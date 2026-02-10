@@ -73,7 +73,11 @@ class CredentialsStore {
     final token = prefs.getString(_tokenKey);
 
     if (url == null || username == null || token == null) return null;
-    return KanboardCredentials(serverUrl: url, username: username, token: token);
+    return KanboardCredentials(
+      serverUrl: url,
+      username: username,
+      token: token,
+    );
   }
 
   Future<void> _clearSharedPrefs() async {

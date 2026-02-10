@@ -36,7 +36,10 @@ class CacheStore {
   }
 
   Future<void> saveBoard(KanboardBoard board) async {
-    await _box.put('$_boardPrefix${board.projectId}', jsonEncode(board.toJson()));
+    await _box.put(
+      '$_boardPrefix${board.projectId}',
+      jsonEncode(board.toJson()),
+    );
   }
 
   KanboardBoard? readBoard(int projectId) {

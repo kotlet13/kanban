@@ -41,6 +41,12 @@ dependencies:
   shared_preferences: ^2.5.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  window_manager: ^0.4.3
+  file_picker: ^10.3.3
+  share_plus: ^11.1.0
+  url_launcher: ^6.3.2
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.0.1
 
 dev_dependencies:
   flutter_test:
@@ -52,9 +58,19 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  macos:
+    generate: true
+    image_path: assets/icon1.png
+  image_path: assets/icon1.png
+  min_sdk_android: 21
 
 # The following section is specific to Flutter packages.
 flutter:

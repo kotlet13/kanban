@@ -39,15 +39,64 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CircularProgressIndicator(),
-            SizedBox(height: 12),
-            Text('Restoring session...'),
-          ],
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+              theme.scaffoldBackgroundColor,
+              theme.colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+            ],
+          ),
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 28,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.12,
+                      ),
+                      child: Icon(
+                        Icons.dashboard_customize_rounded,
+                        size: 30,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Kanboard Workspace',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Restoring session...',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const LinearProgressIndicator(minHeight: 5),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

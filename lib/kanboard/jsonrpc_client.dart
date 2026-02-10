@@ -48,26 +48,50 @@ class JsonRpcClient {
 
   Future<dynamic> call(String method, [Object? params]) async {
     _requestId += 1;
+    final requestId = _requestId;
     final payload = <String, dynamic>{
       'jsonrpc': '2.0',
       'method': method,
-      'id': _requestId,
+      'id': requestId,
       if (params != null) 'params': params,
     };
     _log(
-      'Request #$_requestId -> $method @ $endpoint (user="$username", params=${_safePreview(params)})',
+      'Request #$requestId -> $method @ $endpoint (user="$username", params=${_safePreview(params)})',
     );
 
-    final response = await _httpClient.post(
-      endpoint,
+    final body = jsonEncode(payload);
+    Uri requestUri = endpoint;
+    http.Response response = await _httpClient.post(
+      requestUri,
       headers: <String, String>{
         'Content-Type': 'application/json',
         'Authorization': _basicAuth,
       },
-      body: jsonEncode(payload),
+      body: body,
     );
+    var redirects = 0;
+    while (response.statusCode >= 300 &&
+        response.statusCode < 400 &&
+        redirects < 2) {
+      final location = response.headers['location'];
+      if (location == null || location.isEmpty) break;
+      final nextUri = requestUri.resolve(location);
+      _log(
+        'Request #$requestId redirected (${response.statusCode}) to $nextUri, retrying with same payload.',
+      );
+      requestUri = nextUri;
+      response = await _httpClient.post(
+        requestUri,
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': _basicAuth,
+        },
+        body: body,
+      );
+      redirects += 1;
+    }
     _log(
-      'Response #$_requestId <- HTTP ${response.statusCode} ${response.reasonPhrase ?? ''} body=${_safePreview(response.body)}',
+      'Response #$requestId <- HTTP ${response.statusCode} ${response.reasonPhrase ?? ''} body=${_safePreview(response.body)}',
     );
 
     if (response.statusCode == 401) {
@@ -79,9 +103,11 @@ class JsonRpcClient {
       throw JsonRpcException('Permission denied (403).');
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      _log('Unexpected HTTP status ${response.statusCode}.');
+      final location = response.headers['location'];
+      final locationSuffix = location == null ? '' : ' (location: $location)';
+      _log('Unexpected HTTP status ${response.statusCode}$locationSuffix.');
       throw JsonRpcException(
-        'HTTP error ${response.statusCode}: ${response.reasonPhrase}',
+        'HTTP error ${response.statusCode}: ${response.reasonPhrase}$locationSuffix',
       );
     }
 
@@ -101,7 +127,7 @@ class JsonRpcClient {
       );
     }
 
-    _log('Request #$_requestId succeeded for method "$method".');
+    _log('Request #$requestId succeeded for method "$method".');
     return decoded['result'];
   }
 }

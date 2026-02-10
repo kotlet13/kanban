@@ -12,11 +12,13 @@ class BoardPage extends ConsumerStatefulWidget {
   const BoardPage({
     required this.projectId,
     required this.projectName,
+    this.projectColorHex,
     super.key,
   });
 
   final int projectId;
   final String projectName;
+  final String? projectColorHex;
 
   @override
   ConsumerState<BoardPage> createState() => _BoardPageState();
@@ -26,6 +28,26 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   bool _isLoading = false;
   String? _error;
   KanboardBoard? _board;
+
+  Color _projectAccent(ThemeData theme) {
+    return _parseHexColor(widget.projectColorHex) ?? theme.colorScheme.primary;
+  }
+
+  Color? _parseHexColor(String? value) {
+    final normalized = _normalizeColorHex(value);
+    if (normalized == null) return null;
+    return Color(int.parse('FF${normalized.substring(1)}', radix: 16));
+  }
+
+  String? _normalizeColorHex(String? value) {
+    if (value == null) return null;
+    final text = value.trim().toUpperCase();
+    if (text.isEmpty) return null;
+    final withHash = text.startsWith('#') ? text : '#$text';
+    final hex = withHash.substring(1);
+    if (!RegExp(r'^[0-9A-F]{6}$').hasMatch(hex)) return null;
+    return '#$hex';
+  }
 
   @override
   void initState() {
@@ -79,7 +101,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
-  Future<void> _openTaskEditor({KanboardTask? task, int? columnId, int? swimlaneId}) async {
+  Future<void> _openTaskEditor({
+    KanboardTask? task,
+    int? columnId,
+    int? swimlaneId,
+  }) async {
     final changed = await showDialog<bool>(
       context: context,
       useRootNavigator: true,
@@ -167,18 +193,102 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
+  int _taskCount(KanboardBoard board) {
+    var count = 0;
+    for (final swimlane in board.swimlanes) {
+      for (final column in swimlane.columns) {
+        count += column.tasks.length;
+      }
+    }
+    return count;
+  }
+
+  void _openStructureEditor() {
+    context
+        .push(
+          '/board/${widget.projectId}/structure?projectName=${Uri.encodeComponent(widget.projectName)}',
+        )
+        .then((_) => _loadBoard(fromRefresh: true));
+  }
+
+  Future<void> _openSearch() async {
+    final selectedTaskId = await showDialog<int>(
+      context: context,
+      useRootNavigator: true,
+      builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.all(12),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820, maxHeight: 640),
+          child: _TaskSearchSheet(projectId: widget.projectId),
+        ),
+      ),
+    );
+    if (selectedTaskId != null && selectedTaskId > 0) {
+      await _openTaskEditor(
+        task: KanboardTask(
+          id: selectedTaskId,
+          projectId: widget.projectId,
+          columnId: 0,
+          swimlaneId: 0,
+          position: 0,
+          title: 'Task #$selectedTaskId',
+        ),
+      );
+    }
+  }
+
+  Widget _statusBanner({
+    required IconData icon,
+    required String text,
+    bool isError = false,
+    VoidCallback? onRetry,
+  }) {
+    final theme = Theme.of(context);
+    final color = isError ? theme.colorScheme.error : _projectAccent(theme);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: <Widget>[
+            Icon(icon, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: isError ? color : theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (onRetry != null)
+              FilledButton.tonal(
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _taskCard(KanboardTask task) {
+    final theme = Theme.of(context);
+    final accent = _projectAccent(theme);
     return Draggable<KanboardTask>(
       data: task,
       feedback: Material(
-        elevation: 4,
-        borderRadius: BorderRadius.circular(8),
+        elevation: 6,
+        borderRadius: BorderRadius.circular(14),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 220),
+          constraints: const BoxConstraints(maxWidth: 250),
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(task.title, maxLines: 3, overflow: TextOverflow.ellipsis),
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                task.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
         ),
@@ -186,86 +296,496 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       childWhenDragging: Opacity(
         opacity: 0.35,
         child: Card(
-          child: ListTile(
-            title: Text(task.title),
-            subtitle: const Text('Moving...'),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.open_with_rounded, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    task.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
       child: Card(
-        child: ListTile(
-          title: Text(task.title),
-          subtitle: task.description == null || task.description!.isEmpty
-              ? null
-              : Text(
-                  task.description!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+        child: InkWell(
           onTap: () => _openTaskEditor(task: task),
-          trailing: PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'edit') {
-                _openTaskEditor(task: task);
-              } else if (value == 'delete') {
-                _deleteTask(task);
-              }
-            },
-            itemBuilder: (context) => const <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
-              PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: 6,
+                  height: 36,
+                  margin: const EdgeInsets.only(top: 2),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        task.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (task.description != null &&
+                          task.description!.trim().isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 3),
+                        Text(
+                          task.description!.trim(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 5),
+                      Text(
+                        'Task #${task.id}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _openTaskEditor(task: task);
+                    } else if (value == 'delete') {
+                      _deleteTask(task);
+                    }
+                  },
+                  itemBuilder: (context) => const <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _columnCard(KanboardSwimlane swimlane, KanboardColumn column) {
-    return Container(
-      width: 320,
-      height: 420,
-      margin: const EdgeInsets.only(right: 12),
+  Widget _columnCard(
+    KanboardSwimlane swimlane,
+    KanboardColumn column, {
+    bool compact = false,
+  }) {
+    return SizedBox(
+      width: compact ? double.infinity : 320,
+      height: compact ? 400 : 460,
       child: DragTarget<KanboardTask>(
         onAcceptWithDetails: (details) =>
             _moveTask(details.data, column, swimlane.id),
         builder: (context, candidateData, rejectedData) {
+          final theme = Theme.of(context);
+          final accent = _projectAccent(theme);
           final isHighlighted = candidateData.isNotEmpty;
-          return Card(
-            color: isHighlighted
-                ? Theme.of(context).colorScheme.primaryContainer
-                : null,
-            child: Column(
-              children: <Widget>[
-                ListTile(
-                  title: Text(column.title),
-                  subtitle: Text('${column.tasks.length} task(s)'),
-                  trailing: IconButton(
-                    tooltip: 'New task in ${column.title}',
-                    onPressed: () => _openTaskEditor(
-                      columnId: column.id,
-                      swimlaneId: swimlane.id,
-                    ),
-                    icon: const Icon(Icons.add),
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: column.tasks.isEmpty
-                      ? const Center(child: Text('Drop a task here'))
-                      : ListView.builder(
-                          itemCount: column.tasks.length,
-                          itemBuilder: (context, index) {
-                            return _taskCard(column.tasks[index]);
-                          },
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            margin: compact
+                ? const EdgeInsets.only(bottom: 10)
+                : const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isHighlighted
+                    ? accent
+                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+                width: isHighlighted ? 2 : 1,
+              ),
+            ),
+            child: Card(
+              margin: EdgeInsets.zero,
+              color: isHighlighted
+                  ? Color.alphaBlend(
+                      accent.withValues(alpha: 0.18),
+                      theme.colorScheme.surfaceContainerHigh,
+                    )
+                  : null,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                column.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${column.tasks.length} task(s)',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                ),
-              ],
+                        FilledButton.tonalIcon(
+                          onPressed: () => _openTaskEditor(
+                            columnId: column.id,
+                            swimlaneId: swimlane.id,
+                          ),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(compact ? 'New' : 'Task'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
+                  ),
+                  Expanded(
+                    child: column.tasks.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.inbox_outlined,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Drop a task here',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(8),
+                            itemCount: column.tasks.length,
+                            itemBuilder: (context, index) {
+                              return _taskCard(column.tasks[index]);
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           );
         },
       ),
     );
+  }
+
+  Widget _boardOverview(KanboardBoard? board) {
+    final theme = Theme.of(context);
+    final accent = _projectAccent(theme);
+    final swimlaneCount = board?.swimlanes.length ?? 0;
+    final columnCount = board == null
+        ? 0
+        : board.swimlanes.fold<int>(
+            0,
+            (sum, swimlane) => sum + swimlane.columns.length,
+          );
+    final taskCount = board == null ? 0 : _taskCount(board);
+
+    Widget statChip(IconData icon, String label, String value) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.78),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(
+            color: Color.alphaBlend(
+              accent.withValues(alpha: 0.28),
+              theme.colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 5),
+            Text('$label: ', style: theme.textTheme.labelLarge),
+            Text(
+              value,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              Color.alphaBlend(
+                accent.withValues(alpha: 0.24),
+                theme.colorScheme.surfaceContainerHigh,
+              ),
+              theme.colorScheme.surfaceContainerHigh,
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 10,
+              spacing: 10,
+              children: <Widget>[
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        widget.projectName,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    FilledButton.tonalIcon(
+                      onPressed: _openSearch,
+                      icon: const Icon(Icons.search),
+                      label: const Text('Search'),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: _openStructureEditor,
+                      icon: const Icon(Icons.view_column),
+                      label: const Text('Structure'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _loadBoard(fromRefresh: true),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                statChip(Icons.horizontal_split, 'Swimlanes', '$swimlaneCount'),
+                statChip(Icons.view_column_outlined, 'Columns', '$columnCount'),
+                statChip(Icons.task_alt_outlined, 'Tasks', '$taskCount'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _swimlaneSection(KanboardSwimlane swimlane, {bool stacked = false}) {
+    final theme = Theme.of(context);
+    final accent = _projectAccent(theme);
+    return Card(
+      margin: const EdgeInsets.only(top: 10, bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: accent.withValues(alpha: 0.12),
+                  child: Icon(Icons.lan_outlined, size: 15, color: accent),
+                ),
+                Text(
+                  swimlane.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${swimlane.columns.length} column(s)',
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (swimlane.columns.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'No columns configured for this swimlane. Use Structure to add columns.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else if (stacked)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  for (final column in swimlane.columns)
+                    _columnCard(swimlane, column, compact: true),
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (final column in swimlane.columns)
+                    _columnCard(swimlane, column),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyBoardState() {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.dashboard_outlined,
+              size: 34,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No board data yet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Pull to refresh or open structure to configure columns and swimlanes.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: _openStructureEditor,
+              icon: const Icon(Icons.view_column),
+              label: const Text('Open structure'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _boardContent(
+    KanboardBoard? board, {
+    required bool stackedColumns,
+  }) {
+    return <Widget>[
+      _boardOverview(board),
+      if (_isLoading)
+        const Padding(
+          padding: EdgeInsets.only(top: 10),
+          child: ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(99)),
+            child: LinearProgressIndicator(minHeight: 5),
+          ),
+        ),
+      if (_error != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: _statusBanner(
+            icon: Icons.error_outline,
+            text: _error!,
+            isError: true,
+            onRetry: _isLoading ? null : () => _loadBoard(fromRefresh: true),
+          ),
+        ),
+      if (board == null && !_isLoading)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: _emptyBoardState(),
+        ),
+      if (board != null)
+        for (final swimlane in board.swimlanes)
+          _swimlaneSection(swimlane, stacked: stackedColumns),
+    ];
   }
 
   @override
@@ -274,10 +794,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final maxColumnsPerSwimlane = board == null || board.swimlanes.isEmpty
         ? 3
         : board.swimlanes
-            .map((s) => s.columns.length)
-            .reduce((a, b) => a > b ? a : b);
-    final boardContentWidth =
-        (maxColumnsPerSwimlane * 332 + 120).clamp(1200, 7000).toDouble();
+              .map((swimlane) => swimlane.columns.length)
+              .reduce((a, b) => a > b ? a : b);
+    final boardContentWidth = (maxColumnsPerSwimlane * 334 + 140)
+        .clamp(1200, 7000)
+        .toDouble();
 
     return Scaffold(
       appBar: AppBar(
@@ -290,12 +811,13 @@ class _BoardPageState extends ConsumerState<BoardPage> {
           ),
           IconButton(
             tooltip: 'Board structure',
-            onPressed: () {
-              context.push(
-                '/board/${widget.projectId}/structure?projectName=${Uri.encodeComponent(widget.projectName)}',
-              ).then((_) => _loadBoard(fromRefresh: true));
-            },
+            onPressed: _openStructureEditor,
             icon: const Icon(Icons.view_column),
+          ),
+          IconButton(
+            tooltip: 'Search tasks',
+            onPressed: _openSearch,
+            icon: const Icon(Icons.search),
           ),
           IconButton(
             tooltip: 'Refresh board',
@@ -308,60 +830,187 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openTaskEditor(),
         icon: const Icon(Icons.add_task),
-        label: const Text('Task'),
+        label: const Text('New task'),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadBoard(fromRefresh: true),
-        child: BidirectionalScrollView(
-          alwaysScrollable: true,
-          padding: const EdgeInsets.all(12),
-          contentWidth: boardContentWidth,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-            if (_isLoading) const LinearProgressIndicator(),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            if (board == null && !_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Text('No board data yet. Pull to refresh.'),
-              ),
-            if (board != null)
-              for (final swimlane in board.swimlanes) ...<Widget>[
-                Card(
-                  margin: const EdgeInsets.only(top: 8, bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final stackedColumns = constraints.maxWidth < 900;
+          final content = _boardContent(board, stackedColumns: stackedColumns);
+
+          return RefreshIndicator(
+            onRefresh: () => _loadBoard(fromRefresh: true),
+            child: stackedColumns
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                    children: content,
+                  )
+                : BidirectionalScrollView(
+                    alwaysScrollable: true,
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                    contentWidth: boardContentWidth,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          swimlane.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            for (final column in swimlane.columns)
-                              _columnCard(swimlane, column),
-                          ],
-                        ),
-                      ],
+                      children: content,
                     ),
                   ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TaskSearchSheet extends ConsumerStatefulWidget {
+  const _TaskSearchSheet({required this.projectId});
+
+  final int projectId;
+
+  @override
+  ConsumerState<_TaskSearchSheet> createState() => _TaskSearchSheetState();
+}
+
+class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
+  final _queryController = TextEditingController();
+  bool _isSearching = false;
+  String? _error;
+  List<KanboardTask> _results = const <KanboardTask>[];
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    final api = ref.read(kanboardApiProvider);
+    if (api == null) return;
+    final query = _queryController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _results = const <KanboardTask>[];
+        _error = 'Enter a search query.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _error = null;
+    });
+    try {
+      final results = await api.searchTasks(
+        projectId: widget.projectId,
+        query: query,
+      );
+      if (!mounted) return;
+      setState(() {
+        _results = results;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Task Search',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: TextField(
+                  controller: _queryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Query',
+                    hintText: 'status:open category:bug',
+                  ),
+                  onSubmitted: (_) => _search(),
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _isSearching ? null : _search,
+                icon: const Icon(Icons.search),
+                label: const Text('Search'),
+              ),
             ],
           ),
-        ),
+          if (_isSearching)
+            const Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: LinearProgressIndicator(),
+            ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _error!,
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
+            ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: _results.isEmpty
+                ? Center(
+                    child: Text(
+                      'No results yet.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _results.length,
+                    itemBuilder: (context, index) {
+                      final task = _results[index];
+                      return ListTile(
+                        onTap: () => Navigator.of(context).pop(task.id),
+                        title: Text(task.title),
+                        subtitle: Text('Task #${task.id}'),
+                        trailing: const Icon(Icons.chevron_right),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ),
+        ],
       ),
     );
   }

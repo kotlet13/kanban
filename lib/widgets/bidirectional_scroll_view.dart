@@ -15,7 +15,8 @@ class BidirectionalScrollView extends StatefulWidget {
   final double? contentWidth;
 
   @override
-  State<BidirectionalScrollView> createState() => _BidirectionalScrollViewState();
+  State<BidirectionalScrollView> createState() =>
+      _BidirectionalScrollViewState();
 }
 
 class _BidirectionalScrollViewState extends State<BidirectionalScrollView> {
@@ -32,7 +33,8 @@ class _BidirectionalScrollViewState extends State<BidirectionalScrollView> {
   @override
   Widget build(BuildContext context) {
     final platform = Theme.of(context).platform;
-    final showDesktopScrollbars = platform == TargetPlatform.macOS ||
+    final showDesktopScrollbars =
+        platform == TargetPlatform.macOS ||
         platform == TargetPlatform.windows ||
         platform == TargetPlatform.linux;
 
@@ -49,6 +51,8 @@ class _BidirectionalScrollViewState extends State<BidirectionalScrollView> {
           controller: _verticalController,
           thumbVisibility: showDesktopScrollbars,
           trackVisibility: showDesktopScrollbars,
+          thickness: showDesktopScrollbars ? 10 : null,
+          radius: const Radius.circular(999),
           child: SingleChildScrollView(
             controller: _verticalController,
             physics: widget.alwaysScrollable
@@ -58,6 +62,8 @@ class _BidirectionalScrollViewState extends State<BidirectionalScrollView> {
               controller: _horizontalController,
               thumbVisibility: showDesktopScrollbars,
               trackVisibility: showDesktopScrollbars,
+              thickness: showDesktopScrollbars ? 10 : null,
+              radius: const Radius.circular(999),
               notificationPredicate: (notification) {
                 return notification.metrics.axis == Axis.horizontal;
               },
@@ -68,8 +74,8 @@ class _BidirectionalScrollViewState extends State<BidirectionalScrollView> {
                   width: widget.contentWidth == null
                       ? null
                       : (widget.contentWidth! > safeMaxWidth
-                          ? widget.contentWidth!
-                          : safeMaxWidth),
+                            ? widget.contentWidth!
+                            : safeMaxWidth),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minWidth: safeMaxWidth,
