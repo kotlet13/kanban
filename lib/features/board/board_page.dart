@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/bidirectional_scroll_view.dart';
@@ -29,6 +30,8 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   String? _error;
   KanboardBoard? _board;
   bool _isCompactDragLocked = true;
+  String? _expenseCurrencyCode;
+  int? _expenseBudgetCents;
 
   Color _projectAccent(ThemeData theme) {
     return _parseHexColor(widget.projectColorHex) ?? theme.colorScheme.primary;
@@ -60,7 +63,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final api = ref.read(kanboardApiProvider);
     if (api == null) {
       setState(() {
-        _error = 'No active session. Connect first.';
+        _error = context.l10n.noActiveSessionConnectFirst;
       });
       return;
     }
@@ -81,12 +84,19 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     });
 
     try {
-      final board = await api.getBoard(widget.projectId);
+      final boardFuture = api.getBoard(widget.projectId);
+      final currencyFuture = api.getProjectExpenseCurrency(widget.projectId);
+      final budgetFuture = api.getProjectExpenseBudgetCents(widget.projectId);
+      final board = await boardFuture;
+      final expenseCurrencyCode = await currencyFuture;
+      final expenseBudgetCents = await budgetFuture;
       final cache = await ref.read(cacheStoreProvider.future);
       await cache.saveBoard(board);
       if (!mounted) return;
       setState(() {
         _board = board;
+        _expenseCurrencyCode = expenseCurrencyCode;
+        _expenseBudgetCents = expenseBudgetCents;
       });
     } catch (error) {
       if (!mounted) return;
@@ -143,16 +153,16 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: const Text('Delete task?'),
-        content: Text('Delete "${task.title}" permanently?'),
+        title: Text(context.l10n.deleteTask),
+        content: Text(context.l10n.deletePermanently(task.title)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -166,7 +176,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Delete failed: $error')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.deleteFailed(error))));
     }
   }
 
@@ -183,13 +193,17 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       await _loadBoard(fromRefresh: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(done ? 'Task marked done.' : 'Task reopened.')),
+        SnackBar(
+          content: Text(
+            done ? context.l10n.taskMarkedDone : context.l10n.taskReopened,
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Status update failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.statusUpdateFailed(error))),
+      );
     }
   }
 
@@ -213,7 +227,160 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Move failed: $error')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.moveFailed(error))));
+    }
+  }
+
+  int? _parseMoneyToCents(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null || value < 0) return null;
+    return (value * 100).round();
+  }
+
+  String _formatCents(int cents) {
+    return (cents / 100).toStringAsFixed(2);
+  }
+
+  Future<void> _openExpenseSettings() async {
+    final api = ref.read(kanboardApiProvider);
+    if (api == null) return;
+    final currencyController = TextEditingController(
+      text: (_expenseCurrencyCode ?? '').trim(),
+    );
+    final budgetController = TextEditingController(
+      text: _expenseBudgetCents == null
+          ? ''
+          : _formatCents(_expenseBudgetCents!),
+    );
+    String? validationError;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocalState) => AlertDialog(
+          title: Text(context.l10n.projectExpenses),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  controller: currencyController,
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: 3,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.currencyCode,
+                    counterText: '',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: budgetController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.budget,
+                    hintText: context.l10n.leaveEmptyForNoBudget,
+                  ),
+                ),
+                if (validationError != null) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Text(
+                    validationError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(context.l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final currency = currencyController.text.trim().toUpperCase();
+                if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
+                  setLocalState(() {
+                    validationError = context.l10n.currencyMustBeA3LetterCode;
+                  });
+                  return;
+                }
+                final budgetText = budgetController.text.trim();
+                final budgetCents = _parseMoneyToCents(budgetText);
+                if (budgetText.isNotEmpty && budgetCents == null) {
+                  setLocalState(() {
+                    validationError = context.l10n.budgetMustBeAPositiveNumber;
+                  });
+                  return;
+                }
+                Navigator.of(context).pop(true);
+              },
+              child: Text(context.l10n.save),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm != true) return;
+    final currency = currencyController.text.trim().toUpperCase();
+    final budgetText = budgetController.text.trim();
+    final budgetCents = budgetText.isEmpty
+        ? null
+        : _parseMoneyToCents(budgetText);
+    try {
+      await api.saveProjectExpenseSettings(
+        projectId: widget.projectId,
+        currency: currency,
+        budgetCents: budgetCents,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.expenseSettingsSaved)),
+      );
+      await _loadBoard(fromRefresh: true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.expenseSettingsFailed(error))),
+      );
+    }
+  }
+
+  Future<void> _openGroceryListEditor() async {
+    final changed = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      builder: (dialogContext) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        final maxWidth = size.width < 760 ? size.width - 24 : 720.0;
+        final maxHeight = size.height * 0.9;
+        return Dialog(
+          insetPadding: const EdgeInsets.all(12),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: maxHeight,
+            ),
+            child: TaskDetailsSheet(
+              projectId: widget.projectId,
+              createAsGroceryList: true,
+              initialTitle: dialogContext.l10n.groceryList,
+            ),
+          ),
+        );
+      },
+    );
+    if (changed == true && mounted) {
+      await _loadBoard(fromRefresh: true);
     }
   }
 
@@ -227,6 +394,39 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     return count;
   }
 
+  int _plannedExpenseCents(KanboardBoard board) {
+    var total = 0;
+    for (final swimlane in board.swimlanes) {
+      for (final column in swimlane.columns) {
+        for (final task in column.tasks) {
+          if (task.score > 0) {
+            total += task.score;
+          }
+        }
+      }
+    }
+    return total;
+  }
+
+  int _spentExpenseCents(KanboardBoard board) {
+    var total = 0;
+    for (final swimlane in board.swimlanes) {
+      for (final column in swimlane.columns) {
+        for (final task in column.tasks) {
+          if (!task.isActive && task.score > 0) {
+            total += task.score;
+          }
+        }
+      }
+    }
+    return total;
+  }
+
+  String _formatMoneyCents(int cents) {
+    final code = (_expenseCurrencyCode ?? 'EUR').trim().toUpperCase();
+    return '$code ${_formatCents(cents)}';
+  }
+
   void _openStructureEditor() {
     context
         .push(
@@ -236,6 +436,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   }
 
   Future<void> _openSearch() async {
+    final l10n = context.l10n;
     final selectedTaskId = await showDialog<int>(
       context: context,
       useRootNavigator: true,
@@ -255,7 +456,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
           columnId: 0,
           swimlaneId: 0,
           position: 0,
-          title: 'Task #$selectedTaskId',
+          title: l10n.taskNumber(selectedTaskId),
         ),
       );
     }
@@ -287,7 +488,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             if (onRetry != null)
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: const Text('Retry'),
+                child: Text(context.l10n.retry),
               ),
           ],
         ),
@@ -342,7 +543,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                     ],
                     const SizedBox(height: 5),
                     Text(
-                      'Task #${task.id}',
+                      context.l10n.taskNumber(task.id),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -363,17 +564,21 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   }
                 },
                 itemBuilder: (context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'edit',
-                    child: Text('Edit'),
+                    child: Text(context.l10n.edit),
                   ),
                   PopupMenuItem<String>(
                     value: task.isActive ? 'done' : 'reopen',
-                    child: Text(task.isActive ? 'Mark done' : 'Reopen'),
+                    child: Text(
+                      task.isActive
+                          ? context.l10n.markDone
+                          : context.l10n.reopen,
+                    ),
                   ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'delete',
-                    child: Text('Delete'),
+                    child: Text(context.l10n.delete),
                   ),
                 ],
               ),
@@ -490,7 +695,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${column.tasks.length} task(s)',
+                                context.l10n.tasks2(column.tasks.length),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -504,7 +709,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                             swimlaneId: swimlane.id,
                           ),
                           icon: const Icon(Icons.add, size: 18),
-                          label: Text(compact ? 'New' : 'Task'),
+                          label: Text(
+                            compact ? context.l10n.newLabel : context.l10n.task,
+                          ),
                         ),
                       ],
                     ),
@@ -528,8 +735,8 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                                 const SizedBox(height: 6),
                                 Text(
                                   dragEnabled
-                                      ? 'Drop a task here'
-                                      : 'Unlock drag to move tasks',
+                                      ? context.l10n.dropATaskHere
+                                      : context.l10n.unlockDragToMoveTasks,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -572,6 +779,10 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             (sum, swimlane) => sum + swimlane.columns.length,
           );
     final taskCount = board == null ? 0 : _taskCount(board);
+    final plannedCents = board == null ? 0 : _plannedExpenseCents(board);
+    final spentCents = board == null ? 0 : _spentExpenseCents(board);
+    final budgetCents = _expenseBudgetCents;
+    final remainingCents = budgetCents == null ? null : (budgetCents - spentCents);
 
     Widget statChip(IconData icon, String label, String value) {
       return Container(
@@ -643,9 +854,15 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       Text(
                         showCompactDragLock
                             ? dragEnabled
-                                  ? 'Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.'
-                                  : 'Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.'
-                            : 'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.',
+                                  ? context
+                                        .l10n
+                                        .taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves
+                                  : context
+                                        .l10n
+                                        .taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks
+                            : context
+                                  .l10n
+                                  .dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -658,21 +875,31 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     FilledButton.tonalIcon(
+                      onPressed: _openGroceryListEditor,
+                      icon: const Icon(Icons.shopping_cart_outlined),
+                      label: Text(context.l10n.groceryList),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: _openExpenseSettings,
+                      icon: const Icon(Icons.payments_outlined),
+                      label: Text(context.l10n.projectExpenses),
+                    ),
+                    FilledButton.tonalIcon(
                       onPressed: _openSearch,
                       icon: const Icon(Icons.search),
-                      label: const Text('Search'),
+                      label: Text(context.l10n.search),
                     ),
                     FilledButton.tonalIcon(
                       onPressed: _openStructureEditor,
                       icon: const Icon(Icons.view_column),
-                      label: const Text('Structure'),
+                      label: Text(context.l10n.structure),
                     ),
                     FilledButton.icon(
                       onPressed: _isLoading
                           ? null
                           : () => _loadBoard(fromRefresh: true),
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Refresh'),
+                      label: Text(context.l10n.refresh),
                     ),
                   ],
                 ),
@@ -683,9 +910,45 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               spacing: 8,
               runSpacing: 8,
               children: <Widget>[
-                statChip(Icons.horizontal_split, 'Swimlanes', '$swimlaneCount'),
-                statChip(Icons.view_column_outlined, 'Columns', '$columnCount'),
-                statChip(Icons.task_alt_outlined, 'Tasks', '$taskCount'),
+                statChip(
+                  Icons.horizontal_split,
+                  context.l10n.swimlanes,
+                  '$swimlaneCount',
+                ),
+                statChip(
+                  Icons.view_column_outlined,
+                  context.l10n.columns,
+                  '$columnCount',
+                ),
+                statChip(
+                  Icons.task_alt_outlined,
+                  context.l10n.tasks,
+                  '$taskCount',
+                ),
+                statChip(
+                  Icons.payments_outlined,
+                  context.l10n.planned,
+                  _formatMoneyCents(plannedCents),
+                ),
+                statChip(
+                  Icons.check_circle_outline,
+                  context.l10n.spent,
+                  _formatMoneyCents(spentCents),
+                ),
+                statChip(
+                  Icons.account_balance_wallet_outlined,
+                  context.l10n.budget,
+                  budgetCents == null
+                      ? context.l10n.noBudget
+                      : _formatMoneyCents(budgetCents),
+                ),
+                statChip(
+                  Icons.savings_outlined,
+                  context.l10n.remaining,
+                  remainingCents == null
+                      ? context.l10n.noBudget
+                      : _formatMoneyCents(remainingCents),
+                ),
               ],
             ),
           ],
@@ -734,7 +997,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '${swimlane.columns.length} column(s)',
+                    context.l10n.columns2(swimlane.columns.length),
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
@@ -745,7 +1008,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  'No columns configured for this swimlane. Use Structure to add columns.',
+                  context
+                      .l10n
+                      .noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -793,14 +1058,16 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No board data yet',
+              context.l10n.noBoardDataYet,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Pull to refresh or open structure to configure columns and swimlanes.',
+              context
+                  .l10n
+                  .pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -810,7 +1077,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             FilledButton.tonalIcon(
               onPressed: _openStructureEditor,
               icon: const Icon(Icons.view_column),
-              label: const Text('Open structure'),
+              label: Text(context.l10n.openStructure),
             ),
           ],
         ),
@@ -881,23 +1148,25 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         title: Text(widget.projectName),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Projects',
+            tooltip: context.l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
           IconButton(
-            tooltip: 'Board structure',
+            tooltip: context.l10n.boardStructure,
             onPressed: _openStructureEditor,
             icon: const Icon(Icons.view_column),
           ),
           IconButton(
-            tooltip: 'Search tasks',
+            tooltip: context.l10n.searchTasks,
             onPressed: _openSearch,
             icon: const Icon(Icons.search),
           ),
           if (stackedColumns)
             IconButton(
-              tooltip: dragEnabled ? 'Lock task drag' : 'Unlock task drag',
+              tooltip: dragEnabled
+                  ? context.l10n.lockTaskDrag
+                  : context.l10n.unlockTaskDrag,
               onPressed: () {
                 setState(() {
                   _isCompactDragLocked = !_isCompactDragLocked;
@@ -906,7 +1175,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               icon: Icon(dragEnabled ? Icons.lock_open : Icons.lock),
             ),
           IconButton(
-            tooltip: 'Refresh board',
+            tooltip: context.l10n.refreshBoard,
             onPressed: _isLoading ? null : () => _loadBoard(fromRefresh: true),
             icon: const Icon(Icons.refresh),
           ),
@@ -916,7 +1185,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openTaskEditor(),
         icon: const Icon(Icons.add_task),
-        label: const Text('New task'),
+        label: Text(context.l10n.newTask),
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadBoard(fromRefresh: true),
@@ -978,7 +1247,7 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
     if (query.isEmpty) {
       setState(() {
         _results = const <KanboardTask>[];
-        _error = 'Enter a search query.';
+        _error = context.l10n.enterASearchQuery;
       });
       return;
     }
@@ -1019,14 +1288,16 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Task Search',
+            context.l10n.taskSearch,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`',
+            context
+                .l10n
+                .useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -1037,9 +1308,9 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
               Expanded(
                 child: TextField(
                   controller: _queryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Query',
-                    hintText: 'status:open category:bug',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.query,
+                    hintText: context.l10n.queryExampleStatusOpenCategoryBug,
                   ),
                   onSubmitted: (_) => _search(),
                 ),
@@ -1048,7 +1319,7 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
               FilledButton.icon(
                 onPressed: _isSearching ? null : _search,
                 icon: const Icon(Icons.search),
-                label: const Text('Search'),
+                label: Text(context.l10n.search),
               ),
             ],
           ),
@@ -1070,7 +1341,7 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
             child: _results.isEmpty
                 ? Center(
                     child: Text(
-                      'No results yet.',
+                      context.l10n.noResultsYet,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1083,7 +1354,7 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
                       return ListTile(
                         onTap: () => Navigator.of(context).pop(task.id),
                         title: Text(task.title),
-                        subtitle: Text('Task #${task.id}'),
+                        subtitle: Text(context.l10n.taskNumber(task.id)),
                         trailing: const Icon(Icons.chevron_right),
                       );
                     },
@@ -1094,7 +1365,7 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              child: Text(context.l10n.close),
             ),
           ),
         ],

@@ -1,0 +1,549 @@
+{
+  "@@locale": "sl",
+  "kanbanConnect": "Kanban povezava",
+  "routeError": "Napaka poti",
+  "unknownError": "Neznana napaka",
+  "kanboardWorkspace": "Delovni prostor Kanboard",
+  "restoringSession": "Obnavljanje seje...",
+  "connectToKanboard": "Poveži se s Kanboardom",
+  "projects": "Projekti",
+  "projectDefaults": "Privzete nastavitve projekta",
+  "connectionSettings": "Nastavitve povezave",
+  "refresh": "Osveži",
+  "logout": "Odjava",
+  "newProject": "Nov projekt",
+  "couldNotLoadProjects": "Projektov ni bilo mogoče naložiti",
+  "retry": "Poskusi znova",
+  "noActiveSession": "Ni aktivne seje",
+  "noActiveSessionConnectFirst": "Ni aktivne seje. Najprej se povežite.",
+  "connectToKanboardToContinue": "Za nadaljevanje se povežite s Kanboardom.",
+  "connect": "Poveži",
+  "projectsWorkspace": "Delovni prostor projektov",
+  "trackOrganizeAndOpenYourKanboardProjects": "Spremljajte, organizirajte in odpirajte svoje Kanboard projekte.",
+  "connectYourKanboardAccountToLoadProjectData": "Povežite svoj Kanboard račun za nalaganje podatkov projektov.",
+  "total": "Skupaj",
+  "active": "Aktivni",
+  "inactive": "Neaktivni",
+  "noProjectsYet": "Projektov še ni",
+  "createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard": "Ustvarite svoj prvi projekt z akcijskim gumbom in začnite organizirati tablo.",
+  "openBoard": "Odpri projekt",
+  "projectAttachments": "Priponke projekta",
+  "deleteProject": "Izbriši projekt",
+  "noDescriptionYetOpenTheProjectToAddContext": "Opisa še ni. Odprite projekt in dodajte podrobnosti.",
+  "deleteProject2": "Izbrišem projekt?",
+  "thisWillRemovePermanently": "To bo trajno odstranilo \"{name}\".",
+  "cancel": "Prekliči",
+  "delete": "Izbriši",
+  "createProject": "Ustvari projekt",
+  "editProject": "Uredi projekt",
+  "projectName": "Ime projekta",
+  "description": "Opis",
+  "projectColorSyncedViaMetadata": "Barva projekta (sinhronizirano prek metapodatkov)",
+  "noColor": "Brez barve",
+  "save": "Shrani",
+  "attachments": "Priponke · {name}",
+  "noProjectAttachmentsYet": "Priponk projekta še ni.",
+  "download": "Prenesi",
+  "addFiles": "Dodaj datoteke",
+  "close": "Zapri",
+  "projectDefaults2": "Privzete nastavitve projekta",
+  "appLanguage": "Jezik aplikacije",
+  "followSystemKeepsLocaleAutomatic": "Sledenje sistemu ohranja samodejno izbiro jezika.",
+  "language": "Jezik",
+  "followSystemDefault": "Sledi sistemu (privzeto)",
+  "english": "Angleščina",
+  "slovene": "Slovenščina",
+  "templateAppliedToEveryNewProjectCreatedFromThisApp": "Predloga se uporabi za vsak nov projekt, ustvarjen v tej aplikaciji.",
+  "leaveFieldsEmptyToKeepServerDefaults": "Polja pustite prazna za ohranitev privzetih nastavitev strežnika.",
+  "savingADefaultCurrencyAlsoAppliesItToAllExistingProjects": "Shranjevanje privzete valute jo uporabi tudi za vse obstoječe projekte.",
+  "defaultBoardColumns": "Privzeti stolpci table",
+  "defaultBoardColumnsHint": "Ena vrstica na stolpec, npr.\\nBacklog\\nPripravljeno\\nV teku\\nKončano",
+  "defaultSwimlane": "Privzeta steza",
+  "exampleMain": "Primer: Glavno",
+  "exampleUSD": "Primer: USD",
+  "defaultExpenseCurrency": "Privzeta valuta stroškov",
+  "reset": "Ponastavi",
+  "saving": "Shranjevanje...",
+  "saveDefaults": "Shrani privzete",
+  "projectDefaultsReset": "Privzete nastavitve projekta so ponastavljene.",
+  "resetDefaults": "Ponastavim privzete?",
+  "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "To počisti prilagojene privzete nastavitve in uporabi privzete nastavitve strežnika Kanboard za nove projekte.",
+  "connectYourKanboardInstance": "Povežite svojo Kanboard instanco",
+  "loadedSavedCredentials": "Naložene shranjene poverilnice.",
+  "connectedViaJsonrpcTokenAuthServerVersion": "Povezano prek avtentikacije jsonrpc z žetonom. Različica strežnika: {version}",
+  "connectedAsVersion": "Povezano kot {username}. Različica: {version}",
+  "connectedSuccessfullyButServerVersionIsTarget1250": "Povezava je uspela, vendar je različica strežnika {version} (cilj: 1.2.50).",
+  "connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": "Povezava ni uspela: {error}\nNamig: če ste kopirali \"API User Access\", poskusite z uporabniškim imenom \"jsonrpc\" in tem žetonom.",
+  "usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc": "Uporabite osebni žeton + uporabniško ime ali aplikacijski žeton z uporabniškim imenom \"jsonrpc\".",
+  "nothingToExportYetConnectOnceOrFillAllFieldsFirst": "Še ni nič za izvoz. Najprej se povežite ali izpolnite vsa polja.",
+  "scanThisCodeWithYourPhoneInTheConnectScreen": "Skenirajte to kodo s telefonom na zaslonu za povezavo.",
+  "couldNotRenderQRError": "QR ni bilo mogoče prikazati.\n$error",
+  "credentialsTransferQR": "QR za prenos poverilnic",
+  "ifQRRenderingFailsCopyPasteTheTransferCode": "Če prikaz QR ne uspe, kopirajte/prilepite kodo za prenos.",
+  "securityNoteThisQRContainsYourAPITokenInPlainText": "Varnostna opomba: ta QR vsebuje vaš API žeton v navadnem besedilu.",
+  "transferCodeCopied": "Koda za prenos je kopirana.",
+  "importedCredentialsFromTransferCode": "Poverilnice so uvožene iz kode za prenos.",
+  "credentialsImportedTapConnect": "Poverilnice so uvožene. Tapnite Poveži.",
+  "clipboardIsEmpty": "Odložišče je prazno.",
+  "invalidTransferCode": "Neveljavna koda za prenos: {error}",
+  "qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere": "Skeniranje QR je na voljo na iOS/Android. Tukaj uporabite \"Prilepi kodo za prenos\".",
+  "serverURLIsRequired": "URL strežnika je obvezen.",
+  "enterAValidURL": "Vnesite veljaven URL.",
+  "usernameIsRequired": "Uporabniško ime je obvezno.",
+  "tokenIsRequired": "Žeton je obvezen.",
+  "credentials": "Poverilnice",
+  "showTransferQR": "Prikaži QR za prenos",
+  "pasteTransferCode": "Prilepi kodo za prenos",
+  "serverURL": "URL strežnika",
+  "serverURLExample": "https://kanboard.example.com",
+  "username": "Uporabniško ime",
+  "personalAccessToken": "Osebni dostopni žeton",
+  "testConnectionContinue": "Preizkusi povezavo in nadaljuj",
+  "openProjects": "Odpri projekte",
+  "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Opomba o prijavi: osebni žeton običajno uporablja vaše uporabniško ime; aplikacijski žeton običajno uporablja \"jsonrpc\".",
+  "scanTransferQR": "Skeniraj QR za prenos",
+  "transferCredentials": "Prenesi poverilnice",
+  "copyCode": "Kopiraj kodo",
+  "done": "Končano",
+  "boardStructure": "Struktura table",
+  "searchTasks": "Išči naloge",
+  "newGroceryList": "Nov nakupovalni seznam",
+  "refreshBoard": "Osveži tablo",
+  "lockTaskDrag": "Zakleni vlečenje nalog",
+  "unlockTaskDrag": "Odkleni vlečenje nalog",
+  "newTask": "Nova naloga",
+  "groceryList": "Nakupovalni seznam",
+  "expenses": "Stroški",
+  "search": "Iskanje",
+  "structure": "Struktura",
+  "swimlanes": "Steze",
+  "columns": "Stolpci",
+  "tasks": "Naloge",
+  "planned": "Planirano",
+  "spent": "Porabljeno",
+  "remaining": "Preostalo",
+  "noBudget": "Ni proračuna",
+  "dropATaskHere": "Spustite nalogo sem",
+  "unlockDragToMoveTasks": "Odklenite vlečenje za premikanje nalog",
+  "edit": "Uredi",
+  "markDone": "Označi kot končano",
+  "reopen": "Ponovno odpri",
+  "taskSearch": "Iskanje nalog",
+  "deleteFailed": "Izbris ni uspel: {error}",
+  "statusUpdateFailed": "Posodobitev statusa ni uspela: {error}",
+  "moveFailed": "Premik ni uspel: {error}",
+  "addColumn": "Dodaj stolpec",
+  "editColumn": "Uredi stolpec",
+  "deleteColumn": "Izbrišem stolpec?",
+  "deleteColumn2": "Izbrišem stolpec \"{name}\"?",
+  "taskLimit": "Omejitev nalog",
+  "addSwimlane": "Dodaj stezo",
+  "editSwimlane": "Uredi stezo",
+  "deleteSwimlane": "Izbrišem stezo?",
+  "deleteSwimlane2": "Izbrišem stezo \"{name}\"?",
+  "name": "Ime",
+  "structure2": "Struktura {name}",
+  "query": "Poizvedba",
+  "queryExampleStatusOpenCategoryBug": "status:open category:bug",
+  "noResultsYet": "Rezultatov še ni.",
+  "projectExpenses": "Stroški projekta",
+  "expenseSettingsSaved": "Nastavitve stroškov so shranjene.",
+  "expenseSettingsFailed": "Nastavitve stroškov niso uspele: {error}",
+  "deleteTask": "Izbrišem nalogo?",
+  "deletePermanently": "Trajno izbrišem \"{name}\"?",
+  "currencyCode": "Koda valute",
+  "budget": "Proračun",
+  "leaveEmptyForNoBudget": "Pustite prazno za brez proračuna",
+  "task": "Naloga",
+  "newLabel": "Novo",
+  "openStructure": "Odpri strukturo",
+  "noBoardDataYet": "Podatkov table še ni",
+  "pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes": "Povlecite za osvežitev ali odprite strukturo za nastavitev stolpcev in stez.",
+  "themeMode": "Način teme",
+  "systemTheme": "Sistemska tema",
+  "lightTheme": "Svetla tema",
+  "darkTheme": "Temna tema",
+  "add": "Dodaj",
+  "additionalDetails": "Dodatne podrobnosti",
+  "attachments2": "Priponke",
+  "comments": "Komentarji",
+  "subtasks": "Podnaloge",
+  "tags": "Oznake",
+  "taskLinks": "Povezave nalog",
+  "externalLinks": "Zunanje povezave",
+  "link": "Poveži",
+  "linkTitle": "Naslov povezave",
+  "type": "Tip",
+  "dependency": "Odvisnost",
+  "url": "URL",
+  "columnSaveFailed": "Shranjevanje stolpca ni uspelo: {error}",
+  "columnDeletionFailed": "Brisanje stolpca ni uspelo: {error}",
+  "swimlaneSaveFailed": "Shranjevanje steze ni uspelo: {error}",
+  "swimlaneDeletionFailed": "Brisanje steze ni uspelo: {error}",
+  "projectSaveFailed": "Shranjevanje projekta ni uspelo: {error}",
+  "projectDeletionFailed": "Brisanje projekta ni uspelo: {error}",
+  "apply": "Uporabi",
+  "post": "Objavi",
+  "noAttachmentsYet": "Priponk še ni.",
+  "noCommentsYet": "Komentarjev še ni.",
+  "noSubtasksYet": "Podnalog še ni.",
+  "noTagsAssigned": "Oznak ni dodeljenih.",
+  "noTaskLinks": "Ni povezav nalog.",
+  "noExternalLinks": "Ni zunanjih povezav.",
+  "newTask2": "Nova naloga",
+  "editTask": "Uredi nalogo",
+  "title": "Naslov",
+  "column": "Stolpec",
+  "swimlane": "Steza",
+  "assignee": "Dodeljeno",
+  "unassigned": "Nedodeljeno",
+  "priority": "Prioriteta",
+  "dueDate": "Rok",
+  "pickDateTime": "Izberi datum/čas",
+  "expense": "Strošek",
+  "score": "Ocena",
+  "pickDueDate": "Izberi rok",
+  "clearDueDate": "Počisti rok",
+  "newComment": "Nov komentar",
+  "comment": "Komentar",
+  "editComment": "Uredi komentar",
+  "editSubtask": "Uredi podnalogo",
+  "estimateH": "Ocena (h)",
+  "spentH": "Porabljeno (h)",
+  "newGroceryItem": "Nova postavka",
+  "newSubtask": "Nova podnaloga",
+  "addTagsCommaSeparated": "Dodaj oznake (ločene z vejico)",
+  "relation": "Relacija",
+  "linkedTaskID": "ID povezane naloge",
+  "export": "Izvozi",
+  "remove": "Odstrani",
+  "project": "Projekt",
+  "projectCreatedButDefaultsFailedToApply": "Projekt je ustvarjen, vendar privzetih nastavitev ni bilo mogoče uporabiti: {error}",
+  "projectAttachmentsUploaded": "Priponke projekta so naložene.",
+  "uploadFailed": "Nalaganje ni uspelo: {error}",
+  "attachmentContentMissing": "Vsebina priponke manjka.",
+  "downloadFailed": "Prenos ni uspel: {error}",
+  "filePickerFailed": "Izbira datotek ni uspela: {error}",
+  "attachmentPickerFailed": "Izbira priponke ni uspela: {error}",
+  "attachmentUploadComplete": "Nalaganje priponk je končano.",
+  "attachmentUploadFailed": "Nalaganje priponk ni uspelo: {error}",
+  "attachmentHasNoDownloadableContent": "Priponka nima vsebine za prenos.",
+  "attachmentExportFailed": "Izvoz priponke ni uspel: {error}",
+  "attachmentDeleteFailed": "Brisanje priponke ni uspelo: {error}",
+  "commentSaveFailed": "Shranjevanje komentarja ni uspelo: {error}",
+  "commentUpdateFailed": "Posodobitev komentarja ni uspela: {error}",
+  "commentDeleteFailed": "Brisanje komentarja ni uspelo: {error}",
+  "subtaskCreateFailed": "Ustvarjanje podnaloge ni uspelo: {error}",
+  "subtaskUpdateFailed": "Posodobitev podnaloge ni uspela: {error}",
+  "subtaskDeleteFailed": "Brisanje podnaloge ni uspelo: {error}",
+  "tagUpdateFailed": "Posodobitev oznak ni uspela: {error}",
+  "theGroceryListTagIsReservedForGroceryTasks": "Oznaka grocery-list je rezervirana za nakupovalne naloge.",
+  "taskLinkFailed": "Povezovanje naloge ni uspelo: {error}",
+  "linkDeleteFailed": "Brisanje povezave ni uspelo: {error}",
+  "externalLinkFailed": "Zunanja povezava ni uspela: {error}",
+  "externalLinkDeleteFailed": "Brisanje zunanje povezave ni uspelo: {error}",
+  "taskStatusUpdateFailed": "Posodobitev statusa ni uspela: {error}",
+  "serverRejectedTaskStatusUpdate": "Strežnik je zavrnil posodobitev statusa naloge.",
+  "taskNumber": "Naloga #{id}",
+  "taskMarkedDone": "Naloga je označena kot končana.",
+  "taskReopened": "Naloga je ponovno odprta.",
+  "open": "Odprto",
+  "reopenTask": "Ponovno odpri nalogo",
+  "markAsDone": "Označi kot končano",
+  "editTask2": "Uredi nalogo",
+  "createTask": "Ustvari nalogo",
+  "editGroceryList": "Uredi nakupovalni seznam",
+  "createGroceryList": "Ustvari nakupovalni seznam",
+  "groceryListTitle": "Naslov nakupovalnega seznama",
+  "noGroceryItemsYet": "Postavk še ni.",
+  "addItemsNowTheyWillBeCreatedWhenYouSave": "Dodajte postavke zdaj. Ustvarjene bodo ob shranjevanju.",
+  "titleIsRequired": "Naslov je obvezen.",
+  "scoreMustBeAnInteger": "Ocena mora biti celo število.",
+  "serverRejectedAttachmentName": "Strežnik je zavrnil priponko \"{name}\".",
+  "amountMustBeAValidNumber": "Znesek mora biti veljavno število.",
+  "taskWasNotCreated": "Naloga ni bila ustvarjena.",
+  "enterATitleBeforeOpeningAdditionalDetails": "Pred odpiranjem dodatnih podrobnosti vnesite naslov.",
+  "taskMustBeSavedFirst": "Nalogo je treba najprej shraniti.",
+  "saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks": "Najprej shranite nalogo, da boste lahko upravljali priponke, komentarje, podnaloge, oznake in povezave.",
+  "externalLinkTitleAndURLAreRequired": "Naslov in URL zunanje povezave sta obvezna.",
+  "enterAValidLinkedTaskID": "Vnesite veljaven ID povezane naloge.",
+  "invalidURL": "Neveljaven URL.",
+  "couldNotOpenURLCopiedToClipboard": "URL-ja ni bilo mogoče odpreti. Kopirano v odložišče.",
+  "attachmentsCommentsSubtasksTagsAndLinks": "Priponke, komentarji, podnaloge, oznake in povezave",
+  "tapToExpandAdvancedTaskDetails": "Tapnite za prikaz dodatnih podrobnosti naloge",
+  "advancedSectionsAreHidden": "Napredni razdelki so skriti.",
+  "forNewTasksTheAppSavesFirstThenOpensAdvancedSections": "Pri novih nalogah aplikacija najprej shrani, nato odpre napredne razdelke.",
+  "internalLinkTypesUnavailableForThisUserProject": "Notranji tipi povezav niso na voljo za tega uporabnika/projekt.",
+  "noPermissionForInternalTaskLinksGetAllLinks": "Ni dovoljenja za notranje povezave nalog (`getAllLinks`).",
+  "linkedTo": "povezano z",
+  "userNumber": "Uporabnik #{id}",
+  "estHSpentH": "Ocena {est}h · Porabljeno {spent}h",
+  "eG1250": "npr. 12,50",
+  "macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement": "Manjka macOS dovoljenje za dostop do datotek. Po omogočitvi dovoljenja za branje uporabniško izbranih datotek ponovno zgradite aplikacijo.",
+  "tasks2": "Naloge: {count}",
+  "columns2": "Stolpci: {count}",
+  "noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns": "Za to stezo ni nastavljenih stolpcev. Za dodajanje stolpcev uporabite Strukturo.",
+  "taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves": "Vlečenje nalog je odklenjeno. Med drsenjem premikajte naloge previdno ali tapnite zaklep, da preprečite nenamerne premike.",
+  "taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks": "Vlečenje nalog je zaklenjeno, da lahko varno drsite. Ko želite premikati naloge, zgoraj tapnite odklep.",
+  "dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax": "Povlecite in spustite naloge med stezami in stolpci. Za napredno sintakso uporabite Iskanje.",
+  "currencyMustBeA3LetterCode": "Valuta mora biti 3-črkovna koda.",
+  "budgetMustBeAPositiveNumber": "Proračun mora biti pozitivno število.",
+  "useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow": "Uporabite sintakso poizvedb Kanboard. Primer: `status:open assignee:me due:tomorrow`",
+  "enterASearchQuery": "Vnesite iskalno poizvedbo.",
+  "boardStructure2": "Struktura table · {name}",
+  "dragRowsToReorderChangesAreSavedImmediately": "Vlecite vrstice za spremembo vrstnega reda. Spremembe se shranijo takoj.",
+  "noColumnsYetAddOne": "Stolpcev še ni. Dodajte prvega.",
+  "noSwimlanesYetAddOne": "Stez še ni. Dodajte prvo.",
+  "positionLimit": "Položaj {position} · Omejitev {limit}",
+  "position": "Položaj {position}",
+  "horizontalStructureOfTheBoard": "Vodoravna struktura table",
+  "verticalWorkGrouping": "Navpično razvrščanje dela",
+  "@thisWillRemovePermanently": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@attachments": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@connectedViaJsonrpcTokenAuthServerVersion": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "@connectedAsVersion": {
+    "placeholders": {
+      "username": {},
+      "version": {}
+    }
+  },
+  "@connectedSuccessfullyButServerVersionIsTarget1250": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "@connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@invalidTransferCode": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@statusUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@moveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deleteColumn2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@deleteSwimlane2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@structure2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@expenseSettingsFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deletePermanently": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@columnSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@columnDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@swimlaneSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@swimlaneDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectCreatedButDefaultsFailedToApply": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@uploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@downloadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@filePickerFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentPickerFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentUploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskCreateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@tagUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskLinkFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@linkDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@externalLinkFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@externalLinkDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskStatusUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskNumber": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@userNumber": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@estHSpentH": {
+    "placeholders": {
+      "est": {},
+      "spent": {}
+    }
+  },
+  "@tasks2": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@columns2": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@boardStructure2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@positionLimit": {
+    "placeholders": {
+      "position": {},
+      "limit": {}
+    }
+  },
+  "@position": {
+    "placeholders": {
+      "position": {}
+    }
+  }
+}

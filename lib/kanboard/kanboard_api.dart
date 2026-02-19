@@ -6,6 +6,8 @@ class KanboardApi {
 
   final JsonRpcClient _client;
   static const String projectColorMetadataKey = 'ui_project_color';
+  static const String expenseCurrencyMetadataKey = 'ui_expense_currency';
+  static const String expenseBudgetCentsMetadataKey = 'ui_expense_budget_cents';
 
   factory KanboardApi.fromCredentials(KanboardCredentials credentials) {
     return KanboardApi(
@@ -147,6 +149,67 @@ class KanboardApi {
       projectId: projectId,
       values: <String, String>{projectColorMetadataKey: normalized},
     );
+  }
+
+  Future<String?> getProjectExpenseCurrency(int projectId) async {
+    final raw = await getProjectMetadataByName(
+      projectId: projectId,
+      name: expenseCurrencyMetadataKey,
+    );
+    return _normalizeCurrency(raw);
+  }
+
+  Future<int?> getProjectExpenseBudgetCents(int projectId) async {
+    final raw = await getProjectMetadataByName(
+      projectId: projectId,
+      name: expenseBudgetCentsMetadataKey,
+    );
+    if (raw == null) return null;
+    final parsed = int.tryParse(raw.trim());
+    if (parsed == null || parsed < 0) return null;
+    return parsed;
+  }
+
+  Future<bool> saveProjectExpenseSettings({
+    required int projectId,
+    required String currency,
+    int? budgetCents,
+  }) async {
+    final normalizedCurrency = _normalizeCurrency(currency);
+    if (normalizedCurrency == null) {
+      throw ArgumentError.value(
+        currency,
+        'currency',
+        'Currency must be a 3-letter code.',
+      );
+    }
+
+    final values = <String, String>{
+      expenseCurrencyMetadataKey: normalizedCurrency,
+    };
+    if (budgetCents != null) {
+      if (budgetCents < 0) {
+        throw ArgumentError.value(
+          budgetCents,
+          'budgetCents',
+          'Budget cannot be negative.',
+        );
+      }
+      values[expenseBudgetCentsMetadataKey] = '$budgetCents';
+    }
+
+    final saved = await saveProjectMetadata(
+      projectId: projectId,
+      values: values,
+    );
+    if (!saved) return false;
+    if (budgetCents == null) {
+      await removeProjectMetadata(
+        projectId: projectId,
+        name: expenseBudgetCentsMetadataKey,
+      );
+    }
+    return true;
   }
 
   Future<KanboardBoard> getBoard(int projectId) async {
@@ -617,21 +680,35 @@ class KanboardApi {
 
   Future<bool> updateSubtask({
     required int id,
+    int? taskId,
     String? title,
     int? userId,
     int? status,
     double? timeEstimated,
     double? timeSpent,
   }) async {
-    final result = await _client.call('updateSubtask', <String, dynamic>{
+    final payload = <String, dynamic>{
       'id': id,
+      if (taskId != null && taskId > 0) 'task_id': taskId,
       if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
       if (userId != null) 'user_id': userId,
       if (status != null) 'status': status,
       if (timeEstimated != null) 'time_estimated': timeEstimated,
       if (timeSpent != null) 'time_spent': timeSpent,
-    });
-    return result == true;
+    };
+    try {
+      final result = await _client.call('updateSubtask', payload);
+      return result == true;
+    } on JsonRpcException catch (error) {
+      final missingTaskId = error.code == -32602 &&
+          error.message.toLowerCase().contains('missing argument: task_id');
+      if (!missingTaskId || taskId == null || taskId <= 0) rethrow;
+      final retry = await _client.call('updateSubtask', <String, dynamic>{
+        ...payload,
+        'task_id': taskId,
+      });
+      return retry == true;
+    }
   }
 
   Future<bool> removeSubtask(int subtaskId) async {
@@ -667,9 +744,14 @@ class KanboardApi {
   }
 
   Future<List<String>> getTaskTags(int taskId) async {
-    final result = await _client.call('getTaskTags', <String, dynamic>{
-      'task_id': taskId,
-    });
+    dynamic result;
+    try {
+      result = await _client.call('getTaskTags', <String, dynamic>{
+        'task_id': taskId,
+      });
+    } on JsonRpcException {
+      result = await _client.call('getTaskTags', <dynamic>[taskId]);
+    }
     if (result is List<dynamic>) {
       return result
           .map((e) => e.toString().trim())
@@ -692,12 +774,84 @@ class KanboardApi {
     final cleanTags = tags
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
+        .toSet()
         .toList();
-    final result = await _client.call('setTaskTags', <String, dynamic>{
-      'task_id': taskId,
-      'tags': cleanTags,
-    });
-    return result == true;
+    final payloadVariants = <Object>[
+      <String, dynamic>{'task_id': taskId, 'tags': cleanTags},
+      <dynamic>[taskId, cleanTags],
+      <String, dynamic>{'task_id': taskId, 'tags': cleanTags.join(',')},
+      <dynamic>[taskId, cleanTags.join(',')],
+    ];
+
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('setTaskTags', params);
+        return result == true;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+
+    // Some Kanboard versions reject setTaskTags and only allow per-tag methods.
+    try {
+      final currentTags = (await getTaskTags(taskId)).toSet();
+      final nextTags = cleanTags.toSet();
+      final toAdd = nextTags.difference(currentTags);
+      final toRemove = currentTags.difference(nextTags);
+
+      for (final tag in toAdd) {
+        await _createTaskTag(taskId: taskId, tag: tag);
+      }
+      for (final tag in toRemove) {
+        await _removeTaskTag(taskId: taskId, tag: tag);
+      }
+      return true;
+    } on JsonRpcException catch (error) {
+      lastError = error;
+    }
+
+    throw lastError;
+  }
+
+  Future<void> _createTaskTag({
+    required int taskId,
+    required String tag,
+  }) async {
+    final payloadVariants = <Object>[
+      <String, dynamic>{'task_id': taskId, 'tag': tag},
+      <dynamic>[taskId, tag],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        await _client.call('createTaskTag', params);
+        return;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
+  }
+
+  Future<void> _removeTaskTag({
+    required int taskId,
+    required String tag,
+  }) async {
+    final payloadVariants = <Object>[
+      <String, dynamic>{'task_id': taskId, 'tag': tag},
+      <dynamic>[taskId, tag],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        await _client.call('removeTaskTag', params);
+        return;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
   }
 
   Future<List<KanboardTaskLinkType>> getAllLinks() async {
@@ -866,5 +1020,12 @@ class KanboardApi {
     final valid = RegExp(r'^[0-9A-F]{6}$').hasMatch(hex);
     if (!valid) return null;
     return '#$hex';
+  }
+
+  String? _normalizeCurrency(String? value) {
+    if (value == null) return null;
+    final text = value.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{3}$').hasMatch(text)) return null;
+    return text;
   }
 }

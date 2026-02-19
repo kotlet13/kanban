@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/l10n.dart';
 import '../../state/providers.dart';
 
 class LaunchPage extends ConsumerStatefulWidget {
@@ -40,6 +41,7 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
       body: DecoratedBox(
         decoration: BoxDecoration(
@@ -78,14 +80,14 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'Kanboard Workspace',
+                      l10n.kanboardWorkspace,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Restoring session...',
+                      l10n.restoringSession,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
@@ -72,7 +73,9 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: Text(column == null ? 'Add column' : 'Edit column'),
+        title: Text(
+          column == null ? context.l10n.addColumn : context.l10n.editColumn,
+        ),
         content: SizedBox(
           width: 520,
           child: Column(
@@ -80,12 +83,12 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
             children: <Widget>[
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration: InputDecoration(labelText: context.l10n.title),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: limitController,
-                decoration: const InputDecoration(labelText: 'Task limit'),
+                decoration: InputDecoration(labelText: context.l10n.taskLimit),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -94,11 +97,11 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -126,9 +129,9 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Column save failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.columnSaveFailed(error))),
+      );
     }
   }
 
@@ -139,16 +142,16 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: const Text('Delete column?'),
-        content: Text('Delete column "${column.title}"?'),
+        title: Text(context.l10n.deleteColumn),
+        content: Text(context.l10n.deleteColumn2(column.title)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -160,9 +163,9 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Column deletion failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.columnDeletionFailed(error))),
+      );
     }
   }
 
@@ -174,22 +177,26 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: Text(swimlane == null ? 'Add swimlane' : 'Edit swimlane'),
+        title: Text(
+          swimlane == null
+              ? context.l10n.addSwimlane
+              : context.l10n.editSwimlane,
+        ),
         content: SizedBox(
           width: 520,
           child: TextField(
             controller: nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: InputDecoration(labelText: context.l10n.name),
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -212,9 +219,9 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       await _load();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Swimlane save failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.swimlaneSaveFailed(error))),
+      );
     }
   }
 
@@ -225,16 +232,16 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: const Text('Delete swimlane?'),
-        content: Text('Delete swimlane "${swimlane.name}"?'),
+        title: Text(context.l10n.deleteSwimlane),
+        content: Text(context.l10n.deleteSwimlane2(swimlane.name)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -250,7 +257,7 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Swimlane deletion failed: $error')),
+        SnackBar(content: Text(context.l10n.swimlaneDeletionFailed(error))),
       );
     }
   }
@@ -349,14 +356,14 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              '${widget.projectName} Board Structure',
+              context.l10n.boardStructure2(widget.projectName),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Drag rows to reorder. Changes are saved immediately.',
+              context.l10n.dragRowsToReorderChangesAreSavedImmediately,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -368,12 +375,12 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
               children: <Widget>[
                 _statChip(
                   icon: Icons.view_column_outlined,
-                  label: 'Columns',
+                  label: context.l10n.columns,
                   value: '${_columns.length}',
                 ),
                 _statChip(
                   icon: Icons.horizontal_split,
-                  label: 'Swimlanes',
+                  label: context.l10n.swimlanes,
                   value: '${_swimlanes.length}',
                 ),
               ],
@@ -430,7 +437,7 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
                 FilledButton.tonalIcon(
                   onPressed: onAdd,
                   icon: const Icon(Icons.add),
-                  label: const Text('Add'),
+                  label: Text(context.l10n.add),
                 ),
               ],
             ),
@@ -525,12 +532,12 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
             ),
           ),
           IconButton(
-            tooltip: 'Edit',
+            tooltip: context.l10n.edit,
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
-            tooltip: 'Delete',
+            tooltip: context.l10n.delete,
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -541,7 +548,9 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
   }
 
   Widget _columnsList() {
-    if (_columns.isEmpty) return _emptyListState('No columns yet. Add one.');
+    if (_columns.isEmpty) {
+      return _emptyListState(context.l10n.noColumnsYetAddOne);
+    }
     return ReorderableListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -554,7 +563,10 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
           key: ValueKey('column-${column.id}'),
           index: index,
           title: column.title,
-          subtitle: 'Position ${column.position} · Limit ${column.taskLimit}',
+          subtitle: context.l10n.positionLimit(
+            column.position,
+            column.taskLimit,
+          ),
           onEdit: () => _createOrEditColumn(column: column),
           onDelete: () => _deleteColumn(column),
           accent: Theme.of(context).colorScheme.primary,
@@ -565,7 +577,7 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
 
   Widget _swimlanesList() {
     if (_swimlanes.isEmpty) {
-      return _emptyListState('No swimlanes yet. Add one.');
+      return _emptyListState(context.l10n.noSwimlanesYetAddOne);
     }
     return ReorderableListView.builder(
       shrinkWrap: true,
@@ -579,7 +591,7 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
           key: ValueKey('swimlane-${swimlane.id}'),
           index: index,
           title: swimlane.name,
-          subtitle: 'Position ${swimlane.position}',
+          subtitle: context.l10n.position(swimlane.position),
           onEdit: () => _createOrEditSwimlane(swimlane: swimlane),
           onDelete: () => _deleteSwimlane(swimlane),
           accent: Theme.of(context).colorScheme.tertiary,
@@ -594,15 +606,15 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.projectName} structure'),
+        title: Text(context.l10n.structure2(widget.projectName)),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Projects',
+            tooltip: context.l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.refresh,
             onPressed: _isLoading ? null : _load,
             icon: const Icon(Icons.refresh),
           ),
@@ -653,8 +665,8 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
                       Expanded(
                         child: _panel(
                           icon: Icons.view_column_outlined,
-                          title: 'Columns',
-                          subtitle: 'Horizontal structure of the board',
+                          title: context.l10n.columns,
+                          subtitle: context.l10n.horizontalStructureOfTheBoard,
                           onAdd: _createOrEditColumn,
                           child: _columnsList(),
                         ),
@@ -663,8 +675,8 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
                       Expanded(
                         child: _panel(
                           icon: Icons.horizontal_split,
-                          title: 'Swimlanes',
-                          subtitle: 'Vertical work grouping',
+                          title: context.l10n.swimlanes,
+                          subtitle: context.l10n.verticalWorkGrouping,
                           onAdd: _createOrEditSwimlane,
                           child: _swimlanesList(),
                         ),
@@ -674,16 +686,16 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
                 else ...<Widget>[
                   _panel(
                     icon: Icons.view_column_outlined,
-                    title: 'Columns',
-                    subtitle: 'Horizontal structure of the board',
+                    title: context.l10n.columns,
+                    subtitle: context.l10n.horizontalStructureOfTheBoard,
                     onAdd: _createOrEditColumn,
                     child: _columnsList(),
                   ),
                   const SizedBox(height: 12),
                   _panel(
                     icon: Icons.horizontal_split,
-                    title: 'Swimlanes',
-                    subtitle: 'Vertical work grouping',
+                    title: context.l10n.swimlanes,
+                    subtitle: context.l10n.verticalWorkGrouping,
                     onAdd: _createOrEditSwimlane,
                     child: _swimlanesList(),
                   ),

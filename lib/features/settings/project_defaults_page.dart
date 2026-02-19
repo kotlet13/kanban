@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/l10n.dart';
 import '../../state/providers.dart';
 import '../../storage/project_defaults_store.dart';
 import '../../widgets/theme_mode_menu_button.dart';
@@ -17,6 +18,7 @@ class ProjectDefaultsPage extends ConsumerStatefulWidget {
 class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
   final _columnsController = TextEditingController();
   final _swimlaneController = TextEditingController();
+  final _currencyController = TextEditingController();
 
   bool _isLoading = false;
   bool _isSaving = false;
@@ -38,6 +40,7 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
       final defaults = await store.read();
       _columnsController.text = defaults.columnNames.join('\n');
       _swimlaneController.text = defaults.defaultSwimlaneName ?? '';
+      _currencyController.text = defaults.defaultCurrencyCode ?? '';
     } catch (error) {
       _error = '$error';
     } finally {
@@ -63,6 +66,12 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
     return columns;
   }
 
+  Future<void> _setAppLocale(String value) async {
+    final locale = value == 'system' ? null : Locale(value);
+    ref.read(appLocaleProvider.notifier).state = locale;
+    await ref.read(localeStoreProvider).save(locale);
+  }
+
   Future<void> _save() async {
     final store = ref.read(projectDefaultsStoreProvider);
     setState(() {
@@ -72,17 +81,44 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
     try {
       final columns = _parseColumns(_columnsController.text);
       final swimlane = _swimlaneController.text.trim();
+      final currency = _currencyController.text.trim().toUpperCase();
+      if (currency.isNotEmpty && !RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
+        setState(() {
+          _error = 'Default currency must be a 3-letter code (e.g. USD).';
+        });
+        return;
+      }
       await store.save(
         ProjectDefaults(
           columnNames: columns,
           defaultSwimlaneName: swimlane.isEmpty ? null : swimlane,
+          defaultCurrencyCode: currency.isEmpty ? null : currency,
         ),
       );
+      if (currency.isNotEmpty) {
+        final api = ref.read(kanboardApiProvider);
+        if (api != null) {
+          final projects = await api.getMyProjects();
+          for (final project in projects) {
+            await api.saveProjectExpenseSettings(
+              projectId: project.id,
+              currency: currency,
+              budgetCents: await api.getProjectExpenseBudgetCents(project.id),
+            );
+          }
+        }
+      }
       ref.invalidate(projectDefaultsProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Project defaults saved.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            currency.isEmpty
+                ? 'Project defaults saved.'
+                : 'Project defaults saved. Currency applied to all projects.',
+          ),
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -101,18 +137,20 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset defaults?'),
-        content: const Text(
-          'This clears custom defaults and uses Kanboard server defaults for new projects.',
+        title: Text(context.l10n.resetDefaults),
+        content: Text(
+          context
+              .l10n
+              .thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects,
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Reset'),
+            child: Text(context.l10n.reset),
           ),
         ],
       ),
@@ -125,26 +163,30 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
     if (!mounted) return;
     _columnsController.clear();
     _swimlaneController.clear();
+    _currencyController.clear();
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Project defaults reset.')));
+    ).showSnackBar(SnackBar(content: Text(context.l10n.projectDefaultsReset)));
   }
 
   @override
   void dispose() {
     _columnsController.dispose();
     _swimlaneController.dispose();
+    _currencyController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final appLocale = ref.watch(appLocaleProvider);
+    final localeValue = appLocale?.languageCode ?? 'system';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Project Defaults'),
+        title: Text(context.l10n.projectDefaults2),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Projects',
+            tooltip: context.l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
@@ -166,13 +208,68 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Template applied to every new project created from this app.',
+                          context
+                              .l10n
+                              .templateAppliedToEveryNewProjectCreatedFromThisApp,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Leave fields empty to keep server defaults.',
+                          context.l10n.leaveFieldsEmptyToKeepServerDefaults,
                           style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          context
+                              .l10n
+                              .savingADefaultCurrencyAlsoAppliesItToAllExistingProjects,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          context.l10n.appLanguage,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          context.l10n.followSystemKeepsLocaleAutomatic,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          key: ValueKey<String>(localeValue),
+                          initialValue: localeValue,
+                          decoration: InputDecoration(
+                            labelText: context.l10n.language,
+                          ),
+                          items: <DropdownMenuItem<String>>[
+                            DropdownMenuItem<String>(
+                              value: 'system',
+                              child: Text(context.l10n.followSystemDefault),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'en',
+                              child: Text(context.l10n.english),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'sl',
+                              child: Text(context.l10n.slovene),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            _setAppLocale(value);
+                          },
                         ),
                       ],
                     ),
@@ -198,18 +295,28 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
                   controller: _columnsController,
                   minLines: 5,
                   maxLines: 10,
-                  decoration: const InputDecoration(
-                    labelText: 'Default Board Columns',
-                    hintText:
-                        'One per line, e.g.\nBacklog\nReady\nIn Progress\nDone',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.defaultBoardColumns,
+                    hintText: context.l10n.defaultBoardColumnsHint,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _swimlaneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Default Swimlane',
-                    hintText: 'Example: Main',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.defaultSwimlane,
+                    hintText: context.l10n.exampleMain,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _currencyController,
+                  textCapitalization: TextCapitalization.characters,
+                  maxLength: 3,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.defaultExpenseCurrency,
+                    hintText: context.l10n.exampleUSD,
+                    counterText: '',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -220,14 +327,14 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
                     OutlinedButton.icon(
                       onPressed: _isSaving ? null : _reset,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Reset'),
+                      label: Text(context.l10n.reset),
                     ),
                     FilledButton.icon(
                       onPressed: _isSaving ? null : _save,
                       icon: const Icon(Icons.save),
                       label: _isSaving
-                          ? const Text('Saving...')
-                          : const Text('Save defaults'),
+                          ? Text(context.l10n.saving)
+                          : Text(context.l10n.saveDefaults),
                     ),
                   ],
                 ),

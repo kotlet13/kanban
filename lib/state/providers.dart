@@ -5,6 +5,7 @@ import '../kanboard/kanboard_api.dart';
 import '../models/kanboard_models.dart';
 import '../storage/cache_store.dart';
 import '../storage/credentials_store.dart';
+import '../storage/locale_store.dart';
 import '../storage/project_defaults_store.dart';
 
 final credentialsStoreProvider = Provider<CredentialsStore>(
@@ -38,3 +39,7 @@ final projectDefaultsProvider = FutureProvider<ProjectDefaults>((ref) async {
 });
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+
+final localeStoreProvider = Provider<LocaleStore>((ref) => const LocaleStore());
+
+final appLocaleProvider = StateProvider<Locale?>((ref) => null);

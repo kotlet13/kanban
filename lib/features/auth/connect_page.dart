@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../kanboard/kanboard_api.dart';
+import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
@@ -41,7 +41,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       _urlController.text = saved.serverUrl;
       _usernameController.text = saved.username;
       _tokenController.text = saved.token;
-      _status = 'Loaded saved credentials.';
+      _status = context.l10n.loadedSavedCredentials;
     });
   }
 
@@ -102,39 +102,21 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       if (!mounted) return;
       setState(() {
         _status = _usedJsonRpcFallback
-            ? 'Connected via jsonrpc token auth. Server version: $version'
-            : 'Connected as ${me.username}. Version: $version';
+            ? context.l10n.connectedViaJsonrpcTokenAuthServerVersion(version)
+            : context.l10n.connectedAsVersion(me.username, version);
       });
 
       if (version != '1.2.50') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Connected successfully, but server version is $version (target: 1.2.50).',
+              context.l10n.connectedSuccessfullyButServerVersionIsTarget1250(
+                version,
+              ),
             ),
           ),
         );
       }
-
-      if (_usedJsonRpcFallback) {
-        _usernameController.text = 'jsonrpc';
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Connected only after switching to username "jsonrpc". Your token appears to be an application API token.',
-            ),
-          ),
-        );
-      }
-
-      context.go('/projects');
-    } catch (error) {
-      debugPrint('[Connect] Final connection failure: $error');
-      if (!mounted) return;
-      setState(() {
-        _status =
-            'Connection failed: $error\nTip: if you copied "API User Access", try username "jsonrpc" with that token.';
-      });
     } finally {
       if (mounted) {
         setState(() {
@@ -142,13 +124,6 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         });
       }
     }
-  }
-
-  bool get _supportsQrScan {
-    return switch (Theme.of(context).platform) {
-      TargetPlatform.android || TargetPlatform.iOS => true,
-      _ => false,
-    };
   }
 
   KanboardCredentials? _credentialsFromForm() {
@@ -171,9 +146,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
     if (credentials == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Nothing to export yet. Connect once or fill all fields first.',
+            context.l10n.nothingToExportYetConnectOnceOrFillAllFieldsFirst,
           ),
         ),
       );
@@ -189,7 +164,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       builder: (context) {
         final maxDialogHeight = MediaQuery.sizeOf(context).height * 0.72;
         return AlertDialog(
-          title: const Text('Transfer credentials'),
+          title: Text(context.l10n.transferCredentials),
           content: SizedBox(
             width: 340,
             child: ConstrainedBox(
@@ -199,8 +174,8 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
-                      'Scan this code with your phone in the Connect screen.',
+                    Text(
+                      context.l10n.scanThisCodeWithYourPhoneInTheConnectScreen,
                     ),
                     const SizedBox(height: 12),
                     Center(
@@ -226,7 +201,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                             ),
                           );
                         },
-                        semanticsLabel: 'Credentials transfer QR',
+                        semanticsLabel: context.l10n.credentialsTransferQR,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -238,15 +213,17 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'If QR rendering fails, copy/paste the transfer code.',
-                      style: TextStyle(fontSize: 12),
+                    Text(
+                      context.l10n.ifQRRenderingFailsCopyPasteTheTransferCode,
+                      style: const TextStyle(fontSize: 12),
                     ),
                     const SizedBox(height: 4),
                     const Divider(),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Security note: this QR contains your API token in plain text.',
+                    Text(
+                      context
+                          .l10n
+                          .securityNoteThisQRContainsYourAPITokenInPlainText,
                     ),
                   ],
                 ),
@@ -259,14 +236,14 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                 await Clipboard.setData(ClipboardData(text: payload));
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transfer code copied.')),
+                  SnackBar(content: Text(context.l10n.transferCodeCopied)),
                 );
               },
-              child: const Text('Copy code'),
+              child: Text(context.l10n.copyCode),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Done'),
+              child: Text(context.l10n.done),
             ),
           ],
         );
@@ -282,16 +259,16 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         _urlController.text = credentials.serverUrl;
         _usernameController.text = credentials.username;
         _tokenController.text = credentials.token;
-        _status = 'Imported credentials from transfer code.';
+        _status = context.l10n.importedCredentialsFromTransferCode;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Credentials imported. Tap Connect.')),
+        SnackBar(content: Text(context.l10n.credentialsImportedTapConnect)),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Invalid transfer code: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.invalidTransferCode(error))),
+      );
     }
   }
 
@@ -302,33 +279,10 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Clipboard is empty.')));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.clipboardIsEmpty)));
       return;
     }
     await _applyTransferPayload(value);
-  }
-
-  Future<void> _scanQrAndImport() async {
-    if (!_supportsQrScan) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'QR scanning is available on iOS/Android. Use "Paste transfer code" here.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    final scannedPayload = await showDialog<String>(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => const _TransferQrScannerDialog(),
-    );
-
-    if (scannedPayload == null || scannedPayload.trim().isEmpty) return;
-    await _applyTransferPayload(scannedPayload);
   }
 
   @override
@@ -344,10 +298,10 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Connect to Kanboard'),
+        title: Text(context.l10n.connectToKanboard),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Projects',
+            tooltip: context.l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
@@ -412,7 +366,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                       ),
                                       const SizedBox(height: 10),
                                       Text(
-                                        'Connect Your Kanboard Instance',
+                                        context
+                                            .l10n
+                                            .connectYourKanboardInstance,
                                         style: theme.textTheme.titleLarge
                                             ?.copyWith(
                                               fontWeight: FontWeight.w800,
@@ -420,7 +376,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Use personal token + username, or use application token with username "jsonrpc".',
+                                        context
+                                            .l10n
+                                            .usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc,
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                               color: theme
@@ -457,7 +415,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                                 CrossAxisAlignment.start,
                                             children: <Widget>[
                                               Text(
-                                                'Connect Your Kanboard Instance',
+                                                context
+                                                    .l10n
+                                                    .connectYourKanboardInstance,
                                                 style: theme
                                                     .textTheme
                                                     .titleLarge
@@ -468,7 +428,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                'Use personal token + username, or use application token with username "jsonrpc".',
+                                                context
+                                                    .l10n
+                                                    .usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc,
                                                 style: theme
                                                     .textTheme
                                                     .bodyMedium
@@ -494,7 +456,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  'Credentials',
+                                  context.l10n.credentials,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -507,39 +469,36 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                     FilledButton.tonalIcon(
                                       onPressed: _showExportQr,
                                       icon: const Icon(Icons.qr_code_2_rounded),
-                                      label: const Text('Show transfer QR'),
-                                    ),
-                                    OutlinedButton.icon(
-                                      onPressed: _scanQrAndImport,
-                                      icon: const Icon(Icons.qr_code_scanner),
-                                      label: const Text('Scan transfer QR'),
+                                      label: Text(context.l10n.showTransferQR),
                                     ),
                                     OutlinedButton.icon(
                                       onPressed: _importFromClipboard,
                                       icon: const Icon(Icons.content_paste),
-                                      label: const Text('Paste transfer code'),
+                                      label: Text(
+                                        context.l10n.pasteTransferCode,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
                                 TextFormField(
                                   controller: _urlController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Server URL',
-                                    hintText: 'https://kanboard.example.com',
-                                    prefixIcon: Icon(Icons.link_rounded),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.serverURL,
+                                    hintText: context.l10n.serverURLExample,
+                                    prefixIcon: const Icon(Icons.link_rounded),
                                   ),
                                   keyboardType: TextInputType.url,
                                   validator: (value) {
                                     final text = value?.trim() ?? '';
                                     if (text.isEmpty) {
-                                      return 'Server URL is required.';
+                                      return context.l10n.serverURLIsRequired;
                                     }
                                     final uri = Uri.tryParse(text);
                                     if (uri == null ||
                                         !uri.hasScheme ||
                                         uri.host.isEmpty) {
-                                      return 'Enter a valid URL.';
+                                      return context.l10n.enterAValidURL;
                                     }
                                     return null;
                                   },
@@ -547,26 +506,30 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                 const SizedBox(height: 12),
                                 TextFormField(
                                   controller: _usernameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Username',
-                                    prefixIcon: Icon(Icons.person_outline),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.username,
+                                    prefixIcon: const Icon(
+                                      Icons.person_outline,
+                                    ),
                                   ),
                                   validator: (value) =>
                                       (value == null || value.trim().isEmpty)
-                                      ? 'Username is required.'
+                                      ? context.l10n.usernameIsRequired
                                       : null,
                                 ),
                                 const SizedBox(height: 12),
                                 TextFormField(
                                   controller: _tokenController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Personal access token',
-                                    prefixIcon: Icon(Icons.password_rounded),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.personalAccessToken,
+                                    prefixIcon: const Icon(
+                                      Icons.password_rounded,
+                                    ),
                                   ),
                                   obscureText: true,
                                   validator: (value) =>
                                       (value == null || value.trim().isEmpty)
-                                      ? 'Token is required.'
+                                      ? context.l10n.tokenIsRequired
                                       : null,
                                 ),
                                 const SizedBox(height: 14),
@@ -587,8 +550,8 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                               ),
                                             )
                                           : const Icon(Icons.login_rounded),
-                                      label: const Text(
-                                        'Test connection & continue',
+                                      label: Text(
+                                        context.l10n.testConnectionContinue,
                                       ),
                                     ),
                                     OutlinedButton.icon(
@@ -596,7 +559,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                           ? null
                                           : () => context.go('/projects'),
                                       icon: const Icon(Icons.folder_open),
-                                      label: const Text('Open projects'),
+                                      label: Text(context.l10n.openProjects),
                                     ),
                                   ],
                                 ),
@@ -624,7 +587,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Auth note: personal token usually uses your username; application token usually uses username "jsonrpc".',
+                                    context
+                                        .l10n
+                                        .authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -679,48 +644,6 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _TransferQrScannerDialog extends StatefulWidget {
-  const _TransferQrScannerDialog();
-
-  @override
-  State<_TransferQrScannerDialog> createState() =>
-      _TransferQrScannerDialogState();
-}
-
-class _TransferQrScannerDialogState extends State<_TransferQrScannerDialog> {
-  bool _didCapture = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Scan transfer QR'),
-      content: SizedBox(
-        width: 360,
-        height: 320,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: MobileScanner(
-            onDetect: (capture) {
-              if (_didCapture) return;
-              if (capture.barcodes.isEmpty) return;
-              final value = capture.barcodes.first.rawValue;
-              if (value == null || value.trim().isEmpty) return;
-              _didCapture = true;
-              Navigator.of(context).pop(value);
-            },
-          ),
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-      ],
     );
   }
 }

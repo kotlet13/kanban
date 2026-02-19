@@ -1,0 +1,549 @@
+{
+  "@@locale": "en",
+  "kanbanConnect": "Kanban Connect",
+  "routeError": "Route error",
+  "unknownError": "Unknown error",
+  "kanboardWorkspace": "Kanboard Workspace",
+  "restoringSession": "Restoring session...",
+  "connectToKanboard": "Connect to Kanboard",
+  "projects": "Projects",
+  "projectDefaults": "Project defaults",
+  "connectionSettings": "Connection settings",
+  "refresh": "Refresh",
+  "logout": "Logout",
+  "newProject": "New project",
+  "couldNotLoadProjects": "Could not load projects",
+  "retry": "Retry",
+  "noActiveSession": "No active session",
+  "noActiveSessionConnectFirst": "No active session. Connect first.",
+  "connectToKanboardToContinue": "Connect to Kanboard to continue.",
+  "connect": "Connect",
+  "projectsWorkspace": "Projects Workspace",
+  "trackOrganizeAndOpenYourKanboardProjects": "Track, organize, and open your Kanboard projects.",
+  "connectYourKanboardAccountToLoadProjectData": "Connect your Kanboard account to load project data.",
+  "total": "Total",
+  "active": "Active",
+  "inactive": "Inactive",
+  "noProjectsYet": "No projects yet",
+  "createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard": "Create your first project from the action button and start organizing your board.",
+  "openBoard": "Open board",
+  "projectAttachments": "Project attachments",
+  "deleteProject": "Delete project",
+  "noDescriptionYetOpenTheProjectToAddContext": "No description yet. Open the project to add context.",
+  "deleteProject2": "Delete project?",
+  "thisWillRemovePermanently": "This will remove \"{name}\" permanently.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "createProject": "Create project",
+  "editProject": "Edit project",
+  "projectName": "Project name",
+  "description": "Description",
+  "projectColorSyncedViaMetadata": "Project color (synced via metadata)",
+  "noColor": "No color",
+  "save": "Save",
+  "attachments": "Attachments · {name}",
+  "noProjectAttachmentsYet": "No project attachments yet.",
+  "download": "Download",
+  "addFiles": "Add files",
+  "close": "Close",
+  "projectDefaults2": "Project Defaults",
+  "appLanguage": "App language",
+  "followSystemKeepsLocaleAutomatic": "Follow system keeps locale automatic.",
+  "language": "Language",
+  "followSystemDefault": "Follow system (default)",
+  "english": "English",
+  "slovene": "Slovene",
+  "templateAppliedToEveryNewProjectCreatedFromThisApp": "Template applied to every new project created from this app.",
+  "leaveFieldsEmptyToKeepServerDefaults": "Leave fields empty to keep server defaults.",
+  "savingADefaultCurrencyAlsoAppliesItToAllExistingProjects": "Saving a default currency also applies it to all existing projects.",
+  "defaultBoardColumns": "Default Board Columns",
+  "defaultBoardColumnsHint": "One per line, e.g.\\nBacklog\\nReady\\nIn Progress\\nDone",
+  "defaultSwimlane": "Default Swimlane",
+  "exampleMain": "Example: Main",
+  "exampleUSD": "Example: USD",
+  "defaultExpenseCurrency": "Default Expense Currency",
+  "reset": "Reset",
+  "saving": "Saving...",
+  "saveDefaults": "Save defaults",
+  "projectDefaultsReset": "Project defaults reset.",
+  "resetDefaults": "Reset defaults?",
+  "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "This clears custom defaults and uses Kanboard server defaults for new projects.",
+  "connectYourKanboardInstance": "Connect Your Kanboard Instance",
+  "loadedSavedCredentials": "Loaded saved credentials.",
+  "connectedViaJsonrpcTokenAuthServerVersion": "Connected via jsonrpc token auth. Server version: {version}",
+  "connectedAsVersion": "Connected as {username}. Version: {version}",
+  "connectedSuccessfullyButServerVersionIsTarget1250": "Connected successfully, but server version is {version} (target: 1.2.50).",
+  "connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": "Connection failed: {error}\nTip: if you copied \"API User Access\", try username \"jsonrpc\" with that token.",
+  "usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc": "Use personal token + username, or use application token with username \"jsonrpc\".",
+  "nothingToExportYetConnectOnceOrFillAllFieldsFirst": "Nothing to export yet. Connect once or fill all fields first.",
+  "scanThisCodeWithYourPhoneInTheConnectScreen": "Scan this code with your phone in the Connect screen.",
+  "couldNotRenderQRError": "Could not render QR.\n$error",
+  "credentialsTransferQR": "Credentials transfer QR",
+  "ifQRRenderingFailsCopyPasteTheTransferCode": "If QR rendering fails, copy/paste the transfer code.",
+  "securityNoteThisQRContainsYourAPITokenInPlainText": "Security note: this QR contains your API token in plain text.",
+  "transferCodeCopied": "Transfer code copied.",
+  "importedCredentialsFromTransferCode": "Imported credentials from transfer code.",
+  "credentialsImportedTapConnect": "Credentials imported. Tap Connect.",
+  "clipboardIsEmpty": "Clipboard is empty.",
+  "invalidTransferCode": "Invalid transfer code: {error}",
+  "qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere": "QR scanning is available on iOS/Android. Use \"Paste transfer code\" here.",
+  "serverURLIsRequired": "Server URL is required.",
+  "enterAValidURL": "Enter a valid URL.",
+  "usernameIsRequired": "Username is required.",
+  "tokenIsRequired": "Token is required.",
+  "credentials": "Credentials",
+  "showTransferQR": "Show transfer QR",
+  "pasteTransferCode": "Paste transfer code",
+  "serverURL": "Server URL",
+  "serverURLExample": "https://kanboard.example.com",
+  "username": "Username",
+  "personalAccessToken": "Personal access token",
+  "testConnectionContinue": "Test connection & continue",
+  "openProjects": "Open projects",
+  "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".",
+  "scanTransferQR": "Scan transfer QR",
+  "transferCredentials": "Transfer credentials",
+  "copyCode": "Copy code",
+  "done": "Done",
+  "boardStructure": "Board structure",
+  "searchTasks": "Search tasks",
+  "newGroceryList": "New grocery list",
+  "refreshBoard": "Refresh board",
+  "lockTaskDrag": "Lock task drag",
+  "unlockTaskDrag": "Unlock task drag",
+  "newTask": "New task",
+  "groceryList": "Grocery list",
+  "expenses": "Expenses",
+  "search": "Search",
+  "structure": "Structure",
+  "swimlanes": "Swimlanes",
+  "columns": "Columns",
+  "tasks": "Tasks",
+  "planned": "Planned",
+  "spent": "Spent",
+  "remaining": "Remaining",
+  "noBudget": "No budget",
+  "dropATaskHere": "Drop a task here",
+  "unlockDragToMoveTasks": "Unlock drag to move tasks",
+  "edit": "Edit",
+  "markDone": "Mark done",
+  "reopen": "Reopen",
+  "taskSearch": "Task Search",
+  "deleteFailed": "Delete failed: {error}",
+  "statusUpdateFailed": "Status update failed: {error}",
+  "moveFailed": "Move failed: {error}",
+  "addColumn": "Add column",
+  "editColumn": "Edit column",
+  "deleteColumn": "Delete column?",
+  "deleteColumn2": "Delete column \"{name}\"?",
+  "taskLimit": "Task limit",
+  "addSwimlane": "Add swimlane",
+  "editSwimlane": "Edit swimlane",
+  "deleteSwimlane": "Delete swimlane?",
+  "deleteSwimlane2": "Delete swimlane \"{name}\"?",
+  "name": "Name",
+  "structure2": "{name} structure",
+  "query": "Query",
+  "queryExampleStatusOpenCategoryBug": "status:open category:bug",
+  "noResultsYet": "No results yet.",
+  "projectExpenses": "Project expenses",
+  "expenseSettingsSaved": "Expense settings saved.",
+  "expenseSettingsFailed": "Expense settings failed: {error}",
+  "deleteTask": "Delete task?",
+  "deletePermanently": "Delete \"{name}\" permanently?",
+  "currencyCode": "Currency code",
+  "budget": "Budget",
+  "leaveEmptyForNoBudget": "Leave empty for no budget",
+  "task": "Task",
+  "newLabel": "New",
+  "openStructure": "Open structure",
+  "noBoardDataYet": "No board data yet",
+  "pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes": "Pull to refresh or open structure to configure columns and swimlanes.",
+  "themeMode": "Theme mode",
+  "systemTheme": "System theme",
+  "lightTheme": "Light theme",
+  "darkTheme": "Dark theme",
+  "add": "Add",
+  "additionalDetails": "Additional details",
+  "attachments2": "Attachments",
+  "comments": "Comments",
+  "subtasks": "Subtasks",
+  "tags": "Tags",
+  "taskLinks": "Task Links",
+  "externalLinks": "External Links",
+  "link": "Link",
+  "linkTitle": "Link title",
+  "type": "Type",
+  "dependency": "Dependency",
+  "url": "URL",
+  "columnSaveFailed": "Column save failed: {error}",
+  "columnDeletionFailed": "Column deletion failed: {error}",
+  "swimlaneSaveFailed": "Swimlane save failed: {error}",
+  "swimlaneDeletionFailed": "Swimlane deletion failed: {error}",
+  "projectSaveFailed": "Project save failed: {error}",
+  "projectDeletionFailed": "Project deletion failed: {error}",
+  "apply": "Apply",
+  "post": "Post",
+  "noAttachmentsYet": "No attachments yet.",
+  "noCommentsYet": "No comments yet.",
+  "noSubtasksYet": "No subtasks yet.",
+  "noTagsAssigned": "No tags assigned.",
+  "noTaskLinks": "No task links.",
+  "noExternalLinks": "No external links.",
+  "newTask2": "New Task",
+  "editTask": "Edit Task",
+  "title": "Title",
+  "column": "Column",
+  "swimlane": "Swimlane",
+  "assignee": "Assignee",
+  "unassigned": "Unassigned",
+  "priority": "Priority",
+  "dueDate": "Due date",
+  "pickDateTime": "Pick date/time",
+  "expense": "Expense",
+  "score": "Score",
+  "pickDueDate": "Pick due date",
+  "clearDueDate": "Clear due date",
+  "newComment": "New comment",
+  "comment": "Comment",
+  "editComment": "Edit comment",
+  "editSubtask": "Edit subtask",
+  "estimateH": "Estimate (h)",
+  "spentH": "Spent (h)",
+  "newGroceryItem": "New grocery item",
+  "newSubtask": "New subtask",
+  "addTagsCommaSeparated": "Add tags (comma separated)",
+  "relation": "Relation",
+  "linkedTaskID": "Linked task ID",
+  "export": "Export",
+  "remove": "Remove",
+  "project": "Project",
+  "projectCreatedButDefaultsFailedToApply": "Project created, but defaults failed to apply: {error}",
+  "projectAttachmentsUploaded": "Project attachments uploaded.",
+  "uploadFailed": "Upload failed: {error}",
+  "attachmentContentMissing": "Attachment content missing.",
+  "downloadFailed": "Download failed: {error}",
+  "filePickerFailed": "File picker failed: {error}",
+  "attachmentPickerFailed": "Attachment picker failed: {error}",
+  "attachmentUploadComplete": "Attachment upload complete.",
+  "attachmentUploadFailed": "Attachment upload failed: {error}",
+  "attachmentHasNoDownloadableContent": "Attachment has no downloadable content.",
+  "attachmentExportFailed": "Attachment export failed: {error}",
+  "attachmentDeleteFailed": "Attachment delete failed: {error}",
+  "commentSaveFailed": "Comment save failed: {error}",
+  "commentUpdateFailed": "Comment update failed: {error}",
+  "commentDeleteFailed": "Comment delete failed: {error}",
+  "subtaskCreateFailed": "Subtask create failed: {error}",
+  "subtaskUpdateFailed": "Subtask update failed: {error}",
+  "subtaskDeleteFailed": "Subtask delete failed: {error}",
+  "tagUpdateFailed": "Tag update failed: {error}",
+  "theGroceryListTagIsReservedForGroceryTasks": "The grocery-list tag is reserved for grocery tasks.",
+  "taskLinkFailed": "Task link failed: {error}",
+  "linkDeleteFailed": "Link delete failed: {error}",
+  "externalLinkFailed": "External link failed: {error}",
+  "externalLinkDeleteFailed": "External link delete failed: {error}",
+  "taskStatusUpdateFailed": "Task status update failed: {error}",
+  "serverRejectedTaskStatusUpdate": "Server rejected task status update.",
+  "taskNumber": "Task #{id}",
+  "taskMarkedDone": "Task marked done.",
+  "taskReopened": "Task reopened.",
+  "open": "Open",
+  "reopenTask": "Reopen task",
+  "markAsDone": "Mark as done",
+  "editTask2": "Edit task",
+  "createTask": "Create task",
+  "editGroceryList": "Edit grocery list",
+  "createGroceryList": "Create grocery list",
+  "groceryListTitle": "Grocery list title",
+  "noGroceryItemsYet": "No grocery items yet.",
+  "addItemsNowTheyWillBeCreatedWhenYouSave": "Add items now. They will be created when you save.",
+  "titleIsRequired": "Title is required.",
+  "scoreMustBeAnInteger": "Score must be an integer.",
+  "serverRejectedAttachmentName": "Server rejected attachment \"{name}\".",
+  "amountMustBeAValidNumber": "Amount must be a valid number.",
+  "taskWasNotCreated": "Task was not created.",
+  "enterATitleBeforeOpeningAdditionalDetails": "Enter a title before opening additional details.",
+  "taskMustBeSavedFirst": "Task must be saved first.",
+  "saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks": "Save this task first to manage attachments, comments, subtasks, tags, and links.",
+  "externalLinkTitleAndURLAreRequired": "External link title and URL are required.",
+  "enterAValidLinkedTaskID": "Enter a valid linked task ID.",
+  "invalidURL": "Invalid URL.",
+  "couldNotOpenURLCopiedToClipboard": "Could not open URL. Copied to clipboard.",
+  "attachmentsCommentsSubtasksTagsAndLinks": "Attachments, comments, subtasks, tags and links",
+  "tapToExpandAdvancedTaskDetails": "Tap to expand advanced task details",
+  "advancedSectionsAreHidden": "Advanced sections are hidden.",
+  "forNewTasksTheAppSavesFirstThenOpensAdvancedSections": "For new tasks, the app saves first, then opens advanced sections.",
+  "internalLinkTypesUnavailableForThisUserProject": "Internal link types unavailable for this user/project.",
+  "noPermissionForInternalTaskLinksGetAllLinks": "No permission for internal task links (`getAllLinks`).",
+  "linkedTo": "linked to",
+  "userNumber": "User #{id}",
+  "estHSpentH": "Est {est}h · Spent {spent}h",
+  "eG1250": "e.g. 12.50",
+  "macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement": "macOS file access entitlement missing. Rebuild the app after enabling user-selected file read entitlement.",
+  "tasks2": "Tasks: {count}",
+  "columns2": "Columns: {count}",
+  "noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns": "No columns configured for this swimlane. Use Structure to add columns.",
+  "taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves": "Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.",
+  "taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks": "Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.",
+  "dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax": "Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.",
+  "currencyMustBeA3LetterCode": "Currency must be a 3-letter code.",
+  "budgetMustBeAPositiveNumber": "Budget must be a positive number.",
+  "useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow": "Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`",
+  "enterASearchQuery": "Enter a search query.",
+  "boardStructure2": "{name} Board Structure",
+  "dragRowsToReorderChangesAreSavedImmediately": "Drag rows to reorder. Changes are saved immediately.",
+  "noColumnsYetAddOne": "No columns yet. Add one.",
+  "noSwimlanesYetAddOne": "No swimlanes yet. Add one.",
+  "positionLimit": "Position {position} · Limit {limit}",
+  "position": "Position {position}",
+  "horizontalStructureOfTheBoard": "Horizontal structure of the board",
+  "verticalWorkGrouping": "Vertical work grouping",
+  "@thisWillRemovePermanently": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@attachments": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@connectedViaJsonrpcTokenAuthServerVersion": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "@connectedAsVersion": {
+    "placeholders": {
+      "username": {},
+      "version": {}
+    }
+  },
+  "@connectedSuccessfullyButServerVersionIsTarget1250": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "@connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@invalidTransferCode": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@statusUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@moveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deleteColumn2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@deleteSwimlane2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@structure2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@expenseSettingsFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@deletePermanently": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@columnSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@columnDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@swimlaneSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@swimlaneDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectDeletionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@projectCreatedButDefaultsFailedToApply": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@uploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@downloadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@filePickerFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentPickerFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentUploadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@attachmentDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentSaveFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@commentDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskCreateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@subtaskDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@tagUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskLinkFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@linkDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@externalLinkFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@externalLinkDeleteFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskStatusUpdateFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@taskNumber": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@userNumber": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@estHSpentH": {
+    "placeholders": {
+      "est": {},
+      "spent": {}
+    }
+  },
+  "@tasks2": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@columns2": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@boardStructure2": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@positionLimit": {
+    "placeholders": {
+      "position": {},
+      "limit": {}
+    }
+  },
+  "@position": {
+    "placeholders": {
+      "position": {}
+    }
+  }
+}

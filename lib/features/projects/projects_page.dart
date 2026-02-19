@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../kanboard/kanboard_api.dart';
+import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
@@ -50,7 +51,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     final api = ref.read(kanboardApiProvider);
     if (api == null) {
       setState(() {
-        _error = 'No active session. Connect first.';
+        _error = context.l10n.noActiveSessionConnectFirst;
       });
       return;
     }
@@ -107,7 +108,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       useRootNavigator: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: Text(project == null ? 'Create project' : 'Edit project'),
+          title: Text(
+            project == null
+                ? context.l10n.createProject
+                : context.l10n.editProject,
+          ),
           content: SizedBox(
             width: 520,
             child: SingleChildScrollView(
@@ -117,20 +122,22 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                 children: <Widget>[
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Project name',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.projectName,
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.description,
+                    ),
                     minLines: 2,
                     maxLines: 4,
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Project color (synced via metadata)',
+                    context.l10n.projectColorSyncedViaMetadata,
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
@@ -158,7 +165,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           });
                         },
                         icon: const Icon(Icons.clear),
-                        label: const Text('No color'),
+                        label: Text(context.l10n.noColor),
                       ),
                     ],
                   ),
@@ -169,11 +176,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Save'),
+              child: Text(context.l10n.save),
             ),
           ],
         ),
@@ -219,16 +226,18 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Project created, but defaults failed to apply: $defaultsError',
+              context.l10n.projectCreatedButDefaultsFailedToApply(
+                defaultsError,
+              ),
             ),
           ),
         );
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Project save failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.projectSaveFailed(error))),
+      );
     }
   }
 
@@ -304,16 +313,16 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       context: context,
       useRootNavigator: true,
       builder: (context) => AlertDialog(
-        title: const Text('Delete project?'),
-        content: Text('This will remove "${project.name}" permanently.'),
+        title: Text(context.l10n.deleteProject2),
+        content: Text(context.l10n.thisWillRemovePermanently(project.name)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -327,7 +336,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Project deletion failed: $error')),
+        SnackBar(content: Text(context.l10n.projectDeletionFailed(error))),
       );
     }
   }
@@ -359,20 +368,20 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Projects'),
+        title: Text(context.l10n.projects),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Project defaults',
+            tooltip: context.l10n.projectDefaults,
             onPressed: () => context.push('/settings/project-defaults'),
             icon: const Icon(Icons.tune),
           ),
           IconButton(
-            tooltip: 'Connection settings',
+            tooltip: context.l10n.connectionSettings,
             onPressed: () => context.push('/connect'),
             icon: const Icon(Icons.settings_ethernet),
           ),
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.refresh,
             onPressed: _isLoading
                 ? null
                 : () => _loadProjects(fromRefresh: true),
@@ -380,7 +389,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
           ),
           const ThemeModeMenuButton(),
           IconButton(
-            tooltip: 'Logout',
+            tooltip: context.l10n.logout,
             onPressed: _logout,
             icon: const Icon(Icons.logout),
           ),
@@ -389,7 +398,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: hasSession ? () => _createOrEditProject() : null,
         icon: const Icon(Icons.add),
-        label: const Text('New project'),
+        label: Text(context.l10n.newProject),
       ),
       body: RefreshIndicator(
         onRefresh: () => _loadProjects(fromRefresh: true),
@@ -433,7 +442,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                     sliver: SliverToBoxAdapter(
                       child: _statusCard(
                         icon: Icons.error_outline,
-                        title: 'Could not load projects',
+                        title: context.l10n.couldNotLoadProjects,
                         subtitle: _error!,
                         isError: true,
                         action: FilledButton.tonalIcon(
@@ -441,7 +450,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                               ? null
                               : () => _loadProjects(fromRefresh: true),
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
+                          label: Text(context.l10n.retry),
                         ),
                       ),
                     ),
@@ -452,12 +461,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                     sliver: SliverToBoxAdapter(
                       child: _statusCard(
                         icon: Icons.link_off,
-                        title: 'No active session',
-                        subtitle: 'Connect to Kanboard to continue.',
+                        title: context.l10n.noActiveSession,
+                        subtitle: context.l10n.connectToKanboardToContinue,
                         action: FilledButton.icon(
                           onPressed: () => context.push('/connect'),
                           icon: const Icon(Icons.settings_ethernet),
-                          label: const Text('Connect'),
+                          label: Text(context.l10n.connect),
                         ),
                       ),
                     ),
@@ -559,7 +568,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           icon: project.isActive
                               ? Icons.check_circle_outline
                               : Icons.pause_circle_outline,
-                          text: project.isActive ? 'Active' : 'Inactive',
+                          text: project.isActive
+                              ? context.l10n.active
+                              : context.l10n.inactive,
                           foreground: project.isActive
                               ? Colors.green.shade800
                               : theme.colorScheme.onSurfaceVariant,
@@ -604,7 +615,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
               Text(
                 hasDescription
                     ? project.description!.trim()
-                    : 'No description yet. Open the project to add context.',
+                    : context.l10n.noDescriptionYetOpenTheProjectToAddContext,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -622,21 +633,21 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                   FilledButton.tonalIcon(
                     onPressed: () => _openProjectBoard(project),
                     icon: const Icon(Icons.view_kanban_outlined, size: 18),
-                    label: const Text('Open board'),
+                    label: Text(context.l10n.openBoard),
                   ),
                   const SizedBox(width: 6),
                   IconButton(
-                    tooltip: 'Project attachments',
+                    tooltip: context.l10n.projectAttachments,
                     onPressed: () => _openProjectAttachments(project),
                     icon: const Icon(Icons.attach_file),
                   ),
                   IconButton(
-                    tooltip: 'Edit project',
+                    tooltip: context.l10n.editProject,
                     onPressed: () => _createOrEditProject(project: project),
                     icon: const Icon(Icons.edit_outlined),
                   ),
                   IconButton(
-                    tooltip: 'Delete project',
+                    tooltip: context.l10n.deleteProject,
                     onPressed: () => _deleteProject(project),
                     icon: const Icon(Icons.delete_outline),
                   ),
@@ -691,7 +702,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'Projects Workspace',
+                        context.l10n.projectsWorkspace,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -699,8 +710,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                       const SizedBox(height: 2),
                       Text(
                         hasSession
-                            ? 'Track, organize, and open your Kanboard projects.'
-                            : 'Connect your Kanboard account to load project data.',
+                            ? context
+                                  .l10n
+                                  .trackOrganizeAndOpenYourKanboardProjects
+                            : context
+                                  .l10n
+                                  .connectYourKanboardAccountToLoadProjectData,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -717,17 +732,17 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
               children: <Widget>[
                 _statsChip(
                   icon: Icons.folder_copy_outlined,
-                  label: 'Total',
+                  label: context.l10n.total,
                   value: '${_projects.length}',
                 ),
                 _statsChip(
                   icon: Icons.check_circle_outline,
-                  label: 'Active',
+                  label: context.l10n.active,
                   value: '$activeProjects',
                 ),
                 _statsChip(
                   icon: Icons.pause_circle_outline,
-                  label: 'Inactive',
+                  label: context.l10n.inactive,
                   value: '$archivedProjects',
                 ),
               ],
@@ -976,6 +991,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
   Future<void> _addFiles() async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
+    final l10n = context.l10n;
 
     FilePickerResult? picked;
     try {
@@ -989,13 +1005,13 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
           (error.message ?? '').contains('entitlement');
       _showSnack(
         missingEntitlement
-            ? 'macOS file access entitlement missing. Rebuild app after entitlement update.'
-            : 'File picker failed: $error',
+            ? l10n.macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement
+            : l10n.filePickerFailed(error),
         isError: true,
       );
       return;
     } catch (error) {
-      _showSnack('File picker failed: $error', isError: true);
+      _showSnack(l10n.filePickerFailed(error), isError: true);
       return;
     }
     if (picked == null || picked.files.isEmpty) return;
@@ -1012,9 +1028,9 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
         );
       }
       await _load();
-      _showSnack('Project attachments uploaded.');
+      _showSnack(l10n.projectAttachmentsUploaded);
     } catch (error) {
-      _showSnack('Upload failed: $error', isError: true);
+      _showSnack(l10n.uploadFailed(error), isError: true);
     } finally {
       if (mounted) {
         setState(() => _isWorking = false);
@@ -1025,10 +1041,11 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
   Future<void> _downloadFile(KanboardProjectFile file) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
+    final l10n = context.l10n;
     try {
       final encoded = await api.downloadProjectFile(file.id);
       if (encoded == null || encoded.isEmpty) {
-        _showSnack('Attachment content missing.', isError: true);
+        _showSnack(l10n.attachmentContentMissing, isError: true);
         return;
       }
       final bytes = base64Decode(encoded);
@@ -1039,18 +1056,19 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
         ),
       );
     } catch (error) {
-      _showSnack('Download failed: $error', isError: true);
+      _showSnack(l10n.downloadFailed(error), isError: true);
     }
   }
 
   Future<void> _removeFile(KanboardProjectFile file) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
+    final l10n = context.l10n;
     try {
       await api.removeProjectFile(file.id);
       await _load();
     } catch (error) {
-      _showSnack('Delete failed: $error', isError: true);
+      _showSnack(l10n.deleteFailed(error), isError: true);
     }
   }
 
@@ -1079,7 +1097,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Attachments · ${widget.project.name}'),
+      title: Text(context.l10n.attachments(widget.project.name)),
       content: SizedBox(
         width: 640,
         child: Column(
@@ -1097,9 +1115,9 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
               ),
             const SizedBox(height: 8),
             if (_files.isEmpty && !_isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Text('No project attachments yet.'),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(context.l10n.noProjectAttachmentsYet),
               ),
             if (_files.isNotEmpty)
               ConstrainedBox(
@@ -1119,12 +1137,12 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
                         spacing: 6,
                         children: <Widget>[
                           IconButton(
-                            tooltip: 'Download',
+                            tooltip: context.l10n.download,
                             onPressed: () => _downloadFile(file),
                             icon: const Icon(Icons.download_rounded),
                           ),
                           IconButton(
-                            tooltip: 'Delete',
+                            tooltip: context.l10n.delete,
                             onPressed: () => _removeFile(file),
                             icon: const Icon(Icons.delete_outline),
                           ),
@@ -1141,11 +1159,11 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
         OutlinedButton.icon(
           onPressed: _isWorking ? null : _addFiles,
           icon: const Icon(Icons.attach_file),
-          label: const Text('Add files'),
+          label: Text(context.l10n.addFiles),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(context.l10n.close),
         ),
       ],
     );
@@ -1178,14 +1196,16 @@ class _EmptyProjectsState extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'No projects yet',
+                context.l10n.noProjectsYet,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Create your first project from the action button and start organizing your board.',
+                context
+                    .l10n
+                    .createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

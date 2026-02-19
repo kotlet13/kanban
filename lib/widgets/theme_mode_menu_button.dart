@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/l10n.dart';
 import '../state/providers.dart';
 
 class ThemeModeMenuButton extends ConsumerWidget {
@@ -10,6 +11,7 @@ class ThemeModeMenuButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     IconData icon;
     switch (mode) {
       case ThemeMode.light:
@@ -24,7 +26,7 @@ class ThemeModeMenuButton extends ConsumerWidget {
     }
 
     return PopupMenuButton<ThemeMode>(
-      tooltip: 'Theme mode',
+      tooltip: l10n.themeMode,
       icon: Icon(icon, size: 20),
       style: IconButton.styleFrom(
         backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(
@@ -38,17 +40,17 @@ class ThemeModeMenuButton extends ConsumerWidget {
         CheckedPopupMenuItem<ThemeMode>(
           checked: mode == ThemeMode.system,
           value: ThemeMode.system,
-          child: Text('System theme'),
+          child: Text(l10n.systemTheme),
         ),
         CheckedPopupMenuItem<ThemeMode>(
           checked: mode == ThemeMode.light,
           value: ThemeMode.light,
-          child: Text('Light theme'),
+          child: Text(l10n.lightTheme),
         ),
         CheckedPopupMenuItem<ThemeMode>(
           checked: mode == ThemeMode.dark,
           value: ThemeMode.dark,
-          child: Text('Dark theme'),
+          child: Text(l10n.darkTheme),
         ),
       ],
     );

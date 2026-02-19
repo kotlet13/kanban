@@ -4,14 +4,17 @@ class ProjectDefaults {
   const ProjectDefaults({
     this.columnNames = const <String>[],
     this.defaultSwimlaneName,
+    this.defaultCurrencyCode,
   });
 
   final List<String> columnNames;
   final String? defaultSwimlaneName;
+  final String? defaultCurrencyCode;
 
   bool get hasAnyValue =>
       columnNames.isNotEmpty ||
-      (defaultSwimlaneName != null && defaultSwimlaneName!.isNotEmpty);
+      (defaultSwimlaneName != null && defaultSwimlaneName!.isNotEmpty) ||
+      (defaultCurrencyCode != null && defaultCurrencyCode!.isNotEmpty);
 }
 
 class ProjectDefaultsStore {
@@ -19,6 +22,7 @@ class ProjectDefaultsStore {
 
   static const _columnsKey = 'project_defaults_columns';
   static const _swimlaneKey = 'project_defaults_swimlane';
+  static const _currencyKey = 'project_defaults_currency';
 
   Future<ProjectDefaults> read() async {
     final prefs = await SharedPreferences.getInstance();
@@ -32,7 +36,14 @@ class ProjectDefaultsStore {
         ? null
         : swimlaneRaw.trim();
 
-    return ProjectDefaults(columnNames: columns, defaultSwimlaneName: swimlane);
+    final currencyRaw = prefs.getString(_currencyKey);
+    final currency = _normalizeCurrencyCode(currencyRaw);
+
+    return ProjectDefaults(
+      columnNames: columns,
+      defaultSwimlaneName: swimlane,
+      defaultCurrencyCode: currency,
+    );
   }
 
   Future<void> save(ProjectDefaults defaults) async {
@@ -51,11 +62,26 @@ class ProjectDefaultsStore {
     } else {
       await prefs.setString(_swimlaneKey, swimlane);
     }
+
+    final currency = _normalizeCurrencyCode(defaults.defaultCurrencyCode);
+    if (currency == null) {
+      await prefs.remove(_currencyKey);
+    } else {
+      await prefs.setString(_currencyKey, currency);
+    }
   }
 
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_columnsKey);
     await prefs.remove(_swimlaneKey);
+    await prefs.remove(_currencyKey);
+  }
+
+  String? _normalizeCurrencyCode(String? value) {
+    if (value == null) return null;
+    final normalized = value.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{3}$').hasMatch(normalized)) return null;
+    return normalized;
   }
 }

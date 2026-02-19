@@ -1,20 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_router.dart';
+import 'l10n/l10n.dart';
 import 'state/providers.dart';
 
-class KanbanApp extends ConsumerWidget {
+class KanbanApp extends ConsumerStatefulWidget {
   const KanbanApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KanbanApp> createState() => _KanbanAppState();
+}
+
+class _KanbanAppState extends ConsumerState<KanbanApp> {
+  bool _didLoadLocale = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedLocale());
+  }
+
+  Future<void> _loadSavedLocale() async {
+    if (_didLoadLocale) return;
+    _didLoadLocale = true;
+    final locale = await ref.read(localeStoreProvider).read();
+    if (!mounted) return;
+    ref.read(appLocaleProvider.notifier).state = locale;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final appLocale = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
-      title: 'Kanban Connect',
+      onGenerateTitle: (context) => context.l10n.kanbanConnect,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: appLocale,
       scrollBehavior: const _AppScrollBehavior(),
       themeMode: themeMode,
       theme: _buildTheme(Brightness.light),

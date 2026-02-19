@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'l10n/l10n.dart';
 import 'features/auth/connect_page.dart';
 import 'features/auth/launch_page.dart';
 import 'features/board/board_page.dart';
@@ -28,7 +29,7 @@ final appRouter = GoRouter(
         final projectId =
             int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
         final projectName =
-            state.uri.queryParameters['projectName'] ?? 'Project';
+            state.uri.queryParameters['projectName'] ?? context.l10n.project;
         final projectColorHex = state.uri.queryParameters['projectColor'];
         return BoardPage(
           projectId: projectId,
@@ -43,7 +44,8 @@ final appRouter = GoRouter(
             final projectId =
                 int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
             final projectName =
-                state.uri.queryParameters['projectName'] ?? 'Project';
+                state.uri.queryParameters['projectName'] ??
+                context.l10n.project;
             return BoardStructurePage(
               projectId: projectId,
               projectName: projectName,
@@ -65,7 +67,7 @@ final appRouter = GoRouter(
     ),
   ],
   errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('Route error')),
+    appBar: AppBar(title: Text(context.l10n.routeError)),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
@@ -78,7 +80,7 @@ final appRouter = GoRouter(
                 const Icon(Icons.route_outlined, size: 28),
                 const SizedBox(height: 10),
                 Text(
-                  state.error?.toString() ?? 'Unknown error',
+                  state.error?.toString() ?? context.l10n.unknownError,
                   textAlign: TextAlign.center,
                 ),
               ],

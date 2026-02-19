@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../kanboard/jsonrpc_client.dart';
+import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
@@ -27,10 +27,12 @@ class TaskDetailsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(taskId == null ? 'New Task' : 'Edit Task'),
+        title: Text(
+          taskId == null ? context.l10n.newTask2 : context.l10n.editTask,
+        ),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Projects',
+            tooltip: context.l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
@@ -59,6 +61,8 @@ class TaskDetailsSheet extends ConsumerStatefulWidget {
     this.taskId,
     this.initialColumnId,
     this.initialSwimlaneId,
+    this.initialTitle,
+    this.createAsGroceryList = false,
     this.isStandalonePage = false,
     super.key,
   });
@@ -68,13 +72,24 @@ class TaskDetailsSheet extends ConsumerStatefulWidget {
   final int? taskId;
   final int? initialColumnId;
   final int? initialSwimlaneId;
+  final String? initialTitle;
+  final bool createAsGroceryList;
   final bool isStandalonePage;
 
   @override
   ConsumerState<TaskDetailsSheet> createState() => _TaskDetailsSheetState();
 }
 
+class _DraftGroceryItem {
+  const _DraftGroceryItem({required this.title, this.isDone = false});
+
+  final String title;
+  final bool isDone;
+}
+
 class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
+  static const String _groceryMarker = '[grocery-list]';
+
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _dueDateController = TextEditingController();
@@ -91,7 +106,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   bool _isLoadingDetails = false;
   bool _isWorking = false;
   bool _isUpdatingStatus = false;
+  bool _advancedExpanded = false;
+  bool _isPreparingAdvanced = false;
+  String? _titleInlineError;
   String? _error;
+  String? _lastSavedSignature;
 
   int? _columnId;
   int? _swimlaneId;
@@ -100,7 +119,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   DateTime? _selectedDueDate;
 
   KanboardTask? _loadedTask;
-  final List<String> _permissionIssues = <String>[];
+  bool _isGroceryList = false;
 
   List<KanboardColumn> _columns = const <KanboardColumn>[];
   List<KanboardSwimlane> _swimlanes = const <KanboardSwimlane>[];
@@ -110,6 +129,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   List<KanboardTaskFile> _attachments = const <KanboardTaskFile>[];
   List<KanboardComment> _comments = const <KanboardComment>[];
   List<KanboardSubtask> _subtasks = const <KanboardSubtask>[];
+  List<_DraftGroceryItem> _draftGroceryItems = const <_DraftGroceryItem>[];
   List<String> _taskTags = const <String>[];
   List<KanboardTag> _projectTags = const <KanboardTag>[];
   List<KanboardTaskLinkType> _linkTypes = const <KanboardTaskLinkType>[];
@@ -133,6 +153,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   @override
   void initState() {
     super.initState();
+    _isGroceryList = widget.createAsGroceryList;
     _loadInitial();
   }
 
@@ -160,7 +181,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     setState(() {
       _isLoading = true;
       _error = null;
-      _permissionIssues.clear();
+      _titleInlineError = null;
     });
 
     try {
@@ -181,14 +202,6 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           api.getAllLinks(),
           const <KanboardTaskLinkType>[],
           label: 'getAllLinks',
-          onError: (error) {
-            if (error is JsonRpcException &&
-                (error.code == 403 || error.message.contains('403'))) {
-              _permissionIssues.add(
-                'No permission for internal task links (`getAllLinks`).',
-              );
-            }
-          },
         ),
         _safeOptional<Map<String, String>>(
           api.getExternalTaskLinkTypes(),
@@ -218,11 +231,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       }
 
       _loadedTask = task;
-      _titleController.text = task?.title ?? '';
-      _descriptionController.text = task?.description ?? '';
+      _titleController.text = task?.title ?? widget.initialTitle ?? '';
+      _descriptionController.text = _stripGroceryMarker(task?.description);
       _dueDateController.text = task?.dateDueForInput ?? '';
       _selectedDueDate = _parseDueDateInput(_dueDateController.text.trim());
-      _scoreController.text = task == null ? '' : '${task.score}';
+      _scoreController.text = task == null ? '' : _formatCentsToAmount(task.score);
 
       _columnId =
           task?.columnId ??
@@ -237,6 +250,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         _ownerId = null;
       }
       _priority = task?.priority ?? 0;
+      _isGroceryList =
+          widget.createAsGroceryList ||
+          _hasGroceryMarker(task?.description) ||
+          ((task?.title ?? '').trim().toLowerCase() ==
+              context.l10n.groceryList.trim().toLowerCase());
+      _lastSavedSignature = _currentTaskSignature();
 
       _selectedLinkTypeId = linkTypes.isNotEmpty ? linkTypes.first.id : null;
       _selectedExternalType = externalTypes.keys.isNotEmpty
@@ -258,7 +277,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       });
 
       final taskId = _activeTaskId;
-      if (taskId != null && taskId > 0) {
+      if (taskId != null &&
+          taskId > 0 &&
+          (_advancedExpanded || _isGroceryList)) {
         await _loadTaskDetails(taskId);
       }
     } catch (error) {
@@ -340,23 +361,34 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     }
   }
 
-  Future<void> _save() async {
+  Future<bool> _save({bool closeOnSuccess = true}) async {
     final api = ref.read(kanboardApiProvider);
-    if (api == null) return;
+    if (api == null) return false;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _error = 'Title is required.');
-      return;
+      setState(() => _error = context.l10n.titleIsRequired);
+      return false;
     }
 
-    final score = int.tryParse(_scoreController.text.trim());
+    final score = _parseAmountToCents(_scoreController.text.trim());
     if (_scoreController.text.trim().isNotEmpty && score == null) {
-      setState(() => _error = 'Score must be an integer.');
-      return;
+      setState(() => _error = context.l10n.scoreMustBeAnInteger);
+      return false;
     }
     final dueDateValue = _selectedDueDate == null
         ? ''
         : _formatDueDateForApi(_selectedDueDate!);
+    final descriptionValue = _descriptionForSave();
+    final hasPersistedId = _activeTaskId != null && _activeTaskId! > 0;
+    final signatureBeforeSave = _currentTaskSignature();
+    if (closeOnSuccess &&
+        hasPersistedId &&
+        _lastSavedSignature != null &&
+        _lastSavedSignature == signatureBeforeSave) {
+      if (!mounted) return false;
+      Navigator.of(context).pop(false);
+      return true;
+    }
 
     setState(() {
       _isSaving = true;
@@ -368,18 +400,21 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         await api.updateTask(
           id: id,
           title: title,
-          description: _descriptionController.text.trim(),
+          description: descriptionValue,
           ownerId: _ownerId ?? 0,
           dateDue: dueDateValue,
           clearDateDue: dueDateValue.isEmpty,
           priority: _priority,
           score: score ?? 0,
         );
+        if (!closeOnSuccess && _advancedExpanded) {
+          await _loadTaskDetails(id);
+        }
       } else {
-        await api.createTask(
+        final createdTaskId = await api.createTask(
           projectId: widget.projectId,
           title: title,
-          description: _descriptionController.text.trim(),
+          description: descriptionValue,
           columnId: _columnId,
           swimlaneId: _swimlaneId,
           ownerId: _ownerId,
@@ -387,14 +422,51 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           priority: _priority,
           score: score,
         );
+        if (createdTaskId == null || createdTaskId <= 0) {
+          throw StateError(context.l10n.taskWasNotCreated);
+        }
+        if (widget.createAsGroceryList && createdTaskId > 0) {
+          final tags = <String>{..._taskTags, 'grocery-list'}.toList()..sort();
+          try {
+            await api.setTaskTags(taskId: createdTaskId, tags: tags);
+          } catch (_) {
+            // Ignore tag-sync failures on older Kanboard servers.
+          }
+          if (_draftGroceryItems.isNotEmpty) {
+            for (final item in _draftGroceryItems) {
+              final subtaskId = await api.createSubtask(
+                taskId: createdTaskId,
+                title: item.title,
+              );
+              if (item.isDone && subtaskId != null && subtaskId > 0) {
+                await api.updateSubtask(
+                  id: subtaskId,
+                  taskId: createdTaskId,
+                  status: 1,
+                );
+              }
+            }
+          }
+        }
+        if (!closeOnSuccess) {
+          _loadedTask = await api.getTask(createdTaskId);
+          if (_advancedExpanded) {
+            await _loadTaskDetails(createdTaskId);
+          }
+        }
       }
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
+      if (!mounted) return false;
+      _lastSavedSignature = _currentTaskSignature();
+      if (closeOnSuccess) {
+        Navigator.of(context).pop(true);
+      }
+      return true;
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() {
         _error = '$error';
       });
+      return false;
     } finally {
       if (mounted) {
         setState(() {
@@ -417,7 +489,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           ? await api.closeTask(taskId)
           : await api.openTask(taskId);
       if (!ok) {
-        throw StateError('Server rejected task status update.');
+        throw StateError(context.l10n.serverRejectedTaskStatusUpdate);
       }
       final refreshed = await api.getTask(taskId);
       if (!mounted) return;
@@ -426,7 +498,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           _loadedTask = refreshed;
         }
       });
-      _showSnack(done ? 'Task marked done.' : 'Task reopened.');
+      _showSnack(
+        done ? context.l10n.taskMarkedDone : context.l10n.taskReopened,
+      );
       if (!widget.isStandalonePage) {
         Navigator.of(context).pop(true);
       }
@@ -435,7 +509,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       setState(() {
         _error = '$error';
       });
-      _showSnack('Task status update failed: $error', isError: true);
+      _showSnack(context.l10n.taskStatusUpdateFailed(error), isError: true);
     } finally {
       if (mounted) {
         setState(() {
@@ -476,15 +550,17 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           (error.message ?? '').contains('entitlement');
       if (missingEntitlement) {
         _showSnack(
-          'macOS file access entitlement missing. Rebuild the app after enabling user-selected file read entitlement.',
+          context
+              .l10n
+              .macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement,
           isError: true,
         );
       } else {
-        _showSnack('Attachment picker failed: $error', isError: true);
+        _showSnack(context.l10n.attachmentPickerFailed(error), isError: true);
       }
       return;
     } catch (error) {
-      _showSnack('Attachment picker failed: $error', isError: true);
+      _showSnack(context.l10n.attachmentPickerFailed(error), isError: true);
       return;
     }
     if (picked == null || picked.files.isEmpty) return;
@@ -502,13 +578,15 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           contentBase64: base64Data,
         );
         if (createdId == null || createdId <= 0) {
-          throw StateError('Server rejected attachment "${file.name}".');
+          throw StateError(
+            context.l10n.serverRejectedAttachmentName(file.name),
+          );
         }
       }
       await _loadTaskDetails(taskId);
-      _showSnack('Attachment upload complete.');
+      _showSnack(context.l10n.attachmentUploadComplete);
     } catch (error) {
-      _showSnack('Attachment upload failed: $error', isError: true);
+      _showSnack(context.l10n.attachmentUploadFailed(error), isError: true);
     } finally {
       if (mounted) setState(() => _isWorking = false);
     }
@@ -520,7 +598,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     try {
       final encoded = await api.downloadTaskFile(file.id);
       if (encoded == null || encoded.isEmpty) {
-        _showSnack('Attachment has no downloadable content.', isError: true);
+        _showSnack(
+          context.l10n.attachmentHasNoDownloadableContent,
+          isError: true,
+        );
         return;
       }
       final bytes = base64Decode(encoded);
@@ -531,7 +612,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         ),
       );
     } catch (error) {
-      _showSnack('Attachment export failed: $error', isError: true);
+      _showSnack(context.l10n.attachmentExportFailed(error), isError: true);
     }
   }
 
@@ -543,7 +624,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.removeTaskFile(file.id);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Attachment delete failed: $error', isError: true);
+      _showSnack(context.l10n.attachmentDeleteFailed(error), isError: true);
     }
   }
 
@@ -558,7 +639,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _newCommentController.clear();
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Comment save failed: $error', isError: true);
+      _showSnack(context.l10n.commentSaveFailed(error), isError: true);
     }
   }
 
@@ -570,21 +651,21 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit comment'),
+        title: Text(context.l10n.editComment),
         content: TextField(
           controller: controller,
           minLines: 3,
           maxLines: 6,
-          decoration: const InputDecoration(labelText: 'Comment'),
+          decoration: InputDecoration(labelText: context.l10n.comment),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -596,7 +677,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.updateComment(commentId: comment.id, comment: text);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Comment update failed: $error', isError: true);
+      _showSnack(context.l10n.commentUpdateFailed(error), isError: true);
     }
   }
 
@@ -608,23 +689,73 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.removeComment(comment.id);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Comment delete failed: $error', isError: true);
+      _showSnack(context.l10n.commentDeleteFailed(error), isError: true);
     }
   }
 
   Future<void> _addSubtask() async {
     final api = ref.read(kanboardApiProvider);
     final taskId = _activeTaskId;
-    if (api == null || taskId == null) return;
     final title = _newSubtaskController.text.trim();
     if (title.isEmpty) return;
+    if (_isGroceryList && taskId == null) {
+      setState(() {
+        _draftGroceryItems = <_DraftGroceryItem>[
+          ..._draftGroceryItems,
+          _DraftGroceryItem(title: title),
+        ];
+        _newSubtaskController.clear();
+      });
+      return;
+    }
+    if (api == null || taskId == null) return;
     try {
       await api.createSubtask(taskId: taskId, title: title);
       _newSubtaskController.clear();
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Subtask create failed: $error', isError: true);
+      _showSnack(context.l10n.subtaskCreateFailed(error), isError: true);
     }
+  }
+
+  void _toggleDraftGroceryItem(int index, bool done) {
+    final next = List<_DraftGroceryItem>.from(_draftGroceryItems);
+    if (index < 0 || index >= next.length) return;
+    final current = next[index];
+    next[index] = _DraftGroceryItem(title: current.title, isDone: done);
+    setState(() {
+      _draftGroceryItems = next;
+    });
+  }
+
+  void _deleteDraftGroceryItem(int index) {
+    if (index < 0 || index >= _draftGroceryItems.length) return;
+    final next = List<_DraftGroceryItem>.from(_draftGroceryItems)
+      ..removeAt(index);
+    setState(() {
+      _draftGroceryItems = next;
+    });
+  }
+
+  Future<bool> _confirmDeleteGroceryItem(String itemTitle) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.delete),
+        content: Text(context.l10n.deletePermanently(itemTitle)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(context.l10n.delete),
+          ),
+        ],
+      ),
+    );
+    return confirm == true;
   }
 
   Future<void> _toggleSubtask(KanboardSubtask subtask, bool done) async {
@@ -632,10 +763,14 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     final taskId = _activeTaskId;
     if (api == null || taskId == null) return;
     try {
-      await api.updateSubtask(id: subtask.id, status: done ? 1 : 0);
+      await api.updateSubtask(
+        id: subtask.id,
+        taskId: taskId,
+        status: done ? 1 : 0,
+      );
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Subtask update failed: $error', isError: true);
+      _showSnack(context.l10n.subtaskUpdateFailed(error), isError: true);
     }
   }
 
@@ -657,7 +792,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: const Text('Edit subtask'),
+          title: Text(context.l10n.editSubtask),
           content: SizedBox(
             width: 420,
             child: Column(
@@ -665,16 +800,16 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
               children: <Widget>[
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
+                  decoration: InputDecoration(labelText: context.l10n.title),
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
                   initialValue: selectedUser,
-                  decoration: const InputDecoration(labelText: 'Assignee'),
+                  decoration: InputDecoration(labelText: context.l10n.assignee),
                   items: <DropdownMenuItem<int?>>[
-                    const DropdownMenuItem<int?>(
+                    DropdownMenuItem<int?>(
                       value: null,
-                      child: Text('Unassigned'),
+                      child: Text(context.l10n.unassigned),
                     ),
                     ..._assignableUsers.map(
                       (u) => DropdownMenuItem<int?>(
@@ -689,7 +824,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: estimateController,
-                  decoration: const InputDecoration(labelText: 'Estimate (h)'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.estimateH,
+                  ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -697,7 +834,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: spentController,
-                  decoration: const InputDecoration(labelText: 'Spent (h)'),
+                  decoration: InputDecoration(labelText: context.l10n.spentH),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -708,11 +845,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Save'),
+              child: Text(context.l10n.save),
             ),
           ],
         ),
@@ -723,6 +860,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     try {
       await api.updateSubtask(
         id: subtask.id,
+        taskId: taskId,
         title: titleController.text.trim(),
         userId: selectedUser ?? 0,
         timeEstimated: double.tryParse(estimateController.text.trim()),
@@ -730,7 +868,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       );
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Subtask update failed: $error', isError: true);
+      _showSnack(context.l10n.subtaskUpdateFailed(error), isError: true);
     }
   }
 
@@ -742,7 +880,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.removeSubtask(subtask.id);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Subtask delete failed: $error', isError: true);
+      _showSnack(context.l10n.subtaskDeleteFailed(error), isError: true);
     }
   }
 
@@ -761,7 +899,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _tagInputController.clear();
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Tag update failed: $error', isError: true);
+      _showSnack(context.l10n.tagUpdateFailed(error), isError: true);
     }
   }
 
@@ -780,7 +918,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.setTaskTags(taskId: taskId, tags: nextTags);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Tag update failed: $error', isError: true);
+      _showSnack(context.l10n.tagUpdateFailed(error), isError: true);
     }
   }
 
@@ -792,7 +930,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _internalLinkTaskIdController.text.trim(),
     );
     if (oppositeTaskId == null || oppositeTaskId <= 0) {
-      _showSnack('Enter a valid linked task ID.', isError: true);
+      _showSnack(context.l10n.enterAValidLinkedTaskID, isError: true);
       return;
     }
     try {
@@ -804,7 +942,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _internalLinkTaskIdController.clear();
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Task link failed: $error', isError: true);
+      _showSnack(context.l10n.taskLinkFailed(error), isError: true);
     }
   }
 
@@ -816,7 +954,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.removeTaskLink(link.id);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('Link delete failed: $error', isError: true);
+      _showSnack(context.l10n.linkDeleteFailed(error), isError: true);
     }
   }
 
@@ -832,7 +970,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     final title = _externalLinkTitleController.text.trim();
     final url = _externalLinkUrlController.text.trim();
     if (title.isEmpty || url.isEmpty) {
-      _showSnack('External link title and URL are required.', isError: true);
+      _showSnack(
+        context.l10n.externalLinkTitleAndURLAreRequired,
+        isError: true,
+      );
       return;
     }
     try {
@@ -847,7 +988,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _externalLinkUrlController.clear();
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('External link failed: $error', isError: true);
+      _showSnack(context.l10n.externalLinkFailed(error), isError: true);
     }
   }
 
@@ -859,21 +1000,21 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await api.removeExternalTaskLink(taskId: taskId, linkId: link.id);
       await _loadTaskDetails(taskId);
     } catch (error) {
-      _showSnack('External link delete failed: $error', isError: true);
+      _showSnack(context.l10n.externalLinkDeleteFailed(error), isError: true);
     }
   }
 
   Future<void> _openExternalLink(KanboardExternalTaskLink link) async {
     final uri = Uri.tryParse(link.url);
     if (uri == null) {
-      _showSnack('Invalid URL.', isError: true);
+      _showSnack(context.l10n.invalidURL, isError: true);
       return;
     }
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       await Clipboard.setData(ClipboardData(text: link.url));
-      _showSnack('Could not open URL. Copied to clipboard.');
+      _showSnack(context.l10n.couldNotOpenURLCopiedToClipboard);
     }
   }
 
@@ -914,6 +1055,106 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     return '${date.year}-$month-$day $hour:$minute';
   }
 
+  int? _parseAmountToCents(String raw) {
+    final value = raw.trim().replaceAll(',', '.');
+    if (value.isEmpty) return null;
+    final parsed = double.tryParse(value);
+    if (parsed == null || parsed < 0) return null;
+    return (parsed * 100).round();
+  }
+
+  String _formatCentsToAmount(int cents) {
+    final whole = cents ~/ 100;
+    final fraction = (cents % 100).toString().padLeft(2, '0');
+    return '$whole.$fraction';
+  }
+
+  bool _hasGroceryMarker(String? description) {
+    if (description == null) return false;
+    return description.contains(_groceryMarker);
+  }
+
+  String _stripGroceryMarker(String? description) {
+    if (description == null || description.trim().isEmpty) return '';
+    return description
+        .replaceAll(_groceryMarker, '')
+        .replaceAll(RegExp(r'^\s+|\s+$'), '');
+  }
+
+  String _descriptionForSave() {
+    final text = _descriptionController.text.trim();
+    if (!_isGroceryList) return text;
+    if (_hasGroceryMarker(text)) return text;
+    return text.isEmpty ? _groceryMarker : '$_groceryMarker\n$text';
+  }
+
+  String _currentTaskSignature() {
+    final taskId = _activeTaskId ?? 0;
+    return [
+      taskId.toString(),
+      _titleController.text.trim(),
+      _descriptionController.text.trim(),
+      (_columnId ?? 0).toString(),
+      (_swimlaneId ?? 0).toString(),
+      (_ownerId ?? 0).toString(),
+      _priority.toString(),
+      _dueDateController.text.trim(),
+      _scoreController.text.trim(),
+      _isGroceryList ? '1' : '0',
+    ].join('|');
+  }
+
+  String? _requiredMessageBeforeExpand() {
+    if (_titleController.text.trim().isEmpty) {
+      return context.l10n.enterATitleBeforeOpeningAdditionalDetails;
+    }
+    return null;
+  }
+
+  Future<void> _toggleAdvancedSection() async {
+    if (_advancedExpanded) {
+      setState(() {
+        _advancedExpanded = false;
+      });
+      return;
+    }
+
+    final validationMessage = _requiredMessageBeforeExpand();
+    if (validationMessage != null) {
+      setState(() {
+        _titleInlineError = validationMessage;
+      });
+      return;
+    }
+
+    setState(() {
+      _isPreparingAdvanced = true;
+      _error = null;
+      _titleInlineError = null;
+    });
+    try {
+      var taskId = _activeTaskId;
+      if (taskId == null || taskId <= 0) {
+        final saved = await _save(closeOnSuccess: false);
+        if (!saved || !mounted) return;
+        taskId = _activeTaskId;
+      }
+      if (taskId == null || taskId <= 0) return;
+
+      await _loadTaskDetails(taskId);
+      if (!mounted) return;
+      setState(() {
+        _advancedExpanded = true;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPreparingAdvanced = false;
+        });
+      }
+    }
+  }
+
   Future<void> _pickDueDateTime() async {
     final initial = _selectedDueDate ?? DateTime.now();
     final picked = await showModalBottomSheet<DateTime>(
@@ -932,12 +1173,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                     children: <Widget>[
                       TextButton(
                         onPressed: () => Navigator.of(sheetContext).pop(),
-                        child: const Text('Cancel'),
+                        child: Text(context.l10n.cancel),
                       ),
                       const Spacer(),
                       FilledButton(
                         onPressed: () => Navigator.of(sheetContext).pop(draft),
-                        child: const Text('Done'),
+                        child: Text(context.l10n.done),
                       ),
                     ],
                   ),
@@ -1029,6 +1270,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isPersistedTask = _activeTaskId != null && _activeTaskId! > 0;
     final isTaskDone = isPersistedTask && !_isTaskActive;
+    final isGroceryEditor = _isGroceryList;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
@@ -1042,7 +1284,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           children: <Widget>[
             if (!widget.isStandalonePage)
               Text(
-                _isEditing ? 'Edit task' : 'Create task',
+                isGroceryEditor
+                    ? (_isEditing
+                          ? context.l10n.editGroceryList
+                          : context.l10n.createGroceryList)
+                    : (_isEditing ? context.l10n.editTask2 : context.l10n.createTask),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             if (_isLoading) const LinearProgressIndicator(),
@@ -1077,7 +1323,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                               : Icons.radio_button_checked,
                           size: 16,
                         ),
-                        label: Text(isTaskDone ? 'Done' : 'Open'),
+                        label: Text(
+                          isTaskDone ? context.l10n.done : context.l10n.open,
+                        ),
                       ),
                       FilledButton.tonalIcon(
                         onPressed: _isSaving || _isUpdatingStatus
@@ -1087,7 +1335,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                           isTaskDone ? Icons.undo_rounded : Icons.task_alt,
                         ),
                         label: Text(
-                          isTaskDone ? 'Reopen task' : 'Mark as done',
+                          isTaskDone
+                              ? context.l10n.reopenTask
+                              : context.l10n.markAsDone,
                         ),
                       ),
                     ],
@@ -1096,135 +1346,157 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
               ),
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              onChanged: (_) {
+                if (_titleInlineError != null) {
+                  setState(() {
+                    _titleInlineError = null;
+                  });
+                }
+              },
+              decoration: InputDecoration(
+                labelText: isGroceryEditor
+                    ? context.l10n.groceryListTitle
+                    : context.l10n.title,
+                errorText: _titleInlineError,
+              ),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-              minLines: 3,
-              maxLines: 6,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: _columnId,
-                    items: _columns
-                        .map(
-                          (c) => DropdownMenuItem<int>(
-                            value: c.id,
-                            child: Text(c.title),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _isEditing
-                        ? null
-                        : (v) => setState(() => _columnId = v),
-                    decoration: const InputDecoration(labelText: 'Column'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: _swimlaneId,
-                    items: _swimlanes
-                        .map(
-                          (s) => DropdownMenuItem<int>(
-                            value: s.id,
-                            child: Text(s.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _isEditing
-                        ? null
-                        : (v) => setState(() => _swimlaneId = v),
-                    decoration: const InputDecoration(labelText: 'Swimlane'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: DropdownButtonFormField<int?>(
-                    initialValue: _ownerId,
-                    decoration: const InputDecoration(labelText: 'Assignee'),
-                    items: <DropdownMenuItem<int?>>[
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text('Unassigned'),
-                      ),
-                      ..._assignableUsers.map(
-                        (u) => DropdownMenuItem<int?>(
-                          value: u.id,
-                          child: Text(u.displayName),
-                        ),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => _ownerId = v),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: _priority,
-                    decoration: const InputDecoration(labelText: 'Priority'),
-                    items: const <DropdownMenuItem<int>>[
-                      DropdownMenuItem<int>(value: 0, child: Text('0')),
-                      DropdownMenuItem<int>(value: 1, child: Text('1')),
-                      DropdownMenuItem<int>(value: 2, child: Text('2')),
-                      DropdownMenuItem<int>(value: 3, child: Text('3')),
-                      DropdownMenuItem<int>(value: 4, child: Text('4')),
-                      DropdownMenuItem<int>(value: 5, child: Text('5')),
-                    ],
-                    onChanged: (v) => setState(() => _priority = v ?? 0),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: TextField(
-                    controller: _dueDateController,
-                    readOnly: true,
-                    onTap: _pickDueDateTime,
-                    decoration: InputDecoration(
-                      labelText: 'Due date',
-                      hintText: 'Pick date/time',
-                      suffixIcon: Wrap(
-                        spacing: 0,
-                        children: <Widget>[
-                          IconButton(
-                            tooltip: 'Pick due date',
-                            onPressed: _pickDueDateTime,
-                            icon: const Icon(Icons.calendar_today_outlined),
-                          ),
-                          if (_selectedDueDate != null)
-                            IconButton(
-                              tooltip: 'Clear due date',
-                              onPressed: _clearDueDate,
-                              icon: const Icon(Icons.clear),
+            if (!isGroceryEditor) ...<Widget>[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: context.l10n.description),
+                minLines: 3,
+                maxLines: 6,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      initialValue: _columnId,
+                      items: _columns
+                          .map(
+                            (c) => DropdownMenuItem<int>(
+                              value: c.id,
+                              child: Text(c.title),
                             ),
-                        ],
+                          )
+                          .toList(),
+                      onChanged: _isEditing
+                          ? null
+                          : (v) => setState(() => _columnId = v),
+                      decoration: InputDecoration(labelText: context.l10n.column),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      initialValue: _swimlaneId,
+                      items: _swimlanes
+                          .map(
+                            (s) => DropdownMenuItem<int>(
+                              value: s.id,
+                              child: Text(s.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: _isEditing
+                          ? null
+                          : (v) => setState(() => _swimlaneId = v),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.swimlane,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _scoreController,
-                    decoration: const InputDecoration(labelText: 'Score'),
-                    keyboardType: TextInputType.number,
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: DropdownButtonFormField<int?>(
+                      initialValue: _ownerId,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.assignee,
+                      ),
+                      items: <DropdownMenuItem<int?>>[
+                        DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text(context.l10n.unassigned),
+                        ),
+                        ..._assignableUsers.map(
+                          (u) => DropdownMenuItem<int?>(
+                            value: u.id,
+                            child: Text(u.displayName),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() => _ownerId = v),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      initialValue: _priority,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.priority,
+                      ),
+                      items: const <DropdownMenuItem<int>>[
+                        DropdownMenuItem<int>(value: 0, child: Text('0')),
+                        DropdownMenuItem<int>(value: 1, child: Text('1')),
+                        DropdownMenuItem<int>(value: 2, child: Text('2')),
+                        DropdownMenuItem<int>(value: 3, child: Text('3')),
+                        DropdownMenuItem<int>(value: 4, child: Text('4')),
+                        DropdownMenuItem<int>(value: 5, child: Text('5')),
+                      ],
+                      onChanged: (v) => setState(() => _priority = v ?? 0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                      controller: _dueDateController,
+                      readOnly: true,
+                      onTap: _pickDueDateTime,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.dueDate,
+                        hintText: context.l10n.pickDateTime,
+                        suffixIcon: Wrap(
+                          spacing: 0,
+                          children: <Widget>[
+                            IconButton(
+                              tooltip: context.l10n.pickDueDate,
+                              onPressed: _pickDueDateTime,
+                              icon: const Icon(Icons.calendar_today_outlined),
+                            ),
+                            if (_selectedDueDate != null)
+                              IconButton(
+                                tooltip: context.l10n.clearDueDate,
+                                onPressed: _clearDueDate,
+                                icon: const Icon(Icons.clear),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _scoreController,
+                      decoration: InputDecoration(labelText: context.l10n.expense),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             Wrap(
               alignment: WrapAlignment.end,
@@ -1235,51 +1507,86 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   onPressed: _isSaving
                       ? null
                       : () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.cancel),
                 ),
                 FilledButton(
-                  onPressed: _isSaving ? null : _save,
+                  onPressed: _isSaving ? null : () => _save(),
                   child: _isSaving
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Save'),
+                      : Text(context.l10n.save),
                 ),
               ],
             ),
-            if (!isPersistedTask)
+            if (!isGroceryEditor)
+              Card(
+                margin: const EdgeInsets.only(top: 12),
+                child: Column(
+                  children: <Widget>[
+                    ListTile(
+                      title: Text(context.l10n.additionalDetails),
+                      subtitle: Text(
+                        _advancedExpanded
+                            ? context.l10n.additionalDetails
+                            : context.l10n.tapToExpandAdvancedTaskDetails,
+                      ),
+                      trailing: _isPreparingAdvanced
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              _advancedExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                            ),
+                      onTap:
+                          _isSaving || _isPreparingAdvanced
+                              ? null
+                              : _toggleAdvancedSection,
+                    ),
+                    if (!_advancedExpanded)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            isPersistedTask
+                                ? context.l10n.advancedSectionsAreHidden
+                                : context
+                                      .l10n
+                                      .forNewTasksTheAppSavesFirstThenOpensAdvancedSections,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            if (!isPersistedTask && isGroceryEditor)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  'Save this task first to manage attachments, comments, subtasks, tags, and links.',
+                  context.l10n.forNewTasksTheAppSavesFirstThenOpensAdvancedSections,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-            if (isPersistedTask) ...<Widget>[
-              if (_permissionIssues.isNotEmpty)
-                Card(
-                  margin: const EdgeInsets.only(top: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      _permissionIssues.join('\n'),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
-                ),
-              _section(
-                title: 'Attachments',
+            if ((isPersistedTask && _advancedExpanded) || isGroceryEditor)
+              ...<Widget>[
+              if (!isGroceryEditor)
+                _section(
+                title: context.l10n.attachments2,
                 trailing: FilledButton.tonalIcon(
                   onPressed: _isWorking ? null : _addAttachments,
                   icon: const Icon(Icons.attach_file),
-                  label: const Text('Add'),
+                  label: Text(context.l10n.add),
                 ),
                 child: _attachments.isEmpty
-                    ? const Text('No attachments yet.')
+                    ? Text(context.l10n.noAttachmentsYet)
                     : Column(
                         children: _attachments
                             .map(
@@ -1293,12 +1600,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                   spacing: 6,
                                   children: <Widget>[
                                     IconButton(
-                                      tooltip: 'Export',
+                                      tooltip: context.l10n.export,
                                       onPressed: () => _exportAttachment(file),
                                       icon: const Icon(Icons.download_rounded),
                                     ),
                                     IconButton(
-                                      tooltip: 'Delete',
+                                      tooltip: context.l10n.delete,
                                       onPressed: () => _deleteAttachment(file),
                                       icon: const Icon(Icons.delete_outline),
                                     ),
@@ -1309,8 +1616,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                             .toList(),
                       ),
               ),
-              _section(
-                title: 'Comments',
+              if (!isGroceryEditor)
+                _section(
+                title: context.l10n.comments,
                 child: Column(
                   children: <Widget>[
                     Row(
@@ -1318,8 +1626,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _newCommentController,
-                            decoration: const InputDecoration(
-                              labelText: 'New comment',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.newComment,
                             ),
                             minLines: 1,
                             maxLines: 4,
@@ -1328,15 +1636,15 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         const SizedBox(width: 8),
                         FilledButton(
                           onPressed: _addComment,
-                          child: const Text('Post'),
+                          child: Text(context.l10n.post),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (_comments.isEmpty)
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('No comments yet.'),
+                        child: Text(context.l10n.noCommentsYet),
                       ),
                     if (_comments.isNotEmpty)
                       Column(
@@ -1346,7 +1654,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                 dense: true,
                                 title: Text(comment.comment),
                                 subtitle: Text(
-                                  '${comment.username ?? 'User #${comment.userId}'} · ${_formatUnix(comment.dateCreation)}',
+                                  '${comment.username ?? context.l10n.userNumber(comment.userId)} · ${_formatUnix(comment.dateCreation)}',
                                 ),
                                 trailing: Wrap(
                                   spacing: 6,
@@ -1369,7 +1677,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                 ),
               ),
               _section(
-                title: 'Subtasks',
+                title: isGroceryEditor
+                    ? context.l10n.groceryList
+                    : context.l10n.subtasks,
                 child: Column(
                   children: <Widget>[
                     Row(
@@ -1377,70 +1687,222 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _newSubtaskController,
-                            decoration: const InputDecoration(
-                              labelText: 'New subtask',
+                            decoration: InputDecoration(
+                              labelText: isGroceryEditor
+                                  ? context.l10n.newGroceryItem
+                                  : context.l10n.newSubtask,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
                           onPressed: _addSubtask,
-                          child: const Text('Add'),
+                          child: Text(context.l10n.add),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (_subtasks.isEmpty)
-                      const Align(
+                    if ((isPersistedTask && _subtasks.isEmpty) ||
+                        (!isPersistedTask && _draftGroceryItems.isEmpty))
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('No subtasks yet.'),
+                        child: Text(
+                          isGroceryEditor
+                              ? context.l10n.noGroceryItemsYet
+                              : context.l10n.noSubtasksYet,
+                        ),
                       ),
-                    if (_subtasks.isNotEmpty)
-                      Column(
-                        children: _subtasks
-                            .map(
-                              (subtask) => CheckboxListTile(
-                                dense: true,
-                                value: subtask.isDone,
-                                onChanged: (checked) =>
-                                    _toggleSubtask(subtask, checked ?? false),
-                                title: Text(subtask.title),
-                                subtitle: Text(
-                                  'Est ${subtask.timeEstimated}h · Spent ${subtask.timeSpent}h',
-                                ),
-                                secondary: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      _editSubtask(subtask);
-                                    } else if (value == 'delete') {
-                                      _deleteSubtask(subtask);
-                                    }
-                                  },
-                                  itemBuilder: (context) =>
-                                      const <PopupMenuEntry<String>>[
-                                        PopupMenuItem<String>(
-                                          value: 'edit',
-                                          child: Text('Edit'),
-                                        ),
-                                        PopupMenuItem<String>(
-                                          value: 'delete',
-                                          child: Text('Delete'),
-                                        ),
-                                      ],
+                    if (isPersistedTask && _subtasks.isNotEmpty)
+                      isGroceryEditor
+                          ? Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                                 ),
                               ),
+                              child: Column(
+                                children: _subtasks.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final subtask = entry.value;
+                                  return Column(
+                                    children: <Widget>[
+                                      ListTile(
+                                        dense: true,
+                                        leading: Checkbox(
+                                          value: subtask.isDone,
+                                          onChanged: (checked) => _toggleSubtask(
+                                            subtask,
+                                            checked ?? false,
+                                          ),
+                                          checkColor: Colors.black,
+                                          activeColor: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        title: Text(
+                                          subtask.title,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            decoration: subtask.isDone
+                                                ? TextDecoration.lineThrough
+                                                : TextDecoration.none,
+                                            decorationColor: Colors.white,
+                                            decorationThickness: 2,
+                                          ),
+                                        ),
+                                        trailing: IconButton(
+                                          tooltip: context.l10n.delete,
+                                          onPressed: () async {
+                                            final ok = await _confirmDeleteGroceryItem(
+                                              subtask.title,
+                                            );
+                                            if (!ok) return;
+                                            await _deleteSubtask(subtask);
+                                          },
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      if (index < _subtasks.length - 1)
+                                        Divider(
+                                          height: 1,
+                                          thickness: 1,
+                                          color: Colors.white.withValues(alpha: 0.14),
+                                        ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
                             )
-                            .toList(),
+                          : Column(
+                              children: _subtasks
+                                  .map(
+                                    (subtask) => CheckboxListTile(
+                                      dense: true,
+                                      value: subtask.isDone,
+                                      onChanged: (checked) =>
+                                          _toggleSubtask(subtask, checked ?? false),
+                                      title: Text(
+                                        subtask.title,
+                                        style: TextStyle(
+                                          decoration: subtask.isDone
+                                              ? TextDecoration.lineThrough
+                                              : TextDecoration.none,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        context.l10n.estHSpentH(
+                                          subtask.timeEstimated,
+                                          subtask.timeSpent,
+                                        ),
+                                      ),
+                                      secondary: PopupMenuButton<String>(
+                                        onSelected: (value) {
+                                          if (value == 'edit') {
+                                            _editSubtask(subtask);
+                                          } else if (value == 'delete') {
+                                            _deleteSubtask(subtask);
+                                          }
+                                        },
+                                        itemBuilder: (context) =>
+                                            <PopupMenuEntry<String>>[
+                                              PopupMenuItem<String>(
+                                                value: 'edit',
+                                                child: Text(context.l10n.edit),
+                                              ),
+                                              PopupMenuItem<String>(
+                                                value: 'delete',
+                                                child: Text(context.l10n.delete),
+                                              ),
+                                            ],
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                    if (!isPersistedTask &&
+                        isGroceryEditor &&
+                        _draftGroceryItems.isNotEmpty)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Column(
+                          children: _draftGroceryItems.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
+                            return Column(
+                              children: <Widget>[
+                                ListTile(
+                                  dense: true,
+                                  leading: Checkbox(
+                                    value: item.isDone,
+                                    onChanged: (checked) => _toggleDraftGroceryItem(
+                                      index,
+                                      checked ?? false,
+                                    ),
+                                    checkColor: Colors.black,
+                                    activeColor: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  title: Text(
+                                    item.title,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      decoration: item.isDone
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                      decorationColor: Colors.white,
+                                      decorationThickness: 2,
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    tooltip: context.l10n.delete,
+                                    onPressed: () async {
+                                      final ok = await _confirmDeleteGroceryItem(
+                                        item.title,
+                                      );
+                                      if (!ok) return;
+                                      _deleteDraftGroceryItem(index);
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                if (index < _draftGroceryItems.length - 1)
+                                  Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Colors.white.withValues(alpha: 0.14),
+                                  ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                   ],
                 ),
               ),
-              _section(
-                title: 'Tags',
+              if (!isGroceryEditor)
+                _section(
+                title: context.l10n.tags,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (_taskTags.isEmpty) const Text('No tags assigned.'),
+                    if (_taskTags.isEmpty) Text(context.l10n.noTagsAssigned),
                     if (_taskTags.isNotEmpty)
                       Wrap(
                         spacing: 8,
@@ -1460,15 +1922,15 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _tagInputController,
-                            decoration: const InputDecoration(
-                              labelText: 'Add tags (comma separated)',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.addTagsCommaSeparated,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
                           onPressed: _applyTags,
-                          child: const Text('Apply'),
+                          child: Text(context.l10n.apply),
                         ),
                       ],
                     ),
@@ -1491,17 +1953,20 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   ],
                 ),
               ),
-              _section(
-                title: 'Task Links',
+              if (!isGroceryEditor)
+                _section(
+                title: context.l10n.taskLinks,
                 child: Column(
                   children: <Widget>[
                     if (_linkTypes.isEmpty)
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(
                           padding: EdgeInsets.only(bottom: 8),
                           child: Text(
-                            'Internal link types unavailable for this user/project.',
+                            context
+                                .l10n
+                                .internalLinkTypesUnavailableForThisUserProject,
                           ),
                         ),
                       ),
@@ -1510,8 +1975,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _internalLinkTaskIdController,
-                            decoration: const InputDecoration(
-                              labelText: 'Linked task ID',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.linkedTaskID,
                             ),
                             keyboardType: TextInputType.number,
                           ),
@@ -1530,8 +1995,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                 .toList(),
                             onChanged: (value) =>
                                 setState(() => _selectedLinkTypeId = value),
-                            decoration: const InputDecoration(
-                              labelText: 'Relation',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.relation,
                             ),
                           ),
                         ),
@@ -1540,15 +2005,15 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                           onPressed: _linkTypes.isEmpty
                               ? null
                               : _addInternalLink,
-                          child: const Text('Link'),
+                          child: Text(context.l10n.link),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (_taskLinks.isEmpty)
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('No task links.'),
+                        child: Text(context.l10n.noTaskLinks),
                       ),
                     if (_taskLinks.isNotEmpty)
                       Column(
@@ -1557,11 +2022,13 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                               (link) => ListTile(
                                 dense: true,
                                 title: Text(
-                                  '${link.label ?? 'linked to'} #${link.oppositeTaskId}',
+                                  '${link.label ?? context.l10n.linkedTo} #${link.oppositeTaskId}',
                                 ),
                                 subtitle: Text(
                                   link.oppositeTaskTitle ??
-                                      'Task #${link.oppositeTaskId}',
+                                      context.l10n.taskNumber(
+                                        link.oppositeTaskId,
+                                      ),
                                 ),
                                 trailing: IconButton(
                                   onPressed: () => _removeInternalLink(link),
@@ -1574,8 +2041,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   ],
                 ),
               ),
-              _section(
-                title: 'External Links',
+              if (!isGroceryEditor)
+                _section(
+                title: context.l10n.externalLinks,
                 child: Column(
                   children: <Widget>[
                     Row(
@@ -1583,8 +2051,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _externalLinkTitleController,
-                            decoration: const InputDecoration(
-                              labelText: 'Link title',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.linkTitle,
                             ),
                           ),
                         ),
@@ -1592,7 +2060,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                         Expanded(
                           child: TextField(
                             controller: _externalLinkUrlController,
-                            decoration: const InputDecoration(labelText: 'URL'),
+                            decoration: InputDecoration(
+                              labelText: context.l10n.url,
+                            ),
                           ),
                         ),
                       ],
@@ -1613,8 +2083,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                 .toList(),
                             onChanged: (value) =>
                                 setState(() => _selectedExternalType = value),
-                            decoration: const InputDecoration(
-                              labelText: 'Type',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.type,
                             ),
                           ),
                         ),
@@ -1633,23 +2103,23 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                             onChanged: (value) => setState(
                               () => _selectedExternalDependency = value,
                             ),
-                            decoration: const InputDecoration(
-                              labelText: 'Dependency',
+                            decoration: InputDecoration(
+                              labelText: context.l10n.dependency,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         FilledButton(
                           onPressed: _addExternalLink,
-                          child: const Text('Add'),
+                          child: Text(context.l10n.add),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (_externalLinks.isEmpty)
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('No external links.'),
+                        child: Text(context.l10n.noExternalLinks),
                       ),
                     if (_externalLinks.isNotEmpty)
                       Column(
