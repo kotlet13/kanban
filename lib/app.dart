@@ -13,7 +13,7 @@ class KanbanApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Kanboard Client',
+      title: 'Kanban Connect',
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _AppScrollBehavior(),
       themeMode: themeMode,

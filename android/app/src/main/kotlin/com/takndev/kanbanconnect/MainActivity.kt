@@ -1,4 +1,4 @@
-package com.example.kanban
+package com.takndev.kanbanconnect
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -410,6 +410,20 @@ class KanboardApi {
     return result == true;
   }
 
+  Future<bool> closeTask(int taskId) async {
+    final result = await _client.call('closeTask', <String, dynamic>{
+      'task_id': taskId,
+    });
+    return result == true;
+  }
+
+  Future<bool> openTask(int taskId) async {
+    final result = await _client.call('openTask', <String, dynamic>{
+      'task_id': taskId,
+    });
+    return result == true;
+  }
+
   Future<bool> moveTaskPosition({
     required int projectId,
     required int taskId,

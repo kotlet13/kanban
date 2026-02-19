@@ -90,6 +90,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   bool _isLoading = false;
   bool _isLoadingDetails = false;
   bool _isWorking = false;
+  bool _isUpdatingStatus = false;
   String? _error;
 
   int? _columnId;
@@ -126,6 +127,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   bool get _isEditing => widget.task != null || widget.taskId != null;
 
   int? get _activeTaskId => _loadedTask?.id ?? widget.task?.id ?? widget.taskId;
+
+  bool get _isTaskActive => (_loadedTask ?? widget.task)?.isActive ?? true;
 
   @override
   void initState() {
@@ -396,6 +399,47 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       if (mounted) {
         setState(() {
           _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _setTaskDone({required bool done}) async {
+    final api = ref.read(kanboardApiProvider);
+    final taskId = _activeTaskId;
+    if (api == null || taskId == null || taskId <= 0) return;
+    setState(() {
+      _isUpdatingStatus = true;
+      _error = null;
+    });
+    try {
+      final ok = done
+          ? await api.closeTask(taskId)
+          : await api.openTask(taskId);
+      if (!ok) {
+        throw StateError('Server rejected task status update.');
+      }
+      final refreshed = await api.getTask(taskId);
+      if (!mounted) return;
+      setState(() {
+        if (refreshed != null) {
+          _loadedTask = refreshed;
+        }
+      });
+      _showSnack(done ? 'Task marked done.' : 'Task reopened.');
+      if (!widget.isStandalonePage) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$error';
+      });
+      _showSnack('Task status update failed: $error', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
         });
       }
     }
@@ -984,6 +1028,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isPersistedTask = _activeTaskId != null && _activeTaskId! > 0;
+    final isTaskDone = isPersistedTask && !_isTaskActive;
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
@@ -1015,6 +1060,40 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                 ),
               ),
             const SizedBox(height: 8),
+            if (isPersistedTask)
+              Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: <Widget>[
+                      Chip(
+                        avatar: Icon(
+                          isTaskDone
+                              ? Icons.check_circle_outline
+                              : Icons.radio_button_checked,
+                          size: 16,
+                        ),
+                        label: Text(isTaskDone ? 'Done' : 'Open'),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: _isSaving || _isUpdatingStatus
+                            ? null
+                            : () => _setTaskDone(done: !isTaskDone),
+                        icon: Icon(
+                          isTaskDone ? Icons.undo_rounded : Icons.task_alt,
+                        ),
+                        label: Text(
+                          isTaskDone ? 'Reopen task' : 'Mark as done',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),

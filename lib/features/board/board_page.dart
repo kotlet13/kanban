@@ -28,6 +28,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   bool _isLoading = false;
   String? _error;
   KanboardBoard? _board;
+  bool _isCompactDragLocked = true;
 
   Color _projectAccent(ThemeData theme) {
     return _parseHexColor(widget.projectColorHex) ?? theme.colorScheme.primary;
@@ -169,6 +170,29 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
+  Future<void> _setTaskDone(KanboardTask task, {required bool done}) async {
+    final api = ref.read(kanboardApiProvider);
+    if (api == null) return;
+    try {
+      final ok = done
+          ? await api.closeTask(task.id)
+          : await api.openTask(task.id);
+      if (!ok) {
+        throw StateError('Server rejected task status update.');
+      }
+      await _loadBoard(fromRefresh: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(done ? 'Task marked done.' : 'Task reopened.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Status update failed: $error')));
+    }
+  }
+
   Future<void> _moveTask(
     KanboardTask task,
     KanboardColumn targetColumn,
@@ -271,9 +295,98 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
-  Widget _taskCard(KanboardTask task) {
+  Widget _taskCard(KanboardTask task, {required bool dragEnabled}) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
+    final taskCardBody = Card(
+      child: InkWell(
+        onTap: () => _openTaskEditor(task: task),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 6,
+                height: 36,
+                margin: const EdgeInsets.only(top: 2),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (task.description != null &&
+                        task.description!.trim().isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 3),
+                      Text(
+                        task.description!.trim(),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 5),
+                    Text(
+                      'Task #${task.id}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _openTaskEditor(task: task);
+                  } else if (value == 'done') {
+                    _setTaskDone(task, done: true);
+                  } else if (value == 'reopen') {
+                    _setTaskDone(task, done: false);
+                  } else if (value == 'delete') {
+                    _deleteTask(task);
+                  }
+                },
+                itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: task.isActive ? 'done' : 'reopen',
+                    child: Text(task.isActive ? 'Mark done' : 'Reopen'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!dragEnabled) {
+      return taskCardBody;
+    }
+
     return Draggable<KanboardTask>(
       data: task,
       feedback: Material(
@@ -314,79 +427,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
           ),
         ),
       ),
-      child: Card(
-        child: InkWell(
-          onTap: () => _openTaskEditor(task: task),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  width: 6,
-                  height: 36,
-                  margin: const EdgeInsets.only(top: 2),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (task.description != null &&
-                          task.description!.trim().isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 3),
-                        Text(
-                          task.description!.trim(),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 5),
-                      Text(
-                        'Task #${task.id}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _openTaskEditor(task: task);
-                    } else if (value == 'delete') {
-                      _deleteTask(task);
-                    }
-                  },
-                  itemBuilder: (context) => const <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Text('Delete'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      child: taskCardBody,
     );
   }
 
@@ -394,13 +435,15 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     KanboardSwimlane swimlane,
     KanboardColumn column, {
     bool compact = false,
+    required bool dragEnabled,
   }) {
     return SizedBox(
       width: compact ? double.infinity : 320,
       height: compact ? 400 : 460,
       child: DragTarget<KanboardTask>(
-        onAcceptWithDetails: (details) =>
-            _moveTask(details.data, column, swimlane.id),
+        onAcceptWithDetails: dragEnabled
+            ? (details) => _moveTask(details.data, column, swimlane.id)
+            : null,
         builder: (context, candidateData, rejectedData) {
           final theme = Theme.of(context);
           final accent = _projectAccent(theme);
@@ -484,7 +527,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Drop a task here',
+                                  dragEnabled
+                                      ? 'Drop a task here'
+                                      : 'Unlock drag to move tasks',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -496,7 +541,10 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                             padding: const EdgeInsets.all(8),
                             itemCount: column.tasks.length,
                             itemBuilder: (context, index) {
-                              return _taskCard(column.tasks[index]);
+                              return _taskCard(
+                                column.tasks[index],
+                                dragEnabled: dragEnabled,
+                              );
                             },
                           ),
                   ),
@@ -509,7 +557,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
-  Widget _boardOverview(KanboardBoard? board) {
+  Widget _boardOverview(
+    KanboardBoard? board, {
+    required bool showCompactDragLock,
+    required bool dragEnabled,
+  }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
     final swimlaneCount = board?.swimlanes.length ?? 0;
@@ -589,7 +641,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.',
+                        showCompactDragLock
+                            ? dragEnabled
+                                  ? 'Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.'
+                                  : 'Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.'
+                            : 'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -638,7 +694,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
-  Widget _swimlaneSection(KanboardSwimlane swimlane, {bool stacked = false}) {
+  Widget _swimlaneSection(
+    KanboardSwimlane swimlane, {
+    bool stacked = false,
+    required bool dragEnabled,
+  }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
     return Card(
@@ -696,7 +756,12 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   for (final column in swimlane.columns)
-                    _columnCard(swimlane, column, compact: true),
+                    _columnCard(
+                      swimlane,
+                      column,
+                      compact: true,
+                      dragEnabled: dragEnabled,
+                    ),
                 ],
               )
             else
@@ -704,7 +769,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   for (final column in swimlane.columns)
-                    _columnCard(swimlane, column),
+                    _columnCard(swimlane, column, dragEnabled: dragEnabled),
                 ],
               ),
           ],
@@ -756,9 +821,14 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   List<Widget> _boardContent(
     KanboardBoard? board, {
     required bool stackedColumns,
+    required bool dragEnabled,
   }) {
     return <Widget>[
-      _boardOverview(board),
+      _boardOverview(
+        board,
+        showCompactDragLock: stackedColumns,
+        dragEnabled: dragEnabled,
+      ),
       if (_isLoading)
         const Padding(
           padding: EdgeInsets.only(top: 10),
@@ -784,13 +854,19 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         ),
       if (board != null)
         for (final swimlane in board.swimlanes)
-          _swimlaneSection(swimlane, stacked: stackedColumns),
+          _swimlaneSection(
+            swimlane,
+            stacked: stackedColumns,
+            dragEnabled: dragEnabled,
+          ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     final board = _board;
+    final stackedColumns = MediaQuery.sizeOf(context).width < 900;
+    final dragEnabled = !stackedColumns || !_isCompactDragLocked;
     final maxColumnsPerSwimlane = board == null || board.swimlanes.isEmpty
         ? 3
         : board.swimlanes
@@ -819,6 +895,16 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             onPressed: _openSearch,
             icon: const Icon(Icons.search),
           ),
+          if (stackedColumns)
+            IconButton(
+              tooltip: dragEnabled ? 'Lock task drag' : 'Unlock task drag',
+              onPressed: () {
+                setState(() {
+                  _isCompactDragLocked = !_isCompactDragLocked;
+                });
+              },
+              icon: Icon(dragEnabled ? Icons.lock_open : Icons.lock),
+            ),
           IconButton(
             tooltip: 'Refresh board',
             onPressed: _isLoading ? null : () => _loadBoard(fromRefresh: true),
@@ -832,32 +918,33 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         icon: const Icon(Icons.add_task),
         label: const Text('New task'),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final stackedColumns = constraints.maxWidth < 900;
-          final content = _boardContent(board, stackedColumns: stackedColumns);
-
-          return RefreshIndicator(
-            onRefresh: () => _loadBoard(fromRefresh: true),
-            child: stackedColumns
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
-                    children: content,
-                  )
-                : BidirectionalScrollView(
-                    alwaysScrollable: true,
-                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
-                    contentWidth: boardContentWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: content,
-                    ),
+      body: RefreshIndicator(
+        onRefresh: () => _loadBoard(fromRefresh: true),
+        child: stackedColumns
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                children: _boardContent(
+                  board,
+                  stackedColumns: stackedColumns,
+                  dragEnabled: dragEnabled,
+                ),
+              )
+            : BidirectionalScrollView(
+                alwaysScrollable: true,
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                contentWidth: boardContentWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _boardContent(
+                    board,
+                    stackedColumns: stackedColumns,
+                    dragEnabled: dragEnabled,
                   ),
-          );
-        },
+                ),
+              ),
       ),
     );
   }
