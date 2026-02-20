@@ -8,6 +8,8 @@
   "connectToKanboard": "Connect to Kanboard",
   "projects": "Projects",
   "projectDefaults": "Project defaults",
+  "aiSettings": "AI settings",
+  "aiChat": "AI chat",
   "connectionSettings": "Connection settings",
   "refresh": "Refresh",
   "logout": "Logout",
@@ -41,6 +43,8 @@
   "projectColorSyncedViaMetadata": "Project color (synced via metadata)",
   "noColor": "No color",
   "save": "Save",
+  "stop": "Stop",
+  "send": "Send",
   "attachments": "Attachments · {name}",
   "noProjectAttachmentsYet": "No project attachments yet.",
   "download": "Download",
@@ -63,8 +67,54 @@
   "exampleUSD": "Example: USD",
   "defaultExpenseCurrency": "Default Expense Currency",
   "reset": "Reset",
+  "enableAI": "Enable AI",
+  "instantResponse": "Instant response",
+  "thinkingResponse": "Thinking response",
+  "thinkingEffort": "Thinking effort",
+  "effortLow": "Low",
+  "effortMedium": "Medium",
+  "effortHigh": "High",
+  "aiModel": "AI model",
+  "openAiApiKey": "OpenAI API key",
+  "openAiApiKeyIsRequired": "OpenAI API key is required.",
+  "testAIConnection": "Test AI connection",
+  "fetchAvailableModels": "Fetch available models",
+  "availableModelsFetched": "Fetched {count} models.",
+  "availableModelsFetchFailed": "Fetching models failed: {error}",
+  "aiSettingsSaved": "AI settings saved.",
+  "aiConnectionTestSucceeded": "AI test succeeded: {result}",
+  "aiConnectionTestFailed": "AI test failed: {error}",
+  "aiSettingsSecurityNotice": "Security notice: local key mode is less secure. Anyone with device/app access may extract this key.",
   "saving": "Saving...",
   "saveDefaults": "Save defaults",
+  "configureAiInSettings": "Configure AI in settings before using assistant features.",
+  "aiNotEnabledForThisProject": "AI is not enabled for this project.",
+  "aiProjectPolicySaved": "Project AI policy saved.",
+  "aiActionPlanDetected": "AI action plan detected",
+  "aiActionsApplied": "Applied actions: swimlanes {swimlanes}, tasks {tasks}.",
+  "aiActionsAppliedDetailed": "Applied actions: swimlanes {swimlanes}, columns {columns}, new tasks {tasks}, moved tasks {moved}, skipped moves {skipped}.",
+  "enableAIForProject": "Enable AI for this project",
+  "aiKeyMode": "AI key mode",
+  "ownerKeyMode": "Owner key (shared costs)",
+  "userKeyRequiredMode": "Each user needs own key",
+  "aiCostNoticeTitle": "AI usage cost notice",
+  "aiCostNoticeBody": "This project uses owner key mode. AI usage here is billed to {owner}.",
+  "iUnderstand": "I understand",
+  "aiChatForProject": "AI chat · {name}",
+  "newChat": "New chat",
+  "continueChat": "Continue chat",
+  "exportChat": "Export chat",
+  "currentChatId": "Current chat: {id}",
+  "noSavedChatsForProject": "No saved chats for this project yet.",
+  "noMessagesToExport": "No messages to export.",
+  "chatExportFailed": "Chat export failed: {error}",
+  "aiRequestFailed": "AI request failed: {error}",
+  "aiIsTyping": "AI is typing...",
+  "aiSuggestedTitle": "AI-suggested title",
+  "aiSuggestedDescription": "AI-suggested description",
+  "aiImproveTitle": "Improve title with AI",
+  "aiImproveDescription": "Improve description with AI",
+  "message": "Message",
   "projectDefaultsReset": "Project defaults reset.",
   "resetDefaults": "Reset defaults?",
   "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "This clears custom defaults and uses Kanboard server defaults for new projects.",
@@ -91,16 +141,23 @@
   "enterAValidURL": "Enter a valid URL.",
   "usernameIsRequired": "Username is required.",
   "tokenIsRequired": "Token is required.",
+  "passwordIsRequired": "Password is required.",
   "credentials": "Credentials",
+  "authMode": "Auth mode",
+  "apiTokenMode": "API token",
+  "passwordMode": "Password",
   "showTransferQR": "Show transfer QR",
   "pasteTransferCode": "Paste transfer code",
   "serverURL": "Server URL",
   "serverURLExample": "https://kanboard.example.com",
   "username": "Username",
+  "password": "Password",
   "personalAccessToken": "Personal access token",
+  "useYourKanboardUsernameAndPassword": "Use your Kanboard username and password.",
   "testConnectionContinue": "Test connection & continue",
   "openProjects": "Open projects",
   "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".",
+  "authNotePasswordModeUsesYourKanboardLoginCredentials": "Auth note: password mode uses your Kanboard login credentials.",
   "scanTransferQR": "Scan transfer QR",
   "transferCredentials": "Transfer credentials",
   "copyCode": "Copy code",
@@ -544,6 +601,66 @@
   "@position": {
     "placeholders": {
       "position": {}
+    }
+  },
+  "@aiConnectionTestSucceeded": {
+    "placeholders": {
+      "result": {}
+    }
+  },
+  "@aiConnectionTestFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@availableModelsFetched": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@availableModelsFetchFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@aiCostNoticeBody": {
+    "placeholders": {
+      "owner": {}
+    }
+  },
+  "@aiActionsApplied": {
+    "placeholders": {
+      "swimlanes": {},
+      "tasks": {}
+    }
+  },
+  "@aiActionsAppliedDetailed": {
+    "placeholders": {
+      "swimlanes": {},
+      "columns": {},
+      "tasks": {},
+      "moved": {},
+      "skipped": {}
+    }
+  },
+  "@aiChatForProject": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@currentChatId": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@chatExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@aiRequestFailed": {
+    "placeholders": {
+      "error": {}
     }
   }
 }

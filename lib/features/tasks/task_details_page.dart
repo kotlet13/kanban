@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../ai/ai_models.dart';
 import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
@@ -105,6 +106,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   bool _isLoading = false;
   bool _isLoadingDetails = false;
   bool _isWorking = false;
+  bool _isAiWorking = false;
   bool _isUpdatingStatus = false;
   bool _advancedExpanded = false;
   bool _isPreparingAdvanced = false;
@@ -1217,6 +1219,147 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     });
   }
 
+  Future<bool> _ensureAiAllowed() async {
+    final settings = await ref.read(aiSettingsStoreProvider).read();
+    if (!settings.enabled || !settings.hasApiKey) {
+      _showSnack(context.l10n.configureAiInSettings, isError: true);
+      return false;
+    }
+    final api = ref.read(kanboardApiProvider);
+    final creds = ref.read(sessionCredentialsProvider);
+    if (api == null || creds == null) return false;
+    final policy = await api.getProjectAiPolicy(widget.projectId);
+    if (!policy.enabled) {
+      _showSnack(context.l10n.aiNotEnabledForThisProject, isError: true);
+      return false;
+    }
+    if (policy.keyMode != AiKeyMode.ownerKey) return true;
+    final owner = (policy.ownerUsername ?? '').trim();
+    if (owner.isEmpty ||
+        owner.toLowerCase() == creds.username.trim().toLowerCase()) {
+      return true;
+    }
+    final consentStore = ref.read(aiConsentStoreProvider);
+    final accepted = await consentStore.hasAcceptedProjectCostWarning(
+      projectId: widget.projectId,
+      username: creds.username,
+    );
+    if (accepted) return true;
+    if (!mounted) return false;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.aiCostNoticeTitle),
+        content: Text(context.l10n.aiCostNoticeBody(owner)),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.l10n.iUnderstand),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return false;
+    await consentStore.setAcceptedProjectCostWarning(
+      projectId: widget.projectId,
+      username: creds.username,
+      accepted: true,
+    );
+    return true;
+  }
+
+  Future<void> _assistTitleWithAi() async {
+    if (_isAiWorking) return;
+    final allowed = await _ensureAiAllowed();
+    if (!allowed || !mounted) return;
+    setState(() => _isAiWorking = true);
+    try {
+      final ai = ref.read(aiFacadeProvider);
+      final suggestion = await ai.assistTaskTitle(
+        AiTaskAssistRequest(
+          projectName: 'Project ${widget.projectId}',
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+        ),
+      );
+      if (!mounted) return;
+      final apply = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.l10n.aiSuggestedTitle),
+          content: Text(suggestion),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(context.l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(context.l10n.apply),
+            ),
+          ],
+        ),
+      );
+      if (apply == true && mounted) {
+        setState(() {
+          _titleController.text = suggestion.trim();
+        });
+      }
+    } catch (error) {
+      _showSnack(context.l10n.aiRequestFailed(error), isError: true);
+    } finally {
+      if (mounted) setState(() => _isAiWorking = false);
+    }
+  }
+
+  Future<void> _assistDescriptionWithAi() async {
+    if (_isAiWorking) return;
+    final allowed = await _ensureAiAllowed();
+    if (!allowed || !mounted) return;
+    setState(() => _isAiWorking = true);
+    try {
+      final ai = ref.read(aiFacadeProvider);
+      final suggestion = await ai.assistTaskDescription(
+        AiTaskAssistRequest(
+          projectName: 'Project ${widget.projectId}',
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+        ),
+      );
+      if (!mounted) return;
+      final apply = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.l10n.aiSuggestedDescription),
+          content: SingleChildScrollView(child: Text(suggestion)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(context.l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(context.l10n.apply),
+            ),
+          ],
+        ),
+      );
+      if (apply == true && mounted) {
+        setState(() {
+          _descriptionController.text = suggestion.trim();
+        });
+      }
+    } catch (error) {
+      _showSnack(context.l10n.aiRequestFailed(error), isError: true);
+    } finally {
+      if (mounted) setState(() => _isAiWorking = false);
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -1344,29 +1487,59 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   ),
                 ),
               ),
-            TextField(
-              controller: _titleController,
-              onChanged: (_) {
-                if (_titleInlineError != null) {
-                  setState(() {
-                    _titleInlineError = null;
-                  });
-                }
-              },
-              decoration: InputDecoration(
-                labelText: isGroceryEditor
-                    ? context.l10n.groceryListTitle
-                    : context.l10n.title,
-                errorText: _titleInlineError,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: TextField(
+                    controller: _titleController,
+                    onChanged: (_) {
+                      if (_titleInlineError != null) {
+                        setState(() {
+                          _titleInlineError = null;
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: isGroceryEditor
+                          ? context.l10n.groceryListTitle
+                          : context.l10n.title,
+                      errorText: _titleInlineError,
+                    ),
+                  ),
+                ),
+                if (!isGroceryEditor) ...<Widget>[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: context.l10n.aiImproveTitle,
+                    onPressed: _isAiWorking ? null : _assistTitleWithAi,
+                    icon: const Icon(Icons.auto_fix_high_outlined),
+                  ),
+                ],
+              ],
             ),
             if (!isGroceryEditor) ...<Widget>[
               const SizedBox(height: 8),
-              TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: context.l10n.description),
-                minLines: 3,
-                maxLines: 6,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.description,
+                      ),
+                      minLines: 3,
+                      maxLines: 6,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: context.l10n.aiImproveDescription,
+                    onPressed: _isAiWorking ? null : _assistDescriptionWithAi,
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Row(

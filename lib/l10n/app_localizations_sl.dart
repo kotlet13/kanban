@@ -33,6 +33,12 @@ class AppLocalizationsSl extends AppLocalizations {
   String get projectDefaults => 'Privzete nastavitve projekta';
 
   @override
+  String get aiSettings => 'Nastavitve AI';
+
+  @override
+  String get aiChat => 'AI klepet';
+
+  @override
   String get connectionSettings => 'Nastavitve povezave';
 
   @override
@@ -142,6 +148,12 @@ class AppLocalizationsSl extends AppLocalizations {
   String get save => 'Shrani';
 
   @override
+  String get stop => 'Ustavi';
+
+  @override
+  String get send => 'Pošlji';
+
+  @override
   String attachments(Object name) {
     return 'Priponke · $name';
   }
@@ -215,10 +227,179 @@ class AppLocalizationsSl extends AppLocalizations {
   String get reset => 'Ponastavi';
 
   @override
+  String get enableAI => 'Omogoči AI';
+
+  @override
+  String get instantResponse => 'Takojšen odgovor';
+
+  @override
+  String get thinkingResponse => 'Razmislek (thinking)';
+
+  @override
+  String get thinkingEffort => 'Nivo razmisleka';
+
+  @override
+  String get effortLow => 'Nizek';
+
+  @override
+  String get effortMedium => 'Srednji';
+
+  @override
+  String get effortHigh => 'Visok';
+
+  @override
+  String get aiModel => 'AI model';
+
+  @override
+  String get openAiApiKey => 'OpenAI API ključ';
+
+  @override
+  String get openAiApiKeyIsRequired => 'OpenAI API ključ je obvezen.';
+
+  @override
+  String get testAIConnection => 'Preizkusi AI povezavo';
+
+  @override
+  String get fetchAvailableModels => 'Pridobi razpoložljive modele';
+
+  @override
+  String availableModelsFetched(Object count) {
+    return 'Pridobljenih modelov: $count.';
+  }
+
+  @override
+  String availableModelsFetchFailed(Object error) {
+    return 'Pridobivanje modelov ni uspelo: $error';
+  }
+
+  @override
+  String get aiSettingsSaved => 'AI nastavitve so shranjene.';
+
+  @override
+  String aiConnectionTestSucceeded(Object result) {
+    return 'AI test je uspel: $result';
+  }
+
+  @override
+  String aiConnectionTestFailed(Object error) {
+    return 'AI test ni uspel: $error';
+  }
+
+  @override
+  String get aiSettingsSecurityNotice =>
+      'Varnostna opomba: lokalni način ključa je manj varen. Vsak z dostopom do naprave/aplikacije lahko pridobi ta ključ.';
+
+  @override
   String get saving => 'Shranjevanje...';
 
   @override
   String get saveDefaults => 'Shrani privzete';
+
+  @override
+  String get configureAiInSettings =>
+      'Pred uporabo AI funkcij najprej nastavite AI v nastavitvah.';
+
+  @override
+  String get aiNotEnabledForThisProject => 'AI za ta projekt ni omogočen.';
+
+  @override
+  String get aiProjectPolicySaved => 'Politika AI za projekt je shranjena.';
+
+  @override
+  String get aiActionPlanDetected => 'Zaznan je AI akcijski načrt';
+
+  @override
+  String aiActionsApplied(Object swimlanes, Object tasks) {
+    return 'Uporabljene akcije: steze $swimlanes, naloge $tasks.';
+  }
+
+  @override
+  String aiActionsAppliedDetailed(
+    Object swimlanes,
+    Object columns,
+    Object tasks,
+    Object moved,
+    Object skipped,
+  ) {
+    return 'Uporabljene akcije: steze $swimlanes, stolpci $columns, nove naloge $tasks, premaknjene naloge $moved, preskočeni premiki $skipped.';
+  }
+
+  @override
+  String get enableAIForProject => 'Omogoči AI za ta projekt';
+
+  @override
+  String get aiKeyMode => 'Način AI ključa';
+
+  @override
+  String get ownerKeyMode => 'Lastnikov ključ (deljeni stroški)';
+
+  @override
+  String get userKeyRequiredMode => 'Vsak uporabnik potrebuje svoj ključ';
+
+  @override
+  String get aiCostNoticeTitle => 'Obvestilo o stroških AI';
+
+  @override
+  String aiCostNoticeBody(Object owner) {
+    return 'Ta projekt uporablja način lastnikovega ključa. Uporaba AI se tukaj zaračuna uporabniku $owner.';
+  }
+
+  @override
+  String get iUnderstand => 'Razumem';
+
+  @override
+  String aiChatForProject(Object name) {
+    return 'AI klepet · $name';
+  }
+
+  @override
+  String get newChat => 'Nov klepet';
+
+  @override
+  String get continueChat => 'Nadaljuj klepet';
+
+  @override
+  String get exportChat => 'Izvozi klepet';
+
+  @override
+  String currentChatId(Object id) {
+    return 'Trenutni klepet: $id';
+  }
+
+  @override
+  String get noSavedChatsForProject =>
+      'Za ta projekt še ni shranjenih klepetov.';
+
+  @override
+  String get noMessagesToExport => 'Ni sporočil za izvoz.';
+
+  @override
+  String chatExportFailed(Object error) {
+    return 'Izvoz klepeta ni uspel: $error';
+  }
+
+  @override
+  String aiRequestFailed(Object error) {
+    return 'AI zahteva ni uspela: $error';
+  }
+
+  @override
+  String get aiIsTyping => 'AI piše ...';
+
+  @override
+  String get aiSuggestedTitle => 'AI predlagan naslov';
+
+  @override
+  String get aiSuggestedDescription => 'AI predlagan opis';
+
+  @override
+  String get aiImproveTitle => 'Izboljšaj naslov z AI';
+
+  @override
+  String get aiImproveDescription => 'Izboljšaj opis z AI';
+
+  @override
+  String get message => 'Sporočilo';
 
   @override
   String get projectDefaultsReset =>
@@ -323,7 +504,19 @@ class AppLocalizationsSl extends AppLocalizations {
   String get tokenIsRequired => 'Žeton je obvezen.';
 
   @override
+  String get passwordIsRequired => 'Geslo je obvezno.';
+
+  @override
   String get credentials => 'Poverilnice';
+
+  @override
+  String get authMode => 'Način prijave';
+
+  @override
+  String get apiTokenMode => 'API žeton';
+
+  @override
+  String get passwordMode => 'Geslo';
 
   @override
   String get showTransferQR => 'Prikaži QR za prenos';
@@ -341,7 +534,14 @@ class AppLocalizationsSl extends AppLocalizations {
   String get username => 'Uporabniško ime';
 
   @override
+  String get password => 'Geslo';
+
+  @override
   String get personalAccessToken => 'Osebni dostopni žeton';
+
+  @override
+  String get useYourKanboardUsernameAndPassword =>
+      'Uporabite svoje Kanboard uporabniško ime in geslo.';
 
   @override
   String get testConnectionContinue => 'Preizkusi povezavo in nadaljuj';
@@ -353,6 +553,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String
   get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc =>
       'Opomba o prijavi: osebni žeton običajno uporablja vaše uporabniško ime; aplikacijski žeton običajno uporablja \"jsonrpc\".';
+
+  @override
+  String get authNotePasswordModeUsesYourKanboardLoginCredentials =>
+      'Opomba o prijavi: način z geslom uporablja vaše Kanboard prijavne podatke.';
 
   @override
   String get scanTransferQR => 'Skeniraj QR za prenos';

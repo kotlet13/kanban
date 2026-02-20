@@ -23,6 +23,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
   final _urlController = TextEditingController();
   final _usernameController = TextEditingController();
   final _tokenController = TextEditingController();
+  KanboardAuthMode _authMode = KanboardAuthMode.password;
 
   bool _isConnecting = false;
   String? _status;
@@ -41,6 +42,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       _urlController.text = saved.serverUrl;
       _usernameController.text = saved.username;
       _tokenController.text = saved.token;
+      _authMode = saved.authMode;
       _status = context.l10n.loadedSavedCredentials;
     });
   }
@@ -57,6 +59,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       serverUrl: _urlController.text.trim(),
       username: _usernameController.text.trim(),
       token: _tokenController.text.trim(),
+      authMode: _authMode,
     );
 
     try {
@@ -76,7 +79,8 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         me = await api.getMe();
       } catch (firstError) {
         debugPrint('[Connect] Primary auth failed: $firstError');
-        if (credentials.username.toLowerCase() != 'jsonrpc') {
+        if (_authMode == KanboardAuthMode.apiToken &&
+            credentials.username.toLowerCase() != 'jsonrpc') {
           debugPrint(
             '[Connect] Retrying with username="jsonrpc" using same token.',
           );
@@ -84,6 +88,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
             serverUrl: credentials.serverUrl,
             username: 'jsonrpc',
             token: credentials.token,
+            authMode: _authMode,
           );
           final fallbackApi = KanboardApi.fromCredentials(fallbackCredentials);
           version = await fallbackApi.getVersion();
@@ -135,6 +140,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
       serverUrl: serverUrl,
       username: username,
       token: token,
+      authMode: _authMode,
     );
   }
 
@@ -259,6 +265,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         _urlController.text = credentials.serverUrl;
         _usernameController.text = credentials.username;
         _tokenController.text = credentials.token;
+        _authMode = credentials.authMode;
         _status = context.l10n.importedCredentialsFromTransferCode;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -296,12 +303,27 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final isPasswordMode = _authMode == KanboardAuthMode.password;
+    final secretFieldLabel = isPasswordMode
+        ? l10n.password
+        : l10n.personalAccessToken;
+    final secretRequiredMessage = isPasswordMode
+        ? l10n.passwordIsRequired
+        : l10n.tokenIsRequired;
+    final connectionHint = isPasswordMode
+        ? l10n.useYourKanboardUsernameAndPassword
+        : l10n.usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc;
+    final authNote = isPasswordMode
+        ? l10n.authNotePasswordModeUsesYourKanboardLoginCredentials
+        : l10n
+              .authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.l10n.connectToKanboard),
+        title: Text(l10n.connectToKanboard),
         actions: <Widget>[
           IconButton(
-            tooltip: context.l10n.projects,
+            tooltip: l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
           ),
@@ -376,9 +398,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        context
-                                            .l10n
-                                            .usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc,
+                                        connectionHint,
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                               color: theme
@@ -428,9 +448,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                context
-                                                    .l10n
-                                                    .usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc,
+                                                connectionHint,
                                                 style: theme
                                                     .textTheme
                                                     .bodyMedium
@@ -462,6 +480,36 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
+                                Text(
+                                  l10n.authMode,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SegmentedButton<KanboardAuthMode>(
+                                  segments: <ButtonSegment<KanboardAuthMode>>[
+                                    ButtonSegment<KanboardAuthMode>(
+                                      value: KanboardAuthMode.apiToken,
+                                      label: Text(l10n.apiTokenMode),
+                                      icon: const Icon(Icons.key_rounded),
+                                    ),
+                                    ButtonSegment<KanboardAuthMode>(
+                                      value: KanboardAuthMode.password,
+                                      label: Text(l10n.passwordMode),
+                                      icon: const Icon(Icons.password_rounded),
+                                    ),
+                                  ],
+                                  selected: <KanboardAuthMode>{_authMode},
+                                  onSelectionChanged:
+                                      (Set<KanboardAuthMode> selection) {
+                                        if (selection.isEmpty) return;
+                                        setState(() {
+                                          _authMode = selection.first;
+                                        });
+                                      },
+                                ),
+                                const SizedBox(height: 12),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
@@ -521,7 +569,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                 TextFormField(
                                   controller: _tokenController,
                                   decoration: InputDecoration(
-                                    labelText: context.l10n.personalAccessToken,
+                                    labelText: secretFieldLabel,
                                     prefixIcon: const Icon(
                                       Icons.password_rounded,
                                     ),
@@ -529,7 +577,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                   obscureText: true,
                                   validator: (value) =>
                                       (value == null || value.trim().isEmpty)
-                                      ? context.l10n.tokenIsRequired
+                                      ? secretRequiredMessage
                                       : null,
                                 ),
                                 const SizedBox(height: 14),
@@ -587,9 +635,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    context
-                                        .l10n
-                                        .authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc,
+                                    authNote,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),

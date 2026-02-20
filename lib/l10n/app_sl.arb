@@ -8,6 +8,8 @@
   "connectToKanboard": "Poveži se s Kanboardom",
   "projects": "Projekti",
   "projectDefaults": "Privzete nastavitve projekta",
+  "aiSettings": "Nastavitve AI",
+  "aiChat": "AI klepet",
   "connectionSettings": "Nastavitve povezave",
   "refresh": "Osveži",
   "logout": "Odjava",
@@ -41,6 +43,8 @@
   "projectColorSyncedViaMetadata": "Barva projekta (sinhronizirano prek metapodatkov)",
   "noColor": "Brez barve",
   "save": "Shrani",
+  "stop": "Ustavi",
+  "send": "Pošlji",
   "attachments": "Priponke · {name}",
   "noProjectAttachmentsYet": "Priponk projekta še ni.",
   "download": "Prenesi",
@@ -63,8 +67,54 @@
   "exampleUSD": "Primer: USD",
   "defaultExpenseCurrency": "Privzeta valuta stroškov",
   "reset": "Ponastavi",
+  "enableAI": "Omogoči AI",
+  "instantResponse": "Takojšen odgovor",
+  "thinkingResponse": "Razmislek (thinking)",
+  "thinkingEffort": "Nivo razmisleka",
+  "effortLow": "Nizek",
+  "effortMedium": "Srednji",
+  "effortHigh": "Visok",
+  "aiModel": "AI model",
+  "openAiApiKey": "OpenAI API ključ",
+  "openAiApiKeyIsRequired": "OpenAI API ključ je obvezen.",
+  "testAIConnection": "Preizkusi AI povezavo",
+  "fetchAvailableModels": "Pridobi razpoložljive modele",
+  "availableModelsFetched": "Pridobljenih modelov: {count}.",
+  "availableModelsFetchFailed": "Pridobivanje modelov ni uspelo: {error}",
+  "aiSettingsSaved": "AI nastavitve so shranjene.",
+  "aiConnectionTestSucceeded": "AI test je uspel: {result}",
+  "aiConnectionTestFailed": "AI test ni uspel: {error}",
+  "aiSettingsSecurityNotice": "Varnostna opomba: lokalni način ključa je manj varen. Vsak z dostopom do naprave/aplikacije lahko pridobi ta ključ.",
   "saving": "Shranjevanje...",
   "saveDefaults": "Shrani privzete",
+  "configureAiInSettings": "Pred uporabo AI funkcij najprej nastavite AI v nastavitvah.",
+  "aiNotEnabledForThisProject": "AI za ta projekt ni omogočen.",
+  "aiProjectPolicySaved": "Politika AI za projekt je shranjena.",
+  "aiActionPlanDetected": "Zaznan je AI akcijski načrt",
+  "aiActionsApplied": "Uporabljene akcije: steze {swimlanes}, naloge {tasks}.",
+  "aiActionsAppliedDetailed": "Uporabljene akcije: steze {swimlanes}, stolpci {columns}, nove naloge {tasks}, premaknjene naloge {moved}, preskočeni premiki {skipped}.",
+  "enableAIForProject": "Omogoči AI za ta projekt",
+  "aiKeyMode": "Način AI ključa",
+  "ownerKeyMode": "Lastnikov ključ (deljeni stroški)",
+  "userKeyRequiredMode": "Vsak uporabnik potrebuje svoj ključ",
+  "aiCostNoticeTitle": "Obvestilo o stroških AI",
+  "aiCostNoticeBody": "Ta projekt uporablja način lastnikovega ključa. Uporaba AI se tukaj zaračuna uporabniku {owner}.",
+  "iUnderstand": "Razumem",
+  "aiChatForProject": "AI klepet · {name}",
+  "newChat": "Nov klepet",
+  "continueChat": "Nadaljuj klepet",
+  "exportChat": "Izvozi klepet",
+  "currentChatId": "Trenutni klepet: {id}",
+  "noSavedChatsForProject": "Za ta projekt še ni shranjenih klepetov.",
+  "noMessagesToExport": "Ni sporočil za izvoz.",
+  "chatExportFailed": "Izvoz klepeta ni uspel: {error}",
+  "aiRequestFailed": "AI zahteva ni uspela: {error}",
+  "aiIsTyping": "AI piše ...",
+  "aiSuggestedTitle": "AI predlagan naslov",
+  "aiSuggestedDescription": "AI predlagan opis",
+  "aiImproveTitle": "Izboljšaj naslov z AI",
+  "aiImproveDescription": "Izboljšaj opis z AI",
+  "message": "Sporočilo",
   "projectDefaultsReset": "Privzete nastavitve projekta so ponastavljene.",
   "resetDefaults": "Ponastavim privzete?",
   "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "To počisti prilagojene privzete nastavitve in uporabi privzete nastavitve strežnika Kanboard za nove projekte.",
@@ -91,16 +141,23 @@
   "enterAValidURL": "Vnesite veljaven URL.",
   "usernameIsRequired": "Uporabniško ime je obvezno.",
   "tokenIsRequired": "Žeton je obvezen.",
+  "passwordIsRequired": "Geslo je obvezno.",
   "credentials": "Poverilnice",
+  "authMode": "Način prijave",
+  "apiTokenMode": "API žeton",
+  "passwordMode": "Geslo",
   "showTransferQR": "Prikaži QR za prenos",
   "pasteTransferCode": "Prilepi kodo za prenos",
   "serverURL": "URL strežnika",
   "serverURLExample": "https://kanboard.example.com",
   "username": "Uporabniško ime",
+  "password": "Geslo",
   "personalAccessToken": "Osebni dostopni žeton",
+  "useYourKanboardUsernameAndPassword": "Uporabite svoje Kanboard uporabniško ime in geslo.",
   "testConnectionContinue": "Preizkusi povezavo in nadaljuj",
   "openProjects": "Odpri projekte",
   "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Opomba o prijavi: osebni žeton običajno uporablja vaše uporabniško ime; aplikacijski žeton običajno uporablja \"jsonrpc\".",
+  "authNotePasswordModeUsesYourKanboardLoginCredentials": "Opomba o prijavi: način z geslom uporablja vaše Kanboard prijavne podatke.",
   "scanTransferQR": "Skeniraj QR za prenos",
   "transferCredentials": "Prenesi poverilnice",
   "copyCode": "Kopiraj kodo",
@@ -544,6 +601,66 @@
   "@position": {
     "placeholders": {
       "position": {}
+    }
+  },
+  "@aiConnectionTestSucceeded": {
+    "placeholders": {
+      "result": {}
+    }
+  },
+  "@aiConnectionTestFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@availableModelsFetched": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@availableModelsFetchFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@aiCostNoticeBody": {
+    "placeholders": {
+      "owner": {}
+    }
+  },
+  "@aiActionsApplied": {
+    "placeholders": {
+      "swimlanes": {},
+      "tasks": {}
+    }
+  },
+  "@aiActionsAppliedDetailed": {
+    "placeholders": {
+      "swimlanes": {},
+      "columns": {},
+      "tasks": {},
+      "moved": {},
+      "skipped": {}
+    }
+  },
+  "@aiChatForProject": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "@currentChatId": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "@chatExportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "@aiRequestFailed": {
+    "placeholders": {
+      "error": {}
     }
   }
 }

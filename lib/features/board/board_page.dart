@@ -29,7 +29,6 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   bool _isLoading = false;
   String? _error;
   KanboardBoard? _board;
-  bool _isCompactDragLocked = true;
   String? _expenseCurrencyCode;
   int? _expenseBudgetCents;
 
@@ -435,6 +434,12 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         .then((_) => _loadBoard(fromRefresh: true));
   }
 
+  void _openAiChat() {
+    context.push(
+      '/board/${widget.projectId}/ai-chat?projectName=${Uri.encodeComponent(widget.projectName)}',
+    );
+  }
+
   Future<void> _openSearch() async {
     final l10n = context.l10n;
     final selectedTaskId = await showDialog<int>(
@@ -499,6 +504,51 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   Widget _taskCard(KanboardTask task, {required bool dragEnabled}) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
+    final isDone = !task.isActive;
+    final dragHandle = Draggable<KanboardTask>(
+      data: task,
+      feedback: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(14),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 250),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                task.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  decoration: isDone
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.35,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Icon(
+            Icons.open_with_rounded,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Icon(
+          Icons.open_with_rounded,
+          size: 18,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
     final taskCardBody = Card(
       child: InkWell(
         onTap: () => _openTaskEditor(task: task),
@@ -527,6 +577,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
+                        decoration: isDone
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
                       ),
                     ),
                     if (task.description != null &&
@@ -538,6 +591,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
+                          decoration: isDone
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
                         ),
                       ),
                     ],
@@ -551,6 +607,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   ],
                 ),
               ),
+              if (dragEnabled) dragHandle,
               PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == 'edit') {
@@ -588,52 +645,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       ),
     );
 
-    if (!dragEnabled) {
-      return taskCardBody;
-    }
-
-    return Draggable<KanboardTask>(
-      data: task,
-      feedback: Material(
-        elevation: 6,
-        borderRadius: BorderRadius.circular(14),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 250),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                task.title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.35,
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: <Widget>[
-                const Icon(Icons.open_with_rounded, size: 16),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    task.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      child: taskCardBody,
-    );
+    return taskCardBody;
   }
 
   Widget _columnCard(
@@ -764,11 +776,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
-  Widget _boardOverview(
-    KanboardBoard? board, {
-    required bool showCompactDragLock,
-    required bool dragEnabled,
-  }) {
+  Widget _boardOverview(KanboardBoard? board) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
     final swimlaneCount = board?.swimlanes.length ?? 0;
@@ -782,7 +790,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final plannedCents = board == null ? 0 : _plannedExpenseCents(board);
     final spentCents = board == null ? 0 : _spentExpenseCents(board);
     final budgetCents = _expenseBudgetCents;
-    final remainingCents = budgetCents == null ? null : (budgetCents - spentCents);
+    final remainingCents = budgetCents == null
+        ? null
+        : (budgetCents - spentCents);
 
     Widget statChip(IconData icon, String label, String value) {
       return Container(
@@ -852,17 +862,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        showCompactDragLock
-                            ? dragEnabled
-                                  ? context
-                                        .l10n
-                                        .taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves
-                                  : context
-                                        .l10n
-                                        .taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks
-                            : context
-                                  .l10n
-                                  .dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax,
+                        context
+                            .l10n
+                            .dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -1091,11 +1093,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     required bool dragEnabled,
   }) {
     return <Widget>[
-      _boardOverview(
-        board,
-        showCompactDragLock: stackedColumns,
-        dragEnabled: dragEnabled,
-      ),
+      _boardOverview(board),
       if (_isLoading)
         const Padding(
           padding: EdgeInsets.only(top: 10),
@@ -1133,7 +1131,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   Widget build(BuildContext context) {
     final board = _board;
     final stackedColumns = MediaQuery.sizeOf(context).width < 900;
-    final dragEnabled = !stackedColumns || !_isCompactDragLocked;
+    const dragEnabled = true;
     final maxColumnsPerSwimlane = board == null || board.swimlanes.isEmpty
         ? 3
         : board.swimlanes
@@ -1162,18 +1160,11 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             onPressed: _openSearch,
             icon: const Icon(Icons.search),
           ),
-          if (stackedColumns)
-            IconButton(
-              tooltip: dragEnabled
-                  ? context.l10n.lockTaskDrag
-                  : context.l10n.unlockTaskDrag,
-              onPressed: () {
-                setState(() {
-                  _isCompactDragLocked = !_isCompactDragLocked;
-                });
-              },
-              icon: Icon(dragEnabled ? Icons.lock_open : Icons.lock),
-            ),
+          IconButton(
+            tooltip: context.l10n.aiChat,
+            onPressed: _openAiChat,
+            icon: const Icon(Icons.smart_toy_outlined),
+          ),
           IconButton(
             tooltip: context.l10n.refreshBoard,
             onPressed: _isLoading ? null : () => _loadBoard(fromRefresh: true),
@@ -1353,7 +1344,14 @@ class _TaskSearchSheetState extends ConsumerState<_TaskSearchSheet> {
                       final task = _results[index];
                       return ListTile(
                         onTap: () => Navigator.of(context).pop(task.id),
-                        title: Text(task.title),
+                        title: Text(
+                          task.title,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            decoration: !task.isActive
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                          ),
+                        ),
                         subtitle: Text(context.l10n.taskNumber(task.id)),
                         trailing: const Icon(Icons.chevron_right),
                       );

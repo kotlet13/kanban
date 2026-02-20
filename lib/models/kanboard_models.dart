@@ -19,16 +19,20 @@ String? parseKanboardString(dynamic value) {
   return text.isEmpty ? null : text;
 }
 
+enum KanboardAuthMode { apiToken, password }
+
 class KanboardCredentials {
   const KanboardCredentials({
     required this.serverUrl,
     required this.username,
     required this.token,
+    this.authMode = KanboardAuthMode.apiToken,
   });
 
   final String serverUrl;
   final String username;
   final String token;
+  final KanboardAuthMode authMode;
 
   String get normalizedEndpoint {
     final trimmed = serverUrl.trim();

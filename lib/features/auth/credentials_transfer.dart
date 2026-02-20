@@ -12,6 +12,7 @@ String buildCredentialsTransferPayload(KanboardCredentials credentials) {
     'url': credentials.serverUrl,
     'u': credentials.username,
     't': credentials.token,
+    'm': credentials.authMode.name,
     'iat': DateTime.now().toUtc().millisecondsSinceEpoch,
   };
 
@@ -57,6 +58,7 @@ KanboardCredentials parseCredentialsTransferPayload(String rawValue) {
   final serverUrl = payload['url']?.toString().trim() ?? '';
   final username = payload['u']?.toString().trim() ?? '';
   final token = payload['t']?.toString().trim() ?? '';
+  final authModeRaw = payload['m']?.toString().trim();
 
   if (serverUrl.isEmpty || username.isEmpty || token.isEmpty) {
     throw const FormatException('Transfer payload is incomplete.');
@@ -66,5 +68,9 @@ KanboardCredentials parseCredentialsTransferPayload(String rawValue) {
     serverUrl: serverUrl,
     username: username,
     token: token,
+    authMode: KanboardAuthMode.values.firstWhere(
+      (mode) => mode.name == authModeRaw,
+      orElse: () => KanboardAuthMode.apiToken,
+    ),
   );
 }

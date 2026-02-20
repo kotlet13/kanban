@@ -376,6 +376,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
             icon: const Icon(Icons.tune),
           ),
           IconButton(
+            tooltip: context.l10n.aiSettings,
+            onPressed: () => context.push('/settings/ai'),
+            icon: const Icon(Icons.smart_toy_outlined),
+          ),
+          IconButton(
             tooltip: context.l10n.connectionSettings,
             onPressed: () => context.push('/connect'),
             icon: const Icon(Icons.settings_ethernet),

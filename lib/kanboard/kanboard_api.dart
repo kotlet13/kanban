@@ -1,3 +1,4 @@
+import '../ai/ai_models.dart';
 import '../models/kanboard_models.dart';
 import 'jsonrpc_client.dart';
 
@@ -8,6 +9,9 @@ class KanboardApi {
   static const String projectColorMetadataKey = 'ui_project_color';
   static const String expenseCurrencyMetadataKey = 'ui_expense_currency';
   static const String expenseBudgetCentsMetadataKey = 'ui_expense_budget_cents';
+  static const String aiEnabledMetadataKey = 'ui_ai_enabled';
+  static const String aiKeyModeMetadataKey = 'ui_ai_key_mode';
+  static const String aiOwnerUsernameMetadataKey = 'ui_ai_owner_username';
 
   factory KanboardApi.fromCredentials(KanboardCredentials credentials) {
     return KanboardApi(
@@ -208,6 +212,54 @@ class KanboardApi {
         projectId: projectId,
         name: expenseBudgetCentsMetadataKey,
       );
+    }
+    return true;
+  }
+
+  Future<AiProjectPolicy> getProjectAiPolicy(int projectId) async {
+    final enabledRaw = await getProjectMetadataByName(
+      projectId: projectId,
+      name: aiEnabledMetadataKey,
+    );
+    final keyModeRaw = await getProjectMetadataByName(
+      projectId: projectId,
+      name: aiKeyModeMetadataKey,
+    );
+    final ownerUsername = await getProjectMetadataByName(
+      projectId: projectId,
+      name: aiOwnerUsernameMetadataKey,
+    );
+    final enabled = (enabledRaw?.trim() ?? '').toLowerCase() == '1';
+    final keyMode = (keyModeRaw?.trim() ?? '').toLowerCase() == 'user_key_required'
+        ? AiKeyMode.userKeyRequired
+        : AiKeyMode.ownerKey;
+    return AiProjectPolicy(
+      enabled: enabled,
+      keyMode: keyMode,
+      ownerUsername: ownerUsername?.trim().isEmpty == true
+          ? null
+          : ownerUsername?.trim(),
+    );
+  }
+
+  Future<bool> saveProjectAiPolicy({
+    required int projectId,
+    required AiProjectPolicy policy,
+  }) async {
+    final values = <String, String>{
+      aiEnabledMetadataKey: policy.enabled ? '1' : '0',
+      aiKeyModeMetadataKey: policy.keyMode == AiKeyMode.userKeyRequired
+          ? 'user_key_required'
+          : 'owner_key',
+    };
+    final owner = policy.ownerUsername?.trim();
+    if (owner != null && owner.isNotEmpty) {
+      values[aiOwnerUsernameMetadataKey] = owner;
+    }
+    final saved = await saveProjectMetadata(projectId: projectId, values: values);
+    if (!saved) return false;
+    if (owner == null || owner.isEmpty) {
+      await removeProjectMetadata(projectId: projectId, name: aiOwnerUsernameMetadataKey);
     }
     return true;
   }

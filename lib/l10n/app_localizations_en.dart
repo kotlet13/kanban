@@ -33,6 +33,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectDefaults => 'Project defaults';
 
   @override
+  String get aiSettings => 'AI settings';
+
+  @override
+  String get aiChat => 'AI chat';
+
+  @override
   String get connectionSettings => 'Connection settings';
 
   @override
@@ -140,6 +146,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
+  String get stop => 'Stop';
+
+  @override
+  String get send => 'Send';
+
+  @override
   String attachments(Object name) {
     return 'Attachments · $name';
   }
@@ -213,10 +225,179 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
+  String get enableAI => 'Enable AI';
+
+  @override
+  String get instantResponse => 'Instant response';
+
+  @override
+  String get thinkingResponse => 'Thinking response';
+
+  @override
+  String get thinkingEffort => 'Thinking effort';
+
+  @override
+  String get effortLow => 'Low';
+
+  @override
+  String get effortMedium => 'Medium';
+
+  @override
+  String get effortHigh => 'High';
+
+  @override
+  String get aiModel => 'AI model';
+
+  @override
+  String get openAiApiKey => 'OpenAI API key';
+
+  @override
+  String get openAiApiKeyIsRequired => 'OpenAI API key is required.';
+
+  @override
+  String get testAIConnection => 'Test AI connection';
+
+  @override
+  String get fetchAvailableModels => 'Fetch available models';
+
+  @override
+  String availableModelsFetched(Object count) {
+    return 'Fetched $count models.';
+  }
+
+  @override
+  String availableModelsFetchFailed(Object error) {
+    return 'Fetching models failed: $error';
+  }
+
+  @override
+  String get aiSettingsSaved => 'AI settings saved.';
+
+  @override
+  String aiConnectionTestSucceeded(Object result) {
+    return 'AI test succeeded: $result';
+  }
+
+  @override
+  String aiConnectionTestFailed(Object error) {
+    return 'AI test failed: $error';
+  }
+
+  @override
+  String get aiSettingsSecurityNotice =>
+      'Security notice: local key mode is less secure. Anyone with device/app access may extract this key.';
+
+  @override
   String get saving => 'Saving...';
 
   @override
   String get saveDefaults => 'Save defaults';
+
+  @override
+  String get configureAiInSettings =>
+      'Configure AI in settings before using assistant features.';
+
+  @override
+  String get aiNotEnabledForThisProject =>
+      'AI is not enabled for this project.';
+
+  @override
+  String get aiProjectPolicySaved => 'Project AI policy saved.';
+
+  @override
+  String get aiActionPlanDetected => 'AI action plan detected';
+
+  @override
+  String aiActionsApplied(Object swimlanes, Object tasks) {
+    return 'Applied actions: swimlanes $swimlanes, tasks $tasks.';
+  }
+
+  @override
+  String aiActionsAppliedDetailed(
+    Object swimlanes,
+    Object columns,
+    Object tasks,
+    Object moved,
+    Object skipped,
+  ) {
+    return 'Applied actions: swimlanes $swimlanes, columns $columns, new tasks $tasks, moved tasks $moved, skipped moves $skipped.';
+  }
+
+  @override
+  String get enableAIForProject => 'Enable AI for this project';
+
+  @override
+  String get aiKeyMode => 'AI key mode';
+
+  @override
+  String get ownerKeyMode => 'Owner key (shared costs)';
+
+  @override
+  String get userKeyRequiredMode => 'Each user needs own key';
+
+  @override
+  String get aiCostNoticeTitle => 'AI usage cost notice';
+
+  @override
+  String aiCostNoticeBody(Object owner) {
+    return 'This project uses owner key mode. AI usage here is billed to $owner.';
+  }
+
+  @override
+  String get iUnderstand => 'I understand';
+
+  @override
+  String aiChatForProject(Object name) {
+    return 'AI chat · $name';
+  }
+
+  @override
+  String get newChat => 'New chat';
+
+  @override
+  String get continueChat => 'Continue chat';
+
+  @override
+  String get exportChat => 'Export chat';
+
+  @override
+  String currentChatId(Object id) {
+    return 'Current chat: $id';
+  }
+
+  @override
+  String get noSavedChatsForProject => 'No saved chats for this project yet.';
+
+  @override
+  String get noMessagesToExport => 'No messages to export.';
+
+  @override
+  String chatExportFailed(Object error) {
+    return 'Chat export failed: $error';
+  }
+
+  @override
+  String aiRequestFailed(Object error) {
+    return 'AI request failed: $error';
+  }
+
+  @override
+  String get aiIsTyping => 'AI is typing...';
+
+  @override
+  String get aiSuggestedTitle => 'AI-suggested title';
+
+  @override
+  String get aiSuggestedDescription => 'AI-suggested description';
+
+  @override
+  String get aiImproveTitle => 'Improve title with AI';
+
+  @override
+  String get aiImproveDescription => 'Improve description with AI';
+
+  @override
+  String get message => 'Message';
 
   @override
   String get projectDefaultsReset => 'Project defaults reset.';
@@ -320,7 +501,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tokenIsRequired => 'Token is required.';
 
   @override
+  String get passwordIsRequired => 'Password is required.';
+
+  @override
   String get credentials => 'Credentials';
+
+  @override
+  String get authMode => 'Auth mode';
+
+  @override
+  String get apiTokenMode => 'API token';
+
+  @override
+  String get passwordMode => 'Password';
 
   @override
   String get showTransferQR => 'Show transfer QR';
@@ -338,7 +531,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get username => 'Username';
 
   @override
+  String get password => 'Password';
+
+  @override
   String get personalAccessToken => 'Personal access token';
+
+  @override
+  String get useYourKanboardUsernameAndPassword =>
+      'Use your Kanboard username and password.';
 
   @override
   String get testConnectionContinue => 'Test connection & continue';
@@ -350,6 +550,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String
   get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc =>
       'Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".';
+
+  @override
+  String get authNotePasswordModeUsesYourKanboardLoginCredentials =>
+      'Auth note: password mode uses your Kanboard login credentials.';
 
   @override
   String get scanTransferQR => 'Scan transfer QR';

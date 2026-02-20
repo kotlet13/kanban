@@ -146,6 +146,18 @@ abstract class AppLocalizations {
   /// **'Project defaults'**
   String get projectDefaults;
 
+  /// No description provided for @aiSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'AI settings'**
+  String get aiSettings;
+
+  /// No description provided for @aiChat.
+  ///
+  /// In en, this message translates to:
+  /// **'AI chat'**
+  String get aiChat;
+
   /// No description provided for @connectionSettings.
   ///
   /// In en, this message translates to:
@@ -345,6 +357,18 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
   /// No description provided for @attachments.
   ///
   /// In en, this message translates to:
@@ -477,6 +501,114 @@ abstract class AppLocalizations {
   /// **'Reset'**
   String get reset;
 
+  /// No description provided for @enableAI.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AI'**
+  String get enableAI;
+
+  /// No description provided for @instantResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant response'**
+  String get instantResponse;
+
+  /// No description provided for @thinkingResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking response'**
+  String get thinkingResponse;
+
+  /// No description provided for @thinkingEffort.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking effort'**
+  String get thinkingEffort;
+
+  /// No description provided for @effortLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get effortLow;
+
+  /// No description provided for @effortMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get effortMedium;
+
+  /// No description provided for @effortHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get effortHigh;
+
+  /// No description provided for @aiModel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI model'**
+  String get aiModel;
+
+  /// No description provided for @openAiApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI API key'**
+  String get openAiApiKey;
+
+  /// No description provided for @openAiApiKeyIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI API key is required.'**
+  String get openAiApiKeyIsRequired;
+
+  /// No description provided for @testAIConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test AI connection'**
+  String get testAIConnection;
+
+  /// No description provided for @fetchAvailableModels.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch available models'**
+  String get fetchAvailableModels;
+
+  /// No description provided for @availableModelsFetched.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetched {count} models.'**
+  String availableModelsFetched(Object count);
+
+  /// No description provided for @availableModelsFetchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching models failed: {error}'**
+  String availableModelsFetchFailed(Object error);
+
+  /// No description provided for @aiSettingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'AI settings saved.'**
+  String get aiSettingsSaved;
+
+  /// No description provided for @aiConnectionTestSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'AI test succeeded: {result}'**
+  String aiConnectionTestSucceeded(Object result);
+
+  /// No description provided for @aiConnectionTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI test failed: {error}'**
+  String aiConnectionTestFailed(Object error);
+
+  /// No description provided for @aiSettingsSecurityNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Security notice: local key mode is less secure. Anyone with device/app access may extract this key.'**
+  String get aiSettingsSecurityNotice;
+
   /// No description provided for @saving.
   ///
   /// In en, this message translates to:
@@ -488,6 +620,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save defaults'**
   String get saveDefaults;
+
+  /// No description provided for @configureAiInSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure AI in settings before using assistant features.'**
+  String get configureAiInSettings;
+
+  /// No description provided for @aiNotEnabledForThisProject.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is not enabled for this project.'**
+  String get aiNotEnabledForThisProject;
+
+  /// No description provided for @aiProjectPolicySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Project AI policy saved.'**
+  String get aiProjectPolicySaved;
+
+  /// No description provided for @aiActionPlanDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'AI action plan detected'**
+  String get aiActionPlanDetected;
+
+  /// No description provided for @aiActionsApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied actions: swimlanes {swimlanes}, tasks {tasks}.'**
+  String aiActionsApplied(Object swimlanes, Object tasks);
+
+  /// No description provided for @aiActionsAppliedDetailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied actions: swimlanes {swimlanes}, columns {columns}, new tasks {tasks}, moved tasks {moved}, skipped moves {skipped}.'**
+  String aiActionsAppliedDetailed(
+    Object swimlanes,
+    Object columns,
+    Object tasks,
+    Object moved,
+    Object skipped,
+  );
+
+  /// No description provided for @enableAIForProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable AI for this project'**
+  String get enableAIForProject;
+
+  /// No description provided for @aiKeyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'AI key mode'**
+  String get aiKeyMode;
+
+  /// No description provided for @ownerKeyMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner key (shared costs)'**
+  String get ownerKeyMode;
+
+  /// No description provided for @userKeyRequiredMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Each user needs own key'**
+  String get userKeyRequiredMode;
+
+  /// No description provided for @aiCostNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI usage cost notice'**
+  String get aiCostNoticeTitle;
+
+  /// No description provided for @aiCostNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This project uses owner key mode. AI usage here is billed to {owner}.'**
+  String aiCostNoticeBody(Object owner);
+
+  /// No description provided for @iUnderstand.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand'**
+  String get iUnderstand;
+
+  /// No description provided for @aiChatForProject.
+  ///
+  /// In en, this message translates to:
+  /// **'AI chat · {name}'**
+  String aiChatForProject(Object name);
+
+  /// No description provided for @newChat.
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get newChat;
+
+  /// No description provided for @continueChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue chat'**
+  String get continueChat;
+
+  /// No description provided for @exportChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Export chat'**
+  String get exportChat;
+
+  /// No description provided for @currentChatId.
+  ///
+  /// In en, this message translates to:
+  /// **'Current chat: {id}'**
+  String currentChatId(Object id);
+
+  /// No description provided for @noSavedChatsForProject.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved chats for this project yet.'**
+  String get noSavedChatsForProject;
+
+  /// No description provided for @noMessagesToExport.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages to export.'**
+  String get noMessagesToExport;
+
+  /// No description provided for @chatExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat export failed: {error}'**
+  String chatExportFailed(Object error);
+
+  /// No description provided for @aiRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI request failed: {error}'**
+  String aiRequestFailed(Object error);
+
+  /// No description provided for @aiIsTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is typing...'**
+  String get aiIsTyping;
+
+  /// No description provided for @aiSuggestedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-suggested title'**
+  String get aiSuggestedTitle;
+
+  /// No description provided for @aiSuggestedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-suggested description'**
+  String get aiSuggestedDescription;
+
+  /// No description provided for @aiImproveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve title with AI'**
+  String get aiImproveTitle;
+
+  /// No description provided for @aiImproveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve description with AI'**
+  String get aiImproveDescription;
+
+  /// No description provided for @message.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get message;
 
   /// No description provided for @projectDefaultsReset.
   ///
@@ -649,11 +955,35 @@ abstract class AppLocalizations {
   /// **'Token is required.'**
   String get tokenIsRequired;
 
+  /// No description provided for @passwordIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required.'**
+  String get passwordIsRequired;
+
   /// No description provided for @credentials.
   ///
   /// In en, this message translates to:
   /// **'Credentials'**
   String get credentials;
+
+  /// No description provided for @authMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth mode'**
+  String get authMode;
+
+  /// No description provided for @apiTokenMode.
+  ///
+  /// In en, this message translates to:
+  /// **'API token'**
+  String get apiTokenMode;
+
+  /// No description provided for @passwordMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordMode;
 
   /// No description provided for @showTransferQR.
   ///
@@ -685,11 +1015,23 @@ abstract class AppLocalizations {
   /// **'Username'**
   String get username;
 
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
   /// No description provided for @personalAccessToken.
   ///
   /// In en, this message translates to:
   /// **'Personal access token'**
   String get personalAccessToken;
+
+  /// No description provided for @useYourKanboardUsernameAndPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your Kanboard username and password.'**
+  String get useYourKanboardUsernameAndPassword;
 
   /// No description provided for @testConnectionContinue.
   ///
@@ -709,6 +1051,12 @@ abstract class AppLocalizations {
   /// **'Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".'**
   String
   get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
+
+  /// No description provided for @authNotePasswordModeUsesYourKanboardLoginCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth note: password mode uses your Kanboard login credentials.'**
+  String get authNotePasswordModeUsesYourKanboardLoginCredentials;
 
   /// No description provided for @scanTransferQR.
   ///
