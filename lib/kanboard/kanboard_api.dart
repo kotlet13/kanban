@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import '../ai/ai_models.dart';
 import '../models/kanboard_models.dart';
 import 'jsonrpc_client.dart';
@@ -6,6 +10,9 @@ class KanboardApi {
   KanboardApi(this._client);
 
   final JsonRpcClient _client;
+  String? _webSessionCookie;
+  static const String taskHoursTrackerSubtaskTitle =
+      '__APP_TASK_HOURS_TRACKER__';
   static const String projectColorMetadataKey = 'ui_project_color';
   static const String expenseCurrencyMetadataKey = 'ui_expense_currency';
   static const String expenseBudgetCentsMetadataKey = 'ui_expense_budget_cents';
@@ -230,7 +237,8 @@ class KanboardApi {
       name: aiOwnerUsernameMetadataKey,
     );
     final enabled = (enabledRaw?.trim() ?? '').toLowerCase() == '1';
-    final keyMode = (keyModeRaw?.trim() ?? '').toLowerCase() == 'user_key_required'
+    final keyMode =
+        (keyModeRaw?.trim() ?? '').toLowerCase() == 'user_key_required'
         ? AiKeyMode.userKeyRequired
         : AiKeyMode.ownerKey;
     return AiProjectPolicy(
@@ -256,10 +264,16 @@ class KanboardApi {
     if (owner != null && owner.isNotEmpty) {
       values[aiOwnerUsernameMetadataKey] = owner;
     }
-    final saved = await saveProjectMetadata(projectId: projectId, values: values);
+    final saved = await saveProjectMetadata(
+      projectId: projectId,
+      values: values,
+    );
     if (!saved) return false;
     if (owner == null || owner.isEmpty) {
-      await removeProjectMetadata(projectId: projectId, name: aiOwnerUsernameMetadataKey);
+      await removeProjectMetadata(
+        projectId: projectId,
+        name: aiOwnerUsernameMetadataKey,
+      );
     }
     return true;
   }
@@ -433,31 +447,88 @@ class KanboardApi {
     final result = await _client.call('getAssignableUsers', <String, dynamic>{
       'project_id': projectId,
     });
-    final users = <KanboardUserReference>[];
+    return _toUserReferences(result);
+  }
+
+  Future<List<KanboardUserReference>> getAllUsers() async {
+    final result = await _client.call('getAllUsers');
+    return _toUserReferences(result);
+  }
+
+  Future<List<KanboardUserReference>> searchUsersByAutocomplete(
+    String query,
+  ) async {
+    final term = query.trim();
+    if (term.isEmpty) return const <KanboardUserReference>[];
+
+    final endpoint = _buildWebControllerUri(
+      controller: 'UserAjaxController',
+      action: 'autocomplete',
+      params: <String, String>{'term': term},
+    );
+
+    // Attempt 1: basic-auth request (works on some Kanboard setups).
+    final auth = base64Encode(
+      utf8.encode('${_client.username}:${_client.password}'),
+    );
+    final directResponse = await http
+        .get(
+          endpoint,
+          headers: <String, String>{
+            'Authorization': 'Basic $auth',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        )
+        .timeout(const Duration(seconds: 12));
+    final directUsers = _decodeAutocompleteUsersOrNull(directResponse.body);
+    if (directUsers != null) {
+      return _dedupeAndSortUsers(directUsers);
+    }
+
+    // Attempt 2: establish a web session and call the same endpoint.
+    final viaSession = await _searchUsersViaWebSession(term);
+    if (viaSession != null) {
+      return _dedupeAndSortUsers(viaSession);
+    }
+
+    throw JsonRpcException(
+      'Autocomplete returned login/non-JSON response. '
+      'Use password login mode or grant API access to list users.',
+    );
+  }
+
+  Future<List<KanboardProjectPermission>> getProjectUsers(int projectId) async {
+    final result = await _client.call('getProjectUsers', <String, dynamic>{
+      'project_id': projectId,
+    });
+    final users = <KanboardProjectPermission>[];
     if (result is List<dynamic>) {
       for (final item in result) {
         if (item is Map<String, dynamic>) {
-          users.add(KanboardUserReference.fromJson(item));
+          users.add(KanboardProjectPermission.fromJson(item));
         }
       }
     } else if (result is Map<String, dynamic>) {
       result.forEach((key, value) {
         if (value is Map<String, dynamic>) {
           users.add(
-            KanboardUserReference.fromJson(<String, dynamic>{
+            KanboardProjectPermission.fromJson(<String, dynamic>{
               ...value,
-              if (value['id'] == null) 'id': key,
+              if (value['id'] == null && value['user_id'] == null) 'id': key,
             }),
           );
-        } else {
-          users.add(
-            KanboardUserReference(
-              id: int.tryParse(key) ?? 0,
-              name: value?.toString() ?? '',
-              username: value?.toString() ?? '',
-            ),
-          );
+          return;
         }
+        final userId = int.tryParse(key) ?? 0;
+        final username = value?.toString() ?? '';
+        users.add(
+          KanboardProjectPermission(
+            userId: userId,
+            username: username,
+            name: username,
+          ),
+        );
       });
     }
     users.sort(
@@ -465,6 +536,110 @@ class KanboardApi {
           a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
     );
     return users;
+  }
+
+  Future<bool> addProjectUser({
+    required int projectId,
+    required int userId,
+    String? role,
+  }) async {
+    final roleText = role?.trim();
+    final payloadVariants = <Object>[
+      <String, dynamic>{
+        'project_id': projectId,
+        'user_id': userId,
+        if (roleText != null && roleText.isNotEmpty) 'role': roleText,
+      },
+      <dynamic>[
+        projectId,
+        userId,
+        if (roleText != null && roleText.isNotEmpty) roleText,
+      ],
+      <String, dynamic>{'project_id': projectId, 'user_id': userId},
+      <dynamic>[projectId, userId],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('addProjectUser', params);
+        return result == true;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
+    return false;
+  }
+
+  Future<String?> getProjectUserRole({
+    required int projectId,
+    required int userId,
+  }) async {
+    final payloadVariants = <Object>[
+      <String, dynamic>{'project_id': projectId, 'user_id': userId},
+      <dynamic>[projectId, userId],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('getProjectUserRole', params);
+        final role = result?.toString().trim();
+        if (role == null || role.isEmpty) return null;
+        return role;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
+    return null;
+  }
+
+  Future<bool> changeProjectUserRole({
+    required int projectId,
+    required int userId,
+    required String role,
+  }) async {
+    final roleText = role.trim();
+    final payloadVariants = <Object>[
+      <String, dynamic>{
+        'project_id': projectId,
+        'user_id': userId,
+        'role': roleText,
+      },
+      <dynamic>[projectId, userId, roleText],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('changeProjectUserRole', params);
+        return result == true;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
+    return false;
+  }
+
+  Future<bool> removeProjectUser({
+    required int projectId,
+    required int userId,
+  }) async {
+    final payloadVariants = <Object>[
+      <String, dynamic>{'project_id': projectId, 'user_id': userId},
+      <dynamic>[projectId, userId],
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('removeProjectUser', params);
+        return result == true;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) throw lastError;
+    return false;
   }
 
   Future<int?> createTask({
@@ -477,6 +652,8 @@ class KanboardApi {
     String? dateDue,
     int? priority,
     int? score,
+    double? timeEstimated,
+    double? timeSpent,
   }) async {
     final result = await _client.call('createTask', <String, dynamic>{
       'project_id': projectId,
@@ -491,7 +668,17 @@ class KanboardApi {
       if (priority != null) 'priority': priority,
       if (score != null) 'score': score,
     });
-    return result == false ? null : parseKanboardInt(result, -1);
+    if (result == false) return null;
+    final taskId = parseKanboardInt(result, -1);
+    if (taskId <= 0) return null;
+    if (timeEstimated != null || timeSpent != null) {
+      await updateTask(
+        id: taskId,
+        timeEstimated: timeEstimated,
+        timeSpent: timeSpent,
+      );
+    }
+    return taskId;
   }
 
   Future<bool> updateTask({
@@ -502,6 +689,8 @@ class KanboardApi {
     String? dateDue,
     int? priority,
     int? score,
+    double? timeEstimated,
+    double? timeSpent,
     bool clearDateDue = false,
   }) async {
     final result = await _client.call('updateTask', <String, dynamic>{
@@ -515,7 +704,85 @@ class KanboardApi {
       if (priority != null) 'priority': priority,
       if (score != null) 'score': score,
     });
-    return result == true;
+    final baseAccepted = result == true || result == false;
+    if (!baseAccepted) return false;
+
+    if (timeEstimated == null && timeSpent == null) {
+      return true;
+    }
+
+    try {
+      final directTimeUpdate = await _client
+          .call('updateTask', <String, dynamic>{
+            'id': id,
+            if (timeEstimated != null) 'time_estimated': timeEstimated,
+            if (timeSpent != null) 'time_spent': timeSpent,
+          });
+      if (directTimeUpdate == true) {
+        return true;
+      }
+    } on JsonRpcException {
+      // Fall back to subtask-based syncing below for older/strict servers.
+    }
+
+    return _syncTaskHoursWithTrackerSubtask(
+      taskId: id,
+      timeEstimated: timeEstimated,
+      timeSpent: timeSpent,
+    );
+  }
+
+  Future<bool> _syncTaskHoursWithTrackerSubtask({
+    required int taskId,
+    double? timeEstimated,
+    double? timeSpent,
+  }) async {
+    final subtasks = await getAllSubtasks(taskId);
+
+    KanboardSubtask? tracker;
+    var otherEstimated = 0.0;
+    var otherSpent = 0.0;
+
+    for (final subtask in subtasks) {
+      if (subtask.title == taskHoursTrackerSubtaskTitle) {
+        tracker = subtask;
+      } else {
+        otherEstimated += subtask.timeEstimated;
+        otherSpent += subtask.timeSpent;
+      }
+    }
+
+    final desiredEstimated = timeEstimated ?? 0.0;
+    final desiredSpent = timeSpent ?? 0.0;
+    final trackerEstimated = (desiredEstimated - otherEstimated)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+    final trackerSpent = (desiredSpent - otherSpent)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+
+    if (tracker == null && trackerEstimated == 0 && trackerSpent == 0) {
+      return true;
+    }
+
+    var trackerId = tracker?.id;
+    if (trackerId == null) {
+      trackerId = await createSubtask(
+        taskId: taskId,
+        title: taskHoursTrackerSubtaskTitle,
+      );
+      if (trackerId == null || trackerId <= 0) {
+        return false;
+      }
+    }
+
+    return updateSubtask(
+      id: trackerId,
+      taskId: taskId,
+      title: taskHoursTrackerSubtaskTitle,
+      timeEstimated: trackerEstimated,
+      timeSpent: trackerSpent,
+    );
   }
 
   Future<bool> removeTask(int taskId) async {
@@ -752,7 +1019,8 @@ class KanboardApi {
       final result = await _client.call('updateSubtask', payload);
       return result == true;
     } on JsonRpcException catch (error) {
-      final missingTaskId = error.code == -32602 &&
+      final missingTaskId =
+          error.code == -32602 &&
           error.message.toLowerCase().contains('missing argument: task_id');
       if (!missingTaskId || taskId == null || taskId <= 0) rethrow;
       final retry = await _client.call('updateSubtask', <String, dynamic>{
@@ -1061,6 +1329,229 @@ class KanboardApi {
       return value.whereType<Map<String, dynamic>>().toList();
     }
     return const <Map<String, dynamic>>[];
+  }
+
+  List<KanboardUserReference> _toUserReferences(dynamic result) {
+    final users = <KanboardUserReference>[];
+    if (result is List<dynamic>) {
+      for (final item in result) {
+        if (item is Map<String, dynamic>) {
+          users.add(KanboardUserReference.fromJson(item));
+        }
+      }
+    } else if (result is Map<String, dynamic>) {
+      result.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          users.add(
+            KanboardUserReference.fromJson(<String, dynamic>{
+              ...value,
+              if (value['id'] == null) 'id': key,
+            }),
+          );
+        } else {
+          final userId = int.tryParse(key) ?? 0;
+          final label = value?.toString() ?? '';
+          users.add(
+            KanboardUserReference(id: userId, name: label, username: label),
+          );
+        }
+      });
+    }
+
+    return _dedupeAndSortUsers(users);
+  }
+
+  List<KanboardUserReference> _dedupeAndSortUsers(
+    List<KanboardUserReference> users,
+  ) {
+    final uniqueById = <int, KanboardUserReference>{};
+    for (final user in users) {
+      if (user.id <= 0) continue;
+      uniqueById[user.id] = user;
+    }
+    final normalized = uniqueById.values.toList()
+      ..sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+    return normalized;
+  }
+
+  Uri _buildWebControllerUri({
+    required String controller,
+    required String action,
+    Map<String, String> params = const <String, String>{},
+  }) {
+    var path = _client.endpoint.path;
+    if (path.endsWith('/jsonrpc.php')) {
+      path = path.substring(0, path.length - '/jsonrpc.php'.length);
+    } else if (path.endsWith('jsonrpc.php')) {
+      path = path.substring(0, path.length - 'jsonrpc.php'.length);
+    }
+    if (path.isEmpty) {
+      path = '/';
+    }
+    return _client.endpoint.replace(
+      path: path,
+      queryParameters: <String, String>{
+        'controller': controller,
+        'action': action,
+        ...params,
+      },
+    );
+  }
+
+  Future<List<KanboardUserReference>?> _searchUsersViaWebSession(
+    String term,
+  ) async {
+    final loginUri = _buildWebControllerUri(
+      controller: 'AuthController',
+      action: 'login',
+    );
+    final checkUri = _buildWebControllerUri(
+      controller: 'AuthController',
+      action: 'check',
+    );
+    final autocompleteUri = _buildWebControllerUri(
+      controller: 'UserAjaxController',
+      action: 'autocomplete',
+      params: <String, String>{'term': term},
+    );
+
+    try {
+      var cookie = _webSessionCookie;
+      if (cookie == null || cookie.isEmpty) {
+        final loginPage = await _sendWebRequest(
+          loginUri,
+          headers: const <String, String>{'Accept': 'text/html'},
+        );
+        cookie = _extractCookiePair(loginPage.headers['set-cookie']);
+        final csrfToken = _extractCsrfToken(loginPage.body);
+        if (csrfToken == null || csrfToken.isEmpty) {
+          return null;
+        }
+
+        final loginCheck = await _sendWebRequest(
+          checkUri,
+          method: 'POST',
+          headers: <String, String>{
+            if (cookie != null) 'Cookie': cookie,
+            'Accept': 'text/html',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          bodyFields: <String, String>{
+            'csrf_token': csrfToken,
+            'username': _client.username,
+            'password': _client.password,
+            'remember_me': '1',
+          },
+        );
+        cookie = _extractCookiePair(loginCheck.headers['set-cookie']) ?? cookie;
+        if (_looksLikeLoginPage(loginCheck.body)) {
+          return null;
+        }
+      }
+
+      final autocompleteResponse = await _sendWebRequest(
+        autocompleteUri,
+        headers: <String, String>{
+          if (cookie != null) 'Cookie': cookie,
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      );
+      final users = _decodeAutocompleteUsersOrNull(autocompleteResponse.body);
+      if (users != null) {
+        _webSessionCookie = cookie;
+      }
+      return users;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<http.Response> _sendWebRequest(
+    Uri uri, {
+    String method = 'GET',
+    Map<String, String>? headers,
+    Map<String, String>? bodyFields,
+  }) async {
+    final client = http.Client();
+    try {
+      final request = http.Request(method, uri);
+      request.followRedirects = true;
+      request.maxRedirects = 5;
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
+      if (bodyFields != null) {
+        request.bodyFields = bodyFields;
+      }
+      final streamed = await client
+          .send(request)
+          .timeout(const Duration(seconds: 12));
+      return http.Response.fromStream(streamed);
+    } finally {
+      client.close();
+    }
+  }
+
+  List<KanboardUserReference>? _decodeAutocompleteUsersOrNull(String body) {
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(body);
+    } catch (_) {
+      return null;
+    }
+    if (decoded is! List<dynamic>) return null;
+    final users = <KanboardUserReference>[];
+    for (final item in decoded) {
+      if (item is! Map<String, dynamic>) continue;
+      final userId = parseKanboardInt(item['id']);
+      final username = parseKanboardString(item['username']) ?? '';
+      final name =
+          parseKanboardString(item['value']) ??
+          parseKanboardString(item['label']) ??
+          username;
+      users.add(
+        KanboardUserReference(id: userId, name: name, username: username),
+      );
+    }
+    return users;
+  }
+
+  String? _extractCookiePair(String? setCookieHeader) {
+    if (setCookieHeader == null || setCookieHeader.trim().isEmpty) {
+      return null;
+    }
+    final entries = setCookieHeader.split(',');
+    for (final entry in entries) {
+      final trimmed = entry.trim();
+      if (trimmed.isEmpty) continue;
+      final firstPart = trimmed.split(';').first.trim();
+      final equalIndex = firstPart.indexOf('=');
+      if (equalIndex <= 0) continue;
+      final key = firstPart.substring(0, equalIndex).trim();
+      final value = firstPart.substring(equalIndex + 1).trim();
+      if (key.isEmpty || value.isEmpty) continue;
+      return '$key=$value';
+    }
+    return null;
+  }
+
+  String? _extractCsrfToken(String html) {
+    final match = RegExp(
+      r'''name=["']csrf_token["'][^>]*value=["']([^"']+)["']''',
+      caseSensitive: false,
+    ).firstMatch(html);
+    return match?.group(1);
+  }
+
+  bool _looksLikeLoginPage(String body) {
+    final normalized = body.toLowerCase();
+    return normalized.contains('authcontroller') &&
+        normalized.contains('action=check') &&
+        normalized.contains('forgot password');
   }
 
   String? _normalizeColorHex(String? value) {

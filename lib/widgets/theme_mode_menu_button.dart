@@ -35,6 +35,7 @@ class ThemeModeMenuButton extends ConsumerWidget {
       ),
       onSelected: (value) {
         ref.read(themeModeProvider.notifier).state = value;
+        ref.read(themeModeStoreProvider).save(value);
       },
       itemBuilder: (context) => <PopupMenuEntry<ThemeMode>>[
         CheckedPopupMenuItem<ThemeMode>(

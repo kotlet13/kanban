@@ -9,6 +9,8 @@ import '../../widgets/bidirectional_scroll_view.dart';
 import '../../widgets/theme_mode_menu_button.dart';
 import '../tasks/task_details_page.dart';
 
+enum _BoardOverflowAction { projects, structure, search, aiChat }
+
 class BoardPage extends ConsumerStatefulWidget {
   const BoardPage({
     required this.projectId,
@@ -206,152 +208,47 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
-  Future<void> _moveTask(
-    KanboardTask task,
-    KanboardColumn targetColumn,
-    int targetSwimlaneId,
-  ) async {
+  Future<void> _reorderTasksInColumn({
+    required KanboardSwimlane swimlane,
+    required KanboardColumn column,
+    required int oldIndex,
+    required int newIndex,
+  }) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
+    final list = List<KanboardTask>.from(column.tasks);
+    if (oldIndex < newIndex) newIndex -= 1;
+    if (oldIndex == newIndex) return;
+    final moved = list.removeAt(oldIndex);
+    list.insert(newIndex, moved);
+    setState(() {
+      column.tasks
+        ..clear()
+        ..addAll(list);
+    });
+
     try {
-      await api.moveTaskPosition(
-        projectId: widget.projectId,
-        taskId: task.id,
-        columnId: targetColumn.id,
-        position: targetColumn.tasks.length + 1,
-        swimlaneId: targetSwimlaneId,
-      );
+      for (var i = 0; i < list.length; i++) {
+        await api.moveTaskPosition(
+          projectId: widget.projectId,
+          taskId: list[i].id,
+          columnId: column.id,
+          position: i + 1,
+          swimlaneId: swimlane.id,
+        );
+      }
       await _loadBoard(fromRefresh: true);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.moveFailed(error))));
+      await _loadBoard(fromRefresh: true);
     }
-  }
-
-  int? _parseMoneyToCents(String raw) {
-    final text = raw.trim();
-    if (text.isEmpty) return null;
-    final value = double.tryParse(text.replaceAll(',', '.'));
-    if (value == null || value < 0) return null;
-    return (value * 100).round();
   }
 
   String _formatCents(int cents) {
     return (cents / 100).toStringAsFixed(2);
-  }
-
-  Future<void> _openExpenseSettings() async {
-    final api = ref.read(kanboardApiProvider);
-    if (api == null) return;
-    final currencyController = TextEditingController(
-      text: (_expenseCurrencyCode ?? '').trim(),
-    );
-    final budgetController = TextEditingController(
-      text: _expenseBudgetCents == null
-          ? ''
-          : _formatCents(_expenseBudgetCents!),
-    );
-    String? validationError;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
-          title: Text(context.l10n.projectExpenses),
-          content: SizedBox(
-            width: 520,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextField(
-                  controller: currencyController,
-                  textCapitalization: TextCapitalization.characters,
-                  maxLength: 3,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.currencyCode,
-                    counterText: '',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: budgetController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: context.l10n.budget,
-                    hintText: context.l10n.leaveEmptyForNoBudget,
-                  ),
-                ),
-                if (validationError != null) ...<Widget>[
-                  const SizedBox(height: 8),
-                  Text(
-                    validationError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(context.l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                final currency = currencyController.text.trim().toUpperCase();
-                if (!RegExp(r'^[A-Z]{3}$').hasMatch(currency)) {
-                  setLocalState(() {
-                    validationError = context.l10n.currencyMustBeA3LetterCode;
-                  });
-                  return;
-                }
-                final budgetText = budgetController.text.trim();
-                final budgetCents = _parseMoneyToCents(budgetText);
-                if (budgetText.isNotEmpty && budgetCents == null) {
-                  setLocalState(() {
-                    validationError = context.l10n.budgetMustBeAPositiveNumber;
-                  });
-                  return;
-                }
-                Navigator.of(context).pop(true);
-              },
-              child: Text(context.l10n.save),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (confirm != true) return;
-    final currency = currencyController.text.trim().toUpperCase();
-    final budgetText = budgetController.text.trim();
-    final budgetCents = budgetText.isEmpty
-        ? null
-        : _parseMoneyToCents(budgetText);
-    try {
-      await api.saveProjectExpenseSettings(
-        projectId: widget.projectId,
-        currency: currency,
-        budgetCents: budgetCents,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.expenseSettingsSaved)),
-      );
-      await _loadBoard(fromRefresh: true);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.expenseSettingsFailed(error))),
-      );
-    }
   }
 
   Future<void> _openGroceryListEditor() async {
@@ -393,20 +290,6 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     return count;
   }
 
-  int _plannedExpenseCents(KanboardBoard board) {
-    var total = 0;
-    for (final swimlane in board.swimlanes) {
-      for (final column in swimlane.columns) {
-        for (final task in column.tasks) {
-          if (task.score > 0) {
-            total += task.score;
-          }
-        }
-      }
-    }
-    return total;
-  }
-
   int _spentExpenseCents(KanboardBoard board) {
     var total = 0;
     for (final swimlane in board.swimlanes) {
@@ -419,6 +302,24 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       }
     }
     return total;
+  }
+
+  double _swimlaneSpentHours(KanboardSwimlane swimlane) {
+    var total = 0.0;
+    for (final column in swimlane.columns) {
+      for (final task in column.tasks) {
+        if (task.timeSpent > 0) {
+          total += task.timeSpent;
+        }
+      }
+    }
+    return total;
+  }
+
+  String _formatHoursLabel(double hours) {
+    var text = hours.toStringAsFixed(2);
+    text = text.replaceFirst(RegExp(r'\.?0+$'), '');
+    return '$text h';
   }
 
   String _formatMoneyCents(int cents) {
@@ -438,6 +339,36 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     context.push(
       '/board/${widget.projectId}/ai-chat?projectName=${Uri.encodeComponent(widget.projectName)}',
     );
+  }
+
+  void _openExpensesPage() {
+    final query = <String, String>{
+      'projectName': widget.projectName,
+      if ((widget.projectColorHex ?? '').trim().isNotEmpty)
+        'projectColor': widget.projectColorHex!.trim(),
+    };
+    final uri = Uri(
+      path: '/board/${widget.projectId}/expenses',
+      queryParameters: query,
+    );
+    context.push(uri.toString()).then((_) => _loadBoard(fromRefresh: true));
+  }
+
+  void _onOverflowActionSelected(_BoardOverflowAction action) {
+    switch (action) {
+      case _BoardOverflowAction.projects:
+        context.go('/projects');
+        return;
+      case _BoardOverflowAction.structure:
+        _openStructureEditor();
+        return;
+      case _BoardOverflowAction.search:
+        _openSearch();
+        return;
+      case _BoardOverflowAction.aiChat:
+        _openAiChat();
+        return;
+    }
   }
 
   Future<void> _openSearch() async {
@@ -501,73 +432,55 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
-  Widget _taskCard(KanboardTask task, {required bool dragEnabled}) {
+  Widget _taskCard(
+    KanboardTask task, {
+    required bool dragEnabled,
+    int? reorderIndex,
+  }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
     final isDone = !task.isActive;
-    final dragHandle = Draggable<KanboardTask>(
-      data: task,
-      feedback: Material(
-        elevation: 6,
-        borderRadius: BorderRadius.circular(14),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 250),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Text(
-                task.title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  decoration: isDone
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.35,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Icon(
-            Icons.open_with_rounded,
-            size: 18,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Icon(
-          Icons.open_with_rounded,
-          size: 18,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+    final handleIcon = Container(
+      width: 42,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.drag_indicator,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
-    final taskCardBody = Card(
+    final Widget? dragHandle = dragEnabled && reorderIndex != null
+        ? ReorderableDragStartListener(index: reorderIndex, child: handleIcon)
+        : dragEnabled
+        ? handleIcon
+        : null;
+    final taskCardBody = Container(
+      key: ValueKey('task-${task.id}'),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(14),
         onTap: () => _openTaskEditor(task: task),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                width: 6,
-                height: 36,
-                margin: const EdgeInsets.only(top: 2),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(99),
-                ),
+        child: Row(
+          children: <Widget>[
+            if (dragHandle != null) dragHandle,
+            Container(
+              width: 4,
+              height: 46,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(99),
               ),
-              const SizedBox(width: 8),
-              Expanded(
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -575,7 +488,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       task.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         decoration: isDone
                             ? TextDecoration.lineThrough
@@ -584,10 +497,10 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                     ),
                     if (task.description != null &&
                         task.description!.trim().isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         task.description!.trim(),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -597,50 +510,48 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 2),
                     Text(
                       context.l10n.taskNumber(task.id),
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              if (dragEnabled) dragHandle,
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _openTaskEditor(task: task);
-                  } else if (value == 'done') {
-                    _setTaskDone(task, done: true);
-                  } else if (value == 'reopen') {
-                    _setTaskDone(task, done: false);
-                  } else if (value == 'delete') {
-                    _deleteTask(task);
-                  }
-                },
-                itemBuilder: (context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text(context.l10n.edit),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _openTaskEditor(task: task);
+                } else if (value == 'done') {
+                  _setTaskDone(task, done: true);
+                } else if (value == 'reopen') {
+                  _setTaskDone(task, done: false);
+                } else if (value == 'delete') {
+                  _deleteTask(task);
+                }
+              },
+              itemBuilder: (context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Text(context.l10n.edit),
+                ),
+                PopupMenuItem<String>(
+                  value: task.isActive ? 'done' : 'reopen',
+                  child: Text(
+                    task.isActive ? context.l10n.markDone : context.l10n.reopen,
                   ),
-                  PopupMenuItem<String>(
-                    value: task.isActive ? 'done' : 'reopen',
-                    child: Text(
-                      task.isActive
-                          ? context.l10n.markDone
-                          : context.l10n.reopen,
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text(context.l10n.delete),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Text(context.l10n.delete),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
       ),
     );
@@ -657,36 +568,21 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     return SizedBox(
       width: compact ? double.infinity : 320,
       height: compact ? 400 : 460,
-      child: DragTarget<KanboardTask>(
-        onAcceptWithDetails: dragEnabled
-            ? (details) => _moveTask(details.data, column, swimlane.id)
-            : null,
-        builder: (context, candidateData, rejectedData) {
+      child: Builder(
+        builder: (context) {
           final theme = Theme.of(context);
-          final accent = _projectAccent(theme);
-          final isHighlighted = candidateData.isNotEmpty;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+          return Container(
             margin: compact
                 ? const EdgeInsets.only(bottom: 10)
                 : const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isHighlighted
-                    ? accent
-                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
-                width: isHighlighted ? 2 : 1,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
               ),
             ),
             child: Card(
               margin: EdgeInsets.zero,
-              color: isHighlighted
-                  ? Color.alphaBlend(
-                      accent.withValues(alpha: 0.18),
-                      theme.colorScheme.surfaceContainerHigh,
-                    )
-                  : null,
               child: Column(
                 children: <Widget>[
                   Padding(
@@ -746,9 +642,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  dragEnabled
-                                      ? context.l10n.dropATaskHere
-                                      : context.l10n.unlockDragToMoveTasks,
+                                  context.l10n.tasks2(0),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -756,13 +650,23 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                               ],
                             ),
                           )
-                        : ListView.builder(
+                        : ReorderableListView.builder(
+                            buildDefaultDragHandles: false,
                             padding: const EdgeInsets.all(8),
                             itemCount: column.tasks.length,
+                            onReorder: dragEnabled
+                                ? (oldIndex, newIndex) => _reorderTasksInColumn(
+                                    swimlane: swimlane,
+                                    column: column,
+                                    oldIndex: oldIndex,
+                                    newIndex: newIndex,
+                                  )
+                                : (_, __) {},
                             itemBuilder: (context, index) {
                               return _taskCard(
                                 column.tasks[index],
                                 dragEnabled: dragEnabled,
+                                reorderIndex: index,
                               );
                             },
                           ),
@@ -779,30 +683,37 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   Widget _boardOverview(KanboardBoard? board) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
-    final swimlaneCount = board?.swimlanes.length ?? 0;
-    final columnCount = board == null
-        ? 0
-        : board.swimlanes.fold<int>(
-            0,
-            (sum, swimlane) => sum + swimlane.columns.length,
-          );
+    final compact = MediaQuery.sizeOf(context).width < 760;
     final taskCount = board == null ? 0 : _taskCount(board);
-    final plannedCents = board == null ? 0 : _plannedExpenseCents(board);
     final spentCents = board == null ? 0 : _spentExpenseCents(board);
     final budgetCents = _expenseBudgetCents;
     final remainingCents = budgetCents == null
         ? null
         : (budgetCents - spentCents);
 
-    Widget statChip(IconData icon, String label, String value) {
+    Widget statChip(
+      IconData icon,
+      String label,
+      String value, {
+      bool emphasized = false,
+    }) {
+      final chipColor = emphasized
+          ? Color.alphaBlend(
+              accent.withValues(alpha: 0.22),
+              theme.colorScheme.surface,
+            )
+          : theme.colorScheme.surface.withValues(alpha: 0.78);
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 12,
+          vertical: compact ? 7 : 8,
+        ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.78),
+          color: chipColor,
           borderRadius: BorderRadius.circular(99),
           border: Border.all(
             color: Color.alphaBlend(
-              accent.withValues(alpha: 0.28),
+              accent.withValues(alpha: emphasized ? 0.34 : 0.24),
               theme.colorScheme.outlineVariant,
             ),
           ),
@@ -810,8 +721,8 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(width: 5),
+            Icon(icon, size: compact ? 15 : 16, color: accent),
+            const SizedBox(width: 6),
             Text('$label: ', style: theme.textTheme.labelLarge),
             Text(
               value,
@@ -823,6 +734,14 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         ),
       );
     }
+
+    final overviewActionStyle = FilledButton.styleFrom(
+      visualDensity: compact ? VisualDensity.compact : VisualDensity.standard,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 12 : 14,
+        vertical: compact ? 10 : 12,
+      ),
+    );
 
     return Card(
       child: Container(
@@ -839,119 +758,79 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             ],
           ),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(compact ? 10 : 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              runSpacing: 10,
-              spacing: 10,
-              children: <Widget>[
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 700),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        widget.projectName,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        context
-                            .l10n
-                            .dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(compact ? 8 : 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.44),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.4,
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    FilledButton.tonalIcon(
-                      onPressed: _openGroceryListEditor,
-                      icon: const Icon(Icons.shopping_cart_outlined),
-                      label: Text(context.l10n.groceryList),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: _openExpenseSettings,
-                      icon: const Icon(Icons.payments_outlined),
-                      label: Text(context.l10n.projectExpenses),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: _openSearch,
-                      icon: const Icon(Icons.search),
-                      label: Text(context.l10n.search),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: _openStructureEditor,
-                      icon: const Icon(Icons.view_column),
-                      label: Text(context.l10n.structure),
-                    ),
-                    FilledButton.icon(
-                      onPressed: _isLoading
-                          ? null
-                          : () => _loadBoard(fromRefresh: true),
-                      icon: const Icon(Icons.refresh),
-                      label: Text(context.l10n.refresh),
-                    ),
-                  ],
-                ),
-              ],
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  FilledButton.tonalIcon(
+                    style: overviewActionStyle,
+                    onPressed: _openGroceryListEditor,
+                    icon: const Icon(Icons.shopping_cart_outlined),
+                    label: Text(context.l10n.groceryList),
+                  ),
+                  FilledButton.tonalIcon(
+                    style: overviewActionStyle,
+                    onPressed: _openExpensesPage,
+                    icon: const Icon(Icons.payments_outlined),
+                    label: Text(context.l10n.projectExpenses),
+                  ),
+                  FilledButton.tonalIcon(
+                    style: overviewActionStyle,
+                    onPressed: _openSearch,
+                    icon: const Icon(Icons.search),
+                    label: Text(context.l10n.search),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                statChip(
-                  Icons.horizontal_split,
-                  context.l10n.swimlanes,
-                  '$swimlaneCount',
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(compact ? 8 : 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.44),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
-                statChip(
-                  Icons.view_column_outlined,
-                  context.l10n.columns,
-                  '$columnCount',
-                ),
-                statChip(
-                  Icons.task_alt_outlined,
-                  context.l10n.tasks,
-                  '$taskCount',
-                ),
-                statChip(
-                  Icons.payments_outlined,
-                  context.l10n.planned,
-                  _formatMoneyCents(plannedCents),
-                ),
-                statChip(
-                  Icons.check_circle_outline,
-                  context.l10n.spent,
-                  _formatMoneyCents(spentCents),
-                ),
-                statChip(
-                  Icons.account_balance_wallet_outlined,
-                  context.l10n.budget,
-                  budgetCents == null
-                      ? context.l10n.noBudget
-                      : _formatMoneyCents(budgetCents),
-                ),
-                statChip(
-                  Icons.savings_outlined,
-                  context.l10n.remaining,
-                  remainingCents == null
-                      ? context.l10n.noBudget
-                      : _formatMoneyCents(remainingCents),
-                ),
-              ],
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  statChip(
+                    Icons.task_alt_outlined,
+                    context.l10n.tasks,
+                    '$taskCount',
+                  ),
+                  statChip(
+                    Icons.savings_outlined,
+                    context.l10n.remaining,
+                    remainingCents == null
+                        ? context.l10n.noBudget
+                        : _formatMoneyCents(remainingCents),
+                    emphasized: true,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -966,6 +845,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
+    final spentHours = _swimlaneSpentHours(swimlane);
     return Card(
       margin: const EdgeInsets.only(top: 10, bottom: 14),
       child: Padding(
@@ -1000,6 +880,20 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   ),
                   child: Text(
                     context.l10n.columns2(swimlane.columns.length),
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${context.l10n.spent}: ${_formatHoursLabel(spentHours)}',
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
@@ -1140,35 +1034,66 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final boardContentWidth = (maxColumnsPerSwimlane * 334 + 140)
         .clamp(1200, 7000)
         .toDouble();
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.projectName),
         actions: <Widget>[
           IconButton(
-            tooltip: context.l10n.projects,
-            onPressed: () => context.go('/projects'),
-            icon: const Icon(Icons.folder_open),
-          ),
-          IconButton(
-            tooltip: context.l10n.boardStructure,
-            onPressed: _openStructureEditor,
-            icon: const Icon(Icons.view_column),
-          ),
-          IconButton(
-            tooltip: context.l10n.searchTasks,
-            onPressed: _openSearch,
-            icon: const Icon(Icons.search),
-          ),
-          IconButton(
-            tooltip: context.l10n.aiChat,
-            onPressed: _openAiChat,
-            icon: const Icon(Icons.smart_toy_outlined),
-          ),
-          IconButton(
             tooltip: context.l10n.refreshBoard,
             onPressed: _isLoading ? null : () => _loadBoard(fromRefresh: true),
             icon: const Icon(Icons.refresh),
+          ),
+          PopupMenuButton<_BoardOverflowAction>(
+            icon: const Icon(Icons.more_vert),
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.65),
+            ),
+            onSelected: _onOverflowActionSelected,
+            itemBuilder: (context) => <PopupMenuEntry<_BoardOverflowAction>>[
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.projects,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.folder_open, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.projects),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.structure,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.view_column, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.structure),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.search,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.search, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.search),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.aiChat,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.smart_toy_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.aiChat),
+                  ],
+                ),
+              ),
+            ],
           ),
           const ThemeModeMenuButton(),
         ],

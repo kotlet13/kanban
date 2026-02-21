@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../kanboard/kanboard_api.dart';
 import '../../ai/ai_models.dart';
 import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
@@ -95,6 +96,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   final _descriptionController = TextEditingController();
   final _dueDateController = TextEditingController();
   final _scoreController = TextEditingController();
+  final _timeEstimatedController = TextEditingController();
+  final _timeSpentController = TextEditingController();
   final _newCommentController = TextEditingController();
   final _newSubtaskController = TextEditingController();
   final _tagInputController = TextEditingController();
@@ -238,6 +241,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _dueDateController.text = task?.dateDueForInput ?? '';
       _selectedDueDate = _parseDueDateInput(_dueDateController.text.trim());
       _scoreController.text = task == null ? '' : _formatCentsToAmount(task.score);
+      _timeEstimatedController.text = task == null
+          ? ''
+          : _formatHoursForInput(task.timeEstimated);
+      _timeSpentController.text = task == null
+          ? ''
+          : _formatHoursForInput(task.timeSpent);
 
       _columnId =
           task?.columnId ??
@@ -341,10 +350,16 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       ]);
 
       if (!mounted) return;
+      final rawSubtasks = detailResults[2] as List<KanboardSubtask>;
       setState(() {
         _attachments = detailResults[0] as List<KanboardTaskFile>;
         _comments = detailResults[1] as List<KanboardComment>;
-        _subtasks = detailResults[2] as List<KanboardSubtask>;
+        _subtasks = rawSubtasks
+            .where(
+              (subtask) =>
+                  subtask.title != KanboardApi.taskHoursTrackerSubtaskTitle,
+            )
+            .toList();
         _taskTags = detailResults[3] as List<String>;
         _taskLinks = detailResults[4] as List<KanboardTaskLink>;
         _externalLinks = detailResults[5] as List<KanboardExternalTaskLink>;
@@ -377,6 +392,17 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       setState(() => _error = context.l10n.scoreMustBeAnInteger);
       return false;
     }
+    final timeEstimated = _parseHoursToDecimal(_timeEstimatedController.text);
+    if (_timeEstimatedController.text.trim().isNotEmpty &&
+        timeEstimated == null) {
+      setState(() => _error = 'Estimate (h) must be a positive number.');
+      return false;
+    }
+    final timeSpent = _parseHoursToDecimal(_timeSpentController.text);
+    if (_timeSpentController.text.trim().isNotEmpty && timeSpent == null) {
+      setState(() => _error = 'Spent (h) must be a positive number.');
+      return false;
+    }
     final dueDateValue = _selectedDueDate == null
         ? ''
         : _formatDueDateForApi(_selectedDueDate!);
@@ -399,7 +425,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     try {
       if (_isEditing) {
         final id = _activeTaskId!;
-        await api.updateTask(
+        final updated = await api.updateTask(
           id: id,
           title: title,
           description: descriptionValue,
@@ -408,7 +434,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           clearDateDue: dueDateValue.isEmpty,
           priority: _priority,
           score: score ?? 0,
+          timeEstimated: timeEstimated,
+          timeSpent: timeSpent,
         );
+        if (!updated) {
+          throw StateError('Task was not updated on server.');
+        }
         if (!closeOnSuccess && _advancedExpanded) {
           await _loadTaskDetails(id);
         }
@@ -423,6 +454,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
           dateDue: dueDateValue,
           priority: _priority,
           score: score,
+          timeEstimated: timeEstimated,
+          timeSpent: timeSpent,
         );
         if (createdTaskId == null || createdTaskId <= 0) {
           throw StateError(context.l10n.taskWasNotCreated);
@@ -1071,6 +1104,20 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     return '$whole.$fraction';
   }
 
+  double? _parseHoursToDecimal(String raw) {
+    final value = raw.trim().replaceAll(',', '.');
+    if (value.isEmpty) return 0;
+    final parsed = double.tryParse(value);
+    if (parsed == null || parsed < 0) return null;
+    return parsed;
+  }
+
+  String _formatHoursForInput(double hours) {
+    if (hours <= 0) return '';
+    if (hours == hours.roundToDouble()) return hours.toStringAsFixed(0);
+    return hours.toString();
+  }
+
   bool _hasGroceryMarker(String? description) {
     if (description == null) return false;
     return description.contains(_groceryMarker);
@@ -1102,6 +1149,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _priority.toString(),
       _dueDateController.text.trim(),
       _scoreController.text.trim(),
+      _timeEstimatedController.text.trim(),
+      _timeSpentController.text.trim(),
       _isGroceryList ? '1' : '0',
     ].join('|');
   }
@@ -1366,6 +1415,8 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     _descriptionController.dispose();
     _dueDateController.dispose();
     _scoreController.dispose();
+    _timeEstimatedController.dispose();
+    _timeSpentController.dispose();
     _newCommentController.dispose();
     _newSubtaskController.dispose();
     _tagInputController.dispose();
@@ -1662,6 +1713,30 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                     child: TextField(
                       controller: _scoreController,
                       decoration: InputDecoration(labelText: context.l10n.expense),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                      controller: _timeEstimatedController,
+                      decoration: InputDecoration(labelText: context.l10n.estimateH),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _timeSpentController,
+                      decoration: InputDecoration(labelText: context.l10n.spentH),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),

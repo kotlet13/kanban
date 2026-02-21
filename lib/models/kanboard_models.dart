@@ -234,6 +234,47 @@ class KanboardUserReference {
   }
 }
 
+class KanboardProjectPermission {
+  const KanboardProjectPermission({
+    required this.userId,
+    required this.username,
+    this.name,
+    this.role,
+  });
+
+  final int userId;
+  final String username;
+  final String? name;
+  final String? role;
+
+  String get displayName {
+    final trimmedName = name?.trim() ?? '';
+    if (trimmedName.isNotEmpty) return trimmedName;
+    final trimmedUsername = username.trim();
+    if (trimmedUsername.isNotEmpty) return trimmedUsername;
+    return 'User #$userId';
+  }
+
+  factory KanboardProjectPermission.fromJson(Map<String, dynamic> json) {
+    final resolvedUserId = parseKanboardInt(
+      json['user_id'] ?? json['id'] ?? json['userId'],
+    );
+    return KanboardProjectPermission(
+      userId: resolvedUserId,
+      username:
+          parseKanboardString(json['username']) ??
+          parseKanboardString(json['user_name']) ??
+          '',
+      name:
+          parseKanboardString(json['name']) ??
+          parseKanboardString(json['fullname']),
+      role:
+          parseKanboardString(json['role']) ??
+          parseKanboardString(json['role_name']),
+    );
+  }
+}
+
 class KanboardTaskFile {
   const KanboardTaskFile({
     required this.id,

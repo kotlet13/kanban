@@ -16,11 +16,15 @@ class KanbanApp extends ConsumerStatefulWidget {
 
 class _KanbanAppState extends ConsumerState<KanbanApp> {
   bool _didLoadLocale = false;
+  bool _didLoadThemeMode = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedLocale());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedLocale();
+      _loadSavedThemeMode();
+    });
   }
 
   Future<void> _loadSavedLocale() async {
@@ -29,6 +33,14 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
     final locale = await ref.read(localeStoreProvider).read();
     if (!mounted) return;
     ref.read(appLocaleProvider.notifier).state = locale;
+  }
+
+  Future<void> _loadSavedThemeMode() async {
+    if (_didLoadThemeMode) return;
+    _didLoadThemeMode = true;
+    final mode = await ref.read(themeModeStoreProvider).read();
+    if (!mounted) return;
+    ref.read(themeModeProvider.notifier).state = mode;
   }
 
   @override

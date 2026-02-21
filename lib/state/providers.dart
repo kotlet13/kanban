@@ -14,6 +14,7 @@ import '../storage/cache_store.dart';
 import '../storage/credentials_store.dart';
 import '../storage/locale_store.dart';
 import '../storage/project_defaults_store.dart';
+import '../storage/theme_mode_store.dart';
 
 final credentialsStoreProvider = Provider<CredentialsStore>(
   (ref) => const CredentialsStore(),
@@ -46,6 +47,9 @@ final projectDefaultsProvider = FutureProvider<ProjectDefaults>((ref) async {
 });
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+final themeModeStoreProvider = Provider<ThemeModeStore>(
+  (ref) => const ThemeModeStore(),
+);
 
 final localeStoreProvider = Provider<LocaleStore>((ref) => const LocaleStore());
 
