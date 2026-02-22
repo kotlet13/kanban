@@ -731,6 +731,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get showPastMonths => 'Prikaži pretekle mesece';
 
   @override
+  String get includeSpentExternalExpensesInProjection =>
+      'Vključi porabljene zunanje stroške v projekcijo';
+
+  @override
   String get unsavedFinanceChangesTitle => 'Neshranjene finančne spremembe';
 
   @override
@@ -822,6 +826,9 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get plannedExpenses => 'Načrtovani stroški';
+
+  @override
+  String get expensesFromOtherProjects => 'Stroški iz drugih projektov';
 
   @override
   String get ongoing => 'tekoče';

@@ -728,6 +728,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showPastMonths => 'Show past months';
 
   @override
+  String get includeSpentExternalExpensesInProjection =>
+      'Include spent external expenses in projection';
+
+  @override
   String get unsavedFinanceChangesTitle => 'Unsaved finance changes';
 
   @override
@@ -819,6 +823,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plannedExpenses => 'Planned expenses';
+
+  @override
+  String get expensesFromOtherProjects => 'Expenses from other projects';
 
   @override
   String get ongoing => 'ongoing';

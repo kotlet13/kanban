@@ -1376,6 +1376,12 @@ abstract class AppLocalizations {
   /// **'Show past months'**
   String get showPastMonths;
 
+  /// No description provided for @includeSpentExternalExpensesInProjection.
+  ///
+  /// In en, this message translates to:
+  /// **'Include spent external expenses in projection'**
+  String get includeSpentExternalExpensesInProjection;
+
   /// No description provided for @unsavedFinanceChangesTitle.
   ///
   /// In en, this message translates to:
@@ -1555,6 +1561,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Planned expenses'**
   String get plannedExpenses;
+
+  /// No description provided for @expensesFromOtherProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses from other projects'**
+  String get expensesFromOtherProjects;
 
   /// No description provided for @ongoing.
   ///

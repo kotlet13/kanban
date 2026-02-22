@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../kanboard/kanboard_api.dart';
 import '../../l10n/l10n.dart';
 import '../../models/finance_models.dart';
 import '../../models/kanboard_models.dart';
@@ -43,8 +44,11 @@ class _ProjectFinanceTablePageState
 
   int _horizonMonths = 12;
   bool _showPastMonths = false;
+  bool _includeSpentExternalExpensesInProjection = false;
   String _projectCurrencyCode = 'EUR';
   FinanceTableData _data = FinanceTableData.empty();
+  List<_ExternalTaskExpenseRow> _externalTaskExpenses =
+      const <_ExternalTaskExpenseRow>[];
 
   bool get _hasUnsavedChanges => _changeVersion > _savedChangeVersion;
 
@@ -159,10 +163,15 @@ class _ProjectFinanceTablePageState
         contributors: mergedContributors.contributors,
         months: normalizedMonths,
       );
+      final externalTaskExpenses = await _loadExternalTaskExpenses(
+        api: api,
+        contributors: normalized.contributors,
+      );
 
       if (!mounted) return;
       setState(() {
         _data = normalized;
+        _externalTaskExpenses = externalTaskExpenses;
         _projectCurrencyCode = normalized.currencyCode;
         _currentBalanceController.text = (normalized.currentBalanceCents / 100)
             .toStringAsFixed(2);
@@ -1238,6 +1247,21 @@ class _ProjectFinanceTablePageState
     return '${date.year}-${date.month.toString().padLeft(2, '0')}';
   }
 
+  String _monthKeyFromTaskDateRaw(String? raw) {
+    final fallback = _monthKeyForDate(DateTime.now());
+    final text = (raw ?? '').trim();
+    if (text.isEmpty || text == '0') return fallback;
+    final unix = int.tryParse(text);
+    if (unix != null && unix > 0) {
+      final date = DateTime.fromMillisecondsSinceEpoch(unix * 1000).toLocal();
+      return _monthKeyForDate(date);
+    }
+    final normalized = text.contains('T') ? text : text.replaceFirst(' ', 'T');
+    final parsed = DateTime.tryParse(normalized);
+    if (parsed == null) return fallback;
+    return _monthKeyForDate(parsed.toLocal());
+  }
+
   List<String> _monthOptionsWith(String? include) {
     final now = DateTime.now();
     final options = <String>[];
@@ -1295,6 +1319,80 @@ class _ProjectFinanceTablePageState
       if (contributors.any((entry) => entry.id == candidate)) return candidate;
     }
     return null;
+  }
+
+  int? _userIdFromContributorId(String contributorId) {
+    if (!contributorId.startsWith('user:')) return null;
+    return int.tryParse(contributorId.substring('user:'.length));
+  }
+
+  Future<List<_ExternalTaskExpenseRow>> _loadExternalTaskExpenses({
+    required KanboardApi api,
+    required List<FinanceContributor> contributors,
+  }) async {
+    final contributorNamesByUserId = <int, String>{};
+    for (final contributor in contributors) {
+      final userId = _userIdFromContributorId(contributor.id);
+      if (userId != null && userId > 0) {
+        contributorNamesByUserId[userId] = contributor.name;
+      }
+    }
+    if (contributorNamesByUserId.isEmpty) {
+      return const <_ExternalTaskExpenseRow>[];
+    }
+
+    final rows = <_ExternalTaskExpenseRow>[];
+    List<KanboardProject> projects;
+    try {
+      projects = await api.getMyProjects();
+    } catch (_) {
+      return const <_ExternalTaskExpenseRow>[];
+    }
+
+    final externalProjects = projects
+        .where((project) => project.id != widget.projectId)
+        .toList();
+    await Future.wait(
+      externalProjects.map((project) async {
+        try {
+          final board = await api.getBoard(project.id);
+          for (final swimlane in board.swimlanes) {
+            for (final column in swimlane.columns) {
+              for (final task in column.tasks) {
+                if (task.score <= 0 || task.ownerId <= 0) continue;
+                final contributorName = contributorNamesByUserId[task.ownerId];
+                if (contributorName == null) continue;
+                rows.add(
+                  _ExternalTaskExpenseRow(
+                    projectId: project.id,
+                    projectName: project.name,
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    monthKey: _monthKeyFromTaskDateRaw(task.dateDueRaw),
+                    amountCents: task.score,
+                    isSpent: !task.isActive,
+                    contributorName: contributorName,
+                  ),
+                );
+              }
+            }
+          }
+        } catch (_) {
+          // Ignore one project failing; keep partial results.
+        }
+      }),
+    );
+
+    rows.sort((a, b) {
+      final amountCompare = b.amountCents.compareTo(a.amountCents);
+      if (amountCompare != 0) return amountCompare;
+      final projectCompare = a.projectName.toLowerCase().compareTo(
+        b.projectName.toLowerCase(),
+      );
+      if (projectCompare != 0) return projectCompare;
+      return a.taskId.compareTo(b.taskId);
+    });
+    return rows;
   }
 
   Widget _metricTile({
@@ -1371,8 +1469,30 @@ class _ProjectFinanceTablePageState
     final projectionStartMonth = projectedMonths.isEmpty
         ? null
         : projectedMonths.first.monthKey;
+    final externalProjectedExpenses = _externalTaskExpenses
+        .where(
+          (row) => _includeSpentExternalExpensesInProjection || !row.isSpent,
+        )
+        .where((row) => row.monthKey.compareTo(currentMonthKey) >= 0)
+        .map(
+          (row) => PlannedExpense(
+            id: 'external:${row.projectId}:${row.taskId}',
+            title: row.taskTitle,
+            category: context.l10n.expensesFromOtherProjects,
+            amountCents: row.amountCents,
+            monthKey: row.monthKey,
+          ),
+        )
+        .toList();
+    final projectedTableData = _data.copyWith(
+      months: projectedMonths,
+      plannedExpenses: <PlannedExpense>[
+        ..._data.plannedExpenses,
+        ...externalProjectedExpenses,
+      ],
+    );
     final projection = buildFinanceProjection(
-      tableData: _data.copyWith(months: projectedMonths),
+      tableData: projectedTableData,
       horizonMonths: _horizonMonths,
       startMonthKey: projectionStartMonth,
     );
@@ -1474,6 +1594,20 @@ class _ProjectFinanceTablePageState
                         onChanged: (value) {
                           if (value == null) return;
                           setState(() => _horizonMonths = value);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          context.l10n.includeSpentExternalExpensesInProjection,
+                        ),
+                        value: _includeSpentExternalExpensesInProjection,
+                        onChanged: (value) {
+                          setState(
+                            () => _includeSpentExternalExpensesInProjection =
+                                value,
+                          );
                         },
                       ),
                       if (_validationError != null) ...<Widget>[
@@ -1868,6 +2002,49 @@ class _ProjectFinanceTablePageState
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        context.l10n.expensesFromOtherProjects,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_externalTaskExpenses.isEmpty)
+                        Text(context.l10n.noResultsYet)
+                      else
+                        for (final row in _externalTaskExpenses)
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              row.isSpent
+                                  ? Icons.check_circle_outline
+                                  : Icons.payments_outlined,
+                            ),
+                            title: Text(
+                              row.taskTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              '${row.projectName} · ${row.monthKey} · ${row.contributorName} · ${context.l10n.taskNumber(row.taskId)} · ${row.isSpent ? context.l10n.spent : context.l10n.planned}',
+                            ),
+                            trailing: Text(
+                              _formatMoney(row.amountCents),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+              ),
               if (_isLoading)
                 const Padding(
                   padding: EdgeInsets.only(top: 10),
@@ -1907,4 +2084,26 @@ class _ContributorMergeResult {
 
   final List<FinanceContributor> contributors;
   final Map<String, String> idAliases;
+}
+
+class _ExternalTaskExpenseRow {
+  const _ExternalTaskExpenseRow({
+    required this.projectId,
+    required this.projectName,
+    required this.taskId,
+    required this.taskTitle,
+    required this.monthKey,
+    required this.amountCents,
+    required this.isSpent,
+    required this.contributorName,
+  });
+
+  final int projectId;
+  final String projectName;
+  final int taskId;
+  final String taskTitle;
+  final String monthKey;
+  final int amountCents;
+  final bool isSpent;
+  final String contributorName;
 }
