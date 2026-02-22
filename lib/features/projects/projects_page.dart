@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 
+import '../shared/attachment_share.dart';
 import '../../kanboard/kanboard_api.dart';
 import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
@@ -1108,12 +1108,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
         return;
       }
       final bytes = base64Decode(encoded);
-      await SharePlus.instance.share(
-        ShareParams(
-          files: <XFile>[XFile.fromData(bytes, name: file.name)],
-          text: file.name,
-        ),
-      );
+      await shareAttachmentBytes(bytes: bytes, filename: file.name);
     } catch (error) {
       _showSnack(l10n.downloadFailed(error), isError: true);
     }
