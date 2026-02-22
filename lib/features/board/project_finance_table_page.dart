@@ -55,6 +55,7 @@ class _ProjectFinanceTablePageState
   @override
   void initState() {
     super.initState();
+    _currentBalanceController.text = '0.00';
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
@@ -487,7 +488,10 @@ class _ProjectFinanceTablePageState
     final messenger = ScaffoldMessenger.of(context);
     final saveVersion = _changeVersion;
 
-    final balanceCents = _parseMoneyToCents(_currentBalanceController.text);
+    final rawBalance = _currentBalanceController.text.trim();
+    final balanceCents = rawBalance.isEmpty
+        ? _data.currentBalanceCents
+        : _parseMoneyToCents(rawBalance);
     if (balanceCents == null) {
       setState(() {
         _validationError = l10n.currentBalanceMustBeValidNumber;
@@ -1434,6 +1438,37 @@ class _ProjectFinanceTablePageState
     );
   }
 
+  Widget _collapsibleSectionCard({
+    required String storageKey,
+    required String title,
+    required Widget content,
+    Widget? action,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      child: ExpansionTile(
+        key: PageStorageKey<String>(storageKey),
+        initiallyExpanded: false,
+        maintainState: true,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        title: Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        children: <Widget>[
+          if (action != null) ...<Widget>[
+            Align(alignment: Alignment.centerRight, child: action),
+            const SizedBox(height: 8),
+          ],
+          content,
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentMonthKey = _monthKeyForDate(DateTime.now());
@@ -1522,236 +1557,230 @@ class _ProjectFinanceTablePageState
         ),
         body: RefreshIndicator(
           onRefresh: _loadData,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
-            children: <Widget>[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        widget.projectName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+          child: IgnorePointer(
+            ignoring: _isLoading,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
+              children: <Widget>[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          widget.projectName,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(context.l10n.sharedFinanceTable),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _currentBalanceController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        onChanged: (_) => _markDirtyAndScheduleAutoSave(),
-                        decoration: InputDecoration(
-                          labelText: context.l10n.currentBalance,
-                          hintText: context.l10n.amountHint,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<int>(
-                        initialValue: _horizonMonths,
-                        decoration: InputDecoration(
-                          labelText: context.l10n.projectionHorizon,
-                        ),
-                        items: <DropdownMenuItem<int>>[
-                          DropdownMenuItem(
-                            value: 3,
-                            child: Text(context.l10n.months3),
-                          ),
-                          DropdownMenuItem(
-                            value: 6,
-                            child: Text(context.l10n.months6),
-                          ),
-                          DropdownMenuItem(
-                            value: 12,
-                            child: Text(context.l10n.months12),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _horizonMonths = value);
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          context.l10n.includeSpentExternalExpensesInProjection,
-                        ),
-                        value: _includeSpentExternalExpensesInProjection,
-                        onChanged: (value) {
-                          setState(
-                            () => _includeSpentExternalExpensesInProjection =
-                                value,
-                          );
-                        },
-                      ),
-                      if (_validationError != null) ...<Widget>[
+                        const SizedBox(height: 4),
+                        Text(context.l10n.sharedFinanceTable),
                         const SizedBox(height: 8),
-                        Text(
-                          _validationError!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
+                        TextField(
+                          controller: _currentBalanceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => _markDirtyAndScheduleAutoSave(),
+                          decoration: InputDecoration(
+                            labelText: context.l10n.currentBalance,
+                            hintText: context.l10n.amountHint,
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: <Widget>[
-                      _metricTile(
-                        icon: Icons.trending_up_outlined,
-                        label: context.l10n.summedMonthlyIncome,
-                        value: _formatMoney(summedMonthlyIncomeCents),
-                      ),
-                      _metricTile(
-                        icon: Icons.trending_down_outlined,
-                        label: context.l10n.summedMonthlyExpenses,
-                        value: _formatMoney(summedMonthlyExpenseCents),
-                      ),
-                      _metricTile(
-                        icon: Icons.savings_outlined,
-                        label: context.l10n.totalBalance,
-                        value: _formatMoney(totalBalanceCents),
-                        emphasized: true,
-                      ),
-                      _metricTile(
-                        icon: Icons.event_note_outlined,
-                        label: context.l10n.biggestIncomeExpenseGap,
-                        value: lowestMonthlyNetMonth == null
-                            ? '-'
-                            : '${lowestMonthlyNetMonth.monthKey} (${_formatMoney(lowestMonthlyNetMonth.netCents)})',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        context.l10n.monthlyIncomesAndProjections,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      if (visibleMonths.isEmpty)
-                        Text(
-                          context.l10n.noResultsYet,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        )
-                      else
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            columns: <DataColumn>[
-                              DataColumn(label: Text(context.l10n.month)),
-                              DataColumn(label: Text(context.l10n.incomeTotal)),
-                              DataColumn(
-                                label: Text(context.l10n.expensesTotal),
-                              ),
-                              DataColumn(label: Text(context.l10n.net)),
-                              DataColumn(label: Text(context.l10n.closing)),
-                            ],
-                            rows: visibleMonths.map((month) {
-                              final projectionMonth =
-                                  projectionByMonth[month.monthKey];
-                              return DataRow(
-                                cells: <DataCell>[
-                                  DataCell(Text(month.monthKey)),
-                                  DataCell(
-                                    Text(
-                                      _formatMoney(
-                                        projectionMonth?.totalIncomeCents ??
-                                            month.totalIncomeCents,
-                                      ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Text(
-                                      projectionMonth == null
-                                          ? '-'
-                                          : _formatMoney(
-                                              projectionMonth.totalExpenseCents,
-                                            ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Text(
-                                      projectionMonth == null
-                                          ? '-'
-                                          : _formatMoney(
-                                              projectionMonth.netCents,
-                                            ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Text(
-                                      projectionMonth == null
-                                          ? '-'
-                                          : _formatMoney(
-                                              projectionMonth
-                                                  .closingBalanceCents,
-                                            ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<int>(
+                          initialValue: _horizonMonths,
+                          decoration: InputDecoration(
+                            labelText: context.l10n.projectionHorizon,
                           ),
+                          items: <DropdownMenuItem<int>>[
+                            DropdownMenuItem(
+                              value: 3,
+                              child: Text(context.l10n.months3),
+                            ),
+                            DropdownMenuItem(
+                              value: 6,
+                              child: Text(context.l10n.months6),
+                            ),
+                            DropdownMenuItem(
+                              value: 12,
+                              child: Text(context.l10n.months12),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _horizonMonths = value);
+                          },
                         ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              context.l10n.recurringIncomes,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
+                        const SizedBox(height: 4),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            context
+                                .l10n
+                                .includeSpentExternalExpensesInProjection,
+                          ),
+                          value: _includeSpentExternalExpensesInProjection,
+                          onChanged: (value) {
+                            setState(
+                              () => _includeSpentExternalExpensesInProjection =
+                                  value,
+                            );
+                          },
+                        ),
+                        if (_validationError != null) ...<Widget>[
+                          const SizedBox(height: 8),
+                          Text(
+                            _validationError!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
                             ),
                           ),
-                          FilledButton.tonalIcon(
-                            onPressed: _upsertRecurringIncome,
-                            icon: const Icon(Icons.add),
-                            label: Text(context.l10n.add),
-                          ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        _metricTile(
+                          icon: Icons.trending_up_outlined,
+                          label: context.l10n.summedMonthlyIncome,
+                          value: _formatMoney(summedMonthlyIncomeCents),
+                        ),
+                        _metricTile(
+                          icon: Icons.trending_down_outlined,
+                          label: context.l10n.summedMonthlyExpenses,
+                          value: _formatMoney(summedMonthlyExpenseCents),
+                        ),
+                        _metricTile(
+                          icon: Icons.savings_outlined,
+                          label: context.l10n.totalBalance,
+                          value: _formatMoney(totalBalanceCents),
+                          emphasized: true,
+                        ),
+                        _metricTile(
+                          icon: Icons.event_note_outlined,
+                          label: context.l10n.biggestIncomeExpenseGap,
+                          value: lowestMonthlyNetMonth == null
+                              ? '-'
+                              : '${lowestMonthlyNetMonth.monthKey} (${_formatMoney(lowestMonthlyNetMonth.netCents)})',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          context.l10n.monthlyIncomesAndProjections,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        if (visibleMonths.isEmpty)
+                          Text(
+                            context.l10n.noResultsYet,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          )
+                        else
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              columns: <DataColumn>[
+                                DataColumn(label: Text(context.l10n.month)),
+                                DataColumn(
+                                  label: Text(context.l10n.incomeTotal),
+                                ),
+                                DataColumn(
+                                  label: Text(context.l10n.expensesTotal),
+                                ),
+                                DataColumn(label: Text(context.l10n.net)),
+                                DataColumn(label: Text(context.l10n.closing)),
+                              ],
+                              rows: visibleMonths.map((month) {
+                                final projectionMonth =
+                                    projectionByMonth[month.monthKey];
+                                return DataRow(
+                                  cells: <DataCell>[
+                                    DataCell(Text(month.monthKey)),
+                                    DataCell(
+                                      Text(
+                                        _formatMoney(
+                                          projectionMonth?.totalIncomeCents ??
+                                              month.totalIncomeCents,
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        projectionMonth == null
+                                            ? '-'
+                                            : _formatMoney(
+                                                projectionMonth
+                                                    .totalExpenseCents,
+                                              ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        projectionMonth == null
+                                            ? '-'
+                                            : _formatMoney(
+                                                projectionMonth.netCents,
+                                              ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        projectionMonth == null
+                                            ? '-'
+                                            : _formatMoney(
+                                                projectionMonth
+                                                    .closingBalanceCents,
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _collapsibleSectionCard(
+                  storageKey: 'finance-recurring-incomes-section',
+                  title: context.l10n.recurringIncomes,
+                  action: FilledButton.tonalIcon(
+                    onPressed: _upsertRecurringIncome,
+                    icon: const Icon(Icons.add),
+                    label: Text(context.l10n.add),
+                  ),
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
                       if (_data.recurringIncomes.isEmpty)
                         Text(context.l10n.noResultsYet)
                       else
@@ -1786,31 +1815,18 @@ class _ProjectFinanceTablePageState
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
+                const SizedBox(height: 8),
+                _collapsibleSectionCard(
+                  storageKey: 'finance-planned-incomes-section',
+                  title: context.l10n.plannedIncomes,
+                  action: FilledButton.tonalIcon(
+                    onPressed: _upsertPlannedIncome,
+                    icon: const Icon(Icons.add),
+                    label: Text(context.l10n.add),
+                  ),
+                  content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              context.l10n.plannedIncomes,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: _upsertPlannedIncome,
-                            icon: const Icon(Icons.add),
-                            label: Text(context.l10n.add),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
                       if (_data.plannedIncomes.isEmpty)
                         Text(context.l10n.noResultsYet)
                       else
@@ -1845,31 +1861,18 @@ class _ProjectFinanceTablePageState
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
+                const SizedBox(height: 8),
+                _collapsibleSectionCard(
+                  storageKey: 'finance-recurring-expenses-section',
+                  title: context.l10n.recurringExpenses,
+                  action: FilledButton.tonalIcon(
+                    onPressed: _upsertRecurring,
+                    icon: const Icon(Icons.add),
+                    label: Text(context.l10n.add),
+                  ),
+                  content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              context.l10n.recurringExpenses,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: _upsertRecurring,
-                            icon: const Icon(Icons.add),
-                            label: Text(context.l10n.add),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
                       if (_data.recurringExpenses.isEmpty)
                         Text(context.l10n.noResultsYet)
                       else
@@ -1903,31 +1906,18 @@ class _ProjectFinanceTablePageState
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
+                const SizedBox(height: 8),
+                _collapsibleSectionCard(
+                  storageKey: 'finance-planned-expenses-section',
+                  title: context.l10n.plannedExpenses,
+                  action: FilledButton.tonalIcon(
+                    onPressed: _upsertPlanned,
+                    icon: const Icon(Icons.add),
+                    label: Text(context.l10n.add),
+                  ),
+                  content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              context.l10n.plannedExpenses,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                          FilledButton.tonalIcon(
-                            onPressed: _upsertPlanned,
-                            icon: const Icon(Icons.add),
-                            label: Text(context.l10n.add),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
                       if (_data.plannedExpenses.isEmpty)
                         Text(context.l10n.noResultsYet)
                       else
@@ -1961,20 +1951,13 @@ class _ProjectFinanceTablePageState
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
+                const SizedBox(height: 8),
+                _collapsibleSectionCard(
+                  storageKey: 'finance-external-expenses-section',
+                  title: context.l10n.expensesFromOtherProjects,
+                  content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        context.l10n.expensesFromOtherProjects,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
                       if (_externalTaskExpenses.isEmpty)
                         Text(context.l10n.noResultsYet)
                       else
@@ -2004,31 +1987,31 @@ class _ProjectFinanceTablePageState
                     ],
                   ),
                 ),
-              ),
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(top: 10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(99)),
-                    child: LinearProgressIndicator(minHeight: 5),
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(99)),
+                      child: LinearProgressIndicator(minHeight: 5),
+                    ),
                   ),
-                ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        _error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
