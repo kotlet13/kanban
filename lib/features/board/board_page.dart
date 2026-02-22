@@ -304,6 +304,20 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     return total;
   }
 
+  int _plannedExpenseCents(KanboardBoard board) {
+    var total = 0;
+    for (final swimlane in board.swimlanes) {
+      for (final column in swimlane.columns) {
+        for (final task in column.tasks) {
+          if (task.isActive && task.score > 0) {
+            total += task.score;
+          }
+        }
+      }
+    }
+    return total;
+  }
+
   double _swimlaneSpentHours(KanboardSwimlane swimlane) {
     var total = 0.0;
     for (final column in swimlane.columns) {
@@ -701,17 +715,28 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final accent = _projectAccent(theme);
     final compact = MediaQuery.sizeOf(context).width < 760;
     final taskCount = board == null ? 0 : _taskCount(board);
+    final plannedCents = board == null ? 0 : _plannedExpenseCents(board);
     final spentCents = board == null ? 0 : _spentExpenseCents(board);
     final budgetCents = _expenseBudgetCents;
     final remainingCents = budgetCents == null
         ? null
-        : (budgetCents - spentCents);
+        : (budgetCents - spentCents - plannedCents);
+    final remainingValueColor = remainingCents == null
+        ? null
+        : remainingCents < 0
+        ? theme.colorScheme.error
+        : remainingCents > 0
+        ? (theme.brightness == Brightness.dark
+              ? Colors.green.shade300
+              : Colors.green.shade700)
+        : null;
 
     Widget statChip(
       IconData icon,
       String label,
       String value, {
       bool emphasized = false,
+      Color? valueColor,
     }) {
       final chipColor = emphasized
           ? Color.alphaBlend(
@@ -744,6 +769,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               value,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: valueColor,
               ),
             ),
           ],
@@ -850,6 +876,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                         ? context.l10n.noBudget
                         : _formatMoneyCents(remainingCents),
                     emphasized: true,
+                    valueColor: remainingValueColor,
                   ),
                 ],
               ),

@@ -742,15 +742,17 @@ class KanboardApi {
       <dynamic>[projectId, userId],
     ];
     JsonRpcException? lastError;
+    var sawFalseResult = false;
     for (final params in payloadVariants) {
       try {
         final result = await _client.call('addProjectUser', params);
-        return result == true;
+        if (result == true) return true;
+        sawFalseResult = true;
       } on JsonRpcException catch (error) {
         lastError = error;
       }
     }
-    if (lastError != null) throw lastError;
+    if (lastError != null && !sawFalseResult) throw lastError;
     return false;
   }
 
@@ -763,17 +765,25 @@ class KanboardApi {
       <dynamic>[projectId, userId],
     ];
     JsonRpcException? lastError;
+    var sawFalseResult = false;
     for (final params in payloadVariants) {
       try {
         final result = await _client.call('getProjectUserRole', params);
+        if (result == false || result == null) {
+          sawFalseResult = true;
+          continue;
+        }
         final role = result?.toString().trim();
-        if (role == null || role.isEmpty) return null;
+        if (role == null || role.isEmpty) {
+          sawFalseResult = true;
+          continue;
+        }
         return role;
       } on JsonRpcException catch (error) {
         lastError = error;
       }
     }
-    if (lastError != null) throw lastError;
+    if (lastError != null && !sawFalseResult) throw lastError;
     return null;
   }
 
@@ -792,15 +802,17 @@ class KanboardApi {
       <dynamic>[projectId, userId, roleText],
     ];
     JsonRpcException? lastError;
+    var sawFalseResult = false;
     for (final params in payloadVariants) {
       try {
         final result = await _client.call('changeProjectUserRole', params);
-        return result == true;
+        if (result == true) return true;
+        sawFalseResult = true;
       } on JsonRpcException catch (error) {
         lastError = error;
       }
     }
-    if (lastError != null) throw lastError;
+    if (lastError != null && !sawFalseResult) throw lastError;
     return false;
   }
 
@@ -813,15 +825,17 @@ class KanboardApi {
       <dynamic>[projectId, userId],
     ];
     JsonRpcException? lastError;
+    var sawFalseResult = false;
     for (final params in payloadVariants) {
       try {
         final result = await _client.call('removeProjectUser', params);
-        return result == true;
+        if (result == true) return true;
+        sawFalseResult = true;
       } on JsonRpcException catch (error) {
         lastError = error;
       }
     }
-    if (lastError != null) throw lastError;
+    if (lastError != null && !sawFalseResult) throw lastError;
     return false;
   }
 

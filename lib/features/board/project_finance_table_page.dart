@@ -135,9 +135,22 @@ class _ProjectFinanceTablePageState
         }
       }
 
+      final needsAllUsersLookup = parsed.contributors.any(
+        (entry) => entry.id.trim().startsWith('username:'),
+      );
+      List<KanboardUserReference> allUsers = const <KanboardUserReference>[];
+      if (needsAllUsersLookup) {
+        try {
+          allUsers = await api.getAllUsers();
+        } catch (_) {
+          allUsers = const <KanboardUserReference>[];
+        }
+      }
+
       final mergedContributors = _mergeContributors(
         existing: parsed.contributors,
         sharedUsers: sharedUsers,
+        allUsers: allUsers,
         sessionUsername: session?.username,
         meUserId: me?.id,
         meUsername: me?.username,
@@ -201,23 +214,54 @@ class _ProjectFinanceTablePageState
   _ContributorMergeResult _mergeContributors({
     required List<FinanceContributor> existing,
     required List<dynamic> sharedUsers,
+    required List<KanboardUserReference> allUsers,
     required String? sessionUsername,
     required int? meUserId,
     required String? meUsername,
     required String? meDisplayName,
   }) {
+    final allUsersByUsername = <String, KanboardUserReference>{};
+    for (final user in allUsers) {
+      final userId = user.id;
+      final username = user.username.trim();
+      if (userId <= 0 || username.isEmpty) continue;
+      allUsersByUsername[username.toLowerCase()] = user;
+    }
+
     final usernameToUserContributorId = <String, String>{};
     final userContributorNames = <String, String>{};
+    for (final user in allUsers) {
+      final userId = user.id;
+      final username = user.username.trim();
+      if (userId <= 0 || username.isEmpty) continue;
+      final contributorId = 'user:$userId';
+      usernameToUserContributorId.putIfAbsent(
+        username.toLowerCase(),
+        () => contributorId,
+      );
+      userContributorNames.putIfAbsent(
+        contributorId,
+        () => user.displayName.trim().isEmpty ? username : user.displayName,
+      );
+    }
     for (final user in sharedUsers) {
-      final userId = user.userId ?? 0;
       final username = (user.username ?? '').toString().trim();
+      var userId = user.userId ?? 0;
+      if (userId <= 0 && username.isNotEmpty) {
+        userId = allUsersByUsername[username.toLowerCase()]?.id ?? 0;
+      }
       final displayName = (user.displayName ?? '').toString().trim();
       if (userId <= 0 || username.isEmpty) continue;
       final contributorId = 'user:$userId';
       usernameToUserContributorId[username.toLowerCase()] = contributorId;
       userContributorNames[contributorId] = displayName.isNotEmpty
           ? displayName
-          : username;
+          : (allUsersByUsername[username.toLowerCase()]?.displayName
+                        .trim()
+                        .isNotEmpty ==
+                    true
+                ? allUsersByUsername[username.toLowerCase()]!.displayName
+                : username);
     }
     final normalizedMeUsername = (meUsername ?? '').trim();
     if ((meUserId ?? 0) > 0 && normalizedMeUsername.isNotEmpty) {
@@ -506,67 +550,6 @@ class _ProjectFinanceTablePageState
         });
       }
     }
-  }
-
-  void _setIncome({
-    required String monthKey,
-    required String contributorId,
-    required int amountCents,
-  }) {
-    final nextMonths = _data.months.map((month) {
-      if (month.monthKey != monthKey) return month;
-      final nextIncomes = Map<String, int>.from(
-        month.incomesByContributorCents,
-      );
-      nextIncomes[contributorId] = amountCents < 0 ? 0 : amountCents;
-      return FinanceMonthEntry(
-        monthKey: month.monthKey,
-        incomesByContributorCents: nextIncomes,
-      );
-    }).toList();
-    setState(() {
-      _data = _data.copyWith(months: nextMonths);
-    });
-    _markDirtyAndScheduleAutoSave();
-  }
-
-  Future<void> _editIncomeCell({
-    required String monthKey,
-    required FinanceContributor contributor,
-    required int currentCents,
-  }) async {
-    final controller = TextEditingController(text: _formatCents(currentCents));
-    final apply = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.incomeForPerson(contributor.name)),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: context.l10n.amount,
-            hintText: context.l10n.amountHint,
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.apply),
-          ),
-        ],
-      ),
-    );
-    if (apply != true) return;
-    final parsed = _parseMoneyToCents(controller.text) ?? 0;
-    _setIncome(
-      monthKey: monthKey,
-      contributorId: contributor.id,
-      amountCents: parsed,
-    );
   }
 
   Future<void> _upsertRecurring({RecurringExpense? existing}) async {
@@ -1337,9 +1320,7 @@ class _ProjectFinanceTablePageState
         contributorNamesByUserId[userId] = contributor.name;
       }
     }
-    if (contributorNamesByUserId.isEmpty) {
-      return const <_ExternalTaskExpenseRow>[];
-    }
+    final unassignedContributorLabel = context.l10n.otherExpense;
 
     final rows = <_ExternalTaskExpenseRow>[];
     List<KanboardProject> projects;
@@ -1359,9 +1340,8 @@ class _ProjectFinanceTablePageState
           for (final swimlane in board.swimlanes) {
             for (final column in swimlane.columns) {
               for (final task in column.tasks) {
-                if (task.score <= 0 || task.ownerId <= 0) continue;
+                if (task.score <= 0) continue;
                 final contributorName = contributorNamesByUserId[task.ownerId];
-                if (contributorName == null) continue;
                 rows.add(
                   _ExternalTaskExpenseRow(
                     projectId: project.id,
@@ -1371,7 +1351,11 @@ class _ProjectFinanceTablePageState
                     monthKey: _monthKeyFromTaskDateRaw(task.dateDueRaw),
                     amountCents: task.score,
                     isSpent: !task.isActive,
-                    contributorName: contributorName,
+                    contributorName:
+                        contributorName ??
+                        (task.ownerId > 0
+                            ? 'User #${task.ownerId}'
+                            : unassignedContributorLabel),
                   ),
                 );
               }
@@ -1465,7 +1449,6 @@ class _ProjectFinanceTablePageState
     final visibleMonths = _showPastMonths
         ? <FinanceMonthEntry>[...pastMonths, ...futureVisibleMonths]
         : futureVisibleMonths;
-    final contributors = _data.contributors;
     final projectionStartMonth = projectedMonths.isEmpty
         ? null
         : projectedMonths.first.monthKey;
@@ -1687,8 +1670,6 @@ class _ProjectFinanceTablePageState
                           child: DataTable(
                             columns: <DataColumn>[
                               DataColumn(label: Text(context.l10n.month)),
-                              for (final contributor in contributors)
-                                DataColumn(label: Text(contributor.name)),
                               DataColumn(label: Text(context.l10n.incomeTotal)),
                               DataColumn(
                                 label: Text(context.l10n.expensesTotal),
@@ -1702,27 +1683,6 @@ class _ProjectFinanceTablePageState
                               return DataRow(
                                 cells: <DataCell>[
                                   DataCell(Text(month.monthKey)),
-                                  for (final contributor in contributors)
-                                    DataCell(
-                                      OutlinedButton(
-                                        onPressed: () => _editIncomeCell(
-                                          monthKey: month.monthKey,
-                                          contributor: contributor,
-                                          currentCents:
-                                              month
-                                                  .incomesByContributorCents[contributor
-                                                  .id] ??
-                                              0,
-                                        ),
-                                        child: Text(
-                                          _formatCents(
-                                            month.incomesByContributorCents[contributor
-                                                    .id] ??
-                                                0,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   DataCell(
                                     Text(
                                       _formatMoney(

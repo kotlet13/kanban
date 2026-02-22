@@ -117,7 +117,7 @@ class _ProjectExpensesPageState extends ConsumerState<ProjectExpensesPage> {
     for (final swimlane in board.swimlanes) {
       for (final column in swimlane.columns) {
         for (final task in column.tasks) {
-          if (task.score > 0) {
+          if (task.isActive && task.score > 0) {
             total += task.score;
           }
         }
@@ -242,6 +242,7 @@ class _ProjectExpensesPageState extends ConsumerState<ProjectExpensesPage> {
     required String label,
     required String value,
     bool emphasized = false,
+    Color? valueColor,
   }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
@@ -282,6 +283,7 @@ class _ProjectExpensesPageState extends ConsumerState<ProjectExpensesPage> {
                   value,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: valueColor,
                   ),
                 ),
               ],
@@ -301,7 +303,16 @@ class _ProjectExpensesPageState extends ConsumerState<ProjectExpensesPage> {
     final budgetCents = _expenseBudgetCents;
     final remainingCents = budgetCents == null
         ? null
-        : budgetCents - spentCents;
+        : budgetCents - spentCents - plannedCents;
+    final remainingValueColor = remainingCents == null
+        ? null
+        : remainingCents < 0
+        ? theme.colorScheme.error
+        : remainingCents > 0
+        ? (theme.brightness == Brightness.dark
+              ? Colors.green.shade300
+              : Colors.green.shade700)
+        : null;
     final expenseRows = board == null
         ? const <_ExpenseTaskRow>[]
         : _expenseRows(board);
@@ -364,6 +375,7 @@ class _ProjectExpensesPageState extends ConsumerState<ProjectExpensesPage> {
                               ? context.l10n.noBudget
                               : _formatMoneyCents(remainingCents),
                           emphasized: true,
+                          valueColor: remainingValueColor,
                         ),
                       ],
                     ),
