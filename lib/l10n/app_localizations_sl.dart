@@ -709,6 +709,212 @@ class AppLocalizationsSl extends AppLocalizations {
   String get projectExpenses => 'Stroški projekta';
 
   @override
+  String get financeTable => 'Finančna tabela';
+
+  @override
+  String get financeProject => 'Finančni projekt';
+
+  @override
+  String get financeProjectDescription =>
+      'Ta projekt se odpre neposredno v finančni tabeli.';
+
+  @override
+  String get sharedFinanceTable => 'Deljena finančna tabela';
+
+  @override
+  String get currentBalance => 'Trenutno stanje';
+
+  @override
+  String get projectionHorizon => 'Obdobje projekcije';
+
+  @override
+  String get showPastMonths => 'Prikaži pretekle mesece';
+
+  @override
+  String get unsavedFinanceChangesTitle => 'Neshranjene finančne spremembe';
+
+  @override
+  String get unsavedFinanceChangesMessage =>
+      'Nekateri finančni podatki še niso shranjeni. Želiš vseeno zapustiti stran?';
+
+  @override
+  String get leaveWithoutSaving => 'Zapusti brez shranjevanja';
+
+  @override
+  String get summedMonthlyIncome => 'Skupni mesečni prihodki';
+
+  @override
+  String get summedMonthlyExpenses => 'Skupni mesečni stroški';
+
+  @override
+  String get totalBalance => 'Skupno stanje';
+
+  @override
+  String get biggestIncomeExpenseGap =>
+      'Najnižji mesečni neto (prihodki - stroški)';
+
+  @override
+  String get months3 => '3 mesece';
+
+  @override
+  String get months6 => '6 mesecev';
+
+  @override
+  String get months12 => '12 mesecev';
+
+  @override
+  String get lowestProjectedBalance => 'Najnižje projicirano stanje';
+
+  @override
+  String get firstNegativeMonth => 'Prvi negativni mesec';
+
+  @override
+  String get endBalance => 'Končno stanje';
+
+  @override
+  String get recurringMonthlyEnabled => 'Mesečno ponavljajoče (omogočeno)';
+
+  @override
+  String get recurringIncomeMonthlyEnabled =>
+      'Mesečni ponavljajoči prihodki (omogočeno)';
+
+  @override
+  String get monthlyIncomesAndProjections => 'Mesečni prihodki in projekcije';
+
+  @override
+  String get month => 'Mesec';
+
+  @override
+  String get incomeTotal => 'Skupaj prihodki';
+
+  @override
+  String get expensesTotal => 'Skupaj stroški';
+
+  @override
+  String get net => 'Razlika';
+
+  @override
+  String get closing => 'Končno';
+
+  @override
+  String get contributor => 'Uporabnik';
+
+  @override
+  String get contributorOptional => 'Uporabnik (neobvezno)';
+
+  @override
+  String get source => 'Vir';
+
+  @override
+  String get otherIncome => 'Drugi prihodki';
+
+  @override
+  String get otherExpense => 'Drugi stroški';
+
+  @override
+  String get recurringIncomes => 'Ponavljajoči prihodki';
+
+  @override
+  String get recurringExpenses => 'Ponavljajoči stroški';
+
+  @override
+  String get plannedIncomes => 'Načrtovani prihodki';
+
+  @override
+  String get plannedExpenses => 'Načrtovani stroški';
+
+  @override
+  String get ongoing => 'tekoče';
+
+  @override
+  String get enabled => 'Omogočeno';
+
+  @override
+  String get category => 'Kategorija';
+
+  @override
+  String get monthlyAmount => 'Mesečni znesek';
+
+  @override
+  String get startMonthYYYYMM => 'Začetni mesec (YYYY-MM)';
+
+  @override
+  String get endMonthOptionalYYYYMM => 'Končni mesec (YYYY-MM, neobvezno)';
+
+  @override
+  String get addRecurringExpense => 'Dodaj ponavljajoči strošek';
+
+  @override
+  String get editRecurringExpense => 'Uredi ponavljajoči strošek';
+
+  @override
+  String get recurringExpenseFieldsNotValid =>
+      'Polja za ponavljajoči strošek niso veljavna.';
+
+  @override
+  String get addRecurringIncome => 'Dodaj ponavljajoči prihodek';
+
+  @override
+  String get editRecurringIncome => 'Uredi ponavljajoči prihodek';
+
+  @override
+  String get recurringIncomeFieldsNotValid =>
+      'Polja za ponavljajoči prihodek niso veljavna.';
+
+  @override
+  String get addPlannedExpense => 'Dodaj načrtovani strošek';
+
+  @override
+  String get editPlannedExpense => 'Uredi načrtovani strošek';
+
+  @override
+  String get plannedExpenseFieldsNotValid =>
+      'Polja za načrtovani strošek niso veljavna.';
+
+  @override
+  String get addPlannedIncome => 'Dodaj načrtovani prihodek';
+
+  @override
+  String get editPlannedIncome => 'Uredi načrtovani prihodek';
+
+  @override
+  String get plannedIncomeFieldsNotValid =>
+      'Polja za načrtovani prihodek niso veljavna.';
+
+  @override
+  String get amount => 'Znesek';
+
+  @override
+  String get amountHint => '0,00';
+
+  @override
+  String get monthYYYYMM => 'Mesec (YYYY-MM)';
+
+  @override
+  String get financeContributorMe => 'Jaz';
+
+  @override
+  String incomeForPerson(Object name) {
+    return 'Prihodek - $name';
+  }
+
+  @override
+  String get currentBalanceMustBeValidNumber =>
+      'Trenutno stanje mora biti veljavno število.';
+
+  @override
+  String get financeTableSaved => 'Finančna tabela je shranjena.';
+
+  @override
+  String financeTableSaveFailed(Object error) {
+    return 'Shranjevanje finančne tabele ni uspelo: $error';
+  }
+
+  @override
+  String get serverRejectedFinanceTableSave =>
+      'Strežnik je zavrnil shranjevanje finančne tabele.';
+
+  @override
   String get expenseSettingsSaved => 'Nastavitve stroškov so shranjene.';
 
   @override

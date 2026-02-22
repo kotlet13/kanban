@@ -14,8 +14,14 @@ class KanboardApi {
   static const String taskHoursTrackerSubtaskTitle =
       '__APP_TASK_HOURS_TRACKER__';
   static const String projectColorMetadataKey = 'ui_project_color';
+  static const String projectTypeMetadataKey = 'ui_project_type';
+  static const String financeProjectTypeValue = 'finance';
   static const String expenseCurrencyMetadataKey = 'ui_expense_currency';
   static const String expenseBudgetCentsMetadataKey = 'ui_expense_budget_cents';
+  static const String financeTableMetadataKey = 'ui_finance_table_v1';
+  static const String _financeTableChunkPrefix = 'ui_finance_table_v1_chunk_';
+  static const String _financeTableChunkMarkerPrefix = '@chunked:';
+  static const int _financeTableChunkMaxBytes = 220;
   static const String aiEnabledMetadataKey = 'ui_ai_enabled';
   static const String aiKeyModeMetadataKey = 'ui_ai_key_mode';
   static const String aiOwnerUsernameMetadataKey = 'ui_ai_owner_username';
@@ -51,22 +57,29 @@ class KanboardApi {
             (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
           );
 
-    final colors = await Future.wait<String?>(
+    final metadataRows = await Future.wait<(String?, String?)>(
       projects.map((project) async {
         try {
-          final color = await getProjectMetadataByName(
-            projectId: project.id,
-            name: projectColorMetadataKey,
+          final metadata = await getProjectMetadata(project.id);
+          final color = _normalizeColorHex(
+            metadata[projectColorMetadataKey]?.toString(),
           );
-          return _normalizeColorHex(color);
+          final projectType = metadata[projectTypeMetadataKey]
+              ?.toString()
+              .trim()
+              .toLowerCase();
+          return (color, projectType);
         } catch (_) {
-          return null;
+          return (null, null);
         }
       }),
     );
 
     return List<KanboardProject>.generate(projects.length, (index) {
-      return projects[index].copyWith(uiColorHex: colors[index]);
+      return projects[index].copyWith(
+        uiColorHex: metadataRows[index].$1,
+        uiProjectType: metadataRows[index].$2,
+      );
     });
   }
 
@@ -162,6 +175,23 @@ class KanboardApi {
     );
   }
 
+  Future<bool> saveProjectType({
+    required int projectId,
+    String? projectType,
+  }) async {
+    final normalized = projectType?.trim().toLowerCase();
+    if (normalized == null || normalized.isEmpty) {
+      return removeProjectMetadata(
+        projectId: projectId,
+        name: projectTypeMetadataKey,
+      );
+    }
+    return saveProjectMetadata(
+      projectId: projectId,
+      values: <String, String>{projectTypeMetadataKey: normalized},
+    );
+  }
+
   Future<String?> getProjectExpenseCurrency(int projectId) async {
     final raw = await getProjectMetadataByName(
       projectId: projectId,
@@ -221,6 +251,159 @@ class KanboardApi {
       );
     }
     return true;
+  }
+
+  Future<String?> getProjectFinanceTableRaw(int projectId) async {
+    final marker = await getProjectMetadataByName(
+      projectId: projectId,
+      name: financeTableMetadataKey,
+    );
+    if (marker == null || marker.trim().isEmpty) return null;
+
+    final normalizedMarker = marker.trim();
+    if (!normalizedMarker.startsWith(_financeTableChunkMarkerPrefix)) {
+      return marker;
+    }
+
+    final countText = normalizedMarker.substring(
+      _financeTableChunkMarkerPrefix.length,
+    );
+    final chunkCount = int.tryParse(countText) ?? 0;
+    if (chunkCount <= 0) return null;
+
+    final chunks = await Future.wait<String?>(
+      List<String>.generate(
+        chunkCount,
+        (index) => _financeChunkKey(index),
+      ).map((key) => getProjectMetadataByName(projectId: projectId, name: key)),
+    );
+    if (chunks.any((chunk) => chunk == null)) return null;
+    return chunks.join();
+  }
+
+  Future<Map<String, dynamic>?> getProjectFinanceTableData(
+    int projectId,
+  ) async {
+    final raw = await getProjectFinanceTableRaw(projectId);
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  Future<bool> saveProjectFinanceTableRaw({
+    required int projectId,
+    required String rawJson,
+  }) async {
+    final normalized = rawJson.trim();
+    if (normalized.isEmpty) {
+      await removeProjectMetadata(
+        projectId: projectId,
+        name: financeTableMetadataKey,
+      );
+      await _removeStaleFinanceChunkKeys(
+        projectId: projectId,
+        keepKeys: const <String>{},
+      );
+      return true;
+    }
+
+    final rawBytes = utf8.encode(normalized);
+    if (rawBytes.length <= _financeTableChunkMaxBytes) {
+      final saved = await saveProjectMetadata(
+        projectId: projectId,
+        values: <String, String>{financeTableMetadataKey: normalized},
+      );
+      if (!saved) return false;
+      await _removeStaleFinanceChunkKeys(
+        projectId: projectId,
+        keepKeys: const <String>{},
+      );
+      return true;
+    }
+
+    final chunks = _chunkByUtf8Bytes(normalized, _financeTableChunkMaxBytes);
+    final values = <String, String>{
+      financeTableMetadataKey:
+          '$_financeTableChunkMarkerPrefix${chunks.length}',
+    };
+    for (var index = 0; index < chunks.length; index++) {
+      values[_financeChunkKey(index)] = chunks[index];
+    }
+
+    final saved = await saveProjectMetadata(
+      projectId: projectId,
+      values: values,
+    );
+    if (!saved) return false;
+    await _removeStaleFinanceChunkKeys(
+      projectId: projectId,
+      keepKeys: values.keys
+          .where((key) => key.startsWith(_financeTableChunkPrefix))
+          .toSet(),
+    );
+    return true;
+  }
+
+  Future<bool> saveProjectFinanceTableData({
+    required int projectId,
+    required Map<String, dynamic> data,
+  }) {
+    return saveProjectFinanceTableRaw(
+      projectId: projectId,
+      rawJson: jsonEncode(data),
+    );
+  }
+
+  String _financeChunkKey(int index) => '$_financeTableChunkPrefix$index';
+
+  List<String> _chunkByUtf8Bytes(String input, int maxBytes) {
+    final chunks = <String>[];
+    final buffer = StringBuffer();
+    var bufferBytes = 0;
+
+    for (final rune in input.runes) {
+      final chunkPart = String.fromCharCode(rune);
+      final partBytes = utf8.encode(chunkPart).length;
+      if (bufferBytes > 0 && bufferBytes + partBytes > maxBytes) {
+        chunks.add(buffer.toString());
+        buffer.clear();
+        bufferBytes = 0;
+      }
+      buffer.write(chunkPart);
+      bufferBytes += partBytes;
+    }
+    if (bufferBytes > 0) {
+      chunks.add(buffer.toString());
+    }
+    return chunks;
+  }
+
+  Future<void> _removeStaleFinanceChunkKeys({
+    required int projectId,
+    required Set<String> keepKeys,
+  }) async {
+    try {
+      final metadata = await getProjectMetadata(projectId);
+      final chunkKeys = metadata.keys
+          .where((key) => key.startsWith(_financeTableChunkPrefix))
+          .where((key) => !keepKeys.contains(key))
+          .toList();
+      for (final key in chunkKeys) {
+        await removeProjectMetadata(projectId: projectId, name: key);
+      }
+    } catch (_) {
+      // Ignore cleanup failures; core payload save already succeeded.
+    }
   }
 
   Future<AiProjectPolicy> getProjectAiPolicy(int projectId) async {

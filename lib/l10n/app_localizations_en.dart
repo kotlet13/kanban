@@ -706,6 +706,212 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectExpenses => 'Project expenses';
 
   @override
+  String get financeTable => 'Finance table';
+
+  @override
+  String get financeProject => 'Finance project';
+
+  @override
+  String get financeProjectDescription =>
+      'Open this project directly in Finance table.';
+
+  @override
+  String get sharedFinanceTable => 'Shared finance table';
+
+  @override
+  String get currentBalance => 'Current balance';
+
+  @override
+  String get projectionHorizon => 'Projection horizon';
+
+  @override
+  String get showPastMonths => 'Show past months';
+
+  @override
+  String get unsavedFinanceChangesTitle => 'Unsaved finance changes';
+
+  @override
+  String get unsavedFinanceChangesMessage =>
+      'Some finance data is not saved yet. Leave this page anyway?';
+
+  @override
+  String get leaveWithoutSaving => 'Leave without saving';
+
+  @override
+  String get summedMonthlyIncome => 'Summed monthly income';
+
+  @override
+  String get summedMonthlyExpenses => 'Summed monthly expenses';
+
+  @override
+  String get totalBalance => 'Total balance';
+
+  @override
+  String get biggestIncomeExpenseGap =>
+      'Lowest monthly net (income - expenses)';
+
+  @override
+  String get months3 => '3 months';
+
+  @override
+  String get months6 => '6 months';
+
+  @override
+  String get months12 => '12 months';
+
+  @override
+  String get lowestProjectedBalance => 'Lowest projected balance';
+
+  @override
+  String get firstNegativeMonth => 'First negative month';
+
+  @override
+  String get endBalance => 'End balance';
+
+  @override
+  String get recurringMonthlyEnabled => 'Recurring monthly (enabled)';
+
+  @override
+  String get recurringIncomeMonthlyEnabled =>
+      'Recurring income monthly (enabled)';
+
+  @override
+  String get monthlyIncomesAndProjections => 'Monthly incomes & projections';
+
+  @override
+  String get month => 'Month';
+
+  @override
+  String get incomeTotal => 'Income total';
+
+  @override
+  String get expensesTotal => 'Expenses total';
+
+  @override
+  String get net => 'Net';
+
+  @override
+  String get closing => 'Closing';
+
+  @override
+  String get contributor => 'Contributor';
+
+  @override
+  String get contributorOptional => 'Contributor (optional)';
+
+  @override
+  String get source => 'Source';
+
+  @override
+  String get otherIncome => 'Other income';
+
+  @override
+  String get otherExpense => 'Other expense';
+
+  @override
+  String get recurringIncomes => 'Recurring incomes';
+
+  @override
+  String get recurringExpenses => 'Recurring expenses';
+
+  @override
+  String get plannedIncomes => 'Planned incomes';
+
+  @override
+  String get plannedExpenses => 'Planned expenses';
+
+  @override
+  String get ongoing => 'ongoing';
+
+  @override
+  String get enabled => 'Enabled';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get monthlyAmount => 'Monthly amount';
+
+  @override
+  String get startMonthYYYYMM => 'Start month (YYYY-MM)';
+
+  @override
+  String get endMonthOptionalYYYYMM => 'End month (YYYY-MM, optional)';
+
+  @override
+  String get addRecurringExpense => 'Add recurring expense';
+
+  @override
+  String get editRecurringExpense => 'Edit recurring expense';
+
+  @override
+  String get recurringExpenseFieldsNotValid =>
+      'Recurring expense fields are not valid.';
+
+  @override
+  String get addRecurringIncome => 'Add recurring income';
+
+  @override
+  String get editRecurringIncome => 'Edit recurring income';
+
+  @override
+  String get recurringIncomeFieldsNotValid =>
+      'Recurring income fields are not valid.';
+
+  @override
+  String get addPlannedExpense => 'Add planned expense';
+
+  @override
+  String get editPlannedExpense => 'Edit planned expense';
+
+  @override
+  String get plannedExpenseFieldsNotValid =>
+      'Planned expense fields are not valid.';
+
+  @override
+  String get addPlannedIncome => 'Add planned income';
+
+  @override
+  String get editPlannedIncome => 'Edit planned income';
+
+  @override
+  String get plannedIncomeFieldsNotValid =>
+      'Planned income fields are not valid.';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get amountHint => '0.00';
+
+  @override
+  String get monthYYYYMM => 'Month (YYYY-MM)';
+
+  @override
+  String get financeContributorMe => 'Me';
+
+  @override
+  String incomeForPerson(Object name) {
+    return 'Income - $name';
+  }
+
+  @override
+  String get currentBalanceMustBeValidNumber =>
+      'Current balance must be a valid number.';
+
+  @override
+  String get financeTableSaved => 'Finance table saved.';
+
+  @override
+  String financeTableSaveFailed(Object error) {
+    return 'Finance table save failed: $error';
+  }
+
+  @override
+  String get serverRejectedFinanceTableSave =>
+      'Server rejected finance table save.';
+
+  @override
   String get expenseSettingsSaved => 'Expense settings saved.';
 
   @override

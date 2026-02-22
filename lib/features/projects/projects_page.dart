@@ -102,6 +102,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       text: project?.description ?? '',
     );
     String? selectedColorHex = _normalizeColorHex(project?.uiColorHex);
+    var isFinanceProject =
+        (project?.uiProjectType ?? '').trim().toLowerCase() ==
+        KanboardApi.financeProjectTypeValue;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -169,6 +172,18 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: isFinanceProject,
+                    onChanged: (value) {
+                      setLocalState(() {
+                        isFinanceProject = value;
+                      });
+                    },
+                    title: Text(context.l10n.financeProject),
+                    subtitle: Text(context.l10n.financeProjectDescription),
+                  ),
                 ],
               ),
             ),
@@ -205,6 +220,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
           projectId: projectId,
           colorHex: selectedColorHex,
         );
+        await api.saveProjectType(
+          projectId: projectId,
+          projectType: isFinanceProject
+              ? KanboardApi.financeProjectTypeValue
+              : null,
+        );
         try {
           await _applyProjectDefaults(api: api, projectId: projectId);
         } catch (error) {
@@ -219,6 +240,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         await api.saveProjectColorHex(
           projectId: project.id,
           colorHex: selectedColorHex,
+        );
+        await api.saveProjectType(
+          projectId: project.id,
+          projectType: isFinanceProject
+              ? KanboardApi.financeProjectTypeValue
+              : null,
         );
       }
       await _loadProjects(fromRefresh: true);
@@ -534,7 +561,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     if (colorHex != null) {
       query['projectColor'] = colorHex;
     }
-    final uri = Uri(path: '/board/${project.id}', queryParameters: query);
+    final projectType = (project.uiProjectType ?? '').trim().toLowerCase();
+    final path = projectType == KanboardApi.financeProjectTypeValue
+        ? '/board/${project.id}/finance-table'
+        : '/board/${project.id}';
+    final uri = Uri(path: path, queryParameters: query);
     context.push(uri.toString());
   }
 
@@ -542,6 +573,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final accent = _parseHexColor(project.uiColorHex) ?? colorScheme.primary;
+    final isFinanceProject =
+        (project.uiProjectType ?? '').trim().toLowerCase() ==
+        KanboardApi.financeProjectTypeValue;
     final hasDescription =
         project.description != null && project.description!.trim().isNotEmpty;
 
@@ -597,6 +631,13 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           foreground: theme.colorScheme.onSurfaceVariant,
                           background: theme.colorScheme.surfaceContainerHighest,
                         ),
+                        if (isFinanceProject)
+                          _metaPill(
+                            icon: Icons.table_chart_outlined,
+                            text: context.l10n.financeTable,
+                            foreground: Colors.indigo.shade800,
+                            background: Colors.indigo.withValues(alpha: 0.14),
+                          ),
                       ],
                     ),
                   ),

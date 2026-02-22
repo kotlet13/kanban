@@ -73,6 +73,7 @@ class KanboardProject {
     this.identifier,
     this.isActive = true,
     this.uiColorHex,
+    this.uiProjectType,
   });
 
   final int id;
@@ -81,6 +82,7 @@ class KanboardProject {
   final String? identifier;
   final bool isActive;
   final String? uiColorHex;
+  final String? uiProjectType;
 
   factory KanboardProject.fromJson(Map<String, dynamic> json) {
     return KanboardProject(
@@ -90,6 +92,7 @@ class KanboardProject {
       identifier: json['identifier']?.toString(),
       isActive: parseKanboardInt(json['is_active'], 1) == 1,
       uiColorHex: json['ui_color_hex']?.toString(),
+      uiProjectType: parseKanboardString(json['ui_project_type']),
     );
   }
 
@@ -100,6 +103,7 @@ class KanboardProject {
     'identifier': identifier,
     'is_active': isActive ? 1 : 0,
     'ui_color_hex': uiColorHex,
+    'ui_project_type': uiProjectType,
   };
 
   KanboardProject copyWith({
@@ -108,7 +112,9 @@ class KanboardProject {
     String? identifier,
     bool? isActive,
     String? uiColorHex,
+    String? uiProjectType,
     bool clearUiColorHex = false,
+    bool clearUiProjectType = false,
   }) {
     return KanboardProject(
       id: id,
@@ -117,6 +123,9 @@ class KanboardProject {
       identifier: identifier ?? this.identifier,
       isActive: isActive ?? this.isActive,
       uiColorHex: clearUiColorHex ? null : (uiColorHex ?? this.uiColorHex),
+      uiProjectType: clearUiProjectType
+          ? null
+          : (uiProjectType ?? this.uiProjectType),
     );
   }
 }

@@ -9,7 +9,7 @@ import '../../widgets/bidirectional_scroll_view.dart';
 import '../../widgets/theme_mode_menu_button.dart';
 import '../tasks/task_details_page.dart';
 
-enum _BoardOverflowAction { projects, structure, search, aiChat }
+enum _BoardOverflowAction { projects, structure, search, financeTable, aiChat }
 
 class BoardPage extends ConsumerStatefulWidget {
   const BoardPage({
@@ -354,6 +354,19 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     context.push(uri.toString()).then((_) => _loadBoard(fromRefresh: true));
   }
 
+  void _openFinanceTablePage() {
+    final query = <String, String>{
+      'projectName': widget.projectName,
+      if ((widget.projectColorHex ?? '').trim().isNotEmpty)
+        'projectColor': widget.projectColorHex!.trim(),
+    };
+    final uri = Uri(
+      path: '/board/${widget.projectId}/finance-table',
+      queryParameters: query,
+    );
+    context.push(uri.toString()).then((_) => _loadBoard(fromRefresh: true));
+  }
+
   void _onOverflowActionSelected(_BoardOverflowAction action) {
     switch (action) {
       case _BoardOverflowAction.projects:
@@ -364,6 +377,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         return;
       case _BoardOverflowAction.search:
         _openSearch();
+        return;
+      case _BoardOverflowAction.financeTable:
+        _openFinanceTablePage();
         return;
       case _BoardOverflowAction.aiChat:
         _openAiChat();
@@ -792,6 +808,12 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   ),
                   FilledButton.tonalIcon(
                     style: overviewActionStyle,
+                    onPressed: _openFinanceTablePage,
+                    icon: const Icon(Icons.table_chart_outlined),
+                    label: Text(context.l10n.financeTable),
+                  ),
+                  FilledButton.tonalIcon(
+                    style: overviewActionStyle,
                     onPressed: _openSearch,
                     icon: const Icon(Icons.search),
                     label: Text(context.l10n.search),
@@ -1080,6 +1102,16 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                     const Icon(Icons.search, size: 18),
                     const SizedBox(width: 10),
                     Text(context.l10n.search),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.financeTable,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.table_chart_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.financeTable),
                   ],
                 ),
               ),

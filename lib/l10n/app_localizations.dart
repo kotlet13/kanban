@@ -1334,6 +1334,390 @@ abstract class AppLocalizations {
   /// **'Project expenses'**
   String get projectExpenses;
 
+  /// No description provided for @financeTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance table'**
+  String get financeTable;
+
+  /// No description provided for @financeProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance project'**
+  String get financeProject;
+
+  /// No description provided for @financeProjectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this project directly in Finance table.'**
+  String get financeProjectDescription;
+
+  /// No description provided for @sharedFinanceTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared finance table'**
+  String get sharedFinanceTable;
+
+  /// No description provided for @currentBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get currentBalance;
+
+  /// No description provided for @projectionHorizon.
+  ///
+  /// In en, this message translates to:
+  /// **'Projection horizon'**
+  String get projectionHorizon;
+
+  /// No description provided for @showPastMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Show past months'**
+  String get showPastMonths;
+
+  /// No description provided for @unsavedFinanceChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved finance changes'**
+  String get unsavedFinanceChangesTitle;
+
+  /// No description provided for @unsavedFinanceChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some finance data is not saved yet. Leave this page anyway?'**
+  String get unsavedFinanceChangesMessage;
+
+  /// No description provided for @leaveWithoutSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave without saving'**
+  String get leaveWithoutSaving;
+
+  /// No description provided for @summedMonthlyIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Summed monthly income'**
+  String get summedMonthlyIncome;
+
+  /// No description provided for @summedMonthlyExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Summed monthly expenses'**
+  String get summedMonthlyExpenses;
+
+  /// No description provided for @totalBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Total balance'**
+  String get totalBalance;
+
+  /// No description provided for @biggestIncomeExpenseGap.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest monthly net (income - expenses)'**
+  String get biggestIncomeExpenseGap;
+
+  /// No description provided for @months3.
+  ///
+  /// In en, this message translates to:
+  /// **'3 months'**
+  String get months3;
+
+  /// No description provided for @months6.
+  ///
+  /// In en, this message translates to:
+  /// **'6 months'**
+  String get months6;
+
+  /// No description provided for @months12.
+  ///
+  /// In en, this message translates to:
+  /// **'12 months'**
+  String get months12;
+
+  /// No description provided for @lowestProjectedBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest projected balance'**
+  String get lowestProjectedBalance;
+
+  /// No description provided for @firstNegativeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'First negative month'**
+  String get firstNegativeMonth;
+
+  /// No description provided for @endBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'End balance'**
+  String get endBalance;
+
+  /// No description provided for @recurringMonthlyEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring monthly (enabled)'**
+  String get recurringMonthlyEnabled;
+
+  /// No description provided for @recurringIncomeMonthlyEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring income monthly (enabled)'**
+  String get recurringIncomeMonthlyEnabled;
+
+  /// No description provided for @monthlyIncomesAndProjections.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly incomes & projections'**
+  String get monthlyIncomesAndProjections;
+
+  /// No description provided for @month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get month;
+
+  /// No description provided for @incomeTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Income total'**
+  String get incomeTotal;
+
+  /// No description provided for @expensesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses total'**
+  String get expensesTotal;
+
+  /// No description provided for @net.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get net;
+
+  /// No description provided for @closing.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing'**
+  String get closing;
+
+  /// No description provided for @contributor.
+  ///
+  /// In en, this message translates to:
+  /// **'Contributor'**
+  String get contributor;
+
+  /// No description provided for @contributorOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Contributor (optional)'**
+  String get contributorOptional;
+
+  /// No description provided for @source.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get source;
+
+  /// No description provided for @otherIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Other income'**
+  String get otherIncome;
+
+  /// No description provided for @otherExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Other expense'**
+  String get otherExpense;
+
+  /// No description provided for @recurringIncomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring incomes'**
+  String get recurringIncomes;
+
+  /// No description provided for @recurringExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expenses'**
+  String get recurringExpenses;
+
+  /// No description provided for @plannedIncomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned incomes'**
+  String get plannedIncomes;
+
+  /// No description provided for @plannedExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned expenses'**
+  String get plannedExpenses;
+
+  /// No description provided for @ongoing.
+  ///
+  /// In en, this message translates to:
+  /// **'ongoing'**
+  String get ongoing;
+
+  /// No description provided for @enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get enabled;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @monthlyAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly amount'**
+  String get monthlyAmount;
+
+  /// No description provided for @startMonthYYYYMM.
+  ///
+  /// In en, this message translates to:
+  /// **'Start month (YYYY-MM)'**
+  String get startMonthYYYYMM;
+
+  /// No description provided for @endMonthOptionalYYYYMM.
+  ///
+  /// In en, this message translates to:
+  /// **'End month (YYYY-MM, optional)'**
+  String get endMonthOptionalYYYYMM;
+
+  /// No description provided for @addRecurringExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add recurring expense'**
+  String get addRecurringExpense;
+
+  /// No description provided for @editRecurringExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recurring expense'**
+  String get editRecurringExpense;
+
+  /// No description provided for @recurringExpenseFieldsNotValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring expense fields are not valid.'**
+  String get recurringExpenseFieldsNotValid;
+
+  /// No description provided for @addRecurringIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add recurring income'**
+  String get addRecurringIncome;
+
+  /// No description provided for @editRecurringIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recurring income'**
+  String get editRecurringIncome;
+
+  /// No description provided for @recurringIncomeFieldsNotValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring income fields are not valid.'**
+  String get recurringIncomeFieldsNotValid;
+
+  /// No description provided for @addPlannedExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add planned expense'**
+  String get addPlannedExpense;
+
+  /// No description provided for @editPlannedExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit planned expense'**
+  String get editPlannedExpense;
+
+  /// No description provided for @plannedExpenseFieldsNotValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned expense fields are not valid.'**
+  String get plannedExpenseFieldsNotValid;
+
+  /// No description provided for @addPlannedIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add planned income'**
+  String get addPlannedIncome;
+
+  /// No description provided for @editPlannedIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit planned income'**
+  String get editPlannedIncome;
+
+  /// No description provided for @plannedIncomeFieldsNotValid.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned income fields are not valid.'**
+  String get plannedIncomeFieldsNotValid;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @amountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0.00'**
+  String get amountHint;
+
+  /// No description provided for @monthYYYYMM.
+  ///
+  /// In en, this message translates to:
+  /// **'Month (YYYY-MM)'**
+  String get monthYYYYMM;
+
+  /// No description provided for @financeContributorMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get financeContributorMe;
+
+  /// No description provided for @incomeForPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Income - {name}'**
+  String incomeForPerson(Object name);
+
+  /// No description provided for @currentBalanceMustBeValidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance must be a valid number.'**
+  String get currentBalanceMustBeValidNumber;
+
+  /// No description provided for @financeTableSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance table saved.'**
+  String get financeTableSaved;
+
+  /// No description provided for @financeTableSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance table save failed: {error}'**
+  String financeTableSaveFailed(Object error);
+
+  /// No description provided for @serverRejectedFinanceTableSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Server rejected finance table save.'**
+  String get serverRejectedFinanceTableSave;
+
   /// No description provided for @expenseSettingsSaved.
   ///
   /// In en, this message translates to:

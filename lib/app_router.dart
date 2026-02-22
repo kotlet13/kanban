@@ -7,6 +7,7 @@ import 'features/auth/launch_page.dart';
 import 'features/ai/project_ai_chat_page.dart';
 import 'features/board/board_page.dart';
 import 'features/board/project_expenses_page.dart';
+import 'features/board/project_finance_table_page.dart';
 import 'features/board/board_structure_page.dart';
 import 'features/projects/projects_page.dart';
 import 'features/settings/ai_settings_page.dart';
@@ -94,6 +95,22 @@ final appRouter = GoRouter(
                 context.l10n.project;
             final projectColorHex = state.uri.queryParameters['projectColor'];
             return ProjectExpensesPage(
+              projectId: projectId,
+              projectName: projectName,
+              projectColorHex: projectColorHex,
+            );
+          },
+        ),
+        GoRoute(
+          path: 'finance-table',
+          builder: (context, state) {
+            final projectId =
+                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
+            final projectName =
+                state.uri.queryParameters['projectName'] ??
+                context.l10n.project;
+            final projectColorHex = state.uri.queryParameters['projectColor'];
+            return ProjectFinanceTablePage(
               projectId: projectId,
               projectName: projectName,
               projectColorHex: projectColorHex,
