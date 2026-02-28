@@ -24,8 +24,46 @@ class TaskDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final platform = Theme.of(context).platform;
+    final isApple =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final width = MediaQuery.sizeOf(context).width;
     final formMaxWidth = width < 900 ? width - 24 : 900.0;
+    final pageBody = Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: formMaxWidth),
+        child: TaskDetailsSheet(
+          projectId: projectId,
+          task: null,
+          taskId: taskId,
+          isStandalonePage: true,
+        ),
+      ),
+    );
+
+    if (isApple) {
+      return CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          middle: Text(
+            taskId == null ? context.l10n.newTask2 : context.l10n.editTask,
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: () => context.go('/projects'),
+                child: const Icon(CupertinoIcons.folder, size: 20),
+              ),
+              const SizedBox(width: 4),
+              const ThemeModeMenuButton(),
+            ],
+          ),
+        ),
+        child: pageBody,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -41,17 +79,7 @@ class TaskDetailsPage extends StatelessWidget {
           const ThemeModeMenuButton(),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: formMaxWidth),
-          child: TaskDetailsSheet(
-            projectId: projectId,
-            task: null,
-            taskId: taskId,
-            isStandalonePage: true,
-          ),
-        ),
-      ),
+      body: pageBody,
     );
   }
 }
@@ -751,9 +779,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     final taskId = _activeTaskId;
     if (api == null || taskId == null) return;
     final controller = TextEditingController(text: comment.comment);
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.editComment),
         content: TextField(
           controller: controller,
@@ -841,9 +869,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   }
 
   Future<bool> _confirmDeleteGroceryItem(String itemTitle) async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => AlertDialog.adaptive(
         title: Text(context.l10n.delete),
         content: Text(context.l10n.deletePermanently(itemTitle)),
         actions: <Widget>[
@@ -891,10 +919,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     );
     int? selectedUser = subtask.userId > 0 ? subtask.userId : null;
 
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
+        builder: (context, setLocalState) => AlertDialog.adaptive(
           title: Text(context.l10n.editSubtask),
           content: SizedBox(
             width: 420,
@@ -984,6 +1012,37 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       await _loadTaskDetails(taskId);
     } catch (error) {
       _showSnack(context.l10n.subtaskDeleteFailed(error), isError: true);
+    }
+  }
+
+  Future<void> _showSubtaskActionSheet(KanboardSubtask subtask) async {
+    final selected = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (popupContext) => CupertinoActionSheet(
+        title: Text(subtask.title),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(popupContext).pop('edit'),
+            child: Text(context.l10n.edit),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(popupContext).pop('delete'),
+            child: Text(context.l10n.delete),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popupContext).pop(),
+          child: Text(context.l10n.cancel),
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    if (selected == 'edit') {
+      _editSubtask(subtask);
+    } else if (selected == 'delete') {
+      _deleteSubtask(subtask);
     }
   }
 
@@ -1385,9 +1444,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     );
     if (accepted) return true;
     if (!mounted) return false;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.aiCostNoticeTitle),
         content: Text(context.l10n.aiCostNoticeBody(owner)),
         actions: <Widget>[
@@ -1426,9 +1485,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         ),
       );
       if (!mounted) return;
-      final apply = await showDialog<bool>(
+      final apply = await showAdaptiveDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => AlertDialog.adaptive(
           title: Text(context.l10n.aiSuggestedTitle),
           content: Text(suggestion),
           actions: <Widget>[
@@ -1470,9 +1529,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         ),
       );
       if (!mounted) return;
-      final apply = await showDialog<bool>(
+      final apply = await showAdaptiveDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => AlertDialog.adaptive(
           title: Text(context.l10n.aiSuggestedDescription),
           content: SingleChildScrollView(child: Text(suggestion)),
           actions: <Widget>[
@@ -2165,28 +2224,47 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                           subtask.timeSpent,
                                         ),
                                       ),
-                                      secondary: PopupMenuButton<String>(
-                                        onSelected: (value) {
-                                          if (value == 'edit') {
-                                            _editSubtask(subtask);
-                                          } else if (value == 'delete') {
-                                            _deleteSubtask(subtask);
-                                          }
-                                        },
-                                        itemBuilder: (context) =>
-                                            <PopupMenuEntry<String>>[
-                                              PopupMenuItem<String>(
-                                                value: 'edit',
-                                                child: Text(context.l10n.edit),
+                                      secondary:
+                                          Theme.of(context).platform ==
+                                                  TargetPlatform.iOS ||
+                                              Theme.of(context).platform ==
+                                                  TargetPlatform.macOS
+                                          ? CupertinoButton(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(30, 30),
+                                              onPressed: () =>
+                                                  _showSubtaskActionSheet(
+                                                    subtask,
+                                                  ),
+                                              child: const Icon(
+                                                CupertinoIcons.ellipsis_circle,
+                                                size: 20,
                                               ),
-                                              PopupMenuItem<String>(
-                                                value: 'delete',
-                                                child: Text(
-                                                  context.l10n.delete,
-                                                ),
-                                              ),
-                                            ],
-                                      ),
+                                            )
+                                          : PopupMenuButton<String>(
+                                              onSelected: (value) {
+                                                if (value == 'edit') {
+                                                  _editSubtask(subtask);
+                                                } else if (value == 'delete') {
+                                                  _deleteSubtask(subtask);
+                                                }
+                                              },
+                                              itemBuilder: (context) =>
+                                                  <PopupMenuEntry<String>>[
+                                                    PopupMenuItem<String>(
+                                                      value: 'edit',
+                                                      child: Text(
+                                                        context.l10n.edit,
+                                                      ),
+                                                    ),
+                                                    PopupMenuItem<String>(
+                                                      value: 'delete',
+                                                      child: Text(
+                                                        context.l10n.delete,
+                                                      ),
+                                                    ),
+                                                  ],
+                                            ),
                                     ),
                                   )
                                   .toList(),

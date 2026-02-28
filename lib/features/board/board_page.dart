@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,14 @@ import '../../widgets/bidirectional_scroll_view.dart';
 import '../../widgets/theme_mode_menu_button.dart';
 import '../tasks/task_details_page.dart';
 
-enum _BoardOverflowAction { projects, structure, search, financeTable, aiChat }
+enum _BoardOverflowAction {
+  refresh,
+  projects,
+  structure,
+  search,
+  financeTable,
+  aiChat,
+}
 
 class _TaskDragPayload {
   const _TaskDragPayload({
@@ -131,7 +139,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     int? columnId,
     int? swimlaneId,
   }) async {
-    final changed = await showDialog<bool>(
+    final changed = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
       builder: (dialogContext) {
@@ -163,10 +171,10 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   Future<void> _deleteTask(KanboardTask task) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.deleteTask),
         content: Text(context.l10n.deletePermanently(task.title)),
         actions: <Widget>[
@@ -315,7 +323,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   }
 
   Future<void> _openGroceryListEditor() async {
-    final changed = await showDialog<bool>(
+    final changed = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
       builder: (dialogContext) {
@@ -446,6 +454,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
 
   void _onOverflowActionSelected(_BoardOverflowAction action) {
     switch (action) {
+      case _BoardOverflowAction.refresh:
+        _loadBoard(fromRefresh: true);
+        return;
       case _BoardOverflowAction.projects:
         context.go('/projects');
         return;
@@ -464,9 +475,64 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
+  Future<void> _showAppleOverflowMenu() async {
+    final l10n = context.l10n;
+    final selected = await showCupertinoModalPopup<_BoardOverflowAction>(
+      context: context,
+      builder: (popupContext) => CupertinoActionSheet(
+        title: Text(widget.projectName),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.refresh);
+            },
+            child: Text(l10n.refreshBoard),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.projects);
+            },
+            child: Text(l10n.projects),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.structure);
+            },
+            child: Text(l10n.structure),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.search);
+            },
+            child: Text(l10n.search),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.financeTable);
+            },
+            child: Text(l10n.financeTable),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_BoardOverflowAction.aiChat);
+            },
+            child: Text(l10n.aiChat),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popupContext).pop(),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    _onOverflowActionSelected(selected);
+  }
+
   Future<void> _openSearch() async {
     final l10n = context.l10n;
-    final selectedTaskId = await showDialog<int>(
+    final selectedTaskId = await showAdaptiveDialog<int>(
       context: context,
       useRootNavigator: true,
       builder: (dialogContext) => Dialog(
@@ -525,6 +591,53 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
+  void _onTaskMenuSelected(KanboardTask task, String value) {
+    if (value == 'edit') {
+      _openTaskEditor(task: task);
+    } else if (value == 'done') {
+      _setTaskDone(task, done: true);
+    } else if (value == 'reopen') {
+      _setTaskDone(task, done: false);
+    } else if (value == 'delete') {
+      _deleteTask(task);
+    }
+  }
+
+  Future<void> _showTaskActionSheet(KanboardTask task) async {
+    final l10n = context.l10n;
+    final selected = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (popupContext) => CupertinoActionSheet(
+        title: Text(task.title),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(popupContext).pop('edit'),
+            child: Text(l10n.edit),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(
+              popupContext,
+            ).pop(task.isActive ? 'done' : 'reopen'),
+            child: Text(task.isActive ? l10n.markDone : l10n.reopen),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(popupContext).pop('delete'),
+            child: Text(l10n.delete),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popupContext).pop(),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null) return;
+    _onTaskMenuSelected(task, selected);
+  }
+
   Widget _taskCard(
     KanboardTask task, {
     required int sourceColumnId,
@@ -532,6 +645,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     required bool dragEnabled,
   }) {
     final theme = Theme.of(context);
+    final isApple =
+        theme.platform == TargetPlatform.iOS ||
+        theme.platform == TargetPlatform.macOS;
     final accent = _projectAccent(theme);
     final isDone = !task.isActive;
     final taskDragPayload = _TaskDragPayload(
@@ -669,37 +785,37 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                   ),
                 ),
               ),
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _openTaskEditor(task: task);
-                  } else if (value == 'done') {
-                    _setTaskDone(task, done: true);
-                  } else if (value == 'reopen') {
-                    _setTaskDone(task, done: false);
-                  } else if (value == 'delete') {
-                    _deleteTask(task);
-                  }
-                },
-                itemBuilder: (context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text(context.l10n.edit),
-                  ),
-                  PopupMenuItem<String>(
-                    value: task.isActive ? 'done' : 'reopen',
-                    child: Text(
-                      task.isActive
-                          ? context.l10n.markDone
-                          : context.l10n.reopen,
+              isApple
+                  ? CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(30, 30),
+                      onPressed: () => _showTaskActionSheet(task),
+                      child: const Icon(
+                        CupertinoIcons.ellipsis_circle,
+                        size: 20,
+                      ),
+                    )
+                  : PopupMenuButton<String>(
+                      onSelected: (value) => _onTaskMenuSelected(task, value),
+                      itemBuilder: (context) => <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Text(context.l10n.edit),
+                        ),
+                        PopupMenuItem<String>(
+                          value: task.isActive ? 'done' : 'reopen',
+                          child: Text(
+                            task.isActive
+                                ? context.l10n.markDone
+                                : context.l10n.reopen,
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Text(context.l10n.delete),
+                        ),
+                      ],
                     ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text(context.l10n.delete),
-                  ),
-                ],
-              ),
               const SizedBox(width: 4),
             ],
           ),
@@ -1246,6 +1362,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   @override
   Widget build(BuildContext context) {
     final board = _board;
+    final platform = Theme.of(context).platform;
+    final isApple =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final stackedColumns = MediaQuery.sizeOf(context).width < 900;
     const dragEnabled = true;
     final maxColumnsPerSwimlane = board == null || board.swimlanes.isEmpty
@@ -1257,6 +1376,101 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         .clamp(1200, 7000)
         .toDouble();
     final theme = Theme.of(context);
+
+    final body = isApple
+        ? (stackedColumns
+              ? CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: <Widget>[
+                    CupertinoSliverRefreshControl(
+                      onRefresh: () => _loadBoard(fromRefresh: true),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate(
+                          _boardContent(
+                            board,
+                            stackedColumns: stackedColumns,
+                            dragEnabled: dragEnabled,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : BidirectionalScrollView(
+                  alwaysScrollable: true,
+                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                  contentWidth: boardContentWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _boardContent(
+                      board,
+                      stackedColumns: stackedColumns,
+                      dragEnabled: dragEnabled,
+                    ),
+                  ),
+                ))
+        : RefreshIndicator(
+            onRefresh: () => _loadBoard(fromRefresh: true),
+            child: stackedColumns
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                    children: _boardContent(
+                      board,
+                      stackedColumns: stackedColumns,
+                      dragEnabled: dragEnabled,
+                    ),
+                  )
+                : BidirectionalScrollView(
+                    alwaysScrollable: true,
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
+                    contentWidth: boardContentWidth,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _boardContent(
+                        board,
+                        stackedColumns: stackedColumns,
+                        dragEnabled: dragEnabled,
+                      ),
+                    ),
+                  ),
+          );
+
+    if (isApple) {
+      return CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          middle: Text(widget.projectName),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: () => _openTaskEditor(),
+                child: const Icon(CupertinoIcons.add, size: 20),
+              ),
+              const SizedBox(width: 4),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: _showAppleOverflowMenu,
+                child: const Icon(CupertinoIcons.ellipsis_circle, size: 20),
+              ),
+              const SizedBox(width: 4),
+              const ThemeModeMenuButton(),
+            ],
+          ),
+        ),
+        child: body,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -1275,6 +1489,16 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             ),
             onSelected: _onOverflowActionSelected,
             itemBuilder: (context) => <PopupMenuEntry<_BoardOverflowAction>>[
+              PopupMenuItem<_BoardOverflowAction>(
+                value: _BoardOverflowAction.refresh,
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.refresh, size: 18),
+                    const SizedBox(width: 10),
+                    Text(context.l10n.refreshBoard),
+                  ],
+                ),
+              ),
               PopupMenuItem<_BoardOverflowAction>(
                 value: _BoardOverflowAction.projects,
                 child: Row(
@@ -1335,34 +1559,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         icon: const Icon(Icons.add_task),
         label: Text(context.l10n.newTask),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadBoard(fromRefresh: true),
-        child: stackedColumns
-            ? ListView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
-                children: _boardContent(
-                  board,
-                  stackedColumns: stackedColumns,
-                  dragEnabled: dragEnabled,
-                ),
-              )
-            : BidirectionalScrollView(
-                alwaysScrollable: true,
-                padding: const EdgeInsets.fromLTRB(12, 14, 12, 96),
-                contentWidth: boardContentWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _boardContent(
-                    board,
-                    stackedColumns: stackedColumns,
-                    dragEnabled: dragEnabled,
-                  ),
-                ),
-              ),
-      ),
+      body: body,
     );
   }
 }

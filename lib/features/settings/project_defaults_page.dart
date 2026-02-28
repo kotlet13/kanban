@@ -134,9 +134,9 @@ class _ProjectDefaultsPageState extends ConsumerState<ProjectDefaultsPage> {
   }
 
   Future<void> _reset() async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.resetDefaults),
         content: Text(
           context

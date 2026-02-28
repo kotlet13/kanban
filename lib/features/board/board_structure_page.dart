@@ -69,10 +69,10 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
     final limitController = TextEditingController(
       text: column == null ? '' : '${column.taskLimit}',
     );
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(
           column == null ? context.l10n.addColumn : context.l10n.editColumn,
         ),
@@ -138,10 +138,10 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
   Future<void> _deleteColumn(KanboardColumn column) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.deleteColumn),
         content: Text(context.l10n.deleteColumn2(column.title)),
         actions: <Widget>[
@@ -173,10 +173,10 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
     final nameController = TextEditingController(text: swimlane?.name ?? '');
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(
           swimlane == null
               ? context.l10n.addSwimlane
@@ -228,10 +228,10 @@ class _BoardStructurePageState extends ConsumerState<BoardStructurePage> {
   Future<void> _deleteSwimlane(KanboardSwimlane swimlane) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.deleteSwimlane),
         content: Text(context.l10n.deleteSwimlane2(swimlane.name)),
         actions: <Widget>[

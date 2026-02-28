@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,35 +47,35 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: <Color>[
-              theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.38),
               theme.scaffoldBackgroundColor,
-              theme.colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+              theme.colorScheme.tertiaryContainer.withValues(alpha: 0.24),
             ],
           ),
         ),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 420, minHeight: 220),
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 28,
+                  vertical: 24,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     CircleAvatar(
-                      radius: 30,
+                      radius: 28,
                       backgroundColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.12,
+                        alpha: 0.14,
                       ),
                       child: Icon(
-                        Icons.dashboard_customize_rounded,
-                        size: 30,
+                        CupertinoIcons.square_grid_2x2_fill,
+                        size: 28,
                         color: theme.colorScheme.primary,
                       ),
                     ),
@@ -92,8 +93,8 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const LinearProgressIndicator(minHeight: 5),
+                    const SizedBox(height: 20),
+                    const CupertinoActivityIndicator(radius: 11),
                   ],
                 ),
               ),

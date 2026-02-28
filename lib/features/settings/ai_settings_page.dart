@@ -28,11 +28,7 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
   String _thinkingEffort = 'medium';
   String? _error;
 
-  List<String> _models = <String>[
-    'gpt-4.1-mini',
-    'gpt-4.1',
-    'gpt-4o-mini',
-  ];
+  List<String> _models = <String>['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini'];
 
   @override
   void initState() {
@@ -72,7 +68,9 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
       _error = null;
     });
     try {
-      await ref.read(aiSettingsStoreProvider).save(
+      await ref
+          .read(aiSettingsStoreProvider)
+          .save(
             AiSettings(
               enabled: _enabled,
               model: _model,
@@ -113,7 +111,9 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
       _error = null;
     });
     try {
-      await ref.read(aiSettingsStoreProvider).save(
+      await ref
+          .read(aiSettingsStoreProvider)
+          .save(
             AiSettings(
               enabled: true,
               model: _model,
@@ -151,25 +151,29 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
       _isLoadingModels = true;
       _error = null;
     });
-    final response = await ref.read(httpClientProvider).get(
-      Uri.parse('https://api.openai.com/v1/models'),
-      headers: <String, String>{'Authorization': 'Bearer $key'},
-    );
+    final response = await ref
+        .read(httpClientProvider)
+        .get(
+          Uri.parse('https://api.openai.com/v1/models'),
+          headers: <String, String>{'Authorization': 'Bearer $key'},
+        );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('HTTP ${response.statusCode}');
     }
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final data = decoded['data'] as List<dynamic>? ?? const <dynamic>[];
-    final modelIds = data
-        .whereType<Map<String, dynamic>>()
-        .map((m) => m['id']?.toString() ?? '')
-        .where((id) => id.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final modelIds =
+        data
+            .whereType<Map<String, dynamic>>()
+            .map((m) => m['id']?.toString() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
     if (!mounted) return modelIds.length;
     setState(() {
-      _models = (modelIds.isEmpty ? _models : modelIds).toSet().toList()..sort();
+      _models = (modelIds.isEmpty ? _models : modelIds).toSet().toList()
+        ..sort();
       if (_models.isNotEmpty && !_models.contains(_model)) {
         _model = _models.first;
       }
@@ -177,7 +181,9 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
     });
     if (showSnack && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.availableModelsFetched(_models.length))),
+        SnackBar(
+          content: Text(context.l10n.availableModelsFetched(_models.length)),
+        ),
       );
     }
     return _models.length;
@@ -230,13 +236,17 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
                   const SizedBox(height: 8),
                   Text(
                     _error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
                 SwitchListTile.adaptive(
                   value: _enabled,
-                  onChanged: _isSaving ? null : (value) => setState(() => _enabled = value),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) => setState(() => _enabled = value),
                   title: Text(context.l10n.enableAI),
                 ),
                 const SizedBox(height: 8),

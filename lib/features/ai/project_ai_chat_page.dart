@@ -173,9 +173,9 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
       );
       return;
     }
-    final selected = await showDialog<AiChatThread>(
+    final selected = await showAdaptiveDialog<AiChatThread>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.continueChat),
         content: SizedBox(
           width: 460,
@@ -315,9 +315,9 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
     );
     if (accepted) return true;
     if (!mounted) return false;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.aiCostNoticeTitle),
         content: Text(context.l10n.aiCostNoticeBody(owner)),
         actions: <Widget>[
@@ -626,9 +626,9 @@ If no action is needed, reply normally without JSON.
         })
         .join('\n');
 
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.aiActionPlanDetected),
         content: Text(summary),
         actions: <Widget>[

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,14 @@ import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
+
+enum _ProjectsQuickAction {
+  projectDefaults,
+  aiSettings,
+  connectionSettings,
+  refresh,
+  logout,
+}
 
 class ProjectsPage extends ConsumerStatefulWidget {
   const ProjectsPage({super.key});
@@ -106,11 +115,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         (project?.uiProjectType ?? '').trim().toLowerCase() ==
         KanboardApi.financeProjectTypeValue;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
       builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
+        builder: (context, setLocalState) => AlertDialog.adaptive(
           title: Text(
             project == null
                 ? context.l10n.createProject
@@ -336,10 +345,10 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
   Future<void> _deleteProject(KanboardProject project) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(context.l10n.deleteProject2),
         content: Text(context.l10n.thisWillRemovePermanently(project.name)),
         actions: <Widget>[
@@ -369,7 +378,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
   }
 
   Future<void> _openProjectAttachments(KanboardProject project) async {
-    await showDialog<void>(
+    await showAdaptiveDialog<void>(
       context: context,
       useRootNavigator: true,
       builder: (context) => _ProjectFilesDialog(project: project),
@@ -377,7 +386,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
   }
 
   Future<void> _openProjectPermissions(KanboardProject project) async {
-    await showDialog<void>(
+    await showAdaptiveDialog<void>(
       context: context,
       useRootNavigator: true,
       builder: (context) => _ProjectPermissionsDialog(project: project),
@@ -391,8 +400,82 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
     context.go('/connect');
   }
 
+  Future<void> _showAppleToolbarMenu() async {
+    final l10n = context.l10n;
+    final selected = await showCupertinoModalPopup<_ProjectsQuickAction>(
+      context: context,
+      builder: (popupContext) => CupertinoActionSheet(
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(
+                popupContext,
+              ).pop(_ProjectsQuickAction.projectDefaults);
+            },
+            child: Text(l10n.projectDefaults),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(popupContext).pop(_ProjectsQuickAction.aiSettings);
+            },
+            child: Text(l10n.aiSettings),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(
+                popupContext,
+              ).pop(_ProjectsQuickAction.connectionSettings);
+            },
+            child: Text(l10n.connectionSettings),
+          ),
+          if (!_isLoading)
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.of(popupContext).pop(_ProjectsQuickAction.refresh);
+              },
+              child: Text(l10n.refresh),
+            ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.of(popupContext).pop(_ProjectsQuickAction.logout);
+            },
+            child: Text(l10n.logout),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popupContext).pop(),
+          child: Text(l10n.cancel),
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null) return;
+    switch (selected) {
+      case _ProjectsQuickAction.projectDefaults:
+        context.push('/settings/project-defaults');
+        return;
+      case _ProjectsQuickAction.aiSettings:
+        context.push('/settings/ai');
+        return;
+      case _ProjectsQuickAction.connectionSettings:
+        context.push('/connect');
+        return;
+      case _ProjectsQuickAction.refresh:
+        _loadProjects(fromRefresh: true);
+        return;
+      case _ProjectsQuickAction.logout:
+        _logout();
+        return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final platform = Theme.of(context).platform;
+    final isApple =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final hasSession = ref.watch(kanboardApiProvider) != null;
     final activeProjects = _projects
         .where((project) => project.isActive)
@@ -401,6 +484,162 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       0,
       _projects.length,
     );
+    final body = LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1280
+            ? 3
+            : width >= 820
+            ? 2
+            : 1;
+        final slivers = <Widget>[
+          if (isApple)
+            CupertinoSliverRefreshControl(
+              onRefresh: () => _loadProjects(fromRefresh: true),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
+            sliver: SliverToBoxAdapter(
+              child: _summaryCard(
+                hasSession: hasSession,
+                activeProjects: activeProjects,
+                archivedProjects: archivedProjects,
+              ),
+            ),
+          ),
+          if (_isLoading)
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              sliver: SliverToBoxAdapter(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.all(Radius.circular(99)),
+                  child: LinearProgressIndicator(minHeight: 5),
+                ),
+              ),
+            ),
+          if (_error != null)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              sliver: SliverToBoxAdapter(
+                child: _statusCard(
+                  icon: Icons.error_outline,
+                  title: context.l10n.couldNotLoadProjects,
+                  subtitle: _error!,
+                  isError: true,
+                  action: FilledButton.tonalIcon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _loadProjects(fromRefresh: true),
+                    icon: const Icon(Icons.refresh),
+                    label: Text(context.l10n.retry),
+                  ),
+                ),
+              ),
+            ),
+          if (!hasSession)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              sliver: SliverToBoxAdapter(
+                child: _statusCard(
+                  icon: Icons.link_off,
+                  title: context.l10n.noActiveSession,
+                  subtitle: context.l10n.connectToKanboardToContinue,
+                  action: FilledButton.icon(
+                    onPressed: () => context.push('/connect'),
+                    icon: const Icon(Icons.settings_ethernet),
+                    label: Text(context.l10n.connect),
+                  ),
+                ),
+              ),
+            ),
+          if (hasSession && _projects.isEmpty && !_isLoading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: _EmptyProjectsState(),
+                ),
+              ),
+            ),
+          if (hasSession && _projects.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 110),
+              sliver: crossAxisCount == 1
+                  ? SliverList.separated(
+                      itemBuilder: (context, index) {
+                        final project = _projects[index];
+                        return _projectCard(project);
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
+                      itemCount: _projects.length,
+                    )
+                  : SliverGrid.builder(
+                      itemCount: _projects.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        mainAxisExtent: width >= 1200 ? 252 : 262,
+                      ),
+                      itemBuilder: (context, index) =>
+                          _projectCard(_projects[index]),
+                    ),
+            ),
+        ];
+
+        final list = CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: slivers,
+        );
+
+        if (isApple) {
+          return list;
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => _loadProjects(fromRefresh: true),
+          child: list,
+        );
+      },
+    );
+
+    if (isApple) {
+      return CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          middle: Text(context.l10n.projects),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: hasSession ? () => _createOrEditProject() : null,
+                child: Icon(
+                  CupertinoIcons.add,
+                  size: 20,
+                  color: hasSession ? null : CupertinoColors.inactiveGray,
+                ),
+              ),
+              const SizedBox(width: 4),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: _showAppleToolbarMenu,
+                child: const Icon(CupertinoIcons.ellipsis_circle, size: 20),
+              ),
+              const SizedBox(width: 4),
+              const ThemeModeMenuButton(),
+            ],
+          ),
+        ),
+        child: body,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.projects),
@@ -440,118 +679,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         icon: const Icon(Icons.add),
         label: Text(context.l10n.newProject),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadProjects(fromRefresh: true),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final crossAxisCount = width >= 1280
-                ? 3
-                : width >= 820
-                ? 2
-                : 1;
-
-            return CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              slivers: <Widget>[
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: _summaryCard(
-                      hasSession: hasSession,
-                      activeProjects: activeProjects,
-                      archivedProjects: archivedProjects,
-                    ),
-                  ),
-                ),
-                if (_isLoading)
-                  const SliverPadding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    sliver: SliverToBoxAdapter(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(99)),
-                        child: LinearProgressIndicator(minHeight: 5),
-                      ),
-                    ),
-                  ),
-                if (_error != null)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                    sliver: SliverToBoxAdapter(
-                      child: _statusCard(
-                        icon: Icons.error_outline,
-                        title: context.l10n.couldNotLoadProjects,
-                        subtitle: _error!,
-                        isError: true,
-                        action: FilledButton.tonalIcon(
-                          onPressed: _isLoading
-                              ? null
-                              : () => _loadProjects(fromRefresh: true),
-                          icon: const Icon(Icons.refresh),
-                          label: Text(context.l10n.retry),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (!hasSession)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    sliver: SliverToBoxAdapter(
-                      child: _statusCard(
-                        icon: Icons.link_off,
-                        title: context.l10n.noActiveSession,
-                        subtitle: context.l10n.connectToKanboardToContinue,
-                        action: FilledButton.icon(
-                          onPressed: () => context.push('/connect'),
-                          icon: const Icon(Icons.settings_ethernet),
-                          label: Text(context.l10n.connect),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (hasSession && _projects.isEmpty && !_isLoading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: _EmptyProjectsState(),
-                      ),
-                    ),
-                  ),
-                if (hasSession && _projects.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 110),
-                    sliver: crossAxisCount == 1
-                        ? SliverList.separated(
-                            itemBuilder: (context, index) {
-                              final project = _projects[index];
-                              return _projectCard(project);
-                            },
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 10),
-                            itemCount: _projects.length,
-                          )
-                        : SliverGrid.builder(
-                            itemCount: _projects.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 10,
-                                  mainAxisExtent: width >= 1200 ? 252 : 262,
-                                ),
-                            itemBuilder: (context, index) =>
-                                _projectCard(_projects[index]),
-                          ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
+      body: body,
     );
   }
 
@@ -1150,7 +1278,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return AlertDialog.adaptive(
       title: Text(context.l10n.attachments(widget.project.name)),
       content: SizedBox(
         width: 640,
@@ -1462,10 +1590,10 @@ class _ProjectPermissionsDialogState
   Future<void> _removeUser(KanboardProjectPermission user) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final confirm = await showDialog<bool>(
+    final confirm = await showAdaptiveDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: const Text('Remove project access?'),
         content: Text('Remove ${user.displayName} from this project?'),
         actions: <Widget>[
@@ -1530,6 +1658,49 @@ class _ProjectPermissionsDialogState
     }
   }
 
+  Future<void> _showUserRoleActions({
+    required KanboardProjectPermission user,
+    required String currentRole,
+  }) async {
+    if (_isWorking) return;
+    const removeAction = '__remove__';
+    final selected = await showCupertinoModalPopup<String>(
+      context: context,
+      builder: (popupContext) => CupertinoActionSheet(
+        title: Text(user.displayName),
+        actions: <CupertinoActionSheetAction>[
+          for (final candidateRole in _projectRoles)
+            CupertinoActionSheetAction(
+              isDefaultAction: candidateRole == currentRole,
+              onPressed: () {
+                Navigator.of(popupContext).pop(candidateRole);
+              },
+              child: Text(_roleLabel(candidateRole)),
+            ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.of(popupContext).pop(removeAction);
+            },
+            child: Text(context.l10n.remove),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popupContext).pop(),
+          child: Text(context.l10n.cancel),
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null) return;
+    if (selected == removeAction) {
+      _removeUser(user);
+      return;
+    }
+    _changeUserRole(user: user, role: selected);
+  }
+
   void _showSnack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1556,12 +1727,15 @@ class _ProjectPermissionsDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isApple =
+        theme.platform == TargetPlatform.iOS ||
+        theme.platform == TargetPlatform.macOS;
     final candidates = _shareCandidates();
     final selectedInCandidates =
         _selectedUserId != null &&
         candidates.any((user) => user.id == _selectedUserId);
 
-    return AlertDialog(
+    return AlertDialog.adaptive(
       title: Text('Project permissions - ${widget.project.name}'),
       content: SizedBox(
         width: 700,
@@ -1749,30 +1923,46 @@ class _ProjectPermissionsDialogState
                       subtitle: details.isEmpty
                           ? null
                           : Text(details.join('  ')),
-                      trailing: PopupMenuButton<String>(
-                        tooltip: 'Manage role',
-                        enabled: !_isWorking,
-                        onSelected: (value) {
-                          if (value == 'remove') {
-                            _removeUser(user);
-                            return;
-                          }
-                          _changeUserRole(user: user, role: value);
-                        },
-                        itemBuilder: (context) => <PopupMenuEntry<String>>[
-                          for (final candidateRole in _projectRoles)
-                            CheckedPopupMenuItem<String>(
-                              value: candidateRole,
-                              checked: candidateRole == role,
-                              child: Text(_roleLabel(candidateRole)),
+                      trailing: isApple
+                          ? CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(30, 30),
+                              onPressed: _isWorking
+                                  ? null
+                                  : () => _showUserRoleActions(
+                                      user: user,
+                                      currentRole: role,
+                                    ),
+                              child: const Icon(
+                                CupertinoIcons.ellipsis_circle,
+                                size: 20,
+                              ),
+                            )
+                          : PopupMenuButton<String>(
+                              tooltip: 'Manage role',
+                              enabled: !_isWorking,
+                              onSelected: (value) {
+                                if (value == 'remove') {
+                                  _removeUser(user);
+                                  return;
+                                }
+                                _changeUserRole(user: user, role: value);
+                              },
+                              itemBuilder: (context) =>
+                                  <PopupMenuEntry<String>>[
+                                    for (final candidateRole in _projectRoles)
+                                      CheckedPopupMenuItem<String>(
+                                        value: candidateRole,
+                                        checked: candidateRole == role,
+                                        child: Text(_roleLabel(candidateRole)),
+                                      ),
+                                    const PopupMenuDivider(),
+                                    PopupMenuItem<String>(
+                                      value: 'remove',
+                                      child: Text(context.l10n.remove),
+                                    ),
+                                  ],
                             ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem<String>(
-                            value: 'remove',
-                            child: Text(context.l10n.remove),
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),

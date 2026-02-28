@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -164,12 +165,12 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
     final payload = buildCredentialsTransferPayload(credentials);
 
     if (!mounted) return;
-    await showDialog<void>(
+    await showAdaptiveDialog<void>(
       context: context,
       useRootNavigator: true,
       builder: (context) {
         final maxDialogHeight = MediaQuery.sizeOf(context).height * 0.72;
-        return AlertDialog(
+        return AlertDialog.adaptive(
           title: Text(context.l10n.transferCredentials),
           content: SizedBox(
             width: 340,
@@ -303,6 +304,9 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final platform = theme.platform;
+    final isApple =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
     final l10n = context.l10n;
     final isPasswordMode = _authMode == KanboardAuthMode.password;
     final secretFieldLabel = isPasswordMode
@@ -316,8 +320,337 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         : l10n.usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc;
     final authNote = isPasswordMode
         ? l10n.authNotePasswordModeUsesYourKanboardLoginCredentials
-        : l10n
-              .authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
+        : l10n.authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
+    final body = SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 760;
+          final horizontalPadding = isCompact ? 12.0 : 16.0;
+
+          return Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                16,
+                horizontalPadding,
+                24,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isCompact ? 560 : 920),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Card(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: <Color>[
+                                theme.colorScheme.primaryContainer,
+                                theme.colorScheme.surfaceContainerHigh,
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(18),
+                          child: isCompact
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    CircleAvatar(
+                                      radius: 22,
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withValues(alpha: 0.15),
+                                      child: Icon(
+                                        Icons.settings_ethernet_rounded,
+                                        color: theme.colorScheme.primary,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      context.l10n.connectYourKanboardInstance,
+                                      style: theme.textTheme.titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      connectionHint,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                )
+                              : Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    CircleAvatar(
+                                      radius: 25,
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withValues(alpha: 0.15),
+                                      child: Icon(
+                                        Icons.settings_ethernet_rounded,
+                                        color: theme.colorScheme.primary,
+                                        size: 26,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 620,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text(
+                                              context
+                                                  .l10n
+                                                  .connectYourKanboardInstance,
+                                              style: theme.textTheme.titleLarge
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              connectionHint,
+                                              style: theme.textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                context.l10n.credentials,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.authMode,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SegmentedButton<KanboardAuthMode>(
+                                segments: <ButtonSegment<KanboardAuthMode>>[
+                                  ButtonSegment<KanboardAuthMode>(
+                                    value: KanboardAuthMode.apiToken,
+                                    label: Text(l10n.apiTokenMode),
+                                    icon: const Icon(Icons.key_rounded),
+                                  ),
+                                  ButtonSegment<KanboardAuthMode>(
+                                    value: KanboardAuthMode.password,
+                                    label: Text(l10n.passwordMode),
+                                    icon: const Icon(Icons.password_rounded),
+                                  ),
+                                ],
+                                selected: <KanboardAuthMode>{_authMode},
+                                onSelectionChanged:
+                                    (Set<KanboardAuthMode> selection) {
+                                      if (selection.isEmpty) return;
+                                      setState(() {
+                                        _authMode = selection.first;
+                                      });
+                                    },
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: <Widget>[
+                                  FilledButton.tonalIcon(
+                                    onPressed: _showExportQr,
+                                    icon: const Icon(Icons.qr_code_2_rounded),
+                                    label: Text(context.l10n.showTransferQR),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: _importFromClipboard,
+                                    icon: const Icon(Icons.content_paste),
+                                    label: Text(context.l10n.pasteTransferCode),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _urlController,
+                                decoration: InputDecoration(
+                                  labelText: context.l10n.serverURL,
+                                  hintText: context.l10n.serverURLExample,
+                                  prefixIcon: const Icon(Icons.link_rounded),
+                                ),
+                                keyboardType: TextInputType.url,
+                                validator: (value) {
+                                  final text = value?.trim() ?? '';
+                                  if (text.isEmpty) {
+                                    return context.l10n.serverURLIsRequired;
+                                  }
+                                  final uri = Uri.tryParse(text);
+                                  if (uri == null ||
+                                      !uri.hasScheme ||
+                                      uri.host.isEmpty) {
+                                    return context.l10n.enterAValidURL;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _usernameController,
+                                decoration: InputDecoration(
+                                  labelText: context.l10n.username,
+                                  prefixIcon: const Icon(Icons.person_outline),
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.trim().isEmpty)
+                                    ? context.l10n.usernameIsRequired
+                                    : null,
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _tokenController,
+                                decoration: InputDecoration(
+                                  labelText: secretFieldLabel,
+                                  prefixIcon: const Icon(
+                                    Icons.password_rounded,
+                                  ),
+                                ),
+                                obscureText: true,
+                                validator: (value) =>
+                                    (value == null || value.trim().isEmpty)
+                                    ? secretRequiredMessage
+                                    : null,
+                              ),
+                              const SizedBox(height: 14),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: <Widget>[
+                                  FilledButton.icon(
+                                    onPressed: _isConnecting ? null : _connect,
+                                    icon: _isConnecting
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.login_rounded),
+                                    label: Text(
+                                      context.l10n.testConnectionContinue,
+                                    ),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: _isConnecting
+                                        ? null
+                                        : () => context.go('/projects'),
+                                    icon: const Icon(Icons.folder_open),
+                                    label: Text(context.l10n.openProjects),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: theme.colorScheme.secondary
+                                    .withValues(alpha: 0.16),
+                                child: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 18,
+                                  color: theme.colorScheme.secondary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  authNote,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_status != null) ...<Widget>[
+                        const SizedBox(height: 12),
+                        _statusCard(theme),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (isApple) {
+      return CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          middle: Text(l10n.connectToKanboard),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: () => context.go('/projects'),
+                child: const Icon(CupertinoIcons.folder, size: 20),
+              ),
+              const SizedBox(width: 4),
+              const ThemeModeMenuButton(),
+            ],
+          ),
+        ),
+        child: body,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.connectToKanboard),
@@ -330,334 +663,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
           const ThemeModeMenuButton(),
         ],
       ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 760;
-            final horizontalPadding = isCompact ? 12.0 : 16.0;
-
-            return Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  16,
-                  horizontalPadding,
-                  24,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isCompact ? 560 : 920,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Card(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: <Color>[
-                                  theme.colorScheme.primaryContainer,
-                                  theme.colorScheme.surfaceContainerHigh,
-                                ],
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(18),
-                            child: isCompact
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      CircleAvatar(
-                                        radius: 22,
-                                        backgroundColor: theme
-                                            .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.15),
-                                        child: Icon(
-                                          Icons.settings_ethernet_rounded,
-                                          color: theme.colorScheme.primary,
-                                          size: 24,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        context
-                                            .l10n
-                                            .connectYourKanboardInstance,
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        connectionHint,
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ],
-                                  )
-                                : Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      CircleAvatar(
-                                        radius: 25,
-                                        backgroundColor: theme
-                                            .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.15),
-                                        child: Icon(
-                                          Icons.settings_ethernet_rounded,
-                                          color: theme.colorScheme.primary,
-                                          size: 26,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 620,
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Text(
-                                                context
-                                                    .l10n
-                                                    .connectYourKanboardInstance,
-                                                style: theme
-                                                    .textTheme
-                                                    .titleLarge
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                connectionHint,
-                                                style: theme
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: theme
-                                                          .colorScheme
-                                                          .onSurfaceVariant,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  context.l10n.credentials,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  l10n.authMode,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SegmentedButton<KanboardAuthMode>(
-                                  segments: <ButtonSegment<KanboardAuthMode>>[
-                                    ButtonSegment<KanboardAuthMode>(
-                                      value: KanboardAuthMode.apiToken,
-                                      label: Text(l10n.apiTokenMode),
-                                      icon: const Icon(Icons.key_rounded),
-                                    ),
-                                    ButtonSegment<KanboardAuthMode>(
-                                      value: KanboardAuthMode.password,
-                                      label: Text(l10n.passwordMode),
-                                      icon: const Icon(Icons.password_rounded),
-                                    ),
-                                  ],
-                                  selected: <KanboardAuthMode>{_authMode},
-                                  onSelectionChanged:
-                                      (Set<KanboardAuthMode> selection) {
-                                        if (selection.isEmpty) return;
-                                        setState(() {
-                                          _authMode = selection.first;
-                                        });
-                                      },
-                                ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: <Widget>[
-                                    FilledButton.tonalIcon(
-                                      onPressed: _showExportQr,
-                                      icon: const Icon(Icons.qr_code_2_rounded),
-                                      label: Text(context.l10n.showTransferQR),
-                                    ),
-                                    OutlinedButton.icon(
-                                      onPressed: _importFromClipboard,
-                                      icon: const Icon(Icons.content_paste),
-                                      label: Text(
-                                        context.l10n.pasteTransferCode,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: _urlController,
-                                  decoration: InputDecoration(
-                                    labelText: context.l10n.serverURL,
-                                    hintText: context.l10n.serverURLExample,
-                                    prefixIcon: const Icon(Icons.link_rounded),
-                                  ),
-                                  keyboardType: TextInputType.url,
-                                  validator: (value) {
-                                    final text = value?.trim() ?? '';
-                                    if (text.isEmpty) {
-                                      return context.l10n.serverURLIsRequired;
-                                    }
-                                    final uri = Uri.tryParse(text);
-                                    if (uri == null ||
-                                        !uri.hasScheme ||
-                                        uri.host.isEmpty) {
-                                      return context.l10n.enterAValidURL;
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: _usernameController,
-                                  decoration: InputDecoration(
-                                    labelText: context.l10n.username,
-                                    prefixIcon: const Icon(
-                                      Icons.person_outline,
-                                    ),
-                                  ),
-                                  validator: (value) =>
-                                      (value == null || value.trim().isEmpty)
-                                      ? context.l10n.usernameIsRequired
-                                      : null,
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: _tokenController,
-                                  decoration: InputDecoration(
-                                    labelText: secretFieldLabel,
-                                    prefixIcon: const Icon(
-                                      Icons.password_rounded,
-                                    ),
-                                  ),
-                                  obscureText: true,
-                                  validator: (value) =>
-                                      (value == null || value.trim().isEmpty)
-                                      ? secretRequiredMessage
-                                      : null,
-                                ),
-                                const SizedBox(height: 14),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: <Widget>[
-                                    FilledButton.icon(
-                                      onPressed: _isConnecting
-                                          ? null
-                                          : _connect,
-                                      icon: _isConnecting
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : const Icon(Icons.login_rounded),
-                                      label: Text(
-                                        context.l10n.testConnectionContinue,
-                                      ),
-                                    ),
-                                    OutlinedButton.icon(
-                                      onPressed: _isConnecting
-                                          ? null
-                                          : () => context.go('/projects'),
-                                      icon: const Icon(Icons.folder_open),
-                                      label: Text(context.l10n.openProjects),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: theme.colorScheme.secondary
-                                      .withValues(alpha: 0.16),
-                                  child: Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 18,
-                                    color: theme.colorScheme.secondary,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    authNote,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (_status != null) ...<Widget>[
-                          const SizedBox(height: 12),
-                          _statusCard(theme),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+      body: body,
     );
   }
 

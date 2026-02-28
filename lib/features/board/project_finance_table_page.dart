@@ -431,9 +431,9 @@ class _ProjectFinanceTablePageState
 
   Future<bool> _confirmLeaveWithUnsavedChanges() async {
     final l10n = context.l10n;
-    final result = await showDialog<bool>(
+    final result = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(l10n.unsavedFinanceChangesTitle),
         content: Text(l10n.unsavedFinanceChangesMessage),
         actions: <Widget>[
@@ -575,10 +575,10 @@ class _ProjectFinanceTablePageState
         existing?.contributorId ?? _defaultContributorIdForDialogs();
     var enabled = existing?.enabled ?? true;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
+        builder: (context, setLocalState) => AlertDialog.adaptive(
           title: Text(
             existing == null
                 ? context.l10n.addRecurringExpense
@@ -673,7 +673,7 @@ class _ProjectFinanceTablePageState
                   },
                 ),
                 const SizedBox(height: 8),
-                SwitchListTile(
+                SwitchListTile.adaptive(
                   title: Text(context.l10n.enabled),
                   value: enabled,
                   onChanged: (value) => setLocalState(() => enabled = value),
@@ -748,9 +748,9 @@ class _ProjectFinanceTablePageState
     String? selectedContributorId =
         existing?.contributorId ?? _defaultContributorIdForDialogs();
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(
           existing == null
               ? context.l10n.addPlannedExpense
@@ -889,10 +889,10 @@ class _ProjectFinanceTablePageState
         existing?.contributorId ?? _defaultContributorIdForDialogs();
     var enabled = existing?.enabled ?? true;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setLocalState) => AlertDialog(
+        builder: (context, setLocalState) => AlertDialog.adaptive(
           title: Text(
             existing == null
                 ? context.l10n.addRecurringIncome
@@ -987,7 +987,7 @@ class _ProjectFinanceTablePageState
                   },
                 ),
                 const SizedBox(height: 8),
-                SwitchListTile(
+                SwitchListTile.adaptive(
                   title: Text(context.l10n.enabled),
                   value: enabled,
                   onChanged: (value) => setLocalState(() => enabled = value),
@@ -1062,9 +1062,9 @@ class _ProjectFinanceTablePageState
     String? selectedContributorId =
         existing?.contributorId ?? _defaultContributorIdForDialogs();
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAdaptiveDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AlertDialog.adaptive(
         title: Text(
           existing == null
               ? context.l10n.addPlannedIncome
@@ -1616,7 +1616,7 @@ class _ProjectFinanceTablePageState
                           },
                         ),
                         const SizedBox(height: 4),
-                        SwitchListTile(
+                        SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,
                           title: Text(
                             context
