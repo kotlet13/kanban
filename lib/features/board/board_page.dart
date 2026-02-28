@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,18 @@ import '../../widgets/theme_mode_menu_button.dart';
 import '../tasks/task_details_page.dart';
 
 enum _BoardOverflowAction { projects, structure, search, financeTable, aiChat }
+
+class _TaskDragPayload {
+  const _TaskDragPayload({
+    required this.task,
+    required this.sourceColumnId,
+    required this.sourceSwimlaneId,
+  });
+
+  final KanboardTask task;
+  final int sourceColumnId;
+  final int sourceSwimlaneId;
+}
 
 class BoardPage extends ConsumerStatefulWidget {
   const BoardPage({
@@ -247,6 +260,56 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     }
   }
 
+  Future<void> _moveTaskToColumn({
+    required KanboardTask task,
+    required int sourceColumnId,
+    required int sourceSwimlaneId,
+    required KanboardColumn targetColumn,
+    required KanboardSwimlane targetSwimlane,
+  }) async {
+    if (sourceColumnId == targetColumn.id &&
+        sourceSwimlaneId == targetSwimlane.id) {
+      return;
+    }
+    final api = ref.read(kanboardApiProvider);
+    if (api == null) return;
+
+    final targetPosition =
+        targetColumn.tasks.where((existing) => existing.id != task.id).length +
+        1;
+
+    setState(() {
+      final board = _board;
+      if (board == null) return;
+      for (final swimlane in board.swimlanes) {
+        for (final column in swimlane.columns) {
+          column.tasks.removeWhere((existing) => existing.id == task.id);
+        }
+      }
+      targetColumn.tasks.add(task);
+    });
+
+    try {
+      final moved = await api.moveTaskPosition(
+        projectId: widget.projectId,
+        taskId: task.id,
+        columnId: targetColumn.id,
+        position: targetPosition,
+        swimlaneId: targetSwimlane.id,
+      );
+      if (!moved) {
+        throw StateError('Task move rejected by server.');
+      }
+      await _loadBoard(fromRefresh: true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.moveFailed(error))));
+      await _loadBoard(fromRefresh: true);
+    }
+  }
+
   String _formatCents(int cents) {
     return (cents / 100).toStringAsFixed(2);
   }
@@ -464,13 +527,50 @@ class _BoardPageState extends ConsumerState<BoardPage> {
 
   Widget _taskCard(
     KanboardTask task, {
+    required int sourceColumnId,
+    required int sourceSwimlaneId,
     required bool dragEnabled,
-    int? reorderIndex,
   }) {
     final theme = Theme.of(context);
     final accent = _projectAccent(theme);
     final isDone = !task.isActive;
-    final handleIcon = Container(
+    final taskDragPayload = _TaskDragPayload(
+      task: task,
+      sourceColumnId: sourceColumnId,
+      sourceSwimlaneId: sourceSwimlaneId,
+    );
+    final dragFeedback = Material(
+      color: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 280),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Text(
+            task.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+    final handleChild = Container(
       width: 42,
       alignment: Alignment.center,
       child: Icon(
@@ -478,115 +578,139 @@ class _BoardPageState extends ConsumerState<BoardPage> {
         color: theme.colorScheme.onSurfaceVariant,
       ),
     );
-    final Widget? dragHandle = dragEnabled && reorderIndex != null
-        ? ReorderableDragStartListener(index: reorderIndex, child: handleIcon)
-        : dragEnabled
-        ? handleIcon
-        : null;
-    final taskCardBody = Container(
-      key: ValueKey('task-${task.id}'),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+    Widget? dragHandle;
+    if (dragEnabled) {
+      final desktopLikePlatform =
+          kIsWeb ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux;
+      if (desktopLikePlatform) {
+        dragHandle = Draggable<_TaskDragPayload>(
+          data: taskDragPayload,
+          feedback: dragFeedback,
+          childWhenDragging: Opacity(opacity: 0.35, child: handleChild),
+          child: handleChild,
+        );
+      } else {
+        dragHandle = LongPressDraggable<_TaskDragPayload>(
+          data: taskDragPayload,
+          feedback: dragFeedback,
+          childWhenDragging: Opacity(opacity: 0.35, child: handleChild),
+          child: handleChild,
+        );
+      }
+    }
+
+    Widget buildTaskCardBody() {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          ),
         ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => _openTaskEditor(task: task),
-        child: Row(
-          children: <Widget>[
-            if (dragHandle != null) dragHandle,
-            Container(
-              width: 4,
-              height: 46,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(99),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _openTaskEditor(task: task),
+          child: Row(
+            children: <Widget>[
+              if (dragHandle != null) dragHandle,
+              Container(
+                width: 4,
+                height: 46,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      task.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        decoration: isDone
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                    ),
-                    if (task.description != null &&
-                        task.description!.trim().isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 2),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
                       Text(
-                        task.description!.trim(),
-                        maxLines: 1,
+                        task.title,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                           decoration: isDone
                               ? TextDecoration.lineThrough
                               : TextDecoration.none,
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 2),
-                    Text(
-                      context.l10n.taskNumber(task.id),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      Text(
+                        context.l10n.taskNumber(task.id),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _openTaskEditor(task: task);
-                } else if (value == 'done') {
-                  _setTaskDone(task, done: true);
-                } else if (value == 'reopen') {
-                  _setTaskDone(task, done: false);
-                } else if (value == 'delete') {
-                  _deleteTask(task);
-                }
-              },
-              itemBuilder: (context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Text(context.l10n.edit),
-                ),
-                PopupMenuItem<String>(
-                  value: task.isActive ? 'done' : 'reopen',
-                  child: Text(
-                    task.isActive ? context.l10n.markDone : context.l10n.reopen,
+                      if (task.description != null &&
+                          task.description!.trim().isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 2),
+                        Text(
+                          task.description!.trim(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            decoration: isDone
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Text(context.l10n.delete),
-                ),
-              ],
-            ),
-            const SizedBox(width: 4),
-          ],
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _openTaskEditor(task: task);
+                  } else if (value == 'done') {
+                    _setTaskDone(task, done: true);
+                  } else if (value == 'reopen') {
+                    _setTaskDone(task, done: false);
+                  } else if (value == 'delete') {
+                    _deleteTask(task);
+                  }
+                },
+                itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text(context.l10n.edit),
+                  ),
+                  PopupMenuItem<String>(
+                    value: task.isActive ? 'done' : 'reopen',
+                    child: Text(
+                      task.isActive
+                          ? context.l10n.markDone
+                          : context.l10n.reopen,
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text(context.l10n.delete),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
 
-    return taskCardBody;
+    return KeyedSubtree(
+      key: ValueKey('task-${task.id}'),
+      child: buildTaskCardBody(),
+    );
   }
 
   Widget _columnCard(
@@ -661,45 +785,94 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                     ),
                   ),
                   Expanded(
-                    child: column.tasks.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(
-                                  Icons.inbox_outlined,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                    child: DragTarget<_TaskDragPayload>(
+                      onWillAcceptWithDetails: (details) {
+                        if (!dragEnabled) return false;
+                        final payload = details.data;
+                        return !(payload.sourceColumnId == column.id &&
+                            payload.sourceSwimlaneId == swimlane.id);
+                      },
+                      onAcceptWithDetails: (details) {
+                        final payload = details.data;
+                        _moveTaskToColumn(
+                          task: payload.task,
+                          sourceColumnId: payload.sourceColumnId,
+                          sourceSwimlaneId: payload.sourceSwimlaneId,
+                          targetColumn: column,
+                          targetSwimlane: swimlane,
+                        );
+                      },
+                      builder: (context, candidateData, rejectedData) {
+                        final isHovering = candidateData.isNotEmpty;
+                        final body = column.tasks.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.inbox_outlined,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      isHovering
+                                          ? context.l10n.dropATaskHere
+                                          : context.l10n.tasks2(0),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  context.l10n.tasks2(0),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ReorderableListView.builder(
-                            buildDefaultDragHandles: false,
-                            padding: const EdgeInsets.all(8),
-                            itemCount: column.tasks.length,
-                            onReorder: dragEnabled
-                                ? (oldIndex, newIndex) => _reorderTasksInColumn(
-                                    swimlane: swimlane,
-                                    column: column,
-                                    oldIndex: oldIndex,
-                                    newIndex: newIndex,
-                                  )
-                                : (_, __) {},
-                            itemBuilder: (context, index) {
-                              return _taskCard(
-                                column.tasks[index],
-                                dragEnabled: dragEnabled,
-                                reorderIndex: index,
+                              )
+                            : ReorderableListView.builder(
+                                buildDefaultDragHandles: false,
+                                padding: const EdgeInsets.all(8),
+                                itemCount: column.tasks.length,
+                                onReorder: dragEnabled
+                                    ? (oldIndex, newIndex) =>
+                                          _reorderTasksInColumn(
+                                            swimlane: swimlane,
+                                            column: column,
+                                            oldIndex: oldIndex,
+                                            newIndex: newIndex,
+                                          )
+                                    : (_, __) {},
+                                itemBuilder: (context, index) {
+                                  return _taskCard(
+                                    column.tasks[index],
+                                    sourceColumnId: column.id,
+                                    sourceSwimlaneId: swimlane.id,
+                                    dragEnabled: dragEnabled,
+                                  );
+                                },
                               );
-                            },
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 120),
+                          margin: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isHovering
+                                ? theme.colorScheme.primary.withValues(
+                                    alpha: 0.12,
+                                  )
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: isHovering
+                                ? Border.all(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                    width: 1.3,
+                                  )
+                                : null,
                           ),
+                          child: body,
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

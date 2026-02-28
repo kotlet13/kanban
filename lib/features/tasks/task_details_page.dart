@@ -240,7 +240,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
       _descriptionController.text = _stripGroceryMarker(task?.description);
       _dueDateController.text = task?.dateDueForInput ?? '';
       _selectedDueDate = _parseDueDateInput(_dueDateController.text.trim());
-      _scoreController.text = task == null ? '' : _formatCentsToAmount(task.score);
+      _scoreController.text = task == null
+          ? ''
+          : _formatCentsToAmount(task.score);
       _timeEstimatedController.text = task == null
           ? ''
           : _formatHoursForInput(task.timeEstimated);
@@ -425,21 +427,92 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     try {
       if (_isEditing) {
         final id = _activeTaskId!;
-        final updated = await api.updateTask(
-          id: id,
-          title: title,
-          description: descriptionValue,
-          ownerId: _ownerId ?? 0,
-          dateDue: dueDateValue,
-          clearDateDue: dueDateValue.isEmpty,
-          priority: _priority,
-          score: score ?? 0,
-          timeEstimated: timeEstimated,
-          timeSpent: timeSpent,
-        );
-        if (!updated) {
-          throw StateError('Task was not updated on server.');
+        final originalTask = _loadedTask;
+        final nextColumnId = _columnId;
+        final nextSwimlaneId = _swimlaneId;
+        final originalOwnerId = originalTask != null && originalTask.ownerId > 0
+            ? originalTask.ownerId
+            : null;
+        final originalDueDateValue = originalTask?.dateDueForInput ?? '';
+        final nextScore = score ?? 0;
+        final nextTimeEstimated = timeEstimated ?? 0;
+        final nextTimeSpent = timeSpent ?? 0;
+
+        final titleChanged =
+            originalTask == null || originalTask.title != title;
+        final descriptionChanged =
+            originalTask == null ||
+            (originalTask.description ?? '') != descriptionValue;
+        final ownerChanged =
+            originalTask == null || originalOwnerId != _ownerId;
+        final dueChanged =
+            originalTask == null || originalDueDateValue != dueDateValue;
+        final priorityChanged =
+            originalTask == null || originalTask.priority != _priority;
+        final scoreChanged =
+            originalTask == null || originalTask.score != nextScore;
+        final timeEstimatedChanged =
+            originalTask == null ||
+            originalTask.timeEstimated != nextTimeEstimated;
+        final timeSpentChanged =
+            originalTask == null || originalTask.timeSpent != nextTimeSpent;
+
+        final hasNonLocationChanges =
+            titleChanged ||
+            descriptionChanged ||
+            ownerChanged ||
+            dueChanged ||
+            priorityChanged ||
+            scoreChanged ||
+            timeEstimatedChanged ||
+            timeSpentChanged;
+
+        if (hasNonLocationChanges) {
+          final updated = await api.updateTask(
+            id: id,
+            title: titleChanged ? title : null,
+            description: descriptionChanged ? descriptionValue : null,
+            ownerId: ownerChanged ? (_ownerId ?? 0) : null,
+            dateDue: dueChanged && dueDateValue.isNotEmpty
+                ? dueDateValue
+                : null,
+            clearDateDue: dueChanged && dueDateValue.isEmpty,
+            priority: priorityChanged ? _priority : null,
+            score: scoreChanged ? nextScore : null,
+            timeEstimated: timeEstimatedChanged ? nextTimeEstimated : null,
+            timeSpent: timeSpentChanged ? nextTimeSpent : null,
+          );
+          if (!updated) {
+            throw StateError('Task was not updated on server.');
+          }
         }
+        if (originalTask != null &&
+            nextColumnId != null &&
+            nextSwimlaneId != null &&
+            (originalTask.columnId != nextColumnId ||
+                originalTask.swimlaneId != nextSwimlaneId)) {
+          final effectiveProjectId = originalTask.projectId > 0
+              ? originalTask.projectId
+              : widget.projectId;
+          final targetPosition = await _resolveTargetTaskPosition(
+            api: api,
+            projectId: effectiveProjectId,
+            taskId: id,
+            columnId: nextColumnId,
+            swimlaneId: nextSwimlaneId,
+          );
+          final moved = await api.moveTaskPosition(
+            projectId: effectiveProjectId,
+            taskId: id,
+            columnId: nextColumnId,
+            position: targetPosition,
+            swimlaneId: nextSwimlaneId,
+          );
+          if (!moved) {
+            throw StateError('Task move was rejected by server.');
+          }
+        }
+        _loadedTask = await api.getTask(id) ?? _loadedTask;
         if (!closeOnSuccess && _advancedExpanded) {
           await _loadTaskDetails(id);
         }
@@ -1150,6 +1223,28 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
     ].join('|');
   }
 
+  Future<int> _resolveTargetTaskPosition({
+    required KanboardApi api,
+    required int projectId,
+    required int taskId,
+    required int columnId,
+    required int swimlaneId,
+  }) async {
+    try {
+      final board = await api.getBoard(projectId);
+      for (final swimlane in board.swimlanes) {
+        if (swimlane.id != swimlaneId) continue;
+        for (final column in swimlane.columns) {
+          if (column.id != columnId) continue;
+          return column.tasks.where((task) => task.id != taskId).length + 1;
+        }
+      }
+    } catch (_) {
+      // Fall back to first position if board snapshot cannot be loaded.
+    }
+    return 1;
+  }
+
   String? _requiredMessageBeforeExpand() {
     if (_titleController.text.trim().isEmpty) {
       return context.l10n.enterATitleBeforeOpeningAdditionalDetails;
@@ -1477,7 +1572,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                     ? (_isEditing
                           ? context.l10n.editGroceryList
                           : context.l10n.createGroceryList)
-                    : (_isEditing ? context.l10n.editTask2 : context.l10n.createTask),
+                    : (_isEditing
+                          ? context.l10n.editTask2
+                          : context.l10n.createTask),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             if (_isLoading) const LinearProgressIndicator(),
@@ -1601,10 +1698,12 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                             ),
                           )
                           .toList(),
-                      onChanged: _isEditing
+                      onChanged: _isSaving
                           ? null
                           : (v) => setState(() => _columnId = v),
-                      decoration: InputDecoration(labelText: context.l10n.column),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.column,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1619,7 +1718,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                             ),
                           )
                           .toList(),
-                      onChanged: _isEditing
+                      onChanged: _isSaving
                           ? null
                           : (v) => setState(() => _swimlaneId = v),
                       decoration: InputDecoration(
@@ -1707,7 +1806,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   Expanded(
                     child: TextField(
                       controller: _scoreController,
-                      decoration: InputDecoration(labelText: context.l10n.expense),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.expense,
+                      ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1721,7 +1822,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   Expanded(
                     child: TextField(
                       controller: _timeEstimatedController,
-                      decoration: InputDecoration(labelText: context.l10n.estimateH),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.estimateH,
+                      ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1731,7 +1834,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                   Expanded(
                     child: TextField(
                       controller: _timeSpentController,
-                      decoration: InputDecoration(labelText: context.l10n.spentH),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.spentH,
+                      ),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -1787,10 +1892,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                   ? Icons.expand_less
                                   : Icons.expand_more,
                             ),
-                      onTap:
-                          _isSaving || _isPreparingAdvanced
-                              ? null
-                              : _toggleAdvancedSection,
+                      onTap: _isSaving || _isPreparingAdvanced
+                          ? null
+                          : _toggleAdvancedSection,
                     ),
                     if (!_advancedExpanded)
                       Padding(
@@ -1814,111 +1918,118 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  context.l10n.forNewTasksTheAppSavesFirstThenOpensAdvancedSections,
+                  context
+                      .l10n
+                      .forNewTasksTheAppSavesFirstThenOpensAdvancedSections,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-            if ((isPersistedTask && _advancedExpanded) || isGroceryEditor)
-              ...<Widget>[
+            if ((isPersistedTask && _advancedExpanded) ||
+                isGroceryEditor) ...<Widget>[
               if (!isGroceryEditor)
                 _section(
-                title: context.l10n.attachments2,
-                trailing: FilledButton.tonalIcon(
-                  onPressed: _isWorking ? null : _addAttachments,
-                  icon: const Icon(Icons.attach_file),
-                  label: Text(context.l10n.add),
+                  title: context.l10n.attachments2,
+                  trailing: FilledButton.tonalIcon(
+                    onPressed: _isWorking ? null : _addAttachments,
+                    icon: const Icon(Icons.attach_file),
+                    label: Text(context.l10n.add),
+                  ),
+                  child: _attachments.isEmpty
+                      ? Text(context.l10n.noAttachmentsYet)
+                      : Column(
+                          children: _attachments
+                              .map(
+                                (file) => ListTile(
+                                  dense: true,
+                                  title: Text(file.name),
+                                  subtitle: Text(
+                                    '${file.sizeLabel} · ${_formatUnix(file.dateCreation)}',
+                                  ),
+                                  trailing: Wrap(
+                                    spacing: 6,
+                                    children: <Widget>[
+                                      IconButton(
+                                        tooltip: context.l10n.export,
+                                        onPressed: () =>
+                                            _exportAttachment(file),
+                                        icon: const Icon(
+                                          Icons.download_rounded,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: context.l10n.delete,
+                                        onPressed: () =>
+                                            _deleteAttachment(file),
+                                        icon: const Icon(Icons.delete_outline),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
                 ),
-                child: _attachments.isEmpty
-                    ? Text(context.l10n.noAttachmentsYet)
-                    : Column(
-                        children: _attachments
-                            .map(
-                              (file) => ListTile(
-                                dense: true,
-                                title: Text(file.name),
-                                subtitle: Text(
-                                  '${file.sizeLabel} · ${_formatUnix(file.dateCreation)}',
-                                ),
-                                trailing: Wrap(
-                                  spacing: 6,
-                                  children: <Widget>[
-                                    IconButton(
-                                      tooltip: context.l10n.export,
-                                      onPressed: () => _exportAttachment(file),
-                                      icon: const Icon(Icons.download_rounded),
-                                    ),
-                                    IconButton(
-                                      tooltip: context.l10n.delete,
-                                      onPressed: () => _deleteAttachment(file),
-                                      icon: const Icon(Icons.delete_outline),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-              ),
               if (!isGroceryEditor)
                 _section(
-                title: context.l10n.comments,
-                child: Column(
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _newCommentController,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.newComment,
+                  title: context.l10n.comments,
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: _newCommentController,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.newComment,
+                              ),
+                              minLines: 1,
+                              maxLines: 4,
                             ),
-                            minLines: 1,
-                            maxLines: 4,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _addComment,
-                          child: Text(context.l10n.post),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_comments.isEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(context.l10n.noCommentsYet),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _addComment,
+                            child: Text(context.l10n.post),
+                          ),
+                        ],
                       ),
-                    if (_comments.isNotEmpty)
-                      Column(
-                        children: _comments
-                            .map(
-                              (comment) => ListTile(
-                                dense: true,
-                                title: Text(comment.comment),
-                                subtitle: Text(
-                                  '${comment.username ?? context.l10n.userNumber(comment.userId)} · ${_formatUnix(comment.dateCreation)}',
+                      const SizedBox(height: 8),
+                      if (_comments.isEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(context.l10n.noCommentsYet),
+                        ),
+                      if (_comments.isNotEmpty)
+                        Column(
+                          children: _comments
+                              .map(
+                                (comment) => ListTile(
+                                  dense: true,
+                                  title: Text(comment.comment),
+                                  subtitle: Text(
+                                    '${comment.username ?? context.l10n.userNumber(comment.userId)} · ${_formatUnix(comment.dateCreation)}',
+                                  ),
+                                  trailing: Wrap(
+                                    spacing: 6,
+                                    children: <Widget>[
+                                      IconButton(
+                                        onPressed: () => _editComment(comment),
+                                        icon: const Icon(Icons.edit_outlined),
+                                      ),
+                                      IconButton(
+                                        onPressed: () =>
+                                            _deleteComment(comment),
+                                        icon: const Icon(Icons.delete_outline),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                trailing: Wrap(
-                                  spacing: 6,
-                                  children: <Widget>[
-                                    IconButton(
-                                      onPressed: () => _editComment(comment),
-                                      icon: const Icon(Icons.edit_outlined),
-                                    ),
-                                    IconButton(
-                                      onPressed: () => _deleteComment(comment),
-                                      icon: const Icon(Icons.delete_outline),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                  ],
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
               _section(
                 title: isGroceryEditor
                     ? context.l10n.groceryList
@@ -1962,13 +2073,16 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                 color: Colors.black,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                               child: Column(
-                                children: _subtasks.asMap().entries.map((entry) {
+                                children: _subtasks.asMap().entries.map((
+                                  entry,
+                                ) {
                                   final index = entry.key;
                                   final subtask = entry.value;
                                   return Column(
@@ -1977,10 +2091,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                         dense: true,
                                         leading: Checkbox(
                                           value: subtask.isDone,
-                                          onChanged: (checked) => _toggleSubtask(
-                                            subtask,
-                                            checked ?? false,
-                                          ),
+                                          onChanged: (checked) =>
+                                              _toggleSubtask(
+                                                subtask,
+                                                checked ?? false,
+                                              ),
                                           checkColor: Colors.black,
                                           activeColor: Theme.of(
                                             context,
@@ -2000,9 +2115,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                         trailing: IconButton(
                                           tooltip: context.l10n.delete,
                                           onPressed: () async {
-                                            final ok = await _confirmDeleteGroceryItem(
-                                              subtask.title,
-                                            );
+                                            final ok =
+                                                await _confirmDeleteGroceryItem(
+                                                  subtask.title,
+                                                );
                                             if (!ok) return;
                                             await _deleteSubtask(subtask);
                                           },
@@ -2016,7 +2132,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                         Divider(
                                           height: 1,
                                           thickness: 1,
-                                          color: Colors.white.withValues(alpha: 0.14),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.14,
+                                          ),
                                         ),
                                     ],
                                   );
@@ -2029,8 +2147,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                     (subtask) => CheckboxListTile(
                                       dense: true,
                                       value: subtask.isDone,
-                                      onChanged: (checked) =>
-                                          _toggleSubtask(subtask, checked ?? false),
+                                      onChanged: (checked) => _toggleSubtask(
+                                        subtask,
+                                        checked ?? false,
+                                      ),
                                       title: Text(
                                         subtask.title,
                                         style: TextStyle(
@@ -2061,7 +2181,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                               ),
                                               PopupMenuItem<String>(
                                                 value: 'delete',
-                                                child: Text(context.l10n.delete),
+                                                child: Text(
+                                                  context.l10n.delete,
+                                                ),
                                               ),
                                             ],
                                       ),
@@ -2083,7 +2205,9 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                           ),
                         ),
                         child: Column(
-                          children: _draftGroceryItems.asMap().entries.map((entry) {
+                          children: _draftGroceryItems.asMap().entries.map((
+                            entry,
+                          ) {
                             final index = entry.key;
                             final item = entry.value;
                             return Column(
@@ -2092,12 +2216,15 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                   dense: true,
                                   leading: Checkbox(
                                     value: item.isDone,
-                                    onChanged: (checked) => _toggleDraftGroceryItem(
-                                      index,
-                                      checked ?? false,
-                                    ),
+                                    onChanged: (checked) =>
+                                        _toggleDraftGroceryItem(
+                                          index,
+                                          checked ?? false,
+                                        ),
                                     checkColor: Colors.black,
-                                    activeColor: Theme.of(context).colorScheme.primary,
+                                    activeColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   title: Text(
                                     item.title,
@@ -2113,9 +2240,10 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
                                   trailing: IconButton(
                                     tooltip: context.l10n.delete,
                                     onPressed: () async {
-                                      final ok = await _confirmDeleteGroceryItem(
-                                        item.title,
-                                      );
+                                      final ok =
+                                          await _confirmDeleteGroceryItem(
+                                            item.title,
+                                          );
                                       if (!ok) return;
                                       _deleteDraftGroceryItem(index);
                                     },
@@ -2141,259 +2269,260 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
               ),
               if (!isGroceryEditor)
                 _section(
-                title: context.l10n.tags,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    if (_taskTags.isEmpty) Text(context.l10n.noTagsAssigned),
-                    if (_taskTags.isNotEmpty)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _taskTags
-                            .map(
-                              (tag) => InputChip(
-                                label: Text(tag),
-                                onDeleted: () => _toggleTag(tag),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _tagInputController,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.addTagsCommaSeparated,
-                            ),
-                          ),
+                  title: context.l10n.tags,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (_taskTags.isEmpty) Text(context.l10n.noTagsAssigned),
+                      if (_taskTags.isNotEmpty)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _taskTags
+                              .map(
+                                (tag) => InputChip(
+                                  label: Text(tag),
+                                  onDeleted: () => _toggleTag(tag),
+                                ),
+                              )
+                              .toList(),
                         ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _applyTags,
-                          child: Text(context.l10n.apply),
-                        ),
-                      ],
-                    ),
-                    if (_projectTags.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _projectTags
-                            .map(
-                              (tag) => FilterChip(
-                                label: Text(tag.name),
-                                selected: _taskTags.contains(tag.name),
-                                onSelected: (_) => _toggleTag(tag.name),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: _tagInputController,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.addTagsCommaSeparated,
                               ),
-                            )
-                            .toList(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _applyTags,
+                            child: Text(context.l10n.apply),
+                          ),
+                        ],
                       ),
+                      if (_projectTags.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _projectTags
+                              .map(
+                                (tag) => FilterChip(
+                                  label: Text(tag.name),
+                                  selected: _taskTags.contains(tag.name),
+                                  onSelected: (_) => _toggleTag(tag.name),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
               if (!isGroceryEditor)
                 _section(
-                title: context.l10n.taskLinks,
-                child: Column(
-                  children: <Widget>[
-                    if (_linkTypes.isEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            context
-                                .l10n
-                                .internalLinkTypesUnavailableForThisUserProject,
-                          ),
-                        ),
-                      ),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _internalLinkTaskIdController,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.linkedTaskID,
+                  title: context.l10n.taskLinks,
+                  child: Column(
+                    children: <Widget>[
+                      if (_linkTypes.isEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              context
+                                  .l10n
+                                  .internalLinkTypesUnavailableForThisUserProject,
                             ),
-                            keyboardType: TextInputType.number,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<int>(
-                            initialValue: _selectedLinkTypeId,
-                            items: _linkTypes
-                                .map(
-                                  (type) => DropdownMenuItem<int>(
-                                    value: type.id,
-                                    child: Text(type.label),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: _internalLinkTaskIdController,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.linkedTaskID,
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              initialValue: _selectedLinkTypeId,
+                              items: _linkTypes
+                                  .map(
+                                    (type) => DropdownMenuItem<int>(
+                                      value: type.id,
+                                      child: Text(type.label),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) =>
+                                  setState(() => _selectedLinkTypeId = value),
+                              decoration: InputDecoration(
+                                labelText: context.l10n.relation,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _linkTypes.isEmpty
+                                ? null
+                                : _addInternalLink,
+                            child: Text(context.l10n.link),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (_taskLinks.isEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(context.l10n.noTaskLinks),
+                        ),
+                      if (_taskLinks.isNotEmpty)
+                        Column(
+                          children: _taskLinks
+                              .map(
+                                (link) => ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    '${link.label ?? context.l10n.linkedTo} #${link.oppositeTaskId}',
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (value) =>
-                                setState(() => _selectedLinkTypeId = value),
-                            decoration: InputDecoration(
-                              labelText: context.l10n.relation,
+                                  subtitle: Text(
+                                    link.oppositeTaskTitle ??
+                                        context.l10n.taskNumber(
+                                          link.oppositeTaskId,
+                                        ),
+                                  ),
+                                  trailing: IconButton(
+                                    onPressed: () => _removeInternalLink(link),
+                                    icon: const Icon(Icons.delete_outline),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              if (!isGroceryEditor)
+                _section(
+                  title: context.l10n.externalLinks,
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: TextField(
+                              controller: _externalLinkTitleController,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.linkTitle,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _linkTypes.isEmpty
-                              ? null
-                              : _addInternalLink,
-                          child: Text(context.l10n.link),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_taskLinks.isEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(context.l10n.noTaskLinks),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _externalLinkUrlController,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.url,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    if (_taskLinks.isNotEmpty)
-                      Column(
-                        children: _taskLinks
-                            .map(
-                              (link) => ListTile(
-                                dense: true,
-                                title: Text(
-                                  '${link.label ?? context.l10n.linkedTo} #${link.oppositeTaskId}',
-                                ),
-                                subtitle: Text(
-                                  link.oppositeTaskTitle ??
-                                      context.l10n.taskNumber(
-                                        link.oppositeTaskId,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _selectedExternalType,
+                              items: _externalLinkTypes.entries
+                                  .map(
+                                    (entry) => DropdownMenuItem<String>(
+                                      value: entry.key,
+                                      child: Text(entry.value),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) =>
+                                  setState(() => _selectedExternalType = value),
+                              decoration: InputDecoration(
+                                labelText: context.l10n.type,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _selectedExternalDependency,
+                              items: _externalDependencies.entries
+                                  .map(
+                                    (entry) => DropdownMenuItem<String>(
+                                      value: entry.key,
+                                      child: Text(entry.value),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) => setState(
+                                () => _selectedExternalDependency = value,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: context.l10n.dependency,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _addExternalLink,
+                            child: Text(context.l10n.add),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (_externalLinks.isEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(context.l10n.noExternalLinks),
+                        ),
+                      if (_externalLinks.isNotEmpty)
+                        Column(
+                          children: _externalLinks
+                              .map(
+                                (link) => ListTile(
+                                  dense: true,
+                                  title: Text(link.title),
+                                  subtitle: Text(link.url),
+                                  onTap: () => _openExternalLink(link),
+                                  trailing: Wrap(
+                                    spacing: 6,
+                                    children: <Widget>[
+                                      IconButton(
+                                        onPressed: () =>
+                                            _openExternalLink(link),
+                                        icon: const Icon(Icons.open_in_new),
                                       ),
-                                ),
-                                trailing: IconButton(
-                                  onPressed: () => _removeInternalLink(link),
-                                  icon: const Icon(Icons.delete_outline),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                  ],
-                ),
-              ),
-              if (!isGroceryEditor)
-                _section(
-                title: context.l10n.externalLinks,
-                child: Column(
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: TextField(
-                            controller: _externalLinkTitleController,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.linkTitle,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _externalLinkUrlController,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.url,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _selectedExternalType,
-                            items: _externalLinkTypes.entries
-                                .map(
-                                  (entry) => DropdownMenuItem<String>(
-                                    value: entry.key,
-                                    child: Text(entry.value),
+                                      IconButton(
+                                        onPressed: () =>
+                                            _removeExternalLink(link),
+                                        icon: const Icon(Icons.delete_outline),
+                                      ),
+                                    ],
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (value) =>
-                                setState(() => _selectedExternalType = value),
-                            decoration: InputDecoration(
-                              labelText: context.l10n.type,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _selectedExternalDependency,
-                            items: _externalDependencies.entries
-                                .map(
-                                  (entry) => DropdownMenuItem<String>(
-                                    value: entry.key,
-                                    child: Text(entry.value),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) => setState(
-                              () => _selectedExternalDependency = value,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: context.l10n.dependency,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _addExternalLink,
-                          child: Text(context.l10n.add),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_externalLinks.isEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(context.l10n.noExternalLinks),
-                      ),
-                    if (_externalLinks.isNotEmpty)
-                      Column(
-                        children: _externalLinks
-                            .map(
-                              (link) => ListTile(
-                                dense: true,
-                                title: Text(link.title),
-                                subtitle: Text(link.url),
-                                onTap: () => _openExternalLink(link),
-                                trailing: Wrap(
-                                  spacing: 6,
-                                  children: <Widget>[
-                                    IconButton(
-                                      onPressed: () => _openExternalLink(link),
-                                      icon: const Icon(Icons.open_in_new),
-                                    ),
-                                    IconButton(
-                                      onPressed: () =>
-                                          _removeExternalLink(link),
-                                      icon: const Icon(Icons.delete_outline),
-                                    ),
-                                  ],
                                 ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                  ],
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ],
         ),

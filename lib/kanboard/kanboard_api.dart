@@ -882,6 +882,8 @@ class KanboardApi {
     required int id,
     String? title,
     String? description,
+    int? columnId,
+    int? swimlaneId,
     int? ownerId,
     String? dateDue,
     int? priority,
@@ -890,19 +892,38 @@ class KanboardApi {
     double? timeSpent,
     bool clearDateDue = false,
   }) async {
-    final result = await _client.call('updateTask', <String, dynamic>{
-      'id': id,
-      if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
-      if (description != null) 'description': description,
-      if (ownerId != null) 'owner_id': ownerId,
-      if (dateDue != null && dateDue.trim().isNotEmpty)
-        'date_due': dateDue.trim(),
-      if (clearDateDue) 'date_due': 0,
-      if (priority != null) 'priority': priority,
-      if (score != null) 'score': score,
-    });
-    final baseAccepted = result == true || result == false;
-    if (!baseAccepted) return false;
+    final titleValue = title?.trim();
+    final dateDueValue = dateDue?.trim();
+    final hasTitle = titleValue != null && titleValue.isNotEmpty;
+    final hasDateDue = dateDueValue != null && dateDueValue.isNotEmpty;
+    final hasBaseFields =
+        hasTitle ||
+        description != null ||
+        columnId != null ||
+        swimlaneId != null ||
+        ownerId != null ||
+        hasDateDue ||
+        clearDateDue ||
+        priority != null ||
+        score != null;
+
+    if (hasBaseFields) {
+      final result = await _client.call('updateTask', <String, dynamic>{
+        'id': id,
+        if (hasTitle) 'title': titleValue,
+        if (description != null) 'description': description,
+        if (columnId != null) 'column_id': columnId,
+        if (swimlaneId != null) 'swimlane_id': swimlaneId,
+        if (ownerId != null) 'owner_id': ownerId,
+        if (hasDateDue) 'date_due': dateDueValue,
+        if (clearDateDue) 'date_due': 0,
+        if (priority != null) 'priority': priority,
+        if (score != null) 'score': score,
+      });
+      if (result != true) {
+        return false;
+      }
+    }
 
     if (timeEstimated == null && timeSpent == null) {
       return true;
