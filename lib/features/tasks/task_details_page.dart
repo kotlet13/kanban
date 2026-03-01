@@ -741,7 +741,7 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         return;
       }
       final bytes = base64Decode(encoded);
-      await shareAttachmentBytes(bytes: bytes, filename: file.name);
+      await openAttachmentBytes(bytes: bytes, filename: file.name);
     } catch (error) {
       _showSnack(context.l10n.attachmentExportFailed(error), isError: true);
     }

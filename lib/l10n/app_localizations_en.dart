@@ -580,6 +580,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refreshBoard => 'Refresh board';
 
   @override
+  String get showDoneTasks => 'Show done tasks';
+
+  @override
+  String get hideDoneTasks => 'Hide done tasks';
+
+  @override
   String get lockTaskDrag => 'Lock task drag';
 
   @override

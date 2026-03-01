@@ -583,6 +583,12 @@ class AppLocalizationsSl extends AppLocalizations {
   String get refreshBoard => 'Osveži tablo';
 
   @override
+  String get showDoneTasks => 'Prikaži končane naloge';
+
+  @override
+  String get hideDoneTasks => 'Skrij končane naloge';
+
+  @override
   String get lockTaskDrag => 'Zakleni vlečenje nalog';
 
   @override

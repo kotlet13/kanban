@@ -378,7 +378,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
   }
 
   Future<void> _openProjectAttachments(KanboardProject project) async {
-    await showAdaptiveDialog<void>(
+    await showDialog<void>(
       context: context,
       useRootNavigator: true,
       builder: (context) => _ProjectFilesDialog(project: project),
@@ -1140,6 +1140,8 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
   bool _isLoading = false;
   bool _isWorking = false;
   String? _error;
+  String? _statusMessage;
+  bool _statusIsError = false;
   List<KanboardProjectFile> _files = const <KanboardProjectFile>[];
 
   @override
@@ -1230,13 +1232,16 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
     if (api == null) return;
     final l10n = context.l10n;
     try {
-      final encoded = await api.downloadProjectFile(file.id);
+      final encoded = await api.downloadProjectFile(
+        file.id,
+        projectId: widget.project.id,
+      );
       if (encoded == null || encoded.isEmpty) {
         _showSnack(l10n.attachmentContentMissing, isError: true);
         return;
       }
       final bytes = base64Decode(encoded);
-      await shareAttachmentBytes(bytes: bytes, filename: file.name);
+      await openAttachmentBytes(bytes: bytes, filename: file.name);
     } catch (error) {
       _showSnack(l10n.downloadFailed(error), isError: true);
     }
@@ -1247,7 +1252,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
     if (api == null) return;
     final l10n = context.l10n;
     try {
-      await api.removeProjectFile(file.id);
+      await api.removeProjectFile(file.id, projectId: widget.project.id);
       await _load();
     } catch (error) {
       _showSnack(l10n.deleteFailed(error), isError: true);
@@ -1256,12 +1261,23 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
 
   void _showSnack(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
-      ),
-    );
+    setState(() {
+      _statusMessage = message;
+      _statusIsError = isError;
+    });
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    try {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+        ),
+      );
+    } on AssertionError {
+      // Some dialog contexts have no Scaffold descendants in debug mode.
+      // The inline status message above still informs the user.
+    }
   }
 
   String _formatUnix(int unixSeconds) {
@@ -1278,7 +1294,7 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog.adaptive(
+    return AlertDialog(
       title: Text(context.l10n.attachments(widget.project.name)),
       content: SizedBox(
         width: 640,
@@ -1293,6 +1309,19 @@ class _ProjectFilesDialogState extends ConsumerState<_ProjectFilesDialog> {
                 child: Text(
                   _error!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            if (_statusMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _statusMessage!,
+                  style: TextStyle(
+                    color: _statusIsError
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             const SizedBox(height: 8),
@@ -1703,12 +1732,18 @@ class _ProjectPermissionsDialogState
 
   void _showSnack(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
-      ),
-    );
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    try {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+        ),
+      );
+    } on AssertionError {
+      // Ignore when there is no Scaffold under the current route.
+    }
   }
 
   String _roleLabel(String? role) {

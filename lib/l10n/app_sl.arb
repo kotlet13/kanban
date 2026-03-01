@@ -166,6 +166,8 @@
   "searchTasks": "Išči naloge",
   "newGroceryList": "Nov nakupovalni seznam",
   "refreshBoard": "Osveži tablo",
+  "showDoneTasks": "Prikaži končane naloge",
+  "hideDoneTasks": "Skrij končane naloge",
   "lockTaskDrag": "Zakleni vlečenje nalog",
   "unlockTaskDrag": "Odkleni vlečenje nalog",
   "newTask": "Nova naloga",

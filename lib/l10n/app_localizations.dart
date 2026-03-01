@@ -1106,6 +1106,18 @@ abstract class AppLocalizations {
   /// **'Refresh board'**
   String get refreshBoard;
 
+  /// No description provided for @showDoneTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Show done tasks'**
+  String get showDoneTasks;
+
+  /// No description provided for @hideDoneTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide done tasks'**
+  String get hideDoneTasks;
+
   /// No description provided for @lockTaskDrag.
   ///
   /// In en, this message translates to:

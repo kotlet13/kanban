@@ -1,5 +1,8 @@
 import 'dart:typed_data';
+import 'dart:io';
 
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 const Map<String, String> _attachmentMimeTypes = <String, String>{
@@ -47,4 +50,39 @@ Future<void> shareAttachmentBytes({
       text: filename,
     ),
   );
+}
+
+Future<void> openAttachmentBytes({
+  required Uint8List bytes,
+  required String filename,
+  bool fallbackToShare = true,
+}) async {
+  final tempDir = await getTemporaryDirectory();
+  final safeFilename = _sanitizeFilename(filename);
+  final tempPath =
+      '${tempDir.path}${Platform.pathSeparator}${DateTime.now().millisecondsSinceEpoch}_$safeFilename';
+  final file = File(tempPath);
+  await file.writeAsBytes(bytes, flush: true);
+
+  final result = await OpenFilex.open(
+    file.path,
+    type: attachmentMimeType(filename),
+  );
+  if (result.type == ResultType.done) return;
+  if (fallbackToShare) {
+    await shareAttachmentBytes(bytes: bytes, filename: filename);
+    return;
+  }
+  throw StateError(result.message);
+}
+
+String _sanitizeFilename(String filename) {
+  final trimmed = filename.trim();
+  final sanitized = trimmed
+      .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+      .replaceAll(RegExp(r'\s+'), ' ');
+  if (sanitized.isEmpty) {
+    return 'attachment.bin';
+  }
+  return sanitized;
 }

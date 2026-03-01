@@ -166,6 +166,8 @@
   "searchTasks": "Search tasks",
   "newGroceryList": "New grocery list",
   "refreshBoard": "Refresh board",
+  "showDoneTasks": "Show done tasks",
+  "hideDoneTasks": "Hide done tasks",
   "lockTaskDrag": "Lock task drag",
   "unlockTaskDrag": "Unlock task drag",
   "newTask": "New task",

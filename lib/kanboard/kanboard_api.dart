@@ -1091,17 +1091,27 @@ class KanboardApi {
   }
 
   Future<String?> downloadTaskFile(int fileId) async {
-    final result = await _client.call('downloadTaskFile', <String, dynamic>{
-      'file_id': fileId,
-    });
+    dynamic result;
+    try {
+      result = await _client.call('downloadTaskFile', <dynamic>[fileId]);
+    } on JsonRpcException {
+      result = await _client.call('downloadTaskFile', <String, dynamic>{
+        'file_id': fileId,
+      });
+    }
     final text = result?.toString();
     return text == null || text.isEmpty ? null : text;
   }
 
   Future<bool> removeTaskFile(int fileId) async {
-    final result = await _client.call('removeTaskFile', <String, dynamic>{
-      'file_id': fileId,
-    });
+    dynamic result;
+    try {
+      result = await _client.call('removeTaskFile', <dynamic>[fileId]);
+    } on JsonRpcException {
+      result = await _client.call('removeTaskFile', <String, dynamic>{
+        'file_id': fileId,
+      });
+    }
     return result == true;
   }
 
@@ -1134,19 +1144,51 @@ class KanboardApi {
     return result == false ? null : parseKanboardInt(result, -1);
   }
 
-  Future<String?> downloadProjectFile(int fileId) async {
-    final result = await _client.call('downloadProjectFile', <String, dynamic>{
-      'file_id': fileId,
-    });
-    final text = result?.toString();
-    return text == null || text.isEmpty ? null : text;
+  Future<String?> downloadProjectFile(int fileId, {int? projectId}) async {
+    final payloadVariants = <Object>[
+      if (projectId != null) <dynamic>[projectId, fileId],
+      if (projectId != null)
+        <String, dynamic>{'project_id': projectId, 'file_id': fileId},
+      <dynamic>[fileId],
+      <String, dynamic>{'file_id': fileId},
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('downloadProjectFile', params);
+        final text = result?.toString();
+        return text == null || text.isEmpty ? null : text;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) {
+      throw lastError;
+    }
+    return null;
   }
 
-  Future<bool> removeProjectFile(int fileId) async {
-    final result = await _client.call('removeProjectFile', <String, dynamic>{
-      'file_id': fileId,
-    });
-    return result == true;
+  Future<bool> removeProjectFile(int fileId, {int? projectId}) async {
+    final payloadVariants = <Object>[
+      if (projectId != null) <dynamic>[projectId, fileId],
+      if (projectId != null)
+        <String, dynamic>{'project_id': projectId, 'file_id': fileId},
+      <dynamic>[fileId],
+      <String, dynamic>{'file_id': fileId},
+    ];
+    JsonRpcException? lastError;
+    for (final params in payloadVariants) {
+      try {
+        final result = await _client.call('removeProjectFile', params);
+        return result == true;
+      } on JsonRpcException catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError != null) {
+      throw lastError;
+    }
+    return false;
   }
 
   Future<List<KanboardComment>> getAllComments(int taskId) async {

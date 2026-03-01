@@ -50,6 +50,7 @@ class BoardPage extends ConsumerStatefulWidget {
 
 class _BoardPageState extends ConsumerState<BoardPage> {
   bool _isLoading = false;
+  bool _showDoneTasks = false;
   String? _error;
   KanboardBoard? _board;
   String? _expenseCurrencyCode;
@@ -73,6 +74,19 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     final hex = withHash.substring(1);
     if (!RegExp(r'^[0-9A-F]{6}$').hasMatch(hex)) return null;
     return '#$hex';
+  }
+
+  List<KanboardTask> _visibleTasks(Iterable<KanboardTask> tasks) {
+    if (_showDoneTasks) {
+      return tasks.toList(growable: false);
+    }
+    return tasks.where((task) => task.isActive).toList(growable: false);
+  }
+
+  void _toggleDoneTasksVisibility() {
+    setState(() {
+      _showDoneTasks = !_showDoneTasks;
+    });
   }
 
   @override
@@ -214,18 +228,30 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       }
       await _loadBoard(fromRefresh: true);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            done ? context.l10n.taskMarkedDone : context.l10n.taskReopened,
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      try {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              done ? context.l10n.taskMarkedDone : context.l10n.taskReopened,
+            ),
           ),
-        ),
-      );
+        );
+      } on AssertionError {
+        // Ignore in dialog/overlay contexts without Scaffold descendants.
+      }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.statusUpdateFailed(error))),
-      );
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      try {
+        messenger.showSnackBar(
+          SnackBar(content: Text(context.l10n.statusUpdateFailed(error))),
+        );
+      } on AssertionError {
+        // Ignore in dialog/overlay contexts without Scaffold descendants.
+      }
     }
   }
 
@@ -237,11 +263,26 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   }) async {
     final api = ref.read(kanboardApiProvider);
     if (api == null) return;
-    final list = List<KanboardTask>.from(column.tasks);
+    final original = List<KanboardTask>.from(column.tasks);
+    final visible = _visibleTasks(original);
     if (oldIndex < newIndex) newIndex -= 1;
     if (oldIndex == newIndex) return;
-    final moved = list.removeAt(oldIndex);
-    list.insert(newIndex, moved);
+    final moved = visible.removeAt(oldIndex);
+    visible.insert(newIndex, moved);
+    final list = <KanboardTask>[];
+    if (_showDoneTasks) {
+      list.addAll(visible);
+    } else {
+      var activeIndex = 0;
+      for (final task in original) {
+        if (task.isActive) {
+          list.add(visible[activeIndex]);
+          activeIndex += 1;
+        } else {
+          list.add(task);
+        }
+      }
+    }
     setState(() {
       column.tasks
         ..clear()
@@ -355,7 +396,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     var count = 0;
     for (final swimlane in board.swimlanes) {
       for (final column in swimlane.columns) {
-        count += column.tasks.length;
+        count += _visibleTasks(column.tasks).length;
       }
     }
     return count;
@@ -840,6 +881,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       height: compact ? 400 : 460,
       child: Builder(
         builder: (context) {
+          final visibleTasks = _visibleTasks(column.tasks);
           final theme = Theme.of(context);
           return Container(
             margin: compact
@@ -873,7 +915,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                context.l10n.tasks2(column.tasks.length),
+                                context.l10n.tasks2(visibleTasks.length),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -920,7 +962,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                       },
                       builder: (context, candidateData, rejectedData) {
                         final isHovering = candidateData.isNotEmpty;
-                        final body = column.tasks.isEmpty
+                        final body = visibleTasks.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -947,7 +989,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                             : ReorderableListView.builder(
                                 buildDefaultDragHandles: false,
                                 padding: const EdgeInsets.all(8),
-                                itemCount: column.tasks.length,
+                                itemCount: visibleTasks.length,
                                 onReorder: dragEnabled
                                     ? (oldIndex, newIndex) =>
                                           _reorderTasksInColumn(
@@ -959,7 +1001,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
                                     : (_, __) {},
                                 itemBuilder: (context, index) {
                                   return _taskCard(
-                                    column.tasks[index],
+                                    visibleTasks[index],
                                     sourceColumnId: column.id,
                                     sourceSwimlaneId: swimlane.id,
                                     dragEnabled: dragEnabled,
@@ -1362,6 +1404,9 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   @override
   Widget build(BuildContext context) {
     final board = _board;
+    final doneTasksToggleLabel = _showDoneTasks
+        ? context.l10n.hideDoneTasks
+        : context.l10n.showDoneTasks;
     final platform = Theme.of(context).platform;
     final isApple =
         platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
@@ -1453,6 +1498,21 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 minimumSize: const Size(30, 30),
+                onPressed: _toggleDoneTasksVisibility,
+                child: Tooltip(
+                  message: doneTasksToggleLabel,
+                  child: Icon(
+                    _showDoneTasks
+                        ? CupertinoIcons.eye_slash
+                        : CupertinoIcons.eye,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
                 onPressed: () => _openTaskEditor(),
                 child: const Icon(CupertinoIcons.add, size: 20),
               ),
@@ -1476,6 +1536,13 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       appBar: AppBar(
         title: Text(widget.projectName),
         actions: <Widget>[
+          IconButton(
+            tooltip: doneTasksToggleLabel,
+            onPressed: _toggleDoneTasksVisibility,
+            icon: Icon(
+              _showDoneTasks ? Icons.visibility_off : Icons.visibility,
+            ),
+          ),
           IconButton(
             tooltip: context.l10n.refreshBoard,
             onPressed: _isLoading ? null : () => _loadBoard(fromRefresh: true),
