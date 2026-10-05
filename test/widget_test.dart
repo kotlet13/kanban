@@ -1,22 +1,15 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:kanban/app.dart';
+import 'organizer/ui/organizer_ui_test.dart'
+    show MemoryOrganizerStorage, pumpOrganizer;
 
 void main() {
-  testWidgets('App boots into launch gate', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: KanbanApp()),
-    );
-    await tester.pump();
-
-    expect(find.text('Restoring session...'), findsOneWidget);
+  testWidgets('app starts in the personal organizer without credentials', (
+    tester,
+  ) async {
+    final storage = MemoryOrganizerStorage();
+    await pumpOrganizer(tester, storage);
+    expect(find.text('Vsakdan'), findsOneWidget);
+    expect(find.text('Začni z enim opravilom.'), findsOneWidget);
+    expect(storage.writes, 0);
   });
 }

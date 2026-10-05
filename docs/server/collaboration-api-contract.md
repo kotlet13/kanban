@@ -1,0 +1,60 @@
+# FamilyHub sodelovanje, inbox, opomniki in finance — pogodba v razvoju
+
+Pogodba FamilyHub 0.3.0, preverjena 4. oktobra 2026 v izoliranih razvojnih okoljih. Native transport, prijava in device ACL ostanejo iz [native-api-contract.md](native-api-contract.md): envelope `v:1`, bearer, HTTPS, strogi CORS in brez cookie/global API fallback. Migracije schema 4–7 so additivne; stare seje, UUID, zapisi in outbox se ne brišejo. Rezultati in omejitve dejanskih preizkusov so v [README.md](README.md); namestitev v produkcijo ni bila izvedena.
+
+## Record contract 2
+
+Novi operaciji `sync2.push` in `sync2.pull` imata enake parametre/odgovore kot `sync.push/pull`. Capabilities oglašuje `recordContractVersions:[1,2]` pri vključenem native API. Stare shranjene operacije ohranijo ime `sync.push` in natančno telo/hash. Replay vrne star odgovor. V1 lahko ustvarja/ureja zapise le v še nerazširjenem obsegu; nove v1 spremembe in v1 pull obsega z v2 zapisi vrneta 409 `client_upgrade_required`, brez tihega izpuščanja polj ali premika cursorja. Sync2 pull dopolni zgodovinske v1 task/project s privzetimi null datumi in praznimi assignees brez spremembe izvirnega zapisa.
+
+V2 payload vsebuje vsa v1 polja in:
+
+- project: `startAt:UTC|null,endAt:UTC|null`;
+- task: `startAt:UTC|null,endAt:UTC|null,assigneeAccountIds:UUID[]`; `dueAt` ostane;
+- event: `title,notes,startAt:UTC,endAt:UTC|null,projectId:UUID|null,assigneeAccountIds:UUID[],createdAt,updatedAt`;
+- shoppingList/shoppingItem: ista polja kot v1.
+
+Časovni format/byte limiti ostanejo v1; endAt ne sme biti pred startAt. Največ 20 različnih assignee UUID, vsak aktivni član tega obsega s trenutno account identity. Viewer je lahko izvajalec, ne postane urejevalec. V2 canonical record zunaj payload doda `createdByAccountId:UUID|null,updatedByAccountId:UUID|null`; avtor je strežniška identiteta, ne klientov vnos. Izvorno avtorstvo je nespremenljivo; stari zapisi brez dokazljivega avtorja ostanejo null. Parent delete upošteva task in event reference. `assignee_not_member` je trajna 422 zavrnitev z details.serverRecord za lasten dostopen zapis (ali null), da odjemalec ohrani/prikaže spor in ne ustavi drugih operacij. Semantično isti UTC trenutek z drugo decimalno natančnostjo ne spremeni immutable createdAt ali prekliče opomnika.
+
+## Trajni inbox
+
+Vsaka sprejeta sprememba atomarno ustvari največ en inbox zapis za vsakega upravičenega prejemnika. Replay/conflict/rollback ne ustvarijo novega. Privzeto brez obvestila avtorju. Osebno naslovljen `audience:"personal"` ima prednost pred `"scope"`; create+assign ne ustvari dveh variant. Pri shopping item je groupKey vezan na scope + list + kategorijo + audience + petminutni časovni bucket, vendar vsak zapis ohrani konkreten targetId.
+
+Ops:
+
+- `inbox.sync {cursor:int,limit?:50,visibilityRevision?:int}` → `{items,cursor,hasMore,visibilityRevision}`. Account-scoped monotono zaporedje vsakega create/read; prvi backfill cursor0. Po spremembi member/finance pravic 409 `visibility_changed` z details.visibilityRevision zahteva takojšnje skritje stare vsebine, purge inbox snapshot/cursor in paginiran backfill od0; odhodne operacije se ne zavržejo.
+- `inbox.list {beforeId?:int,limit?:50,scopeId?:UUID}` → `{items:[notification],nextBeforeId:int|null,hasMore:bool}` (največ 100; zgodovina po padajočem id; refresh od začetka).
+- `inbox.read {id:int,read:bool,expectedRevision:int,requestId:UUID}` → `{item}`; samo lastno stanje; expectedRevision je item read-state revision (ne targetRevision), stale toggle 409 inbox_conflict; ne dokonča opravila/plačila.
+- `inbox.open {id:int}` → `{item,target:{scopeId,type,id},record}`; ponoven aktualni ACL pred vrnitvijo vsebine. Izbrisan target vrne tombstone, ne zgodovinske skrivne vsebine.
+- `inbox.preferences.get {scopeId}` → `{preferences}`.
+- `inbox.preferences.set {scopeId,category,settings:{inApp:bool,sound:bool,push:bool,email:bool},requestId}` → `{preferences}`.
+
+`notification={id:int,revision:int,sequence:int,targetRevision:int,scopeId,kind,category,audience,actorAccountId:UUID|null,targetType,targetId,groupKey,createdAt:UTC,readAt:UTC|null}`. Reference-only: ni snapshotov naslovov, zneskov, gesel ali payloadov. List/open vedno preverita trenutno članstvo; finančne tudi finance read grant. Preklic pravic skrije zgodovino. Kategorije `tasks,events,shopping,finance,reminders,membership`; privzeto inApp=true, sound/push/email=false. InApp=false skrije prihodnji in-app prikaz, ne utiša email/push; reference event lahko ostane za drug izbrani kanal. Vsi kanali false preprečijo nastanek. Ne briše zgodovine. Nastavitev push/email ni trditev o delujočem providerju.
+
+Vrste: `task.created,task.assigned,task.updated,task.completed,task.deleted,event.created,event.assigned,event.updated,event.deleted,project.created,project.updated,project.deleted,shoppingList.created,shoppingList.updated,shoppingList.deleted,shoppingItem.created,shoppingItem.updated,shoppingItem.checked,shoppingItem.deleted,member.joined,reminder.due,financeAccount.created,financeAccount.updated,financeEntry.created,financeEntry.updated,financeEntry.deleted,financeTransfer.created,financeTransfer.updated,financeTransfer.deleted`. Član brez osebne dodelitve dobi scope awareness; osebno označeni izvajalec personal varianto.
+
+## Opomniki in cron
+
+Opomnik je lasten uporabniku/accountUUID in referenca na dostopen task/event ali finančno planirano entry. Operacije `reminders.list {scopeId,beforeId?:UUID,limit?:100}`, `reminders.put {id:UUID,scopeId,targetType,targetId,remindAt:UTC,expectedRevision:int,requestId:UUID}` in `reminders.cancel {id,scopeId,expectedRevision,requestId}`. Put služi tudi odložitvi/spremembi časa. Odgovor `{reminder:{id,scopeId,targetType,targetId,remindAt,revision,state:"pending"|"delivered"|"cancelled"}}`; list `{reminders:[reminder],nextBeforeId:UUID|null,hasMore:bool}` (max100, klient paginuje do hasMore=false). Predviden termin/rok targeta se ob put posname; zaključitev/izbris/sprememba datuma targeta prekliče stale reminder. Cron pred dostavo ponovno preveri ACL in stanje targeta. Dostava je atomaren inbox insert in state transition, največ enkrat na reminder revision; ponovljen cron je idempotenten.
+
+CLI `php plugins/FamilyHub/cli/reminders.php --limit=100` iz Kanboard korena, brez stalnega procesa; največ 500 na tek. CPanel lahko kliče minutni cron. Ura in zahteve so UTC, lokalni prikaz odjemalčev timezone. Transport capabilities: inbox/scheduledReminders izvedena, externalPush=false brez konfiguracije (izbirni adapter0.4 je v [push-api-contract.md](push-api-contract.md)); smtp=false brez veljavne lastne SMTP konfiguracije. Adapter je ločen od inbox točnosti. Lokalni sistemski opomniki so ločena platformna odjemalčeva izvedba.
+
+## Finance: ločen modul in cursor
+
+Finance nikoli niso generic sync record. Lastne tabele, revision/operation hash, cursor, audit trail. `finance.grants {scopeId}` → `{grants:[{accountId,grant}],enabled,revision}` samo owner (trenutni člani, brez finančnih zapisov). `finance.policy {scopeId}` → `{enabled,grant:"none"|"read"|"write",revision}`. `finance.enable {scopeId,enabled:bool,requestId}` in `finance.grant {scopeId,accountId,grant,requestId}` samo trenutni scope owner; enable owner dobi write, noben drug član samodejno. Viewer največ read. Odstranitev člana tudi nastavi njegov finančni grant na none; ponovno povabilo ga ne obnovi. Pri vseh metodah najprej current scope ACL, nato enabled/read/write grant; zavrnitev `finance_forbidden` 403 brez record/conflict/details. Onemogočitev/preklic ne izbrišeta podatkov, vendar ustavita branje/pisanje/list/open/export.
+
+`finance.push {scopeId,operation:{opId,recordId,type,expectedRevision,deleted,payload}}` / `finance.pull {scopeId,cursor,accessRevision?:int,limit?}` analogna sync2; response vsebuje accessRevision. Za cursor>0 je accessRevision obvezen; vsaka sprememba policy/granta dvigne revision v scope lock. 409 finance_access_changed zahteva takoj skriti/purge prejšnjo finance projekcijo ter backfill cursor0 z aktualno accessRevision; pending outbox ne izgubi. Canonical provenance v record wire. Finance record tipi:
+
+- financeAccount payload `{name,currency:"EUR",openingBalanceMinor:int,ownerAccountId:UUID|null,createdAt,updatedAt}`; name največ300bytes, currency za to etapo EUR/USD/GBP/CHF, vsaka z dvema decimalnima mestoma, owner aktivni član ali null; nespremenjeni historični owner/payer/recipient UUID sme ostati po odstranitvi člana; currency in openingBalance po create nespremenljiva (popravke predstavimo transakcijsko).
+- financeEntry `{accountId:UUID,kind:"income"|"expense",status:"planned"|"posted",amountMinor:int>0,currency,title,notes,category,payerAccountId:UUID|null,recipientAccountId:UUID|null,occurredAt:UTC,createdAt,updatedAt}`; ledger account obstaja in valuta se ujema; payer/recipient nista avtor vnosa. Category največ100bytes. Planned ne vpliva na dejansko stanje; posted vpliva enkrat.
+- financeTransfer `{fromAccountId:UUID,toAccountId:UUID,amountMinor:int>0,currency,status:"planned"|"posted",title,notes,occurredAt:UTC,createdAt,updatedAt}`; dva različna živa računa istega scope in valute. Transfer vpliva -/+ na računa, ne na skupni income/expense. Cross-scope/currency prenos zahteva ločeno prihodnjo atomarno pogodbo; ne nadomesti ga par income/expense.
+
+Denar je JSON integer v območju ±9.000.000.000.000 (amount>0), brez float/string/clamp. Finance account deletion blokira žive reference. Vsak sprejet finance write ustvari nespremenljiv audit `{scopeId,recordId,revision,actorAccountId,changedAt,before,after,opId}`; client ga ne ureja. `finance.audit {scopeId,recordId,beforeRevision?:int,limit?:50}` → `{entries,nextBeforeRevision,hasMore}` samo trenutni read grant. Konflikti vključijo finance serverRecord le po uspešnem ACL. Generic sync, inbox in viewers nikoli ne vrnejo finančnega payload brez ločene finance ACL. Trenutna etapa nima finančnega CSV/export endpointa; odjemalčev lokalni izvoz mora preveriti grant in uporabljati ločen finance partition.
+
+
+## Izbirna e-poštna dostava
+
+Schema6 doda reference-only delivery queue, schema7 immutable in_app visibility flag. Končna migracija je7; stari zapisi se ohranijo. Privzeto ni SMTP nastavljen. Ločene server constants `FAMILYHUB_SMTP_HOST`, `FAMILYHUB_SMTP_PORT` (default465), `FAMILYHUB_SMTP_ENCRYPTION` (ssl default ali tls), `FAMILYHUB_SMTP_FROM`, po potrebi `FAMILYHUB_SMTP_USERNAME`/`FAMILYHUB_SMTP_PASSWORD`. Ne uporabljamo global MAIL_BCC, core Mail queue ali mail() fallback. Verified TLS je obvezen; zahtevani STARTTLS ne sme pasti na HELO/auth plaintext. Izrecna dev-only plaintext izjema je dovoljena le za loopback zajemnik in .invalid prejemnike.
+
+Ob email=true in veljavni konfiguraciji inbox insert atomarno doda queue samo z inbox ID. Pred dostavo se preverijo trenutni member/finance ACL, email preference, aktivni account in njegov aktualni email. Telo je generično, brez naslovov, zneskov ali source payload; opcijski `FAMILYHUB_APP_URL` je HTTPS povezava do centra, brez nepodprtega notification query. Privzeta shopping email preference je false. Transport ne sklepa uspeha iz enqueue; SMTP sprejem šteje le send()==1.
+
+CLI `php plugins/FamilyHub/cli/delivery.php --limit=20`: največ50 jobov, časovni budget40s (posamezen I/O timeout10s), 120s lease, največ5 poskusov, bounded exponential backoff, veljavnost24h. Ne pošilja predhodnih eventov ob poznejšem vklopu SMTP. Job po grant/member revocation prekliče. Stabilen Message-ID pomaga preprečiti duplikate, vendar izgubljen SMTP ACK lahko povzroči ponovno e-pošto; ne trdimo exactly-once e-poštne dostave. Trajni inbox ostane idempotenten. External push/APNs/FCM ni izveden in capability ostane false. Dejanski provider/TLS credentials in produkcijsko pošiljanje niso preverjeni.

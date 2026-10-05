@@ -4,8 +4,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../ai/ai_models.dart';
+import '../../kanboard/kanboard_api.dart';
+import '../../storage/ai_consent_store.dart';
 import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
@@ -27,6 +30,30 @@ class ProjectAiChatPage extends ConsumerStatefulWidget {
 }
 
 class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
+  late final KanboardCredentials? _sessionCredentials;
+  late final AiChatStore _chatStore;
+  late final AiConsentStore _consentStore;
+  late final KanboardApi? _api;
+  ProviderSubscription<KanboardCredentials?>? _sessionSubscription;
+  bool _sessionExpired = false;
+  bool get _sameSession =>
+      mounted &&
+      !_sessionExpired &&
+      _sessionCredentials != null &&
+      identical(ref.read(sessionCredentialsProvider), _sessionCredentials);
+  KanboardApi get _sessionApi {
+    if (!_sameSession || _api == null) throw StateError('AI session changed');
+    return _api;
+  }
+
+  void _showStorageError() {
+    if (_sameSession) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.organizerSaveError)));
+    }
+  }
+
   final TextEditingController _promptController = TextEditingController();
   final ScrollController _messagesScrollController = ScrollController();
   final List<AiChatMessage> _messages = <AiChatMessage>[];
@@ -41,8 +68,31 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   @override
   void initState() {
     super.initState();
+    _sessionCredentials = ref.read(sessionCredentialsProvider);
+    _chatStore = ref.read(aiChatStoreProvider);
+    _consentStore = ref.read(aiConsentStoreProvider);
+    _api = ref.read(kanboardApiProvider);
+    _sessionSubscription = ref.listenManual(sessionCredentialsProvider, (
+      previous,
+      next,
+    ) {
+      if (!identical(next, _sessionCredentials)) {
+        _sessionExpired = true;
+        unawaited(_streamSubscription?.cancel());
+        _streamSubscription = null;
+        if (mounted) {
+          setState(() {
+            _messages.clear();
+            _threads = [];
+            _activeThreadId = null;
+            _policy = const AiProjectPolicy();
+            _isSending = false;
+          });
+        }
+      }
+    });
     _loadPolicy();
-    _loadThreads();
+    _loadThreads().catchError((Object _) => _showStorageError());
   }
 
   void _scheduleScrollToLatest({bool animated = false}) {
@@ -79,9 +129,10 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<void> _loadThreads() async {
-    final store = ref.read(aiChatStoreProvider);
+    final store = _chatStore;
+    if (!mounted || !_sameSession) return;
     final threads = await store.readByProject(widget.projectId);
-    if (!mounted) return;
+    if (!mounted || !_sameSession) return;
     if (threads.isEmpty) {
       final now = DateTime.now().millisecondsSinceEpoch;
       final created = AiChatThread(
@@ -93,7 +144,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
         messages: const <AiChatMessage>[],
       );
       await store.saveThread(created);
-      if (!mounted) return;
+      if (!mounted || !_sameSession) return;
       setState(() {
         _threads = <AiChatThread>[created];
         _activeThreadId = created.id;
@@ -115,6 +166,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<void> _saveActiveThread() async {
+    if (!mounted || !_sameSession) return;
     final activeId = _activeThreadId;
     if (activeId == null) return;
     AiChatThread? existing;
@@ -133,17 +185,16 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
       updatedAtMs: now,
       messages: List<AiChatMessage>.from(_messages),
     );
-    await ref.read(aiChatStoreProvider).saveThread(thread);
-    final updated = await ref
-        .read(aiChatStoreProvider)
-        .readByProject(widget.projectId);
-    if (!mounted) return;
+    await _chatStore.saveThread(thread);
+    final updated = await _chatStore.readByProject(widget.projectId);
+    if (!mounted || !_sameSession) return;
     setState(() {
       _threads = updated;
     });
   }
 
   Future<void> _startNewChat() async {
+    if (!mounted || !_sameSession) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final thread = AiChatThread(
       id: '${widget.projectId}-$now',
@@ -153,11 +204,9 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
       updatedAtMs: now,
       messages: const <AiChatMessage>[],
     );
-    await ref.read(aiChatStoreProvider).saveThread(thread);
-    final updated = await ref
-        .read(aiChatStoreProvider)
-        .readByProject(widget.projectId);
-    if (!mounted) return;
+    await _chatStore.saveThread(thread);
+    final updated = await _chatStore.readByProject(widget.projectId);
+    if (!mounted || !_sameSession) return;
     setState(() {
       _threads = updated;
       _activeThreadId = thread.id;
@@ -205,7 +254,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
         ],
       ),
     );
-    if (selected == null || !mounted) return;
+    if (selected == null || !_sameSession) return;
     setState(() {
       _activeThreadId = selected.id;
       _messages
@@ -216,6 +265,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<void> _exportCurrentChat() async {
+    if (!mounted || !_sameSession) return;
     if (_messages.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -247,7 +297,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
         ),
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || !_sameSession) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.chatExportFailed(error))),
       );
@@ -255,41 +305,41 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<void> _loadPolicy() async {
-    final api = ref.read(kanboardApiProvider);
+    final api = _api;
     if (api == null) return;
     setState(() => _isLoadingPolicy = true);
     try {
-      final policy = await api.getProjectAiPolicy(widget.projectId);
-      if (!mounted) return;
+      final policy = await _sessionApi.getProjectAiPolicy(widget.projectId);
+      if (!mounted || !_sameSession) return;
       setState(() {
         _policy = policy;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || !_sameSession) return;
       setState(() {
         _policy = const AiProjectPolicy();
       });
     } finally {
-      if (mounted) {
+      if (_sameSession) {
         setState(() => _isLoadingPolicy = false);
       }
     }
   }
 
   Future<void> _savePolicy() async {
-    final api = ref.read(kanboardApiProvider);
-    final creds = ref.read(sessionCredentialsProvider);
+    final api = _api;
+    final creds = _sessionCredentials;
     if (api == null || creds == null) return;
     final next = AiProjectPolicy(
       enabled: _policy.enabled,
       keyMode: _policy.keyMode,
       ownerUsername: creds.username,
     );
-    final saved = await api.saveProjectAiPolicy(
+    final saved = await _sessionApi.saveProjectAiPolicy(
       projectId: widget.projectId,
       policy: next,
     );
-    if (!saved || !mounted) return;
+    if (!saved || !mounted || !_sameSession) return;
     setState(() => _policy = next);
     ScaffoldMessenger.of(
       context,
@@ -297,6 +347,7 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<bool> _ensurePolicyAndConsent() async {
+    if (!mounted || !_sameSession) return false;
     if (!_policy.enabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.aiNotEnabledForThisProject)),
@@ -304,17 +355,18 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
       return false;
     }
     if (_policy.keyMode != AiKeyMode.ownerKey) return true;
-    final creds = ref.read(sessionCredentialsProvider);
+    final creds = _sessionCredentials;
     final owner = (_policy.ownerUsername ?? '').trim();
     if (creds == null || owner.isEmpty) return true;
     if (creds.username.trim().toLowerCase() == owner.toLowerCase()) return true;
-    final consentStore = ref.read(aiConsentStoreProvider);
+    final consentStore = _consentStore;
     final accepted = await consentStore.hasAcceptedProjectCostWarning(
       projectId: widget.projectId,
       username: creds.username,
     );
+    if (!mounted || !_sameSession) return false;
     if (accepted) return true;
-    if (!mounted) return false;
+    if (!mounted || !_sameSession) return false;
     final confirm = await showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => AlertDialog.adaptive(
@@ -332,26 +384,26 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
         ],
       ),
     );
-    if (confirm == true) {
+    if (confirm == true && _sameSession) {
       await consentStore.setAcceptedProjectCostWarning(
         projectId: widget.projectId,
         username: creds.username,
         accepted: true,
       );
-      return true;
+      return _sameSession;
     }
     return false;
   }
 
   Future<String> _buildProjectContext() async {
-    final api = ref.read(kanboardApiProvider);
+    final api = _api;
     if (api == null) {
       return 'Project: ${widget.projectName} (ID: ${widget.projectId})';
     }
     final header = StringBuffer()
       ..writeln('Project: ${widget.projectName} (ID: ${widget.projectId})');
     try {
-      final board = await api.getBoard(widget.projectId);
+      final board = await _sessionApi.getBoard(widget.projectId);
       var openCount = 0;
       var doneCount = 0;
       var included = 0;
@@ -434,19 +486,23 @@ class _ProjectAiChatPageState extends ConsumerState<ProjectAiChatPage> {
   }
 
   Future<void> _send() async {
+    if (!mounted || !_sameSession) return;
+    final ai = ref.read(aiFacadeProvider);
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty || _isSending) return;
     final aiSettings = await ref.read(aiSettingsStoreProvider).read();
+    if (!mounted || !_sameSession) return;
     if (!aiSettings.enabled || !aiSettings.hasApiKey) {
-      if (!mounted) return;
+      if (!mounted || !_sameSession) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.configureAiInSettings)),
       );
       return;
     }
     final permitted = await _ensurePolicyAndConsent();
-    if (!permitted) return;
+    if (!permitted || !_sameSession) return;
     final projectContext = await _buildProjectContext();
+    if (!mounted || !_sameSession) return;
     const toolInstruction = '''
 You are running inside a Kanboard Flutter app connected to a Kanboard server through JSON-RPC.
 When the user asks to create/update Kanboard data, you may return an action plan JSON in a fenced code block.
@@ -488,9 +544,9 @@ If no action is needed, reply normally without JSON.
       _promptController.clear();
     });
     _scheduleScrollToLatest(animated: true);
-    await _saveActiveThread();
     try {
-      final ai = ref.read(aiFacadeProvider);
+      await _saveActiveThread();
+      if (!mounted || !_sameSession) return;
       final assistantIndex = _messages.length - 1;
       _streamSubscription = ai
           .streamChat(
@@ -500,7 +556,7 @@ If no action is needed, reply normally without JSON.
           )
           .listen(
             (delta) {
-              if (!mounted) return;
+              if (!mounted || !_sameSession) return;
               setState(() {
                 final current = _messages[assistantIndex];
                 _messages[assistantIndex] = current.copyWith(
@@ -510,7 +566,7 @@ If no action is needed, reply normally without JSON.
               _scheduleScrollToLatest();
             },
             onError: (Object error) {
-              if (!mounted) return;
+              if (!mounted || !_sameSession) return;
               setState(() {
                 _streamSubscription = null;
                 if (_messages.isNotEmpty &&
@@ -519,14 +575,14 @@ If no action is needed, reply normally without JSON.
                 }
                 _isSending = false;
               });
-              _saveActiveThread();
+              _saveActiveThread().catchError((Object _) => _showStorageError());
               _scheduleScrollToLatest();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(context.l10n.aiRequestFailed(error))),
               );
             },
             onDone: () {
-              if (!mounted) return;
+              if (!mounted || !_sameSession) return;
               final assistantText =
                   _messages.isNotEmpty && _messages.last.role == 'assistant'
                   ? _messages.last.content
@@ -540,17 +596,22 @@ If no action is needed, reply normally without JSON.
                 }
                 _isSending = false;
               });
-              _saveActiveThread();
+              _saveActiveThread().catchError((Object _) => _showStorageError());
               _scheduleScrollToLatest();
               if (assistantText.trim().isNotEmpty) {
-                unawaited(_maybeExecuteActionPlan(assistantText));
+                unawaited(
+                  _maybeExecuteActionPlan(
+                    assistantText,
+                  ).catchError((Object _) => _showStorageError()),
+                );
               }
             },
             cancelOnError: true,
           );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || !_sameSession) return;
       setState(() {
+        _isSending = false;
         if (_messages.isNotEmpty && _messages.last.role == 'assistant') {
           _messages.removeLast();
         }
@@ -591,7 +652,7 @@ If no action is needed, reply normally without JSON.
     final plan = _extractActionPlan(assistantText);
     if (plan == null) return;
     final actions = plan['actions'] as List<dynamic>? ?? const <dynamic>[];
-    if (actions.isEmpty || !mounted) return;
+    if (actions.isEmpty || !mounted || !_sameSession) return;
 
     final summary = actions
         .whereType<Map<String, dynamic>>()
@@ -643,12 +704,16 @@ If no action is needed, reply normally without JSON.
         ],
       ),
     );
-    if (confirm != true) return;
-    await _executeActionPlan(actions);
+    if (confirm != true || !mounted || !_sameSession) return;
+    try {
+      await _executeActionPlan(actions);
+    } catch (_) {
+      _showStorageError();
+    }
   }
 
   Future<void> _executeActionPlan(List<dynamic> rawActions) async {
-    final api = ref.read(kanboardApiProvider);
+    final api = _api;
     if (api == null) return;
 
     final aliases = <String, int>{};
@@ -658,13 +723,13 @@ If no action is needed, reply normally without JSON.
     var createdTasks = 0;
     var relocatedTasks = 0;
     var skippedRelocations = 0;
-    var columns = await api.getColumns(widget.projectId);
+    var columns = await _sessionApi.getColumns(widget.projectId);
     final defaultColumnId = columns.isNotEmpty ? columns.first.id : null;
-    var swimlanes = await api.getAllSwimlanes(widget.projectId);
+    var swimlanes = await _sessionApi.getAllSwimlanes(widget.projectId);
 
     String norm(String value) => value.trim().toLowerCase();
 
-    Future<KanboardBoard> loadBoard() => api.getBoard(widget.projectId);
+    Future<KanboardBoard> loadBoard() => _sessionApi.getBoard(widget.projectId);
 
     List<KanboardTask> flattenTasks(KanboardBoard board) {
       final tasks = <KanboardTask>[];
@@ -750,7 +815,7 @@ If no action is needed, reply normally without JSON.
     ) async {
       final taskId = int.tryParse(raw['task_id']?.toString() ?? '');
       if (taskId != null && taskId > 0) {
-        return api.getTask(taskId);
+        return _sessionApi.getTask(taskId);
       }
       final taskTitle = raw['task_title']?.toString().trim();
       if (taskTitle == null || taskTitle.isEmpty) return null;
@@ -780,7 +845,7 @@ If no action is needed, reply normally without JSON.
       if (type == 'create_swimlane') {
         final name = raw['name']?.toString().trim() ?? '';
         if (name.isEmpty) continue;
-        final createdId = await api.addSwimlane(
+        final createdId = await _sessionApi.addSwimlane(
           projectId: widget.projectId,
           name: name,
           description: raw['description']?.toString(),
@@ -803,7 +868,7 @@ If no action is needed, reply normally without JSON.
         final title = raw['title']?.toString().trim() ?? '';
         if (title.isEmpty) continue;
         final taskLimit = int.tryParse(raw['task_limit']?.toString() ?? '');
-        final createdId = await api.addColumn(
+        final createdId = await _sessionApi.addColumn(
           projectId: widget.projectId,
           title: title,
           taskLimit: taskLimit,
@@ -815,10 +880,10 @@ If no action is needed, reply normally without JSON.
           if (alias != null && alias.isNotEmpty) {
             columnAliases[alias] = createdId;
           }
-          columns = await api.getColumns(widget.projectId);
+          columns = await _sessionApi.getColumns(widget.projectId);
         }
       } else if (type == 'remove_column' || type == 'delete_column') {
-        columns = await api.getColumns(widget.projectId);
+        columns = await _sessionApi.getColumns(widget.projectId);
         if (columns.length <= 1) continue;
         int? columnId = int.tryParse(raw['column_id']?.toString() ?? '');
         final columnAlias = raw['column_alias']?.toString().trim();
@@ -839,11 +904,11 @@ If no action is needed, reply normally without JSON.
         if (columnId == null || !columns.any((c) => c.id == columnId)) {
           continue;
         }
-        final removed = await api.removeColumn(columnId);
+        final removed = await _sessionApi.removeColumn(columnId);
         if (removed) {
           // "columns" in snackbar reports column changes (creates + removes).
           createdColumns += 1;
-          columns = await api.getColumns(widget.projectId);
+          columns = await _sessionApi.getColumns(widget.projectId);
         }
       } else if (type == 'create_task') {
         final title = raw['title']?.toString().trim() ?? '';
@@ -883,7 +948,7 @@ If no action is needed, reply normally without JSON.
           }
         }
         columnId ??= defaultColumnId;
-        final createdId = await api.createTask(
+        final createdId = await _sessionApi.createTask(
           projectId: widget.projectId,
           title: title,
           description: raw['description']?.toString(),
@@ -900,7 +965,7 @@ If no action is needed, reply normally without JSON.
                 .where((e) => e.isNotEmpty)
                 .toList();
         if (orderedTitles.isEmpty) continue;
-        columns = await api.getColumns(widget.projectId);
+        columns = await _sessionApi.getColumns(widget.projectId);
         final byTitle = <String, KanboardColumn>{};
         for (final c in columns) {
           byTitle[c.title.trim().toLowerCase()] = c;
@@ -910,7 +975,7 @@ If no action is needed, reply normally without JSON.
         for (final title in orderedTitles) {
           final column = byTitle[title.toLowerCase()];
           if (column == null) continue;
-          await api.changeColumnPosition(
+          await _sessionApi.changeColumnPosition(
             projectId: widget.projectId,
             columnId: column.id,
             position: nextPosition,
@@ -920,14 +985,14 @@ If no action is needed, reply normally without JSON.
         }
         for (final column in columns) {
           if (touched.contains(column.id)) continue;
-          await api.changeColumnPosition(
+          await _sessionApi.changeColumnPosition(
             projectId: widget.projectId,
             columnId: column.id,
             position: nextPosition,
           );
           nextPosition += 1;
         }
-        columns = await api.getColumns(widget.projectId);
+        columns = await _sessionApi.getColumns(widget.projectId);
       } else if (type == 'reorder_swimlanes') {
         final orderedNames =
             (raw['swimlane_names'] as List<dynamic>? ?? const <dynamic>[])
@@ -935,7 +1000,7 @@ If no action is needed, reply normally without JSON.
                 .where((e) => e.isNotEmpty)
                 .toList();
         if (orderedNames.isEmpty) continue;
-        swimlanes = await api.getAllSwimlanes(widget.projectId);
+        swimlanes = await _sessionApi.getAllSwimlanes(widget.projectId);
         final byName = <String, KanboardSwimlane>{};
         for (final lane in swimlanes) {
           byName[lane.name.trim().toLowerCase()] = lane;
@@ -945,7 +1010,7 @@ If no action is needed, reply normally without JSON.
         for (final name in orderedNames) {
           final lane = byName[name.toLowerCase()];
           if (lane == null) continue;
-          await api.changeSwimlanePosition(
+          await _sessionApi.changeSwimlanePosition(
             projectId: widget.projectId,
             swimlaneId: lane.id,
             position: nextPosition,
@@ -955,14 +1020,14 @@ If no action is needed, reply normally without JSON.
         }
         for (final lane in swimlanes) {
           if (touched.contains(lane.id)) continue;
-          await api.changeSwimlanePosition(
+          await _sessionApi.changeSwimlanePosition(
             projectId: widget.projectId,
             swimlaneId: lane.id,
             position: nextPosition,
           );
           nextPosition += 1;
         }
-        swimlanes = await api.getAllSwimlanes(widget.projectId);
+        swimlanes = await _sessionApi.getAllSwimlanes(widget.projectId);
       } else if (type == 'relocate_task' || type == 'move_task') {
         final task = await resolveTaskByIdOrTitle(raw);
         if (task == null) {
@@ -981,7 +1046,7 @@ If no action is needed, reply normally without JSON.
           columnId: targetColumnId,
           requested: requested,
         );
-        final moved = await api.moveTaskPosition(
+        final moved = await _sessionApi.moveTaskPosition(
           projectId: widget.projectId,
           taskId: task.id,
           columnId: targetColumnId,
@@ -1001,7 +1066,7 @@ If no action is needed, reply normally without JSON.
             .toSet()
             .toList();
         for (final id in taskIds) {
-          final task = await api.getTask(id);
+          final task = await _sessionApi.getTask(id);
           if (task != null) candidates.add(task);
         }
         final taskTitles =
@@ -1084,7 +1149,7 @@ If no action is needed, reply normally without JSON.
             columnId: targetColumnId,
             requested: requestedPosition,
           );
-          final moved = await api.moveTaskPosition(
+          final moved = await _sessionApi.moveTaskPosition(
             projectId: widget.projectId,
             taskId: task.id,
             columnId: targetColumnId,
@@ -1103,7 +1168,7 @@ If no action is needed, reply normally without JSON.
       }
     }
 
-    if (!mounted) return;
+    if (!mounted || !_sameSession) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -1124,7 +1189,7 @@ If no action is needed, reply normally without JSON.
     if (subscription == null) return;
     await subscription.cancel();
     _streamSubscription = null;
-    if (!mounted) return;
+    if (!mounted || !_sameSession) return;
     setState(() {
       _isSending = false;
       if (_messages.isNotEmpty &&
@@ -1139,6 +1204,7 @@ If no action is needed, reply normally without JSON.
 
   @override
   void dispose() {
+    _sessionSubscription?.close();
     _streamSubscription?.cancel();
     _messagesScrollController.dispose();
     _promptController.dispose();
@@ -1147,6 +1213,31 @@ If no action is needed, reply normally without JSON.
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(sessionCredentialsProvider);
+    if (!_sameSession) {
+      return Scaffold(
+        appBar: AppBar(title: Text(context.l10n.aiChat)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.l10n.aiSessionChanged,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.go('/'),
+                  child: Text(context.l10n.organizerBackToday),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.aiChatForProject(widget.projectName)),
@@ -1155,7 +1246,7 @@ If no action is needed, reply normally without JSON.
             onSelected: (value) {
               switch (value) {
                 case 'new':
-                  _startNewChat();
+                  _startNewChat().catchError((Object _) => _showStorageError());
                   break;
                 case 'continue':
                   _pickThread();
@@ -1249,7 +1340,9 @@ If no action is needed, reply normally without JSON.
                   Align(
                     alignment: Alignment.centerRight,
                     child: FilledButton.icon(
-                      onPressed: _savePolicy,
+                      onPressed: () => _savePolicy().catchError(
+                        (Object _) => _showStorageError(),
+                      ),
                       icon: const Icon(Icons.save),
                       label: Text(context.l10n.save),
                     ),
@@ -1349,7 +1442,11 @@ If no action is needed, reply normally without JSON.
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _isSending ? null : _send,
+                    onPressed: _isSending
+                        ? null
+                        : () => _send().catchError(
+                            (Object _) => _showStorageError(),
+                          ),
                     icon: _isSending
                         ? const SizedBox(
                             width: 14,
@@ -1361,7 +1458,11 @@ If no action is needed, reply normally without JSON.
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
-                    onPressed: _isSending ? _stopStreaming : null,
+                    onPressed: _isSending
+                        ? () => _stopStreaming().catchError(
+                            (Object _) => _showStorageError(),
+                          )
+                        : null,
                     icon: const Icon(Icons.stop_circle_outlined),
                     label: Text(context.l10n.stop),
                   ),

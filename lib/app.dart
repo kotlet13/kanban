@@ -8,6 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_router.dart';
 import 'l10n/l10n.dart';
 import 'state/providers.dart';
+import 'organizer/platform/notification_coordinator.dart';
+import 'organizer/platform/backup_preferences_replay.dart';
+import 'organizer/presentation/onboarding/getting_started.dart';
+import 'organizer/platform/invitation_links/invitation_link_coordinator.dart';
+import 'organizer/platform/remote_push/remote_push_coordinator.dart';
 
 class KanbanApp extends ConsumerStatefulWidget {
   const KanbanApp({super.key});
@@ -47,11 +52,27 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(backupPreferencesReplayProvider, (previous, next) {
+      next.whenData((values) {
+        if (values.containsKey('app_locale_code')) {
+          final code = values['app_locale_code'] as String?;
+          ref.read(appLocaleProvider.notifier).state = code == null
+              ? null
+              : Locale(code);
+        }
+        if (values.containsKey('app_theme_mode')) {
+          ref.read(themeModeProvider.notifier).state = ThemeMode.values.byName(
+            values['app_theme_mode'] as String,
+          );
+        }
+        ref.invalidate(gettingStartedSeenProvider);
+      });
+    });
     final themeMode = ref.watch(themeModeProvider);
     final appLocale = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
-      onGenerateTitle: (context) => context.l10n.kanbanConnect,
+      onGenerateTitle: (context) => context.l10n.organizerAppName,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         AppLocalizations.delegate,
@@ -66,6 +87,13 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
       routerConfig: appRouter,
+      builder: (context, child) => InvitationLinkCoordinator(
+        child: RemotePushCoordinator(
+          child: LocalNotificationCoordinator(
+            child: child ?? const SizedBox.shrink(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -73,19 +101,35 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
     final isDark = brightness == Brightness.dark;
     final colorScheme =
         ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0A84FF),
+          seedColor: const Color(0xFF365BD9),
           brightness: brightness,
         ).copyWith(
-          surface: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+          surface: isDark ? const Color(0xFF22242A) : const Color(0xFFFFFFFF),
+          primary: isDark ? const Color(0xFFA8B9FF) : const Color(0xFF365BD9),
+          onPrimary: isDark ? const Color(0xFF18234B) : Colors.white,
+          onSurface: isDark ? const Color(0xFFF1F2F5) : const Color(0xFF202329),
+          onSurfaceVariant: isDark
+              ? const Color(0xFFAEB3BF)
+              : const Color(0xFF696E79),
+          surfaceContainerLow: isDark
+              ? const Color(0xFF24262D)
+              : const Color(0xFFF4F5F8),
+          surfaceContainerHigh: isDark ? const Color(0xFF22242A) : Colors.white,
+          surfaceContainerHighest: isDark
+              ? const Color(0xFF343740)
+              : const Color(0xFFE9EBEF),
+          primaryContainer: isDark
+              ? const Color(0xFF2A334F)
+              : const Color(0xFFEDF1FF),
           outlineVariant: isDark
-              ? const Color(0xFF3A3A3C)
-              : const Color(0xFFD1D1D6),
+              ? const Color(0xFF343740)
+              : const Color(0xFFE9EBEF),
           tertiary: const Color(0xFF64D2FF),
         );
 
     final scaffoldBackground = isDark
-        ? const Color(0xFF000000)
-        : const Color(0xFFF2F2F7);
+        ? const Color(0xFF17181C)
+        : const Color(0xFFFFFFFF);
     final baseText = ThemeData(
       brightness: brightness,
       typography: Typography.material2021(platform: TargetPlatform.iOS),
@@ -121,16 +165,16 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
         primaryColor: colorScheme.primary,
         scaffoldBackgroundColor: scaffoldBackground,
         barBackgroundColor: isDark
-            ? const Color(0xFF1C1C1E)
-            : const Color(0xFFF2F2F7),
+            ? const Color(0xFF22242A)
+            : const Color(0xFFFFFFFF),
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: isDark
-            ? const Color(0xCC1C1C1E)
-            : const Color(0xCCF2F2F7),
+            ? const Color(0xFF22242A)
+            : const Color(0xFFFFFFFF),
         surfaceTintColor: Colors.transparent,
         titleSpacing: 16,
         toolbarHeight: 52,
@@ -156,7 +200,7 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
       textTheme: baseText.copyWith(
         titleLarge: baseText.titleLarge?.copyWith(
           fontSize: 22,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           letterSpacing: -0.35,
         ),
         titleMedium: baseText.titleMedium?.copyWith(
@@ -167,7 +211,7 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+        fillColor: isDark ? const Color(0xFF22242A) : Colors.white,
         border: fieldBorder(colorScheme.outlineVariant),
         enabledBorder: fieldBorder(colorScheme.outlineVariant),
         focusedBorder: fieldBorder(colorScheme.primary),
@@ -207,7 +251,7 @@ class _KanbanAppState extends ConsumerState<KanbanApp> {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 0,
-        foregroundColor: Colors.white,
+        foregroundColor: colorScheme.onPrimary,
         backgroundColor: colorScheme.primary,
         extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),

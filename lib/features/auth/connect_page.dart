@@ -1,16 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../kanboard/kanboard_api.dart';
 import '../../l10n/l10n.dart';
 import '../../models/kanboard_models.dart';
 import '../../state/providers.dart';
 import '../../widgets/theme_mode_menu_button.dart';
-import 'credentials_transfer.dart';
+import '../../storage/credentials_store.dart';
+import '../../kanboard/jsonrpc_client.dart';
 
 class ConnectPage extends ConsumerStatefulWidget {
   const ConnectPage({super.key});
@@ -28,7 +27,8 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
 
   bool _isConnecting = false;
   String? _status;
-  bool _usedJsonRpcFallback = false;
+  bool _allowLocalHttp = false;
+  bool _statusIsError = false;
 
   @override
   void initState() {
@@ -37,260 +37,67 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
   }
 
   Future<void> _prefillSaved() async {
-    final saved = await ref.read(credentialsStoreProvider).read();
-    if (!mounted || saved == null) return;
-    setState(() {
-      _urlController.text = saved.serverUrl;
-      _usernameController.text = saved.username;
-      _tokenController.text = saved.token;
-      _authMode = saved.authMode;
-      _status = context.l10n.loadedSavedCredentials;
-    });
+    try {
+      final saved = await ref.read(credentialsStoreProvider).read();
+      if (!mounted || saved == null) return;
+      setState(() {
+        _urlController.text = saved.serverUrl;
+        _usernameController.text = saved.username;
+        _tokenController.text = saved.token;
+        _authMode = saved.authMode;
+        _allowLocalHttp = saved.allowLocalHttp;
+        _status = context.l10n.loadedSavedCredentials;
+        _statusIsError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _status = context.l10n.secureStorageUnavailable;
+        _statusIsError = true;
+      });
+    }
   }
 
   Future<void> _connect() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isConnecting = true;
       _status = null;
+      _statusIsError = false;
     });
-
     final credentials = KanboardCredentials(
       serverUrl: _urlController.text.trim(),
       username: _usernameController.text.trim(),
-      token: _tokenController.text.trim(),
+      token: _authMode == KanboardAuthMode.password
+          ? _tokenController.text
+          : _tokenController.text.trim(),
       authMode: _authMode,
+      allowLocalHttp: _allowLocalHttp,
     );
-
+    KanboardApi? api;
     try {
-      debugPrint(
-        '[Connect] Attempting auth with username="${credentials.username}" endpoint="${credentials.normalizedEndpoint}"',
-      );
-
-      _usedJsonRpcFallback = false;
-
-      String version;
-      KanboardUser me;
-      KanboardCredentials successfulCredentials = credentials;
-
-      try {
-        final api = KanboardApi.fromCredentials(credentials);
-        version = await api.getVersion();
-        me = await api.getMe();
-      } catch (firstError) {
-        debugPrint('[Connect] Primary auth failed: $firstError');
-        if (_authMode == KanboardAuthMode.apiToken &&
-            credentials.username.toLowerCase() != 'jsonrpc') {
-          debugPrint(
-            '[Connect] Retrying with username="jsonrpc" using same token.',
-          );
-          final fallbackCredentials = KanboardCredentials(
-            serverUrl: credentials.serverUrl,
-            username: 'jsonrpc',
-            token: credentials.token,
-            authMode: _authMode,
-          );
-          final fallbackApi = KanboardApi.fromCredentials(fallbackCredentials);
-          version = await fallbackApi.getVersion();
-          me = await fallbackApi.getMe();
-          successfulCredentials = fallbackCredentials;
-          _usedJsonRpcFallback = true;
-        } else {
-          rethrow;
-        }
-      }
-
-      await ref.read(credentialsStoreProvider).save(successfulCredentials);
-      ref.read(sessionCredentialsProvider.notifier).state =
-          successfulCredentials;
-
+      api = KanboardApi.fromCredentials(credentials);
+      final version = await api.getVersion();
+      final me = await api.getMe();
+      await ref.read(credentialsStoreProvider).save(credentials);
       if (!mounted) return;
+      ref.read(sessionCredentialsProvider.notifier).state = credentials;
       setState(() {
-        _status = _usedJsonRpcFallback
-            ? context.l10n.connectedViaJsonrpcTokenAuthServerVersion(version)
-            : context.l10n.connectedAsVersion(me.username, version);
+        _status = context.l10n.connectedAsVersion(me.username, version);
       });
-
-      if (version != '1.2.50') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.connectedSuccessfullyButServerVersionIsTarget1250(
-                version,
-              ),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isConnecting = false;
-        });
-      }
-    }
-  }
-
-  KanboardCredentials? _credentialsFromForm() {
-    final serverUrl = _urlController.text.trim();
-    final username = _usernameController.text.trim();
-    final token = _tokenController.text.trim();
-    if (serverUrl.isEmpty || username.isEmpty || token.isEmpty) return null;
-    return KanboardCredentials(
-      serverUrl: serverUrl,
-      username: username,
-      token: token,
-      authMode: _authMode,
-    );
-  }
-
-  Future<void> _showExportQr() async {
-    final credentials =
-        _credentialsFromForm() ??
-        await ref.read(credentialsStoreProvider).read();
-
-    if (credentials == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.nothingToExportYetConnectOnceOrFillAllFieldsFirst,
-          ),
-        ),
-      );
-      return;
-    }
-
-    final payload = buildCredentialsTransferPayload(credentials);
-
-    if (!mounted) return;
-    await showAdaptiveDialog<void>(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) {
-        final maxDialogHeight = MediaQuery.sizeOf(context).height * 0.72;
-        return AlertDialog.adaptive(
-          title: Text(context.l10n.transferCredentials),
-          content: SizedBox(
-            width: 340,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxDialogHeight),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      context.l10n.scanThisCodeWithYourPhoneInTheConnectScreen,
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: QrImageView(
-                        data: payload,
-                        version: QrVersions.auto,
-                        size: 250,
-                        gapless: false,
-                        backgroundColor: Colors.white,
-                        eyeStyle: const QrEyeStyle(
-                          eyeShape: QrEyeShape.square,
-                          color: Colors.black,
-                        ),
-                        dataModuleStyle: const QrDataModuleStyle(
-                          dataModuleShape: QrDataModuleShape.square,
-                          color: Colors.black,
-                        ),
-                        errorStateBuilder: (context, error) {
-                          return Center(
-                            child: Text(
-                              'Could not render QR.\n$error',
-                              textAlign: TextAlign.center,
-                            ),
-                          );
-                        },
-                        semanticsLabel: context.l10n.credentialsTransferQR,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SelectableText(
-                      payload,
-                      maxLines: 2,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.l10n.ifQRRenderingFailsCopyPasteTheTransferCode,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    const Divider(),
-                    const SizedBox(height: 4),
-                    Text(
-                      context
-                          .l10n
-                          .securityNoteThisQRContainsYourAPITokenInPlainText,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: payload));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(context.l10n.transferCodeCopied)),
-                );
-              },
-              child: Text(context.l10n.copyCode),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(context.l10n.done),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _applyTransferPayload(String value) async {
-    try {
-      final credentials = parseCredentialsTransferPayload(value);
-      if (!mounted) return;
-      setState(() {
-        _urlController.text = credentials.serverUrl;
-        _usernameController.text = credentials.username;
-        _tokenController.text = credentials.token;
-        _authMode = credentials.authMode;
-        _status = context.l10n.importedCredentialsFromTransferCode;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.credentialsImportedTapConnect)),
-      );
+      context.go('/projects');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.invalidTransferCode(error))),
-      );
+      setState(() {
+        _status = error is CredentialsStorageException
+            ? context.l10n.secureStorageUnavailable
+            : context.l10n.connectionFailed;
+        _statusIsError = true;
+      });
+    } finally {
+      api?.close();
+      if (mounted) setState(() => _isConnecting = false);
     }
-  }
-
-  Future<void> _importFromClipboard() async {
-    final clipboard = await Clipboard.getData('text/plain');
-    final value = clipboard?.text?.trim() ?? '';
-    if (value.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.clipboardIsEmpty)));
-      return;
-    }
-    await _applyTransferPayload(value);
   }
 
   @override
@@ -317,10 +124,10 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         : l10n.tokenIsRequired;
     final connectionHint = isPasswordMode
         ? l10n.useYourKanboardUsernameAndPassword
-        : l10n.usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc;
+        : l10n.personalTokenHint;
     final authNote = isPasswordMode
         ? l10n.authNotePasswordModeUsesYourKanboardLoginCredentials
-        : l10n.authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
+        : l10n.personalTokenHint;
     final body = SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -486,21 +293,17 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                     },
                               ),
                               const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: <Widget>[
-                                  FilledButton.tonalIcon(
-                                    onPressed: _showExportQr,
-                                    icon: const Icon(Icons.qr_code_2_rounded),
-                                    label: Text(context.l10n.showTransferQR),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: _importFromClipboard,
-                                    icon: const Icon(Icons.content_paste),
-                                    label: Text(context.l10n.pasteTransferCode),
-                                  ),
-                                ],
+                              Text(l10n.credentialsSharingDisabled),
+                              const SizedBox(height: 12),
+                              CheckboxListTile(
+                                contentPadding: EdgeInsets.zero,
+                                value: _allowLocalHttp,
+                                title: Text(l10n.localDevelopmentConnection),
+                                onChanged: _isConnecting
+                                    ? null
+                                    : (value) => setState(
+                                        () => _allowLocalHttp = value ?? false,
+                                      ),
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -522,6 +325,20 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                       uri.host.isEmpty) {
                                     return context.l10n.enterAValidURL;
                                   }
+                                  try {
+                                    JsonRpcClient.validateEndpoint(
+                                      Uri.parse(
+                                        KanboardCredentials(
+                                          serverUrl: text,
+                                          username: 'validation',
+                                          token: '',
+                                        ).normalizedEndpoint,
+                                      ),
+                                      allowLocalHttp: _allowLocalHttp,
+                                    );
+                                  } catch (_) {
+                                    return l10n.secureConnectionRequired;
+                                  }
                                   return null;
                                 },
                               ),
@@ -532,10 +349,15 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                                   labelText: context.l10n.username,
                                   prefixIcon: const Icon(Icons.person_outline),
                                 ),
-                                validator: (value) =>
-                                    (value == null || value.trim().isEmpty)
-                                    ? context.l10n.usernameIsRequired
-                                    : null,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return l10n.usernameIsRequired;
+                                  }
+                                  if (value.trim().toLowerCase() == 'jsonrpc') {
+                                    return l10n.personalTokenHint;
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -643,6 +465,12 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
                 child: const Icon(CupertinoIcons.folder, size: 20),
               ),
               const SizedBox(width: 4),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
+                onPressed: () => context.go('/'),
+                child: const Icon(CupertinoIcons.house, size: 20),
+              ),
               const ThemeModeMenuButton(),
             ],
           ),
@@ -656,6 +484,11 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
         title: Text(l10n.connectToKanboard),
         actions: <Widget>[
           IconButton(
+            tooltip: l10n.organizerToday,
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.home_outlined),
+          ),
+          IconButton(
             tooltip: l10n.projects,
             onPressed: () => context.go('/projects'),
             icon: const Icon(Icons.folder_open),
@@ -668,7 +501,7 @@ class _ConnectPageState extends ConsumerState<ConnectPage> {
   }
 
   Widget _statusCard(ThemeData theme) {
-    final isError = _status!.toLowerCase().contains('failed');
+    final isError = _statusIsError;
     final color = isError ? theme.colorScheme.error : theme.colorScheme.primary;
     return Card(
       child: Padding(

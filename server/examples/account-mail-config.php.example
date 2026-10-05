@@ -1,0 +1,14 @@
+<?php
+// Merge into the protected Kanboard configuration; placeholders are not usable.
+// Enable native API only after backup, deployment review and testing.
+define('FAMILYHUB_ENABLE_NATIVE_API', true);
+define('FAMILYHUB_SMTP_HOST', 'smtp.example.invalid');
+define('FAMILYHUB_SMTP_PORT', 465);
+define('FAMILYHUB_SMTP_ENCRYPTION', 'ssl'); // verified TLS; no plaintext production fallback
+define('FAMILYHUB_SMTP_FROM', 'sender@example.invalid');
+define('FAMILYHUB_SMTP_USERNAME', 'REPLACE_ON_SERVER');
+define('FAMILYHUB_SMTP_PASSWORD', 'REPLACE_ON_SERVER');
+// File outside every public root, readable only by the PHP account. Random32bytes.
+define('FAMILYHUB_ACCOUNT_MAIL_KEY_BASE64', trim(file_get_contents('/home/ACCOUNT/private/familyhub-account-mail.key')));
+// Never use core MAIL_BCC for this module; it is deliberately ignored.
+// Do not enable FAMILYHUB_DEVELOPMENT_MODE or local plaintext SMTP in production.

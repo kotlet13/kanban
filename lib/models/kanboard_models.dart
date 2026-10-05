@@ -27,18 +27,22 @@ class KanboardCredentials {
     required this.username,
     required this.token,
     this.authMode = KanboardAuthMode.apiToken,
+    this.allowLocalHttp = false,
   });
 
   final String serverUrl;
   final String username;
   final String token;
   final KanboardAuthMode authMode;
+  final bool allowLocalHttp;
 
   String get normalizedEndpoint {
     final trimmed = serverUrl.trim();
-    if (trimmed.endsWith('/jsonrpc.php')) return trimmed;
-    if (trimmed.endsWith('/')) return '${trimmed}jsonrpc.php';
-    return '$trimmed/jsonrpc.php';
+    final uri = Uri.parse(trimmed);
+    final path = uri.path.endsWith('/jsonrpc.php')
+        ? uri.path
+        : '${uri.path.endsWith('/') ? uri.path : '${uri.path}/'}jsonrpc.php';
+    return uri.replace(path: path).toString();
   }
 }
 

@@ -1,0 +1,18 @@
+{
+  "release": "drift-2.35.1",
+  "source": "https://github.com/simolus3/drift/releases/tag/drift-2.35.1",
+  "assets": [
+    {
+      "path": "web/drift_worker.js",
+      "url": "https://github.com/simolus3/drift/releases/download/drift-2.35.1/drift_worker.js",
+      "sha256": "fe5f13be0526f78293796aefb9a29d3823a2dbdbf1bccd3f0faeb90eaaafd72a",
+      "bytes": 360061
+    },
+    {
+      "path": "web/sqlite3.wasm",
+      "url": "https://github.com/simolus3/drift/releases/download/drift-2.35.1/sqlite3.wasm",
+      "sha256": "fbcd2e8214f9231ea961e1b7706a22dd1194cfbfe6f26f13841b5aa7a0be1a1f",
+      "bytes": 750007
+    }
+  ]
+}

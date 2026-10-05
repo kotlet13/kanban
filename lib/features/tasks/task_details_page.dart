@@ -1418,15 +1418,20 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
   }
 
   Future<bool> _ensureAiAllowed() async {
+    final api = ref.read(kanboardApiProvider);
+    final creds = ref.read(sessionCredentialsProvider);
+    final consentStore = ref.read(aiConsentStoreProvider);
+    if (api == null || creds == null) return false;
+    bool currentSession() =>
+        mounted && identical(ref.read(sessionCredentialsProvider), creds);
     final settings = await ref.read(aiSettingsStoreProvider).read();
+    if (!currentSession()) return false;
     if (!settings.enabled || !settings.hasApiKey) {
       _showSnack(context.l10n.configureAiInSettings, isError: true);
       return false;
     }
-    final api = ref.read(kanboardApiProvider);
-    final creds = ref.read(sessionCredentialsProvider);
-    if (api == null || creds == null) return false;
     final policy = await api.getProjectAiPolicy(widget.projectId);
+    if (!currentSession()) return false;
     if (!policy.enabled) {
       _showSnack(context.l10n.aiNotEnabledForThisProject, isError: true);
       return false;
@@ -1437,11 +1442,11 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         owner.toLowerCase() == creds.username.trim().toLowerCase()) {
       return true;
     }
-    final consentStore = ref.read(aiConsentStoreProvider);
     final accepted = await consentStore.hasAcceptedProjectCostWarning(
       projectId: widget.projectId,
       username: creds.username,
     );
+    if (!currentSession()) return false;
     if (accepted) return true;
     if (!mounted) return false;
     final confirm = await showAdaptiveDialog<bool>(
@@ -1461,19 +1466,24 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
         ],
       ),
     );
-    if (confirm != true) return false;
+    if (confirm != true || !currentSession()) return false;
     await consentStore.setAcceptedProjectCostWarning(
       projectId: widget.projectId,
       username: creds.username,
       accepted: true,
     );
-    return true;
+    return currentSession();
   }
 
   Future<void> _assistTitleWithAi() async {
     if (_isAiWorking) return;
+    final capturedCredentials = ref.read(sessionCredentialsProvider);
     final allowed = await _ensureAiAllowed();
-    if (!allowed || !mounted) return;
+    if (!allowed ||
+        !mounted ||
+        !identical(ref.read(sessionCredentialsProvider), capturedCredentials)) {
+      return;
+    }
     setState(() => _isAiWorking = true);
     try {
       final ai = ref.read(aiFacadeProvider);
@@ -1516,8 +1526,13 @@ class _TaskDetailsSheetState extends ConsumerState<TaskDetailsSheet> {
 
   Future<void> _assistDescriptionWithAi() async {
     if (_isAiWorking) return;
+    final capturedCredentials = ref.read(sessionCredentialsProvider);
     final allowed = await _ensureAiAllowed();
-    if (!allowed || !mounted) return;
+    if (!allowed ||
+        !mounted ||
+        !identical(ref.read(sessionCredentialsProvider), capturedCredentials)) {
+      return;
+    }
     setState(() => _isAiWorking = true);
     try {
       final ai = ref.read(aiFacadeProvider);

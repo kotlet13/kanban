@@ -31,6 +31,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/android/build/
 /coverage/
 
 # Symbolication related
@@ -43,3 +44,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local Firebase configuration and credentials (never application assets)
+/.firebase/
+/android/app/google-services.json
+/android/app/src/main/res/values/firebase_config.xml
+/ios/Runner/GoogleService-Info.plist
+**/*.p8
+**/*service-account*.json
+**/*firebase-adminsdk*.json

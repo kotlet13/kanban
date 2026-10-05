@@ -104,43 +104,49 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       return;
     }
 
-    if (!fromRefresh) {
-      final cache = await ref.read(cacheStoreProvider.future);
-      final cachedBoard = cache.readBoard(widget.projectId);
-      if (cachedBoard != null && mounted) {
-        setState(() {
-          _board = cachedBoard;
-        });
-      }
-    }
-
+    final capturedCredentials = ref.read(sessionCredentialsProvider);
+    final cacheFuture = ref.read(cacheStoreProvider.future);
+    bool currentSession() =>
+        mounted &&
+        identical(ref.read(sessionCredentialsProvider), capturedCredentials);
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      final cache = await cacheFuture;
+      if (!currentSession()) return;
+
+      if (!fromRefresh) {
+        final cachedBoard = cache.readBoard(widget.projectId);
+        if (cachedBoard != null && currentSession()) {
+          setState(() {
+            _board = cachedBoard;
+          });
+        }
+      }
+
       final boardFuture = api.getBoard(widget.projectId);
       final currencyFuture = api.getProjectExpenseCurrency(widget.projectId);
       final budgetFuture = api.getProjectExpenseBudgetCents(widget.projectId);
       final board = await boardFuture;
       final expenseCurrencyCode = await currencyFuture;
       final expenseBudgetCents = await budgetFuture;
-      final cache = await ref.read(cacheStoreProvider.future);
       await cache.saveBoard(board);
-      if (!mounted) return;
+      if (!currentSession()) return;
       setState(() {
         _board = board;
         _expenseCurrencyCode = expenseCurrencyCode;
         _expenseBudgetCents = expenseBudgetCents;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!currentSession()) return;
       setState(() {
         _error = '$error';
       });
     } finally {
-      if (mounted) {
+      if (currentSession()) {
         setState(() {
           _isLoading = false;
         });

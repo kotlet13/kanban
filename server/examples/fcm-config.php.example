@@ -1,0 +1,9 @@
+<?php
+// Manual deployment reference ONLY. No secrets or usable project in this file.
+// Populate private files first; PHP HTTP/cron must be able to read them.
+define('FAMILYHUB_ENABLE_NATIVE_API', true);
+define('FAMILYHUB_ENABLE_FCM', true);
+define('FAMILYHUB_PUBLIC_ROOT', '/home/CPANEL_USER/public_html');
+define('FAMILYHUB_FCM_PROJECT_ID', 'YOUR_FIREBASE_PROJECT_ID');
+define('FAMILYHUB_FCM_SERVICE_ACCOUNT_FILE', '/home/CPANEL_USER/private/firebase-service-account.json');
+define('FAMILYHUB_PUSH_KEY_BASE64', trim(file_get_contents('/home/CPANEL_USER/private/familyhub-push.key')));

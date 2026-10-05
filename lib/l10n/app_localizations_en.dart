@@ -1476,4 +1476,1701 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verticalWorkGrouping => 'Vertical work grouping';
+
+  @override
+  String get organizerAppName => 'Vsakdan';
+
+  @override
+  String get organizerToday => 'Today';
+
+  @override
+  String get organizerPlans => 'Plans';
+
+  @override
+  String get organizerShopping => 'Shopping';
+
+  @override
+  String get organizerMore => 'More';
+
+  @override
+  String get organizerCalendar => 'Calendar';
+
+  @override
+  String get organizerProjects => 'Projects';
+
+  @override
+  String get organizerFinances => 'Finances';
+
+  @override
+  String get organizerHome => 'Home';
+
+  @override
+  String get organizerSettings => 'Settings';
+
+  @override
+  String get organizerLocalSpace => 'Personal space';
+
+  @override
+  String get organizerLocalOnly => 'Saved on this device';
+
+  @override
+  String get organizerLocalDescription =>
+      'Tasks and plans live on this device. No account needed.';
+
+  @override
+  String get organizerTodayIntro => 'Room for what matters today.';
+
+  @override
+  String get organizerNextEvent => 'Next on your calendar';
+
+  @override
+  String get organizerNoEvents => 'Your calendar is empty.';
+
+  @override
+  String get organizerNoEventsDescription =>
+      'Add an event to keep your next step in sight.';
+
+  @override
+  String get organizerNextTasks => 'Next steps';
+
+  @override
+  String get organizerNoTasks => 'Start with one task.';
+
+  @override
+  String get organizerNoTasksDescription =>
+      'Small tasks, bigger plans. Everything in its place.';
+
+  @override
+  String get organizerAddTask => 'Add task';
+
+  @override
+  String get organizerEditTask => 'Edit task';
+
+  @override
+  String get organizerAddEvent => 'Add event';
+
+  @override
+  String get organizerEditEvent => 'Edit event';
+
+  @override
+  String get organizerAddProject => 'New project';
+
+  @override
+  String get organizerEditProject => 'Edit project';
+
+  @override
+  String get organizerNoProjects => 'What would you like to plan?';
+
+  @override
+  String get organizerNoProjectsDescription =>
+      'Create a project for a trip, renovation or everyday tasks.';
+
+  @override
+  String get organizerShoppingShortcut => 'Open shopping lists';
+
+  @override
+  String get organizerShoppingIntro =>
+      'Write down what you need. Check it off when it is in your basket.';
+
+  @override
+  String get organizerAddList => 'New list';
+
+  @override
+  String get organizerEditList => 'Edit list';
+
+  @override
+  String get organizerNoLists => 'A list for your next shop.';
+
+  @override
+  String get organizerNoListsDescription =>
+      'Create a list and add the first thing you need.';
+
+  @override
+  String get organizerAddItem => 'Add item';
+
+  @override
+  String get organizerEditItem => 'Edit item';
+
+  @override
+  String get organizerItemHint => 'What do you need?';
+
+  @override
+  String get organizerQuantity => 'Quantity';
+
+  @override
+  String get organizerBought => 'Purchased';
+
+  @override
+  String get organizerEmptyList => 'There are no items on this list yet.';
+
+  @override
+  String get organizerTasks => 'Tasks';
+
+  @override
+  String get organizerAllTasks => 'All tasks';
+
+  @override
+  String get organizerNoProject => 'No project';
+
+  @override
+  String get organizerCompleted => 'Completed';
+
+  @override
+  String get organizerTitle => 'Title';
+
+  @override
+  String get organizerNotes => 'Notes';
+
+  @override
+  String get organizerDescription => 'Description';
+
+  @override
+  String get organizerRequired => 'Enter a title.';
+
+  @override
+  String get organizerSaveError =>
+      'Could not save the change. Please try again.';
+
+  @override
+  String get organizerLoadError => 'Could not open local data.';
+
+  @override
+  String get organizerRetry => 'Try again';
+
+  @override
+  String get organizerDate => 'Date';
+
+  @override
+  String get organizerTime => 'Time';
+
+  @override
+  String get organizerNoDate => 'No due date';
+
+  @override
+  String get organizerRemoveDate => 'Remove date';
+
+  @override
+  String get organizerUpcoming => 'Upcoming';
+
+  @override
+  String get organizerCalendarIntro =>
+      'Events and task deadlines in one place.';
+
+  @override
+  String get organizerFinanceIntro =>
+      'Personal income and expense entries on this device.';
+
+  @override
+  String get organizerAddFinance => 'Add entry';
+
+  @override
+  String get organizerEditFinance => 'Edit entry';
+
+  @override
+  String get organizerNoFinance => 'Your overview starts with the first entry.';
+
+  @override
+  String get organizerIncome => 'Income';
+
+  @override
+  String get organizerExpense => 'Expense';
+
+  @override
+  String get organizerCurrency => 'Currency';
+
+  @override
+  String get organizerInvalidMoney =>
+      'Enter a positive amount with at most two decimal places.';
+
+  @override
+  String get organizerBalance => 'Income minus expenses';
+
+  @override
+  String get organizerConnection => 'Existing Kanboard';
+
+  @override
+  String get organizerConnectionDescription =>
+      'Your existing projects are still on your Kanboard server. Connect your account to open them. The local organizer does not import or sync them yet.';
+
+  @override
+  String get organizerConnect => 'Connect account';
+
+  @override
+  String get organizerOpenKanboard => 'Open Kanboard';
+
+  @override
+  String get organizerBackup => 'Backup';
+
+  @override
+  String get organizerBackupDescription =>
+      'Export local records to a JSON file or restore them from a backup. The file is not encrypted; store it in a safe place.';
+
+  @override
+  String get organizerExport => 'Export backup';
+
+  @override
+  String get organizerImport => 'Restore backup';
+
+  @override
+  String get organizerRestoreWarning =>
+      'Restoring adds records from the backup. If the backup contains records that already exist, the entire import is rejected. Export your current backup first.';
+
+  @override
+  String get organizerRestoreConfirm => 'Restore';
+
+  @override
+  String get organizerRestored => 'Local data restored.';
+
+  @override
+  String get organizerReminders => 'Reminders';
+
+  @override
+  String get organizerNoReminders => 'No new reminders.';
+
+  @override
+  String get organizerRemindersDescription =>
+      'Task deadline reminders appear when you open the app.';
+
+  @override
+  String get organizerHomeIntro =>
+      'Organize home plans with projects and tasks in your personal space.';
+
+  @override
+  String get organizerBackToday => 'Back to Today';
+
+  @override
+  String get organizerDeleteConfirm => 'Delete this entry?';
+
+  @override
+  String get organizerDeleteProjectNote =>
+      'Tasks, events and finance entries are kept without a project.';
+
+  @override
+  String organizerProjectProgress(int done, int total) {
+    return '$done of $total completed';
+  }
+
+  @override
+  String organizerShoppingCount(int count) {
+    return '$count items on your lists';
+  }
+
+  @override
+  String organizerTasksCount(int count) {
+    return '$count tasks';
+  }
+
+  @override
+  String get organizerNoMatchingTasks =>
+      'There are no tasks in this project yet.';
+
+  @override
+  String get organizerPersonal => 'Local · personal';
+
+  @override
+  String get organizerSystemLanguage => 'Device language';
+
+  @override
+  String get organizerRead => 'Read';
+
+  @override
+  String get organizerWithoutDate => 'Without a deadline';
+
+  @override
+  String get organizerOverdue => 'Overdue';
+
+  @override
+  String get organizerHomeProjects => 'Home projects';
+
+  @override
+  String get organizerProjectArea => 'Area';
+
+  @override
+  String get organizerPersonalArea => 'Personal';
+
+  @override
+  String get organizerHomeArea => 'Home';
+
+  @override
+  String get organizerConflict =>
+      'The record changed or the backup contains existing records. Open the latest version of the record; a conflicting import is rejected.';
+
+  @override
+  String get organizerInvalidData =>
+      'The data is invalid or the backup format is unsupported.';
+
+  @override
+  String get secureStorageUnavailable =>
+      'Secure storage is unavailable. Credentials were not saved; check this device’s secure storage settings.';
+
+  @override
+  String get credentialsSharingDisabled =>
+      'Passwords and personal API keys are not shared. Project invitations will be available when the secure flow is ready.';
+
+  @override
+  String get personalTokenHint =>
+      'Use your username and personal API token. The global jsonrpc key is not supported.';
+
+  @override
+  String get secureConnectionRequired =>
+      'Use HTTPS. HTTP is allowed only for an explicit local development connection.';
+
+  @override
+  String get localDevelopmentConnection =>
+      'Local development connection (HTTP on this computer)';
+
+  @override
+  String get aiSessionChanged =>
+      'The account changed. This chat belongs to the previous session; reopen AI help from your project.';
+
+  @override
+  String get connectionFailed =>
+      'Connection failed. Check the server address, username and password or personal API token.';
+
+  @override
+  String get sharingAccount => 'Account and sharing';
+
+  @override
+  String get sharingIntro =>
+      'Personal data stays on this device. Connect an account when you want to use shared lists and projects.';
+
+  @override
+  String get sharingPersonal => 'Personal';
+
+  @override
+  String get sharingShared => 'Shared';
+
+  @override
+  String get sharingConnect => 'Connect for sharing';
+
+  @override
+  String get sharingLogin => 'Sign in';
+
+  @override
+  String get sharingLoginAction => 'Sign in';
+
+  @override
+  String get sharingHaveInvite => 'I have an invitation';
+
+  @override
+  String get sharingInvitation => 'Invitation';
+
+  @override
+  String get sharingInvitationCode => 'Invitation code';
+
+  @override
+  String get sharingInvitationHint =>
+      'Paste the code sent by the person you want to collaborate with.';
+
+  @override
+  String get sharingPreviewInvite => 'Check invitation';
+
+  @override
+  String get sharingAcceptInvite => 'Accept invitation';
+
+  @override
+  String get sharingRegister => 'Create an account with an invitation';
+
+  @override
+  String get sharingRegisterAction => 'Create account and accept';
+
+  @override
+  String get sharingDisplayName => 'Display name';
+
+  @override
+  String get sharingEmail => 'Email';
+
+  @override
+  String get sharingConfirmPassword => 'Confirm password';
+
+  @override
+  String get sharingPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get sharingTwoFactorCode => 'Two-factor authentication code';
+
+  @override
+  String get sharingDeviceName => 'This device’s name';
+
+  @override
+  String get sharingDeviceSession => 'This device’s session';
+
+  @override
+  String get sharingSpaces => 'Shared spaces';
+
+  @override
+  String get sharingCreateSpace => 'New shared space';
+
+  @override
+  String get sharingSpaceName => 'Space name';
+
+  @override
+  String get sharingScopeType => 'Space type';
+
+  @override
+  String get sharingHousehold => 'Household';
+
+  @override
+  String get sharingProject => 'Project';
+
+  @override
+  String get sharingScopeDescription =>
+      'In this version you share lists, projects, and tasks. Shared finances will follow in the finance redesign.';
+
+  @override
+  String get sharingNoSpaces => 'No shared spaces yet.';
+
+  @override
+  String get sharingChooseSpace => 'Choose a shared space';
+
+  @override
+  String get sharingMembers => 'Members';
+
+  @override
+  String get sharingOwner => 'Owner';
+
+  @override
+  String get sharingEditor => 'Can edit';
+
+  @override
+  String get sharingViewer => 'Can view';
+
+  @override
+  String get sharingRole => 'Role';
+
+  @override
+  String get sharingInvitePerson => 'Invite someone';
+
+  @override
+  String get sharingCreateInvite => 'Create invitation';
+
+  @override
+  String get sharingInvitations => 'Invitations';
+
+  @override
+  String get sharingCopyInvite => 'Copy code';
+
+  @override
+  String get sharingInviteCopied => 'Invitation code copied.';
+
+  @override
+  String get sharingInviteCodeOnce =>
+      'Save or send the code now. It cannot be displayed again later.';
+
+  @override
+  String get sharingRevokeInvite => 'Revoke invitation';
+
+  @override
+  String get sharingRemoveMember => 'Remove member';
+
+  @override
+  String get sharingRemoveMemberConfirm =>
+      'Once removed, this member can no longer access this space. Previously downloaded copies cannot be erased remotely.';
+
+  @override
+  String get sharingSignOutDescription =>
+      'Personal data stays on this device. Check pending shared changes before signing out.';
+
+  @override
+  String get sharingSyncNow => 'Sync now';
+
+  @override
+  String get sharingSynced => 'Synced';
+
+  @override
+  String get sharingSyncing => 'Syncing …';
+
+  @override
+  String get sharingPending => 'Waiting to sync';
+
+  @override
+  String get sharingOffline => 'Connection unavailable';
+
+  @override
+  String get sharingSyncFailed => 'Sync failed. Local changes have been kept.';
+
+  @override
+  String get sharingConflicts => 'Changes need a decision';
+
+  @override
+  String get sharingConflictDescription =>
+      'The same record also changed elsewhere. Compare both versions and choose which to keep.';
+
+  @override
+  String get sharingLocalVersion => 'On this device';
+
+  @override
+  String get sharingRemoteVersion => 'On the server';
+
+  @override
+  String get sharingKeepLocal => 'Keep my version';
+
+  @override
+  String get sharingKeepRemote => 'Keep server version';
+
+  @override
+  String get sharingAccessRevoked =>
+      'Access was revoked. Pending changes have not been sent.';
+
+  @override
+  String get sharingUnsupported =>
+      'This server does not support the required sharing features yet.';
+
+  @override
+  String get sharingOperationFailed =>
+      'The action failed. Check the connection and try again.';
+
+  @override
+  String get sharingInvalidInvite =>
+      'The invitation is invalid, expired, or already used.';
+
+  @override
+  String get sharingSessionExpired =>
+      'Your session expired. Sign in again; personal data stays on this device.';
+
+  @override
+  String get sharingPermissionDenied =>
+      'You do not have permission for this action.';
+
+  @override
+  String get sharingNoSharedLists => 'This space has no shared list yet.';
+
+  @override
+  String get sharingNoSharedListsDescription =>
+      'Create a list to collaborate. Personal lists are not shared automatically.';
+
+  @override
+  String get sharingCreateSharedList => 'New shared list';
+
+  @override
+  String get sharingReadOnly => 'Read only';
+
+  @override
+  String get sharingQuietShopping =>
+      'Shopping list changes are quiet; they do not send email.';
+
+  @override
+  String get sharingShareList => 'Share this list';
+
+  @override
+  String get sharingShareProject => 'Share project and tasks';
+
+  @override
+  String get sharingShareConfirm =>
+      'A shared copy will be created in the selected space. Personal content and finances are not shared automatically.';
+
+  @override
+  String get sharingNoMembers => 'No member information available.';
+
+  @override
+  String get sharingNoInvitations => 'No active invitations.';
+
+  @override
+  String get sharingGoToAccount => 'Open account and sharing';
+
+  @override
+  String get sharingConnectBeforeShared =>
+      'Connect an account or accept an invitation to use shared lists.';
+
+  @override
+  String get sharingSaveBeforeSync =>
+      'Changes are saved on this device first, then synced with the space.';
+
+  @override
+  String get sharingMember => 'Member';
+
+  @override
+  String get sharingRequired => 'Complete this field.';
+
+  @override
+  String get sharingSaveDrafts => 'Save my unsynced changes';
+
+  @override
+  String get sharingSaveDraftsDescription =>
+      'The export contains your pending shared changes, without credentials. The JSON file is not encrypted.';
+
+  @override
+  String get sharingCopyAction => 'Create a shared copy';
+
+  @override
+  String get sharingCopyDone =>
+      'Shared copy created. Your personal original is unchanged.';
+
+  @override
+  String get sharingCopyDescription =>
+      'This version copies only this list or the project with its tasks. Finances and events are not transferred in this action. Later edits to the personal original are not sent to the shared copy.';
+
+  @override
+  String get sharingLoginNeedsOtp =>
+      'Enter the code from your two-factor authentication app.';
+
+  @override
+  String get sharingInvalidCredentials =>
+      'Sign-in failed. Check your username, password, and any two-factor code.';
+
+  @override
+  String get sharingSelectDestination =>
+      'Where should the shared copy be created?';
+
+  @override
+  String get sharingPendingSignOut =>
+      'The shared view will be hidden after signing out. Personal data remains. Unsynced shared changes are not sent under another account; you can export them before signing out.';
+
+  @override
+  String get sharingNoPending => 'No pending changes';
+
+  @override
+  String get sharingResumeBlocked => 'Resume syncing my changes';
+
+  @override
+  String get sharingResumeBlockedDescription =>
+      'Access has been restored. Previously blocked changes are sent only when you explicitly resume syncing.';
+
+  @override
+  String get sharingOfflineSignOut =>
+      'Signed out on this device. Server session revocation could not be confirmed; that session remains valid until revoked or expired.';
+
+  @override
+  String get sharingExpires => 'Expires';
+
+  @override
+  String get sharingAccepted => 'Accepted';
+
+  @override
+  String get sharingRevoked => 'Revoked';
+
+  @override
+  String get sharingExpired => 'Expired';
+
+  @override
+  String get sharingSessionEnds => 'Session expires';
+
+  @override
+  String get sharingSharedTasks => 'Shared tasks';
+
+  @override
+  String get sharingConflictsButton => 'Review changes';
+
+  @override
+  String get sharingDeletedVersion =>
+      'This version is absent or the record has been deleted.';
+
+  @override
+  String get sharingNetworkError =>
+      'Connection unavailable. Unsynced changes stay on this device; try syncing again.';
+
+  @override
+  String get sharingSessionRevoked =>
+      'This device’s session was revoked. Sign in again; unsynced changes are not sent under another account.';
+
+  @override
+  String get sharingStorageUnavailable =>
+      'Durable storage for shared data is unavailable. The action was not confirmed; check this device’s storage and try again.';
+
+  @override
+  String get sharingInvalidServer =>
+      'Check the server address. Use HTTPS for a normal connection.';
+
+  @override
+  String get sharingRateLimited =>
+      'Too many attempts. Wait a while, then try again.';
+
+  @override
+  String get sharingUnsupportedAuth =>
+      'This sign-in method is not supported. Use a supported local user account on the server for sharing.';
+
+  @override
+  String get sharingIncompatibleServer =>
+      'The server version is not compatible with sharing in this app. Check the server plugin; local data stays on this device.';
+
+  @override
+  String get sharingValidationError =>
+      'The data is invalid. Check your input and try again.';
+
+  @override
+  String get sharingRegistrationPasswordHint =>
+      'A new password needs at least 12 characters (at most 72 bytes).';
+
+  @override
+  String get sharingBlockedDescription =>
+      'These changes are blocked because access was revoked. You can export them. Restored access requires an explicit choice to resume them.';
+
+  @override
+  String get sharingAdvancedLogin => 'Additional sign-in options';
+
+  @override
+  String get sharingMoreDetails => 'Record details';
+
+  @override
+  String get sharingNoConflicts => 'No changes need a decision.';
+
+  @override
+  String get sharingRefreshMembers => 'Refresh members';
+
+  @override
+  String get sharingDeletedConflict =>
+      'This record was deleted on the server. You can save your version in an export; accepting the server state does not restore it.';
+
+  @override
+  String get sharingRelatedConflict =>
+      'Related records have changed. First save your version, accept the server state, and review related records. You can then explicitly create a copy or choose deletion again.';
+
+  @override
+  String get sharingStaleEditor =>
+      'This record changed while you were editing it. Close the editor and open the latest version; you can copy your text first.';
+
+  @override
+  String get sharingInvalidResponse =>
+      'The server response cannot be used safely. Check plugin compatibility. Local changes remain on this device.';
+
+  @override
+  String get sharingRequestMismatch =>
+      'The server rejected a repeated request with different content. Save your changes in an export and review the state; do not blindly resend the request.';
+
+  @override
+  String get planningAssignees => 'Assigned to';
+
+  @override
+  String get planningUnassigned => 'Not assigned yet';
+
+  @override
+  String get planningFormerMember => 'Former member';
+
+  @override
+  String get planningSchedule => 'Planned schedule';
+
+  @override
+  String get planningStart => 'Start';
+
+  @override
+  String get planningEnd => 'End';
+
+  @override
+  String get planningDue => 'Due';
+
+  @override
+  String get planningCreatedBy => 'Created by';
+
+  @override
+  String get planningUpdatedBy => 'Last updated by';
+
+  @override
+  String get planningInvalidSchedule => 'The end cannot be before the start.';
+
+  @override
+  String get planningSharedToday => 'Today in this shared space';
+
+  @override
+  String get planningTimeline => 'Timeline';
+
+  @override
+  String get planningNoAgenda =>
+      'There are no shared scheduled items for this day.';
+
+  @override
+  String get planningNoTimeline =>
+      'Add a schedule to a task or project to see the timeline.';
+
+  @override
+  String get planningAllPeople => 'Everyone';
+
+  @override
+  String get planningNoTime => 'No schedule';
+
+  @override
+  String get planningPreviousDay => 'Previous day';
+
+  @override
+  String get planningNextDay => 'Next day';
+
+  @override
+  String get financeMinorUnits => 'minor units';
+
+  @override
+  String get financeUnspecifiedPerson => 'Not specified';
+
+  @override
+  String get financeUnavailableAccount => 'Account unavailable';
+
+  @override
+  String get financePosted => 'Posted';
+
+  @override
+  String get financePlanned => 'Planned';
+
+  @override
+  String get financeAddTransfer => 'Add transfer';
+
+  @override
+  String get financeTransfer => 'Transfer';
+
+  @override
+  String get financeInternalTransfer => 'Transfer between accounts';
+
+  @override
+  String get financeAddAccount => 'Add account';
+
+  @override
+  String get financeNoAccounts =>
+      'Create the first financial account in this space.';
+
+  @override
+  String get financeAccounts => 'Financial accounts';
+
+  @override
+  String get financeAccount => 'Financial account';
+
+  @override
+  String get financeAllAccounts => 'All accounts';
+
+  @override
+  String get financePayerRecipient => 'Payer / recipient';
+
+  @override
+  String get financeEnteredBy => 'Entered by';
+
+  @override
+  String get financeStatus => 'Entry status';
+
+  @override
+  String get financeAllStatuses => 'All statuses';
+
+  @override
+  String get financeNoMatchingEntries => 'No entries match these filters.';
+
+  @override
+  String get financeCategory => 'Category';
+
+  @override
+  String get financePayer => 'Payer';
+
+  @override
+  String get financeRecipient => 'Recipient';
+
+  @override
+  String get financeJointAccount => 'Joint account';
+
+  @override
+  String get financeAudit => 'Change history';
+
+  @override
+  String get financeScopeTotals => 'Entire financial space';
+
+  @override
+  String get financeTransfersExcluded =>
+      'Totals include posted entries. Transfers between accounts are not new income or expenses. The filters below apply to the table.';
+
+  @override
+  String get financeSharedAccountsDescription =>
+      'These accounts are shared in this space. Private local accounts are not connected automatically.';
+
+  @override
+  String get financeDate => 'Date and time';
+
+  @override
+  String get planningAllProjects => 'All projects';
+
+  @override
+  String get inboxDeviceReminder =>
+      'It is time for your reminder. Open the app for details.';
+
+  @override
+  String get inboxDeviceEventReminder =>
+      'Your event is approaching. Open the app for details.';
+
+  @override
+  String get inboxTitle => 'Notifications';
+
+  @override
+  String get inboxForMe => 'For me';
+
+  @override
+  String get inboxInSharedSpace => 'In a shared space';
+
+  @override
+  String get inboxAll => 'All';
+
+  @override
+  String get inboxRead => 'Read';
+
+  @override
+  String get inboxMarkRead => 'Mark as read';
+
+  @override
+  String get inboxMarkUnread => 'Mark as unread';
+
+  @override
+  String get inboxEmpty => 'There are no notifications in this view yet.';
+
+  @override
+  String get inboxSettings => 'Notification settings';
+
+  @override
+  String get inboxDeviceSettings => 'Reminders on this device';
+
+  @override
+  String get inboxDevicePrivacy =>
+      'System notifications show a generic reminder only. Open the app for details. Enabling applies to personal and accessible shared reminders on this device.';
+
+  @override
+  String get inboxDeviceEnable => 'Enable system reminders';
+
+  @override
+  String get inboxSound => 'Sound';
+
+  @override
+  String get inboxDeviceUnsupported =>
+      'Timed system notifications are not supported here. The in-app notification center remains available.';
+
+  @override
+  String get inboxDeviceDenied =>
+      'System permission is not enabled. Change it in device settings and return to the app.';
+
+  @override
+  String get inboxDeviceGranted => 'Device permission is enabled.';
+
+  @override
+  String get inboxDeviceUnknown =>
+      'System permission status has not been confirmed yet.';
+
+  @override
+  String get inboxDeviceError =>
+      'System reminders could not be prepared. Check device permissions and try again; your data remains saved.';
+
+  @override
+  String get inboxDeviceInexact =>
+      'Android may deliver the notification later, especially in battery-saving mode.';
+
+  @override
+  String inboxDeviceLimit(int count) {
+    return '$count later reminders are waiting. The nearest 60 are scheduled; the list is replenished when the app opens or refreshes.';
+  }
+
+  @override
+  String inboxDeviceScheduled(int count) {
+    return 'Scheduled reminders: $count.';
+  }
+
+  @override
+  String get inboxDeleted => 'The source record was deleted.';
+
+  @override
+  String get inboxNeedsConnection =>
+      'A connection is needed to verify access and open this notification.';
+
+  @override
+  String get inboxWrongAccount =>
+      'This notification belongs to another account. Sign in with the correct account.';
+
+  @override
+  String get inboxOfflineView =>
+      'Offline · last accessible copy. Current server permissions cannot be checked.';
+
+  @override
+  String inboxPersonalReminders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Reminders for $count tasks',
+      one: 'Reminder for $count task',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inboxTasksAssigned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks were assigned to you',
+      one: '$count task was assigned to you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inboxTaskCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks were added',
+      one: '$count task was added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxEventCreated => 'An event was added';
+
+  @override
+  String get inboxEventAssigned => 'An event was assigned to you';
+
+  @override
+  String get inboxShoppingListCreated => 'A shopping list was added';
+
+  @override
+  String inboxShoppingItemsCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items were added',
+      one: '$count item was added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxMemberJoined => 'A member joined';
+
+  @override
+  String get inboxRecordUpdated => 'A record was updated';
+
+  @override
+  String get inboxRecordDeleted => 'A record was deleted';
+
+  @override
+  String get inboxTaskCompleted => 'A task was completed';
+
+  @override
+  String get inboxShoppingChecked => 'An item was marked as bought';
+
+  @override
+  String get inboxFinanceChanged => 'A shared finance change';
+
+  @override
+  String get inboxProjectChanged => 'A project change';
+
+  @override
+  String get inboxReminderDue => 'It is time for a reminder';
+
+  @override
+  String get inboxOpenToView => 'Open for details';
+
+  @override
+  String get inboxSharedPreferencesUnavailable =>
+      'This server does not support notification preferences yet.';
+
+  @override
+  String get planningFullDay => 'Full shared day';
+
+  @override
+  String get sharingView => 'View';
+
+  @override
+  String get financeEditAccount => 'Edit account';
+
+  @override
+  String get financeOpeningBalance => 'Opening balance';
+
+  @override
+  String get financeDeleteAccountDescription =>
+      'You can delete an account when it has no linked entries or transfers.';
+
+  @override
+  String get financeEditEntry => 'Edit financial entry';
+
+  @override
+  String get financeAccountCurrencyAmount =>
+      'Amount in selected account currency';
+
+  @override
+  String get financeEditTransfer => 'Edit transfer';
+
+  @override
+  String get financeTransferDescription =>
+      'A transfer moves funds between shared accounts in the same currency within this space. It does not count as income or expense.';
+
+  @override
+  String get financeFromAccount => 'From account';
+
+  @override
+  String get financeToAccount => 'To account';
+
+  @override
+  String get financeInvalidTransfer =>
+      'Choose two different accounts in the same currency.';
+
+  @override
+  String get financeNoAudit => 'No financial audit yet.';
+
+  @override
+  String get financeRevision => 'Revision';
+
+  @override
+  String get financeBefore => 'Before change';
+
+  @override
+  String get financeAfter => 'After change';
+
+  @override
+  String get financeEnable => 'Enable shared finances';
+
+  @override
+  String get financeDisabled => 'Finances are not enabled in this space yet.';
+
+  @override
+  String get financeNoAccess =>
+      'You do not have finance access in this space. The owner can grant viewing or editing rights.';
+
+  @override
+  String get financePermissions => 'Finance access';
+
+  @override
+  String get financeGrantNone => 'No access';
+
+  @override
+  String get financeGrantRead => 'View';
+
+  @override
+  String get financeGrantWrite => 'Edit';
+
+  @override
+  String get financeLoadingSnapshot =>
+      'Preparing the complete financial overview.';
+
+  @override
+  String get financeUnsupported =>
+      'This server does not support shared finances yet.';
+
+  @override
+  String get financeDisable => 'Disable finances';
+
+  @override
+  String get financeDisableDescription =>
+      'Finances will be hidden from members. Records and my unsynced changes are retained.';
+
+  @override
+  String get financePending => 'Financial changes are waiting to sync.';
+
+  @override
+  String get financeBlocked =>
+      'Financial changes are blocked. Save a copy before resolving access.';
+
+  @override
+  String get financeConflicts => 'Conflicting financial changes';
+
+  @override
+  String get inboxPreferencesDescription =>
+      'Preferences apply to the selected shared space and notification type. System reminders on this device are a separate setting.';
+
+  @override
+  String get inboxChannelInApp => 'In notification center';
+
+  @override
+  String get inboxChannelSound => 'Reminder sound';
+
+  @override
+  String get inboxChannelPush => 'Remote system notifications';
+
+  @override
+  String get inboxChannelEmail => 'Email';
+
+  @override
+  String get inboxChannelUnavailable =>
+      'This channel is unavailable on this server.';
+
+  @override
+  String get inboxPreferencesUnsupported =>
+      'This server does not support notification preferences yet.';
+
+  @override
+  String get inboxCategoryAssignments => 'Assignments';
+
+  @override
+  String get inboxCategoryTasks => 'Tasks and plans';
+
+  @override
+  String get inboxCategoryShopping => 'Shopping';
+
+  @override
+  String get inboxCategoryMembers => 'Members';
+
+  @override
+  String get inboxCategoryReminders => 'Reminders';
+
+  @override
+  String get inboxCategoryFinance => 'Finances';
+
+  @override
+  String get financeHolder => 'Account holder';
+
+  @override
+  String get inboxScope => 'Shared space';
+
+  @override
+  String get inboxCategoryEvents => 'Events';
+
+  @override
+  String get inboxJoinedScope => 'You joined the space';
+
+  @override
+  String get financeUnsupportedCurrency =>
+      'Editing this currency is not supported yet. The amount remains preserved in minor units.';
+
+  @override
+  String get financeTotalBalance => 'Total balance';
+
+  @override
+  String get remotePushTitle => 'Remote notifications on this device';
+
+  @override
+  String get remotePushPrivacy =>
+      'Notifications show generic text. Content opens only after checking the account and access.';
+
+  @override
+  String get remotePushEnable => 'Enable remote notifications';
+
+  @override
+  String get remotePushUnsupported =>
+      'Remote notifications are prepared for Android and iPhone. Use the inbox on this platform.';
+
+  @override
+  String get remotePushUnconfigured =>
+      'This build has no Firebase configuration yet. The inbox and local reminders remain available.';
+
+  @override
+  String get remotePushInvalidConfiguration =>
+      'Notification configuration does not match this app. An updated installation is required.';
+
+  @override
+  String get remotePushNeedsAccount =>
+      'Sign in to receive remote notifications. Personal use remains available without an account.';
+
+  @override
+  String get remotePushDisabled =>
+      'Remote notifications on this device are disabled.';
+
+  @override
+  String get remotePushPreparing =>
+      'Preparing permission and device registration…';
+
+  @override
+  String get remotePushDenied =>
+      'Notifications are blocked by the system. Enable them in device settings and try again.';
+
+  @override
+  String get remotePushWaitingApns =>
+      'Waiting for Apple to register this device. Check the connection and push-enabled signing.';
+
+  @override
+  String get remotePushRegistered =>
+      'This device is registered. Choose notification types for each shared space.';
+
+  @override
+  String get remotePushOffline =>
+      'Registration is waiting for a connection. App changes remain saved.';
+
+  @override
+  String get remotePushServerUnavailable =>
+      'The server has no compatible remote notification configuration. The inbox remains available.';
+
+  @override
+  String get remotePushProjectMismatch =>
+      'The app and server use different Firebase projects. This device is not registered.';
+
+  @override
+  String get remotePushCleanupRequired =>
+      'The previous device registration could not be removed. Retry before enabling another account.';
+
+  @override
+  String get remotePushError =>
+      'Remote notifications could not be prepared. Retry; the inbox remains available.';
+
+  @override
+  String get remotePushRetry => 'Check notifications again';
+
+  @override
+  String get remotePushLoginForOpen =>
+      'Sign in to the account that received this notification.';
+
+  @override
+  String get remotePushDeviceUnavailable =>
+      'First enable and register remote notifications on this device.';
+
+  @override
+  String get setupTitle => 'How would you like to start?';
+
+  @override
+  String get setupIntro =>
+      'Choose a starting point. You can change how you use the app in settings later.';
+
+  @override
+  String get setupHint =>
+      'Your personal space already works without an account. Optionally connect your devices or create a shared home.';
+
+  @override
+  String get setupChoose => 'Choose your starting point';
+
+  @override
+  String get setupDeviceOnly => 'Only on this device';
+
+  @override
+  String get setupDeviceOnlyDescription =>
+      'No account or server. Protect your data with a backup.';
+
+  @override
+  String get setupPrivateDevices => 'Connect my devices';
+
+  @override
+  String get setupPrivateDevicesDescription =>
+      'Private synchronization of my data. Enable upload separately after signing in.';
+
+  @override
+  String get setupHousehold => 'Shared home';
+
+  @override
+  String get setupHouseholdDescription =>
+      'Create a home and invite another person. Your personal space stays separate.';
+
+  @override
+  String get setupOpen => 'Getting started';
+
+  @override
+  String get inviteOpenTitle => 'Open invitation';
+
+  @override
+  String get inviteOpenWarning =>
+      'Check the server address. Invitations are not accepted automatically; preview it first.';
+
+  @override
+  String get inviteOpenContinue => 'Continue to invitation';
+
+  @override
+  String get inviteLinkInvalid =>
+      'This link is not a valid invitation. You can enter the server and code manually in the app.';
+
+  @override
+  String get inviteCopyLink => 'Copy invitation link';
+
+  @override
+  String get inviteLinkPrepared =>
+      'The link opens the installed app where the vsakdan scheme is supported. Universal web links are not configured yet.';
+
+  @override
+  String get accountFirstTitle => 'First account with a code';
+
+  @override
+  String get accountFirstDescription =>
+      'The server operator provides a one-use setup code. This creates a regular user account. Once the first account exists, others join by invitation.';
+
+  @override
+  String get accountBootstrapCode => 'Operator setup code';
+
+  @override
+  String get accountCreate => 'Create account';
+
+  @override
+  String get accountPasswordRule => 'Password must contain 12 to 72 bytes.';
+
+  @override
+  String get accountForgotPassword => 'Forgot password';
+
+  @override
+  String get accountResetRequestDescription =>
+      'A code is sent only to an already verified email address. For privacy, we do not reveal whether a username exists.';
+
+  @override
+  String get accountSendReset => 'Request recovery code';
+
+  @override
+  String get accountResetGeneric =>
+      'If this account supports recovery, a code was sent to its verified address.';
+
+  @override
+  String get accountResetConfirm => 'I have a recovery code';
+
+  @override
+  String get accountResetConfirmDescription =>
+      'Enter the received code and a new password. Two-factor accounts also require a TOTP code. Sign in again afterward; old device sessions are revoked.';
+
+  @override
+  String get accountEmailCode => 'Email code';
+
+  @override
+  String get accountResetPassword => 'Reset password';
+
+  @override
+  String get accountResetDone =>
+      'Password reset. Sign in with the new password.';
+
+  @override
+  String get accountEmailTitle => 'Email and account recovery';
+
+  @override
+  String get accountEmailNone => 'No email address is set yet.';
+
+  @override
+  String get accountEmailVerified => 'Verified address';
+
+  @override
+  String get accountEmailUnverified => 'Address is not verified yet';
+
+  @override
+  String get accountEmailPending => 'Awaiting verification';
+
+  @override
+  String get accountEmailChange => 'Set or change email';
+
+  @override
+  String get accountEmailRequestDescription =>
+      'Confirm your password again and TOTP if required. Your current verified address stays active until you verify the new one.';
+
+  @override
+  String get accountEmail => 'Email address';
+
+  @override
+  String get accountEmailSend => 'Send verification code';
+
+  @override
+  String get accountEmailConfirm => 'Confirm email code';
+
+  @override
+  String get accountEmailSent =>
+      'A verification code was requested. Enter it after receiving the email.';
+
+  @override
+  String get accountEmailUnavailable =>
+      'The server has not configured account security email yet.';
+
+  @override
+  String get accountCodeInvalid =>
+      'The code is invalid, expired or already used. Request a new one.';
+
+  @override
+  String get accountEnrollmentUnavailable =>
+      'First-account setup is no longer available here. Sign in or use an invitation.';
+
+  @override
+  String get privateSyncTitle => 'My devices';
+
+  @override
+  String get privateSyncDescription =>
+      'A private space for this account only. Other people cannot be invited.';
+
+  @override
+  String get privateSyncOff =>
+      'Personal data currently stays on this device. Signing in does not upload it automatically.';
+
+  @override
+  String get privateSyncReview => 'Review before enabling';
+
+  @override
+  String get privateSyncEnable => 'Enable private synchronization';
+
+  @override
+  String get privateSyncUploadWarning =>
+      'This uploads the reviewed personal records, including personal finances, to your account’s private space. Server synchronization is not a backup.';
+
+  @override
+  String get privateSyncRemoteCount => 'Existing records in private space';
+
+  @override
+  String get privateSyncOn => 'Private synchronization is enabled.';
+
+  @override
+  String get privateSyncPaused =>
+      'Synchronization is paused. Local work remains saved.';
+
+  @override
+  String get privateSyncPause => 'Pause synchronization';
+
+  @override
+  String get privateSyncResume => 'Resume synchronization';
+
+  @override
+  String get privateSyncUnavailable =>
+      'Private synchronization requires sign-in and a supported server.';
+
+  @override
+  String get privateSyncPending => 'Pending changes';
+
+  @override
+  String get privateSyncIssue =>
+      'Resolve incompatible or conflicting records before enabling. Personal data stays on this device.';
+
+  @override
+  String get backupTitle => 'Encrypted backup';
+
+  @override
+  String get backupDescription =>
+      'A password protects this copy of personal records, settings and authorized shared work. Credentials are excluded. This does not add encryption to the active database.';
+
+  @override
+  String get backupCreate => 'Create backup';
+
+  @override
+  String get backupRestore => 'Restore backup';
+
+  @override
+  String get backupPassword => 'Backup password';
+
+  @override
+  String get backupPasswordHint =>
+      'The password is not saved. If you forget it, we cannot open the backup.';
+
+  @override
+  String get backupPasswordRule =>
+      'Use at least 12 characters and no more than 1024 UTF-8 bytes.';
+
+  @override
+  String get backupPrepare => 'Prepare encrypted backup';
+
+  @override
+  String get backupPick => 'Choose encrypted backup';
+
+  @override
+  String get backupOpen => 'Open and review backup';
+
+  @override
+  String get backupReview => 'Content review';
+
+  @override
+  String get backupSave => 'Save backup file';
+
+  @override
+  String get backupSaved => 'Backup file saved.';
+
+  @override
+  String get backupCreatedAt => 'Created';
+
+  @override
+  String get backupScopes => 'Shared spaces in backup';
+
+  @override
+  String get backupPending => 'Unsent operations in backup';
+
+  @override
+  String get backupCredentialsExcluded =>
+      'Passwords, device sessions and notification tokens are excluded.';
+
+  @override
+  String get backupRemoteQuarantine =>
+      'Restored shared work stays protected and separate. After signing in to the matching account, review it and explicitly allow recovery; nothing is sent automatically.';
+
+  @override
+  String get backupMerge => 'Merge with personal records';
+
+  @override
+  String get backupReplace => 'Replace personal records';
+
+  @override
+  String get backupMergeDescription =>
+      'Add missing personal records. Different content with the same ID rejects the entire merge.';
+
+  @override
+  String get backupReplaceDescription =>
+      'The backup replaces current personal records. Save a current backup first.';
+
+  @override
+  String get backupRestoreConfirm => 'Confirm restore';
+
+  @override
+  String get backupRestored =>
+      'Backup restored. Shared work is not sent automatically.';
+
+  @override
+  String get backupWrongPassword =>
+      'The password is incorrect or the backup is damaged. Data was not changed.';
+
+  @override
+  String get backupUnsupported =>
+      'This backup version cannot be opened. Use a compatible app.';
+
+  @override
+  String get backupChanged =>
+      'This preview is no longer current. Prepare the backup again or review the contents before restoring.';
+
+  @override
+  String get backupRecoveryTitle => 'Restored shared work';
+
+  @override
+  String get backupRecoveryReview => 'Review restored work';
+
+  @override
+  String get backupRecoveryResume => 'Allow restored work to resume';
+
+  @override
+  String get backupRecoveryBlocked =>
+      'This work requires the matching account and current access. The copy remains protected.';
+
+  @override
+  String get backupRecoveryNone => 'No restored shared-work packages.';
+
+  @override
+  String get backupReadError =>
+      'The backup could not be opened or saved. Try again.';
+
+  @override
+  String get backupShoppingItems => 'Shopping items';
+
+  @override
+  String get backupOtherRecords => 'Other records';
+
+  @override
+  String get backupSaveCancelled => 'Saving cancelled. The file was not saved.';
+
+  @override
+  String get backupDownloadStarted =>
+      'Backup download started. Check your browser downloads.';
+
+  @override
+  String get backupSourceAccount => 'Backup account';
+
+  @override
+  String get backupSourceServer => 'Backup server';
+
+  @override
+  String get backupLocalOnly => 'Device only';
+
+  @override
+  String get backupAccountMatches =>
+      'Personal records can be restored locally. Resuming shared work checks the account and permissions again.';
+
+  @override
+  String get backupAccountDifferent =>
+      'The backup belongs to another account. Shared work stays protected until you sign in to the matching account.';
+
+  @override
+  String get backupCompleteness =>
+      'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded.';
+
+  @override
+  String get backupTooLarge =>
+      'The backup exceeds the 64 MiB limit. Your data was not changed.';
+
+  @override
+  String get backupMergeConflict =>
+      'The backup contains different content with an existing ID. Merge was rejected; your data was not changed.';
+
+  @override
+  String get privateSyncLocalPending =>
+      'New local records are awaiting your review.';
+
+  @override
+  String get backupRecoveryState => 'Recovered work status';
+
+  @override
+  String get backupRecoveryReady => 'Ready to review and resume';
+
+  @override
+  String get backupLegacyJson => 'Legacy unencrypted JSON export';
+
+  @override
+  String get backupIncomplete =>
+      'Some cached spaces in this backup are incomplete. They need to sync again after restoration.';
+
+  @override
+  String get backupArchiveReview =>
+      'Separate unlocked backup preview. These records do not enter the active account until you explicitly resume permitted work.';
+
+  @override
+  String get backupCached => 'Cached record; no pending change';
+
+  @override
+  String get backupSettingsRetry =>
+      'Restored settings have not been applied yet. Your records are preserved; try again.';
+
+  @override
+  String get privateFinanceIncomplete =>
+      'The private financial view has not fully downloaded. Visible records and pending changes are preserved; totals appear after a complete sync.';
 }

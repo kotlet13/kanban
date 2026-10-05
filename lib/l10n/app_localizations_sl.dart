@@ -1479,4 +1479,1701 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get verticalWorkGrouping => 'Navpično razvrščanje dela';
+
+  @override
+  String get organizerAppName => 'Vsakdan';
+
+  @override
+  String get organizerToday => 'Danes';
+
+  @override
+  String get organizerPlans => 'Načrti';
+
+  @override
+  String get organizerShopping => 'Nakupi';
+
+  @override
+  String get organizerMore => 'Več';
+
+  @override
+  String get organizerCalendar => 'Koledar';
+
+  @override
+  String get organizerProjects => 'Projekti';
+
+  @override
+  String get organizerFinances => 'Finance';
+
+  @override
+  String get organizerHome => 'Dom';
+
+  @override
+  String get organizerSettings => 'Nastavitve';
+
+  @override
+  String get organizerLocalSpace => 'Osebni prostor';
+
+  @override
+  String get organizerLocalOnly => 'Shranjeno na tej napravi';
+
+  @override
+  String get organizerLocalDescription =>
+      'Opravila in načrti so na tej napravi. Račun ni potreben.';
+
+  @override
+  String get organizerTodayIntro => 'Prostor za stvari, ki so danes pomembne.';
+
+  @override
+  String get organizerNextEvent => 'Naslednje na koledarju';
+
+  @override
+  String get organizerNoEvents => 'Koledar je še prazen.';
+
+  @override
+  String get organizerNoEventsDescription =>
+      'Dodaj dogodek in imej naslednji korak na očeh.';
+
+  @override
+  String get organizerNextTasks => 'Naslednji koraki';
+
+  @override
+  String get organizerNoTasks => 'Začni z enim opravilom.';
+
+  @override
+  String get organizerNoTasksDescription =>
+      'Majhna opravila, večji načrti. Vse na svojem mestu.';
+
+  @override
+  String get organizerAddTask => 'Dodaj opravilo';
+
+  @override
+  String get organizerEditTask => 'Uredi opravilo';
+
+  @override
+  String get organizerAddEvent => 'Dodaj dogodek';
+
+  @override
+  String get organizerEditEvent => 'Uredi dogodek';
+
+  @override
+  String get organizerAddProject => 'Nov projekt';
+
+  @override
+  String get organizerEditProject => 'Uredi projekt';
+
+  @override
+  String get organizerNoProjects => 'Kaj želiš načrtovati?';
+
+  @override
+  String get organizerNoProjectsDescription =>
+      'Ustvari projekt za izlet, prenovo ali vsakdanja opravila.';
+
+  @override
+  String get organizerShoppingShortcut => 'Na nakupovalni seznam';
+
+  @override
+  String get organizerShoppingIntro =>
+      'Zapiši, kar potrebuješ. Odkljukaj, ko je v košarici.';
+
+  @override
+  String get organizerAddList => 'Nov seznam';
+
+  @override
+  String get organizerEditList => 'Uredi seznam';
+
+  @override
+  String get organizerNoLists => 'Seznam za naslednji nakup.';
+
+  @override
+  String get organizerNoListsDescription =>
+      'Ustvari seznam in dodaj prvo stvar, ki jo potrebuješ.';
+
+  @override
+  String get organizerAddItem => 'Dodaj izdelek';
+
+  @override
+  String get organizerEditItem => 'Uredi izdelek';
+
+  @override
+  String get organizerItemHint => 'Kaj potrebuješ?';
+
+  @override
+  String get organizerQuantity => 'Količina';
+
+  @override
+  String get organizerBought => 'Kupljeno';
+
+  @override
+  String get organizerEmptyList => 'Na seznamu še ni izdelkov.';
+
+  @override
+  String get organizerTasks => 'Opravila';
+
+  @override
+  String get organizerAllTasks => 'Vsa opravila';
+
+  @override
+  String get organizerNoProject => 'Brez projekta';
+
+  @override
+  String get organizerCompleted => 'Opravljeno';
+
+  @override
+  String get organizerTitle => 'Naslov';
+
+  @override
+  String get organizerNotes => 'Opombe';
+
+  @override
+  String get organizerDescription => 'Opis';
+
+  @override
+  String get organizerRequired => 'Vpiši naslov.';
+
+  @override
+  String get organizerSaveError =>
+      'Spremembe ni bilo mogoče shraniti. Poskusi znova.';
+
+  @override
+  String get organizerLoadError => 'Lokalnih podatkov ni bilo mogoče odpreti.';
+
+  @override
+  String get organizerRetry => 'Poskusi znova';
+
+  @override
+  String get organizerDate => 'Datum';
+
+  @override
+  String get organizerTime => 'Ura';
+
+  @override
+  String get organizerNoDate => 'Brez roka';
+
+  @override
+  String get organizerRemoveDate => 'Odstrani datum';
+
+  @override
+  String get organizerUpcoming => 'Prihajajoče';
+
+  @override
+  String get organizerCalendarIntro => 'Dogodki in roki opravil na enem mestu.';
+
+  @override
+  String get organizerFinanceIntro =>
+      'Osebni zapisi prihodkov in odhodkov na tej napravi.';
+
+  @override
+  String get organizerAddFinance => 'Dodaj zapis';
+
+  @override
+  String get organizerEditFinance => 'Uredi zapis';
+
+  @override
+  String get organizerNoFinance => 'Tvoj pregled se začne s prvim zapisom.';
+
+  @override
+  String get organizerIncome => 'Prihodek';
+
+  @override
+  String get organizerExpense => 'Odhodek';
+
+  @override
+  String get organizerCurrency => 'Valuta';
+
+  @override
+  String get organizerInvalidMoney =>
+      'Vpiši pozitiven znesek z največ dvema decimalkama.';
+
+  @override
+  String get organizerBalance => 'Razlika prihodkov in odhodkov';
+
+  @override
+  String get organizerConnection => 'Obstoječi Kanboard';
+
+  @override
+  String get organizerConnectionDescription =>
+      'Tvoji obstoječi projekti so še na strežniku Kanboard. Odpri jih s povezavo računa. Lokalni organizator jih še ne uvaža ali sinhronizira.';
+
+  @override
+  String get organizerConnect => 'Poveži račun';
+
+  @override
+  String get organizerOpenKanboard => 'Odpri Kanboard';
+
+  @override
+  String get organizerBackup => 'Varnostna kopija';
+
+  @override
+  String get organizerBackupDescription =>
+      'Izvozi lokalne zapise v datoteko JSON ali jih obnovi iz kopije. Datoteka ni šifrirana; shrani jo na varno mesto.';
+
+  @override
+  String get organizerExport => 'Izvozi kopijo';
+
+  @override
+  String get organizerImport => 'Obnovi iz kopije';
+
+  @override
+  String get organizerRestoreWarning =>
+      'Obnova doda zapise iz kopije. Če kopija vsebuje že obstoječe zapise, se celoten uvoz zavrne. Najprej izvozi trenutno kopijo.';
+
+  @override
+  String get organizerRestoreConfirm => 'Obnovi';
+
+  @override
+  String get organizerRestored => 'Lokalni podatki so obnovljeni.';
+
+  @override
+  String get organizerReminders => 'Opomniki';
+
+  @override
+  String get organizerNoReminders => 'Ni novih opomnikov.';
+
+  @override
+  String get organizerRemindersDescription =>
+      'Opomniki za roke opravil se pokažejo ob odprtju aplikacije.';
+
+  @override
+  String get organizerHomeIntro =>
+      'Domače načrte vodi s projekti in opravili v osebnem prostoru.';
+
+  @override
+  String get organizerBackToday => 'Nazaj na Danes';
+
+  @override
+  String get organizerDeleteConfirm => 'Izbrišem ta zapis?';
+
+  @override
+  String get organizerDeleteProjectNote =>
+      'Opravila, dogodki in finančni zapisi ostanejo brez projekta.';
+
+  @override
+  String organizerProjectProgress(int done, int total) {
+    return '$done od $total opravljenih';
+  }
+
+  @override
+  String organizerShoppingCount(int count) {
+    return '$count na seznamih';
+  }
+
+  @override
+  String organizerTasksCount(int count) {
+    return '$count opravil';
+  }
+
+  @override
+  String get organizerNoMatchingTasks => 'V tem projektu še ni opravil.';
+
+  @override
+  String get organizerPersonal => 'Lokalno · osebno';
+
+  @override
+  String get organizerSystemLanguage => 'Jezik naprave';
+
+  @override
+  String get organizerRead => 'Prebrano';
+
+  @override
+  String get organizerWithoutDate => 'Brez roka';
+
+  @override
+  String get organizerOverdue => 'Zapadlo';
+
+  @override
+  String get organizerHomeProjects => 'Domači projekti';
+
+  @override
+  String get organizerProjectArea => 'Področje';
+
+  @override
+  String get organizerPersonalArea => 'Osebno';
+
+  @override
+  String get organizerHomeArea => 'Dom';
+
+  @override
+  String get organizerConflict =>
+      'Zapis se je vmes spremenil ali kopija vsebuje obstoječe zapise. Odpri zadnjo različico zapisa; uvoz nasprotujoče kopije je zavrnjen.';
+
+  @override
+  String get organizerInvalidData =>
+      'Podatki niso veljavni ali oblika kopije ni podprta.';
+
+  @override
+  String get secureStorageUnavailable =>
+      'Varna shramba ni na voljo. Poverilnice niso bile shranjene; preverite nastavitve varne shrambe naprave.';
+
+  @override
+  String get credentialsSharingDisabled =>
+      'Gesel in osebnih API ključev ne delimo. Projektna povabila bodo omogočena, ko bo pripravljen varen postopek.';
+
+  @override
+  String get personalTokenHint =>
+      'Uporabite svoje uporabniško ime in osebni API ključ. Globalni ključ jsonrpc ni podprt.';
+
+  @override
+  String get secureConnectionRequired =>
+      'Uporabite HTTPS. HTTP je dovoljen samo za izrecno lokalno razvojno povezavo.';
+
+  @override
+  String get localDevelopmentConnection =>
+      'Lokalna razvojna povezava (HTTP na tem računalniku)';
+
+  @override
+  String get aiSessionChanged =>
+      'Račun se je spremenil. Ta pogovor pripada prejšnji prijavi; odpri AI pomoč ponovno iz svojega projekta.';
+
+  @override
+  String get connectionFailed =>
+      'Povezava ni uspela. Preverite naslov strežnika, uporabniško ime in geslo ali osebni API ključ.';
+
+  @override
+  String get sharingAccount => 'Račun in deljenje';
+
+  @override
+  String get sharingIntro =>
+      'Osebni podatki ostanejo na napravi. Poveži račun, ko želiš uporabljati skupne sezname in projekte.';
+
+  @override
+  String get sharingPersonal => 'Osebno';
+
+  @override
+  String get sharingShared => 'Deljeno';
+
+  @override
+  String get sharingConnect => 'Poveži za deljenje';
+
+  @override
+  String get sharingLogin => 'Prijava';
+
+  @override
+  String get sharingLoginAction => 'Prijavi se';
+
+  @override
+  String get sharingHaveInvite => 'Imam povabilo';
+
+  @override
+  String get sharingInvitation => 'Povabilo';
+
+  @override
+  String get sharingInvitationCode => 'Koda povabila';
+
+  @override
+  String get sharingInvitationHint =>
+      'Prilepi kodo, ki ti jo je poslala oseba, s katero želiš sodelovati.';
+
+  @override
+  String get sharingPreviewInvite => 'Preveri povabilo';
+
+  @override
+  String get sharingAcceptInvite => 'Sprejmi povabilo';
+
+  @override
+  String get sharingRegister => 'Ustvari račun s povabilom';
+
+  @override
+  String get sharingRegisterAction => 'Ustvari račun in sprejmi';
+
+  @override
+  String get sharingDisplayName => 'Ime za prikaz';
+
+  @override
+  String get sharingEmail => 'E-pošta';
+
+  @override
+  String get sharingConfirmPassword => 'Ponovi geslo';
+
+  @override
+  String get sharingPasswordMismatch => 'Gesli se ne ujemata.';
+
+  @override
+  String get sharingTwoFactorCode => 'Koda dvostopenjske prijave';
+
+  @override
+  String get sharingDeviceName => 'Ime te naprave';
+
+  @override
+  String get sharingDeviceSession => 'Seja te naprave';
+
+  @override
+  String get sharingSpaces => 'Skupni prostori';
+
+  @override
+  String get sharingCreateSpace => 'Nov skupni prostor';
+
+  @override
+  String get sharingSpaceName => 'Ime prostora';
+
+  @override
+  String get sharingScopeType => 'Vrsta prostora';
+
+  @override
+  String get sharingHousehold => 'Gospodinjstvo';
+
+  @override
+  String get sharingProject => 'Projekt';
+
+  @override
+  String get sharingScopeDescription =>
+      'V tej različici deliš sezname, projekte in opravila. Skupne finance sledijo v finančni prenovi.';
+
+  @override
+  String get sharingNoSpaces => 'Še ni skupnih prostorov.';
+
+  @override
+  String get sharingChooseSpace => 'Izberi skupni prostor';
+
+  @override
+  String get sharingMembers => 'Člani';
+
+  @override
+  String get sharingOwner => 'Lastnik';
+
+  @override
+  String get sharingEditor => 'Ureja';
+
+  @override
+  String get sharingViewer => 'Bere';
+
+  @override
+  String get sharingRole => 'Vloga';
+
+  @override
+  String get sharingInvitePerson => 'Povabi osebo';
+
+  @override
+  String get sharingCreateInvite => 'Ustvari povabilo';
+
+  @override
+  String get sharingInvitations => 'Povabila';
+
+  @override
+  String get sharingCopyInvite => 'Kopiraj kodo';
+
+  @override
+  String get sharingInviteCopied => 'Koda povabila je kopirana.';
+
+  @override
+  String get sharingInviteCodeOnce =>
+      'Kodo shrani ali pošlji prejemniku zdaj. Pozneje je ne bo mogoče ponovno prikazati.';
+
+  @override
+  String get sharingRevokeInvite => 'Prekliči povabilo';
+
+  @override
+  String get sharingRemoveMember => 'Odstrani člana';
+
+  @override
+  String get sharingRemoveMemberConfirm =>
+      'Član po preklicu ne bo več mogel dostopati do tega prostora. Že prenesenih kopij ni mogoče izbrisati na daljavo.';
+
+  @override
+  String get sharingSignOutDescription =>
+      'Osebni podatki ostanejo na napravi. Preveri čakajoče skupne spremembe pred odjavo.';
+
+  @override
+  String get sharingSyncNow => 'Uskladi zdaj';
+
+  @override
+  String get sharingSynced => 'Usklajeno';
+
+  @override
+  String get sharingSyncing => 'Usklajujem …';
+
+  @override
+  String get sharingPending => 'Čaka na uskladitev';
+
+  @override
+  String get sharingOffline => 'Povezava ni na voljo';
+
+  @override
+  String get sharingSyncFailed =>
+      'Uskladitev ni uspela. Lokalne spremembe so ohranjene.';
+
+  @override
+  String get sharingConflicts => 'Spremembe potrebujejo odločitev';
+
+  @override
+  String get sharingConflictDescription =>
+      'Isti zapis se je spremenil tudi drugje. Primerjaj obe različici in izberi, katero želiš obdržati.';
+
+  @override
+  String get sharingLocalVersion => 'Na tej napravi';
+
+  @override
+  String get sharingRemoteVersion => 'Na strežniku';
+
+  @override
+  String get sharingKeepLocal => 'Obdrži mojo različico';
+
+  @override
+  String get sharingKeepRemote => 'Obdrži strežniško različico';
+
+  @override
+  String get sharingAccessRevoked =>
+      'Dostop je preklican. Čakajoče spremembe niso bile poslane.';
+
+  @override
+  String get sharingUnsupported =>
+      'Ta strežnik še ne podpira potrebnih funkcij deljenja.';
+
+  @override
+  String get sharingOperationFailed =>
+      'Dejanje ni uspelo. Preveri povezavo in poskusi znova.';
+
+  @override
+  String get sharingInvalidInvite =>
+      'Povabilo ni veljavno, je poteklo ali je že porabljeno.';
+
+  @override
+  String get sharingSessionExpired =>
+      'Seja je potekla. Ponovno se prijavi; osebni podatki ostanejo na napravi.';
+
+  @override
+  String get sharingPermissionDenied => 'Za to dejanje nimaš dovoljenja.';
+
+  @override
+  String get sharingNoSharedLists => 'V tem prostoru še ni skupnega seznama.';
+
+  @override
+  String get sharingNoSharedListsDescription =>
+      'Ustvari seznam za sodelovanje. Osebni seznami se ne delijo samodejno.';
+
+  @override
+  String get sharingCreateSharedList => 'Nov skupni seznam';
+
+  @override
+  String get sharingReadOnly => 'Samo za branje';
+
+  @override
+  String get sharingQuietShopping =>
+      'Spremembe nakupovalnega seznama so tihe; ne pošiljajo e-pošte.';
+
+  @override
+  String get sharingShareList => 'Deli ta seznam';
+
+  @override
+  String get sharingShareProject => 'Deli projekt in opravila';
+
+  @override
+  String get sharingShareConfirm =>
+      'V izbranem prostoru bo nastala skupna kopija. Osebna vsebina in finance se ne delijo samodejno.';
+
+  @override
+  String get sharingNoMembers => 'Ni podatkov o članih.';
+
+  @override
+  String get sharingNoInvitations => 'Ni aktivnih povabil.';
+
+  @override
+  String get sharingGoToAccount => 'Odpri račun in deljenje';
+
+  @override
+  String get sharingConnectBeforeShared =>
+      'Za skupne sezname poveži račun ali sprejmi povabilo.';
+
+  @override
+  String get sharingSaveBeforeSync =>
+      'Sprememba se najprej shrani na napravi, nato uskladi s prostorom.';
+
+  @override
+  String get sharingMember => 'Član';
+
+  @override
+  String get sharingRequired => 'Izpolni to polje.';
+
+  @override
+  String get sharingSaveDrafts => 'Shrani moje neusklajene spremembe';
+
+  @override
+  String get sharingSaveDraftsDescription =>
+      'Izvoz vsebuje tvoje čakajoče skupne spremembe, brez poverilnic. Datoteka JSON ni šifrirana.';
+
+  @override
+  String get sharingCopyAction => 'Ustvari skupno kopijo';
+
+  @override
+  String get sharingCopyDone =>
+      'Skupna kopija je ustvarjena. Osebni izvirnik ostane nespremenjen.';
+
+  @override
+  String get sharingCopyDescription =>
+      'V tej različici se skopira samo ta seznam oziroma projekt z njegovimi opravili. Finance in dogodki se pri tem ne prenesejo. Poznejše spremembe osebnega izvirnika se ne prenašajo v skupno kopijo.';
+
+  @override
+  String get sharingLoginNeedsOtp =>
+      'Vpiši kodo iz aplikacije za dvostopenjsko prijavo.';
+
+  @override
+  String get sharingInvalidCredentials =>
+      'Prijava ni uspela. Preveri uporabniško ime, geslo in morebitno dvostopenjsko kodo.';
+
+  @override
+  String get sharingSelectDestination => 'Kam želiš ustvariti skupno kopijo?';
+
+  @override
+  String get sharingPendingSignOut =>
+      'Skupni pogled bo po odjavi skrit. Osebni podatki ostanejo. Neusklajene skupne spremembe se ne pošljejo pod drugim računom; pred odjavo jih lahko izvoziš.';
+
+  @override
+  String get sharingNoPending => 'Ni čakajočih sprememb';
+
+  @override
+  String get sharingResumeBlocked => 'Nadaljuj usklajevanje mojih sprememb';
+
+  @override
+  String get sharingResumeBlockedDescription =>
+      'Dostop je ponovno dovoljen. Prej zadržane spremembe se pošljejo šele, ko izrecno nadaljuješ usklajevanje.';
+
+  @override
+  String get sharingOfflineSignOut =>
+      'Odjava na napravi je uspela. Preklica seje na strežniku ni bilo mogoče potrditi; seja bo tam veljavna do preklica ali poteka.';
+
+  @override
+  String get sharingExpires => 'Velja do';
+
+  @override
+  String get sharingAccepted => 'Sprejeto';
+
+  @override
+  String get sharingRevoked => 'Preklicano';
+
+  @override
+  String get sharingExpired => 'Poteklo';
+
+  @override
+  String get sharingSessionEnds => 'Seja velja do';
+
+  @override
+  String get sharingSharedTasks => 'Skupna opravila';
+
+  @override
+  String get sharingConflictsButton => 'Preglej spremembe';
+
+  @override
+  String get sharingDeletedVersion =>
+      'Te različice ni oziroma je zapis izbrisan.';
+
+  @override
+  String get sharingNetworkError =>
+      'Povezava ni na voljo. Neusklajene spremembe ostanejo na napravi; poskusi uskladiti znova.';
+
+  @override
+  String get sharingSessionRevoked =>
+      'Seja naprave je preklicana. Ponovno se prijavi; neusklajene spremembe se ne pošljejo pod drugim računom.';
+
+  @override
+  String get sharingStorageUnavailable =>
+      'Trajna shramba za skupne podatke ni na voljo. Dejanje ni bilo potrjeno; preveri shrambo naprave in poskusi znova.';
+
+  @override
+  String get sharingInvalidServer =>
+      'Preveri veljaven naslov strežnika. Za običajno povezavo uporabi HTTPS.';
+
+  @override
+  String get sharingRateLimited =>
+      'Preveč poskusov. Počakaj nekaj časa, nato poskusi znova.';
+
+  @override
+  String get sharingUnsupportedAuth =>
+      'Ta način prijave ni podprt. Za deljenje uporabi podprt lokalni uporabniški račun na strežniku.';
+
+  @override
+  String get sharingIncompatibleServer =>
+      'Različica strežnika ni združljiva z deljenjem v tej aplikaciji. Preveri strežniški vtičnik; lokalni podatki ostanejo na napravi.';
+
+  @override
+  String get sharingValidationError =>
+      'Podatki niso veljavni. Preveri vnos in poskusi znova.';
+
+  @override
+  String get sharingRegistrationPasswordHint =>
+      'Novo geslo potrebuje vsaj 12 znakov (največ 72 bajtov).';
+
+  @override
+  String get sharingBlockedDescription =>
+      'Te spremembe so zadržane zaradi preklicanega dostopa. Lahko jih izvoziš. Po ponovni pridobitvi dostopa zahtevajo izrecno nadaljevanje.';
+
+  @override
+  String get sharingAdvancedLogin => 'Dodatne možnosti prijave';
+
+  @override
+  String get sharingMoreDetails => 'Podrobnosti zapisa';
+
+  @override
+  String get sharingNoConflicts => 'Ni sprememb, ki bi potrebovale odločitev.';
+
+  @override
+  String get sharingRefreshMembers => 'Osveži člane';
+
+  @override
+  String get sharingDeletedConflict =>
+      'Zapis je bil na strežniku izbrisan. Svojo različico lahko shraniš v izvoz; sprejem strežniškega stanja ga ne obnovi.';
+
+  @override
+  String get sharingRelatedConflict =>
+      'Povezani zapisi so se spremenili. Najprej shrani svojo različico, sprejmi strežniško stanje in preglej povezane zapise. Nato lahko izrecno ustvariš kopijo ali znova izbereš izbris.';
+
+  @override
+  String get sharingStaleEditor =>
+      'Ta zapis se je med urejanjem spremenil. Zapri urejevalnik in odpri zadnjo različico; svoje besedilo lahko prej skopiraš.';
+
+  @override
+  String get sharingInvalidResponse =>
+      'Odgovora strežnika ni mogoče varno uporabiti. Preveri združljivost vtičnika. Lokalne spremembe ostanejo na napravi.';
+
+  @override
+  String get sharingRequestMismatch =>
+      'Strežnik je zavrnil ponovitev zahteve z drugačno vsebino. Shrani svoje spremembe v izvoz in preveri stanje; zahteve ne pošiljaj znova na slepo.';
+
+  @override
+  String get planningAssignees => 'Izvajalci';
+
+  @override
+  String get planningUnassigned => 'Še ni dodeljeno';
+
+  @override
+  String get planningFormerMember => 'Prejšnji član';
+
+  @override
+  String get planningSchedule => 'Načrtovani termin';
+
+  @override
+  String get planningStart => 'Začetek';
+
+  @override
+  String get planningEnd => 'Konec';
+
+  @override
+  String get planningDue => 'Rok';
+
+  @override
+  String get planningCreatedBy => 'Ustvaril/a';
+
+  @override
+  String get planningUpdatedBy => 'Nazadnje spremenil/a';
+
+  @override
+  String get planningInvalidSchedule => 'Konec ne sme biti pred začetkom.';
+
+  @override
+  String get planningSharedToday => 'Danes v skupnem prostoru';
+
+  @override
+  String get planningTimeline => 'Časovnica';
+
+  @override
+  String get planningNoAgenda => 'Za ta dan ni skupnih terminov.';
+
+  @override
+  String get planningNoTimeline =>
+      'Dodaj termin opravilu ali projektu za pregled časovnice.';
+
+  @override
+  String get planningAllPeople => 'Vsi izvajalci';
+
+  @override
+  String get planningNoTime => 'Brez termina';
+
+  @override
+  String get planningPreviousDay => 'Prejšnji dan';
+
+  @override
+  String get planningNextDay => 'Naslednji dan';
+
+  @override
+  String get financeMinorUnits => 'najmanjših enot';
+
+  @override
+  String get financeUnspecifiedPerson => 'Ni določeno';
+
+  @override
+  String get financeUnavailableAccount => 'Račun ni na voljo';
+
+  @override
+  String get financePosted => 'Knjiženo';
+
+  @override
+  String get financePlanned => 'Načrtovano';
+
+  @override
+  String get financeAddTransfer => 'Dodaj prenos';
+
+  @override
+  String get financeTransfer => 'Prenos';
+
+  @override
+  String get financeInternalTransfer => 'Prenos med računi';
+
+  @override
+  String get financeAddAccount => 'Dodaj račun';
+
+  @override
+  String get financeNoAccounts => 'Ustvari prvi finančni račun v tem prostoru.';
+
+  @override
+  String get financeAccounts => 'Finančni računi';
+
+  @override
+  String get financeAccount => 'Finančni račun';
+
+  @override
+  String get financeAllAccounts => 'Vsi računi';
+
+  @override
+  String get financePayerRecipient => 'Plačnik / prejemnik';
+
+  @override
+  String get financeEnteredBy => 'Vnesel/a';
+
+  @override
+  String get financeStatus => 'Stanje vnosa';
+
+  @override
+  String get financeAllStatuses => 'Vsa stanja';
+
+  @override
+  String get financeNoMatchingEntries => 'Za te filtre ni vnosov.';
+
+  @override
+  String get financeCategory => 'Kategorija';
+
+  @override
+  String get financePayer => 'Plačnik';
+
+  @override
+  String get financeRecipient => 'Prejemnik';
+
+  @override
+  String get financeJointAccount => 'Skupni račun';
+
+  @override
+  String get financeAudit => 'Sled sprememb';
+
+  @override
+  String get financeScopeTotals => 'Celoten finančni prostor';
+
+  @override
+  String get financeTransfersExcluded =>
+      'Seštevki vključujejo knjižene vnose. Prenosi med računi niso nov prihodek ali strošek. Filtri spodaj omejijo tabelo.';
+
+  @override
+  String get financeSharedAccountsDescription =>
+      'Ti računi so deljeni v tem prostoru. Zasebni lokalni računi se ne povežejo samodejno.';
+
+  @override
+  String get financeDate => 'Datum in čas';
+
+  @override
+  String get planningAllProjects => 'Vsi projekti';
+
+  @override
+  String get inboxDeviceReminder =>
+      'Čas je za tvoj opomnik. Odpri aplikacijo za podrobnosti.';
+
+  @override
+  String get inboxDeviceEventReminder =>
+      'Približuje se tvoj dogodek. Odpri aplikacijo za podrobnosti.';
+
+  @override
+  String get inboxTitle => 'Obvestila';
+
+  @override
+  String get inboxForMe => 'Zame';
+
+  @override
+  String get inboxInSharedSpace => 'V skupnem prostoru';
+
+  @override
+  String get inboxAll => 'Vsa';
+
+  @override
+  String get inboxRead => 'Prebrano';
+
+  @override
+  String get inboxMarkRead => 'Označi kot prebrano';
+
+  @override
+  String get inboxMarkUnread => 'Označi kot neprebrano';
+
+  @override
+  String get inboxEmpty => 'Za ta pogled še ni obvestil.';
+
+  @override
+  String get inboxSettings => 'Nastavitve obvestil';
+
+  @override
+  String get inboxDeviceSettings => 'Opomniki na tej napravi';
+
+  @override
+  String get inboxDevicePrivacy =>
+      'Sistemsko obvestilo pokaže samo splošen opomnik. Podrobnosti odpreš v aplikaciji. Vklop velja za osebne in dostopne skupne opomnike na tej napravi.';
+
+  @override
+  String get inboxDeviceEnable => 'Vključi sistemske opomnike';
+
+  @override
+  String get inboxSound => 'Zvok';
+
+  @override
+  String get inboxDeviceUnsupported =>
+      'Časovna sistemska obvestila v tem okolju niso podprta. Center obvestil v aplikaciji ostane na voljo.';
+
+  @override
+  String get inboxDeviceDenied =>
+      'Sistemska dovoljenja niso omogočena. Spremeni jih v nastavitvah naprave in se vrni v aplikacijo.';
+
+  @override
+  String get inboxDeviceGranted => 'Dovoljenje naprave je omogočeno.';
+
+  @override
+  String get inboxDeviceUnknown =>
+      'Stanje sistemskega dovoljenja še ni potrjeno.';
+
+  @override
+  String get inboxDeviceError =>
+      'Sistemskih opomnikov ni bilo mogoče pripraviti. Preveri dovoljenja naprave in poskusi znova; podatki ostanejo shranjeni.';
+
+  @override
+  String get inboxDeviceInexact =>
+      'Android lahko obvestilo dostavi z zamikom, zlasti med varčevanjem z energijo.';
+
+  @override
+  String inboxDeviceLimit(int count) {
+    return '$count poznejših opomnikov čaka. Razporedi se najbližjih 60; seznam se dopolni ob odprtju in osvežitvi aplikacije.';
+  }
+
+  @override
+  String inboxDeviceScheduled(int count) {
+    return 'Razporejenih opomnikov: $count.';
+  }
+
+  @override
+  String get inboxDeleted => 'Izvorni zapis je izbrisan.';
+
+  @override
+  String get inboxNeedsConnection =>
+      'Za preverjanje dostopa in odprtje tega obvestila potrebuješ povezavo.';
+
+  @override
+  String get inboxWrongAccount =>
+      'To obvestilo pripada drugemu računu. Prijavi se s pravim računom.';
+
+  @override
+  String get inboxOfflineView =>
+      'Brez povezave · zadnja dostopna kopija. Trenutnih strežniških pravic ni mogoče preveriti.';
+
+  @override
+  String inboxPersonalReminders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Opomniki za $count opravil',
+      few: 'Opomniki za $count opravila',
+      two: 'Opomnika za $count opravili',
+      one: 'Opomnik za $count opravilo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inboxTasksAssigned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dodeljenih ti je $count opravil',
+      few: 'Dodeljena so ti $count opravila',
+      two: 'Dodeljeni sta ti $count opravili',
+      one: 'Dodeljeno ti je $count opravilo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inboxTaskCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dodanih je $count opravil',
+      few: 'Dodana so $count opravila',
+      two: 'Dodani sta $count opravili',
+      one: 'Dodano je $count opravilo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxEventCreated => 'Dodan je dogodek';
+
+  @override
+  String get inboxEventAssigned => 'Dodeljen ti je dogodek';
+
+  @override
+  String get inboxShoppingListCreated => 'Dodan je nakupovalni seznam';
+
+  @override
+  String inboxShoppingItemsCreated(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dodanih je $count izdelkov',
+      few: 'Dodani so $count izdelki',
+      two: 'Dodana sta $count izdelka',
+      one: 'Dodan je $count izdelek',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxMemberJoined => 'Pridružil se je član';
+
+  @override
+  String get inboxRecordUpdated => 'Zapis je spremenjen';
+
+  @override
+  String get inboxRecordDeleted => 'Zapis je izbrisan';
+
+  @override
+  String get inboxTaskCompleted => 'Opravilo je zaključeno';
+
+  @override
+  String get inboxShoppingChecked => 'Izdelek je označen kot kupljen';
+
+  @override
+  String get inboxFinanceChanged => 'Sprememba v skupnih financah';
+
+  @override
+  String get inboxProjectChanged => 'Sprememba projekta';
+
+  @override
+  String get inboxReminderDue => 'Čas je za opomnik';
+
+  @override
+  String get inboxOpenToView => 'Odpri za podrobnosti';
+
+  @override
+  String get inboxSharedPreferencesUnavailable =>
+      'Ta strežnik še ne podpira nastavitev obvestil.';
+
+  @override
+  String get planningFullDay => 'Celoten skupni dan';
+
+  @override
+  String get sharingView => 'Pogled';
+
+  @override
+  String get financeEditAccount => 'Uredi račun';
+
+  @override
+  String get financeOpeningBalance => 'Začetno stanje';
+
+  @override
+  String get financeDeleteAccountDescription =>
+      'Račun lahko izbrišeš, ko nima povezanih vnosov ali prenosov.';
+
+  @override
+  String get financeEditEntry => 'Uredi finančni vnos';
+
+  @override
+  String get financeAccountCurrencyAmount => 'Znesek v valuti izbranega računa';
+
+  @override
+  String get financeEditTransfer => 'Uredi prenos';
+
+  @override
+  String get financeTransferDescription =>
+      'Prenos poteka med deljenima računoma iste valute v tem prostoru. Ne šteje kot prihodek ali odhodek.';
+
+  @override
+  String get financeFromAccount => 'Iz računa';
+
+  @override
+  String get financeToAccount => 'Na račun';
+
+  @override
+  String get financeInvalidTransfer =>
+      'Izberi dva različna računa iste valute.';
+
+  @override
+  String get financeNoAudit => 'Še ni finančne sledi.';
+
+  @override
+  String get financeRevision => 'Različica';
+
+  @override
+  String get financeBefore => 'Pred spremembo';
+
+  @override
+  String get financeAfter => 'Po spremembi';
+
+  @override
+  String get financeEnable => 'Omogoči skupne finance';
+
+  @override
+  String get financeDisabled => 'Finance v tem prostoru še niso omogočene.';
+
+  @override
+  String get financeNoAccess =>
+      'Za finance v tem prostoru nimaš dostopa. Lastnik lahko dodeli pravico za ogled ali urejanje.';
+
+  @override
+  String get financePermissions => 'Dostop do financ';
+
+  @override
+  String get financeGrantNone => 'Brez dostopa';
+
+  @override
+  String get financeGrantRead => 'Ogled';
+
+  @override
+  String get financeGrantWrite => 'Urejanje';
+
+  @override
+  String get financeLoadingSnapshot => 'Pripravljamo celoten finančni pregled.';
+
+  @override
+  String get financeUnsupported => 'Ta strežnik še ne podpira skupnih financ.';
+
+  @override
+  String get financeDisable => 'Onemogoči finance';
+
+  @override
+  String get financeDisableDescription =>
+      'Finance bodo skrite za člane. Podatki in moje neusklajene spremembe se ohranijo.';
+
+  @override
+  String get financePending => 'Finančne spremembe čakajo na uskladitev.';
+
+  @override
+  String get financeBlocked =>
+      'Finančne spremembe so zadržane. Shrani kopijo, preden razrešiš dostop.';
+
+  @override
+  String get financeConflicts => 'Sporne finančne spremembe';
+
+  @override
+  String get inboxPreferencesDescription =>
+      'Nastavitve veljajo za izbrani skupni prostor in vrsto obvestila. Sistemski opomniki na tej napravi so ločena nastavitev.';
+
+  @override
+  String get inboxChannelInApp => 'V centru obvestil';
+
+  @override
+  String get inboxChannelSound => 'Zvok opomnikov';
+
+  @override
+  String get inboxChannelPush => 'Oddaljena sistemska obvestila';
+
+  @override
+  String get inboxChannelEmail => 'E-pošta';
+
+  @override
+  String get inboxChannelUnavailable => 'Kanal na tem strežniku ni na voljo.';
+
+  @override
+  String get inboxPreferencesUnsupported =>
+      'Ta strežnik še ne podpira nastavitev obvestil.';
+
+  @override
+  String get inboxCategoryAssignments => 'Dodelitve';
+
+  @override
+  String get inboxCategoryTasks => 'Opravila in načrti';
+
+  @override
+  String get inboxCategoryShopping => 'Nakupi';
+
+  @override
+  String get inboxCategoryMembers => 'Člani';
+
+  @override
+  String get inboxCategoryReminders => 'Opomniki';
+
+  @override
+  String get inboxCategoryFinance => 'Finance';
+
+  @override
+  String get financeHolder => 'Imetnik računa';
+
+  @override
+  String get inboxScope => 'Skupni prostor';
+
+  @override
+  String get inboxCategoryEvents => 'Dogodki';
+
+  @override
+  String get inboxJoinedScope => 'Pridružil/a si se prostoru';
+
+  @override
+  String get financeUnsupportedCurrency =>
+      'Urejanje te valute še ni podprto. Znesek ostane ohranjen v najmanjših denarnih enotah.';
+
+  @override
+  String get financeTotalBalance => 'Skupno stanje';
+
+  @override
+  String get remotePushTitle => 'Oddaljena obvestila na tej napravi';
+
+  @override
+  String get remotePushPrivacy =>
+      'Obvestilo pokaže splošno besedilo. Vsebina se odpre šele po preverjanju računa in pravic.';
+
+  @override
+  String get remotePushEnable => 'Omogoči oddaljena obvestila';
+
+  @override
+  String get remotePushUnsupported =>
+      'Oddaljena obvestila so pripravljena za Android in iPhone. Na tej platformi uporabljaj center obvestil.';
+
+  @override
+  String get remotePushUnconfigured =>
+      'Ta različica še nima konfiguracije Firebase. Center obvestil in lokalni opomniki ostajajo na voljo.';
+
+  @override
+  String get remotePushInvalidConfiguration =>
+      'Konfiguracija obvestil ni veljavna za to aplikacijo. Potrebna je popravljena namestitev.';
+
+  @override
+  String get remotePushNeedsAccount =>
+      'Za oddaljena obvestila se prijavi v svoj račun. Osebna uporaba ostaja brez računa.';
+
+  @override
+  String get remotePushDisabled =>
+      'Oddaljena obvestila na tej napravi so izključena.';
+
+  @override
+  String get remotePushPreparing =>
+      'Pripravljam dovoljenje in registracijo naprave …';
+
+  @override
+  String get remotePushDenied =>
+      'Sistem ne dovoljuje obvestil. Omogoči jih v nastavitvah naprave in poskusi znova.';
+
+  @override
+  String get remotePushWaitingApns =>
+      'Čakam potrditev Apple za to napravo. Preveri povezavo in omogočeno podpisovanje za obvestila.';
+
+  @override
+  String get remotePushRegistered =>
+      'Naprava je registrirana. Vrste obvestil izbereš za vsak skupni prostor.';
+
+  @override
+  String get remotePushOffline =>
+      'Registracija čaka na povezavo. Spremembe v aplikaciji ostajajo shranjene.';
+
+  @override
+  String get remotePushServerUnavailable =>
+      'Strežnik nima združljive konfiguracije oddaljenih obvestil. Center obvestil ostaja na voljo.';
+
+  @override
+  String get remotePushProjectMismatch =>
+      'Aplikacija in strežnik uporabljata različna projekta Firebase. Naprava ni registrirana.';
+
+  @override
+  String get remotePushCleanupRequired =>
+      'Prejšnje registracije naprave še ni bilo mogoče odstraniti. Poskusi znova pred omogočanjem drugega računa.';
+
+  @override
+  String get remotePushError =>
+      'Oddaljenih obvestil ni bilo mogoče pripraviti. Poskusi znova; center obvestil ostaja na voljo.';
+
+  @override
+  String get remotePushRetry => 'Preveri obvestila znova';
+
+  @override
+  String get remotePushLoginForOpen =>
+      'Prijavi se v račun, ki je prejel to obvestilo.';
+
+  @override
+  String get remotePushDeviceUnavailable =>
+      'Najprej omogoči in registriraj oddaljena obvestila na tej napravi.';
+
+  @override
+  String get setupTitle => 'Kako želiš začeti?';
+
+  @override
+  String get setupIntro =>
+      'Izberi začetek. Svoj način lahko kasneje spremeniš v nastavitvah.';
+
+  @override
+  String get setupHint =>
+      'Osebni prostor že deluje brez računa. Po želji poveži svoje naprave ali ustvari skupni dom.';
+
+  @override
+  String get setupChoose => 'Izberi svoj začetek';
+
+  @override
+  String get setupDeviceOnly => 'Samo na tej napravi';
+
+  @override
+  String get setupDeviceOnlyDescription =>
+      'Brez računa in strežnika. Podatke varuj z varnostno kopijo.';
+
+  @override
+  String get setupPrivateDevices => 'Poveži moje naprave';
+
+  @override
+  String get setupPrivateDevicesDescription =>
+      'Zasebna sinhronizacija mojih podatkov. Prenos vključiš posebej po prijavi.';
+
+  @override
+  String get setupHousehold => 'Skupni dom';
+
+  @override
+  String get setupHouseholdDescription =>
+      'Ustvari dom in povabi drugo osebo. Osebni prostor ostane ločen.';
+
+  @override
+  String get setupOpen => 'Začetek uporabe';
+
+  @override
+  String get inviteOpenTitle => 'Odpri povabilo';
+
+  @override
+  String get inviteOpenWarning =>
+      'Preveri naslov strežnika. Povabilo se ne sprejme samodejno; najprej ga pregledaš.';
+
+  @override
+  String get inviteOpenContinue => 'Nadaljuj do povabila';
+
+  @override
+  String get inviteLinkInvalid =>
+      'Ta povezava ni veljavno povabilo. V aplikacijo lahko ročno vneseš strežnik in kodo.';
+
+  @override
+  String get inviteCopyLink => 'Kopiraj povezavo do povabila';
+
+  @override
+  String get inviteLinkPrepared =>
+      'Povezava odpre nameščeno aplikacijo, kjer je podprta shema vsakdan. Univerzalne spletne povezave še niso nastavljene.';
+
+  @override
+  String get accountFirstTitle => 'Prvi račun s kodo';
+
+  @override
+  String get accountFirstDescription =>
+      'Upravljavec strežnika ti izda enkratno začetno kodo. Ustvariš navaden uporabniški račun. Po prvem računu se drugi pridružijo s povabilom.';
+
+  @override
+  String get accountBootstrapCode => 'Začetna koda upravljavca';
+
+  @override
+  String get accountCreate => 'Ustvari račun';
+
+  @override
+  String get accountPasswordRule => 'Geslo mora imeti od 12 do 72 bajtov.';
+
+  @override
+  String get accountForgotPassword => 'Pozabljeno geslo';
+
+  @override
+  String get accountResetRequestDescription =>
+      'Koda se pošlje samo na že potrjen naslov e-pošte. Zaradi zasebnosti ne razkrivamo, ali uporabniško ime obstaja.';
+
+  @override
+  String get accountSendReset => 'Zahtevaj kodo za obnovo';
+
+  @override
+  String get accountResetGeneric =>
+      'Če račun podpira obnovo, je bila koda poslana na potrjen naslov.';
+
+  @override
+  String get accountResetConfirm => 'Imam kodo za obnovo';
+
+  @override
+  String get accountResetConfirmDescription =>
+      'Vnesi prejeto kodo in novo geslo. Pri dvostopenjski prijavi potrebuješ tudi kodo TOTP. Nato se znova prijaviš; stare naprave se odjavijo.';
+
+  @override
+  String get accountEmailCode => 'Koda iz e-pošte';
+
+  @override
+  String get accountResetPassword => 'Ponastavi geslo';
+
+  @override
+  String get accountResetDone =>
+      'Geslo je ponastavljeno. Prijavi se z novim geslom.';
+
+  @override
+  String get accountEmailTitle => 'E-pošta in obnova dostopa';
+
+  @override
+  String get accountEmailNone => 'Naslov še ni nastavljen.';
+
+  @override
+  String get accountEmailVerified => 'Potrjen naslov';
+
+  @override
+  String get accountEmailUnverified => 'Naslov še ni potrjen';
+
+  @override
+  String get accountEmailPending => 'Čaka na potrditev';
+
+  @override
+  String get accountEmailChange => 'Nastavi ali spremeni e-pošto';
+
+  @override
+  String get accountEmailRequestDescription =>
+      'Ponovno potrdi geslo in po potrebi TOTP. Sedanji potrjeni naslov ostane veljaven, dokler ne potrdiš novega.';
+
+  @override
+  String get accountEmail => 'Naslov e-pošte';
+
+  @override
+  String get accountEmailSend => 'Pošlji potrditveno kodo';
+
+  @override
+  String get accountEmailConfirm => 'Potrdi kodo iz e-pošte';
+
+  @override
+  String get accountEmailSent =>
+      'Potrditvena koda je zahtevana. Vnesi jo po prejemu e-pošte.';
+
+  @override
+  String get accountEmailUnavailable =>
+      'Strežnik še nima nastavljenega pošiljanja varnostne e-pošte.';
+
+  @override
+  String get accountCodeInvalid =>
+      'Koda ni veljavna, je potekla ali je že porabljena. Zahtevaj novo.';
+
+  @override
+  String get accountEnrollmentUnavailable =>
+      'Prvi račun s kodo tu ni več na voljo. Prijavi se ali uporabi povabilo.';
+
+  @override
+  String get privateSyncTitle => 'Moje naprave';
+
+  @override
+  String get privateSyncDescription =>
+      'Zasebni prostor samo za ta račun. Vanj ni mogoče povabiti drugih oseb.';
+
+  @override
+  String get privateSyncOff =>
+      'Osebni podatki so za zdaj samo na tej napravi. Prijava jih ne naloži samodejno.';
+
+  @override
+  String get privateSyncReview => 'Preglej pred vključitvijo';
+
+  @override
+  String get privateSyncEnable => 'Vključi zasebno sinhronizacijo';
+
+  @override
+  String get privateSyncUploadWarning =>
+      'Ta izbira prenese pregledane osebne zapise, vključno z osebnimi financami, v zasebni prostor računa. Strežniška sinhronizacija ni varnostna kopija.';
+
+  @override
+  String get privateSyncRemoteCount => 'Obstoječi zapisi v zasebnem prostoru';
+
+  @override
+  String get privateSyncOn => 'Zasebna sinhronizacija je vključena.';
+
+  @override
+  String get privateSyncPaused =>
+      'Sinhronizacija je začasno ustavljena. Lokalno delo ostaja shranjeno.';
+
+  @override
+  String get privateSyncPause => 'Začasno ustavi sinhronizacijo';
+
+  @override
+  String get privateSyncResume => 'Nadaljuj sinhronizacijo';
+
+  @override
+  String get privateSyncUnavailable =>
+      'Za zasebno sinhronizacijo potrebuješ prijavo in podprt strežnik.';
+
+  @override
+  String get privateSyncPending => 'Čakajoče spremembe';
+
+  @override
+  String get privateSyncIssue =>
+      'Pred vključitvijo odpravi nezdružljive ali sporne zapise. Osebni podatki ostanejo na napravi.';
+
+  @override
+  String get backupTitle => 'Šifrirana varnostna kopija';
+
+  @override
+  String get backupDescription =>
+      'Kopija varuje osebne zapise, nastavitve in dovoljeno skupno delo z geslom. Poverilnic ne vključuje. Aktivna baza s tem ne postane dodatno šifrirana.';
+
+  @override
+  String get backupCreate => 'Ustvari kopijo';
+
+  @override
+  String get backupRestore => 'Obnovi kopijo';
+
+  @override
+  String get backupPassword => 'Geslo varnostne kopije';
+
+  @override
+  String get backupPasswordHint =>
+      'Geslo ni shranjeno. Če ga pozabiš, kopije ne moremo odpreti.';
+
+  @override
+  String get backupPasswordRule =>
+      'Uporabi vsaj 12 znakov in največ 1024 bajtov UTF-8.';
+
+  @override
+  String get backupPrepare => 'Pripravi šifrirano kopijo';
+
+  @override
+  String get backupPick => 'Izberi šifrirano kopijo';
+
+  @override
+  String get backupOpen => 'Odpri in preglej kopijo';
+
+  @override
+  String get backupReview => 'Pregled vsebine';
+
+  @override
+  String get backupSave => 'Shrani datoteko kopije';
+
+  @override
+  String get backupSaved => 'Datoteka kopije je shranjena.';
+
+  @override
+  String get backupCreatedAt => 'Ustvarjena';
+
+  @override
+  String get backupScopes => 'Skupni prostori v kopiji';
+
+  @override
+  String get backupPending => 'Neusklajene operacije v kopiji';
+
+  @override
+  String get backupCredentialsExcluded =>
+      'Gesla, seje naprav in žetoni obvestil niso vključeni.';
+
+  @override
+  String get backupRemoteQuarantine =>
+      'Obnovljeno skupno delo ostane zaščiteno in ločeno. Po prijavi v pravi račun ga pregledaš ter izrecno dovoliš nadaljevanje; nič se ne pošlje samodejno.';
+
+  @override
+  String get backupMerge => 'Združi z osebnimi zapisi';
+
+  @override
+  String get backupReplace => 'Zamenjaj osebne zapise';
+
+  @override
+  String get backupMergeDescription =>
+      'Dodaj manjkajoče osebne zapise. Različna vsebina z istim ID zavrne celotno združitev.';
+
+  @override
+  String get backupReplaceDescription =>
+      'Trenutne osebne zapise zamenja vsebina kopije. Najprej shrani sedanjo varnostno kopijo.';
+
+  @override
+  String get backupRestoreConfirm => 'Potrdi obnovo';
+
+  @override
+  String get backupRestored =>
+      'Kopija je obnovljena. Skupno delo se ne pošilja samodejno.';
+
+  @override
+  String get backupWrongPassword =>
+      'Geslo ni pravilno ali je kopija poškodovana. Podatki niso bili spremenjeni.';
+
+  @override
+  String get backupUnsupported =>
+      'Te različice kopije ni mogoče odpreti. Uporabi združljivo aplikacijo.';
+
+  @override
+  String get backupChanged =>
+      'Predogled ni več aktualen. Znova pripravi kopijo ali preveri vsebino pred obnovo.';
+
+  @override
+  String get backupRecoveryTitle => 'Obnovljeno skupno delo';
+
+  @override
+  String get backupRecoveryReview => 'Preglej obnovljeno delo';
+
+  @override
+  String get backupRecoveryResume => 'Dovoli nadaljevanje obnovljenega dela';
+
+  @override
+  String get backupRecoveryBlocked =>
+      'Za to delo potrebuješ pravi račun in veljavne pravice. Kopija ostane zaščitena.';
+
+  @override
+  String get backupRecoveryNone => 'Ni obnovljenih paketov skupnega dela.';
+
+  @override
+  String get backupReadError =>
+      'Kopije ni bilo mogoče odpreti ali shraniti. Poskusi znova.';
+
+  @override
+  String get backupShoppingItems => 'Artikli na nakupovalnih seznamih';
+
+  @override
+  String get backupOtherRecords => 'Drugi zapisi';
+
+  @override
+  String get backupSaveCancelled =>
+      'Shranjevanje je preklicano. Datoteka ni bila shranjena.';
+
+  @override
+  String get backupDownloadStarted =>
+      'Prenos kopije je sprožen. Preveri prenesene datoteke v brskalniku.';
+
+  @override
+  String get backupSourceAccount => 'Račun kopije';
+
+  @override
+  String get backupSourceServer => 'Strežnik kopije';
+
+  @override
+  String get backupLocalOnly => 'Samo na napravi';
+
+  @override
+  String get backupAccountMatches =>
+      'Osebne zapise lahko obnoviš lokalno. Nadaljevanje skupnega dela znova preveri račun in pravice.';
+
+  @override
+  String get backupAccountDifferent =>
+      'Kopija je iz drugega računa. Skupno delo ostane zaščiteno do prijave v pravi račun.';
+
+  @override
+  String get backupCompleteness =>
+      'Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame.';
+
+  @override
+  String get backupTooLarge =>
+      'Kopija je večja od dovoljene omejitve 64 MiB. Podatki niso bili spremenjeni.';
+
+  @override
+  String get backupMergeConflict =>
+      'Kopija vsebuje drugačno vsebino z istim ID. Združitev je zavrnjena; podatki niso spremenjeni.';
+
+  @override
+  String get privateSyncLocalPending =>
+      'Novi lokalni zapisi čakajo na tvoj pregled.';
+
+  @override
+  String get backupRecoveryState => 'Stanje obnovljenega dela';
+
+  @override
+  String get backupRecoveryReady => 'Lahko pregledaš in nadaljuješ';
+
+  @override
+  String get backupLegacyJson => 'Prejšnji izvoz JSON brez šifriranja';
+
+  @override
+  String get backupIncomplete =>
+      'Nekateri preneseni prostori v kopiji niso popolni. Po obnovi jih je treba znova uskladiti.';
+
+  @override
+  String get backupArchiveReview =>
+      'Ločen pregled odklenjene kopije. Ti zapisi ne postanejo del aktivnega računa, dokler izrecno ne nadaljuješ dovoljenega dela.';
+
+  @override
+  String get backupCached => 'Preneseni zapis; ni čakajoče spremembe';
+
+  @override
+  String get backupSettingsRetry =>
+      'Obnovljene nastavitve še niso bile uporabljene. Zapisi so ohranjeni; poskusi znova.';
+
+  @override
+  String get privateFinanceIncomplete =>
+      'Zasebni finančni pregled še ni v celoti prenesen. Prikazani zapisi in čakajoče spremembe so ohranjeni; skupni seštevek se pokaže po popolni sinhronizaciji.';
 }

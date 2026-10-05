@@ -2651,6 +2651,2988 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vertical work grouping'**
   String get verticalWorkGrouping;
+
+  /// No description provided for @organizerAppName.
+  ///
+  /// In en, this message translates to:
+  /// **'Vsakdan'**
+  String get organizerAppName;
+
+  /// No description provided for @organizerToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get organizerToday;
+
+  /// No description provided for @organizerPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans'**
+  String get organizerPlans;
+
+  /// No description provided for @organizerShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get organizerShopping;
+
+  /// No description provided for @organizerMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get organizerMore;
+
+  /// No description provided for @organizerCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get organizerCalendar;
+
+  /// No description provided for @organizerProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get organizerProjects;
+
+  /// No description provided for @organizerFinances.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances'**
+  String get organizerFinances;
+
+  /// No description provided for @organizerHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get organizerHome;
+
+  /// No description provided for @organizerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get organizerSettings;
+
+  /// No description provided for @organizerLocalSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal space'**
+  String get organizerLocalSpace;
+
+  /// No description provided for @organizerLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device'**
+  String get organizerLocalOnly;
+
+  /// No description provided for @organizerLocalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks and plans live on this device. No account needed.'**
+  String get organizerLocalDescription;
+
+  /// No description provided for @organizerTodayIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Room for what matters today.'**
+  String get organizerTodayIntro;
+
+  /// No description provided for @organizerNextEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Next on your calendar'**
+  String get organizerNextEvent;
+
+  /// No description provided for @organizerNoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Your calendar is empty.'**
+  String get organizerNoEvents;
+
+  /// No description provided for @organizerNoEventsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an event to keep your next step in sight.'**
+  String get organizerNoEventsDescription;
+
+  /// No description provided for @organizerNextTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Next steps'**
+  String get organizerNextTasks;
+
+  /// No description provided for @organizerNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with one task.'**
+  String get organizerNoTasks;
+
+  /// No description provided for @organizerNoTasksDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Small tasks, bigger plans. Everything in its place.'**
+  String get organizerNoTasksDescription;
+
+  /// No description provided for @organizerAddTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add task'**
+  String get organizerAddTask;
+
+  /// No description provided for @organizerEditTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit task'**
+  String get organizerEditTask;
+
+  /// No description provided for @organizerAddEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get organizerAddEvent;
+
+  /// No description provided for @organizerEditEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit event'**
+  String get organizerEditEvent;
+
+  /// No description provided for @organizerAddProject.
+  ///
+  /// In en, this message translates to:
+  /// **'New project'**
+  String get organizerAddProject;
+
+  /// No description provided for @organizerEditProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit project'**
+  String get organizerEditProject;
+
+  /// No description provided for @organizerNoProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to plan?'**
+  String get organizerNoProjects;
+
+  /// No description provided for @organizerNoProjectsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a project for a trip, renovation or everyday tasks.'**
+  String get organizerNoProjectsDescription;
+
+  /// No description provided for @organizerShoppingShortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Open shopping lists'**
+  String get organizerShoppingShortcut;
+
+  /// No description provided for @organizerShoppingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Write down what you need. Check it off when it is in your basket.'**
+  String get organizerShoppingIntro;
+
+  /// No description provided for @organizerAddList.
+  ///
+  /// In en, this message translates to:
+  /// **'New list'**
+  String get organizerAddList;
+
+  /// No description provided for @organizerEditList.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit list'**
+  String get organizerEditList;
+
+  /// No description provided for @organizerNoLists.
+  ///
+  /// In en, this message translates to:
+  /// **'A list for your next shop.'**
+  String get organizerNoLists;
+
+  /// No description provided for @organizerNoListsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a list and add the first thing you need.'**
+  String get organizerNoListsDescription;
+
+  /// No description provided for @organizerAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get organizerAddItem;
+
+  /// No description provided for @organizerEditItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get organizerEditItem;
+
+  /// No description provided for @organizerItemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you need?'**
+  String get organizerItemHint;
+
+  /// No description provided for @organizerQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get organizerQuantity;
+
+  /// No description provided for @organizerBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchased'**
+  String get organizerBought;
+
+  /// No description provided for @organizerEmptyList.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no items on this list yet.'**
+  String get organizerEmptyList;
+
+  /// No description provided for @organizerTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get organizerTasks;
+
+  /// No description provided for @organizerAllTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'All tasks'**
+  String get organizerAllTasks;
+
+  /// No description provided for @organizerNoProject.
+  ///
+  /// In en, this message translates to:
+  /// **'No project'**
+  String get organizerNoProject;
+
+  /// No description provided for @organizerCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get organizerCompleted;
+
+  /// No description provided for @organizerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get organizerTitle;
+
+  /// No description provided for @organizerNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get organizerNotes;
+
+  /// No description provided for @organizerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get organizerDescription;
+
+  /// No description provided for @organizerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title.'**
+  String get organizerRequired;
+
+  /// No description provided for @organizerSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the change. Please try again.'**
+  String get organizerSaveError;
+
+  /// No description provided for @organizerLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open local data.'**
+  String get organizerLoadError;
+
+  /// No description provided for @organizerRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get organizerRetry;
+
+  /// No description provided for @organizerDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get organizerDate;
+
+  /// No description provided for @organizerTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get organizerTime;
+
+  /// No description provided for @organizerNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No due date'**
+  String get organizerNoDate;
+
+  /// No description provided for @organizerRemoveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove date'**
+  String get organizerRemoveDate;
+
+  /// No description provided for @organizerUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get organizerUpcoming;
+
+  /// No description provided for @organizerCalendarIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Events and task deadlines in one place.'**
+  String get organizerCalendarIntro;
+
+  /// No description provided for @organizerFinanceIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal income and expense entries on this device.'**
+  String get organizerFinanceIntro;
+
+  /// No description provided for @organizerAddFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Add entry'**
+  String get organizerAddFinance;
+
+  /// No description provided for @organizerEditFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit entry'**
+  String get organizerEditFinance;
+
+  /// No description provided for @organizerNoFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Your overview starts with the first entry.'**
+  String get organizerNoFinance;
+
+  /// No description provided for @organizerIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get organizerIncome;
+
+  /// No description provided for @organizerExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get organizerExpense;
+
+  /// No description provided for @organizerCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get organizerCurrency;
+
+  /// No description provided for @organizerInvalidMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount with at most two decimal places.'**
+  String get organizerInvalidMoney;
+
+  /// No description provided for @organizerBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Income minus expenses'**
+  String get organizerBalance;
+
+  /// No description provided for @organizerConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing Kanboard'**
+  String get organizerConnection;
+
+  /// No description provided for @organizerConnectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your existing projects are still on your Kanboard server. Connect your account to open them. The local organizer does not import or sync them yet.'**
+  String get organizerConnectionDescription;
+
+  /// No description provided for @organizerConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect account'**
+  String get organizerConnect;
+
+  /// No description provided for @organizerOpenKanboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Kanboard'**
+  String get organizerOpenKanboard;
+
+  /// No description provided for @organizerBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get organizerBackup;
+
+  /// No description provided for @organizerBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Export local records to a JSON file or restore them from a backup. The file is not encrypted; store it in a safe place.'**
+  String get organizerBackupDescription;
+
+  /// No description provided for @organizerExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get organizerExport;
+
+  /// No description provided for @organizerImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get organizerImport;
+
+  /// No description provided for @organizerRestoreWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring adds records from the backup. If the backup contains records that already exist, the entire import is rejected. Export your current backup first.'**
+  String get organizerRestoreWarning;
+
+  /// No description provided for @organizerRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get organizerRestoreConfirm;
+
+  /// No description provided for @organizerRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data restored.'**
+  String get organizerRestored;
+
+  /// No description provided for @organizerReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get organizerReminders;
+
+  /// No description provided for @organizerNoReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'No new reminders.'**
+  String get organizerNoReminders;
+
+  /// No description provided for @organizerRemindersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deadline reminders appear when you open the app.'**
+  String get organizerRemindersDescription;
+
+  /// No description provided for @organizerHomeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize home plans with projects and tasks in your personal space.'**
+  String get organizerHomeIntro;
+
+  /// No description provided for @organizerBackToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Today'**
+  String get organizerBackToday;
+
+  /// No description provided for @organizerDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this entry?'**
+  String get organizerDeleteConfirm;
+
+  /// No description provided for @organizerDeleteProjectNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks, events and finance entries are kept without a project.'**
+  String get organizerDeleteProjectNote;
+
+  /// No description provided for @organizerProjectProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} completed'**
+  String organizerProjectProgress(int done, int total);
+
+  /// No description provided for @organizerShoppingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items on your lists'**
+  String organizerShoppingCount(int count);
+
+  /// No description provided for @organizerTasksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tasks'**
+  String organizerTasksCount(int count);
+
+  /// No description provided for @organizerNoMatchingTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no tasks in this project yet.'**
+  String get organizerNoMatchingTasks;
+
+  /// No description provided for @organizerPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local · personal'**
+  String get organizerPersonal;
+
+  /// No description provided for @organizerSystemLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Device language'**
+  String get organizerSystemLanguage;
+
+  /// No description provided for @organizerRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get organizerRead;
+
+  /// No description provided for @organizerWithoutDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a deadline'**
+  String get organizerWithoutDate;
+
+  /// No description provided for @organizerOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get organizerOverdue;
+
+  /// No description provided for @organizerHomeProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Home projects'**
+  String get organizerHomeProjects;
+
+  /// No description provided for @organizerProjectArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Area'**
+  String get organizerProjectArea;
+
+  /// No description provided for @organizerPersonalArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get organizerPersonalArea;
+
+  /// No description provided for @organizerHomeArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get organizerHomeArea;
+
+  /// No description provided for @organizerConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The record changed or the backup contains existing records. Open the latest version of the record; a conflicting import is rejected.'**
+  String get organizerConflict;
+
+  /// No description provided for @organizerInvalidData.
+  ///
+  /// In en, this message translates to:
+  /// **'The data is invalid or the backup format is unsupported.'**
+  String get organizerInvalidData;
+
+  /// No description provided for @secureStorageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure storage is unavailable. Credentials were not saved; check this device’s secure storage settings.'**
+  String get secureStorageUnavailable;
+
+  /// No description provided for @credentialsSharingDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords and personal API keys are not shared. Project invitations will be available when the secure flow is ready.'**
+  String get credentialsSharingDisabled;
+
+  /// No description provided for @personalTokenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your username and personal API token. The global jsonrpc key is not supported.'**
+  String get personalTokenHint;
+
+  /// No description provided for @secureConnectionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Use HTTPS. HTTP is allowed only for an explicit local development connection.'**
+  String get secureConnectionRequired;
+
+  /// No description provided for @localDevelopmentConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Local development connection (HTTP on this computer)'**
+  String get localDevelopmentConnection;
+
+  /// No description provided for @aiSessionChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The account changed. This chat belongs to the previous session; reopen AI help from your project.'**
+  String get aiSessionChanged;
+
+  /// No description provided for @connectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed. Check the server address, username and password or personal API token.'**
+  String get connectionFailed;
+
+  /// No description provided for @sharingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and sharing'**
+  String get sharingAccount;
+
+  /// No description provided for @sharingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal data stays on this device. Connect an account when you want to use shared lists and projects.'**
+  String get sharingIntro;
+
+  /// No description provided for @sharingPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get sharingPersonal;
+
+  /// No description provided for @sharingShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get sharingShared;
+
+  /// No description provided for @sharingConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect for sharing'**
+  String get sharingConnect;
+
+  /// No description provided for @sharingLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get sharingLogin;
+
+  /// No description provided for @sharingLoginAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get sharingLoginAction;
+
+  /// No description provided for @sharingHaveInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'I have an invitation'**
+  String get sharingHaveInvite;
+
+  /// No description provided for @sharingInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation'**
+  String get sharingInvitation;
+
+  /// No description provided for @sharingInvitationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation code'**
+  String get sharingInvitationCode;
+
+  /// No description provided for @sharingInvitationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the code sent by the person you want to collaborate with.'**
+  String get sharingInvitationHint;
+
+  /// No description provided for @sharingPreviewInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Check invitation'**
+  String get sharingPreviewInvite;
+
+  /// No description provided for @sharingAcceptInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept invitation'**
+  String get sharingAcceptInvite;
+
+  /// No description provided for @sharingRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account with an invitation'**
+  String get sharingRegister;
+
+  /// No description provided for @sharingRegisterAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account and accept'**
+  String get sharingRegisterAction;
+
+  /// No description provided for @sharingDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get sharingDisplayName;
+
+  /// No description provided for @sharingEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get sharingEmail;
+
+  /// No description provided for @sharingConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get sharingConfirmPassword;
+
+  /// No description provided for @sharingPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get sharingPasswordMismatch;
+
+  /// No description provided for @sharingTwoFactorCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication code'**
+  String get sharingTwoFactorCode;
+
+  /// No description provided for @sharingDeviceName.
+  ///
+  /// In en, this message translates to:
+  /// **'This device’s name'**
+  String get sharingDeviceName;
+
+  /// No description provided for @sharingDeviceSession.
+  ///
+  /// In en, this message translates to:
+  /// **'This device’s session'**
+  String get sharingDeviceSession;
+
+  /// No description provided for @sharingSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared spaces'**
+  String get sharingSpaces;
+
+  /// No description provided for @sharingCreateSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'New shared space'**
+  String get sharingCreateSpace;
+
+  /// No description provided for @sharingSpaceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Space name'**
+  String get sharingSpaceName;
+
+  /// No description provided for @sharingScopeType.
+  ///
+  /// In en, this message translates to:
+  /// **'Space type'**
+  String get sharingScopeType;
+
+  /// No description provided for @sharingHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Household'**
+  String get sharingHousehold;
+
+  /// No description provided for @sharingProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get sharingProject;
+
+  /// No description provided for @sharingScopeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'In this version you share lists, projects, and tasks. Shared finances will follow in the finance redesign.'**
+  String get sharingScopeDescription;
+
+  /// No description provided for @sharingNoSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared spaces yet.'**
+  String get sharingNoSpaces;
+
+  /// No description provided for @sharingChooseSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a shared space'**
+  String get sharingChooseSpace;
+
+  /// No description provided for @sharingMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get sharingMembers;
+
+  /// No description provided for @sharingOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get sharingOwner;
+
+  /// No description provided for @sharingEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Can edit'**
+  String get sharingEditor;
+
+  /// No description provided for @sharingViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Can view'**
+  String get sharingViewer;
+
+  /// No description provided for @sharingRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get sharingRole;
+
+  /// No description provided for @sharingInvitePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite someone'**
+  String get sharingInvitePerson;
+
+  /// No description provided for @sharingCreateInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Create invitation'**
+  String get sharingCreateInvite;
+
+  /// No description provided for @sharingInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations'**
+  String get sharingInvitations;
+
+  /// No description provided for @sharingCopyInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get sharingCopyInvite;
+
+  /// No description provided for @sharingInviteCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation code copied.'**
+  String get sharingInviteCopied;
+
+  /// No description provided for @sharingInviteCodeOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or send the code now. It cannot be displayed again later.'**
+  String get sharingInviteCodeOnce;
+
+  /// No description provided for @sharingRevokeInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke invitation'**
+  String get sharingRevokeInvite;
+
+  /// No description provided for @sharingRemoveMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get sharingRemoveMember;
+
+  /// No description provided for @sharingRemoveMemberConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Once removed, this member can no longer access this space. Previously downloaded copies cannot be erased remotely.'**
+  String get sharingRemoveMemberConfirm;
+
+  /// No description provided for @sharingSignOutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal data stays on this device. Check pending shared changes before signing out.'**
+  String get sharingSignOutDescription;
+
+  /// No description provided for @sharingSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get sharingSyncNow;
+
+  /// No description provided for @sharingSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get sharingSynced;
+
+  /// No description provided for @sharingSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing …'**
+  String get sharingSyncing;
+
+  /// No description provided for @sharingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to sync'**
+  String get sharingPending;
+
+  /// No description provided for @sharingOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection unavailable'**
+  String get sharingOffline;
+
+  /// No description provided for @sharingSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Local changes have been kept.'**
+  String get sharingSyncFailed;
+
+  /// No description provided for @sharingConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes need a decision'**
+  String get sharingConflicts;
+
+  /// No description provided for @sharingConflictDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The same record also changed elsewhere. Compare both versions and choose which to keep.'**
+  String get sharingConflictDescription;
+
+  /// No description provided for @sharingLocalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get sharingLocalVersion;
+
+  /// No description provided for @sharingRemoteVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'On the server'**
+  String get sharingRemoteVersion;
+
+  /// No description provided for @sharingKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my version'**
+  String get sharingKeepLocal;
+
+  /// No description provided for @sharingKeepRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep server version'**
+  String get sharingKeepRemote;
+
+  /// No description provided for @sharingAccessRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Access was revoked. Pending changes have not been sent.'**
+  String get sharingAccessRevoked;
+
+  /// No description provided for @sharingUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support the required sharing features yet.'**
+  String get sharingUnsupported;
+
+  /// No description provided for @sharingOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The action failed. Check the connection and try again.'**
+  String get sharingOperationFailed;
+
+  /// No description provided for @sharingInvalidInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'The invitation is invalid, expired, or already used.'**
+  String get sharingInvalidInvite;
+
+  /// No description provided for @sharingSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired. Sign in again; personal data stays on this device.'**
+  String get sharingSessionExpired;
+
+  /// No description provided for @sharingPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission for this action.'**
+  String get sharingPermissionDenied;
+
+  /// No description provided for @sharingNoSharedLists.
+  ///
+  /// In en, this message translates to:
+  /// **'This space has no shared list yet.'**
+  String get sharingNoSharedLists;
+
+  /// No description provided for @sharingNoSharedListsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a list to collaborate. Personal lists are not shared automatically.'**
+  String get sharingNoSharedListsDescription;
+
+  /// No description provided for @sharingCreateSharedList.
+  ///
+  /// In en, this message translates to:
+  /// **'New shared list'**
+  String get sharingCreateSharedList;
+
+  /// No description provided for @sharingReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get sharingReadOnly;
+
+  /// No description provided for @sharingQuietShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list changes are quiet; they do not send email.'**
+  String get sharingQuietShopping;
+
+  /// No description provided for @sharingShareList.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this list'**
+  String get sharingShareList;
+
+  /// No description provided for @sharingShareProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Share project and tasks'**
+  String get sharingShareProject;
+
+  /// No description provided for @sharingShareConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'A shared copy will be created in the selected space. Personal content and finances are not shared automatically.'**
+  String get sharingShareConfirm;
+
+  /// No description provided for @sharingNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No member information available.'**
+  String get sharingNoMembers;
+
+  /// No description provided for @sharingNoInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'No active invitations.'**
+  String get sharingNoInvitations;
+
+  /// No description provided for @sharingGoToAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Open account and sharing'**
+  String get sharingGoToAccount;
+
+  /// No description provided for @sharingConnectBeforeShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an account or accept an invitation to use shared lists.'**
+  String get sharingConnectBeforeShared;
+
+  /// No description provided for @sharingSaveBeforeSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are saved on this device first, then synced with the space.'**
+  String get sharingSaveBeforeSync;
+
+  /// No description provided for @sharingMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get sharingMember;
+
+  /// No description provided for @sharingRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete this field.'**
+  String get sharingRequired;
+
+  /// No description provided for @sharingSaveDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Save my unsynced changes'**
+  String get sharingSaveDrafts;
+
+  /// No description provided for @sharingSaveDraftsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The export contains your pending shared changes, without credentials. The JSON file is not encrypted.'**
+  String get sharingSaveDraftsDescription;
+
+  /// No description provided for @sharingCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a shared copy'**
+  String get sharingCopyAction;
+
+  /// No description provided for @sharingCopyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared copy created. Your personal original is unchanged.'**
+  String get sharingCopyDone;
+
+  /// No description provided for @sharingCopyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This version copies only this list or the project with its tasks. Finances and events are not transferred in this action. Later edits to the personal original are not sent to the shared copy.'**
+  String get sharingCopyDescription;
+
+  /// No description provided for @sharingLoginNeedsOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your two-factor authentication app.'**
+  String get sharingLoginNeedsOtp;
+
+  /// No description provided for @sharingInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Check your username, password, and any two-factor code.'**
+  String get sharingInvalidCredentials;
+
+  /// No description provided for @sharingSelectDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should the shared copy be created?'**
+  String get sharingSelectDestination;
+
+  /// No description provided for @sharingPendingSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The shared view will be hidden after signing out. Personal data remains. Unsynced shared changes are not sent under another account; you can export them before signing out.'**
+  String get sharingPendingSignOut;
+
+  /// No description provided for @sharingNoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending changes'**
+  String get sharingNoPending;
+
+  /// No description provided for @sharingResumeBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume syncing my changes'**
+  String get sharingResumeBlocked;
+
+  /// No description provided for @sharingResumeBlockedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Access has been restored. Previously blocked changes are sent only when you explicitly resume syncing.'**
+  String get sharingResumeBlockedDescription;
+
+  /// No description provided for @sharingOfflineSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out on this device. Server session revocation could not be confirmed; that session remains valid until revoked or expired.'**
+  String get sharingOfflineSignOut;
+
+  /// No description provided for @sharingExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get sharingExpires;
+
+  /// No description provided for @sharingAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get sharingAccepted;
+
+  /// No description provided for @sharingRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get sharingRevoked;
+
+  /// No description provided for @sharingExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get sharingExpired;
+
+  /// No description provided for @sharingSessionEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expires'**
+  String get sharingSessionEnds;
+
+  /// No description provided for @sharingSharedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared tasks'**
+  String get sharingSharedTasks;
+
+  /// No description provided for @sharingConflictsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Review changes'**
+  String get sharingConflictsButton;
+
+  /// No description provided for @sharingDeletedVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is absent or the record has been deleted.'**
+  String get sharingDeletedVersion;
+
+  /// No description provided for @sharingNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection unavailable. Unsynced changes stay on this device; try syncing again.'**
+  String get sharingNetworkError;
+
+  /// No description provided for @sharingSessionRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'This device’s session was revoked. Sign in again; unsynced changes are not sent under another account.'**
+  String get sharingSessionRevoked;
+
+  /// No description provided for @sharingStorageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Durable storage for shared data is unavailable. The action was not confirmed; check this device’s storage and try again.'**
+  String get sharingStorageUnavailable;
+
+  /// No description provided for @sharingInvalidServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the server address. Use HTTPS for a normal connection.'**
+  String get sharingInvalidServer;
+
+  /// No description provided for @sharingRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a while, then try again.'**
+  String get sharingRateLimited;
+
+  /// No description provided for @sharingUnsupportedAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'This sign-in method is not supported. Use a supported local user account on the server for sharing.'**
+  String get sharingUnsupportedAuth;
+
+  /// No description provided for @sharingIncompatibleServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server version is not compatible with sharing in this app. Check the server plugin; local data stays on this device.'**
+  String get sharingIncompatibleServer;
+
+  /// No description provided for @sharingValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'The data is invalid. Check your input and try again.'**
+  String get sharingValidationError;
+
+  /// No description provided for @sharingRegistrationPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A new password needs at least 12 characters (at most 72 bytes).'**
+  String get sharingRegistrationPasswordHint;
+
+  /// No description provided for @sharingBlockedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'These changes are blocked because access was revoked. You can export them. Restored access requires an explicit choice to resume them.'**
+  String get sharingBlockedDescription;
+
+  /// No description provided for @sharingAdvancedLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional sign-in options'**
+  String get sharingAdvancedLogin;
+
+  /// No description provided for @sharingMoreDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Record details'**
+  String get sharingMoreDetails;
+
+  /// No description provided for @sharingNoConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes need a decision.'**
+  String get sharingNoConflicts;
+
+  /// No description provided for @sharingRefreshMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh members'**
+  String get sharingRefreshMembers;
+
+  /// No description provided for @sharingDeletedConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This record was deleted on the server. You can save your version in an export; accepting the server state does not restore it.'**
+  String get sharingDeletedConflict;
+
+  /// No description provided for @sharingRelatedConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Related records have changed. First save your version, accept the server state, and review related records. You can then explicitly create a copy or choose deletion again.'**
+  String get sharingRelatedConflict;
+
+  /// No description provided for @sharingStaleEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'This record changed while you were editing it. Close the editor and open the latest version; you can copy your text first.'**
+  String get sharingStaleEditor;
+
+  /// No description provided for @sharingInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The server response cannot be used safely. Check plugin compatibility. Local changes remain on this device.'**
+  String get sharingInvalidResponse;
+
+  /// No description provided for @sharingRequestMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected a repeated request with different content. Save your changes in an export and review the state; do not blindly resend the request.'**
+  String get sharingRequestMismatch;
+
+  /// No description provided for @planningAssignees.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to'**
+  String get planningAssignees;
+
+  /// No description provided for @planningUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Not assigned yet'**
+  String get planningUnassigned;
+
+  /// No description provided for @planningFormerMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Former member'**
+  String get planningFormerMember;
+
+  /// No description provided for @planningSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned schedule'**
+  String get planningSchedule;
+
+  /// No description provided for @planningStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get planningStart;
+
+  /// No description provided for @planningEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get planningEnd;
+
+  /// No description provided for @planningDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get planningDue;
+
+  /// No description provided for @planningCreatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Created by'**
+  String get planningCreatedBy;
+
+  /// No description provided for @planningUpdatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated by'**
+  String get planningUpdatedBy;
+
+  /// No description provided for @planningInvalidSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'The end cannot be before the start.'**
+  String get planningInvalidSchedule;
+
+  /// No description provided for @planningSharedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today in this shared space'**
+  String get planningSharedToday;
+
+  /// No description provided for @planningTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get planningTimeline;
+
+  /// No description provided for @planningNoAgenda.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no shared scheduled items for this day.'**
+  String get planningNoAgenda;
+
+  /// No description provided for @planningNoTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a schedule to a task or project to see the timeline.'**
+  String get planningNoTimeline;
+
+  /// No description provided for @planningAllPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get planningAllPeople;
+
+  /// No description provided for @planningNoTime.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule'**
+  String get planningNoTime;
+
+  /// No description provided for @planningPreviousDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day'**
+  String get planningPreviousDay;
+
+  /// No description provided for @planningNextDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Next day'**
+  String get planningNextDay;
+
+  /// No description provided for @financeMinorUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'minor units'**
+  String get financeMinorUnits;
+
+  /// No description provided for @financeUnspecifiedPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get financeUnspecifiedPerson;
+
+  /// No description provided for @financeUnavailableAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account unavailable'**
+  String get financeUnavailableAccount;
+
+  /// No description provided for @financePosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted'**
+  String get financePosted;
+
+  /// No description provided for @financePlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get financePlanned;
+
+  /// No description provided for @financeAddTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add transfer'**
+  String get financeAddTransfer;
+
+  /// No description provided for @financeTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get financeTransfer;
+
+  /// No description provided for @financeInternalTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer between accounts'**
+  String get financeInternalTransfer;
+
+  /// No description provided for @financeAddAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get financeAddAccount;
+
+  /// No description provided for @financeNoAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the first financial account in this space.'**
+  String get financeNoAccounts;
+
+  /// No description provided for @financeAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial accounts'**
+  String get financeAccounts;
+
+  /// No description provided for @financeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial account'**
+  String get financeAccount;
+
+  /// No description provided for @financeAllAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'All accounts'**
+  String get financeAllAccounts;
+
+  /// No description provided for @financePayerRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer / recipient'**
+  String get financePayerRecipient;
+
+  /// No description provided for @financeEnteredBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered by'**
+  String get financeEnteredBy;
+
+  /// No description provided for @financeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry status'**
+  String get financeStatus;
+
+  /// No description provided for @financeAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All statuses'**
+  String get financeAllStatuses;
+
+  /// No description provided for @financeNoMatchingEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries match these filters.'**
+  String get financeNoMatchingEntries;
+
+  /// No description provided for @financeCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get financeCategory;
+
+  /// No description provided for @financePayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer'**
+  String get financePayer;
+
+  /// No description provided for @financeRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient'**
+  String get financeRecipient;
+
+  /// No description provided for @financeJointAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Joint account'**
+  String get financeJointAccount;
+
+  /// No description provided for @financeAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'Change history'**
+  String get financeAudit;
+
+  /// No description provided for @financeScopeTotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire financial space'**
+  String get financeScopeTotals;
+
+  /// No description provided for @financeTransfersExcluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals include posted entries. Transfers between accounts are not new income or expenses. The filters below apply to the table.'**
+  String get financeTransfersExcluded;
+
+  /// No description provided for @financeSharedAccountsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'These accounts are shared in this space. Private local accounts are not connected automatically.'**
+  String get financeSharedAccountsDescription;
+
+  /// No description provided for @financeDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date and time'**
+  String get financeDate;
+
+  /// No description provided for @planningAllProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'All projects'**
+  String get planningAllProjects;
+
+  /// No description provided for @inboxDeviceReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'It is time for your reminder. Open the app for details.'**
+  String get inboxDeviceReminder;
+
+  /// No description provided for @inboxDeviceEventReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Your event is approaching. Open the app for details.'**
+  String get inboxDeviceEventReminder;
+
+  /// No description provided for @inboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get inboxTitle;
+
+  /// No description provided for @inboxForMe.
+  ///
+  /// In en, this message translates to:
+  /// **'For me'**
+  String get inboxForMe;
+
+  /// No description provided for @inboxInSharedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'In a shared space'**
+  String get inboxInSharedSpace;
+
+  /// No description provided for @inboxAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get inboxAll;
+
+  /// No description provided for @inboxRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get inboxRead;
+
+  /// No description provided for @inboxMarkRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get inboxMarkRead;
+
+  /// No description provided for @inboxMarkUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as unread'**
+  String get inboxMarkUnread;
+
+  /// No description provided for @inboxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no notifications in this view yet.'**
+  String get inboxEmpty;
+
+  /// No description provided for @inboxSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get inboxSettings;
+
+  /// No description provided for @inboxDeviceSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders on this device'**
+  String get inboxDeviceSettings;
+
+  /// No description provided for @inboxDevicePrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications show a generic reminder only. Open the app for details. Enabling applies to personal and accessible shared reminders on this device.'**
+  String get inboxDevicePrivacy;
+
+  /// No description provided for @inboxDeviceEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable system reminders'**
+  String get inboxDeviceEnable;
+
+  /// No description provided for @inboxSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get inboxSound;
+
+  /// No description provided for @inboxDeviceUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed system notifications are not supported here. The in-app notification center remains available.'**
+  String get inboxDeviceUnsupported;
+
+  /// No description provided for @inboxDeviceDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'System permission is not enabled. Change it in device settings and return to the app.'**
+  String get inboxDeviceDenied;
+
+  /// No description provided for @inboxDeviceGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Device permission is enabled.'**
+  String get inboxDeviceGranted;
+
+  /// No description provided for @inboxDeviceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'System permission status has not been confirmed yet.'**
+  String get inboxDeviceUnknown;
+
+  /// No description provided for @inboxDeviceError.
+  ///
+  /// In en, this message translates to:
+  /// **'System reminders could not be prepared. Check device permissions and try again; your data remains saved.'**
+  String get inboxDeviceError;
+
+  /// No description provided for @inboxDeviceInexact.
+  ///
+  /// In en, this message translates to:
+  /// **'Android may deliver the notification later, especially in battery-saving mode.'**
+  String get inboxDeviceInexact;
+
+  /// No description provided for @inboxDeviceLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} later reminders are waiting. The nearest 60 are scheduled; the list is replenished when the app opens or refreshes.'**
+  String inboxDeviceLimit(int count);
+
+  /// No description provided for @inboxDeviceScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled reminders: {count}.'**
+  String inboxDeviceScheduled(int count);
+
+  /// No description provided for @inboxDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'The source record was deleted.'**
+  String get inboxDeleted;
+
+  /// No description provided for @inboxNeedsConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'A connection is needed to verify access and open this notification.'**
+  String get inboxNeedsConnection;
+
+  /// No description provided for @inboxWrongAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This notification belongs to another account. Sign in with the correct account.'**
+  String get inboxWrongAccount;
+
+  /// No description provided for @inboxOfflineView.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline · last accessible copy. Current server permissions cannot be checked.'**
+  String get inboxOfflineView;
+
+  /// No description provided for @inboxPersonalReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Reminder for {count} task} other{Reminders for {count} tasks}}'**
+  String inboxPersonalReminders(int count);
+
+  /// No description provided for @inboxTasksAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} task was assigned to you} other{{count} tasks were assigned to you}}'**
+  String inboxTasksAssigned(int count);
+
+  /// No description provided for @inboxTaskCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} task was added} other{{count} tasks were added}}'**
+  String inboxTaskCreated(int count);
+
+  /// No description provided for @inboxEventCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'An event was added'**
+  String get inboxEventCreated;
+
+  /// No description provided for @inboxEventAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'An event was assigned to you'**
+  String get inboxEventAssigned;
+
+  /// No description provided for @inboxShoppingListCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'A shopping list was added'**
+  String get inboxShoppingListCreated;
+
+  /// No description provided for @inboxShoppingItemsCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} item was added} other{{count} items were added}}'**
+  String inboxShoppingItemsCreated(int count);
+
+  /// No description provided for @inboxMemberJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'A member joined'**
+  String get inboxMemberJoined;
+
+  /// No description provided for @inboxRecordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'A record was updated'**
+  String get inboxRecordUpdated;
+
+  /// No description provided for @inboxRecordDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'A record was deleted'**
+  String get inboxRecordDeleted;
+
+  /// No description provided for @inboxTaskCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'A task was completed'**
+  String get inboxTaskCompleted;
+
+  /// No description provided for @inboxShoppingChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'An item was marked as bought'**
+  String get inboxShoppingChecked;
+
+  /// No description provided for @inboxFinanceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'A shared finance change'**
+  String get inboxFinanceChanged;
+
+  /// No description provided for @inboxProjectChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'A project change'**
+  String get inboxProjectChanged;
+
+  /// No description provided for @inboxReminderDue.
+  ///
+  /// In en, this message translates to:
+  /// **'It is time for a reminder'**
+  String get inboxReminderDue;
+
+  /// No description provided for @inboxOpenToView.
+  ///
+  /// In en, this message translates to:
+  /// **'Open for details'**
+  String get inboxOpenToView;
+
+  /// No description provided for @inboxSharedPreferencesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support notification preferences yet.'**
+  String get inboxSharedPreferencesUnavailable;
+
+  /// No description provided for @planningFullDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Full shared day'**
+  String get planningFullDay;
+
+  /// No description provided for @sharingView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get sharingView;
+
+  /// No description provided for @financeEditAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit account'**
+  String get financeEditAccount;
+
+  /// No description provided for @financeOpeningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get financeOpeningBalance;
+
+  /// No description provided for @financeDeleteAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'You can delete an account when it has no linked entries or transfers.'**
+  String get financeDeleteAccountDescription;
+
+  /// No description provided for @financeEditEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit financial entry'**
+  String get financeEditEntry;
+
+  /// No description provided for @financeAccountCurrencyAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount in selected account currency'**
+  String get financeAccountCurrencyAmount;
+
+  /// No description provided for @financeEditTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transfer'**
+  String get financeEditTransfer;
+
+  /// No description provided for @financeTransferDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A transfer moves funds between shared accounts in the same currency within this space. It does not count as income or expense.'**
+  String get financeTransferDescription;
+
+  /// No description provided for @financeFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'From account'**
+  String get financeFromAccount;
+
+  /// No description provided for @financeToAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'To account'**
+  String get financeToAccount;
+
+  /// No description provided for @financeInvalidTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose two different accounts in the same currency.'**
+  String get financeInvalidTransfer;
+
+  /// No description provided for @financeNoAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'No financial audit yet.'**
+  String get financeNoAudit;
+
+  /// No description provided for @financeRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision'**
+  String get financeRevision;
+
+  /// No description provided for @financeBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Before change'**
+  String get financeBefore;
+
+  /// No description provided for @financeAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After change'**
+  String get financeAfter;
+
+  /// No description provided for @financeEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable shared finances'**
+  String get financeEnable;
+
+  /// No description provided for @financeDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances are not enabled in this space yet.'**
+  String get financeDisabled;
+
+  /// No description provided for @financeNoAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have finance access in this space. The owner can grant viewing or editing rights.'**
+  String get financeNoAccess;
+
+  /// No description provided for @financePermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance access'**
+  String get financePermissions;
+
+  /// No description provided for @financeGrantNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No access'**
+  String get financeGrantNone;
+
+  /// No description provided for @financeGrantRead.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get financeGrantRead;
+
+  /// No description provided for @financeGrantWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get financeGrantWrite;
+
+  /// No description provided for @financeLoadingSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the complete financial overview.'**
+  String get financeLoadingSnapshot;
+
+  /// No description provided for @financeUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support shared finances yet.'**
+  String get financeUnsupported;
+
+  /// No description provided for @financeDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable finances'**
+  String get financeDisable;
+
+  /// No description provided for @financeDisableDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances will be hidden from members. Records and my unsynced changes are retained.'**
+  String get financeDisableDescription;
+
+  /// No description provided for @financePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial changes are waiting to sync.'**
+  String get financePending;
+
+  /// No description provided for @financeBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial changes are blocked. Save a copy before resolving access.'**
+  String get financeBlocked;
+
+  /// No description provided for @financeConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicting financial changes'**
+  String get financeConflicts;
+
+  /// No description provided for @inboxPreferencesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences apply to the selected shared space and notification type. System reminders on this device are a separate setting.'**
+  String get inboxPreferencesDescription;
+
+  /// No description provided for @inboxChannelInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'In notification center'**
+  String get inboxChannelInApp;
+
+  /// No description provided for @inboxChannelSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder sound'**
+  String get inboxChannelSound;
+
+  /// No description provided for @inboxChannelPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote system notifications'**
+  String get inboxChannelPush;
+
+  /// No description provided for @inboxChannelEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get inboxChannelEmail;
+
+  /// No description provided for @inboxChannelUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This channel is unavailable on this server.'**
+  String get inboxChannelUnavailable;
+
+  /// No description provided for @inboxPreferencesUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support notification preferences yet.'**
+  String get inboxPreferencesUnsupported;
+
+  /// No description provided for @inboxCategoryAssignments.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments'**
+  String get inboxCategoryAssignments;
+
+  /// No description provided for @inboxCategoryTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks and plans'**
+  String get inboxCategoryTasks;
+
+  /// No description provided for @inboxCategoryShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get inboxCategoryShopping;
+
+  /// No description provided for @inboxCategoryMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get inboxCategoryMembers;
+
+  /// No description provided for @inboxCategoryReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get inboxCategoryReminders;
+
+  /// No description provided for @inboxCategoryFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances'**
+  String get inboxCategoryFinance;
+
+  /// No description provided for @financeHolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Account holder'**
+  String get financeHolder;
+
+  /// No description provided for @inboxScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared space'**
+  String get inboxScope;
+
+  /// No description provided for @inboxCategoryEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get inboxCategoryEvents;
+
+  /// No description provided for @inboxJoinedScope.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined the space'**
+  String get inboxJoinedScope;
+
+  /// No description provided for @financeUnsupportedCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing this currency is not supported yet. The amount remains preserved in minor units.'**
+  String get financeUnsupportedCurrency;
+
+  /// No description provided for @financeTotalBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Total balance'**
+  String get financeTotalBalance;
+
+  /// No description provided for @remotePushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote notifications on this device'**
+  String get remotePushTitle;
+
+  /// No description provided for @remotePushPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications show generic text. Content opens only after checking the account and access.'**
+  String get remotePushPrivacy;
+
+  /// No description provided for @remotePushEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable remote notifications'**
+  String get remotePushEnable;
+
+  /// No description provided for @remotePushUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote notifications are prepared for Android and iPhone. Use the inbox on this platform.'**
+  String get remotePushUnsupported;
+
+  /// No description provided for @remotePushUnconfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'This build has no Firebase configuration yet. The inbox and local reminders remain available.'**
+  String get remotePushUnconfigured;
+
+  /// No description provided for @remotePushInvalidConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification configuration does not match this app. An updated installation is required.'**
+  String get remotePushInvalidConfiguration;
+
+  /// No description provided for @remotePushNeedsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to receive remote notifications. Personal use remains available without an account.'**
+  String get remotePushNeedsAccount;
+
+  /// No description provided for @remotePushDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote notifications on this device are disabled.'**
+  String get remotePushDisabled;
+
+  /// No description provided for @remotePushPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing permission and device registration…'**
+  String get remotePushPreparing;
+
+  /// No description provided for @remotePushDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked by the system. Enable them in device settings and try again.'**
+  String get remotePushDenied;
+
+  /// No description provided for @remotePushWaitingApns.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for Apple to register this device. Check the connection and push-enabled signing.'**
+  String get remotePushWaitingApns;
+
+  /// No description provided for @remotePushRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is registered. Choose notification types for each shared space.'**
+  String get remotePushRegistered;
+
+  /// No description provided for @remotePushOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration is waiting for a connection. App changes remain saved.'**
+  String get remotePushOffline;
+
+  /// No description provided for @remotePushServerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has no compatible remote notification configuration. The inbox remains available.'**
+  String get remotePushServerUnavailable;
+
+  /// No description provided for @remotePushProjectMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The app and server use different Firebase projects. This device is not registered.'**
+  String get remotePushProjectMismatch;
+
+  /// No description provided for @remotePushCleanupRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous device registration could not be removed. Retry before enabling another account.'**
+  String get remotePushCleanupRequired;
+
+  /// No description provided for @remotePushError.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote notifications could not be prepared. Retry; the inbox remains available.'**
+  String get remotePushError;
+
+  /// No description provided for @remotePushRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Check notifications again'**
+  String get remotePushRetry;
+
+  /// No description provided for @remotePushLoginForOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to the account that received this notification.'**
+  String get remotePushLoginForOpen;
+
+  /// No description provided for @remotePushDeviceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'First enable and register remote notifications on this device.'**
+  String get remotePushDeviceUnavailable;
+
+  /// No description provided for @setupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How would you like to start?'**
+  String get setupTitle;
+
+  /// No description provided for @setupIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a starting point. You can change how you use the app in settings later.'**
+  String get setupIntro;
+
+  /// No description provided for @setupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your personal space already works without an account. Optionally connect your devices or create a shared home.'**
+  String get setupHint;
+
+  /// No description provided for @setupChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your starting point'**
+  String get setupChoose;
+
+  /// No description provided for @setupDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on this device'**
+  String get setupDeviceOnly;
+
+  /// No description provided for @setupDeviceOnlyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No account or server. Protect your data with a backup.'**
+  String get setupDeviceOnlyDescription;
+
+  /// No description provided for @setupPrivateDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect my devices'**
+  String get setupPrivateDevices;
+
+  /// No description provided for @setupPrivateDevicesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Private synchronization of my data. Enable upload separately after signing in.'**
+  String get setupPrivateDevicesDescription;
+
+  /// No description provided for @setupHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared home'**
+  String get setupHousehold;
+
+  /// No description provided for @setupHouseholdDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a home and invite another person. Your personal space stays separate.'**
+  String get setupHouseholdDescription;
+
+  /// No description provided for @setupOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting started'**
+  String get setupOpen;
+
+  /// No description provided for @inviteOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invitation'**
+  String get inviteOpenTitle;
+
+  /// No description provided for @inviteOpenWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the server address. Invitations are not accepted automatically; preview it first.'**
+  String get inviteOpenWarning;
+
+  /// No description provided for @inviteOpenContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to invitation'**
+  String get inviteOpenContinue;
+
+  /// No description provided for @inviteLinkInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is not a valid invitation. You can enter the server and code manually in the app.'**
+  String get inviteLinkInvalid;
+
+  /// No description provided for @inviteCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy invitation link'**
+  String get inviteCopyLink;
+
+  /// No description provided for @inviteLinkPrepared.
+  ///
+  /// In en, this message translates to:
+  /// **'The link opens the installed app where the vsakdan scheme is supported. Universal web links are not configured yet.'**
+  String get inviteLinkPrepared;
+
+  /// No description provided for @accountFirstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'First account with a code'**
+  String get accountFirstTitle;
+
+  /// No description provided for @accountFirstDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The server operator provides a one-use setup code. This creates a regular user account. Once the first account exists, others join by invitation.'**
+  String get accountFirstDescription;
+
+  /// No description provided for @accountBootstrapCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator setup code'**
+  String get accountBootstrapCode;
+
+  /// No description provided for @accountCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get accountCreate;
+
+  /// No description provided for @accountPasswordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain 12 to 72 bytes.'**
+  String get accountPasswordRule;
+
+  /// No description provided for @accountForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password'**
+  String get accountForgotPassword;
+
+  /// No description provided for @accountResetRequestDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A code is sent only to an already verified email address. For privacy, we do not reveal whether a username exists.'**
+  String get accountResetRequestDescription;
+
+  /// No description provided for @accountSendReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Request recovery code'**
+  String get accountSendReset;
+
+  /// No description provided for @accountResetGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'If this account supports recovery, a code was sent to its verified address.'**
+  String get accountResetGeneric;
+
+  /// No description provided for @accountResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I have a recovery code'**
+  String get accountResetConfirm;
+
+  /// No description provided for @accountResetConfirmDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the received code and a new password. Two-factor accounts also require a TOTP code. Sign in again afterward; old device sessions are revoked.'**
+  String get accountResetConfirmDescription;
+
+  /// No description provided for @accountEmailCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Email code'**
+  String get accountEmailCode;
+
+  /// No description provided for @accountResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get accountResetPassword;
+
+  /// No description provided for @accountResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset. Sign in with the new password.'**
+  String get accountResetDone;
+
+  /// No description provided for @accountEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and account recovery'**
+  String get accountEmailTitle;
+
+  /// No description provided for @accountEmailNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No email address is set yet.'**
+  String get accountEmailNone;
+
+  /// No description provided for @accountEmailVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified address'**
+  String get accountEmailVerified;
+
+  /// No description provided for @accountEmailUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Address is not verified yet'**
+  String get accountEmailUnverified;
+
+  /// No description provided for @accountEmailPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting verification'**
+  String get accountEmailPending;
+
+  /// No description provided for @accountEmailChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Set or change email'**
+  String get accountEmailChange;
+
+  /// No description provided for @accountEmailRequestDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your password again and TOTP if required. Your current verified address stays active until you verify the new one.'**
+  String get accountEmailRequestDescription;
+
+  /// No description provided for @accountEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get accountEmail;
+
+  /// No description provided for @accountEmailSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send verification code'**
+  String get accountEmailSend;
+
+  /// No description provided for @accountEmailConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm email code'**
+  String get accountEmailConfirm;
+
+  /// No description provided for @accountEmailSent.
+  ///
+  /// In en, this message translates to:
+  /// **'A verification code was requested. Enter it after receiving the email.'**
+  String get accountEmailSent;
+
+  /// No description provided for @accountEmailUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has not configured account security email yet.'**
+  String get accountEmailUnavailable;
+
+  /// No description provided for @accountCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The code is invalid, expired or already used. Request a new one.'**
+  String get accountCodeInvalid;
+
+  /// No description provided for @accountEnrollmentUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'First-account setup is no longer available here. Sign in or use an invitation.'**
+  String get accountEnrollmentUnavailable;
+
+  /// No description provided for @privateSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My devices'**
+  String get privateSyncTitle;
+
+  /// No description provided for @privateSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A private space for this account only. Other people cannot be invited.'**
+  String get privateSyncDescription;
+
+  /// No description provided for @privateSyncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal data currently stays on this device. Signing in does not upload it automatically.'**
+  String get privateSyncOff;
+
+  /// No description provided for @privateSyncReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review before enabling'**
+  String get privateSyncReview;
+
+  /// No description provided for @privateSyncEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable private synchronization'**
+  String get privateSyncEnable;
+
+  /// No description provided for @privateSyncUploadWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This uploads the reviewed personal records, including personal finances, to your account’s private space. Server synchronization is not a backup.'**
+  String get privateSyncUploadWarning;
+
+  /// No description provided for @privateSyncRemoteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing records in private space'**
+  String get privateSyncRemoteCount;
+
+  /// No description provided for @privateSyncOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Private synchronization is enabled.'**
+  String get privateSyncOn;
+
+  /// No description provided for @privateSyncPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization is paused. Local work remains saved.'**
+  String get privateSyncPaused;
+
+  /// No description provided for @privateSyncPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause synchronization'**
+  String get privateSyncPause;
+
+  /// No description provided for @privateSyncResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume synchronization'**
+  String get privateSyncResume;
+
+  /// No description provided for @privateSyncUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Private synchronization requires sign-in and a supported server.'**
+  String get privateSyncUnavailable;
+
+  /// No description provided for @privateSyncPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending changes'**
+  String get privateSyncPending;
+
+  /// No description provided for @privateSyncIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve incompatible or conflicting records before enabling. Personal data stays on this device.'**
+  String get privateSyncIssue;
+
+  /// No description provided for @backupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted backup'**
+  String get backupTitle;
+
+  /// No description provided for @backupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A password protects this copy of personal records, settings and authorized shared work. Credentials are excluded. This does not add encryption to the active database.'**
+  String get backupDescription;
+
+  /// No description provided for @backupCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get backupCreate;
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get backupRestore;
+
+  /// No description provided for @backupPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get backupPassword;
+
+  /// No description provided for @backupPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The password is not saved. If you forget it, we cannot open the backup.'**
+  String get backupPasswordHint;
+
+  /// No description provided for @backupPasswordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 12 characters and no more than 1024 UTF-8 bytes.'**
+  String get backupPasswordRule;
+
+  /// No description provided for @backupPrepare.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare encrypted backup'**
+  String get backupPrepare;
+
+  /// No description provided for @backupPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose encrypted backup'**
+  String get backupPick;
+
+  /// No description provided for @backupOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open and review backup'**
+  String get backupOpen;
+
+  /// No description provided for @backupReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Content review'**
+  String get backupReview;
+
+  /// No description provided for @backupSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save backup file'**
+  String get backupSave;
+
+  /// No description provided for @backupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup file saved.'**
+  String get backupSaved;
+
+  /// No description provided for @backupCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get backupCreatedAt;
+
+  /// No description provided for @backupScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared spaces in backup'**
+  String get backupScopes;
+
+  /// No description provided for @backupPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsent operations in backup'**
+  String get backupPending;
+
+  /// No description provided for @backupCredentialsExcluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords, device sessions and notification tokens are excluded.'**
+  String get backupCredentialsExcluded;
+
+  /// No description provided for @backupRemoteQuarantine.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored shared work stays protected and separate. After signing in to the matching account, review it and explicitly allow recovery; nothing is sent automatically.'**
+  String get backupRemoteQuarantine;
+
+  /// No description provided for @backupMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with personal records'**
+  String get backupMerge;
+
+  /// No description provided for @backupReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace personal records'**
+  String get backupReplace;
+
+  /// No description provided for @backupMergeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add missing personal records. Different content with the same ID rejects the entire merge.'**
+  String get backupMergeDescription;
+
+  /// No description provided for @backupReplaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup replaces current personal records. Save a current backup first.'**
+  String get backupReplaceDescription;
+
+  /// No description provided for @backupRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm restore'**
+  String get backupRestoreConfirm;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored. Shared work is not sent automatically.'**
+  String get backupRestored;
+
+  /// No description provided for @backupWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'The password is incorrect or the backup is damaged. Data was not changed.'**
+  String get backupWrongPassword;
+
+  /// No description provided for @backupUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup version cannot be opened. Use a compatible app.'**
+  String get backupUnsupported;
+
+  /// No description provided for @backupChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This preview is no longer current. Prepare the backup again or review the contents before restoring.'**
+  String get backupChanged;
+
+  /// No description provided for @backupRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored shared work'**
+  String get backupRecoveryTitle;
+
+  /// No description provided for @backupRecoveryReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review restored work'**
+  String get backupRecoveryReview;
+
+  /// No description provided for @backupRecoveryResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow restored work to resume'**
+  String get backupRecoveryResume;
+
+  /// No description provided for @backupRecoveryBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This work requires the matching account and current access. The copy remains protected.'**
+  String get backupRecoveryBlocked;
+
+  /// No description provided for @backupRecoveryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No restored shared-work packages.'**
+  String get backupRecoveryNone;
+
+  /// No description provided for @backupReadError.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not be opened or saved. Try again.'**
+  String get backupReadError;
+
+  /// No description provided for @backupShoppingItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping items'**
+  String get backupShoppingItems;
+
+  /// No description provided for @backupOtherRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Other records'**
+  String get backupOtherRecords;
+
+  /// No description provided for @backupSaveCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving cancelled. The file was not saved.'**
+  String get backupSaveCancelled;
+
+  /// No description provided for @backupDownloadStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup download started. Check your browser downloads.'**
+  String get backupDownloadStarted;
+
+  /// No description provided for @backupSourceAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup account'**
+  String get backupSourceAccount;
+
+  /// No description provided for @backupSourceServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup server'**
+  String get backupSourceServer;
+
+  /// No description provided for @backupLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Device only'**
+  String get backupLocalOnly;
+
+  /// No description provided for @backupAccountMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal records can be restored locally. Resuming shared work checks the account and permissions again.'**
+  String get backupAccountMatches;
+
+  /// No description provided for @backupAccountDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup belongs to another account. Shared work stays protected until you sign in to the matching account.'**
+  String get backupAccountDifferent;
+
+  /// No description provided for @backupCompleteness.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded.'**
+  String get backupCompleteness;
+
+  /// No description provided for @backupTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup exceeds the 64 MiB limit. Your data was not changed.'**
+  String get backupTooLarge;
+
+  /// No description provided for @backupMergeConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup contains different content with an existing ID. Merge was rejected; your data was not changed.'**
+  String get backupMergeConflict;
+
+  /// No description provided for @privateSyncLocalPending.
+  ///
+  /// In en, this message translates to:
+  /// **'New local records are awaiting your review.'**
+  String get privateSyncLocalPending;
+
+  /// No description provided for @backupRecoveryState.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered work status'**
+  String get backupRecoveryState;
+
+  /// No description provided for @backupRecoveryReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to review and resume'**
+  String get backupRecoveryReady;
+
+  /// No description provided for @backupLegacyJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy unencrypted JSON export'**
+  String get backupLegacyJson;
+
+  /// No description provided for @backupIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Some cached spaces in this backup are incomplete. They need to sync again after restoration.'**
+  String get backupIncomplete;
+
+  /// No description provided for @backupArchiveReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate unlocked backup preview. These records do not enter the active account until you explicitly resume permitted work.'**
+  String get backupArchiveReview;
+
+  /// No description provided for @backupCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached record; no pending change'**
+  String get backupCached;
+
+  /// No description provided for @backupSettingsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored settings have not been applied yet. Your records are preserved; try again.'**
+  String get backupSettingsRetry;
+
+  /// No description provided for @privateFinanceIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The private financial view has not fully downloaded. Visible records and pending changes are preserved; totals appear after a complete sync.'**
+  String get privateFinanceIncomplete;
 }
 
 class _AppLocalizationsDelegate

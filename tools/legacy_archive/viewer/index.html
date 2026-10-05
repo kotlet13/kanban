@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Arhiv Kanboard</title>
+  <link rel="stylesheet" href="viewer.css">
+  <script defer src="archive-data.js"></script>
+  <script defer src="viewer.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div><p class="eyebrow">LOKALNI ARHIV · SAMO ZA BRANJE</p><h1>Arhiv Kanboard</h1></div>
+    <button id="integrity-button" class="quiet">Preverjanje zajema</button>
+  </header>
+  <section id="capture" class="capture" aria-label="Podatki o zajemu"></section>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Brskanje po arhivu">
+      <label for="search">Poišči projekt ali opravilo</label>
+      <input id="search" type="search" placeholder="Naslov, opis ali številka …" autocomplete="off">
+      <label for="status">Stanje opravila</label>
+      <select id="status"><option value="all">Vsa opravila</option><option value="open">Odprta</option><option value="closed">Zaključena</option></select>
+      <nav id="navigation" aria-label="Pogledi"></nav>
+      <p class="sidebar-note">Vsebina ostane na tem računalniku. Izvirniki in zasebni del varnostne kopije so shranjeni ločeno.</p>
+    </aside>
+    <main id="content" tabindex="-1"></main>
+  </div>
+  <dialog id="task-dialog" aria-labelledby="task-title"><header class="dialog-header"><h2 id="task-title"></h2><button id="close-dialog" class="quiet">Zapri</button></header><div id="task-content"></div></dialog>
+  <noscript>Za prikaz lokalne datoteke archive-data.js omogoči JavaScript. Pregledovalnik ne uporablja omrežja.</noscript>
+</body>
+</html>

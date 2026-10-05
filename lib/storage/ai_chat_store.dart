@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -82,26 +83,55 @@ class AiChatThread {
   }
 }
 
+/// Account-bound local history. Unscoped v1 records remain on disk but are
+/// deliberately not claimed by any account; migrating them requires ownership.
 class AiChatStore {
-  const AiChatStore();
+  AiChatStore({this.scope}) : _generation = _generations[scope] ?? 0;
 
-  static const String _threadsKey = 'ai_chat_threads_v1';
+  final String? scope;
+  final int _generation;
+  static final Map<String?, int> _generations = {};
+  static final Map<String, Future<void>> _pending = {};
+  String get _threadsKey => 'ai_chat_threads_v2_$scope';
+  bool get _active =>
+      scope != null && _generation == (_generations[scope] ?? 0);
 
-  Future<List<AiChatThread>> readAll() async {
+  void _requireActive() {
+    if (!_active) {
+      throw StateError('AI history requires an active account scope');
+    }
+  }
+
+  Future<T> _enqueue<T>(Future<T> Function() operation) {
+    final key = scope ?? '';
+    final result = Completer<T>();
+    _pending[key] = (_pending[key] ?? Future<void>.value()).then((_) async {
+      try {
+        result.complete(await operation());
+      } catch (error, stack) {
+        result.completeError(error, stack);
+      }
+    });
+    return result.future;
+  }
+
+  Future<List<AiChatThread>> readAll() =>
+      _enqueue(() async => _active ? _readAll() : const <AiChatThread>[]);
+
+  Future<List<AiChatThread>> _readAll() async {
+    _requireActive();
     final prefs = await SharedPreferences.getInstance();
+    if (!_active) return const [];
     final raw = prefs.getString(_threadsKey);
     if (raw == null || raw.trim().isEmpty) return const <AiChatThread>[];
-    try {
-      final decoded = jsonDecode(raw) as List<dynamic>;
-      return decoded
-          .whereType<Map<String, dynamic>>()
-          .map(AiChatThread.fromJson)
-          .where((t) => t.id.isNotEmpty)
-          .toList()
-        ..sort((a, b) => b.updatedAtMs.compareTo(a.updatedAtMs));
-    } catch (_) {
-      return const <AiChatThread>[];
-    }
+    // Malformed account data must not be silently overwritten as empty history.
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded
+        .whereType<Map<String, dynamic>>()
+        .map(AiChatThread.fromJson)
+        .where((t) => t.id.isNotEmpty)
+        .toList()
+      ..sort((a, b) => b.updatedAtMs.compareTo(a.updatedAtMs));
   }
 
   Future<List<AiChatThread>> readByProject(int projectId) async {
@@ -110,21 +140,41 @@ class AiChatStore {
       ..sort((a, b) => b.updatedAtMs.compareTo(a.updatedAtMs));
   }
 
-  Future<void> saveThread(AiChatThread thread) async {
-    final all = await readAll();
-    final next = <AiChatThread>[thread, ...all.where((t) => t.id != thread.id)];
-    await _writeAll(next);
-  }
+  Future<void> saveThread(AiChatThread thread) => _enqueue(() async {
+    _requireActive();
+    final all = await _readAll();
+    _requireActive();
+    await _writeAll([thread, ...all.where((t) => t.id != thread.id)]);
+  });
 
-  Future<void> deleteThread(String id) async {
-    final all = await readAll();
-    final next = all.where((t) => t.id != id).toList();
-    await _writeAll(next);
-  }
+  Future<void> deleteThread(String id) => _enqueue(() async {
+    _requireActive();
+    final all = await _readAll();
+    _requireActive();
+    await _writeAll(all.where((t) => t.id != id).toList());
+  });
 
   Future<void> _writeAll(List<AiChatThread> threads) async {
     final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(threads.map((t) => t.toJson()).toList());
-    await prefs.setString(_threadsKey, encoded);
+    _requireActive();
+    if (!await prefs.setString(
+      _threadsKey,
+      jsonEncode(threads.map((t) => t.toJson()).toList()),
+    )) {
+      throw StateError('AI history could not be saved');
+    }
+  }
+
+  /// Invalidates in-flight writers from this account before queued cleanup.
+  /// New store instances created after sign-in can use this scope again.
+  Future<void> clearScope() {
+    if (scope == null) return Future.value();
+    _generations[scope] = (_generations[scope] ?? 0) + 1;
+    return _enqueue(() async {
+      final prefs = await SharedPreferences.getInstance();
+      if (!await prefs.remove(_threadsKey)) {
+        throw StateError('AI history could not be cleared');
+      }
+    });
   }
 }

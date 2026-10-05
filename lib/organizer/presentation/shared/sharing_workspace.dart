@@ -1,0 +1,257 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../l10n/l10n.dart';
+import '../../state/collaboration_provider.dart';
+import '../organizer_widgets.dart';
+import '../finance/shared_finance_workspace.dart';
+import '../projects_page.dart';
+import '../shopping_page.dart';
+import '../planning/shared_agenda_page.dart';
+import '../inbox/notification_target_view.dart';
+import 'collaboration_actions.dart';
+import 'sharing_conflicts.dart';
+import 'sharing_errors.dart';
+import 'sharing_forms.dart';
+import 'sharing_recovery.dart';
+import 'sharing_session_boundary.dart';
+import 'sharing_status.dart';
+
+enum SharingView { shopping, projects, tasks, agenda, timeline, finances }
+
+class SharingWorkspace extends ConsumerWidget {
+  const SharingWorkspace({
+    super.key,
+    required this.view,
+    required this.selectedScopeId,
+    required this.onScopeSelected,
+    required this.onConnect,
+    this.selectedListId,
+    this.selectedProjectId,
+    this.onListSelected,
+    this.onProjectSelected,
+    this.onMembers,
+    this.showScopePicker = true,
+  });
+  final SharingView view;
+  final String? selectedScopeId;
+  final ValueChanged<String> onScopeSelected;
+  final VoidCallback onConnect;
+  final String? selectedListId;
+  final String? selectedProjectId;
+  final ValueChanged<String?>? onListSelected;
+  final ValueChanged<String?>? onProjectSelected;
+  final ValueChanged<String>? onMembers;
+  final bool showScopePicker;
+
+  Future<void> _sync(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(collaborationProvider.notifier);
+    try {
+      await controller.syncNow();
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(sharingErrorMessage(context, error))),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return ref
+        .watch(collaborationProvider)
+        .when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(sharingErrorMessage(context, error)),
+              TextButton(
+                onPressed: () =>
+                    ref.invalidate(collaborationRepositoryProvider),
+                child: Text(l.organizerRetry),
+              ),
+            ],
+          ),
+          data: (state) {
+            if (state.session == null) {
+              return OrganizerEmpty(
+                icon: Icons.people_outline,
+                title: l.sharingShared,
+                description: l.sharingConnectBeforeShared,
+                action: l.sharingConnect,
+                onAction: onConnect,
+              );
+            }
+            final scopes = state.scopes
+                .where((scope) => scope.kind != SharedScopeKind.personal)
+                .toList();
+            if (scopes.isEmpty) {
+              return OrganizerEmpty(
+                icon: Icons.people_outline,
+                title: l.sharingNoSpaces,
+                description: l.sharingScopeDescription,
+                action: l.sharingGoToAccount,
+                onAction: onConnect,
+              );
+            }
+            final scope =
+                scopes
+                    .where((item) => item.id == selectedScopeId)
+                    .firstOrNull ??
+                scopes.first;
+            final data = state.dataForScope(scope.id);
+            final actions = CollaborationActions(context, ref, scope, data);
+            final expired =
+                !state.session!.expiresAt.isAfter(DateTime.now()) ||
+                state.lastError?.code == 'device_revoked' ||
+                state.lastError?.code == 'auth_required';
+            final readOnly = !scope.canEdit || expired;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showScopePicker) ...[
+                  SharingScopePicker(
+                    scopes: scopes,
+                    selectedId: scope.id,
+                    onChanged: onScopeSelected,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                SharingStatus(
+                  state: state,
+                  onSync: () => _sync(context, ref),
+                  onConflicts: () => showSharingConflicts(context, ref),
+                  onExport: () => exportSharingDrafts(context, ref),
+                ),
+                if (expired)
+                  TextButton(
+                    onPressed: onConnect,
+                    child: Text(l.sharingLoginAction),
+                  ),
+                if (scope.revoked) ...[
+                  const SizedBox(height: 20),
+                  Text(l.sharingAccessRevoked),
+                  Text(l.sharingSaveDraftsDescription),
+                  TextButton.icon(
+                    onPressed: () => exportSharingDrafts(context, ref),
+                    icon: const Icon(Icons.file_download_outlined, size: 18),
+                    label: Text(l.sharingSaveDrafts),
+                  ),
+                ] else ...[
+                  if (scope.blocked) ...[
+                    const SizedBox(height: 16),
+                    Text(l.sharingBlockedDescription),
+                    if (scope.role != SharedRole.viewer && !expired)
+                      TextButton(
+                        onPressed: () async {
+                          final confirmed = await confirmSharingAction(
+                            context,
+                            title: l.sharingResumeBlocked,
+                            description: l.sharingResumeBlockedDescription,
+                            confirmLabel: l.sharingResumeBlocked,
+                            wrap: (dialog) => SharingSessionBoundary(
+                              guard: actions.guard,
+                              child: dialog,
+                            ),
+                          );
+                          if (confirmed && context.mounted) {
+                            await actions.run(
+                              () => actions.controller.resumeBlockedChanges(
+                                scope.id,
+                              ),
+                            );
+                          }
+                        },
+                        child: Text(l.sharingResumeBlocked),
+                      ),
+                  ],
+                  if (readOnly && !scope.blocked)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(l.sharingReadOnly),
+                    ),
+                  if (onMembers != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => onMembers!(scope.id),
+                        icon: const Icon(Icons.people_outline, size: 18),
+                        label: Text(l.sharingMembers),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  switch (view) {
+                    SharingView.finances => SharedFinanceWorkspace(
+                      scope: scope,
+                      state: state,
+                    ),
+                    SharingView.shopping => OrganizerShoppingPage(
+                      key: ValueKey(
+                        'shared-shopping-${state.session!.partition}-${scope.id}',
+                      ),
+                      snapshot: sharedPresentationSnapshot(data),
+                      actions: actions,
+                      selectedId: selectedListId,
+                      onSelection: onListSelected ?? (_) {},
+                      readOnly: readOnly,
+                      scopeLabel: '${scope.name} · ${l.sharingShared}',
+                      emptyDescription: l.sharingNoSharedListsDescription,
+                    ),
+                    SharingView.projects => OrganizerProjectsPage(
+                      key: ValueKey(
+                        'shared-projects-${state.session!.partition}-${scope.id}',
+                      ),
+                      snapshot: sharedPresentationSnapshot(data),
+                      actions: actions,
+                      selectedId: selectedProjectId,
+                      onSelection: onProjectSelected ?? (_) {},
+                      readOnly: readOnly,
+                      scopeLabel: '${scope.name} · ${l.sharingShared}',
+                    ),
+                    SharingView.agenda ||
+                    SharingView.timeline => SharedAgendaPage(
+                      key: ValueKey(
+                        'agenda-${state.session!.partition}-${scope.id}-$view',
+                      ),
+                      scope: scope,
+                      data: data,
+                      people: actions.people,
+                      timeline: view == SharingView.timeline,
+                      selectedProjectId: selectedProjectId,
+                      onProjectSelected: onProjectSelected,
+                      onAddEvent: readOnly ? null : () => actions.event(),
+                      onOpen: (item) => showNotificationTarget(
+                        context,
+                        ref,
+                        NotificationTarget(
+                          serverUrl: state.session!.serverUrl,
+                          serverId: state.session!.serverId,
+                          accountId: state.session!.accountId,
+                          scopeId: scope.id,
+                          records: [
+                            NotificationRecordTarget(
+                              type: item.type,
+                              recordId: item.id,
+                            ),
+                          ],
+                        ),
+                        onAccount: onConnect,
+                      ),
+                    ),
+                    SharingView.tasks => OrganizerTasksPage(
+                      snapshot: sharedPresentationSnapshot(data),
+                      actions: actions,
+                      readOnly: readOnly,
+                      scopeLabel: '${scope.name} · ${l.sharingShared}',
+                    ),
+                  },
+                ],
+              ],
+            );
+          },
+        );
+  }
+}

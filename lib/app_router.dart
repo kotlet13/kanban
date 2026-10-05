@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'l10n/l10n.dart';
 import 'features/auth/connect_page.dart';
-import 'features/auth/launch_page.dart';
+import 'organizer/presentation/organizer_shell.dart';
 import 'features/ai/project_ai_chat_page.dart';
 import 'features/board/board_page.dart';
 import 'features/board/project_expenses_page.dart';
@@ -16,9 +16,10 @@ import 'features/settings/project_defaults_page.dart';
 import 'features/tasks/task_details_page.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/launch',
+  initialLocation: '/',
   routes: <RouteBase>[
-    GoRoute(path: '/launch', builder: (context, state) => const LaunchPage()),
+    GoRoute(path: '/', builder: (context, state) => const OrganizerShell()),
+    GoRoute(path: '/launch', redirect: (context, state) => '/'),
     GoRoute(path: '/connect', builder: (context, state) => const ConnectPage()),
     GoRoute(
       path: '/projects',

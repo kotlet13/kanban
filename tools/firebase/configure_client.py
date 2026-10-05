@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""Validate downloaded Firebase mobile client configuration; no network calls."""
+import argparse
+import json
+import plistlib
+import re
+import sys
+import os
+import tempfile
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+def application_identifiers(root=REPO_ROOT):
+    gradle = (root / 'android/app/build.gradle.kts').read_text()
+    android_ids = re.findall(r'\bapplicationId\s*=\s*"([^"\n]+)"', gradle)
+    if len(android_ids) != 1 or 'applicationIdSuffix' in gradle or 'productFlavors' in gradle:
+        raise ValueError('Ambiguous Android application identifier')
+    project = (root / 'ios/Runner.xcodeproj/project.pbxproj').read_text()
+    blocks = re.findall(r'buildSettings\s*=\s*\{(.*?)\};', project, re.S)
+    ios_ids = []
+    for block in blocks:
+        if re.search(r'INFOPLIST_FILE\s*=\s*"?Runner/Info\.plist"?;', block):
+            found = re.findall(r'PRODUCT_BUNDLE_IDENTIFIER\s*=\s*"?([^;"\n]+)"?;', block)
+            if len(found) != 1:
+                raise ValueError('Missing iOS bundle identifier')
+            ios_ids.append(found[0].strip())
+    if not ios_ids or len(set(ios_ids)) != 1:
+        raise ValueError('Ambiguous iOS bundle identifier')
+    for value in [android_ids[0], ios_ids[0]]:
+        if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_-]*(?:\.[A-Za-z][A-Za-z0-9_-]*)+', value):
+            raise ValueError('Unresolved application identifier')
+    return android_ids[0], ios_ids[0]
+
+def validate(data, platform, identifier):
+    if not re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]', str(data['project'])):
+        raise ValueError('Invalid project ID')
+    if not re.fullmatch(r'\d{6,20}', str(data['sender'])):
+        raise ValueError('Invalid sender ID')
+    if not re.fullmatch(r'AIza[A-Za-z0-9_-]{35}', str(data['api'])):
+        raise ValueError('Invalid mobile API key format')
+    if not re.fullmatch(r'1:' + re.escape(str(data['sender'])) + ':' + platform + r':[a-fA-F0-9]{8,64}', str(data['app'])):
+        raise ValueError('App ID does not match sender/platform')
+    if data['identifier'] != identifier:
+        raise ValueError('Firebase app identifier differs from the current app; choose identifiers with the project owner first')
+    return data
+
+def android(path, identifier=None):
+    identifier = identifier or application_identifiers()[0]
+    data = json.loads(Path(path).read_text())
+    if data.get('type') == 'service_account' or 'private_key' in data:
+        raise ValueError('Service-account credentials must never be used in the mobile client')
+    matches = [c for c in data['client'] if c['client_info']['android_client_info']['package_name'] == identifier]
+    if len(matches) != 1:
+        raise ValueError('Expected exactly one client matching the Android application ID')
+    client = matches[0]
+    keys = client.get('api_key', [])
+    if len(keys) != 1:
+        raise ValueError('Expected one mobile client API key')
+    return validate(dict(project=data['project_info']['project_id'], sender=str(data['project_info']['project_number']),
+                         api=keys[0]['current_key'], app=client['client_info']['mobilesdk_app_id'], identifier=identifier), 'android', identifier)
+
+def ios(path, identifier=None):
+    identifier = identifier or application_identifiers()[1]
+    with Path(path).open('rb') as handle:
+        data = plistlib.load(handle)
+    return validate(dict(project=data['PROJECT_ID'], sender=str(data['GCM_SENDER_ID']), api=data['API_KEY'],
+                         app=data['GOOGLE_APP_ID'], identifier=data['BUNDLE_ID']), 'ios', identifier)
+
+def generate(android_config=None, ios_config=None, output_dir=None):
+    root = Path(output_dir) if output_dir else REPO_ROOT
+    configs = [v for v in (android_config, ios_config) if v]
+    if not configs:
+        raise ValueError('Provide an Android or iOS configuration')
+    if len({(v['project'], v['sender']) for v in configs}) != 1:
+        raise ValueError('Both mobile apps must belong to the same Firebase project')
+    out = {'FIREBASE_PROJECT_ID': configs[0]['project'], 'FIREBASE_SENDER_ID': configs[0]['sender']}
+    for platform, config in [('ANDROID', android_config), ('IOS', ios_config)]:
+        if config:
+            out.update({f'FIREBASE_{platform}_API_KEY': config['api'], f'FIREBASE_{platform}_APP_ID': config['app'],
+                        f'FIREBASE_{platform}_' + ('PACKAGE' if platform == 'ANDROID' else 'BUNDLE_ID'): config['identifier']})
+    target = root / '.firebase/client.json'
+    native = root / 'android/app/src/main/res/values/firebase_config.xml'
+    if not android_config and native.exists():
+        raise ValueError('Existing Android configuration requires --android too; partial output would be inconsistent')
+    outputs = {target: (json.dumps(out, indent=2) + '\n').encode()}
+    if android_config:
+        resources = ET.Element('resources')
+        resources.append(ET.Comment(' Generated by tools/firebase/configure_client.py '))
+        for key, value in [('google_app_id', android_config['app']), ('gcm_defaultSenderId', android_config['sender']),
+                           ('google_api_key', android_config['api']), ('project_id', android_config['project'])]:
+            ET.SubElement(resources, 'string', name=key, translatable='false').text = value
+        ET.indent(resources)
+        outputs[native] = ET.tostring(resources, encoding='utf-8', xml_declaration=True)
+    # Stage complete outputs then replace; rollback previous contents if any replace fails.
+    staged, previous, replaced = {}, {}, []
+    try:
+        for path, contents in outputs.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            previous[path] = path.read_bytes() if path.exists() else None
+            with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temp:
+                temp.write(contents)
+                staged[path] = Path(temp.name)
+        for path, temp in staged.items():
+            os.replace(temp, path)
+            replaced.append(path)
+    except OSError:
+        for path in reversed(replaced):
+            if previous[path] is None:
+                path.unlink(missing_ok=True)
+            else:
+                path.write_bytes(previous[path])
+        raise
+    finally:
+        for temp in staged.values():
+            temp.unlink(missing_ok=True)
+    return target
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--android', type=Path)
+    parser.add_argument('--ios', type=Path)
+    parser.add_argument('--output-dir', type=Path)
+    args = parser.parse_args()
+    try:
+        target = generate(android(args.android) if args.android else None, ios(args.ios) if args.ios else None, args.output_dir)
+    except (ValueError, KeyError, TypeError, OSError, plistlib.InvalidFileException):
+        print('Configuration rejected. Check downloaded mobile files, matching identifiers and project. No credential values printed.', file=sys.stderr)
+        return 1
+    print(f'Client configuration written to {target}; no network request made.')
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

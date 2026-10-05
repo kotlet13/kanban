@@ -11,7 +11,38 @@ plugins {
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+
+val releaseSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val hasReleaseSigning = releaseSigningKeys.all {
+    !keystoreProperties.getProperty(it).isNullOrBlank()
+}
+val releaseKeystoreFile = keystoreProperties.getProperty("storeFile")
+    ?.takeIf { it.isNotBlank() }
+    ?.let { path ->
+        val moduleRelativeFile = file(path)
+        if (moduleRelativeFile.exists()) moduleRelativeFile else rootProject.file(path)
+    }
+
+// Missing private signing settings must not prevent development builds. The
+// release variant always checks them before building and never uses debug keys.
+val validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        if (!hasReleaseSigning) {
+            throw GradleException(
+                "Release signing requires android/key.properties with non-empty " +
+                    releaseSigningKeys.joinToString(", ") + "."
+            )
+        }
+        if (releaseKeystoreFile?.isFile != true) {
+            throw GradleException("Release signing requires an existing keystore file.")
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "preReleaseBuild") dependsOn(validateReleaseSigning)
 }
 
 android {
@@ -20,12 +51,13 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -41,17 +73,12 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFilePath = keystoreProperties["storeFile"] as String
-            val moduleRelativeStoreFile = file(storeFilePath)
-            val rootRelativeStoreFile = rootProject.file(storeFilePath)
-            storeFile = if (moduleRelativeStoreFile.exists()) {
-                moduleRelativeStoreFile
-            } else {
-                rootRelativeStoreFile
+            if (hasReleaseSigning) {
+                storeFile = releaseKeystoreFile
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
             }
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
         }
     }
 
@@ -64,4 +91,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

@@ -11,6 +11,7 @@ import '../storage/ai_consent_store.dart';
 import '../storage/ai_chat_store.dart';
 import '../storage/ai_settings_store.dart';
 import '../storage/cache_store.dart';
+import '../storage/account_scope.dart';
 import '../storage/credentials_store.dart';
 import '../storage/locale_store.dart';
 import '../storage/project_defaults_store.dart';
@@ -31,11 +32,20 @@ final sessionCredentialsProvider = StateProvider<KanboardCredentials?>(
 final kanboardApiProvider = Provider<KanboardApi?>((ref) {
   final credentials = ref.watch(sessionCredentialsProvider);
   if (credentials == null) return null;
-  return KanboardApi.fromCredentials(credentials);
+  final api = KanboardApi.fromCredentials(credentials);
+  ref.onDispose(api.close);
+  return api;
 });
 
+final _cacheStorageProvider = FutureProvider<CacheStore>(
+  (ref) => CacheStore.create(),
+);
+
 final cacheStoreProvider = FutureProvider<CacheStore>((ref) async {
-  return CacheStore.create();
+  final credentials = ref.watch(sessionCredentialsProvider);
+  if (credentials == null) throw StateError('An active account is required.');
+  final storage = await ref.read(_cacheStorageProvider.future);
+  return storage.forAccount(credentials);
 });
 
 final projectDefaultsStoreProvider = Provider<ProjectDefaultsStore>(
@@ -59,11 +69,19 @@ final aiSettingsStoreProvider = Provider<AiSettingsStore>(
   (ref) => const AiSettingsStore(),
 );
 
-final aiChatStoreProvider = Provider<AiChatStore>((ref) => const AiChatStore());
+final aiChatStoreProvider = Provider<AiChatStore>((ref) {
+  final credentials = ref.watch(sessionCredentialsProvider);
+  return AiChatStore(
+    scope: credentials == null ? null : accountScopeKey(credentials),
+  );
+});
 
-final aiConsentStoreProvider = Provider<AiConsentStore>(
-  (ref) => const AiConsentStore(),
-);
+final aiConsentStoreProvider = Provider<AiConsentStore>((ref) {
+  final credentials = ref.watch(sessionCredentialsProvider);
+  return AiConsentStore(
+    scope: credentials == null ? null : accountScopeKey(credentials),
+  );
+});
 
 final aiSettingsProvider = FutureProvider<AiSettings>((ref) {
   return ref.read(aiSettingsStoreProvider).read();

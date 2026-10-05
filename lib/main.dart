@@ -1,21 +1,37 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
+import 'organizer/platform/backup_ui_preferences.dart';
+import 'organizer/state/portable_backup_provider.dart';
 
 final _desktopWindowPersistence = _DesktopWindowPersistence();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+  if (!kIsWeb &&
+      {
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+      }.contains(defaultTargetPlatform)) {
     await _desktopWindowPersistence.init();
   }
-  runApp(const ProviderScope(child: KanbanApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        backupUiPreferencesProvider.overrideWithValue(
+          PlatformBackupUiPreferencesStore(),
+        ),
+      ],
+      child: const KanbanApp(),
+    ),
+  );
 }
 
 class _DesktopWindowPersistence extends WindowListener {

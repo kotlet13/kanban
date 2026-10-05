@@ -10,6 +10,8 @@ class KanboardApi {
   KanboardApi(this._client);
 
   final JsonRpcClient _client;
+
+  void close() => _client.close();
   String? _webSessionCookie;
   static const String taskHoursTrackerSubtaskTitle =
       '__APP_TASK_HOURS_TRACKER__';
@@ -32,6 +34,7 @@ class KanboardApi {
         endpoint: Uri.parse(credentials.normalizedEndpoint),
         username: credentials.username,
         password: credentials.token,
+        allowLocalHttp: credentials.allowLocalHttp,
       ),
     );
   }
@@ -651,19 +654,15 @@ class KanboardApi {
     );
 
     // Attempt 1: basic-auth request (works on some Kanboard setups).
-    final auth = base64Encode(
-      utf8.encode('${_client.username}:${_client.password}'),
+    final directResponse = await _client.sendAuthenticatedRequest(
+      endpoint,
+      method: 'GET',
+      headers: const {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      basicAuth: true,
     );
-    final directResponse = await http
-        .get(
-          endpoint,
-          headers: <String, String>{
-            'Authorization': 'Basic $auth',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        )
-        .timeout(const Duration(seconds: 12));
     final directUsers = _decodeAutocompleteUsersOrNull(directResponse.body);
     if (directUsers != null) {
       return _dedupeAndSortUsers(directUsers);
@@ -1736,24 +1735,13 @@ class KanboardApi {
     Map<String, String>? headers,
     Map<String, String>? bodyFields,
   }) async {
-    final client = http.Client();
-    try {
-      final request = http.Request(method, uri);
-      request.followRedirects = true;
-      request.maxRedirects = 5;
-      if (headers != null) {
-        request.headers.addAll(headers);
-      }
-      if (bodyFields != null) {
-        request.bodyFields = bodyFields;
-      }
-      final streamed = await client
-          .send(request)
-          .timeout(const Duration(seconds: 12));
-      return http.Response.fromStream(streamed);
-    } finally {
-      client.close();
-    }
+    return _client.sendAuthenticatedRequest(
+      uri,
+      method: method,
+      headers: headers ?? const {},
+      bodyFields: bodyFields,
+      followSameOriginRedirects: false,
+    );
   }
 
   List<KanboardUserReference>? _decodeAutocompleteUsersOrNull(String body) {

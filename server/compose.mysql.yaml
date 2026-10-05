@@ -1,0 +1,35 @@
+# Optional integration matrix; these are disposable local development credentials.
+name: kanban-familyhub-mysqltest
+services:
+  database:
+    image: mysql:8.4@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
+    command: ["--skip-log-bin"] # Synthetic failure tests use a temporary trigger.
+    environment:
+      MYSQL_DATABASE: kanboard
+      MYSQL_USER: familyhub_dev
+      MYSQL_PASSWORD: familyhub-development-only
+      MYSQL_ROOT_PASSWORD: familyhub-root-development-only
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: "no"
+  kanboard:
+    image: kanboard/kanboard:v1.2.54@sha256:8df6c4339134b6c196da9a262daa42ab8ce395f528a48d4a3dd7038c296f34c1
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18381:80"
+    volumes:
+      - kanboard-data:/var/www/app/data
+      - ./plugins/FamilyHub:/var/www/app/plugins/FamilyHub:ro
+      - ./dev-mysql-config.php:/var/www/app/config.php:ro
+      - ./tests:/familyhub-tests:ro
+    restart: "no"
+volumes:
+  mysql-data:
+  kanboard-data:

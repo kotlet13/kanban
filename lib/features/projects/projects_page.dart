@@ -65,36 +65,42 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       return;
     }
 
-    if (!fromRefresh) {
-      final cache = await ref.read(cacheStoreProvider.future);
-      final cachedProjects = cache.readProjects();
-      if (cachedProjects.isNotEmpty && mounted) {
-        setState(() {
-          _projects = cachedProjects;
-        });
-      }
-    }
-
+    final capturedCredentials = ref.read(sessionCredentialsProvider);
+    final cacheFuture = ref.read(cacheStoreProvider.future);
+    bool currentSession() =>
+        mounted &&
+        identical(ref.read(sessionCredentialsProvider), capturedCredentials);
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      final cache = await cacheFuture;
+      if (!currentSession()) return;
+
+      if (!fromRefresh) {
+        final cachedProjects = cache.readProjects();
+        if (cachedProjects.isNotEmpty && currentSession()) {
+          setState(() {
+            _projects = cachedProjects;
+          });
+        }
+      }
+
       final projects = await api.getMyProjects();
-      final cache = await ref.read(cacheStoreProvider.future);
       await cache.saveProjects(projects);
-      if (!mounted) return;
+      if (!currentSession()) return;
       setState(() {
         _projects = projects;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!currentSession()) return;
       setState(() {
         _error = '$error';
       });
     } finally {
-      if (mounted) {
+      if (currentSession()) {
         setState(() {
           _isLoading = false;
         });
@@ -394,9 +400,30 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
   }
 
   Future<void> _logout() async {
-    await ref.read(credentialsStoreProvider).clear();
+    final cacheFuture = ref.read(cacheStoreProvider.future);
+    final chats = ref.read(aiChatStoreProvider);
+    final consent = ref.read(aiConsentStoreProvider);
+    final credentials = ref.read(credentialsStoreProvider);
     ref.read(sessionCredentialsProvider.notifier).state = null;
+    var cleanupFailed = false;
+    for (final cleanup in <Future<void> Function()>[
+      () async => (await cacheFuture).clearScope(),
+      chats.clearScope,
+      consent.clearScope,
+      credentials.clear,
+    ]) {
+      try {
+        await cleanup();
+      } catch (_) {
+        cleanupFailed = true;
+      }
+    }
     if (!mounted) return;
+    if (cleanupFailed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.secureStorageUnavailable)),
+      );
+    }
     context.go('/connect');
   }
 
@@ -617,6 +644,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 minimumSize: const Size(30, 30),
+                onPressed: () => context.go('/'),
+                child: const Icon(CupertinoIcons.house, size: 20),
+              ),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(30, 30),
                 onPressed: hasSession ? () => _createOrEditProject() : null,
                 child: Icon(
                   CupertinoIcons.add,
@@ -644,6 +677,11 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
       appBar: AppBar(
         title: Text(context.l10n.projects),
         actions: <Widget>[
+          IconButton(
+            tooltip: context.l10n.organizerToday,
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.home_outlined),
+          ),
           IconButton(
             tooltip: context.l10n.projectDefaults,
             onPressed: () => context.push('/settings/project-defaults'),

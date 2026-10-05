@@ -1,6 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'credentials_store.dart';
 
 class AiSettings {
   const AiSettings({
@@ -62,16 +63,27 @@ class AiSettingsStore {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_enabledKey) ?? false;
     final model = (prefs.getString(_modelKey) ?? 'gpt-4.1-mini').trim();
-    final responseMode = (prefs.getString(_responseModeKey) ?? 'instant').trim();
-    final thinkingEffort =
-        (prefs.getString(_thinkingEffortKey) ?? 'medium').trim();
+    final responseMode = (prefs.getString(_responseModeKey) ?? 'instant')
+        .trim();
+    final thinkingEffort = (prefs.getString(_thinkingEffortKey) ?? 'medium')
+        .trim();
     String? apiKey;
     try {
       apiKey = await _storage.read(key: _apiKeyKey);
-    } on PlatformException {
-      // Fall back below.
+      final legacyKey = prefs.getString(_apiKeyKey);
+      if (apiKey == null && legacyKey != null) {
+        await _storage.write(key: _apiKeyKey, value: legacyKey);
+        if (await _storage.read(key: _apiKeyKey) != legacyKey) {
+          throw const CredentialsStorageException();
+        }
+        apiKey = legacyKey;
+      }
+      if (legacyKey != null && !await prefs.remove(_apiKeyKey)) {
+        throw const CredentialsStorageException();
+      }
+    } catch (_) {
+      throw const CredentialsStorageException();
     }
-    apiKey ??= prefs.getString(_apiKeyKey);
     return AiSettings(
       enabled: enabled,
       model: model,
@@ -88,6 +100,22 @@ class AiSettingsStore {
   Future<void> save(AiSettings settings) async {
     final prefs = await SharedPreferences.getInstance();
     final normalizedKey = settings.apiKey?.trim();
+    // Commit the secret first; failures preserve existing settings and legacy key.
+    try {
+      if (normalizedKey == null || normalizedKey.isEmpty) {
+        await _storage.delete(key: _apiKeyKey);
+      } else {
+        await _storage.write(key: _apiKeyKey, value: normalizedKey);
+        if (await _storage.read(key: _apiKeyKey) != normalizedKey) {
+          throw const CredentialsStorageException();
+        }
+      }
+      if (!await prefs.remove(_apiKeyKey)) {
+        throw const CredentialsStorageException();
+      }
+    } catch (_) {
+      throw const CredentialsStorageException();
+    }
     await prefs.setBool(_enabledKey, settings.enabled);
     await prefs.setString(_modelKey, settings.model.trim());
     await prefs.setString(
@@ -98,19 +126,5 @@ class AiSettingsStore {
       _thinkingEffortKey,
       settings.normalizedThinkingEffort,
     );
-    if (normalizedKey == null || normalizedKey.isEmpty) {
-      await prefs.remove(_apiKeyKey);
-    } else {
-      await prefs.setString(_apiKeyKey, normalizedKey);
-    }
-    try {
-      if (normalizedKey == null || normalizedKey.isEmpty) {
-        await _storage.delete(key: _apiKeyKey);
-      } else {
-        await _storage.write(key: _apiKeyKey, value: normalizedKey);
-      }
-    } on PlatformException {
-      // SharedPreferences already stores a fallback copy.
-    }
   }
 }
