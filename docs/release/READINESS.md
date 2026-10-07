@@ -1,6 +1,8 @@
-# Pogoji za oddajo Jivie 1.0.0+1
+# Pogoji za oddajo Jivie 1.0.1+2
 
 To je seznam odprtih pogojev, ne potrdilo skladnosti. Zadnji pregled: 7. oktober 2026. Lokalne spremembe ne spreminjajo računa v trgovini, produkcijskega strežnika ali osebnih podatkov. [Izvorni preverjevalnik](../../tools/release/README.md) odkrije del teh napak; dejanska dokazila so še potrebna.
+
+Aktualno: Android 1.0.1 (2) je na internem kanalu. iOS prvi upload iste verzije je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Ne enači naloženega paketa s sprejeto gradnjo ali omogočenim dostopom testerjev.
 
 | Pogoj | Trenutno stanje | Pot do dokazila |
 | --- | --- | --- |

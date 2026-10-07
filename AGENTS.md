@@ -22,6 +22,8 @@ Uporabnik je istega dne potrdil izdajatelja **TriparNA (triparna.si)** in sporo�
 
 ## Način dela
 
+Najnovejši usklajeni izdajni korak: glavni commit/push prenove s sporočilom natanko `popolna predelava aplikacije` je pred izrecnim dvigom na `1.0.1+2`. Android te verzije je na internem kanalu, popravljena iOS distribucija še ni potrjena. Zaradi dejanske Apple 90683 zavrnitve uporablja projekt podprti CocoaPods način in samo dokumentni file_picker; SDK/Dart paketi, identitete/baze ter stari artefakti ostanejo ohranjeni. Vrstni red in aktualne meje vodi `docs/release/NOTIFICATION_RELEASE_RUN.md`, odprte korake `docs/release/OWNER_ACTIONS.md`. Testerje `Domači` uredi po uspešnih oddajah, brez ugibanja naslovov ali širjenja upravljavskih privilegijev. Ločen javni repo vtičnika ostaja nedotaknjen. Ko je lastnik odsoten, izvedi dovoljene rutinske odločitve, obveznih pravnih/dostopnih/napravnih korakov ne obidi; zapiši jih za nadaljevanje.
+
 - Z uporabnikom komuniciraj v slovenščini. Imena razredov, datotek in API metod naj sledijo obstoječim angleškim konvencijam.
 - Pred spremembami preglej `git status` in navodila za zadevni del projekta. Ohrani uporabnikove lokalne spremembe; različice aplikacije ne zvišuj kot stranski učinek druge naloge.
 - Izvedi dogovorjeni obseg. Za običajne lokalne popravke znotraj tega obsega ne uvajaj dodatnih potrditev. Raziskava gostovanja ni dovoljenje za posege v produkcijske podatke ali namestitev.

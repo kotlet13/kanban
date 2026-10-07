@@ -18,8 +18,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-# First release of the separate Jivie app; Kanban Connect keeps its identity.
-version: 1.0.0+1
+# Current internal Jivie release; Kanban Connect keeps its separate identity.
+version: 1.0.1+2
 
 environment:
   sdk: ^3.12.0
@@ -110,6 +110,9 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # file_picker's CocoaPods options exclude unused iOS media permissions.
+  config:
+    enable-swift-package-manager: false
   generate: true
 
   # The following line ensures that the Material Icons font is

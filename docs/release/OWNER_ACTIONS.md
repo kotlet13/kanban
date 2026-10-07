@@ -9,14 +9,15 @@ Stanje te naloge: 7. oktober 2026. Uporabnik je dovolil samostojne izvedbene odl
 - Podatki, SMTP geslo in šifrirni ključ poštne vrste so zunaj javnih spletnih map, z omejenimi dovoljenji. Poštni predal `jivie-test@triparna.si` je ustvaril lastnik; SMTP TLS in prijava sta uspešno preverjena brez pošiljanja sporočila.
 - Periodična opravila so nastavljena. Nakupovalnih dodatkov nismo spremenili v obvezna posamezna e-poštna sporočila.
 - Vrt je izveden kot lokalni modul s kopijo/obnovo. Samodejnega deljenja vrtov ali preselitve arhiva ni.
-- Android 1.0.0 (1) je na internem kanalu; iOS IPA 1.0.0 (1) je podpisana. Javne izdaje še ni. Končno stanje in uskladitev naslednje izdaje vodi [predaja](NOTIFICATION_HANDOFF.md).
+- Android **1.0.1 (2)** je objavljen na internem kanalu; prvotna iOS oddaja 1.0.1 (2) je bila zavrnjena pri Apple obdelavi. Popravljena iOS razvojna kandidatka je preverjena, njen distribucijski izvoz pa še ni uspel. Stari paketi ostanejo ohranjeni. [Aktualni potek](NOTIFICATION_RELEASE_RUN.md) loči upload, obdelavo in dejanski dostop.
 
 ## Odprto
 
 | Korak | Kaj še potrebujemo | Kaj lahko agent naredi sam |
 | --- | --- | --- |
+| Odklep in Xcode podpisovanje | Mac je zaklenjen; distribucijski izvoz popravljene iOS kandidatke z obstoječo ekipo vrne `No Accounts`. Odkleni Mac in preveri/obnovi obstoječo prijavo v Xcode → Settings → Accounts za TriparNA. | Ponovi izvoz z obstoječim managed certifikatom/profilom in isto gradnjo 2, nato preveri App Store obdelavo. Ne ustvarja novega certifikata ali druge ekipe. Zaklep native UI in CLI `No Accounts` sta ločeni opažanji, ne dokazana ista napaka. |
 | Test na telefonih | Dostopen Android in iPhone, namestitev testne izdaje ter preverjanje dovoljenj/obvestil na zaklenjenem telefonu. | Pripravi izdajo, navodila in preizkuse; center, lokalni opomniki ter FCM že obstajajo. |
-| Testni dostop Play/TestFlight | Končni preizkuševalci in dovoljen dostop; trenutna Play izdaja nima izbranega seznama. | Uredi dogovorjeni seznam po zaključeni implementaciji in novi izdaji; ne dodaja ljudi iz nepovezanih seznamov. |
+| Testni dostop Play/TestFlight | Dogovorjeni seznam je `Domači`; Play izdaja nima izbranega seznama, popravljena iOS oddaja še ni na voljo. | Po uspešnih oddajah poišče in uporabi obstoječi dogovorjeni seznam. Naslovov ne ugiba; za namestitev ne ustvarja širših App Store Connect privilegijev. |
 | FCM in APNs | Dokončanje strežniške FCM identitete in Apple APNs povezave; morebitno potrjevanje ponudnikovih pogojev ali varnostnega dostopa ostane lastnikovo. | Pripravi najmanjše potrebne pravice, zasebno konfiguracijo ter merljiv preizkus dostave. Ključev ni treba pošiljati v klepet. |
 | Google Cloud pogoji | Odprt je prvi obrazec za ločeno sprejetje Google Cloud Platform Terms of Service in pogojev uporabljenih storitev/API-jev. Potrditev še ni prejeta. | Obrazec za projekt `jivie-e928a` je pripravljen, promocijska pošta izključena. Potrjena Firebase CLI prijava ne nadomesti tega pravnega koraka. |
 | Apple encryption compliance | Izdajateljeva klasifikacija šifriranja/izjeme ter države distribucije, zlasti Francija. | Predloži tehničen popis in pripravi obrazec; ne označi izjeme brez ustrezne podlage. AES-256-GCM/PBKDF2 in Dart fallback pomenijo, da šifriranje ni omejeno samo na Apple OS. |

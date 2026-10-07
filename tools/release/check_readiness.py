@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ID = 'si.triparna.jivie'
-VERSION = '1.0.0+1'
+VERSION = '1.0.1+2'
 ANDROID_NS = '{http://schemas.android.com/apk/res/android}'
 
 
@@ -170,7 +170,7 @@ def source_checks(root):
         return True
 
     check('iOS app icons, catalog sizes, opacity and pixels', ios_icons)
-    check('Planned first Jivie version', lambda: re.search(r'^version:\s*' + re.escape(VERSION) + r'\s*$', (root / 'pubspec.yaml').read_text(), re.M) is not None)
+    check('Current Jivie release version', lambda: re.search(r'^version:\s*' + re.escape(VERSION) + r'\s*$', (root / 'pubspec.yaml').read_text(), re.M) is not None)
     for locale in ('sl', 'en'):
         check(f'{locale} app title', lambda locale=locale: json.loads((root / f'lib/l10n/app_{locale}.arb').read_text()).get('organizerAppName') == 'Jivie')
     check('SL/EN store listing limits', lambda: validate_listings(json.loads((root / 'docs/release/STORE_LISTINGS.json').read_text())))

@@ -1,5 +1,11 @@
 # Jivie — stanje testnih izdaj
 
+## Aktualna naslednja kandidatka: 1.0.1+2
+
+Po glavnem commitu/pushu `d551028` je bila različica izrecno zvišana. Android AAB SHA256 `0cff4cd29b4787e9c9092e6b1c9847329f87d1482164ee708a286220f4b1a78d` je podpisan, preverjen in objavljen na internem kanalu; testerjev še nismo izbrali. iOS prvi upload 1.0.1 (2) je uspel, nato pa obdelava `Failed`/90683 zaradi camera/photo referenc neuporabljenega medijskega izbirnika. Dokumentna CocoaPods izvedba in razvojni arhiv sta preverjena, ponovni distribucijski izvoz pa vrne `No Accounts`. Nova uspešna iOS interna izdaja zato še ni potrjena. [Celotni aktualni potek](NOTIFICATION_RELEASE_RUN.md), [pogoji lastnika](OWNER_ACTIONS.md).
+
+Spodnja evidenca **1.0.0+1** ostane zgodovinski dokaz prvega cikla; ne predstavlja trenutne verzije v kodi ali zadnje Android izdaje.
+
 Tekoča evidenca 7. oktobra 2026. Uporabnik je naročil novi ločeni aplikaciji in testni izdaji ter dokončno potrdil **`si.triparna.jivie`** za Android in iOS. Izdajatelj je TriparNA; različica ostane **1.0.0+1**. Priprava in ustvarjena evidenca nista dokaz naloženega paketa, razpoložljive testne namestitve ali javne objave.
 
 ## Potrjeni konzoli
