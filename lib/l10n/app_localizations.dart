@@ -2655,8 +2655,20 @@ abstract class AppLocalizations {
   /// No description provided for @organizerAppName.
   ///
   /// In en, this message translates to:
-  /// **'Vsakdan'**
+  /// **'Jivie'**
   String get organizerAppName;
+
+  /// No description provided for @jivieAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About Jivie'**
+  String get jivieAbout;
+
+  /// No description provided for @jivieDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A free personal and family organizer for tasks, plans, shopping and finances. Create and edit personal data on your device without an account or connection. Enable synchronization and sharing when you choose.'**
+  String get jivieDescription;
 
   /// No description provided for @organizerToday.
   ///
@@ -4965,7 +4977,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupIntro.
   ///
   /// In en, this message translates to:
-  /// **'Choose a starting point. You can change how you use the app in settings later.'**
+  /// **'Choose how you want to use Jivie. You can change how you use the app in settings later.'**
   String get setupIntro;
 
   /// No description provided for @setupHint.
@@ -5055,7 +5067,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteLinkPrepared.
   ///
   /// In en, this message translates to:
-  /// **'The link opens the installed app where the vsakdan scheme is supported. Universal web links are not configured yet.'**
+  /// **'The link opens the invitation in the installed Jivie app. If the app does not open, enter the server and code manually in the app.'**
   String get inviteLinkPrepared;
 
   /// No description provided for @accountFirstTitle.
@@ -5633,6 +5645,678 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The private financial view has not fully downloaded. Visible records and pending changes are preserved; totals appear after a complete sync.'**
   String get privateFinanceIncomplete;
+
+  /// No description provided for @guideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Jivie'**
+  String get guideTitle;
+
+  /// No description provided for @guideOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'A quick guide to Jivie'**
+  String get guideOpen;
+
+  /// No description provided for @guideLocalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start on your device'**
+  String get guideLocalTitle;
+
+  /// No description provided for @guideLocalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks, plans, shopping and personal finances work without an account or connection. Start with one task or shopping list. Optional sync requires your explicit choice.'**
+  String get guideLocalBody;
+
+  /// No description provided for @guideTodayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.'**
+  String get guideTodayBody;
+
+  /// No description provided for @guidePlansBody.
+  ///
+  /// In en, this message translates to:
+  /// **'In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.'**
+  String get guidePlansBody;
+
+  /// No description provided for @guideShoppingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.'**
+  String get guideShoppingBody;
+
+  /// No description provided for @guideMoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'More contains finances, home, garden, account and settings. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.'**
+  String get guideMoreBody;
+
+  /// No description provided for @guideSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get guideSkip;
+
+  /// No description provided for @guideBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get guideBack;
+
+  /// No description provided for @guideNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get guideNext;
+
+  /// No description provided for @guideDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get guideDone;
+
+  /// No description provided for @guideProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{step} of {total}'**
+  String guideProgress(int step, int total);
+
+  /// No description provided for @deletionAccountSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Account settings'**
+  String get deletionAccountSettings;
+
+  /// No description provided for @deletionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete account'**
+  String get deletionTitle;
+
+  /// No description provided for @deletionLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'You are using local mode. There is no server account to delete. Local work stays on your device.'**
+  String get deletionLocalOnly;
+
+  /// No description provided for @deletionWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion affects the displayed account on this self-hosted server, including the same Kanboard account. It is permanent. Copies already obtained by other members cannot be recalled.'**
+  String get deletionWarning;
+
+  /// No description provided for @deletionPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review account deletion'**
+  String get deletionPreview;
+
+  /// No description provided for @deletionLocalConsequences.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion also removes this account’s private SYNCED data, its local server copy, pending changes, reminders, sync binding and staged recovery work. Independent personal data in the local workspace remains. Synced data is not automatically copied back to local mode.'**
+  String get deletionLocalConsequences;
+
+  /// No description provided for @deletionExportLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'An encrypted .vsakdan backup is not a complete Kanboard or attachment archive. It cannot resume this account’s server work after deletion. To retain private synced personal records for standalone use, use the explicit JSON export below. Contact the administrator for a full Kanboard archive before deleting.'**
+  String get deletionExportLimit;
+
+  /// No description provided for @deletionImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'Server impact'**
+  String get deletionImpact;
+
+  /// No description provided for @deletionSharedRemains.
+  ///
+  /// In en, this message translates to:
+  /// **'shared space remains'**
+  String get deletionSharedRemains;
+
+  /// No description provided for @deletionBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve the requirements below before deletion, then review the impact again.'**
+  String get deletionBlocked;
+
+  /// No description provided for @deletionAcknowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand the permanent deletion of this account, its synced data and the described effects on shared work.'**
+  String get deletionAcknowledge;
+
+  /// No description provided for @deletionTypeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Type DELETE to confirm'**
+  String get deletionTypeDelete;
+
+  /// No description provided for @deletionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get deletionConfirm;
+
+  /// No description provided for @deletionUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion is not confirmed. The connection was interrupted or the response was inconclusive. Check the status of this same request in Account settings; your password is not stored.'**
+  String get deletionUnknown;
+
+  /// No description provided for @deletionNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has not confirmed deletion. The account may still be active. Retry with the same decisions and a fresh password/TOTP.'**
+  String get deletionNotConfirmed;
+
+  /// No description provided for @deletionSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'The server confirmed deletion. You can continue in local mode.'**
+  String get deletionSuccess;
+
+  /// No description provided for @deletionCheckStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Check deletion status'**
+  String get deletionCheckStatus;
+
+  /// No description provided for @deletionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support account deletion in Jivie. Its administrator must enable deletion. Deletion cannot be confirmed offline.'**
+  String get deletionUnavailable;
+
+  /// No description provided for @deletionStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Data has changed. Review the impact again and confirm your decisions.'**
+  String get deletionStale;
+
+  /// No description provided for @deletionPersonalScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'Private spaces to delete'**
+  String get deletionPersonalScopes;
+
+  /// No description provided for @deletionPersonalRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Private records to delete'**
+  String get deletionPersonalRecords;
+
+  /// No description provided for @deletionPersonalFinance.
+  ///
+  /// In en, this message translates to:
+  /// **'Private finance records to delete'**
+  String get deletionPersonalFinance;
+
+  /// No description provided for @deletionMemberships.
+  ///
+  /// In en, this message translates to:
+  /// **'Memberships to remove'**
+  String get deletionMemberships;
+
+  /// No description provided for @deletionDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices and sessions to revoke'**
+  String get deletionDevices;
+
+  /// No description provided for @deletionPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Push registrations to remove'**
+  String get deletionPush;
+
+  /// No description provided for @deletionEmailTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Email codes to revoke'**
+  String get deletionEmailTokens;
+
+  /// No description provided for @deletionRelatedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Related records to remove'**
+  String get deletionRelatedData;
+
+  /// No description provided for @deletionOwnedScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new owner for the shared space'**
+  String get deletionOwnedScopes;
+
+  /// No description provided for @deletionLastAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign another Kanboard administrator first'**
+  String get deletionLastAdmin;
+
+  /// No description provided for @deletionContributions.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve your contributions and their shared references'**
+  String get deletionContributions;
+
+  /// No description provided for @deletionStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep only a generic structure for other members’ records. The original name and owner are removed; a finance account retains its currency and opening balance. My entries are deleted and shared totals may change.'**
+  String get deletionStructure;
+
+  /// No description provided for @deletionSharedRecordsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Own shared records to delete'**
+  String get deletionSharedRecordsDeleted;
+
+  /// No description provided for @deletionSharedRecordsUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared records to detach'**
+  String get deletionSharedRecordsUpdated;
+
+  /// No description provided for @deletionSharedFinanceDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Own shared finance records to delete'**
+  String get deletionSharedFinanceDeleted;
+
+  /// No description provided for @deletionSharedFinanceUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared finance records to detach'**
+  String get deletionSharedFinanceUpdated;
+
+  /// No description provided for @deletionLegacyTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Own Kanboard tasks to delete'**
+  String get deletionLegacyTasks;
+
+  /// No description provided for @deletionLegacyComments.
+  ///
+  /// In en, this message translates to:
+  /// **'Own Kanboard comments to delete'**
+  String get deletionLegacyComments;
+
+  /// No description provided for @deletionLegacyFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Own Kanboard attachments to delete'**
+  String get deletionLegacyFiles;
+
+  /// No description provided for @deletionAssignedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanboard tasks to unassign'**
+  String get deletionAssignedTasks;
+
+  /// No description provided for @deletionAssignedSubtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Kanboard subtasks to unassign'**
+  String get deletionAssignedSubtasks;
+
+  /// No description provided for @deletionLegacyPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve the private Kanboard project first'**
+  String get deletionLegacyPrivate;
+
+  /// No description provided for @deletionServerCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'The account and database records have been removed. The server is still deleting attachments; check status until completion is confirmed.'**
+  String get deletionServerCleanup;
+
+  /// No description provided for @deletionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry the same request'**
+  String get deletionRetry;
+
+  /// No description provided for @deletionRetryReview.
+  ///
+  /// In en, this message translates to:
+  /// **'This retry uses the same decisions and the same preview below. Enter your password and TOTP again. If the preview is stale, the server rejects deletion and requires a new review.'**
+  String get deletionRetryReview;
+
+  /// No description provided for @deletionDeleteOwnedScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete this space and its content too'**
+  String get deletionDeleteOwnedScope;
+
+  /// No description provided for @deletionUnnamedStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared structure without permission to view details'**
+  String get deletionUnnamedStructure;
+
+  /// No description provided for @deletionMinorUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'minor currency units'**
+  String get deletionMinorUnits;
+
+  /// No description provided for @deletionRetainedEdits.
+  ///
+  /// In en, this message translates to:
+  /// **'Server records created by your account are deleted. Records created by others remain, including your edits to their content. Your identity references are removed; individual field edits cannot be separated by author.'**
+  String get deletionRetainedEdits;
+
+  /// No description provided for @jiviePrivacyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get jiviePrivacyLink;
+
+  /// No description provided for @jivieHelpLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Help and support'**
+  String get jivieHelpLink;
+
+  /// No description provided for @jivieDeletionLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion website'**
+  String get jivieDeletionLink;
+
+  /// No description provided for @jivieLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the link.'**
+  String get jivieLinkFailed;
+
+  /// No description provided for @deletionSpaceDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This shared space and its content will be permanently deleted.'**
+  String get deletionSpaceDeleted;
+
+  /// No description provided for @deletionCancelPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel pending request'**
+  String get deletionCancelPending;
+
+  /// No description provided for @deletionCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'The server confirmed cancellation. This request can no longer delete the account. Review the impact again to delete it.'**
+  String get deletionCancelled;
+
+  /// No description provided for @deletionLegacyLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Separately stored legacy Kanboard connections, caches and AI conversations are not removed by this action. A legacy connection to the deleted account will no longer work.'**
+  String get deletionLegacyLocal;
+
+  /// No description provided for @deletionPersonalExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export personal data for local recovery'**
+  String get deletionPersonalExport;
+
+  /// No description provided for @deletionJsonWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This standalone copy contains currently accessible personal records, including private synced records. JSON is not encrypted; save it securely. It contains no shared work, sessions or sync bindings. After deletion, explicitly import it in local mode through Settings. Do not upload recovered data to another account without your explicit choice.'**
+  String get deletionJsonWarning;
+
+  /// No description provided for @gardenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden'**
+  String get gardenTitle;
+
+  /// No description provided for @gardenIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep planting notes and arrange beds, plants or other areas by hand.'**
+  String get gardenIntro;
+
+  /// No description provided for @gardenLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device · no sync or sharing'**
+  String get gardenLocalOnly;
+
+  /// No description provided for @gardenNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New garden'**
+  String get gardenNew;
+
+  /// No description provided for @gardenEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit garden'**
+  String get gardenEdit;
+
+  /// No description provided for @gardenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden name'**
+  String get gardenName;
+
+  /// No description provided for @gardenNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a garden name.'**
+  String get gardenNameRequired;
+
+  /// No description provided for @gardenEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first garden'**
+  String get gardenEmptyTitle;
+
+  /// No description provided for @gardenEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Name your garden, add notes and draw its layout. You can edit everything without an account or connection.'**
+  String get gardenEmptyBody;
+
+  /// No description provided for @gardenLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get gardenLayout;
+
+  /// No description provided for @gardenSelectTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Select / move'**
+  String get gardenSelectTool;
+
+  /// No description provided for @gardenDrawTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw area'**
+  String get gardenDrawTool;
+
+  /// No description provided for @gardenUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo layout change'**
+  String get gardenUndo;
+
+  /// No description provided for @gardenDrawHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag from one corner to another to draw a rectangular area.'**
+  String get gardenDrawHelp;
+
+  /// No description provided for @gardenSelectHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an area to select it. Drag to move it; edit its size and label in the list.'**
+  String get gardenSelectHelp;
+
+  /// No description provided for @gardenCanvasDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden layout sketch. Areas can also be edited in the list.'**
+  String get gardenCanvasDescription;
+
+  /// No description provided for @gardenSketchDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a layout sketch, without a physical scale or real distances. Confirm your changes with Save.'**
+  String get gardenSketchDisclaimer;
+
+  /// No description provided for @gardenAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Areas'**
+  String get gardenAreas;
+
+  /// No description provided for @gardenAreaListHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'You can also add and edit areas using a form, without drawing.'**
+  String get gardenAreaListHelp;
+
+  /// No description provided for @gardenAddArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Add area'**
+  String get gardenAddArea;
+
+  /// No description provided for @gardenNoAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'No areas yet. Draw the first one or add it using the form.'**
+  String get gardenNoAreas;
+
+  /// No description provided for @gardenEditArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit area'**
+  String get gardenEditArea;
+
+  /// No description provided for @gardenAreaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What goes here?'**
+  String get gardenAreaLabel;
+
+  /// No description provided for @gardenLabelRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an area label.'**
+  String get gardenLabelRequired;
+
+  /// No description provided for @gardenPositionX.
+  ///
+  /// In en, this message translates to:
+  /// **'From left'**
+  String get gardenPositionX;
+
+  /// No description provided for @gardenPositionY.
+  ///
+  /// In en, this message translates to:
+  /// **'From top'**
+  String get gardenPositionY;
+
+  /// No description provided for @gardenWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get gardenWidth;
+
+  /// No description provided for @gardenHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get gardenHeight;
+
+  /// No description provided for @gardenGeometryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Position and size are percentages of the whole sketch.'**
+  String get gardenGeometryHelp;
+
+  /// No description provided for @gardenNumberError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 0–100; size must be at least 1.'**
+  String get gardenNumberError;
+
+  /// No description provided for @gardenGeometryError.
+  ///
+  /// In en, this message translates to:
+  /// **'The whole area must stay inside the sketch. Reduce its size or adjust its position.'**
+  String get gardenGeometryError;
+
+  /// No description provided for @gardenUnsavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get gardenUnsavedTitle;
+
+  /// No description provided for @gardenUnsavedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your garden changes have not been saved. Leaving the editor discards them.'**
+  String get gardenUnsavedBody;
+
+  /// No description provided for @gardenKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get gardenKeepEditing;
+
+  /// No description provided for @gardenDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes'**
+  String get gardenDiscard;
+
+  /// No description provided for @gardenSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.'**
+  String get gardenSaveError;
+
+  /// No description provided for @gardenDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete garden?'**
+  String get gardenDeleteTitle;
+
+  /// No description provided for @gardenDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The garden “{name}”, its notes and all areas will be deleted from this device.'**
+  String gardenDeleteBody(String name);
+
+  /// No description provided for @gardenDefaultArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Area {number}'**
+  String gardenDefaultArea(int number);
+
+  /// No description provided for @gardenAreaCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} areas'**
+  String gardenAreaCount(int count);
+
+  /// No description provided for @gardenAreaPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Left {x}%, top {y}% · {width} × {height}%'**
+  String gardenAreaPosition(int x, int y, int width, int height);
 }
 
 class _AppLocalizationsDelegate

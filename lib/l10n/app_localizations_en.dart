@@ -1478,7 +1478,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verticalWorkGrouping => 'Vertical work grouping';
 
   @override
-  String get organizerAppName => 'Vsakdan';
+  String get organizerAppName => 'Jivie';
+
+  @override
+  String get jivieAbout => 'About Jivie';
+
+  @override
+  String get jivieDescription =>
+      'A free personal and family organizer for tasks, plans, shopping and finances. Create and edit personal data on your device without an account or connection. Enable synchronization and sharing when you choose.';
 
   @override
   String get organizerToday => 'Today';
@@ -2792,7 +2799,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupIntro =>
-      'Choose a starting point. You can change how you use the app in settings later.';
+      'Choose how you want to use Jivie. You can change how you use the app in settings later.';
 
   @override
   String get setupHint =>
@@ -2844,7 +2851,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteLinkPrepared =>
-      'The link opens the installed app where the vsakdan scheme is supported. Universal web links are not configured yet.';
+      'The link opens the invitation in the installed Jivie app. If the app does not open, enter the server and code manually in the app.';
 
   @override
   String get accountFirstTitle => 'First account with a code';
@@ -3173,4 +3180,392 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privateFinanceIncomplete =>
       'The private financial view has not fully downloaded. Visible records and pending changes are preserved; totals appear after a complete sync.';
+
+  @override
+  String get guideTitle => 'Welcome to Jivie';
+
+  @override
+  String get guideOpen => 'A quick guide to Jivie';
+
+  @override
+  String get guideLocalTitle => 'Start on your device';
+
+  @override
+  String get guideLocalBody =>
+      'Tasks, plans, shopping and personal finances work without an account or connection. Start with one task or shopping list. Optional sync requires your explicit choice.';
+
+  @override
+  String get guideTodayBody =>
+      'Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.';
+
+  @override
+  String get guidePlansBody =>
+      'In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.';
+
+  @override
+  String get guideShoppingBody =>
+      'In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.';
+
+  @override
+  String get guideMoreBody =>
+      'More contains finances, home, garden, account and settings. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.';
+
+  @override
+  String get guideSkip => 'Skip';
+
+  @override
+  String get guideBack => 'Back';
+
+  @override
+  String get guideNext => 'Next';
+
+  @override
+  String get guideDone => 'Get started';
+
+  @override
+  String guideProgress(int step, int total) {
+    return '$step of $total';
+  }
+
+  @override
+  String get deletionAccountSettings => 'Account settings';
+
+  @override
+  String get deletionTitle => 'Permanently delete account';
+
+  @override
+  String get deletionLocalOnly =>
+      'You are using local mode. There is no server account to delete. Local work stays on your device.';
+
+  @override
+  String get deletionWarning =>
+      'Deletion affects the displayed account on this self-hosted server, including the same Kanboard account. It is permanent. Copies already obtained by other members cannot be recalled.';
+
+  @override
+  String get deletionPreview => 'Review account deletion';
+
+  @override
+  String get deletionLocalConsequences =>
+      'Deletion also removes this account’s private SYNCED data, its local server copy, pending changes, reminders, sync binding and staged recovery work. Independent personal data in the local workspace remains. Synced data is not automatically copied back to local mode.';
+
+  @override
+  String get deletionExportLimit =>
+      'An encrypted .vsakdan backup is not a complete Kanboard or attachment archive. It cannot resume this account’s server work after deletion. To retain private synced personal records for standalone use, use the explicit JSON export below. Contact the administrator for a full Kanboard archive before deleting.';
+
+  @override
+  String get deletionImpact => 'Server impact';
+
+  @override
+  String get deletionSharedRemains => 'shared space remains';
+
+  @override
+  String get deletionBlocked =>
+      'Resolve the requirements below before deletion, then review the impact again.';
+
+  @override
+  String get deletionAcknowledge =>
+      'I understand the permanent deletion of this account, its synced data and the described effects on shared work.';
+
+  @override
+  String get deletionTypeDelete => 'Type DELETE to confirm';
+
+  @override
+  String get deletionConfirm => 'Delete permanently';
+
+  @override
+  String get deletionUnknown =>
+      'Deletion is not confirmed. The connection was interrupted or the response was inconclusive. Check the status of this same request in Account settings; your password is not stored.';
+
+  @override
+  String get deletionNotConfirmed =>
+      'The server has not confirmed deletion. The account may still be active. Retry with the same decisions and a fresh password/TOTP.';
+
+  @override
+  String get deletionSuccess =>
+      'The server confirmed deletion. You can continue in local mode.';
+
+  @override
+  String get deletionCheckStatus => 'Check deletion status';
+
+  @override
+  String get deletionUnavailable =>
+      'This server does not support account deletion in Jivie. Its administrator must enable deletion. Deletion cannot be confirmed offline.';
+
+  @override
+  String get deletionStale =>
+      'Data has changed. Review the impact again and confirm your decisions.';
+
+  @override
+  String get deletionPersonalScopes => 'Private spaces to delete';
+
+  @override
+  String get deletionPersonalRecords => 'Private records to delete';
+
+  @override
+  String get deletionPersonalFinance => 'Private finance records to delete';
+
+  @override
+  String get deletionMemberships => 'Memberships to remove';
+
+  @override
+  String get deletionDevices => 'Devices and sessions to revoke';
+
+  @override
+  String get deletionPush => 'Push registrations to remove';
+
+  @override
+  String get deletionEmailTokens => 'Email codes to revoke';
+
+  @override
+  String get deletionRelatedData => 'Related records to remove';
+
+  @override
+  String get deletionOwnedScopes => 'Choose a new owner for the shared space';
+
+  @override
+  String get deletionLastAdmin => 'Assign another Kanboard administrator first';
+
+  @override
+  String get deletionContributions =>
+      'Resolve your contributions and their shared references';
+
+  @override
+  String get deletionStructure =>
+      'Keep only a generic structure for other members’ records. The original name and owner are removed; a finance account retains its currency and opening balance. My entries are deleted and shared totals may change.';
+
+  @override
+  String get deletionSharedRecordsDeleted => 'Own shared records to delete';
+
+  @override
+  String get deletionSharedRecordsUpdated => 'Shared records to detach';
+
+  @override
+  String get deletionSharedFinanceDeleted =>
+      'Own shared finance records to delete';
+
+  @override
+  String get deletionSharedFinanceUpdated => 'Shared finance records to detach';
+
+  @override
+  String get deletionLegacyTasks => 'Own Kanboard tasks to delete';
+
+  @override
+  String get deletionLegacyComments => 'Own Kanboard comments to delete';
+
+  @override
+  String get deletionLegacyFiles => 'Own Kanboard attachments to delete';
+
+  @override
+  String get deletionAssignedTasks => 'Kanboard tasks to unassign';
+
+  @override
+  String get deletionAssignedSubtasks => 'Kanboard subtasks to unassign';
+
+  @override
+  String get deletionLegacyPrivate =>
+      'Resolve the private Kanboard project first';
+
+  @override
+  String get deletionServerCleanup =>
+      'The account and database records have been removed. The server is still deleting attachments; check status until completion is confirmed.';
+
+  @override
+  String get deletionRetry => 'Retry the same request';
+
+  @override
+  String get deletionRetryReview =>
+      'This retry uses the same decisions and the same preview below. Enter your password and TOTP again. If the preview is stale, the server rejects deletion and requires a new review.';
+
+  @override
+  String get deletionDeleteOwnedScope =>
+      'Permanently delete this space and its content too';
+
+  @override
+  String get deletionUnnamedStructure =>
+      'Shared structure without permission to view details';
+
+  @override
+  String get deletionMinorUnits => 'minor currency units';
+
+  @override
+  String get deletionRetainedEdits =>
+      'Server records created by your account are deleted. Records created by others remain, including your edits to their content. Your identity references are removed; individual field edits cannot be separated by author.';
+
+  @override
+  String get jiviePrivacyLink => 'Privacy';
+
+  @override
+  String get jivieHelpLink => 'Help and support';
+
+  @override
+  String get jivieDeletionLink => 'Account deletion website';
+
+  @override
+  String get jivieLinkFailed => 'Could not open the link.';
+
+  @override
+  String get deletionSpaceDeleted =>
+      'This shared space and its content will be permanently deleted.';
+
+  @override
+  String get deletionCancelPending => 'Cancel pending request';
+
+  @override
+  String get deletionCancelled =>
+      'The server confirmed cancellation. This request can no longer delete the account. Review the impact again to delete it.';
+
+  @override
+  String get deletionLegacyLocal =>
+      'Separately stored legacy Kanboard connections, caches and AI conversations are not removed by this action. A legacy connection to the deleted account will no longer work.';
+
+  @override
+  String get deletionPersonalExport =>
+      'Export personal data for local recovery';
+
+  @override
+  String get deletionJsonWarning =>
+      'This standalone copy contains currently accessible personal records, including private synced records. JSON is not encrypted; save it securely. It contains no shared work, sessions or sync bindings. After deletion, explicitly import it in local mode through Settings. Do not upload recovered data to another account without your explicit choice.';
+
+  @override
+  String get gardenTitle => 'Garden';
+
+  @override
+  String get gardenIntro =>
+      'Keep planting notes and arrange beds, plants or other areas by hand.';
+
+  @override
+  String get gardenLocalOnly => 'On this device · no sync or sharing';
+
+  @override
+  String get gardenNew => 'New garden';
+
+  @override
+  String get gardenEdit => 'Edit garden';
+
+  @override
+  String get gardenName => 'Garden name';
+
+  @override
+  String get gardenNameRequired => 'Enter a garden name.';
+
+  @override
+  String get gardenEmptyTitle => 'Your first garden';
+
+  @override
+  String get gardenEmptyBody =>
+      'Name your garden, add notes and draw its layout. You can edit everything without an account or connection.';
+
+  @override
+  String get gardenLayout => 'Layout';
+
+  @override
+  String get gardenSelectTool => 'Select / move';
+
+  @override
+  String get gardenDrawTool => 'Draw area';
+
+  @override
+  String get gardenUndo => 'Undo layout change';
+
+  @override
+  String get gardenDrawHelp =>
+      'Drag from one corner to another to draw a rectangular area.';
+
+  @override
+  String get gardenSelectHelp =>
+      'Tap an area to select it. Drag to move it; edit its size and label in the list.';
+
+  @override
+  String get gardenCanvasDescription =>
+      'Garden layout sketch. Areas can also be edited in the list.';
+
+  @override
+  String get gardenSketchDisclaimer =>
+      'This is a layout sketch, without a physical scale or real distances. Confirm your changes with Save.';
+
+  @override
+  String get gardenAreas => 'Areas';
+
+  @override
+  String get gardenAreaListHelp =>
+      'You can also add and edit areas using a form, without drawing.';
+
+  @override
+  String get gardenAddArea => 'Add area';
+
+  @override
+  String get gardenNoAreas =>
+      'No areas yet. Draw the first one or add it using the form.';
+
+  @override
+  String get gardenEditArea => 'Edit area';
+
+  @override
+  String get gardenAreaLabel => 'What goes here?';
+
+  @override
+  String get gardenLabelRequired => 'Enter an area label.';
+
+  @override
+  String get gardenPositionX => 'From left';
+
+  @override
+  String get gardenPositionY => 'From top';
+
+  @override
+  String get gardenWidth => 'Width';
+
+  @override
+  String get gardenHeight => 'Height';
+
+  @override
+  String get gardenGeometryHelp =>
+      'Position and size are percentages of the whole sketch.';
+
+  @override
+  String get gardenNumberError => 'Enter 0–100; size must be at least 1.';
+
+  @override
+  String get gardenGeometryError =>
+      'The whole area must stay inside the sketch. Reduce its size or adjust its position.';
+
+  @override
+  String get gardenUnsavedTitle => 'Unsaved changes';
+
+  @override
+  String get gardenUnsavedBody =>
+      'Your garden changes have not been saved. Leaving the editor discards them.';
+
+  @override
+  String get gardenKeepEditing => 'Keep editing';
+
+  @override
+  String get gardenDiscard => 'Discard changes';
+
+  @override
+  String get gardenSaveError =>
+      'Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.';
+
+  @override
+  String get gardenDeleteTitle => 'Delete garden?';
+
+  @override
+  String gardenDeleteBody(String name) {
+    return 'The garden “$name”, its notes and all areas will be deleted from this device.';
+  }
+
+  @override
+  String gardenDefaultArea(int number) {
+    return 'Area $number';
+  }
+
+  @override
+  String gardenAreaCount(int count) {
+    return '$count areas';
+  }
+
+  @override
+  String gardenAreaPosition(int x, int y, int width, int height) {
+    return 'Left $x%, top $y% · $width × $height%';
+  }
 }

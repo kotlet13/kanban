@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="Kanban Connect"
+        android:label="Jivie"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
@@ -34,6 +34,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="jivie" android:host="invite" />
                 <data android:scheme="vsakdan" android:host="invite" />
             </intent-filter>
         </activity>

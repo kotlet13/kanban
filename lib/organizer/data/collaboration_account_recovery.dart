@@ -9,7 +9,7 @@ extension CollaborationAccountRecovery on CollaborationRepository {
     required String username,
     required String password,
     required String name,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
     bool allowLocalHttp = false,
   }) => _authenticate(serverUrl, 'auth.enroll', {
     'code': code,

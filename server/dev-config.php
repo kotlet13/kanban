@@ -9,3 +9,5 @@ define('PLUGIN_INSTALLER', false);
 define('FAMILYHUB_ENABLE_PROJECT_INVITATIONS', true);
 define('FAMILYHUB_ENABLE_NATIVE_API', true);
 define('FAMILYHUB_CORS_ORIGINS', ['http://127.0.0.1:18770', 'http://127.0.0.1:18771']);
+
+define('FAMILYHUB_ACCOUNT_MODE', 'self_hosted');

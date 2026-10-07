@@ -100,39 +100,41 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     },
   );
-  testWidgets(
-    'full invitation pasted into blank server field prepares correct source without joining',
-    (tester) async {
-      final controller = SharingUiController(initial: CollaborationState());
-      await pumpPanel(
-        tester,
-        controller,
-        SharingAuthPanel(
-          onStart: () {},
-          onConnected: () {},
-          invitationMode: true,
-        ),
-      );
-      final link = InvitationLink(
-        serverUrl: 'https://invited.example.test/path',
-        token: 'fhi1_${'a' * 64}',
-      );
-      await tester.enterText(
-        find.byKey(const ValueKey('sharing-invitation-token')),
-        link.toUri().toString(),
-      );
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('sharing-preview-invite')),
-      );
-      await tester.tap(find.byKey(const ValueKey('sharing-preview-invite')));
-      await tester.pumpAndSettle();
-      expect(controller.previewServer, link.serverUrl);
-      expect(controller.previewToken, link.token);
-      expect(find.text('Povabljeni dom'), findsOneWidget);
-      expect(controller.registeredUsername, null);
-      expect(tester.takeException(), null);
-    },
-  );
+  for (final scheme in ['jivie', 'vsakdan']) {
+    testWidgets(
+      '$scheme invitation pasted into blank server field prepares correct source without joining',
+      (tester) async {
+        final controller = SharingUiController(initial: CollaborationState());
+        await pumpPanel(
+          tester,
+          controller,
+          SharingAuthPanel(
+            onStart: () {},
+            onConnected: () {},
+            invitationMode: true,
+          ),
+        );
+        final link = InvitationLink(
+          serverUrl: 'https://invited.example.test/path',
+          token: 'fhi1_${'a' * 64}',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('sharing-invitation-token')),
+          link.toUri().replace(scheme: scheme).toString(),
+        );
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('sharing-preview-invite')),
+        );
+        await tester.tap(find.byKey(const ValueKey('sharing-preview-invite')));
+        await tester.pumpAndSettle();
+        expect(controller.previewServer, link.serverUrl);
+        expect(controller.previewToken, link.token);
+        expect(find.text('Povabljeni dom'), findsOneWidget);
+        expect(controller.registeredUsername, null);
+        expect(tester.takeException(), null);
+      },
+    );
+  }
   testWidgets(
     'first-account form validates matching password then enrolls without administrator credential',
     (tester) async {

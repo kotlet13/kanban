@@ -1,4 +1,4 @@
-package com.takndev.kanbanconnect
+package si.triparna.jivie
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine

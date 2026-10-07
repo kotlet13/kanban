@@ -269,6 +269,7 @@ class CollaborationState {
     this.session,
     this.pushProjectId,
     this.sessionInvalid = false,
+    this.deletionPending = false,
     this.privateSync = const PrivateSyncState(),
     Map<String, String> privateRecordIds = const {},
     this.remotePushRegistration = const RemotePushRegistrationState(),
@@ -329,6 +330,7 @@ class CollaborationState {
   final RemotePushRegistrationState remotePushRegistration;
   final String? pushProjectId;
   final bool sessionInvalid;
+  final bool deletionPending;
   final PrivateSyncState privateSync;
   final Map<String, String> privateRecordIds;
   String personalRecordId(String serverRecordId) =>

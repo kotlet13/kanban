@@ -5,6 +5,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   Future<void> _loadCapabilities(String partition) async {
     _recordContractVersion = 1;
     _inboxSupported = false;
+    _accountDeletionSupported = false;
     _financeSupported = false;
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
@@ -37,6 +38,7 @@ extension CollaborationAccountActions on CollaborationRepository {
         features['privateSync'] == true &&
         features['personalFinanceEntry'] == true;
     _inboxSupported = features['inbox'] == true;
+    _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
     _externalPushSupported = features['externalPush'] == true;
     _pushProjectId = caps['pushProjectId'] is String
@@ -99,7 +101,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String password,
     String? otp,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) => _authenticate(serverUrl, 'auth.login', {
     'username': username,
     'password': password,
@@ -113,7 +115,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String name,
     required String password,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) => _authenticate(serverUrl, 'auth.register', {
     'token': invitationToken,
     'username': username,
@@ -139,6 +141,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _remotePushState = const RemotePushRegistrationState();
     _recordContractVersion = 1;
     _inboxSupported = false;
+    _accountDeletionSupported = false;
     _financeSupported = false;
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
@@ -252,6 +255,17 @@ extension CollaborationAccountActions on CollaborationRepository {
       await _invalidateDeviceSession(session, epoch, 'auth_required');
       throw const CollaborationException('auth_required');
     }
+    if (!operation.startsWith('account.deletion.') &&
+        (await database.rows(
+          'SELECT value FROM local_meta WHERE name IN (?,?)',
+          [
+            'deleted_account:${session.profile.partition}',
+            'deletion_pending:${session.profile.partition}',
+          ],
+        )).isNotEmpty) {
+      throw const CollaborationException('deletion_pending');
+    }
+    _checkEpoch(epoch);
     Map<String, dynamic> reply;
     try {
       reply = await transport.call(
@@ -269,11 +283,23 @@ extension CollaborationAccountActions on CollaborationRepository {
             'session_expired',
             'invalid_credentials',
           }.contains(e.code) &&
-          !(operation == 'account.email.request' &&
+          !((operation == 'account.email.request' ||
+                  operation == 'account.deletion.confirm') &&
               e.code == 'invalid_credentials')) {
         await _invalidateDeviceSession(session, epoch, e.code);
       }
       rethrow;
+    }
+    _checkEpoch(epoch);
+    if (!operation.startsWith('account.deletion.') &&
+        (await database.rows(
+          'SELECT value FROM local_meta WHERE name IN (?,?)',
+          [
+            'deleted_account:${session.profile.partition}',
+            'deletion_pending:${session.profile.partition}',
+          ],
+        )).isNotEmpty) {
+      throw const CollaborationException('deletion_pending');
     }
     _checkEpoch(epoch);
     return reply;

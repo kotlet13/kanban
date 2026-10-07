@@ -106,7 +106,7 @@ try {
     $result=(new NativePushQueue($container))->run(20,$transport);
     check($result['accepted']===2 && count($captured)===2 && $result['coalesced']===6,'cron coalesces latest known group once per device');
     check($oauth===1,'short-lived OAuth token reused only in worker memory');
-    $message=$captured[0];check(array_keys($message['data'])===['type','serverId','accountId','notificationId'] && $message['data']['accountId']===$accounts['a'] && $message['data']['type']==='familyhub.inbox.v1','push data contains only strict identity/inbox references');
+    $message=$captured[0];check($message['notification']['title']==='Jivie','generic FCM title identifies Jivie');check(array_keys($message['data'])===['type','serverId','accountId','notificationId'] && $message['data']['accountId']===$accounts['a'] && $message['data']['type']==='familyhub.inbox.v1','push data contains only strict identity/inbox references');
     check($message['android']['notification']['channel_id']==='familyhub_push_silent_v1' && !isset($message['apns']['payload']['aps']['sound']) && strlen($message['apns']['headers']['apns-collapse-id'])===64,'silent platform channel/APNs respects preference and bounded collapse ID');
     check(strpos(json_encode($message),$scope)===false && strpos(json_encode($message),'amountMinor')===false && strpos(json_encode($message),'task.assigned')===false,'payload leaks no scope/kind/financial content');
     check((new NativePushQueue($container))->run(20,$transport)['accepted']===0,'repeated cron does not resend accepted jobs');

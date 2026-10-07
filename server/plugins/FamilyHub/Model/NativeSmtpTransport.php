@@ -28,7 +28,7 @@ class NativeSmtpTransport
         $domain = substr(strrchr($config['from'], '@'), 1);
         $message = new \Swift_Message('Novo obvestilo v aplikaciji');
         $message->setId('familyhub.'.$inboxId.'.'.substr(hash('sha256', $accountId), 0, 16).'@'.$domain);
-        $message->setFrom([$config['from'] => 'FamilyHub'])->setTo([$recipient]);
+        $message->setFrom([$config['from'] => 'Jivie'])->setTo([$recipient]);
         $body = "V skupnem prostoru je novo obvestilo. Odprite center obvestil v aplikaciji.\n";
         if (defined('FAMILYHUB_APP_URL') && is_string(FAMILYHUB_APP_URL)) {
             $url = parse_url(FAMILYHUB_APP_URL);

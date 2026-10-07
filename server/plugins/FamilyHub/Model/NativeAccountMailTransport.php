@@ -14,10 +14,10 @@ class NativeAccountMailTransport
         if (defined('FAMILYHUB_SMTP_PASSWORD')) { $transport->setPassword(FAMILYHUB_SMTP_PASSWORD); }
         $english = $language === 'en';
         $title = $purpose === 'verify' ? ($english ? 'Confirm your email' : 'Potrdite e-pošto') : ($english ? 'Reset your password' : 'Ponastavite geslo');
-        $body = ($english ? 'Enter this one-time code in the Vsakdan app:' : 'To enkratno kodo vnesite v aplikacijo Vsakdan:')."\n\n".$code."\n\n".($english ? 'If you did not request this, ignore the message.' : 'Če tega niste zahtevali, sporočilo prezrite.');
+        $body = ($english ? 'Enter this one-time code in the Jivie app:' : 'To enkratno kodo vnesite v aplikacijo Jivie:')."\n\n".$code."\n\n".($english ? 'If you did not request this, ignore the message.' : 'Če tega niste zahtevali, sporočilo prezrite.');
         $message = new \Swift_Message($title);
         $message->setId('familyhub.account.'.$id.'@'.substr(strrchr($config['from'], '@'), 1));
-        $message->setFrom([$config['from'] => 'Vsakdan'])->setTo([$recipient])->setBody($body, 'text/plain', 'UTF-8');
+        $message->setFrom([$config['from'] => 'Jivie'])->setTo([$recipient])->setBody($body, 'text/plain', 'UTF-8');
         try { if ((new \Swift_Mailer($transport))->send($message) !== 1) { throw new NativeError('email_unavailable', 503); } }
         finally { try { $transport->stop(); } catch (\Throwable $ignored) {} }
         return ['accepted' => true];

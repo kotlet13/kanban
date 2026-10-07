@@ -71,10 +71,9 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
       setState(() => _error = context.l10n.sharingRequired);
       return;
     }
-    if (_token.text.trim().startsWith('vsakdan:')) {
-      final link = InvitationLink.tryParse(
-        Uri.tryParse(_token.text.trim()) ?? Uri(),
-      );
+    final invitationUri = Uri.tryParse(_token.text.trim());
+    if (InvitationLink.supportedSchemes.contains(invitationUri?.scheme)) {
+      final link = InvitationLink.tryParse(invitationUri!);
       if (link == null) {
         setState(() => _error = context.l10n.inviteLinkInvalid);
         return;

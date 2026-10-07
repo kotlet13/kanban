@@ -8,11 +8,13 @@ import '../data/collaboration_repository.dart';
 import '../data/collaboration_transport.dart';
 import '../data/device_session_store.dart';
 import '../data/remote_push_store.dart';
+import '../data/account_deletion_store.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import 'organizer_provider.dart';
 
 export '../domain/collaboration_models.dart';
+export '../data/account_deletion_store.dart' show PendingAccountDeletion;
 
 final collaborationTransportFactoryProvider =
     Provider<CollaborationTransport Function()>(
@@ -167,7 +169,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String username,
     required String password,
     required String name,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
     bool allowLocalHttp = false,
   }) => _repo.enroll(
     serverUrl: serverUrl,
@@ -177,6 +179,31 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     name: name,
     deviceName: deviceName,
     allowLocalHttp: allowLocalHttp,
+  );
+  Future<Map<String, dynamic>> previewAccountDeletion() =>
+      _repo.previewAccountDeletion();
+  Future<List<PendingAccountDeletion>> pendingAccountDeletions() =>
+      _repo.pendingAccountDeletions();
+  Future<bool> cancelPendingAccountDeletion(PendingAccountDeletion request) =>
+      _repo.cancelPendingAccountDeletion(request);
+  Future<bool> checkAccountDeletion(PendingAccountDeletion request) =>
+      _repo.checkAccountDeletion(request);
+  Future<void> confirmAccountDeletion({
+    required String previewHash,
+    required String password,
+    String? otp,
+    List<Map<String, Object?>> ownershipTransfers = const [],
+    List<Map<String, Object?>> resolutions = const [],
+    List<String> ownedScopeDeletions = const [],
+    Map<String, dynamic> review = const {},
+  }) => _repo.confirmAccountDeletion(
+    previewHash: previewHash,
+    password: password,
+    otp: otp,
+    ownershipTransfers: ownershipTransfers,
+    resolutions: resolutions,
+    ownedScopeDeletions: ownedScopeDeletions,
+    review: review,
   );
   Future<AccountStatus> accountStatus() => _repo.accountStatus();
   Future<void> requestEmailVerification({
@@ -417,7 +444,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String password,
     String? otp,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) => _repo.login(
     serverUrl: serverUrl,
     username: username,
@@ -433,7 +460,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String name,
     required String password,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) => _repo.registerWithInvitation(
     serverUrl: serverUrl,
     invitationToken: invitationToken,

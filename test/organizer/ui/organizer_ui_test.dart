@@ -10,6 +10,8 @@ import 'package:kanban/app.dart';
 import 'package:kanban/features/auth/connect_page.dart';
 import 'package:kanban/app_router.dart';
 import 'package:kanban/organizer/data/organizer_storage.dart';
+import 'package:kanban/organizer/data/garden_repository.dart';
+import 'package:kanban/organizer/state/garden_provider.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
 
@@ -32,11 +34,13 @@ Future<void> pumpOrganizer(
   WidgetTester tester,
   MemoryOrganizerStorage storage, {
   double width = 390,
+  double height = 1000,
+  GardenRepository? gardenRepository,
   String locale = 'sl',
   String theme = 'light',
   Future<Map<String, Object?>> Function()? replayPreferences,
 }) async {
-  tester.view.physicalSize = Size(width, 1000);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -48,6 +52,10 @@ Future<void> pumpOrganizer(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (gardenRepository != null)
+          gardenRepositoryProvider.overrideWith(
+            (ref) async => gardenRepository,
+          ),
         portableBackupProvider.overrideWith(EmptyBackupUiController.new),
         backupPreferencesReplayProvider.overrideWith(
           (ref) async => replayPreferences == null
@@ -91,7 +99,7 @@ void main() {
             locale: locale,
             theme: theme,
           );
-          expect(find.text('Vsakdan'), findsOneWidget);
+          expect(find.text('Jivie'), findsOneWidget);
           expect(
             find.text(
               locale == 'sl'
@@ -144,6 +152,14 @@ void main() {
             find.text(locale == 'sl' ? 'Varnostna kopija' : 'Backup'),
             findsOneWidget,
           );
+          final aboutLabel = locale == 'sl'
+              ? 'O aplikaciji Jivie'
+              : 'About Jivie';
+          await tester.ensureVisible(find.text(aboutLabel));
+          await tester.tap(find.text(aboutLabel));
+          await tester.pumpAndSettle();
+          expect(find.byType(AboutDialog), findsOneWidget);
+          expect(find.text('Jivie'), findsNWidgets(2));
           expect(tester.takeException(), isNull);
         });
       }

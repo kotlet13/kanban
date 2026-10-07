@@ -1481,7 +1481,14 @@ class AppLocalizationsSl extends AppLocalizations {
   String get verticalWorkGrouping => 'Navpično razvrščanje dela';
 
   @override
-  String get organizerAppName => 'Vsakdan';
+  String get organizerAppName => 'Jivie';
+
+  @override
+  String get jivieAbout => 'O aplikaciji Jivie';
+
+  @override
+  String get jivieDescription =>
+      'Brezplačen osebni in družinski organizator za opravila, načrte, nakupe in finance. Osebne podatke lahko ustvarjaš in urejaš na napravi brez računa ali povezave. Sinhronizacijo in deljenje vključiš po izbiri.';
 
   @override
   String get organizerToday => 'Danes';
@@ -2794,7 +2801,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get setupIntro =>
-      'Izberi začetek. Svoj način lahko kasneje spremeniš v nastavitvah.';
+      'Izberi, kako želiš uporabljati Jivie. Svoj način lahko kasneje spremeniš v nastavitvah.';
 
   @override
   String get setupHint =>
@@ -2846,7 +2853,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get inviteLinkPrepared =>
-      'Povezava odpre nameščeno aplikacijo, kjer je podprta shema vsakdan. Univerzalne spletne povezave še niso nastavljene.';
+      'Povezava odpre povabilo v nameščeni aplikaciji Jivie. Če se aplikacija ne odpre, v njej ročno vnesi strežnik in kodo.';
 
   @override
   String get accountFirstTitle => 'Prvi račun s kodo';
@@ -3176,4 +3183,398 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get privateFinanceIncomplete =>
       'Zasebni finančni pregled še ni v celoti prenesen. Prikazani zapisi in čakajoče spremembe so ohranjeni; skupni seštevek se pokaže po popolni sinhronizaciji.';
+
+  @override
+  String get guideTitle => 'Dobrodošli v Jivie';
+
+  @override
+  String get guideOpen => 'Kratek vodič po Jivie';
+
+  @override
+  String get guideLocalTitle => 'Začnite na svoji napravi';
+
+  @override
+  String get guideLocalBody =>
+      'Opravila, načrti, nakupi in osebne finance delujejo brez računa in povezave. Začnite z enim opravilom ali nakupovalnim seznamom. Izbirna sinhronizacija potrebuje vašo izrecno vključitev.';
+
+  @override
+  String get guideTodayBody =>
+      'Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.';
+
+  @override
+  String get guidePlansBody =>
+      'V Načrtih uredite opravila, projekte in dogodke. Dodajte termine in po potrebi povežite opravilo s projektom. Na večjem zaslonu jih dosežete tudi prek stranskega menija.';
+
+  @override
+  String get guideShoppingBody =>
+      'V Nakupih ustvarite seznam, dodajte artikle in označite kupljeno. Osebni seznam ostane na napravi; kopiranje v skupni prostor je vaša izrecna odločitev.';
+
+  @override
+  String get guideMoreBody =>
+      'V Več najdete finance, dom, vrt, račun in nastavitve. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.';
+
+  @override
+  String get guideSkip => 'Preskoči';
+
+  @override
+  String get guideBack => 'Nazaj';
+
+  @override
+  String get guideNext => 'Naprej';
+
+  @override
+  String get guideDone => 'Začnimo';
+
+  @override
+  String guideProgress(int step, int total) {
+    return '$step od $total';
+  }
+
+  @override
+  String get deletionAccountSettings => 'Nastavitve računa';
+
+  @override
+  String get deletionTitle => 'Trajno izbriši račun';
+
+  @override
+  String get deletionLocalOnly =>
+      'Uporabljate lokalni način. Brez strežniškega računa ni računa za izbris. Lokalno delo ostane na napravi.';
+
+  @override
+  String get deletionWarning =>
+      'Izbris velja za prikazani račun na tem samostojnem strežniku, tudi za isti račun v Kanboardu. Je trajen. Kopij, ki so jih drugi člani že pridobili, ni mogoče odpoklicati.';
+
+  @override
+  String get deletionPreview => 'Preglej izbris računa';
+
+  @override
+  String get deletionLocalConsequences =>
+      'Izbris odstrani tudi zasebno SINHRONIZIRANE podatke tega računa, njegovo lokalno strežniško kopijo, čakajoče spremembe, opomnike, povezavo za sinhronizacijo in obnovitveno delo. Samostojni osebni podatki v lokalnem prostoru ostanejo. Sinhroniziranih podatkov ne prenesemo samodejno nazaj v lokalni prostor.';
+
+  @override
+  String get deletionExportLimit =>
+      'Šifrirana .vsakdan kopija ni popoln arhiv Kanboarda ali priponk. Po izbrisu računa z njo ni mogoče nadaljevati njegovega strežniškega dela. Za ohranitev zasebno sinhroniziranih osebnih zapisov za samostojno uporabo uporabite spodnji izrecni JSON izvoz. Za popoln Kanboard arhiv se pred izbrisom obrnite na upravljavca.';
+
+  @override
+  String get deletionImpact => 'Posledice na strežniku';
+
+  @override
+  String get deletionSharedRemains => 'skupni prostor ostane';
+
+  @override
+  String get deletionBlocked =>
+      'Pred izbrisom razrešite spodnje pogoje. Nato ponovno preglejte posledice.';
+
+  @override
+  String get deletionAcknowledge =>
+      'Razumem trajni izbris tega računa, njegovih sinhroniziranih podatkov in opisane posledice za skupno delo.';
+
+  @override
+  String get deletionTypeDelete => 'Za potrditev vpišite DELETE';
+
+  @override
+  String get deletionConfirm => 'Trajno izbriši';
+
+  @override
+  String get deletionUnknown =>
+      'Izbris še ni potrjen. Povezava je bila prekinjena ali odgovor ni zanesljiv. V nastavitvah računa preverite stanje te iste zahteve; gesla ne hranimo.';
+
+  @override
+  String get deletionNotConfirmed =>
+      'Strežnik še ni potrdil izbrisa. Račun je lahko še vedno aktiven. Za ponovitev uporabite iste odločitve in sveže geslo/TOTP.';
+
+  @override
+  String get deletionSuccess =>
+      'Strežnik je potrdil izbris. Nadaljujete lahko v lokalnem načinu.';
+
+  @override
+  String get deletionCheckStatus => 'Preveri stanje izbrisa';
+
+  @override
+  String get deletionUnavailable =>
+      'Ta strežnik ne podpira izbrisa računa v Jivie. Izbris mora omogočiti njegov upravljavec. Brez povezave izbrisa ni mogoče potrditi.';
+
+  @override
+  String get deletionStale =>
+      'Podatki so se spremenili. Ponovno preglejte posledice in potrdite nove odločitve.';
+
+  @override
+  String get deletionPersonalScopes => 'Zasebni prostori za izbris';
+
+  @override
+  String get deletionPersonalRecords => 'Zasebni zapisi za izbris';
+
+  @override
+  String get deletionPersonalFinance => 'Zasebni finančni zapisi za izbris';
+
+  @override
+  String get deletionMemberships => 'Članstva za odstranitev';
+
+  @override
+  String get deletionDevices => 'Naprave in seje za preklic';
+
+  @override
+  String get deletionPush => 'Potisne registracije za odstranitev';
+
+  @override
+  String get deletionEmailTokens => 'E-poštne kode za preklic';
+
+  @override
+  String get deletionRelatedData => 'Povezani zapisi za odstranitev';
+
+  @override
+  String get deletionOwnedScopes =>
+      'Izberite novega lastnika skupnega prostora';
+
+  @override
+  String get deletionLastAdmin => 'Najprej določite drugega skrbnika Kanboarda';
+
+  @override
+  String get deletionContributions =>
+      'Razrešite svoje prispevke in njihove skupne povezave';
+
+  @override
+  String get deletionStructure =>
+      'Ohrani le generično strukturo za zapise drugih članov. Izvirno ime in lastnik se odstranita; finančni račun ohrani valuto in začetno stanje. Moji vnosi se izbrišejo in skupni seštevki se lahko spremenijo.';
+
+  @override
+  String get deletionSharedRecordsDeleted => 'Lastni skupni zapisi za izbris';
+
+  @override
+  String get deletionSharedRecordsUpdated =>
+      'Skupni zapisi za razvezavo povezav';
+
+  @override
+  String get deletionSharedFinanceDeleted =>
+      'Lastni skupni finančni zapisi za izbris';
+
+  @override
+  String get deletionSharedFinanceUpdated =>
+      'Skupni finančni zapisi za razvezavo';
+
+  @override
+  String get deletionLegacyTasks => 'Lastna Kanboard opravila za izbris';
+
+  @override
+  String get deletionLegacyComments => 'Lastni Kanboard komentarji za izbris';
+
+  @override
+  String get deletionLegacyFiles => 'Lastne Kanboard priponke za izbris';
+
+  @override
+  String get deletionAssignedTasks =>
+      'Kanboard opravila za odstranitev dodelitve';
+
+  @override
+  String get deletionAssignedSubtasks =>
+      'Kanboard podopravila za odstranitev dodelitve';
+
+  @override
+  String get deletionLegacyPrivate =>
+      'Najprej razrešite zasebni projekt v Kanboardu';
+
+  @override
+  String get deletionServerCleanup =>
+      'Račun in podatkovni zapisi so odstranjeni. Strežnik še dokončuje izbris priponk; preverite stanje do potrjenega zaključka.';
+
+  @override
+  String get deletionRetry => 'Ponovi isto zahtevo';
+
+  @override
+  String get deletionRetryReview =>
+      'Ponovitev uporablja iste odločitve in isti predogled spodaj. Geslo in TOTP vnesite ponovno. Če je predogled zastarel, strežnik zavrne izbris in zahteva nov pregled.';
+
+  @override
+  String get deletionDeleteOwnedScope =>
+      'Trajno izbriši tudi ta prostor in njegovo vsebino';
+
+  @override
+  String get deletionUnnamedStructure =>
+      'Skupna struktura brez pravice do podrobnosti';
+
+  @override
+  String get deletionMinorUnits => 'najmanjših denarnih enot';
+
+  @override
+  String get deletionRetainedEdits =>
+      'Na strežniku se izbrišejo zapisi, ki jih je ustvaril vaš račun. Zapisi drugih ustvarjalcev ostanejo, tudi če ste urejali njihovo vsebino. Vaše identitetne povezave se odstranijo; urejanj posameznih polj ni mogoče ločiti po avtorju.';
+
+  @override
+  String get jiviePrivacyLink => 'Zasebnost';
+
+  @override
+  String get jivieHelpLink => 'Pomoč in podpora';
+
+  @override
+  String get jivieDeletionLink => 'Spletna pot za izbris računa';
+
+  @override
+  String get jivieLinkFailed => 'Povezave ni bilo mogoče odpreti.';
+
+  @override
+  String get deletionSpaceDeleted =>
+      'Ta skupni prostor in njegova vsebina bosta trajno izbrisana.';
+
+  @override
+  String get deletionCancelPending => 'Prekliči čakajočo zahtevo';
+
+  @override
+  String get deletionCancelled =>
+      'Strežnik je potrdil preklic. Ta zahteva računa ne more več izbrisati. Za izbris ponovno preglejte posledice.';
+
+  @override
+  String get deletionLegacyLocal =>
+      'Ločeno shranjene stare Kanboard povezave, predpomnilniki in AI pogovori s tem niso odstranjeni. Stara povezava do izbrisanega računa ne bo več delovala.';
+
+  @override
+  String get deletionPersonalExport =>
+      'Izvozi osebne podatke za lokalno obnovo';
+
+  @override
+  String get deletionJsonWarning =>
+      'Ta samostojna kopija vsebuje trenutno dostopne osebne zapise, tudi zasebno sinhronizirane. JSON ni šifriran; shranite ga na varno. Ne vsebuje skupnega dela, sej ali sinhronizacijskih povezav. Po izbrisu ga lahko izrecno uvozite v lokalni način prek nastavitev. Obnovljenih podatkov ne prenesite v drug račun brez svoje izrecne odločitve.';
+
+  @override
+  String get gardenTitle => 'Vrt';
+
+  @override
+  String get gardenIntro =>
+      'Zapiši zasaditve in ročno razporedi grede, rastline ali druge površine.';
+
+  @override
+  String get gardenLocalOnly =>
+      'Na tej napravi · brez sinhronizacije in deljenja';
+
+  @override
+  String get gardenNew => 'Nov vrt';
+
+  @override
+  String get gardenEdit => 'Uredi vrt';
+
+  @override
+  String get gardenName => 'Ime vrta';
+
+  @override
+  String get gardenNameRequired => 'Vpiši ime vrta.';
+
+  @override
+  String get gardenEmptyTitle => 'Tvoj prvi vrt';
+
+  @override
+  String get gardenEmptyBody =>
+      'Poimenuj vrt, dodaj opombe in nariši svojo razporeditev. Vse lahko urejaš brez računa ali povezave.';
+
+  @override
+  String get gardenLayout => 'Razporeditev';
+
+  @override
+  String get gardenSelectTool => 'Izberi / premakni';
+
+  @override
+  String get gardenDrawTool => 'Nariši območje';
+
+  @override
+  String get gardenUndo => 'Razveljavi spremembo razporeditve';
+
+  @override
+  String get gardenDrawHelp =>
+      'Povleci od enega vogala do drugega, da narišeš pravokotno območje.';
+
+  @override
+  String get gardenSelectHelp =>
+      'Izberi območje z dotikom. Povleci ga za premik; velikost in oznako uredi na seznamu.';
+
+  @override
+  String get gardenCanvasDescription =>
+      'Skica razporeditve vrta. Območja lahko urejaš tudi na spodnjem seznamu.';
+
+  @override
+  String get gardenSketchDisclaimer =>
+      'Skica prikazuje razporeditev, ne merila ali resničnih razdalj. Spremembe potrdi s Shrani.';
+
+  @override
+  String get gardenAreas => 'Območja';
+
+  @override
+  String get gardenAreaListHelp =>
+      'Območje lahko dodaš in urediš tudi z obrazcem, brez risanja.';
+
+  @override
+  String get gardenAddArea => 'Dodaj območje';
+
+  @override
+  String get gardenNoAreas =>
+      'Še ni območij. Nariši prvo ali ga dodaj z obrazcem.';
+
+  @override
+  String get gardenEditArea => 'Uredi območje';
+
+  @override
+  String get gardenAreaLabel => 'Kaj je na tem mestu?';
+
+  @override
+  String get gardenLabelRequired => 'Vpiši oznako območja.';
+
+  @override
+  String get gardenPositionX => 'Od leve';
+
+  @override
+  String get gardenPositionY => 'Od zgoraj';
+
+  @override
+  String get gardenWidth => 'Širina';
+
+  @override
+  String get gardenHeight => 'Višina';
+
+  @override
+  String get gardenGeometryHelp =>
+      'Položaj in velikost sta v odstotkih celotne skice.';
+
+  @override
+  String get gardenNumberError => 'Vpiši 0–100; velikost mora biti vsaj 1.';
+
+  @override
+  String get gardenGeometryError =>
+      'Območje mora v celoti ostati znotraj skice. Zmanjšaj velikost ali popravi položaj.';
+
+  @override
+  String get gardenUnsavedTitle => 'Neshranjene spremembe';
+
+  @override
+  String get gardenUnsavedBody =>
+      'Spremembe vrta še niso shranjene. Če zapustiš urejanje, jih zavržeš.';
+
+  @override
+  String get gardenKeepEditing => 'Nadaljuj urejanje';
+
+  @override
+  String get gardenDiscard => 'Zavrzi spremembe';
+
+  @override
+  String get gardenSaveError =>
+      'Sprememb ni bilo mogoče shraniti. Osnutek je še odprt. Poskusi znova; če se je shranjeni vrt spremenil, ga ponovno odpri.';
+
+  @override
+  String get gardenDeleteTitle => 'Izbrišem vrt?';
+
+  @override
+  String gardenDeleteBody(String name) {
+    return 'Vrt »$name«, opombe in vsa območja bodo izbrisani s te naprave.';
+  }
+
+  @override
+  String gardenDefaultArea(int number) {
+    return 'Območje $number';
+  }
+
+  @override
+  String gardenAreaCount(int count) {
+    return '$count območij';
+  }
+
+  @override
+  String gardenAreaPosition(int x, int y, int width, int height) {
+    return 'Levo $x %, zgoraj $y % · $width × $height %';
+  }
 }

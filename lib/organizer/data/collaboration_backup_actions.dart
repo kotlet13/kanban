@@ -8,6 +8,11 @@ extension CollaborationBackupActions on CollaborationRepository {
     final session = _requireSession(),
         epoch = _epoch,
         p = session.profile.partition;
+    if ((await database.rows('SELECT value FROM local_meta WHERE name=?', [
+      'deleted_account:$p',
+    ])).isNotEmpty) {
+      throw const CollaborationException('account_deleted');
+    }
     final source = doc['source'];
     if (source is! Map ||
         source['partition'] != p ||

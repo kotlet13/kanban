@@ -1,0 +1,41 @@
+<?php
+// Fresh, isolated Kanboard 1.2.54 + FamilyHub 0.6.0 only.
+// Review every placeholder before copying this file to the NEW root/config.php.
+// Do not replace an existing installation's config or reference its DB/files.
+
+// Both paths must be outside ALL document roots and the Kanboard source root.
+// Create DATA_DIR and its files/cache directories with restricted permissions,
+// readable/writable by the actual PHP HTTP and CLI account (normally 0700).
+define('DATA_DIR', '/home/ACCOUNT/private/jivie-test-kanboard-data');
+
+// This separate private file is prepared directly by the administrator.
+// It declares only the NEW database's DB_DRIVER, DB_HOSTNAME, DB_PORT,
+// DB_NAME, DB_USERNAME and DB_PASSWORD. No database values are in this template.
+// require fails closed if the private configuration has not been installed.
+require '/home/ACCOUNT/private/jivie-test-kanboard-db.php';
+
+define('DEBUG', false);
+define('PLUGIN_INSTALLER', false);
+define('LDAP_AUTH', false);
+define('REVERSE_PROXY_AUTH', false);
+define('ENABLE_URL_REWRITE', false);
+
+define('FAMILYHUB_ENABLE_NATIVE_API', true);
+define('FAMILYHUB_ACCOUNT_MODE', 'self_hosted');
+define('FAMILYHUB_ENABLE_PROJECT_INVITATIONS', false);
+define('FAMILYHUB_ENABLE_FCM', false);
+define('FAMILYHUB_TRUSTED_PROXY_IPS', []);
+define('FAMILYHUB_CORS_ORIGINS', []);
+
+// FamilyHub SMTP is disabled by OMITTING all FAMILYHUB_SMTP_* constants.
+// There is no FAMILYHUB_ENABLE_SMTP switch. Do not invent one.
+// Account verification/password reset remain disabled without SMTP and its key.
+// No mail(), global BCC, FCM configuration or development exceptions are added.
+// Do not run delivery.php/account-mail.php/push.php while these are disabled.
+
+// FUTURE private key locations only (not read or enabled by this template):
+// /home/ACCOUNT/private/jivie-test-account-mail.key   (32-byte base64)
+// /home/ACCOUNT/private/jivie-test-push.key           (different 32-byte base64)
+// /home/ACCOUNT/private/jivie-test-fcm-service-account.json
+// These paths must be checked against every virtual host before enabling them.
+// Preserve keys in protected backups; never print them or include them in ZIPs.

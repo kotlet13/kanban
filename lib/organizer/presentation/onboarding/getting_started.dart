@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/l10n.dart';
+import 'first_time_guide.dart';
 
 enum SetupIntent { deviceOnly, privateDevices, household }
 
@@ -95,7 +96,10 @@ class GettingStartedHint extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seen = ref.watch(gettingStartedSeenProvider);
-    if (seen.valueOrNull != false) return const SizedBox.shrink();
+    final guideSeen = ref.watch(firstTimeGuideSeenProvider);
+    if (seen.valueOrNull != false && guideSeen.valueOrNull != false) {
+      return const SizedBox.shrink();
+    }
     final l = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -111,11 +115,18 @@ class GettingStartedHint extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(l.setupHint),
-              TextButton.icon(
-                onPressed: onStart,
-                icon: const Icon(Icons.arrow_forward),
-                label: Text(l.setupChoose),
-              ),
+              if (guideSeen.valueOrNull == false)
+                TextButton.icon(
+                  onPressed: () => showFirstTimeGuide(context, ref),
+                  icon: const Icon(Icons.explore_outlined),
+                  label: Text(l.guideOpen),
+                ),
+              if (seen.valueOrNull == false)
+                TextButton.icon(
+                  onPressed: onStart,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: Text(l.setupChoose),
+                ),
             ],
           ),
         ),

@@ -9,11 +9,12 @@ plugins {
 }
 
 val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
+val keystorePropertiesFile = rootProject.file("jivie-key.properties")
 if (keystorePropertiesFile.exists()) {
     FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
 
+val jivieApplicationId = "si.triparna.jivie"
 val releaseSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
 val hasReleaseSigning = releaseSigningKeys.all {
     !keystoreProperties.getProperty(it).isNullOrBlank()
@@ -31,8 +32,14 @@ val validateReleaseSigning = tasks.register("validateReleaseSigning") {
     doLast {
         if (!hasReleaseSigning) {
             throw GradleException(
-                "Release signing requires android/key.properties with non-empty " +
+                "Release signing requires android/jivie-key.properties with non-empty " +
                     releaseSigningKeys.joinToString(", ") + "."
+            )
+        }
+        if (keystoreProperties.getProperty("applicationId") != jivieApplicationId) {
+            throw GradleException(
+                "Jivie release signing must explicitly declare applicationId=$jivieApplicationId " +
+                    "in android/jivie-key.properties."
             )
         }
         if (releaseKeystoreFile?.isFile != true) {
@@ -46,7 +53,7 @@ tasks.configureEach {
 }
 
 android {
-    namespace = "com.takndev.kanbanconnect"
+    namespace = "si.triparna.jivie"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -61,12 +68,13 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.takndev.kanbanconnect"
+        // A separate install and store identity from legacy Kanban Connect.
+        applicationId = "si.triparna.jivie"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // Current Google Play target for a new phone app; keep explicit for release review.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

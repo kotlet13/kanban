@@ -16,7 +16,27 @@ Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. o
 
 ## Oblikovanje in navigacija
 
-Potrjen je mobilni koncept »Vsakdan«. Ime ostaja delovno. Svetla tema uporablja belo in svetlo sivo, grafitno besedilo in moder poudarek `#365BD9`; temna tema ohrani isto hierarhijo in berljivost. Nastavitev teme ne zahteva računa.
+### Nova znamka in izdaja — odločitev 5. oktobra 2026
+
+Odločitev z dne 5. oktobra je nova aplikacija z novo znamko, ločena od Kanban Connect. **7. oktobra 2026 je uporabnik izbral Jivie (dživi)** ter naročil začetek priprav za iOS in Android. Ikona predstavlja življenje kot čim bolj abstrakten preplet **zemlje, vode in zraka**; čebela in dobesedni trinity knot nista zahteva. Glavni agent vodi oblikovanje in pregled, podagenti GPT‑6.1 Sol / high izvajajo preimenovanje kode in pripravo izdaje. Potrjena zasnova vmesnika spodaj ostaja osnova.
+
+Nova lokalna konfiguracija mobilne aplikacije uporablja `si.triparna.jivie` in `1.0.0+1`; stare trgovinske aplikacije ne spreminjamo. Uporabnik je dovolil registracijo novih aplikacij v App Store Connect/Play Console ter testne izdaje; aktualno stanje vodi [predaja testnih izdaj](release/TEST_RELEASE_STATUS.md). Javna izdaja ni izvedena. Ohranimo podatkovne formate, interno Dart ime `kanban`, obstoječe namizne identitete za dostop do shrambe in branje starih povabil. Nova povabila uporabljajo `jivie://invite`. [Priprava izdaje](release/README.md) vodi aktualne dokaze, opravila in omejitve; [platformne opombe](release/PLATFORM_NOTES.md) pojasnijo podpis ter združljivost. Prvi spletni pregled imena ni preverjanje znamke ali domene; podobna zdravstvena aplikacija Jivi obstaja.
+
+Dejanski bralni pregled Play Console: Kanban Connect uporablja `com.takndev.kanbanconnect`; zadnja interna izdaja je `1.0.12`, koda 12, javna izdaja ni aktivna, nastavitev aplikacije je dokončanih 0/11. Račun TaknDevs je označen kot organizacijski. Stara aplikacija prikazuje zahtevo 12 preizkuševalcev/14 dni; uporabnik pojasnjuje, da izvira iz prenosa aplikacije iz njegovega prejšnjega osebnega računa. Tega pogoja ne prenašamo na novo aplikacijo v organizacijskem računu. [Googlova dokumentacija](https://support.google.com/googleplay/android-developer/answer/14151465?hl=en) opredeli to zahtevo za nove osebne račune. Interno/izbrano testiranje priporočamo za kakovost, ne kot domnevno obvezni 12/14 korak nove objave.
+
+Uporabnik je potrdil brezplačno aplikacijo. Model: brezplačno lokalno delo; lastni strežnik za izbirno sinhronizacijo in sodelovanje; poznejše upravljano gostovanje kot izbirna plačljiva storitev. V tej izdaji ne dodajamo plačil ali naročnin. Cena, obseg podpore in način obračuna prihodnjega gostovanja še niso določeni. Vtičnik FamilyHub pripravljamo za ločen javni repozitorij pod MIT; to ne spremeni licence celotne aplikacije. Prodajo digitalnih storitev bo treba uskladiti s [pravili Googla](https://support.google.com/googleplay/android-developer/answer/9858738?hl=en) in [Appla](https://developer.apple.com/app-store/review/guidelines/#other-purchase-methods).
+
+**Dopolnitev 7. oktobra:** izdajatelj je TriparNA (triparna.si), uporabnik je kupil jivie.app. [Statična spletna stran](../website/README.md) je pripravljena v slovenščini in angleščini za ročni prenos ZIP v javno korensko mapo domene na cPanelu. Vključuje predstavitev, pomoč, zasebnost ter pripravo povezave do samopostrežnega izbrisa na lastnem strežniku. Stran ne zbira poverilnic, ne uporablja analitike in ne izvaja samega izbrisa; dejanski postopek opravi ustrezen FamilyHub na izbranem strežniku. Spletna objava in dosegljivost javnih URL še nista preverjeni.
+
+Izbris uporabniškega računa gradimo za **self-hosted** strežnik. Vključuje dejanski račun Kanboarda, povezane seje, osebne podatke in prispevke po izrecnem predogledu. Skupnih vsebin drugih ustvarjalcev ne brišemo prikrito; izbire za naslednika in ohranitev skupne strukture so ločene. Urejanja vsebine zapisov drugih ustvarjalcev lahko ostanejo, ker ni zgodovine avtorstva po poljih. Pri starem spletnem Kanboardu ostanejo posebej dokumentirane omejitve odvisnosti in že začetih zahtev. To ni dokaz popolnega izbrisa UGC ali sprejetja v trgovini. Upravljano gostovanje z lastnimi pravili hrambe bo ločena prihodnja izvedba.
+
+Pred objavo: preverimo znamko in registriramo nove identifikatorje, preverimo podpisan AAB in iOS arhiv (za novo aplikacijo sta potrebna izbrana ekipa in profil), objavimo javne strani, izpolnimo resnične podatkovne deklaracije ter zagotovimo pregledovalcem dostop do skupnih funkcij. [Uporabniški izbris](ACCOUNT_DELETION_CLIENT.md) in [strežniška pogodba FamilyHub 0.6.0](server/account-deletion-contract.md) sta zdaj izdelana in lokalno preverjena; opisana legacy omejitev in ohranjena tuja vsebina nista dokaz popolnega odstranjevanja UGC ali sprejema v trgovini. Odjava in izbris finančnega računa ostajata ločeni dejanji. Zunanjo dostavo SMTP/FCM/APNs in celotno shranjevanje/obnovo kopije preverimo na pravih napravah. [Google: izbris računa](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en), [Apple: zasebnost in računi](https://developer.apple.com/app-store/review/guidelines/#privacy).
+
+[Kratek prvi vodič](FIRST_TIME_GUIDE.md) predstavi lokalni začetek in štiri glavna področja. Odpre se iz začetnega namiga in nastavitev, omogoča preskok ter si zapomni ogled. Ne ustvarja podatkov in ne vključi povezave/obvestil. Strani zasebnosti, pomoči in izbrisa so povezane tudi iz nastavitev aplikacije; njihove javne destinacije čakajo na uporabnikovo objavo pripravljenega ZIP-a.
+
+Odprta arhitekturna odločitev za samostojno gostovanje: uradni mobilni paket ima en Firebase projekt, trenutni FamilyHub pa pošilja neposredno v ta projekt. Lasten drugačen Firebase projekt zahteva lasten mobilni build; našega storitvenega/APNs ključa ne delimo upraviteljem drugih strežnikov. Predlog je izbirni skupni posrednik za generična push obvestila, z ločenimi pravicami, omejitvami in preklicem. **Posrednik še ni izdelan ali potrjen kot obvezna storitev.** Lokalno delo, sinhronizacija, center obvestil, lokalni opomniki in konfigurirana e-pošta niso odvisni od njega.
+
+Potrjen mobilni koncept, prvotno imenovan »Vsakdan«, nadaljujemo pod imenom Jivie. Svetla tema uporablja belo in svetlo sivo, grafitno besedilo in moder poudarek `#365BD9`; temna tema ohrani isto hierarhijo in berljivost. Nastavitev teme ne zahteva računa.
 
 | Telefon | Namen | Namizna prilagoditev |
 | --- | --- | --- |
@@ -124,6 +144,60 @@ Obseg načrtovane izvedbe:
 - Vizualen in funkcionalen pregled telefona, tablice ter namizja v obeh temah in jezikih.
 - Podpisane mobilne gradnje, dovoljenja in pravilne nastavitve trgovin; App Store in Play objava sta ločena od lokalne gradnje.
 - Matrika dejansko preverjenih platform; uspešen spletni build sam po sebi ne potrdi vseh native pluginov.
+
+## Vrt — prva lokalna izvedba
+
+**Zahteva uporabnika, 7. oktober 2026:** dodati modul **Vrt**, v katerem uporabnik ustvari svoj vrt ter sam zapiše in nariše, kje bo kaj imel. Prva izvedba je lokalna: več vrtov, zapiski in skica s poimenovanimi pravokotnimi območji. Deljenje in strežniška sinhronizacija Vrta nista del te etape. [Dokazi izvedbe](GARDEN.md): 76 podatkovnih/regresijskih in 48 UI/navigacijskih/vodičevih preizkusov PASS; mobilna namestitev je ločen pogoj.
+
+Prvi obseg:
+
+- Ustvarjanje in poimenovanje lastnega vrta.
+- Ročni zapiski o tem, kaj želi uporabnik posaditi in kam.
+- Preprost urejevalnik skice oziroma tlorisa: narisati razporeditev vrta, označiti posamezne dele in jim dodati napise, da je razvidno, kje bo kaj.
+- Shranjevanje in poznejše urejanje zapiskov ter skice lokalno, brez računa in strežnika; vsebina mora preživeti ponovni zagon ter biti vključena v kopijo in obnovo.
+
+Telefon uporablja zavihek Več, namizje stranski meni. Risanje in premikanje dopolnjuje obrazec za dostopno urejanje položaja in velikosti v odstotkih skice. Fizično merilo, prostoročno risanje, rastlinski katalog in deljenje ostajajo prihodnji obseg.
+
+## Opomba za prihodnjo nadgradnjo — projektne časovnice
+
+**Zamisel uporabnika, 7. oktober 2026; za zdaj samo opomba, brez začetka izvedbe.** Projekt naj dobi časovnico kot koledar znotraj projekta. Glavni poudarek so faze in mejniki: jasno mora biti, katera opravila je treba dokončati za prvo fazo, katera za drugo ter koliko ur dela je predvidenih za vsako. To razširja osnovni razpored izvajalcev in terminov iz [družinske nadgradnje](FAMILY_UPGRADE.md); tamkajšnji dokazi ne potrjujejo spodnjih novih funkcij.
+
+Želeni obseg za prihodnjo zasnovo:
+
+- Projektni koledar oziroma časovnica pokaže opravila z okvirnim začetkom in koncem.
+- Projekt lahko razdelimo na poimenovane faze z mejniki. Vsaka faza poveže opravila, ki so potrebna za dosego njenega mejnika, ter pokaže njihovo dokončanost.
+- Opravilo ima oceno potrebnega dela; pri fazi je vidna predvidena količina ur. Ciljni pregled je: »Za prvo fazo potrebujemo ta opravila in približno X ur; za drugo fazo druga opravila in približno Y ur.«
+- Na projektu oziroma posameznem opravilu lahko določimo okviren čas, ki mu ga uporabnik lahko posveti na dan ali teden. Ta razpoložljivi čas pomaga načrtovati izvedbo faz.
+- Koledarski začetek/konec, ocena potrebnih ur in razpoložljivi dnevni/tedenski čas so ločeni podatki: večdnevni termin sam po sebi ne pomeni enakega števila ur dela.
+
+**Poznejša dopolnitev:** gumba **Play/Pause** na opravilu začneta oziroma začasno ustavita odštevanje zastavljenega časa. Pregled naj loči oceno, dejansko porabljeni in preostali čas; iztek časovnika sam po sebi ne pomeni dokončanega opravila ali doseženega mejnika.
+
+Ob začetku zasnove dorečemo povezavo med oceno faze in ocenami njenih opravil, razmerje med projektnim ter posamičnim dnevnim/tedenskim časom in pravilo, kateri zastavljeni čas odšteva časovnik. Lokalno načrtovanje sledi osnovni zasnovi brez računa in strežnika, s trajno hrambo ter kopijo/obnovo; morebitno skupno urejanje potrebuje svojo pogodbo in preverjanje pravic. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+
+## Opomba za prihodnjo nadgradnjo — finančni čarovnik in napoved
+
+**Zamisel uporabnika, 7. oktober 2026; za zdaj samo opomba za naslednje faze, brez začetka izvedbe.** V financah naj izbirni čarovnik z nekaj vprašanji pomaga pripraviti osnovno napoved denarnega toka in opomnike za pričakovane prilive ter obveznosti.
+
+Predvidena vprašanja:
+
+| Korak | Vprašanje | Odgovor in nadaljevanje |
+| --- | --- | --- |
+| 1 | Kdaj imaš redni mesečni priliv oziroma plačo? | Datum iz koledarčka ali »Nimam«. Če ga ima: koliko okvirno? |
+| 2 | Ali imaš kredit? | Da/ne. Če da: koliko in kdaj? Pri zasnovi ločimo skupni znesek kredita od mesečnega obroka, ki vpliva na napoved. |
+| 3 | Ali imaš kreditno kartico z odloženim plačilom? | Da/ne. Če da: kdaj je poravnava? Datum iz koledarčka. |
+| 4 | Ali imaš še druge ponavljajoče mesečne prilive? | Da/ne. Če da: kdaj in koliko? Omogoči več vnosov; že vnesene plače ne podvoji. |
+| 5 | Ali imaš ponavljajoče mesečne stroške? | Da/ne. Če da: kdaj in koliko? Omogoči več vnosov. |
+
+Odgovori ustvarijo urediv načrt ponavljanja in osnovno napoved po datumih. Okvirni zneski in pričakovani datumi ostanejo jasno ločeni od dejansko prejetih prilivov ter plačanih obveznosti. Potrditev dejanskega dogodka uskladi pripadajočo napoved, da se isti priliv ali strošek ne šteje dvakrat. Zneski ohranijo valuto; različnih valut ne seštevamo brez izrecnega pravila pretvorbe.
+
+Opomnik za plačo:
+
+- Na pričakovani dan uporabnik dobi obvestilo z vprašanjem **»Ali si že dobil plačo?«**. Odgovor **Da** odpre vnos dejanskega zneska in potrditev priliva.
+- Po zahtevi uporabnika načrtovanje plače upošteva delovne dni. Če izbrani datum pade na soboto ali nedeljo, se vprašanje pojavi pred vikendom in po njem: praviloma v petek ter ponedeljek. To sta preverjanji istega pričakovanega priliva, ne dve napovedani plači.
+- Če uporabnik prejem potrdi že pred vikendom, se nadaljnje vprašanje za ta mesečni priliv prekliče. Brez potrditve priliv ostane pričakovan; sam opomnik ga ne knjiži kot prejetega.
+- Uporabnik je zahteval potisno obvestilo. Zasnova ga poveže z obstoječim centrom obvestil in sistemskimi opomniki: lokalno načrtovani opomnik mora delovati brez strežnika, izbirna oddaljena push dostava pa uporablja ločen konfiguriran kanal. Odprtje obvestila vodi v potrditev pravega priliva in finančnega obsega.
+
+Ob zasnovi dorečemo začetno stanje za napoved, ponavljanje datumov po mesecih, praznike in delovne dni, spremenljiv znesek poravnave kartice ter ravnanje, če plača tudi po vikendu še ni prispela. Osebni načrt ostane lokalen, trajno shranjen in vključen v kopijo/obnovo; skupni finančni obseg in morebitna sinhronizacija zahtevata izrecno izbiro ter obstoječe finančne pravice. Čarovnik ne vključi samodejno deljenja ali obvestil. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
 
 ## Tehnične meje prve izvedbe
 

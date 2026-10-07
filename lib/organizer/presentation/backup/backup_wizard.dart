@@ -139,7 +139,7 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
           _bytes!,
           title: l.backupSave,
           name:
-              'vsakdan-${DateTime.now().toIso8601String().substring(0, 10)}.vsakdan',
+              'jivie-${DateTime.now().toIso8601String().substring(0, 10)}.vsakdan',
         );
     if (mounted && _validIdentity) {
       setState(

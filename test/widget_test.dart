@@ -8,7 +8,7 @@ void main() {
   ) async {
     final storage = MemoryOrganizerStorage();
     await pumpOrganizer(tester, storage);
-    expect(find.text('Vsakdan'), findsOneWidget);
+    expect(find.text('Jivie'), findsOneWidget);
     expect(find.text('Začni z enim opravilom.'), findsOneWidget);
     expect(storage.writes, 0);
   });

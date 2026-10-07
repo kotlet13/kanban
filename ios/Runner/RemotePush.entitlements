@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Optional: assign CODE_SIGN_ENTITLEMENTS=Runner/RemotePush.entitlements only
-     after choosing an actual signing team, bundle and APNs provisioning profile.
-     APNS_ENVIRONMENT must be development or production for that profile. -->
+<!-- Jivie Runner uses development for Debug, production for Release/Profile.
+     Inspect the signed artifact and its provisioning profile to establish the
+     actual APNs environment; this declaration does not verify delivery. -->
 <plist version="1.0"><dict><key>aps-environment</key><string>$(APNS_ENVIRONMENT)</string></dict></plist>

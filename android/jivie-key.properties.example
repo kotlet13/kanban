@@ -1,0 +1,8 @@
+# Copy to jivie-key.properties locally. Never commit the real file or keystore.
+# Supply a dedicated or explicitly approved Jivie upload key, not the legacy key
+# configuration merely because it already exists on this machine.
+applicationId=si.triparna.jivie
+storeFile=/absolute/path/to/jivie-upload.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=jivie-upload
+keyPassword=REPLACE_LOCALLY

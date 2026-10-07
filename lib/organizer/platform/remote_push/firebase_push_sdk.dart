@@ -63,7 +63,7 @@ class FirebasePushSdk implements RemotePushSdk {
       await android?.createNotificationChannel(
         const AndroidNotificationChannel(
           'familyhub_push_silent_v1',
-          'Vsakdan',
+          'Jivie',
           importance: Importance.defaultImportance,
           playSound: false,
         ),
@@ -71,7 +71,7 @@ class FirebasePushSdk implements RemotePushSdk {
       await android?.createNotificationChannel(
         const AndroidNotificationChannel(
           'familyhub_push_sound_v1',
-          'Vsakdan',
+          'Jivie',
           importance: Importance.defaultImportance,
           playSound: true,
         ),

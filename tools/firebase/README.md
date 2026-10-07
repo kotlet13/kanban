@@ -10,7 +10,7 @@ flutter build apk --dart-define-from-file=.firebase/client.json
 flutter build ios --dart-define-from-file=.firebase/client.json
 ```
 
-Either input may be omitted. The utility checks both files use the same project/sender, validates app ID/key formats and extracts authoritative identifiers from Android Gradle and iOS Runner build configurations; inconsistent/flavoured/unresolved identifiers are rejected. The current IDs are Android `com.takndev.kanbanconnect` and iOS `com.example.kanban`. Identifier/signing changes require a separate owner decision. `--output-dir /tmp/fixture-root` writes into an isolated root for tests. Existing output files are staged and replaced after input validation, with rollback on write failure. An iOS-only run refuses to overwrite client JSON if generated Android XML already exists: supply both inputs, or deliberately remove that XML before switching to an iOS-only configuration. No network request or secret logging occurs.
+Either input may be omitted. The utility checks both files use the same project/sender, validates app ID/key formats and extracts authoritative identifiers from Android Gradle and iOS Runner build configurations; inconsistent/flavoured/unresolved identifiers are rejected. The Jivie IDs are Android `si.triparna.jivie` and iOS `si.triparna.jivie`, approved for the new separate application on 7 October 2026. These files must not reuse the old Kanban Connect registration. The old store record is unaffected. `--output-dir /tmp/fixture-root` writes into an isolated root for tests. Existing output files are staged and replaced after input validation, with rollback on write failure. An iOS-only run refuses to overwrite client JSON if generated Android XML already exists: supply both inputs, or deliberately remove that XML before switching to an iOS-only configuration. No network request or secret logging occurs.
 
 Outputs:
 
@@ -23,6 +23,16 @@ A configured build is insufficient to enable delivery. The user must sign in, us
 
 The safe background handler performs no database/login/navigation work. Foreground delivery refreshes the persisted inbox without showing another notification. Initial/opened pushes carry only recipient identities plus a notification ID; the app resolves the persisted group and current rights before navigating. A force-quit application may need reopening before delivery resumes, as documented by Firebase.
 
-No real Firebase project or external delivery is verified by these preparation tests. Follow `docs/NOTIFICATION_SETUP.md` for server/APNs setup and eventual physical-device proof.
+A distributed build uses one Firebase project. An arbitrary self-hosted server configured for a different project cannot send to that build automatically. There is no central push relay. Do not share the application project service-account private key with arbitrary server operators; a general self-hosted push architecture remains separate work.
+
+On 7 October 2026, the owner supplied the Android and iOS mobile configuration files for project `jivie-e928a`, both registered as `si.triparna.jivie`. Running this utility with both verified files generated the two local outputs; their structure, shared project/application identity, Git exclusion and file modes (0600) were checked without logging API keys. The original files and generated outputs remain outside version control. This confirms client configuration, not server IAM, APNs setup or delivery. Follow `docs/NOTIFICATION_SETUP.md` for those remaining steps and eventual physical-device proof.
+
+The configured Android release command is:
+
+```sh
+flutter build appbundle --release --dart-define-from-file=.firebase/client.json
+```
+
+It requires the separate ignored `android/jivie-key.properties` signing setup described in `docs/release/PLATFORM_NOTES.md`. A successful signed build does not verify notification delivery.
 
 References: [Flutter FCM setup](https://firebase.google.com/docs/cloud-messaging/flutter/get-started), [receive messages](https://firebase.google.com/docs/cloud-messaging/flutter/receive-messages), [pinned messaging package](https://pub.dev/packages/firebase_messaging/versions/16.7.0).

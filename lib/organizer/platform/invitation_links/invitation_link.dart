@@ -3,6 +3,8 @@
 class InvitationLink {
   const InvitationLink({required this.serverUrl, required this.token});
   final String serverUrl, token;
+  // The working-name scheme remains valid for previously shared invitations.
+  static const supportedSchemes = {'jivie', 'vsakdan'};
   static InvitationLink? tryParse(Uri uri) {
     try {
       return _parse(uri);
@@ -13,7 +15,7 @@ class InvitationLink {
 
   static InvitationLink? _parse(Uri uri) {
     if (uri.toString().length > 4096 ||
-        uri.scheme != 'vsakdan' ||
+        !supportedSchemes.contains(uri.scheme) ||
         uri.host != 'invite' ||
         !{'', '/'}.contains(uri.path) ||
         uri.userInfo.isNotEmpty ||
@@ -26,7 +28,8 @@ class InvitationLink {
     }
     final token = uri.queryParameters['token']!,
         server = uri.queryParameters['server']!;
-    if (!RegExp(r'^fhi1_[a-f0-9]{64}$').hasMatch(token) || server.length > 2048) {
+    if (!RegExp(r'^fhi1_[a-f0-9]{64}$').hasMatch(token) ||
+        server.length > 2048) {
       return null;
     }
     // Uri parsing normalizes encoded dot segments, so reject them before
@@ -67,7 +70,7 @@ class InvitationLink {
   }
 
   Uri toUri() => Uri(
-    scheme: 'vsakdan',
+    scheme: 'jivie',
     host: 'invite',
     queryParameters: {'server': serverUrl, 'token': token},
   );

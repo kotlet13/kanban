@@ -1,0 +1,29 @@
+<?php
+// ADDITION to the fresh Softaculous installation's existing config.php.
+// Preserve all actual DB_* constants and other existing Kanboard configuration.
+// This is a snippet, not a replacement file. Do not copy a second opening <?php
+// into an already-open PHP file. Define every constant once, before core defaults.
+
+// Proposed private directory: confirm it is outside ALL hosted document roots,
+// create it and preserve fresh data contents before switching the DATA_DIR.
+// The known new document root is /home/tripar13/jivie-test.triparna.si.
+// The proposed private directory's existence/permissions are NOT yet verified.
+define('DATA_DIR', '/home/tripar13/private/jivie-test/data');
+
+define('FAMILYHUB_ENABLE_NATIVE_API', true);
+define('FAMILYHUB_ACCOUNT_MODE', 'self_hosted');
+define('FAMILYHUB_ENABLE_PROJECT_INVITATIONS', false);
+define('FAMILYHUB_ENABLE_FCM', false);
+define('FAMILYHUB_TRUSTED_PROXY_IPS', []);
+define('FAMILYHUB_CORS_ORIGINS', []);
+
+// No FAMILYHUB_SMTP_* constants: FamilyHub SMTP stays disabled.
+// There is no FAMILYHUB_ENABLE_SMTP constant.
+// No account-mail key is read: emailVerification/passwordReset stay disabled.
+// No FCM credential or push key is read; there is no external delivery.
+// Do not enable FAMILYHUB_DEVELOPMENT_MODE/DEVELOPMENT_ENVIRONMENT/plaintext SMTP.
+
+// Future private keys only; these files have NOT been created or enabled:
+// /home/tripar13/private/jivie-test/account-mail.key
+// /home/tripar13/private/jivie-test/push.key
+// /home/tripar13/private/jivie-test/fcm-service-account.json

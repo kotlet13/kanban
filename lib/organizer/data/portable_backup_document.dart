@@ -1,6 +1,7 @@
 import 'dart:convert';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
+import '../domain/garden_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
 import '../domain/shared_dates.dart';
@@ -101,18 +102,46 @@ List<Map<String, dynamic>> backupRows(Map<String, dynamic> doc, String table) =>
 OrganizerSnapshot backupPersonal(Map<String, dynamic> doc) =>
     OrganizerBackupCodec.decode(doc['personal'] as String);
 
+GardenSnapshot? backupGardens(Map<String, dynamic> doc) => doc['version'] == 1
+    ? null
+    : GardenSnapshot.fromJson(backupMap(doc['gardens']));
+
 /// Reject unsupported fields and invalid parent links before any restore write.
 void validateBackupDocument(Map<String, dynamic> doc) {
   try {
-    if (doc.length != 12 ||
+    if (doc.keys.toSet().difference({
+          'format',
+          'version',
+          'databaseVersion',
+          'id',
+          'createdAt',
+          'source',
+          'privateData',
+          'personal',
+          'tables',
+          'uiPreferences',
+          'completeness',
+          'exclusions',
+          if (doc['version'] == 2) 'gardens',
+        }).isNotEmpty ||
+        doc.length != (doc['version'] == 2 ? 13 : 12) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        doc['version'] != 1 ||
-        doc['databaseVersion'] != 4 ||
+        !const [1, 2].contains(doc['version']) ||
+        doc['databaseVersion'] != (doc['version'] == 1 ? 4 : 5) ||
         !isSharedUuid(doc['id'] as String)) {
       throw const FormatException();
     }
     DateTime.parse(doc['createdAt'] as String);
     backupPersonal(doc).validate();
+    // Portable documents have one canonical garden section; embedded JSON
+    // garden extensions are rejected to avoid ambiguous duplicate restores.
+    if (OrganizerBackupCodec.decodeDocument(
+          doc['personal'] as String,
+        ).gardens !=
+        null) {
+      throw const FormatException();
+    }
+    backupGardens(doc)?.validate();
     final source = doc['source'] == null ? null : backupMap(doc['source']);
     if (source != null &&
         (source.keys.toSet().difference({

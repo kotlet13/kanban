@@ -17,7 +17,7 @@ Future<void> exportSharingDrafts(BuildContext context, WidgetRef ref) async {
     await FilePicker.platform.saveFile(
       dialogTitle: context.l10n.sharingSaveDrafts,
       fileName:
-          'vsakdan-unsynced-${DateTime.now().toIso8601String().substring(0, 10)}.json',
+          'jivie-unsynced-${DateTime.now().toIso8601String().substring(0, 10)}.json',
       type: FileType.custom,
       allowedExtensions: ['json'],
       bytes: Uint8List.fromList(utf8.encode(json)),

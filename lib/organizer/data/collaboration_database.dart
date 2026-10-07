@@ -7,7 +7,7 @@ import '../domain/collaboration_models.dart' show AccountSession;
 class CollaborationDatabase extends GeneratedDatabase {
   CollaborationDatabase(super.executor);
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
   AccountSession? personalProfile;
   final personalChanges = StreamController<void>.broadcast();
   void activatePersonal(AccountSession? profile) {
@@ -32,12 +32,17 @@ class CollaborationDatabase extends GeneratedDatabase {
       for (final statement in _schema) {
         await customStatement(statement);
       }
-      for (final statement in [..._upgrade2, ..._upgrade3, ..._upgrade4]) {
+      for (final statement in [
+        ..._upgrade2,
+        ..._upgrade3,
+        ..._upgrade4,
+        ..._upgrade5,
+      ]) {
         await customStatement(statement);
       }
     },
     onUpgrade: (_, from, to) async {
-      if (from < 1 || from > 3 || to != 4) {
+      if (from < 1 || from > 4 || to != 5) {
         throw const FormatException('Unsupported shared database schema');
       }
       if (from < 2) {
@@ -50,7 +55,12 @@ class CollaborationDatabase extends GeneratedDatabase {
           await customStatement(statement);
         }
       }
-      for (final statement in _upgrade4) {
+      if (from < 4) {
+        for (final statement in _upgrade4) {
+          await customStatement(statement);
+        }
+      }
+      for (final statement in _upgrade5) {
         await customStatement(statement);
       }
     },
@@ -115,6 +125,10 @@ class CollaborationDatabase extends GeneratedDatabase {
     "CREATE TABLE personal_records(workspace TEXT NOT NULL,id TEXT NOT NULL,type TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(workspace,id))",
     "CREATE TABLE personal_record_map(workspace TEXT NOT NULL,id TEXT NOT NULL,remote_id TEXT NOT NULL,type TEXT NOT NULL,PRIMARY KEY(workspace,id),UNIQUE(workspace,remote_id))",
     "CREATE TABLE restored_backups(id TEXT PRIMARY KEY,created_at TEXT NOT NULL,source_partition TEXT,data TEXT NOT NULL)",
+  ];
+
+  static const _upgrade5 = [
+    "CREATE TABLE device_gardens(id TEXT PRIMARY KEY,payload TEXT NOT NULL)",
   ];
 
   Future<List<Map<String, dynamic>>> rows(

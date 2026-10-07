@@ -1,6 +1,8 @@
 # Lokalno okolje in strežniški temelj
 
-To je izvedena razvojna osnova, ne namestitev v produkcijo. Lasten vtičnik `FamilyHub` 0.5.0 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul z ločenimi pravicami; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
+To je izvedena razvojna osnova, ne namestitev v produkcijo. Lasten vtičnik `FamilyHub` 0.6.0 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul z ločenimi pravicami; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
+
+Za konkretno samostojno namestitev na gostovanju glej [cPanel postopek](CPANEL_SETUP.md): staging, sveža kopija, dejanske poti/razširitve, konfiguracija 0.6.0, ločeni croni in meje izbrisa. Vodič ni dokaz produkcijske namestitve.
 
 ## Zagon in preverjanje
 
@@ -59,10 +61,12 @@ Dodatek `--volumes` odstrani izključno nosilce izbranega Compose projekta in s 
 ## Paket vtičnika
 
 ```sh
-python3 server/scripts/package-plugin.py
+python3 tools/plugin_release/package_source.py --output build/releases/FamilyHub-0.6.0-source.zip
 ```
 
-Nastaneta `server/dist/FamilyHub-0.5.0.zip` in datoteka SHA256. Paket vsebuje samo mapo `FamilyHub`: PHP izvorno kodo, migracije in kratka navodila. Ne vsebuje podatkov, testov, razvojnih nastavitev ali gesel. Sestava ZIP je deterministična. Paket je pripravljen za kasnejši prenos z upravljalnikom datotek v cPanel, vendar še ni nameščen v produkcijo in produkcijske nastavitve/pravice niso preizkušene.
+Aktualna priprava uporablja [strogi paketor](../../tools/plugin_release/README.md). `build/releases/FamilyHub-0.6.0-source.zip` je dejansko pripravljen z mapo `FamilyHub/`,61 datotekami, MIT LICENSE, samostojnim README in javno pogodbo izbrisa; SHA256 `433d45fbb8c7aa350e92beab812a7b9e7ffc1ed07bdae5d003fa1fce4e9624c0`. Vsi vnosi/CRC ter nespremenjen PHP in licenca so preverjeni. Paket ne vsebuje Git zgodovine, konfiguracije, skrivnosti, testnih računov ali produkcijskih podatkov. Orodje obstoječe ZIP datoteke ne prepiše; za novo kandidatko izberi drug `--output`.
+
+**Opuščeni/deprecated:** `server/scripts/package-plugin.py` ima hardcoded ime ZIP-a (zdaj0.6.0) in širok rekurzivni zajem. Za to predajo ga ne uporabljamo; zgodovinski ZIP-i spodaj ostanejo zgodovinski dokazi. Novi strict source ZIP že ima namestitveno strukturo `FamilyHub/`: po ločenem dogovoru uporabnik njegovo mapo prenese v `plugins/` združljivega Kanboarda. To ni website ZIP za javni documentroot in ni dovoljenje za samodejno namestitev. Produkcijske pravice, migracija/rollback in konfiguracija še zahtevajo preverjanje; produkcijska namestitev ni izvedena.
 
 Povabila so v razvojnih konfiguracijah izrecno vključena, v samem vtičniku pa **privzeto izključena**. Razlog: obstoječe finance so v Kanboardovih projektnih metapodatkih. Dodajanje projektnega člana lahko odpre tudi te metapodatke, zato vtičnik ne trdi, da ločeno varuje finance. Pred vključitvijo na resničnih podatkih potrebujemo ločeno finančno shrambo in preverjene pravice. Podrobnosti pogodbe so v [api-contract.md](api-contract.md).
 
@@ -178,7 +182,7 @@ Preverjanje e-pošte in reset gesla zahtevata [ločeno SMTP/key konfiguracijo](.
 
 ```sh
 umask 077
-php -r 'file_put_contents("/home/ACCOUNT/private/familyhub-account-mail.key", base 64_encode(random_bytes(32)));'
+php -r 'file_put_contents("/home/ACCOUNT/private/familyhub-account-mail.key", base64_encode(random_bytes(32)));'
 php /path/to/kanboard/plugins/FamilyHub/cli/account-mail.php --limit=20
 ```
 
@@ -198,7 +202,7 @@ Finalna matrika 0.5: **48 account + 36 personal + 76 push + 93 native + 37 colla
 Admin HTTP sklop na svežem SQLite ima **12/12** dejanskih preverjanj: GET ne izdaja, CSRF/nonadmin zavrnitev, admin POST, refresh replay, dvoprocesna enrollment poraba in HTTP zavrnitev brez razvojne izjeme. Fresh fixture se ustvari izključno na 18383/18384, nikoli ne ponastavi 18380:
 
 ```sh
-python 3 server/scripts/start-account-http-fixture.py --project kanban-familyhub-account-review --port 18383 --output build/qa/personal-sync-recovery/account-review.json
+python3 server/scripts/start-account-http-fixture.py --project kanban-familyhub-account-review --port 18383 --output build/qa/personal-sync-recovery/account-review.json
 ```
 
 Za ponovitev potrebuješ nov project/volume in novo zasebno fixture datoteko, ker enrollment uspe samo enkrat. SMTP zajemnik velja 900 s; namenjen je samo loopback .invalid naslovom. Admin smoke potrebuje ločeno fresh smoke fixture na 18384 in sprejme --fixture argument (glej --help). Evidence v build/qa/personal-sync-recovery imajo 0600; fixture vsebuje sintetična gesla/kode in ni za objavo. Logi ne vsebujejo teh vrednosti. V produkciji še niso preverjeni SMTP ponudnik/TLS, cPanel namestitev/cron ali email dostava.
@@ -206,3 +210,7 @@ Za ponovitev potrebuješ nov project/volume in novo zasebno fixture datoteko, ke
 Paket **FamilyHub-0.5.0.zip** vsebuje **53 izvornih datotek**, SHA256 **`8dafe 588ec 930d 3189d 60e 79be 727cf 15d 5d 29fbbbdf 259937f 578575c 389066`**. Dve sestavi sta bajtno enaki; CRC in vsi ZIP vnosi so preverjeni proti izvoru. Razširjeni dejanski ZIP brez konfiguracije opravi **11/11 default-policy** preverjanj. Konfigurirani FCM HTTP smoke ostaja **12/12**, brez omrežja ali realnih Google zahtev. PHP lint vseh **68** datotek vtičnika/testov je uspešen. MySQL/MariaDB in admin smoke vsebniki so po preverjanju ustavljeni brez odstranitve nosilcev; SQLite 18380 in ločeni 18383 QA sta ohranjena.
 
 Po zaključku 0.5 sta na svežih ločenih SQLite HTTP okoljih uspešna tudi **2/2 prejšnja Flutter HTTP regresijska testa** (collaboration_http_integration_test in family_upgrade_http_test), z aktualnim client schema4: dve identiteti, diskovni restart, konflikti/kopiranje/preklic ter dodelitve, inbox race/paginacija, finance ACL/restart/spori in push-group routing. Dokaz je v build/qa/personal-sync-recovery/client-shared-regression-http.log (0600). Okolji18381/18382 sta po testu ustavljeni brez odstranitve nosilcev;18380 in novi account QA18383 ostaneta ločena. Ponovitev registracij potrebuje svež fixture, ne ponastavitve običajnega razvojnega strežnika.
+
+## Self-hosted izbris računa (7. oktober 2026)
+
+FamilyHub0.6.0/schema10: [pogodba in dejanski testi](account-deletion-contract.md). Native pregled/potrditev/receipt ter spletni POST+CSRF tok odstranijo dejanski Kanboard `users` račun in zasebni prostor, očistijo lastne shared zapise in identitetne reference ter izrecno rešijo ownerstvo/strukturne odvisnosti.36+24 preverjanj na SQLite/MySQL/MariaDB;16 HTTP preverjanj brez aplikacije. Upravljano gostovanje ni del te zmožnosti. Legacy že avtorizirane create zahteve in vsebina drugih ustvarjalcev (tudi urejanja izbrisanega člana) imajo izrecne meje; to ni full-UGC ali store-ready dokaz. Produkcijska namestitev/izbris nista izvedena.

@@ -1,12 +1,16 @@
 # Nastavitev dostave obvestil
 
-Center obvestil in lokalni opomniki delujejo brez Firebase. Uporabnik je 5. oktobra 2026 odobril pripravo Firebase Cloud Messaging (FCM) in bo projekt ustvaril pozneje. Izvedba in preverjanja te priprave se vodijo v [mejniku Firebase](FIREBASE_PREPARATION.md). Resnična dostava FCM/APNs na telefon še ni potrjena.
+Center obvestil in lokalni opomniki delujejo brez Firebase. Uporabnik je 5. oktobra 2026 odobril pripravo Firebase Cloud Messaging (FCM), 7. oktobra pa pripravil klientovi konfiguraciji projekta `jivie-e928a` za Android/iOS `si.triparna.jivie`. Izvedba in preverjanja te priprave se vodijo v [mejniku Firebase](FIREBASE_PREPARATION.md). Resnična dostava FCM/APNs na telefon še ni potrjena.
 
-## Ko uporabnik ustvari projekt
+## Trenutna klientova nastavitev
+
+Obe uporabnikovi preneseni konfiguraciji sta lokalno preverjeni in pretvorjeni z `tools/firebase/configure_client.py`. Izhoda `.firebase/client.json` in `android/app/src/main/res/values/firebase_config.xml` sta preverjena glede strukture, ujemanja projekta/ID-jev, načina 0600 ter izključitve iz Gita. Vsebine ključev niso bile izpisane. Strežniška pošiljateljska poverilnica, APNs in dejanska dostava še niso preverjeni; mobilni klientovi datoteki jih ne nadomestita.
+
+## Priprava projekta in preostali koraki
 
 1. V [Firebase konzoli](https://console.firebase.google.com/) ustvari projekt na paketu **Spark**. Za naš kanal ne potrebuje računa za obračunavanje, Cloud Functions, Firestore, Firebase Authentication ali Analytics. Analytics lahko ob ustvarjanju projekta izključi. FCM je po [uradnem ceniku](https://firebase.google.com/docs/projects/billing/firebase-pricing-plans) brezplačna storitev; preverjeno 5. oktobra 2026.
-2. Dodaj Android aplikacijo z obstoječim ID **`com.takndev.kanbanconnect`** in prenesi `google-services.json`. ID obstoječe Play aplikacije ostane enak.
-3. Pred dodajanjem iOS aplikacije skupaj določimo končni bundle ID in Apple podpisno ekipo. Trenutni razvojni ID je **`com.example.kanban`**, `DEVELOPMENT_TEAM` ni nastavljen. Na Macu sta bili zaznani dve Apple ekipi; izbira ne sme biti naključna. Nato v Firebase dodaj iOS aplikacijo z izbranim ID in prenesi `GoogleService-Info.plist`.
+2. Dodaj novo Android aplikacijo **Jivie** z ID **`si.triparna.jivie`** in prenesi `google-services.json`. Stara Kanban Connect ima ločeno registracijo in Play evidenco; njenih ID-jev ne preimenujemo.
+3. Nova iOS aplikacija Jivie uporablja bundle ID **`si.triparna.jivie`**. Izbrana je Apple ekipa TriparNA `CXNM99632B`; končni App ID je registriran s Push Notifications. Podpisni profil in APNs dostavo preverimo posebej, nato v Firebase dodamo iOS aplikacijo s tem ID in prenesemo `GoogleService-Info.plist`.
 4. Za iOS povežemo APNs ključ iz Apple Developer računa s to aplikacijo v Firebase Project settings → Cloud Messaging. Ključ `.p8`, njegov Key ID in Team ID se vnesejo neposredno v konzolo. V Xcode vključimo Push Notifications in uredimo podpisni profil za izbrano ekipo/ID. [Uradna priprava Flutter FCM](https://firebase.google.com/docs/cloud-messaging/flutter/get-started) opisuje APNs povezavo in platformne pogoje.
 5. V FamilyHub nastavimo namensko strežniško poverilnico, šifriranje napravnih žetonov in cron. Podrobnosti so spodaj. Nato na obeh telefonih izrecno vključimo oddaljena obvestila in opravimo dejanski preizkus.
 
@@ -25,13 +29,18 @@ python3 tools/firebase/configure_client.py \
 Posamezen platformni argument lahko izpustiš. Orodje preveri identifikator aplikacije ter ujemanje projekta in sender ID med platformama. Izhoda sta `.firebase/client.json` in za Android še `android/app/src/main/res/values/firebase_config.xml`. To so javni klientovi identifikatorji; strežniška storitvena poverilnica ni dovoljen vhod. Datoteke s konfiguracijo so izključene iz Gita. Natančno obnašanje in izolirani testi so v [navodilih orodja](../tools/firebase/README.md).
 
 ```sh
+flutter build appbundle --release --dart-define-from-file=.firebase/client.json
 flutter build apk --debug --dart-define-from-file=.firebase/client.json
 flutter build ios --debug --dart-define-from-file=.firebase/client.json
 ```
 
 Android potrebuje tudi generirani XML: njegov sistemski sprejemnik lahko sprejme sporočilo pred zagonom Dart kode. Pri menjavi projekta je treba ponovno ustvariti oba izhoda. Gradnja brez konfiguracije ostane uporabna za local-first način, sinhronizacijo, center obvestil in lokalne opomnike; sama ne aktivira oddaljenega kanala.
 
-Za iOS je pripravljen `ios/Runner/RemotePush.entitlements`. Vključitev v podpisano gradnjo (`CODE_SIGN_ENTITLEMENTS`) in vrednost `APNS_ENVIRONMENT` uredimo skladno z dejanskim profilom, po izbiri ekipe in bundle ID. Predloga sama ne omogoči APNs. Android/iOS uporabljata FCM; oddaljena dostava za web in namizje v tem mejniku ni vključena.
+Za iOS je `ios/Runner/RemotePush.entitlements` zdaj vključen v vseh Runner konfiguracijah: Debug določa razvojno, Release/Profile produkcijsko okolje. Po preverjeni Xcode prijavi ekipe TriparNA sta podpisan razvojni arhiv in App Store IPA uspešna. Dejanski razvojni profil arhiva ima `aps-environment=development`; Store profil izvozene IPA ima `aps-environment=production`, pravi Jivie ID in ekipo `CXNM99632B`. Ta izvoz je preverjen, APNs ključ v Firebase in dejanska dostava pa še ne. Podrobnosti vodi [platformna evidenca](release/PLATFORM_NOTES.md). Android/iOS uporabljata FCM; oddaljena dostava za web in namizje v tem mejniku ni vključena.
+
+## Samostojno gostovanje in omejitev Firebase projekta
+
+Navodila opisujejo usklajeno aplikacijo in pošiljatelja istega Firebase projekta. Jivie build trenutno vsebuje en projekt; strežnik z drugim projektom ne more samodejno dostavljati na njegove žetone. Za lastno sestavljeno aplikacijo lahko upravljavec nastavi svoj projekt, za poljubne strežnike splošne trgovinske aplikacije pa centralni posrednik oziroma druga omejena avtorizacija še ni izvedena. Zasebnega ključa skupnega projekta ne posredujemo vsem samostojnim upraviteljem. Zato ne obljubljamo univerzalnih obvestil ob zaprti aplikaciji za samostojno gostovanje. Brez ustrezne nastavitve ostanejo lokalni opomniki ter center obvestil ob sinhronizaciji. [Meje izdaje](release/READINESS.md).
 
 ## FamilyHub in cPanel
 

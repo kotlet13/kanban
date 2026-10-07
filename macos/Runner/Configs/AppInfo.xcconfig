@@ -5,9 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = kanban
+PRODUCT_NAME = Jivie
 
-// The application's bundle identifier
+// Retained desktop identity: changing it would move the sandbox and Keychain.
+// This is not the new iOS store bundle identifier.
 PRODUCT_BUNDLE_IDENTIFIER = com.example.kanban
 
 // The copyright displayed in application information

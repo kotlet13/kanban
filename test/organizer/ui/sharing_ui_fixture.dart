@@ -75,6 +75,8 @@ SharedScopeData sharingData() => SharedScopeData(
 );
 
 class SharingUiController extends CollaborationController {
+  @override
+  Future<List<PendingAccountDeletion>> pendingAccountDeletions() async => [];
   SharingUiController({CollaborationState? initial})
     : initial =
           initial ??
@@ -154,7 +156,7 @@ class SharingUiController extends CollaborationController {
     required String username,
     required String password,
     required String name,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
     bool allowLocalHttp = false,
   }) async {
     enrollmentAllowLocalHttp = allowLocalHttp;
@@ -189,7 +191,7 @@ class SharingUiController extends CollaborationController {
     required String password,
     String? otp,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) async {
     loginAttempts.add(otp);
     if (requireOtp && otp == null) {
@@ -231,7 +233,7 @@ class SharingUiController extends CollaborationController {
     required String name,
     required String password,
     bool allowLocalHttp = false,
-    String deviceName = 'Vsakdan',
+    String deviceName = 'Jivie',
   }) async {
     registeredUsername = username;
     registeredName = name;

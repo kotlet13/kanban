@@ -38,7 +38,7 @@ class NativeFcmTransport
     {
         $sound = $job['sound']; $en = $job['language'] === 'en';
         $group = hash('sha256', $job['accountId'].':'.$job['groupKey'].':'.$job['kind']);
-        return ['token'=>$job['token'], 'notification'=>['title'=>'Vsakdan','body'=>$en ? 'You have a new notification.' : 'Imate novo obvestilo.'],
+        return ['token'=>$job['token'], 'notification'=>['title'=>'Jivie','body'=>$en ? 'You have a new notification.' : 'Imate novo obvestilo.'],
             'data'=>['type'=>'familyhub.inbox.v1','serverId'=>$serverId,'accountId'=>$job['accountId'],'notificationId'=>(string)$job['inboxId']],
             'android'=>['ttl'=>max(1,min(86400,$job['expiresAt']-time())).'s','notification'=>array_merge(['channel_id'=>$sound ? 'familyhub_push_sound_v1' : 'familyhub_push_silent_v1','tag'=>$group,'default_sound'=>$sound],$sound ? ['sound'=>'default'] : [])],
             'apns'=>['headers'=>['apns-push-type'=>'alert','apns-priority'=>'10','apns-expiration'=>(string)$job['expiresAt'],'apns-collapse-id'=>$group], 'payload'=>['aps'=>array_merge(['thread-id'=>$group], $sound ? ['sound'=>'default'] : [])]]];

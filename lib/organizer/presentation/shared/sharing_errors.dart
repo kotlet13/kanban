@@ -10,6 +10,12 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'deletion_pending' => l.deletionUnknown,
+    'deletion_cancelled' => l.deletionCancelled,
+    'deletion_unavailable' => l.deletionUnavailable,
+    'deletion_preview_stale' => l.deletionStale,
+    'deletion_blocked' => l.deletionBlocked,
+    'account_deleted' => l.deletionSuccess,
     'email_unavailable' => l.accountEmailUnavailable,
     'account_token_invalid' || 'bootstrap_invalid' => l.accountCodeInvalid,
     'enrollment_closed' ||

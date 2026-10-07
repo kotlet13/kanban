@@ -4,8 +4,8 @@ import 'package:kanban/organizer/platform/invitation_links/invitation_link_provi
 
 void main() {
   final token = 'fhi1_${List.filled(64, 'a').join()}';
-  Uri link(String server, {String? value}) => Uri(
-    scheme: 'vsakdan',
+  Uri link(String server, {String? value, String scheme = 'jivie'}) => Uri(
+    scheme: scheme,
     host: 'invite',
     queryParameters: {'server': server, 'token': value ?? token},
   );
@@ -15,6 +15,13 @@ void main() {
     expect(parsed.serverUrl, 'https://example.test/kanboard');
     expect(parsed.token, token);
     expect(parsed.toUri(), original);
+  });
+  test('accepts legacy invitations and emits the Jivie scheme', () {
+    final legacy = link('https://example.test/kanboard', scheme: 'vsakdan');
+    final parsed = InvitationLink.tryParse(legacy)!;
+    expect(parsed.serverUrl, 'https://example.test/kanboard');
+    expect(parsed.token, token);
+    expect(parsed.toUri(), legacy.replace(scheme: 'jivie'));
   });
   test(
     'rejects credentials, non HTTPS, query, fragment, traversal and unsafe ports',
@@ -29,7 +36,13 @@ void main() {
         'https://example.test/%5Cdata',
         'https://example.test:65536',
       ]) {
-        expect(InvitationLink.tryParse(link(server)), isNull, reason: server);
+        for (final scheme in InvitationLink.supportedSchemes) {
+          expect(
+            InvitationLink.tryParse(link(server, scheme: scheme)),
+            isNull,
+            reason: '$scheme $server',
+          );
+        }
       }
     },
   );
@@ -40,7 +53,7 @@ void main() {
       for (final uri in [
         '$valid&token=$token',
         '$valid&extra=1',
-        valid.replaceFirst('vsakdan:', 'https:'),
+        valid.replaceFirst('jivie:', 'https:'),
         valid.replaceFirst('invite?', 'invite/other?'),
         '$valid#fragment',
       ]) {

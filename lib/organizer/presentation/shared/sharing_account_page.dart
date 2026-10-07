@@ -18,6 +18,7 @@ import '../../platform/invitation_links/invitation_link.dart';
 import '../onboarding/getting_started.dart';
 import '../onboarding/private_sync_panel.dart';
 import '../onboarding/account_email_card.dart';
+import '../onboarding/account_deletion_panel.dart';
 
 class SharingAccountPage extends ConsumerStatefulWidget {
   const SharingAccountPage({
@@ -258,6 +259,12 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     'email-${session.partition}-${session.deviceId}',
                   ),
                   session: session,
+                ),
+                const SizedBox(height: 20),
+                AccountDeletionPanel(
+                  key: ValueKey(
+                    'deletion-${session.partition}-${session.deviceId}',
+                  ),
                 ),
                 if (widget.setupIntent == SetupIntent.household)
                   Padding(

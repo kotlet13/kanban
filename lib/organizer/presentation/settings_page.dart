@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/l10n.dart';
+import '../../widgets/jivie_brand_mark.dart';
 import '../../state/providers.dart';
 import 'organizer_actions.dart';
+import 'jivie_public_links.dart';
+import 'onboarding/first_time_guide.dart';
+import 'onboarding/account_deletion_panel.dart';
 import 'backup/backup_wizard.dart';
+import 'backup/personal_json_export.dart';
 import 'backup/backup_recovery.dart';
 import '../platform/backup_preferences_replay.dart';
 import 'organizer_widgets.dart';
@@ -19,19 +23,6 @@ import 'planning/remote_push_device_settings.dart';
 class OrganizerSettingsPage extends ConsumerWidget {
   const OrganizerSettingsPage({super.key, required this.actions});
   final OrganizerActions actions;
-
-  Future<void> _export(BuildContext context) => actions.run(() async {
-    final json = await actions.controller.exportBackup();
-    if (!context.mounted) return;
-    await FilePicker.platform.saveFile(
-      dialogTitle: context.l10n.organizerExport,
-      fileName:
-          'vsakdan-${DateTime.now().toIso8601String().substring(0, 10)}.json',
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-      bytes: Uint8List.fromList(utf8.encode(json)),
-    );
-  });
 
   Future<void> _import(BuildContext context) async {
     await actions.run(() async {
@@ -80,6 +71,11 @@ class OrganizerSettingsPage extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ListTile(
+          leading: const Icon(Icons.explore_outlined),
+          title: Text(l.guideOpen),
+          onTap: () => showFirstTimeGuide(context, ref),
+        ),
         const DeviceReminderSettings(),
         const SizedBox(height: 24),
         const RemotePushDeviceSettings(),
@@ -195,7 +191,8 @@ class OrganizerSettingsPage extends ConsumerWidget {
                         runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
-                            onPressed: () => _export(context),
+                            onPressed: () =>
+                                exportPersonalJsonForLocalRestore(context, ref),
                             icon: const Icon(
                               Icons.file_download_outlined,
                               size: 18,
@@ -221,6 +218,8 @@ class OrganizerSettingsPage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const BackupRecoveryPanel(),
+        const SizedBox(height: 28),
+        const AccountDeletionPanel(),
         const SizedBox(height: 28),
         OrganizerSection(
           title: l.organizerConnection,
@@ -249,6 +248,15 @@ class OrganizerSettingsPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
+        const JiviePublicLinks(),
+        const SizedBox(height: 16),
+        AboutListTile(
+          icon: const Icon(Icons.info_outline),
+          applicationName: l.organizerAppName,
+          applicationIcon: const JivieBrandMark(size: 48),
+          aboutBoxChildren: [Text(l.jivieDescription)],
+          child: Text(l.jivieAbout),
+        ),
       ],
     );
   }

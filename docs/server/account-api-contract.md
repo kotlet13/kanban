@@ -33,3 +33,7 @@ EmailVerification/passwordReset capabilities so false brez lastne SMTP konfigura
 Trajna account-mail queue vsebuje samo šifrirano enkratno kodo in vezano identiteto, ne plaintext skrivnosti. Hash tokena je avtoritativen; transport pred pošiljanjem ponovno preveri veljavnost/rok/account/namen. SMTP pošilja navadno besedilo s kodo za vnos v aplikacijo, brez URL tokena ali avtomatskega deep-link write. Enkratna poraba in FIFO generation preprečita stare sprejete zahteve; ambiguous SMTP ACK lahko podvoji isto kodo. Inbox email preference ne blokira varnostne email kode. Ključi samo server config, zunaj repo/javnih map; capture testi samo .invalid.
 
 Popolne šifrirane lokalne kopije/obnova so klientov tok; server ta obseg podpira z ločenimi private cursors in ACL. Strežniški sync ni backup. Ta pogodba ne vključuje oddaljenega cloud backup blob storage.
+
+## Izbris samostojnega računa
+
+FamilyHub0.6.0/schema10 doda self-hosted `account.deletion.preview/confirm/status` in splet brez mobilne aplikacije. Pogodba, razrešitve lastništva, natančna meja izbrisa/hranjenih tujih vsebin in odprte legacy omejitve so v [account-deletion-contract.md](account-deletion-contract.md). To ni dokaz store-ready/full-UGC skladnosti.

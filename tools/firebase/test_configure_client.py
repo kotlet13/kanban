@@ -9,12 +9,12 @@ import configure_client as tool
 
 API = 'AIza' + 'A' * 35
 
-def config(platform='android', identifier='com.takndev.kanbanconnect', project='fixture-project'):
+def config(platform='android', identifier='si.triparna.jivie', project='fixture-project'):
     return dict(project=project, sender='123456789', api=API, app=f'1:123456789:{platform}:abcdef1234567890', identifier=identifier)
 
 class ConfigurationTests(unittest.TestCase):
     def test_authoritative_current_identifiers(self):
-        self.assertEqual(tool.application_identifiers(), ('com.takndev.kanbanconnect', 'com.example.kanban'))
+        self.assertEqual(tool.application_identifiers(), ('si.triparna.jivie', 'si.triparna.jivie'))
 
     def test_changed_identifier_is_read_without_hardcoded_client_rejection(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -36,7 +36,7 @@ class ConfigurationTests(unittest.TestCase):
             android = root / 'google-services.json'
             android.write_text(json.dumps({'project_info': {'project_id': c['project'], 'project_number': c['sender']}, 'client': [{'client_info': {'mobilesdk_app_id': c['app'], 'android_client_info': {'package_name': c['identifier']}}, 'api_key': [{'current_key': c['api']}]}]}))
             self.assertEqual(tool.android(android), c)
-            c = config('ios', 'com.example.kanban')
+            c = config('ios', 'si.triparna.jivie')
             ios = root / 'GoogleService-Info.plist'
             ios.write_bytes(plistlib.dumps({'PROJECT_ID': c['project'], 'GCM_SENDER_ID': c['sender'], 'API_KEY': c['api'], 'GOOGLE_APP_ID': c['app'], 'BUNDLE_ID': c['identifier']}))
             self.assertEqual(tool.ios(ios), c)
@@ -45,7 +45,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_native_resources_and_no_sensitive_output(self):
         with tempfile.TemporaryDirectory() as temp:
-            target = tool.generate(config(), config('ios', 'com.example.kanban'), temp)
+            target = tool.generate(config(), config('ios', 'si.triparna.jivie'), temp)
             data = json.loads(target.read_text())
             self.assertEqual(data['FIREBASE_PROJECT_ID'], 'fixture-project')
             xml = Path(temp, 'android/app/src/main/res/values/firebase_config.xml').read_text()
@@ -57,8 +57,8 @@ class ConfigurationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             target = tool.generate(config(), output_dir=temp)
             original = target.read_bytes()
-            with self.assertRaises(ValueError): tool.generate(config(), config('ios', 'com.example.kanban', 'other-project'), temp)
-            with self.assertRaises(ValueError): tool.generate(ios_config=config('ios', 'com.example.kanban'), output_dir=temp)
+            with self.assertRaises(ValueError): tool.generate(config(), config('ios', 'si.triparna.jivie', 'other-project'), temp)
+            with self.assertRaises(ValueError): tool.generate(ios_config=config('ios', 'si.triparna.jivie'), output_dir=temp)
             self.assertEqual(target.read_bytes(), original)
 
     def test_transaction_rolls_back_first_file_if_second_replace_fails(self):
@@ -80,6 +80,6 @@ class ConfigurationTests(unittest.TestCase):
         for field, value in [('project', 'invalid-'), ('app', '1:987654321:android:abcdef1234567890'), ('api', 'private-key'), ('identifier', 'wrong.app')]:
             with self.subTest(field=field):
                 data = config(); data[field] = value
-                with self.assertRaises(ValueError): tool.validate(data, 'android', 'com.takndev.kanbanconnect')
+                with self.assertRaises(ValueError): tool.validate(data, 'android', 'si.triparna.jivie')
 
 if __name__ == '__main__': unittest.main()

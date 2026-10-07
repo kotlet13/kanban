@@ -1,0 +1,23 @@
+{
+  "status": "draft_not_submitted",
+  "version": "1.0.0+1",
+  "price": "free",
+  "locales": {
+    "sl": {
+      "name": "Jivie",
+      "subtitle": "Opravila, načrti in nakupi",
+      "short_description": "Uredi opravila, načrte, nakupe in osebne izdatke. Začni brez računa.",
+      "promotional_text": "Začni z osebnimi opravili na napravi. Uredi načrte, nakupovalne sezname in izdatke ter pripravi šifrirano varnostno kopijo.",
+      "keywords": "opravila,načrti,nakupi,seznami,izdatki,opomniki,organizacija",
+      "description": "Jivie pomaga urediti vsakodnevna opravila, načrte in nakupe. Začni brez računa: osebne podatke ustvarjaš in urejaš na napravi tudi brez internetne povezave.\n\n• Preglej današnja opravila in dogodke.\n• Uredi projekte, opravila in termine.\n• Pripravi nakupovalne sezname z artikli in količinami.\n• Beleži osebne prihodke in izdatke z valuto.\n• Vključi lokalne opomnike za shranjena opravila in dogodke.\n• Ustvari šifrirano prenosno kopijo ter pred obnovo preveri njeno vsebino.\n• Izberi slovenščino ali angleščino ter svetlo ali temno temo.\n\nZa izbirno sinhronizacijo svojih naprav in sodelovanje potrebuješ združljiv strežnik s FamilyHub. Za nov račun potrebuješ kodo upravitelja ali povabilo. Prijava sama ne prenese osebnih podatkov; prenos vključiš izrecno. Dostop do skupnih zapisov in financ določajo pravice prostora.\n\nOddaljena obvestila zahtevajo dodatno združljivo strežniško in mobilno konfiguracijo. Samostojno gostovanje samo po sebi ne zagotavlja potisnih obvestil ob zaprti aplikaciji. Lokalni opomniki imajo omejitve operacijskega sistema in lahko zamujajo.\n\nAplikacija je brezplačna. Gostovanje in račun pri ponudniku gostovanja nista vključena. Sinhronizacija ni varnostna kopija strežnika. Prenosna kopija ne vsebuje priponk ali podatkov, ki jih naprava še ni prenesla."
+    },
+    "en": {
+      "name": "Jivie",
+      "subtitle": "Tasks, plans and shopping",
+      "short_description": "Organize tasks, plans, shopping and personal expenses. Start without an account.",
+      "promotional_text": "Start with personal tasks on your device. Organize plans, shopping lists and expenses, and create an encrypted backup.",
+      "keywords": "tasks,plans,shopping,lists,expenses,reminders,organizer",
+      "description": "Jivie helps organize everyday tasks, plans and shopping. Start without an account: create and edit personal data on your device, even without an internet connection.\n\n• Review today's tasks and events.\n• Organize projects, tasks and dates.\n• Make shopping lists with items and quantities.\n• Record personal income and expenses with a currency.\n• Enable local reminders for saved tasks and events.\n• Create an encrypted portable backup and preview its contents before restoring.\n• Choose Slovenian or English and a light or dark theme.\n\nOptional synchronization between your devices and collaboration require a compatible server with FamilyHub. A new account needs an administrator's code or an invitation. Signing in does not upload personal data automatically; you explicitly enable the transfer. Workspace permissions control access to shared records and finances.\n\nRemote notifications require additional compatible server and mobile configuration. Self-hosting alone does not provide push delivery when the app is closed. Local reminders are subject to operating system limits and may be delayed.\n\nThe app is free. Hosting and a hosting-provider account are not included. Synchronization is not a server backup. Portable backups do not contain attachments or data the device has not downloaded."
+    }
+  }
+}

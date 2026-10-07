@@ -10,6 +10,8 @@ import 'collaboration_database.dart';
 import 'collaboration_transport.dart';
 import 'device_session_store.dart';
 import 'remote_push_store.dart';
+import 'account_deletion_store.dart';
+import 'account_deletion_preview.dart';
 import 'sqlite_organizer_storage.dart';
 import 'portable_backup_document.dart';
 import 'organizer_storage.dart';
@@ -30,6 +32,7 @@ part 'collaboration_remote_push_cleanup.dart';
 part 'collaboration_private_actions.dart';
 part 'collaboration_account_recovery.dart';
 part 'collaboration_backup_actions.dart';
+part 'collaboration_account_deletion.dart';
 
 class CollaborationRepository {
   CollaborationRepository(
@@ -39,18 +42,21 @@ class CollaborationRepository {
     DateTime Function()? clock,
     this.pushStore,
     this.ownsDatabase = true,
+    this.deletionStore = const SecureAccountDeletionStore(),
   }) : clock = clock ?? DateTime.now;
   final CollaborationDatabase database;
   final CollaborationTransport transport;
   final DeviceSessionStore sessionStore;
   final RemotePushStore? pushStore;
   final bool ownsDatabase;
+  final AccountDeletionStore deletionStore;
   final DateTime Function() clock;
   final _events = StreamController<CollaborationState>.broadcast();
   Stream<CollaborationState> get changes => _events.stream;
   CollaborationState state = CollaborationState();
   DeviceSession? _session;
   Future<void> _secureQueue = Future.value();
+  Future<void> _deletionQueue = Future.value();
   Completer<void>? _syncDone, _pushSyncDone;
   Future<void> _pushSecureQueue = Future.value();
   bool _pushSyncing = false, _pushRestored = false;
@@ -62,6 +68,7 @@ class CollaborationRepository {
   DateTime? _pushStateCheckedAt;
   int _recordContractVersion = 1;
   bool _inboxSupported = false;
+  bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
   bool _financeSupported = false;
@@ -75,6 +82,13 @@ class CollaborationRepository {
   Future<void> initialize() async {
     await database.rows('SELECT name FROM local_meta LIMIT 1');
     _session = await sessionStore.read();
+    if (_session != null &&
+        (await database.rows('SELECT value FROM local_meta WHERE name=?', [
+          'deleted_account:${_session!.profile.partition}',
+        ])).isNotEmpty) {
+      _session = null;
+      await sessionStore.clear();
+    }
     if (_session != null && pushStore != null) {
       final cleanup = await pushStore!.readCleanups();
       if (cleanup.any((c) => c.matches(_session!.profile))) {
@@ -119,9 +133,38 @@ class CollaborationRepository {
   Future<void> refreshLocal() async {
     final epoch = _epoch, profile = _session?.profile;
     if (_closed) return;
+    if (profile != null &&
+        (await database.rows('SELECT value FROM local_meta WHERE name=?', [
+          'deleted_account:${profile.partition}',
+        ])).isNotEmpty) {
+      if (epoch != _epoch || _closed) {
+        return;
+      }
+      _session = null;
+      final endedEpoch = ++_epoch;
+      if (database.personalProfile?.partition == profile.partition) {
+        database.activatePersonal(null);
+      }
+      await _secure(endedEpoch, () async {
+        final stored = await sessionStore.read();
+        if (stored?.profile.partition == profile.partition) {
+          await sessionStore.clear();
+        }
+      });
+      await refreshLocal();
+      return;
+    }
     if (profile == null) {
       state = CollaborationState(lastError: _lastError);
     } else {
+      final deletionPending = (await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['deletion_pending:${profile.partition}'],
+      )).isNotEmpty;
+      if (deletionPending &&
+          database.personalProfile?.partition == profile.partition) {
+        database.activatePersonal(null);
+      }
       final scopes = await database.rows(
         'SELECT data,blocked FROM scopes WHERE partition=? ORDER BY id',
         [profile.partition],
@@ -255,7 +298,8 @@ class CollaborationRepository {
       state = CollaborationState(
         session: profile,
         remotePushRegistration: _remotePushState,
-        sessionInvalid: _sessionInvalidReason != null,
+        sessionInvalid: _sessionInvalidReason != null || deletionPending,
+        deletionPending: deletionPending,
         privateSync: await _privateSyncState(profile),
         privateRecordIds: _sessionInvalidReason != null
             ? const {}

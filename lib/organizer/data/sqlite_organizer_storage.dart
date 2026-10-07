@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import '../domain/garden_models.dart';
+import 'garden_storage.dart';
 import '../domain/organizer_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
@@ -12,7 +14,10 @@ import 'organizer_repository.dart' show OrganizerConflictException;
 /// Per-record canonical storage. Opening and anonymous use need no credentials.
 /// Hive is read once and retained intact; the marker and every row commit together.
 class SqliteOrganizerStorage
-    implements OrganizerStorage, ObservableOrganizerStorage {
+    implements
+        OrganizerStorage,
+        ObservableOrganizerStorage,
+        PersonalJsonBackupStorage {
   SqliteOrganizerStorage(this.database, {this.legacyFactory});
   final CollaborationDatabase database;
   final Future<OrganizerStorage> Function()? legacyFactory;
@@ -305,6 +310,42 @@ class SqliteOrganizerStorage
         );
       }
       await database.touchPersonal();
+    });
+    database.personalChanged();
+  }
+
+  @override
+  Future<String> exportPersonalJsonBackup() => database.transaction(
+    () async => OrganizerBackupCodec.encode(
+      await read(),
+      gardens: await GardenStorage(database).read(),
+    ),
+  );
+
+  @override
+  Future<void> importPersonalJsonBackup(String json) async {
+    final document = OrganizerBackupCodec.decodeDocument(json);
+    await database.transaction(() async {
+      final current = await read();
+      final merged = mergePersonalSnapshots(
+        current,
+        document.personal,
+        revision: current.revision + 1,
+      ).copyWith(workspaceKey: current.workspaceKey);
+      final gardenStorage = GardenStorage(database),
+          gardens = await gardenStorage.read();
+      final candidateGardens = document.gardens == null
+          ? null
+          : mergeGardenSnapshots(gardens, document.gardens!);
+      // Personal work follows the existing explicit JSON-import path. Gardens
+      // always remain device-local, including with a private binding enabled.
+      await write(merged);
+      if (candidateGardens != null) {
+        await gardenStorage.write(
+          candidateGardens,
+          expectedRevision: gardens.revision,
+        );
+      }
     });
     database.personalChanged();
   }

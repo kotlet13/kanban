@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import '../domain/garden_models.dart';
+import 'garden_storage.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import 'collaboration_database.dart';
@@ -208,8 +210,9 @@ class PortableBackupRepository {
       };
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 1,
-        'databaseVersion': 4,
+        'version': 2,
+        'databaseVersion': 5,
+        'gardens': (await GardenStorage(database).read()).toJson(),
         'id': newSharedId(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'source': profile == null
@@ -255,7 +258,11 @@ class PortableBackupRepository {
       backupId: doc['id'] as String,
       createdAt: DateTime.parse(doc['createdAt'] as String),
       personalRevision: local.revision,
-      personalCounts: personalCounts(local),
+      personalCounts: {
+        ...personalCounts(local),
+        if (backupGardens(doc) != null)
+          'gardens': backupGardens(doc)!.gardens.length,
+      },
       scopeCount: scopes.length,
       pendingCount:
           backupRows(doc, 'outbox').length +
@@ -283,14 +290,45 @@ class PortableBackupRepository {
         doc = await _decode(bytes, password),
         imported = backupPersonal(doc);
     final id = doc['id'] as String;
+    final sourcePartition = doc['source'] == null
+        ? null
+        : backupMap(doc['source'])['partition'];
+    final sourceDeleted =
+        sourcePartition != null &&
+        (await database.rows('SELECT value FROM local_meta WHERE name=?', [
+          'deleted_account:$sourcePartition',
+        ])).isNotEmpty;
     await database.transaction(() async {
       if (stamp != await _rightsStamp() ||
           (await storage.read()).revision != expectedPersonalRevision) {
         throw const CollaborationException('backup_stale');
       }
       final current = await storage.localSnapshot();
+      final gardenStorage = GardenStorage(database),
+          currentGardens = await gardenStorage.read();
+      final importedGardens = backupGardens(doc);
+      GardenSnapshot? candidateGardens;
       OrganizerSnapshot candidate;
       try {
+        final existingGardens = {
+          for (final g in currentGardens.gardens) g.id: g,
+        };
+        candidateGardens = importedGardens == null
+            ? null
+            : mode == BackupRestoreMode.replace
+            ? GardenSnapshot(
+                gardens: importedGardens.gardens.map((g) {
+                  final old = existingGardens[g.id];
+                  return old == null
+                      ? g
+                      : g.copyWith(
+                          revision: g.revision > old.revision
+                              ? g.revision
+                              : old.revision + 1,
+                        );
+                }),
+              )
+            : mergeGardenSnapshots(currentGardens, importedGardens);
         candidate = mode == BackupRestoreMode.replace
             ? imported
             : mergePersonalSnapshots(
@@ -319,18 +357,29 @@ class PortableBackupRepository {
           ['local', row.id, row.type, jsonEncode(row.json)],
         );
       }
-      await database.execute(
-        'INSERT INTO restored_backups(id,created_at,source_partition,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
-        [
-          id,
-          doc['createdAt'],
-          doc['source'] == null ? null : backupMap(doc['source'])['partition'],
-          jsonEncode({
-            'preview': _previewJson(_preview(doc)),
-            'encrypted': base64Encode(bytes),
-          }),
-        ],
-      );
+      // A legacy v1 file has no garden section and must preserve local gardens.
+      if (candidateGardens != null) {
+        await gardenStorage.write(
+          candidateGardens,
+          expectedRevision: currentGardens.revision,
+        );
+      }
+      if (!sourceDeleted) {
+        await database.execute(
+          'INSERT INTO restored_backups(id,created_at,source_partition,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
+          [
+            id,
+            doc['createdAt'],
+            doc['source'] == null
+                ? null
+                : backupMap(doc['source'])['partition'],
+            jsonEncode({
+              'preview': _previewJson(_preview(doc)),
+              'encrypted': base64Encode(bytes),
+            }),
+          ],
+        );
+      }
       await database.execute(
         "INSERT INTO local_meta(name,value) VALUES('backup_ui_preferences_pending',?) ON CONFLICT(name) DO UPDATE SET value=excluded.value",
         [jsonEncode(doc['uiPreferences'])],
@@ -341,8 +390,9 @@ class PortableBackupRepository {
     await applyPendingUiPreferences();
     return BackupRestoreResult(
       backupId: id,
-      personalRecordCount: imported.recordIds.length,
-      hasRemoteRecovery: backupRows(doc, 'scopes').isNotEmpty,
+      personalRecordCount:
+          imported.recordIds.length + (backupGardens(doc)?.gardens.length ?? 0),
+      hasRemoteRecovery: !sourceDeleted && backupRows(doc, 'scopes').isNotEmpty,
     );
   }
 
@@ -402,13 +452,23 @@ class PortableBackupRepository {
       [id],
     );
     if (rows.isEmpty) throw const CollaborationException('backup_missing');
-    return _decode(
+    final doc = await _decode(
       base64Decode(
         backupMap(jsonDecode(rows.single['data'] as String))['encrypted']
             as String,
       ),
       password,
     );
+    final partition = doc['source'] == null
+        ? null
+        : backupMap(doc['source'])['partition'];
+    if (partition != null &&
+        (await database.rows('SELECT value FROM local_meta WHERE name=?', [
+          'deleted_account:$partition',
+        ])).isNotEmpty) {
+      throw const CollaborationException('account_deleted');
+    }
+    return doc;
   }
 
   Future<bool> _knownFinanceDenied(String partition, String scope) async {

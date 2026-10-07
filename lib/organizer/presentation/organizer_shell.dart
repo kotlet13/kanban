@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../widgets/jivie_brand_mark.dart';
 import '../domain/organizer_models.dart';
 import '../state/organizer_provider.dart';
 import 'calendar_page.dart';
 import 'finance_page.dart';
+import 'garden/garden_page.dart';
 import 'organizer_actions.dart';
 import 'organizer_widgets.dart';
 import 'projects_page.dart';
@@ -36,6 +38,7 @@ enum _Area {
   shopping,
   finances,
   home,
+  garden,
   more,
   settings,
   sharing,
@@ -349,6 +352,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.shopping => l.organizerShopping,
       _Area.finances => l.organizerFinances,
       _Area.home => l.organizerHome,
+      _Area.garden => l.gardenTitle,
       _Area.more => l.organizerMore,
       _Area.settings => l.organizerSettings,
       _Area.sharing => l.sharingAccount,
@@ -364,6 +368,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.shopping => Icons.shopping_bag_outlined,
     _Area.finances => Icons.account_balance_wallet_outlined,
     _Area.home => Icons.home_outlined,
+    _Area.garden => Icons.yard_outlined,
     _Area.more => Icons.grid_view_outlined,
     _Area.settings => Icons.tune_outlined,
     _Area.sharing => Icons.people_outline,
@@ -459,11 +464,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.check_circle_outline,
-                        color: scheme.primary,
-                        size: 23,
-                      ),
+                      const JivieBrandMark(size: 28),
                       const SizedBox(width: 9),
                       Text(l.organizerAppName),
                     ],
@@ -599,11 +600,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 32),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    color: scheme.primary,
-                    size: 28,
-                  ),
+                  const JivieBrandMark(),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -616,32 +613,39 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                 ],
               ),
             ),
-            for (final area in [
-              _Area.today,
-              _Area.inbox,
-              _Area.plans,
-              _Area.calendar,
-              _Area.projects,
-              _Area.shopping,
-              _Area.finances,
-              _Area.home,
-            ])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: ListTile(
-                  dense: true,
-                  minTileHeight: 47,
-                  selected:
-                      _area == area ||
-                      (_area == _Area.plans && area == _planArea),
-                  selectedTileColor: scheme.surface,
-                  selectedColor: scheme.primary,
-                  leading: Icon(_icon(area), size: 21),
-                  title: Text(_label(context, area)),
-                  onTap: () => _navigate(area),
-                ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final area in [
+                    _Area.today,
+                    _Area.inbox,
+                    _Area.plans,
+                    _Area.calendar,
+                    _Area.projects,
+                    _Area.shopping,
+                    _Area.finances,
+                    _Area.home,
+                    _Area.garden,
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: ListTile(
+                        dense: true,
+                        minTileHeight: 47,
+                        selected:
+                            _area == area ||
+                            (_area == _Area.plans && area == _planArea),
+                        selectedTileColor: scheme.surface,
+                        selectedColor: scheme.primary,
+                        leading: Icon(_icon(area), size: 21),
+                        title: Text(_label(context, area)),
+                        onTap: () => _navigate(area),
+                      ),
+                    ),
+                ],
               ),
-            const Spacer(),
+            ),
             ListTile(
               dense: true,
               selected: _area == _Area.sharing,
@@ -860,6 +864,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onShare: (project) => _copyProject(snapshot, project),
       ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
+      _Area.garden => const GardenPage(),
       _Area.inbox => OrganizerInboxPage(
         onSettings: () => showInboxPreferences(context, ref),
         onAccount: () => _navigate(_Area.sharing),
@@ -891,6 +896,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _Area.sharing,
             _Area.finances,
             _Area.home,
+            _Area.garden,
             _Area.settings,
           ])
             ListTile(

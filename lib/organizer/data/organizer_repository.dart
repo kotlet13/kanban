@@ -476,14 +476,30 @@ class OrganizerRepository {
   });
 
   Future<String> exportBackup() => _enqueue(() async {
-    _snapshot ??= await storage.read();
+    _snapshot = await storage.read();
+    if (storage is PersonalJsonBackupStorage) {
+      return (storage as PersonalJsonBackupStorage).exportPersonalJsonBackup();
+    }
     return OrganizerBackupCodec.encode(snapshot);
   });
 
   /// Validates every imported record before writing. Existing records are
   /// never overwritten; any ID collision explicitly rejects the entire import.
   Future<void> importBackup(String json) async {
-    final imported = OrganizerBackupCodec.decode(json);
+    final document = OrganizerBackupCodec.decodeDocument(json);
+    if (storage is PersonalJsonBackupStorage) {
+      return _enqueue(() async {
+        await (storage as PersonalJsonBackupStorage).importPersonalJsonBackup(
+          json,
+        );
+        _snapshot = await storage.read();
+        _changes.add(snapshot);
+      });
+    }
+    if (document.gardens != null) {
+      throw const FormatException('This storage cannot restore garden data');
+    }
+    final imported = document.personal;
     return _change((s) {
       if (s.recordIds.intersection(imported.recordIds).isNotEmpty) {
         throw const OrganizerConflictException(

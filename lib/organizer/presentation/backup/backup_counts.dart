@@ -15,6 +15,7 @@ class BackupCounts extends StatelessWidget {
       'events' => l.organizerCalendar,
       'financeEntries' || 'personalFinanceEntry' => l.organizerFinances,
       'reminders' => l.inboxCategoryReminders,
+      'gardens' => l.gardenTitle,
       _ => l.backupOtherRecords,
     };
     return Column(

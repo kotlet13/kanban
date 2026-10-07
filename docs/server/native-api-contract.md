@@ -164,3 +164,7 @@ Izbirna FCM priprava FamilyHub0.4: [push-api-contract.md](push-api-contract.md).
 ## Dopolnitev 0.5 — osebni prostor in račun
 
 [account-api-contract.md](account-api-contract.md) določa auth.enroll, email verification/reset in izrecni personal.ensure. scopes.list brez includePersonal=true ostane združljiv s starejšimi odjemalci. HTTP telo je omejeno na1MiB; obstoječe shared payload meje ostanejo, private payload do524288 bajtov in pull strani512KiB. Schema9 je additivna, obstoječih outbox zapisov ne spreminja.
+
+## Izbris samostojnega računa
+
+FamilyHub0.6.0/schema10 doda self-hosted `account.deletion.preview/confirm/status` in splet brez mobilne aplikacije. Pogodba, razrešitve lastništva, natančna meja izbrisa/hranjenih tujih vsebin in odprte legacy omejitve so v [account-deletion-contract.md](account-deletion-contract.md). To ni dokaz store-ready/full-UGC skladnosti.

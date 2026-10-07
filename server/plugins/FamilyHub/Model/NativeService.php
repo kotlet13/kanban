@@ -10,7 +10,7 @@ class NativeService extends NativeDatabase
         if ($operation === 'capabilities') {
             $pushConfigured=$enabled && NativeFcmConfig::configured();
             return ['api' => 'familyhub_native', 'version' => 1, 'serverId' => $supported ? $this->serverId() : null, 'enabled' => $enabled,
-                    'features' => ['privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
+                    'features' => ['accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
                                    'recordSync' => $enabled, 'collaboration' => $enabled, 'inbox' => $enabled, 'scheduledReminders' => $enabled, 'externalPush' => $pushConfigured, 'smtp' => $enabled && NativeSmtpTransport::configured(), 'finance' => $enabled, 'legacyProjectSharing' => false],
                     'pushProjectId'=>$pushConfigured ? FAMILYHUB_FCM_PROJECT_ID : null,
                     'recordContractVersions' => [1, 2], 'recordTypesV2' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem'],
@@ -20,7 +20,7 @@ class NativeService extends NativeDatabase
         $class = match (explode('.', $operation)[0]) {
             'auth' => NativeAuthService::class,
             'personal' => NativePersonalService::class,
-            'account' => NativeAccountService::class,
+            'account' => str_starts_with($operation, 'account.deletion.') ? NativeAccountDeletionService::class : NativeAccountService::class,
             'scopes' => NativeScopeService::class,
             'invitations' => NativeInvitationService::class,
             'sync', 'sync2' => NativeSyncService::class,
