@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Opomniki in Vrt — priprava 1.1.3+6
+
+Funkcionalni commit `10a9e03` vključuje oddaljeno razporejanje in prenovo Vrta. 636 Flutter PASS/9 opt-in HTTP preskočenih, ločeno 2 dejanska HTTP testa; analiza 37 obstoječih info brez napak/opozoril. Po funkcionalnem commitu je izrecno pripravljena različica 1.1.3+6. Nova podpisana gradnja in aktivacija še sledita. [Izvedba in preverjanje](../REMOTE_REMINDERS.md), [Vrt](../GARDEN.md).
+
 ## Kompaktna telefonska glava — 1.1.2+5
 
 Koda/push `3d504c4` premakne prostor v glavo ob ikono, odstrani ime in dodatno vrstico s telefona ter dodajalno tipko zamenja z + Nov prostor v dropdownu. 565 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Po funkcionalnem commitu je `1121407` izrecno pripravil 1.1.2+5. Podpisana gradnja je preverjena in Play potrdi Aktivno/1.1.2 (5), na voljo internim preizkuševalcem 8. oktobra ob 17:39. Strežnik, pogodbe ter SDK/paketi niso spremenjeni. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
