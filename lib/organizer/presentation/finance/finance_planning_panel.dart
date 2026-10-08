@@ -78,10 +78,14 @@ class FinancePlanningPanel extends ConsumerStatefulWidget {
     required this.snapshot,
     this.sharedScopeId,
     this.forecastAvailable = true,
+    this.accountFilter,
   });
   final OrganizerSnapshot snapshot;
   final String? sharedScopeId;
   final bool forecastAvailable;
+
+  /// External ledger selection: * all, _none unassigned, otherwise account ID.
+  final String? accountFilter;
   @override
   ConsumerState<FinancePlanningPanel> createState() =>
       _FinancePlanningPanelState();
@@ -329,8 +333,9 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
         });
       });
     }
+    final selectedAccount = widget.accountFilter ?? _accountId;
     final account = snapshot.financeAccounts
-        .where((a) => a.id == _accountId)
+        .where((a) => a.id == selectedAccount)
         .firstOrNull;
     final currencies = {
       ...supportedCurrencies,
@@ -342,6 +347,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
       snapshot,
       currency: currency,
       account: account,
+      unassignedOnly: widget.accountFilter == '_none',
       through: through,
       transfers: _isShared
           ? (state?.dataForScope(widget.sharedScopeId!).financeTransfers ?? [])
@@ -435,20 +441,24 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
           ),
           Text(l.financePlanForecastPeriod(organizerDate(context, through))),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _accountId,
-            isExpanded: true,
-            decoration: InputDecoration(labelText: l.financeAccount),
-            items: [
-              DropdownMenuItem(value: null, child: Text(l.financeAllAccounts)),
-              for (final a in snapshot.financeAccounts)
+          if (widget.accountFilter == null)
+            DropdownButtonFormField<String>(
+              initialValue: _accountId,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: l.financeAccount),
+              items: [
                 DropdownMenuItem(
-                  value: a.id,
-                  child: Text('${a.name} · ${a.currency}'),
+                  value: null,
+                  child: Text(l.financeAllAccounts),
                 ),
-            ],
-            onChanged: (id) => setState(() => _accountId = id),
-          ),
+                for (final a in snapshot.financeAccounts)
+                  DropdownMenuItem(
+                    value: a.id,
+                    child: Text('${a.name} · ${a.currency}'),
+                  ),
+              ],
+              onChanged: (id) => setState(() => _accountId = id),
+            ),
           const SizedBox(height: 12),
           if (account == null)
             DropdownButtonFormField<String>(

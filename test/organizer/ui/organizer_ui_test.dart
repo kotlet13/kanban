@@ -71,7 +71,24 @@ Future<void> pumpOrganizer(
 }
 
 Future<void> mobileTab(WidgetTester tester, String text) async {
-  await tester.tap(find.widgetWithText(NavigationDestination, text));
+  final destination = find.widgetWithText(NavigationDestination, text);
+  if (destination.evaluate().isNotEmpty) {
+    await tester.tap(destination);
+  } else {
+    if (find
+        .byKey(const ValueKey('organizer-mobile-menu'))
+        .evaluate()
+        .isEmpty) {
+      await tester.tap(find.byKey(const ValueKey('organizer-menu-open')));
+      await tester.pumpAndSettle();
+    }
+    // Older scenario helpers enter More then select a module. On a phone the
+    // same intermediate step opens the real drawer; there is no More screen.
+    if (text == 'Več' || text == 'More') return;
+    final item = find.widgetWithText(ListTile, text).first;
+    await tester.ensureVisible(item);
+    await tester.tap(item);
+  }
   await tester.pumpAndSettle();
 }
 

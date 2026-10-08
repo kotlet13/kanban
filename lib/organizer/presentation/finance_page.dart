@@ -9,8 +9,9 @@ import 'organizer_widgets.dart';
 import 'finance/finance_money.dart';
 import 'finance/finance_planning_panel.dart';
 import 'finance/finance_entry_editing.dart';
+import 'finance/finance_source_link.dart';
 
-class OrganizerFinancePage extends ConsumerWidget {
+class OrganizerFinancePage extends ConsumerStatefulWidget {
   const OrganizerFinancePage({
     super.key,
     required this.snapshot,
@@ -19,7 +20,32 @@ class OrganizerFinancePage extends ConsumerWidget {
   final OrganizerSnapshot snapshot;
   final OrganizerActions actions;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OrganizerFinancePage> createState() =>
+      _OrganizerFinancePageState();
+}
+
+class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
+  String _accountFilter = '*';
+  OrganizerSnapshot get snapshot => widget.snapshot;
+  OrganizerActions get actions => widget.actions;
+  @override
+  void didUpdateWidget(covariant OrganizerFinancePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.snapshot.workspaceKey != snapshot.workspaceKey ||
+        (_accountFilter != '*' &&
+            _accountFilter != '_none' &&
+            !snapshot.financeAccounts.any((a) => a.id == _accountFilter))) {
+      _accountFilter = '*';
+    }
+  }
+
+  bool _matches(FinanceEntry entry) =>
+      _accountFilter == '*' ||
+      (_accountFilter == '_none'
+          ? entry.ledgerAccountId == null
+          : entry.ledgerAccountId == _accountFilter);
+  @override
+  Widget build(BuildContext context) {
     final l = context.l10n;
     final shared = ref.watch(collaborationProvider).valueOrNull;
     if (snapshot.workspaceKey != 'local' &&
@@ -35,12 +61,12 @@ class OrganizerFinancePage extends ConsumerWidget {
         shared?.financeSnapshotComplete[privateScopeId] == true;
     final entries =
         snapshot.financeEntries
-            .where((e) => e.status == FinanceEntryStatus.posted)
+            .where((e) => e.status == FinanceEntryStatus.posted && _matches(e))
             .toList()
           ..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
     final planned =
         snapshot.financeEntries
-            .where((e) => e.status == FinanceEntryStatus.planned)
+            .where((e) => e.status == FinanceEntryStatus.planned && _matches(e))
             .toList()
           ..sort((a, b) {
             if (a.plannedAt == null) {
@@ -64,16 +90,41 @@ class OrganizerFinancePage extends ConsumerWidget {
                 label: Text(l.organizerAddFinance),
               ),
             ),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('personal-finance-account-filter'),
+              initialValue: _accountFilter,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: l.financeAccount),
+              items: [
+                DropdownMenuItem(value: '*', child: Text(l.financeAllAccounts)),
+                DropdownMenuItem(
+                  value: '_none',
+                  child: Text(l.taskCostUnassignedAccount),
+                ),
+                for (final account in snapshot.financeAccounts)
+                  DropdownMenuItem(
+                    value: account.id,
+                    child: Text('${account.name} · ${account.currency}'),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _accountFilter = value!),
+            ),
+            const SizedBox(height: 16),
             FinancePlanningPanel(
               key: ValueKey('finance-planning-${snapshot.workspaceKey}'),
               snapshot: snapshot,
               forecastAvailable: complete,
+              accountFilter: _accountFilter,
             ),
             if (!complete)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(l.privateFinanceIncomplete),
               ),
+            if (snapshot.financeEntries.isNotEmpty &&
+                entries.isEmpty &&
+                planned.isEmpty)
+              Text(l.financeNoFilterResults),
             if (snapshot.financeEntries.isEmpty && complete)
               OrganizerEmpty(
                 icon: Icons.account_balance_wallet_outlined,
@@ -106,7 +157,21 @@ class OrganizerFinancePage extends ConsumerWidget {
                               Text(
                                 sharedMoneyLabel(
                                   context,
-                                  snapshot.exactBalanceForCurrency(currency),
+                                  entries
+                                      .where((e) => e.currency == currency)
+                                      .fold<BigInt>(
+                                        BigInt.zero,
+                                        (sum, e) =>
+                                            sum +
+                                            BigInt.from(e.amountMinor) *
+                                                BigInt.from(
+                                                  e.kind ==
+                                                          FinanceEntryKind
+                                                              .income
+                                                      ? 1
+                                                      : -1,
+                                                ),
+                                      ),
                                   currency,
                                 ),
                                 style: Theme.of(
@@ -147,8 +212,17 @@ class OrganizerFinancePage extends ConsumerWidget {
                       : null,
                   leading: const Icon(Icons.schedule_outlined, size: 20),
                   title: Text(entry.title),
-                  subtitle: Text(
-                    '${entry.plannedAt == null ? l.financePlanUndatedEntry : organizerDate(context, entry.plannedAt!)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense} · ${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${entry.plannedAt == null ? l.financePlanUndatedEntry : organizerDate(context, entry.plannedAt!)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense} · ${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
+                      ),
+                      FinanceSourceLink(
+                        entryId: entry.id,
+                        workspaceKey: snapshot.workspaceKey,
+                      ),
+                    ],
                   ),
                   trailing: Icon(
                     Icons.chevron_right,
@@ -184,8 +258,17 @@ class OrganizerFinancePage extends ConsumerWidget {
                     size: 20,
                   ),
                   title: Text(entry.title),
-                  subtitle: Text(
-                    '${organizerDate(context, entry.occurredAt)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense}',
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${organizerDate(context, entry.occurredAt)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense}',
+                      ),
+                      FinanceSourceLink(
+                        entryId: entry.id,
+                        workspaceKey: snapshot.workspaceKey,
+                      ),
+                    ],
                   ),
                   trailing: Text(
                     '${entry.kind == FinanceEntryKind.income ? '+' : '−'}${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',

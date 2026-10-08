@@ -3553,7 +3553,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get backupCompleteness =>
-      'Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame.';
+      'Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.';
 
   @override
   String get backupTooLarge =>
@@ -3622,7 +3622,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'V Več najdete finance, dom, vrt, račun in nastavitve. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.';
+      'Na telefonu odpri levi meni z gumbom ☰. Tam so neposredne povezave do financ, doma, vrta, oseb, obvestil, računa in nastavitev. Na tablici so dodatne možnosti v Več, na računalniku v stranskem meniju. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.';
 
   @override
   String get guideSkip => 'Preskoči';
@@ -4003,4 +4003,113 @@ class AppLocalizationsSl extends AppLocalizations {
   String financePlanForecastPeriod(String date) {
     return 'Datirani vnosi do $date; prikazano je stanje ob koncu posameznega dne.';
   }
+
+  @override
+  String get organizerMenuOpen => 'Odpri meni';
+
+  @override
+  String get organizerMenuClose => 'Zapri meni';
+
+  @override
+  String get planningCapacityTitle => 'Okvirno trajanje';
+
+  @override
+  String get planningCapacityRule =>
+      'Upoštevamo preostalo ocenjeno delo in zaporedno izvedbo opravil. Pri opravilu velja njegova razpoložljivost, sicer projektna; projektni čas si opravila delijo. Tedenski čas preračunamo na povprečje sedmih dni. To je okvirna količina časa, ne obljubljen datum; vikendov in dejanskih delovnih dni ne razporejamo.';
+
+  @override
+  String planningCapacityDuration(String days) {
+    return 'Okvirno trajanje v dnevih: $days';
+  }
+
+  @override
+  String planningCapacityMissingEstimates(int count) {
+    return 'Odprta opravila brez ocene dela: $count.';
+  }
+
+  @override
+  String planningCapacityMissingAvailability(int count) {
+    return 'Odprta opravila brez dnevne ali tedenske razpoložljivosti: $count.';
+  }
+
+  @override
+  String get planningCapacityNoTasks => 'Ni opravil za izračun trajanja.';
+
+  @override
+  String get planningCapacityComplete => 'Vsa opravila so zaključena.';
+
+  @override
+  String organizationProjectPreview(String name) {
+    return 'Organizacija: $name';
+  }
+
+  @override
+  String get organizationProjectInitialVisibility =>
+      'Na začetku vidi projekt samo ustvarjalec. Drugi člani organizacije in zunanji sodelavci dobijo dostop šele z izrecnim povabilom v projekt.';
+
+  @override
+  String get organizationProjectCreated =>
+      'Projekt je ustvarjen. Zdaj lahko povabiš sodelavce ali odpreš projekt.';
+
+  @override
+  String get organizationProjectOpen => 'Odpri projekt';
+
+  @override
+  String get reminderSnooze => 'Odloži opomnik';
+
+  @override
+  String get reminderSnooze15Minutes => 'Čez 15 minut';
+
+  @override
+  String get reminderSnooze1Hour => 'Čez eno uro';
+
+  @override
+  String get reminderSnoozeTomorrow => 'Jutri ob tej uri';
+
+  @override
+  String get reminderSnoozeChooseTime => 'Izberi datum in čas';
+
+  @override
+  String get reminderSnoozeSaved => 'Opomnik je odložen.';
+
+  @override
+  String get reminderSnoozeFutureRequired => 'Izberi čas v prihodnosti.';
+
+  @override
+  String get reminderSnoozeNeedsConnection =>
+      'Za odložitev skupnega opomnika se poveži s strežnikom.';
+
+  @override
+  String reminderSnoozedUntil(String until) {
+    return 'Odloženo do $until';
+  }
+
+  @override
+  String financeSourceTask(String title) {
+    return 'Povezano opravilo: $title';
+  }
+
+  @override
+  String financeSourceProject(String title) {
+    return 'Projekt: $title';
+  }
+
+  @override
+  String get financeSourceUnlinked => 'Brez povezave z opravilom';
+
+  @override
+  String get financeSourceUnavailable => 'Povezano opravilo ni več na voljo.';
+
+  @override
+  String get financeAccountUnavailable => 'Finančni račun ni več na voljo.';
+
+  @override
+  String get financeNoFilterResults => 'Za izbrani račun ni vnosov.';
+
+  @override
+  String get reminderSnoozeDeviceOnly =>
+      'Odložitev velja na tej napravi. Rok opravila ali plačila ostane enak.';
+
+  @override
+  String get guideMenuTitle => 'Meni in nastavitve';
 }

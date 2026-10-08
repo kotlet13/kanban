@@ -153,12 +153,20 @@ void main() {
           OrganizationWorkspace(
             organization: org,
             onProject: (id) => selected = id,
-            onMembers: () {},
+            onMembers: (_) {},
           ),
           width: width,
         );
         await tester.tap(find.text('Dodaj projekt v organizacijo'));
         await tester.pumpAndSettle();
+        expect(
+          find.textContaining('Organizacija: Synthetic organization'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Na začetku vidi projekt samo ustvarjalec.'),
+          findsOneWidget,
+        );
         await tester.enterText(find.byType(TextField).first, 'Project');
         await tester.tap(find.byKey(const ValueKey('sharing-submit')));
         await tester.pumpAndSettle();
@@ -167,6 +175,11 @@ void main() {
         expect(controller.requests[0], controller.requests[1]);
         expect(controller.requests.first['organizationId'], orgId);
         expect(controller.created.length, 1);
+        expect(selected, isNull);
+        await tester.tap(
+          find.byKey(const ValueKey('organization-created-open')),
+        );
+        await tester.pumpAndSettle();
         expect(selected, controller.requests.first['id']);
         expect(tester.takeException(), isNull);
       },
@@ -222,6 +235,49 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets(
+    'created project opens its own members and ignores later identity change',
+    (tester) async {
+      final controller = CreationController()..loseFirst = false;
+      String? members, selected;
+      await pumpPanel(
+        tester,
+        controller,
+        OrganizationWorkspace(
+          organization: org,
+          onProject: (id) => selected = id,
+          onMembers: (id) => members = id,
+        ),
+      );
+      await tester.tap(find.text('Dodaj projekt v organizacijo'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Private project');
+      await tester.tap(find.byKey(const ValueKey('sharing-submit')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('organization-created-members')),
+      );
+      await tester.pumpAndSettle();
+      expect(members, controller.requests.single['id']);
+      expect(members, isNot(orgId));
+      expect(selected, isNull);
+      members = null;
+      await tester.tap(find.text('Dodaj projekt v organizacijo'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Another project');
+      await tester.tap(find.byKey(const ValueKey('sharing-submit')));
+      await tester.pumpAndSettle();
+      controller.switchAccount();
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('organization-created-members')),
+        findsNothing,
+      );
+      expect(members, isNull);
+      expect(selected, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'late creation response after account switch cannot select old scope',
     (tester) async {

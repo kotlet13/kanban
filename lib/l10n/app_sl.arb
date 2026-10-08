@@ -1441,7 +1441,7 @@
   "backupLocalOnly": "Samo na napravi",
   "backupAccountMatches": "Osebne zapise lahko obnoviš lokalno. Nadaljevanje skupnega dela znova preveri račun in pravice.",
   "backupAccountDifferent": "Kopija je iz drugega računa. Skupno delo ostane zaščiteno do prijave v pravi račun.",
-  "backupCompleteness": "Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame.",
+  "backupCompleteness": "Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.",
   "backupTooLarge": "Kopija je večja od dovoljene omejitve 64 MiB. Podatki niso bili spremenjeni.",
   "backupMergeConflict": "Kopija vsebuje drugačno vsebino z istim ID. Združitev je zavrnjena; podatki niso spremenjeni.",
   "privateSyncLocalPending": "Novi lokalni zapisi čakajo na tvoj pregled.",
@@ -1460,7 +1460,7 @@
   "guideTodayBody": "Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.",
   "guidePlansBody": "V Načrtih uredite opravila, projekte in dogodke. Dodajte termine in po potrebi povežite opravilo s projektom. Na večjem zaslonu jih dosežete tudi prek stranskega menija.",
   "guideShoppingBody": "V Nakupih ustvarite seznam, dodajte artikle in označite kupljeno. Osebni seznam ostane na napravi; kopiranje v skupni prostor je vaša izrecna odločitev.",
-  "guideMoreBody": "V Več najdete finance, dom, vrt, račun in nastavitve. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.",
+  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰. Tam so neposredne povezave do financ, doma, vrta, oseb, obvestil, računa in nastavitev. Na tablici so dodatne možnosti v Več, na računalniku v stranskem meniju. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.",
   "guideSkip": "Preskoči",
   "guideBack": "Nazaj",
   "guideNext": "Naprej",
@@ -1622,5 +1622,84 @@
         "type": "String"
       }
     }
-  }
+  },
+  "organizerMenuOpen": "Odpri meni",
+  "organizerMenuClose": "Zapri meni",
+  "planningCapacityTitle": "Okvirno trajanje",
+  "planningCapacityRule": "Upoštevamo preostalo ocenjeno delo in zaporedno izvedbo opravil. Pri opravilu velja njegova razpoložljivost, sicer projektna; projektni čas si opravila delijo. Tedenski čas preračunamo na povprečje sedmih dni. To je okvirna količina časa, ne obljubljen datum; vikendov in dejanskih delovnih dni ne razporejamo.",
+  "planningCapacityDuration": "Okvirno trajanje v dnevih: {days}",
+  "@planningCapacityDuration": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "planningCapacityMissingEstimates": "Odprta opravila brez ocene dela: {count}.",
+  "@planningCapacityMissingEstimates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planningCapacityMissingAvailability": "Odprta opravila brez dnevne ali tedenske razpoložljivosti: {count}.",
+  "@planningCapacityMissingAvailability": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planningCapacityNoTasks": "Ni opravil za izračun trajanja.",
+  "planningCapacityComplete": "Vsa opravila so zaključena.",
+  "organizationProjectPreview": "Organizacija: {name}",
+  "@organizationProjectPreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "organizationProjectInitialVisibility": "Na začetku vidi projekt samo ustvarjalec. Drugi člani organizacije in zunanji sodelavci dobijo dostop šele z izrecnim povabilom v projekt.",
+  "organizationProjectCreated": "Projekt je ustvarjen. Zdaj lahko povabiš sodelavce ali odpreš projekt.",
+  "organizationProjectOpen": "Odpri projekt",
+  "reminderSnooze": "Odloži opomnik",
+  "reminderSnooze15Minutes": "Čez 15 minut",
+  "reminderSnooze1Hour": "Čez eno uro",
+  "reminderSnoozeTomorrow": "Jutri ob tej uri",
+  "reminderSnoozeChooseTime": "Izberi datum in čas",
+  "reminderSnoozeSaved": "Opomnik je odložen.",
+  "reminderSnoozeFutureRequired": "Izberi čas v prihodnosti.",
+  "reminderSnoozeNeedsConnection": "Za odložitev skupnega opomnika se poveži s strežnikom.",
+  "reminderSnoozedUntil": "Odloženo do {until}",
+  "@reminderSnoozedUntil": {
+    "placeholders": {
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceTask": "Povezano opravilo: {title}",
+  "@financeSourceTask": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceProject": "Projekt: {title}",
+  "@financeSourceProject": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceUnlinked": "Brez povezave z opravilom",
+  "financeSourceUnavailable": "Povezano opravilo ni več na voljo.",
+  "financeAccountUnavailable": "Finančni račun ni več na voljo.",
+  "financeNoFilterResults": "Za izbrani račun ni vnosov.",
+  "reminderSnoozeDeviceOnly": "Odložitev velja na tej napravi. Rok opravila ali plačila ostane enak.",
+  "guideMenuTitle": "Meni in nastavitve"
 }

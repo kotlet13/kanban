@@ -17,6 +17,7 @@ import '../organizer_widgets.dart';
 import '../shared/collaboration_actions.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
+import 'reminder_snooze.dart';
 
 Future<bool> showNotificationTarget(
   BuildContext context,
@@ -262,6 +263,16 @@ class NotificationTargetContent extends ConsumerWidget {
                             ? l.organizerCompleted
                             : l.organizerTasks,
                       ),
+                      if (!task.isCompleted)
+                        ReminderSnoozeButton(
+                          target: NotificationTarget(
+                            serverUrl: target.serverUrl,
+                            serverId: target.serverId,
+                            accountId: target.accountId,
+                            scopeId: target.scopeId,
+                            records: [record],
+                          ),
+                        ),
                       if (!personalPresentation &&
                           task.createdByAccountId != null)
                         Text(
@@ -395,6 +406,7 @@ class NotificationTargetContent extends ConsumerWidget {
                             await showFinanceOccurrenceConfirmation(
                               context,
                               entry: entry,
+                              sourceWorkspaceKey: personal.workspaceKey,
                               initialPaidAt: ref.read(organizerClockProvider)(),
                               wrap: (child) =>
                                   guard.wrap(financial?.wrap(child) ?? child),
@@ -483,6 +495,7 @@ class NotificationTargetContent extends ConsumerWidget {
                               kind: entry.kind,
                               occurredAt: entry.occurredAt,
                               projectId: null,
+                              taskId: entry.taskId,
                               notes: entry.notes,
                               createdAt: entry.createdAt,
                               updatedAt: entry.updatedAt,
@@ -490,6 +503,8 @@ class NotificationTargetContent extends ConsumerWidget {
                             await showFinanceOccurrenceConfirmation(
                               context,
                               entry: local,
+                              sourceScopeId: scope.id,
+                              sourcePartition: state.session!.partition,
                               wrap: guard.wrap,
                               onConfirm: (amount, date) => guard.controller
                                   .confirmFinanceOccurrenceForScope(
@@ -580,6 +595,7 @@ Future<bool> _openFinanceConfirmation(
     await showFinanceOccurrenceConfirmation(
       context,
       entry: entry,
+      sourceWorkspaceKey: personal.workspaceKey,
       initialPaidAt: ref.read(organizerClockProvider)(),
       wrap: (child) => guard.wrap(financial?.wrap(child) ?? child),
       isCurrent: () => guard.isCurrent && (financial?.isCurrent ?? true),
@@ -618,6 +634,7 @@ Future<bool> _openFinanceConfirmation(
     kind: entry.kind,
     occurredAt: entry.occurredAt,
     projectId: null,
+    taskId: entry.taskId,
     notes: entry.notes,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
@@ -625,6 +642,8 @@ Future<bool> _openFinanceConfirmation(
   await showFinanceOccurrenceConfirmation(
     context,
     entry: local,
+    sourceScopeId: scope.id,
+    sourcePartition: state.session!.partition,
     initialPaidAt: ref.read(organizerClockProvider)(),
     wrap: guard.wrap,
     isCurrent: () => guard.isCurrent,

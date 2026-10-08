@@ -328,48 +328,105 @@ class OrganizerActions implements OrganizerCollectionActions {
             : () => controller.deleteShoppingItem(item.id),
       );
 
-  Future<void> finance([FinanceEntry? entry]) => showOrganizerEditor(
-    context,
-    heading: entry == null
-        ? context.l10n.organizerAddFinance
-        : context.l10n.organizerEditFinance,
-    wrap: _guard.wrap,
-    kind: OrganizerEditorKind.finance,
-    projects: snapshot.projects,
-    draft: OrganizerDraft(
-      title: entry?.title ?? '',
-      notes: entry?.notes ?? '',
-      projectId: entry?.projectId,
-      date: entry?.occurredAt ?? DateTime.now(),
-      amount: entry == null ? '' : formatMoneyMinor(entry.amountMinor),
-      kind: entry?.kind ?? FinanceEntryKind.expense,
-      financeIdentityLocked: entry?.recurrenceRuleId != null,
-      currency: entry?.currency ?? 'EUR',
-    ),
-    onSave: (d) => entry == null
-        ? controller.createFinanceEntry(
-            title: d.title,
-            amountMinor: parseMoneyMinor(d.amount),
-            kind: d.kind,
-            occurredAt: d.date!,
-            currency: d.currency,
-            notes: d.notes,
-            projectId: d.projectId,
+  Future<void> finance([FinanceEntry? entry]) async {
+    final localIds = await controller.deviceLocalRecordIds();
+    if (!context.mounted || !_guard.isCurrent) return;
+    final isLocal = entry == null
+        ? snapshot.workspaceKey == 'local'
+        : localIds.contains(entry.id);
+    final shared = ref.read(collaborationProvider).valueOrNull;
+    final financial =
+        entry != null && !isLocal && shared?.privateSync.scopeId != null
+        ? FinanceAccessGuard(
+            context,
+            ref,
+            shared!.privateSync.scopeId!,
+            write: true,
           )
-        : controller.updateFinanceEntry(
-            entry.copyWith(
-              title: d.title,
-              amountMinor: parseMoneyMinor(d.amount),
-              kind: d.kind,
-              occurredAt: d.date!,
-              paidAt: entry.paidAt == null ? null : d.date!,
-              currency: d.currency,
-              notes: d.notes,
-              projectId: d.projectId,
-            ),
-          ),
-    onDelete: entry == null || entry.recurrenceRuleId != null
-        ? null
-        : () => controller.deleteFinanceEntry(entry.id),
-  );
+        : null;
+    if (financial?.isCurrent == false) return;
+    final locked = entry?.taskId != null || entry?.recurrenceRuleId != null;
+    await showOrganizerEditor(
+      context,
+      heading: entry == null
+          ? context.l10n.organizerAddFinance
+          : context.l10n.organizerEditFinance,
+      wrap: (child) => _guard.wrap(financial?.wrap(child) ?? child),
+      kind: OrganizerEditorKind.finance,
+      projects: snapshot.projects
+          .where((p) => entry == null || localIds.contains(p.id) == isLocal)
+          .toList(),
+      projectSelectionEnabled: !locked,
+      financeAccounts: snapshot.financeAccounts,
+      localRecordIds: localIds,
+      recordId: entry?.id,
+      defaultLocalOwnership: isLocal,
+      draft: OrganizerDraft(
+        title: entry?.title ?? '',
+        notes: entry?.notes ?? '',
+        projectId: entry?.projectId,
+        ledgerAccountId: entry?.ledgerAccountId,
+        date: entry?.occurredAt ?? DateTime.now(),
+        amount: entry == null ? '' : formatMoneyMinor(entry.amountMinor),
+        kind: entry?.kind ?? FinanceEntryKind.expense,
+        financeIdentityLocked: locked,
+        currency: entry?.currency ?? 'EUR',
+      ),
+      onSave: (d) {
+        if (!_guard.isCurrent || financial?.isCurrent == false) {
+          throw const CollaborationException('finance_forbidden');
+        }
+        final privateDestination =
+            entry == null &&
+            snapshot.workspaceKey != 'local' &&
+            ![
+              d.ledgerAccountId,
+              d.projectId,
+            ].whereType<String>().any(localIds.contains);
+        if (privateDestination) {
+          final scope = ref
+              .read(collaborationProvider)
+              .valueOrNull
+              ?.privateSync
+              .scopeId;
+          if (scope == null ||
+              !FinanceAccessGuard(context, ref, scope, write: true).isCurrent) {
+            throw const CollaborationException('finance_forbidden');
+          }
+        }
+        return entry == null
+            ? controller.createFinanceEntry(
+                title: d.title,
+                amountMinor: parseMoneyMinor(d.amount),
+                kind: d.kind,
+                occurredAt: d.date!,
+                currency: d.currency,
+                notes: d.notes,
+                projectId: d.projectId,
+                ledgerAccountId: d.ledgerAccountId,
+                expectedWorkspaceKey: snapshot.workspaceKey,
+              )
+            : controller.updateFinanceEntry(
+                entry.copyWith(
+                  title: d.title,
+                  amountMinor: parseMoneyMinor(d.amount),
+                  kind: d.kind,
+                  occurredAt: d.date!,
+                  paidAt: entry.paidAt == null ? null : d.date!,
+                  currency: d.currency,
+                  notes: d.notes,
+                  projectId: d.projectId,
+                  ledgerAccountId: d.ledgerAccountId,
+                ),
+                expectedWorkspaceKey: snapshot.workspaceKey,
+              );
+      },
+      onDelete:
+          entry == null ||
+              entry.taskId != null ||
+              entry.recurrenceRuleId != null
+          ? null
+          : () => controller.deleteFinanceEntry(entry.id),
+    );
+  }
 }

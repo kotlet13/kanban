@@ -111,8 +111,21 @@ List<ReminderPlan> desiredReminderPlans({
   final plans = <ReminderPlan>[
     ...desiredFinanceReminderPlans(personal: personal, shared: shared),
   ];
+  final session = shared.session;
+  final matchingWorkspace =
+      personal.workspaceKey == 'local' ||
+      (session != null &&
+          !shared.sessionInvalid &&
+          personal.workspaceKey == 'private:${session.partition}');
+  // Private records are projected once by their server scope below. Their
+  // presentation IDs can differ from remote IDs after an import collision.
+  final privateIds = shared.privateRecordIds.values.toSet();
   for (final t in personal.tasks.where(
-    (t) => !t.isCompleted && t.dueAt != null,
+    (t) =>
+        matchingWorkspace &&
+        !privateIds.contains(t.id) &&
+        !t.isCompleted &&
+        t.dueAt != null,
   )) {
     plans.add(
       ReminderPlan(
@@ -125,7 +138,9 @@ List<ReminderPlan> desiredReminderPlans({
       ),
     );
   }
-  for (final e in personal.events) {
+  for (final e in personal.events.where(
+    (e) => matchingWorkspace && !privateIds.contains(e.id),
+  )) {
     plans.add(
       ReminderPlan(
         stableKey: 'personal:event:${e.id}:start',
@@ -137,8 +152,7 @@ List<ReminderPlan> desiredReminderPlans({
       ),
     );
   }
-  final session = shared.session;
-  if (session == null) return List.unmodifiable(plans);
+  if (session == null || shared.sessionInvalid) return List.unmodifiable(plans);
   for (final scope in shared.scopes.where((s) => !s.revoked && !s.archived)) {
     final prefs = shared.notificationPreferences[scope.id];
     final data = shared.dataForScope(scope.id);

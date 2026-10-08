@@ -91,6 +91,7 @@ Future<void> confirmPersonalFinanceEntry(
     context,
     entry: entry,
     initialPaidAt: ref.read(organizerClockProvider)(),
+    sourceWorkspaceKey: snapshot.workspaceKey,
     wrap: (child) => guard.wrap(financial?.wrap(child) ?? child),
     isCurrent: isCurrent,
     onConfirm: (amount, date) async {

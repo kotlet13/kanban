@@ -427,7 +427,21 @@ class OrganizerRepository {
     String currency = 'EUR',
     String notes = '',
     String? projectId,
+    String? ledgerAccountId,
+    String? expectedWorkspaceKey,
   }) => _change((s) {
+    if (expectedWorkspaceKey != null) {
+      _checkFinanceWorkspace(s, expectedWorkspaceKey);
+    }
+    if (ledgerAccountId != null &&
+        !s.financeAccounts.any(
+          (a) =>
+              a.id == ledgerAccountId &&
+              !a.archived &&
+              a.currency == currency.trim().toUpperCase(),
+        )) {
+      throw const FormatException('Invalid active finance account');
+    }
     final now = _now();
     return s.copyWith(
       financeEntries: [
@@ -441,6 +455,7 @@ class OrganizerRepository {
           currency: currency.trim().toUpperCase(),
           notes: notes,
           projectId: projectId,
+          ledgerAccountId: ledgerAccountId,
           createdAt: now,
           updatedAt: now,
         ),
@@ -448,13 +463,38 @@ class OrganizerRepository {
     );
   });
 
-  Future<void> updateFinanceEntry(FinanceEntry record) => _change((s) {
+  Future<void> updateFinanceEntry(
+    FinanceEntry record, {
+    String? expectedWorkspaceKey,
+  }) => _change((s) {
+    if (expectedWorkspaceKey != null) {
+      _checkFinanceWorkspace(s, expectedWorkspaceKey);
+    }
     final current = _find(s.financeEntries, record.id, (v) => v.id);
     if (current.revision != record.revision ||
         current.createdAt != record.createdAt) {
       throw const OrganizerConflictException(
         'This record changed; reload before editing',
       );
+    }
+    if (record.ledgerAccountId != current.ledgerAccountId &&
+        record.ledgerAccountId != null &&
+        !s.financeAccounts.any(
+          (a) =>
+              a.id == record.ledgerAccountId &&
+              !a.archived &&
+              a.currency == record.currency,
+        )) {
+      throw const FormatException('Invalid active finance account');
+    }
+    if (record.taskId != current.taskId ||
+        record.recurrenceRuleId != current.recurrenceRuleId ||
+        record.occurrenceKey != current.occurrenceKey ||
+        ((current.taskId != null || current.recurrenceRuleId != null) &&
+            (record.ledgerAccountId != current.ledgerAccountId ||
+                record.currency != current.currency ||
+                record.kind != current.kind))) {
+      throw const FormatException('Linked financial identity is immutable');
     }
     if (current.recurrenceRuleId != null &&
         (record.currency != current.currency || record.kind != current.kind)) {

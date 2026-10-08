@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'package:drift/native.dart';
+import 'package:kanban/organizer/data/collaboration_database.dart';
+import 'package:kanban/organizer/state/local_database_provider.dart';
+import 'package:kanban/organizer/state/reminder_snooze_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kanban/l10n/app_localizations.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
+import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/platform/notification_coordinator.dart';
 import 'package:kanban/organizer/platform/notification_providers.dart';
@@ -13,6 +18,12 @@ import 'package:kanban/organizer/presentation/planning/device_reminder_settings.
 import '../ui/organizer_ui_test.dart' as personal;
 import '../ui/sharing_ui_fixture.dart';
 import 'local_notification_adapter_test.dart' as fake;
+
+class BrokenOrganizer extends OrganizerController {
+  @override
+  Future<OrganizerSnapshot> build() async =>
+      throw StateError('personal SQLite read failed');
+}
 
 class DelayedShared extends SharingUiController {
   DelayedShared(this.gate) : super(initial: CollaborationState());
@@ -24,15 +35,23 @@ class DelayedShared extends SharingUiController {
   }
 }
 
-Widget host(List<Override> overrides, Widget child) => ProviderScope(
-  overrides: overrides,
-  child: MaterialApp(
-    locale: const Locale('sl'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: LocalNotificationCoordinator(child: Scaffold(body: child)),
-  ),
-);
+Widget host(List<Override> overrides, Widget child) {
+  final database = CollaborationDatabase(NativeDatabase.memory());
+  addTearDown(database.close);
+  return ProviderScope(
+    overrides: [
+      localDatabaseProvider.overrideWith((ref) async => database),
+      ...overrides,
+    ],
+    child: MaterialApp(
+      locale: const Locale('sl'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: LocalNotificationCoordinator(child: Scaffold(body: child)),
+    ),
+  );
+}
+
 void main() {
   testWidgets(
     'shared initialization loading retains existing scheduled alarms until identity resolves',
@@ -175,6 +194,87 @@ void main() {
         scheduler.scheduled.values.single.plan.target.accountId,
         b.accountId,
       );
+    },
+  );
+  testWidgets(
+    'snooze storage failure cancels old alarms after logout and reports the error',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final scheduler = fake.FakeScheduler();
+      final adapter = LocalNotificationAdapter(
+        scheduler: scheduler,
+        preferences: await SharedPreferences.getInstance(),
+      );
+      await adapter.initialize((_) {});
+      await adapter.reconcile([
+        fake.request(1, DateTime.now().add(const Duration(hours: 1))),
+      ]);
+      expect(scheduler.pending, hasLength(1));
+      final controller = SharingUiController();
+      final gate = Completer<List<ReminderPlan>>();
+      await tester.pumpWidget(
+        host([
+          organizerStorageProvider.overrideWithValue(
+            () async => personal.MemoryOrganizerStorage(),
+          ),
+          collaborationProvider.overrideWith(() => controller),
+          localNotificationAdapterProvider.overrideWith((ref) async => adapter),
+          effectiveReminderPlansProvider.overrideWith((ref) => gate.future),
+        ], const Text('ready')),
+      );
+      await tester.pump();
+      controller.replace(CollaborationState());
+      await tester.pump();
+      gate.completeError(StateError('injected snooze read failure'));
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, isEmpty);
+      expect(scheduler.canceled, isNotEmpty);
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('ready')),
+      );
+      expect(
+        container.read(localNotificationDeviceStatusProvider).error,
+        isA<StateError>(),
+      );
+      expect(scheduler.scheduleCalls, 1);
+    },
+  );
+  testWidgets(
+    'personal SQLite load error cancels existing alarms instead of returning early',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final scheduler = fake.FakeScheduler();
+      final adapter = LocalNotificationAdapter(
+        scheduler: scheduler,
+        preferences: await SharedPreferences.getInstance(),
+      );
+      await adapter.initialize((_) {});
+      await adapter.reconcile([
+        fake.request(1, DateTime.now().add(const Duration(hours: 1))),
+      ]);
+      await tester.pumpWidget(
+        host([
+          organizerProvider.overrideWith(BrokenOrganizer.new),
+          collaborationProvider.overrideWith(
+            () => SharingUiController(initial: CollaborationState()),
+          ),
+          localNotificationAdapterProvider.overrideWith((ref) async => adapter),
+        ], const Text('ready')),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, isEmpty);
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('ready')),
+      );
+      expect(
+        container.read(localNotificationDeviceStatusProvider).error,
+        isA<StateError>(),
+      );
+      expect(scheduler.scheduleCalls, 1);
     },
   );
 }

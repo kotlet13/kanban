@@ -3,6 +3,7 @@ import '../../../l10n/l10n.dart';
 import '../../domain/organizer_models.dart';
 import 'task_timer_panel.dart';
 import 'project_calendar.dart';
+import 'project_capacity_panel.dart';
 
 class ProjectPlanningSummary extends StatelessWidget {
   const ProjectPlanningSummary({
@@ -46,6 +47,7 @@ class ProjectPlanningSummary extends StatelessWidget {
               '${l.planningAvailabilityMinutes}: ${project.availabilityMinutes} · ${project.availabilityPeriod == AvailabilityPeriod.day ? l.planningPerDay : l.planningPerWeek}',
             ),
           ),
+        ProjectCapacityPanel(project: project, tasks: projectTasks),
         if (project.phases.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text(
@@ -80,6 +82,11 @@ class ProjectPlanningSummary extends StatelessWidget {
                       ),
                       for (final task in phaseTasks)
                         _taskRow(context, task, 'phase-${phase.id}'),
+                      ProjectCapacityPanel(
+                        project: project,
+                        tasks: phaseTasks,
+                        phaseId: phase.id,
+                      ),
                       if (phaseTasks.isNotEmpty)
                         LinearProgressIndicator(
                           value: done / phaseTasks.length,

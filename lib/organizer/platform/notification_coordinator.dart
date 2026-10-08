@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
-import '../domain/organizer_projections.dart';
 import '../state/collaboration_provider.dart';
 import '../state/organizer_provider.dart';
+import '../state/reminder_snooze_provider.dart';
 import 'local_notification_scheduler.dart';
 import 'notification_providers.dart';
 
@@ -35,6 +35,25 @@ class _LocalNotificationCoordinatorState
     WidgetsBinding.instance.addObserver(this);
     _timer = Timer.periodic(const Duration(minutes: 1), (_) => _reconcile());
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  Future<void> _storageFailure(
+    Object error,
+    StackTrace stack,
+    int generation,
+  ) async {
+    if (!mounted || generation != _generation) return;
+    try {
+      final adapter = await ref.read(localNotificationAdapterProvider.future);
+      if (mounted && generation == _generation) await adapter.cancelAll();
+    } catch (_) {
+      // The original storage failure remains visible even if OS cancellation
+      // cannot be confirmed.
+    }
+    if (mounted && generation == _generation) {
+      ref.read(localNotificationDeviceStatusProvider.notifier).state =
+          AsyncError(error, stack);
+    }
   }
 
   @override
@@ -73,12 +92,29 @@ class _LocalNotificationCoordinatorState
     final sharedState = ref.read(collaborationProvider);
     // Wait for the cached SQLite identity before removing shared alarms.
     if (sharedState.isLoading) return;
-    final personal = ref.read(organizerProvider).valueOrNull;
+    final personalState = ref.read(organizerProvider);
+    final personal = personalState.valueOrNull;
     final shared = sharedState.valueOrNull;
     final identity =
         '${shared?.session?.partition}:${shared?.session?.deviceId}';
-    final settings = ref.read(localReminderSettingsProvider).valueOrNull;
-    if (settings == null || personal == null) return;
+    final settingsState = ref.read(localReminderSettingsProvider);
+    final settings = settingsState.valueOrNull;
+    if (settings == null || personal == null) {
+      if (personalState.hasError && !personalState.isLoading) {
+        await _storageFailure(
+          personalState.error!,
+          personalState.stackTrace ?? StackTrace.current,
+          generation,
+        );
+      } else if (settingsState.hasError && !settingsState.isLoading) {
+        await _storageFailure(
+          settingsState.error!,
+          settingsState.stackTrace ?? StackTrace.current,
+          generation,
+        );
+      }
+      return;
+    }
     final clock = ref.read(organizerClockProvider)().toLocal();
     final financeKey = '${personal.workspaceKey}:${clock.year}-${clock.month}';
     final privateScope = shared?.privateSync.scopeId;
@@ -124,10 +160,14 @@ class _LocalNotificationCoordinatorState
       return _reconcile();
     }
     final l = context.l10n;
-    final plans = desiredReminderPlans(
-      personal: personal,
-      shared: shared ?? CollaborationState(),
-    );
+    List<ReminderPlan> plans;
+    try {
+      plans = await ref.read(effectiveReminderPlansProvider.future);
+    } catch (error, stack) {
+      await _storageFailure(error, stack, generation);
+      return;
+    }
+    if (!mounted || generation != _generation) return;
     final requests = settings.enabled
         ? [
             for (final plan in plans)
@@ -183,6 +223,9 @@ class _LocalNotificationCoordinatorState
     });
     ref.listen(organizerProvider, (_, _) => _reconcile());
     ref.listen(collaborationProvider, (_, _) => _reconcile());
+    ref.listen(effectiveReminderPlansProvider, (_, next) {
+      if (next.hasValue) _reconcile();
+    });
     ref.listen(
       localReminderSettingsProvider,
       (_, _) => _ready ? _reconcile() : _start(),

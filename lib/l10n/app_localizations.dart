@@ -6333,7 +6333,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupCompleteness.
   ///
   /// In en, this message translates to:
-  /// **'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded.'**
+  /// **'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.'**
   String get backupCompleteness;
 
   /// No description provided for @backupTooLarge.
@@ -6447,7 +6447,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'More contains finances, home, garden, account and settings. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.'**
+  /// **'On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.'**
   String get guideMoreBody;
 
   /// No description provided for @guideSkip.
@@ -7097,6 +7097,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dated entries through {date}, showing the closing total for each day.'**
   String financePlanForecastPeriod(String date);
+
+  /// No description provided for @organizerMenuOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open menu'**
+  String get organizerMenuOpen;
+
+  /// No description provided for @organizerMenuClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close menu'**
+  String get organizerMenuClose;
+
+  /// No description provided for @planningCapacityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate duration'**
+  String get planningCapacityTitle;
+
+  /// No description provided for @planningCapacityRule.
+  ///
+  /// In en, this message translates to:
+  /// **'We use remaining estimated work and assume tasks are done in sequence. A task uses its own availability, otherwise the project’s; tasks share project capacity. Weekly capacity is averaged over seven days. This is an approximate amount of time, not a promised date; weekends and actual working days are not scheduled.'**
+  String get planningCapacityRule;
+
+  /// No description provided for @planningCapacityDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate duration in days: {days}'**
+  String planningCapacityDuration(String days);
+
+  /// No description provided for @planningCapacityMissingEstimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Open tasks without an effort estimate: {count}.'**
+  String planningCapacityMissingEstimates(int count);
+
+  /// No description provided for @planningCapacityMissingAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'Open tasks without daily or weekly availability: {count}.'**
+  String planningCapacityMissingAvailability(int count);
+
+  /// No description provided for @planningCapacityNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks to estimate duration.'**
+  String get planningCapacityNoTasks;
+
+  /// No description provided for @planningCapacityComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'All tasks are complete.'**
+  String get planningCapacityComplete;
+
+  /// No description provided for @organizationProjectPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization: {name}'**
+  String organizationProjectPreview(String name);
+
+  /// No description provided for @organizationProjectInitialVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Initially only the creator can access this project. Other organization members and external collaborators gain access only through an explicit project invitation.'**
+  String get organizationProjectInitialVisibility;
+
+  /// No description provided for @organizationProjectCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Project created. You can now invite collaborators or open the project.'**
+  String get organizationProjectCreated;
+
+  /// No description provided for @organizationProjectOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open project'**
+  String get organizationProjectOpen;
+
+  /// No description provided for @reminderSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze reminder'**
+  String get reminderSnooze;
+
+  /// No description provided for @reminderSnooze15Minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'In 15 minutes'**
+  String get reminderSnooze15Minutes;
+
+  /// No description provided for @reminderSnooze1Hour.
+  ///
+  /// In en, this message translates to:
+  /// **'In one hour'**
+  String get reminderSnooze1Hour;
+
+  /// No description provided for @reminderSnoozeTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow at this time'**
+  String get reminderSnoozeTomorrow;
+
+  /// No description provided for @reminderSnoozeChooseTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose date and time'**
+  String get reminderSnoozeChooseTime;
+
+  /// No description provided for @reminderSnoozeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder snoozed.'**
+  String get reminderSnoozeSaved;
+
+  /// No description provided for @reminderSnoozeFutureRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future time.'**
+  String get reminderSnoozeFutureRequired;
+
+  /// No description provided for @reminderSnoozeNeedsConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the server to snooze a shared reminder.'**
+  String get reminderSnoozeNeedsConnection;
+
+  /// No description provided for @reminderSnoozedUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed until {until}'**
+  String reminderSnoozedUntil(String until);
+
+  /// No description provided for @financeSourceTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked task: {title}'**
+  String financeSourceTask(String title);
+
+  /// No description provided for @financeSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: {title}'**
+  String financeSourceProject(String title);
+
+  /// No description provided for @financeSourceUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'No linked task'**
+  String get financeSourceUnlinked;
+
+  /// No description provided for @financeSourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The linked task is no longer available.'**
+  String get financeSourceUnavailable;
+
+  /// No description provided for @financeAccountUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The financial account is no longer available.'**
+  String get financeAccountUnavailable;
+
+  /// No description provided for @financeNoFilterResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries for the selected account.'**
+  String get financeNoFilterResults;
+
+  /// No description provided for @reminderSnoozeDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozing applies on this device. The task or payment due date stays the same.'**
+  String get reminderSnoozeDeviceOnly;
+
+  /// No description provided for @guideMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu and settings'**
+  String get guideMenuTitle;
 }
 
 class _AppLocalizationsDelegate

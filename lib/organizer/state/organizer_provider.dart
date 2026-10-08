@@ -317,6 +317,8 @@ class OrganizerController extends AsyncNotifier<OrganizerSnapshot> {
     String currency = 'EUR',
     String notes = '',
     String? projectId,
+    String? ledgerAccountId,
+    String? expectedWorkspaceKey,
   }) => _repo.createFinanceEntry(
     title: title,
     amountMinor: amountMinor,
@@ -325,9 +327,16 @@ class OrganizerController extends AsyncNotifier<OrganizerSnapshot> {
     currency: currency,
     notes: notes,
     projectId: projectId,
+    ledgerAccountId: ledgerAccountId,
+    expectedWorkspaceKey: expectedWorkspaceKey,
   );
-  Future<void> updateFinanceEntry(FinanceEntry record) =>
-      _repo.updateFinanceEntry(record);
+  Future<void> updateFinanceEntry(
+    FinanceEntry record, {
+    String? expectedWorkspaceKey,
+  }) => _repo.updateFinanceEntry(
+    record,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
   Future<void> deleteFinanceEntry(String id) => _repo.deleteFinanceEntry(id);
 
   Future<void> setTaskCompleted(String id, bool completed) =>

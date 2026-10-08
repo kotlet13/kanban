@@ -31,6 +31,7 @@ import 'onboarding/getting_started.dart';
 import '../platform/invitation_links/invitation_link.dart';
 import '../platform/invitation_links/invitation_link_providers.dart';
 import 'shared/sharing_accept.dart';
+import 'navigation/organizer_mobile_menu.dart';
 
 enum _Area {
   today,
@@ -443,6 +444,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final desktop = constraints.maxWidth >= 900;
+        final phone = constraints.maxWidth < 600;
         final scheme = Theme.of(context).colorScheme;
         final body = data.when(
           data: (snapshot) {
@@ -494,9 +496,54 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           ),
         );
         return Scaffold(
+          drawer: phone
+              ? OrganizerMobileMenu(
+                  items: [
+                    for (final area in [
+                      _Area.today,
+                      _Area.plans,
+                      _Area.calendar,
+                      _Area.projects,
+                      _Area.shopping,
+                      _Area.finances,
+                      _Area.home,
+                      _Area.garden,
+                      _Area.people,
+                      _Area.inbox,
+                      _Area.sharing,
+                      _Area.settings,
+                    ])
+                      OrganizerMenuItem(
+                        id: area.name,
+                        label: _label(context, area),
+                        icon: _icon(area),
+                        selected: _area == area,
+                        unread: area == _Area.inbox && hasUnread,
+                        onSelected: () => _navigate(area),
+                      ),
+                    OrganizerMenuItem(
+                      id: 'setup',
+                      label: l.setupOpen,
+                      icon: Icons.waving_hand_outlined,
+                      selected: false,
+                      onSelected: _startSetup,
+                    ),
+                  ],
+                )
+              : null,
           appBar: desktop
               ? null
               : AppBar(
+                  leading: phone
+                      ? Builder(
+                          builder: (context) => IconButton(
+                            key: const ValueKey('organizer-menu-open'),
+                            tooltip: l.organizerMenuOpen,
+                            icon: const Icon(Icons.menu),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                          ),
+                        )
+                      : null,
                   title: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -583,7 +630,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                   )
                 : body,
           ),
-          bottomNavigationBar: desktop
+          bottomNavigationBar: desktop || phone
               ? null
               : NavigationBar(
                   height: 76,

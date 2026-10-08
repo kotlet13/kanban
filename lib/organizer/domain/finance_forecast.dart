@@ -37,13 +37,15 @@ FinanceForecast forecastFinance(
   required String currency,
   required DateTime through,
   LocalFinanceAccount? account,
+  bool unassignedOnly = false,
   Iterable<SharedFinanceTransfer> transfers = const [],
 }) {
   final entries = snapshot.financeEntries
       .where(
         (e) =>
             e.currency == currency &&
-            (account == null || e.ledgerAccountId == account.id),
+            (account == null || e.ledgerAccountId == account.id) &&
+            (!unassignedOnly || e.ledgerAccountId == null),
       )
       .toList();
   // A canonical posted occurrence suppresses a stale planned duplicate in any

@@ -63,7 +63,7 @@ class _FirstTimeGuideState extends State<FirstTimeGuide> {
       (Icons.today_outlined, l.organizerToday, l.guideTodayBody),
       (Icons.event_note_outlined, l.organizerPlans, l.guidePlansBody),
       (Icons.shopping_bag_outlined, l.organizerShopping, l.guideShoppingBody),
-      (Icons.more_horiz, l.organizerMore, l.guideMoreBody),
+      (Icons.menu, l.guideMenuTitle, l.guideMoreBody),
     ];
     final page = pages[_step];
     return AlertDialog(

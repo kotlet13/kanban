@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'finance_source_link.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../data/organizer_repository.dart' show newLocalId;
@@ -324,6 +325,9 @@ Future<void> showFinanceOccurrenceConfirmation(
   Widget Function(Widget)? wrap,
   bool Function()? isCurrent,
   DateTime? initialPaidAt,
+  String? sourceWorkspaceKey,
+  String? sourceScopeId,
+  String? sourcePartition,
 }) async {
   final l = context.l10n;
   bool confirmed = false;
@@ -331,6 +335,14 @@ Future<void> showFinanceOccurrenceConfirmation(
     context,
     title: l.financePlanConfirm,
     description: entry.title,
+    leading: sourceWorkspaceKey == null && sourceScopeId == null
+        ? null
+        : FinanceSourceLink(
+            entryId: entry.id,
+            workspaceKey: sourceWorkspaceKey,
+            scopeId: sourceScopeId,
+            partition: sourcePartition,
+          ),
     fields: [
       SharingField(
         id: 'actual-amount',

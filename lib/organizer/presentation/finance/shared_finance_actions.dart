@@ -160,7 +160,8 @@ class SharedFinanceActions {
     }
     final l = context.l10n;
     final guard = FinanceAccessGuard(context, ref, scope.id, write: true);
-    if (entry?.recurrenceRuleId != null ||
+    if (entry?.taskId != null ||
+        entry?.recurrenceRuleId != null ||
         state.financeContractVersion == 2 &&
             entry?.status == SharedFinanceStatus.planned) {
       final source = entry!;
@@ -181,6 +182,8 @@ class SharedFinanceActions {
         return showFinanceOccurrenceConfirmation(
           context,
           entry: local,
+          sourceScopeId: scope.id,
+          sourcePartition: state.session!.partition,
           wrap: guard.wrap,
           isCurrent: () => guard.isCurrent,
           onConfirm: (amount, date) =>

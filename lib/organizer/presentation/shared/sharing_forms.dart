@@ -39,6 +39,7 @@ Future<void> showSharingForm(
   BuildContext context, {
   required String title,
   String? description,
+  Widget? leading,
   required List<SharingField> fields,
   required String submitLabel,
   required Future<void> Function(Map<String, String>) onSubmit,
@@ -53,6 +54,7 @@ Future<void> showSharingForm(
     final form = _SharingFormDialog(
       title: title,
       description: description,
+      leading: leading,
       fields: fields,
       submitLabel: submitLabel,
       onSubmit: onSubmit,
@@ -73,12 +75,14 @@ class _SharingFormDialog extends StatefulWidget {
     required this.onSubmit,
     required this.errorMessage,
     this.description,
+    this.leading,
     this.wrap,
     this.onDelete,
     this.deleteDescription,
   });
   final String title;
   final String? description;
+  final Widget? leading;
   final List<SharingField> fields;
   final String submitLabel;
   final Future<void> Function(Map<String, String>) onSubmit;
@@ -218,6 +222,10 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                   if (widget.description != null) ...[
                     Text(widget.description!),
                     SizedBox(height: compact ? 12 : 20),
+                  ],
+                  if (widget.leading != null) ...[
+                    widget.leading!,
+                    const SizedBox(height: 16),
                   ],
                   for (final field in widget.fields)
                     Padding(

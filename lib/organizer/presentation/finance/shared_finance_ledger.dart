@@ -6,11 +6,14 @@ import '../../domain/shared_finance_models.dart';
 import '../organizer_widgets.dart';
 import '../planning/task_plan_fields.dart';
 import 'finance_money.dart';
+import 'finance_source_link.dart';
 
 class SharedFinanceLedger extends StatefulWidget {
   const SharedFinanceLedger({
     super.key,
     required this.scopeName,
+    this.scopeId,
+    this.partition,
     required this.accounts,
     required this.entries,
     required this.transfers,
@@ -22,6 +25,7 @@ class SharedFinanceLedger extends StatefulWidget {
     required this.onAudit,
   });
   final String scopeName;
+  final String? scopeId, partition;
   final List<SharedFinanceAccount> accounts;
   final List<SharedFinanceEntry> entries;
   final List<SharedFinanceTransfer> transfers;
@@ -366,6 +370,13 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               ),
             ],
           ),
+          if (row case SharedFinanceEntry e)
+            if (widget.scopeId != null)
+              FinanceSourceLink(
+                entryId: e.id,
+                scopeId: widget.scopeId,
+                partition: widget.partition,
+              ),
           Text(_amount(row), style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text('${organizerDate(context, _date(row))} · ${_typeStatus(row)}'),
@@ -388,6 +399,8 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
   Widget _table(List<Object> rows) => SingleChildScrollView(
     scrollDirection: Axis.horizontal,
     child: DataTable(
+      dataRowMinHeight: 72,
+      dataRowMaxHeight: 140,
       columns: [
         for (final label in [
           context.l10n.financeDate,
@@ -398,6 +411,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           context.l10n.financePayerRecipient,
           context.l10n.financeEnteredBy,
           context.l10n.financeAudit,
+          context.l10n.organizerTasks,
         ])
           DataColumn(label: Text(label)),
       ],
@@ -428,6 +442,15 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                   onPressed: () => widget.onAudit(_id(row)),
                   icon: const Icon(Icons.history, size: 18),
                 ),
+              ),
+              DataCell(
+                row is SharedFinanceEntry && widget.scopeId != null
+                    ? FinanceSourceLink(
+                        entryId: row.id,
+                        scopeId: widget.scopeId,
+                        partition: widget.partition,
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
           ),

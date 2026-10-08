@@ -16,7 +16,7 @@ class OrganizationWorkspace extends ConsumerWidget {
   });
   final SharedScope organization;
   final ValueChanged<String> onProject;
-  final VoidCallback onMembers;
+  final ValueChanged<String> onMembers;
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final l = context.l10n, guard = SharingSessionGuard(context, ref);
     String? id, submittedName;
@@ -24,6 +24,8 @@ class OrganizationWorkspace extends ConsumerWidget {
     await showSharingForm(
       context,
       title: l.organizationCreateProject,
+      description:
+          '${l.organizationProjectPreview(organization.name)}\n\n${l.organizationProjectInitialVisibility}',
       fields: [SharingField(id: 'name', label: l.organizerTitle)],
       submitLabel: l.organizationCreateProject,
       errorMessage: (error) => sharingErrorMessage(context, error),
@@ -45,7 +47,37 @@ class OrganizationWorkspace extends ConsumerWidget {
         await guard.controller.syncNow();
       },
     );
-    if (context.mounted && guard.isCurrent && id != null) onProject(id!);
+    if (!context.mounted || !guard.isCurrent || id == null) return;
+    final createdId = id!;
+    final openMembers = await showDialog<bool>(
+      context: context,
+      builder: (context) => SharingSessionBoundary(
+        guard: guard,
+        child: AlertDialog(
+          scrollable: true,
+          title: Text(l.organizationProjectCreated),
+          content: Text(l.organizationProjectInitialVisibility),
+          actions: [
+            TextButton(
+              key: const ValueKey('organization-created-open'),
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l.organizationProjectOpen),
+            ),
+            FilledButton(
+              key: const ValueKey('organization-created-members'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l.sharingMembers),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || !guard.isCurrent) return;
+    if (openMembers == true) {
+      onMembers(createdId);
+    } else if (openMembers == false) {
+      onProject(createdId);
+    }
   }
 
   @override
@@ -74,7 +106,7 @@ class OrganizationWorkspace extends ConsumerWidget {
           spacing: 12,
           children: [
             TextButton.icon(
-              onPressed: onMembers,
+              onPressed: () => onMembers(organization.id),
               icon: const Icon(Icons.group_outlined),
               label: Text(l.sharingMembers),
             ),

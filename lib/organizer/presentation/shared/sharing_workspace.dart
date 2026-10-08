@@ -126,7 +126,7 @@ class SharingWorkspace extends ConsumerWidget {
               return OrganizationWorkspace(
                 organization: scope,
                 onProject: onScopeSelected,
-                onMembers: () => onMembers?.call(scope.id),
+                onMembers: (id) => onMembers?.call(id),
               );
             }
             final data = state.dataForScope(scope.id);

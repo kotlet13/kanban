@@ -12,6 +12,8 @@ import 'notification_target_view.dart';
 import 'finance_inbox_section.dart';
 import '../../domain/finance_reminder_plans.dart';
 import '../../state/finance_inbox_provider.dart';
+import '../../state/reminder_snooze_provider.dart';
+import 'reminder_snooze.dart';
 
 enum _InboxFilter { all, personal, scope }
 
@@ -29,9 +31,16 @@ class OrganizerInboxPage extends ConsumerStatefulWidget {
 class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
   _InboxFilter _filter = _InboxFilter.all;
   bool _busy = false;
-  Future<void> _run(Future<void> Function() action) async {
+  bool _showProgress = true;
+  Future<void> _run(
+    Future<void> Function() action, {
+    bool showProgress = true,
+  }) async {
     if (_busy) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _showProgress = showProgress;
+    });
     try {
       await action();
     } catch (error) {
@@ -76,6 +85,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     required VoidCallback onOpen,
     required VoidCallback? onRead,
     required String audience,
+    VoidCallback? onSnooze,
   }) => Card(
     child: ListTile(
       contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
@@ -90,19 +100,30 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
       ),
       subtitle: Text('$audience · $subtitle'),
       onTap: _busy ? null : onOpen,
-      trailing: IconButton(
-        tooltip: onRead == null
-            ? context.l10n.inboxRead
-            : read
-            ? context.l10n.inboxMarkUnread
-            : context.l10n.inboxMarkRead,
-        onPressed: _busy ? null : onRead,
-        icon: Icon(
-          read
-              ? Icons.mark_email_unread_outlined
-              : Icons.mark_email_read_outlined,
-          size: 20,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (onSnooze != null)
+            IconButton(
+              tooltip: context.l10n.reminderSnooze,
+              onPressed: _busy ? null : onSnooze,
+              icon: const Icon(Icons.snooze_outlined),
+            ),
+          IconButton(
+            tooltip: onRead == null
+                ? context.l10n.inboxRead
+                : read
+                ? context.l10n.inboxMarkUnread
+                : context.l10n.inboxMarkRead,
+            onPressed: _busy ? null : onRead,
+            icon: Icon(
+              read
+                  ? Icons.mark_email_unread_outlined
+                  : Icons.mark_email_read_outlined,
+              size: 20,
+            ),
+          ),
+        ],
       ),
     ),
   );
@@ -113,27 +134,81 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     final sharedAsync = ref.watch(collaborationProvider);
     final shared = sharedAsync.valueOrNull;
     final session = shared?.session;
-    final groups = groupSharedInbox(shared?.inbox ?? const [])
-        .where(
-          (group) =>
-              _filter == _InboxFilter.all ||
-              (_filter == _InboxFilter.personal
-                  ? group.entries.first.audience == InboxAudience.personal
-                  : group.entries.first.audience == InboxAudience.scope),
-        )
-        .toList();
-    final localGroups = <List<LocalReminder>>[];
-    if (_filter != _InboxFilter.scope && personal != null) {
-      for (final read in [false, true]) {
-        final reminders = personal.reminders
-            .where((r) => r.isRead == read)
-            .toList();
-        if (reminders.isNotEmpty) localGroups.add(reminders);
-      }
-    }
     final now =
         ref.watch(financeInboxClockProvider).valueOrNull ??
         ref.read(organizerClockProvider)();
+    final plans = ref.watch(effectiveReminderPlansProvider).valueOrNull;
+    ReminderPlan? planFor(String type, String id, {String? scopeId}) => plans
+        ?.where(
+          (p) =>
+              p.target.scopeId == scopeId &&
+              p.target.records.any((r) => r.type == type && r.recordId == id),
+        )
+        .latestPlan;
+    ReminderPlan? localPlan(LocalReminder reminder) => plans
+        ?.where(
+          (p) => p.target.records.any(
+            (r) =>
+                r.type == 'task' &&
+                (p.target.isPersonal
+                    ? r.recordId == reminder.taskId
+                    : p.target.scopeId == shared?.privateSync.scopeId &&
+                          shared?.personalRecordId(r.recordId) ==
+                              reminder.taskId),
+          ),
+        )
+        .latestPlan;
+    final allGroups = groupSharedInbox(shared?.inbox ?? const []);
+    final seenReminderTargets = <String>{};
+    final groups = <SharedInboxGroup>[];
+    for (final group in allGroups) {
+      final candidates = group.entries.first.kind == 'reminder.due'
+          ? group.entries.map((e) => SharedInboxGroup([e]))
+          : [group];
+      for (final candidate in candidates) {
+        final entry = candidate.entries.first;
+        if (entry.kind == 'reminder.due') {
+          if (personal?.reminders.any(
+                (r) =>
+                    localPlan(r)?.target.scopeId == entry.scopeId &&
+                    localPlan(r)?.target.records.any(
+                          (t) =>
+                              t.type == entry.targetType &&
+                              t.recordId == entry.targetId,
+                        ) ==
+                        true,
+              ) ==
+              true) {
+            continue;
+          }
+          final key = '${entry.scopeId}:${entry.targetType}:${entry.targetId}';
+          if (!seenReminderTargets.add(key)) continue;
+          final plan = planFor(
+            entry.targetType,
+            entry.targetId,
+            scopeId: entry.scopeId,
+          );
+          if (plans == null || plan == null || plan.scheduledAt.isAfter(now)) {
+            continue;
+          }
+        }
+        if (_filter == _InboxFilter.all ||
+            (_filter == _InboxFilter.personal
+                ? entry.audience == InboxAudience.personal
+                : entry.audience == InboxAudience.scope)) {
+          groups.add(candidate);
+        }
+      }
+    }
+    final localGroups = <List<LocalReminder>>[];
+    if (_filter != _InboxFilter.scope && personal != null && plans != null) {
+      for (final reminder in personal.reminders) {
+        final plan = localPlan(reminder);
+        if (plan != null && !plan.scheduledAt.isAfter(now)) {
+          localGroups.add([reminder]);
+        }
+      }
+    }
     final financePlans =
         personal == null || shared == null
               ? <ReminderPlan>[]
@@ -142,6 +217,14 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                       shared: shared,
                       now: now,
                     )
+                    .map(
+                      (p) => plans
+                          ?.where(
+                            (effective) => effective.stableKey == p.stableKey,
+                          )
+                          .firstOrNull,
+                    )
+                    .whereType<ReminderPlan>()
                     .where(
                       (p) =>
                           !p.scheduledAt.isAfter(
@@ -186,7 +269,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
           ],
         ),
         const SizedBox(height: 20),
-        if (_busy) const LinearProgressIndicator(),
+        if (_busy && _showProgress) const LinearProgressIndicator(),
         if (financePlans.isNotEmpty) FinanceInboxSection(plans: financePlans),
         for (final reminders in localGroups)
           _card(
@@ -203,18 +286,15 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                 .join(', '),
             read: reminders.every((r) => r.isRead),
             audience: l.inboxForMe,
+            onSnooze: () => _run(
+              () => snoozeReminder(context, ref, localPlan(reminders.single)!),
+              showProgress: false,
+            ),
             onOpen: () => _run(() async {
               await showNotificationTarget(
                 context,
                 ref,
-                NotificationTarget(
-                  records: reminders.map(
-                    (r) => NotificationRecordTarget(
-                      type: 'task',
-                      recordId: r.taskId,
-                    ),
-                  ),
-                ),
+                localPlan(reminders.single)!.target,
                 onAccount: widget.onAccount,
               );
             }),
@@ -253,6 +333,20 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                   );
                 });
               },
+              onSnooze: group.entries.first.kind != 'reminder.due'
+                  ? null
+                  : () => _run(
+                      () => snoozeReminder(
+                        context,
+                        ref,
+                        planFor(
+                          group.entries.first.targetType,
+                          group.entries.first.targetId,
+                          scopeId: group.entries.first.scopeId,
+                        )!,
+                      ),
+                      showProgress: false,
+                    ),
               onRead: () {
                 final guard = SharingSessionGuard(context, ref);
                 _run(
@@ -274,5 +368,14 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
           Text(l.inboxSharedPreferencesUnavailable),
       ],
     );
+  }
+}
+
+// One selected alarm per target. An undelivered future snooze hides older events.
+extension on Iterable<ReminderPlan> {
+  ReminderPlan? get latestPlan {
+    final values = toList()
+      ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
+    return values.firstOrNull;
   }
 }

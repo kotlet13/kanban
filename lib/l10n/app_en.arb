@@ -1441,7 +1441,7 @@
   "backupLocalOnly": "Device only",
   "backupAccountMatches": "Personal records can be restored locally. Resuming shared work checks the account and permissions again.",
   "backupAccountDifferent": "The backup belongs to another account. Shared work stays protected until you sign in to the matching account.",
-  "backupCompleteness": "The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded.",
+  "backupCompleteness": "The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.",
   "backupTooLarge": "The backup exceeds the 64 MiB limit. Your data was not changed.",
   "backupMergeConflict": "The backup contains different content with an existing ID. Merge was rejected; your data was not changed.",
   "privateSyncLocalPending": "New local records are awaiting your review.",
@@ -1460,7 +1460,7 @@
   "guideTodayBody": "Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.",
   "guidePlansBody": "In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.",
   "guideShoppingBody": "In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.",
-  "guideMoreBody": "More contains finances, home, garden, account and settings. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.",
+  "guideMoreBody": "On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.",
   "guideSkip": "Skip",
   "guideBack": "Back",
   "guideNext": "Next",
@@ -1622,5 +1622,84 @@
         "type": "String"
       }
     }
-  }
+  },
+  "organizerMenuOpen": "Open menu",
+  "organizerMenuClose": "Close menu",
+  "planningCapacityTitle": "Approximate duration",
+  "planningCapacityRule": "We use remaining estimated work and assume tasks are done in sequence. A task uses its own availability, otherwise the project’s; tasks share project capacity. Weekly capacity is averaged over seven days. This is an approximate amount of time, not a promised date; weekends and actual working days are not scheduled.",
+  "planningCapacityDuration": "Approximate duration in days: {days}",
+  "@planningCapacityDuration": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "planningCapacityMissingEstimates": "Open tasks without an effort estimate: {count}.",
+  "@planningCapacityMissingEstimates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planningCapacityMissingAvailability": "Open tasks without daily or weekly availability: {count}.",
+  "@planningCapacityMissingAvailability": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planningCapacityNoTasks": "No tasks to estimate duration.",
+  "planningCapacityComplete": "All tasks are complete.",
+  "organizationProjectPreview": "Organization: {name}",
+  "@organizationProjectPreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "organizationProjectInitialVisibility": "Initially only the creator can access this project. Other organization members and external collaborators gain access only through an explicit project invitation.",
+  "organizationProjectCreated": "Project created. You can now invite collaborators or open the project.",
+  "organizationProjectOpen": "Open project",
+  "reminderSnooze": "Snooze reminder",
+  "reminderSnooze15Minutes": "In 15 minutes",
+  "reminderSnooze1Hour": "In one hour",
+  "reminderSnoozeTomorrow": "Tomorrow at this time",
+  "reminderSnoozeChooseTime": "Choose date and time",
+  "reminderSnoozeSaved": "Reminder snoozed.",
+  "reminderSnoozeFutureRequired": "Choose a future time.",
+  "reminderSnoozeNeedsConnection": "Connect to the server to snooze a shared reminder.",
+  "reminderSnoozedUntil": "Snoozed until {until}",
+  "@reminderSnoozedUntil": {
+    "placeholders": {
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceTask": "Linked task: {title}",
+  "@financeSourceTask": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceProject": "Project: {title}",
+  "@financeSourceProject": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "financeSourceUnlinked": "No linked task",
+  "financeSourceUnavailable": "The linked task is no longer available.",
+  "financeAccountUnavailable": "The financial account is no longer available.",
+  "financeNoFilterResults": "No entries for the selected account.",
+  "reminderSnoozeDeviceOnly": "Snoozing applies on this device. The task or payment due date stays the same.",
+  "guideMenuTitle": "Menu and settings"
 }

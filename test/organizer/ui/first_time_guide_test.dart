@@ -47,6 +47,22 @@ void main() {
               findsOneWidget,
             );
             expect(tester.takeException(), null);
+            if (step == 4) {
+              expect(
+                find.text(
+                  language == 'sl' ? 'Meni in nastavitve' : 'Menu and settings',
+                ),
+                findsOneWidget,
+              );
+              expect(
+                find.textContaining(
+                  language == 'sl'
+                      ? 'Na telefonu odpri levi meni'
+                      : 'On a phone, open the left menu',
+                ),
+                findsOneWidget,
+              );
+            }
             await tester.ensureVisible(
               find.byKey(const ValueKey('guide-next')),
             );

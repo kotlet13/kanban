@@ -135,6 +135,8 @@ class SharedFinanceWorkspace extends ConsumerWidget {
           SharedFinanceLedger(
             key: ValueKey('finance-${state.session!.partition}-${scope.id}'),
             scopeName: scope.name,
+            scopeId: scope.id,
+            partition: state.session!.partition,
             accounts: data.financeAccounts,
             entries: data.financeEntries,
             transfers: data.financeTransfers,

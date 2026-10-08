@@ -48,6 +48,7 @@ class PortableBackupRepository {
     'passwords and verification codes',
     'FCM tokens and opt-in',
     'OS permissions and scheduled delivery IDs',
+    'device_reminder_snoozes',
     'server attachments and complete server database',
     'other signed-out accounts',
   ];

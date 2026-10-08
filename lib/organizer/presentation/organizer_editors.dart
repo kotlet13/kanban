@@ -347,6 +347,8 @@ class _RecordEditorState extends State<_RecordEditor> {
         ? localIds.contains(widget.recordId)
         : draft.projectId != null
         ? localIds.contains(draft.projectId)
+        : widget.kind == OrganizerEditorKind.finance
+        ? null
         : widget.defaultLocalOwnership;
     final allowedPeople = widget.householdPeople
         .where(
@@ -557,6 +559,53 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                 if (finance) ...[
                   SizedBox(height: fieldGap),
+                  DropdownButtonFormField<String>(
+                    key: const ValueKey('personal-finance-account'),
+                    initialValue: draft.ledgerAccountId ?? '',
+                    isExpanded: true,
+                    decoration: InputDecoration(labelText: l.financeAccount),
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(l.taskCostUnassignedAccount),
+                      ),
+                      for (final account in allowedAccounts.where(
+                        (a) => !a.archived || a.id == draft.ledgerAccountId,
+                      ))
+                        DropdownMenuItem(
+                          value: account.id,
+                          child: Text('${account.name} · ${account.currency}'),
+                        ),
+                      if (draft.ledgerAccountId != null &&
+                          !allowedAccounts.any(
+                            (a) => a.id == draft.ledgerAccountId,
+                          ))
+                        DropdownMenuItem(
+                          value: draft.ledgerAccountId!,
+                          child: Text(l.financeAccountUnavailable),
+                        ),
+                    ],
+                    validator: (id) =>
+                        id == null ||
+                            id.isEmpty ||
+                            allowedAccounts.any(
+                              (a) => a.id == id && a.currency == draft.currency,
+                            )
+                        ? null
+                        : l.financeAccountUnavailable,
+                    onChanged: _busy || draft.financeIdentityLocked
+                        ? null
+                        : (id) => setState(() {
+                            draft.ledgerAccountId = id == '' ? null : id;
+                            final account = allowedAccounts
+                                .where((a) => a.id == id)
+                                .firstOrNull;
+                            if (account != null) {
+                              draft.currency = account.currency;
+                            }
+                          }),
+                  ),
+                  SizedBox(height: fieldGap),
                   DropdownButtonFormField<FinanceEntryKind>(
                     isExpanded: true,
                     initialValue: draft.kind,
@@ -577,6 +626,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                   SizedBox(height: fieldGap),
                   TextFormField(
+                    key: const ValueKey('personal-finance-amount'),
                     initialValue: draft.amount,
                     style: fieldStyle,
                     keyboardType: const TextInputType.numberWithOptions(
@@ -596,13 +646,17 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                   SizedBox(height: fieldGap),
                   DropdownButtonFormField<String>(
+                    key: ValueKey('finance-currency-${draft.currency}'),
                     initialValue: draft.currency,
                     isExpanded: true,
                     decoration: InputDecoration(labelText: l.organizerCurrency),
                     items: const ['EUR', 'USD', 'GBP', 'CHF']
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
-                    onChanged: _busy || draft.financeIdentityLocked
+                    onChanged:
+                        _busy ||
+                            draft.financeIdentityLocked ||
+                            draft.ledgerAccountId != null
                         ? null
                         : (v) => draft.currency = v!,
                   ),

@@ -54,3 +54,24 @@ Testno gostovanje je uspešno nadgrajeno na FamilyHub **0.7.0/schema11** po prev
 Android **1.1.0 (3)** je po pregledu in potrditvi aktivno objavljen na obstoječem internem kanalu; konzola kaže »Na voljo notranjim preizkuševalcem« in 8. oktober ob 12:56. Dokaz: `build/qa/jivie-upgrade/play-internal-1.1.0-3-active.jpg`. [Povezava za namestitev](https://play.google.com/apps/internaltest/4701286726300038561). Kratek lastnikov dokument je [OWNER_NEXT_STEPS](release/OWNER_NEXT_STEPS.md). Preostali iOS, ponudniški/pravni in fizični koraki so tam; z novo gradnjo jih ne predstavljamo kot izvedene.
 
 Po objavi je ponovno preverjen izbrani seznam **`domači` s 15 člani**; drugi trije seznami ostanejo neizbrani. Dokaz brez naslovov: `build/qa/jivie-upgrade/play-domaci-15-1.1.0-3.jpg`. Izdajna priprava je commit/push `b99760d`; stari paketi in zasebne kopije ostanejo ohranjeni.
+
+## Dopolnitev po uporabniškem pregledu — preostale vrzeli
+
+Uporabnik je po izdaji 1.1.0 (3) opozoril na izpuščen levi mobilni meni. Ponovni pregled zahtev in kode je našel tudi delne uporabniške tokove; prejšnja skupna oznaka »nadgradnje zaključene« je bila preširoka. **8. oktobra je izrecno naročena izvedba spodnjih dopolnitev, commit/push in naslednja Android interna izdaja.**
+
+Dogovorjeni obseg:
+
+1. Levi zložljivi meni z neposrednim dostopom do področij na telefonu namesto stalnih spodnjih zavihkov; tablična in namizna postavitev se preverjata ločeno.
+2. Finančni pogled pokaže povezano opravilo/projekt ter omogoči odpiranje konkretnega opravila v pravilnem prostoru z ustreznim preverjanjem identitete in pravic.
+3. Razpoložljivi dnevni/tedenski čas se uporabi za okvirno oceno izvedbe faz; ocena ne premika izbranih koledarskih terminov.
+4. Nov organizacijski projekt pred shranjevanjem jasno pokaže organizacijo in začetno vidnost; upravljanje izrecnih članstev ostane dosegljivo.
+5. Ročni osebni finančni vnos omogoči izbiro računa in filtriranje po njem; napoved istega računa vključuje tak vnos ter spoštuje valuto in lokalno/zasebno lastništvo.
+6. Center opomnikov omogoči trajno odložitev na tej napravi brez spremembe roka opravila ali knjiženja plačila; ponovni zagon, sprememba/izbris izvora in preklic pravic se obravnavajo izrecno.
+
+Stanje: **vseh šest dopolnitev je izdelanih in preverjenih; nova Android izdaja še ni zgrajena ali objavljena.** Lastništvo: `upgrade_omissions_planning` (meni, faze, vidnost), `upgrade_omissions_finance` (finance, skupna lokalizacija), `remaining_reminders` (odložitev). Vsi uporabljajo GPT-6.1 Sol / high; glavni agent vodi dokumentacijo, integracijo in izdajo. Začetno delovno drevo je čisto, HEAD `42f3a29`. Google Play je ponovno preverjen: 1.1.0 (3) ostaja aktivna na obstoječem internem kanalu.
+
+Lokalne odložitve so napravna nastavitev, shranjena ločeno od izvornih zapisov. Ne vključijo oddaljene dostave in se ne prenašajo v šifrirano kopijo; izvorni roki in obstoječa strežniška pravila se ne spreminjajo. Izvoz ne spreminja pogodbe prenosne kopije 3. iOS, FCM/APNs, javna objava in fizični telefonski preizkusi imajo še vedno svoja ločena merila.
+
+Končno skupno preverjanje dopolnitev: **544 Flutter PASS / 8 opt-in HTTP preskočenih**, analiza **37 obstoječih info**, brez napak/opozoril. Datoteke z informacijskimi ugotovitvami v tej dopolnitvi niso spremenjene. `flutter gen-l10n`, format 45 spremenjenih/novih Dart datotek, `git diff --check` in izvorni izdajni preverjalnik so uspešni. Izdajna orodja imajo 18 PASS. Ciljni dokazi: načrtovanje/navigacija 83 različnih preverjanj, finance 44 + 12 geometrijskih preverjanj, odložitve 32. Končni dnevniki so v `build/qa/jivie-followup/`; izvorni ciljni dnevniki tudi v `build/qa/omissions-1.1.1/`.
+
+Neodvisni pregled je pred zamrznitvijo odpravil nepravilno lokalno razreševanje zasebnega opravila in nepreklicane OS alarme ob napaki SQLite. Regresije preverijo dejanske preslikane ID-je, trajni ponovni zagon, finance petek/ponedeljek in potrditev iste plače, dotik Odloži v centru, zavrnjen/svež oddaljeni dostop ter ohranitev roka in prebranega stanja. Strežniška koda, API pogodbe, lokalna schema6/JSON4/prenosna3 ter SDK/paketi ostanejo nespremenjeni.

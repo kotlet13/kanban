@@ -6,6 +6,8 @@ import '../../domain/finance_reminder_plans.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
 import '../../state/finance_inbox_provider.dart';
+import '../../state/reminder_snooze_provider.dart';
+import 'reminder_snooze.dart';
 import '../shared/sharing_errors.dart';
 import 'notification_target_view.dart';
 
@@ -27,6 +29,8 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
     final personal = ref.read(organizerProvider).valueOrNull;
     final shared = ref.read(collaborationProvider).valueOrNull;
     if (personal == null || shared == null) return false;
+    final effective = ref.read(effectiveReminderPlansProvider).valueOrNull;
+    if (effective == null) return false;
     return dueFinanceInboxPlans(
       personal: personal,
       shared: shared,
@@ -34,7 +38,11 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
     ).any(
       (p) =>
           p.stableKey == plan.stableKey &&
-          !p.scheduledAt.isAfter(ref.read(organizerClockProvider)()),
+          effective.any(
+            (e) =>
+                e.stableKey == p.stableKey &&
+                !e.scheduledAt.isAfter(ref.read(organizerClockProvider)()),
+          ),
     );
   }
 
@@ -106,13 +114,33 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                       if (!_visible(plan)) return;
                       await showNotificationTarget(context, ref, plan.target);
                     },
-              trailing: IconButton(
-                tooltip: l.inboxMarkRead,
-                key: ValueKey('finance-inbox-read-${plan.stableKey}'),
-                onPressed: _busy || _reads.contains(plan.stableKey)
-                    ? null
-                    : () => _read(plan),
-                icon: const Icon(Icons.done),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: l.reminderSnooze,
+                    key: ValueKey('finance-inbox-snooze-${plan.stableKey}'),
+                    onPressed: _busy
+                        ? null
+                        : () async {
+                            setState(() => _busy = true);
+                            try {
+                              await snoozeReminder(context, ref, plan);
+                            } finally {
+                              if (mounted) setState(() => _busy = false);
+                            }
+                          },
+                    icon: const Icon(Icons.snooze_outlined),
+                  ),
+                  IconButton(
+                    tooltip: l.inboxMarkRead,
+                    key: ValueKey('finance-inbox-read-${plan.stableKey}'),
+                    onPressed: _busy || _reads.contains(plan.stableKey)
+                        ? null
+                        : () => _read(plan),
+                    icon: const Icon(Icons.done),
+                  ),
+                ],
               ),
             ),
           ),

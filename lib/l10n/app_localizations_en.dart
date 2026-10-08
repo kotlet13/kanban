@@ -3550,7 +3550,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupCompleteness =>
-      'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded.';
+      'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.';
 
   @override
   String get backupTooLarge =>
@@ -3619,7 +3619,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'More contains finances, home, garden, account and settings. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.';
+      'On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.';
 
   @override
   String get guideSkip => 'Skip';
@@ -3994,4 +3994,115 @@ class AppLocalizationsEn extends AppLocalizations {
   String financePlanForecastPeriod(String date) {
     return 'Dated entries through $date, showing the closing total for each day.';
   }
+
+  @override
+  String get organizerMenuOpen => 'Open menu';
+
+  @override
+  String get organizerMenuClose => 'Close menu';
+
+  @override
+  String get planningCapacityTitle => 'Approximate duration';
+
+  @override
+  String get planningCapacityRule =>
+      'We use remaining estimated work and assume tasks are done in sequence. A task uses its own availability, otherwise the project’s; tasks share project capacity. Weekly capacity is averaged over seven days. This is an approximate amount of time, not a promised date; weekends and actual working days are not scheduled.';
+
+  @override
+  String planningCapacityDuration(String days) {
+    return 'Approximate duration in days: $days';
+  }
+
+  @override
+  String planningCapacityMissingEstimates(int count) {
+    return 'Open tasks without an effort estimate: $count.';
+  }
+
+  @override
+  String planningCapacityMissingAvailability(int count) {
+    return 'Open tasks without daily or weekly availability: $count.';
+  }
+
+  @override
+  String get planningCapacityNoTasks => 'No tasks to estimate duration.';
+
+  @override
+  String get planningCapacityComplete => 'All tasks are complete.';
+
+  @override
+  String organizationProjectPreview(String name) {
+    return 'Organization: $name';
+  }
+
+  @override
+  String get organizationProjectInitialVisibility =>
+      'Initially only the creator can access this project. Other organization members and external collaborators gain access only through an explicit project invitation.';
+
+  @override
+  String get organizationProjectCreated =>
+      'Project created. You can now invite collaborators or open the project.';
+
+  @override
+  String get organizationProjectOpen => 'Open project';
+
+  @override
+  String get reminderSnooze => 'Snooze reminder';
+
+  @override
+  String get reminderSnooze15Minutes => 'In 15 minutes';
+
+  @override
+  String get reminderSnooze1Hour => 'In one hour';
+
+  @override
+  String get reminderSnoozeTomorrow => 'Tomorrow at this time';
+
+  @override
+  String get reminderSnoozeChooseTime => 'Choose date and time';
+
+  @override
+  String get reminderSnoozeSaved => 'Reminder snoozed.';
+
+  @override
+  String get reminderSnoozeFutureRequired => 'Choose a future time.';
+
+  @override
+  String get reminderSnoozeNeedsConnection =>
+      'Connect to the server to snooze a shared reminder.';
+
+  @override
+  String reminderSnoozedUntil(String until) {
+    return 'Snoozed until $until';
+  }
+
+  @override
+  String financeSourceTask(String title) {
+    return 'Linked task: $title';
+  }
+
+  @override
+  String financeSourceProject(String title) {
+    return 'Project: $title';
+  }
+
+  @override
+  String get financeSourceUnlinked => 'No linked task';
+
+  @override
+  String get financeSourceUnavailable =>
+      'The linked task is no longer available.';
+
+  @override
+  String get financeAccountUnavailable =>
+      'The financial account is no longer available.';
+
+  @override
+  String get financeNoFilterResults => 'No entries for the selected account.';
+
+  @override
+  String get reminderSnoozeDeviceOnly =>
+      'Snoozing applies on this device. The task or payment due date stays the same.';
+
+  @override
+  String get guideMenuTitle => 'Menu and settings';
 }
