@@ -4112,4 +4112,14 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideMenuTitle => 'Meni in nastavitve';
+
+  @override
+  String get spacePickerNewSpace => '+ Nov prostor';
+
+  @override
+  String get spacePickerInitialVisibility =>
+      'Na začetku vidi prostor samo ustvarjalec. Izberi vrsto in ime; druge člane dodaš z izrecnim povabilom. Osebni podatki se ne prenesejo ali delijo samodejno.';
+
+  @override
+  String get spacePickerSharedProject => 'Deljeni projekt';
 }

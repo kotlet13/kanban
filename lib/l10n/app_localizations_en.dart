@@ -4105,4 +4105,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideMenuTitle => 'Menu and settings';
+
+  @override
+  String get spacePickerNewSpace => '+ New space';
+
+  @override
+  String get spacePickerInitialVisibility =>
+      'Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.';
+
+  @override
+  String get spacePickerSharedProject => 'Shared project';
 }

@@ -7277,6 +7277,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Menu and settings'**
   String get guideMenuTitle;
+
+  /// No description provided for @spacePickerNewSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'+ New space'**
+  String get spacePickerNewSpace;
+
+  /// No description provided for @spacePickerInitialVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.'**
+  String get spacePickerInitialVisibility;
+
+  /// No description provided for @spacePickerSharedProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared project'**
+  String get spacePickerSharedProject;
 }
 
 class _AppLocalizationsDelegate

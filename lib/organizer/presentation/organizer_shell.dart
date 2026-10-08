@@ -464,11 +464,13 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      OrganizerSpacePicker(
-                        onSelected: _selectSpace,
-                        onConnect: () => _navigate(_Area.sharing),
-                      ),
-                      const SizedBox(height: 16),
+                      if (!phone) ...[
+                        OrganizerSpacePicker(
+                          onSelected: _selectSpace,
+                          onConnect: () => _navigate(_Area.sharing),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       _content(context, snapshot, actions, desktop),
                     ],
                   ),
@@ -534,6 +536,13 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           appBar: desktop
               ? null
               : AppBar(
+                  titleSpacing: phone ? 0 : null,
+                  toolbarHeight: phone
+                      ? (MediaQuery.textScalerOf(context).scale(16) + 24).clamp(
+                          kToolbarHeight,
+                          double.infinity,
+                        )
+                      : null,
                   leading: phone
                       ? Builder(
                           builder: (context) => IconButton(
@@ -545,11 +554,20 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                         )
                       : null,
                   title: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: phone ? MainAxisSize.max : MainAxisSize.min,
                     children: [
                       const JivieBrandMark(size: 28),
                       const SizedBox(width: 9),
-                      Text(l.organizerAppName),
+                      if (phone)
+                        Expanded(
+                          child: OrganizerSpacePicker(
+                            compact: true,
+                            onSelected: _selectSpace,
+                            onConnect: () => _navigate(_Area.sharing),
+                          ),
+                        )
+                      else
+                        Text(l.organizerAppName),
                     ],
                   ),
                   actions: [

@@ -14,6 +14,8 @@ import 'package:kanban/organizer/data/garden_repository.dart';
 import 'package:kanban/organizer/state/garden_provider.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
+import 'package:kanban/organizer/state/collaboration_provider.dart';
+import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
 
 class MemoryOrganizerStorage implements OrganizerStorage {
   OrganizerSnapshot snapshot = OrganizerSnapshot();
@@ -39,6 +41,8 @@ Future<void> pumpOrganizer(
   String locale = 'sl',
   String theme = 'light',
   Future<Map<String, Object?>> Function()? replayPreferences,
+  CollaborationController? collaborationController,
+  GlobalKey? repaintBoundaryKey,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -52,6 +56,10 @@ Future<void> pumpOrganizer(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (repaintBoundaryKey != null)
+          invitationLinkSourceProvider.overrideWithValue(null),
+        if (collaborationController != null)
+          collaborationProvider.overrideWith(() => collaborationController),
         if (gardenRepository != null)
           gardenRepositoryProvider.overrideWith(
             (ref) async => gardenRepository,
@@ -64,7 +72,9 @@ Future<void> pumpOrganizer(
         ),
         organizerStorageProvider.overrideWithValue(() async => storage),
       ],
-      child: const KanbanApp(),
+      child: repaintBoundaryKey == null
+          ? const KanbanApp()
+          : RepaintBoundary(key: repaintBoundaryKey, child: const KanbanApp()),
     ),
   );
   await tester.pumpAndSettle();
@@ -116,7 +126,10 @@ void main() {
             locale: locale,
             theme: theme,
           );
-          expect(find.text('Jivie'), findsOneWidget);
+          expect(
+            find.text('Jivie'),
+            width < 600 ? findsNothing : findsOneWidget,
+          );
           expect(
             find.text(
               locale == 'sl'
@@ -176,7 +189,7 @@ void main() {
           await tester.tap(find.text(aboutLabel));
           await tester.pumpAndSettle();
           expect(find.byType(AboutDialog), findsOneWidget);
-          expect(find.text('Jivie'), findsNWidgets(2));
+          expect(find.text('Jivie'), findsNWidgets(width < 600 ? 1 : 2));
           expect(tester.takeException(), isNull);
         });
       }

@@ -123,7 +123,15 @@ void main() {
           ),
           width: width,
         );
-        await tester.tap(find.byIcon(Icons.add_business_outlined));
+        await tester.tap(find.byType(DropdownButton<String>).first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('+ Nov prostor').last);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Organizacija').last);
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextField).first,
@@ -293,7 +301,9 @@ void main() {
           onConnect: () {},
         ),
       );
-      await tester.tap(find.byIcon(Icons.add_business_outlined));
+      await tester.tap(find.byType(DropdownButton<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+ Nov prostor').last);
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField).first,

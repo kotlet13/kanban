@@ -2,6 +2,8 @@
 
 Jivie (izgovorjeno **dživi**) je brezplačen lokalni organizator osebnega in družinskega življenja: prostega časa, opravil, domačih projektov, nabave in financ. Flutter aplikacija je nastala iz Kanban Connect; izbirno strežniško sodelovanje razvijamo prek vtičnika FamilyHub za Kanboard.
 
+**Kompaktna telefonska glava:** izbira prostora je prestavljena ob ikono v zgornji vrstici, ime Jivie ostane v meniju. Spustni seznam vsebuje **+ Nov prostor**, ločena vrstica in tipka sta odstranjeni. Preverjeno s **565 Flutter PASS** in analizo brez napak/opozoril (37 obstoječih info); naslednja interna gradnja sledi. [Dokazi in predogled](docs/UPGRADE_IMPLEMENTATION.md).
+
 **Dopolnitve po uporabniškem pregledu:** levi meni na telefonu, ocena trajanja faz iz razpoložljivosti, jasna začetna vidnost projekta, povezava financ z opravilom, ročni finančni računi/filtri in napravna odložitev opomnikov so izdelani. Skupno preverjanje: **544 Flutter PASS**, brez napak/opozoril pri analizi, 37 obstoječih info. **Android 1.1.1 (4) je aktivno objavljen za domači (15).** [Dokazi in omejitve](docs/UPGRADE_IMPLEMENTATION.md).
 
 **Prva nadgradnja 8. oktobra:** popravki prikaza/prijave so poslani v Git, organizacije, osebe brez računa, faze/koledar/časovnik, povezani stroški in finančni načrt pa so izdelani ter preverjeni. Končni odjemalčev nabor ima **502 PASS**, strežniški **987 PASS** na treh bazah. [Izvedbeni dnevnik](docs/UPGRADE_IMPLEMENTATION.md) vodi commite ter ločena dokaza testne namestitve in nove Android objave. Testno gostovanje in Android interna izdaja 1.1.0 (3) sta potrjena.
