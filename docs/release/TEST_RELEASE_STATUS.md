@@ -1,5 +1,9 @@
 # Jivie — stanje testnih izdaj
 
+## Nadgradnja 8. oktobra — 1.1.0+3
+
+Popravki `54f3061` in nadgradnje `e73cd1c` so poslani v Git. Svež Android AAB 1.1.0 (3) uporablja isti namenski Jivie upload certifikat, ID `si.triparna.jivie`, API24+/target36 in 16KiB poravnavo osmih 64-bitnih knjižnic. SHA256 `6efb71c9701f1c9261086816a72ca80231de58b1e6e94d9128cbc0bbbb65ead7`. ZIP CRC, bundletool, podpis in Firebase projekt `jivie-e928a` so preverjeni. Upload/aktivacija in nova fizična namestitev še niso potrjeni; spodaj je zgodovina izdaje2. [Aktualni dnevnik](../UPGRADE_IMPLEMENTATION.md).
+
 ## Aktualna naslednja kandidatka: 1.0.1+2
 
 Po glavnem commitu/pushu `d551028` je bila različica izrecno zvišana. Android AAB SHA256 `0cff4cd29b4787e9c9092e6b1c9847329f87d1482164ee708a286220f4b1a78d` je podpisan, preverjen in objavljen na internem kanalu; 8. oktobra je po uporabnikovi potrditvi vključen obstoječi seznam `domači` (14 članov), kanal kaže `Aktivno`. iOS prvi upload 1.0.1 (2) je uspel, nato pa obdelava `Failed`/90683 zaradi camera/photo referenc neuporabljenega medijskega izbirnika. Dokumentna CocoaPods izvedba in razvojni arhiv sta preverjena, ponovni distribucijski izvoz pa vrne `No Accounts`. Nova uspešna iOS interna izdaja zato še ni potrjena. [Celotni aktualni potek](NOTIFICATION_RELEASE_RUN.md), [pogoji lastnika](OWNER_ACTIONS.md).
