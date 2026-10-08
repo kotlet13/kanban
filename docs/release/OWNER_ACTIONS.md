@@ -1,17 +1,17 @@
 # Jivie — preostali koraki za lastnika
 
-Kratek aktualni seznam: [kaj še urediš ti](OWNER_NEXT_STEPS.md). Nova kandidatka 1.1.0+3 ima izdelane nadgradnje; njeno Android aktivacijo in testno namestitev vodi [izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md). Spodnji dokazi izdaje2 ostanejo zgodovinski.
+Kratek aktualni seznam: [kaj še urediš ti](OWNER_NEXT_STEPS.md). Android 1.1.0+3 je aktivno objavljen za obstoječi seznam `domači` (15); njegove dokaze in testno namestitev vodi [izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md). Spodnji dokazi izdaje2 ostanejo zgodovinski.
 
 Stanje te naloge: 8. oktober 2026. Uporabnik je dovolil samostojne izvedbene odločitve in zahteval, da odprte odločitve zapišemo, ker ne bo več pri računalniku. To je seznam za nadaljevanje; ni nova zahteva, da sproti potrjuje že dogovorjeno delo.
 
 ## Kaj je že odločeno in urejeno
 
 - Ime **Jivie**, izgovorjava dživi; Android/iOS **si.triparna.jivie**; brezplačna aplikacija. Plačljivo upravljano gostovanje ostaja poznejša faza.
-- Nov ločen testni strežnik **https://jivie-test.triparna.si/** s FamilyHub 0.6.0. Stari Kanboard/podatki so ohranjeni. Native API in self-hosted izbris sta vključena; stara projektna povabila in FCM dostava ostajajo izključeni.
+- Nov ločen testni strežnik **https://jivie-test.triparna.si/** s FamilyHub 0.7.0/schema11 po preverjeni kopiji in obnovi. Stari Kanboard/podatki so ohranjeni. Native API in self-hosted izbris sta vključena; stara projektna povabila in FCM dostava ostajajo izključeni.
 - Podatki, SMTP geslo in šifrirni ključ poštne vrste so zunaj javnih spletnih map, z omejenimi dovoljenji. Poštni predal `jivie-test@triparna.si` je ustvaril lastnik; SMTP TLS in prijava sta uspešno preverjena brez pošiljanja sporočila.
 - Periodična opravila so nastavljena. Nakupovalnih dodatkov nismo spremenili v obvezna posamezna e-poštna sporočila.
 - Vrt je izveden kot lokalni modul s kopijo/obnovo. Samodejnega deljenja vrtov ali preselitve arhiva ni.
-- Android **1.0.1 (2)** je objavljen na aktivnem internem kanalu z vključenim seznamom `domači` (zdaj 15 članov); prvotna iOS oddaja 1.0.1 (2) je bila zavrnjena pri Apple obdelavi. Popravljena iOS razvojna kandidatka je preverjena, njen distribucijski izvoz pa še ni uspel. Stari paketi ostanejo ohranjeni. [Aktualni potek](NOTIFICATION_RELEASE_RUN.md) loči upload, obdelavo in dejanski dostop.
+- Android **1.1.0 (3)** je objavljen na aktivnem internem kanalu z vključenim seznamom `domači` (zdaj 15 članov); prvotna iOS oddaja 1.0.1 (2) je bila zavrnjena pri Apple obdelavi. Popravljena iOS razvojna kandidatka je preverjena, njen distribucijski izvoz pa še ni uspel. Stari paketi ostanejo ohranjeni. [Aktualni potek](NOTIFICATION_RELEASE_RUN.md) loči upload, obdelavo in dejanski dostop.
 
 ## Odprto
 

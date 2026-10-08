@@ -1,5 +1,15 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Aktualna nadgradnja — 8. oktober, 1.1.0 (3)
+
+Popravki `54f3061` in funkcionalne nadgradnje `e73cd1c` so commitani/pushani ločeno s sporočilom `popolna predelava aplikacije`. Nato je `b99760d` pripravil izrecni dvig na **1.1.0+3** brez menjave SDK/odvisnosti. Android je **aktivno objavljen na istem internem kanalu**: Play kaže `1.1.0 (3) — nadgradnje Jivie`, »Na voljo notranjim preizkuševalcem«, 8. oktober ob 12:56. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Novo namestitev in fizične opomnike uporabnik še preveri.
+
+AAB SHA256 `6efb71c9701f1c9261086816a72ca80231de58b1e6e94d9128cbc0bbbb65ead7`; ID/verzija/API36, nespremenjeni namenski upload certifikat, ZIP/bundletool, vseh 8 knjižnic 64-bit s 16KiB poravnavo in native Firebase viri so potrjeni. Končni Flutter **502 PASS**, analiza brez error/warning (35 starih info); backend **987 PASS** na treh bazah. [Funkcionalni in namestitveni dokazi](../UPGRADE_IMPLEMENTATION.md), dokaz konzole `build/qa/jivie-upgrade/play-internal-1.1.0-3-active.jpg`.
+
+Testno gostovanje je po izolirani obnovi kopije nadgrajeno na **FamilyHub 0.7.0/schema11**, z ohranjenimi računi, gesli, serverId, konfiguracijo in izvirnim cronom. [cPanel](../server/CPANEL_SETUP.md). FCM ostane izključen. iOS zahteva svežo gradnjo 1.1.0 (3) po obnovljenem podpisnem dostopu; ne ponavljamo starega razvoja 2. [Kratek seznam lastnika](OWNER_NEXT_STEPS.md).
+
+Spodaj ostane zgodovina prejšnje 1.0.1 (2).
+
 Tekoča evidenca 8. oktobra 2026, ki jo vodi koordinacijski klepet. [Predaja](NOTIFICATION_HANDOFF.md) potrjuje zaključek vzporednih sprememb, gradenj in izdaj. Mobilni ID ostane `si.triparna.jivie`, Firebase projekt `jivie-e928a`, izdajatelj TriparNA. Ta dokument ni potrdilo fizične dostave ali oddaje.
 
 ## Vrstni red

@@ -1,5 +1,7 @@
 # Jivie in FamilyHub na cPanelu
 
+**Aktualno 8. oktobra:** ista testna namestitev je nadgrajena na FamilyHub 0.7.0/schema11 po preverjeni kopiji in izolirani obnovi. Razdelek 12 vodi nove dokaze; spodaj ostane prvotna namestitev 7. oktobra.
+
 Vodič za samostojno gostovanje, pripravljen 7. oktobra 2026 iz kode **FamilyHub 0.6.0 / schema10** za **Kanboard 1.2.54**. Po uporabnikovem dovoljenju je na novi ločeni testni poddomeni izvedena sveža namestitev; dejanske dokaze vodi razdelek 11. Stari Kanboard ostane nespremenjen. Jivie osebni način deluje brez strežnika; ta postopek omogoči izbirno sinhronizacijo, sodelovanje in strežniške storitve.
 
 Pregled gostovanja in prejšnja kopija kažeta PHP 8.4 (glava izvoza: 8.4.25), `DB_DRIVER=mysql` in podatkovni strežnik 10.11.19. Lokalna matrika vključuje MariaDB 10.11.19. Aktualno različico, poti in dovoljenja je treba preveriti na mestu namestitve; stare ugotovitve niso pregled trenutnega stanja. PHP `mail()` in izvajanje sistemskih procesov sta bila izključena. Vtičnik uporablja SMTP oziroma PHP cURL, ne teh funkcij.
@@ -237,3 +239,15 @@ Lokalni izolirani preizkus **nespremenjenega v3** z dejanskim PHP tokenizerjem j
 Dodatno preverjeni zavrnitvi Native API: `scopes.list` brez seje vrne **401 auth_required**, nezaupanja vreden Origin vrne **403 origin_not_allowed**. Dokazilo je `build/qa/garden-release/cpanel-native-api-evidence.json`.
 
 Končni pregled ob **22:30:01 +02:00** potrdi vse štiri periodične statuse z ničelnimi števci in dovoljenji 0600. Dokaz: `build/qa/garden-release/cpanel-cron-executed.png`. Aktivna migracija je **10**, vse tri zasebne podatkovne poti pa so zapisljive.
+
+## 12. Nadgradnja 8. oktobra — FamilyHub 0.7.0 / schema11
+
+Na isti ločeni testni namestitvi je izvedena additivna nadgradnja. Pregledani 63-datotečni paket (62 izvornih datotek in vključena pogodba izbrisa) ima SHA256 `1f201bb6c44c269af081bf629236db815fae3bf5518e8a1913f4a2c6f0bd67ba`. Uporabljen je pregledani manifest, brez razvojnih konfiguracij. Sveži konfiguracijski pomočnik ni bil uporabljen prek že nastavljenega SMTP.
+
+Pred aktivacijo so bili ustavljeni samo štirje croni testne namestitve, vključen in javno preverjen HTTP503, nato preverjeni vidni staging PHP procesi. Med zajemom je baza držala READ zaklepe vseh tabel; pred/po zajemu so preverjeni celotni podatkovni in datotečni hashi. Procesni pregled vidi poti v argv, ne vseh podrobnosti generičnega spletnega poola; 65 sekund ni jamstvo največjega trajanja zahtev.
+
+Zaščitena kopija baze, konfiguracije, vtičnika in zasebnih datotek je prenesena zunaj Git in spletnih map. Obnova v sveži **MariaDB10.11.19 z `network=none`**, brez zagonov aplikacije ali workerjev, je potrdila **79 tabel, 98 vrstic in 27 zasebnih datotek**, vsa števila ter vsebino po hashih, schema10, serverId in nespremenjene račune/gesla/enrollment. SQL SHA256 `58d78b28279b4fac90574c0127d6a418a091b41f1e31e1971fd073d85eed8ef3`. Kopija ostane zasebna; javni dokaz vsebuje samo števce/hashe/booleans.
+
+Aktivacija je preverila celoten dokaz obnove, nato migrirala na schema11 in ponovno primerjala stare stolpce vseh tabel, identitete ter konfiguracijo. Izvirni cron in `.htaccess` sta obnovljena. Javna HTTPS `capabilities` po preklopu potrdi record `[1,2,3]`, finance `[1,2]`, deletion policy `[1,2]`, organizacije, osebe, arhiviranje in podaljševanje seje. SMTP, preverjanje e-pošte in obnova gesla ostanejo vključeni; bootstrap ostane zaprt, FCM in stara povabila izključeni. `serverId` ostane `95c11fe0-916c-48be-a3f6-999732846266`.
+
+Nov račun, poverilnica ali e-pošta med nadgradnjo niso bili ustvarjeni. Stari `kan.triparna.si` ostane nedotaknjen. To potrjuje namestitev in ohranitev obstoječega stanja; fizični večnapravni tok z novo Android gradnjo ter resnična SMTP/FCM/APNs dostava imajo ločene dokaze. [Izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md) in [koraki lastnika](../release/OWNER_NEXT_STEPS.md).
