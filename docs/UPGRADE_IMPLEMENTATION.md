@@ -1,5 +1,7 @@
 # Nadgradnje Jivie — izvedba 8. oktobra 2026
 
+Najnovejša dopolnitev: [oddaljeni opomniki in aktivna interna 1.1.3+6](REMOTE_REMINDERS.md) ter [Vrt z gredami in sezonami](GARDEN.md). Celotni nabor 636 Flutter PASS; spodaj ostane zgodovina prejšnjih nadgradenj.
+
 Uporabnik je naročil: popravki → commit/push → implementacija nadgradenj → commit/push → nova Android interna izdaja za obstoječi seznam `domači`. iOS in obvestila, ki potrebujejo lastnikov dostop oziroma fizično napravo, dobijo kratek končni seznam. Ta dokument vodi tekoče delo; odprta vrstica ni dokaz izdelane funkcije.
 
 ## Izvedbeni obseg

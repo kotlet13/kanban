@@ -20,7 +20,7 @@ Vrt ostane na napravi, brez povezovanja s strežniškimi prostori. Razširjena v
 4. Za preverjanje opozorila uporabi isto prepoznano družino kot pri dejanski zasaditvi pretekle sezone. Opozorilo je pomoč pri pregledu lastnih vnosov, ne celovit setveni načrt.
 5. Znova odpri aplikacijo brez povezave in preveri vrt. Naredi šifrirano kopijo ter pred morebitno obnovo preglej njen predogled; nove kopije potrebujejo novo različico aplikacije.
 
-Fizični preizkus tega novega toka še čaka uporabnika. Prejšnji preizkusi spodaj veljajo za prvotno izvedbo.
+Nova Android interna izdaja **1.1.3 (6)** je aktivno objavljena za domači (15). Fizični preizkus tega novega toka še čaka uporabnika. Prejšnji preizkusi spodaj veljajo za prvotno izvedbo.
 
 ## Zgodovina prve lokalne izvedbe
 

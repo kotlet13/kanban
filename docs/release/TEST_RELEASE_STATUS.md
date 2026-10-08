@@ -1,8 +1,8 @@
 # Jivie — stanje testnih izdaj
 
-## Opomniki in Vrt — priprava 1.1.3+6
+## Opomniki in Vrt — aktivna 1.1.3+6
 
-Funkcionalni commit `10a9e03` vključuje oddaljeno razporejanje in prenovo Vrta. 636 Flutter PASS/9 opt-in HTTP preskočenih, ločeno 2 dejanska HTTP testa; analiza 37 obstoječih info brez napak/opozoril. Po funkcionalnem commitu je izrecno pripravljena različica 1.1.3+6. Nova podpisana gradnja in aktivacija še sledita. [Izvedba in preverjanje](../REMOTE_REMINDERS.md), [Vrt](../GARDEN.md).
+Funkcionalni commit `10a9e03` vključuje oddaljeno razporejanje in prenovo Vrta. 636 Flutter PASS/9 opt-in HTTP preskočenih, ločeno 2 dejanska HTTP testa; analiza 37 obstoječih info brez napak/opozoril. Po funkcionalnem commitu je izrecno pripravljena različica 1.1.3+6. Google Play potrdi **Aktivno / 1.1.3 (6) — opomniki in Vrt**, na voljo internim preizkuševalcem 8. oktobra ob **22:04**. Izbran je samo obstoječi seznam **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/remote-reminders/play-internal-1.1.3-6-active.jpg`. [Povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Podpis, manifest, 16KiB native knjižnice in Firebase so preverjeni; SHA256 AAB `d61a7b45151813edc2205bc8ba580b2fe27fb00c00a9742a98536409a446377c`. [Izvedba in preverjanje](../REMOTE_REMINDERS.md), [Vrt](../GARDEN.md).
 
 ## Kompaktna glava — aktivna 1.1.2+5
 

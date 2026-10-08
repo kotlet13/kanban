@@ -1,6 +1,6 @@
 # Oddaljeni razporejeni opomniki
 
-Mejnik 8. oktobra 2026: po uporabnikovi potrjeni dostavi na zaklenjeni Samsung S25 je obstoječa strežniška pogodba povezana z aplikacijo. Izvedba in končno lokalno preverjanje sta zaključena; Android izdaja je v pripravi; fizični preizkus novega obrazca uporabnik opravi naslednji dan.
+Mejnik 8. oktobra 2026: po uporabnikovi potrjeni dostavi na zaklenjeni Samsung S25 je obstoječa strežniška pogodba povezana z aplikacijo. Izvedba in končno lokalno preverjanje sta zaključena; Android interna izdaja 1.1.3 (6) je aktivna; fizični preizkus novega obrazca uporabnik opravi naslednji dan.
 
 ## Uporabniški tok
 
@@ -32,6 +32,14 @@ Izolirani strežniški regresijski preizkusi na SQLite: 37 collaboration + 77 pu
 Vrt dodatno preverijo dejanska SQLite hramba, ponovno odprtje, kopije/obnova, arhiviranje, razveljavitev po zasaditvi in stare zelo majhne grede. 11 podatkovnih testov je uspešnih tudi v `America/Sao_Paulo`; UI koledarski datum z letnico je preverjen v `America/Los_Angeles`. Prikazi 320/390/1280 px, svetla/temna tema in geste so preverjeni. Glavni agent je pregledal dejanske Flutter zajeme v `build/qa/jivie-garden-season/`.
 
 Fizični preizkus novega obrazca opomnikov in prenovljenega Vrta še čaka uporabnika. Uspešne stare dostave na Samsung ne pripisujemo novi gradnji.
+
+## Gradnji in izdajni artefakt
+
+Funkcionalni commit/push `10a9e03`; izrecna izdajna priprava `920a6b4` za **1.1.3+6**. Sveži Android release AAB in spletni JavaScript release sta uspešno zgrajena. Spletni Wasm dry-run še opozarja na obstoječe platformne odvisnosti; Wasm ni potrjena ciljna gradnja. SDK, odvisnosti in zaklenjene različice niso spremenjeni.
+
+Android: `si.triparna.jivie`, različica 1.1.3 (6), minSDK24/target36, isti namenski Jivie upload certifikat. ZIP CRC, bundletool validacija, podpis, 16KiB poravnava vseh osmih 64-bitnih knjižnic in native Firebase projekt so preverjeni. `client.json` ni vključen kot asset; strežniškega ključa v paketu ni. AAB ima 77.297.049 bajtov, SHA256 `d61a7b45151813edc2205bc8ba580b2fe27fb00c00a9742a98536409a446377c`. Lokalni artefakt je `build/releases/Jivie-1.1.3+6-android-firebase.aab`; stari paketi ostanejo ohranjeni. Dokazi: `build/qa/remote-reminders/android-artifact-evidence.json`, `android-build.log` in `web-build.log`.
+
+Google Play potrdi **Aktivno / 1.1.3 (6) — opomniki in Vrt**, na voljo internim preizkuševalcem 8. oktobra ob **22:04**. Izbran je samo obstoječi seznam **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/remote-reminders/play-internal-1.1.3-6-active.jpg`. [Povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Javna izdaja, iOS in APNs niso vključeni v ta korak.
 
 ## Preizkus na telefonu po posodobitvi
 
