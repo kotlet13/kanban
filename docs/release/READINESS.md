@@ -1,8 +1,8 @@
-# Pogoji za oddajo Jivie 1.0.1+2
+# Jivie — pogoji za javno izdajo
 
 To je seznam odprtih pogojev, ne potrdilo skladnosti. Zadnji pregled: 7. oktober 2026. Lokalne spremembe ne spreminjajo računa v trgovini, produkcijskega strežnika ali osebnih podatkov. [Izvorni preverjevalnik](../../tools/release/README.md) odkrije del teh napak; dejanska dokazila so še potrebna.
 
-Aktualno: Android 1.0.1 (2) je na internem kanalu. iOS prvi upload iste verzije je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Ne enači naloženega paketa s sprejeto gradnjo ali omogočenim dostopom testerjev.
+Aktualno, 8. oktober: Android **1.1.1 (4)** je potrjeno aktiven na internem kanalu za domači (15). Svež AAB je podpisan in preverjen; 544 Flutter testov PASS, analiza brez napak/opozoril s 37 obstoječimi info. iOS prvi upload prejšnje1.0.1 (2) je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, svež distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Javna izdaja ter FCM/APNs fizična dostava še nista potrjeni.
 
 | Pogoj | Trenutno stanje | Pot do dokazila |
 | --- | --- | --- |

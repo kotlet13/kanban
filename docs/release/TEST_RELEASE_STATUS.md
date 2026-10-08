@@ -1,14 +1,14 @@
 # Jivie — stanje testnih izdaj
 
-## Dopolnitve 8. oktobra — kandidatka 1.1.1+4
+## Dopolnitve 8. oktobra — aktivna 1.1.1+4
 
-Šest dopolnitev iz uporabniškega pregleda je v commitu/pushu `cbcb29d`; 544 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Kandidatka uporablja isti ID in upload ključ. Gradnja, upload in aktivacija še niso potrjeni; trenutna živa interna izdaja ostaja 1.1.0 (3). [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
+Šest dopolnitev iz uporabniškega pregleda je v commitu/pushu `cbcb29d`; 544 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Kandidatka uporablja isti ID in upload ključ. Podpisana gradnja, upload in aktivacija so potrjeni: Play kaže Aktivno/1.1.1 (4), na voljo notranjim preizkuševalcem, 8. oktobra ob15:03. Domači (15) ostane izbrana skupina. Dokaz: `build/qa/jivie-followup/play-internal-1.1.1-4-active.jpg`. SHA256 novega AAB je `16bc3d8013401c1c9bf24bd6354c70e1e3c710df0e71c0e25853aa4f286c5f1f`; isti upload certifikat, ZIP/bundle/16KiB in native Firebase so preverjeni. Fizična namestitev nove gradnje še ni preverjena. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
 
 ## Nadgradnja 8. oktobra — 1.1.0+3
 
 Popravki `54f3061` in nadgradnje `e73cd1c` so poslani v Git. Svež Android AAB 1.1.0 (3) uporablja isti namenski Jivie upload certifikat, ID `si.triparna.jivie`, API24+/target36 in 16KiB poravnavo osmih 64-bitnih knjižnic. SHA256 `6efb71c9701f1c9261086816a72ca80231de58b1e6e94d9128cbc0bbbb65ead7`. ZIP CRC, bundletool, podpis in Firebase projekt `jivie-e928a` so preverjeni. Upload in aktivacija sta potrjena: Play kaže `Aktivno`, `1.1.0 (3) — nadgradnje Jivie` ter »Na voljo notranjim preizkuševalcem«, datum 8. oktober ob 12:56. Nova fizična namestitev še ni preverjena; spodaj je zgodovina izdaje2. [Aktualni dnevnik](../UPGRADE_IMPLEMENTATION.md).
 
-## Aktualna naslednja kandidatka: 1.0.1+2
+## Zgodovina predhodne kandidatke: 1.0.1+2
 
 Po glavnem commitu/pushu `d551028` je bila različica izrecno zvišana. Android AAB SHA256 `0cff4cd29b4787e9c9092e6b1c9847329f87d1482164ee708a286220f4b1a78d` je podpisan, preverjen in objavljen na internem kanalu; 8. oktobra je po uporabnikovi potrditvi vključen obstoječi seznam `domači` (14 članov), kanal kaže `Aktivno`. iOS prvi upload 1.0.1 (2) je uspel, nato pa obdelava `Failed`/90683 zaradi camera/photo referenc neuporabljenega medijskega izbirnika. Dokumentna CocoaPods izvedba in razvojni arhiv sta preverjena, ponovni distribucijski izvoz pa vrne `No Accounts`. Nova uspešna iOS interna izdaja zato še ni potrjena. [Celotni aktualni potek](NOTIFICATION_RELEASE_RUN.md), [pogoji lastnika](OWNER_ACTIONS.md).
 

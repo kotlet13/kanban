@@ -2,7 +2,7 @@
 
 ## Dopolnitve po uporabniškem pregledu — 1.1.1+4
 
-Funkcionalni commit/push `cbcb29d` z levim telefonskim menijem, uporabno razpoložljivostjo, vidnostjo projekta, finančnimi povezavami/računi in napravno odložitvijo je zaključen. Končni skupni nabor: 544 PASS; analiza 37 obstoječih info brez napak/opozoril. Izrecni dvig 1.1.1+4 je naslednja izdajna priprava; gradnja in objava se potrdita ločeno v [izvedbenem dnevniku](../UPGRADE_IMPLEMENTATION.md). FCM/APNs in iOS niso del te Android oddaje.
+Funkcionalni commit/push `cbcb29d` z levim telefonskim menijem, uporabno razpoložljivostjo, vidnostjo projekta, finančnimi povezavami/računi in napravno odložitvijo je zaključen. Končni skupni nabor: 544 PASS; analiza 37 obstoječih info brez napak/opozoril. Izdajna priprava `e9d676f` izrecno dvigne verzijo na1.1.1+4. Podpisani AAB je preverjen in objava potrjena: Play Aktivno/1.1.1 (4), na voljo internim preizkuševalcem8. oktobra ob15:03. Dokazi so v [izvedbenem dnevniku](../UPGRADE_IMPLEMENTATION.md). FCM/APNs in iOS niso del te Android oddaje.
 
 ## Aktualna nadgradnja — 8. oktober, 1.1.0 (3)
 
