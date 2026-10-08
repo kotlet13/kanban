@@ -242,7 +242,7 @@ void main() {
             .dataForScope(scope)
             .tasks
             .firstWhere((t) => t.id == assigned);
-        final remindAt = date.subtract(const Duration(hours: 2));
+        final remindAt = DateTime.now().toUtc().add(const Duration(days: 1));
         await b.putReminder(
           scopeId: scope,
           targetType: 'task',
@@ -264,8 +264,10 @@ void main() {
             personal: OrganizerSnapshot(),
             shared: b.state,
           ).any((p) => p.scheduledAt == remindAt),
-          true,
+          false,
         );
+        expect(b.state.scheduledReminders.single.state, 'pending');
+        expect(b.state.scheduledReminders.single.remindAt, remindAt);
         await b.updateTask(
           scope,
           b.state

@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../domain/garden_models.dart';
 
-Future<GardenArea?> showGardenAreaForm(BuildContext context, GardenArea area) =>
-    showDialog<GardenArea>(
-      context: context,
-      builder: (_) => _AreaForm(area: area),
-    );
+Future<GardenArea?> showGardenAreaForm(
+  BuildContext context,
+  GardenArea area, {
+  bool allowKindChange = true,
+}) => showDialog<GardenArea>(
+  context: context,
+  builder: (_) => _AreaForm(area: area, allowKindChange: allowKindChange),
+);
 
 class _AreaForm extends StatefulWidget {
-  const _AreaForm({required this.area});
+  const _AreaForm({required this.area, required this.allowKindChange});
   final GardenArea area;
+  final bool allowKindChange;
   @override
   State<_AreaForm> createState() => _AreaFormState();
 }
@@ -29,6 +33,7 @@ class _AreaFormState extends State<_AreaForm> {
     widget.area.width,
     widget.area.height,
   ].map((number) => (number * 100).toStringAsFixed(1)).toList();
+  late var _kind = widget.area.kind;
   String? _geometryError;
 
   @override
@@ -62,6 +67,7 @@ class _AreaFormState extends State<_AreaForm> {
       context,
       widget.area.copyWith(
         label: _label.text.trim(),
+        kind: _kind,
         x: values[0],
         y: values[1],
         width: values[2],
@@ -99,6 +105,26 @@ class _AreaFormState extends State<_AreaForm> {
                       value!.trim().isEmpty ? l.gardenLabelRequired : null,
                 ),
                 const SizedBox(height: 12),
+                DropdownButtonFormField<GardenAreaKind>(
+                  key: const ValueKey('garden-area-kind'),
+                  initialValue: _kind,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: l.gardenAreaKind),
+                  items: [
+                    DropdownMenuItem(
+                      value: GardenAreaKind.bed,
+                      child: Text(l.gardenBed),
+                    ),
+                    DropdownMenuItem(
+                      value: GardenAreaKind.zone,
+                      child: Text(l.gardenZone),
+                    ),
+                  ],
+                  onChanged: widget.allowKindChange
+                      ? (v) => setState(() => _kind = v!)
+                      : null,
+                ),
+                const SizedBox(height: 12),
                 Text(
                   l.gardenGeometryHelp,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -127,13 +153,22 @@ class _AreaFormState extends State<_AreaForm> {
                                     decimal: true,
                                   ),
                               validator: (value) {
-                                final n = double.tryParse(
-                                  value!.replaceAll(',', '.'),
-                                );
+                                final index = row * 2 + column;
+                                final n = value == _initialNumbers[index]
+                                    ? [
+                                            widget.area.x,
+                                            widget.area.y,
+                                            widget.area.width,
+                                            widget.area.height,
+                                          ][index] *
+                                          100
+                                    : double.tryParse(
+                                        value!.replaceAll(',', '.'),
+                                      );
                                 final position = row == 0;
                                 return n == null ||
                                         !n.isFinite ||
-                                        n < (position ? 0 : 1) ||
+                                        (position ? n < 0 : n <= 0) ||
                                         n > 100
                                     ? l.gardenNumberError
                                     : null;
@@ -144,6 +179,10 @@ class _AreaFormState extends State<_AreaForm> {
                       ],
                     ),
                   ),
+                Text(
+                  l.gardenConfirmDraft,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 if (_geometryError != null)
                   Text(
                     _geometryError!,

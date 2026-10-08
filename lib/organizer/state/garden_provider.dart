@@ -52,8 +52,22 @@ class GardenController extends AsyncNotifier<GardenSnapshot> {
     required String name,
     String notes = '',
     Iterable<GardenArea> areas = const [],
-  }) => _repo.createGarden(name: name, notes: notes, areas: areas);
+    Iterable<GardenSeason> seasons = const [],
+  }) => _repo.createGarden(
+    name: name,
+    notes: notes,
+    areas: areas,
+    seasons: seasons,
+  );
   Future<void> updateGarden(Garden garden) => _repo.updateGarden(garden);
   Future<void> deleteGarden(Garden garden) => _repo.deleteGarden(garden);
+  Future<void> saveSeason(Garden garden, GardenSeason season) =>
+      _repo.saveSeason(garden, season);
+  Future<void> deleteSeason(Garden garden, int year) =>
+      _repo.deleteSeason(garden, year);
+  Future<void> savePlanting(Garden garden, int year, GardenPlanting planting) =>
+      _repo.savePlanting(garden, year, planting);
+  Future<void> deletePlanting(Garden garden, int year, String plantingId) =>
+      _repo.deletePlanting(garden, year, plantingId);
   Future<void> reload() => _repo.reload();
 }

@@ -156,18 +156,11 @@ void main() {
       CollaborationState value(AccountSession session) => CollaborationState(
         session: session,
         scopes: [sharingScope()],
-        data: {sharingScopeId: sharingData()},
-        scheduledReminders: [
-          SharedScheduledReminder(
-            id: 'reminder',
-            scopeId: sharingScopeId,
-            targetType: 'task',
-            targetId: 'task',
-            remindAt: date,
-            revision: 1,
-            state: 'pending',
+        data: {
+          sharingScopeId: SharedScopeData(
+            tasks: [sharingData().tasks.first.copyWith(dueAt: date)],
           ),
-        ],
+        },
       );
       final controller = SharingUiController(initial: value(a));
       await tester.pumpWidget(

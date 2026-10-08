@@ -18,6 +18,7 @@ import '../shared/collaboration_actions.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'reminder_snooze.dart';
+import 'remote_reminder_editor.dart';
 
 Future<bool> showNotificationTarget(
   BuildContext context,
@@ -263,6 +264,12 @@ class NotificationTargetContent extends ConsumerWidget {
                             ? l.organizerCompleted
                             : l.organizerTasks,
                       ),
+                      if (!personalPresentation && !task.isCompleted)
+                        RemoteReminderButton(
+                          scopeId: scope!.id,
+                          targetType: 'task',
+                          targetId: task.id,
+                        ),
                       if (!task.isCompleted)
                         ReminderSnoozeButton(
                           target: NotificationTarget(
@@ -306,6 +313,11 @@ class NotificationTargetContent extends ConsumerWidget {
                     title: Text(event.title),
                     subtitle: Text(
                       '${organizerDateTime(context, event.startAt)}\n${event.notes}',
+                    ),
+                    trailing: RemoteReminderButton(
+                      scopeId: scope!.id,
+                      targetType: 'event',
+                      targetId: event.id,
                     ),
                     onTap: canEdit ? () => sharedActions!.event(event) : null,
                   ),
@@ -470,6 +482,13 @@ class NotificationTargetContent extends ConsumerWidget {
                     subtitle: Text(
                       '${sharedMoneyLabel(context, BigInt.from(entry.amountMinor), entry.currency)} · ${organizerDateTime(context, entry.occurredAt)}\n${entry.notes}',
                     ),
+                    trailing: entry.status == SharedFinanceStatus.planned
+                        ? RemoteReminderButton(
+                            scopeId: scope.id,
+                            targetType: 'financeEntry',
+                            targetId: entry.id,
+                          )
+                        : null,
                     onTap: state.financePolicyForScope(scope.id).canWrite
                         ? () async {
                             if (entry.status != SharedFinanceStatus.planned) {

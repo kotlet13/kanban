@@ -46,6 +46,20 @@ extension CollaborationNotificationSync on CollaborationRepository {
     String partition,
     SharedScheduledReminder reminder,
   ) async {
+    if (isFinancialRecordType(reminder.targetType) &&
+        !(await _cachedFinancePolicy(partition, reminder.scopeId)).canRead) {
+      return;
+    }
+    final scopes = await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [partition, reminder.scopeId],
+    );
+    if (scopes.isEmpty ||
+        SharedScope.fromJson(
+          CollaborationRepository._map(scopes.first['data']),
+        ).revoked) {
+      return;
+    }
     final queued = await database.rows(
       "SELECT id FROM commands WHERE partition=? AND entity_key=? AND state='pending'",
       [partition, 'reminder:${reminder.id}'],
@@ -54,6 +68,16 @@ extension CollaborationNotificationSync on CollaborationRepository {
       'SELECT data,remote FROM scheduled_reminders WHERE partition=? AND id=?',
       [partition, reminder.id],
     );
+    if (old.isNotEmpty) {
+      final stored = SharedScheduledReminder.fromJson(
+        CollaborationRepository._map(old.first['data']),
+      );
+      if (stored.scopeId != reminder.scopeId ||
+          stored.targetType != reminder.targetType ||
+          stored.targetId != reminder.targetId) {
+        throw const CollaborationException('invalid_response');
+      }
+    }
     var canonical = reminder;
     if (old.isNotEmpty && old.first['remote'] != null) {
       final latest = SharedScheduledReminder.fromJson(
@@ -67,9 +91,17 @@ extension CollaborationNotificationSync on CollaborationRepository {
     );
     final canonicalJson = canonical.toJson();
     if (cancelled.isNotEmpty) canonicalJson['state'] = 'cancelled';
-    final data = queued.isNotEmpty && old.isNotEmpty
-        ? old.first['data']
-        : jsonEncode(canonicalJson);
+    var data = jsonEncode(canonicalJson);
+    if (old.isNotEmpty) {
+      final candidate = SharedScheduledReminder.fromJson(
+        CollaborationRepository._map(old.first['data']),
+      );
+      if (queued.isNotEmpty || candidate.syncState == 'blocked') {
+        final local = candidate.toJson();
+        if (cancelled.isNotEmpty) local['state'] = 'cancelled';
+        data = jsonEncode(local);
+      }
+    }
     await database.execute(
       'INSERT INTO scheduled_reminders(partition,id,scope_id,data,remote) VALUES(?,?,?,?,?) ON CONFLICT(partition,id) DO UPDATE SET data=excluded.data,remote=excluded.remote',
       [
@@ -95,6 +127,34 @@ extension CollaborationNotificationSync on CollaborationRepository {
       final command = rows.first,
           params = CollaborationRepository._map(command['params']);
       try {
+        if ((command['operation'] as String).startsWith('reminders.')) {
+          SharedScope scope;
+          try {
+            scope = await _readableReminderScope(
+              p,
+              params['scopeId'] as String,
+            );
+          } on CollaborationException catch (error) {
+            if (error.code != 'permission_revoked') rethrow;
+            throw const CollaborationApiException('permission_revoked');
+          }
+          if (command['operation'] == 'reminders.put' && scope.archived) {
+            throw const CollaborationApiException('scope_archived');
+          }
+          final stored = await database.rows(
+            'SELECT data FROM scheduled_reminders WHERE partition=? AND id=?',
+            [p, params['id']],
+          );
+          if (stored.isNotEmpty &&
+              isFinancialRecordType(
+                SharedScheduledReminder.fromJson(
+                  CollaborationRepository._map(stored.first['data']),
+                ).targetType,
+              ) &&
+              !(await _cachedFinancePolicy(p, scope.id)).canRead) {
+            throw const CollaborationApiException('finance_forbidden');
+          }
+        }
         final reply = await _callSession(
           session,
           epoch,
@@ -105,6 +165,28 @@ extension CollaborationNotificationSync on CollaborationRepository {
           _checkEpoch(epoch);
           await _validLease(p);
           _checkEpoch(epoch);
+          if ((command['operation'] as String).startsWith('reminders.')) {
+            if (reply['reminder'] is! Map<String, dynamic>) {
+              throw const CollaborationException('invalid_response');
+            }
+            final item = SharedScheduledReminder.fromJson(
+              reply['reminder'] as Map<String, dynamic>,
+            );
+            if (item.id != params['id'] ||
+                item.scopeId != params['scopeId'] ||
+                item.revision != (params['expectedRevision'] as int) + 1 ||
+                (command['operation'] == 'reminders.put' &&
+                    (item.targetType != params['targetType'] ||
+                        item.targetId != params['targetId']))) {
+              throw const CollaborationException('invalid_response');
+            }
+            // An explicit accepted edit/cancel resolves only older rejected
+            // intent. A later local rejection must survive a delayed ACK.
+            await database.execute(
+              "DELETE FROM commands WHERE partition=? AND entity_key=? AND state='blocked' AND sequence<?",
+              [p, command['entity_key'], command['sequence']],
+            );
+          }
           await database.execute(
             'DELETE FROM commands WHERE partition=? AND id=?',
             [p, command['id']],
@@ -137,6 +219,7 @@ extension CollaborationNotificationSync on CollaborationRepository {
           'reminder_target_immutable',
           'reminder_missing',
           'record_missing',
+          'scope_archived',
         ].contains(e.code)) {
           rethrow;
         }
@@ -149,6 +232,21 @@ extension CollaborationNotificationSync on CollaborationRepository {
             "UPDATE commands SET state='blocked' WHERE partition=? AND entity_key=?",
             [p, command['entity_key']],
           );
+          if ((command['operation'] as String).startsWith('reminders.')) {
+            final local = await database.rows(
+              'SELECT data FROM scheduled_reminders WHERE partition=? AND id=?',
+              [p, params['id']],
+            );
+            if (local.isNotEmpty) {
+              final data = CollaborationRepository._map(local.first['data'])
+                ..['syncState'] = 'blocked'
+                ..['syncError'] = e.code;
+              await database.execute(
+                'UPDATE scheduled_reminders SET data=? WHERE partition=? AND id=?',
+                [jsonEncode(data), p, params['id']],
+              );
+            }
+          }
           if (e.details['item'] is Map<String, dynamic>) {
             await _applyInbox(
               p,
@@ -310,6 +408,9 @@ extension CollaborationNotificationSync on CollaborationRepository {
             );
           }
           for (final reminder in remoteReminders) {
+            if (reminder.scopeId != scope.id) {
+              throw const CollaborationException('invalid_response');
+            }
             await _applyReminder(p, reminder);
           }
         });

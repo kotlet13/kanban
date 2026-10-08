@@ -488,7 +488,7 @@ void main() {
           scopeId: f.scope,
           targetType: 'financeEntry',
           targetId: plannedEntry,
-          remindAt: f.transport.date,
+          remindAt: DateTime.utc(2099),
         );
         final entered = Completer<void>(), release = Completer<void>();
         f.transport.beforePolicy = (scope) async {

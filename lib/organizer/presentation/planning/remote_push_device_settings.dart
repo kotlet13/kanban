@@ -30,7 +30,11 @@ class _RemotePushDeviceSettingsState
       }
       ref.read(remotePushPermissionRequestProvider.notifier).state++;
     } catch (_) {
-      if (mounted) {
+      if (mounted &&
+          ref.read(collaborationProvider).valueOrNull?.session?.partition ==
+              session.partition &&
+          ref.read(collaborationProvider).valueOrNull?.session?.deviceId ==
+              session.deviceId) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(context.l10n.remotePushError)));
@@ -91,6 +95,7 @@ class _RemotePushDeviceSettingsState
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(l.remotePushEnable),
+          subtitle: Text(l.remotePushRegistrationOnly),
           value: enabled,
           onChanged:
               _busy ||

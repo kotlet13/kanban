@@ -2,7 +2,7 @@
 
 To je seznam odprtih pogojev, ne potrdilo skladnosti. Zadnji pregled: 7. oktober 2026. Lokalne spremembe ne spreminjajo računa v trgovini, produkcijskega strežnika ali osebnih podatkov. [Izvorni preverjevalnik](../../tools/release/README.md) odkrije del teh napak; dejanska dokazila so še potrebna.
 
-Aktualno, 8. oktober: Android **1.1.2 (5)** je potrjeno aktiven na internem kanalu za domači (15). Svež AAB je podpisan in preverjen; 565 Flutter testov PASS, analiza brez napak/opozoril s 37 obstoječimi info. iOS prvi upload prejšnje1.0.1 (2) je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, svež distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Javna izdaja ter FCM/APNs fizična dostava še nista potrjeni.
+Aktualno, 8. oktober: Android **1.1.2 (5)** je potrjeno aktiven na internem kanalu za domači (15). Svež AAB je podpisan in preverjen; 565 Flutter testov PASS, analiza brez napak/opozoril s 37 obstoječimi info. iOS prvi upload prejšnje1.0.1 (2) je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, svež distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Javna izdaja in APNs še nista potrjena. Android FCM je uporabnik na zaklenjenem Samsungu S25 že potrdil skupaj s klikom do pravega opravila; novi obrazec razporejenih opomnikov potrebuje ločen fizični preizkus.
 
 | Pogoj | Trenutno stanje | Pot do dokazila |
 | --- | --- | --- |

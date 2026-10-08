@@ -251,3 +251,60 @@ Zaščitena kopija baze, konfiguracije, vtičnika in zasebnih datotek je prenese
 Aktivacija je preverila celoten dokaz obnove, nato migrirala na schema11 in ponovno primerjala stare stolpce vseh tabel, identitete ter konfiguracijo. Izvirni cron in `.htaccess` sta obnovljena. Javna HTTPS `capabilities` po preklopu potrdi record `[1,2,3]`, finance `[1,2]`, deletion policy `[1,2]`, organizacije, osebe, arhiviranje in podaljševanje seje. SMTP, preverjanje e-pošte in obnova gesla ostanejo vključeni; bootstrap ostane zaprt, FCM in stara povabila izključeni. `serverId` ostane `95c11fe0-916c-48be-a3f6-999732846266`.
 
 Nov račun, poverilnica ali e-pošta med nadgradnjo niso bili ustvarjeni. Stari `kan.triparna.si` ostane nedotaknjen. To potrjuje namestitev in ohranitev obstoječega stanja; fizični večnapravni tok z novo Android gradnjo ter resnična SMTP/FCM/APNs dostava imajo ločene dokaze. [Izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md) in [koraki lastnika](../release/OWNER_NEXT_STEPS.md).
+
+## 13. FCM na testnem strežniku (8. oktober 2026)
+
+**FCM je vključen; namenski ključ, OAuth in HTTP v1 so preverjeni. Uporabnik je potrdil prikaz testnega obvestila na zaklenjenem Samsungu ter klik do pravega opravila.** Firebase projekt `jivie-e928a` uporablja Spark, HTTP v1 je omogočen. iOS registracija še nima APNs ključa ali certifikata.
+
+### Poverilnica in uspešen prenos
+
+Uporabnik je izrecno potrdil ustvarjanje računa `jivie-test-fcm-sender`, vlogo **Firebase Cloud Messaging API Admin** (`roles/firebasecloudmessaging.admin`) in zasebno namestitev JSON ključa na `jivie-test.triparna.si`. IAM tabela potrjuje samo to namensko vlogo, brez splošnega Owner/Editor. Gre za namensko FCM vlogo, ne trditev o dovoljenju za samo eno metodo.
+
+Prvi dve ustvarjanji v brskalniku Codexa sta prikazali Googlovo potrdilo, vendar datotek nismo prejeli. Prvi ključ `54e32090…` je bil preklican po uporabnikovi izrecni potrditvi, nadomestni `1193de1a11b5…` pa med dogovorjeno zamenjavo prek Computer Use. Oba sta preklicana in nikoli nista bila nameščena. Razlog neuspeha konkretnega prenosa v Codexu ni dokazan; običajni HTTP in sintetični blob prenos sta tam delovala.
+
+Na uporabnikovo zahtevo je bil postopek nadaljevan v Safariju z obstoječo prijavo TaknDev. Safari je prikazal dovoljenje za prenos iz Google Cloud; po potrditvi je bil ključ **`c4401f92eccc…`** dejansko prenesen. Preverjeni so projekt, storitveni račun, javni ID ključa in oblika JSON. Datoteka je premaknjena iz Downloads v zasebno lokalno mapo zunaj repozitorija (0700, datoteka 0600), nato naložena neposredno v `/home/tripar13/private/jivie-test/jivie-test-fcm-sender.json`. Vsebina ključa ni bila izpisana ali vključena v QA artefakte.
+
+### Zasebna strežniška namestitev
+
+Preverjeni PHP CLI `/opt/alt/php84/usr/bin/php` ima cURL, OpenSSL in tokenizer. `config.php` vključuje zasebni `familyhub-config.php`, ta zasebni `smtp-config.php`; slednji nima FCM definicij. Pregled vseh domen (11/11) in kanoničnih document rootov potrjuje zasebno mapo zunaj vseh javnih korenov. Inventar `public-roots.json` ima SHA256 `56e1829b448597a1a86a8db3cab8b994b3806ba689a1a150ee1984fc829a41fd`.
+
+Pregledani [namestitveni pomočnik](FCM_SETUP_HELPER.md), SHA256 `eda0eba325be4c379332c75d7228942be1cbcb21b409a59c5d7cb17f7ba314f3`, je lokalno prestal **189 sintetičnih preverjanj** brez omrežja. Po nalaganju sta preverjeni kontrolni vsoti pomočnika in inventarja. Zasebne mape imajo 0700, datoteke 0600.
+
+Na strežniku so uspešni `--check`, `--prepare`, oba PHP lint pregleda, `--activate` in obstoječi `push-preflight.php`. Priprava je shranila natančno kopijo prejšnje konfiguracije ter ločen naključni 32-bajtni ključ za šifriranje napravnih žetonov; SMTP ključ se ni ponovno uporabil. Aktivacija je nadomestila samo izključeno FCM definicijo z vključitvijo zasebnega `fcm-config.php`.
+
+- Prvotni SHA256 `familyhub-config.php`: `32d225db2654ee86dda40873c8f39d5e628c6cd0abb404588ca623d7104fd8f9`.
+- Aktivni SHA256: `069f83895e9dcfdf43abdfbc7068072123f4121c6a4e5ec9b288552d615334bb`.
+- Kopija in načrt povrnitve: `/home/tripar13/private/jivie-test/install/fcm-setup`. Povrnitev uporablja iste argumente in prvotni SHA iz [navodil pomočnika](FCM_SETUP_HELPER.md).
+- Preflight: `configured=true`, `nativeEnabled=true`, `providerVerified=false`, `networkRequests=0`. Ta preflight namenoma vedno loči lokalni pregled od zunanje avtentikacije.
+
+Namestitev konfiguracije ni spremenila različice aplikacije, sheme ali uporabniških zapisov. Stari strežnik in SMTP nastavitve ostajajo nedotaknjeni. Poznejši ciljni test je dodal eno obvestilo; push cron obstoječi razpored dopolnjuje ločeno.
+
+### Ločen dokaz pri Googlu in javni HTTPS API
+
+Preverjeni sta odhodni povezavi s TLS preverjanjem gostitelja in certifikata. Ločeni operativni preizkus uporablja obstoječi `NativeFcmTransport`, isti zasebni ključ in omejeni scope `firebase.messaging`. OAuth je uspešen; FCM `messages:send` z **`validate_only=true`** vrne **HTTP 200**, brez dostave in brez resničnega napravnega žetona ali uporabniške vsebine. Pomen te možnosti določa [uradna referenca FCM](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages/send). Žetoni in ponudnikov odgovor niso bili izpisani.
+
+Prvi izolirani poskus brez aplikacijskega `ROOT_DIR` je ustavilo lokalno varovalo poti; ponovljen je bil s pravim korenom aplikacije, brez spreminjanja ali rahljanja varovala. Uspešen OAuth/validacija potrjuje trenutni ključ, API in pošiljateljevo dovoljenje, ne telefonskega prikaza ali APNs.
+
+Dejanski javni HTTPS `capabilities` vrne HTTP 200, `features.externalPush=true`, `pushProjectId=jivie-e928a` in nespremenjen `serverId=95c11fe0-916c-48be-a3f6-999732846266`. To potrjuje tudi berljivost zasebne konfiguracije iz spletnega PHP.
+
+### En testni opomnik za Android
+
+Uporabnik je potrdil **Naprava je registrirana**, ustvaril prostor **preizkus obvestil** in opravilo **Test obvestila**, vključil oddaljena obvestila za kategorijo **Opomniki** ter telefon zaklenil. Strežnik potrjuje natanko eno aktivno Android registracijo, sinhronizirano nezaključeno opravilo in nastavitve `inApp=true`, `push=true`, `sound=true`, `email=false`. Prvotni sklep, da račun nima prostorov, je bil napačen zaradi napačno prepisanega UUID; popravljeni pregled račun določi prek uporabniškega imena in obstoječega članstva.
+
+Pregledani enkratni zasebni CLI pomočnik `send-test-reminder.php` (SHA256 `4758ee41c3a90a20739b91d236f6a7ddd0b09a6af01a86b39c312cdc789bb1d4`) je prestal lokalni PHP lint in zavrnitve napačnih argumentov. Strežniški `--check` je vrnil `guards_passed`, `changes=0`, `networkRequests=0`. Preveri konkretni račun, članstvo, opravilo, napravo, generacijo registracije in izbiro kategorije. `--send` je v eni transakciji ustvaril eno trajno obvestilo ter prevzel samo njegovo dostavno opravilo; uporabil je obstoječi `NativePushWorker` in `NativeFcmTransport`. Fiksen ID preizkusa preprečuje novo obvestilo ob ponovitvi, ločena skupina prepreči združevanje z drugim dogajanjem. Globalni worker ni bil zagnan; e-pošta in drugi prejemniki niso vključeni.
+
+Dejanski rezultat je **`inboxId=1`, `status=accepted`, `coalesced=0`**. Uporabnik je nato izrecno potrdil: **»Obvestilo je prišlo in odpre pravo opravilo«**. Pred pošiljanjem je potrdil zaklenjen telefon. S tem sta potrjena prikaz v ozadju na fizičnem Samsungu S25 ter klik do konkretnega opravila v pravem prostoru. To je diagnostični preizkus dostavnega kanala, ne dokaz ustvarjanja oddaljenega razporejenega opomnika iz UI. Klica `putReminder`/`cancelReminder` trenutno nista povezana z uporabniškim zaslonom; nadaljnje delo vodi [načrt prenove](../RENOVATION_PLAN.md#dopolnitev-obvestil-po-preizkusu-fcm-8-oktober-2026). APNs ostane ločen korak.
+
+### Samodejna dostava
+
+Po uporabnikovi potrditvi fizičnega preizkusa je dodan natanko en minutni vnos:
+
+```cron
+* * * * * umask 077; /opt/alt/php84/usr/bin/php /home/tripar13/jivie-test.triparna.si/plugins/FamilyHub/cli/push.php --limit=20 > /home/tripar13/private/jivie-test/push-status.json 2>&1
+```
+
+Predhodni razpored, kandidat in prebrani končni razpored so zasebno shranjeni v `install/fcm-cron-20261008`. Pred namestitvijo je primerjava potrdila nespremenjen razpored in odsotnost obstoječega push vnosa; po namestitvi je razpored bajtno enak kandidatu. Vsi prejšnji vnosi so ohranjeni. Povrnitev tega koraka pomeni odstranitev samo zgornjega vnosa ob ohranitvi morebitnih poznejših sprememb; celotne stare kopije ne nameščaj slepo.
+
+Cron je brez ročnega zagona workerja ustvaril veljaven zasebni `push-status.json`, dovoljenja **0600**, čas **2026-10-08 19:12:01 UTC**. Preverjanje ob 19:12:42 UTC je pokazalo nič čakajočih/sprejetih/ponovljenih/preklicanih/združenih opravil. To potrjuje dejanski periodični zagon prazne vrste; fizično dostavo potrjuje predhodni ciljni preizkus. Že poslanega testnega obvestila nismo ponavljali. Izvorni roki, opravilo in preference ostanejo nespremenjeni.
+
+Neskrivni dokazi: `build/qa/fcm-rollout/safari-key-downloaded.png`, `sender-role-confirmed.png`, `cpanel-fcm-enabled.png`, `android-test-send.png` in `push-cron-running.png`. Zasebni JSON in šifrirni ključ nista del repozitorija ali teh dokazov.

@@ -1,4 +1,28 @@
-# Vrt — prva lokalna izvedba
+# Vrt — grede, sezone in zasaditve
+
+## Prenova 8. oktobra 2026
+
+Uporabnik je izrecno potrdil prenovo s poudarkom na zelenjavnih gredah in kolobarju ter vključitev v novo interno Android izdajo. Izvedba in končno preverjanje sta zaključena: celotni nabor **636 Flutter PASS**, 9 opt-in HTTP preskočenih, analiza brez napak/opozoril s 37 obstoječimi info. [Skupna dokazila](REMOTE_REMINDERS.md#končno-preverjanje-8-oktobra-2026) vključujejo resnično SQLite hrambo ter datume v različnih časovnih pasovih. Spodnja zgodovina prve izvedbe ni dokaz nove funkcionalnosti.
+
+Načrt ostane ročno narisana razporeditev, ki se dopolni z letnimi sezonami. Posamezna greda ima več zasaditev: kultura, sorta, vnesena družina, načrtovano/dejansko, datumi setve, sajenja in pobiranja ter zapiski. Datumi so koledarski dnevi brez časovnega pasu, ne termini telefonskih opomnikov. Nova sezona je privzeto prazna. Uporabnik lahko izrecno kopira kulture iz prejšnje sezone; nastanejo novi načrtovani vnosi z novimi ID-ji, brez prejšnjih datumov in brez pretvorbe stare zgodovine v dejansko zasaditev novega leta.
+
+Grede ohranijo trajne identifikatorje, zato je zgodovina vezana na isto gredo skozi leta. Razpored je skupen sezonam, ne vsakoletna kopija geometrije. Arhiviranje območja ohrani njegove zasaditve. Obstoječe risbe, imena, zapiski in koordinate se pri branju starega formata ne izgubijo.
+
+Kolobar je informativna primerjava uporabnikovih zapisov: pri isti gredi pokaže ponovitev prepoznane družine v dejanskih zasaditvah zadnjih treh let. Pretekli načrti niso dokaz dejanske zasaditve. Prazna ali nepoznana družina ne pomeni »kolobar je primeren«; aplikacija ne ugiba družine iz imena kulture in ne pripravlja strokovnega samodejnega načrta. Slovenski oznaki bučevke in narcisovke sta preverjeni v [seznamu družin Botaničnega vrta Univerze v Ljubljani](https://www.botanicni-vrt.si/seznam-rastlin/rastline-po-druzinah).
+
+Vrt ostane na napravi, brez povezovanja s strežniškimi prostori. Razširjena vrtna vsebina uporablja različico 2 znotraj obstoječe lokalne baze in formatov kopij. Novi bralnik sprejme stare vrtove; stari bralnik nov format zavrne in ga ne sme tiho skrajšati. Obnova, revizijski konflikti in brisanje ostanejo transakcijski. Fotografije, samodejni setveni koledar, fizično merilo in deljenje niso del te prenove.
+
+### Preizkus nove izdaje na telefonu
+
+1. Odpri obstoječi vrt in preveri imena, zapiske ter razpored gred. Izberi gredo, poskusi ročice in način povečave/premika. Podatki so še vedno lokalni.
+2. Dodaj sezono, vanjo kulturo, sorto, družino in datume. Po zaprtju obrazca uporabi še **Shrani vrt**, nato ga ponovno odpri.
+3. Dodaj drugo sezono, preklapljaj med letoma ter preveri zgodovino iste grede. Kopiranje kultur mora biti izrecno, z novimi načrtovanimi vnosi; prejšnje dejanske zasaditve ostanejo.
+4. Za preverjanje opozorila uporabi isto prepoznano družino kot pri dejanski zasaditvi pretekle sezone. Opozorilo je pomoč pri pregledu lastnih vnosov, ne celovit setveni načrt.
+5. Znova odpri aplikacijo brez povezave in preveri vrt. Naredi šifrirano kopijo ter pred morebitno obnovo preglej njen predogled; nove kopije potrebujejo novo različico aplikacije.
+
+Fizični preizkus tega novega toka še čaka uporabnika. Prejšnji preizkusi spodaj veljajo za prvotno izvedbo.
+
+## Zgodovina prve lokalne izvedbe
 
 **Dopolnitev 8. oktobra:** aktualna lokalna schema 6, JSON 4 in prenosna kopija 3 ohranijo vrtove ter berljivost prejšnjih formatov. Dejanske legacy schema4/JSON2–3/prenosne1–2 regresije so ponovno preverjene v [nadgradnji](UPGRADE_IMPLEMENTATION.md). Spodaj ostanejo dokazi prvotne izvedbe schema5.
 

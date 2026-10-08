@@ -433,6 +433,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String targetId,
     required DateTime remindAt,
     int expectedRevision = 0,
+    String? expectedPartition,
   }) => _edit(
     (repo) => repo.putReminder(
       id: id,
@@ -441,10 +442,16 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       targetId: targetId,
       remindAt: remindAt,
       expectedRevision: expectedRevision,
+      expectedPartition: expectedPartition,
     ),
   );
-  Future<void> cancelReminder(SharedScheduledReminder reminder) =>
-      _edit((repo) => repo.cancelReminder(reminder));
+  Future<void> cancelReminder(
+    SharedScheduledReminder reminder, {
+    String? expectedPartition,
+  }) => _edit(
+    (repo) =>
+        repo.cancelReminder(reminder, expectedPartition: expectedPartition),
+  );
   Future<NotificationOpenResult> openNotificationTarget(
     NotificationTarget target,
   ) async {

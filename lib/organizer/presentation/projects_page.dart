@@ -4,6 +4,7 @@ import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
 import 'collection_actions.dart';
 import 'organizer_widgets.dart';
+import 'inbox/remote_reminder_editor.dart';
 import 'planning/project_planning_summary.dart';
 
 class OrganizerProjectsPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.readOnly = false,
     this.allowProjectCreation = true,
     this.scopeLabel,
+    this.reminderScopeId,
     this.onShare,
   });
   final OrganizerSnapshot snapshot;
@@ -24,6 +26,7 @@ class OrganizerProjectsPage extends StatefulWidget {
   final bool readOnly;
   final bool allowProjectCreation;
   final String? scopeLabel;
+  final String? reminderScopeId;
   final ValueChanged<LocalProject>? onShare;
   final bool home;
   final String? selectedId;
@@ -245,6 +248,13 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                       OrganizerTaskRow(
                         task: task,
                         snapshot: widget.snapshot,
+                        trailing: widget.reminderScopeId == null
+                            ? null
+                            : RemoteReminderButton(
+                                scopeId: widget.reminderScopeId!,
+                                targetType: 'task',
+                                targetId: task.id,
+                              ),
                         onEdit: widget.readOnly
                             ? null
                             : () => widget.actions.task(task: task),
@@ -268,11 +278,13 @@ class OrganizerTasksPage extends StatelessWidget {
     required this.actions,
     this.readOnly = false,
     this.scopeLabel,
+    this.reminderScopeId,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
   final bool readOnly;
   final String? scopeLabel;
+  final String? reminderScopeId;
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -284,6 +296,13 @@ class OrganizerTasksPage extends StatelessWidget {
     Widget row(LocalTask task) => OrganizerTaskRow(
       task: task,
       snapshot: snapshot,
+      trailing: reminderScopeId == null
+          ? null
+          : RemoteReminderButton(
+              scopeId: reminderScopeId!,
+              targetType: 'task',
+              targetId: task.id,
+            ),
       onEdit: readOnly ? null : () => actions.task(task: task),
       onCompleted: readOnly
           ? null

@@ -2718,6 +2718,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financeTotalBalance => 'Total balance';
 
   @override
+  String inboxPushCategoriesNone(String space) {
+    return 'No remote notification types are selected for “$space”.';
+  }
+
+  @override
+  String inboxPushCategoriesSelected(String space, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count remote notification types selected.',
+      one: '1 remote notification type selected.',
+    );
+    return 'Space “$space”: $_temp0';
+  }
+
+  @override
+  String get inboxPushCategoriesDescription =>
+      'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.';
+
+  @override
+  String get remotePushRegistrationOnly =>
+      'Registration connects this device to your account. Choose notification types for individual spaces separately.';
+
+  @override
+  String get remoteReminderTitle => 'Remote reminder';
+
+  @override
+  String get remoteReminderDescription =>
+      'This reminder is only for your account. The server saves it in your inbox; phone or email delivery depends on your settings and connection.';
+
+  @override
+  String get remoteReminderDate => 'Reminder date';
+
+  @override
+  String get remoteReminderTime => 'Reminder time';
+
+  @override
+  String get remoteReminderAdd => 'Add remote reminder';
+
+  @override
+  String get remoteReminderEdit => 'Edit remote reminder';
+
+  @override
+  String get remoteReminderCancel => 'Cancel reminder';
+
+  @override
+  String get remoteReminderQueued =>
+      'Waiting for server confirmation. Delivery is not confirmed yet.';
+
+  @override
+  String get remoteReminderScheduled => 'The schedule is saved on the server.';
+
+  @override
+  String get remoteReminderDelivered => 'The reminder was added to your inbox.';
+
+  @override
+  String get remoteReminderCancelled => 'The reminder is cancelled.';
+
+  @override
+  String get remoteReminderBlocked =>
+      'The change was not accepted. Check your access and refresh the data.';
+
+  @override
+  String get remoteReminderFuture => 'Choose a future time.';
+
+  @override
+  String get remoteReminderUnavailable =>
+      'A remote reminder is unavailable for this record.';
+
+  @override
+  String get remoteReminderSaved =>
+      'The reminder is saved on this device and waiting for the server.';
+
+  @override
+  String get remoteReminderCancelQueued =>
+      'Cancellation is saved on this device and waiting for the server.';
+
+  @override
   String get remotePushTitle => 'Remote notifications on this device';
 
   @override
@@ -3884,7 +3962,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gardenSelectHelp =>
-      'Tap an area to select it. Drag to move it; edit its size and label in the list.';
+      'Tap a bed to select it. Drag it to move or drag a corner handle to resize. The form remains available in the list.';
 
   @override
   String get gardenCanvasDescription =>
@@ -3934,7 +4012,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Position and size are percentages of the whole sketch.';
 
   @override
-  String get gardenNumberError => 'Enter 0–100; size must be at least 1.';
+  String get gardenNumberError => 'Enter 0–100; size must be greater than 0.';
 
   @override
   String get gardenGeometryError =>
@@ -4115,4 +4193,209 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spacePickerSharedProject => 'Shared project';
+
+  @override
+  String get gardenSeason => 'Season';
+
+  @override
+  String get gardenNewSeason => 'New season';
+
+  @override
+  String get gardenNoSeasons =>
+      'Start with a new season. Your existing bed layout is preserved.';
+
+  @override
+  String get gardenSeasonYear => 'Year';
+
+  @override
+  String get gardenSeasonYearError => 'Enter a new year between 1900 and 9999.';
+
+  @override
+  String get gardenSeasonEmpty => 'Empty season';
+
+  @override
+  String get gardenSeasonCopy => 'Copy crops from season';
+
+  @override
+  String get gardenSeasonCopyHelp =>
+      'Copied crops form a new plan with new entries and no dates. Actual plantings and history in the source season are preserved.';
+
+  @override
+  String get gardenSharedGeometry =>
+      'The bed layout is shared across seasons. Moving or resizing a bed applies to every year; crops and dates belong to individual seasons.';
+
+  @override
+  String get gardenPanTool => 'Pan / zoom';
+
+  @override
+  String get gardenPanHelp =>
+      'Drag to pan and pinch or use the buttons to zoom. Choose Select / move to edit beds.';
+
+  @override
+  String get gardenZoomIn => 'Zoom in';
+
+  @override
+  String get gardenZoomOut => 'Zoom out';
+
+  @override
+  String get gardenResetView => 'Fit plan';
+
+  @override
+  String get gardenBed => 'Bed';
+
+  @override
+  String get gardenZone => 'Other area';
+
+  @override
+  String get gardenAreaKind => 'Area type';
+
+  @override
+  String get gardenArchiveArea => 'Retire bed';
+
+  @override
+  String get gardenRestoreArea => 'Restore bed';
+
+  @override
+  String get gardenArchivedArea => 'Retired bed · history preserved';
+
+  @override
+  String get gardenArchiveHelp =>
+      'A retired bed is hidden from the plan. Its plantings and history remain in the list.';
+
+  @override
+  String get gardenSelectBed => 'Select a bed on the plan or in the list.';
+
+  @override
+  String get gardenSeasonPlantings => 'Crops in selected season';
+
+  @override
+  String get gardenNoPlantings =>
+      'This bed has no crops in the selected season yet.';
+
+  @override
+  String get gardenAddPlanting => 'Add crop';
+
+  @override
+  String get gardenEditPlanting => 'Edit crop';
+
+  @override
+  String get gardenCrop => 'Crop';
+
+  @override
+  String get gardenCropRequired => 'Enter a crop.';
+
+  @override
+  String get gardenVariety => 'Variety';
+
+  @override
+  String get gardenFamily => 'Plant family';
+
+  @override
+  String get gardenFamilyHelp =>
+      'Choose a known family or enter your own. We do not infer a family from the crop name.';
+
+  @override
+  String get gardenPlantingPlanned => 'Planned';
+
+  @override
+  String get gardenPlantingActual => 'Actual planting';
+
+  @override
+  String get gardenPlantingStatus => 'Planting status';
+
+  @override
+  String get gardenSowDate => 'Sowing';
+
+  @override
+  String get gardenPlantDate => 'Planting';
+
+  @override
+  String get gardenHarvestDate => 'Harvest';
+
+  @override
+  String get gardenChooseDate => 'Choose date';
+
+  @override
+  String get gardenClearDate => 'Clear date';
+
+  @override
+  String get gardenPlantingDatesError =>
+      'Dates must follow the order sowing, planting, harvest.';
+
+  @override
+  String get gardenHistory => 'Bed history';
+
+  @override
+  String get gardenNoHistory =>
+      'No seasons have been recorded for this bed yet.';
+
+  @override
+  String get gardenRotationInfo =>
+      'We compare entered known families with actual plantings on the same bed during the previous three years. An unknown family or missing history does not mean the rotation is suitable.';
+
+  @override
+  String gardenRotationRepeated(String family, String years) {
+    return 'The same recorded family $family was planted in this bed in $years.';
+  }
+
+  @override
+  String get gardenDetails => 'Garden name and notes';
+
+  @override
+  String get gardenSeasonNotes => 'Season notes';
+
+  @override
+  String get gardenDeletePlanting => 'Delete crop?';
+
+  @override
+  String get gardenDeletePlantingBody =>
+      'The selected crop entry will be removed from this season.';
+
+  @override
+  String get gardenDeleteSeason => 'Delete season?';
+
+  @override
+  String get gardenDeleteSeasonBody =>
+      'The selected season’s plantings and notes will be removed. The bed layout is preserved.';
+
+  @override
+  String get gardenDeleteSeasonAction => 'Delete season';
+
+  @override
+  String get gardenConfirmDraft =>
+      'After closing this form, save the garden too.';
+
+  @override
+  String get gardenSave => 'Save garden';
+
+  @override
+  String get gardenUndoPreserved =>
+      'The bed with plantings is preserved as retired. Its history is available in the list.';
+
+  @override
+  String get gardenFamilySolanaceae => 'Nightshades (Solanaceae)';
+
+  @override
+  String get gardenFamilyFabaceae => 'Legumes (Fabaceae)';
+
+  @override
+  String get gardenFamilyBrassicaceae => 'Brassicas (Brassicaceae)';
+
+  @override
+  String get gardenFamilyApiaceae => 'Umbellifers (Apiaceae)';
+
+  @override
+  String get gardenFamilyAsteraceae => 'Composites (Asteraceae)';
+
+  @override
+  String get gardenFamilyCucurbitaceae => 'Cucurbits (Cucurbitaceae)';
+
+  @override
+  String get gardenFamilyAmaryllidaceae => 'Amaryllis family (Amaryllidaceae)';
+
+  @override
+  String get gardenFamilyAmaranthaceae => 'Amaranths (Amaranthaceae)';
+
+  @override
+  String get gardenFamilyPoaceae => 'Grasses (Poaceae)';
 }

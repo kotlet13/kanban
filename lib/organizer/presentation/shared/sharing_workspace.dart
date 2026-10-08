@@ -263,6 +263,7 @@ class SharingWorkspace extends ConsumerWidget {
                       emptyDescription: l.sharingNoSharedListsDescription,
                     ),
                     SharingView.projects => OrganizerProjectsPage(
+                      reminderScopeId: scope.id,
                       allowProjectCreation:
                           scope.projectRootId == null &&
                           scope.organizationId == null,
@@ -307,6 +308,7 @@ class SharingWorkspace extends ConsumerWidget {
                       ),
                     ),
                     SharingView.tasks => OrganizerTasksPage(
+                      reminderScopeId: scope.id,
                       snapshot: sharedPresentationSnapshot(data),
                       actions: actions,
                       readOnly: readOnly,

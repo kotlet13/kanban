@@ -4,6 +4,7 @@ import '../../../l10n/l10n.dart';
 import '../../domain/collaboration_models.dart';
 import '../../domain/organizer_projections.dart';
 import '../organizer_widgets.dart';
+import '../inbox/remote_reminder_editor.dart';
 import 'task_plan_fields.dart';
 
 class SharedAgendaPage extends StatefulWidget {
@@ -248,6 +249,13 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
                         ],
                       ),
                     ),
+                    if (!widget.scope.archived &&
+                        (item.type == 'task' || item.type == 'event'))
+                      RemoteReminderButton(
+                        scopeId: widget.scope.id,
+                        targetType: item.type,
+                        targetId: item.id,
+                      ),
                     const Icon(Icons.chevron_right, size: 18),
                   ],
                 ),

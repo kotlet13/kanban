@@ -519,7 +519,10 @@ void main() {
       await tester.ensureVisible(tasks);
       await tester.tap(tasks);
       await tester.pumpAndSettle();
-      final inApp = find.widgetWithText(SwitchListTile, 'V centru obvestil');
+      final inApp = find.descendant(
+        of: tasks,
+        matching: find.widgetWithText(SwitchListTile, 'V centru obvestil'),
+      );
       await tester.ensureVisible(inApp);
       await tester.tap(inApp);
       await tester.pumpAndSettle();
@@ -529,9 +532,12 @@ void main() {
       expect(
         tester
             .widget<SwitchListTile>(
-              find.widgetWithText(
-                SwitchListTile,
-                'Oddaljena sistemska obvestila',
+              find.descendant(
+                of: tasks,
+                matching: find.widgetWithText(
+                  SwitchListTile,
+                  'Oddaljena sistemska obvestila',
+                ),
               ),
             )
             .onChanged,
@@ -540,7 +546,10 @@ void main() {
       expect(
         tester
             .widget<SwitchListTile>(
-              find.widgetWithText(SwitchListTile, 'E-pošta'),
+              find.descendant(
+                of: tasks,
+                matching: find.widgetWithText(SwitchListTile, 'E-pošta'),
+              ),
             )
             .onChanged,
         isNull,

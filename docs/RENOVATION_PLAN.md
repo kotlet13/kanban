@@ -6,6 +6,14 @@ Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. o
 
 **Aktualna usmeritev, pozneje 4. oktobra 2026:** uporabnik je po zahtevi za pregled pojasnil, da želi nadaljevati gradnjo in je z začetkom zadovoljen. Pregled stare kode in dosedanjih sprememb usmerja razvoj, ne ustavlja novih funkcij. Ohranitev starih lokalnih podatkov aplikacije ni pogoj; bistveno je iz strežnika zajeti vse obstoječe podatke kot preverjen lokalni arhiv s samostojnim brskalnikom. Staro aplikacijo in projekte lahko nato upokojimo. Obstoječi projekti so izhodišče za razumevanje potreb in morebiten izbrani prenos, ne obvezna živa združljivost. Finance ponovno zasnujemo. Spodnje izdelane etape so zapis dosedanjega razvoja, prihodnje etape pa se po ugotovitvah prilagodijo.
 
+## Dopolnitev obvestil po preizkusu FCM, 8. oktober 2026
+
+Uporabnik je naročil dokončanje brez svoje prisotnosti, commit/push in združitev v privzeto vejo `main`, nato izrecno še novo interno Android izdajo. [Mejnik oddaljenih opomnikov](REMOTE_REMINDERS.md) vodi uporabniški tok, preverjanje in jutrišnji fizični preizkus.
+
+- Strežniški FCM je nastavljen; en ciljni diagnostični opomnik je Google sprejel za registrirani Samsung. Uporabnik je potrdil prikaz na zaklenjenem telefonu in klik do pravega opravila. Cron in APNs imajo ločene dokaze v [cPanel zapisu](server/CPANEL_SETUP.md#13-fcm-na-testnem-strežniku-8-oktober-2026).
+- Dodano je ustvarjanje, sprememba in preklic **oddaljenega razporejenega opomnika** za skupno opravilo, dogodek in načrtovan finančni zapis. Obrazec uporablja obstoječi pogodbi `putReminder`/`cancelReminder`; trajna čakalna vrsta in strežniška potrditev imata ločeni stanji. Lokalni »Odloži 15 min« ostaja ločen tok. Nov fizični preizkus je načrtovan po posodobitvi.
+- Nastavitve zdaj ločijo **registracijo telefona** od **izbire kategorij za posamezen prostor**. Povzetek pokaže vključene kategorije ali odsotnost izbire, opomniki pa so prvi in razširjeni. Uporabnikov izbor ostane izrecen; ne vključujemo samodejno vseh kategorij ali e-pošte.
+
 ## Potrjena smer
 
 - Osrednja aplikacija za osebne načrte, prosti čas, dom, družino, projekte, nakupovanje in finance.
@@ -148,6 +156,8 @@ Obseg načrtovane izvedbe:
 - Matrika dejansko preverjenih platform; uspešen spletni build sam po sebi ne potrdi vseh native pluginov.
 
 ## Vrt — prva lokalna izvedba
+
+**Nadaljnja odobrena prenova, 8. oktober:** uporabnik je izbral poudarek na zelenjavnih gredah in kolobarju ter izrecno naročil izvedbo predloga v isti novi interni izdaji kot opomnike. Načrt v ospredju, povečava/premik, urejanje velikosti gred, letne sezone, več kultur na gredo (sorta, družina, datumi, zapiski), zgodovina in informativna opozorila ponovljene družine. Obstoječe risbe in ID-ji ostanejo; ni samodejne delitve, vzorčnih podatkov, strežniškega modula ali fotografij. Podatkovni in prikazni del izvajata ločena podagenta. Končni obseg in dokaze vodi [Vrt](GARDEN.md).
 
 **Zahteva uporabnika, 7. oktober 2026:** dodati modul **Vrt**, v katerem uporabnik ustvari svoj vrt ter sam zapiše in nariše, kje bo kaj imel. Prva izvedba je lokalna: več vrtov, zapiski in skica s poimenovanimi pravokotnimi območji. Deljenje in strežniška sinhronizacija Vrta nista del te etape. [Dokazi izvedbe](GARDEN.md): 76 podatkovnih/regresijskih in 48 UI/navigacijskih/vodičevih preizkusov PASS; mobilna namestitev je ločen pogoj.
 

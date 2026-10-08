@@ -182,7 +182,7 @@ void main() {
     },
   );
   test(
-    'scheduled reminders use their own category, independent of activity settings',
+    'remote schedules suppress duplicate local plans while automatic plans use reminders category',
     () {
       final session = AccountSession(
         serverUrl: 'https://example.test/',
@@ -258,7 +258,7 @@ void main() {
           personal: OrganizerSnapshot(),
           shared: state(true, false),
         ).map((p) => p.reason),
-        containsAll(['custom_reminder', 'event_start']),
+        equals(['event_start']),
       );
       final automatic = CollaborationState(
         session: session,

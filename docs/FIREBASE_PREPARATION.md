@@ -1,5 +1,7 @@
 # Priprava Firebase Cloud Messaging
 
+Aktualizacija 8. oktobra: namenski FCM račun in zasebni ključ sta nameščena na `jivie-test.triparna.si`; uspešni so lokalni preflight, javni capabilities, OAuth in FCM `validate_only=true` (HTTP 200). En ciljni opomnik je FCM sprejel; uporabnik je potrdil prikaz na zaklenjenem Samsungu S25 in klik do pravega opravila. Minutni push cron je dodan. APNs ostaja odprt. [Obrazec oddaljenih opomnikov](REMOTE_REMINDERS.md) je izdelan in se preverja za naslednjo interno izdajo; njegov fizični tok še ni potrjen. [Dejanski strežniški dokazi](server/CPANEL_SETUP.md#13-fcm-na-testnem-strežniku-8-oktober-2026).
+
 Uporabnik je 5. oktobra 2026 odobril pripravo FCM s paketom Spark. Ob tem mejniku je bila priprava pravega Firebase projekta še odložena; aktualna klientova nastavitev 7. oktobra je opisana spodaj. **Priprava implementirana in lokalno preverjena**; dejanska zunanja dostava še ni potrjena. Takrat je bila različica 1.0.12+12; zgodovinski dokazi spodaj veljajo zanjo. Priprava nove ločene aplikacije Jivie 7. oktobra 2026 uporablja Android/iOS `si.triparna.jivie` in načrtovano `1.0.0+1`; ne predstavlja preverjene nove oddaljene dostave. Produkcija in preverjeni arhiv ostajata nespremenjena. [Priprava izdaje](release/README.md).
 
 ## Klientova konfiguracija Jivie, 7. oktober 2026

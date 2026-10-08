@@ -633,4 +633,115 @@ void main() {
       expect(restored.snapshot.financeRecurrenceRules.single.active, false);
     },
   );
+  test(
+    'remote finance schedules replace automatic checks in shared and mapped private spaces',
+    () {
+      final r = rule(reminders: true).copyWith(ledgerAccountId: 'account');
+      final sharedEntry = SharedFinanceEntry(
+        id: 'shared-entry',
+        accountId: 'account',
+        kind: FinanceEntryKind.income,
+        status: SharedFinanceStatus.planned,
+        amountMinor: 100,
+        currency: 'EUR',
+        title: 'Planned income',
+        occurredAt: clock,
+        plannedAt: clock,
+        recurrenceRuleId: r.id,
+        occurrenceKey: '2026-10',
+        createdAt: clock,
+        updatedAt: clock,
+      );
+      final personalEntry = entry(
+        id: 'local-private-entry',
+        at: clock,
+        ruleId: r.id,
+        key: '2026-10',
+      );
+      final session = profile();
+      final personal = OrganizerSnapshot(
+        workspaceKey: 'private:${session.partition}',
+        financeEntries: [personalEntry],
+        financeRecurrenceRules: [r],
+      );
+      CollaborationState state(String delivery, String sync) =>
+          CollaborationState(
+            session: session,
+            scopes: [
+              const SharedScope(
+                id: 'shared',
+                name: 'Shared',
+                kind: SharedScopeKind.household,
+                role: SharedRole.owner,
+              ),
+            ],
+            data: {
+              'shared': SharedScopeData(
+                financeEntries: [sharedEntry],
+                financeRecurrenceRules: [r],
+              ),
+            },
+            privateSync: const PrivateSyncState(
+              enabled: true,
+              scopeId: 'private',
+            ),
+            privateRecordIds: {'remote-private-entry': 'local-private-entry'},
+            financePolicies: {
+              for (final scope in ['shared', 'private'])
+                scope: const SharedFinancePolicy(
+                  enabled: true,
+                  grant: SharedFinanceGrant.read,
+                ),
+            },
+            financeSnapshotComplete: {'shared': true, 'private': true},
+            scheduledReminders: [
+              for (final scope in ['shared', 'private'])
+                SharedScheduledReminder(
+                  id: 'reminder-$scope',
+                  scopeId: scope,
+                  targetType: scope == 'private'
+                      ? 'personalFinanceEntry'
+                      : 'financeEntry',
+                  targetId: scope == 'private'
+                      ? 'remote-private-entry'
+                      : 'shared-entry',
+                  remindAt: clock,
+                  revision: 1,
+                  state: delivery,
+                  syncState: sync,
+                ),
+            ],
+          );
+      for (final delivery in ['pending', 'delivered']) {
+        expect(
+          desiredFinanceReminderPlans(
+            personal: personal,
+            shared: state(delivery, 'synced'),
+          ),
+          isEmpty,
+        );
+        expect(
+          desiredFinanceReminderPlans(
+            personal: personal,
+            shared: state(delivery, 'queued'),
+          ),
+          isEmpty,
+        );
+      }
+      expect(
+        desiredFinanceReminderPlans(
+          personal: personal,
+          shared: state('cancelled', 'synced'),
+        ),
+        isNotEmpty,
+      );
+      expect(
+        desiredFinanceReminderPlans(
+          personal: personal,
+          shared: state('pending', 'blocked'),
+        ),
+        isNotEmpty,
+      );
+    },
+  );
 }

@@ -4,6 +4,7 @@ import '../../../l10n/l10n.dart';
 import '../../domain/organizer_models.dart';
 import '../../domain/shared_finance_models.dart';
 import '../organizer_widgets.dart';
+import '../inbox/remote_reminder_editor.dart';
 import '../planning/task_plan_fields.dart';
 import 'finance_money.dart';
 import 'finance_source_link.dart';
@@ -363,6 +364,14 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
+              if (row is SharedFinanceEntry &&
+                  row.status == SharedFinanceStatus.planned &&
+                  widget.scopeId != null)
+                RemoteReminderButton(
+                  scopeId: widget.scopeId!,
+                  targetType: 'financeEntry',
+                  targetId: row.id,
+                ),
               IconButton(
                 tooltip: context.l10n.financeAudit,
                 onPressed: () => widget.onAudit(_id(row)),
@@ -412,6 +421,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           context.l10n.financeEnteredBy,
           context.l10n.financeAudit,
           context.l10n.organizerTasks,
+          context.l10n.remoteReminderTitle,
         ])
           DataColumn(label: Text(label)),
       ],
@@ -449,6 +459,17 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                         entryId: row.id,
                         scopeId: widget.scopeId,
                         partition: widget.partition,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              DataCell(
+                row is SharedFinanceEntry &&
+                        row.status == SharedFinanceStatus.planned &&
+                        widget.scopeId != null
+                    ? RemoteReminderButton(
+                        scopeId: widget.scopeId!,
+                        targetType: 'financeEntry',
+                        targetId: row.id,
                       )
                     : const SizedBox.shrink(),
               ),

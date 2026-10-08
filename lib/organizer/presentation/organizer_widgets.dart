@@ -145,11 +145,13 @@ class OrganizerTaskRow extends StatelessWidget {
     required this.snapshot,
     required this.onEdit,
     required this.onCompleted,
+    this.trailing,
   });
   final LocalTask task;
   final OrganizerSnapshot snapshot;
   final VoidCallback? onEdit;
   final ValueChanged<bool>? onCompleted;
+  final Widget? trailing;
   @override
   Widget build(BuildContext context) {
     final project = snapshot.projects
@@ -225,6 +227,7 @@ class OrganizerTaskRow extends StatelessWidget {
               ),
             ),
           ),
+          if (trailing != null) trailing!,
         ],
       ),
     );

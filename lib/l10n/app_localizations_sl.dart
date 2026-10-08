@@ -2720,6 +2720,87 @@ class AppLocalizationsSl extends AppLocalizations {
   String get financeTotalBalance => 'Skupno stanje';
 
   @override
+  String inboxPushCategoriesNone(String space) {
+    return 'V prostoru »$space« ni izbranih vrst oddaljenih obvestil.';
+  }
+
+  @override
+  String inboxPushCategoriesSelected(String space, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count izbranih vrst oddaljenih obvestil.',
+      few: '$count izbrane vrste oddaljenih obvestil.',
+      two: '2 izbrani vrsti oddaljenih obvestil.',
+      one: '1 izbrana vrsta oddaljenih obvestil.',
+    );
+    return 'Prostor »$space«: $_temp0';
+  }
+
+  @override
+  String get inboxPushCategoriesDescription =>
+      'Vrste obvestil izbereš posebej za vsak prostor. Za razporejene opomnike spodaj vključi želeni kanal v razdelku Opomniki.';
+
+  @override
+  String get remotePushRegistrationOnly =>
+      'Registracija poveže to napravo s tvojim računom. Vrste obvestil za posamezne prostore izbereš posebej.';
+
+  @override
+  String get remoteReminderTitle => 'Oddaljeni opomnik';
+
+  @override
+  String get remoteReminderDescription =>
+      'Opomnik je namenjen samo tvojemu računu. Strežnik ga shrani v center obvestil; dostava na telefon ali e-pošto je odvisna od tvojih nastavitev in povezave.';
+
+  @override
+  String get remoteReminderDate => 'Datum opomnika';
+
+  @override
+  String get remoteReminderTime => 'Čas opomnika';
+
+  @override
+  String get remoteReminderAdd => 'Dodaj oddaljeni opomnik';
+
+  @override
+  String get remoteReminderEdit => 'Uredi oddaljeni opomnik';
+
+  @override
+  String get remoteReminderCancel => 'Prekliči opomnik';
+
+  @override
+  String get remoteReminderQueued =>
+      'Čaka na potrditev strežnika. Dostava še ni potrjena.';
+
+  @override
+  String get remoteReminderScheduled => 'Termin je shranjen na strežniku.';
+
+  @override
+  String get remoteReminderDelivered =>
+      'Opomnik je bil dodan v center obvestil.';
+
+  @override
+  String get remoteReminderCancelled => 'Opomnik je preklican.';
+
+  @override
+  String get remoteReminderBlocked =>
+      'Sprememba ni bila sprejeta. Preveri dostop in osveži podatke.';
+
+  @override
+  String get remoteReminderFuture => 'Izberi čas v prihodnosti.';
+
+  @override
+  String get remoteReminderUnavailable =>
+      'Za ta zapis oddaljeni opomnik ni na voljo.';
+
+  @override
+  String get remoteReminderSaved =>
+      'Opomnik je shranjen na napravi in čaka na strežnik.';
+
+  @override
+  String get remoteReminderCancelQueued =>
+      'Preklic je shranjen na napravi in čaka na strežnik.';
+
+  @override
   String get remotePushTitle => 'Oddaljena obvestila na tej napravi';
 
   @override
@@ -3893,7 +3974,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get gardenSelectHelp =>
-      'Izberi območje z dotikom. Povleci ga za premik; velikost in oznako uredi na seznamu.';
+      'Izberi gredo z dotikom. Povleci jo za premik ali povleci vogalno ročico za velikost. Obrazec ostane na voljo na seznamu.';
 
   @override
   String get gardenCanvasDescription =>
@@ -3943,7 +4024,7 @@ class AppLocalizationsSl extends AppLocalizations {
       'Položaj in velikost sta v odstotkih celotne skice.';
 
   @override
-  String get gardenNumberError => 'Vpiši 0–100; velikost mora biti vsaj 1.';
+  String get gardenNumberError => 'Vpiši 0–100; velikost mora biti večja od 0.';
 
   @override
   String get gardenGeometryError =>
@@ -4122,4 +4203,206 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get spacePickerSharedProject => 'Deljeni projekt';
+
+  @override
+  String get gardenSeason => 'Sezona';
+
+  @override
+  String get gardenNewSeason => 'Nova sezona';
+
+  @override
+  String get gardenNoSeasons =>
+      'Začnemo z novo sezono. Obstoječi razpored gred je ohranjen.';
+
+  @override
+  String get gardenSeasonYear => 'Letnica';
+
+  @override
+  String get gardenSeasonYearError => 'Vpiši novo letnico med 1900 in 9999.';
+
+  @override
+  String get gardenSeasonEmpty => 'Prazna sezona';
+
+  @override
+  String get gardenSeasonCopy => 'Kopiraj kulture iz sezone';
+
+  @override
+  String get gardenSeasonCopyHelp =>
+      'Kopirane kulture so nov načrt z novimi vnosi in brez datumov. Dejanske zasaditve in zgodovina izvorne sezone ostanejo ohranjene.';
+
+  @override
+  String get gardenSharedGeometry =>
+      'Razpored gred je skupen vsem sezonam. Premik ali sprememba velikosti velja za vse letnice; kulture in datumi so ločeni po sezonah.';
+
+  @override
+  String get gardenPanTool => 'Pogled / povečava';
+
+  @override
+  String get gardenPanHelp =>
+      'Premakni pogled s potegom in povečaj z dvema prstoma ali gumboma. Za urejanje gred izberi Izberi / premakni.';
+
+  @override
+  String get gardenZoomIn => 'Povečaj načrt';
+
+  @override
+  String get gardenZoomOut => 'Pomanjšaj načrt';
+
+  @override
+  String get gardenResetView => 'Celoten načrt';
+
+  @override
+  String get gardenBed => 'Greda';
+
+  @override
+  String get gardenZone => 'Drugo območje';
+
+  @override
+  String get gardenAreaKind => 'Vrsta območja';
+
+  @override
+  String get gardenArchiveArea => 'Upokoji gredo';
+
+  @override
+  String get gardenRestoreArea => 'Obnovi gredo';
+
+  @override
+  String get gardenArchivedArea => 'Upokojena greda · zgodovina ohranjena';
+
+  @override
+  String get gardenArchiveHelp =>
+      'Upokojena greda se skrije z načrta. Njene zasaditve in zgodovina ostanejo v seznamu.';
+
+  @override
+  String get gardenSelectBed => 'Izberi gredo na načrtu ali seznamu.';
+
+  @override
+  String get gardenSeasonPlantings => 'Kulture v izbrani sezoni';
+
+  @override
+  String get gardenNoPlantings => 'Ta greda v izbrani sezoni še nima kultur.';
+
+  @override
+  String get gardenAddPlanting => 'Dodaj kulturo';
+
+  @override
+  String get gardenEditPlanting => 'Uredi kulturo';
+
+  @override
+  String get gardenCrop => 'Kultura';
+
+  @override
+  String get gardenCropRequired => 'Vpiši kulturo.';
+
+  @override
+  String get gardenVariety => 'Sorta';
+
+  @override
+  String get gardenFamily => 'Družina rastlin';
+
+  @override
+  String get gardenFamilyHelp =>
+      'Izberi znano družino ali vpiši svojo. Družine ne določamo samodejno iz imena kulture.';
+
+  @override
+  String get gardenPlantingPlanned => 'Načrtovano';
+
+  @override
+  String get gardenPlantingActual => 'Dejanska zasaditev';
+
+  @override
+  String get gardenPlantingStatus => 'Stanje zasaditve';
+
+  @override
+  String get gardenSowDate => 'Setev';
+
+  @override
+  String get gardenPlantDate => 'Sajenje';
+
+  @override
+  String get gardenHarvestDate => 'Pobiranje';
+
+  @override
+  String get gardenChooseDate => 'Izberi datum';
+
+  @override
+  String get gardenClearDate => 'Odstrani datum';
+
+  @override
+  String get gardenPlantingDatesError =>
+      'Datumi morajo biti v vrstnem redu setev, sajenje, pobiranje.';
+
+  @override
+  String get gardenHistory => 'Zgodovina grede';
+
+  @override
+  String get gardenNoHistory => 'Za to gredo še ni zabeleženih sezon.';
+
+  @override
+  String get gardenRotationInfo =>
+      'Informativno primerjamo vpisane znane družine z dejanskimi zasaditvami zadnjih treh let na isti gredi. Neznana družina ali manjkajoča zgodovina ne pomenita, da je kolobar ustrezen.';
+
+  @override
+  String gardenRotationRepeated(String family, String years) {
+    return 'Ista zapisana družina $family je bila na tej gredi v letih $years.';
+  }
+
+  @override
+  String get gardenDetails => 'Ime in zapiski vrta';
+
+  @override
+  String get gardenSeasonNotes => 'Zapiski sezone';
+
+  @override
+  String get gardenDeletePlanting => 'Izbrišem kulturo?';
+
+  @override
+  String get gardenDeletePlantingBody =>
+      'Izbrani vnos kulture bo odstranjen iz te sezone.';
+
+  @override
+  String get gardenDeleteSeason => 'Izbrišem sezono?';
+
+  @override
+  String get gardenDeleteSeasonBody =>
+      'Zasaditve in zapiski izbrane sezone bodo odstranjeni. Razpored gred ostane ohranjen.';
+
+  @override
+  String get gardenDeleteSeasonAction => 'Izbriši sezono';
+
+  @override
+  String get gardenConfirmDraft => 'Po zaprtju tega obrazca shrani še vrt.';
+
+  @override
+  String get gardenSave => 'Shrani vrt';
+
+  @override
+  String get gardenUndoPreserved =>
+      'Greda z zasaditvami je ohranjena kot upokojena. Njeno zgodovino najdeš v seznamu.';
+
+  @override
+  String get gardenFamilySolanaceae => 'Razhudnikovke (Solanaceae)';
+
+  @override
+  String get gardenFamilyFabaceae => 'Metuljnice (Fabaceae)';
+
+  @override
+  String get gardenFamilyBrassicaceae => 'Križnice (Brassicaceae)';
+
+  @override
+  String get gardenFamilyApiaceae => 'Kobulnice (Apiaceae)';
+
+  @override
+  String get gardenFamilyAsteraceae => 'Nebinovke (Asteraceae)';
+
+  @override
+  String get gardenFamilyCucurbitaceae => 'Bučevke (Cucurbitaceae)';
+
+  @override
+  String get gardenFamilyAmaryllidaceae => 'Narcisovke (Amaryllidaceae)';
+
+  @override
+  String get gardenFamilyAmaranthaceae => 'Ščirovke (Amaranthaceae)';
+
+  @override
+  String get gardenFamilyPoaceae => 'Trave (Poaceae)';
 }

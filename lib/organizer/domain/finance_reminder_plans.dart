@@ -9,6 +9,15 @@ List<ReminderPlan> desiredFinanceReminderPlans({
 }) {
   final result = <ReminderPlan>[];
   final session = shared.session;
+  bool remotelyScheduled(String scopeId, String type, String id) =>
+      shared.scheduledReminders.any(
+        (r) =>
+            r.scopeId == scopeId &&
+            r.targetType == type &&
+            r.targetId == id &&
+            r.state != 'cancelled' &&
+            r.syncState != 'blocked',
+      );
   void salary(
     FinanceRecurrenceRule rule,
     String entryId,
@@ -80,6 +89,10 @@ List<ReminderPlan> desiredFinanceReminderPlans({
               .firstOrNull
               ?.key ??
           e.id;
+      if (isPrivate &&
+          remotelyScheduled(privateScope!, 'personalFinanceEntry', remoteId)) {
+        continue;
+      }
       final target = NotificationTarget(
         serverUrl: isPrivate ? session!.serverUrl : null,
         serverId: isPrivate ? session!.serverId : null,
@@ -120,6 +133,7 @@ List<ReminderPlan> desiredFinanceReminderPlans({
             e.status == SharedFinanceStatus.planned &&
             e.recurrenceRuleId != null,
       )) {
+        if (remotelyScheduled(scope.id, 'financeEntry', e.id)) continue;
         final rule = data.financeRecurrenceRules
             .where((r) => r.id == e.recurrenceRuleId)
             .firstOrNull;

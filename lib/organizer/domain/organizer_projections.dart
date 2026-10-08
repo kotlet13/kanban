@@ -164,7 +164,12 @@ List<ReminderPlan> desiredReminderPlans({
       records: [NotificationRecordTarget(type: type, recordId: id)],
     );
     final custom = shared.scheduledReminders
-        .where((r) => r.scopeId == scope.id && r.state != 'cancelled')
+        .where(
+          (r) =>
+              r.scopeId == scope.id &&
+              r.state != 'cancelled' &&
+              r.syncState != 'blocked',
+        )
         .toList();
     if (prefs?.forCategory('reminders').inApp != false) {
       for (final t in data.tasks.where(
@@ -198,32 +203,9 @@ List<ReminderPlan> desiredReminderPlans({
         );
       }
     }
-    if (prefs?.forCategory('reminders').inApp != false) {
-      for (final r in custom) {
-        final valid = switch (r.targetType) {
-          'task' => data.tasks.any((t) => t.id == r.targetId && !t.isCompleted),
-          'event' => data.events.any((e) => e.id == r.targetId),
-          'financeEntry' =>
-            shared.financePolicyForScope(scope.id).canRead &&
-                data.financeEntries.any(
-                  (e) =>
-                      e.id == r.targetId &&
-                      e.status == SharedFinanceStatus.planned,
-                ),
-          _ => false,
-        };
-        if (valid) {
-          plans.add(
-            ReminderPlan(
-              stableKey: '${session.partition}:reminder:${r.id}',
-              scheduledAt: r.remindAt,
-              reason: 'custom_reminder',
-              target: target(r.targetType, r.targetId),
-            ),
-          );
-        }
-      }
-    }
+    // Custom schedules are delivered by the server. Suppress the automatic
+    // local plan for that target, including after delivery, to avoid a second
+    // notification for the same explicitly scheduled reminder.
   }
   return List.unmodifiable(plans);
 }

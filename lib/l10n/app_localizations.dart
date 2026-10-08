@@ -4848,6 +4848,126 @@ abstract class AppLocalizations {
   /// **'Total balance'**
   String get financeTotalBalance;
 
+  /// No description provided for @inboxPushCategoriesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No remote notification types are selected for “{space}”.'**
+  String inboxPushCategoriesNone(String space);
+
+  /// No description provided for @inboxPushCategoriesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Space “{space}”: {count, plural, one{1 remote notification type selected.} other{{count} remote notification types selected.}}'**
+  String inboxPushCategoriesSelected(String space, int count);
+
+  /// No description provided for @inboxPushCategoriesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.'**
+  String get inboxPushCategoriesDescription;
+
+  /// No description provided for @remotePushRegistrationOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration connects this device to your account. Choose notification types for individual spaces separately.'**
+  String get remotePushRegistrationOnly;
+
+  /// No description provided for @remoteReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote reminder'**
+  String get remoteReminderTitle;
+
+  /// No description provided for @remoteReminderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This reminder is only for your account. The server saves it in your inbox; phone or email delivery depends on your settings and connection.'**
+  String get remoteReminderDescription;
+
+  /// No description provided for @remoteReminderDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder date'**
+  String get remoteReminderDate;
+
+  /// No description provided for @remoteReminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get remoteReminderTime;
+
+  /// No description provided for @remoteReminderAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add remote reminder'**
+  String get remoteReminderAdd;
+
+  /// No description provided for @remoteReminderEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit remote reminder'**
+  String get remoteReminderEdit;
+
+  /// No description provided for @remoteReminderCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reminder'**
+  String get remoteReminderCancel;
+
+  /// No description provided for @remoteReminderQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for server confirmation. Delivery is not confirmed yet.'**
+  String get remoteReminderQueued;
+
+  /// No description provided for @remoteReminderScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'The schedule is saved on the server.'**
+  String get remoteReminderScheduled;
+
+  /// No description provided for @remoteReminderDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'The reminder was added to your inbox.'**
+  String get remoteReminderDelivered;
+
+  /// No description provided for @remoteReminderCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'The reminder is cancelled.'**
+  String get remoteReminderCancelled;
+
+  /// No description provided for @remoteReminderBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The change was not accepted. Check your access and refresh the data.'**
+  String get remoteReminderBlocked;
+
+  /// No description provided for @remoteReminderFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future time.'**
+  String get remoteReminderFuture;
+
+  /// No description provided for @remoteReminderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A remote reminder is unavailable for this record.'**
+  String get remoteReminderUnavailable;
+
+  /// No description provided for @remoteReminderSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The reminder is saved on this device and waiting for the server.'**
+  String get remoteReminderSaved;
+
+  /// No description provided for @remoteReminderCancelQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation is saved on this device and waiting for the server.'**
+  String get remoteReminderCancelQueued;
+
   /// No description provided for @remotePushTitle.
   ///
   /// In en, this message translates to:
@@ -6915,7 +7035,7 @@ abstract class AppLocalizations {
   /// No description provided for @gardenSelectHelp.
   ///
   /// In en, this message translates to:
-  /// **'Tap an area to select it. Drag to move it; edit its size and label in the list.'**
+  /// **'Tap a bed to select it. Drag it to move or drag a corner handle to resize. The form remains available in the list.'**
   String get gardenSelectHelp;
 
   /// No description provided for @gardenCanvasDescription.
@@ -7005,7 +7125,7 @@ abstract class AppLocalizations {
   /// No description provided for @gardenNumberError.
   ///
   /// In en, this message translates to:
-  /// **'Enter 0–100; size must be at least 1.'**
+  /// **'Enter 0–100; size must be greater than 0.'**
   String get gardenNumberError;
 
   /// No description provided for @gardenGeometryError.
@@ -7295,6 +7415,384 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shared project'**
   String get spacePickerSharedProject;
+
+  /// No description provided for @gardenSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Season'**
+  String get gardenSeason;
+
+  /// No description provided for @gardenNewSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'New season'**
+  String get gardenNewSeason;
+
+  /// No description provided for @gardenNoSeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with a new season. Your existing bed layout is preserved.'**
+  String get gardenNoSeasons;
+
+  /// No description provided for @gardenSeasonYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get gardenSeasonYear;
+
+  /// No description provided for @gardenSeasonYearError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a new year between 1900 and 9999.'**
+  String get gardenSeasonYearError;
+
+  /// No description provided for @gardenSeasonEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty season'**
+  String get gardenSeasonEmpty;
+
+  /// No description provided for @gardenSeasonCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy crops from season'**
+  String get gardenSeasonCopy;
+
+  /// No description provided for @gardenSeasonCopyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied crops form a new plan with new entries and no dates. Actual plantings and history in the source season are preserved.'**
+  String get gardenSeasonCopyHelp;
+
+  /// No description provided for @gardenSharedGeometry.
+  ///
+  /// In en, this message translates to:
+  /// **'The bed layout is shared across seasons. Moving or resizing a bed applies to every year; crops and dates belong to individual seasons.'**
+  String get gardenSharedGeometry;
+
+  /// No description provided for @gardenPanTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Pan / zoom'**
+  String get gardenPanTool;
+
+  /// No description provided for @gardenPanHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to pan and pinch or use the buttons to zoom. Choose Select / move to edit beds.'**
+  String get gardenPanHelp;
+
+  /// No description provided for @gardenZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get gardenZoomIn;
+
+  /// No description provided for @gardenZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get gardenZoomOut;
+
+  /// No description provided for @gardenResetView.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit plan'**
+  String get gardenResetView;
+
+  /// No description provided for @gardenBed.
+  ///
+  /// In en, this message translates to:
+  /// **'Bed'**
+  String get gardenBed;
+
+  /// No description provided for @gardenZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Other area'**
+  String get gardenZone;
+
+  /// No description provided for @gardenAreaKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Area type'**
+  String get gardenAreaKind;
+
+  /// No description provided for @gardenArchiveArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Retire bed'**
+  String get gardenArchiveArea;
+
+  /// No description provided for @gardenRestoreArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore bed'**
+  String get gardenRestoreArea;
+
+  /// No description provided for @gardenArchivedArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Retired bed · history preserved'**
+  String get gardenArchivedArea;
+
+  /// No description provided for @gardenArchiveHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A retired bed is hidden from the plan. Its plantings and history remain in the list.'**
+  String get gardenArchiveHelp;
+
+  /// No description provided for @gardenSelectBed.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a bed on the plan or in the list.'**
+  String get gardenSelectBed;
+
+  /// No description provided for @gardenSeasonPlantings.
+  ///
+  /// In en, this message translates to:
+  /// **'Crops in selected season'**
+  String get gardenSeasonPlantings;
+
+  /// No description provided for @gardenNoPlantings.
+  ///
+  /// In en, this message translates to:
+  /// **'This bed has no crops in the selected season yet.'**
+  String get gardenNoPlantings;
+
+  /// No description provided for @gardenAddPlanting.
+  ///
+  /// In en, this message translates to:
+  /// **'Add crop'**
+  String get gardenAddPlanting;
+
+  /// No description provided for @gardenEditPlanting.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit crop'**
+  String get gardenEditPlanting;
+
+  /// No description provided for @gardenCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop'**
+  String get gardenCrop;
+
+  /// No description provided for @gardenCropRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a crop.'**
+  String get gardenCropRequired;
+
+  /// No description provided for @gardenVariety.
+  ///
+  /// In en, this message translates to:
+  /// **'Variety'**
+  String get gardenVariety;
+
+  /// No description provided for @gardenFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant family'**
+  String get gardenFamily;
+
+  /// No description provided for @gardenFamilyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a known family or enter your own. We do not infer a family from the crop name.'**
+  String get gardenFamilyHelp;
+
+  /// No description provided for @gardenPlantingPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get gardenPlantingPlanned;
+
+  /// No description provided for @gardenPlantingActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual planting'**
+  String get gardenPlantingActual;
+
+  /// No description provided for @gardenPlantingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Planting status'**
+  String get gardenPlantingStatus;
+
+  /// No description provided for @gardenSowDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sowing'**
+  String get gardenSowDate;
+
+  /// No description provided for @gardenPlantDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Planting'**
+  String get gardenPlantDate;
+
+  /// No description provided for @gardenHarvestDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Harvest'**
+  String get gardenHarvestDate;
+
+  /// No description provided for @gardenChooseDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose date'**
+  String get gardenChooseDate;
+
+  /// No description provided for @gardenClearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date'**
+  String get gardenClearDate;
+
+  /// No description provided for @gardenPlantingDatesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Dates must follow the order sowing, planting, harvest.'**
+  String get gardenPlantingDatesError;
+
+  /// No description provided for @gardenHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Bed history'**
+  String get gardenHistory;
+
+  /// No description provided for @gardenNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No seasons have been recorded for this bed yet.'**
+  String get gardenNoHistory;
+
+  /// No description provided for @gardenRotationInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'We compare entered known families with actual plantings on the same bed during the previous three years. An unknown family or missing history does not mean the rotation is suitable.'**
+  String get gardenRotationInfo;
+
+  /// No description provided for @gardenRotationRepeated.
+  ///
+  /// In en, this message translates to:
+  /// **'The same recorded family {family} was planted in this bed in {years}.'**
+  String gardenRotationRepeated(String family, String years);
+
+  /// No description provided for @gardenDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden name and notes'**
+  String get gardenDetails;
+
+  /// No description provided for @gardenSeasonNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Season notes'**
+  String get gardenSeasonNotes;
+
+  /// No description provided for @gardenDeletePlanting.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete crop?'**
+  String get gardenDeletePlanting;
+
+  /// No description provided for @gardenDeletePlantingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected crop entry will be removed from this season.'**
+  String get gardenDeletePlantingBody;
+
+  /// No description provided for @gardenDeleteSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete season?'**
+  String get gardenDeleteSeason;
+
+  /// No description provided for @gardenDeleteSeasonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected season’s plantings and notes will be removed. The bed layout is preserved.'**
+  String get gardenDeleteSeasonBody;
+
+  /// No description provided for @gardenDeleteSeasonAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete season'**
+  String get gardenDeleteSeasonAction;
+
+  /// No description provided for @gardenConfirmDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'After closing this form, save the garden too.'**
+  String get gardenConfirmDraft;
+
+  /// No description provided for @gardenSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save garden'**
+  String get gardenSave;
+
+  /// No description provided for @gardenUndoPreserved.
+  ///
+  /// In en, this message translates to:
+  /// **'The bed with plantings is preserved as retired. Its history is available in the list.'**
+  String get gardenUndoPreserved;
+
+  /// No description provided for @gardenFamilySolanaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Nightshades (Solanaceae)'**
+  String get gardenFamilySolanaceae;
+
+  /// No description provided for @gardenFamilyFabaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Legumes (Fabaceae)'**
+  String get gardenFamilyFabaceae;
+
+  /// No description provided for @gardenFamilyBrassicaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Brassicas (Brassicaceae)'**
+  String get gardenFamilyBrassicaceae;
+
+  /// No description provided for @gardenFamilyApiaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Umbellifers (Apiaceae)'**
+  String get gardenFamilyApiaceae;
+
+  /// No description provided for @gardenFamilyAsteraceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Composites (Asteraceae)'**
+  String get gardenFamilyAsteraceae;
+
+  /// No description provided for @gardenFamilyCucurbitaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Cucurbits (Cucurbitaceae)'**
+  String get gardenFamilyCucurbitaceae;
+
+  /// No description provided for @gardenFamilyAmaryllidaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Amaryllis family (Amaryllidaceae)'**
+  String get gardenFamilyAmaryllidaceae;
+
+  /// No description provided for @gardenFamilyAmaranthaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Amaranths (Amaranthaceae)'**
+  String get gardenFamilyAmaranthaceae;
+
+  /// No description provided for @gardenFamilyPoaceae.
+  ///
+  /// In en, this message translates to:
+  /// **'Grasses (Poaceae)'**
+  String get gardenFamilyPoaceae;
 }
 
 class _AppLocalizationsDelegate

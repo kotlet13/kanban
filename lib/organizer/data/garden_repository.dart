@@ -68,6 +68,7 @@ class GardenRepository {
     required String name,
     String notes = '',
     Iterable<GardenArea> areas = const [],
+    Iterable<GardenSeason> seasons = const [],
   }) => _change((s) {
     final now = _clock().toUtc(), id = _idGenerator();
     final garden = Garden(
@@ -75,6 +76,7 @@ class GardenRepository {
       name: name.trim(),
       notes: notes,
       areas: areas,
+      seasons: seasons,
       createdAt: now,
       updatedAt: now,
     );
@@ -120,6 +122,40 @@ class GardenRepository {
       null,
     );
   });
+  Future<void> saveSeason(Garden garden, GardenSeason season) => updateGarden(
+    garden.copyWith(
+      seasons: [...garden.seasons.where((s) => s.year != season.year), season],
+    ),
+  );
+  Future<void> deleteSeason(Garden garden, int year) => updateGarden(
+    garden.copyWith(seasons: garden.seasons.where((s) => s.year != year)),
+  );
+  Future<void> savePlanting(Garden garden, int year, GardenPlanting planting) {
+    final season = garden.seasonForYear(year) ?? GardenSeason(year: year);
+    return saveSeason(
+      garden,
+      season.copyWith(
+        plantings: [
+          ...season.plantings.where((p) => p.id != planting.id),
+          planting,
+        ],
+      ),
+    );
+  }
+
+  Future<void> deletePlanting(Garden garden, int year, String plantingId) {
+    final season = garden.seasonForYear(year);
+    if (season == null || !season.plantings.any((p) => p.id == plantingId)) {
+      throw const OrganizerConflictException('Planting no longer exists');
+    }
+    return saveSeason(
+      garden,
+      season.copyWith(
+        plantings: season.plantings.where((p) => p.id != plantingId),
+      ),
+    );
+  }
+
   Future<void> close() async {
     _closed = true;
     await _subscription.cancel();

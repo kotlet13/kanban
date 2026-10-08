@@ -239,12 +239,36 @@ class CollaborationRepository {
           );
         }
       }
+      final reminderCommandStates = <String, String>{};
+      for (final command in await database.rows(
+        "SELECT entity_key,state FROM commands WHERE partition=? AND entity_key LIKE 'reminder:%'",
+        [profile.partition],
+      )) {
+        final id = (command['entity_key'] as String).substring(
+          'reminder:'.length,
+        );
+        // Older local snapshots predate syncState. Never describe their queued
+        // or rejected operation as a confirmed server schedule after restore.
+        if (command['state'] == 'pending') {
+          reminderCommandStates[id] = 'queued';
+        } else if (!reminderCommandStates.containsKey(id)) {
+          reminderCommandStates[id] = 'blocked';
+        }
+      }
       final reminders =
           (await database.rows(
                 'SELECT data FROM scheduled_reminders WHERE partition=?',
                 [profile.partition],
               ))
-              .map((r) => SharedScheduledReminder.fromJson(_map(r['data'])))
+              .map((r) {
+                final value = _map(r['data']);
+                return SharedScheduledReminder.fromJson({
+                  ...value,
+                  if (value['syncState'] == null &&
+                      reminderCommandStates[value['id']] != null)
+                    'syncState': reminderCommandStates[value['id']],
+                });
+              })
               .where(
                 (e) => parsedScopes.any(
                   (s) => s.id == e.scopeId && !s.revoked && !s.archived,
@@ -254,6 +278,12 @@ class CollaborationRepository {
       final commands =
           (await database.rows(
                 'SELECT COUNT(*) AS count FROM commands WHERE partition=?',
+                [profile.partition],
+              )).first['count']
+              as int;
+      final blockedCommands =
+          (await database.rows(
+                "SELECT COUNT(*) AS count FROM commands WHERE partition=? AND state='blocked'",
                 [profile.partition],
               )).first['count']
               as int;
@@ -368,7 +398,7 @@ class CollaborationRepository {
         inbox: inbox,
         notificationPreferences: notificationPreferences,
         scheduledReminders: reminders,
-        blockedCount: blocked.first['count'] as int,
+        blockedCount: (blocked.first['count'] as int) + blockedCommands,
         isSyncing: _syncing,
         lastError: _lastError,
         conflicts: conflicts.map(

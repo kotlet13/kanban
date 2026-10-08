@@ -256,8 +256,14 @@ class SharedScheduledReminder {
     required this.remindAt,
     required this.revision,
     required this.state,
+    this.syncState = 'synced',
+    this.syncError,
   });
   final String id, scopeId, targetType, targetId, state;
+
+  /// Local command status, independent of the server delivery state.
+  final String syncState;
+  final String? syncError;
   final DateTime remindAt;
   final int revision;
   factory SharedScheduledReminder.fromJson(Map<String, dynamic> j) =>
@@ -269,6 +275,8 @@ class SharedScheduledReminder {
         remindAt: readSharedDate(j, 'remindAt'),
         revision: readInt(j, 'revision'),
         state: readString(j, 'state'),
+        syncState: j['syncState'] as String? ?? 'synced',
+        syncError: j['syncError'] as String?,
       );
   Map<String, Object?> toJson() => {
     'id': id,
@@ -278,5 +286,7 @@ class SharedScheduledReminder {
     'remindAt': remindAt.toUtc().toIso8601String(),
     'revision': revision,
     'state': state,
+    'syncState': syncState,
+    if (syncError != null) 'syncError': syncError,
   };
 }

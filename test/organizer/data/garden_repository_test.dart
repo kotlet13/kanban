@@ -231,7 +231,7 @@ void main() {
       'Severni rob 🌱',
     );
     for (final mutate in <void Function(Map<String, dynamic>)>[
-      (j) => j['version'] = 2,
+      (j) => j['version'] = 3,
       (j) => j['token'] = 'unknown',
       (j) => (j['gardens'] as List).first['revision'] = -1,
       (j) => (j['gardens'] as List).first['createdAt'] =

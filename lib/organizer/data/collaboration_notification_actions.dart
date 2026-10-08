@@ -15,7 +15,13 @@ extension CollaborationNotificationActions on CollaborationRepository {
     }
     if (!const ['task', 'event', 'financeEntry'].contains(type)) return null;
     return jsonEncode([
-      for (final key in ['dueAt', 'startAt', 'endAt', 'occurredAt'])
+      for (final key in [
+        'dueAt',
+        'startAt',
+        'endAt',
+        'occurredAt',
+        'plannedAt',
+      ])
         payload[key] == null
             ? null
             : DateTime.parse(
@@ -47,10 +53,14 @@ extension CollaborationNotificationActions on CollaborationRepository {
       );
       if (reminder.targetType != type ||
           reminder.targetId != id ||
-          reminder.state == 'cancelled') {
+          reminder.state != 'pending') {
         continue;
       }
       final data = reminder.toJson()..['state'] = 'cancelled';
+      if (reminder.syncState == 'queued') {
+        data['syncState'] = 'blocked';
+        data['syncError'] = 'reminder_target_unavailable';
+      }
       await database.execute(
         'UPDATE scheduled_reminders SET data=? WHERE partition=? AND id=?',
         [jsonEncode(data), p, reminder.id],
@@ -170,19 +180,26 @@ extension CollaborationNotificationActions on CollaborationRepository {
     required String targetId,
     required DateTime remindAt,
     int expectedRevision = 0,
+    String? expectedPartition,
   }) async {
     if (!const ['task', 'event', 'financeEntry'].contains(targetType) ||
-        !isSharedUuid(targetId)) {
+        !isSharedUuid(targetId) ||
+        !isSharedUuid(scopeId) ||
+        (id != null && !isSharedUuid(id)) ||
+        expectedRevision < 0 ||
+        !remindAt.toUtc().isAfter(clock().toUtc())) {
       throw const CollaborationException('validation_error');
     }
     final session = _requireSession(),
         epoch = _epoch,
         reminderId = id ?? newSharedId();
+    if (expectedPartition != null &&
+        expectedPartition != session.profile.partition) {
+      throw const CollaborationException('session_changed');
+    }
     await database.transaction(() async {
       _checkEpoch(epoch);
-      if (!state.scopes.any((s) => s.id == scopeId && !s.revoked)) {
-        throw const CollaborationException('permission_revoked');
-      }
+      await _writable(session.profile.partition, scopeId);
       final table = isFinancialRecordType(targetType)
           ? 'finance_records'
           : 'records';
@@ -210,7 +227,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         throw const CollaborationException('reminder_target_unavailable');
       }
       final rows = await database.rows(
-        'SELECT data FROM scheduled_reminders WHERE partition=? AND id=?',
+        'SELECT data,remote FROM scheduled_reminders WHERE partition=? AND id=?',
         [session.profile.partition, reminderId],
       );
       final old = rows.isEmpty
@@ -218,9 +235,20 @@ extension CollaborationNotificationActions on CollaborationRepository {
           : SharedScheduledReminder.fromJson(
               CollaborationRepository._map(rows.first['data']),
             );
+      if (old != null &&
+          (old.scopeId != scopeId ||
+              old.targetType != targetType ||
+              old.targetId != targetId)) {
+        throw const CollaborationException('reminder_target_immutable');
+      }
       if ((old?.revision ?? 0) != expectedRevision) {
         throw const CollaborationException('stale_edit');
       }
+      final serverRevision = await _nextReminderServerRevision(
+        session.profile.partition,
+        reminderId,
+        rows.isEmpty ? null : rows.first['remote'],
+      );
       final reminder = SharedScheduledReminder(
         id: reminderId,
         scopeId: scopeId,
@@ -229,6 +257,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         remindAt: remindAt.toUtc(),
         revision: expectedRevision + 1,
         state: 'pending',
+        syncState: 'queued',
       );
       await database.execute('DELETE FROM local_meta WHERE name=?', [
         'reminder_cancelled:${session.profile.partition}:$reminderId',
@@ -248,43 +277,120 @@ extension CollaborationNotificationActions on CollaborationRepository {
         'targetType': targetType,
         'targetId': targetId,
         'remindAt': remindAt.toUtc().toIso8601String(),
-        'expectedRevision': expectedRevision,
+        'expectedRevision': serverRevision,
         'requestId': newSharedId(),
       }, 'reminder:$reminderId');
+      _checkEpoch(epoch);
     });
     await refreshLocal();
     return reminderId;
   }
 
-  Future<void> cancelReminder(SharedScheduledReminder reminder) async {
+  /// Predict only from immutable pending commands, never from a rejected draft.
+  Future<int> _nextReminderServerRevision(
+    String partition,
+    String id,
+    Object? remote,
+  ) async {
+    final pending = await database.rows(
+      "SELECT params FROM commands WHERE partition=? AND entity_key=? AND state='pending' ORDER BY sequence DESC LIMIT 1",
+      [partition, 'reminder:$id'],
+    );
+    if (pending.isNotEmpty) {
+      return (CollaborationRepository._map(
+                pending.first['params'],
+              )['expectedRevision']
+              as int) +
+          1;
+    }
+    return remote == null
+        ? 0
+        : SharedScheduledReminder.fromJson(
+            CollaborationRepository._map(remote),
+          ).revision;
+  }
+
+  Future<void> cancelReminder(
+    SharedScheduledReminder reminder, {
+    String? expectedPartition,
+  }) async {
     final session = _requireSession(), epoch = _epoch;
+    final partition = session.profile.partition;
+    if (expectedPartition != null && expectedPartition != partition) {
+      throw const CollaborationException('session_changed');
+    }
     await database.transaction(() async {
       _checkEpoch(epoch);
       final rows = await database.rows(
-        'SELECT data FROM scheduled_reminders WHERE partition=? AND id=?',
-        [session.profile.partition, reminder.id],
+        'SELECT data,remote FROM scheduled_reminders WHERE partition=? AND id=?',
+        [partition, reminder.id],
       );
-      if (rows.isEmpty ||
-          SharedScheduledReminder.fromJson(
-                CollaborationRepository._map(rows.first['data']),
-              ).revision !=
-              reminder.revision) {
+      if (rows.isEmpty) throw const CollaborationException('stale_edit');
+      final stored = SharedScheduledReminder.fromJson(
+        CollaborationRepository._map(rows.first['data']),
+      );
+      if (stored.revision != reminder.revision) {
         throw const CollaborationException('stale_edit');
       }
-      final value = reminder.toJson()
+      if (stored.scopeId != reminder.scopeId ||
+          stored.targetId != reminder.targetId ||
+          stored.targetType != reminder.targetType) {
+        throw const CollaborationException('reminder_target_immutable');
+      }
+      await _readableReminderScope(partition, stored.scopeId);
+      if (isFinancialRecordType(stored.targetType) &&
+          !(await _cachedFinancePolicy(partition, stored.scopeId)).canRead) {
+        throw const CollaborationException('finance_forbidden');
+      }
+      final serverRevision = await _nextReminderServerRevision(
+        partition,
+        stored.id,
+        rows.first['remote'],
+      );
+      // A rejected create has no server reminder to cancel; an explicit
+      // cancellation can finish locally and discard that rejected intent.
+      final needsRemoteCancel = serverRevision > 0;
+      final value = stored.toJson()
         ..['state'] = 'cancelled'
-        ..['revision'] = reminder.revision + 1;
+        ..['syncState'] = needsRemoteCancel ? 'queued' : 'synced'
+        ..remove('syncError')
+        ..['revision'] = stored.revision + 1;
       await database.execute(
         'UPDATE scheduled_reminders SET data=? WHERE partition=? AND id=?',
-        [jsonEncode(value), session.profile.partition, reminder.id],
+        [jsonEncode(value), partition, stored.id],
       );
-      await _enqueueCommand(session.profile.partition, 'reminders.cancel', {
-        'id': reminder.id,
-        'scopeId': reminder.scopeId,
-        'expectedRevision': reminder.revision,
-        'requestId': newSharedId(),
-      }, 'reminder:${reminder.id}');
+      if (needsRemoteCancel) {
+        await _enqueueCommand(partition, 'reminders.cancel', {
+          'id': stored.id,
+          'scopeId': stored.scopeId,
+          'expectedRevision': serverRevision,
+          'requestId': newSharedId(),
+        }, 'reminder:${stored.id}');
+      } else {
+        await database.execute(
+          "DELETE FROM commands WHERE partition=? AND entity_key=? AND state='blocked'",
+          [partition, 'reminder:${stored.id}'],
+        );
+      }
+      _checkEpoch(epoch);
     });
     await refreshLocal();
+  }
+
+  Future<SharedScope> _readableReminderScope(
+    String partition,
+    String scopeId,
+  ) async {
+    final rows = await database.rows(
+      'SELECT data,blocked FROM scopes WHERE partition=? AND id=?',
+      [partition, scopeId],
+    );
+    if (rows.isEmpty) throw const CollaborationException('permission_revoked');
+    final scope = SharedScope.fromJson({
+      ...CollaborationRepository._map(rows.first['data']),
+      'blocked': rows.first['blocked'] == 1,
+    });
+    if (scope.revoked) throw const CollaborationException('permission_revoked');
+    return scope;
   }
 }

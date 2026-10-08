@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,11 @@ import '../../domain/garden_models.dart';
 import '../../state/garden_provider.dart';
 import 'garden_area_form.dart';
 import 'garden_canvas.dart';
+import 'garden_bed_detail.dart';
+import 'garden_planting_form.dart';
+import 'garden_season_panel.dart';
+import 'garden_plan_panel.dart';
+import 'garden_area_list.dart';
 
 /// The editor owns an uncommitted draft. Opening or cancelling never writes.
 class GardenEditor extends ConsumerStatefulWidget {
@@ -21,6 +27,10 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   late final _name = TextEditingController(text: widget.garden?.name ?? '');
   late final _notes = TextEditingController(text: widget.garden?.notes ?? '');
   late List<GardenArea> _areas = [...?widget.garden?.areas];
+  late List<GardenSeason> _seasons = [...?widget.garden?.seasons];
+  late int? _year = (_seasons.map((s) => s.year).toList()..sort()).lastOrNull;
+  final _draftId = newLocalId();
+  final _openedAt = DateTime.now();
   final _undo = <List<GardenArea>>[];
   GardenTool _tool = GardenTool.select;
   String? _selectedId;
@@ -32,7 +42,13 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   bool get _dirty =>
       _name.text != (widget.garden?.name ?? '') ||
       _notes.text != (widget.garden?.notes ?? '') ||
-      !_sameAreas(_areas, widget.garden?.areas ?? const []);
+      !_sameAreas(_areas, widget.garden?.areas ?? const []) ||
+      jsonEncode(_seasons.map((s) => s.toJson()).toList()) !=
+          jsonEncode(
+            (widget.garden?.seasons ?? <GardenSeason>[])
+                .map((s) => s.toJson())
+                .toList(),
+          );
 
   bool _sameAreas(List<GardenArea> a, List<GardenArea> b) {
     if (a.length != b.length) return false;
@@ -42,7 +58,9 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           a[i].x != b[i].x ||
           a[i].y != b[i].y ||
           a[i].width != b[i].width ||
-          a[i].height != b[i].height) {
+          a[i].height != b[i].height ||
+          a[i].kind != b[i].kind ||
+          a[i].archived != b[i].archived) {
         return false;
       }
     }
@@ -52,6 +70,10 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   @override
   void initState() {
     super.initState();
+    _selectedId = _areas
+        .where((a) => !a.archived && a.kind == GardenAreaKind.bed)
+        .firstOrNull
+        ?.id;
     _name.addListener(_textChanged);
     _notes.addListener(_textChanged);
   }
@@ -123,6 +145,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           name: _name.text.trim(),
           notes: _notes.text,
           areas: _areas,
+          seasons: _seasons,
         );
       } else {
         await controller.updateGarden(
@@ -130,6 +153,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
             name: _name.text.trim(),
             notes: _notes.text,
             areas: _areas,
+            seasons: _seasons,
           ),
         );
       }
@@ -149,7 +173,13 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   }
 
   Future<void> _editArea(GardenArea area) async {
-    final edited = await showGardenAreaForm(context, area);
+    final edited = await showGardenAreaForm(
+      context,
+      area,
+      allowKindChange: !_seasons.any(
+        (s) => s.plantings.any((p) => p.areaId == area.id),
+      ),
+    );
     if (edited != null && mounted && !_sameAreas([area], [edited])) {
       _changeAreas([
         for (final item in _areas) item.id == area.id ? edited : item,
@@ -189,94 +219,189 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     setState(() => _tool = GardenTool.select);
   }
 
-  Widget _sketch() {
-    final l = context.l10n;
-    final selected = _areas.where((area) => area.id == _selectedId).firstOrNull;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(l.gardenLayout, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ChoiceChip(
-              key: const ValueKey('garden-tool-select'),
-              avatar: const Icon(Icons.open_with, size: 18),
-              selected: _tool == GardenTool.select,
-              label: Text(l.gardenSelectTool),
-              onSelected: (_) => setState(() => _tool = GardenTool.select),
+  Garden get _draft =>
+      (widget.garden ??
+              Garden(
+                id: _draftId,
+                name: _name.text,
+                createdAt: _openedAt,
+                updatedAt: _openedAt,
+              ))
+          .copyWith(
+            name: _name.text,
+            notes: _notes.text,
+            areas: _areas,
+            seasons: _seasons,
+          );
+
+  Future<void> _addSeason() async {
+    final season = await showGardenSeasonForm(
+      context,
+      _seasons,
+      activeAreaIds: _areas.where((a) => !a.archived).map((a) => a.id).toSet(),
+    );
+    if (season != null && mounted) {
+      setState(() {
+        _seasons = [..._seasons, season];
+        _year = season.year;
+      });
+    }
+  }
+
+  Future<void> _deleteSeason() async {
+    if (_year == null) return;
+    final yes = await _confirm(
+      context.l10n.gardenDeleteSeason,
+      context.l10n.gardenDeleteSeasonBody,
+    );
+    if (yes && mounted) {
+      setState(() {
+        _seasons = _seasons.where((s) => s.year != _year).toList();
+        _year = (_seasons.map((s) => s.year).toList()..sort()).lastOrNull;
+      });
+    }
+  }
+
+  Future<bool> _confirm(String title, String body) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(body),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.l10n.cancel),
             ),
-            ChoiceChip(
-              key: const ValueKey('garden-tool-draw'),
-              avatar: const Icon(Icons.crop_square, size: 18),
-              selected: _tool == GardenTool.draw,
-              label: Text(l.gardenDrawTool),
-              onSelected: _areas.length >= 1000
-                  ? null
-                  : (_) => setState(() => _tool = GardenTool.draw),
-            ),
-            IconButton(
-              tooltip: l.gardenUndo,
-              onPressed: _undo.isEmpty
-                  ? null
-                  : () => setState(() {
-                      _areas = _undo.removeLast();
-                      _selectedId = null;
-                    }),
-              icon: const Icon(Icons.undo),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.l10n.delete),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          _tool == GardenTool.draw ? l.gardenDrawHelp : l.gardenSelectHelp,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 12),
-        GardenCanvas(
-          areas: _areas,
-          tool: _tool,
-          selectedId: _selectedId,
-          onSelect: (id) => setState(() => _selectedId = id),
-          onDraw: _draw,
-          onMove: (area) => _changeAreas([
-            for (final item in _areas) item.id == area.id ? area : item,
-          ], selectedId: area.id),
-          semanticLabel: l.gardenCanvasDescription,
-        ),
-        if (selected != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8,
-              children: [
-                Text(selected.label),
-                TextButton.icon(
-                  onPressed: () => _editArea(selected),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(l.edit),
-                ),
-                TextButton.icon(
-                  onPressed: () => _changeAreas(
-                    _areas.where((item) => item.id != selected.id).toList(),
-                  ),
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: Text(l.delete),
-                ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 16),
-        Text(
-          l.gardenSketchDisclaimer,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+      ) ==
+      true;
+  Future<void> _planting(GardenArea area, [GardenPlanting? planting]) async {
+    if (_year == null || area.archived) return;
+    final value = await showGardenPlantingForm(
+      context,
+      planting ?? GardenPlanting(id: newLocalId(), areaId: area.id, crop: ''),
+      isNew: planting == null,
+    );
+    if (value != null && mounted) {
+      setState(() {
+        _seasons = [
+          for (final s in _seasons)
+            if (s.year != _year)
+              s
+            else
+              s.copyWith(
+                plantings: [
+                  for (final p in s.plantings)
+                    if (p.id != value.id) p,
+                  value,
+                ],
+              ),
+        ];
+      });
+    }
+  }
+
+  Future<void> _deletePlanting(GardenPlanting planting) async {
+    final yes = await _confirm(
+      context.l10n.gardenDeletePlanting,
+      context.l10n.gardenDeletePlantingBody,
+    );
+    if (yes && mounted) {
+      setState(() {
+        _seasons = [
+          for (final s in _seasons)
+            if (s.year != _year)
+              s
+            else
+              s.copyWith(
+                plantings: s.plantings.where((p) => p.id != planting.id),
+              ),
+        ];
+      });
+    }
+  }
+
+  void _removeArea(GardenArea area) {
+    final used = _seasons.any(
+      (s) => s.plantings.any((p) => p.areaId == area.id),
+    );
+    _changeAreas([
+      for (final a in _areas)
+        if (a.id != area.id) a else if (used) a.copyWith(archived: true),
+    ], selectedId: used ? area.id : null);
+  }
+
+  Widget _bedDetails() {
+    final area = _areas.where((a) => a.id == _selectedId).firstOrNull;
+    return GardenBedDetail(
+      garden: _draft,
+      area: area,
+      year: _year,
+      onAdd: () {
+        if (area != null) _planting(area);
+      },
+      onEdit: (p) {
+        if (area != null) _planting(area, p);
+      },
+      onDelete: _deletePlanting,
+      onNotes: (notes) => setState(() {
+        _seasons = [
+          for (final s in _seasons)
+            s.year == _year ? s.copyWith(notes: notes) : s,
+        ];
+      }),
     );
   }
+
+  Widget _sketch() => GardenPlanPanel(
+    garden: _draft,
+    year: _year,
+    selectedId: _selectedId,
+    tool: _tool,
+    onTool: (tool) => setState(() => _tool = tool),
+    onSelect: (id) => setState(() => _selectedId = id),
+    onDraw: _draw,
+    onMove: (area) => _changeAreas([
+      for (final item in _areas) item.id == area.id ? area : item,
+    ], selectedId: area.id),
+    onEdit: _editArea,
+    onRemove: (area) => area.archived
+        ? _changeAreas([
+            for (final a in _areas)
+              a.id == area.id ? a.copyWith(archived: false) : a,
+          ], selectedId: area.id)
+        : _removeArea(area),
+    onUndo: _undo.isEmpty
+        ? null
+        : () => setState(() {
+            final previous = _undo.removeLast();
+            final referenced = _seasons
+                .expand((s) => s.plantings)
+                .map((p) => p.areaId)
+                .toSet();
+            final retained = _areas
+                .where(
+                  (a) =>
+                      referenced.contains(a.id) &&
+                      !previous.any((p) => p.id == a.id),
+                )
+                .map((a) => a.copyWith(archived: true))
+                .toList();
+            _areas = [...previous, ...retained];
+            _selectedId = retained.firstOrNull?.id;
+            if (retained.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.l10n.gardenUndoPreserved)),
+              );
+            }
+          }),
+  );
 
   Widget _details() {
     final l = context.l10n;
@@ -307,64 +432,14 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     );
   }
 
-  Widget _areaList() {
-    final l = context.l10n;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 20),
-        Text(l.gardenAreas, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Text(
-          l.gardenAreaListHelp,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          key: const ValueKey('garden-add-area'),
-          onPressed: _areas.length >= 1000 ? null : _addArea,
-          icon: const Icon(Icons.add),
-          label: Text(l.gardenAddArea),
-        ),
-        if (_areas.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(l.gardenNoAreas),
-          ),
-        for (final area in _areas)
-          ListTile(
-            key: ValueKey('garden-area-${area.id}'),
-            contentPadding: EdgeInsets.zero,
-            selected: _selectedId == area.id,
-            leading: const Icon(Icons.crop_square),
-            title: Text(
-              area.label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(
-              l.gardenAreaPosition(
-                (area.x * 100).round(),
-                (area.y * 100).round(),
-                (area.width * 100).round(),
-                (area.height * 100).round(),
-              ),
-            ),
-            onTap: () {
-              setState(() => _selectedId = area.id);
-              _editArea(area);
-            },
-            trailing: IconButton(
-              tooltip: l.delete,
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _changeAreas(
-                _areas.where((item) => item.id != area.id).toList(),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
+  Widget _areaList() => GardenAreaList(
+    garden: _draft,
+    year: _year,
+    selectedId: _selectedId,
+    onAdd: _addArea,
+    onSelect: (id) => setState(() => _selectedId = id),
+    onEdit: _editArea,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -376,7 +451,9 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.garden == null ? l.gardenNew : l.gardenEdit),
+          title: Text(
+            widget.garden == null ? l.gardenNew : widget.garden!.name,
+          ),
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             icon: const Icon(Icons.arrow_back),
@@ -392,7 +469,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(l.save),
+                  : Text(l.gardenSave),
             ),
             const SizedBox(width: 8),
           ],
@@ -425,6 +502,18 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
                               ),
                             ),
                           ),
+                        if (widget.garden == null) ...[
+                          const SizedBox(height: 20),
+                          _details(),
+                        ],
+                        const SizedBox(height: 20),
+                        GardenSeasonPanel(
+                          seasons: _seasons,
+                          year: _year,
+                          onSelected: (year) => setState(() => _year = year),
+                          onAdd: _addSeason,
+                          onDelete: _deleteSeason,
+                        ),
                         const SizedBox(height: 20),
                         LayoutBuilder(
                           builder: (context, constraints) =>
@@ -437,7 +526,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
                                     Expanded(
                                       flex: 2,
                                       child: Column(
-                                        children: [_details(), _areaList()],
+                                        children: [_bedDetails(), _areaList()],
                                       ),
                                     ),
                                   ],
@@ -446,13 +535,22 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    _details(),
-                                    const SizedBox(height: 24),
                                     _sketch(),
+                                    const SizedBox(height: 20),
+                                    _bedDetails(),
                                     _areaList(),
                                   ],
                                 ),
                         ),
+                        if (widget.garden != null) ...[
+                          const SizedBox(height: 24),
+                          Text(
+                            l.gardenDetails,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 12),
+                          _details(),
+                        ],
                         const SizedBox(height: 32),
                       ],
                     ),
