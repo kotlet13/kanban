@@ -268,7 +268,10 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
         ) &&
         (p['resolutions'] as List? ?? []).every(
           (r) =>
-              _preserved.contains('${(r as Map)['scopeId']}:${r['recordId']}'),
+              (r as Map)['action'] == 'detachOrganization' &&
+                  (_owners[r['scopeId']] != 'delete' ||
+                      _owners[r['childScopeId']] == 'delete') ||
+              _preserved.contains('${r['scopeId']}:${r['recordId']}'),
         );
   }
 
@@ -320,7 +323,7 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
               {
                 'scopeId': r['scopeId'],
                 'recordId': r['recordId'],
-                'action': 'preserveStructure',
+                'action': r['action'],
               },
         ],
       );
@@ -501,8 +504,14 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                       for (final value in p['resolutions'] as List? ?? [])
                         Builder(
                           builder: (context) {
-                            final r = value as Map,
-                                id = '${value['scopeId']}:${value['recordId']}';
+                            final r = value as Map;
+                            if (r['action'] == 'detachOrganization' &&
+                                (_owners[r['scopeId']] != 'delete' ||
+                                    _owners[r['childScopeId']] == 'delete')) {
+                              return const SizedBox.shrink();
+                            }
+                            final id =
+                                '${value['scopeId']}:${value['recordId']}';
                             return CheckboxListTile(
                               contentPadding: EdgeInsets.zero,
                               value: _preserved.contains(id),
@@ -520,7 +529,9 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                                     l.deletionUnnamedStructure,
                               ),
                               subtitle: Text(
-                                '${l.deletionStructure}${r['currency'] == null ? '' : '\n${sharedMoneyLabel(context, BigInt.from(r['openingBalanceMinor'] as int), r['currency'] as String)}'}',
+                                r['action'] == 'detachOrganization'
+                                    ? l.deletionDetachOrganization
+                                    : '${l.deletionStructure}${r['currency'] == null || r['openingBalanceMinor'] == null ? '' : '\n${sharedMoneyLabel(context, BigInt.from(r['openingBalanceMinor'] as int), r['currency'] as String)}'}',
                               ),
                             );
                           },

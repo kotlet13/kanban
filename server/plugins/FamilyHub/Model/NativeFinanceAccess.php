@@ -11,9 +11,10 @@ class NativeFinanceAccess extends NativeDatabase
         $grant = $this->one('SELECT access_level FROM familyhub_finance_grants WHERE scope_id=? AND account_id=?', [$scopeId, $user['account_id']]);
         $access = $grant['access_level'] ?? 'none';
         $enabled = $policy && (int)$policy['enabled'] === 1;
-        if ($scope['role'] === 'viewer' && $access === 'write') { $access = 'read'; }
+        if (($scope['role'] === 'viewer' || (int)($scope['archived'] ?? 0)===1) && $access === 'write') { $access = 'read'; }
+        if ($write && (int)($scope['archived'] ?? 0)===1) { throw new NativeError('scope_archived',403); }
         if ($require && (!$enabled || $access === 'none' || ($write && $access !== 'write'))) { throw new NativeError('finance_forbidden', 403); }
-        return ['enabled' => (bool)$enabled, 'grant' => $access, 'revision' => (int)($policy['revision'] ?? 0), 'sequence' => (int)($policy['sequence'] ?? 0)];
+        return ['enabled' => (bool)$enabled, 'grant' => $access, 'revision' => (int)($policy['revision'] ?? 0), 'sequence' => (int)($policy['sequence'] ?? 0), 'requiredContractVersion' => (int)($policy['required_contract_version'] ?? 1)];
     }
 
     /** Nonlocking visibility check for inbox, inside READ COMMITTED transaction. */

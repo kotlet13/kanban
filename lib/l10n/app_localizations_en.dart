@@ -2965,6 +2965,400 @@ class AppLocalizationsEn extends AppLocalizations {
       'First-account setup is no longer available here. Sign in or use an invitation.';
 
   @override
+  String get planningPhases => 'Phases and milestones';
+
+  @override
+  String get planningAddPhase => 'Add phase';
+
+  @override
+  String get planningPhaseTitle => 'Phase name';
+
+  @override
+  String get planningMilestone => 'Milestone';
+
+  @override
+  String get planningRemovePhase => 'Remove phase';
+
+  @override
+  String get planningNoPhase => 'No phase';
+
+  @override
+  String get planningEstimateMinutes => 'Estimated work in minutes';
+
+  @override
+  String get planningAvailabilityMinutes => 'Available minutes';
+
+  @override
+  String get planningAvailabilityPeriod => 'Availability period';
+
+  @override
+  String get planningPerDay => 'Per day';
+
+  @override
+  String get planningPerWeek => 'Per week';
+
+  @override
+  String get planningTimerStart => 'Start timer';
+
+  @override
+  String get planningTimerPause => 'Pause';
+
+  @override
+  String get planningElapsed => 'Elapsed time';
+
+  @override
+  String get planningRemaining => 'Remaining time';
+
+  @override
+  String get planningEstimated => 'Estimated time';
+
+  @override
+  String get planningCalendar => 'Calendar dates';
+
+  @override
+  String get taskCostTitle => 'Task cost';
+
+  @override
+  String get taskCostEnabled => 'Add cost';
+
+  @override
+  String get taskCostPaid => 'Paid';
+
+  @override
+  String get taskCostPlanned => 'Planned';
+
+  @override
+  String get taskCostAccount => 'Financial account';
+
+  @override
+  String get taskCostUnassignedAccount => 'No account selected';
+
+  @override
+  String get taskCostPayer => 'Payer';
+
+  @override
+  String get taskCostRecipient => 'Recipient';
+
+  @override
+  String get taskCostAuthor => 'Entry author';
+
+  @override
+  String get taskCostNoDue =>
+      'Without a task due date, the cost has no planned date.';
+
+  @override
+  String get taskCostDetachHint =>
+      'Removing the link preserves the financial entry.';
+
+  @override
+  String get spacePickerTitle => 'Space';
+
+  @override
+  String get organizationTitle => 'Organization';
+
+  @override
+  String get organizationCreate => 'Create organization';
+
+  @override
+  String get organizationProjects => 'Organization projects';
+
+  @override
+  String get organizationCreateProject => 'Add organization project';
+
+  @override
+  String get organizationAccessDescription =>
+      'Membership does not grant access to every project or finances. Set access for each project separately.';
+
+  @override
+  String get peopleTitle => 'People';
+
+  @override
+  String get peopleAdd => 'Add person';
+
+  @override
+  String get peopleName => 'Name';
+
+  @override
+  String get peopleNotes => 'Notes';
+
+  @override
+  String get peopleArchive => 'Archive';
+
+  @override
+  String get peopleRestore => 'Restore';
+
+  @override
+  String get peopleWithoutAccountDescription =>
+      'A person profile has no login or access rights.';
+
+  @override
+  String get peopleEmpty => 'Add people whose tasks you want to manage.';
+
+  @override
+  String get peopleArchived => 'Archived person';
+
+  @override
+  String get financePlanTitle => 'Monthly plan';
+
+  @override
+  String get financePlanWizard => 'Set up a financial plan';
+
+  @override
+  String get financePlanDescription =>
+      'Estimates stay expected until you confirm actual receipt or payment.';
+
+  @override
+  String get financePlanLocal =>
+      'The plan is saved on this device and in portable backups.';
+
+  @override
+  String get financePlanPrivate =>
+      'The plan is saved in your selected private space with sync enabled.';
+
+  @override
+  String get financePlanUpgrade =>
+      'Planning in a synced space requires the newer server finance contract.';
+
+  @override
+  String get financePlanMonthEnd =>
+      'If the day does not exist in a month, its last day is used.';
+
+  @override
+  String get financePlanWeekend =>
+      'Weekend salary checks occur on Friday and Monday for the same income. Holidays are not adjusted automatically.';
+
+  @override
+  String get financePlanSalary => 'When do you expect your monthly salary?';
+
+  @override
+  String get financePlanNoSalary => 'No regular salary';
+
+  @override
+  String get financePlanLoan => 'Do you have a loan?';
+
+  @override
+  String get financePlanLoanPrincipal => 'Total loan amount (optional)';
+
+  @override
+  String get financePlanInstallment => 'Estimated monthly installment';
+
+  @override
+  String get financePlanCard => 'Do you have a deferred payment card?';
+
+  @override
+  String get financePlanCardEstimate => 'Estimated monthly settlement';
+
+  @override
+  String get financePlanOtherIncome => 'Other monthly income';
+
+  @override
+  String get financePlanOtherExpenses => 'Monthly expenses';
+
+  @override
+  String get financePlanAddIncome => 'Add income';
+
+  @override
+  String get financePlanAddExpense => 'Add expense';
+
+  @override
+  String get financePlanEstimatedAmount => 'Estimated amount';
+
+  @override
+  String get financePlanDay => 'Day of month';
+
+  @override
+  String get financePlanFirstDate => 'First expected date';
+
+  @override
+  String get financePlanSalaryLabel => 'Salary';
+
+  @override
+  String get financePlanLoanLabel => 'Loan installment';
+
+  @override
+  String get financePlanCardLabel => 'Card settlement';
+
+  @override
+  String get financePlanReview => 'Review plan';
+
+  @override
+  String get financePlanSave => 'Save plan';
+
+  @override
+  String get financePlanRules => 'Monthly recurrences';
+
+  @override
+  String get financePlanAddRule => 'Add monthly rule';
+
+  @override
+  String get financePlanEditRule => 'Edit monthly rule';
+
+  @override
+  String get financePlanRuleActive => 'Rule is active';
+
+  @override
+  String get financePlanReminders => 'Reminders for this plan';
+
+  @override
+  String get financePlanReminderTime => 'Reminder time';
+
+  @override
+  String get financePlanReminderOptIn =>
+      'This does not enable phone permission. Enable device reminders in notification settings.';
+
+  @override
+  String get financePlanSalaryQuestion => 'Have you received your salary?';
+
+  @override
+  String get financePlanConfirm => 'Confirm actual amount';
+
+  @override
+  String get financePlanActualAmount => 'Actual amount';
+
+  @override
+  String get financePlanActualDate => 'Receipt or payment date';
+
+  @override
+  String get financePlanConfirmed => 'The actual amount is confirmed.';
+
+  @override
+  String get financePlanForecast => 'Forecast by date';
+
+  @override
+  String get financePlanNetChange => 'Expected net change';
+
+  @override
+  String get financePlanProjectedBalance => 'Projected balance';
+
+  @override
+  String get financePlanOpeningBalance => 'Opening balance (optional)';
+
+  @override
+  String get financePlanOpeningDate => 'Opening balance at the start of day';
+
+  @override
+  String get financePlanNoOpening =>
+      'No opening balance is set; net change is shown.';
+
+  @override
+  String get financePlanUndated =>
+      'Undated entries are excluded from the dated forecast.';
+
+  @override
+  String get financePlanSymbolicAccount =>
+      'This is a named ledger account; it does not move money or connect to a bank.';
+
+  @override
+  String get financePlanEmpty => 'No dated entries in the selected period.';
+
+  @override
+  String get financePlanRuleType => 'Recurrence type';
+
+  @override
+  String get financePlanSaved => 'The financial plan is saved.';
+
+  @override
+  String get financePlanOverdue => 'Still unconfirmed';
+
+  @override
+  String get financePlanBack => 'Back';
+
+  @override
+  String get financePlanNext => 'Next';
+
+  @override
+  String get financePlanDateNeeded => 'Choose a date.';
+
+  @override
+  String get financePlanNoItems => 'No additional entries.';
+
+  @override
+  String get financePlanAccountName => 'Financial account name';
+
+  @override
+  String get financePlanAccountArchived => 'Archived account';
+
+  @override
+  String get financePlanReminderBody =>
+      'Have you received your salary? Open the expected income and confirm the actual amount.';
+
+  @override
+  String get peopleTaskSubjects => 'Who this task concerns';
+
+  @override
+  String get financePlanYes => 'Yes';
+
+  @override
+  String get financePlanNo => 'No';
+
+  @override
+  String get financePlanRecordedChange => 'Recorded net change';
+
+  @override
+  String get financePairedConflict =>
+      'Review the task and cost conflict in finances.';
+
+  @override
+  String get deletionDetachOrganization =>
+      'Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.';
+
+  @override
+  String get deletionOrganizationLinks =>
+      'Projects detached from an organization';
+
+  @override
+  String get financePlanIncomeQuestion => 'Have you received this income?';
+
+  @override
+  String get financePlanExpenseQuestion => 'Has this obligation been paid?';
+
+  @override
+  String get financePlanIncomeReminderBody =>
+      'Have you received this income? Open the expected entry and confirm the actual amount.';
+
+  @override
+  String get financePlanExpenseReminderBody =>
+      'Has this obligation been paid? Open the planned entry and confirm the actual amount.';
+
+  @override
+  String get financePlanManageRule =>
+      'Manage a recurring entry through its monthly rule. Disabling the rule stops future entries and preserves confirmed history.';
+
+  @override
+  String get scopeArchivedProjects => 'Archived projects';
+
+  @override
+  String get scopeArchivedDescription =>
+      'This project is archived. Data and financial history remain available according to your permissions; tasks do not contribute to the daily overview or reminders.';
+
+  @override
+  String get peopleCopyDescription =>
+      'Related person profiles (names and notes) will also be copied into the selected space.';
+
+  @override
+  String get financePlanPrincipalOnlyLoan =>
+      'The total loan amount can only be entered for a loan installment.';
+
+  @override
+  String get financePlanOpeningUndated => 'No reference date';
+
+  @override
+  String planningInvalidMinutes(int max) {
+    return 'Enter a positive number of minutes, up to $max.';
+  }
+
+  @override
+  String get taskCostSelectAccount => 'Choose a financial account.';
+
+  @override
+  String get financeDuplicateOccurrence =>
+      'Another device already created the canonical entry for this month. Your local version is kept for comparison; the same income or expense is not counted twice.';
+
+  @override
+  String get financePairedTaskReview =>
+      'Linked task: these changes and the cost will be reviewed together.';
+
+  @override
   String get privateSyncTitle => 'My devices';
 
   @override
@@ -3584,5 +3978,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String gardenAreaPosition(int x, int y, int width, int height) {
     return 'Left $x%, top $y% · $width × $height%';
+  }
+
+  @override
+  String get financePlanPendingEntries => 'Unconfirmed entries';
+
+  @override
+  String get financePlanPendingDescription =>
+      'All expected income and expenses, including undated entries and entries beyond the forecast. Open an entry to confirm the actual amount.';
+
+  @override
+  String get financePlanUndatedEntry => 'No date set';
+
+  @override
+  String financePlanForecastPeriod(String date) {
+    return 'Dated entries through $date, showing the closing total for each day.';
   }
 }

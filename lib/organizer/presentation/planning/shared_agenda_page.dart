@@ -59,15 +59,25 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
     }
   }
 
-  String _people(AgendaItem item) => item.assigneeAccountIds.isEmpty
-      ? context.l10n.planningUnassigned
-      : item.assigneeAccountIds
-            .map(
-              (id) =>
-                  widget.people.where((p) => p.id == id).firstOrNull?.label ??
-                  context.l10n.planningFormerMember,
-            )
-            .join(', ');
+  String _people(AgendaItem item) {
+    final names = [
+      for (final id in item.assigneeAccountIds)
+        widget.people.where((p) => p.id == id).firstOrNull?.label ??
+            context.l10n.planningFormerMember,
+    ];
+    final task = widget.data.tasks.where((t) => t.id == item.id).firstOrNull;
+    if (task?.assigneePersonId != null) {
+      names.add(
+        widget.data.people
+                .where((p) => p.id == task!.assigneePersonId)
+                .firstOrNull
+                ?.name ??
+            context.l10n.planningFormerMember,
+      );
+    }
+    return names.isEmpty ? context.l10n.planningUnassigned : names.join(', ');
+  }
+
   String _when(AgendaItem item) {
     final material = MaterialLocalizations.of(context);
     String at(DateTime value) {
@@ -97,13 +107,15 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
                 : dailyAgenda(widget.data, scopeId: widget.scope.id, day: _day))
             .where(
               (item) =>
-                  _personId.isEmpty ||
-                  item.assigneeAccountIds.contains(_personId),
+                  (widget.timeline || !widget.scope.archived) &&
+                  (_personId.isEmpty ||
+                      item.assigneeAccountIds.contains(_personId)),
             )
             .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.scope.archived) Text(l.scopeArchivedDescription),
         OrganizerHeading(
           title: widget.timeline ? l.planningTimeline : l.planningSharedToday,
           subtitle: widget.scope.name,

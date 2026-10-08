@@ -144,6 +144,11 @@ abstract class NativeDatabase extends Base
         return ['user' => $user, 'device' => $device];
     }
 
+    protected function financialRecordType($type)
+    {
+        return in_array($type,['financeAccount','financeEntry','financeTransfer','personalFinanceEntry','personalFinanceAccount','financeRecurrenceRule'],true);
+    }
+
     protected function fingerprint(array $user)
     {
         return hash('sha256', json_encode([$user['password'], (int)$user['twofactor_activated'], $user['twofactor_secret']], JSON_THROW_ON_ERROR));
@@ -157,6 +162,7 @@ abstract class NativeDatabase extends Base
         if (!$scope || !$member || !$account || $member['account_id'] !== $account['account_id'] || (int)$member['active'] !== 1 || ($write && $member['role'] === 'viewer') || ($owner && $member['role'] !== 'owner')) {
             throw new NativeError('permission_revoked', 403);
         }
+        if ($write && (int)($scope['archived']??0)===1) { throw new NativeError('scope_archived',403); }
         if ($scope['kind'] === 'personal') {
             $private = $this->one('SELECT scope_id FROM familyhub_personal_scopes WHERE account_id=?', [$account['account_id']]);
             if ((int)$scope['owner_id'] !== (int)$userId || $member['role'] !== 'owner' || !$private || $private['scope_id'] !== $id) { throw new NativeError('permission_revoked', 403); }
@@ -174,7 +180,7 @@ abstract class NativeDatabase extends Base
 
     protected function scopeWire(array $scope)
     {
-        return ['id' => $scope['id'], 'kind' => $scope['kind'], 'name' => $scope['name'], 'role' => $scope['role'], 'sequence' => (int)$scope['sequence']];
+        return ['id' => $scope['id'], 'kind' => $scope['kind'], 'name' => $scope['name'], 'role' => $scope['role'], 'sequence' => (int)$scope['sequence'], 'archived'=>(int)($scope['archived']??0)===1, 'organizationId' => $scope['organization_id'] ?? null, 'projectRootId'=>$scope['project_root_id']??(!empty($scope['organization_id']) ? $scope['id'] : null), 'requiredRecordContractVersion' => (int)($scope['required_record_contract'] ?? 1)];
     }
 
     protected function userWire(array $user)

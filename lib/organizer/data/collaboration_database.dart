@@ -7,7 +7,7 @@ import '../domain/collaboration_models.dart' show AccountSession;
 class CollaborationDatabase extends GeneratedDatabase {
   CollaborationDatabase(super.executor);
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
   AccountSession? personalProfile;
   final personalChanges = StreamController<void>.broadcast();
   void activatePersonal(AccountSession? profile) {
@@ -37,12 +37,13 @@ class CollaborationDatabase extends GeneratedDatabase {
         ..._upgrade3,
         ..._upgrade4,
         ..._upgrade5,
+        ..._upgrade6,
       ]) {
         await customStatement(statement);
       }
     },
     onUpgrade: (_, from, to) async {
-      if (from < 1 || from > 4 || to != 5) {
+      if (from < 1 || from > 5 || to != 6) {
         throw const FormatException('Unsupported shared database schema');
       }
       if (from < 2) {
@@ -60,7 +61,12 @@ class CollaborationDatabase extends GeneratedDatabase {
           await customStatement(statement);
         }
       }
-      for (final statement in _upgrade5) {
+      if (from < 5) {
+        for (final statement in _upgrade5) {
+          await customStatement(statement);
+        }
+      }
+      for (final statement in _upgrade6) {
         await customStatement(statement);
       }
     },
@@ -129,6 +135,10 @@ class CollaborationDatabase extends GeneratedDatabase {
 
   static const _upgrade5 = [
     "CREATE TABLE device_gardens(id TEXT PRIMARY KEY,payload TEXT NOT NULL)",
+  ];
+
+  static const _upgrade6 = [
+    'ALTER TABLE finance_outbox ADD COLUMN wire_version INTEGER NOT NULL DEFAULT 1',
   ];
 
   Future<List<Map<String, dynamic>>> rows(

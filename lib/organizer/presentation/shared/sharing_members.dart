@@ -246,7 +246,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
             OrganizerHeading(
               title: l.sharingMembers,
               subtitle: widget.scope.name,
-              action: widget.scope.canManage
+              action: widget.scope.canManage && !widget.scope.archived
                   ? FilledButton.icon(
                       onPressed: _busy ? null : _invite,
                       icon: const Icon(Icons.person_add_outlined, size: 18),

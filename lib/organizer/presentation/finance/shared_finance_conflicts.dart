@@ -5,6 +5,7 @@ import '../../state/collaboration_provider.dart';
 import '../shared/sharing_errors.dart';
 import 'finance_access_guard.dart';
 import 'finance_snapshot_view.dart';
+import '../organizer_widgets.dart' show organizerDate;
 
 Future<void> showFinanceConflicts(
   BuildContext context,
@@ -59,6 +60,105 @@ class _FinanceConflictsState extends ConsumerState<_FinanceConflicts> {
     }
   }
 
+  Map<String, dynamic>? _existingOccurrence(
+    SharedFinanceConflict conflict,
+    CollaborationState? state,
+  ) {
+    if (conflict.reason != 'duplicate_finance_reference' || state == null) {
+      return conflict.remotePayload;
+    }
+    final data = state.dataForScope(conflict.scopeId),
+        local = conflict.localPayload;
+    final rule = local?['recurrenceRuleId'], key = local?['occurrenceKey'];
+    if (rule == null || key == null) return null;
+    final shared = data.financeEntries
+        .where(
+          (e) =>
+              e.id != conflict.recordId &&
+              e.recurrenceRuleId == rule &&
+              e.occurrenceKey == key,
+        )
+        .firstOrNull;
+    if (shared != null) return shared.toJson().cast<String, dynamic>();
+    return data.personalFinanceEntries
+        .where(
+          (e) =>
+              e.id != conflict.recordId &&
+              e.recurrenceRuleId == rule &&
+              e.occurrenceKey == key,
+        )
+        .firstOrNull
+        ?.toJson()
+        .cast<String, dynamic>();
+  }
+
+  Widget _taskReview(
+    SharedFinanceConflict conflict,
+    CollaborationState? state,
+  ) {
+    if (state == null) return const SizedBox.shrink();
+    final data = state.dataForScope(conflict.scopeId);
+    final taskId =
+        conflict.localPayload?['taskId'] ??
+        conflict.remotePayload?['taskId'] ??
+        data.financeEntries
+            .where((e) => e.id == conflict.recordId)
+            .firstOrNull
+            ?.taskId ??
+        data.personalFinanceEntries
+            .where((e) => e.id == conflict.recordId)
+            .firstOrNull
+            ?.taskId;
+    if (taskId == null) return const SizedBox.shrink();
+    final paired = state.conflicts
+        .where(
+          (c) =>
+              c.scopeId == conflict.scopeId &&
+              c.recordType == SharedRecordType.task &&
+              c.recordId == taskId,
+        )
+        .firstOrNull;
+    if (paired == null) return const SizedBox.shrink();
+    final fresh =
+        data.tasks
+            .where((t) => t.id == taskId)
+            .firstOrNull
+            ?.toJson()
+            .cast<String, dynamic>() ??
+        paired.remotePayload;
+    Widget version(String label, Map<String, dynamic>? payload) {
+      final date = DateTime.tryParse('${payload?['dueAt'] ?? ''}');
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.titleSmall),
+            Text('${payload?['title'] ?? context.l10n.sharingDeletedVersion}'),
+            if (payload != null)
+              Text(
+                date == null
+                    ? context.l10n.organizerNoDate
+                    : organizerDate(context, date),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l10n.financePairedTaskReview,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        version(context.l10n.sharingLocalVersion, paired.localPayload),
+        version(context.l10n.sharingRemoteVersion, fresh),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(collaborationProvider).valueOrNull;
@@ -84,6 +184,7 @@ class _FinanceConflictsState extends ConsumerState<_FinanceConflicts> {
                       CollaborationException(conflict.reason),
                     ),
                   ),
+                  _taskReview(conflict, state),
                   ExpansionTile(
                     title: Text(l.sharingLocalVersion),
                     children: [
@@ -98,7 +199,7 @@ class _FinanceConflictsState extends ConsumerState<_FinanceConflicts> {
                     children: [
                       FinanceSnapshotView(
                         scopeId: widget.guard.scopeId,
-                        value: conflict.remotePayload,
+                        value: _existingOccurrence(conflict, state),
                       ),
                     ],
                   ),
@@ -109,7 +210,8 @@ class _FinanceConflictsState extends ConsumerState<_FinanceConflicts> {
                                   ?.financePolicyForScope(widget.guard.scopeId)
                                   .canWrite ==
                               true &&
-                          !conflict.remoteDeleted)
+                          !conflict.remoteDeleted &&
+                          conflict.reason == 'conflict')
                         TextButton(
                           onPressed: _busy
                               ? null

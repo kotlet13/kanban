@@ -211,7 +211,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
-                            '${l.financeTotalBalance}: ${sharedMoneyLabel(context, total.balanceMinor, total.currency)}',
+                            '${widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? l.financeTotalBalance : l.financePlanRecordedChange}: ${sharedMoneyLabel(context, widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? total.balanceMinor : total.incomeMinor - total.expenseMinor, total.currency)}',
                           ),
                           Text(
                             '${l.organizerIncome}: ${sharedMoneyLabel(context, total.incomeMinor, total.currency)}',
@@ -239,7 +239,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                 onTap: widget.canWrite ? () => widget.onAccount(account) : null,
                 title: Text(account.name),
                 subtitle: Text(
-                  '${account.ownerAccountId == null ? l.financeJointAccount : _person(account.ownerAccountId)} · ${sharedMoneyLabel(context, totals[account.currency]?.accountBalances[account.id] ?? BigInt.from(account.openingBalanceMinor), account.currency)}',
+                  '${account.ownerAccountId == null ? l.financeJointAccount : _person(account.ownerAccountId)} · ${account.openingBalanceMinor == null ? l.financePlanRecordedChange : ''} ${sharedMoneyLabel(context, totals[account.currency]?.accountBalances[account.id] ?? BigInt.from(account.openingBalanceMinor ?? 0), account.currency)}',
                 ),
                 trailing: IconButton(
                   tooltip: l.financeAudit,

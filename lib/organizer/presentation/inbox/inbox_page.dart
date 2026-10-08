@@ -9,6 +9,9 @@ import '../organizer_widgets.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'notification_target_view.dart';
+import 'finance_inbox_section.dart';
+import '../../domain/finance_reminder_plans.dart';
+import '../../state/finance_inbox_provider.dart';
 
 enum _InboxFilter { all, personal, scope }
 
@@ -128,6 +131,33 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
         if (reminders.isNotEmpty) localGroups.add(reminders);
       }
     }
+    final now =
+        ref.watch(financeInboxClockProvider).valueOrNull ??
+        ref.read(organizerClockProvider)();
+    final financePlans =
+        personal == null || shared == null
+              ? <ReminderPlan>[]
+              : dueFinanceInboxPlans(
+                      personal: personal,
+                      shared: shared,
+                      now: now,
+                    )
+                    .where(
+                      (p) =>
+                          !p.scheduledAt.isAfter(
+                            ref.read(organizerClockProvider)(),
+                          ) &&
+                          (_filter == _InboxFilter.all ||
+                              (_filter == _InboxFilter.personal
+                                  ? p.target.isPersonal ||
+                                        p.target.scopeId ==
+                                            shared.privateSync.scopeId
+                                  : !p.target.isPersonal &&
+                                        p.target.scopeId !=
+                                            shared.privateSync.scopeId)),
+                    )
+                    .toList()
+          ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -157,6 +187,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
         ),
         const SizedBox(height: 20),
         if (_busy) const LinearProgressIndicator(),
+        if (financePlans.isNotEmpty) FinanceInboxSection(plans: financePlans),
         for (final reminders in localGroups)
           _card(
             title: l.inboxPersonalReminders(reminders.length),
@@ -232,7 +263,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                 );
               },
             ),
-        if (groups.isEmpty && localGroups.isEmpty)
+        if (groups.isEmpty && localGroups.isEmpty && financePlans.isEmpty)
           OrganizerEmpty(
             icon: Icons.notifications_none_outlined,
             title: l.inboxEmpty,

@@ -10,6 +10,8 @@ import '../shopping_page.dart';
 import '../planning/shared_agenda_page.dart';
 import '../inbox/notification_target_view.dart';
 import 'collaboration_actions.dart';
+import 'organization_workspace.dart';
+import '../people/people_page.dart';
 import 'sharing_conflicts.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
@@ -17,7 +19,15 @@ import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
 import 'sharing_status.dart';
 
-enum SharingView { shopping, projects, tasks, agenda, timeline, finances }
+enum SharingView {
+  shopping,
+  projects,
+  tasks,
+  agenda,
+  timeline,
+  finances,
+  people,
+}
 
 class SharingWorkspace extends ConsumerWidget {
   const SharingWorkspace({
@@ -102,6 +112,23 @@ class SharingWorkspace extends ConsumerWidget {
                     .where((item) => item.id == selectedScopeId)
                     .firstOrNull ??
                 scopes.first;
+            if (selectedScopeId != null &&
+                !scopes.any((scope) => scope.id == selectedScopeId)) {
+              return Text(l.sharingAccessRevoked);
+            }
+            if (scope.kind == SharedScopeKind.organization &&
+                view != SharingView.finances &&
+                view != SharingView.people &&
+                view != SharingView.shopping) {
+              if (scope.revoked || state.sessionInvalid) {
+                return Text(l.sharingAccessRevoked);
+              }
+              return OrganizationWorkspace(
+                organization: scope,
+                onProject: onScopeSelected,
+                onMembers: () => onMembers?.call(scope.id),
+              );
+            }
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
             final expired =
@@ -173,6 +200,34 @@ class SharingWorkspace extends ConsumerWidget {
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(l.sharingReadOnly),
                     ),
+                  if (scope.archived)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(l.scopeArchivedDescription),
+                    ),
+                  if (state.projectArchivingSupported &&
+                      scope.canManage &&
+                      (scope.projectRootId != null ||
+                          scope.organizationId != null))
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        icon: Icon(
+                          scope.archived
+                              ? Icons.unarchive_outlined
+                              : Icons.archive_outlined,
+                        ),
+                        label: Text(
+                          scope.archived ? l.peopleRestore : l.peopleArchive,
+                        ),
+                        onPressed: () => actions.run(
+                          () => actions.controller.archiveProjectScope(
+                            scope.id,
+                            archived: !scope.archived,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (onMembers != null)
                     Align(
                       alignment: Alignment.centerLeft,
@@ -184,6 +239,13 @@ class SharingWorkspace extends ConsumerWidget {
                     ),
                   const SizedBox(height: 24),
                   switch (view) {
+                    SharingView.people => OrganizerPeoplePage(
+                      people: data.people,
+                      tasks: data.tasks,
+                      scope: scope,
+                      readOnly: readOnly || !state.householdPeopleSupported,
+                      onTask: (task) => actions.task(task: task),
+                    ),
                     SharingView.finances => SharedFinanceWorkspace(
                       scope: scope,
                       state: state,
@@ -201,6 +263,9 @@ class SharingWorkspace extends ConsumerWidget {
                       emptyDescription: l.sharingNoSharedListsDescription,
                     ),
                     SharingView.projects => OrganizerProjectsPage(
+                      allowProjectCreation:
+                          scope.projectRootId == null &&
+                          scope.organizationId == null,
                       key: ValueKey(
                         'shared-projects-${state.session!.partition}-${scope.id}',
                       ),

@@ -22,9 +22,10 @@ void validateSharedPayload(
   int? contractVersion,
   bool personal = false,
 }) {
-  final version = contractVersion ?? (payload.containsKey('startAt') ? 2 : 1);
+  final version =
+      contractVersion ?? sharedPayloadContractVersion(type.name, payload);
   final keys = <String>{
-    'title',
+    if (type != SharedRecordType.householdPerson) 'title',
     'createdAt',
     'updatedAt',
     ...switch (type) {
@@ -32,6 +33,11 @@ void validateSharedPayload(
         'description',
         'area',
         if (version >= 2) ...['startAt', 'endAt'],
+        if (version >= 3) ...[
+          'phases',
+          'availabilityMinutes',
+          'availabilityPeriod',
+        ],
       ],
       SharedRecordType.task => [
         'notes',
@@ -39,7 +45,17 @@ void validateSharedPayload(
         'dueAt',
         'isCompleted',
         if (version >= 2) ...['startAt', 'endAt', 'assigneeAccountIds'],
+        if (version >= 3) ...[
+          'phaseId',
+          'estimateMinutes',
+          'availabilityMinutes',
+          'availabilityPeriod',
+          'timer',
+          'assigneePersonId',
+          'subjectPersonIds',
+        ],
       ],
+      SharedRecordType.householdPerson => ['name', 'notes', 'archived'],
       SharedRecordType.shoppingList => <String>[],
       SharedRecordType.shoppingItem => ['listId', 'quantity', 'isChecked'],
       SharedRecordType.event => [
@@ -64,8 +80,13 @@ void validateSharedPayload(
           (personal ? 524288 : 8192)) {
     throw const CollaborationException('validation_error');
   }
-  validateSharedText(payload['title'], personal ? 2000 : 300);
-  if (personal && (payload['title'] as String).length > 500) {
+  if (type == SharedRecordType.householdPerson && version < 3) {
+    throw const CollaborationException('client_upgrade_required');
+  }
+  final title =
+      payload[type == SharedRecordType.householdPerson ? 'name' : 'title'];
+  validateSharedText(title, personal ? 2000 : 300);
+  if (personal && (title as String).length > 500) {
     throw const CollaborationException('validation_error');
   }
   void date(Object? value, {bool nullable = false}) {
@@ -112,7 +133,104 @@ void validateSharedPayload(
       }
     }
   }
+  if (version >= 3 &&
+      (type == SharedRecordType.project || type == SharedRecordType.task)) {
+    final minutes = payload['availabilityMinutes'],
+        period = payload['availabilityPeriod'];
+    if ((minutes == null) != (period == null) ||
+        (minutes != null &&
+            (minutes is! int ||
+                minutes < 1 ||
+                minutes > (period == 'day' ? 1440 : 10080) ||
+                !const ['day', 'week'].contains(period)))) {
+      throw const CollaborationException('validation_error');
+    }
+    if (type == SharedRecordType.project) {
+      final phases = payload['phases'];
+      if (phases is! List || phases.length > 200) {
+        throw const CollaborationException('validation_error');
+      }
+      final ids = <String>{};
+      for (final phase in phases) {
+        if (phase is! Map ||
+            phase.length != 5 ||
+            !const {
+              'id',
+              'title',
+              'milestone',
+              'startAt',
+              'endAt',
+            }.containsAll(phase.keys) ||
+            phase['id'] is! String ||
+            !ids.add(phase['id'] as String)) {
+          throw const CollaborationException('validation_error');
+        }
+        validateSharedText(phase['id'], 200);
+        validateSharedText(phase['title'], 300);
+        validateSharedText(phase['milestone'], 4096, empty: true);
+        date(phase['startAt'], nullable: true);
+        date(phase['endAt'], nullable: true);
+        if (phase['startAt'] != null &&
+            phase['endAt'] != null &&
+            DateTime.parse(
+              phase['endAt'] as String,
+            ).isBefore(DateTime.parse(phase['startAt'] as String))) {
+          throw const CollaborationException('validation_error');
+        }
+      }
+    } else {
+      for (final key in ['assigneePersonId']) {
+        if (payload[key] != null && !isSharedUuid(payload[key])) {
+          throw const CollaborationException('validation_error');
+        }
+      }
+      if (payload['phaseId'] != null) {
+        validateSharedText(payload['phaseId'], 200);
+      }
+      final estimate = payload['estimateMinutes'],
+          people = payload['subjectPersonIds'];
+      if ((estimate != null &&
+              (estimate is! int || estimate < 1 || estimate > 10000000)) ||
+          people is! List ||
+          people.length > 20 ||
+          !people.every(isSharedUuid) ||
+          people.toSet().length != people.length) {
+        throw const CollaborationException('validation_error');
+      }
+      final timer = payload['timer'];
+      if (timer is! Map ||
+          timer.length != 3 ||
+          !const {
+            'elapsedSeconds',
+            'runningSince',
+            'runId',
+          }.containsAll(timer.keys)) {
+        throw const CollaborationException('validation_error');
+      }
+      final elapsed = timer['elapsedSeconds'];
+      if (elapsed is! int ||
+          elapsed < 0 ||
+          elapsed > 315360000 ||
+          (timer['runningSince'] == null) != (timer['runId'] == null)) {
+        throw const CollaborationException('validation_error');
+      }
+      if (timer['runningSince'] != null) {
+        date(timer['runningSince']);
+        validateSharedText(timer['runId'], 200);
+      }
+    }
+  }
   switch (type) {
+    case SharedRecordType.householdPerson:
+      validateSharedText(
+        payload['notes'],
+        personal ? 200000 : 4096,
+        empty: true,
+      );
+      if (payload['archived'] is! bool ||
+          (personal && (payload['notes'] as String).length > 50000)) {
+        throw const CollaborationException('validation_error');
+      }
     case SharedRecordType.event:
       validateSharedText(
         payload['notes'],
@@ -167,5 +285,34 @@ void validateSharedPayload(
       if (!isSharedUuid(payload['listId']) || payload['isChecked'] is! bool) {
         throw const CollaborationException('validation_error');
       }
+  }
+}
+
+int sharedPayloadContractVersion(String type, Map payload) =>
+    type == 'householdPerson' ||
+        payload.containsKey('phases') ||
+        payload.containsKey('timer')
+    ? 3
+    : (payload.containsKey('startAt') ? 2 : 1);
+
+void addRichPlanningDefaults(Map<String, dynamic> payload, String type) {
+  if (type != 'project' && type != 'task') return;
+  payload.putIfAbsent('availabilityMinutes', () => null);
+  payload.putIfAbsent('availabilityPeriod', () => null);
+  if (type == 'project') {
+    payload.putIfAbsent('phases', () => <Object>[]);
+  } else {
+    payload.putIfAbsent('phaseId', () => null);
+    payload.putIfAbsent('estimateMinutes', () => null);
+    payload.putIfAbsent(
+      'timer',
+      () => <String, Object?>{
+        'elapsedSeconds': 0,
+        'runningSince': null,
+        'runId': null,
+      },
+    );
+    payload.putIfAbsent('assigneePersonId', () => null);
+    payload.putIfAbsent('subjectPersonIds', () => <String>[]);
   }
 }

@@ -51,7 +51,7 @@ class NativeDeliveryService extends NativeDatabase
             // Native mutations lock user -> scope. Core user updates also wait on
             // this row; the Native global mutex alone would not protect email.
             $user = $binding ? $this->one('SELECT id,email,is_active FROM users WHERE id=?'.$this->lockSuffix(), [$binding['user_id']]) : null;
-            if ($inbox) { $this->one('SELECT id FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(), [$inbox['scope_id']]); }
+            if ($inbox) { $deliveryScope=$this->one('SELECT id,archived FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(), [$inbox['scope_id']]); }
             $job = $this->one('SELECT * FROM familyhub_deliveries WHERE inbox_id=?'.$this->lockSuffix(), [$id]);
             if (!$job || $job['state'] !== 'processing' || $job['lease_token'] !== $lease) { return 'cancelled'; }
             // Refresh all references after lock waits, including account deletion.
@@ -59,7 +59,7 @@ class NativeDeliveryService extends NativeDatabase
             $account = $user ? $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id=?', [$user['id']]) : null;
             $settings = $inbox ? $this->one('SELECT settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$inbox['scope_id'], $inbox['recipient_account_id'], $inbox['category']]) : null;
             $settings = $settings ? json_decode($settings['settings'], true, 32, JSON_THROW_ON_ERROR) : [];
-            $visible = $inbox && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'], $inbox['recipient_account_id'], str_starts_with($inbox['target_type'], 'finance'));
+            $visible = $inbox && !(int)($deliveryScope['archived']??0) && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'], $inbox['recipient_account_id'], $this->financialRecordType($inbox['target_type']));
             if (!$user || (int)$user['is_active'] !== 1 || !$account || !$inbox || $account['account_id'] !== $inbox['recipient_account_id'] || !$visible || !($settings['email'] ?? false) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL) || (int)$job['expires_at'] <= time() || (int)$job['attempts'] > 5) {
                 $this->finish($id, $lease, 'cancelled'); return 'cancelled';
             }

@@ -1,4 +1,5 @@
 import 'organizer_models.dart';
+import 'finance_reminder_plans.dart';
 import 'collaboration_models.dart';
 
 class AgendaItem {
@@ -107,7 +108,9 @@ List<ReminderPlan> desiredReminderPlans({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
 }) {
-  final plans = <ReminderPlan>[];
+  final plans = <ReminderPlan>[
+    ...desiredFinanceReminderPlans(personal: personal, shared: shared),
+  ];
   for (final t in personal.tasks.where(
     (t) => !t.isCompleted && t.dueAt != null,
   )) {
@@ -136,7 +139,7 @@ List<ReminderPlan> desiredReminderPlans({
   }
   final session = shared.session;
   if (session == null) return List.unmodifiable(plans);
-  for (final scope in shared.scopes.where((s) => !s.revoked)) {
+  for (final scope in shared.scopes.where((s) => !s.revoked && !s.archived)) {
     final prefs = shared.notificationPreferences[scope.id];
     final data = shared.dataForScope(scope.id);
     NotificationTarget target(String type, String id) => NotificationTarget(

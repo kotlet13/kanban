@@ -1,3 +1,4 @@
+import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -75,7 +76,8 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   Future<void> _createScope() async {
     final guard = SharingSessionGuard(context, ref);
     final l = context.l10n;
-    String? scopeId;
+    String? scopeId, submittedName, submittedKind;
+    final createId = newSharedId(), requestId = newSharedId();
     await showSharingForm(
       context,
       title: l.sharingCreateSpace,
@@ -89,6 +91,12 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
           options: {
             'household': l.sharingHousehold,
             'project': l.sharingProject,
+            if (ref
+                    .read(collaborationProvider)
+                    .valueOrNull
+                    ?.organizationsSupported ==
+                true)
+              'organization': l.organizationTitle,
           },
         ),
       ],
@@ -97,8 +105,12 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
       wrap: (form) => SharingSessionBoundary(guard: guard, child: form),
       onSubmit: (values) async {
         scopeId = await guard.controller.createScope(
-          values['name']!.trim(),
-          kind: SharedScopeKind.values.byName(values['kind']!),
+          submittedName ??= values['name']!.trim(),
+          kind: SharedScopeKind.values.byName(
+            submittedKind ??= values['kind']!,
+          ),
+          id: createId,
+          requestId: requestId,
         );
       },
     );
@@ -365,6 +377,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                                   SharingView.agenda => l.planningSharedToday,
                                   SharingView.timeline => l.planningTimeline,
                                   SharingView.finances => l.organizerFinances,
+                                  SharingView.people => l.peopleTitle,
                                 }, overflow: TextOverflow.ellipsis),
                               ),
                           ],

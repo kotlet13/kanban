@@ -5262,6 +5262,738 @@ abstract class AppLocalizations {
   /// **'First-account setup is no longer available here. Sign in or use an invitation.'**
   String get accountEnrollmentUnavailable;
 
+  /// No description provided for @planningPhases.
+  ///
+  /// In en, this message translates to:
+  /// **'Phases and milestones'**
+  String get planningPhases;
+
+  /// No description provided for @planningAddPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'Add phase'**
+  String get planningAddPhase;
+
+  /// No description provided for @planningPhaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase name'**
+  String get planningPhaseTitle;
+
+  /// No description provided for @planningMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Milestone'**
+  String get planningMilestone;
+
+  /// No description provided for @planningRemovePhase.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove phase'**
+  String get planningRemovePhase;
+
+  /// No description provided for @planningNoPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'No phase'**
+  String get planningNoPhase;
+
+  /// No description provided for @planningEstimateMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated work in minutes'**
+  String get planningEstimateMinutes;
+
+  /// No description provided for @planningAvailabilityMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Available minutes'**
+  String get planningAvailabilityMinutes;
+
+  /// No description provided for @planningAvailabilityPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Availability period'**
+  String get planningAvailabilityPeriod;
+
+  /// No description provided for @planningPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Per day'**
+  String get planningPerDay;
+
+  /// No description provided for @planningPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Per week'**
+  String get planningPerWeek;
+
+  /// No description provided for @planningTimerStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start timer'**
+  String get planningTimerStart;
+
+  /// No description provided for @planningTimerPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get planningTimerPause;
+
+  /// No description provided for @planningElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Elapsed time'**
+  String get planningElapsed;
+
+  /// No description provided for @planningRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining time'**
+  String get planningRemaining;
+
+  /// No description provided for @planningEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated time'**
+  String get planningEstimated;
+
+  /// No description provided for @planningCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar dates'**
+  String get planningCalendar;
+
+  /// No description provided for @taskCostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Task cost'**
+  String get taskCostTitle;
+
+  /// No description provided for @taskCostEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Add cost'**
+  String get taskCostEnabled;
+
+  /// No description provided for @taskCostPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get taskCostPaid;
+
+  /// No description provided for @taskCostPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get taskCostPlanned;
+
+  /// No description provided for @taskCostAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial account'**
+  String get taskCostAccount;
+
+  /// No description provided for @taskCostUnassignedAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'No account selected'**
+  String get taskCostUnassignedAccount;
+
+  /// No description provided for @taskCostPayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer'**
+  String get taskCostPayer;
+
+  /// No description provided for @taskCostRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient'**
+  String get taskCostRecipient;
+
+  /// No description provided for @taskCostAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry author'**
+  String get taskCostAuthor;
+
+  /// No description provided for @taskCostNoDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a task due date, the cost has no planned date.'**
+  String get taskCostNoDue;
+
+  /// No description provided for @taskCostDetachHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing the link preserves the financial entry.'**
+  String get taskCostDetachHint;
+
+  /// No description provided for @spacePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Space'**
+  String get spacePickerTitle;
+
+  /// No description provided for @organizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization'**
+  String get organizationTitle;
+
+  /// No description provided for @organizationCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create organization'**
+  String get organizationCreate;
+
+  /// No description provided for @organizationProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization projects'**
+  String get organizationProjects;
+
+  /// No description provided for @organizationCreateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Add organization project'**
+  String get organizationCreateProject;
+
+  /// No description provided for @organizationAccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Membership does not grant access to every project or finances. Set access for each project separately.'**
+  String get organizationAccessDescription;
+
+  /// No description provided for @peopleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get peopleTitle;
+
+  /// No description provided for @peopleAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add person'**
+  String get peopleAdd;
+
+  /// No description provided for @peopleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get peopleName;
+
+  /// No description provided for @peopleNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get peopleNotes;
+
+  /// No description provided for @peopleArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get peopleArchive;
+
+  /// No description provided for @peopleRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get peopleRestore;
+
+  /// No description provided for @peopleWithoutAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A person profile has no login or access rights.'**
+  String get peopleWithoutAccountDescription;
+
+  /// No description provided for @peopleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people whose tasks you want to manage.'**
+  String get peopleEmpty;
+
+  /// No description provided for @peopleArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived person'**
+  String get peopleArchived;
+
+  /// No description provided for @financePlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly plan'**
+  String get financePlanTitle;
+
+  /// No description provided for @financePlanWizard.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up a financial plan'**
+  String get financePlanWizard;
+
+  /// No description provided for @financePlanDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimates stay expected until you confirm actual receipt or payment.'**
+  String get financePlanDescription;
+
+  /// No description provided for @financePlanLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'The plan is saved on this device and in portable backups.'**
+  String get financePlanLocal;
+
+  /// No description provided for @financePlanPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'The plan is saved in your selected private space with sync enabled.'**
+  String get financePlanPrivate;
+
+  /// No description provided for @financePlanUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning in a synced space requires the newer server finance contract.'**
+  String get financePlanUpgrade;
+
+  /// No description provided for @financePlanMonthEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'If the day does not exist in a month, its last day is used.'**
+  String get financePlanMonthEnd;
+
+  /// No description provided for @financePlanWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekend salary checks occur on Friday and Monday for the same income. Holidays are not adjusted automatically.'**
+  String get financePlanWeekend;
+
+  /// No description provided for @financePlanSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you expect your monthly salary?'**
+  String get financePlanSalary;
+
+  /// No description provided for @financePlanNoSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'No regular salary'**
+  String get financePlanNoSalary;
+
+  /// No description provided for @financePlanLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you have a loan?'**
+  String get financePlanLoan;
+
+  /// No description provided for @financePlanLoanPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total loan amount (optional)'**
+  String get financePlanLoanPrincipal;
+
+  /// No description provided for @financePlanInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated monthly installment'**
+  String get financePlanInstallment;
+
+  /// No description provided for @financePlanCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you have a deferred payment card?'**
+  String get financePlanCard;
+
+  /// No description provided for @financePlanCardEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated monthly settlement'**
+  String get financePlanCardEstimate;
+
+  /// No description provided for @financePlanOtherIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Other monthly income'**
+  String get financePlanOtherIncome;
+
+  /// No description provided for @financePlanOtherExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly expenses'**
+  String get financePlanOtherExpenses;
+
+  /// No description provided for @financePlanAddIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Add income'**
+  String get financePlanAddIncome;
+
+  /// No description provided for @financePlanAddExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get financePlanAddExpense;
+
+  /// No description provided for @financePlanEstimatedAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated amount'**
+  String get financePlanEstimatedAmount;
+
+  /// No description provided for @financePlanDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month'**
+  String get financePlanDay;
+
+  /// No description provided for @financePlanFirstDate.
+  ///
+  /// In en, this message translates to:
+  /// **'First expected date'**
+  String get financePlanFirstDate;
+
+  /// No description provided for @financePlanSalaryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get financePlanSalaryLabel;
+
+  /// No description provided for @financePlanLoanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan installment'**
+  String get financePlanLoanLabel;
+
+  /// No description provided for @financePlanCardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Card settlement'**
+  String get financePlanCardLabel;
+
+  /// No description provided for @financePlanReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review plan'**
+  String get financePlanReview;
+
+  /// No description provided for @financePlanSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save plan'**
+  String get financePlanSave;
+
+  /// No description provided for @financePlanRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly recurrences'**
+  String get financePlanRules;
+
+  /// No description provided for @financePlanAddRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add monthly rule'**
+  String get financePlanAddRule;
+
+  /// No description provided for @financePlanEditRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit monthly rule'**
+  String get financePlanEditRule;
+
+  /// No description provided for @financePlanRuleActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule is active'**
+  String get financePlanRuleActive;
+
+  /// No description provided for @financePlanReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders for this plan'**
+  String get financePlanReminders;
+
+  /// No description provided for @financePlanReminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get financePlanReminderTime;
+
+  /// No description provided for @financePlanReminderOptIn.
+  ///
+  /// In en, this message translates to:
+  /// **'This does not enable phone permission. Enable device reminders in notification settings.'**
+  String get financePlanReminderOptIn;
+
+  /// No description provided for @financePlanSalaryQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Have you received your salary?'**
+  String get financePlanSalaryQuestion;
+
+  /// No description provided for @financePlanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm actual amount'**
+  String get financePlanConfirm;
+
+  /// No description provided for @financePlanActualAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual amount'**
+  String get financePlanActualAmount;
+
+  /// No description provided for @financePlanActualDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt or payment date'**
+  String get financePlanActualDate;
+
+  /// No description provided for @financePlanConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'The actual amount is confirmed.'**
+  String get financePlanConfirmed;
+
+  /// No description provided for @financePlanForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast by date'**
+  String get financePlanForecast;
+
+  /// No description provided for @financePlanNetChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected net change'**
+  String get financePlanNetChange;
+
+  /// No description provided for @financePlanProjectedBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Projected balance'**
+  String get financePlanProjectedBalance;
+
+  /// No description provided for @financePlanOpeningBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance (optional)'**
+  String get financePlanOpeningBalance;
+
+  /// No description provided for @financePlanOpeningDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance at the start of day'**
+  String get financePlanOpeningDate;
+
+  /// No description provided for @financePlanNoOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'No opening balance is set; net change is shown.'**
+  String get financePlanNoOpening;
+
+  /// No description provided for @financePlanUndated.
+  ///
+  /// In en, this message translates to:
+  /// **'Undated entries are excluded from the dated forecast.'**
+  String get financePlanUndated;
+
+  /// No description provided for @financePlanSymbolicAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a named ledger account; it does not move money or connect to a bank.'**
+  String get financePlanSymbolicAccount;
+
+  /// No description provided for @financePlanEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No dated entries in the selected period.'**
+  String get financePlanEmpty;
+
+  /// No description provided for @financePlanRuleType.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurrence type'**
+  String get financePlanRuleType;
+
+  /// No description provided for @financePlanSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The financial plan is saved.'**
+  String get financePlanSaved;
+
+  /// No description provided for @financePlanOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Still unconfirmed'**
+  String get financePlanOverdue;
+
+  /// No description provided for @financePlanBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get financePlanBack;
+
+  /// No description provided for @financePlanNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get financePlanNext;
+
+  /// No description provided for @financePlanDateNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date.'**
+  String get financePlanDateNeeded;
+
+  /// No description provided for @financePlanNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No additional entries.'**
+  String get financePlanNoItems;
+
+  /// No description provided for @financePlanAccountName.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial account name'**
+  String get financePlanAccountName;
+
+  /// No description provided for @financePlanAccountArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived account'**
+  String get financePlanAccountArchived;
+
+  /// No description provided for @financePlanReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Have you received your salary? Open the expected income and confirm the actual amount.'**
+  String get financePlanReminderBody;
+
+  /// No description provided for @peopleTaskSubjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Who this task concerns'**
+  String get peopleTaskSubjects;
+
+  /// No description provided for @financePlanYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get financePlanYes;
+
+  /// No description provided for @financePlanNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get financePlanNo;
+
+  /// No description provided for @financePlanRecordedChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded net change'**
+  String get financePlanRecordedChange;
+
+  /// No description provided for @financePairedConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the task and cost conflict in finances.'**
+  String get financePairedConflict;
+
+  /// No description provided for @deletionDetachOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.'**
+  String get deletionDetachOrganization;
+
+  /// No description provided for @deletionOrganizationLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects detached from an organization'**
+  String get deletionOrganizationLinks;
+
+  /// No description provided for @financePlanIncomeQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Have you received this income?'**
+  String get financePlanIncomeQuestion;
+
+  /// No description provided for @financePlanExpenseQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Has this obligation been paid?'**
+  String get financePlanExpenseQuestion;
+
+  /// No description provided for @financePlanIncomeReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Have you received this income? Open the expected entry and confirm the actual amount.'**
+  String get financePlanIncomeReminderBody;
+
+  /// No description provided for @financePlanExpenseReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Has this obligation been paid? Open the planned entry and confirm the actual amount.'**
+  String get financePlanExpenseReminderBody;
+
+  /// No description provided for @financePlanManageRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage a recurring entry through its monthly rule. Disabling the rule stops future entries and preserves confirmed history.'**
+  String get financePlanManageRule;
+
+  /// No description provided for @scopeArchivedProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived projects'**
+  String get scopeArchivedProjects;
+
+  /// No description provided for @scopeArchivedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This project is archived. Data and financial history remain available according to your permissions; tasks do not contribute to the daily overview or reminders.'**
+  String get scopeArchivedDescription;
+
+  /// No description provided for @peopleCopyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Related person profiles (names and notes) will also be copied into the selected space.'**
+  String get peopleCopyDescription;
+
+  /// No description provided for @financePlanPrincipalOnlyLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'The total loan amount can only be entered for a loan installment.'**
+  String get financePlanPrincipalOnlyLoan;
+
+  /// No description provided for @financePlanOpeningUndated.
+  ///
+  /// In en, this message translates to:
+  /// **'No reference date'**
+  String get financePlanOpeningUndated;
+
+  /// No description provided for @planningInvalidMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive number of minutes, up to {max}.'**
+  String planningInvalidMinutes(int max);
+
+  /// No description provided for @taskCostSelectAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a financial account.'**
+  String get taskCostSelectAccount;
+
+  /// No description provided for @financeDuplicateOccurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Another device already created the canonical entry for this month. Your local version is kept for comparison; the same income or expense is not counted twice.'**
+  String get financeDuplicateOccurrence;
+
+  /// No description provided for @financePairedTaskReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked task: these changes and the cost will be reviewed together.'**
+  String get financePairedTaskReview;
+
   /// No description provided for @privateSyncTitle.
   ///
   /// In en, this message translates to:
@@ -6341,6 +7073,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Left {x}%, top {y}% · {width} × {height}%'**
   String gardenAreaPosition(int x, int y, int width, int height);
+
+  /// No description provided for @financePlanPendingEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'Unconfirmed entries'**
+  String get financePlanPendingEntries;
+
+  /// No description provided for @financePlanPendingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'All expected income and expenses, including undated entries and entries beyond the forecast. Open an entry to confirm the actual amount.'**
+  String get financePlanPendingDescription;
+
+  /// No description provided for @financePlanUndatedEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'No date set'**
+  String get financePlanUndatedEntry;
+
+  /// No description provided for @financePlanForecastPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Dated entries through {date}, showing the closing total for each day.'**
+  String financePlanForecastPeriod(String date);
 }
 
 class _AppLocalizationsDelegate

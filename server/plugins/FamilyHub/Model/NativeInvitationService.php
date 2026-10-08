@@ -60,7 +60,7 @@ class NativeInvitationService extends NativeDatabase
             if ($operation === 'invitations.revoke') {
                 $this->fields($params, ['scopeId', 'invitationId', 'requestId']);
                 $scopeId = $this->uuid($params['scopeId']); $id = $this->uuid($params['invitationId']); $request = $this->uuid($params['requestId']);
-                $scope = $this->scope($scopeId, $user['id'], true, true);
+                $scope = $this->scope($scopeId, $user['id'], false, true);
                 if ($scope['kind'] === 'personal') { throw new NativeError('personal_not_shareable', 403); }
                 $hash = $this->hashRequest($operation, $params);
                 $replay = $this->replay($scopeId, $user['id'], $request, $hash);
@@ -112,6 +112,7 @@ class NativeInvitationService extends NativeDatabase
     {
         // Scope lock serializes native accept/revoke/role removal and sequence commits.
         $scope = $this->scope($row['scope_id'], $row['creator_id'], false, true);
+        if ((int)($scope['archived']??0)===1) { throw new NativeError('scope_archived',403); }
         if ($scope['kind'] === 'personal') { throw new NativeError('invitation_invalid', 404); }
         $account = $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id=?', [$row['creator_id']]);
         $creator = $this->one('SELECT is_active FROM users WHERE id=?', [$row['creator_id']]);

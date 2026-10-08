@@ -16,11 +16,38 @@ class SharedTodayOverview extends ConsumerWidget {
     if (state?.session == null) return const SizedBox.shrink();
     final scopes = state!.scopes
         .where(
-          (scope) => !scope.revoked && scope.kind != SharedScopeKind.personal,
+          (scope) =>
+              !scope.revoked &&
+              !scope.archived &&
+              scope.kind != SharedScopeKind.personal,
         )
         .toList();
     if (scopes.isEmpty) return const SizedBox.shrink();
     final l = context.l10n;
+    String assignees(AgendaItem item) {
+      final data = state.dataForScope(item.scopeId!);
+      final task = data.tasks.where((t) => t.id == item.id).firstOrNull;
+      final names = [
+        for (final id in item.assigneeAccountIds)
+          state
+                  .membersForScope(item.scopeId!)
+                  .where((m) => m.accountId == id)
+                  .firstOrNull
+                  ?.displayName ??
+              l.planningFormerMember,
+      ];
+      if (task?.assigneePersonId != null) {
+        names.add(
+          data.people
+                  .where((p) => p.id == task!.assigneePersonId)
+                  .firstOrNull
+                  ?.name ??
+              l.planningFormerMember,
+        );
+      }
+      return names.isEmpty ? l.planningUnassigned : names.join(', ');
+    }
+
     final items =
         [
           for (final scope in scopes)
@@ -57,7 +84,7 @@ class SharedTodayOverview extends ConsumerWidget {
                   ),
                   title: Text(item.title),
                   subtitle: Text(
-                    '${scopes.where((scope) => scope.id == item.scopeId).first.name} · ${item.assigneeAccountIds.isEmpty ? l.planningUnassigned : item.assigneeAccountIds.map((id) => state.membersForScope(item.scopeId!).where((member) => member.accountId == id).firstOrNull?.displayName ?? l.planningFormerMember).join(', ')}${item.sortAt == null ? '' : '\n${organizerDateTime(context, item.sortAt!)}'}',
+                    '${scopes.where((scope) => scope.id == item.scopeId).first.name} · ${assignees(item)}${item.sortAt == null ? '' : '\n${organizerDateTime(context, item.sortAt!)}'}',
                   ),
                   onTap: () => onAgenda(item.scopeId!),
                   trailing: const Icon(Icons.chevron_right, size: 18),

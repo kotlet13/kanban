@@ -1215,9 +1215,21 @@
   "accountBootstrapCode": "Začetna koda upravljavca",
   "accountCreate": "Ustvari račun",
   "accountCreatedSignedIn": "Račun je ustvarjen. Prijavljen si kot {username}.",
-  "@accountCreatedSignedIn": {"placeholders": {"username": {"type": "String"}}},
+  "@accountCreatedSignedIn": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "accountCreatedSignInRequired": "Račun {username} je ustvarjen, vendar prijave na tej napravi ni bilo mogoče shraniti. Prijavi se s tem uporabniškim imenom in izbranim geslom. Začetne kode ali povabila ne uporabi znova.",
-  "@accountCreatedSignInRequired": {"placeholders": {"username": {"type": "String"}}},
+  "@accountCreatedSignInRequired": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "accountEmailConfirmed": "E-poštni naslov je potrjen.",
   "accountSessionAutoRenew": "Prijava na tej napravi se ob uporabi samodejno podaljšuje.",
   "accountPasswordRule": "Geslo mora imeti od 12 do 72 bajtov.",
@@ -1244,6 +1256,135 @@
   "accountEmailUnavailable": "Strežnik še nima nastavljenega pošiljanja varnostne e-pošte.",
   "accountCodeInvalid": "Koda ni veljavna, je potekla ali je že porabljena. Zahtevaj novo.",
   "accountEnrollmentUnavailable": "Prvi račun s kodo tu ni več na voljo. Prijavi se ali uporabi povabilo.",
+  "planningPhases": "Faze in mejniki",
+  "planningAddPhase": "Dodaj fazo",
+  "planningPhaseTitle": "Ime faze",
+  "planningMilestone": "Mejnik",
+  "planningRemovePhase": "Odstrani fazo",
+  "planningNoPhase": "Brez faze",
+  "planningEstimateMinutes": "Ocena dela v minutah",
+  "planningAvailabilityMinutes": "Razpoložljive minute",
+  "planningAvailabilityPeriod": "Obdobje razpoložljivosti",
+  "planningPerDay": "Na dan",
+  "planningPerWeek": "Na teden",
+  "planningTimerStart": "Začni časovnik",
+  "planningTimerPause": "Začasno ustavi",
+  "planningElapsed": "Porabljeni čas",
+  "planningRemaining": "Preostali čas",
+  "planningEstimated": "Ocenjeni čas",
+  "planningCalendar": "Koledarski termin",
+  "taskCostTitle": "Strošek opravila",
+  "taskCostEnabled": "Dodaj strošek",
+  "taskCostPaid": "Plačano",
+  "taskCostPlanned": "Načrtovano",
+  "taskCostAccount": "Finančni račun",
+  "taskCostUnassignedAccount": "Brez izbire računa",
+  "taskCostPayer": "Plačnik",
+  "taskCostRecipient": "Prejemnik",
+  "taskCostAuthor": "Avtor vnosa",
+  "taskCostNoDue": "Brez roka opravila strošek nima načrtovanega datuma.",
+  "taskCostDetachHint": "Odstranitev povezave ohrani finančni zapis.",
+  "spacePickerTitle": "Prostor",
+  "organizationTitle": "Organizacija",
+  "organizationCreate": "Ustvari organizacijo",
+  "organizationProjects": "Projekti organizacije",
+  "organizationCreateProject": "Dodaj projekt v organizacijo",
+  "organizationAccessDescription": "Članstvo ne odpre vseh projektov ali financ. Dostop uredi za vsak projekt posebej.",
+  "peopleTitle": "Osebe",
+  "peopleAdd": "Dodaj osebo",
+  "peopleName": "Ime",
+  "peopleNotes": "Zapiski",
+  "peopleArchive": "Arhiviraj",
+  "peopleRestore": "Ponovno aktiviraj",
+  "peopleWithoutAccountDescription": "Profil osebe nima prijave ali dostopnih pravic.",
+  "peopleEmpty": "Dodaj osebe, za katere želiš voditi opravila.",
+  "peopleArchived": "Arhivirana oseba",
+  "financePlanTitle": "Mesečni načrt",
+  "financePlanWizard": "Pripravi finančni načrt",
+  "financePlanDescription": "Okvirni zneski so pričakovani, dokler ne potrdiš dejanskega prejemka ali plačila.",
+  "financePlanLocal": "Načrt se shrani na tej napravi in v prenosno kopijo.",
+  "financePlanPrivate": "Načrt se shrani v izbrani zasebni prostor z vključeno sinhronizacijo.",
+  "financePlanUpgrade": "Za načrtovanje v sinhroniziranem prostoru je potrebna novejša finančna pogodba strežnika.",
+  "financePlanMonthEnd": "Če dan v mesecu ne obstaja, uporabimo zadnji dan tega meseca.",
+  "financePlanWeekend": "Pri plači ob koncu tedna sta preverjanji v petek in ponedeljek za isti priliv. Prazniki se ne prilagajajo samodejno.",
+  "financePlanSalary": "Kdaj pričakuješ mesečno plačo?",
+  "financePlanNoSalary": "Nimam redne plače",
+  "financePlanLoan": "Ali imaš kredit?",
+  "financePlanLoanPrincipal": "Skupni znesek kredita (neobvezno)",
+  "financePlanInstallment": "Okvirni mesečni obrok",
+  "financePlanCard": "Ali imaš kartico z odloženim plačilom?",
+  "financePlanCardEstimate": "Okvirna mesečna poravnava",
+  "financePlanOtherIncome": "Drugi mesečni prilivi",
+  "financePlanOtherExpenses": "Mesečni stroški",
+  "financePlanAddIncome": "Dodaj priliv",
+  "financePlanAddExpense": "Dodaj strošek",
+  "financePlanEstimatedAmount": "Okvirni znesek",
+  "financePlanDay": "Dan v mesecu",
+  "financePlanFirstDate": "Prvi pričakovani datum",
+  "financePlanSalaryLabel": "Plača",
+  "financePlanLoanLabel": "Obrok kredita",
+  "financePlanCardLabel": "Poravnava kartice",
+  "financePlanReview": "Preglej načrt",
+  "financePlanSave": "Shrani načrt",
+  "financePlanRules": "Mesečna ponavljanja",
+  "financePlanAddRule": "Dodaj mesečno pravilo",
+  "financePlanEditRule": "Uredi mesečno pravilo",
+  "financePlanRuleActive": "Pravilo je vključeno",
+  "financePlanReminders": "Opomniki za ta načrt",
+  "financePlanReminderTime": "Čas opomnika",
+  "financePlanReminderOptIn": "To ne vključi dovoljenja telefona. Sistemske opomnike vključi v nastavitvah obvestil.",
+  "financePlanSalaryQuestion": "Ali si že dobil plačo?",
+  "financePlanConfirm": "Potrdi dejanski znesek",
+  "financePlanActualAmount": "Dejanski znesek",
+  "financePlanActualDate": "Datum prejemka ali plačila",
+  "financePlanConfirmed": "Dejanski znesek je potrjen.",
+  "financePlanForecast": "Napoved po datumih",
+  "financePlanNetChange": "Pričakovana neto sprememba",
+  "financePlanProjectedBalance": "Pričakovano stanje",
+  "financePlanOpeningBalance": "Začetno stanje (neobvezno)",
+  "financePlanOpeningDate": "Začetno stanje na začetku dne",
+  "financePlanNoOpening": "Začetno stanje ni določeno; prikazana je neto sprememba.",
+  "financePlanUndated": "Vnosi brez datuma niso vključeni v časovno napoved.",
+  "financePlanSymbolicAccount": "To je poimenovan račun za evidenco; denarja ne premika in se ne povezuje z banko.",
+  "financePlanEmpty": "V izbranem obdobju ni datiranih vnosov.",
+  "financePlanRuleType": "Vrsta ponavljanja",
+  "financePlanSaved": "Finančni načrt je shranjen.",
+  "financePlanOverdue": "Še nepotrjeno",
+  "financePlanBack": "Nazaj",
+  "financePlanNext": "Naprej",
+  "financePlanDateNeeded": "Izberi datum.",
+  "financePlanNoItems": "Ni dodatnih vnosov.",
+  "financePlanAccountName": "Ime finančnega računa",
+  "financePlanAccountArchived": "Arhiviran račun",
+  "financePlanReminderBody": "Ali si že dobil plačo? Odpri pričakovani priliv in potrdi dejanski znesek.",
+  "peopleTaskSubjects": "Na koga se opravilo nanaša",
+  "financePlanYes": "Da",
+  "financePlanNo": "Ne",
+  "financePlanRecordedChange": "Evidentirana neto sprememba",
+  "financePairedConflict": "Konflikt opravila in stroška preglej v financah.",
+  "deletionDetachOrganization": "Ohrani ta projekt kot samostojen prostor, ko se izbriše organizacija. Njegovi člani in finance ostanejo nespremenjeni.",
+  "deletionOrganizationLinks": "Projekti, ki se odvežejo od organizacije",
+  "financePlanIncomeQuestion": "Ali si že prejel priliv?",
+  "financePlanExpenseQuestion": "Ali je obveznost že plačana?",
+  "financePlanIncomeReminderBody": "Ali si že prejel priliv? Odpri pričakovani vnos in potrdi dejanski znesek.",
+  "financePlanExpenseReminderBody": "Ali je obveznost že plačana? Odpri načrtovani vnos in potrdi dejanski znesek.",
+  "financePlanManageRule": "Ponavljajoči vnos urejaj prek mesečnega pravila. Izključitev pravila ustavi prihodnje vnose; potrjena zgodovina ostane.",
+  "scopeArchivedProjects": "Arhivirani projekti",
+  "scopeArchivedDescription": "Projekt je arhiviran. Podatki in finančna zgodovina ostanejo na voljo glede na tvoje pravice; opravila ne prispevajo k dnevnemu pregledu ali opomnikom.",
+  "peopleCopyDescription": "Tudi povezani profili oseb (imena in zapiski) bodo kopirani v izbrani prostor.",
+  "financePlanPrincipalOnlyLoan": "Skupni znesek kredita lahko vneseš samo pri obroku kredita.",
+  "financePlanOpeningUndated": "Brez referenčnega datuma",
+  "planningInvalidMinutes": "Vpiši pozitivno število minut, največ {max}.",
+  "@planningInvalidMinutes": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "taskCostSelectAccount": "Izberi finančni račun.",
+  "financeDuplicateOccurrence": "Druga naprava je za ta mesec že ustvarila kanonični vnos. Lokalna različica je ohranjena za primerjavo; isti priliv ali strošek se ne šteje dvakrat.",
+  "financePairedTaskReview": "Povezano opravilo: hkrati bodo obravnavane te spremembe in strošek.",
   "privateSyncTitle": "Moje naprave",
   "privateSyncDescription": "Zasebni prostor samo za ta račun. Vanj ni mogoče povabiti drugih oseb.",
   "privateSyncOff": "Osebni podatki so za zdaj samo na tej napravi. Prijava jih ne naloži samodejno.",
@@ -1431,11 +1572,55 @@
   "gardenSaveError": "Sprememb ni bilo mogoče shraniti. Osnutek je še odprt. Poskusi znova; če se je shranjeni vrt spremenil, ga ponovno odpri.",
   "gardenDeleteTitle": "Izbrišem vrt?",
   "gardenDeleteBody": "Vrt »{name}«, opombe in vsa območja bodo izbrisani s te naprave.",
-  "@gardenDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@gardenDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "gardenDefaultArea": "Območje {number}",
-  "@gardenDefaultArea": {"placeholders": {"number": {"type": "int"}}},
+  "@gardenDefaultArea": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "gardenAreaCount": "{count} območij",
-  "@gardenAreaCount": {"placeholders": {"count": {"type": "int"}}},
+  "@gardenAreaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gardenAreaPosition": "Levo {x} %, zgoraj {y} % · {width} × {height} %",
-  "@gardenAreaPosition": {"placeholders": {"x": {"type": "int"}, "y": {"type": "int"}, "width": {"type": "int"}, "height": {"type": "int"}}}
+  "@gardenAreaPosition": {
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      },
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "financePlanPendingEntries": "Nepotrjeni vnosi",
+  "financePlanPendingDescription": "Vsi pričakovani prilivi in stroški, tudi brez datuma ali zunaj napovedi. Odpri vnos in potrdi dejanski znesek.",
+  "financePlanUndatedEntry": "Datum ni določen",
+  "financePlanForecastPeriod": "Datirani vnosi do {date}; prikazano je stanje ob koncu posameznega dne.",
+  "@financePlanForecastPeriod": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

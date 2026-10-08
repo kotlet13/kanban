@@ -5,6 +5,9 @@ class OrganizerSnapshot {
   OrganizerSnapshot({
     this.revision = 0,
     this.workspaceKey = 'local',
+    Iterable<HouseholdPerson> people = const [],
+    Iterable<LocalFinanceAccount> financeAccounts = const [],
+    Iterable<FinanceRecurrenceRule> financeRecurrenceRules = const [],
     Iterable<LocalProject> projects = const [],
     Iterable<LocalTask> tasks = const [],
     Iterable<LocalShoppingList> shoppingLists = const [],
@@ -12,7 +15,10 @@ class OrganizerSnapshot {
     Iterable<LocalEvent> events = const [],
     Iterable<FinanceEntry> financeEntries = const [],
     Iterable<LocalReminder> reminders = const [],
-  }) : projects = List.unmodifiable(projects),
+  }) : people = List.unmodifiable(people),
+       financeAccounts = List.unmodifiable(financeAccounts),
+       financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
+       projects = List.unmodifiable(projects),
        tasks = List.unmodifiable(tasks),
        shoppingLists = List.unmodifiable(shoppingLists),
        shoppingItems = List.unmodifiable(shoppingItems),
@@ -22,6 +28,9 @@ class OrganizerSnapshot {
 
   final int revision;
   final String workspaceKey;
+  final List<HouseholdPerson> people;
+  final List<LocalFinanceAccount> financeAccounts;
+  final List<FinanceRecurrenceRule> financeRecurrenceRules;
   final List<LocalProject> projects;
   final List<LocalTask> tasks;
   final List<LocalShoppingList> shoppingLists;
@@ -33,6 +42,9 @@ class OrganizerSnapshot {
   OrganizerSnapshot copyWith({
     int? revision,
     String? workspaceKey,
+    Iterable<HouseholdPerson>? people,
+    Iterable<LocalFinanceAccount>? financeAccounts,
+    Iterable<FinanceRecurrenceRule>? financeRecurrenceRules,
     Iterable<LocalProject>? projects,
     Iterable<LocalTask>? tasks,
     Iterable<LocalShoppingList>? shoppingLists,
@@ -43,6 +55,10 @@ class OrganizerSnapshot {
   }) => OrganizerSnapshot(
     revision: revision ?? this.revision,
     workspaceKey: workspaceKey ?? this.workspaceKey,
+    people: people ?? this.people,
+    financeAccounts: financeAccounts ?? this.financeAccounts,
+    financeRecurrenceRules:
+        financeRecurrenceRules ?? this.financeRecurrenceRules,
     projects: projects ?? this.projects,
     tasks: tasks ?? this.tasks,
     shoppingLists: shoppingLists ?? this.shoppingLists,
@@ -53,7 +69,9 @@ class OrganizerSnapshot {
   );
 
   BigInt exactBalanceForCurrency(String currency) => financeEntries
-      .where((e) => e.currency == currency)
+      .where(
+        (e) => e.currency == currency && e.status == FinanceEntryStatus.posted,
+      )
       .fold(
         BigInt.zero,
         (sum, e) =>
@@ -64,7 +82,11 @@ class OrganizerSnapshot {
       );
 
   int balanceForCurrency(String currency) => financeEntries
-      .where((entry) => entry.currency == currency)
+      .where(
+        (entry) =>
+            entry.currency == currency &&
+            entry.status == FinanceEntryStatus.posted,
+      )
       .fold(
         0,
         (total, entry) =>
@@ -77,6 +99,11 @@ class OrganizerSnapshot {
   Map<String, Object?> toJson() => {
     'revision': revision,
     'workspaceKey': workspaceKey,
+    'people': people.map((v) => v.toJson()).toList(),
+    'financeAccounts': financeAccounts.map((v) => v.toJson()).toList(),
+    'financeRecurrenceRules': financeRecurrenceRules
+        .map((v) => v.toJson())
+        .toList(),
     'projects': projects.map((v) => v.toJson()).toList(),
     'tasks': tasks.map((v) => v.toJson()).toList(),
     'shoppingLists': shoppingLists.map((v) => v.toJson()).toList(),
@@ -90,6 +117,19 @@ class OrganizerSnapshot {
     final snapshot = OrganizerSnapshot(
       revision: readInt(json, 'revision'),
       workspaceKey: json['workspaceKey'] as String? ?? 'local',
+      people: json.containsKey('people')
+          ? _records(json, 'people', HouseholdPerson.fromJson)
+          : const [],
+      financeAccounts: json.containsKey('financeAccounts')
+          ? _records(json, 'financeAccounts', LocalFinanceAccount.fromJson)
+          : const [],
+      financeRecurrenceRules: json.containsKey('financeRecurrenceRules')
+          ? _records(
+              json,
+              'financeRecurrenceRules',
+              FinanceRecurrenceRule.fromJson,
+            )
+          : const [],
       projects: _records(json, 'projects', LocalProject.fromJson),
       tasks: _records(json, 'tasks', LocalTask.fromJson),
       shoppingLists: _records(
@@ -111,6 +151,9 @@ class OrganizerSnapshot {
   }
 
   Set<String> get recordIds => {
+    ...people.map((v) => v.id),
+    ...financeAccounts.map((v) => v.id),
+    ...financeRecurrenceRules.map((v) => v.id),
     ...projects.map((v) => v.id),
     ...tasks.map((v) => v.id),
     ...shoppingLists.map((v) => v.id),
@@ -151,6 +194,28 @@ class OrganizerSnapshot {
       }
     }
 
+    for (final person in people) {
+      record(person.id, person.name, person.createdAt, person.updatedAt);
+      person.validate();
+    }
+    for (final account in financeAccounts) {
+      record(account.id, account.name, account.createdAt, account.updatedAt);
+      account.validate();
+    }
+    for (final rule in financeRecurrenceRules) {
+      record(rule.id, rule.title, rule.createdAt, rule.updatedAt);
+      rule.validate();
+    }
+    final personIds = people.map((p) => p.id).toSet();
+    final accounts = {for (final a in financeAccounts) a.id: a};
+    final ruleIds = financeRecurrenceRules.map((r) => r.id).toSet();
+    for (final rule in financeRecurrenceRules) {
+      if (rule.ledgerAccountId != null &&
+          (accounts[rule.ledgerAccountId] == null ||
+              accounts[rule.ledgerAccountId]!.currency != rule.currency)) {
+        throw const FormatException('Invalid rule account');
+      }
+    }
     final projectIds = projects.map((v) => v.id).toSet();
     void project(String? id) {
       if (id != null && !projectIds.contains(id)) {
@@ -165,6 +230,14 @@ class OrganizerSnapshot {
     for (final v in projects) {
       record(v.id, v.title, v.createdAt, v.updatedAt);
       notes(v.description);
+      validateAvailability(v.availabilityMinutes, v.availabilityPeriod);
+      if (v.phases.length > 50 ||
+          v.phases.map((p) => p.id).toSet().length != v.phases.length) {
+        throw const FormatException('Invalid phase list');
+      }
+      for (final phase in v.phases) {
+        phase.validate();
+      }
       if (v.startAt != null &&
           v.endAt != null &&
           v.endAt!.isBefore(v.startAt!)) {
@@ -175,6 +248,29 @@ class OrganizerSnapshot {
       record(v.id, v.title, v.createdAt, v.updatedAt);
       project(v.projectId);
       notes(v.notes);
+      validateAvailability(v.availabilityMinutes, v.availabilityPeriod);
+      v.timer.validate();
+      if (v.estimateMinutes != null &&
+          (v.estimateMinutes! <= 0 || v.estimateMinutes! > 525600)) {
+        throw const FormatException('Invalid time estimate');
+      }
+      if (v.phaseId != null &&
+          !projects.any(
+            (p) =>
+                p.id == v.projectId &&
+                p.phases.any((phase) => phase.id == v.phaseId),
+          )) {
+        throw const FormatException('Invalid task phase');
+      }
+      if (v.assigneePersonId != null &&
+          !personIds.contains(v.assigneePersonId)) {
+        throw const FormatException('Invalid task assignee person');
+      }
+      if (v.subjectPersonIds.length > 20 ||
+          v.subjectPersonIds.toSet().length != v.subjectPersonIds.length ||
+          !v.subjectPersonIds.every(personIds.contains)) {
+        throw const FormatException('Invalid task subject people');
+      }
       if (v.startAt != null &&
           v.endAt != null &&
           v.endAt!.isBefore(v.startAt!)) {
@@ -202,10 +298,48 @@ class OrganizerSnapshot {
         throw const FormatException('Event ends before it starts');
       }
     }
+    final linkedTasks = <String>{};
+    final occurrences = <String>{};
     for (final v in financeEntries) {
       record(v.id, v.title, v.createdAt, v.updatedAt);
       project(v.projectId);
       notes(v.notes);
+      if (v.taskId != null &&
+          (!tasks.any((t) => t.id == v.taskId) ||
+              !linkedTasks.add(v.taskId!) ||
+              v.kind != FinanceEntryKind.expense)) {
+        throw const FormatException('Invalid linked task cost');
+      }
+      if (v.taskId != null &&
+          v.plannedAt != tasks.firstWhere((t) => t.id == v.taskId).dueAt) {
+        throw const FormatException('Task cost date must follow task due date');
+      }
+      if (v.ledgerAccountId != null &&
+          (accounts[v.ledgerAccountId] == null ||
+              accounts[v.ledgerAccountId]!.currency != v.currency)) {
+        throw const FormatException('Invalid finance account');
+      }
+      for (final person in [
+        v.payerPersonId,
+        v.recipientPersonId,
+        v.createdByPersonId,
+      ]) {
+        if (person != null && !personIds.contains(person)) {
+          throw const FormatException('Invalid finance participant');
+        }
+      }
+      if ((v.recurrenceRuleId == null) != (v.occurrenceKey == null) ||
+          (v.recurrenceRuleId != null &&
+              (!ruleIds.contains(v.recurrenceRuleId) ||
+                  !RegExp(r'^\d{4}-\d{2}$').hasMatch(v.occurrenceKey!) ||
+                  !occurrences.add(
+                    '${v.recurrenceRuleId}:${v.occurrenceKey}',
+                  )))) {
+        throw const FormatException('Invalid recurrence occurrence');
+      }
+      if (v.status == FinanceEntryStatus.planned && v.paidAt != null) {
+        throw const FormatException('Planned entry cannot have payment date');
+      }
       if (v.amountMinor <= 0 ||
           v.amountMinor > maxMoneyMinor ||
           !supportedCurrencies.contains(v.currency)) {

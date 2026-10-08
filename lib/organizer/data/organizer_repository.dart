@@ -4,6 +4,10 @@ import 'dart:math';
 import '../domain/organizer_models.dart';
 import 'organizer_storage.dart';
 
+part 'organizer_person_actions.dart';
+part 'organizer_finance_plan_actions.dart';
+part 'organizer_planning_actions.dart';
+
 class OrganizerConflictException implements Exception {
   const OrganizerConflictException(this.message);
   final String message;
@@ -87,6 +91,7 @@ class OrganizerRepository {
     candidate.validate();
     try {
       await storage.write(candidate);
+      _snapshot = await storage.read();
     } catch (error, stack) {
       // A flush error can follow a successful frame write. Reconcile with
       // readable storage before a later mutation; never overwrite it with
@@ -96,8 +101,7 @@ class OrganizerRepository {
       _changes.add(snapshot);
       Error.throwWithStackTrace(error, stack);
     }
-    _snapshot = candidate;
-    _changes.add(candidate);
+    _changes.add(snapshot);
   }
 
   DateTime _now() => _clock().toUtc();
@@ -106,8 +110,18 @@ class OrganizerRepository {
     return now.isBefore(previous) ? previous : now;
   }
 
+  Future<Set<String>> deviceLocalRecordIds() => _enqueue(() async {
+    if (storage is OrganizerOwnershipStorage) {
+      return (storage as OrganizerOwnershipStorage).deviceLocalRecordIds();
+    }
+    return snapshot.workspaceKey == 'local' ? snapshot.recordIds : <String>{};
+  });
+
   Future<void> createProject({
     required String title,
+    Iterable<ProjectPhase> phases = const [],
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
     String description = '',
     DateTime? startAt,
     DateTime? endAt,
@@ -118,6 +132,9 @@ class OrganizerRepository {
       projects: [
         ...s.projects,
         LocalProject(
+          phases: phases,
+          availabilityMinutes: availabilityMinutes,
+          availabilityPeriod: availabilityPeriod,
           startAt: startAt?.toUtc(),
           endAt: endAt?.toUtc(),
           area: area,
@@ -145,6 +162,18 @@ class OrganizerRepository {
     );
     return s.copyWith(
       projects: s.projects.map((v) => v.id == record.id ? updated : v),
+      tasks: s.tasks.map(
+        (t) =>
+            t.projectId == record.id &&
+                t.phaseId != null &&
+                !updated.phases.any((p) => p.id == t.phaseId)
+            ? t.copyWith(
+                phaseId: null,
+                revision: t.revision + 1,
+                updatedAt: _updatedAt(t.updatedAt),
+              )
+            : t,
+      ),
     );
   });
 
@@ -157,6 +186,7 @@ class OrganizerRepository {
         (v) => v.projectId == id
             ? v.copyWith(
                 projectId: null,
+                phaseId: null,
                 revision: v.revision + 1,
                 updatedAt: now.isBefore(v.updatedAt) ? v.updatedAt : now,
               )
@@ -225,12 +255,33 @@ class OrganizerRepository {
     );
     return s.copyWith(
       tasks: s.tasks.map((v) => v.id == record.id ? updated : v),
+      financeEntries: s.financeEntries.map(
+        (e) => e.taskId == record.id
+            ? e.copyWith(
+                plannedAt: updated.dueAt,
+                projectId: updated.projectId,
+                revision: e.revision + 1,
+                updatedAt: _updatedAt(e.updatedAt),
+              )
+            : e,
+      ),
     );
   });
 
   Future<void> deleteTask(String id) => _change((s) {
     _find(s.tasks, id, (v) => v.id);
-    return s.copyWith(tasks: s.tasks.where((v) => v.id != id));
+    return s.copyWith(
+      tasks: s.tasks.where((v) => v.id != id),
+      financeEntries: s.financeEntries.map(
+        (e) => e.taskId == id
+            ? e.copyWith(
+                taskId: null,
+                revision: e.revision + 1,
+                updatedAt: _updatedAt(e.updatedAt),
+              )
+            : e,
+      ),
+    );
   });
 
   Future<void> createShoppingList({required String title}) => _change((s) {
@@ -405,6 +456,15 @@ class OrganizerRepository {
         'This record changed; reload before editing',
       );
     }
+    if (current.recurrenceRuleId != null &&
+        (record.currency != current.currency || record.kind != current.kind)) {
+      throw const OrganizerConflictException(
+        'Monthly rule kind and currency are immutable',
+      );
+    }
+    if (record.paidAt != null && record.occurredAt != record.paidAt) {
+      throw const FormatException('Actual date must equal payment date');
+    }
     final updated = record.copyWith(
       revision: current.revision + 1,
       updatedAt: _updatedAt(current.updatedAt),
@@ -417,7 +477,10 @@ class OrganizerRepository {
   });
 
   Future<void> deleteFinanceEntry(String id) => _change((s) {
-    _find(s.financeEntries, id, (v) => v.id);
+    final current = _find(s.financeEntries, id, (v) => v.id);
+    if (current.recurrenceRuleId != null) {
+      throw const OrganizerConflictException('Manage the monthly rule');
+    }
     return s.copyWith(
       financeEntries: s.financeEntries.where((v) => v.id != id),
     );
@@ -507,6 +570,12 @@ class OrganizerRepository {
         );
       }
       return s.copyWith(
+        people: [...s.people, ...imported.people],
+        financeAccounts: [...s.financeAccounts, ...imported.financeAccounts],
+        financeRecurrenceRules: [
+          ...s.financeRecurrenceRules,
+          ...imported.financeRecurrenceRules,
+        ],
         projects: [...s.projects, ...imported.projects],
         tasks: [...s.tasks, ...imported.tasks],
         shoppingLists: [...s.shoppingLists, ...imported.shoppingLists],

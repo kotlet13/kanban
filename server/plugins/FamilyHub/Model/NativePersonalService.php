@@ -17,7 +17,7 @@ class NativePersonalService extends NativeDatabase
             $this->change('INSERT INTO familyhub_scopes(id,kind,name,owner_id,sequence,created_at) VALUES(?,\'personal\',\'Personal\',?,0,?)', [$id, $user['id'], time()]);
             $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,\'owner\',1)', [$id, $user['id'], $user['account_id']]);
             $this->change('INSERT INTO familyhub_personal_scopes VALUES(?,?)', [$user['account_id'], $id]);
-            $this->change('INSERT INTO familyhub_finance_policy VALUES(?,1,1,0)', [$id]);
+            $this->change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)', [$id]);
             $this->change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'write\')', [$id, $user['account_id']]);
             return ['scope' => $this->scopeWire($this->scope($id, $user['id'], true, true))];
         }, true);

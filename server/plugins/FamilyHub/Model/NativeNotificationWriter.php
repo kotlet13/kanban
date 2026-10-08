@@ -47,6 +47,7 @@ class NativeNotificationWriter extends NativeDatabase
 
     public function recordChanged($scope, array $record, $previous, $actorId, $finance = false)
     {
+        if ($record['type'] === 'householdPerson') { return; }
         $type = $record['type']; $payload = $record['payload'];
         $before = $previous ? json_decode($previous['payload'] ?? 'null', true, 32, JSON_THROW_ON_ERROR) : null;
         $category = $finance ? 'finance' : match ($type) { 'task', 'project' => 'tasks', 'event' => 'events', default => 'shopping' };

@@ -4,6 +4,7 @@ import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
 import 'collection_actions.dart';
 import 'organizer_widgets.dart';
+import 'planning/project_planning_summary.dart';
 
 class OrganizerProjectsPage extends StatefulWidget {
   const OrganizerProjectsPage({
@@ -14,12 +15,14 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.selectedId,
     required this.onSelection,
     this.readOnly = false,
+    this.allowProjectCreation = true,
     this.scopeLabel,
     this.onShare,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
   final bool readOnly;
+  final bool allowProjectCreation;
   final String? scopeLabel;
   final ValueChanged<LocalProject>? onShare;
   final bool home;
@@ -49,7 +52,10 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               (widget.home
                   ? l.organizerHomeIntro
                   : l.organizerNoProjectsDescription),
-          action: visibleProjects.isEmpty || widget.readOnly
+          action:
+              visibleProjects.isEmpty ||
+                  widget.readOnly ||
+                  !widget.allowProjectCreation
               ? null
               : FilledButton.icon(
                   onPressed: () => widget.actions.project(
@@ -64,8 +70,10 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
           OrganizerEmpty(
             icon: Icons.folder_outlined,
             title: l.organizerNoProjects,
-            action: widget.readOnly ? null : l.organizerAddProject,
-            onAction: widget.readOnly
+            action: widget.readOnly || !widget.allowProjectCreation
+                ? null
+                : l.organizerAddProject,
+            onAction: widget.readOnly || !widget.allowProjectCreation
                 ? null
                 : () => widget.actions.project(
                     null,
@@ -206,6 +214,13 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               ),
             ),
           ),
+        ProjectPlanningSummary(
+          project: project,
+          tasks: tasks,
+          onTaskSelected: widget.readOnly
+              ? null
+              : (task) => widget.actions.task(task: task),
+        ),
         OrganizerSection(
           title: l.organizerTasks,
           action: widget.readOnly

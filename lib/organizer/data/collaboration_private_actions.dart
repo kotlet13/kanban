@@ -77,16 +77,24 @@ extension CollaborationPrivateActions on CollaborationRepository {
     for (final r in snapshotRows(local).where((r) => r.type != 'reminder')) {
       try {
         final payload = privateWirePayload(r.json, r.type, map);
-        if (r.type == 'financeEntry') {
+        final wireVersion = privateRecordWireVersion(r.type, r.json);
+        if (privateFinancialType(r.type)) {
+          if (wireVersion > _financeContractVersion) {
+            issues.add('finance_upgrade_required');
+          }
           validateSharedFinancePayload(
-            SharedFinanceRecordType.personalFinanceEntry,
+            SharedFinanceRecordType.values.byName(privateRecordType(r.type)),
             Map<String, dynamic>.from(payload),
+            contractVersion: wireVersion,
           );
         } else {
+          if (wireVersion > _recordContractVersion) {
+            issues.add('planning_upgrade_required');
+          }
           validateSharedPayload(
             SharedRecordType.values.byName(r.type),
             Map<String, dynamic>.from(payload),
-            contractVersion: 2,
+            contractVersion: wireVersion,
             personal: true,
           );
         }
@@ -118,6 +126,10 @@ extension CollaborationPrivateActions on CollaborationRepository {
         epoch = _epoch,
         p = session.profile.partition;
     await _negotiate(session, epoch);
+    final preview = await previewPrivateSync();
+    if (preview.issues.any((issue) => issue.endsWith('upgrade_required'))) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     if (!_privateSyncSupported) {
       throw const CollaborationException('private_sync_unavailable');
     }
@@ -166,11 +178,12 @@ extension CollaborationPrivateActions on CollaborationRepository {
           'SELECT cursor FROM scopes WHERE partition=? AND id=?',
           [p, scope.id],
         )).single['cursor'];
-        final pulled = await _callSession(session, epoch, 'sync2.pull', {
-          'scopeId': scope.id,
-          'cursor': cursor,
-          'limit': 100,
-        });
+        final pulled = await _callSession(
+          session,
+          epoch,
+          _recordContractVersion >= 3 ? 'sync3.pull' : 'sync2.pull',
+          {'scopeId': scope.id, 'cursor': cursor, 'limit': 100},
+        );
         more = readBool(pulled, 'hasMore');
         final next = readInt(pulled, 'cursor');
         if (next < (cursor as int) || (more && next == cursor)) {
@@ -218,7 +231,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
               w,
               row.id,
               isSharedUuid(row.id) ? row.id : newSharedId(),
-              row.type == 'financeEntry' ? 'personalFinanceEntry' : row.type,
+              privateRecordType(row.type),
             ],
           );
         }
@@ -234,7 +247,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
             'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
             [w, row.id],
           )).single['remote_id'];
-          final table = row.type == 'financeEntry'
+          final table = privateFinancialType(row.type)
               ? 'finance_records'
               : 'records';
           final existing = await database.rows(
@@ -253,8 +266,14 @@ extension CollaborationPrivateActions on CollaborationRepository {
             if (existing.single['deleted'] == 1 ||
                 jsonEncode(
                       normalizeSharedPayloadDates(
-                        CollaborationRepository._map(
-                          existing.single['payload'],
+                        Map<String, dynamic>.from(
+                          privatePayloadForVersion(
+                            CollaborationRepository._map(
+                              existing.single['payload'],
+                            ),
+                            row.type,
+                            privateRecordWireVersion(row.type, row.json),
+                          ),
                         ),
                       ),
                     ) !=
@@ -276,6 +295,16 @@ extension CollaborationPrivateActions on CollaborationRepository {
               row.json,
             );
           }
+        }
+        for (final cost in rows.where(
+          (r) => r.type == 'financeEntry' && r.json['taskId'] != null,
+        )) {
+          await pairPrivateTaskCostOperations(
+            database,
+            binding,
+            cost.json['taskId'] as String,
+            cost.id,
+          );
         }
         await database.execute(
           'UPDATE personal_workspaces SET enabled=1,paused=0,migration_snapshot=? WHERE id=?',
@@ -323,6 +352,9 @@ extension CollaborationPrivateActions on CollaborationRepository {
 }
 
 Map<String, int> personalCounts(OrganizerSnapshot s) => {
+  'people': s.people.length,
+  'financeAccounts': s.financeAccounts.length,
+  'financeRecurrenceRules': s.financeRecurrenceRules.length,
   'projects': s.projects.length,
   'tasks': s.tasks.length,
   'shoppingLists': s.shoppingLists.length,
@@ -341,7 +373,7 @@ Map<String, Object?> privateWirePayload(
     ..remove('revision')
     ..remove('createdByAccountId')
     ..remove('updatedByAccountId');
-  for (final field in ['projectId', 'listId']) {
+  for (final field in privateReferenceFields) {
     if (p[field] != null) p[field] = ids[p[field]] ?? p[field];
   }
   if (type == 'event') {
@@ -349,5 +381,10 @@ Map<String, Object?> privateWirePayload(
     p['endAt'] = p.remove('endsAt');
     p['assigneeAccountIds'] = [];
   }
-  return p;
+  if (p['subjectPersonIds'] is List) {
+    p['subjectPersonIds'] = (p['subjectPersonIds'] as List)
+        .map((id) => ids[id] ?? id)
+        .toList();
+  }
+  return privatePayloadForVersion(p, type, privateRecordWireVersion(type, p));
 }

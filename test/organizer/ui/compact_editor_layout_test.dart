@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/presentation/organizer_editors.dart';
+import 'package:kanban/organizer/presentation/shared/sharing_forms.dart';
 
 import 'organizer_ui_test.dart' show MemoryOrganizerStorage, pumpOrganizer;
 
@@ -156,4 +157,67 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  for (final width in [320.0, 390.0]) {
+    testWidgets(
+      'shared forms protect populated floating label and actions at $width keyboard and 2x',
+      (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        addTearDown(tester.view.resetViewInsets);
+        await pumpOrganizer(
+          tester,
+          MemoryOrganizerStorage(),
+          width: width,
+          height: 780,
+        );
+        var saved = false;
+        showSharingForm(
+          tester.element(find.byType(Scaffold).first),
+          title: 'Uredi osebo',
+          fields: const [
+            SharingField(id: 'name', label: 'Ime', initialValue: 'Oseba'),
+            SharingField(
+              id: 'notes',
+              label: 'Zapiski',
+              initialValue: '',
+              required: false,
+              maxLines: 3,
+            ),
+            SharingField(id: 'email', label: 'E-pošta', initialValue: ''),
+          ],
+          submitLabel: 'Shrani',
+          onSubmit: (_) async {
+            saved = true;
+          },
+          errorMessage: (_) => 'Napaka',
+        );
+        await tester.pumpAndSettle();
+        tester.view.viewInsets = const FakeViewPadding(bottom: 340);
+        await tester.pumpAndSettle();
+        final viewport = find.byKey(const ValueKey('sharing-form-scroll'));
+        final label = find.descendant(
+          of: find.byKey(const ValueKey('sharing-name')),
+          matching: find.text('Ime'),
+        );
+        expectInside(paintedRect(tester, label), tester.getRect(viewport));
+        final submit = find.byKey(const ValueKey('sharing-submit'));
+        expect(submit.hitTestable(), findsOneWidget);
+        expect(tester.getRect(submit).bottom, lessThan(440));
+        expect(
+          find.widgetWithText(TextButton, 'Prekliči').hitTestable(),
+          findsOneWidget,
+        );
+        await tester.tap(submit);
+        await tester.pumpAndSettle();
+        expect(saved, isFalse);
+        final email = find.byKey(const ValueKey('sharing-email'));
+        await tester.ensureVisible(email);
+        await tester.enterText(email, 'person@example.test');
+        await tester.tap(submit);
+        await tester.pumpAndSettle();
+        expect(saved, isTrue);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }

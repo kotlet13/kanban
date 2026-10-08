@@ -12,6 +12,8 @@ enum SharedFinanceRecordType {
   financeEntry,
   financeTransfer,
   personalFinanceEntry,
+  personalFinanceAccount,
+  financeRecurrenceRule,
 }
 
 class SharedFinancePolicy {
@@ -49,6 +51,8 @@ class SharedFinanceAccount {
     required this.name,
     required this.currency,
     this.openingBalanceMinor = 0,
+    this.openingBalanceAt,
+    this.archived = false,
     this.ownerAccountId,
   });
   final String id;
@@ -59,14 +63,18 @@ class SharedFinanceAccount {
   final String? updatedByAccountId;
   final String name;
   final String currency;
-  final int openingBalanceMinor;
+  final int? openingBalanceMinor;
+  final DateTime? openingBalanceAt;
+  final bool archived;
   final String? ownerAccountId;
   SharedFinanceAccount copyWith({
     int? revision,
     DateTime? updatedAt,
     String? name,
     String? currency,
-    int? openingBalanceMinor,
+    Object? openingBalanceMinor = _unsetFinance,
+    Object? openingBalanceAt = _unsetFinance,
+    bool? archived,
     Object? ownerAccountId = _unsetFinance,
   }) => SharedFinanceAccount(
     id: id,
@@ -77,7 +85,13 @@ class SharedFinanceAccount {
     updatedByAccountId: updatedByAccountId,
     name: name ?? this.name,
     currency: currency ?? this.currency,
-    openingBalanceMinor: openingBalanceMinor ?? this.openingBalanceMinor,
+    openingBalanceMinor: identical(openingBalanceMinor, _unsetFinance)
+        ? this.openingBalanceMinor
+        : openingBalanceMinor as int?,
+    openingBalanceAt: identical(openingBalanceAt, _unsetFinance)
+        ? this.openingBalanceAt
+        : openingBalanceAt as DateTime?,
+    archived: archived ?? this.archived,
     ownerAccountId: identical(ownerAccountId, _unsetFinance)
         ? this.ownerAccountId
         : ownerAccountId as String?,
@@ -92,13 +106,27 @@ class SharedFinanceAccount {
     'name': name,
     'currency': currency,
     'openingBalanceMinor': openingBalanceMinor,
+    'openingBalanceAt': openingBalanceAt?.toUtc().toIso8601String(),
+    'archived': archived,
     'ownerAccountId': ownerAccountId,
   };
-  Map<String, Object?> toPayload() => Map.of(toJson())
-    ..remove('id')
-    ..remove('revision')
-    ..remove('createdByAccountId')
-    ..remove('updatedByAccountId');
+  Map<String, Object?> toPayload({int contractVersion = 1}) {
+    final payload = Map<String, Object?>.of(toJson())
+      ..remove('id')
+      ..remove('revision')
+      ..remove('createdByAccountId')
+      ..remove('updatedByAccountId');
+    if (contractVersion == 1) {
+      if (openingBalanceMinor == null || openingBalanceAt != null || archived) {
+        throw const FormatException('Finance planning requires contract 2');
+      }
+      payload
+        ..remove('openingBalanceAt')
+        ..remove('archived');
+    }
+    return payload;
+  }
+
   factory SharedFinanceAccount.fromJson(Map<String, dynamic> j) =>
       SharedFinanceAccount(
         id: readString(j, 'id'),
@@ -109,7 +137,11 @@ class SharedFinanceAccount {
         updatedByAccountId: readNullableString(j, 'updatedByAccountId'),
         name: readString(j, 'name'),
         currency: readString(j, 'currency'),
-        openingBalanceMinor: readInt(j, 'openingBalanceMinor'),
+        openingBalanceMinor: j['openingBalanceMinor'] == null
+            ? null
+            : readInt(j, 'openingBalanceMinor'),
+        openingBalanceAt: readNullableSharedDate(j, 'openingBalanceAt'),
+        archived: j['archived'] == true,
         ownerAccountId: readNullableString(j, 'ownerAccountId'),
       );
 }
@@ -125,6 +157,15 @@ class SharedFinanceEntry {
     required this.accountId,
     required this.kind,
     this.status = SharedFinanceStatus.posted,
+    this.plannedAt,
+    this.paidAt,
+    this.taskId,
+    this.ledgerAccountId,
+    this.payerPersonId,
+    this.recipientPersonId,
+    this.createdByPersonId,
+    this.recurrenceRuleId,
+    this.occurrenceKey,
     required this.amountMinor,
     required this.currency,
     required this.title,
@@ -143,6 +184,14 @@ class SharedFinanceEntry {
   final String accountId;
   final FinanceEntryKind kind;
   final SharedFinanceStatus status;
+  final DateTime? plannedAt, paidAt;
+  final String? taskId,
+      ledgerAccountId,
+      payerPersonId,
+      recipientPersonId,
+      createdByPersonId,
+      recurrenceRuleId,
+      occurrenceKey;
   final int amountMinor;
   final String currency;
   final String title;
@@ -157,6 +206,15 @@ class SharedFinanceEntry {
     String? accountId,
     FinanceEntryKind? kind,
     SharedFinanceStatus? status,
+    Object? plannedAt = _unsetFinance,
+    Object? paidAt = _unsetFinance,
+    Object? taskId = _unsetFinance,
+    Object? ledgerAccountId = _unsetFinance,
+    Object? payerPersonId = _unsetFinance,
+    Object? recipientPersonId = _unsetFinance,
+    Object? createdByPersonId = _unsetFinance,
+    Object? recurrenceRuleId = _unsetFinance,
+    Object? occurrenceKey = _unsetFinance,
     int? amountMinor,
     String? currency,
     String? title,
@@ -175,6 +233,32 @@ class SharedFinanceEntry {
     accountId: accountId ?? this.accountId,
     kind: kind ?? this.kind,
     status: status ?? this.status,
+    plannedAt: identical(plannedAt, _unsetFinance)
+        ? this.plannedAt
+        : plannedAt as DateTime?,
+    paidAt: identical(paidAt, _unsetFinance)
+        ? this.paidAt
+        : paidAt as DateTime?,
+    taskId: identical(taskId, _unsetFinance) ? this.taskId : taskId as String?,
+    ledgerAccountId: identical(ledgerAccountId, _unsetFinance)
+        ? this.ledgerAccountId
+        : ledgerAccountId as String?,
+    payerPersonId: identical(payerPersonId, _unsetFinance)
+        ? this.payerPersonId
+        : payerPersonId as String?,
+    recipientPersonId: identical(recipientPersonId, _unsetFinance)
+        ? this.recipientPersonId
+        : recipientPersonId as String?,
+    createdByPersonId: identical(createdByPersonId, _unsetFinance)
+        ? this.createdByPersonId
+        : createdByPersonId as String?,
+    recurrenceRuleId: identical(recurrenceRuleId, _unsetFinance)
+        ? this.recurrenceRuleId
+        : recurrenceRuleId as String?,
+    occurrenceKey: identical(occurrenceKey, _unsetFinance)
+        ? this.occurrenceKey
+        : occurrenceKey as String?,
+
     amountMinor: amountMinor ?? this.amountMinor,
     currency: currency ?? this.currency,
     title: title ?? this.title,
@@ -198,6 +282,16 @@ class SharedFinanceEntry {
     'accountId': accountId,
     'kind': kind.name,
     'status': status.name,
+    'plannedAt': plannedAt?.toUtc().toIso8601String(),
+    'paidAt': paidAt?.toUtc().toIso8601String(),
+    'taskId': taskId,
+    'ledgerAccountId': ledgerAccountId,
+    'payerPersonId': payerPersonId,
+    'recipientPersonId': recipientPersonId,
+    'createdByPersonId': createdByPersonId,
+    'recurrenceRuleId': recurrenceRuleId,
+    'occurrenceKey': occurrenceKey,
+
     'amountMinor': amountMinor,
     'currency': currency,
     'title': title,
@@ -207,11 +301,45 @@ class SharedFinanceEntry {
     'recipientAccountId': recipientAccountId,
     'occurredAt': occurredAt.toUtc().toIso8601String(),
   };
-  Map<String, Object?> toPayload() => Map.of(toJson())
-    ..remove('id')
-    ..remove('revision')
-    ..remove('createdByAccountId')
-    ..remove('updatedByAccountId');
+  bool get hasPlanningMetadata =>
+      plannedAt != null ||
+      paidAt != null ||
+      [
+        taskId,
+        ledgerAccountId,
+        payerPersonId,
+        recipientPersonId,
+        createdByPersonId,
+        recurrenceRuleId,
+        occurrenceKey,
+      ].any((v) => v != null);
+  Map<String, Object?> toPayload({int contractVersion = 1}) {
+    final payload = Map<String, Object?>.of(toJson())
+      ..remove('id')
+      ..remove('revision')
+      ..remove('createdByAccountId')
+      ..remove('updatedByAccountId');
+    if (contractVersion == 1) {
+      if (hasPlanningMetadata) {
+        throw const FormatException('Finance planning requires contract 2');
+      }
+      for (final key in [
+        'plannedAt',
+        'paidAt',
+        'taskId',
+        'ledgerAccountId',
+        'payerPersonId',
+        'recipientPersonId',
+        'createdByPersonId',
+        'recurrenceRuleId',
+        'occurrenceKey',
+      ]) {
+        payload.remove(key);
+      }
+    }
+    return payload;
+  }
+
   factory SharedFinanceEntry.fromJson(Map<String, dynamic> j) =>
       SharedFinanceEntry(
         id: readString(j, 'id'),
@@ -223,6 +351,16 @@ class SharedFinanceEntry {
         accountId: readString(j, 'accountId'),
         kind: FinanceEntryKind.values.byName(readString(j, 'kind')),
         status: SharedFinanceStatus.values.byName(readString(j, 'status')),
+        plannedAt: readNullableSharedDate(j, 'plannedAt'),
+        paidAt: readNullableSharedDate(j, 'paidAt'),
+        taskId: readNullableString(j, 'taskId'),
+        ledgerAccountId: readNullableString(j, 'ledgerAccountId'),
+        payerPersonId: readNullableString(j, 'payerPersonId'),
+        recipientPersonId: readNullableString(j, 'recipientPersonId'),
+        createdByPersonId: readNullableString(j, 'createdByPersonId'),
+        recurrenceRuleId: readNullableString(j, 'recurrenceRuleId'),
+        occurrenceKey: readNullableString(j, 'occurrenceKey'),
+
         amountMinor: readInt(j, 'amountMinor'),
         currency: readString(j, 'currency'),
         title: readString(j, 'title'),
@@ -308,7 +446,7 @@ class SharedFinanceTransfer {
     'notes': notes,
     'occurredAt': occurredAt.toUtc().toIso8601String(),
   };
-  Map<String, Object?> toPayload() => Map.of(toJson())
+  Map<String, Object?> toPayload({int contractVersion = 1}) => Map.of(toJson())
     ..remove('id')
     ..remove('revision')
     ..remove('createdByAccountId')
@@ -358,7 +496,9 @@ Map<String, SharedFinanceTotals> summarizeSharedFinance({
   final balances = <String, Map<String, BigInt>>{};
   final income = <String, BigInt>{}, expense = <String, BigInt>{};
   for (final a in byId.values) {
-    (balances[a.currency] ??= {})[a.id] = BigInt.from(a.openingBalanceMinor);
+    (balances[a.currency] ??= {})[a.id] = BigInt.from(
+      a.openingBalanceMinor ?? 0,
+    );
   }
   for (final e in entries.where(
     (e) => e.status == SharedFinanceStatus.posted,
@@ -371,8 +511,11 @@ Map<String, SharedFinanceTotals> summarizeSharedFinance({
         positive = e.kind == FinanceEntryKind.income;
     final totals = positive ? income : expense;
     totals[e.currency] = (totals[e.currency] ?? BigInt.zero) + amount;
-    balances[e.currency]![a.id] =
-        balances[e.currency]![a.id]! + (positive ? amount : -amount);
+    if (a.openingBalanceAt == null ||
+        !(e.paidAt ?? e.occurredAt).isBefore(a.openingBalanceAt!)) {
+      balances[e.currency]![a.id] =
+          balances[e.currency]![a.id]! + (positive ? amount : -amount);
+    }
   }
   for (final t in transfers.where(
     (e) => e.status == SharedFinanceStatus.posted,
@@ -386,8 +529,14 @@ Map<String, SharedFinanceTotals> summarizeSharedFinance({
       throw const FormatException('Invalid transfer reference');
     }
     final amount = BigInt.from(t.amountMinor);
-    balances[t.currency]![from.id] = balances[t.currency]![from.id]! - amount;
-    balances[t.currency]![to.id] = balances[t.currency]![to.id]! + amount;
+    if (from.openingBalanceAt == null ||
+        !t.occurredAt.isBefore(from.openingBalanceAt!)) {
+      balances[t.currency]![from.id] = balances[t.currency]![from.id]! - amount;
+    }
+    if (to.openingBalanceAt == null ||
+        !t.occurredAt.isBefore(to.openingBalanceAt!)) {
+      balances[t.currency]![to.id] = balances[t.currency]![to.id]! + amount;
+    }
   }
   return Map.unmodifiable({
     for (final c in balances.keys)

@@ -18,6 +18,8 @@ import 'shopping_page.dart';
 import 'today_page.dart';
 import 'shared/sharing_account_page.dart';
 import 'shared/sharing_workspace.dart';
+import 'shared/space_picker.dart';
+import 'people/people_page.dart';
 import 'shared/sharing_copy.dart';
 import '../state/collaboration_provider.dart';
 import '../platform/notification_providers.dart';
@@ -43,6 +45,7 @@ enum _Area {
   settings,
   sharing,
   inbox,
+  people,
 }
 
 class OrganizerShell extends ConsumerStatefulWidget {
@@ -340,6 +343,27 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           _area = _Area.sharing;
         }),
       );
+  Future<void> _selectSpace(String? id) async {
+    try {
+      if (ref.read(collaborationProvider).valueOrNull?.session != null) {
+        await ref.read(collaborationProvider.notifier).selectSpace(id);
+      }
+      if (!mounted) return;
+      setState(() {
+        _sharedScopeId = id;
+        _sharedListId = null;
+        _sharedProjectId = null;
+        _sharingMembers = false;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.sharingAccessRevoked)),
+        );
+      }
+    }
+  }
+
   void _navigate(_Area area) => setState(() => _area = area);
 
   String _label(BuildContext context, _Area area) {
@@ -357,6 +381,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.settings => l.organizerSettings,
       _Area.sharing => l.sharingAccount,
       _Area.inbox => l.inboxTitle,
+      _Area.people => l.peopleTitle,
     };
   }
 
@@ -373,6 +398,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.settings => Icons.tune_outlined,
     _Area.sharing => Icons.people_outline,
     _Area.inbox => Icons.notifications_none_outlined,
+    _Area.people => Icons.person_outline,
   };
 
   @override
@@ -433,7 +459,17 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1160),
-                  child: _content(context, snapshot, actions, desktop),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      OrganizerSpacePicker(
+                        onSelected: _selectSpace,
+                        onConnect: () => _navigate(_Area.sharing),
+                      ),
+                      const SizedBox(height: 16),
+                      _content(context, snapshot, actions, desktop),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -627,6 +663,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                     _Area.finances,
                     _Area.home,
                     _Area.garden,
+                    _Area.people,
                   ])
                     Padding(
                       padding: const EdgeInsets.only(bottom: 5),
@@ -709,7 +746,83 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     bool desktop,
   ) {
     final l = context.l10n;
+    final active = ref
+        .watch(collaborationProvider)
+        .valueOrNull
+        ?.selectedSpaceId;
+    if (active != null &&
+        const {
+          _Area.today,
+          _Area.plans,
+          _Area.calendar,
+          _Area.projects,
+          _Area.shopping,
+          _Area.finances,
+          _Area.home,
+          _Area.people,
+        }.contains(_area)) {
+      final view = switch (_area) {
+        _Area.today => SharingView.agenda,
+        _Area.calendar => SharingView.timeline,
+        _Area.projects || _Area.home => SharingView.projects,
+        _Area.shopping => SharingView.shopping,
+        _Area.finances => SharingView.finances,
+        _Area.people => SharingView.people,
+        _ =>
+          _planArea == _Area.projects
+              ? SharingView.projects
+              : (_planArea == _Area.calendar
+                    ? SharingView.timeline
+                    : SharingView.tasks),
+      };
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_area == _Area.plans)
+            SegmentedButton<_Area>(
+              segments: [
+                ButtonSegment(
+                  value: _Area.plans,
+                  label: Text(l.organizerTasks),
+                ),
+                ButtonSegment(
+                  value: _Area.projects,
+                  label: Text(l.organizerProjects),
+                ),
+                ButtonSegment(
+                  value: _Area.calendar,
+                  label: Text(l.organizerCalendar),
+                ),
+              ],
+              selected: {_planArea},
+              onSelectionChanged: (selection) =>
+                  setState(() => _planArea = selection.first),
+            ),
+          SharingWorkspace(
+            view: view,
+            selectedScopeId: active,
+            showScopePicker: false,
+            onScopeSelected: _selectSpace,
+            onConnect: () => _navigate(_Area.sharing),
+            selectedListId: _sharedListId,
+            onListSelected: (id) => setState(() => _sharedListId = id),
+            selectedProjectId: _sharedProjectId,
+            onProjectSelected: (id) => setState(() => _sharedProjectId = id),
+            onMembers: (id) => setState(() {
+              _sharedScopeId = id;
+              _sharingMembers = true;
+              _area = _Area.sharing;
+            }),
+          ),
+        ],
+      );
+    }
     return switch (_area) {
+      _Area.people => OrganizerPeoplePage(
+        people: snapshot.people,
+        tasks: snapshot.tasks,
+        onTask: (task) => actions.task(task: task),
+      ),
       _Area.today => OrganizerTodayPage(
         onGettingStarted: _startSetup,
         onSharedAgenda: (scopeId) => setState(() {
@@ -897,6 +1010,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _Area.finances,
             _Area.home,
             _Area.garden,
+            _Area.people,
             _Area.settings,
           ])
             ListTile(

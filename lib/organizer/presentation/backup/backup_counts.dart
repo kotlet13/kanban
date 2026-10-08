@@ -8,6 +8,11 @@ class BackupCounts extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = context.l10n;
     String label(String key) => switch (key) {
+      'people' || 'householdPerson' => l.peopleTitle,
+      'financeAccounts' ||
+      'financeAccount' ||
+      'personalFinanceAccount' => l.financeAccounts,
+      'financeRecurrenceRules' || 'financeRecurrenceRule' => l.financePlanRules,
       'projects' => l.organizerProjects,
       'tasks' => l.organizerTasks,
       'shoppingLists' => l.organizerShopping,

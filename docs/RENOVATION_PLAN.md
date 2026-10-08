@@ -162,6 +162,8 @@ Telefon uporablja zavihek Več, namizje stranski meni. Risanje in premikanje dop
 
 ## Opomba za prihodnjo nadgradnjo — projektne časovnice
 
+**Aktualni status:** Izvedba 8. oktobra: faze/mejniki, intervalni mesečni koledar, ocene minut in razpoložljivost ter trajno Play/Pause merjenje so izdelani. Končna integracija in interna objava se vodita v [izvedbenem dnevniku](UPGRADE_IMPLEMENTATION.md). Spodaj ostaja izvorni zapis zahtev.
+
 **Zamisel uporabnika, 7. oktober 2026; za zdaj samo opomba, brez začetka izvedbe.** Projekt naj dobi časovnico kot koledar znotraj projekta. Glavni poudarek so faze in mejniki: jasno mora biti, katera opravila je treba dokončati za prvo fazo, katera za drugo ter koliko ur dela je predvidenih za vsako. To razširja osnovni razpored izvajalcev in terminov iz [družinske nadgradnje](FAMILY_UPGRADE.md); tamkajšnji dokazi ne potrjujejo spodnjih novih funkcij.
 
 Želeni obseg za prihodnjo zasnovo:
@@ -174,9 +176,11 @@ Telefon uporablja zavihek Več, namizje stranski meni. Risanje in premikanje dop
 
 **Poznejša dopolnitev:** gumba **Play/Pause** na opravilu začneta oziroma začasno ustavita odštevanje zastavljenega časa. Pregled naj loči oceno, dejansko porabljeni in preostali čas; iztek časovnika sam po sebi ne pomeni dokončanega opravila ali doseženega mejnika.
 
-Ob začetku zasnove dorečemo povezavo med oceno faze in ocenami njenih opravil, razmerje med projektnim ter posamičnim dnevnim/tedenskim časom in pravilo, kateri zastavljeni čas odšteva časovnik. Lokalno načrtovanje sledi osnovni zasnovi brez računa in strežnika, s trajno hrambo ter kopijo/obnovo; morebitno skupno urejanje potrebuje svojo pogodbo in preverjanje pravic. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+Ob začetku zasnove dorečemo povezavo med oceno faze in ocenami njenih opravil, razmerje med projektnim ter posamičnim dnevnim/tedenskim časom in pravilo, kateri zastavljeni čas odšteva časovnik. Lokalno načrtovanje sledi osnovni zasnovi brez računa in strežnika, s trajno hrambo ter kopijo/obnovo; morebitno skupno urejanje potrebuje svojo pogodbo in preverjanje pravic. Ta zapis je izvor zahteve; uporabnik je pozneje istega dne izrecno odobril izvedbo in interno izdajo.
 
 ## Opomba za prihodnjo nadgradnjo — finančni čarovnik in napoved
+
+**Aktualni status:** Izvedba 8. oktobra: finančni računi, mesečna pravila za plačo/kredit/kartico/drugo, napoved in potrditev dejanskega zneska so izdelani. Dan 31 se omeji na zadnji dan meseca; vikend plače ima petkovo in ponedeljkovo vprašanje za isti vnos. Prazniški koledar ni vključen. Končne dokaze vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md). Spodaj ostaja izvorni zapis zahtev.
 
 **Zamisel uporabnika, 7. oktober 2026; za zdaj samo opomba za naslednje faze, brez začetka izvedbe.** V financah naj izbirni čarovnik z nekaj vprašanji pomaga pripraviti osnovno napoved denarnega toka in opomnike za pričakovane prilive ter obveznosti.
 
@@ -199,9 +203,11 @@ Opomnik za plačo:
 - Če uporabnik prejem potrdi že pred vikendom, se nadaljnje vprašanje za ta mesečni priliv prekliče. Brez potrditve priliv ostane pričakovan; sam opomnik ga ne knjiži kot prejetega.
 - Uporabnik je zahteval potisno obvestilo. Zasnova ga poveže z obstoječim centrom obvestil in sistemskimi opomniki: lokalno načrtovani opomnik mora delovati brez strežnika, izbirna oddaljena push dostava pa uporablja ločen konfiguriran kanal. Odprtje obvestila vodi v potrditev pravega priliva in finančnega obsega.
 
-Ob zasnovi dorečemo začetno stanje za napoved, ponavljanje datumov po mesecih, praznike in delovne dni, spremenljiv znesek poravnave kartice ter ravnanje, če plača tudi po vikendu še ni prispela. Osebni načrt ostane lokalen, trajno shranjen in vključen v kopijo/obnovo; skupni finančni obseg in morebitna sinhronizacija zahtevata izrecno izbiro ter obstoječe finančne pravice. Čarovnik ne vključi samodejno deljenja ali obvestil. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+Ob zasnovi dorečemo začetno stanje za napoved, ponavljanje datumov po mesecih, praznike in delovne dni, spremenljiv znesek poravnave kartice ter ravnanje, če plača tudi po vikendu še ni prispela. Osebni načrt ostane lokalen, trajno shranjen in vključen v kopijo/obnovo; skupni finančni obseg in morebitna sinhronizacija zahtevata izrecno izbiro ter obstoječe finančne pravice. Čarovnik ne vključi samodejno deljenja ali obvestil. Ta zapis je izvor zahteve; uporabnik je pozneje istega dne izrecno odobril izvedbo in interno izdajo.
 
 ## Opomba za prihodnjo nadgradnjo — člani gospodinjstva brez računa
+
+**Aktualni status:** Izvedba 8. oktobra: poimenovane osebe brez prijave ter ločen izvajalec in osebe, na katere se zapis nanaša, so izdelani. Oseba ni članstvo ali račun in ne dobi pravic oziroma push dostave. Končne dokaze vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md). Spodaj ostaja izvorni zapis zahtev.
 
 **Zahteva uporabnika; za zdaj samo opomba za naslednje faze, brez začetka izvedbe.** V gospodinjstvo naj bo mogoče ročno dodati osebe, ki nimajo svojega uporabniškega računa, ter zanje voditi opravila oziroma povezati opravila, ki se nanje nanašajo.
 
@@ -213,9 +219,11 @@ Ob zasnovi dorečemo začetno stanje za napoved, ponavljanje datumov po mesecih,
 - Avtorstvo in spremembe opravil ostanejo pripisani dejanskemu uporabniku, ki jih je vnesel oziroma uredil. Profil osebe brez računa sam po sebi ne ustvari prijave, dostopnih pravic ali prejemnika potisnih obvestil.
 - Dodajanje oseb in vodenje opravil zanje deluje lokalno brez strežnika, s trajno hrambo ter kopijo/obnovo. Morebitno deljenje teh profilov in opravil v skupnem gospodinjstvu je izrecno ter upošteva pravice tega prostora.
 
-Ob zasnovi dorečemo, kdo prejema opomnike za taka opravila ter kako člana pozneje izrecno povežemo z njegovim računom, če ga ustvari, ob ohranitvi povezanih opravil. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+Ob zasnovi dorečemo, kdo prejema opomnike za taka opravila ter kako člana pozneje izrecno povežemo z njegovim računom, če ga ustvari, ob ohranitvi povezanih opravil. Ta zapis je izvor zahteve; uporabnik je pozneje istega dne izrecno odobril izvedbo in interno izdajo.
 
 ## Opomba za prihodnjo nadgradnjo — potrditev registracije in veljavnost prijave
+
+**Aktualni status:** Izvedba 8. oktobra: jasna potrditev ustvarjenega računa in preverjene e-pošte ter zmožnostno podaljševanje aktivne seje so preverjeni in poslani v Git v commitu `54f3061`. FamilyHub 0.6.1+ ohrani isti bearer/napravo in v zadnjih sedmih dneh podaljša sejo na 30 dni; preklicana ali potekla seja se ne obnovi. Spodaj ostaja izvorni zapis zahtev.
 
 **Povratna informacija uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez spremembe aplikacije.** Pri prvem Android preizkusu je uporabnik poročal, da je ustvarjanje računa s kodo uspelo, vendar ni dobil jasne potrditve uspeha ali poziva k prijavi. Datum izteka seje je povzročil dodatno nejasnost.
 
@@ -228,13 +236,15 @@ Predvidena izboljšava:
 - Po uspehu jasno prikazati »Račun je ustvarjen. Prijavljen si kot …« ter preiti na pregled povezanega računa z razvidnim strežnikom in naslednjimi koraki. Ne zahtevati druge prijave, kadar je seja že uspešno shranjena.
 - Če je račun ustvarjen, shranjevanje prijave pa ne uspe, jasno usmeriti v prijavo z ustvarjenim računom; uporabnik naj ne ponavlja ustvarjanja s porabljeno kodo.
 - Po uspešni potrditvi e-poštne kode prikazati »E-poštni naslov je potrjen«, zapreti vnos kode in osvežiti vidno stanje naslova v nastavitvah računa. Uspeh prikazati šele po strežniški potrditvi, ne že ob zahtevi za pošiljanje kode; napaka naj ostane jasno ločena.
-- **Potrjena zahteva uporabnika, 8. oktober 2026: seja se mora samodejno podaljševati.** Ob običajni uporabi naj uporabnik ostane prijavljen brez ponovnega vnosa gesla vsakih 30 dni. Za zdaj je zahteva zapisana za nadgradnjo; trenutna izvedba seje še ne podaljšuje.
+- **Potrjena zahteva uporabnika, 8. oktober 2026: seja se mora samodejno podaljševati.** Ob običajni uporabi naj uporabnik ostane prijavljen brez ponovnega vnosa gesla vsakih 30 dni. Zahteva je zdaj izvedena v commitu `54f3061`; uporaba potrebuje strežnik z zmožnostjo `sessionRenewal`.
 - Prikaz veljavnosti uskladiti s samodejnim podaljševanjem, da tehnični datum izteka ne daje vtisa zaprtja računa ali obvezne mesečne prijave. Odjava, preklic naprave, sprememba gesla in deaktivacija računa morajo še vedno ustaviti dostop; podaljševanje preklica ne sme obiti. Podrobnosti obnove seje in dolgotrajne odsotnosti ostajajo predmet zasnove. Začasen izpad povezave ne sme izbrisati lokalnih ali čakajočih podatkov in ne konča osnovne lokalne osebne uporabe.
 - Ohraniti izrecno izbiro osebne sinhronizacije; uspešna registracija ali podaljšanje seje je ne smeta samodejno vključiti.
 
 Viri preverjenega trenutnega vedenja: `NativeEnrollmentService::execute`, `NativeAuthService::issue`, `CollaborationAccountRecovery.enroll`, `CollaborationAccountActions._authenticate` in `showAccountEnrollment`. Pri izvedbi preveriti jasen uspešen zaključek, napako shranjevanja seje, samodejno podaljševanje, zavrnitev podaljšanja po preklicu ter vrnitev po izpadu povezave brez izgube lokalnih ali čakajočih podatkov.
 
 ## Opomba za prihodnjo nadgradnjo — organizacije in izbira prostora
+
+**Aktualni status:** Izvedba 8. oktobra: enotna izbira osebnega prostora, doma, organizacije in njenih projektov je izdelana. Projekti imajo izrecna članstva in finančne pravice; članstvo organizacije jih ne odpre samodejno. Arhiviranje je obnovljivo in ohrani vsebino. Končne dokaze vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md). Spodaj ostaja izvorni zapis zahtev.
 
 **Potrjena smer uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez začetka izvedbe.** Dodati prostor **Organizacija** za podjetje, zadrugo ali društvo, na primer TriparNA. Trenutna izvedba podpira osebni prostor, gospodinjstvo in samostojen deljeni projekt; organizacija z lastnimi projekti in članstvi še ni izvedena.
 
@@ -251,6 +261,8 @@ Ob zasnovi dorečemo vloge, dedovanje oziroma izrecno omejevanje projektnih prav
 
 ## Opomba za prihodnjo nadgradnjo — preglednost na manjših telefonih
 
+**Aktualni status:** Izvedba 8. oktobra: oznake, razmiki in obrazci ob tipkovnici so popravljeni in preverjeni pri 320/360/390 px ter 2× povečavi; commit `54f3061` je poslan v Git. Mobilni spodnji zavihki ostanejo potrjena navigacija; levi mobilni meni ni potrjena zamenjava. Spodaj ostaja izvorni zapis zahtev.
+
 **Povratna informacija uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez spremembe aplikacije.** Na Samsungu Galaxy S25 je prikaz preveč prostoren glede na razpoložljivo višino. Priloženi posnetek obrazca **Dodaj dogodek** z odprto tipkovnico SwiftKey kaže delno odrezano oznako polja **Naslov**; uporabnik potrjuje, da je obrazec pomaknjen povsem na vrh. Naslov dialoga je viden. To je opažanje dejanskega prikaza; vzrok odrezovanja še ni preverjen v kodi.
 
 Želeni obseg:
@@ -266,6 +278,8 @@ Ob zasnovi dorečemo vloge, dedovanje oziroma izrecno omejevanje projektnih prav
 Pri izvedbi preveriti S25 na fizični napravi, manjše logične širine (320–390), odprto/zaprto tipkovnico, privzeto in povečano sistemsko pisavo ter vrh in dno obrazca. Ne izključiti uporabnikove nastavitve povečave besedila. Ohraniti potrjeno svetlo/temno temo ter ločeno namizno postavitev. Ta opomba ne pomeni, da je popravek že v trenutni testni izdaji.
 
 ## Opomba za prihodnjo nadgradnjo — strošek neposredno pri opravilu
+
+**Aktualni status:** Izvedba 8. oktobra: opravilo in pripadajoči strošek uporabljata isti finančni vnos. Lokalni zapis in skupna oddaja para sta atomarna; rok premakne načrtovani datum, plačanega datuma ne prepiše, izbris opravila odveže in ohrani strošek. Končne dokaze vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md). Spodaj ostaja izvorni zapis zahtev.
 
 **Zahteva uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez začetka izvedbe.** Opravilo lahko vsebuje strošek, ki ga uporabnik doda že pri ustvarjanju ali urejanju opravila. Ta strošek se prikaže tudi v financah, brez ponovnega ročnega vnosa v finančnem modulu.
 

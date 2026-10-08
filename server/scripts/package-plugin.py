@@ -8,7 +8,7 @@ server = Path(__file__).resolve().parents[1]
 source = server / 'plugins' / 'FamilyHub'
 destination = server / 'dist'
 destination.mkdir(exist_ok=True)
-archive = destination / 'FamilyHub-0.6.1.zip'
+archive = destination / 'FamilyHub-0.7.0.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as package:
     for path in sorted(source.rglob('*')):
         if path.is_file():

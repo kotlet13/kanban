@@ -1,8 +1,10 @@
 # Lokalno okolje in strežniški temelj
 
-To je izvedena razvojna osnova, ne namestitev v produkcijo. Lasten vtičnik `FamilyHub` 0.6.0 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul z ločenimi pravicami; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
+To je izvedena razvojna osnova, ne namestitev v produkcijo. Lasten vtičnik `FamilyHub` 0.7.0 / schema11 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul z ločenimi pravicami; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
 
-Za konkretno samostojno namestitev na gostovanju glej [cPanel postopek](CPANEL_SETUP.md): staging, sveža kopija, dejanske poti/razširitve, konfiguracija 0.6.0, ločeni croni in meje izbrisa. Vodič ni dokaz produkcijske namestitve.
+Za konkretno samostojno namestitev na gostovanju glej [cPanel postopek](CPANEL_SETUP.md): staging, sveža kopija, dejanske poti/razširitve, ohranitev obstoječe konfiguracije, ločeni croni in meje izbrisa. Vodič ni dokaz produkcijske namestitve.
+
+Aktualni record3/finance2 dodajata organizacije z izrecnimi projektnimi pravicami, profile brez prijave, faze/časovnik in par opravilo–strošek ter mesečna finančna pravila. [Pogodbe](native-api-contract.md), [finančna pogodba](collaboration-api-contract.md) in [zaključni dokazi](../UPGRADE_IMPLEMENTATION.md) ločijo lokalne preizkuse od namestitve. Nov schema11 je additiven; stare konfiguracije, identitete in izvirne operacije se ohranijo.
 
 ## Zagon in preverjanje
 

@@ -48,7 +48,7 @@ function scenario($action) {
     foreach ([[$ownerId,$owner['user']['accountId'],'owner'],[$userId,$recipient['user']['accountId'],'member']] as $member) { change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,?,1)',array_merge([$scope],$member)); }
     $finance=$action==='finance'; $category=$finance?'finance':'tasks'; $account=$recipient['user']['accountId'];
     change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,?,?)',[$scope,$account,$category,json_encode(['inApp'=>true,'sound'=>false,'push'=>false,'email'=>true])]);
-    if ($finance) { change('INSERT INTO familyhub_finance_policy VALUES(?,1,1,0)',[$scope]); foreach ([$owner['user']['accountId'],$account] as $a) { change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'write\')',[$scope,$a]); } }
+    if ($finance) { change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)',[$scope]); foreach ([$owner['user']['accountId'],$account] as $a) { change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'write\')',[$scope,$a]); } }
     $GLOBALS['pdo']->beginTransaction();
     (new NativeNotificationWriter($container))->insert($scope,$account,null,$finance?'financeEntry':'task',uuid(),1,$finance?'financeEntry.created':'task.created',$category,'scope',hash('sha256',$scope));
     $GLOBALS['pdo']->commit();

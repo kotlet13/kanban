@@ -14,6 +14,19 @@ extension CollaborationEventActions on CollaborationRepository {
       throw const CollaborationException('client_upgrade_required');
     }
     final id = newSharedId(), now = clock().toUtc();
+    final profile = _requireSession().profile, epoch = _epoch;
+    final scoped = SharedScope.fromJson(
+      CollaborationRepository._map(
+        (await database.rows(
+          'SELECT data FROM scopes WHERE partition=? AND id=?',
+          [profile.partition, scopeId],
+        )).single['data'],
+      ),
+    );
+    _checkEpoch(epoch);
+    projectId ??=
+        scoped.projectRootId ??
+        (scoped.organizationId != null ? scopeId : null);
     final event = SharedEvent(
       id: id,
       title: title.trim(),

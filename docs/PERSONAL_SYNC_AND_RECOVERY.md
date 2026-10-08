@@ -1,5 +1,7 @@
 # Osebna sinhronizacija, prvi vstop in obnova
 
+**Novejša nadgradnja 8. oktobra:** lokalna schema6, osebni JSON4 in prenosna kopija3 vključujejo osebe, načrtovanje in finančna pravila ter ohranijo vrtove. Sinhronizirani zapisi uporabljajo record3/finance2; izvirni ID-ji in hashi starih operacij se ohranijo. Lokalno in zasebno lastništvo se preverja po posameznem zapisu. [Aktualni dokazi](UPGRADE_IMPLEMENTATION.md) imajo prednost pred spodnjo zgodovino schema4.
+
 ## Obseg in stanje
 
 Uporabnik je 5. oktobra 2026 potrdil naslednje tri nadgradnje in za zdaj odložil Google Play Console. **Izvedba je pripravljena in preverjena lokalno**, z vtičnikom FamilyHub 0.5.0 in lokalno shemo SQLite 4. To ni produkcijska namestitev; izvedene preizkuse in preostale omejitve navaja zaključek dokumenta. Prejšnje dokaze vodi [priprava FCM](FIREBASE_PREPARATION.md).

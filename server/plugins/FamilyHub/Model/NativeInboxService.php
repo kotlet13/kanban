@@ -24,18 +24,23 @@ class NativeInboxService extends NativeDatabase
             }
             if (str_starts_with($operation, 'inbox.preferences.')) { return $this->preferences($operation, $params, $user); }
             if (!in_array($operation, ['inbox.read', 'inbox.open'], true)) { throw new NativeError('unsupported_operation', 404); }
-            $this->fields($params, $operation === 'inbox.open' ? ['id'] : ['id', 'read', 'expectedRevision', 'requestId']);
+            $this->fields($params, $operation === 'inbox.open' ? ['id'] : ['id', 'read', 'expectedRevision', 'requestId'], $operation === 'inbox.open' ? ['financeContractVersion','recordContractVersion'] : []);
             if (!is_int($params['id']) || $params['id'] < 1) { throw new NativeError('validation_error'); }
             $row = $this->one('SELECT * FROM familyhub_inbox WHERE id=? AND recipient_account_id=?', [$params['id'], $account]);
             if (!$row) { throw new NativeError('permission_revoked', 403); }
             $this->scope($row['scope_id'], $user['id']);
             if (!$this->visible($row, $account)) { throw new NativeError('permission_revoked', 403); }
             if ($operation === 'inbox.open') {
-                $finance = str_starts_with($row['target_type'], 'finance');
+                $finance = $this->financialRecordType($row['target_type']);
                 if ($finance) { (new NativeFinanceAccess($this->container))->policy($row['scope_id'], $user); }
                 $target = ['scopeId' => $row['scope_id'], 'type' => $row['target_type'], 'id' => $row['target_id']];
                 $record = $row['target_type'] === 'membership' ? null : $this->one('SELECT * FROM '.($finance ? 'familyhub_finance_records' : 'familyhub_records').' WHERE scope_id=? AND id=?', [$row['scope_id'], $row['target_id']]);
-                return ['item' => $this->wire($row), 'target' => $target, 'record' => $record ? (new NativeRecordPolicy($this->container))->wire($record) : null];
+                $clientVersion=$params[$finance ? 'financeContractVersion' : 'recordContractVersion'] ?? ($finance ? 1 : 2);
+                if (!is_int($clientVersion) || $clientVersion<1 || $clientVersion>($finance ? 2 : 3)) { throw new NativeError('validation_error'); }
+                if ($record && (int)($record['contract_version']??1)>$clientVersion) { throw new NativeError($finance ? 'unsupported_version' : 'client_upgrade_required',409); }
+                $recordWire=$record ? (new NativeRecordPolicy($this->container))->wire($record,$finance ? 2 : $clientVersion) : null;
+                if ($finance && $recordWire) { $recordWire['contractVersion']=(int)($record['contract_version']??1); }
+                return ['item' => $this->wire($row), 'target' => $target, 'record' => $recordWire];
             }
             if (!is_bool($params['read']) || !is_int($params['expectedRevision'])) { throw new NativeError('validation_error'); }
             $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);
@@ -97,7 +102,7 @@ class NativeInboxService extends NativeDatabase
 
     private function visible($row, $account)
     {
-        return (new NativeFinanceAccess($this->container))->visible($row['scope_id'], $account, str_starts_with($row['target_type'], 'finance'));
+        return (new NativeFinanceAccess($this->container))->visible($row['scope_id'], $account, $this->financialRecordType($row['target_type']));
     }
 
     public function wire($row)

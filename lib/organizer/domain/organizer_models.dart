@@ -1,5 +1,12 @@
+import 'dart:math';
+import 'organizer_snapshot.dart' show supportedCurrencies, maxMoneyMinor;
+export 'household_person.dart';
+
 // Immutable records in the personal local workspace. No remote identity is implied.
 export 'organizer_snapshot.dart';
+
+part 'planning_models.dart';
+part 'finance_planning_models.dart';
 
 const _unset = Object();
 
@@ -8,7 +15,10 @@ enum FinanceEntryKind { income, expense }
 enum ProjectArea { personal, home }
 
 class LocalProject {
-  const LocalProject({
+  LocalProject({
+    Iterable<ProjectPhase> phases = const [],
+    this.availabilityMinutes,
+    this.availabilityPeriod,
     this.revision = 0,
     this.startAt,
     this.endAt,
@@ -20,8 +30,11 @@ class LocalProject {
     required this.description,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : phases = List.unmodifiable(phases);
 
+  final List<ProjectPhase> phases;
+  final int? availabilityMinutes;
+  final AvailabilityPeriod? availabilityPeriod;
   final String id;
   final String title;
   final String description;
@@ -36,6 +49,9 @@ class LocalProject {
   final String? updatedByAccountId;
 
   LocalProject copyWith({
+    Iterable<ProjectPhase>? phases,
+    Object? availabilityMinutes = _unset,
+    Object? availabilityPeriod = _unset,
     int? revision,
     Object? startAt = _unset,
     Object? endAt = _unset,
@@ -44,6 +60,13 @@ class LocalProject {
     String? description,
     DateTime? updatedAt,
   }) => LocalProject(
+    phases: phases ?? this.phases,
+    availabilityMinutes: identical(availabilityMinutes, _unset)
+        ? this.availabilityMinutes
+        : availabilityMinutes as int?,
+    availabilityPeriod: identical(availabilityPeriod, _unset)
+        ? this.availabilityPeriod
+        : availabilityPeriod as AvailabilityPeriod?,
     area: area ?? this.area,
     revision: revision ?? this.revision,
     startAt: identical(startAt, _unset) ? this.startAt : startAt as DateTime?,
@@ -58,6 +81,9 @@ class LocalProject {
   );
 
   Map<String, Object?> toJson() => {
+    'phases': phases.map((p) => p.toJson()).toList(),
+    'availabilityMinutes': availabilityMinutes,
+    'availabilityPeriod': availabilityPeriod?.name,
     'startAt': startAt?.toUtc().toIso8601String(),
     'endAt': endAt?.toUtc().toIso8601String(),
     'createdByAccountId': createdByAccountId,
@@ -72,6 +98,15 @@ class LocalProject {
   };
 
   factory LocalProject.fromJson(Map<String, dynamic> json) => LocalProject(
+    phases: (json['phases'] as List? ?? const []).map(
+      (p) => ProjectPhase.fromJson(Map<String, dynamic>.from(p as Map)),
+    ),
+    availabilityMinutes: json['availabilityMinutes'] as int?,
+    availabilityPeriod: json['availabilityPeriod'] == null
+        ? null
+        : AvailabilityPeriod.values.byName(
+            json['availabilityPeriod'] as String,
+          ),
     area: switch (readString(json, 'area')) {
       'personal' => ProjectArea.personal,
       'home' => ProjectArea.home,
@@ -92,6 +127,13 @@ class LocalProject {
 
 class LocalTask {
   LocalTask({
+    this.phaseId,
+    this.estimateMinutes,
+    this.availabilityMinutes,
+    this.availabilityPeriod,
+    this.timer = const TaskTimerState(),
+    this.assigneePersonId,
+    Iterable<String> subjectPersonIds = const [],
     Iterable<String> assigneeAccountIds = const [],
     this.revision = 0,
     this.startAt,
@@ -106,8 +148,14 @@ class LocalTask {
     required this.isCompleted,
     required this.createdAt,
     required this.updatedAt,
-  }) : assigneeAccountIds = List.unmodifiable(assigneeAccountIds);
+  }) : assigneeAccountIds = List.unmodifiable(assigneeAccountIds),
+       subjectPersonIds = List.unmodifiable(subjectPersonIds);
 
+  final String? phaseId, assigneePersonId;
+  final int? estimateMinutes, availabilityMinutes;
+  final AvailabilityPeriod? availabilityPeriod;
+  final TaskTimerState timer;
+  final List<String> subjectPersonIds;
   final List<String> assigneeAccountIds;
   final String id;
   final String title;
@@ -125,6 +173,13 @@ class LocalTask {
   final String? updatedByAccountId;
 
   LocalTask copyWith({
+    Object? phaseId = _unset,
+    Object? estimateMinutes = _unset,
+    Object? availabilityMinutes = _unset,
+    Object? availabilityPeriod = _unset,
+    Object? assigneePersonId = _unset,
+    Iterable<String>? subjectPersonIds,
+    TaskTimerState? timer,
     Iterable<String>? assigneeAccountIds,
     int? revision,
     Object? startAt = _unset,
@@ -136,6 +191,21 @@ class LocalTask {
     bool? isCompleted,
     DateTime? updatedAt,
   }) => LocalTask(
+    phaseId: identical(phaseId, _unset) ? this.phaseId : phaseId as String?,
+    estimateMinutes: identical(estimateMinutes, _unset)
+        ? this.estimateMinutes
+        : estimateMinutes as int?,
+    availabilityMinutes: identical(availabilityMinutes, _unset)
+        ? this.availabilityMinutes
+        : availabilityMinutes as int?,
+    availabilityPeriod: identical(availabilityPeriod, _unset)
+        ? this.availabilityPeriod
+        : availabilityPeriod as AvailabilityPeriod?,
+    assigneePersonId: identical(assigneePersonId, _unset)
+        ? this.assigneePersonId
+        : assigneePersonId as String?,
+    subjectPersonIds: subjectPersonIds ?? this.subjectPersonIds,
+    timer: timer ?? this.timer,
     assigneeAccountIds: assigneeAccountIds ?? this.assigneeAccountIds,
     revision: revision ?? this.revision,
     startAt: identical(startAt, _unset) ? this.startAt : startAt as DateTime?,
@@ -155,6 +225,13 @@ class LocalTask {
   );
 
   Map<String, Object?> toJson() => {
+    'phaseId': phaseId,
+    'estimateMinutes': estimateMinutes,
+    'availabilityMinutes': availabilityMinutes,
+    'availabilityPeriod': availabilityPeriod?.name,
+    'timer': timer.toJson(),
+    'assigneePersonId': assigneePersonId,
+    'subjectPersonIds': subjectPersonIds,
     'assigneeAccountIds': assigneeAccountIds,
     'startAt': startAt?.toUtc().toIso8601String(),
     'endAt': endAt?.toUtc().toIso8601String(),
@@ -172,6 +249,22 @@ class LocalTask {
   };
 
   factory LocalTask.fromJson(Map<String, dynamic> json) => LocalTask(
+    phaseId: json['phaseId'] as String?,
+    estimateMinutes: json['estimateMinutes'] as int?,
+    availabilityMinutes: json['availabilityMinutes'] as int?,
+    availabilityPeriod: json['availabilityPeriod'] == null
+        ? null
+        : AvailabilityPeriod.values.byName(
+            json['availabilityPeriod'] as String,
+          ),
+    assigneePersonId: json['assigneePersonId'] as String?,
+    subjectPersonIds: (json['subjectPersonIds'] as List? ?? const [])
+        .cast<String>(),
+    timer: json['timer'] == null
+        ? const TaskTimerState()
+        : TaskTimerState.fromJson(
+            Map<String, dynamic>.from(json['timer'] as Map),
+          ),
     assigneeAccountIds: json.containsKey('assigneeAccountIds')
         ? (json['assigneeAccountIds'] as List).cast<String>()
         : const [],
@@ -374,6 +467,18 @@ class LocalEvent {
 
 class FinanceEntry {
   const FinanceEntry({
+    this.status = FinanceEntryStatus.posted,
+    this.plannedAt,
+    this.paidAt,
+    this.taskId,
+    this.ledgerAccountId,
+    this.payerPersonId,
+    this.recipientPersonId,
+    this.createdByPersonId,
+    this.recurrenceRuleId,
+    this.occurrenceKey,
+    this.createdByAccountId,
+    this.updatedByAccountId,
     this.revision = 0,
     required this.id,
     required this.title,
@@ -387,6 +492,16 @@ class FinanceEntry {
     required this.updatedAt,
   });
 
+  final FinanceEntryStatus status;
+  final DateTime? plannedAt, paidAt;
+  final String? taskId,
+      ledgerAccountId,
+      payerPersonId,
+      recipientPersonId,
+      createdByPersonId,
+      recurrenceRuleId,
+      occurrenceKey;
+  final String? createdByAccountId, updatedByAccountId;
   final String id;
   final String title;
   final int amountMinor;
@@ -401,6 +516,16 @@ class FinanceEntry {
   final int revision;
 
   FinanceEntry copyWith({
+    FinanceEntryStatus? status,
+    Object? plannedAt = _unset,
+    Object? paidAt = _unset,
+    Object? taskId = _unset,
+    Object? ledgerAccountId = _unset,
+    Object? payerPersonId = _unset,
+    Object? recipientPersonId = _unset,
+    Object? createdByPersonId = _unset,
+    Object? recurrenceRuleId = _unset,
+    Object? occurrenceKey = _unset,
     int? revision,
     String? title,
     int? amountMinor,
@@ -411,6 +536,32 @@ class FinanceEntry {
     String? notes,
     DateTime? updatedAt,
   }) => FinanceEntry(
+    status: status ?? this.status,
+    plannedAt: identical(plannedAt, _unset)
+        ? this.plannedAt
+        : plannedAt as DateTime?,
+    paidAt: identical(paidAt, _unset) ? this.paidAt : paidAt as DateTime?,
+    taskId: identical(taskId, _unset) ? this.taskId : taskId as String?,
+    ledgerAccountId: identical(ledgerAccountId, _unset)
+        ? this.ledgerAccountId
+        : ledgerAccountId as String?,
+    payerPersonId: identical(payerPersonId, _unset)
+        ? this.payerPersonId
+        : payerPersonId as String?,
+    recipientPersonId: identical(recipientPersonId, _unset)
+        ? this.recipientPersonId
+        : recipientPersonId as String?,
+    createdByPersonId: identical(createdByPersonId, _unset)
+        ? this.createdByPersonId
+        : createdByPersonId as String?,
+    recurrenceRuleId: identical(recurrenceRuleId, _unset)
+        ? this.recurrenceRuleId
+        : recurrenceRuleId as String?,
+    occurrenceKey: identical(occurrenceKey, _unset)
+        ? this.occurrenceKey
+        : occurrenceKey as String?,
+    createdByAccountId: createdByAccountId,
+    updatedByAccountId: updatedByAccountId,
     revision: revision ?? this.revision,
     id: id,
     title: title ?? this.title,
@@ -427,6 +578,18 @@ class FinanceEntry {
   );
 
   Map<String, Object?> toJson() => {
+    'status': status.name,
+    'plannedAt': plannedAt?.toUtc().toIso8601String(),
+    'paidAt': paidAt?.toUtc().toIso8601String(),
+    'taskId': taskId,
+    'ledgerAccountId': ledgerAccountId,
+    'payerPersonId': payerPersonId,
+    'recipientPersonId': recipientPersonId,
+    'createdByPersonId': createdByPersonId,
+    'recurrenceRuleId': recurrenceRuleId,
+    'occurrenceKey': occurrenceKey,
+    'createdByAccountId': createdByAccountId,
+    'updatedByAccountId': updatedByAccountId,
     'revision': revision,
     'id': id,
     'title': title,
@@ -441,6 +604,20 @@ class FinanceEntry {
   };
 
   factory FinanceEntry.fromJson(Map<String, dynamic> json) => FinanceEntry(
+    status: json['status'] == null
+        ? FinanceEntryStatus.posted
+        : FinanceEntryStatus.values.byName(json['status'] as String),
+    plannedAt: readNullableDate(json, 'plannedAt'),
+    paidAt: readNullableDate(json, 'paidAt'),
+    taskId: readNullableString(json, 'taskId'),
+    ledgerAccountId: readNullableString(json, 'ledgerAccountId'),
+    payerPersonId: readNullableString(json, 'payerPersonId'),
+    recipientPersonId: readNullableString(json, 'recipientPersonId'),
+    createdByPersonId: readNullableString(json, 'createdByPersonId'),
+    recurrenceRuleId: readNullableString(json, 'recurrenceRuleId'),
+    occurrenceKey: readNullableString(json, 'occurrenceKey'),
+    createdByAccountId: readNullableString(json, 'createdByAccountId'),
+    updatedByAccountId: readNullableString(json, 'updatedByAccountId'),
     revision: readInt(json, 'revision'),
     id: readString(json, 'id'),
     title: readString(json, 'title'),

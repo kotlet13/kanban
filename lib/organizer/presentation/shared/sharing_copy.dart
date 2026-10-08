@@ -37,7 +37,14 @@ Future<void> showPublishPersonalCopy(
     return;
   }
   final scopes = state.scopes
-      .where((scope) => scope.canEdit && scope.kind != SharedScopeKind.personal)
+      .where(
+        (scope) =>
+            scope.canEdit &&
+            scope.kind != SharedScopeKind.personal &&
+            scope.kind != SharedScopeKind.organization &&
+            (project == null ||
+                (scope.projectRootId == null && scope.organizationId == null)),
+      )
       .toList();
   if (scopes.isEmpty) {
     onConnect();
@@ -47,11 +54,22 @@ Future<void> showPublishPersonalCopy(
   String? copiedId;
   String? destinationId;
   final l = context.l10n;
+  final referencedPeople = <String>{
+    for (final task in personal.tasks.where(
+      (task) => task.projectId == project?.id,
+    )) ...[
+      if (task.assigneePersonId != null) task.assigneePersonId!,
+      ...task.subjectPersonIds,
+    ],
+  };
+  final personReview = project != null && referencedPeople.isNotEmpty
+      ? '\n\n${l.peopleCopyDescription}\n${personal.people.where((person) => referencedPeople.contains(person.id)).map((person) => person.name).join(', ')}'
+      : '';
   await showSharingForm(
     context,
     title: l.sharingCopyAction,
     description:
-        '${list?.title ?? project!.title}\n\n${l.sharingCopyDescription}',
+        '${list?.title ?? project!.title}\n\n${l.sharingCopyDescription}$personReview',
     fields: [
       SharingField(
         id: 'destination',
@@ -82,6 +100,7 @@ Future<void> showPublishPersonalCopy(
           : await controller.publishProject(
               scopeId: scopeId,
               project: project!,
+              people: personal.people,
               tasks: personal.tasks
                   .where((task) => task.projectId == project.id)
                   .toList(),

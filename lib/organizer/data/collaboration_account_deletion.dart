@@ -20,7 +20,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
       session,
       epoch,
       'account.deletion.preview',
-      {},
+      {if (_accountDeletionPolicyVersion >= 2) 'policyVersion': 2},
     );
     return decodeAccountDeletionPreview(result, session.profile);
   }
@@ -118,6 +118,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
         'password': password,
         if (otp != null) 'otp': otp,
         'confirmation': 'DELETE',
+        if (_accountDeletionPolicyVersion >= 2) 'policyVersion': 2,
       });
     } on CollaborationException catch (e) {
       if (previous == null &&

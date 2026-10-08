@@ -20,6 +20,8 @@ import 'organizer_repository.dart' show OrganizerConflictException;
 part 'collaboration_account_actions.dart';
 part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
+part 'collaboration_person_actions.dart';
+part 'collaboration_task_cost_actions.dart';
 part 'collaboration_sync_actions.dart';
 part 'collaboration_event_actions.dart';
 part 'collaboration_notification_actions.dart';
@@ -68,9 +70,14 @@ class CollaborationRepository {
   String? _sessionInvalidReason;
   DateTime? _pushStateCheckedAt;
   int _recordContractVersion = 1;
+  int _financeContractVersion = 1;
+  int _accountDeletionPolicyVersion = 1;
   bool _sessionRenewalSupported = false;
   Future<void>? _sessionRenewal;
   int? _sessionRenewalEpoch;
+  bool _organizationsSupported = false,
+      _householdPeopleSupported = false,
+      _projectArchivingSupported = false;
   bool _inboxSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
@@ -239,7 +246,9 @@ class CollaborationRepository {
               ))
               .map((r) => SharedScheduledReminder.fromJson(_map(r['data'])))
               .where(
-                (e) => parsedScopes.any((s) => s.id == e.scopeId && !s.revoked),
+                (e) => parsedScopes.any(
+                  (s) => s.id == e.scopeId && !s.revoked && !s.archived,
+                ),
               )
               .toList();
       final commands =
@@ -299,21 +308,38 @@ class CollaborationRepository {
             financePolicies[e.scopeId]?.canRead != true,
       );
       if (epoch != _epoch || _closed) return;
+      final selectedSpace = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['selected_space:${profile.partition}'],
+      );
+      final privateState = await _privateSyncState(profile);
+      final runtimePrivateIds = <String, String>{};
+      if (_sessionInvalidReason == null && !deletionPending) {
+        for (final row in await database.rows(
+          'SELECT r.id FROM records r JOIN personal_workspaces w ON w.partition=r.partition AND w.scope_id=r.scope_id WHERE r.partition=? AND w.enabled=1 UNION SELECT f.id FROM finance_records f JOIN personal_workspaces w ON w.partition=f.partition AND w.scope_id=f.scope_id WHERE f.partition=? AND w.enabled=1',
+          [profile.partition, profile.partition],
+        )) {
+          runtimePrivateIds[row['id'] as String] = row['id'] as String;
+        }
+        for (final row in await database.rows(
+          'SELECT id,remote_id FROM personal_record_map WHERE workspace=?',
+          ['private:${profile.partition}'],
+        )) {
+          runtimePrivateIds[row['remote_id'] as String] = row['id'] as String;
+        }
+      }
+      if (epoch != _epoch || _closed) return;
       state = CollaborationState(
+        selectedSpaceId:
+            selectedSpace.isEmpty || selectedSpace.first['value'] == ''
+            ? null
+            : selectedSpace.first['value'] as String,
         session: profile,
         remotePushRegistration: _remotePushState,
         sessionInvalid: _sessionInvalidReason != null || deletionPending,
         deletionPending: deletionPending,
-        privateSync: await _privateSyncState(profile),
-        privateRecordIds: _sessionInvalidReason != null
-            ? const {}
-            : {
-                for (final m in await database.rows(
-                  'SELECT id,remote_id FROM personal_record_map WHERE workspace=?',
-                  ['private:${profile.partition}'],
-                ))
-                  m['remote_id'] as String: m['id'] as String,
-              },
+        privateSync: privateState,
+        privateRecordIds: runtimePrivateIds,
         pushProjectId: _pushProjectId,
         financePolicies: financePolicies,
         financeSnapshotComplete: financeComplete,
@@ -323,8 +349,13 @@ class CollaborationRepository {
             .where((e) => e['state'] == 'blocked')
             .length,
         sessionRenewalSupported: _sessionRenewalSupported,
+        organizationsSupported: _organizationsSupported,
+        householdPeopleSupported: _householdPeopleSupported,
+        projectArchivingSupported: _projectArchivingSupported,
         inboxSupported: _inboxSupported,
         financeSupported: _financeSupported,
+        financeContractVersion: _financeContractVersion,
+        recordContractVersion: _recordContractVersion,
         emailVerificationSupported: _emailVerificationSupported,
         resetSupported: _passwordResetSupported,
         externalPushSupported: _externalPushSupported,
@@ -372,6 +403,7 @@ class CollaborationRepository {
         tasks = <LocalTask>[],
         lists = <LocalShoppingList>[],
         items = <LocalShoppingItem>[];
+    final people = <HouseholdPerson>[];
     final personalFinanceEntries = <FinanceEntry>[];
     final events = <SharedEvent>[];
     for (final r in rows) {
@@ -387,6 +419,8 @@ class CollaborationRepository {
             : _map(r['remote'])['updatedByAccountId'],
       };
       switch (SharedRecordType.values.byName(r['type'] as String)) {
+        case SharedRecordType.householdPerson:
+          people.add(HouseholdPerson.fromJson(json));
         case SharedRecordType.event:
           events.add(SharedEvent.fromJson(json));
         case SharedRecordType.project:
@@ -402,6 +436,7 @@ class CollaborationRepository {
     final financeAccounts = <SharedFinanceAccount>[],
         financeEntries = <SharedFinanceEntry>[],
         financeTransfers = <SharedFinanceTransfer>[];
+    final financeRecurrenceRules = <FinanceRecurrenceRule>[];
     final complete = (await database.rows(
       'SELECT finance_complete FROM scopes WHERE partition=? AND id=?',
       [partition, scopeId],
@@ -429,6 +464,10 @@ class CollaborationRepository {
           'updatedByAccountId': remote?['updatedByAccountId'],
         };
         switch (SharedFinanceRecordType.values.byName(row['type'] as String)) {
+          case SharedFinanceRecordType.personalFinanceAccount:
+            break;
+          case SharedFinanceRecordType.financeRecurrenceRule:
+            financeRecurrenceRules.add(FinanceRecurrenceRule.fromJson(json));
           case SharedFinanceRecordType.personalFinanceEntry:
             personalFinanceEntries.add(FinanceEntry.fromJson(json));
           case SharedFinanceRecordType.financeAccount:
@@ -448,8 +487,10 @@ class CollaborationRepository {
           liveAccounts[e.toAccountId] != e.currency,
     );
     return SharedScopeData(
+      people: people,
       personalFinanceEntries: personalFinanceEntries,
       financeAccounts: financeAccounts,
+      financeRecurrenceRules: financeRecurrenceRules,
       financeEntries: financeEntries,
       financeTransfers: financeTransfers,
       events: events,

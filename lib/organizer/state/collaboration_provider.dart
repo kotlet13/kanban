@@ -300,6 +300,36 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       keepLocal: keepLocal,
     ),
   );
+  Future<void> saveFinancePlanForScope({
+    required String scopeId,
+    required List<LocalFinanceAccount> accounts,
+    required List<FinanceRecurrenceRule> rules,
+  }) => _edit(
+    (repo) => repo.saveFinancePlanForScope(
+      scopeId: scopeId,
+      accounts: accounts,
+      rules: rules,
+    ),
+  );
+  Future<void> updateFinanceRecurrenceRule(
+    String scopeId,
+    FinanceRecurrenceRule rule,
+  ) => _edit((repo) => repo.updateFinanceRecurrenceRule(scopeId, rule));
+  Future<void> materializeFinanceOccurrencesForScope(String scopeId) =>
+      _edit((repo) => repo.materializeFinanceOccurrencesForScope(scopeId));
+  Future<void> confirmFinanceOccurrenceForScope(
+    String scopeId,
+    SharedFinanceEntry entry, {
+    required int amountMinor,
+    required DateTime paidAt,
+  }) => _edit(
+    (repo) => repo.confirmFinanceOccurrenceForScope(
+      scopeId,
+      entry,
+      amountMinor: amountMinor,
+      paidAt: paidAt,
+    ),
+  );
   Future<String> createFinanceAccount({
     required String scopeId,
     required String name,
@@ -422,6 +452,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     final personal = await ref.read(organizerProvider.future);
     final valid = target.records.every(
       (r) => switch (r.type) {
+        'financeEntry' || 'personalFinanceEntry' => personal.financeEntries.any(
+          (v) => v.id == r.recordId,
+        ),
         'task' => personal.tasks.any((v) => v.id == r.recordId),
         'event' => personal.events.any((v) => v.id == r.recordId),
         'project' => personal.projects.any((v) => v.id == r.recordId),
@@ -480,11 +513,45 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     allowLocalHttp: allowLocalHttp,
   );
   Future<bool> signOut() => _repo.signOut();
+  Future<void> selectSpace(String? scopeId) => _repo.selectSpace(scopeId);
+  Future<void> archiveProjectScope(
+    String scopeId, {
+    required bool archived,
+    String? requestId,
+  }) => _repo.archiveProjectScope(
+    scopeId,
+    archived: archived,
+    requestId: requestId,
+  );
   Future<void> syncNow() => _repo.syncNow();
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
-  }) => _repo.createScope(name, kind: kind);
+    String? organizationId,
+    String? id,
+    String? requestId,
+  }) => _repo.createScope(
+    name,
+    kind: kind,
+    organizationId: organizationId,
+    id: id,
+    requestId: requestId,
+  );
+  Future<String> createPerson({
+    required String scopeId,
+    required String name,
+    String notes = '',
+  }) => _edit(
+    (repo) => repo.createPerson(scopeId: scopeId, name: name, notes: notes),
+  );
+  Future<void> updatePerson(String scopeId, HouseholdPerson person) =>
+      _edit((repo) => repo.updatePerson(scopeId, person));
+  Future<void> archivePerson(
+    String scopeId,
+    HouseholdPerson person, {
+    bool archived = true,
+  }) =>
+      _edit((repo) => repo.archivePerson(scopeId, person, archived: archived));
   Future<List<SharedMember>> members(String scopeId) => _repo.members(scopeId);
   Future<List<SharedInvitation>> invitations(String scopeId) =>
       _repo.invitations(scopeId);
@@ -570,12 +637,18 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     DateTime? startAt,
     DateTime? endAt,
     ProjectArea area = ProjectArea.home,
+    Iterable<ProjectPhase> phases = const [],
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
   }) => _edit(
     (repo) => repo.createProject(
       scopeId: scopeId,
       title: title,
       description: description,
       area: area,
+      phases: phases,
+      availabilityMinutes: availabilityMinutes,
+      availabilityPeriod: availabilityPeriod,
       startAt: startAt,
       endAt: endAt,
     ),
@@ -593,6 +666,13 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     DateTime? startAt,
     DateTime? endAt,
     Iterable<String> assigneeAccountIds = const [],
+    String? assigneePersonId,
+    Iterable<String> subjectPersonIds = const [],
+    String? phaseId,
+    int? estimateMinutes,
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
+    TaskTimerState timer = const TaskTimerState(),
   }) => _edit(
     (repo) => repo.createTask(
       scopeId: scopeId,
@@ -600,11 +680,37 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       notes: notes,
       projectId: projectId,
       assigneeAccountIds: assigneeAccountIds,
+      assigneePersonId: assigneePersonId,
+      subjectPersonIds: subjectPersonIds,
+      phaseId: phaseId,
+      estimateMinutes: estimateMinutes,
+      availabilityMinutes: availabilityMinutes,
+      availabilityPeriod: availabilityPeriod,
+      timer: timer,
       dueAt: dueAt,
       startAt: startAt,
       endAt: endAt,
     ),
   );
+  Future<void> saveTaskWithCost(
+    String scopeId,
+    LocalTask task, {
+    bool isNew = false,
+    TaskCostDraft? cost,
+    bool removeCost = false,
+    int? expectedFinanceRevision,
+  }) => _edit(
+    (repo) => repo.saveTaskWithCost(
+      scopeId,
+      task,
+      isNew: isNew,
+      cost: cost,
+      removeCost: removeCost,
+      expectedFinanceRevision: expectedFinanceRevision,
+    ),
+  );
+  Future<LocalTask> toggleTaskTimer(String scopeId, LocalTask task) =>
+      _edit((repo) => repo.toggleTaskTimer(scopeId, task));
   Future<void> updateTask(String scopeId, LocalTask draft) =>
       _edit((repo) => repo.updateTask(scopeId, draft));
   Future<void> deleteTask(String scopeId, String id) =>
@@ -623,9 +729,14 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String scopeId,
     required LocalProject project,
     required List<LocalTask> tasks,
+    List<HouseholdPerson> people = const [],
   }) => _edit(
-    (repo) =>
-        repo.publishProject(scopeId: scopeId, project: project, tasks: tasks),
+    (repo) => repo.publishProject(
+      scopeId: scopeId,
+      project: project,
+      tasks: tasks,
+      people: people,
+    ),
   );
 }
 

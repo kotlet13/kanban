@@ -4,9 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
+import '../../domain/organizer_models.dart';
 import '../organizer_actions.dart';
 import '../finance/shared_finance_actions.dart';
 import '../finance/finance_money.dart';
+import '../finance/finance_plan_forms.dart';
+import '../finance/finance_entry_editing.dart';
+import '../finance/finance_access_guard.dart';
+import '../personal_workspace_boundary.dart';
 import '../collection_actions.dart';
 import '../organizer_widgets.dart';
 import '../shared/collaboration_actions.dart';
@@ -69,6 +74,8 @@ Future<bool> showNotificationTarget(
         (current?.session == null || !target.matches(current!.session!))) {
       return false;
     }
+    if (await _openFinanceConfirmation(context, ref, target)) return true;
+    if (!context.mounted) return false;
     final guard = target.isPersonal ? null : SharingSessionGuard(context, ref);
     await showDialog<void>(
       context: context,
@@ -358,7 +365,58 @@ class NotificationTargetContent extends ConsumerWidget {
                       '${sharedMoneyLabel(context, BigInt.from(entry.amountMinor), entry.currency)} · ${organizerDateTime(context, entry.occurredAt)}\n${entry.notes}',
                     ),
                     onTap: canEdit
-                        ? () => personalActions.finance(entry)
+                        ? () async {
+                            if (entry.status != FinanceEntryStatus.planned) {
+                              if (entry.recurrenceRuleId != null) {
+                                await editRecordedPersonalOccurrence(
+                                  context,
+                                  ref,
+                                  personal,
+                                  entry,
+                                );
+                              } else {
+                                await personalActions.finance(entry);
+                              }
+                              return;
+                            }
+                            final guard = PersonalWorkspaceGuard(
+                              context,
+                              ref,
+                              personal.workspaceKey,
+                            );
+                            final financial = target.isPersonal
+                                ? null
+                                : FinanceAccessGuard(
+                                    context,
+                                    ref,
+                                    scope!.id,
+                                    write: true,
+                                  );
+                            await showFinanceOccurrenceConfirmation(
+                              context,
+                              entry: entry,
+                              initialPaidAt: ref.read(organizerClockProvider)(),
+                              wrap: (child) =>
+                                  guard.wrap(financial?.wrap(child) ?? child),
+                              onConfirm: (amount, date) async {
+                                if (!guard.isCurrent ||
+                                    financial?.isCurrent == false) {
+                                  throw const CollaborationException(
+                                    'finance_forbidden',
+                                  );
+                                }
+                                await ref
+                                    .read(organizerProvider.notifier)
+                                    .confirmFinanceOccurrence(
+                                      entry: entry,
+                                      amountMinor: amount,
+                                      paidAt: date,
+                                      expectedWorkspaceKey:
+                                          personal.workspaceKey,
+                                    );
+                              },
+                            );
+                          }
                         : null,
                   ),
                 )
@@ -377,7 +435,7 @@ class NotificationTargetContent extends ConsumerWidget {
                     subtitle: Text(
                       sharedMoneyLabel(
                         context,
-                        BigInt.from(account.openingBalanceMinor),
+                        BigInt.from(account.openingBalanceMinor ?? 0),
                         account.currency,
                       ),
                     ),
@@ -401,12 +459,47 @@ class NotificationTargetContent extends ConsumerWidget {
                       '${sharedMoneyLabel(context, BigInt.from(entry.amountMinor), entry.currency)} · ${organizerDateTime(context, entry.occurredAt)}\n${entry.notes}',
                     ),
                     onTap: state.financePolicyForScope(scope.id).canWrite
-                        ? () => SharedFinanceActions(
-                            context,
-                            ref,
-                            scope,
-                            state,
-                          ).entry(entry)
+                        ? () async {
+                            if (entry.status != SharedFinanceStatus.planned) {
+                              await SharedFinanceActions(
+                                context,
+                                ref,
+                                scope,
+                                state,
+                              ).entry(entry);
+                              return;
+                            }
+                            final guard = FinanceAccessGuard(
+                              context,
+                              ref,
+                              scope.id,
+                              write: true,
+                            );
+                            final local = FinanceEntry(
+                              id: entry.id,
+                              title: entry.title,
+                              amountMinor: entry.amountMinor,
+                              currency: entry.currency,
+                              kind: entry.kind,
+                              occurredAt: entry.occurredAt,
+                              projectId: null,
+                              notes: entry.notes,
+                              createdAt: entry.createdAt,
+                              updatedAt: entry.updatedAt,
+                            );
+                            await showFinanceOccurrenceConfirmation(
+                              context,
+                              entry: local,
+                              wrap: guard.wrap,
+                              onConfirm: (amount, date) => guard.controller
+                                  .confirmFinanceOccurrenceForScope(
+                                    scope.id,
+                                    entry,
+                                    amountMinor: amount,
+                                    paidAt: date,
+                                  ),
+                            );
+                          }
                         : null,
                   ),
                 ),
@@ -453,4 +546,95 @@ class NotificationTargetContent extends ConsumerWidget {
 String organizerDateTime(BuildContext context, DateTime value) {
   final local = value.toLocal();
   return '${organizerDate(context, local)} · ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
+}
+
+Future<bool> _openFinanceConfirmation(
+  BuildContext context,
+  WidgetRef ref,
+  NotificationTarget target,
+) async {
+  if (target.records.length != 1) return false;
+  final record = target.records.single;
+  if (!['financeEntry', 'personalFinanceEntry'].contains(record.type)) {
+    return false;
+  }
+  final state = ref.read(collaborationProvider).valueOrNull;
+  final personal = ref.read(organizerProvider).valueOrNull;
+  final scope = state?.scopes.where((s) => s.id == target.scopeId).firstOrNull;
+  if (target.isPersonal || scope?.kind == SharedScopeKind.personal) {
+    final id = scope?.kind == SharedScopeKind.personal
+        ? state!.personalRecordId(record.recordId)
+        : record.recordId;
+    final entry = personal?.financeEntries.where((e) => e.id == id).firstOrNull;
+    if (entry == null || entry.status != FinanceEntryStatus.planned) {
+      return false;
+    }
+    final guard = PersonalWorkspaceGuard(context, ref, personal!.workspaceKey);
+    final financeScope =
+        target.scopeId ??
+        (personal.workspaceKey == 'local' ? null : state?.privateSync.scopeId);
+    final financial = financeScope == null
+        ? null
+        : FinanceAccessGuard(context, ref, financeScope, write: true);
+    if (!guard.isCurrent || financial?.isCurrent == false) return false;
+    await showFinanceOccurrenceConfirmation(
+      context,
+      entry: entry,
+      initialPaidAt: ref.read(organizerClockProvider)(),
+      wrap: (child) => guard.wrap(financial?.wrap(child) ?? child),
+      isCurrent: () => guard.isCurrent && (financial?.isCurrent ?? true),
+      onConfirm: (amount, date) async {
+        if (!guard.isCurrent || financial?.isCurrent == false) {
+          throw const CollaborationException('finance_forbidden');
+        }
+        await ref
+            .read(organizerProvider.notifier)
+            .confirmFinanceOccurrence(
+              entry: entry,
+              amountMinor: amount,
+              paidAt: date,
+              expectedWorkspaceKey: personal.workspaceKey,
+            );
+      },
+    );
+    return true;
+  }
+  if (state == null || scope == null) return false;
+  final entry = state
+      .dataForScope(scope.id)
+      .financeEntries
+      .where((e) => e.id == record.recordId)
+      .firstOrNull;
+  if (entry == null || entry.status != SharedFinanceStatus.planned) {
+    return false;
+  }
+  final guard = FinanceAccessGuard(context, ref, scope.id, write: true);
+  if (!guard.isCurrent) return false;
+  final local = FinanceEntry(
+    id: entry.id,
+    title: entry.title,
+    amountMinor: entry.amountMinor,
+    currency: entry.currency,
+    kind: entry.kind,
+    occurredAt: entry.occurredAt,
+    projectId: null,
+    notes: entry.notes,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+  );
+  await showFinanceOccurrenceConfirmation(
+    context,
+    entry: local,
+    initialPaidAt: ref.read(organizerClockProvider)(),
+    wrap: guard.wrap,
+    isCurrent: () => guard.isCurrent,
+    onConfirm: (amount, date) =>
+        guard.controller.confirmFinanceOccurrenceForScope(
+          scope.id,
+          entry,
+          amountMinor: amount,
+          paidAt: date,
+        ),
+  );
+  return true;
 }

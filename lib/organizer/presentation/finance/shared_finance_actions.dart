@@ -9,6 +9,7 @@ import '../shared/sharing_errors.dart';
 import '../shared/sharing_forms.dart';
 import 'finance_access_guard.dart';
 import 'finance_snapshot_view.dart';
+import 'finance_plan_forms.dart';
 
 class SharedFinanceActions {
   SharedFinanceActions(this.context, this.ref, this.scope, this.state);
@@ -90,7 +91,7 @@ class SharedFinanceActions {
               : !supportedCurrencies.contains(account.currency)
               ? account.openingBalanceMinor.toString()
               : formatSharedMoneyMinor(
-                  BigInt.from(account.openingBalanceMinor),
+                  BigInt.from(account.openingBalanceMinor ?? 0),
                 ),
           readOnly: account != null,
           keyboardType: const TextInputType.numberWithOptions(
@@ -159,6 +160,54 @@ class SharedFinanceActions {
     }
     final l = context.l10n;
     final guard = FinanceAccessGuard(context, ref, scope.id, write: true);
+    if (entry?.recurrenceRuleId != null ||
+        state.financeContractVersion == 2 &&
+            entry?.status == SharedFinanceStatus.planned) {
+      final source = entry!;
+      final local = FinanceEntry(
+        id: source.id,
+        title: source.title,
+        amountMinor: source.amountMinor,
+        currency: source.currency,
+        kind: source.kind,
+        occurredAt: source.occurredAt,
+        paidAt: source.paidAt,
+        projectId: null,
+        notes: source.notes,
+        createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
+      );
+      if (source.status == SharedFinanceStatus.planned) {
+        return showFinanceOccurrenceConfirmation(
+          context,
+          entry: local,
+          wrap: guard.wrap,
+          isCurrent: () => guard.isCurrent,
+          onConfirm: (amount, date) =>
+              guard.controller.confirmFinanceOccurrenceForScope(
+                scope.id,
+                source,
+                amountMinor: amount,
+                paidAt: date,
+              ),
+        );
+      }
+      return showRecordedFinanceOccurrenceEditor(
+        context,
+        entry: local,
+        wrap: guard.wrap,
+        onSave: (draft) => guard.controller.updateFinanceEntry(
+          scope.id,
+          source.copyWith(
+            title: draft.title,
+            notes: draft.notes,
+            amountMinor: draft.amountMinor,
+            paidAt: draft.paidAt,
+            occurredAt: draft.occurredAt,
+          ),
+        ),
+      );
+    }
     return showSharingForm(
       context,
       title: entry == null ? l.organizerAddFinance : l.financeEditEntry,
@@ -278,6 +327,9 @@ class SharedFinanceActions {
             scope.id,
             entry.copyWith(
               accountId: selected.id,
+              ledgerAccountId: entry.ledgerAccountId == null
+                  ? null
+                  : selected.id,
               kind: kind,
               status: status,
               amountMinor: amount,
@@ -288,6 +340,7 @@ class SharedFinanceActions {
               payerAccountId: payer,
               recipientAccountId: recipient,
               occurredAt: occurred,
+              paidAt: entry.paidAt == null ? null : occurred,
             ),
           );
         }

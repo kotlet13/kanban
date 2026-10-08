@@ -8,7 +8,7 @@ class NativeDeletionPlan extends NativeDatabase
 
     public function build(array $user, array $scopes)
     {
-        $id=(int)$user['id'];$account=$user['account_id'];$mutations=[];$resolutions=[];$owned=[];$shared=[];$blocks=[];$versions=[];
+        $id=(int)$user['id'];$account=$user['account_id'];$mutations=[];$resolutions=[];$owned=[];$shared=[];$blocks=[];$versions=[];$organizationLinks=[];
         $impact=['personalScopes'=>0,'personalRecords'=>0,'personalFinanceRecords'=>0,'devices'=>$this->n('familyhub_devices','user_id=?',[$id]),'sharedMemberships'=>0,'kanboardAssignedTasks'=>$this->n('tasks','owner_id=?',[$id]),'kanboardAssignedSubtasks'=>$this->n('subtasks','user_id=?',[$id]),'sharedRecordsDeleted'=>0,'sharedRecordsUpdated'=>0,'sharedFinanceRecordsDeleted'=>0,'sharedFinanceRecordsUpdated'=>0,'kanboardTasksDeleted'=>$this->n('tasks','creator_id=?',[$id]),'kanboardCommentsDeleted'=>$this->n('comments','user_id=?',[$id]),'kanboardFilesDeleted'=>$this->n('task_has_files','user_id=?',[$id])+$this->n('project_has_files','user_id=?',[$id])];
         if ($user['role']==='app-admin' && $this->n('users',"role='app-admin' AND is_active=1",[])<2) { $blocks[]=['code'=>'last_admin','count'=>1]; }
         // Shared legacy projects and tasks lack durable author IDs/revision contracts.
@@ -40,6 +40,16 @@ class NativeDeletionPlan extends NativeDatabase
                 $eligible=array_values(array_filter($members,fn($m)=>(int)$m['user_id']!==$id && (int)$m['active']===1 && (int)$m['is_active']===1 && $this->one('SELECT user_id FROM familyhub_accounts WHERE account_id=? AND user_id=?',[$m['account_id'],$m['user_id']])));
                 $foreign=count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
                 $owned[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'canDeleteScope'=>!$foreign,'eligibleSuccessors'=>array_map(fn($m)=>['accountId'=>$m['account_id'],'displayName'=>$m['name'] ?: $m['username']],$eligible)];
+                if ($s['kind']==='organization') {
+                    foreach ($this->many('SELECT * FROM familyhub_scopes WHERE organization_id=? ORDER BY id',[$sid]) as $child) {
+                        $canRead=(new NativeFinanceAccess($this->container))->visible($child['id'],$account);
+                        $opaque=hash_hmac('sha256','organization-link:'.$sid.':'.$child['id'],$this->fingerprint($user));
+                        $token=substr($opaque,0,8).'-'.substr($opaque,8,4).'-4'.substr($opaque,13,3).'-a'.substr($opaque,17,3).'-'.substr($opaque,20,12);
+                        $resolutions[]=['scopeId'=>$sid,'recordId'=>$token,'type'=>'organizationProjectLink','action'=>'detachOrganization','name'=>$canRead ? $child['name'] : null,'childScopeId'=>$canRead ? $child['id'] : null];
+                        $organizationLinks[]=['organizationId'=>$sid,'childScopeId'=>$child['id'],'recordId'=>$token];
+                        $versions[]=['organizationLink'=>$child,'visible'=>$canRead];
+                    }
+                }
                 $blocks[]=['code'=>count($eligible) || !$foreign ?'shared_scope_owner':'shared_scope_without_successor','count'=>1,'scopeId'=>$sid];
             }
             $ownGeneric=array_column(array_filter($generic,fn($r)=>$r['created_by']===$account),'type','id');
@@ -52,8 +62,21 @@ class NativeDeletionPlan extends NativeDatabase
                             $structural=(bool)array_filter($generic,fn($c)=>$c['type']==='shoppingItem' && !(int)$c['deleted'] && $c['created_by']!==$account && (json_decode($c['payload'],true)['listId']??null)===$r['id']);
                             if ($structural) { $payload['title']='Shared shopping list'; }
                         }
+                        if ($r['type']==='project' && ($s['project_root_id']??null)===$r['id']) {
+                            $structural=true;$payload['title']='Shared project';$payload['description']='';
+                            $payload['availabilityMinutes']=null;$payload['availabilityPeriod']=null;
+                            if (isset($payload['phases'])) { foreach ($payload['phases'] as &$phase) { $phase['title']='Shared phase';$phase['milestone']=''; } unset($phase); }
+                        }
+                        if ($r['type']==='householdPerson') {
+                            $structural=(bool)array_filter(array_merge($generic,$finance),function($c) use($account,$r) {
+                                if ((int)$c['deleted'] || $c['created_by']===$account) return false;
+                                $p=json_decode($c['payload']??'null',true,32,JSON_THROW_ON_ERROR);
+                                return in_array($r['id'],[$p['assigneePersonId']??null,$p['payerPersonId']??null,$p['recipientPersonId']??null,$p['createdByPersonId']??null],true) || in_array($r['id'],$p['subjectPersonIds']??[],true);
+                            });
+                            if ($structural) { $payload['name']='Shared person';$payload['notes']='';$payload['archived']=true; }
+                        }
                         if ($r['type']==='financeAccount') {
-                            $structural=(bool)array_filter($finance,function($c) use ($account,$r) { $p=json_decode($c['payload']??'null',true); return !(int)$c['deleted'] && $c['created_by']!==$account && in_array($r['id'],[$p['accountId']??null,$p['fromAccountId']??null,$p['toAccountId']??null],true); });
+                            $structural=(bool)array_filter($finance,function($c) use ($account,$r) { $p=json_decode($c['payload']??'null',true); return !(int)$c['deleted'] && $c['created_by']!==$account && in_array($r['id'],[$p['accountId']??null,$p['fromAccountId']??null,$p['toAccountId']??null,$p['ledgerAccountId']??null],true); });
                             if ($structural) { $payload['name']='Shared financial account';$payload['ownerAccountId']=null; }
                         }
                         if ($structural) {
@@ -69,7 +92,9 @@ class NativeDeletionPlan extends NativeDatabase
                         } else { $deleted=1;$payload=null; }
                     }
                     if ($payload!==null) {
-                        if (isset($payload['projectId']) && ($ownGeneric[$payload['projectId']]??null)==='project') { $payload['projectId']=null; }
+                        if (isset($payload['projectId']) && ($ownGeneric[$payload['projectId']]??null)==='project' && ($s['project_root_id']??null)!==$payload['projectId']) { $payload['projectId']=null; if (array_key_exists('phaseId',$payload)) { $payload['phaseId']=null; } }
+                        if (isset($payload['taskId']) && ($ownGeneric[$payload['taskId']]??null)==='task') { $payload['taskId']=null; }
+                        if (isset($payload['recurrenceRuleId']) && ($ownFinance[$payload['recurrenceRuleId']]??null)==='financeRecurrenceRule') { $payload['recurrenceRuleId']=null;$payload['occurrenceKey']=null; }
                         if (isset($payload['assigneeAccountIds'])) { $payload['assigneeAccountIds']=array_values(array_filter($payload['assigneeAccountIds'],fn($a)=>$a!==$account)); }
                         foreach (['ownerAccountId','payerAccountId','recipientAccountId'] as $key) { if (($payload[$key]??null)===$account) { $payload[$key]=null; } }
                     }
@@ -82,9 +107,12 @@ class NativeDeletionPlan extends NativeDatabase
                 }
             }
         }
-        $plan=['serverId'=>$this->serverId(),'accountId'=>$account,'policyVersion'=>1,'canDelete'=>!$blocks,'blockers'=>$blocks,'impact'=>$impact,'sharedScopes'=>$shared,'ownedScopes'=>$owned,'resolutions'=>$resolutions];
+        $nullableFinancialStructure=count(array_filter($mutations,fn($m)=>$m['table']==='familyhub_finance_records' && $m['preservedStructure'] && array_key_exists('openingBalanceMinor',$m['payload']??[]) && $m['payload']['openingBalanceMinor']===null));
+        $policy= $nullableFinancialStructure || count(array_filter(array_merge($shared,$owned),fn($scope)=>$scope['kind']==='organization')) || count(array_filter($resolutions,fn($r)=>in_array($r['type'],['householdPerson','organizationProjectLink','project'],true))) ? 2 : 1;
+        $impact['organizationProjectsDetached']=count($organizationLinks);
+        $plan=['serverId'=>$this->serverId(),'accountId'=>$account,'policyVersion'=>$policy,'canDelete'=>!$blocks,'blockers'=>$blocks,'impact'=>$impact,'sharedScopes'=>$shared,'ownedScopes'=>$owned,'resolutions'=>$resolutions];
         $plan['previewHash']=hash('sha256',$this->canonical([$plan,$versions,$this->fingerprint($user)]));
-        return ['wire'=>$plan,'mutations'=>$mutations,'privateProjects'=>array_column($private,'id')];
+        return ['wire'=>$plan,'mutations'=>$mutations,'organizationLinks'=>$organizationLinks,'privateProjects'=>array_column($private,'id')];
     }
 
     private function n($table,$where,$params) { return (int)$this->one('SELECT COUNT(*) n FROM '.$table.' WHERE '.$where,$params)['n']; }

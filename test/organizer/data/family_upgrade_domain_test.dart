@@ -169,12 +169,12 @@ void main() {
         ],
       );
       final encoded = jsonDecode(OrganizerBackupCodec.encode(updated)) as Map;
-      expect(encoded['schemaVersion'], 2);
+      expect(encoded['schemaVersion'], 4);
       expect(
         OrganizerBackupCodec.decode(jsonEncode(encoded)).tasks.single.startAt,
         now,
       );
-      encoded['schemaVersion'] = 3;
+      encoded['schemaVersion'] = 5;
       expect(
         () => OrganizerBackupCodec.decode(jsonEncode(encoded)),
         throwsFormatException,

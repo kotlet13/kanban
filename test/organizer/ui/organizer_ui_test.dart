@@ -346,7 +346,7 @@ void main() {
           of: find.byType(ListTile),
           matching: find.text('−123456.78 EUR'),
         ),
-        findsOneWidget,
+        findsNWidgets(2), // The recorded ledger and its dated cash-flow view.
       );
       expect(
         find.descendant(
@@ -407,6 +407,7 @@ void main() {
         ],
       );
       await pumpOrganizer(tester, store);
+      await tester.ensureVisible(find.text('Daljni rok'));
       await tester.tap(find.text('Daljni rok'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(

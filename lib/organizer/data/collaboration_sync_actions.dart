@@ -63,6 +63,8 @@ extension CollaborationSyncActions on CollaborationRepository {
       await _syncRemotePushRegistration(session, epoch);
       final reply = await _callSession(session, epoch, 'scopes.list', {
         if (_privateSyncSupported) 'includePersonal': true,
+        if (_organizationsSupported) 'includeOrganizations': true,
+        if (_projectArchivingSupported) 'includeArchived': true,
       });
       final scopes = (reply['scopes'] as List)
           .map((r) => SharedScope.fromJson(r as Map<String, dynamic>))
@@ -86,6 +88,10 @@ extension CollaborationSyncActions on CollaborationRepository {
                 name: scope.name,
                 kind: scope.kind,
                 role: scope.role,
+                organizationId: scope.organizationId,
+                projectRootId: scope.projectRootId,
+                requiredRecordContractVersion:
+                    scope.requiredRecordContractVersion,
                 revoked: true,
               ),
             );
@@ -102,24 +108,89 @@ extension CollaborationSyncActions on CollaborationRepository {
           await _loadMembers(session, epoch, scope.id, syncLease: true);
         }
       }
+      if (_financeSupported) {
+        await _pushFinanceDependencies(session, epoch, scopes);
+      }
       // Push first, retaining dirty candidates when subsequent pulls arrive.
       while (true) {
         _checkEpoch(epoch);
         await _renewLease(partition);
         final pending = await database.rows(
-          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
+          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND EXISTS(SELECT 1 FROM scopes s WHERE s.partition=o.partition AND s.id=o.scope_id AND COALESCE(json_extract(s.data,'$.archived'),0)=0) AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
           [partition],
         );
         if (pending.isEmpty) break;
         final op = pending.first, scopeId = op['scope_id'] as String;
+        final pairKey = 'task_cost_pair:$partition:${op['op_id']}';
+        final pairs = await database.rows(
+          'SELECT value FROM local_meta WHERE name=?',
+          [pairKey],
+        );
+        Map<String, dynamic>? financeOp;
+        int? financeGeneration;
+        if (pairs.isNotEmpty) {
+          final partner = await database.rows(
+            'SELECT * FROM finance_outbox WHERE partition=? AND scope_id=? AND op_id=?',
+            [partition, scopeId, pairs.single['value']],
+          );
+          if (partner.isEmpty) {
+            throw const CollaborationException('invalid_response');
+          }
+          financeOp = partner.single;
+          if (financeOp['state'] != 'pending') {
+            await database.execute(
+              "UPDATE outbox SET state='blocked' WHERE partition=? AND op_id=?",
+              [partition, op['op_id']],
+            );
+            continue;
+          }
+          financeGeneration = await _financeAccessGeneration(
+            partition,
+            scopeId,
+          );
+        }
+        final financePair = financeOp;
         try {
+          if ((op['wire_version'] as int) > _recordContractVersion) {
+            throw const CollaborationException('client_upgrade_required');
+          }
+          if (financePair != null &&
+              (_recordContractVersion < 3 || _financeContractVersion < 2)) {
+            throw const CollaborationException('unsupported_version');
+          }
+          if (financePair != null) {
+            await _pushFinancePredecessors(
+              session,
+              epoch,
+              scopeId,
+              financePair['record_id'] as String,
+              financePair['sequence'] as int,
+            );
+            financeGeneration = await _financeAccessGeneration(
+              partition,
+              scopeId,
+            );
+          }
           final applied = await _callSession(
             session,
             epoch,
-            op['wire_version'] == 2 ? 'sync2.push' : 'sync.push',
+            financePair != null
+                ? 'sync3.pushTaskWithCost'
+                : (_recordContractVersion >= 3
+                      ? 'sync3.push'
+                      : (op['wire_version'] == 2 ? 'sync2.push' : 'sync.push')),
             {
               'scopeId': scopeId,
+              if (_recordContractVersion >= 3)
+                'operationContractVersion': op['wire_version'],
               'operation': CollaborationRepository._map(op['request']),
+              if (financePair != null)
+                'financeOperation': CollaborationRepository._map(
+                  financePair['request'],
+                ),
+              if (financePair != null)
+                'financeOperationContractVersion':
+                    financePair['wire_version'] ?? 2,
             },
           );
           final canonical = _canonical(
@@ -130,6 +201,15 @@ extension CollaborationSyncActions on CollaborationRepository {
               canonical['id'] != op['record_id']) {
             throw const CollaborationException('invalid_response');
           }
+          final financeCanonical = financePair == null
+              ? null
+              : _financeCanonical(
+                  (applied['finance'] as Map<String, dynamic>)['record'],
+                );
+          if (financeCanonical != null &&
+              financeCanonical['id'] != financePair!['record_id']) {
+            throw const CollaborationException('invalid_response');
+          }
           await database.transaction(() async {
             _checkEpoch(epoch);
             await _validLease(partition);
@@ -138,11 +218,44 @@ extension CollaborationSyncActions on CollaborationRepository {
               'DELETE FROM outbox WHERE op_id=? AND partition=?',
               [op['op_id'], partition],
             );
+            if (financePair != null) {
+              if (financeGeneration !=
+                      await _financeAccessGeneration(partition, scopeId) ||
+                  !(await _cachedFinancePolicy(partition, scopeId)).canWrite) {
+                throw const CollaborationException('finance_forbidden');
+              }
+              await database.execute(
+                'DELETE FROM finance_outbox WHERE partition=? AND op_id=?',
+                [partition, financePair['op_id']],
+              );
+              await database.execute('DELETE FROM local_meta WHERE name=?', [
+                pairKey,
+              ]);
+              await _applyFinanceRemote(partition, scopeId, financeCanonical!);
+            }
             await _applyRemote(partition, scopeId, canonical);
+            if (applied['scope'] is Map<String, dynamic>) {
+              final updatedScope = SharedScope.fromJson(
+                applied['scope'] as Map<String, dynamic>,
+              );
+              if (updatedScope.id != scopeId) {
+                throw const CollaborationException('invalid_response');
+              }
+              await _upsertScope(partition, updatedScope);
+            }
           });
         } on CollaborationApiException catch (error) {
           _checkEpoch(epoch);
-          if (error.code == 'conflict' ||
+          if ((financePair != null &&
+                  !const {
+                    'finance_forbidden',
+                    'permission_revoked',
+                    'auth_required',
+                    'device_revoked',
+                    'rate_limited',
+                    'feature_disabled',
+                  }.contains(error.code)) ||
+              error.code == 'conflict' ||
               const {
                 'parent_missing',
                 'live_children',
@@ -153,6 +266,9 @@ extension CollaborationSyncActions on CollaborationRepository {
                 'client_upgrade_required',
                 'assignee_not_member',
                 'invalid_date_range',
+                'person_missing',
+                'person_archived',
+                'task_cost_change_requires_finance',
               }.contains(error.code)) {
             final canonical = error.details['serverRecord'] == null
                 ? null
@@ -164,6 +280,29 @@ extension CollaborationSyncActions on CollaborationRepository {
               _checkEpoch(epoch);
               await _validLease(partition);
               _checkEpoch(epoch);
+              if (financePair != null) {
+                await database.execute(
+                  "UPDATE finance_outbox SET state='conflict' WHERE partition=? AND scope_id=? AND record_id=?",
+                  [partition, scopeId, financePair['record_id']],
+                );
+                final financial = error.details['financeRecord'];
+                await database.execute(
+                  'INSERT OR REPLACE INTO finance_conflicts(id,partition,scope_id,record_id,type,reason,remote) VALUES(?,?,?,?,?,?,?)',
+                  [
+                    financePair['op_id'],
+                    partition,
+                    scopeId,
+                    financePair['record_id'],
+                    CollaborationRepository._map(
+                      financePair['request'],
+                    )['type'],
+                    error.code,
+                    financial == null
+                        ? null
+                        : jsonEncode(_financeCanonical(financial)),
+                  ],
+                );
+              }
               await database.execute(
                 "UPDATE outbox SET state='conflict' WHERE partition=? AND scope_id=? AND record_id=?",
                 [partition, scopeId, op['record_id']],
@@ -179,6 +318,23 @@ extension CollaborationSyncActions on CollaborationRepository {
                   canonical?['deleted'] == true ? 'record_deleted' : error.code,
                   canonical == null ? null : jsonEncode(canonical),
                 ],
+              );
+            });
+          } else if (financePair != null && error.code == 'finance_forbidden') {
+            await database.transaction(() async {
+              _checkEpoch(epoch);
+              await _storeFinancePolicy(
+                partition,
+                scopeId,
+                const SharedFinancePolicy(),
+              );
+              await database.execute(
+                "UPDATE finance_outbox SET state='blocked' WHERE partition=? AND op_id=?",
+                [partition, financePair['op_id']],
+              );
+              await database.execute(
+                "UPDATE outbox SET state='blocked' WHERE partition=? AND op_id=?",
+                [partition, op['op_id']],
               );
             });
           } else if (error.code == 'permission_revoked') {
@@ -203,7 +359,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             final pulled = await _callSession(
               session,
               epoch,
-              _recordContractVersion >= 2 ? 'sync2.pull' : 'sync.pull',
+              _recordContractVersion >= 3
+                  ? 'sync3.pull'
+                  : (_recordContractVersion >= 2 ? 'sync2.pull' : 'sync.pull'),
               {'scopeId': scope.id, 'cursor': cursor, 'limit': 100},
             );
             final next = readInt(pulled, 'cursor');
@@ -304,6 +462,8 @@ extension CollaborationSyncActions on CollaborationRepository {
         'revision': value['revision'],
       };
       switch (type) {
+        case SharedRecordType.householdPerson:
+          HouseholdPerson.fromJson(json);
         case SharedRecordType.event:
           SharedEvent.fromJson(json);
         case SharedRecordType.project:
@@ -450,7 +610,18 @@ extension CollaborationSyncActions on CollaborationRepository {
     required String conflictId,
     required bool keepLocal,
   }) async {
+    if (await _resolvePairedTaskCostConflict(
+      conflictId: conflictId,
+      keepLocal: keepLocal,
+    )) {
+      return;
+    }
     final profile = _requireSession().profile, epoch = _epoch;
+    if (keepLocal) {
+      await syncNow();
+      _checkEpoch(epoch);
+      if (_lastError != null) throw _lastError!;
+    }
     await database.transaction(() async {
       _checkEpoch(epoch);
       final rows = await database.rows(
@@ -467,10 +638,11 @@ extension CollaborationSyncActions on CollaborationRepository {
         [profile.partition, scope, id],
       );
       final candidate = records.first,
-          remote = conflict['remote'] == null
+          remoteValue = records.first['remote'] ?? conflict['remote'],
+          remote = remoteValue == null
               ? null
               : _canonical(
-                  CollaborationRepository._map(conflict['remote']),
+                  CollaborationRepository._map(remoteValue),
                   personal: await _isPersonalScope(profile.partition, scope),
                 );
       if (keepLocal && remote?['deleted'] == true) {
@@ -506,10 +678,24 @@ extension CollaborationSyncActions on CollaborationRepository {
         final candidatePayload = candidate['payload'] == null
             ? null
             : CollaborationRepository._map(candidate['payload']);
+        if (candidatePayload != null && remote?['payload'] is Map) {
+          // Legacy drafts do not know later planning/person fields. Preserve the
+          // latest canonical values for missing keys before upgrading the body.
+          for (final entry
+              in (remote!['payload'] as Map<String, dynamic>).entries) {
+            candidatePayload.putIfAbsent(entry.key, () => entry.value);
+          }
+        }
         if (candidatePayload != null && _recordContractVersion >= 2) {
           if (candidate['type'] == 'task' || candidate['type'] == 'project') {
             candidatePayload.putIfAbsent('startAt', () => null);
             candidatePayload.putIfAbsent('endAt', () => null);
+          }
+          if (_recordContractVersion >= 3) {
+            addRichPlanningDefaults(
+              candidatePayload,
+              candidate['type'] as String,
+            );
           }
           if (candidate['type'] == 'task') {
             candidatePayload.putIfAbsent(

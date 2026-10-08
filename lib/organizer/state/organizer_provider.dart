@@ -147,14 +147,106 @@ class OrganizerController extends AsyncNotifier<OrganizerSnapshot> {
   OrganizerRepository get _repo =>
       _repository ?? (throw StateError('Organizer is still loading'));
 
+  Future<Set<String>> deviceLocalRecordIds() => _repo.deviceLocalRecordIds();
+  Future<void> createPerson({required String name, String notes = ''}) =>
+      _repo.createPerson(name: name, notes: notes);
+  Future<void> updatePerson(HouseholdPerson person) =>
+      _repo.updatePerson(person);
+  Future<void> archivePerson(HouseholdPerson person, {bool archived = true}) =>
+      _repo.archivePerson(person, archived: archived);
+  Future<void> saveTaskWithCost({
+    required LocalTask task,
+    bool isNew = false,
+    TaskCostDraft? cost,
+    bool removeCost = false,
+    int? expectedFinanceRevision,
+    required String expectedWorkspaceKey,
+  }) => _repo.saveTaskWithCost(
+    task: task,
+    isNew: isNew,
+    cost: cost,
+    removeCost: removeCost,
+    expectedFinanceRevision: expectedFinanceRevision,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> startTaskTimer(
+    String id, {
+    required int expectedRevision,
+    required String expectedWorkspaceKey,
+  }) => _repo.startTaskTimer(
+    id,
+    expectedRevision: expectedRevision,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> pauseTaskTimer(
+    String id, {
+    required String runId,
+    required String expectedWorkspaceKey,
+  }) => _repo.pauseTaskTimer(
+    id,
+    runId: runId,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> saveFinancePlan({
+    required List<LocalFinanceAccount> accounts,
+    required List<FinanceRecurrenceRule> rules,
+    required int expectedRevision,
+    required String expectedWorkspaceKey,
+  }) => _repo.saveFinancePlan(
+    accounts: accounts,
+    rules: rules,
+    expectedRevision: expectedRevision,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> updateFinanceAccount(
+    LocalFinanceAccount account, {
+    required String expectedWorkspaceKey,
+  }) => _repo.updateFinanceAccount(
+    account,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> updateFinanceRecurrenceRule(
+    FinanceRecurrenceRule rule, {
+    required String expectedWorkspaceKey,
+  }) => _repo.updateFinanceRecurrenceRule(
+    rule,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> materializeFinanceOccurrences({
+    DateTime? through,
+    Set<String>? ruleIds,
+    required String expectedWorkspaceKey,
+  }) => _repo.materializeFinanceOccurrences(
+    through: through,
+    ruleIds: ruleIds,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+  Future<void> confirmFinanceOccurrence({
+    required FinanceEntry entry,
+    required int amountMinor,
+    required DateTime paidAt,
+    required String expectedWorkspaceKey,
+  }) => _repo.confirmFinanceOccurrence(
+    entry: entry,
+    amountMinor: amountMinor,
+    paidAt: paidAt,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+  );
+
   Future<void> createProject({
     required String title,
+    Iterable<ProjectPhase> phases = const [],
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
     String description = '',
     DateTime? startAt,
     DateTime? endAt,
     ProjectArea area = ProjectArea.personal,
   }) => _repo.createProject(
     title: title,
+    phases: phases,
+    availabilityMinutes: availabilityMinutes,
+    availabilityPeriod: availabilityPeriod,
     description: description,
     startAt: startAt,
     endAt: endAt,

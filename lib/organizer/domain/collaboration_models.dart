@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'organizer_models.dart';
+export 'household_person.dart';
 import 'shared_event.dart';
 import 'shared_finance_models.dart';
 import 'notification_models.dart';
@@ -14,9 +15,16 @@ import 'private_sync_models.dart';
 
 enum SharedRole { owner, member, viewer }
 
-enum SharedScopeKind { household, project, personal }
+enum SharedScopeKind { household, project, personal, organization }
 
-enum SharedRecordType { project, task, shoppingList, shoppingItem, event }
+enum SharedRecordType {
+  project,
+  task,
+  shoppingList,
+  shoppingItem,
+  event,
+  householdPerson,
+}
 
 class CollaborationException implements Exception {
   const CollaborationException(this.code);
@@ -78,21 +86,35 @@ class SharedScope {
     required this.name,
     required this.kind,
     required this.role,
+    this.organizationId,
+    this.projectRootId,
+    this.requiredRecordContractVersion = 1,
+    this.sequence = 0,
+    this.archived = false,
     this.revoked = false,
     this.blocked = false,
   });
   final String id;
   final String name;
   final SharedScopeKind kind;
+  final String? organizationId, projectRootId;
+  final int requiredRecordContractVersion, sequence;
   final SharedRole role;
+  final bool archived;
   final bool revoked;
   final bool blocked;
-  bool get canEdit => !revoked && !blocked && role != SharedRole.viewer;
+  bool get canEdit =>
+      !revoked && !archived && !blocked && role != SharedRole.viewer;
   bool get canManage => !revoked && role == SharedRole.owner;
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'kind': kind.name,
+    'organizationId': organizationId,
+    'projectRootId': projectRootId,
+    'requiredRecordContractVersion': requiredRecordContractVersion,
+    'sequence': sequence,
+    'archived': archived,
     'role': role.name,
     'revoked': revoked,
     'blocked': blocked,
@@ -101,6 +123,13 @@ class SharedScope {
     id: readString(json, 'id'),
     name: readString(json, 'name'),
     kind: SharedScopeKind.values.byName(readString(json, 'kind')),
+    organizationId: readNullableString(json, 'organizationId'),
+    projectRootId: readNullableString(json, 'projectRootId'),
+    requiredRecordContractVersion: json['requiredRecordContractVersion'] is int
+        ? json['requiredRecordContractVersion'] as int
+        : 1,
+    sequence: json['sequence'] is int ? json['sequence'] as int : 0,
+    archived: json['archived'] == true,
     role: SharedRole.values.byName(readString(json, 'role')),
     revoked: json['revoked'] == true,
     blocked: json['blocked'] == true,
@@ -235,6 +264,8 @@ class SharedConflict {
 
 class SharedScopeData {
   SharedScopeData({
+    Iterable<FinanceRecurrenceRule> financeRecurrenceRules = const [],
+    Iterable<HouseholdPerson> people = const [],
     Iterable<SharedEvent> events = const [],
     Iterable<SharedFinanceAccount> financeAccounts = const [],
     Iterable<SharedFinanceEntry> financeEntries = const [],
@@ -244,7 +275,9 @@ class SharedScopeData {
     Iterable<LocalTask> tasks = const [],
     Iterable<LocalShoppingList> shoppingLists = const [],
     Iterable<LocalShoppingItem> shoppingItems = const [],
-  }) : events = List.unmodifiable(events),
+  }) : financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
+       people = List.unmodifiable(people),
+       events = List.unmodifiable(events),
        financeAccounts = List.unmodifiable(financeAccounts),
        financeEntries = List.unmodifiable(financeEntries),
        personalFinanceEntries = List.unmodifiable(personalFinanceEntries),
@@ -253,6 +286,8 @@ class SharedScopeData {
        tasks = List.unmodifiable(tasks),
        shoppingLists = List.unmodifiable(shoppingLists),
        shoppingItems = List.unmodifiable(shoppingItems);
+  final List<FinanceRecurrenceRule> financeRecurrenceRules;
+  final List<HouseholdPerson> people;
   final List<SharedEvent> events;
   final List<SharedFinanceAccount> financeAccounts;
   final List<SharedFinanceEntry> financeEntries;
@@ -267,9 +302,13 @@ class SharedScopeData {
 class CollaborationState {
   CollaborationState({
     this.session,
+    this.selectedSpaceId,
     this.pushProjectId,
     this.sessionInvalid = false,
     this.sessionRenewalSupported = false,
+    this.organizationsSupported = false,
+    this.householdPeopleSupported = false,
+    this.projectArchivingSupported = false,
     this.deletionPending = false,
     this.privateSync = const PrivateSyncState(),
     Map<String, String> privateRecordIds = const {},
@@ -280,6 +319,8 @@ class CollaborationState {
     Map<String, bool> financeSnapshotComplete = const {},
     this.inboxSupported = false,
     this.financeSupported = false,
+    this.financeContractVersion = 1,
+    this.recordContractVersion = 1,
     this.emailVerificationSupported = false,
     this.resetSupported = false,
     this.externalPushSupported = false,
@@ -328,10 +369,15 @@ class CollaborationState {
       externalPushSupported,
       smtpSupported;
   final AccountSession? session;
+  final String? selectedSpaceId;
   final RemotePushRegistrationState remotePushRegistration;
   final String? pushProjectId;
   final bool sessionInvalid;
   final bool sessionRenewalSupported;
+  final bool organizationsSupported,
+      householdPeopleSupported,
+      projectArchivingSupported;
+  final int financeContractVersion, recordContractVersion;
   final bool deletionPending;
   final PrivateSyncState privateSync;
   final Map<String, String> privateRecordIds;

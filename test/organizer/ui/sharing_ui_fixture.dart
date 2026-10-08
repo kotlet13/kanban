@@ -395,6 +395,7 @@ class SharingUiController extends CollaborationController {
     required String scopeId,
     required LocalProject project,
     required List<LocalTask> tasks,
+    List<HouseholdPerson> people = const [],
   }) async {
     copiedProject = project;
     copiedTasks = tasks;

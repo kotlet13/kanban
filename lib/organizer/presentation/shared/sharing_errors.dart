@@ -10,6 +10,14 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'scope_archived' => l.scopeArchivedDescription,
+    'single_project_guard' => l.organizationAccessDescription,
+    'recurring_entry_managed_by_rule' ||
+    'rule_currency_immutable' => l.financePlanManageRule,
+    'requires_finance_resolution' => l.financePairedConflict,
+    'duplicate_finance_reference' => l.financeDuplicateOccurrence,
+    'finance_account_missing' => l.financeNoAccounts,
+    'task_cost_date_mismatch' => l.sharingStaleEditor,
     'deletion_pending' => l.deletionUnknown,
     'deletion_cancelled' => l.deletionCancelled,
     'deletion_unavailable' => l.deletionUnavailable,
@@ -74,7 +82,9 @@ String sharingRoleLabel(BuildContext context, SharedRole role) =>
     };
 
 String sharingScopeKindLabel(BuildContext context, SharedScopeKind kind) =>
-    kind == SharedScopeKind.household
+    kind == SharedScopeKind.organization
+    ? context.l10n.organizationTitle
+    : kind == SharedScopeKind.household
     ? context.l10n.sharingHousehold
     : kind == SharedScopeKind.personal
     ? context.l10n.privateSyncTitle

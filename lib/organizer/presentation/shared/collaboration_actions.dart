@@ -1,3 +1,5 @@
+import 'dart:convert';
+import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,7 @@ import '../../../l10n/l10n.dart';
 import '../../domain/organizer_models.dart';
 import '../../state/collaboration_provider.dart';
 import '../collection_actions.dart';
+import '../finance/finance_access_guard.dart';
 import '../organizer_editors.dart';
 import '../planning/task_plan_fields.dart';
 import 'sharing_errors.dart';
@@ -40,11 +43,13 @@ class CollaborationActions implements OrganizerCollectionActions {
   Widget wrapEditor(Widget editor) => SharingSessionBoundary(
     guard: _guard,
     visibleWhen: (state) =>
-        state.scopes
-            .where((item) => item.id == scope.id)
-            .firstOrNull
-            ?.canEdit ??
-        false,
+        !state.sessionInvalid &&
+        !state.deletionPending &&
+        (state.scopes
+                .where((item) => item.id == scope.id)
+                .firstOrNull
+                ?.canEdit ??
+            false),
     child: editor,
   );
 
@@ -166,6 +171,9 @@ class CollaborationActions implements OrganizerCollectionActions {
       area: project?.area ?? area,
       startAt: project?.startAt,
       endAt: project?.endAt,
+      phases: project?.phases ?? const [],
+      availabilityMinutes: project?.availabilityMinutes,
+      availabilityPeriod: project?.availabilityPeriod,
     ),
     errorMessage: (error) => sharingErrorMessage(context, error),
     wrap: wrapEditor,
@@ -179,6 +187,9 @@ class CollaborationActions implements OrganizerCollectionActions {
           area: draft.area,
           startAt: draft.startAt,
           endAt: draft.endAt,
+          phases: draft.phases,
+          availabilityMinutes: draft.availabilityMinutes,
+          availabilityPeriod: draft.availabilityPeriod,
         );
       } else {
         await controller.updateProject(
@@ -189,54 +200,148 @@ class CollaborationActions implements OrganizerCollectionActions {
             area: draft.area,
             startAt: draft.startAt,
             endAt: draft.endAt,
+            phases: draft.phases,
+            availabilityMinutes: draft.availabilityMinutes,
+            availabilityPeriod: draft.availabilityPeriod,
           ),
         );
       }
     },
-    onDelete: project == null
+    onDelete:
+        project == null ||
+            project.id ==
+                (scope.projectRootId ??
+                    (scope.organizationId != null ? scope.id : null))
         ? null
         : () => controller.deleteProject(scope.id, project.id),
   );
 
   @override
-  Future<void> task({LocalTask? task, String? projectId}) =>
-      showOrganizerEditor(
-        context,
-        heading: task == null
-            ? context.l10n.organizerAddTask
-            : context.l10n.organizerEditTask,
-        kind: OrganizerEditorKind.task,
-        projects: data.projects,
-        people: people,
-        assignmentEnabled: true,
-        creatorLabel: _creator(task?.createdByAccountId),
-        draft: OrganizerDraft(
-          title: task?.title ?? '',
-          notes: task?.notes ?? '',
-          projectId: task?.projectId ?? projectId,
-          date: task?.dueAt,
-          startAt: task?.startAt,
-          endAt: task?.endAt,
-          assigneeIds: task?.assigneeAccountIds ?? const [],
-        ),
-        errorMessage: (error) => sharingErrorMessage(context, error),
-        wrap: wrapEditor,
-        onSave: (draft) async {
-          if (task == null) {
-            await controller.createTask(
-              scopeId: scope.id,
-              title: draft.title,
-              notes: draft.notes,
-              projectId: draft.projectId,
-              dueAt: draft.date,
-              startAt: draft.startAt,
-              endAt: draft.endAt,
-              assigneeAccountIds: draft.assigneeIds,
-            );
-          } else {
-            await controller.updateTask(
-              scope.id,
-              task.copyWith(
+  Future<void> task({LocalTask? task, String? projectId}) {
+    var timerTask = task;
+    final state = ref.read(collaborationProvider).valueOrNull;
+    final linkedCost = task == null
+        ? null
+        : data.financeEntries
+              .where((entry) => entry.taskId == task.id)
+              .firstOrNull;
+    final canEditCost =
+        state?.sessionInvalid != true &&
+        scope.canEdit &&
+        (state?.recordContractVersion ?? 1) >= 3 &&
+        (state?.financeContractVersion ?? 1) >= 2 &&
+        state?.financePolicyForScope(scope.id).canWrite == true &&
+        state?.financeSnapshotComplete[scope.id] == true;
+    final newTaskId = newSharedId();
+    final financeGuard = linkedCost == null
+        ? null
+        : FinanceAccessGuard(context, ref, scope.id);
+
+    return showOrganizerEditor(
+      context,
+      heading: task == null
+          ? context.l10n.organizerAddTask
+          : context.l10n.organizerEditTask,
+      kind: OrganizerEditorKind.task,
+      projects: data.projects,
+      householdPeople: data.people,
+      projectSelectionEnabled:
+          scope.projectRootId == null && scope.organizationId == null,
+      costEditingEnabled: canEditCost,
+      costAccountRequired: true,
+      financeAccounts: [
+        for (final account in data.financeAccounts)
+          LocalFinanceAccount(
+            id: account.id,
+            name: account.name,
+            currency: account.currency,
+            openingBalanceMinor: account.openingBalanceMinor,
+            openingBalanceAt: account.openingBalanceAt,
+            archived: account.archived,
+            createdAt: account.createdAt,
+            updatedAt: account.updatedAt,
+          ),
+      ],
+      onTimerToggle:
+          task == null ||
+              (ref
+                          .read(collaborationProvider)
+                          .valueOrNull
+                          ?.recordContractVersion ??
+                      1) <
+                  3
+          ? null
+          : () async {
+              timerTask = await controller.toggleTaskTimer(
+                scope.id,
+                timerTask!,
+              );
+              return timerTask!;
+            },
+      people: people,
+      assignmentEnabled: true,
+      creatorLabel: _creator(task?.createdByAccountId),
+      draft: OrganizerDraft(
+        costEnabled: linkedCost != null,
+        costAmount: linkedCost == null
+            ? ''
+            : formatMoneyMinor(linkedCost.amountMinor),
+        costCurrency: linkedCost?.currency ?? 'EUR',
+        costPaid: linkedCost?.status == SharedFinanceStatus.posted,
+        costWasPaid: linkedCost?.status == SharedFinanceStatus.posted,
+        costPaidAt: linkedCost?.paidAt,
+        ledgerAccountId: linkedCost?.ledgerAccountId ?? linkedCost?.accountId,
+        payerPersonId: linkedCost?.payerPersonId,
+        recipientPersonId: linkedCost?.recipientPersonId,
+        createdByPersonId: linkedCost?.createdByPersonId,
+        title: task?.title ?? '',
+        notes: task?.notes ?? '',
+        projectId:
+            task?.projectId ??
+            projectId ??
+            scope.projectRootId ??
+            (scope.organizationId != null ? scope.id : null),
+        date: task?.dueAt,
+        startAt: task?.startAt,
+        endAt: task?.endAt,
+        assigneeIds: task?.assigneeAccountIds ?? const [],
+        assigneePersonId: task?.assigneePersonId,
+        subjectPersonIds: task?.subjectPersonIds ?? const [],
+        phaseId: task?.phaseId,
+        estimateMinutes: task?.estimateMinutes,
+        availabilityMinutes: task?.availabilityMinutes,
+        availabilityPeriod: task?.availabilityPeriod,
+      ),
+      errorMessage: (error) => sharingErrorMessage(context, error),
+      wrap: (editor) => wrapEditor(financeGuard?.wrap(editor) ?? editor),
+      onSave: (draft) async {
+        if (financeGuard != null && !financeGuard.isCurrent)
+          throw const CollaborationException('finance_forbidden');
+        // An acknowledgement of this timer edit updates bookkeeping revision.
+        // Reuse it only when every business field and timer run is unchanged.
+        if (timerTask != null &&
+            task != null &&
+            timerTask!.timer != task.timer) {
+          final latest = ref
+              .read(collaborationProvider)
+              .valueOrNull
+              ?.dataForScope(scope.id)
+              .tasks
+              .where((row) => row.id == timerTask!.id)
+              .firstOrNull;
+          Map<String, Object?> business(LocalTask row) => row.toJson()
+            ..remove('revision')
+            ..remove('createdByAccountId')
+            ..remove('updatedByAccountId');
+          if (latest != null &&
+              jsonEncode(business(latest)) == jsonEncode(business(timerTask!)))
+            timerTask = latest;
+        }
+        if (canEditCost && (draft.costEnabled || linkedCost != null)) {
+          final current = timerTask;
+          final now = DateTime.now().toUtc();
+          final saved =
+              current?.copyWith(
                 title: draft.title,
                 notes: draft.notes,
                 projectId: draft.projectId,
@@ -244,14 +349,97 @@ class CollaborationActions implements OrganizerCollectionActions {
                 startAt: draft.startAt,
                 endAt: draft.endAt,
                 assigneeAccountIds: draft.assigneeIds,
-              ),
-            );
-          }
-        },
-        onDelete: task == null
-            ? null
-            : () => controller.deleteTask(scope.id, task.id),
-      );
+                assigneePersonId: draft.assigneePersonId,
+                subjectPersonIds: draft.subjectPersonIds,
+                phaseId: draft.phaseId,
+                estimateMinutes: draft.estimateMinutes,
+                availabilityMinutes: draft.availabilityMinutes,
+                availabilityPeriod: draft.availabilityPeriod,
+              ) ??
+              LocalTask(
+                id: newTaskId,
+                title: draft.title,
+                notes: draft.notes,
+                projectId: draft.projectId,
+                dueAt: draft.date,
+                startAt: draft.startAt,
+                endAt: draft.endAt,
+                isCompleted: false,
+                assigneeAccountIds: draft.assigneeIds,
+                assigneePersonId: draft.assigneePersonId,
+                subjectPersonIds: draft.subjectPersonIds,
+                phaseId: draft.phaseId,
+                estimateMinutes: draft.estimateMinutes,
+                availabilityMinutes: draft.availabilityMinutes,
+                availabilityPeriod: draft.availabilityPeriod,
+                createdAt: now,
+                updatedAt: now,
+              );
+          await controller.saveTaskWithCost(
+            scope.id,
+            saved,
+            isNew: current == null,
+            cost: draft.costEnabled
+                ? TaskCostDraft(
+                    amountMinor: parseMoneyMinor(draft.costAmount),
+                    currency: draft.costCurrency,
+                    ledgerAccountId: draft.ledgerAccountId,
+                    payerPersonId: draft.payerPersonId,
+                    recipientPersonId: draft.recipientPersonId,
+                    createdByPersonId: draft.createdByPersonId,
+                    paid: draft.costPaid,
+                    paidAt: draft.costPaidAt,
+                  )
+                : null,
+            removeCost: linkedCost != null && !draft.costEnabled,
+            expectedFinanceRevision: linkedCost?.revision,
+          );
+          return;
+        }
+        if (task == null) {
+          await controller.createTask(
+            scopeId: scope.id,
+            title: draft.title,
+            notes: draft.notes,
+            projectId: draft.projectId,
+            dueAt: draft.date,
+            startAt: draft.startAt,
+            endAt: draft.endAt,
+            assigneeAccountIds: draft.assigneeIds,
+            assigneePersonId: draft.assigneePersonId,
+            subjectPersonIds: draft.subjectPersonIds,
+            phaseId: draft.phaseId,
+            estimateMinutes: draft.estimateMinutes,
+            availabilityMinutes: draft.availabilityMinutes,
+            availabilityPeriod: draft.availabilityPeriod,
+          );
+        } else {
+          await controller.updateTask(
+            scope.id,
+            timerTask!.copyWith(
+              title: draft.title,
+              notes: draft.notes,
+              projectId: draft.projectId,
+              dueAt: draft.date,
+              startAt: draft.startAt,
+              endAt: draft.endAt,
+              assigneeAccountIds: draft.assigneeIds,
+              assigneePersonId: draft.assigneePersonId,
+              subjectPersonIds: draft.subjectPersonIds,
+              phaseId: draft.phaseId,
+              estimateMinutes: draft.estimateMinutes,
+              availabilityMinutes: draft.availabilityMinutes,
+              availabilityPeriod: draft.availabilityPeriod,
+            ),
+          );
+        }
+      },
+      onDelete: task == null
+          ? null
+          : () => controller.deleteTask(scope.id, task.id),
+    );
+  }
+
   Future<void> event([SharedEvent? event]) => showOrganizerEditor(
     context,
     heading: event == null
@@ -259,13 +447,18 @@ class CollaborationActions implements OrganizerCollectionActions {
         : context.l10n.organizerEditEvent,
     kind: OrganizerEditorKind.event,
     projects: data.projects,
+    projectSelectionEnabled:
+        scope.projectRootId == null && scope.organizationId == null,
     people: people,
     assignmentEnabled: true,
     creatorLabel: _creator(event?.createdByAccountId),
     draft: OrganizerDraft(
       title: event?.title ?? '',
       notes: event?.notes ?? '',
-      projectId: event?.projectId,
+      projectId:
+          event?.projectId ??
+          scope.projectRootId ??
+          (scope.organizationId != null ? scope.id : null),
       date: event?.startAt ?? DateTime.now(),
       endAt: event?.endAt,
       assigneeIds: event?.assigneeAccountIds ?? const [],
@@ -306,6 +499,7 @@ class CollaborationActions implements OrganizerCollectionActions {
 OrganizerSnapshot sharedPresentationSnapshot(SharedScopeData data) =>
     OrganizerSnapshot(
       projects: data.projects,
+      people: data.people,
       tasks: data.tasks,
       shoppingLists: data.shoppingLists,
       shoppingItems: data.shoppingItems,

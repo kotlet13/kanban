@@ -3,8 +3,13 @@ part of 'collaboration_repository.dart';
 /// Authentication, secure session lifecycle and explicit membership actions.
 extension CollaborationAccountActions on CollaborationRepository {
   Future<void> _loadCapabilities(String partition) async {
+    _organizationsSupported = false;
+    _householdPeopleSupported = false;
+    _projectArchivingSupported = false;
     _sessionRenewalSupported = false;
     _recordContractVersion = 1;
+    _financeContractVersion = 1;
+    _accountDeletionPolicyVersion = 1;
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
@@ -33,12 +38,29 @@ extension CollaborationAccountActions on CollaborationRepository {
 
   void _applyCapabilities(Map<String, dynamic> caps) {
     final versions = caps['recordContractVersions'];
+    _financeContractVersion =
+        (caps['financeContractVersions'] is List &&
+            (caps['financeContractVersions'] as List).contains(2))
+        ? 2
+        : 1;
+    _accountDeletionPolicyVersion =
+        (caps['accountDeletionPolicyVersions'] is List &&
+            (caps['accountDeletionPolicyVersions'] as List).contains(2))
+        ? 2
+        : 1;
     final features = caps['features'] as Map<String, dynamic>;
-    _recordContractVersion = versions is List && versions.contains(2) ? 2 : 1;
+    _recordContractVersion = versions is List && versions.contains(3)
+        ? 3
+        : (versions is List && versions.contains(2) ? 2 : 1);
     _privateSyncSupported =
         features['privateSync'] == true &&
         features['personalFinanceEntry'] == true;
     _sessionRenewalSupported = features['sessionRenewal'] == true;
+    _organizationsSupported =
+        features['organizations'] == true && _recordContractVersion >= 3;
+    _householdPeopleSupported =
+        features['householdPeople'] == true && _recordContractVersion >= 3;
+    _projectArchivingSupported = features['projectArchiving'] == true;
     _inboxSupported = features['inbox'] == true;
     _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
@@ -141,8 +163,13 @@ extension CollaborationAccountActions on CollaborationRepository {
     _sessionInvalidReason = null;
     _pushStateCheckedAt = null;
     _remotePushState = const RemotePushRegistrationState();
+    _organizationsSupported = false;
+    _householdPeopleSupported = false;
+    _projectArchivingSupported = false;
     _sessionRenewalSupported = false;
     _recordContractVersion = 1;
+    _financeContractVersion = 1;
+    _accountDeletionPolicyVersion = 1;
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
@@ -285,6 +312,25 @@ extension CollaborationAccountActions on CollaborationRepository {
       await _invalidateDeviceSession(session, epoch, 'auth_required');
       throw const CollaborationException('auth_required');
     }
+    if (operation == 'scopes.list') {
+      params = {
+        ...params,
+        if (_privateSyncSupported) 'includePersonal': true,
+        if (_organizationsSupported) 'includeOrganizations': true,
+        if (_projectArchivingSupported) 'includeArchived': true,
+      };
+    }
+    if (operation == 'inbox.open') {
+      params = {
+        ...params,
+        if (_financeContractVersion >= 2 &&
+            !params.containsKey('financeContractVersion'))
+          'financeContractVersion': _financeContractVersion,
+        if (_recordContractVersion >= 3 &&
+            !params.containsKey('recordContractVersion'))
+          'recordContractVersion': _recordContractVersion,
+      };
+    }
     Map<String, dynamic> reply;
     try {
       reply = await transport.call(
@@ -393,14 +439,22 @@ extension CollaborationAccountActions on CollaborationRepository {
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
+    String? organizationId,
+    String? id,
+    String? requestId,
   }) async {
+    if ((kind == SharedScopeKind.organization || organizationId != null) &&
+        !_organizationsSupported) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     validateSharedText(name, 200);
     final profile = _requireSession().profile, epoch = _epoch;
     final reply = await _call('scopes.create', {
-      'id': newSharedId(),
+      'id': id ?? newSharedId(),
       'kind': kind.name,
       'name': name,
-      'requestId': newSharedId(),
+      if (organizationId != null) 'organizationId': organizationId,
+      'requestId': requestId ?? newSharedId(),
     });
     final scope = SharedScope.fromJson(reply['scope'] as Map<String, dynamic>);
     await database.transaction(() async {
@@ -409,6 +463,57 @@ extension CollaborationAccountActions on CollaborationRepository {
     });
     await refreshLocal();
     return scope.id;
+  }
+
+  Future<void> archiveProjectScope(
+    String scopeId, {
+    required bool archived,
+    String? requestId,
+  }) async {
+    if (!_projectArchivingSupported) {
+      throw const CollaborationException('client_upgrade_required');
+    }
+    final session = _requireSession(), epoch = _epoch;
+    final reply = await _callSession(session, epoch, 'scopes.archive', {
+      'scopeId': scopeId,
+      'archived': archived,
+      'requestId': requestId ?? newSharedId(),
+    });
+    final scope = SharedScope.fromJson(reply['scope'] as Map<String, dynamic>);
+    if (scope.id != scopeId) {
+      throw const CollaborationException('invalid_response');
+    }
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      await _upsertScope(session.profile.partition, scope);
+    });
+    await refreshLocal();
+    await syncNow();
+  }
+
+  Future<void> selectSpace(String? scopeId) async {
+    final session = _requireSession(), epoch = _epoch;
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      if (scopeId != null) {
+        final scopes = await database.rows(
+          'SELECT data FROM scopes WHERE partition=? AND id=?',
+          [session.profile.partition, scopeId],
+        );
+        if (scopes.isEmpty ||
+            SharedScope.fromJson(
+              CollaborationRepository._map(scopes.single['data']),
+            ).revoked) {
+          throw const CollaborationException('permission_revoked');
+        }
+      }
+      _checkEpoch(epoch);
+      await database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+        ['selected_space:${session.profile.partition}', scopeId ?? ''],
+      );
+    });
+    await refreshLocal();
   }
 
   Future<List<SharedMember>> members(String scopeId) async {
@@ -568,9 +673,16 @@ extension CollaborationAccountActions on CollaborationRepository {
 
   Future<void> _upsertScope(String partition, SharedScope scope) async {
     final old = await database.rows(
-      'SELECT blocked,cursor FROM scopes WHERE partition=? AND id=?',
+      'SELECT blocked,cursor,data FROM scopes WHERE partition=? AND id=?',
       [partition, scope.id],
     );
+    if (!scope.revoked &&
+        old.isNotEmpty &&
+        (CollaborationRepository._map(old.first['data'])['sequence'] as int? ??
+                0) >
+            scope.sequence) {
+      return;
+    }
     final blocked =
         scope.revoked ||
         scope.role == SharedRole.viewer ||

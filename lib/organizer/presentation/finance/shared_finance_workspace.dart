@@ -8,6 +8,7 @@ import '../shared/sharing_recovery.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../planning/task_plan_fields.dart';
 import 'shared_finance_actions.dart';
+import 'finance_planning_panel.dart';
 import 'finance_permissions_dialog.dart';
 import 'shared_finance_ledger.dart';
 import 'shared_finance_conflicts.dart';
@@ -26,7 +27,8 @@ class SharedFinanceWorkspace extends ConsumerWidget {
     final actions = SharedFinanceActions(context, ref, scope, state);
     if (!state.financeSupported) return Text(l.financeUnsupported);
     final data = state.dataForScope(scope.id);
-    final owner = scope.role == SharedRole.owner && !scope.revoked;
+    final owner =
+        scope.role == SharedRole.owner && !scope.revoked && !scope.archived;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -122,7 +124,14 @@ class SharedFinanceWorkspace extends ConsumerWidget {
         else if (state.financeSnapshotComplete[scope.id] != true) ...[
           const LinearProgressIndicator(),
           Text(l.financeLoadingSnapshot),
-        ] else
+        ] else ...[
+          FinancePlanningPanel(
+            key: ValueKey(
+              'shared-planning-${state.session!.partition}-${scope.id}',
+            ),
+            snapshot: sharedFinancePlanningSnapshot(state, scope.id),
+            sharedScopeId: scope.id,
+          ),
           SharedFinanceLedger(
             key: ValueKey('finance-${state.session!.partition}-${scope.id}'),
             scopeName: scope.name,
@@ -143,6 +152,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             canWrite:
                 policy.canWrite &&
                 !scope.blocked &&
+                !scope.archived &&
                 state.session!.expiresAt.isAfter(DateTime.now()) &&
                 state.lastError?.code != 'device_revoked' &&
                 state.lastError?.code != 'auth_required',
@@ -151,6 +161,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             onTransfer: actions.transfer,
             onAudit: actions.audit,
           ),
+        ],
       ],
     );
   }

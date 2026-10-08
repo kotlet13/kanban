@@ -6,11 +6,31 @@ import '../domain/organizer_models.dart';
 import 'organizer_errors.dart';
 import 'planning/task_plan_fields.dart';
 import 'planning/date_time_field.dart';
+import 'planning/record_planning_fields.dart';
+import 'planning/task_timer_panel.dart';
 
 /// Dialog result is presentation data; persistence and validation stay in the
 /// organizer controller and domain layer.
 class OrganizerDraft {
   OrganizerDraft({
+    this.phases = const [],
+    this.phaseId,
+    this.estimateMinutes,
+    this.availabilityMinutes,
+    this.availabilityPeriod,
+    this.timer = const TaskTimerState(),
+    this.assigneePersonId,
+    this.subjectPersonIds = const [],
+    this.costEnabled = false,
+    this.costAmount = '',
+    this.costCurrency = 'EUR',
+    this.costPaid = false,
+    this.costWasPaid = false,
+    this.costPaidAt,
+    this.ledgerAccountId,
+    this.payerPersonId,
+    this.recipientPersonId,
+    this.createdByPersonId,
     this.title = '',
     this.notes = '',
     this.projectId,
@@ -22,8 +42,19 @@ class OrganizerDraft {
     this.amount = '',
     this.currency = 'EUR',
     this.kind = FinanceEntryKind.expense,
+    this.financeIdentityLocked = false,
     this.area = ProjectArea.personal,
   }) : assigneeIds = [...assigneeIds];
+  List<ProjectPhase> phases;
+  String? phaseId, assigneePersonId;
+  List<String> subjectPersonIds;
+  int? estimateMinutes, availabilityMinutes;
+  AvailabilityPeriod? availabilityPeriod;
+  TaskTimerState timer;
+  bool costEnabled, costPaid, costWasPaid;
+  DateTime? costPaidAt;
+  String costAmount, costCurrency;
+  String? ledgerAccountId, payerPersonId, recipientPersonId, createdByPersonId;
   String title;
   String notes;
   String? projectId;
@@ -35,6 +66,7 @@ class OrganizerDraft {
   String amount;
   String currency;
   FinanceEntryKind kind;
+  bool financeIdentityLocked;
   ProjectArea area;
 }
 
@@ -54,8 +86,17 @@ Future<void> showOrganizerEditor(
   required OrganizerDraft draft,
   required Future<void> Function(OrganizerDraft) onSave,
   List<LocalProject> projects = const [],
+  bool projectSelectionEnabled = true,
+  Set<String>? localRecordIds,
+  String? recordId,
+  bool defaultLocalOwnership = true,
   List<OrganizerPersonOption> people = const [],
   bool assignmentEnabled = false,
+  List<HouseholdPerson> householdPeople = const [],
+  List<LocalFinanceAccount> financeAccounts = const [],
+  bool costEditingEnabled = false,
+  bool costAccountRequired = false,
+  Future<LocalTask> Function()? onTimerToggle,
   String? creatorLabel,
   Future<void> Function()? onDelete,
   String Function(Object)? errorMessage,
@@ -68,8 +109,17 @@ Future<void> showOrganizerEditor(
       kind: kind,
       draft: draft,
       projects: projects,
+      projectSelectionEnabled: projectSelectionEnabled,
+      localRecordIds: localRecordIds,
+      recordId: recordId,
+      defaultLocalOwnership: defaultLocalOwnership,
       people: people,
       assignmentEnabled: assignmentEnabled,
+      householdPeople: householdPeople,
+      financeAccounts: financeAccounts,
+      costEditingEnabled: costEditingEnabled,
+      costAccountRequired: costAccountRequired,
+      onTimerToggle: onTimerToggle,
       creatorLabel: creatorLabel,
       onSave: onSave,
       onDelete: onDelete,
@@ -86,8 +136,17 @@ class _RecordEditor extends StatefulWidget {
     required this.kind,
     required this.draft,
     required this.projects,
+    required this.projectSelectionEnabled,
+    this.localRecordIds,
+    this.recordId,
+    required this.defaultLocalOwnership,
     required this.people,
     required this.assignmentEnabled,
+    required this.householdPeople,
+    required this.financeAccounts,
+    required this.costEditingEnabled,
+    required this.costAccountRequired,
+    this.onTimerToggle,
     this.creatorLabel,
     required this.onSave,
     this.onDelete,
@@ -98,8 +157,15 @@ class _RecordEditor extends StatefulWidget {
   final OrganizerEditorKind kind;
   final OrganizerDraft draft;
   final List<LocalProject> projects;
+  final bool projectSelectionEnabled, defaultLocalOwnership;
+  final Set<String>? localRecordIds;
+  final String? recordId;
   final List<OrganizerPersonOption> people;
   final bool assignmentEnabled;
+  final List<HouseholdPerson> householdPeople;
+  final List<LocalFinanceAccount> financeAccounts;
+  final bool costEditingEnabled, costAccountRequired;
+  final Future<LocalTask> Function()? onTimerToggle;
   final String? creatorLabel;
   final Future<void> Function(OrganizerDraft) onSave;
   final Future<void> Function()? onDelete;
@@ -274,6 +340,28 @@ class _RecordEditorState extends State<_RecordEditor> {
     final fieldStyle = compact
         ? Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 15)
         : null;
+    final localIds = widget.localRecordIds;
+    final localOwnership = localIds == null
+        ? null
+        : widget.recordId != null
+        ? localIds.contains(widget.recordId)
+        : draft.projectId != null
+        ? localIds.contains(draft.projectId)
+        : widget.defaultLocalOwnership;
+    final allowedPeople = widget.householdPeople
+        .where(
+          (person) =>
+              localOwnership == null ||
+              localIds!.contains(person.id) == localOwnership,
+        )
+        .toList();
+    final allowedAccounts = widget.financeAccounts
+        .where(
+          (account) =>
+              localOwnership == null ||
+              localIds!.contains(account.id) == localOwnership,
+        )
+        .toList();
     final finance = widget.kind == OrganizerEditorKind.finance;
     final dateRequired = widget.kind == OrganizerEditorKind.event || finance;
     return AlertDialog(
@@ -337,7 +425,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                           ? l.organizerDescription
                           : l.organizerNotes,
                     ),
-                    onSaved: (v) => draft.notes = v?.trim() ?? '',
+                    onSaved: (v) => draft.notes = v ?? '',
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.shoppingItem) ...[
@@ -370,7 +458,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                     onChanged: _busy ? null : (v) => draft.area = v!,
                   ),
                 ],
-                if (_hasProject) ...[
+                if (_hasProject && widget.projectSelectionEnabled) ...[
                   SizedBox(height: fieldGap),
                   DropdownButtonFormField<String>(
                     initialValue: draft.projectId ?? '',
@@ -389,7 +477,15 @@ class _RecordEditorState extends State<_RecordEditor> {
                     ],
                     onChanged: _busy
                         ? null
-                        : (v) => draft.projectId = v == '' ? null : v,
+                        : (v) => setState(() {
+                            draft.projectId = v == '' ? null : v;
+                            draft.phaseId = null;
+                            draft.assigneePersonId = null;
+                            draft.subjectPersonIds = [];
+                            draft.ledgerAccountId = null;
+                            draft.payerPersonId = null;
+                            draft.recipientPersonId = null;
+                          }),
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.task ||
@@ -417,6 +513,48 @@ class _RecordEditorState extends State<_RecordEditor> {
                     enabled: !_busy,
                     wrap: widget.wrap,
                   ),
+                if (widget.kind == OrganizerEditorKind.project ||
+                    widget.kind == OrganizerEditorKind.task)
+                  OrganizerRecordPlanningFields(
+                    draft: draft,
+                    project: widget.kind == OrganizerEditorKind.project,
+                    projects: widget.projects,
+                    key: ValueKey(localOwnership),
+                    people: allowedPeople,
+                    financeAccounts: allowedAccounts,
+                    costEditingEnabled: widget.costEditingEnabled,
+                    costAccountRequired: widget.costAccountRequired,
+                    enabled: !_busy,
+                    wrap: widget.wrap,
+                    onChanged: () => setState(() {}),
+                  ),
+                if (widget.kind == OrganizerEditorKind.task &&
+                    widget.onTimerToggle != null)
+                  TaskTimerPanel(
+                    timer: draft.timer,
+                    estimateMinutes: draft.estimateMinutes,
+                    onToggle: _busy
+                        ? null
+                        : () async {
+                            setState(() => _busy = true);
+                            try {
+                              final task = await widget.onTimerToggle!();
+                              if (mounted) {
+                                setState(() => draft.timer = task.timer);
+                              }
+                            } catch (error) {
+                              if (mounted) {
+                                setState(
+                                  () => _failure =
+                                      widget.errorMessage?.call(error) ??
+                                      organizerErrorMessage(context, error),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _busy = false);
+                            }
+                          },
+                  ),
                 if (finance) ...[
                   SizedBox(height: fieldGap),
                   DropdownButtonFormField<FinanceEntryKind>(
@@ -433,7 +571,9 @@ class _RecordEditorState extends State<_RecordEditor> {
                         child: Text(l.organizerIncome),
                       ),
                     ],
-                    onChanged: _busy ? null : (v) => draft.kind = v!,
+                    onChanged: _busy || draft.financeIdentityLocked
+                        ? null
+                        : (v) => draft.kind = v!,
                   ),
                   SizedBox(height: fieldGap),
                   TextFormField(
@@ -462,7 +602,9 @@ class _RecordEditorState extends State<_RecordEditor> {
                     items: const ['EUR', 'USD', 'GBP', 'CHF']
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
-                    onChanged: _busy ? null : (v) => draft.currency = v!,
+                    onChanged: _busy || draft.financeIdentityLocked
+                        ? null
+                        : (v) => draft.currency = v!,
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.task) ...[

@@ -16,6 +16,7 @@ import 'package:kanban/organizer/data/portable_backup_repository.dart';
 import 'package:kanban/organizer/data/sqlite_organizer_storage.dart';
 import 'package:kanban/organizer/domain/collaboration_models.dart';
 import 'package:kanban/organizer/domain/garden_models.dart';
+import 'package:kanban/organizer/domain/organizer_models.dart';
 
 import 'account_deletion_repository_test.dart' show DeletionServer;
 import 'collaboration_repository_test.dart' show MemorySessionStore;
@@ -40,6 +41,46 @@ Garden garden() => Garden(
   createdAt: now,
   updatedAt: now,
 );
+
+/// The pre-garden JSON v2 fixture has only tasks, with the fields that existed
+/// before planning v4. Do not relabel a current document as an older format.
+String legacyTaskBackup(OrganizerSnapshot snapshot) {
+  expect(snapshot.people, isEmpty);
+  expect(snapshot.financeAccounts, isEmpty);
+  expect(snapshot.financeRecurrenceRules, isEmpty);
+  expect(snapshot.projects, isEmpty);
+  expect(snapshot.financeEntries, isEmpty);
+  final data = snapshot.toJson();
+  for (final key in ['people', 'financeAccounts', 'financeRecurrenceRules']) {
+    data.remove(key);
+  }
+  data['tasks'] = snapshot.tasks.map((task) {
+    expect(task.phaseId, isNull);
+    expect(task.estimateMinutes, isNull);
+    expect(task.availabilityMinutes, isNull);
+    expect(task.availabilityPeriod, isNull);
+    expect(task.assigneePersonId, isNull);
+    expect(task.subjectPersonIds, isEmpty);
+    expect(task.timer.toJson(), const TaskTimerState().toJson());
+    return Map<String, Object?>.from(task.toJson())..removeWhere(
+      (key, _) => const {
+        'phaseId',
+        'estimateMinutes',
+        'availabilityMinutes',
+        'availabilityPeriod',
+        'timer',
+        'assigneePersonId',
+        'subjectPersonIds',
+      }.contains(key),
+    );
+  }).toList();
+  return jsonEncode({
+    'format': 'vsakdan-personal-backup',
+    'schemaVersion': 2,
+    'workspace': 'personal',
+    'data': data,
+  });
+}
 
 Future<
   ({
@@ -292,12 +333,41 @@ void main() {
     await personal.initialize();
     await personal.createTask(title: 'Ohranjeno opravilo');
     await personal.close();
+    // Reconstruct schema 4, including its actual pre-schema-6 finance table.
+    // Merely lowering user_version on a current database leaves wire_version
+    // in place and is not a legacy migration fixture.
+    await original.execute(
+      'ALTER TABLE finance_outbox DROP COLUMN wire_version',
+    );
     await original.execute('DROP TABLE device_gardens');
+    final rows = await original.rows('SELECT id,payload FROM personal_records');
+    final legacy = jsonDecode(legacyTaskBackup(personal.snapshot)) as Map;
+    final legacyTask = ((legacy['data'] as Map)['tasks'] as List).single;
+    await original.execute('UPDATE personal_records SET payload=? WHERE id=?', [
+      jsonEncode(legacyTask),
+      rows.single['id'],
+    ]);
+    await original.execute(
+      "DELETE FROM local_meta WHERE name LIKE 'personal_record_revision:%'",
+    );
+    expect(
+      (await original.rows(
+        'PRAGMA table_info(finance_outbox)',
+      )).any((column) => column['name'] == 'wire_version'),
+      isFalse,
+    );
     await original.execute('PRAGMA user_version=4');
     await original.close();
     final upgraded = await client(file: file);
     expect(upgraded.personal.snapshot.tasks.single.title, 'Ohranjeno opravilo');
     expect(upgraded.garden.snapshot.gardens, isEmpty);
+    expect(upgraded.personal.snapshot.tasks.single.timer.running, isFalse);
+    expect(
+      (await upgraded.db.rows('PRAGMA table_info(finance_outbox)')).singleWhere(
+        (column) => column['name'] == 'wire_version',
+      )['dflt_value'],
+      '1',
+    );
     await upgraded.garden.createGarden(name: 'Nov vrt');
   });
 
@@ -314,7 +384,7 @@ void main() {
       final json = await a.personal.exportBackup();
       final document = OrganizerBackupCodec.decodeDocument(json);
       expect(document.gardens!.gardens.single.notes, 'Čebula');
-      expect(jsonDecode(json)['schemaVersion'], 3);
+      expect(jsonDecode(json)['schemaVersion'], 4);
       final unknown = jsonDecode(json) as Map<String, dynamic>;
       (unknown['gardens'] as Map)['futureField'] = true;
       await expectLater(
@@ -330,7 +400,11 @@ void main() {
       expect((await b.storage.read()).tasks, isEmpty);
       expect((await GardenStorage(b.db).read()).gardens, isEmpty);
       await b.db.execute('DROP TRIGGER fail_garden');
-      await b.personal.importBackup(json);
+      // JSON v3 was the garden release, before planning collections existed.
+      final gardenV3 = jsonDecode(legacyTaskBackup(a.personal.snapshot)) as Map;
+      gardenV3['schemaVersion'] = 3;
+      gardenV3['gardens'] = document.gardens!.toJson();
+      await b.personal.importBackup(jsonEncode(gardenV3));
       expect((await b.storage.read()).tasks.single.title, 'Naloga');
       expect(
         (await GardenStorage(b.db).read()).gardens.single.areas.single.label,
@@ -342,7 +416,7 @@ void main() {
       // Older personal JSON still restores without touching garden data.
       final old = await client();
       await old.personal.createTask(title: 'Star izvoz');
-      final legacy = OrganizerBackupCodec.encode(old.personal.snapshot);
+      final legacy = legacyTaskBackup(old.personal.snapshot);
       await b.personal.importBackup(legacy);
       expect((await GardenStorage(b.db).read()).toJson(), committed);
       expect((await b.storage.read()).tasks.length, 2);
@@ -395,8 +469,18 @@ void main() {
       expect((await b.storage.read()).tasks, isEmpty);
       expect(await b.db.rows('SELECT * FROM restored_backups'), isEmpty);
       await b.db.execute('DROP TRIGGER fail_garden_restore');
+      // Portable v2/schema 5 carried gardens but neither operation pairs nor
+      // finance inbox receipts. Restore that real old shape, not current v3.
+      final gardenV2 = await a.backup.crypto.decrypt(bytes, password);
+      gardenV2.remove('operationPairs');
+      gardenV2.remove('financeInboxReads');
+      gardenV2['version'] = 2;
+      gardenV2['databaseVersion'] = 5;
+      gardenV2['personal'] = legacyTaskBackup(a.personal.snapshot);
+      validateBackupDocument(gardenV2);
+      final gardenV2Bytes = await a.backup.crypto.encrypt(gardenV2, password);
       await b.backup.restoreEncryptedBackup(
-        bytes,
+        gardenV2Bytes,
         password,
         mode: BackupRestoreMode.replace,
         expectedPersonalRevision: revision,
@@ -422,8 +506,11 @@ void main() {
       );
       final oldDoc = await a.backup.crypto.decrypt(bytes, password);
       oldDoc.remove('gardens');
+      oldDoc.remove('operationPairs');
+      oldDoc.remove('financeInboxReads');
       oldDoc['version'] = 1;
       oldDoc['databaseVersion'] = 4;
+      oldDoc['personal'] = legacyTaskBackup(a.personal.snapshot);
       validateBackupDocument(oldDoc);
       final legacyBytes = await a.backup.crypto.encrypt(oldDoc, password);
       await b.backup.restoreEncryptedBackup(

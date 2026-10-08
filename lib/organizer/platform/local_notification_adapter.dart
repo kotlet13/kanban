@@ -263,6 +263,7 @@ class LocalNotificationAdapter {
         'project',
         'shoppingList',
         'shoppingItem',
+        'personalFinanceEntry',
         'financeAccount',
         'financeEntry',
         'financeTransfer',

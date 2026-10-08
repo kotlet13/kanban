@@ -178,11 +178,52 @@ extension CollaborationBackupActions on CollaborationRepository {
               );
             } else {
               await database.execute(
-                'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,state) VALUES(?,?,?,?,?,?)',
-                [op['op_id'], p, scope, recordId, op['request'], op['state']],
+                'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,state,wire_version) VALUES(?,?,?,?,?,?,?)',
+                [
+                  op['op_id'],
+                  p,
+                  scope,
+                  recordId,
+                  op['request'],
+                  op['state'],
+                  op['wire_version'] ?? 1,
+                ],
               );
             }
           }
+        }
+        for (final pair in (doc['operationPairs'] as List? ?? const [])) {
+          final opPair = Map<String, dynamic>.from(pair as Map);
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+            [
+              'task_cost_pair:$p:${opPair['genericOpId']}',
+              opPair['financeOpId'],
+            ],
+          );
+        }
+        for (final raw in (doc['financeInboxReads'] as List? ?? const [])) {
+          final receipt = backupMap(raw), name = receipt['name'] as String;
+          final prefix = 'finance_inbox_read:$p:';
+          if (!name.startsWith(prefix)) continue;
+          final scope = name.substring(prefix.length).split(':').first;
+          if (!isSharedUuid(scope) ||
+              !(await _cachedFinancePolicy(p, scope)).canRead) {
+            continue;
+          }
+          final projection = await database.rows(
+            'SELECT finance_complete FROM scopes WHERE partition=? AND id=?',
+            [p, scope],
+          );
+          if (projection.isEmpty ||
+              projection.single['finance_complete'] != 1) {
+            continue;
+          }
+          _checkEpoch(epoch);
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+            [name, receipt['value']],
+          );
         }
         for (final pair in [
           ('conflicts', 'records'),

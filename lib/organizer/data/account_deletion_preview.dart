@@ -23,7 +23,7 @@ Map<String, dynamic> decodeAccountDeletionPreview(
 
   if (wire['serverId'] != profile.serverId ||
       wire['accountId'] != profile.accountId ||
-      wire['policyVersion'] != 1 ||
+      !const [1, 2].contains(wire['policyVersion']) ||
       wire['canDelete'] is! bool ||
       wire['previewHash'] is! String ||
       !RegExp(r'^[a-f0-9]{64}$').hasMatch(wire['previewHash'] as String)) {
@@ -55,7 +55,10 @@ Map<String, dynamic> decodeAccountDeletionPreview(
   for (final s in rows('sharedScopes')) {
     if (!isSharedUuid(s['id']) ||
         !text(s['name']) ||
-        !const ['household', 'project'].contains(s['kind']) ||
+        !(wire['policyVersion'] == 2
+                ? const ['household', 'project', 'organization']
+                : const ['household', 'project'])
+            .contains(s['kind']) ||
         !const ['owner', 'member', 'viewer'].contains(s['role'])) {
       invalid();
     }
@@ -65,7 +68,10 @@ Map<String, dynamic> decodeAccountDeletionPreview(
     if (!isSharedUuid(s['id']) ||
         !ownedIds.add(s['id'] as String) ||
         !text(s['name']) ||
-        !const ['household', 'project'].contains(s['kind']) ||
+        !(wire['policyVersion'] == 2
+                ? const ['household', 'project', 'organization']
+                : const ['household', 'project'])
+            .contains(s['kind']) ||
         s['canDeleteScope'] is! bool ||
         s['eligibleSuccessors'] is! List ||
         (s['eligibleSuccessors'] as List).length > 10000) {
@@ -87,16 +93,33 @@ Map<String, dynamic> decodeAccountDeletionPreview(
     if (!isSharedUuid(r['scopeId']) ||
         !isSharedUuid(r['recordId']) ||
         !resolutionIds.add('${r['scopeId']}:${r['recordId']}') ||
-        !const ['shoppingList', 'financeAccount'].contains(r['type']) ||
-        r['action'] != 'preserveStructure' ||
+        !(wire['policyVersion'] == 2
+                ? const [
+                    'shoppingList',
+                    'financeAccount',
+                    'householdPerson',
+                    'organizationProjectLink',
+                    'project',
+                  ]
+                : const ['shoppingList', 'financeAccount'])
+            .contains(r['type']) ||
+        r['action'] !=
+            (r['type'] == 'organizationProjectLink'
+                ? 'detachOrganization'
+                : 'preserveStructure') ||
+        (r['type'] == 'organizationProjectLink' &&
+            r['childScopeId'] != null &&
+            !isSharedUuid(r['childScopeId'])) ||
         !text(r['name'], nullable: true)) {
       invalid();
     }
     if (r.containsKey('currency') || r.containsKey('openingBalanceMinor')) {
       if (r['type'] != 'financeAccount' ||
           !const ['EUR', 'USD', 'GBP', 'CHF'].contains(r['currency']) ||
-          r['openingBalanceMinor'] is! int ||
-          (r['openingBalanceMinor'] as int).abs() > 9000000000000) {
+          (r['openingBalanceMinor'] != null &&
+              (r['openingBalanceMinor'] is! int ||
+                  (r['openingBalanceMinor'] as int).abs() > 9000000000000)) ||
+          (wire['policyVersion'] == 1 && r['openingBalanceMinor'] == null)) {
         invalid();
       }
     }

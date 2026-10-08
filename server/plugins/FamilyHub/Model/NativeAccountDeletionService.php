@@ -60,8 +60,14 @@ class NativeAccountDeletionService extends NativeDatabase
             $scopes = $this->many('SELECT * FROM familyhub_scopes ORDER BY id'.$this->lockSuffix());
             $graph = (new NativeDeletionPlan($this->container))->build($user,$scopes);
             $plan = $graph['wire'];
-            if ($operation === 'account.deletion.preview') { $this->fields($params, []); return $plan; }
-            $this->fields($params, ['operationId','receiptToken','previewHash','password','confirmation'], ['otp','ownershipTransfers','resolutions','ownedScopeDeletions']);
+            if ($operation === 'account.deletion.preview') {
+                $this->fields($params, [], ['policyVersion']);
+                if (!in_array($params['policyVersion']??1,[1,2],true)) { throw new NativeError('validation_error'); }
+                if (($params['policyVersion']??1)<$plan['policyVersion']) { throw new NativeError('client_upgrade_required',409); }
+                return $plan;
+            }
+            $this->fields($params, ['operationId','receiptToken','previewHash','password','confirmation'], ['otp','ownershipTransfers','resolutions','ownedScopeDeletions','policyVersion']);
+            if (($params['policyVersion']??1)<$plan['policyVersion']) { throw new NativeError('client_upgrade_required',409); }
             $id = $this->uuid($params['operationId']); $hash = $this->receiptHash($params['receiptToken']);
             if ($params['confirmation'] !== 'DELETE') { throw new NativeError('validation_error'); }
             $receipt=$this->one('SELECT token_hash,cancelled FROM familyhub_deletion_receipts WHERE operation_id=?',[$id]);
@@ -108,8 +114,10 @@ class NativeAccountDeletionService extends NativeDatabase
             if (count($choice)!==1 || !in_array($choice[0]['successorAccountId']??null,array_column($scope['eligibleSuccessors'],'accountId'),true)) { throw new NativeError('deletion_blocked',409,['blockers'=>$plan['blockers']]); }
         }
         foreach ($plan['resolutions'] as $required) {
-            if (in_array($required['scopeId'],$resolved,true)) { continue; }
-            if (!array_filter($resolutions,fn($r)=>is_array($r)&&($r['scopeId']??null)===$required['scopeId']&&($r['recordId']??null)===$required['recordId']&&($r['action']??null)==='preserveStructure')) { throw new NativeError('deletion_blocked',409,['blockers'=>$plan['blockers']]); }
+            if ($required['action']==='detachOrganization') {
+                if (!in_array($required['scopeId'],$resolved,true) || ($required['childScopeId']!==null && in_array($required['childScopeId'],$resolved,true))) { continue; }
+            } elseif (in_array($required['scopeId'],$resolved,true)) { continue; }
+            if (!array_filter($resolutions,fn($r)=>is_array($r)&&($r['scopeId']??null)===$required['scopeId']&&($r['recordId']??null)===$required['recordId']&&($r['action']??null)===$required['action'])) { throw new NativeError('deletion_blocked',409,['blockers'=>$plan['blockers']]); }
         }
         foreach ($plan['blockers'] as $b) { if (!in_array($b['code'],['shared_scope_owner','shared_structure_resolution'],true)) { throw new NativeError('deletion_blocked',409,['blockers'=>$plan['blockers']]); } }
         if (array_diff($deletions,$resolved)) { throw new NativeError('validation_error'); }
@@ -119,7 +127,7 @@ class NativeAccountDeletionService extends NativeDatabase
         }
         foreach ($resolutions as $r) {
             $this->fields($r,['scopeId','recordId','action']);
-            if (!array_filter($plan['resolutions'],fn($p)=>$p['scopeId']===$r['scopeId'] && $p['recordId']===$r['recordId'] && $r['action']==='preserveStructure')) { throw new NativeError('validation_error'); }
+            if (!array_filter($plan['resolutions'],fn($p)=>$p['scopeId']===$r['scopeId'] && $p['recordId']===$r['recordId'] && $r['action']===$p['action'])) { throw new NativeError('validation_error'); }
         }
         // Actual transfer waits until after preview hash and step-up validation.
         return $resolved;
@@ -135,12 +143,20 @@ class NativeAccountDeletionService extends NativeDatabase
     private function applyShared(array $graph,array $user,array $deleteScopes)
     {
         $account=$user['account_id'];$changedScopes=[];$affectedRecipients=[];
+        foreach ($graph['organizationLinks']??[] as $link) {
+            if (in_array($link['organizationId'],$deleteScopes,true) && !in_array($link['childScopeId'],$deleteScopes,true)) {
+                $this->change('UPDATE familyhub_scopes SET organization_id=NULL,sequence=sequence+1 WHERE id=? AND organization_id=?',[$link['childScopeId'],$link['organizationId']]);
+            }
+        }
         foreach ($graph['mutations'] as $m) {
             if (in_array($m['scopeId'],$deleteScopes,true)) { continue; }
             $finance=$m['table']==='familyhub_finance_records';$policyTable=$finance ? 'familyhub_finance_policy':'familyhub_scopes';
             $this->change('UPDATE '.$policyTable.' SET sequence=sequence+1 WHERE '.($finance?'scope_id':'id').'=?',[$m['scopeId']]);
             $sequence=$this->one('SELECT sequence FROM '.$policyTable.' WHERE '.($finance?'scope_id':'id').'=?',[$m['scopeId']])['sequence'];
             $this->change('UPDATE '.$m['table'].' SET payload=?,deleted=?,created_by=?,updated_by=?,revision=?,sequence=?,updated_at=? WHERE scope_id=? AND id=?',[$m['payload']===null ? null:json_encode($m['payload'],JSON_THROW_ON_ERROR),$m['deleted'],$m['created'],$m['updated'],$m['revision'],$sequence,gmdate('Y-m-d\TH:i:s\Z'),$m['scopeId'],$m['id']]);
+            if (!$finance && $m['preservedStructure'] && $m['payload']!==null && isset($m['payload']['title'])) {
+                $this->change('UPDATE familyhub_scopes SET name=? WHERE id=? AND project_root_id=?',[$m['payload']['title'],$m['scopeId'],$m['id']]);
+            }
             $changedScopes[$m['scopeId']]=true;
             if ($finance && ($m['deleted'] || $m['preservedStructure'])) { $this->change('DELETE FROM familyhub_finance_audit WHERE scope_id=? AND record_id=?',[$m['scopeId'],$m['id']]); }
             // Response caches can embed old payloads inside success/conflict replies

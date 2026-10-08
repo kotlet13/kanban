@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
+import 'planning/task_timer_panel.dart';
 
 String organizerDate(
   BuildContext context,
@@ -157,6 +158,12 @@ class OrganizerTaskRow extends StatelessWidget {
     final details = [
       if (project != null) project.title,
       if (task.dueAt != null) organizerDate(context, task.dueAt!),
+      if (task.assigneePersonId != null)
+        '${context.l10n.planningAssignees}: ${snapshot.people.where((p) => p.id == task.assigneePersonId).firstOrNull?.name ?? context.l10n.planningFormerMember}',
+      if (task.subjectPersonIds.isNotEmpty)
+        '${context.l10n.peopleTaskSubjects}: ${task.subjectPersonIds.map((id) => snapshot.people.where((p) => p.id == id).firstOrNull?.name ?? context.l10n.planningFormerMember).join(', ')}',
+      if (task.estimateMinutes != null)
+        '${context.l10n.planningEstimated}: ${planningDuration(task.estimateMinutes! * 60)}',
       if (project == null && task.dueAt == null) context.l10n.organizerPersonal,
     ].join(' · ');
     return Container(
@@ -207,6 +214,12 @@ class OrganizerTaskRow extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    if (task.timer.running || task.timer.elapsedSeconds > 0)
+                      TaskTimerPanel(
+                        timer: task.timer,
+                        estimateMinutes: task.estimateMinutes,
+                        showControls: false,
+                      ),
                   ],
                 ),
               ),

@@ -4,6 +4,7 @@ import '../domain/garden_models.dart';
 import 'garden_storage.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
+import '../domain/finance_reminder_plans.dart';
 import 'collaboration_database.dart';
 import 'collaboration_repository.dart';
 import 'organizer_storage.dart';
@@ -183,9 +184,72 @@ class PortableBackupRepository {
           }
         }
       }
+      final operationPairs = <Map<String, dynamic>>[];
+      if (profile != null) {
+        final genericIds = (tables['outbox'] as List)
+            .map((r) => (r as Map)['op_id'])
+            .toSet();
+        final financeIds = (tables['finance_outbox'] as List)
+            .map((r) => (r as Map)['op_id'])
+            .toSet();
+        final prefix = 'task_cost_pair:${profile.partition}:';
+        for (final row in await database.rows(
+          'SELECT name,value FROM local_meta WHERE name LIKE ?',
+          ['$prefix%'],
+        )) {
+          final genericId = (row['name'] as String).substring(prefix.length),
+              financeId = row['value'];
+          if (!genericIds.contains(genericId)) continue;
+          if (!financeIds.contains(financeId)) {
+            throw const CollaborationException('backup_incomplete_operation');
+          }
+          operationPairs.add({
+            'genericOpId': genericId,
+            'financeOpId': financeId,
+          });
+        }
+      }
       final local = await storage.localSnapshot();
       final revision = (await storage.read()).revision;
       final binding = await storage.activeBinding();
+      final visible = await storage.read();
+      final cachedShared = collaboration?.call()?.state ?? CollaborationState();
+      final selectedShared =
+          cachedShared.session?.partition == profile?.partition
+          ? cachedShared
+          : CollaborationState();
+      final allowedReceiptNames = allowedFinanceInboxReadNames(
+        personal: visible,
+        shared: selectedShared,
+      );
+      final allowedFinancialScopes = (tables['scopes'] as List)
+          .cast<Map<String, dynamic>>()
+          .where((row) {
+            final raw = row['finance_policy'];
+            return raw != null &&
+                row['finance_blocked'] != 1 &&
+                SharedFinancePolicy.fromJson(
+                  backupMap(jsonDecode(raw as String)),
+                ).canRead;
+          })
+          .map((row) => row['id'] as String)
+          .toSet();
+      final financeInboxReads = <Map<String, dynamic>>[];
+      for (final receipt in await database.rows(
+        "SELECT name,value FROM local_meta WHERE name LIKE 'finance_inbox_read:%'",
+      )) {
+        final name = receipt['name'] as String;
+        if (!allowedReceiptNames.contains(name)) continue;
+        if (!name.startsWith('finance_inbox_read:personal:local:') &&
+            !allowedFinancialScopes.any(
+              (scope) => name.startsWith(
+                'finance_inbox_read:${profile?.partition}:$scope:',
+              ),
+            )) {
+          continue;
+        }
+        financeInboxReads.add({'name': name, 'value': receipt['value']});
+      }
       final privateData = <String, dynamic>{
         'binding': binding == null
             ? null
@@ -210,8 +274,10 @@ class PortableBackupRepository {
       };
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 2,
-        'databaseVersion': 5,
+        'version': 3,
+        'databaseVersion': 6,
+        'operationPairs': operationPairs,
+        'financeInboxReads': financeInboxReads,
         'gardens': (await GardenStorage(database).read()).toJson(),
         'id': newSharedId(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
@@ -330,12 +396,26 @@ class PortableBackupRepository {
               )
             : mergeGardenSnapshots(currentGardens, importedGardens);
         candidate = mode == BackupRestoreMode.replace
-            ? imported
+            ? imported.copyWith(
+                financeEntries: (doc['version'] as int) < 3
+                    ? preserveLegacyFinanceEntries(imported, current)
+                    : imported.financeEntries,
+                people: (doc['version'] as int) < 3
+                    ? current.people
+                    : imported.people,
+                financeAccounts: (doc['version'] as int) < 3
+                    ? current.financeAccounts
+                    : imported.financeAccounts,
+                financeRecurrenceRules: (doc['version'] as int) < 3
+                    ? current.financeRecurrenceRules
+                    : imported.financeRecurrenceRules,
+              )
             : mergePersonalSnapshots(
                 current,
                 imported,
                 revision: current.revision,
               );
+        candidate.validate();
       } on Object {
         throw const CollaborationException('backup_conflict');
       }
@@ -347,15 +427,40 @@ class PortableBackupRepository {
           revision: candidate.revision,
         );
       }
+      // Keep non-content revision floors across replacement and deletion.
+      final candidateIds = candidate.recordIds;
+      for (final row in snapshotRows(
+        current,
+      ).where((r) => r.type != 'reminder')) {
+        await savePersonalRevisionFloor(
+          database,
+          SqliteOrganizerStorage.localWorkspace,
+          row.id,
+          (row.json['revision'] as int? ?? 0) +
+              (candidateIds.contains(row.id) ? 0 : 1),
+        );
+      }
       // Restore anonymous data directly. The active B profile must never enqueue A.
       await database.execute(
         "DELETE FROM personal_records WHERE workspace='local'",
       );
       for (final row in snapshotRows(candidate)) {
-        await database.execute(
-          'INSERT INTO personal_records(workspace,id,type,payload) VALUES(?,?,?,?)',
-          ['local', row.id, row.type, jsonEncode(row.json)],
+        await commitPersonalRow(
+          database,
+          SqliteOrganizerStorage.localWorkspace,
+          row,
         );
+      }
+      for (final raw in (doc['financeInboxReads'] as List? ?? const [])) {
+        final receipt = backupMap(raw);
+        if ((receipt['name'] as String).startsWith(
+          'finance_inbox_read:personal:local:',
+        )) {
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+            [receipt['name'], receipt['value']],
+          );
+        }
       }
       // A legacy v1 file has no garden section and must preserve local gardens.
       if (candidateGardens != null) {
@@ -558,4 +663,26 @@ class PortableBackupRepository {
     await repo.resumePortableBackup(doc);
     database.personalChanged();
   }
+}
+
+List<FinanceEntry> preserveLegacyFinanceEntries(
+  OrganizerSnapshot imported,
+  OrganizerSnapshot current,
+) {
+  final entries = {for (final e in imported.financeEntries) e.id: e};
+  final tasks = {for (final t in imported.tasks) t.id: t};
+  final projectIds = imported.projects.map((p) => p.id).toSet();
+  for (final entry in current.financeEntries.where(
+    (e) => privateRecordWireVersion('financeEntry', e.toJson()) >= 2,
+  )) {
+    final task = tasks[entry.taskId];
+    entries[entry.id] = entry.copyWith(
+      taskId: task?.id,
+      plannedAt: task == null ? entry.plannedAt : task.dueAt,
+      projectId:
+          task?.projectId ??
+          (projectIds.contains(entry.projectId) ? entry.projectId : null),
+    );
+  }
+  return entries.values.toList();
 }

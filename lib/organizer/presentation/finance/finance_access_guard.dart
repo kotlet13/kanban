@@ -28,7 +28,7 @@ class FinanceAccessGuard {
           (scope) =>
               scope.id == scopeId &&
               !scope.revoked &&
-              (!write || !scope.blocked),
+              (!write || !scope.blocked && !scope.archived),
         ) &&
         state.financeSnapshotComplete[scopeId] == true &&
         (!write ||

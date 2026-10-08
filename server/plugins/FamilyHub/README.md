@@ -1,6 +1,8 @@
-# FamilyHub 0.6.1
+# FamilyHub 0.7.0
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
+
+Version 0.7.0 uses additive server schema 11, record contracts 1/2/3, finance contracts 1/2 and account-deletion policies 1/2. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.7.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/UPGRADE_IMPLEMENTATION.md` records the current release run. Historical 0.3–0.6 notes below remain applicable to their original features.
 
 ## Native account and sharing API
 
@@ -13,6 +15,26 @@ Native household and standalone project scopes, memberships, invitations and pro
 Version 0.6.1 adds capability-gated `auth.renew`: an active device session extends its expiry to 30 days during its last seven days. The existing device and bearer token remain unchanged so a lost response can be retried. Expired, revoked, deleted or credential-invalidated sessions cannot renew. This does not enable private synchronization.
 
 Schema 2/3 includes a durable server UUID and account UUIDs. Bind client storage to `serverId:accountId`, not reused usernames or numeric IDs. Device/invitation plaintext tokens are never stored, returned in lists or logged. Raw devices and operation outcomes are sensitive backup data.
+
+## Organizations, people and planning (0.7.0/schema 11)
+
+An organization and each project beneath it have independent scope memberships and finance grants. Being an organization member does not expose every project, and a project collaborator does not gain organization/sibling access. Only the organization owner creates a child project. Creation atomically installs its one real root project with the scope ID; tasks/events reference that root. Renaming it also updates the scope name. A second root or direct root deletion is rejected. Legacy scopes without a root keep their existing structure. Linking a project never uploads device-local personal content implicitly.
+
+Record contract 3 adds project phases/milestones, task estimates/availability, a persisted Play/Pause timer and household-person profiles. Profiles have no login, account, membership or notification-recipient privileges; person references and account assignments remain distinct. Archiving a person retains historical references and prevents new ones. Phase removal requires dependent tasks to detach first. `sync3.push/pull` preserve older payloads on disk and supply empty defaults only in the newer wire projection.
+
+`scopes.list` accepts explicit `includePersonal`, `includeOrganizations` and `includeArchived` (all default false for older callers). Rooted project owners may archive/restore through `scopes.archive`; archived content stays readable, data writes stop, finance write becomes read and access revisions change. Owners may still revoke membership/invitations. Reminder/mail/push workers suppress archived scopes and recheck after waiting for the scope lock; restoring cancels already-due reminders rather than sending an old backlog.
+
+Finance contract 2 adds explicit ledger accounts with optional opening balance/date, planned versus posted entries, task costs, person participants and monthly recurrence rules. Finance payloads remain outside generic sync and require separate grants even for inbox opening, audit, reminder and delivery. Legacy balances without an opening date retain their historical meaning. Transfers do not become income/expense; currencies are not added together. The client materializes monthly occurrences, forecasts by currency/account and keeps weekend salary checks/read receipts local; confirmation posts the existing entry rather than creating another payment.
+
+`sync3.pushTaskWithCost` atomically applies a task and its one finance entry under fresh task/finance access. Task, money, audit, inbox and reminders all roll back if either half fails. Planned cost date follows the task due date; task deletion detaches and preserves payment history. Lost acknowledgments retry both immutable original operations. A compound conflict is resolved for both halves together, with explicit financial review before keeping the local pair.
+
+Existing pending operations retain their original ID, body and expected revision. Modern sync3/finance2 transports carry `operationContractVersion` and hash old payloads as their original sync/sync2/finance method. The bridge replays the original stored outcome after checking current rights; it never strips new fields or invents another operation ID. A new conflict-resolution operation uses a new ID. Client schema 6, personal JSON 4 and encrypted portable copy 3 are separate formats; paired IDs/wire versions survive recovery, while restored server work stays quarantined until the same account explicitly resumes with fresh permissions.
+
+`inbox.open` negotiates `recordContractVersion` and `financeContractVersion`. Missing values mean record2/finance1 for old clients; unsupported newer records fail explicitly. New callers use record3/finance2 and receive the supported payload shape, with current membership/finance access checked again. Reference-only notifications and optional transport configuration keep their existing semantics.
+
+Schema 11 adds organization/root/archive/required-record-contract scope columns and finance required/per-record contract versions without deleting existing identities, sessions or payloads. Before any hosting upgrade, verify a separate full database/files/config backup and package. MySQL/MariaDB DDL is not a transaction rollback; restoring the verified database and matching plugin/config/files is the recovery path. Do not reset identities or delete tables to downgrade.
+
+The focused local test sources include `server/tests/organization-integration.php`, `server/tests/finance-planning-integration.php` and the Dart organization/finance/private planning HTTP suites. They exercise isolated ACL, root creation, archive, people, immutable bridges, paired rollback/replay, recurring entries and recovery. They use synthetic accounts and local endpoints, not production account deletion or physical push delivery.
 
 ## Legacy project invitation proof
 
@@ -54,3 +76,7 @@ A minute cron may run cli/account-mail.php --limit=20. Its dispatch budget is 60
 ## Account deletion (0.6.0/schema10)
 
 Enable only with `FAMILYHUB_ENABLE_NATIVE_API=true` and `FAMILYHUB_ACCOUNT_MODE='self_hosted'`. Native preview/confirm/status and the same-server `AccountDeletionController` website support real Kanboard account deletion, explicit ownership transfer/structural retention, and durable postcommit local-file cleanup. Run `php plugins/FamilyHub/cli/account-deletion-cleanup.php` from bounded cron. Managed mode is unavailable. See `docs/server/account-deletion-contract.md` in the repository for exact data policy and tested limitations; this is not a full-UGC/store compliance assertion. Plugin source is MIT; core Kanboard and its dependencies retain their own licenses.
+
+Version 0.7.0 advertises `accountDeletionPolicyVersions:[1,2]`. Policy 2 requires explicit structural decisions for retained project roots/person profiles and organization-project detachment, and permits an unknown opening balance. The root and phase IDs remain valid for other contributors; founder text is anonymized and the scope name follows the retained root. Detaching a surviving child changes its organization link without changing its own members/finance grants. Inaccessible children use opaque confirmation IDs without disclosing their name, scope ID or finance contents. Account deletion still removes the real Kanboard account/devices; retaining a person profile does not retain authentication.
+
+The web deletion controller and form source use policy 2 and explicit preserve/detach actions. Mobile and website tests remain separate evidence: the older policy-1 web HTTP results do not establish the extended graph. Check repository `docs/server/account-deletion-contract.md` and the current release run for the final local web policy-2 result and hosting deployment evidence.

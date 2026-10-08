@@ -1,5 +1,7 @@
 # Dodelitve, družinski pregled, obvestila in skupne finance
 
+**Novejša nadgradnja 8. oktobra:** organizacije, osebe brez računa, faze/koledar/časovnik, atomarni strošek in finančni načrt so izdelani z record3/finance2 ter ločenimi pravicami. [Izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md) vodi aktualne dokaze, nadgradnjo gostovanja in interno izdajo; spodaj je zgodovina prve družinske etape.
+
 Ta mejnik opisuje zaključeno družinsko nadgradnjo pred pripravo FCM. Novejšo izbirno oddaljeno dostavo, njene preizkuse in preostalo konfiguracijo vodi [priprava Firebase](FIREBASE_PREPARATION.md).
 Ta dokument vodi nadgradnjo, ki jo je uporabnik odobril po prvem [mejniku deljenja](SHARING_MILESTONE.md). Stanje 4. oktobra 2026: **izdelano in lokalno preverjeno v razvojni veji**. Spodaj ločimo potrjeno delovanje od zunanje dostave in objave. Produkcijski strežnik in preverjeni arhiv ostajata zunaj testiranja.
 

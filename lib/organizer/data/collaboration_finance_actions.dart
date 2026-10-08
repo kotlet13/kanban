@@ -2,6 +2,11 @@ part of 'collaboration_repository.dart';
 
 /// Financial writes use a distinct local store, queue and module authorization.
 extension CollaborationFinanceActions on CollaborationRepository {
+  DateTime _financeUpdatedAt(DateTime previous) {
+    final now = clock().toUtc();
+    return now.isBefore(previous) ? previous : now;
+  }
+
   Future<SharedFinancePolicy> _cachedFinancePolicy(
     String partition,
     String scopeId,
@@ -35,9 +40,12 @@ extension CollaborationFinanceActions on CollaborationRepository {
     final generation = await _financeAccessGeneration(partition, scopeId);
     _checkEpoch(epoch);
     final policy = SharedFinancePolicy.fromJson(
-      await _callSession(session, epoch, 'finance.policy', {
-        'scopeId': scopeId,
-      }),
+      await _callSession(
+        session,
+        epoch,
+        _financeContractVersion >= 2 ? 'finance2.policy' : 'finance.policy',
+        {'scopeId': scopeId},
+      ),
     );
     return database.transaction(() async {
       _checkEpoch(epoch);
@@ -156,6 +164,11 @@ extension CollaborationFinanceActions on CollaborationRepository {
         ).revoked) {
       throw const CollaborationException('permission_revoked');
     }
+    if (SharedScope.fromJson(
+      CollaborationRepository._map(rows.first['data']),
+    ).archived) {
+      throw const CollaborationException('scope_archived');
+    }
     if (!(await _cachedFinancePolicy(partition, scopeId)).canWrite) {
       throw const CollaborationException('finance_forbidden');
     }
@@ -212,7 +225,11 @@ extension CollaborationFinanceActions on CollaborationRepository {
         ? null
         : CollaborationRepository._map(old!['payload']);
     if (payload != null) {
-      validateSharedFinancePayload(type, Map<String, dynamic>.from(payload));
+      validateSharedFinancePayload(
+        type,
+        Map<String, dynamic>.from(payload),
+        contractVersion: _financeContractVersion,
+      );
       if (previous != null) {
         if (readSharedDate(previous, 'createdAt') !=
             readSharedDate(Map<String, dynamic>.from(payload), 'createdAt')) {
@@ -220,7 +237,8 @@ extension CollaborationFinanceActions on CollaborationRepository {
         }
         payload['createdAt'] = previous['createdAt'];
       }
-      if (type == SharedFinanceRecordType.financeAccount &&
+      if (_financeContractVersion == 1 &&
+          type == SharedFinanceRecordType.financeAccount &&
           previous != null &&
           (previous['currency'] != payload['currency'] ||
               previous['openingBalanceMinor'] !=
@@ -229,7 +247,9 @@ extension CollaborationFinanceActions on CollaborationRepository {
       }
       final accountIds = switch (type) {
         SharedFinanceRecordType.financeAccount => <String>[],
-        SharedFinanceRecordType.personalFinanceEntry => <String>[],
+        SharedFinanceRecordType.personalFinanceEntry ||
+        SharedFinanceRecordType.personalFinanceAccount ||
+        SharedFinanceRecordType.financeRecurrenceRule => <String>[],
         SharedFinanceRecordType.financeEntry => [
           payload['accountId'] as String,
         ],
@@ -318,8 +338,15 @@ extension CollaborationFinanceActions on CollaborationRepository {
       ],
     );
     await database.execute(
-      'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request) VALUES(?,?,?,?,?)',
-      [request['opId'], partition, scopeId, id, jsonEncode(request)],
+      'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,?)',
+      [
+        request['opId'],
+        partition,
+        scopeId,
+        id,
+        jsonEncode(request),
+        _financeContractVersion,
+      ],
     );
   }
 
@@ -380,12 +407,17 @@ extension CollaborationFinanceActions on CollaborationRepository {
     if (!policy.canRead) {
       throw const CollaborationException('finance_forbidden');
     }
-    final reply = await _callSession(session, epoch, 'finance.audit', {
-      'scopeId': scopeId,
-      'recordId': recordId,
-      if (beforeRevision != null) 'beforeRevision': beforeRevision,
-      'limit': limit,
-    });
+    final reply = await _callSession(
+      session,
+      epoch,
+      _financeContractVersion >= 2 ? 'finance2.audit' : 'finance.audit',
+      {
+        'scopeId': scopeId,
+        'recordId': recordId,
+        if (beforeRevision != null) 'beforeRevision': beforeRevision,
+        'limit': limit,
+      },
+    );
     final current = await _cachedFinancePolicy(
       session.profile.partition,
       scopeId,
@@ -425,7 +457,7 @@ extension CollaborationFinanceActions on CollaborationRepository {
         scopeId,
         SharedFinanceRecordType.financeAccount,
         id,
-        record.toPayload(),
+        record.toPayload(contractVersion: _financeContractVersion),
       ),
     );
     return id;
@@ -441,7 +473,9 @@ extension CollaborationFinanceActions on CollaborationRepository {
       scopeId,
       SharedFinanceRecordType.financeAccount,
       draft.id,
-      draft.copyWith(updatedAt: clock().toUtc()).toPayload(),
+      draft
+          .copyWith(updatedAt: _financeUpdatedAt(draft.updatedAt))
+          .toPayload(contractVersion: _financeContractVersion),
       expectedLocalRevision: draft.revision,
     ),
   );
@@ -495,7 +529,7 @@ extension CollaborationFinanceActions on CollaborationRepository {
         scopeId,
         SharedFinanceRecordType.financeEntry,
         id,
-        record.toPayload(),
+        record.toPayload(contractVersion: _financeContractVersion),
       ),
     );
     return id;
@@ -509,7 +543,9 @@ extension CollaborationFinanceActions on CollaborationRepository {
           scopeId,
           SharedFinanceRecordType.financeEntry,
           draft.id,
-          draft.copyWith(updatedAt: clock().toUtc()).toPayload(),
+          draft
+              .copyWith(updatedAt: _financeUpdatedAt(draft.updatedAt))
+              .toPayload(contractVersion: _financeContractVersion),
           expectedLocalRevision: draft.revision,
         ),
       );
@@ -557,7 +593,7 @@ extension CollaborationFinanceActions on CollaborationRepository {
         scopeId,
         SharedFinanceRecordType.financeTransfer,
         id,
-        record.toPayload(),
+        record.toPayload(contractVersion: _financeContractVersion),
       ),
     );
     return id;
@@ -573,7 +609,9 @@ extension CollaborationFinanceActions on CollaborationRepository {
       scopeId,
       SharedFinanceRecordType.financeTransfer,
       draft.id,
-      draft.copyWith(updatedAt: clock().toUtc()).toPayload(),
+      draft
+          .copyWith(updatedAt: _financeUpdatedAt(draft.updatedAt))
+          .toPayload(contractVersion: _financeContractVersion),
       expectedLocalRevision: draft.revision,
     ),
   );
@@ -588,4 +626,219 @@ extension CollaborationFinanceActions on CollaborationRepository {
       deleted: true,
     ),
   );
+}
+
+extension CollaborationFinancePlanningActions on CollaborationRepository {
+  void _requireFinancePlanning() {
+    if (_financeContractVersion < 2) {
+      throw const CollaborationException('unsupported_version');
+    }
+  }
+
+  Future<void> saveFinancePlanForScope({
+    required String scopeId,
+    required List<LocalFinanceAccount> accounts,
+    required List<FinanceRecurrenceRule> rules,
+  }) async {
+    _requireFinancePlanning();
+    await _editFinance(scopeId, (p) async {
+      for (final account in accounts) {
+        account.validate();
+        await _putFinance(
+          p,
+          scopeId,
+          SharedFinanceRecordType.financeAccount,
+          account.id,
+          SharedFinanceAccount(
+            id: account.id,
+            name: account.name,
+            currency: account.currency,
+            openingBalanceMinor: account.openingBalanceMinor,
+            openingBalanceAt: account.openingBalanceAt,
+            archived: account.archived,
+            createdAt: account.createdAt,
+            updatedAt: account.updatedAt,
+          ).toPayload(contractVersion: 2),
+        );
+      }
+      for (final rule in rules) {
+        rule.validate();
+        if (rule.ledgerAccountId == null) {
+          throw const CollaborationException('finance_account_missing');
+        }
+        final payload = Map<String, Object?>.of(rule.toJson())
+          ..remove('id')
+          ..remove('revision');
+        await _putFinance(
+          p,
+          scopeId,
+          SharedFinanceRecordType.financeRecurrenceRule,
+          rule.id,
+          payload,
+        );
+      }
+      await _materializeSharedFinance(p, scopeId);
+    });
+  }
+
+  Future<void> updateFinanceRecurrenceRule(
+    String scopeId,
+    FinanceRecurrenceRule rule,
+  ) async {
+    _requireFinancePlanning();
+    rule.validate();
+    final previous = state
+        .dataForScope(scopeId)
+        .financeRecurrenceRules
+        .where((r) => r.id == rule.id)
+        .firstOrNull;
+    if (previous != null &&
+        (previous.currency != rule.currency || previous.kind != rule.kind)) {
+      throw const CollaborationException('rule_currency_immutable');
+    }
+    await _editFinance(scopeId, (p) async {
+      final payload =
+          Map<String, Object?>.of(
+              rule
+                  .copyWith(updatedAt: _financeUpdatedAt(rule.updatedAt))
+                  .toJson(),
+            )
+            ..remove('id')
+            ..remove('revision');
+      await _putFinance(
+        p,
+        scopeId,
+        SharedFinanceRecordType.financeRecurrenceRule,
+        rule.id,
+        payload,
+        expectedLocalRevision: rule.revision,
+      );
+      final data = await _scopeData(p, scopeId), now = clock();
+      for (final e in data.financeEntries.where(
+        (e) =>
+            e.recurrenceRuleId == rule.id &&
+            e.status == SharedFinanceStatus.planned &&
+            e.plannedAt != null &&
+            !e.plannedAt!.isBefore(now),
+      )) {
+        final month = e.plannedAt!.toLocal();
+        if (!rule.includesMonth(month.year, month.month)) {
+          await _putFinance(
+            p,
+            scopeId,
+            SharedFinanceRecordType.financeEntry,
+            e.id,
+            null,
+            deleted: true,
+            expectedLocalRevision: e.revision,
+          );
+        } else {
+          final updated = e.copyWith(
+            title: rule.title,
+            kind: rule.entryKind,
+            amountMinor: rule.estimatedAmountMinor,
+            currency: rule.currency,
+            accountId: rule.ledgerAccountId,
+            ledgerAccountId: rule.ledgerAccountId,
+            plannedAt: rule.dateForMonth(month.year, month.month).toUtc(),
+            updatedAt: _financeUpdatedAt(e.updatedAt),
+          );
+          await _putFinance(
+            p,
+            scopeId,
+            SharedFinanceRecordType.financeEntry,
+            e.id,
+            updated.toPayload(contractVersion: 2),
+            expectedLocalRevision: e.revision,
+          );
+        }
+      }
+      await _materializeSharedFinance(p, scopeId);
+    });
+  }
+
+  Future<void> materializeFinanceOccurrencesForScope(String scopeId) async {
+    _requireFinancePlanning();
+    await _editFinance(scopeId, (p) => _materializeSharedFinance(p, scopeId));
+  }
+
+  Future<void> _materializeSharedFinance(String p, String scopeId) async {
+    final data = await _scopeData(p, scopeId), now = clock().toLocal();
+    final seen = {
+      for (final e in data.financeEntries)
+        if (e.recurrenceRuleId != null)
+          '${e.recurrenceRuleId}:${e.occurrenceKey}',
+    };
+    for (final rule in data.financeRecurrenceRules.where((r) => r.active)) {
+      if (data.financeAccounts.any(
+        (a) => a.id == rule.ledgerAccountId && a.archived,
+      )) {
+        continue;
+      }
+      if (rule.ledgerAccountId == null) {
+        throw const CollaborationException('finance_account_missing');
+      }
+      for (var offset = 0; offset < 12; offset++) {
+        final month = DateTime(now.year, now.month + offset);
+        if (!rule.includesMonth(month.year, month.month)) continue;
+        final key = rule.keyForMonth(month.year, month.month);
+        if (!seen.add('${rule.id}:$key')) continue;
+        final date = rule.dateForMonth(month.year, month.month).toUtc();
+        final record = SharedFinanceEntry(
+          id: newSharedId(),
+          createdAt: clock().toUtc(),
+          updatedAt: clock().toUtc(),
+          accountId: rule.ledgerAccountId!,
+          kind: rule.entryKind,
+          status: SharedFinanceStatus.planned,
+          amountMinor: rule.estimatedAmountMinor,
+          currency: rule.currency,
+          title: rule.title,
+          occurredAt: date,
+          plannedAt: date,
+          ledgerAccountId: rule.ledgerAccountId,
+          recurrenceRuleId: rule.id,
+          occurrenceKey: key,
+        );
+        await _putFinance(
+          p,
+          scopeId,
+          SharedFinanceRecordType.financeEntry,
+          record.id,
+          record.toPayload(contractVersion: 2),
+        );
+      }
+    }
+  }
+
+  Future<void> confirmFinanceOccurrenceForScope(
+    String scopeId,
+    SharedFinanceEntry entry, {
+    required int amountMinor,
+    required DateTime paidAt,
+  }) async {
+    _requireFinancePlanning();
+    final current = state
+        .dataForScope(scopeId)
+        .financeEntries
+        .where((e) => e.id == entry.id)
+        .firstOrNull;
+    if (current?.status == SharedFinanceStatus.posted &&
+        current?.amountMinor == amountMinor &&
+        current?.paidAt == paidAt.toUtc()) {
+      return;
+    }
+    if (entry.status != SharedFinanceStatus.planned) {
+      throw const CollaborationException('stale_edit');
+    }
+    await updateFinanceEntry(
+      scopeId,
+      entry.copyWith(
+        status: SharedFinanceStatus.posted,
+        amountMinor: amountMinor,
+        paidAt: paidAt.toUtc(),
+        occurredAt: paidAt.toUtc(),
+      ),
+    );
+  }
 }

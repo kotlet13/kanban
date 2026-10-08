@@ -63,6 +63,7 @@ const backupTables = <String, List<String>>{
     'remote',
   ],
   'finance_outbox': [
+    'wire_version',
     'sequence',
     'op_id',
     'partition',
@@ -97,8 +98,18 @@ const backupTables = <String, List<String>>{
 };
 
 Map<String, dynamic> backupMap(Object? value) => value as Map<String, dynamic>;
-List<Map<String, dynamic>> backupRows(Map<String, dynamic> doc, String table) =>
-    (backupMap(doc['tables'])[table] as List).cast<Map<String, dynamic>>();
+List<Map<String, dynamic>> backupRows(Map<String, dynamic> doc, String table) {
+  final rows = (backupMap(doc['tables'])[table] as List)
+      .cast<Map<String, dynamic>>();
+  if (table == 'finance_outbox' && doc['version'] != 3) {
+    // Add envelope metadata only; the immutable request remains byte-for-byte.
+    for (final row in rows) {
+      row.putIfAbsent('wire_version', () => 1);
+    }
+  }
+  return rows;
+}
+
 OrganizerSnapshot backupPersonal(Map<String, dynamic> doc) =>
     OrganizerBackupCodec.decode(doc['personal'] as String);
 
@@ -122,12 +133,23 @@ void validateBackupDocument(Map<String, dynamic> doc) {
           'uiPreferences',
           'completeness',
           'exclusions',
-          if (doc['version'] == 2) 'gardens',
+          if (doc['version'] != 1) 'gardens',
+          if (doc['version'] == 3) ...['operationPairs', 'financeInboxReads'],
         }).isNotEmpty ||
-        doc.length != (doc['version'] == 2 ? 13 : 12) ||
+        doc.length !=
+            (doc['version'] == 1
+                ? 12
+                : doc['version'] == 2
+                ? 13
+                : 15) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2].contains(doc['version']) ||
-        doc['databaseVersion'] != (doc['version'] == 1 ? 4 : 5) ||
+        !const [1, 2, 3].contains(doc['version']) ||
+        doc['databaseVersion'] !=
+            (doc['version'] == 1
+                ? 4
+                : doc['version'] == 2
+                ? 5
+                : 6) ||
         !isSharedUuid(doc['id'] as String)) {
       throw const FormatException();
     }
@@ -215,21 +237,29 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             validateSharedPayload(
               SharedRecordType.values.byName(row['type'] as String),
               payload,
-              contractVersion:
-                  payload.containsKey('startAt') || row['type'] == 'event'
-                  ? 2
-                  : 1,
+              contractVersion: sharedPayloadContractVersion(
+                row['type'] as String,
+                payload,
+              ),
               personal: scope.kind == SharedScopeKind.personal,
             );
           } else {
             final type = SharedFinanceRecordType.values.byName(
               row['type'] as String,
             );
-            if ((type == SharedFinanceRecordType.personalFinanceEntry) !=
-                (scope.kind == SharedScopeKind.personal)) {
+            if (const [
+                      SharedFinanceRecordType.personalFinanceEntry,
+                      SharedFinanceRecordType.personalFinanceAccount,
+                    ].contains(type) !=
+                    (scope.kind == SharedScopeKind.personal) &&
+                type != SharedFinanceRecordType.financeRecurrenceRule) {
               throw const FormatException();
             }
-            validateSharedFinancePayload(type, payload);
+            validateSharedFinancePayload(
+              type,
+              payload,
+              contractVersion: backupFinanceContractVersion(type.name, payload),
+            );
           }
         }
       }
@@ -271,7 +301,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 recordTypes['${row['scope_id']}:${row['record_id']}'] ||
             (request['deleted'] == true) != (request['payload'] == null) ||
             (table == 'outbox' &&
-                !const [1, 2].contains(row['wire_version']))) {
+                !const [1, 2, 3].contains(row['wire_version']))) {
           throw const FormatException();
         }
         lastSequence = row['sequence'] as int;
@@ -288,6 +318,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             validateSharedFinancePayload(
               SharedFinanceRecordType.values.byName(request['type'] as String),
               backupMap(request['payload']),
+              contractVersion: row['wire_version'] as int? ?? 1,
             );
           }
         }
@@ -323,6 +354,9 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'shoppingList',
             'shoppingItem',
             'personalFinanceEntry',
+            'personalFinanceAccount',
+            'financeRecurrenceRule',
+            'householdPerson',
           ].contains(m['type']) ||
           m.keys.toSet().difference({
             'workspace',
@@ -342,7 +376,13 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       final m = backupMap(value);
       if (!backupRows(
         doc,
-        m['type'] == 'personalFinanceEntry' ? 'finance_records' : 'records',
+        const [
+              'personalFinanceEntry',
+              'personalFinanceAccount',
+              'financeRecurrenceRule',
+            ].contains(m['type'])
+            ? 'finance_records'
+            : 'records',
       ).any(
         (r) =>
             r['scope_id'] == binding['scope_id'] &&
@@ -377,7 +417,10 @@ void validateBackupDocument(Map<String, dynamic> doc) {
               'updatedAt',
               'createdByAccountId',
               'updatedByAccountId',
+              if (table.startsWith('finance')) 'contractVersion',
             }).isNotEmpty ||
+            (remote.containsKey('contractVersion') &&
+                !const [1, 2].contains(remote['contractVersion'])) ||
             remote['id'] != id ||
             remote['type'] != row['type'] ||
             (remote['revision'] as int) < 1 ||
@@ -393,13 +436,18 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             validateSharedFinancePayload(
               SharedFinanceRecordType.values.byName(row['type'] as String),
               p,
+              contractVersion:
+                  remote['contractVersion'] as int? ??
+                  backupFinanceContractVersion(row['type'] as String, p),
             );
           } else {
             validateSharedPayload(
               SharedRecordType.values.byName(row['type'] as String),
               p,
-              contractVersion:
-                  p.containsKey('startAt') || row['type'] == 'event' ? 2 : 1,
+              contractVersion: sharedPayloadContractVersion(
+                row['type'] as String,
+                p,
+              ),
               personal:
                   scopeMap[row['scope_id']]!.kind == SharedScopeKind.personal,
             );
@@ -408,6 +456,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       }
     }
     validateBackupLinks(doc);
+    validateBackupOperationPairs(doc);
+    validateBackupFinanceInboxReads(doc);
     for (final row in backupRows(doc, 'commands')) {
       final operation = row['operation'] as String,
           params = backupMap(jsonDecode(row['params'] as String));
@@ -558,5 +608,101 @@ void validateBackupLinks(Map<String, dynamic> doc) {
         throw const FormatException('Invalid conflict');
       }
     }
+  }
+}
+
+int backupFinanceContractVersion(String type, Map<String, dynamic> p) =>
+    const ['personalFinanceAccount', 'financeRecurrenceRule'].contains(type) ||
+        p.containsKey('plannedAt') ||
+        p.containsKey('openingBalanceAt')
+    ? 2
+    : 1;
+
+void validateBackupOperationPairs(Map<String, dynamic> doc) {
+  if (doc['version'] != 3) return;
+  if (doc['operationPairs'] is! List) {
+    throw const FormatException('Missing operation pairs');
+  }
+  final generic = {
+    for (final row in backupRows(doc, 'outbox')) row['op_id']: row,
+  };
+  final finance = {
+    for (final row in backupRows(doc, 'finance_outbox')) row['op_id']: row,
+  };
+  final seenGeneric = <String>{}, seenFinance = <String>{};
+  for (final raw in doc['operationPairs'] as List) {
+    final pair = backupMap(raw),
+        g = generic[pair['genericOpId']],
+        f = finance[pair['financeOpId']];
+    if (pair.length != 2 ||
+        !isSharedUuid(pair['genericOpId']) ||
+        !isSharedUuid(pair['financeOpId']) ||
+        !seenGeneric.add(pair['genericOpId'] as String) ||
+        !seenFinance.add(pair['financeOpId'] as String) ||
+        g == null ||
+        f == null ||
+        g['partition'] != f['partition'] ||
+        g['scope_id'] != f['scope_id']) {
+      throw const FormatException('Invalid operation pair');
+    }
+    final gp = backupMap(jsonDecode(g['request'] as String)),
+        fp = backupMap(jsonDecode(f['request'] as String));
+    if (gp['type'] != 'task' ||
+        !const ['financeEntry', 'personalFinanceEntry'].contains(fp['type'])) {
+      throw const FormatException('Invalid paired types');
+    }
+    final taskId = gp['recordId'];
+    if (fp['payload'] != null && (fp['payload'] as Map)['taskId'] == taskId) {
+      continue;
+    }
+    // Detaching preserves the finance record; prove its original task link.
+    final history = finance.values
+        .where(
+          (r) =>
+              r['scope_id'] == f['scope_id'] &&
+              r['record_id'] == f['record_id'],
+        )
+        .map((r) => backupMap(jsonDecode(r['request'] as String)));
+    final canonical = backupRows(doc, 'finance_records')
+        .where(
+          (r) => r['scope_id'] == f['scope_id'] && r['id'] == f['record_id'],
+        )
+        .firstOrNull?['remote'];
+    if (!history.any(
+          (r) =>
+              r['payload'] != null && (r['payload'] as Map)['taskId'] == taskId,
+        ) &&
+        !(canonical != null &&
+            (backupMap(jsonDecode(canonical as String))['payload']
+                    as Map?)?['taskId'] ==
+                taskId)) {
+      throw const FormatException('Unproven cost detach');
+    }
+  }
+}
+
+void validateBackupFinanceInboxReads(Map<String, dynamic> doc) {
+  if (doc['version'] != 3) return;
+  if (doc['financeInboxReads'] is! List ||
+      (doc['financeInboxReads'] as List).length > 50000) {
+    throw const FormatException('Invalid finance inbox receipts');
+  }
+  final source = doc['source'] as Map?;
+  final seen = <String>{};
+  for (final raw in doc['financeInboxReads'] as List) {
+    final receipt = backupMap(raw), name = receipt['name'];
+    if (receipt.length != 2 ||
+        !receipt.containsKey('value') ||
+        name is! String ||
+        name.length > 4096 ||
+        !seen.add(name) ||
+        (!name.startsWith('finance_inbox_read:personal:local:') &&
+            !(source != null &&
+                name.startsWith(
+                  'finance_inbox_read:${source['partition']}:',
+                )))) {
+      throw const FormatException('Invalid finance inbox receipt source');
+    }
+    readSharedDate(receipt, 'value');
   }
 }

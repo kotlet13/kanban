@@ -1,7 +1,6 @@
 # FamilyHub native API v1 — deljenje in sinhronizacija
 
-Pogodba je usklajena 4. oktobra 2026. Ta različica je izvedena in lokalno preizkušena;
-konkretne rezultate in omejitve vodi [README.md](README.md). Produkcijska namestitev ni izvedena. Ne gre za stare `familyHub*` JSON-RPC
+Pogodba je usklajena z izvorom FamilyHub **0.7.0 / schema 11** 8. oktobra 2026. Transport ostane Native v1; različice zapisov so ločeno `recordContractVersions:[1,2,3]` in `financeContractVersions:[1,2]`. Različice 0.3–0.6 spodaj opisujejo zgodovino razširitev. Izvor in lokalni preizkusi niso dokaz nameščene 0.7.0 na gostovanju ali fizične dostave obvestil; aktualne rezultate vodi [izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md). Ne gre za stare `familyHub*` JSON-RPC
 metode: podatki so v lastnih tabelah, brez pravic ali metapodatkov starih projektov.
 
 ## Transport
@@ -64,21 +63,22 @@ odmik ±1. Brez kode po pravilnem geslu: `two_factor_required`; napačna ali že
 koda: generičen `invalid_credentials`. Časovni korak se porabi atomarno z izdajo naprave.
 Nepodprti zunanji ponudniki vrnejo `auth_provider_unsupported`, brez nadomestnega API ključa.
 
-Nov račun je samo povabljen: username je vezan na povabilo, novo uporabniško ime je
+Pri `auth.register` je nov račun samo povabljen: username je vezan na povabilo, novo uporabniško ime je
 ASCII `[a-z0-9_.-]`, 3–64 znakov; novo geslo 12–72 bajtov brez NUL. Ne gre za preverjeno
 e-pošto. Registracija ustvari običajen `app-user`, članstvo, napravo in porabi povabilo
 v eni transakciji. Ob napaki ne porabi povabila. Noben javni tok ne ustvarja skrbnika.
-Prvi lastnik lastne namestitve se prijavi z obstoječim uporabniškim računom in ustvari obseg.
+Prvi lastnik lastne namestitve se prijavi z obstoječim uporabniškim računom ali uporabi izrecni prvi enrollment iz [pogodbe računa](account-api-contract.md), nato ustvari obseg.
 
 ## Obsegi, člani in povabila
 
-`scope = {id:UUID,kind:"household"|"project",name,role:"owner"|"member"|"viewer",sequence:int}`.
+`scope = {id:UUID,kind:"household"|"project"|"personal"|"organization",name,role:"owner"|"member"|"viewer",sequence:int,archived:bool,organizationId:UUID|null,projectRootId:UUID|null,requiredRecordContractVersion:int}`.
 Gospodinjstvo in samostojen projekt sta ločena obsega; dostop se ne deduje.
 Osebni podatki ostanejo lokalni, dokler uporabnik izrecno izbere deljenje.
 Generic record contract1 nima financ ali dogodkov. FamilyHub0.3 razširitve (sync2/event, inbox/opomniki in ločen finance modul) so v [collaboration-api-contract.md](collaboration-api-contract.md); stari Kanboard projekti ostajajo ločeni.
 
-- `scopes.create {id,kind,name,requestId}` → `{scope}`; prijavljen ustvarjalec postane owner.
-- `scopes.list {}` → `{scopes}`; samo trenutna aktivna članstva.
+- `scopes.create {id,kind,name,requestId,organizationId?}` → `{scope}`; prijavljen ustvarjalec postane owner. `kind` je household/project/organization; personal se ustvari samo prek `personal.ensure`.
+- `scopes.list {includePersonal?:bool,includeOrganizations?:bool,includeArchived?:bool}` → `{scopes}`; samo trenutna aktivna članstva, vse tri izbirne vrednosti so privzeto false.
+- `scopes.archive {scopeId,archived:bool,requestId}` → `{scope}`; samo owner projektnega obsega z `projectRootId`.
 - `scopes.members {scopeId}` → `{members:[{userId,accountId,username,displayName,role,active:true}]}`.
 - `scopes.removeMember {scopeId,userId,requestId}` → `{removed:true}`; samo owner, sebe ne odstrani.
 - `invitations.create {scopeId,recipientUsername,role,requestId,expiresIn?}` → `{invitation,token}`.
@@ -98,7 +98,7 @@ in začasni invitation token, nikoli trajnih poverilnic ali device tokena.
 
 ## Posamezni zapisi in konflikti
 
-V obeh vrstah obsega so podprti `project`, `task`, `shoppingList`, `shoppingItem`.
+Zapisna pogodba 1 podpira `project`, `task`, `shoppingList`, `shoppingItem`.
 Zapisi imajo lokalno ustvarjene UUID; povezave s starimi strežniškimi ID niso del pogodbe.
 
 `record = {id,type,revision:int>=1,deleted:bool,payload:object|null,sequence:int,updatedAt:ISO8601UTC}`.
@@ -169,3 +169,32 @@ Izbirna FCM priprava FamilyHub0.4: [push-api-contract.md](push-api-contract.md).
 ## Izbris samostojnega računa
 
 FamilyHub0.6.0/schema10 doda self-hosted `account.deletion.preview/confirm/status` in splet brez mobilne aplikacije. Pogodba, razrešitve lastništva, natančna meja izbrisa/hranjenih tujih vsebin in odprte legacy omejitve so v [account-deletion-contract.md](account-deletion-contract.md). To ni dokaz store-ready/full-UGC skladnosti.
+
+## Dopolnitev 0.7.0 — organizacije in zapisna pogodba 3
+
+Capabilities dodajo `features.organizations`, `householdPeople`, `richPlanning`, `taskCosts`, `financePlanning`, `projectArchiving`; podprtost ne nadomesti aktualne naprave, članstva ali finančnega granta. `scopeKinds` vključuje personal/organization; `recordTypesV3` doda `householdPerson`. Organizacija in njen projekt sta **ločena obsega z ločenimi članstvi in finančnimi pravicami**. Organizacijsko članstvo ne odpre vseh projektov, projektno članstvo pa ne odpre organizacije ali sorodnega projekta.
+
+Projekt pod organizacijo lahko ustvari samo njen owner: `scopes.create` s `kind:"project"` in `organizationId`. V isti transakciji nastaneta scope in en korenski project zapis z `id=scope.id`, revizijo 1 ter `area:"home"`. `projectRootId` ostane tudi po poznejši izrecni odvezavi organizacije. Drugi project zapis ali izbris korena je `project_scope_single_project`; task/event morata kazati na ta koren. Sprejet popravek naslova korena atomarno posodobi `scope.name`. Organizacijski obseg ne sprejema generic project zapisov (`organization_projects_use_scopes`). Stari samostojni obsegi brez korena obdržijo dosedanjo večprojektno vsebino; niso tiho pretvorjeni.
+
+Arhiviranje obdrži zapise, ID-je, članstva in branje, zavrne pisanje podatkov z `scope_archived`, začasno zniža finančni write na read ter zviša scope sequence/finance access revision. Owner lahko še odstrani člana ali prekliče povabilo; novega povabila ni mogoče sprejeti v arhiviran projekt. Arhivirani obsegi ne pošiljajo opomnikov, e-pošte ali push dostav. Worker izbira aktivne obsege pred omejitvijo vrste in ponovno preveri arhiv pod zaklepom. Ob ponovni aktivaciji se že zapadli pending opomniki prekličejo, da ne nastane zaostali val opozoril.
+
+`sync3.push {scopeId,operation,operationContractVersion?:1|2|3}` in `sync3.pull {scopeId,cursor,limit?}` obdržita sync2 envelope in odgovore. Privzeta različica operacije je 3. Vsa v2 polja ostanejo, v3 doda:
+
+- project: `phases:[{id,title,milestone,startAt:UTC|null,endAt:UTC|null}],availabilityMinutes:int|null,availabilityPeriod:"day"|"week"|null`;
+- task: `phaseId:string|null,estimateMinutes:int|null,availabilityMinutes:int|null,availabilityPeriod:"day"|"week"|null,timer:{elapsedSeconds:int,runningSince:UTC|null,runId:string|null},assigneePersonId:UUID|null,subjectPersonIds:UUID[]`;
+- householdPerson: `name,notes,archived:bool,createdAt,updatedAt`;
+- event/shopping: v2 polja brez novih načrtovalnih polj.
+
+Faze imajo različne ID-je, največ 200; task phase mora obstajati v njegovem živem projektu. Fazo najprej odveži iz opravil, nato odstrani iz projekta (`live_children`). Ocena je 1–10.000.000 minut; razpoložljivost je par minutes/period, največ 1.440 minut/dan oziroma 10.080 minut/teden. Timer hrani največ 315.360.000 preteklih sekund; runningSince/runId sta oba null ali oba prisotna. Časovnik ne pomeni dokončanja opravila. Osebe so zapisi istega obsega, brez gesla, računa, članstva ali samostojnih pravic; account assignees ostanejo ločeni prejemniki obvestil. Arhivirana oseba sme ostati na obstoječem opravilu, ne sme dobiti nove reference (`person_archived`). Izbris osebe z živimi task/finance referencami je blokiran.
+
+Sync3 pull stare task/project payload dopolni s praznimi fazami, timerjem brez teka, praznimi osebami in null načrtovalnimi vrednostmi. To ne prepiše shranjenega starega payload ali njegove revizije. Sync1/2 v razširjenem obsegu zavrneta pull/nove spremembe z `client_upgrade_required`; cursor se ne premakne in polja se ne odstranjujejo.
+
+### Nespremenljive operacije in povezani strošek
+
+Čakajoča v1/v2 operacija sme po nadgradnji potovati prek `sync3.push` z izvirnim `operationContractVersion`. Njeni `opId`, telo in expectedRevision ostanejo nespremenjeni; bridge izračuna **izvirni** hash `sync.push` oziroma `sync2.push` brez novega transportnega polja. Znan rezultat se preveri pred omejitvijo razširjenega obsega, vendar šele po svežem ACL. Nova operacija ne more prepisati zapisa novejše pogodbe. Razrešitev uporablja nov opId; po uporabniškem izbrisu redigiran replay ostane terminalen.
+
+`sync3.pushTaskWithCost {scopeId,operation,operationContractVersion?:1|2|3,financeOperation,financeOperationContractVersion?:2}` zahteva task operacijo in finance2 entry istega obsega. `financeOperation.type` je financeEntry ali personalFinanceEntry glede na vrsto prostora. Odgovor doda `finance:{status,record,cursor,accessRevision,replayed}`. Obe operaciji, audit, inbox, opomniki in rezultati so ena transakcija; finančna zavrnitev povrne tudi opravilo. Trenutno članstvo/write **in** finančni write grant sta obvezna. Izgubljeni ACK se ponovi z obema izvirnima telesoma; compound hash vključuje celoten prvotni zahtevek. Konflikt in zavrnitve parent/live-children/person/validation/created-at/duplicate-reference/task-cost-date/currency se trajno shranijo po rollbacku in novem preverjanju pravic; avtentikacijske ali dostopne zavrnitve ne predpomnijo finančne vsebine.
+
+Strošek je isti finančni zapis, ne kopija zneska v opravilu. Njegov `taskId` je živ task, `plannedAt` sledi task dueAt; odvezava/izbris opravila ohrani znesek in plačilno zgodovino. Strežnik pri običajni dovoljeni spremembi opravila samo izpelje ta datum/odvezavo pod istim scope zaklepom; ne razkrije finančnega payload ali spremeni plačila. Odjemalec pošilja starejše finančne operacije pred povezanim parom, paru ohrani ID-je tudi v kopiji in spor rešuje za obe polovici skupaj. Ohranitev lokalnega para potrebuje izrecen finančni pregled; izbira strežniške različice zavrže obe povezani spremembi.
+
+Schema 11 additivno doda organization/root/archive in zahtevano record pogodbo na scope ter finance contract različico na policy/zapis. Obstoječe identitete, seje, zapisi, denar in rezultati operacij ostanejo. Lokalna odjemalčeva schema 6, osebni JSON 4 in prenosna kopija 3 so ločeni formati, opisani v [izvedbenem dnevniku](../UPGRADE_IMPLEMENTATION.md); ne potrjujejo namestitve server schema 11. Lokalne integracije zajamejo izolirane organizacije, en koren, osebe, arhiv, compound rollback/replay, stare hash mostove in policy2 izbris. Dejansko nadgradnjo gostovanja in fizično dostavo je treba potrditi ločeno.

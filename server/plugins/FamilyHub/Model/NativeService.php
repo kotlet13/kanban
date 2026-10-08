@@ -10,11 +10,11 @@ class NativeService extends NativeDatabase
         if ($operation === 'capabilities') {
             $pushConfigured=$enabled && NativeFcmConfig::configured();
             return ['api' => 'familyhub_native', 'version' => 1, 'serverId' => $supported ? $this->serverId() : null, 'enabled' => $enabled,
-                    'features' => ['accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'sessionRenewal' => $enabled, 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
+                    'features' => ['projectArchiving'=>$enabled, 'financePlanning' => $enabled, 'taskCosts' => $enabled, 'organizations' => $enabled, 'householdPeople' => $enabled, 'richPlanning' => $enabled, 'accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'sessionRenewal' => $enabled, 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
                                    'recordSync' => $enabled, 'collaboration' => $enabled, 'inbox' => $enabled, 'scheduledReminders' => $enabled, 'externalPush' => $pushConfigured, 'smtp' => $enabled && NativeSmtpTransport::configured(), 'finance' => $enabled, 'legacyProjectSharing' => false],
                     'pushProjectId'=>$pushConfigured ? FAMILYHUB_FCM_PROJECT_ID : null,
-                    'recordContractVersions' => [1, 2], 'recordTypesV2' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem'],
-                    'recordTypes' => ['project', 'task', 'shoppingList', 'shoppingItem'], 'scopeKinds' => ['household', 'project', 'personal']];
+                    'accountDeletionPolicyVersions'=>[1,2], 'financeContractVersions' => [1, 2], 'recordContractVersions' => [1, 2, 3], 'recordTypesV3' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'], 'recordTypesV2' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem'],
+                    'recordTypes' => ['project', 'task', 'shoppingList', 'shoppingItem'], 'scopeKinds' => ['household', 'project', 'personal', 'organization']];
         }
         if (!$enabled) { throw new NativeError('feature_disabled', 503); }
         $class = match (explode('.', $operation)[0]) {
@@ -23,10 +23,10 @@ class NativeService extends NativeDatabase
             'account' => str_starts_with($operation, 'account.deletion.') ? NativeAccountDeletionService::class : NativeAccountService::class,
             'scopes' => NativeScopeService::class,
             'invitations' => NativeInvitationService::class,
-            'sync', 'sync2' => NativeSyncService::class,
+            'sync', 'sync2', 'sync3' => NativeSyncService::class,
             'inbox' => NativeInboxService::class,
             'reminders' => NativeReminderService::class,
-            'finance' => NativeFinanceService::class,
+            'finance', 'finance2' => NativeFinanceService::class,
             'push' => NativePushService::class,
             default => throw new NativeError('unsupported_operation', 404),
         };

@@ -1215,9 +1215,21 @@
   "accountBootstrapCode": "Operator setup code",
   "accountCreate": "Create account",
   "accountCreatedSignedIn": "Your account is created. You are signed in as {username}.",
-  "@accountCreatedSignedIn": {"placeholders": {"username": {"type": "String"}}},
+  "@accountCreatedSignedIn": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "accountCreatedSignInRequired": "Account {username} is created, but sign-in could not be saved on this device. Sign in with this username and the password you chose. Do not use the setup code or invitation again.",
-  "@accountCreatedSignInRequired": {"placeholders": {"username": {"type": "String"}}},
+  "@accountCreatedSignInRequired": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
   "accountEmailConfirmed": "Your email address is verified.",
   "accountSessionAutoRenew": "Sign-in on this device renews automatically while you use the app.",
   "accountPasswordRule": "Password must contain 12 to 72 bytes.",
@@ -1244,6 +1256,135 @@
   "accountEmailUnavailable": "The server has not configured account security email yet.",
   "accountCodeInvalid": "The code is invalid, expired or already used. Request a new one.",
   "accountEnrollmentUnavailable": "First-account setup is no longer available here. Sign in or use an invitation.",
+  "planningPhases": "Phases and milestones",
+  "planningAddPhase": "Add phase",
+  "planningPhaseTitle": "Phase name",
+  "planningMilestone": "Milestone",
+  "planningRemovePhase": "Remove phase",
+  "planningNoPhase": "No phase",
+  "planningEstimateMinutes": "Estimated work in minutes",
+  "planningAvailabilityMinutes": "Available minutes",
+  "planningAvailabilityPeriod": "Availability period",
+  "planningPerDay": "Per day",
+  "planningPerWeek": "Per week",
+  "planningTimerStart": "Start timer",
+  "planningTimerPause": "Pause",
+  "planningElapsed": "Elapsed time",
+  "planningRemaining": "Remaining time",
+  "planningEstimated": "Estimated time",
+  "planningCalendar": "Calendar dates",
+  "taskCostTitle": "Task cost",
+  "taskCostEnabled": "Add cost",
+  "taskCostPaid": "Paid",
+  "taskCostPlanned": "Planned",
+  "taskCostAccount": "Financial account",
+  "taskCostUnassignedAccount": "No account selected",
+  "taskCostPayer": "Payer",
+  "taskCostRecipient": "Recipient",
+  "taskCostAuthor": "Entry author",
+  "taskCostNoDue": "Without a task due date, the cost has no planned date.",
+  "taskCostDetachHint": "Removing the link preserves the financial entry.",
+  "spacePickerTitle": "Space",
+  "organizationTitle": "Organization",
+  "organizationCreate": "Create organization",
+  "organizationProjects": "Organization projects",
+  "organizationCreateProject": "Add organization project",
+  "organizationAccessDescription": "Membership does not grant access to every project or finances. Set access for each project separately.",
+  "peopleTitle": "People",
+  "peopleAdd": "Add person",
+  "peopleName": "Name",
+  "peopleNotes": "Notes",
+  "peopleArchive": "Archive",
+  "peopleRestore": "Restore",
+  "peopleWithoutAccountDescription": "A person profile has no login or access rights.",
+  "peopleEmpty": "Add people whose tasks you want to manage.",
+  "peopleArchived": "Archived person",
+  "financePlanTitle": "Monthly plan",
+  "financePlanWizard": "Set up a financial plan",
+  "financePlanDescription": "Estimates stay expected until you confirm actual receipt or payment.",
+  "financePlanLocal": "The plan is saved on this device and in portable backups.",
+  "financePlanPrivate": "The plan is saved in your selected private space with sync enabled.",
+  "financePlanUpgrade": "Planning in a synced space requires the newer server finance contract.",
+  "financePlanMonthEnd": "If the day does not exist in a month, its last day is used.",
+  "financePlanWeekend": "Weekend salary checks occur on Friday and Monday for the same income. Holidays are not adjusted automatically.",
+  "financePlanSalary": "When do you expect your monthly salary?",
+  "financePlanNoSalary": "No regular salary",
+  "financePlanLoan": "Do you have a loan?",
+  "financePlanLoanPrincipal": "Total loan amount (optional)",
+  "financePlanInstallment": "Estimated monthly installment",
+  "financePlanCard": "Do you have a deferred payment card?",
+  "financePlanCardEstimate": "Estimated monthly settlement",
+  "financePlanOtherIncome": "Other monthly income",
+  "financePlanOtherExpenses": "Monthly expenses",
+  "financePlanAddIncome": "Add income",
+  "financePlanAddExpense": "Add expense",
+  "financePlanEstimatedAmount": "Estimated amount",
+  "financePlanDay": "Day of month",
+  "financePlanFirstDate": "First expected date",
+  "financePlanSalaryLabel": "Salary",
+  "financePlanLoanLabel": "Loan installment",
+  "financePlanCardLabel": "Card settlement",
+  "financePlanReview": "Review plan",
+  "financePlanSave": "Save plan",
+  "financePlanRules": "Monthly recurrences",
+  "financePlanAddRule": "Add monthly rule",
+  "financePlanEditRule": "Edit monthly rule",
+  "financePlanRuleActive": "Rule is active",
+  "financePlanReminders": "Reminders for this plan",
+  "financePlanReminderTime": "Reminder time",
+  "financePlanReminderOptIn": "This does not enable phone permission. Enable device reminders in notification settings.",
+  "financePlanSalaryQuestion": "Have you received your salary?",
+  "financePlanConfirm": "Confirm actual amount",
+  "financePlanActualAmount": "Actual amount",
+  "financePlanActualDate": "Receipt or payment date",
+  "financePlanConfirmed": "The actual amount is confirmed.",
+  "financePlanForecast": "Forecast by date",
+  "financePlanNetChange": "Expected net change",
+  "financePlanProjectedBalance": "Projected balance",
+  "financePlanOpeningBalance": "Opening balance (optional)",
+  "financePlanOpeningDate": "Opening balance at the start of day",
+  "financePlanNoOpening": "No opening balance is set; net change is shown.",
+  "financePlanUndated": "Undated entries are excluded from the dated forecast.",
+  "financePlanSymbolicAccount": "This is a named ledger account; it does not move money or connect to a bank.",
+  "financePlanEmpty": "No dated entries in the selected period.",
+  "financePlanRuleType": "Recurrence type",
+  "financePlanSaved": "The financial plan is saved.",
+  "financePlanOverdue": "Still unconfirmed",
+  "financePlanBack": "Back",
+  "financePlanNext": "Next",
+  "financePlanDateNeeded": "Choose a date.",
+  "financePlanNoItems": "No additional entries.",
+  "financePlanAccountName": "Financial account name",
+  "financePlanAccountArchived": "Archived account",
+  "financePlanReminderBody": "Have you received your salary? Open the expected income and confirm the actual amount.",
+  "peopleTaskSubjects": "Who this task concerns",
+  "financePlanYes": "Yes",
+  "financePlanNo": "No",
+  "financePlanRecordedChange": "Recorded net change",
+  "financePairedConflict": "Review the task and cost conflict in finances.",
+  "deletionDetachOrganization": "Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.",
+  "deletionOrganizationLinks": "Projects detached from an organization",
+  "financePlanIncomeQuestion": "Have you received this income?",
+  "financePlanExpenseQuestion": "Has this obligation been paid?",
+  "financePlanIncomeReminderBody": "Have you received this income? Open the expected entry and confirm the actual amount.",
+  "financePlanExpenseReminderBody": "Has this obligation been paid? Open the planned entry and confirm the actual amount.",
+  "financePlanManageRule": "Manage a recurring entry through its monthly rule. Disabling the rule stops future entries and preserves confirmed history.",
+  "scopeArchivedProjects": "Archived projects",
+  "scopeArchivedDescription": "This project is archived. Data and financial history remain available according to your permissions; tasks do not contribute to the daily overview or reminders.",
+  "peopleCopyDescription": "Related person profiles (names and notes) will also be copied into the selected space.",
+  "financePlanPrincipalOnlyLoan": "The total loan amount can only be entered for a loan installment.",
+  "financePlanOpeningUndated": "No reference date",
+  "planningInvalidMinutes": "Enter a positive number of minutes, up to {max}.",
+  "@planningInvalidMinutes": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "taskCostSelectAccount": "Choose a financial account.",
+  "financeDuplicateOccurrence": "Another device already created the canonical entry for this month. Your local version is kept for comparison; the same income or expense is not counted twice.",
+  "financePairedTaskReview": "Linked task: these changes and the cost will be reviewed together.",
   "privateSyncTitle": "My devices",
   "privateSyncDescription": "A private space for this account only. Other people cannot be invited.",
   "privateSyncOff": "Personal data currently stays on this device. Signing in does not upload it automatically.",
@@ -1431,11 +1572,55 @@
   "gardenSaveError": "Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.",
   "gardenDeleteTitle": "Delete garden?",
   "gardenDeleteBody": "The garden “{name}”, its notes and all areas will be deleted from this device.",
-  "@gardenDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@gardenDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "gardenDefaultArea": "Area {number}",
-  "@gardenDefaultArea": {"placeholders": {"number": {"type": "int"}}},
+  "@gardenDefaultArea": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "gardenAreaCount": "{count} areas",
-  "@gardenAreaCount": {"placeholders": {"count": {"type": "int"}}},
+  "@gardenAreaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gardenAreaPosition": "Left {x}%, top {y}% · {width} × {height}%",
-  "@gardenAreaPosition": {"placeholders": {"x": {"type": "int"}, "y": {"type": "int"}, "width": {"type": "int"}, "height": {"type": "int"}}}
+  "@gardenAreaPosition": {
+    "placeholders": {
+      "x": {
+        "type": "int"
+      },
+      "y": {
+        "type": "int"
+      },
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "financePlanPendingEntries": "Unconfirmed entries",
+  "financePlanPendingDescription": "All expected income and expenses, including undated entries and entries beyond the forecast. Open an entry to confirm the actual amount.",
+  "financePlanUndatedEntry": "No date set",
+  "financePlanForecastPeriod": "Dated entries through {date}, showing the closing total for each day.",
+  "@financePlanForecastPeriod": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

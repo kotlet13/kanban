@@ -2967,6 +2967,400 @@ class AppLocalizationsSl extends AppLocalizations {
       'Prvi račun s kodo tu ni več na voljo. Prijavi se ali uporabi povabilo.';
 
   @override
+  String get planningPhases => 'Faze in mejniki';
+
+  @override
+  String get planningAddPhase => 'Dodaj fazo';
+
+  @override
+  String get planningPhaseTitle => 'Ime faze';
+
+  @override
+  String get planningMilestone => 'Mejnik';
+
+  @override
+  String get planningRemovePhase => 'Odstrani fazo';
+
+  @override
+  String get planningNoPhase => 'Brez faze';
+
+  @override
+  String get planningEstimateMinutes => 'Ocena dela v minutah';
+
+  @override
+  String get planningAvailabilityMinutes => 'Razpoložljive minute';
+
+  @override
+  String get planningAvailabilityPeriod => 'Obdobje razpoložljivosti';
+
+  @override
+  String get planningPerDay => 'Na dan';
+
+  @override
+  String get planningPerWeek => 'Na teden';
+
+  @override
+  String get planningTimerStart => 'Začni časovnik';
+
+  @override
+  String get planningTimerPause => 'Začasno ustavi';
+
+  @override
+  String get planningElapsed => 'Porabljeni čas';
+
+  @override
+  String get planningRemaining => 'Preostali čas';
+
+  @override
+  String get planningEstimated => 'Ocenjeni čas';
+
+  @override
+  String get planningCalendar => 'Koledarski termin';
+
+  @override
+  String get taskCostTitle => 'Strošek opravila';
+
+  @override
+  String get taskCostEnabled => 'Dodaj strošek';
+
+  @override
+  String get taskCostPaid => 'Plačano';
+
+  @override
+  String get taskCostPlanned => 'Načrtovano';
+
+  @override
+  String get taskCostAccount => 'Finančni račun';
+
+  @override
+  String get taskCostUnassignedAccount => 'Brez izbire računa';
+
+  @override
+  String get taskCostPayer => 'Plačnik';
+
+  @override
+  String get taskCostRecipient => 'Prejemnik';
+
+  @override
+  String get taskCostAuthor => 'Avtor vnosa';
+
+  @override
+  String get taskCostNoDue =>
+      'Brez roka opravila strošek nima načrtovanega datuma.';
+
+  @override
+  String get taskCostDetachHint =>
+      'Odstranitev povezave ohrani finančni zapis.';
+
+  @override
+  String get spacePickerTitle => 'Prostor';
+
+  @override
+  String get organizationTitle => 'Organizacija';
+
+  @override
+  String get organizationCreate => 'Ustvari organizacijo';
+
+  @override
+  String get organizationProjects => 'Projekti organizacije';
+
+  @override
+  String get organizationCreateProject => 'Dodaj projekt v organizacijo';
+
+  @override
+  String get organizationAccessDescription =>
+      'Članstvo ne odpre vseh projektov ali financ. Dostop uredi za vsak projekt posebej.';
+
+  @override
+  String get peopleTitle => 'Osebe';
+
+  @override
+  String get peopleAdd => 'Dodaj osebo';
+
+  @override
+  String get peopleName => 'Ime';
+
+  @override
+  String get peopleNotes => 'Zapiski';
+
+  @override
+  String get peopleArchive => 'Arhiviraj';
+
+  @override
+  String get peopleRestore => 'Ponovno aktiviraj';
+
+  @override
+  String get peopleWithoutAccountDescription =>
+      'Profil osebe nima prijave ali dostopnih pravic.';
+
+  @override
+  String get peopleEmpty => 'Dodaj osebe, za katere želiš voditi opravila.';
+
+  @override
+  String get peopleArchived => 'Arhivirana oseba';
+
+  @override
+  String get financePlanTitle => 'Mesečni načrt';
+
+  @override
+  String get financePlanWizard => 'Pripravi finančni načrt';
+
+  @override
+  String get financePlanDescription =>
+      'Okvirni zneski so pričakovani, dokler ne potrdiš dejanskega prejemka ali plačila.';
+
+  @override
+  String get financePlanLocal =>
+      'Načrt se shrani na tej napravi in v prenosno kopijo.';
+
+  @override
+  String get financePlanPrivate =>
+      'Načrt se shrani v izbrani zasebni prostor z vključeno sinhronizacijo.';
+
+  @override
+  String get financePlanUpgrade =>
+      'Za načrtovanje v sinhroniziranem prostoru je potrebna novejša finančna pogodba strežnika.';
+
+  @override
+  String get financePlanMonthEnd =>
+      'Če dan v mesecu ne obstaja, uporabimo zadnji dan tega meseca.';
+
+  @override
+  String get financePlanWeekend =>
+      'Pri plači ob koncu tedna sta preverjanji v petek in ponedeljek za isti priliv. Prazniki se ne prilagajajo samodejno.';
+
+  @override
+  String get financePlanSalary => 'Kdaj pričakuješ mesečno plačo?';
+
+  @override
+  String get financePlanNoSalary => 'Nimam redne plače';
+
+  @override
+  String get financePlanLoan => 'Ali imaš kredit?';
+
+  @override
+  String get financePlanLoanPrincipal => 'Skupni znesek kredita (neobvezno)';
+
+  @override
+  String get financePlanInstallment => 'Okvirni mesečni obrok';
+
+  @override
+  String get financePlanCard => 'Ali imaš kartico z odloženim plačilom?';
+
+  @override
+  String get financePlanCardEstimate => 'Okvirna mesečna poravnava';
+
+  @override
+  String get financePlanOtherIncome => 'Drugi mesečni prilivi';
+
+  @override
+  String get financePlanOtherExpenses => 'Mesečni stroški';
+
+  @override
+  String get financePlanAddIncome => 'Dodaj priliv';
+
+  @override
+  String get financePlanAddExpense => 'Dodaj strošek';
+
+  @override
+  String get financePlanEstimatedAmount => 'Okvirni znesek';
+
+  @override
+  String get financePlanDay => 'Dan v mesecu';
+
+  @override
+  String get financePlanFirstDate => 'Prvi pričakovani datum';
+
+  @override
+  String get financePlanSalaryLabel => 'Plača';
+
+  @override
+  String get financePlanLoanLabel => 'Obrok kredita';
+
+  @override
+  String get financePlanCardLabel => 'Poravnava kartice';
+
+  @override
+  String get financePlanReview => 'Preglej načrt';
+
+  @override
+  String get financePlanSave => 'Shrani načrt';
+
+  @override
+  String get financePlanRules => 'Mesečna ponavljanja';
+
+  @override
+  String get financePlanAddRule => 'Dodaj mesečno pravilo';
+
+  @override
+  String get financePlanEditRule => 'Uredi mesečno pravilo';
+
+  @override
+  String get financePlanRuleActive => 'Pravilo je vključeno';
+
+  @override
+  String get financePlanReminders => 'Opomniki za ta načrt';
+
+  @override
+  String get financePlanReminderTime => 'Čas opomnika';
+
+  @override
+  String get financePlanReminderOptIn =>
+      'To ne vključi dovoljenja telefona. Sistemske opomnike vključi v nastavitvah obvestil.';
+
+  @override
+  String get financePlanSalaryQuestion => 'Ali si že dobil plačo?';
+
+  @override
+  String get financePlanConfirm => 'Potrdi dejanski znesek';
+
+  @override
+  String get financePlanActualAmount => 'Dejanski znesek';
+
+  @override
+  String get financePlanActualDate => 'Datum prejemka ali plačila';
+
+  @override
+  String get financePlanConfirmed => 'Dejanski znesek je potrjen.';
+
+  @override
+  String get financePlanForecast => 'Napoved po datumih';
+
+  @override
+  String get financePlanNetChange => 'Pričakovana neto sprememba';
+
+  @override
+  String get financePlanProjectedBalance => 'Pričakovano stanje';
+
+  @override
+  String get financePlanOpeningBalance => 'Začetno stanje (neobvezno)';
+
+  @override
+  String get financePlanOpeningDate => 'Začetno stanje na začetku dne';
+
+  @override
+  String get financePlanNoOpening =>
+      'Začetno stanje ni določeno; prikazana je neto sprememba.';
+
+  @override
+  String get financePlanUndated =>
+      'Vnosi brez datuma niso vključeni v časovno napoved.';
+
+  @override
+  String get financePlanSymbolicAccount =>
+      'To je poimenovan račun za evidenco; denarja ne premika in se ne povezuje z banko.';
+
+  @override
+  String get financePlanEmpty => 'V izbranem obdobju ni datiranih vnosov.';
+
+  @override
+  String get financePlanRuleType => 'Vrsta ponavljanja';
+
+  @override
+  String get financePlanSaved => 'Finančni načrt je shranjen.';
+
+  @override
+  String get financePlanOverdue => 'Še nepotrjeno';
+
+  @override
+  String get financePlanBack => 'Nazaj';
+
+  @override
+  String get financePlanNext => 'Naprej';
+
+  @override
+  String get financePlanDateNeeded => 'Izberi datum.';
+
+  @override
+  String get financePlanNoItems => 'Ni dodatnih vnosov.';
+
+  @override
+  String get financePlanAccountName => 'Ime finančnega računa';
+
+  @override
+  String get financePlanAccountArchived => 'Arhiviran račun';
+
+  @override
+  String get financePlanReminderBody =>
+      'Ali si že dobil plačo? Odpri pričakovani priliv in potrdi dejanski znesek.';
+
+  @override
+  String get peopleTaskSubjects => 'Na koga se opravilo nanaša';
+
+  @override
+  String get financePlanYes => 'Da';
+
+  @override
+  String get financePlanNo => 'Ne';
+
+  @override
+  String get financePlanRecordedChange => 'Evidentirana neto sprememba';
+
+  @override
+  String get financePairedConflict =>
+      'Konflikt opravila in stroška preglej v financah.';
+
+  @override
+  String get deletionDetachOrganization =>
+      'Ohrani ta projekt kot samostojen prostor, ko se izbriše organizacija. Njegovi člani in finance ostanejo nespremenjeni.';
+
+  @override
+  String get deletionOrganizationLinks =>
+      'Projekti, ki se odvežejo od organizacije';
+
+  @override
+  String get financePlanIncomeQuestion => 'Ali si že prejel priliv?';
+
+  @override
+  String get financePlanExpenseQuestion => 'Ali je obveznost že plačana?';
+
+  @override
+  String get financePlanIncomeReminderBody =>
+      'Ali si že prejel priliv? Odpri pričakovani vnos in potrdi dejanski znesek.';
+
+  @override
+  String get financePlanExpenseReminderBody =>
+      'Ali je obveznost že plačana? Odpri načrtovani vnos in potrdi dejanski znesek.';
+
+  @override
+  String get financePlanManageRule =>
+      'Ponavljajoči vnos urejaj prek mesečnega pravila. Izključitev pravila ustavi prihodnje vnose; potrjena zgodovina ostane.';
+
+  @override
+  String get scopeArchivedProjects => 'Arhivirani projekti';
+
+  @override
+  String get scopeArchivedDescription =>
+      'Projekt je arhiviran. Podatki in finančna zgodovina ostanejo na voljo glede na tvoje pravice; opravila ne prispevajo k dnevnemu pregledu ali opomnikom.';
+
+  @override
+  String get peopleCopyDescription =>
+      'Tudi povezani profili oseb (imena in zapiski) bodo kopirani v izbrani prostor.';
+
+  @override
+  String get financePlanPrincipalOnlyLoan =>
+      'Skupni znesek kredita lahko vneseš samo pri obroku kredita.';
+
+  @override
+  String get financePlanOpeningUndated => 'Brez referenčnega datuma';
+
+  @override
+  String planningInvalidMinutes(int max) {
+    return 'Vpiši pozitivno število minut, največ $max.';
+  }
+
+  @override
+  String get taskCostSelectAccount => 'Izberi finančni račun.';
+
+  @override
+  String get financeDuplicateOccurrence =>
+      'Druga naprava je za ta mesec že ustvarila kanonični vnos. Lokalna različica je ohranjena za primerjavo; isti priliv ali strošek se ne šteje dvakrat.';
+
+  @override
+  String get financePairedTaskReview =>
+      'Povezano opravilo: hkrati bodo obravnavane te spremembe in strošek.';
+
+  @override
   String get privateSyncTitle => 'Moje naprave';
 
   @override
@@ -3593,5 +3987,20 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String gardenAreaPosition(int x, int y, int width, int height) {
     return 'Levo $x %, zgoraj $y % · $width × $height %';
+  }
+
+  @override
+  String get financePlanPendingEntries => 'Nepotrjeni vnosi';
+
+  @override
+  String get financePlanPendingDescription =>
+      'Vsi pričakovani prilivi in stroški, tudi brez datuma ali zunaj napovedi. Odpri vnos in potrdi dejanski znesek.';
+
+  @override
+  String get financePlanUndatedEntry => 'Datum ni določen';
+
+  @override
+  String financePlanForecastPeriod(String date) {
+    return 'Datirani vnosi do $date; prikazano je stanje ob koncu posameznega dne.';
   }
 }

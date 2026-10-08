@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 10;
+const VERSION = 11;
 
 function version_1(PDO $pdo)
 {
@@ -67,4 +67,9 @@ function version_9(PDO $pdo)
 function version_10(PDO $pdo)
 {
     AccountDeletionSchema::create($pdo,false);
+}
+
+function version_11(PDO $pdo)
+{
+    OrganizationSchema::create($pdo, false);
 }

@@ -28,6 +28,7 @@ class _LocalNotificationCoordinatorState
   int _generation = 0;
   Timer? _timer;
   String? _locale;
+  String? _financeMaterializedKey;
   @override
   void initState() {
     super.initState();
@@ -78,6 +79,50 @@ class _LocalNotificationCoordinatorState
         '${shared?.session?.partition}:${shared?.session?.deviceId}';
     final settings = ref.read(localReminderSettingsProvider).valueOrNull;
     if (settings == null || personal == null) return;
+    final clock = ref.read(organizerClockProvider)().toLocal();
+    final financeKey = '${personal.workspaceKey}:${clock.year}-${clock.month}';
+    final privateScope = shared?.privateSync.scopeId;
+    final canMaterialize =
+        personal.workspaceKey == 'local' ||
+        (shared?.financeContractVersion == 2 &&
+            shared?.sessionInvalid != true &&
+            privateScope != null &&
+            shared!.financePolicyForScope(privateScope).canWrite &&
+            shared.financeSnapshotComplete[privateScope] == true);
+    final localRules = personal.financeRecurrenceRules
+        .where(
+          (r) =>
+              r.active &&
+              shared?.privateRecordIds.values.contains(r.id) != true,
+        )
+        .map((r) => r.id)
+        .toSet();
+    final sameWorkspace =
+        personal.workspaceKey == 'local' ||
+        (shared?.session != null &&
+            shared?.sessionInvalid != true &&
+            personal.workspaceKey == 'private:${shared!.session!.partition}');
+    if (sameWorkspace &&
+        (canMaterialize || localRules.isNotEmpty) &&
+        personal.financeRecurrenceRules.any((r) => r.active) &&
+        _financeMaterializedKey != financeKey) {
+      _financeMaterializedKey = financeKey;
+      try {
+        await ref
+            .read(organizerProvider.notifier)
+            .materializeFinanceOccurrences(
+              expectedWorkspaceKey: personal.workspaceKey,
+              ruleIds: canMaterialize ? null : localRules,
+            );
+      } catch (error, stack) {
+        if (mounted) {
+          ref.read(localNotificationDeviceStatusProvider.notifier).state =
+              AsyncError(error, stack);
+        }
+      }
+      if (!mounted || generation != _generation) return;
+      return _reconcile();
+    }
     final l = context.l10n;
     final plans = desiredReminderPlans(
       personal: personal,
@@ -89,7 +134,13 @@ class _LocalNotificationCoordinatorState
               LocalNotificationRequest(
                 plan: plan,
                 title: l.organizerAppName,
-                body: plan.reason == 'event_start'
+                body: plan.reason == 'salary_check'
+                    ? l.financePlanReminderBody
+                    : plan.reason == 'income_check'
+                    ? l.financePlanIncomeReminderBody
+                    : plan.reason == 'finance_due'
+                    ? l.financePlanExpenseReminderBody
+                    : plan.reason == 'event_start'
                     ? l.inboxDeviceEventReminder
                     : l.inboxDeviceReminder,
                 sound:

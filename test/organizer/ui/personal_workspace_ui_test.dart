@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,9 +14,14 @@ import 'sharing_ui_fixture.dart';
 class WorkspaceController extends OrganizerController {
   WorkspaceController(this.snapshot);
   final OrganizerSnapshot snapshot;
+  Future<Set<String>>? ownershipRead;
   int creates = 0;
   @override
   Future<OrganizerSnapshot> build() async => snapshot;
+  @override
+  Future<Set<String>> deviceLocalRecordIds() async =>
+      ownershipRead ??
+      (snapshot.workspaceKey == 'local' ? snapshot.recordIds : <String>{});
   @override
   Future<void> createTask({
     required String title,
@@ -99,16 +106,38 @@ void main() {
     },
   );
   testWidgets(
+    'private editor never opens after account switch while ownership read is pending',
+    (tester) async {
+      final ownershipRead = Completer<Set<String>>();
+      final personal = WorkspaceController(
+        OrganizerSnapshot(workspaceKey: 'privateA'),
+      )..ownershipRead = ownershipRead.future;
+      final shared = SharingUiController();
+      await pumpWorkspace(tester, personal, shared);
+      await tester.tap(find.text('Create'));
+      await tester.pump();
+      expect(find.byKey(const ValueKey('organizer-save')), findsNothing);
+      shared.switchAccount();
+      await tester.pump();
+      ownershipRead.complete(<String>{});
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('organizer-save')), findsNothing);
+      expect(personal.creates, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
     'incomplete private finance hides aggregate while retaining visible pending records',
     (tester) async {
       final now = DateTime.utc(2026, 10, 5);
       final personal = WorkspaceController(
         OrganizerSnapshot(
-          workspaceKey: 'privateA',
+          workspaceKey: 'private:${sharingSession().partition}',
           financeEntries: [
             FinanceEntry(
               id: 'one',
               title: 'Čakajoči osebni strošek',
+              status: FinanceEntryStatus.planned,
               amountMinor: 100,
               currency: 'EUR',
               kind: FinanceEntryKind.expense,
@@ -130,11 +159,21 @@ void main() {
             scopeId: sharingScopeId,
           ),
           financeSnapshotComplete: {sharingScopeId: false},
+          privateRecordIds: {'one': 'one'},
         ),
       );
       await pumpWorkspace(tester, personal, shared, finance: true);
       expect(find.text('Čakajoči osebni strošek'), findsOneWidget);
+      expect(
+        tester
+            .widget<ListTile>(find.byKey(const ValueKey('planned-finance-one')))
+            .onTap,
+        isNull,
+      );
       expect(find.text('Stanje'), findsNothing);
+      expect(find.text('Napoved po datumih'), findsNothing);
+      expect(find.text('Pričakovana neto sprememba'), findsNothing);
+      expect(tester.takeException(), isNull);
       expect(find.textContaining('še ni v celoti prenesen'), findsOneWidget);
     },
   );

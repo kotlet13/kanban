@@ -3,6 +3,9 @@ part of 'collaboration_repository.dart';
 /// Atomic local record edits, dependency ordering and explicit personal copies.
 extension CollaborationRecordActions on CollaborationRepository {
   Future<void> _writable(String partition, String scopeId) async {
+    if (_sessionInvalidReason != null) {
+      throw CollaborationException(_sessionInvalidReason!);
+    }
     final rows = await database.rows(
       'SELECT data,blocked FROM scopes WHERE partition=? AND id=?',
       [partition, scopeId],
@@ -28,6 +31,7 @@ extension CollaborationRecordActions on CollaborationRepository {
       _checkEpoch(epoch);
       await _writable(profile.partition, scopeId);
       await action(profile.partition);
+      _checkEpoch(epoch);
     });
     await refreshLocal();
   }
@@ -59,8 +63,31 @@ extension CollaborationRecordActions on CollaborationRepository {
     if (!isSharedUuid(id)) {
       throw const CollaborationException('validation_error');
     }
+    final scopeRow = (await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [partition, scope],
+    )).single;
+    final scoped = SharedScope.fromJson(
+      CollaborationRepository._map(scopeRow['data']),
+    );
+    final root =
+        scoped.projectRootId ??
+        (scoped.organizationId != null ? scoped.id : null);
+    if (root != null && type == SharedRecordType.project && id != root) {
+      throw const CollaborationException('project_scope_single_project');
+    }
+    if (root != null &&
+        payload != null &&
+        (type == SharedRecordType.task || type == SharedRecordType.event) &&
+        payload['projectId'] != root) {
+      throw const CollaborationException('parent_missing');
+    }
     if (payload != null) {
-      validateSharedPayload(type, Map<String, dynamic>.from(payload));
+      validateSharedPayload(
+        type,
+        Map<String, dynamic>.from(payload),
+        contractVersion: _recordContractVersion,
+      );
       final parentId = type == SharedRecordType.shoppingItem
           ? payload['listId']
           : (type == SharedRecordType.task || type == SharedRecordType.event)
@@ -73,6 +100,44 @@ extension CollaborationRecordActions on CollaborationRepository {
                 ? 'shoppingList'
                 : 'project')) {
           throw const CollaborationException('validation_error');
+        }
+      }
+    }
+    if (payload != null &&
+        type == SharedRecordType.task &&
+        _recordContractVersion >= 3 &&
+        payload['phaseId'] != null) {
+      if (payload['projectId'] == null) {
+        throw const CollaborationException('parent_missing');
+      }
+      final project = await _record(
+        partition,
+        scope,
+        payload['projectId'] as String,
+      );
+      final phases =
+          CollaborationRepository._map(project['payload'])['phases'] as List? ??
+          [];
+      if (!phases.any((phase) => (phase as Map)['id'] == payload['phaseId'])) {
+        throw const CollaborationException('parent_missing');
+      }
+    }
+    if (payload != null &&
+        type == SharedRecordType.project &&
+        _recordContractVersion >= 3) {
+      final phaseIds = (payload['phases'] as List)
+          .map((phase) => (phase as Map)['id'])
+          .toSet();
+      final tasks = await database.rows(
+        "SELECT payload FROM records WHERE partition=? AND scope_id=? AND type='task' AND deleted=0",
+        [partition, scope],
+      );
+      for (final task in tasks) {
+        final body = CollaborationRepository._map(task['payload']);
+        if (body['projectId'] == id &&
+            body['phaseId'] != null &&
+            !phaseIds.contains(body['phaseId'])) {
+          throw const CollaborationException('live_children');
         }
       }
     }
@@ -99,6 +164,35 @@ extension CollaborationRecordActions on CollaborationRepository {
         (old == null || old['local_revision'] != expectedLocalRevision)) {
       throw const CollaborationException('stale_edit');
     }
+    if (type == SharedRecordType.task &&
+        payload != null &&
+        _recordContractVersion >= 3) {
+      final previousPayload = old?['payload'] == null
+          ? <String, dynamic>{}
+          : CollaborationRepository._map(old!['payload']);
+      Future<void> person(Object? id, bool retained) async {
+        if (id == null) return;
+        final row = await _record(partition, scope, id as String);
+        if (row['type'] != 'householdPerson') {
+          throw const CollaborationException('person_missing');
+        }
+        if (!retained &&
+            CollaborationRepository._map(row['payload'])['archived'] == true) {
+          throw const CollaborationException('person_archived');
+        }
+      }
+
+      await person(
+        payload['assigneePersonId'],
+        payload['assigneePersonId'] == previousPayload['assigneePersonId'],
+      );
+      for (final id in payload['subjectPersonIds'] as List) {
+        await person(
+          id,
+          (previousPayload['subjectPersonIds'] as List? ?? []).contains(id),
+        );
+      }
+    }
     final queued = await database.rows(
       'SELECT state FROM outbox WHERE partition=? AND scope_id=? AND record_id=?',
       [partition, scope, id],
@@ -119,6 +213,14 @@ extension CollaborationRecordActions on CollaborationRepository {
       payload == null ? null : Map<String, dynamic>.from(payload),
       deleted,
     );
+    if (root != null && type == SharedRecordType.project && payload != null) {
+      validateSharedText(payload['title'], 200);
+      final wire = scoped.toJson()..['name'] = payload['title'];
+      await database.execute(
+        'UPDATE scopes SET data=? WHERE partition=? AND id=?',
+        [jsonEncode(wire), partition, scope],
+      );
+    }
     final serverRevision = (old?['server_revision'] as int?) ?? 0;
     final request = {
       'opId': newSharedId(),
@@ -160,6 +262,36 @@ extension CollaborationRecordActions on CollaborationRepository {
       ..remove('revision')
       ..remove('createdByAccountId')
       ..remove('updatedByAccountId');
+    if (_recordContractVersion < 3) {
+      final rich = <String, Object?>{
+        for (final key in [
+          'phases',
+          'availabilityMinutes',
+          'availabilityPeriod',
+          'phaseId',
+          'estimateMinutes',
+          'timer',
+          'assigneePersonId',
+          'subjectPersonIds',
+        ])
+          if (value.containsKey(key)) key: value[key],
+      };
+      if (rich.entries.any(
+        (entry) =>
+            entry.value != null &&
+            !(entry.value is List && (entry.value as List).isEmpty) &&
+            !(entry.key == 'timer' &&
+                entry.value is Map &&
+                (entry.value as Map)['elapsedSeconds'] == 0 &&
+                (entry.value as Map)['runningSince'] == null &&
+                (entry.value as Map)['runId'] == null),
+      )) {
+        throw const CollaborationException('client_upgrade_required');
+      }
+      for (final key in rich.keys) {
+        value.remove(key);
+      }
+    }
     if (_recordContractVersion < 2) {
       if (value['startAt'] != null ||
           value['endAt'] != null ||
@@ -379,6 +511,9 @@ extension CollaborationRecordActions on CollaborationRepository {
     DateTime? startAt,
     DateTime? endAt,
     ProjectArea area = ProjectArea.home,
+    Iterable<ProjectPhase> phases = const [],
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
   }) async {
     final id = newSharedId(), now = _now;
     await _edit(scopeId, (p) async {
@@ -390,6 +525,9 @@ extension CollaborationRecordActions on CollaborationRepository {
         startAt: startAt?.toUtc(),
         endAt: endAt?.toUtc(),
         area: area,
+        phases: phases,
+        availabilityMinutes: availabilityMinutes,
+        availabilityPeriod: availabilityPeriod,
         createdAt: now,
         updatedAt: now,
       );
@@ -420,6 +558,31 @@ extension CollaborationRecordActions on CollaborationRepository {
               description: draft.description.trim(),
               updatedAt: _now,
             );
+        final previous = data.projects.firstWhere(
+          (project) => project.id == draft.id,
+        );
+        if (previous.revision != draft.revision) {
+          throw const CollaborationException('stale_edit');
+        }
+        final remaining = row.phases.map((phase) => phase.id).toSet();
+        for (final task in data.tasks.where(
+          (task) =>
+              task.projectId == row.id &&
+              task.phaseId != null &&
+              !remaining.contains(task.phaseId),
+        )) {
+          // The editor explicitly confirms phase removal. Queue dependent task
+          // detachment before the project update without touching other fields.
+          final detached = task.copyWith(phaseId: null, updatedAt: _now);
+          await _put(
+            p,
+            scopeId,
+            SharedRecordType.task,
+            task.id,
+            _payload(detached.toJson()),
+            expectedLocalRevision: task.revision,
+          );
+        }
         _validate(
           SharedScopeData(
             projects: data.projects.map((r) => r.id == row.id ? row : r),
@@ -446,16 +609,41 @@ extension CollaborationRecordActions on CollaborationRepository {
     DateTime? startAt,
     DateTime? endAt,
     Iterable<String> assigneeAccountIds = const [],
+    String? assigneePersonId,
+    Iterable<String> subjectPersonIds = const [],
+    String? phaseId,
+    int? estimateMinutes,
+    int? availabilityMinutes,
+    AvailabilityPeriod? availabilityPeriod,
+    TaskTimerState timer = const TaskTimerState(),
   }) async {
     final id = newSharedId(), now = _now;
     await _edit(scopeId, (p) async {
       final data = await _scopeData(p, scopeId);
+      final scoped = SharedScope.fromJson(
+        CollaborationRepository._map(
+          (await database.rows(
+            'SELECT data FROM scopes WHERE partition=? AND id=?',
+            [p, scopeId],
+          )).single['data'],
+        ),
+      );
+      projectId ??=
+          scoped.projectRootId ??
+          (scoped.organizationId != null ? scopeId : null);
       final row = LocalTask(
         id: id,
         title: title.trim(),
         notes: notes.trim(),
         projectId: projectId,
         assigneeAccountIds: assigneeAccountIds,
+        assigneePersonId: assigneePersonId,
+        subjectPersonIds: subjectPersonIds,
+        phaseId: phaseId,
+        estimateMinutes: estimateMinutes,
+        availabilityMinutes: availabilityMinutes,
+        availabilityPeriod: availabilityPeriod,
+        timer: timer,
         startAt: startAt?.toUtc(),
         endAt: endAt?.toUtc(),
         dueAt: dueAt?.toUtc(),
@@ -522,12 +710,32 @@ extension CollaborationRecordActions on CollaborationRepository {
     scopeId,
     (p) => _put(p, scopeId, SharedRecordType.task, id, null, deleted: true),
   );
+  Future<LocalTask> toggleTaskTimer(String scopeId, LocalTask task) async {
+    final profile = _requireSession().profile, epoch = _epoch;
+    final timer = task.timer.running
+        ? task.timer.pausedAt(_now)
+        : TaskTimerState(
+            elapsedSeconds: task.timer.elapsedSeconds,
+            runningSince: _now,
+            runId: newSharedId(),
+          );
+    await updateTask(scopeId, task.copyWith(timer: timer));
+    _checkEpoch(epoch);
+    final data = await _scopeData(profile.partition, scopeId);
+    _checkEpoch(epoch);
+    return data.tasks.firstWhere((row) => row.id == task.id);
+  }
+
   Future<void> deleteProject(String scopeId, String id) => _edit(scopeId, (
     p,
   ) async {
     final data = await _scopeData(p, scopeId);
     for (final task in data.tasks.where((r) => r.projectId == id)) {
-      final row = task.copyWith(projectId: null, updatedAt: _now);
+      final row = task.copyWith(
+        projectId: null,
+        phaseId: null,
+        updatedAt: _now,
+      );
       await _put(
         p,
         scopeId,
@@ -604,9 +812,42 @@ extension CollaborationRecordActions on CollaborationRepository {
     required String scopeId,
     required LocalProject project,
     required List<LocalTask> tasks,
+    List<HouseholdPerson> people = const [],
   }) async {
     final id = newSharedId(), now = _now;
+    final personIds = <String>{
+      for (final task in tasks) ...[
+        if (task.assigneePersonId != null) task.assigneePersonId!,
+        ...task.subjectPersonIds,
+      ],
+    };
+    if (!personIds.every((id) => people.any((person) => person.id == id))) {
+      throw const CollaborationException('invalid_copy');
+    }
+    final personMap = {for (final id in personIds) id: newSharedId()};
+    final phaseMap = {
+      for (final phase in project.phases) phase.id: newSharedId(),
+    };
     await _edit(scopeId, (p) async {
+      for (final person in people.where(
+        (person) => personIds.contains(person.id),
+      )) {
+        final copied = HouseholdPerson(
+          id: personMap[person.id]!,
+          name: person.name,
+          notes: person.notes,
+          archived: false,
+          createdAt: now,
+          updatedAt: now,
+        );
+        await _put(
+          p,
+          scopeId,
+          SharedRecordType.householdPerson,
+          copied.id,
+          _payload(copied.toJson()),
+        );
+      }
       final copied = LocalProject(
         id: id,
         title: project.title,
@@ -614,6 +855,17 @@ extension CollaborationRecordActions on CollaborationRepository {
         startAt: project.startAt,
         endAt: project.endAt,
         area: project.area,
+        phases: project.phases.map(
+          (phase) => ProjectPhase(
+            id: phaseMap[phase.id]!,
+            title: phase.title,
+            milestone: phase.milestone,
+            startAt: phase.startAt,
+            endAt: phase.endAt,
+          ),
+        ),
+        availabilityMinutes: project.availabilityMinutes,
+        availabilityPeriod: project.availabilityPeriod,
         createdAt: now,
         updatedAt: now,
       );
@@ -626,6 +878,13 @@ extension CollaborationRecordActions on CollaborationRepository {
           title: r.title,
           notes: r.notes,
           projectId: id,
+          assigneePersonId: personMap[r.assigneePersonId],
+          subjectPersonIds: r.subjectPersonIds.map((id) => personMap[id]!),
+          phaseId: phaseMap[r.phaseId],
+          estimateMinutes: r.estimateMinutes,
+          availabilityMinutes: r.availabilityMinutes,
+          availabilityPeriod: r.availabilityPeriod,
+          timer: r.timer.pausedAt(now),
           startAt: r.startAt,
           endAt: r.endAt,
           dueAt: r.dueAt,
@@ -649,6 +908,25 @@ extension CollaborationRecordActions on CollaborationRepository {
           SharedRecordType.task,
           task.id,
           _payload(task.toJson()),
+        );
+      }
+      for (final person in people.where(
+        (person) => person.archived && personIds.contains(person.id),
+      )) {
+        final copied = HouseholdPerson(
+          id: personMap[person.id]!,
+          name: person.name,
+          notes: person.notes,
+          archived: true,
+          createdAt: now,
+          updatedAt: now,
+        );
+        await _put(
+          p,
+          scopeId,
+          SharedRecordType.householdPerson,
+          copied.id,
+          _payload(copied.toJson()),
         );
       }
     });

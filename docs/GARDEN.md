@@ -1,5 +1,7 @@
 # Vrt — prva lokalna izvedba
 
+**Dopolnitev 8. oktobra:** aktualna lokalna schema 6, JSON 4 in prenosna kopija 3 ohranijo vrtove ter berljivost prejšnjih formatov. Dejanske legacy schema4/JSON2–3/prenosne1–2 regresije so ponovno preverjene v [nadgradnji](UPGRADE_IMPLEMENTATION.md). Spodaj ostanejo dokazi prvotne izvedbe schema5.
+
 Stanje 7. oktobra 2026. Modul omogoča več poimenovanih vrtov, lastne zapiske in preprosto skico zasaditve. Telefon ga odpre iz zavihka **Več**, namizje iz stranskega menija. Prazno stanje ne vsebuje izmišljenih vrtov ali rastlin.
 
 ## Uporaba
