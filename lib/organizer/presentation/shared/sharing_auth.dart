@@ -39,8 +39,10 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
   bool _register = false;
   bool _allowLocalHttp = false;
   bool _busy = false;
+  bool _showingEnrollment = false;
   bool _needsOtp = false;
   String? _error;
+  String? _notice;
   SharedInvitationPreview? _preview;
 
   bool get _isLocalHttp {
@@ -126,6 +128,7 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
     final password = _password.text;
     final otp = _otp.text.trim();
     final token = _invitationMode ? _token.text.trim() : null;
+    final registering = _register && token != null;
     final device = _device.text.trim().isEmpty
         ? context.l10n.organizerAppName
         : _device.text.trim();
@@ -133,9 +136,10 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
     setState(() {
       _busy = true;
       _error = null;
+      _notice = null;
     });
     try {
-      if (_register && token != null) {
+      if (registering) {
         await controller.registerWithInvitation(
           serverUrl: server,
           invitationToken: token,
@@ -161,10 +165,28 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
         _confirm.clear();
         _otp.clear();
         _token.clear();
+        if (registering) {
+          final session = ref.read(collaborationProvider).valueOrNull?.session;
+          if (session != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  context.l10n.accountCreatedSignedIn(session.username),
+                ),
+              ),
+            );
+          }
+        }
         widget.onConnected();
       }
     } catch (error) {
       if (mounted) {
+        if (registering &&
+            error is CollaborationException &&
+            error.code == 'account_created_session_not_saved') {
+          _prepareCreatedAccountLogin(server, username);
+          return;
+        }
         setState(() {
           _error = sharingErrorMessage(context, error);
           _needsOtp =
@@ -175,6 +197,50 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _enroll() async {
+    widget.onStart();
+    setState(() {
+      _busy = true;
+      _showingEnrollment = true;
+    });
+    try {
+      final enrolled = await showAccountEnrollment(
+        context,
+        ref,
+        initialServer: _server.text.trim(),
+        allowLocalHttp: _allowLocalHttp && _isLocalHttp,
+        onAccountCreatedWithoutSession: (server, username) {
+          if (mounted) _prepareCreatedAccountLogin(server, username);
+        },
+      );
+      if (enrolled && mounted) widget.onConnected();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _showingEnrollment = false;
+        });
+      }
+    }
+  }
+
+  void _prepareCreatedAccountLogin(String server, String username) {
+    setState(() {
+      _server.text = server;
+      _username.text = username;
+      _password.clear();
+      _confirm.clear();
+      _otp.clear();
+      _token.clear();
+      _preview = null;
+      _invitationMode = false;
+      _register = false;
+      _needsOtp = false;
+      _error = null;
+      _notice = context.l10n.accountCreatedSignInRequired(username);
+    });
   }
 
   Widget _field(
@@ -390,19 +456,7 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                       ],
                       if (!_invitationMode) ...[
                         TextButton(
-                          onPressed: _busy
-                              ? null
-                              : () async {
-                                  widget.onStart();
-                                  final enrolled = await showAccountEnrollment(
-                                    context,
-                                    ref,
-                                    initialServer: _server.text.trim(),
-                                    allowLocalHttp:
-                                        _allowLocalHttp && _isLocalHttp,
-                                  );
-                                  if (enrolled && mounted) widget.onConnected();
-                                },
+                          onPressed: _busy ? null : _enroll,
                           child: Text(l.accountFirstTitle),
                         ),
                         TextButton(
@@ -431,10 +485,15 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                           child: Text(l.accountResetConfirm),
                         ),
                       ],
-                      if (_busy)
+                      if (_busy && !_showingEnrollment)
                         const Padding(
                           padding: EdgeInsets.only(top: 16),
                           child: LinearProgressIndicator(),
+                        ),
+                      if (_notice != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Text(_notice!),
                         ),
                       if (_error != null)
                         Padding(

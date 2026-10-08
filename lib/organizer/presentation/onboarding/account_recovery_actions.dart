@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
+import '../../state/collaboration_provider.dart';
 import '../shared/sharing_forms.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
@@ -30,10 +32,14 @@ Future<bool> showAccountEnrollment(
   WidgetRef ref, {
   String initialServer = '',
   bool allowLocalHttp = false,
+  void Function(String server, String username)? onAccountCreatedWithoutSession,
 }) async {
   final l = context.l10n,
       guard = SharingSessionGuard(context, ref, allowSignedOut: true);
-  bool enrolled = false;
+  final container = ProviderScope.containerOf(context, listen: false);
+  AccountSession? enrolledSession;
+  Completer<void>? submissionFinished;
+  String? createdServer, createdUsername;
   await showSharingForm(
     context,
     title: l.accountFirstTitle,
@@ -53,20 +59,59 @@ Future<bool> showAccountEnrollment(
     ],
     submitLabel: l.accountCreate,
     errorMessage: (e) => sharingErrorMessage(context, e),
-    wrap: (form) => SharingSessionBoundary(guard: guard, child: form),
+    wrap: (form) => SharingSessionBoundary(
+      guard: guard,
+      closingChild: const SizedBox.shrink(),
+      child: form,
+    ),
     onSubmit: (values) async {
-      await guard.controller.enroll(
-        serverUrl: values['server']!.trim(),
-        code: values['code']!.trim(),
-        username: values['username']!.trim(),
-        name: values['name']!.trim(),
-        password: values['password']!,
-        allowLocalHttp: allowLocalHttp,
-      );
-      enrolled = true;
+      submissionFinished = Completer<void>();
+      try {
+        await guard.controller.enroll(
+          serverUrl: values['server']!.trim(),
+          code: values['code']!.trim(),
+          username: values['username']!.trim(),
+          name: values['name']!.trim(),
+          password: values['password']!,
+          allowLocalHttp: allowLocalHttp,
+        );
+        if (context.mounted) {
+          enrolledSession = container
+              .read(collaborationProvider)
+              .valueOrNull
+              ?.session;
+        }
+      } on CollaborationException catch (error) {
+        if (error.code != 'account_created_session_not_saved') rethrow;
+        createdServer = values['server']!.trim();
+        createdUsername = values['username']!.trim();
+      } finally {
+        submissionFinished!.complete();
+      }
     },
   );
-  return enrolled;
+  // Saving the session can close the signed-out boundary before initial sync
+  // finishes. Resolve the actual enrollment outcome before notifying the caller.
+  await submissionFinished?.future;
+  if (!context.mounted) return false;
+  final current = container.read(collaborationProvider).valueOrNull?.session;
+  if (enrolledSession != null &&
+      current?.partition == enrolledSession!.partition &&
+      current?.deviceId == enrolledSession!.deviceId) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.accountCreatedSignedIn(enrolledSession!.username)),
+      ),
+    );
+    return true;
+  }
+  if (createdUsername != null && (guard.isCurrent || current == null)) {
+    onAccountCreatedWithoutSession?.call(createdServer!, createdUsername!);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.accountCreatedSignInRequired(createdUsername!))),
+    );
+  }
+  return false;
 }
 
 Future<void> showPasswordResetRequest(

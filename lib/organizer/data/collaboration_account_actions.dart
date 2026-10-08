@@ -3,6 +3,7 @@ part of 'collaboration_repository.dart';
 /// Authentication, secure session lifecycle and explicit membership actions.
 extension CollaborationAccountActions on CollaborationRepository {
   Future<void> _loadCapabilities(String partition) async {
+    _sessionRenewalSupported = false;
     _recordContractVersion = 1;
     _inboxSupported = false;
     _accountDeletionSupported = false;
@@ -37,6 +38,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _privateSyncSupported =
         features['privateSync'] == true &&
         features['personalFinanceEntry'] == true;
+    _sessionRenewalSupported = features['sessionRenewal'] == true;
     _inboxSupported = features['inbox'] == true;
     _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
@@ -139,6 +141,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _sessionInvalidReason = null;
     _pushStateCheckedAt = null;
     _remotePushState = const RemotePushRegistrationState();
+    _sessionRenewalSupported = false;
     _recordContractVersion = 1;
     _inboxSupported = false;
     _accountDeletionSupported = false;
@@ -203,7 +206,13 @@ extension CollaborationAccountActions on CollaborationRepository {
           rethrow;
         }
       });
-    } catch (_) {
+    } catch (error) {
+      // Failed enrollment must lead to login, never reusing the spent code.
+      if (epoch == _epoch &&
+          _session?.profile.deviceId == session.profile.deviceId) {
+        _session = null;
+        database.activatePersonal(null);
+      }
       try {
         await transport.call(
           serverUrl: base,
@@ -213,11 +222,18 @@ extension CollaborationAccountActions on CollaborationRepository {
           allowLocalHttp: localHttp,
         );
       } catch (_) {}
+      _checkEpoch(epoch);
+      if ((operation == 'auth.enroll' || operation == 'auth.register') &&
+          !(error is CollaborationException &&
+              const {'session_changed', 'closed'}.contains(error.code))) {
+        throw const CollaborationException('account_created_session_not_saved');
+      }
       rethrow;
     }
     await refreshLocal();
     // Authentication succeeds independently of connectivity after the token is stored.
     await syncNow();
+    _checkEpoch(epoch);
   }
 
   /// Return whether the server confirmed revocation; local access stops first.
@@ -251,10 +267,6 @@ extension CollaborationAccountActions on CollaborationRepository {
     if (_sessionInvalidReason != null) {
       throw CollaborationException(_sessionInvalidReason!);
     }
-    if (!session.profile.expiresAt.isAfter(clock())) {
-      await _invalidateDeviceSession(session, epoch, 'auth_required');
-      throw const CollaborationException('auth_required');
-    }
     if (!operation.startsWith('account.deletion.') &&
         (await database.rows(
           'SELECT value FROM local_meta WHERE name IN (?,?)',
@@ -266,6 +278,13 @@ extension CollaborationAccountActions on CollaborationRepository {
       throw const CollaborationException('deletion_pending');
     }
     _checkEpoch(epoch);
+    session = _currentDeviceSession(session, epoch);
+    await _renewDeviceSessionIfNeeded(session, epoch);
+    session = _currentDeviceSession(session, epoch);
+    if (!session.profile.expiresAt.isAfter(clock())) {
+      await _invalidateDeviceSession(session, epoch, 'auth_required');
+      throw const CollaborationException('auth_required');
+    }
     Map<String, dynamic> reply;
     try {
       reply = await transport.call(

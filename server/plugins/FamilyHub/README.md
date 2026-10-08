@@ -1,4 +1,4 @@
-# FamilyHub 0.6.0
+# FamilyHub 0.6.1
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
@@ -9,6 +9,8 @@ Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC pro
 Existing local Kanboard users log in with username/password and configured TOTP to receive a 30-day revocable bearer device token. Password/2FA changes and user deactivation invalidate devices. External authentication providers are explicitly unsupported. Registration requires an expiring named-username invitation; it does not verify email or create administrators. Bootstrap uses an existing user login, then creates an owned native scope.
 
 Native household and standalone project scopes, memberships, invitations and project/task/shopping records live in **FamilyHub tables**. No legacy project membership or finance metadata is exposed. Record contract 2 adds task assignments/date ranges, shared events and server author provenance through sync2 operations. Persistent per-account inbox and bounded scheduled reminders have separate endpoints. Financial records use separate tables, explicit read/write grants and immutable audit history; they never enter generic sync. Core Kanboard web synchronization is not supported. Records use revision checks, durable operation IDs, serialized scope cursors and permanent tombstones. API requests recheck devices and membership. Email defaults off, including shopping; optional delivery needs separate SMTP configuration.
+
+Version 0.6.1 adds capability-gated `auth.renew`: an active device session extends its expiry to 30 days during its last seven days. The existing device and bearer token remain unchanged so a lost response can be retried. Expired, revoked, deleted or credential-invalidated sessions cannot renew. This does not enable private synchronization.
 
 Schema 2/3 includes a durable server UUID and account UUIDs. Bind client storage to `serverId:accountId`, not reused usernames or numeric IDs. Device/invitation plaintext tokens are never stored, returned in lists or logged. Raw devices and operation outcomes are sensitive backup data.
 

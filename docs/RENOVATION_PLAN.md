@@ -2,6 +2,8 @@
 
 Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. oktobra 2026 odobril začetek gradnje ter vzporedni razvoj telefona in namizja. Glavni agent orkestrira; izvedbo opravljajo podagenti GPT 6.1 Sol / high. Ta dokument ne pomeni, da so vse spodaj opisane funkcije že izdelane.
 
+**Novo izvedbeno naročilo, 8. oktober 2026:** uporabnik je odobril izvedbo spodaj zapisanih nadgradenj. Vrstni red je popravki prikaza/prijave → commit in push → funkcionalne nadgradnje → commit in push → nova Android interna izdaja za obstoječe preizkuševalce. [Tekoča izvedba](UPGRADE_IMPLEMENTATION.md) vodi lastništvo, dokaze in aktualno dokončanost. Prejšnji zapisi »samo opomba« ohranijo izvor zahtev, niso več odlog njihove izvedbe. Javno produkcijsko izdajo, pravne potrditve in lastnikove iOS/dostopne korake še vedno obravnavamo ločeno.
+
 **Aktualna usmeritev, pozneje 4. oktobra 2026:** uporabnik je po zahtevi za pregled pojasnil, da želi nadaljevati gradnjo in je z začetkom zadovoljen. Pregled stare kode in dosedanjih sprememb usmerja razvoj, ne ustavlja novih funkcij. Ohranitev starih lokalnih podatkov aplikacije ni pogoj; bistveno je iz strežnika zajeti vse obstoječe podatke kot preverjen lokalni arhiv s samostojnim brskalnikom. Staro aplikacijo in projekte lahko nato upokojimo. Obstoječi projekti so izhodišče za razumevanje potreb in morebiten izbrani prenos, ne obvezna živa združljivost. Finance ponovno zasnujemo. Spodnje izdelane etape so zapis dosedanjega razvoja, prihodnje etape pa se po ugotovitvah prilagodijo.
 
 ## Potrjena smer
@@ -198,6 +200,85 @@ Opomnik za plačo:
 - Uporabnik je zahteval potisno obvestilo. Zasnova ga poveže z obstoječim centrom obvestil in sistemskimi opomniki: lokalno načrtovani opomnik mora delovati brez strežnika, izbirna oddaljena push dostava pa uporablja ločen konfiguriran kanal. Odprtje obvestila vodi v potrditev pravega priliva in finančnega obsega.
 
 Ob zasnovi dorečemo začetno stanje za napoved, ponavljanje datumov po mesecih, praznike in delovne dni, spremenljiv znesek poravnave kartice ter ravnanje, če plača tudi po vikendu še ni prispela. Osebni načrt ostane lokalen, trajno shranjen in vključen v kopijo/obnovo; skupni finančni obseg in morebitna sinhronizacija zahtevata izrecno izbiro ter obstoječe finančne pravice. Čarovnik ne vključi samodejno deljenja ali obvestil. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+
+## Opomba za prihodnjo nadgradnjo — člani gospodinjstva brez računa
+
+**Zahteva uporabnika; za zdaj samo opomba za naslednje faze, brez začetka izvedbe.** V gospodinjstvo naj bo mogoče ročno dodati osebe, ki nimajo svojega uporabniškega računa, ter zanje voditi opravila oziroma povezati opravila, ki se nanje nanašajo.
+
+Želeni obseg:
+
+- Dodajanje in urejanje profila člana gospodinjstva z imenom, brez obvezne e-pošte, prijave ali povabila za ustvarjanje računa.
+- Pri opravilu izbrati člana brez računa kot izvajalca oziroma označiti, na katerega člana se opravilo nanaša. To sta ločeni povezavi: opravilo, povezano z osebo, lahko opravlja nekdo drug.
+- Pregled in filtriranje opravil po članu gospodinjstva, da uporabnik vidi in ureja opravila, ki jih vodi zanj.
+- Avtorstvo in spremembe opravil ostanejo pripisani dejanskemu uporabniku, ki jih je vnesel oziroma uredil. Profil osebe brez računa sam po sebi ne ustvari prijave, dostopnih pravic ali prejemnika potisnih obvestil.
+- Dodajanje oseb in vodenje opravil zanje deluje lokalno brez strežnika, s trajno hrambo ter kopijo/obnovo. Morebitno deljenje teh profilov in opravil v skupnem gospodinjstvu je izrecno ter upošteva pravice tega prostora.
+
+Ob zasnovi dorečemo, kdo prejema opomnike za taka opravila ter kako člana pozneje izrecno povežemo z njegovim računom, če ga ustvari, ob ohranitvi povezanih opravil. Ta opomba ne spreminja obsega tekočih posegov ali priprave izdaje.
+
+## Opomba za prihodnjo nadgradnjo — potrditev registracije in veljavnost prijave
+
+**Povratna informacija uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez spremembe aplikacije.** Pri prvem Android preizkusu je uporabnik poročal, da je ustvarjanje računa s kodo uspelo, vendar ni dobil jasne potrditve uspeha ali poziva k prijavi. Datum izteka seje je povzročil dodatno nejasnost.
+
+Pregled kode potrjuje, da `auth.enroll` ob ustvarjanju računa izda tudi napravno sejo, odjemalec pa jo shrani in uporabnika samodejno prijavi. Ločena ponovna prijava zato ni potrebna. Tok nima izrecnega sporočila o uspešno ustvarjenem računu. Strežnik trenutno izda sejo za 30 dni (2.592.000 sekund), brez samodejnega podaljševanja; datum pomeni veljavnost prijave na napravi, ne življenjske dobe računa ali podatkov.
+
+**Dopolnitev istega preizkusa:** uporabnik je dejansko prejel e-pošto s potrditveno kodo in poroča o uspešni potrditvi naslova v aplikaciji. Tudi ob tem ni dobil jasnega sporočila o uspehu. To potrjuje prejem in uporabniški preizkus preverjanja e-pošte; obnova gesla in druge vrste obvestil s tem še niso preizkušene.
+
+Predvidena izboljšava:
+
+- Po uspehu jasno prikazati »Račun je ustvarjen. Prijavljen si kot …« ter preiti na pregled povezanega računa z razvidnim strežnikom in naslednjimi koraki. Ne zahtevati druge prijave, kadar je seja že uspešno shranjena.
+- Če je račun ustvarjen, shranjevanje prijave pa ne uspe, jasno usmeriti v prijavo z ustvarjenim računom; uporabnik naj ne ponavlja ustvarjanja s porabljeno kodo.
+- Po uspešni potrditvi e-poštne kode prikazati »E-poštni naslov je potrjen«, zapreti vnos kode in osvežiti vidno stanje naslova v nastavitvah računa. Uspeh prikazati šele po strežniški potrditvi, ne že ob zahtevi za pošiljanje kode; napaka naj ostane jasno ločena.
+- **Potrjena zahteva uporabnika, 8. oktober 2026: seja se mora samodejno podaljševati.** Ob običajni uporabi naj uporabnik ostane prijavljen brez ponovnega vnosa gesla vsakih 30 dni. Za zdaj je zahteva zapisana za nadgradnjo; trenutna izvedba seje še ne podaljšuje.
+- Prikaz veljavnosti uskladiti s samodejnim podaljševanjem, da tehnični datum izteka ne daje vtisa zaprtja računa ali obvezne mesečne prijave. Odjava, preklic naprave, sprememba gesla in deaktivacija računa morajo še vedno ustaviti dostop; podaljševanje preklica ne sme obiti. Podrobnosti obnove seje in dolgotrajne odsotnosti ostajajo predmet zasnove. Začasen izpad povezave ne sme izbrisati lokalnih ali čakajočih podatkov in ne konča osnovne lokalne osebne uporabe.
+- Ohraniti izrecno izbiro osebne sinhronizacije; uspešna registracija ali podaljšanje seje je ne smeta samodejno vključiti.
+
+Viri preverjenega trenutnega vedenja: `NativeEnrollmentService::execute`, `NativeAuthService::issue`, `CollaborationAccountRecovery.enroll`, `CollaborationAccountActions._authenticate` in `showAccountEnrollment`. Pri izvedbi preveriti jasen uspešen zaključek, napako shranjevanja seje, samodejno podaljševanje, zavrnitev podaljšanja po preklicu ter vrnitev po izpadu povezave brez izgube lokalnih ali čakajočih podatkov.
+
+## Opomba za prihodnjo nadgradnjo — organizacije in izbira prostora
+
+**Potrjena smer uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez začetka izvedbe.** Dodati prostor **Organizacija** za podjetje, zadrugo ali društvo, na primer TriparNA. Trenutna izvedba podpira osebni prostor, gospodinjstvo in samostojen deljeni projekt; organizacija z lastnimi projekti in članstvi še ni izvedena.
+
+Dogovorjena smer:
+
+- Z istim uporabniškim računom preklapljati med prostori, na primer **Osebno / Dom / TriparNA**, z jasno prikazanim trenutno izbranim prostorom na telefonu in namizju.
+- Ustvariti in poimenovati organizacijo ter v njej voditi več projektov, sodelavce, opravila in skupne termine.
+- Pri ustvarjanju projekta jasno izbrati, kateremu prostoru pripada in kdo ga vidi. Osebni projekti ostanejo zasebni, dokler uporabnik izrecno izbere deljenje.
+- Ločiti članstvo v organizaciji od dostopa do posameznih projektov. Zunanjemu sodelavcu omogočiti dostop samo do izbranega projekta, brez samodejnega dostopa do drugih projektov ali vsebine organizacije.
+- Po izbiri vključiti finance organizacije oziroma projekta z ločenimi pravicami za ogled in urejanje. Članstvo ali dostop do opravil sama po sebi ne odpreta financ; osebne in gospodinjske finance ostanejo ločene.
+- Poenotiti pregled projektov in izbiro prostora, da uporabniku za razumevanje osebnih in skupnih projektov ni treba prehajati med nepovezanima pregledoma. Nastavitve računa in upravljanje članov ostanejo jasno dostopni.
+
+Ob zasnovi dorečemo vloge, dedovanje oziroma izrecno omejevanje projektnih pravic, lastništvo ter način premika ali kopiranja obstoječega projekta. Trenutno kopiranje osebnega projekta ustvari ločeno skupno kopijo; nadgradnja ne sme samodejno preseliti ali deliti obstoječih podatkov. Ohrani se local-first osnova z izbirno strežniško sinhronizacijo, preverjanjem pravic na strežniku ter obvestili, omejenimi na vsebino, do katere ima prejemnik dostop.
+
+## Opomba za prihodnjo nadgradnjo — preglednost na manjših telefonih
+
+**Povratna informacija uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez spremembe aplikacije.** Na Samsungu Galaxy S25 je prikaz preveč prostoren glede na razpoložljivo višino. Priloženi posnetek obrazca **Dodaj dogodek** z odprto tipkovnico SwiftKey kaže delno odrezano oznako polja **Naslov**; uporabnik potrjuje, da je obrazec pomaknjen povsem na vrh. Naslov dialoga je viden. To je opažanje dejanskega prikaza; vzrok odrezovanja še ni preverjen v kodi.
+
+Želeni obseg:
+
+- Prilagoditi tipografijo manjšim zaslonom: nekoliko manjša, še dobro berljiva pisava za naslove in obrazce ter bolj uravnotežena razmerja med besedilom, polji in gumbi.
+- Zmanjšati odvečne navpične razmike, notranje odmike in začetno višino večvrstičnih polj, da je na voljo več uporabne vsebine. Ohraniti dovolj velike površine za dotik.
+- Popraviti odmike in odrezovanje ob robovih drsne vsebine, da so oznake polj v celoti vidne tudi na skrajnem vrhu. Zmanjšanje pisave samo po sebi ni dokaz odprave te napake.
+- Pravilno prilagoditi višino in drsenje ob odprti tipkovnici: izbrano polje, njegova oznaka in napaka morajo biti dosegljivi, prav tako gumba Shrani/Prekliči. Preveriti prekrivanje s stalnim spodnjim delom dialoga in obnašanje ob razširitvi načrtovanega termina.
+- Pregled razširiti na druge obrazce in glavne mobilne zaslone. Za daljše obrazce preučiti urejanje čez celoten zaslon, če dialog preveč omejuje prostor; to je možnost za zasnovo, ne že izbrana rešitev.
+
+**Dodatna zamisel uporabnika, 8. oktober 2026:** za telefone velikosti **Samsung Galaxy S25** preučiti levi zložljivi meni, v katerem so navigacijske možnosti skrite do odprtja, namesto stalnih spodnjih zavihkov. Cilj je sprostiti prostor za vsebino. Pri mobilnem predogledu primerjati pridobljeni prostor, preglednost in dostopnost glavnih funkcij s sedanjo spodnjo navigacijo. To je predlog za preizkus, ne dokončna odločitev o zamenjavi. Uporabnik računalniške in tablične postavitve še ni preveril; ta povratna informacija se nanaša izključno na velikost S25 in ne določa sprememb za računalnik ali tablico.
+
+Pri izvedbi preveriti S25 na fizični napravi, manjše logične širine (320–390), odprto/zaprto tipkovnico, privzeto in povečano sistemsko pisavo ter vrh in dno obrazca. Ne izključiti uporabnikove nastavitve povečave besedila. Ohraniti potrjeno svetlo/temno temo ter ločeno namizno postavitev. Ta opomba ne pomeni, da je popravek že v trenutni testni izdaji.
+
+## Opomba za prihodnjo nadgradnjo — strošek neposredno pri opravilu
+
+**Zahteva uporabnika, 8. oktober 2026; za zdaj zapis za nadgradnjo, brez začetka izvedbe.** Opravilo lahko vsebuje strošek, ki ga uporabnik doda že pri ustvarjanju ali urejanju opravila. Ta strošek se prikaže tudi v financah, brez ponovnega ročnega vnosa v finančnem modulu.
+
+Želeni obseg in povezava z obstoječimi pravili financ:
+
+- V obrazcu oziroma podrobnostih opravila omogočiti izbirni vnos stroška z zneskom, valuto in potrebnimi finančnimi podatki; uporabiti enaka pravila za plačnika, finančni račun in avtorja kot v financah.
+- **Dopolnitev uporabnika, 8. oktober 2026: datum stroška je vezan na rok opravila.** Datuma ni treba vnašati posebej; ob spremembi roka se ustrezno premakne tudi datum načrtovanega stroška v financah. Datum dejanskega plačila ostane ločen, da sprememba roka ne prepiše že evidentiranega plačila. Ob zasnovi določiti še ravnanje pri opravilu brez roka oziroma ob odstranitvi roka.
+- Ustvariti en finančni zapis, povezan z opravilom. Prikaz in urejanje pri opravilu ter v financah uporabljata isti zapis, da se znesek v seštevkih ne podvoji. Iz financ mora biti razvidno, na katero opravilo in morebitni projekt se nanaša.
+- Jasno ločiti načrtovani strošek od dejanskega oziroma plačanega. Dokončanje opravila samo po sebi ne potrdi plačila; sprememba stroška se uskladi v obeh pogledih.
+- Pri skupnem opravilu upoštevati izbrani finančni prostor in ločene pravice za ogled/urejanje financ. Dostop do opravila ne razkrije zasebnega stroška in samodejno ne deli osebnih financ; preverjanje velja tudi na strežniku.
+- Vnos osebnega opravila in povezanega stroška mora delovati lokalno brez povezave ter biti vključen v kopijo/obnovo. Pri vključeni sinhronizaciji ponovitev zahteve ne sme ustvariti dodatnega stroška; finančni zapis ostane v ločeni finančni pogodbi.
+
+Ob zasnovi dorečemo možnost več stroškov na enem opravilu, povezovanje že obstoječega finančnega zapisa ter obnašanje ob kopiranju, premiku ali izbrisu opravila. Brisanje opravila ne sme tiho izbrisati finančne evidence. Ta opomba ne pomeni, da je povezani vnos že na voljo v trenutni testni izdaji.
 
 ## Tehnične meje prve izvedbe
 

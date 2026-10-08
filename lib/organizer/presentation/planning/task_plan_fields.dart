@@ -44,12 +44,13 @@ class OrganizerTaskPlanFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     final selected = assigneeIds ?? const <String>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (onAssigneesChanged != null) ...[
-          const SizedBox(height: 16),
+          SizedBox(height: compact ? 12 : 16),
           Text(
             l.planningAssignees,
             style: Theme.of(context).textTheme.labelLarge,
@@ -101,8 +102,12 @@ class OrganizerTaskPlanFields extends StatelessWidget {
         ],
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
-          initiallyExpanded: startAt != null || endAt != null,
-          title: Text(l.planningSchedule),
+          minTileHeight: 48,
+          initiallyExpanded: (showStart && startAt != null) || endAt != null,
+          title: Text(
+            l.planningSchedule,
+            style: compact ? Theme.of(context).textTheme.bodyMedium : null,
+          ),
           children: [
             if (showStart)
               OrganizerDateTimeField(
@@ -113,7 +118,7 @@ class OrganizerTaskPlanFields extends StatelessWidget {
                 enabled: enabled,
                 wrap: wrap,
               ),
-            const SizedBox(height: 8),
+            if (showStart) const SizedBox(height: 8),
             OrganizerDateTimeField(
               key: const ValueKey('task-end-date'),
               label: l.planningEnd,

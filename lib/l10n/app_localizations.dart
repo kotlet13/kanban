@@ -5094,6 +5094,30 @@ abstract class AppLocalizations {
   /// **'Create account'**
   String get accountCreate;
 
+  /// No description provided for @accountCreatedSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is created. You are signed in as {username}.'**
+  String accountCreatedSignedIn(String username);
+
+  /// No description provided for @accountCreatedSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {username} is created, but sign-in could not be saved on this device. Sign in with this username and the password you chose. Do not use the setup code or invitation again.'**
+  String accountCreatedSignInRequired(String username);
+
+  /// No description provided for @accountEmailConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email address is verified.'**
+  String get accountEmailConfirmed;
+
+  /// No description provided for @accountSessionAutoRenew.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in on this device renews automatically while you use the app.'**
+  String get accountSessionAutoRenew;
+
   /// No description provided for @accountPasswordRule.
   ///
   /// In en, this message translates to:

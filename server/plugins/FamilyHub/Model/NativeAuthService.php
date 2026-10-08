@@ -6,6 +6,9 @@ use Base32\Base32;
 
 class NativeAuthService extends NativeDatabase
 {
+    public const SESSION_SECONDS = 2592000;
+    public const RENEWAL_WINDOW_SECONDS = 604800;
+
     public function execute($operation, array $params)
     {
         if ($operation === 'auth.enroll') { return (new NativeEnrollmentService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
@@ -17,6 +20,22 @@ class NativeAuthService extends NativeDatabase
         $this->rate([['device-ip:'.$this->ip, 600, 60]]);
         return $this->transaction(function () use ($operation, $params) {
             $actor = $this->actor();
+            if ($operation === 'auth.renew') {
+                $this->fields($params, ['deviceId']);
+                if ($this->uuid($params['deviceId']) !== $actor['device']['id']) {
+                    throw new NativeError('permission_revoked', 403);
+                }
+                // actor() locks user then device and rejects expiry, revocation,
+                // changed credentials/TOTP, deactivation and recycled accounts.
+                // Keep the token stable so a lost reply or failed secure write
+                // can safely retry without creating an orphan device session.
+                $now = time();
+                if ((int)$actor['device']['expires_at'] <= $now + self::RENEWAL_WINDOW_SECONDS) {
+                    $actor['device']['expires_at'] = $now + self::SESSION_SECONDS;
+                    $this->change('UPDATE familyhub_devices SET expires_at=? WHERE id=?', [$actor['device']['expires_at'], $actor['device']['id']]);
+                }
+                return ['serverId' => $this->serverId(), 'user' => $this->userWire($actor['user']), 'device' => $this->deviceWire($actor['device'])];
+            }
             if ($operation === 'auth.me') {
                 $this->fields($params, []);
                 return ['serverId' => $this->serverId(), 'user' => $this->userWire($actor['user']), 'device' => $this->deviceWire($actor['device'])];
@@ -127,7 +146,7 @@ class NativeAuthService extends NativeDatabase
         }
         $user['account_id'] = $account['account_id'];
         $token = 'fh1_'.bin2hex(random_bytes(32)); $now = time();
-        $device = ['id' => $this->newUuid(), 'name' => $deviceName, 'expires_at' => $now + 2592000];
+        $device = ['id' => $this->newUuid(), 'name' => $deviceName, 'expires_at' => $now + self::SESSION_SECONDS];
         $this->change('INSERT INTO familyhub_devices(id,user_id,account_id,name,token_hash,credentials_hash,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?)',
             [$device['id'], $user['id'], $account['account_id'], $deviceName, hash('sha256', $token), $this->fingerprint($user), $now, $device['expires_at']]);
         return ['serverId' => $this->serverId(), 'user' => $this->userWire($user), 'device' => $this->deviceWire($device), 'token' => $token];

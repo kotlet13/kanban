@@ -49,10 +49,12 @@ class SharingSessionBoundary extends ConsumerStatefulWidget {
     required this.guard,
     required this.child,
     this.visibleWhen,
+    this.closingChild,
   });
   final SharingSessionGuard guard;
   final Widget child;
   final bool Function(CollaborationState)? visibleWhen;
+  final Widget? closingChild;
   @override
   ConsumerState<SharingSessionBoundary> createState() =>
       _SharingSessionBoundaryState();
@@ -80,9 +82,10 @@ class _SharingSessionBoundaryState
         }
       });
     }
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(context.l10n.sharingSessionExpired),
-    );
+    return widget.closingChild ??
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(context.l10n.sharingSessionExpired),
+        );
   }
 }

@@ -211,9 +211,15 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          '${session.username} · ${l.sharingSessionEnds} ${organizerDate(context, session.expiresAt)}',
-                        ),
+                        if (state.sessionRenewalSupported &&
+                            !state.sessionInvalid &&
+                            session.expiresAt.isAfter(DateTime.now())) ...[
+                          Text(session.username),
+                          Text(l.accountSessionAutoRenew),
+                        ] else
+                          Text(
+                            '${session.username} · ${l.sharingSessionEnds} ${organizerDate(context, session.expiresAt)}',
+                          ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 12,

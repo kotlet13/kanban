@@ -28,14 +28,16 @@ class OrganizerHeading extends StatelessWidget {
   final Widget? action;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 24),
+    padding: EdgeInsets.only(
+      bottom: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: 30,
+            fontSize: MediaQuery.sizeOf(context).width < 600 ? 25 : 30,
             fontWeight: FontWeight.w600,
             letterSpacing: -1,
           ),
@@ -74,7 +76,7 @@ class OrganizerEmpty extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(22),
+    padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 600 ? 16 : 22),
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(17),
@@ -83,7 +85,7 @@ class OrganizerEmpty extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 26, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 14),
+        SizedBox(height: MediaQuery.sizeOf(context).width < 600 ? 10 : 14),
         Text(title, style: Theme.of(context).textTheme.titleMedium),
         if (description != null)
           Padding(
@@ -179,8 +181,8 @@ class OrganizerTaskRow extends StatelessWidget {
               onTap: onEdit,
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 17,
+                padding: EdgeInsets.symmetric(
+                  vertical: MediaQuery.sizeOf(context).width < 600 ? 12 : 17,
                   horizontal: 4,
                 ),
                 child: Column(
@@ -230,16 +232,18 @@ class OrganizerEventCard extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(
+          MediaQuery.sizeOf(context).width < 600 ? 12 : 18,
+        ),
         child: Row(
           children: [
             Text(
               MaterialLocalizations.of(context).formatTimeOfDay(
                 TimeOfDay.fromDateTime(event.startsAt.toLocal()),
               ),
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontSize: 24),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontSize: MediaQuery.sizeOf(context).width < 600 ? 20 : 24,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

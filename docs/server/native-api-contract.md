@@ -44,12 +44,13 @@ potrebujejo svež imenik. Preverjanje identitete in scope ACL ostane ob vsaki za
 - `auth.login {username,password,deviceName,otp?}` (javno).
 - `auth.register {token,username,password,displayName,deviceName}` (javno, samo veljavno povabilo).
 - `auth.me {}` (naprava): `{serverId,user,device}`.
+- `auth.renew {deviceId}` (naprava, samo trenutna): `{serverId,user,device}`. FamilyHub 0.6.1 razglasi `features.sessionRenewal`. V zadnjih sedmih dneh veljavnosti strežnik veljavno sejo podaljša na 30 dni od trenutnega časa; prej vrne nespremenjeno veljavnost. Naprava in žeton ostaneta ista, zato je izgubljen odgovor varno ponovljiv. Preklicana, potekla ali zaradi spremembe poverilnic neveljavna seja se ne obnovi.
 - `auth.devices {}` (naprava): `{devices:[device]}` brez žetonov.
 - `auth.revoke {deviceId}` (naprava, samo lastne): `{revoked:true}`.
 
 Prijava/registracija vrne `{serverId,user:{id,accountId,username,displayName},device:{id,name,expiresAt},token}`.
 `user.id` je celo število, `device.id` UUID, čas veljavnosti Unix sekunde. Device token
-je naključen, 256-bitni, v bazi samo SHA256, največ 30 dni. Preklic/iztek, sprememba
+je naključen, 256-bitni, v bazi samo SHA256, z začetno veljavnostjo 30 dni. Zmožnost podaljševanja omogoča drsečo veljavnost ob redni uporabi. Preklic/iztek, sprememba
 gesla ali nastavitve/skrivnosti 2FA ter deaktivacija uporabnika ga naredijo neveljavnega.
 `serverId` je ob migraciji ustvarjen in trajen UUID namestitve; capabilities ga vrne
 tudi pred prijavo. `accountId` je trajen UUID uporabnika, vezan na core user s FK

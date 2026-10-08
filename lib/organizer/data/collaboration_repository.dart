@@ -18,6 +18,7 @@ import 'organizer_storage.dart';
 import 'organizer_repository.dart' show OrganizerConflictException;
 
 part 'collaboration_account_actions.dart';
+part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
 part 'collaboration_sync_actions.dart';
 part 'collaboration_event_actions.dart';
@@ -67,6 +68,9 @@ class CollaborationRepository {
   String? _sessionInvalidReason;
   DateTime? _pushStateCheckedAt;
   int _recordContractVersion = 1;
+  bool _sessionRenewalSupported = false;
+  Future<void>? _sessionRenewal;
+  int? _sessionRenewalEpoch;
   bool _inboxSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
@@ -318,6 +322,7 @@ class CollaborationRepository {
         financeBlockedCount: financeQueue
             .where((e) => e['state'] == 'blocked')
             .length,
+        sessionRenewalSupported: _sessionRenewalSupported,
         inboxSupported: _inboxSupported,
         financeSupported: _financeSupported,
         emailVerificationSupported: _emailVerificationSupported,

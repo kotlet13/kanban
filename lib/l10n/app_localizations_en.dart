@@ -2867,6 +2867,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountCreate => 'Create account';
 
   @override
+  String accountCreatedSignedIn(String username) {
+    return 'Your account is created. You are signed in as $username.';
+  }
+
+  @override
+  String accountCreatedSignInRequired(String username) {
+    return 'Account $username is created, but sign-in could not be saved on this device. Sign in with this username and the password you chose. Do not use the setup code or invitation again.';
+  }
+
+  @override
+  String get accountEmailConfirmed => 'Your email address is verified.';
+
+  @override
+  String get accountSessionAutoRenew =>
+      'Sign-in on this device renews automatically while you use the app.';
+
+  @override
   String get accountPasswordRule => 'Password must contain 12 to 72 bytes.';
 
   @override

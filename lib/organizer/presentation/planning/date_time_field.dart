@@ -22,6 +22,7 @@ class OrganizerDateTimeField extends StatelessWidget {
   final Widget Function(Widget)? wrap;
 
   Future<void> _choose(BuildContext context) async {
+    FocusScope.of(context).unfocus();
     final current = value?.toLocal() ?? DateTime.now();
     final first = DateTime(1900);
     final last = DateTime(2200);
@@ -63,6 +64,11 @@ class OrganizerDateTimeField extends StatelessWidget {
       children: [
         Expanded(
           child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              alignment: Alignment.centerLeft,
+              minimumSize: const Size(0, 48),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
             onPressed: enabled ? () => _choose(context) : null,
             icon: const Icon(Icons.schedule_outlined, size: 18),
             label: Text(

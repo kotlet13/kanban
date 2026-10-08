@@ -2869,6 +2869,23 @@ class AppLocalizationsSl extends AppLocalizations {
   String get accountCreate => 'Ustvari račun';
 
   @override
+  String accountCreatedSignedIn(String username) {
+    return 'Račun je ustvarjen. Prijavljen si kot $username.';
+  }
+
+  @override
+  String accountCreatedSignInRequired(String username) {
+    return 'Račun $username je ustvarjen, vendar prijave na tej napravi ni bilo mogoče shraniti. Prijavi se s tem uporabniškim imenom in izbranim geslom. Začetne kode ali povabila ne uporabi znova.';
+  }
+
+  @override
+  String get accountEmailConfirmed => 'E-poštni naslov je potrjen.';
+
+  @override
+  String get accountSessionAutoRenew =>
+      'Prijava na tej napravi se ob uporabi samodejno podaljšuje.';
+
+  @override
   String get accountPasswordRule => 'Geslo mora imeti od 12 do 72 bajtov.';
 
   @override

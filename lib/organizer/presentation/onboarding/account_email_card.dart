@@ -22,6 +22,7 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
   late Future<AccountStatus> _future = _guard.controller.accountStatus();
   Future<void> _change() async {
     final l = context.l10n;
+    bool requested = false;
     await showSharingForm(
       context,
       title: l.accountEmailChange,
@@ -58,9 +59,13 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
               ? 'sl'
               : 'en',
         );
+        requested = true;
       },
     );
-    if (mounted && _guard.isCurrent) {
+    if (requested && mounted && _guard.isCurrent) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.accountEmailSent)));
       setState(() {
         _future = _guard.controller.accountStatus();
       });
@@ -69,6 +74,7 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
 
   Future<void> _confirm() async {
     final l = context.l10n;
+    bool confirmed = false;
     await showSharingForm(
       context,
       title: l.accountEmailConfirm,
@@ -78,10 +84,17 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
       submitLabel: l.accountEmailConfirm,
       errorMessage: (e) => sharingErrorMessage(context, e),
       wrap: (form) => SharingSessionBoundary(guard: _guard, child: form),
-      onSubmit: (values) =>
-          _guard.controller.confirmEmailVerification(values['token']!.trim()),
+      onSubmit: (values) async {
+        await _guard.controller.confirmEmailVerification(
+          values['token']!.trim(),
+        );
+        confirmed = true;
+      },
     );
-    if (mounted && _guard.isCurrent) {
+    if (confirmed && mounted && _guard.isCurrent) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.accountEmailConfirmed)));
       setState(() {
         _future = _guard.controller.accountStatus();
       });
@@ -116,7 +129,8 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
                   }),
                   child: Text(l.organizerRetry),
                 ),
-              ] else if (!snapshot.hasData)
+              ] else if (snapshot.connectionState != ConnectionState.done ||
+                  !snapshot.hasData)
                 const LinearProgressIndicator()
               else ...[
                 Text(snapshot.data!.email ?? l.accountEmailNone),

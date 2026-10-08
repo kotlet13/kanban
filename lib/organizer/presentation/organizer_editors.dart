@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
@@ -124,7 +125,31 @@ class _RecordEditorState extends State<_RecordEditor> {
       widget.kind != OrganizerEditorKind.shoppingItem;
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate()) return;
+    final invalidFields = _form.currentState!.validateGranularly();
+    if (invalidFields.isNotEmpty) {
+      // Validation can happen while the user is at the bottom of the form.
+      // Reveal the first error after its extra line has been laid out.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !invalidFields.first.mounted) return;
+        final fieldContext = invalidFields.first.context;
+        final object = fieldContext.findRenderObject()!;
+        final position = Scrollable.of(fieldContext).position;
+        final offset = RenderAbstractViewport.of(
+          object,
+        ).getOffsetToReveal(object, 0).offset;
+        // Include the floating label, which is outside the FormField box.
+        final labelMargin = MediaQuery.textScalerOf(context).scale(16);
+        position.animateTo(
+          (offset - labelMargin).clamp(
+            position.minScrollExtent,
+            position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      });
+      return;
+    }
     _form.currentState!.save();
     final planStart = widget.kind == OrganizerEditorKind.event
         ? draft.date
@@ -198,6 +223,7 @@ class _RecordEditorState extends State<_RecordEditor> {
   }
 
   Future<void> _pickDate() async {
+    FocusScope.of(context).unfocus();
     final now = DateTime.now();
     final current = draft.date?.toLocal() ?? now;
     final first = DateTime(1900);
@@ -243,13 +269,37 @@ class _RecordEditorState extends State<_RecordEditor> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    final fieldGap = compact ? 12.0 : 16.0;
+    final fieldStyle = compact
+        ? Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 15)
+        : null;
     final finance = widget.kind == OrganizerEditorKind.finance;
     final dateRequired = widget.kind == OrganizerEditorKind.event || finance;
     return AlertDialog(
-      title: Text(widget.heading),
+      insetPadding: compact
+          ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      titlePadding: compact ? const EdgeInsets.fromLTRB(16, 16, 16, 8) : null,
+      contentPadding: compact ? const EdgeInsets.fromLTRB(16, 8, 16, 12) : null,
+      actionsPadding: compact ? const EdgeInsets.fromLTRB(12, 0, 12, 12) : null,
+      title: Text(
+        widget.heading,
+        style: compact
+            ? Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)
+            : null,
+      ),
       content: SizedBox(
         width: 440,
         child: SingleChildScrollView(
+          key: const ValueKey('organizer-editor-scroll'),
+          // Outlined fields paint their floating label above the field's box.
+          // Keep that paint inside the viewport, including with larger text.
+          padding: EdgeInsets.only(
+            top: MediaQuery.textScalerOf(context).scale(12),
+            bottom: 4,
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Form(
             key: _form,
             child: Column(
@@ -260,6 +310,12 @@ class _RecordEditorState extends State<_RecordEditor> {
                   key: const ValueKey('organizer-title-field'),
                   initialValue: draft.title,
                   autofocus: true,
+                  style: fieldStyle,
+                  textInputAction:
+                      _hasNotes ||
+                          widget.kind == OrganizerEditorKind.shoppingItem
+                      ? TextInputAction.next
+                      : TextInputAction.done,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(labelText: l.organizerTitle),
                   validator: (v) => v == null || v.trim().isEmpty
@@ -268,10 +324,13 @@ class _RecordEditorState extends State<_RecordEditor> {
                   onSaved: (v) => draft.title = v!.trim(),
                 ),
                 if (_hasNotes) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   TextFormField(
+                    key: const ValueKey('organizer-notes-field'),
                     initialValue: draft.notes,
-                    maxLines: 3,
+                    minLines: compact ? 2 : 3,
+                    maxLines: compact ? 4 : 3,
+                    style: fieldStyle,
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
                       labelText: widget.kind == OrganizerEditorKind.project
@@ -282,16 +341,18 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.shoppingItem) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   TextFormField(
                     initialValue: draft.quantity,
+                    style: fieldStyle,
                     decoration: InputDecoration(labelText: l.organizerQuantity),
                     onSaved: (v) => draft.quantity = v?.trim() ?? '',
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.project) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   DropdownButtonFormField<ProjectArea>(
+                    isExpanded: true,
                     initialValue: draft.area,
                     decoration: InputDecoration(
                       labelText: l.organizerProjectArea,
@@ -310,7 +371,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                 ],
                 if (_hasProject) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   DropdownButtonFormField<String>(
                     initialValue: draft.projectId ?? '',
                     isExpanded: true,
@@ -357,8 +418,9 @@ class _RecordEditorState extends State<_RecordEditor> {
                     wrap: widget.wrap,
                   ),
                 if (finance) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   DropdownButtonFormField<FinanceEntryKind>(
+                    isExpanded: true,
                     initialValue: draft.kind,
                     decoration: InputDecoration(labelText: l.type),
                     items: [
@@ -373,9 +435,10 @@ class _RecordEditorState extends State<_RecordEditor> {
                     ],
                     onChanged: _busy ? null : (v) => draft.kind = v!,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   TextFormField(
                     initialValue: draft.amount,
+                    style: fieldStyle,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -391,9 +454,10 @@ class _RecordEditorState extends State<_RecordEditor> {
                     },
                     onSaved: (v) => draft.amount = v!,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   DropdownButtonFormField<String>(
                     initialValue: draft.currency,
+                    isExpanded: true,
                     decoration: InputDecoration(labelText: l.organizerCurrency),
                     items: const ['EUR', 'USD', 'GBP', 'CHF']
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
@@ -402,7 +466,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.task) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   OrganizerDateTimeField(
                     key: const ValueKey('task-due-date'),
                     label: l.planningDue,
@@ -413,7 +477,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                 ],
                 if (_hasDate && widget.kind != OrganizerEditorKind.task) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _pickDate,
                     icon: const Icon(Icons.calendar_today_outlined, size: 18),
