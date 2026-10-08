@@ -2,7 +2,7 @@
 
 ## Kompaktna telefonska glava — 1.1.2+5
 
-Koda/push `3d504c4` premakne prostor v glavo ob ikono, odstrani ime in dodatno vrstico s telefona ter dodajalno tipko zamenja z + Nov prostor v dropdownu. 565 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Po funkcionalnem commitu sledi izrecni dvig na 1.1.2+5 in preverjena interna objava. Strežnik, pogodbe ter SDK/paketi niso spremenjeni. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
+Koda/push `3d504c4` premakne prostor v glavo ob ikono, odstrani ime in dodatno vrstico s telefona ter dodajalno tipko zamenja z + Nov prostor v dropdownu. 565 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Po funkcionalnem commitu je `1121407` izrecno pripravil 1.1.2+5. Podpisana gradnja je preverjena in Play potrdi Aktivno/1.1.2 (5), na voljo internim preizkuševalcem 8. oktobra ob 17:39. Strežnik, pogodbe ter SDK/paketi niso spremenjeni. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
 
 ## Dopolnitve po uporabniškem pregledu — 1.1.1+4
 
