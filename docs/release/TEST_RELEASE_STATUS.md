@@ -1,5 +1,9 @@
 # Jivie — stanje testnih izdaj
 
+## Dopolnitve 8. oktobra — kandidatka 1.1.1+4
+
+Šest dopolnitev iz uporabniškega pregleda je v commitu/pushu `cbcb29d`; 544 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Kandidatka uporablja isti ID in upload ključ. Gradnja, upload in aktivacija še niso potrjeni; trenutna živa interna izdaja ostaja 1.1.0 (3). [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
+
 ## Nadgradnja 8. oktobra — 1.1.0+3
 
 Popravki `54f3061` in nadgradnje `e73cd1c` so poslani v Git. Svež Android AAB 1.1.0 (3) uporablja isti namenski Jivie upload certifikat, ID `si.triparna.jivie`, API24+/target36 in 16KiB poravnavo osmih 64-bitnih knjižnic. SHA256 `6efb71c9701f1c9261086816a72ca80231de58b1e6e94d9128cbc0bbbb65ead7`. ZIP CRC, bundletool, podpis in Firebase projekt `jivie-e928a` so preverjeni. Upload in aktivacija sta potrjena: Play kaže `Aktivno`, `1.1.0 (3) — nadgradnje Jivie` ter »Na voljo notranjim preizkuševalcem«, datum 8. oktober ob 12:56. Nova fizična namestitev še ni preverjena; spodaj je zgodovina izdaje2. [Aktualni dnevnik](../UPGRADE_IMPLEMENTATION.md).

@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Dopolnitve po uporabniškem pregledu — 1.1.1+4
+
+Funkcionalni commit/push `cbcb29d` z levim telefonskim menijem, uporabno razpoložljivostjo, vidnostjo projekta, finančnimi povezavami/računi in napravno odložitvijo je zaključen. Končni skupni nabor: 544 PASS; analiza 37 obstoječih info brez napak/opozoril. Izrecni dvig 1.1.1+4 je naslednja izdajna priprava; gradnja in objava se potrdita ločeno v [izvedbenem dnevniku](../UPGRADE_IMPLEMENTATION.md). FCM/APNs in iOS niso del te Android oddaje.
+
 ## Aktualna nadgradnja — 8. oktober, 1.1.0 (3)
 
 Popravki `54f3061` in funkcionalne nadgradnje `e73cd1c` so commitani/pushani ločeno s sporočilom `popolna predelava aplikacije`. Nato je `b99760d` pripravil izrecni dvig na **1.1.0+3** brez menjave SDK/odvisnosti. Android je **aktivno objavljen na istem internem kanalu**: Play kaže `1.1.0 (3) — nadgradnje Jivie`, »Na voljo notranjim preizkuševalcem«, 8. oktober ob 12:56. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Novo namestitev in fizične opomnike uporabnik še preveri.
