@@ -1,5 +1,9 @@
 # Jivie — stanje testnih izdaj
 
+## Kompaktna glava — kandidatka 1.1.2+5
+
+Premik prostora ob ikono, naziv Jivie v meniju in + Nov prostor so v funkcionalnem commitu/pushu `3d504c4`. Končni nabor 565 PASS/8 opt-in HTTP preskočenih; analiza brez napak/opozoril s 37 obstoječimi info. Izrecni dvig sledi šele po funkcionalnem commitu. Native build in Play aktivacija še nista potrjena, trenutna objava ostaja 1.1.1 (4). [Dokazi in predogled](../UPGRADE_IMPLEMENTATION.md).
+
 ## Dopolnitve 8. oktobra — aktivna 1.1.1+4
 
 Šest dopolnitev iz uporabniškega pregleda je v commitu/pushu `cbcb29d`; 544 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Kandidatka uporablja isti ID in upload ključ. Podpisana gradnja, upload in aktivacija so potrjeni: Play kaže Aktivno/1.1.1 (4), na voljo notranjim preizkuševalcem, 8. oktobra ob15:03. Domači (15) ostane izbrana skupina. Dokaz: `build/qa/jivie-followup/play-internal-1.1.1-4-active.jpg`. SHA256 novega AAB je `16bc3d8013401c1c9bf24bd6354c70e1e3c710df0e71c0e25853aa4f286c5f1f`; isti upload certifikat, ZIP/bundle/16KiB in native Firebase so preverjeni. Fizična namestitev nove gradnje še ni preverjena. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).

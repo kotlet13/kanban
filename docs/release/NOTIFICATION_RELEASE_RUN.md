@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Kompaktna telefonska glava — 1.1.2+5
+
+Koda/push `3d504c4` premakne prostor v glavo ob ikono, odstrani ime in dodatno vrstico s telefona ter dodajalno tipko zamenja z + Nov prostor v dropdownu. 565 Flutter PASS, analiza brez napak/opozoril s 37 obstoječimi info. Po funkcionalnem commitu sledi izrecni dvig na 1.1.2+5 in preverjena interna objava. Strežnik, pogodbe ter SDK/paketi niso spremenjeni. [Aktualni dokazi](../UPGRADE_IMPLEMENTATION.md).
+
 ## Dopolnitve po uporabniškem pregledu — 1.1.1+4
 
 Funkcionalni commit/push `cbcb29d` z levim telefonskim menijem, uporabno razpoložljivostjo, vidnostjo projekta, finančnimi povezavami/računi in napravno odložitvijo je zaključen. Končni skupni nabor: 544 PASS; analiza 37 obstoječih info brez napak/opozoril. Izdajna priprava `e9d676f` izrecno dvigne verzijo na1.1.1+4. Podpisani AAB je preverjen in objava potrjena: Play Aktivno/1.1.1 (4), na voljo internim preizkuševalcem8. oktobra ob15:03. Dokazi so v [izvedbenem dnevniku](../UPGRADE_IMPLEMENTATION.md). FCM/APNs in iOS niso del te Android oddaje.
