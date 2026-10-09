@@ -1,4 +1,21 @@
-# Jivie 1.1.6 (9) — izbor prostorov
+# Jivie — izdaje izbire prostorov
+
+## Dopolnitev 1.1.7 (10): zaprti izbor
+
+Stanje 9. oktobra 2026: funkcionalni commit/push `aad346d` in izdajna priprava `c2a2b9e` sta na `origin/codex/navigation-task-opening`. Podpisani AAB je preverjen in objavljen na istem internem kanalu. **Google Play potrdi Aktivno / 1.1.7 (10) — ikona in poravnava izbora prostora, na voljo notranjim preizkuševalcem 9. oktobra 2026 ob 12:21.** Izbran ostaja seznam **domači (15)**, podpora napravam je nespremenjena. Opombe ob izdaji so shranjene v SL/EN. Dokaz: `build/qa/jivie-space-picker-closed-release/play-internal-1.1.7-10-active.png`. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561).
+
+Popravek poravna zaprti izbor z ostalimi elementi telefonske glave ter doda ikono vrste prostora, manjše besedilo, zadržano ploskev in obrobo. Ohranjen je vsaj 48 px cilj dotika, prilagajanje povečani pisavi, celoten namig dolgega imena ter odprti meni. [Izvedbeni dokazi](../UPGRADE_IMPLEMENTATION.md) vključujejo predhodno reprodukcijo 12 px napačne poravnave.
+
+- **48 ciljnih UI testov PASS**, vključno z izbirnim Android renderiranjem; analiza brez napak/opozoril s 37 obstoječimi info. Preverjene so širine 320/390/600/1280, SL/EN ter 1×/2× besedilo. Vizualni dokazi: `build/qa/jivie-space-picker-closed/`.
+- Izdajna orodja **18 PASS** in `check_readiness.py --code-only` PASS po izrecnem dvigu različice. Prejšnjih sedem Firebase testov je bilo uspešnih; konfiguracija in koda dostave sta nespremenjeni, zato niso ponovno izvedeni.
+- Gradnja `flutter build appbundle --release --dart-define-from-file=.firebase/client.json` je uspešna. Končni AAB: `build/releases/Jivie-1.1.7+10-android-firebase.aab`, **77.619.365 bajtov**. SHA256: `8136306ba4b7646f9a3410944bc1f4220f208b7e8123254c91ea221dd4df6ce0`.
+- Manifest potrdi `si.triparna.jivie`, 1.1.7/kodo 10, min SDK 24/target SDK 36 in Android Back callback. Podpis se ujema z objavljenim AAB 9. Jarsigner, bundletool in ZIP CRC uspešni; `PAGE_ALIGNMENT_16K` ter vseh osem 64-bitnih ELF knjižnic sta preverjena.
+- Native Firebase identiteta se ujema z AAB 9, projekt `jivie-e928a` pa je prisoten v Dart AOT vseh treh ABI. Zasebnih ključev, podpisnih datotek, service-account podatkov in client.json kot sredstva aplikacije ni v AAB.
+- Dokazi paketa: `build/qa/jivie-space-picker-closed-release/android-release-artifact-evidence.json` in spremljajoči dnevniki. JSON opisuje paket pred nalaganjem; objava se vodi ločeno.
+
+SDK, odvisnosti, identitete, podatkovne sheme in strežnik so nespremenjeni. Fizični prikaz novega popravka še čaka uporabnikov preizkus; javna objava in iOS ostajata ločena koraka.
+
+## Prejšnja izdaja 1.1.6 (9)
 
 Stanje 9. oktobra 2026: **Google Play potrdi Aktivno / 1.1.6 (9) — preglednejši izbor prostorov, na voljo notranjim preizkuševalcem od 11:05.** Izvorne spremembe in izdajna priprava so commitane in poslane na `origin/codex/navigation-task-opening`.
 
