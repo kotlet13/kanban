@@ -99,8 +99,6 @@ class OrganizationWorkspace extends ConsumerWidget {
           organization.name,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
-        const SizedBox(height: 8),
-        Text(l.organizationAccessDescription),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
