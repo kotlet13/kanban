@@ -1814,5 +1814,9 @@
   "allSpacesAllDates": "Vsi datumi",
   "allSpacesTodayEmpty": "Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.",
   "allSpacesUpcoming": "Današnje in zamujeno",
-  "organizerPressBackAgainToExit": "Pritisni še enkrat za izhod"
+  "organizerPressBackAgainToExit": "Pritisni še enkrat za izhod",
+  "spaceSettingsTitle": "Nastavitve prostora",
+  "spaceSettingsChoose": "Izberi skupni prostor za upravljanje članov in povabil.",
+  "spaceSettingsConnect": "Za upravljanje skupnih prostorov poveži račun.",
+  "spaceSettingsUnavailable": "Ta prostor trenutno ni dostopen. Izberi drug skupni prostor."
 }

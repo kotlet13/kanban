@@ -19,8 +19,10 @@ class OrganizerInboxPage extends ConsumerStatefulWidget {
     super.key,
     required this.onSettings,
     required this.onAccount,
+    this.onMembers,
   });
   final VoidCallback onSettings, onAccount;
+  final ValueChanged<String>? onMembers;
   @override
   ConsumerState<OrganizerInboxPage> createState() => _OrganizerInboxPageState();
 }
@@ -202,6 +204,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                 ref,
                 item.plan.target,
                 onAccount: widget.onAccount,
+                onMembers: widget.onMembers,
               );
             }),
             onRead: item.isRead
@@ -244,6 +247,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                     ref,
                     target,
                     onAccount: widget.onAccount,
+                    onMembers: widget.onMembers,
                   );
                 });
               },

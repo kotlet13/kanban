@@ -127,6 +127,7 @@ class SharingWorkspace extends ConsumerWidget {
                 organization: scope,
                 onProject: onScopeSelected,
                 onMembers: (id) => onMembers?.call(id),
+                allowProjectCreation: view == SharingView.projects,
               );
             }
             final data = state.dataForScope(scope.id);
@@ -226,15 +227,6 @@ class SharingWorkspace extends ConsumerWidget {
                             archived: !scope.archived,
                           ),
                         ),
-                      ),
-                    ),
-                  if (onMembers != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => onMembers!(scope.id),
-                        icon: const Icon(Icons.people_outline, size: 18),
-                        label: Text(l.sharingMembers),
                       ),
                     ),
                   const SizedBox(height: 24),

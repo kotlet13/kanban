@@ -343,15 +343,10 @@ void main() {
     await tester.pumpAndSettle();
     tester
         .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-        .onMembersChanged!(true);
+        .onSpaceSettings!(sharingScopeId);
     await tester.pumpAndSettle();
     await back(tester);
-    expect(
-      tester
-          .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-          .showMembers,
-      false,
-    );
+    expectArea('sharing');
     expect(
       tester
           .widget<SharingAccountPage>(find.byType(SharingAccountPage))

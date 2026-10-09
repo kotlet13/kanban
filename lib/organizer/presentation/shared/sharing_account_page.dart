@@ -10,7 +10,6 @@ import 'sharing_auth.dart';
 import 'sharing_conflicts.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
-import 'sharing_members.dart';
 import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
 import 'sharing_status.dart';
@@ -31,11 +30,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
     this.selectedProjectId,
     this.onListSelected,
     this.onProjectSelected,
-    this.showMembers = false,
     this.authActive,
     this.onAuthChanged,
     this.onViewChanged,
-    this.onMembersChanged,
+    this.onSpaceSettings,
     this.initialInvitation,
     this.onInvitationHandled,
     this.setupIntent,
@@ -50,11 +48,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
   final String? selectedProjectId;
   final ValueChanged<String?>? onListSelected;
   final ValueChanged<String?>? onProjectSelected;
-  final bool showMembers;
   final bool? authActive;
   final ValueChanged<bool>? onAuthChanged;
   final ValueChanged<SharingView>? onViewChanged;
-  final ValueChanged<bool>? onMembersChanged;
+  final ValueChanged<String?>? onSpaceSettings;
   @override
   ConsumerState<SharingAccountPage> createState() => _SharingAccountPageState();
 }
@@ -63,13 +60,10 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   bool _authActive = false;
   bool _busy = false;
   late SharingView _view = widget.initialView;
-  late bool _members = widget.showMembers;
 
   bool get _currentAuth => widget.authActive ?? _authActive;
   SharingView get _currentView =>
       widget.onViewChanged == null ? _view : widget.initialView;
-  bool get _currentMembers =>
-      widget.onMembersChanged == null ? _members : widget.showMembers;
 
   void _selectAuth(bool active) {
     if (widget.onAuthChanged != null) {
@@ -85,16 +79,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
     } else {
       setState(() {
         _view = view;
-        _members = false;
       });
-    }
-  }
-
-  void _selectMembers(bool members) {
-    if (widget.onMembersChanged != null) {
-      widget.onMembersChanged!(members);
-    } else {
-      setState(() => _members = members);
     }
   }
 
@@ -176,7 +161,6 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
       if (mounted) {
         widget.onScopeSelected(null);
         _selectAuth(false);
-        _selectMembers(false);
         if (!remotelyRevoked) {
           ScaffoldMessenger.of(
             context,
@@ -305,6 +289,13 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     ),
                   ),
                 ),
+                if (widget.onSpaceSettings != null)
+                  ListTile(
+                    leading: const Icon(Icons.settings_outlined),
+                    title: Text(l.spaceSettingsTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => widget.onSpaceSettings!(selected?.id),
+                  ),
                 const SizedBox(height: 20),
                 PrivateSyncPanel(onConnect: () => _selectAuth(true)),
                 const SizedBox(height: 20),
@@ -398,9 +389,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<SharingView>(
-                          key: ValueKey(
-                            'shared-view-$_currentView-$_currentMembers',
-                          ),
+                          key: ValueKey('shared-view-$_currentView'),
                           initialValue: _currentView,
                           isExpanded: true,
                           decoration: InputDecoration(labelText: l.sharingView),
@@ -426,37 +415,21 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                           },
                         ),
                       ),
-                      if (!selected.revoked) ...[
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          selected: _currentMembers,
-                          label: Text(l.sharingMembers),
-                          onSelected: (_) => _selectMembers(true),
-                        ),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 24),
-                  if (_currentMembers && !selected.revoked)
-                    SharingMembersPage(
-                      key: ValueKey(
-                        'members-${session.partition}-${session.deviceId}-${selected.id}',
-                      ),
-                      scope: selected,
-                      session: session,
-                    )
-                  else
-                    SharingWorkspace(
-                      view: _currentView,
-                      showScopePicker: false,
-                      selectedScopeId: selected.id,
-                      onScopeSelected: (id) => widget.onScopeSelected(id),
-                      onConnect: () => _selectAuth(true),
-                      selectedListId: widget.selectedListId,
-                      selectedProjectId: widget.selectedProjectId,
-                      onListSelected: widget.onListSelected,
-                      onProjectSelected: widget.onProjectSelected,
-                    ),
+                  SharingWorkspace(
+                    view: _currentView,
+                    showScopePicker: false,
+                    selectedScopeId: selected.id,
+                    onScopeSelected: (id) => widget.onScopeSelected(id),
+                    onConnect: () => _selectAuth(true),
+                    selectedListId: widget.selectedListId,
+                    selectedProjectId: widget.selectedProjectId,
+                    onListSelected: widget.onListSelected,
+                    onProjectSelected: widget.onProjectSelected,
+                    onMembers: widget.onSpaceSettings,
+                  ),
                 ],
               ],
             );

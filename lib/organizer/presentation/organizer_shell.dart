@@ -21,6 +21,7 @@ import 'settings_page.dart';
 import 'shopping_page.dart';
 import 'today_page.dart';
 import 'shared/sharing_account_page.dart';
+import 'shared/space_settings_page.dart';
 import 'shared/sharing_workspace.dart';
 import 'shared/space_picker.dart';
 import 'people/people_page.dart';
@@ -360,11 +361,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         ref,
         target,
         onAccount: () => _navigate(_Area.sharing),
-        onMembers: (id) => _changeNavigation(() {
-          _navigationState.sharedScopeId = id;
-          _navigationState.sharingMembers = true;
-          _navigationState.area = _Area.sharing;
-        }),
+        onMembers: _openSpaceSettings,
       );
       if (mounted &&
           opened &&
@@ -418,7 +415,6 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           _navigationState.sharedScopeId = scopeId;
           _navigationState.sharedProjectId = id;
           _navigationState.sharingView = SharingView.projects;
-          _navigationState.sharingMembers = false;
           _navigationState.area = _Area.sharing;
         }),
       );
@@ -432,7 +428,6 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         _navigationState.sharedScopeId = id;
         _navigationState.sharedListId = null;
         _navigationState.sharedProjectId = null;
-        _navigationState.sharingMembers = false;
       });
     } catch (error) {
       if (mounted) {
@@ -453,7 +448,6 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         _navigationState.sharedScopeId = null;
         _navigationState.sharedListId = null;
         _navigationState.sharedProjectId = null;
-        _navigationState.sharingMembers = false;
       });
     } catch (_) {
       if (mounted) {
@@ -543,6 +537,75 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   void _navigate(_Area area) =>
       _changeNavigation(() => _navigationState.area = area);
 
+  Future<void> _openSpaceSettings(String? scopeId) async {
+    if (_restoringSpace) return;
+    final selection = ref.read(collaborationProvider).valueOrNull;
+    if (scopeId == null ||
+        (selection?.selectedSpaceId == scopeId &&
+            selection?.allSpacesSelected == false)) {
+      _navigate(_Area.spaceSettings);
+      return;
+    }
+    final session = selection?.session;
+    if (selection == null ||
+        session == null ||
+        selection.sessionInvalid ||
+        !session.expiresAt.isAfter(DateTime.now()) ||
+        !selection.scopes.any(
+          (scope) =>
+              scope.id == scopeId &&
+              scope.kind != SharedScopeKind.personal &&
+              !scope.revoked &&
+              !scope.blocked,
+        )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sharingAccessRevoked)),
+      );
+      return;
+    }
+    final before = _location;
+    final identity = _accountIdentity;
+    final operation = ++_navigationOperation;
+    final revision = _navigationRevision;
+    _spaceRestorations++;
+    try {
+      await ref.read(collaborationProvider.notifier).selectSpace(scopeId);
+    } catch (_) {
+      if (mounted &&
+          identity == _accountIdentity &&
+          operation == _navigationOperation) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.sharingAccessRevoked)),
+        );
+      }
+      return;
+    } finally {
+      _spaceRestorations--;
+    }
+    if (!mounted) return;
+    final current = ref.read(collaborationProvider).valueOrNull;
+    if (identity != _accountIdentity ||
+        operation != _navigationOperation ||
+        revision != _navigationRevision ||
+        current?.selectedSpaceId != scopeId ||
+        current?.allSpacesSelected != false ||
+        current?.sessionInvalid != false ||
+        current?.session?.expiresAt.isAfter(DateTime.now()) != true ||
+        !current!.scopes.any(
+          (scope) => scope.id == scopeId && !scope.revoked && !scope.blocked,
+        )) {
+      return;
+    }
+    setState(() {
+      _navigationState.sharedScopeId = scopeId;
+      _navigationState.sharedListId = null;
+      _navigationState.sharedProjectId = null;
+      _navigationState.area = _Area.spaceSettings;
+      _history.record(before, _location);
+      _navigationRevision++;
+    });
+  }
+
   String _label(BuildContext context, _Area area) {
     final l = context.l10n;
     return switch (area) {
@@ -556,6 +619,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.garden => l.gardenTitle,
       _Area.more => l.organizerMore,
       _Area.settings => l.organizerSettings,
+      _Area.spaceSettings => l.spaceSettingsTitle,
       _Area.sharing => l.sharingAccount,
       _Area.inbox => l.inboxTitle,
       _Area.people => l.peopleTitle,
@@ -573,6 +637,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.garden => Icons.yard_outlined,
     _Area.more => Icons.grid_view_outlined,
     _Area.settings => Icons.tune_outlined,
+    _Area.spaceSettings => Icons.settings_outlined,
     _Area.sharing => Icons.people_outline,
     _Area.inbox => Icons.notifications_none_outlined,
     _Area.people => Icons.person_outline,
@@ -717,6 +782,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                         _Area.people,
                         _Area.inbox,
                         _Area.sharing,
+                        _Area.spaceSettings,
                         _Area.settings,
                       ])
                         OrganizerMenuItem(
@@ -969,6 +1035,13 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             ),
             ListTile(
               dense: true,
+              selected: _navigationState.area == _Area.spaceSettings,
+              leading: const Icon(Icons.settings_outlined, size: 21),
+              title: Text(l.spaceSettingsTitle),
+              onTap: () => _navigate(_Area.spaceSettings),
+            ),
+            ListTile(
+              dense: true,
               selected: _navigationState.area == _Area.settings,
               leading: const Icon(Icons.tune_outlined, size: 21),
               title: Text(l.organizerSettings),
@@ -1155,11 +1228,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             selectedProjectId: _navigationState.sharedProjectId,
             onProjectSelected: (id) =>
                 _changeNavigation(() => _navigationState.sharedProjectId = id),
-            onMembers: (id) => _changeNavigation(() {
-              _navigationState.sharedScopeId = id;
-              _navigationState.sharingMembers = true;
-              _navigationState.area = _Area.sharing;
-            }),
+            onMembers: _openSpaceSettings,
           ),
         ],
       );
@@ -1175,7 +1244,6 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onSharedAgenda: (scopeId) => _changeNavigation(() {
           _navigationState.sharedScopeId = scopeId;
           _navigationState.sharingView = SharingView.agenda;
-          _navigationState.sharingMembers = false;
           _navigationState.area = _Area.sharing;
         }),
         snapshot: snapshot,
@@ -1275,11 +1343,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               onListSelected: (id) =>
                   _changeNavigation(() => _navigationState.sharedListId = id),
               onConnect: () => _navigate(_Area.sharing),
-              onMembers: (id) => _changeNavigation(() {
-                _navigationState.sharedScopeId = id;
-                _navigationState.sharingMembers = true;
-                _navigationState.area = _Area.sharing;
-              }),
+              onMembers: _openSpaceSettings,
             )
           else
             OrganizerShoppingPage(
@@ -1337,11 +1401,17 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _changeNavigation(() => _navigationState.homeProjectId = id),
         onShare: (project) => _copyProject(snapshot, project),
       ),
+      _Area.spaceSettings => SpaceSettingsPage(
+        selectedScopeId: selection?.allSpacesSelected == true ? null : active,
+        onScopeSelected: _openSpaceSettings,
+        onConnect: () => _navigate(_Area.sharing),
+      ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
       _Area.garden => const GardenPage(),
       _Area.inbox => OrganizerInboxPage(
         onSettings: () => showInboxPreferences(context, ref),
         onAccount: () => _navigate(_Area.sharing),
+        onMembers: _openSpaceSettings,
       ),
       _Area.sharing => SharingAccountPage(
         setupIntent: _setupIntent,
@@ -1355,11 +1425,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _changeNavigation(() => _navigationState.sharingAuth = active),
         onViewChanged: (view) => _changeNavigation(() {
           _navigationState.sharingView = view;
-          _navigationState.sharingMembers = false;
         }),
-        onMembersChanged: (members) =>
-            _changeNavigation(() => _navigationState.sharingMembers = members),
-        showMembers: _navigationState.sharingMembers,
+        onSpaceSettings: _openSpaceSettings,
         selectedListId: _navigationState.sharedListId,
         selectedProjectId: _navigationState.sharedProjectId,
         onListSelected: (id) =>
@@ -1379,6 +1446,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           ),
           for (final area in [
             _Area.sharing,
+            _Area.spaceSettings,
             _Area.finances,
             _Area.home,
             _Area.garden,

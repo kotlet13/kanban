@@ -4448,4 +4448,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizerPressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get spaceSettingsTitle => 'Space settings';
+
+  @override
+  String get spaceSettingsChoose =>
+      'Choose a shared space to manage members and invitations.';
+
+  @override
+  String get spaceSettingsConnect =>
+      'Connect an account to manage shared spaces.';
+
+  @override
+  String get spaceSettingsUnavailable =>
+      'This space is currently unavailable. Choose another shared space.';
 }

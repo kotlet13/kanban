@@ -1814,5 +1814,9 @@
   "allSpacesAllDates": "All dates",
   "allSpacesTodayEmpty": "No open tasks, events or expected payments for today.",
   "allSpacesUpcoming": "Today and overdue",
-  "organizerPressBackAgainToExit": "Press back again to exit"
+  "organizerPressBackAgainToExit": "Press back again to exit",
+  "spaceSettingsTitle": "Space settings",
+  "spaceSettingsChoose": "Choose a shared space to manage members and invitations.",
+  "spaceSettingsConnect": "Connect an account to manage shared spaces.",
+  "spaceSettingsUnavailable": "This space is currently unavailable. Choose another shared space."
 }

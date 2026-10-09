@@ -13,10 +13,20 @@ class OrganizationWorkspace extends ConsumerWidget {
     required this.organization,
     required this.onProject,
     required this.onMembers,
+    this.allowProjectCreation = true,
   });
   final SharedScope organization;
   final ValueChanged<String> onProject;
   final ValueChanged<String> onMembers;
+  final bool allowProjectCreation;
+
+  bool _canCreateProject(CollaborationState? state, SharedScope scope) =>
+      allowProjectCreation &&
+      scope.canManage &&
+      scope.canEdit &&
+      state?.sessionInvalid != true &&
+      state?.session?.expiresAt.isAfter(DateTime.now()) == true;
+
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final l = context.l10n, guard = SharingSessionGuard(context, ref);
     String? id, submittedName;
@@ -32,7 +42,8 @@ class OrganizationWorkspace extends ConsumerWidget {
       wrap: (form) => SharingSessionBoundary(
         guard: guard,
         visibleWhen: (state) => state.scopes.any(
-          (scope) => scope.id == organization.id && scope.canManage,
+          (scope) =>
+              scope.id == organization.id && _canCreateProject(state, scope),
         ),
         child: form,
       ),
@@ -97,24 +108,20 @@ class OrganizationWorkspace extends ConsumerWidget {
       children: [
         Wrap(
           spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            TextButton.icon(
-              onPressed: () => onMembers(organization.id),
-              icon: const Icon(Icons.group_outlined),
-              label: Text(l.sharingMembers),
+            Text(
+              l.organizationProjects,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            if (organization.canManage && state?.sessionInvalid != true)
+            if (_canCreateProject(state, organization))
               FilledButton.icon(
                 onPressed: () => _create(context, ref),
                 icon: const Icon(Icons.add),
                 label: Text(l.organizationCreateProject),
               ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l.organizationProjects,
-          style: Theme.of(context).textTheme.titleMedium,
         ),
         for (final project in projects.where((project) => !project.archived))
           ListTile(

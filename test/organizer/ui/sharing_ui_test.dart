@@ -101,15 +101,13 @@ Future<void> tapSharing(WidgetTester tester, String key) async {
 }
 
 Future<void> openMembers(WidgetTester tester) async {
-  await openAccount(tester);
-  await tester.ensureVisible(
-    find.widgetWithText(ListTile, sharingScope().name),
-  );
-  await tester.tap(find.widgetWithText(ListTile, sharingScope().name));
-  await tester.pumpAndSettle();
-  await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Člani'));
-  await tester.tap(find.widgetWithText(ChoiceChip, 'Člani'));
-  await tester.pumpAndSettle();
+  await personal.mobileTab(tester, 'Nastavitve prostora');
+  final scope = find.byKey(ValueKey('space-settings-scope-$sharingScopeId'));
+  if (scope.evaluate().isNotEmpty) {
+    await tester.ensureVisible(scope);
+    await tester.tap(scope);
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {

@@ -7883,6 +7883,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get organizerPressBackAgainToExit;
+
+  /// No description provided for @spaceSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Space settings'**
+  String get spaceSettingsTitle;
+
+  /// No description provided for @spaceSettingsChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a shared space to manage members and invitations.'**
+  String get spaceSettingsChoose;
+
+  /// No description provided for @spaceSettingsConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an account to manage shared spaces.'**
+  String get spaceSettingsConnect;
+
+  /// No description provided for @spaceSettingsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This space is currently unavailable. Choose another shared space.'**
+  String get spaceSettingsUnavailable;
 }
 
 class _AppLocalizationsDelegate

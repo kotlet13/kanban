@@ -4455,4 +4455,19 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerPressBackAgainToExit => 'Pritisni še enkrat za izhod';
+
+  @override
+  String get spaceSettingsTitle => 'Nastavitve prostora';
+
+  @override
+  String get spaceSettingsChoose =>
+      'Izberi skupni prostor za upravljanje članov in povabil.';
+
+  @override
+  String get spaceSettingsConnect =>
+      'Za upravljanje skupnih prostorov poveži račun.';
+
+  @override
+  String get spaceSettingsUnavailable =>
+      'Ta prostor trenutno ni dostopen. Izberi drug skupni prostor.';
 }

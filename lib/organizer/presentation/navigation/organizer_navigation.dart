@@ -11,6 +11,7 @@ enum OrganizerArea {
   garden,
   more,
   settings,
+  spaceSettings,
   sharing,
   inbox,
   people,
@@ -30,7 +31,6 @@ typedef OrganizerLocation = ({
   String? sharedListId,
   String? sharedProjectId,
   SharingView sharingView,
-  bool sharingMembers,
   bool sharingAuth,
   String? spaceId,
   bool allSpaces,
@@ -45,7 +45,7 @@ class OrganizerNavigationState {
   bool sharedShopping = false, sharedFinance = false;
   String? sharedScopeId, sharedListId, sharedProjectId;
   SharingView sharingView = SharingView.shopping;
-  bool sharingMembers = false, sharingAuth = false;
+  bool sharingAuth = false;
 
   OrganizerLocation location({
     required String? spaceId,
@@ -62,7 +62,6 @@ class OrganizerNavigationState {
     sharedListId: sharedListId,
     sharedProjectId: sharedProjectId,
     sharingView: sharingView,
-    sharingMembers: sharingMembers,
     sharingAuth: sharingAuth,
     spaceId: spaceId,
     allSpaces: allSpaces,
@@ -80,7 +79,6 @@ class OrganizerNavigationState {
     sharedListId = location.sharedListId;
     sharedProjectId = location.sharedProjectId;
     sharingView = location.sharingView;
-    sharingMembers = location.sharingMembers;
     sharingAuth = location.sharingAuth;
   }
 
@@ -88,7 +86,6 @@ class OrganizerNavigationState {
     sharedScopeId = null;
     sharedListId = null;
     sharedProjectId = null;
-    sharingMembers = false;
     sharingAuth = false;
     shoppingId = null;
     projectId = null;

@@ -103,6 +103,39 @@ class SharingUiController extends CollaborationController {
   void replace(CollaborationState value) => state = AsyncData(value);
   void switchAccount() =>
       replace(CollaborationState(session: sharingSession(second: true)));
+  @override
+  Future<void> selectSpace(String? id) async {
+    final current = state.requireValue;
+    if (id != null &&
+        !current.scopes.any((scope) => scope.id == id && !scope.revoked)) {
+      throw const CollaborationException('access_revoked');
+    }
+    replace(
+      CollaborationState(
+        session: current.session,
+        selectedSpaceId: id,
+        scopes: current.scopes,
+        data: current.data,
+        organizationsSupported: current.organizationsSupported,
+        sessionInvalid: current.sessionInvalid,
+      ),
+    );
+  }
+
+  @override
+  Future<void> selectAllSpaces() async {
+    final current = state.requireValue;
+    replace(
+      CollaborationState(
+        session: current.session,
+        allSpacesSelected: true,
+        scopes: current.scopes,
+        data: current.data,
+        organizationsSupported: current.organizationsSupported,
+      ),
+    );
+  }
+
   int? privateEnabledRevision;
   int privatePreviewLoads = 0;
   String? previewServer, previewToken;
