@@ -2,7 +2,7 @@
 
 Uporabnik je 9. oktobra 2026 po preizkusu Android 1.1.4 (7) naročil dva popravka: sistemski Nazaj naj odpre prejšnji zaslon, na začetnem zaslonu pa zahteva ponovni pritisk za izhod; dotik opravila ne sme čakati približno tri sekunde na prikaz.
 
-Stanje: izvedba je izdelana in lokalno preverjena na `codex/navigation-task-opening`, izhodišče `main` / `6fdd3aa`. Različica ostaja `1.1.4+7`. Nova mobilna izdaja še ni objavljena. Ta dokument loči dokaz iz kode, avtomatizirane preizkuse in še čakajoči fizični preizkus.
+Stanje: izvedba je izdelana in lokalno preverjena na `codex/navigation-task-opening`, izhodišče `main` / `6fdd3aa`. Funkcionalno preverjanje je potekalo pri `1.1.4+7`. Uporabnik je nato izrecno naročil commit/push in novo Android interno izdajo; po funkcionalnem commitu pripravljamo `1.1.5+8`. Ta dokument loči dokaz iz kode, avtomatizirane preizkuse in še čakajoči fizični preizkus.
 
 ## Ugotovljena vzroka
 
@@ -60,3 +60,7 @@ UI preizkus pokaže opravilo po prvem izrisu (simuliranih 16 ms), čeprav odgovo
 Strežnik, API pogodbe, sheme, odvisnosti, različica ter trenutno objavljena interna izdaja so nespremenjeni. Zasebni urejevalnik še vedno spoštuje zaporednost lastniškega branja v lokalni shrambi; optimizacija odstrani dekodiranje celotne zbirke, ne varovala konsistence. Izvorne kode pred objavo ni dovoljeno enačiti s posodobitvijo uporabnikovega telefona.
 
 Preizkus naslednje izdaje na S25: odpri Nakupi → seznam → drugo področje, nato se vračaj z Nazaj; preveri zapiranje odprtega menija/dialoga, vrnitev Vsi → projekt → Vsi, potek dvosekundnega okna ter drugi pritisk za izhod. V Vsi večkrat odpri lokalno, zasebno in skupno opravilo, tudi brez povezave. V tem koraku nova interna izdaja še ni objavljena.
+
+## Izrecno naročena interna izdaja 1.1.5 (8)
+
+Funkcionalni commit **`22ff222`** (`popravljena navigacija nazaj in hitrejše odpiranje opravil`) je poslan na `origin/codex/navigation-task-opening`. Šele nato je izrecno zvišana različica na **1.1.5+8**. Google Play pred pripravo kaže aktivno 1.1.4 (7), prazen novi osnutek pa je ustvarjen na istem internem kanalu. Podpisano gradnjo, končni artefakt in dejansko aktivacijo preverimo ločeno. Isti Jivie ID, podpis in seznam testerjev ostanejo; javna izdaja ni vključena.
