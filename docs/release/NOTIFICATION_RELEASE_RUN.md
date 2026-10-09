@@ -1,8 +1,8 @@
 # Obvestila in naslednja interna izdaja Jivie
 
-## Vsi prostori in skupni center obvestil — priprava 1.1.4+7
+## Vsi prostori in skupni center obvestil — aktivna 1.1.4+7
 
-Po funkcionalnem commitu `8c33716` je uporabnik 9. oktobra izrecno naročil novo interno Android izdajo. Izdajna različica je 1.1.4+7; identiteta `si.triparna.jivie`, namenski upload podpis in obstoječa izbirna Firebase konfiguracija ostanejo isti. Preverjanje izvorne izdajne priprave je uspešno, 18 release in 7 Firebase testov PASS. Podpisana gradnja in nova aktivacija se preverita ločeno; trenutna aktivna izdaja 1.1.3+6 je zgodovinsko dokazilo spodaj. [Izvedba](../ALL_SPACES_AND_INBOX.md). Dokazi nove gradnje bodo v `build/qa/all-spaces-inbox/android-release-*`.
+Funkcionalni commit/push `8c33716`, izdajna priprava `c6e4e95`. 677 Flutter PASS/9 opt-in HTTP preskočenih, analiza brez napak/opozoril (37 obstoječih info), 18 release in 7 Firebase testov PASS. Podpisana AAB gradnja, ZIP CRC, bundletool, isti Jivie upload certifikat, 16 KiB poravnava knjižnic in Firebase konfiguracija so preverjeni. Google Play potrdi **Aktivno / 1.1.4 (7) — Vsi prostori in obvestila**, na voljo internim preizkuševalcem **9. oktobra 2026 ob 06:21**. Izbran ostaja samo seznam **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/all-spaces-inbox/play-internal-1.1.4-7-active.jpg`. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561), [izvedba in meje](../ALL_SPACES_AND_INBOX.md). Fizični preizkus novih tokov še čaka uporabnika; javna izdaja in iOS nista vključena.
 
 ## Opomniki in Vrt — aktivna 1.1.3+6
 

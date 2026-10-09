@@ -41,4 +41,12 @@ Regresije vključujejo dostavljen oddaljeni opomnik brez lokalnega alarma, prazn
 
 Vmesnik je preverjen na 320/390/1280 px v obeh temah, obstoječi testi menija/glave pa tudi s povečanim besedilom. Berljivi prikazi iz dejanskih Flutter widgetov z izključno sintetičnimi QA podatki so v `build/qa/all-spaces-inbox/`: `all-390-light.png`, `all-390-dark.png`, `all-1280-light.png` in ustrezni `finance-*.png`. Tam so tudi dnevniki celotnih testov, analize in gradenj. To niso posnetki fizičnega Samsunga.
 
-Različica ostaja **1.1.3+6**; shema, strežnik, SDK in zaklenjene odvisnosti so nespremenjeni. Spremembe so v delovni veji `codex/all-spaces-inbox`. Trenutna aktivna Android interna izdaja še ne vsebuje teh popravkov. Objavo in fizični preizkus je treba zabeležiti ločeno od lokalne izvedbe.
+Funkcionalni preizkusi so bili izvedeni pri **1.1.3+6**; shema, strežnik, SDK in zaklenjene odvisnosti so nespremenjeni. Spremembe so v veji `codex/all-spaces-inbox`. Uporabnik je nato izrecno naročil commit/push in novo Android interno izdajo.
+
+## Android interna izdaja 1.1.4 (7)
+
+Funkcionalni commit/push `8c33716`, ločena izdajna priprava `c6e4e95` za **1.1.4+7**. Code-only izdajni pregled ter 18 release in 7 Firebase testov PASS. Podpisana gradnja uporablja obstoječi namenski Jivie upload certifikat in izbirno Firebase konfiguracijo; novih poverilnic ali pravic ne uvaja.
+
+AAB: `build/releases/Jivie-1.1.4+7-android-firebase.aab`, **77.504.625 bajtov**, SHA256 `9682ac78778831ba4b16755356304f5685024e2d4f6317d6426a9a0894f1c1eb`. Paket `si.triparna.jivie`, versionName 1.1.4 / versionCode 7, minSDK24 / target36. ZIP CRC, bundletool validacija, podpis z istim certifikatom kot izdaja 6, 16 KiB poravnava vseh osmih 64-bitnih knjižnic ter native Firebase projekt `jivie-e928a` so preverjeni. Izvorni `client.json` ni vključen kot asset. Stari artefakti so ohranjeni; dokazi so v `build/qa/all-spaces-inbox/android-release-artifact-evidence.json` in spremljajočih `android-release-*` datotekah.
+
+Google Play potrdi **Aktivno / 1.1.4 (7) — Vsi prostori in obvestila**, na voljo internim preizkuševalcem **9. oktobra 2026 ob 06:21**. Izbran ostaja samo seznam **domači (15)**. Pregled izdaje potrdi nič novih oziroma izgubljenih podprtih naprav. Dokaz: `build/qa/all-spaces-inbox/play-internal-1.1.4-7-active.jpg`. [Povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Nova izdaja je interna; javna objava in iOS nista del tega koraka. Nov fizični preizkus pogleda Vsi in popravljenega centra obvestil še čaka uporabnika.
