@@ -95,11 +95,6 @@ class OrganizationWorkspace extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          organization.name,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 16),
         Wrap(
           spacing: 12,
           children: [

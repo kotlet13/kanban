@@ -1,5 +1,7 @@
 # Nadgradnje Jivie — izvedba 8. oktobra 2026
 
+**Naslednji lokalni popravek po 1.1.8, 9. oktober:** odstranjen je tudi podvojeni naslov organizacije (npr. »Doma«) in njegov razmik nad dejanji. Ime prostora je že prikazano v zgornjem izboru. Preverjeno: 13 obstoječih organizacijskih UI testov PASS pri 390/1440 px, format in `git diff --check`; analiza ima 37 obstoječih info brez napak/opozoril. Ta dopolnitev še ni del objavljene 1.1.8 (11).
+
 **Dopolnitev 9. oktobra: razlaga organizacij v začetku uporabe.** Stalno besedilo o članstvu in ločenem dostopu do projektov/financ je odstranjeno iz skupnega organizacijskega pogleda. Ista SL/EN razlaga je zdaj v meniju **Začetek uporabe**, pod tremi izbirami načina uporabe, v informativnem razdelku Organizacija z ikono. Sporočila ob ustvarjanju projekta in dejanskih zavrnitvah dostopa ostanejo. Pravice, podatkovne sheme in strežnik se ne spreminjajo.
 
 Preverjeno: **28 ciljnih UI testov PASS** (`onboarding_ui_test.dart`, `organization_people_ui_test.dart`), vključno z začetnimi izbirami pri 390/1440 px in SL/EN; format in `git diff --check` uspešna. Končna analiza po zadnji UI spremembi ima 37 obstoječih info, brez napak/opozoril. Funkcionalni commit/push **`6031375`** ohrani 1.1.7+10; po izrecnem naročilu izdaje izdajni commit/push **`ff8a2da`** zviša različico na **1.1.8+11**. Izdajnih testov je 18 PASS, izvorni checker PASS.
