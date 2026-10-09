@@ -12,7 +12,7 @@ Preverjeno: **856 Flutter PASS / 11 opt-in HTTP preskočenih**, ločen dejanski 
 - SHA256 AAB: `a8f069fec3a4550b0af5d5effb34e0e42a20548ebcb2f0e32fb0cf11940ee015`.
 - Izhodišče: `de453f042315ba80364e2db173d0c18d4d7a9a56`; izvor je bil zamrznjen pred gradnjo. **317** vhodnih datotek je pred prenosom ponovno preverjenih brez razlik. Aggregate SHA256: `6c73b353a3e083cb377f5c974e9d47f044be93bc991a73f26e1c2f8b9ba4f53d`; SHA256 manifesta: `27005782bef3beb4bf959490138a455fbab4bbcead4b442bb669ab6df8f01d2f`.
 - Dokazi v `build/qa/jivie-spaces-release/`: `android-release-artifact-evidence.json`, `source-input-manifest.json`, `play-internal-1.2.0-14-active.jpg`, `play-testers-domaci-15.jpg`.
-- Git commit/push sledi objavi po uporabnikovem zahtevanem vrstnem redu; commit, ki vsebuje ta zapis, vsebuje zamrznjeni izvor in izdajne metapodatke. Sveženj se po objavi ne gradi ponovno. Nobena skrivnost, zasebna kopija ali izdajni binarni artefakt ni namenjen Gitu.
+- Funkcionalni in izdajni commit **`47f38d7`** je po objavi poslan na `origin/codex/navigation-task-opening`. Oddaljeni SHA se ujema; vseh 317 datotek v commitu se ujema z zamrznjenimi vhodi AAB. Sveženj se po objavi ne gradi ponovno. Poznejši dokumentacijski zapis beleži ta preverjeni izid. Nobena skrivnost, zasebna kopija ali izdajni binarni artefakt ni namenjen Gitu.
 
 ## Nastavitve prostora — aktivna 1.1.10+13
 

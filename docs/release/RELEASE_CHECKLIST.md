@@ -70,7 +70,7 @@ Pregledni račun lahko ostane na testnem strežniku. Produkcija na TriparNA ni p
 **Interna izdaja 1.2.0 (14) je izvedena po nadaljnjem izrecnem naročilu. Javnega pregleda in javne objave s tem ne izvajamo.**
 
 - [x] **Lastnik:** izrecno naročil novo interno gradnjo, nato commit/push. Obseg je zamrznjena nadgradnja prostorov; 317 vhodnih datotek je ponovno preverjenih pred prenosom AAB.
-- [ ] **Izvedba:** pregledati spremembe, uskladiti izvor in dokumentacijo ter pripraviti Git commit/push; ohraniti delo drugih nalog. Dvig različice/kode izdaje izvesti kot izrecni izdajni korak.
+- [x] **Izvedba:** izvor, testi, strežniški pomočniki in usklajena dokumentacija so v commitu `47f38d7`, poslanem na `origin/codex/navigation-task-opening`. Delo drugih nalog je ohranjeno; različica 1.2.0+14 je izrecni izdajni korak. Oddaljeni SHA in vseh 317 zamrznjenih vhodnih datotek sta preverjena.
 - [x] **Izvedba:** podpisani interni AAB 1.2.0 (14) z istim Jivie upload ključem; preverjeni target36/min24, 16KiB, manifest/ID, različica, nespremenjena dovoljenja, certifikat, bundletool/CRC, native knjižnice, Firebase in odsotnost zasebnih ključev. SHA256 in dokazi so v izdajnem dnevniku. Pred javno oddajo ponovno preveriti zahteve za takratno končno kandidatko.
 - [x] **Izvedba:** nova interna izdaja je obdelana in aktivna za domači (15), brez spremembe podpore napravam.
 - [ ] **Skupaj:** preveriti dejansko posodobitev oziroma svežo namestitev 1.2.0 (14) ter fizične preizkuse iz faze3.
