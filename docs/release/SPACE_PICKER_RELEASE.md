@@ -38,4 +38,4 @@ Naložen je preverjeni AAB zgoraj. Predogled potrdi različico 9 (1.1.6), target
 
 Končni prikaz: **Aktivno**, najnovejša izdaja **1.1.6 (9) — preglednejši izbor prostorov**, **Na voljo notranjim preizkuševalcem**, 9. oktober 2026 ob **11:05**. Dokaz: `build/qa/jivie-space-picker-release/play-internal-1.1.6-9-active.png`. [Povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561).
 
-Nova fizična namestitev/prikaz še nista potrjena. Preveri izbiro Vsi/osebno/skupno, oznako izbranega prostora in možnost Nov prostor. Javna objava, iOS in dokončanje novega produkcijskega strežnika so ločeni koraki.
+Uporabnik je nato na S25 potrdil videz odprtega menija ter opozoril na previsoko ime/puščico in manjkajočo ikono v zaprtem izboru. [Lokalno preverjeni nadaljnji popravek](../UPGRADE_IMPLEMENTATION.md) še ni del objavljene 1.1.6 (9). Javna objava, iOS in dokončanje novega produkcijskega strežnika so ločeni koraki.

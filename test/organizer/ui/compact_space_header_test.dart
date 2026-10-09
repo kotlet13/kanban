@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -146,6 +147,44 @@ void main() {
               tester.getSize(spaceButton()).height,
               greaterThanOrEqualTo(48),
             );
+            final headerCenter = tester
+                .getCenter(find.byType(JivieBrandMark))
+                .dy;
+            expect(
+              tester
+                  .getCenter(
+                    find.descendant(
+                      of: spaceButton(),
+                      matching: find.text(longName),
+                    ),
+                  )
+                  .dy,
+              closeTo(headerCenter, 1),
+              reason: 'The closed label must align with the header controls.',
+            );
+            expect(
+              tester.getCenter(find.byIcon(Icons.expand_more)).dy,
+              closeTo(headerCenter, 1),
+              reason: 'The chevron and label share the header center.',
+            );
+            expect(
+              tester
+                  .getCenter(
+                    find.descendant(
+                      of: spaceButton(),
+                      matching: find.byIcon(Icons.home_outlined),
+                    ),
+                  )
+                  .dy,
+              closeTo(headerCenter, 1),
+              reason: 'The selected space icon shares the header center.',
+            );
+            expect(
+              tester
+                  .getCenter(find.byIcon(Icons.notifications_none_outlined))
+                  .dy,
+              closeTo(headerCenter, 1),
+            );
             expect(find.byIcon(Icons.add_business_outlined), findsNothing);
             expect(tester.takeException(), isNull);
             await tester.tap(spaceButton());
@@ -161,6 +200,71 @@ void main() {
       }
     }
   }
+  testWidgets('closed phone picker identifies every selected space kind', (
+    tester,
+  ) async {
+    for (final choice in [
+      (chosen: null, all: false, scope: null, icon: Icons.person_outline),
+      (chosen: null, all: true, scope: null, icon: Icons.dashboard_outlined),
+      for (final kind in [
+        SharedScopeKind.household,
+        SharedScopeKind.project,
+        SharedScopeKind.organization,
+      ])
+        (
+          chosen: selectedId,
+          all: false,
+          scope: SharedScope(
+            id: selectedId,
+            name: 'Selected ${kind.name}',
+            kind: kind,
+            role: SharedRole.owner,
+          ),
+          icon: switch (kind) {
+            SharedScopeKind.household => Icons.home_outlined,
+            SharedScopeKind.project => Icons.folder_outlined,
+            _ => Icons.business_outlined,
+          },
+        ),
+      (
+        chosen: archivedId,
+        all: false,
+        scope: spaces().scopes.singleWhere((scope) => scope.id == archivedId),
+        icon: Icons.inventory_2_outlined,
+      ),
+      (
+        chosen: revokedId,
+        all: false,
+        scope: spaces().scopes.singleWhere((scope) => scope.id == revokedId),
+        icon: Icons.lock_outline,
+      ),
+      (
+        chosen: 'missing-space',
+        all: false,
+        scope: null,
+        icon: Icons.lock_outline,
+      ),
+    ]) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        collaborationController: SharingUiController(
+          initial: CollaborationState(
+            session: sharingSession(),
+            selectedSpaceId: choice.chosen,
+            allSpacesSelected: choice.all,
+            scopes: [if (choice.scope != null) choice.scope!],
+          ),
+        ),
+      );
+      expect(
+        find.descendant(of: spaceButton(), matching: find.byIcon(choice.icon)),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
   for (final width in [600.0, 1280.0]) {
     testWidgets(
       'wide picker keeps body placement without separate plus at $width',
@@ -457,4 +561,108 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+  testWidgets('render closed Android picker and preserved menus', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+    addTearDown(tester.view.resetPadding);
+    await tester.runAsync(() async {
+      final flutterRoot = Platform.resolvedExecutable
+          .split('/bin/cache/')
+          .first;
+      final fonts = '$flutterRoot/bin/cache/artifacts/material_fonts';
+      final loader = FontLoader('Roboto');
+      for (final weight in ['Regular', 'Medium', 'Bold']) {
+        final bytes = await File('$fonts/Roboto-$weight.ttf').readAsBytes();
+        loader.addFont(Future.value(ByteData.sublistView(bytes)));
+      }
+      await loader.load();
+      final icons = await File(
+        '$fonts/MaterialIcons-Regular.otf',
+      ).readAsBytes();
+      await (FontLoader(
+        'MaterialIcons',
+      )..addFont(Future.value(ByteData.sublistView(icons)))).load();
+    });
+    final capture = GlobalKey();
+    Future<void> saveArtifact(String name) => tester.runAsync(() async {
+      final boundary =
+          capture.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 2);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      final file = File('build/qa/jivie-space-picker-closed/$name.png');
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(bytes!.buffer.asUint8List());
+      image.dispose();
+    });
+    for (final scenario in [
+      (width: 390.0, scale: 1.0, name: 'phone', title: 'preizkus obvestil'),
+      (width: 320.0, scale: 2.0, name: 'longname-320-2x', title: longName),
+    ]) {
+      tester.platformDispatcher.textScaleFactorTestValue = scenario.scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      for (final theme in ['light', 'dark']) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+        await pumpOrganizer(
+          tester,
+          MemoryOrganizerStorage(),
+          width: scenario.width,
+          height: 844,
+          theme: theme,
+          repaintBoundaryKey: capture,
+          collaborationController: SharingUiController(
+            initial: CollaborationState(
+              session: sharingSession(),
+              selectedSpaceId: selectedId,
+              scopes: [
+                SharedScope(
+                  id: selectedId,
+                  name: scenario.title,
+                  kind: SharedScopeKind.project,
+                  role: SharedRole.owner,
+                ),
+                const SharedScope(
+                  id: archivedId,
+                  name: 'Doma',
+                  kind: SharedScopeKind.household,
+                  role: SharedRole.owner,
+                ),
+              ],
+            ),
+          ),
+        );
+        final label = find.descendant(
+          of: spaceButton(),
+          matching: find.text(scenario.title),
+        );
+        expect(
+          tester.getCenter(label).dy,
+          closeTo(tester.getCenter(find.byType(JivieBrandMark)).dy, 1),
+        );
+        expect(
+          find.descendant(
+            of: find.byType(OrganizerSpacePicker),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Tooltip &&
+                  widget.message == 'Prostor: ${scenario.title}',
+            ),
+          ),
+          findsOneWidget,
+        );
+        await saveArtifact('closed-${scenario.name}-$theme');
+        await tester.tap(spaceButton());
+        await tester.pumpAndSettle();
+        expect(find.text('Nov prostor'), findsOneWidget);
+        expect(find.text('Deljeni projekt'), findsOneWidget);
+        expect(find.byIcon(Icons.check), findsOneWidget);
+        await saveArtifact('menu-${scenario.name}-$theme');
+        expect(tester.takeException(), isNull);
+      }
+    }
+    debugDefaultTargetPlatformOverride = null;
+  }, skip: !const bool.fromEnvironment('JIVIE_RENDER_QA'));
 }

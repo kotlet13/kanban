@@ -202,13 +202,19 @@ class OrganizerSpacePicker extends ConsumerWidget {
         : selectedScope == null || selectedScope.revoked
         ? l.sharingAccessRevoked
         : selectedScope.name;
+    final chosenIcon = allSelected
+        ? Icons.dashboard_outlined
+        : chosen == null
+        ? Icons.person_outline
+        : selectedScope == null || selectedScope.revoked
+        ? Icons.lock_outline
+        : scopeIcon(selectedScope);
+    final pickerHeight = (MediaQuery.textScalerOf(context).scale(16) + 24)
+        .clamp(48.0, double.infinity);
     final picker = Tooltip(
       message: '${l.spacePickerTitle}: $chosenLabel',
       child: SizedBox(
-        height: (MediaQuery.textScalerOf(context).scale(16) + 24).clamp(
-          48,
-          double.infinity,
-        ),
+        height: pickerHeight,
         child: Theme(
           // DropdownButton captures this theme for its route. Keep native touch
           // and keyboard focus visible without the default grey selection band.
@@ -230,18 +236,51 @@ class OrganizerSpacePicker extends ConsumerWidget {
             elevation: 8,
             selectedItemBuilder: (context) => [
               for (final _ in items)
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    chosenLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // With itemHeight null, DropdownButton wraps selected children
+                // in a shrink-wrapped Column. Give the closed content its full
+                // height so both the label and suffix center in the tap target.
+                SizedBox(
+                  height: pickerHeight,
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: compact
+                        ? Row(
+                            children: [
+                              Icon(chosenIcon, size: 20, color: colors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  chosenLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            chosenLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                   ),
                 ),
             ],
-            style: Theme.of(context).textTheme.titleMedium,
+            style: compact
+                ? theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  )
+                : theme.textTheme.titleMedium,
+            padding: compact
+                ? const EdgeInsets.symmetric(horizontal: 10)
+                : null,
             underline: const SizedBox.shrink(),
-            icon: const Icon(Icons.expand_more),
+            icon: Icon(
+              Icons.expand_more,
+              size: compact ? 20 : 24,
+              color: colors.onSurfaceVariant,
+            ),
             items: items,
             onChanged: (id) {
               if (id == allAction) {
@@ -261,7 +300,14 @@ class OrganizerSpacePicker extends ConsumerWidget {
       ),
     );
     return compact
-        ? picker
+        ? Material(
+            color: colors.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: colors.outlineVariant),
+            ),
+            child: picker,
+          )
         : InputDecorator(
             decoration: InputDecoration(labelText: l.spacePickerTitle),
             child: picker,
