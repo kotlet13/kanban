@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Brez podvojenega naslova — aktivna 1.1.9+12
+
+Funkcionalni commit/push `714f47b`, izdajna priprava `30355ee` na `origin/codex/navigation-task-opening`. Organizacijski pogled ne ponavlja več naziva iz zgornjega izbora prostora. Preverjeno: 13 ciljnih UI testov, analiza brez napak/opozoril (37 obstoječih info), 18 izdajnih testov, source checker in končni podpisani AAB. **Play potrdi Aktivno / 1.1.9 (12) — brez podvojenega naslova, na voljo notranjim preizkuševalcem 9. oktobra 2026 ob 14:23**, samo domači (15), brez sprememb podpore napravam. [Artefakt in SHA256](../UPGRADE_IMPLEMENTATION.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Dokaz: `build/qa/jivie-organization-heading-release/play-internal-1.1.9-12-active.png`. Fizični preizkus še sledi.
+
 ## Organizacijska pomoč — aktivna 1.1.8+11
 
 Funkcionalni commit/push `6031375` in izdajna priprava `ff8a2da` sta na `origin/codex/navigation-task-opening`. Razlaga članstva in dostopa je prestavljena z organizacijskih zaslonov v **Začetek uporabe → Organizacija**. 28 ciljnih UI testov PASS, končna analiza 37 obstoječih info brez napak/opozoril; 18 izdajnih testov, source checker in podpisani AAB so preverjeni. **Google Play potrdi Aktivno / 1.1.8 (11) — preglednejša organizacija, na voljo internim preizkuševalcem 9. oktobra 2026 ob 13:30**, samo domači (15), brez sprememb podpore napravam. [Artefakt, SHA256 in dokazi](../UPGRADE_IMPLEMENTATION.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Dokaz: `build/qa/jivie-organization-help-release/play-internal-1.1.8-11-active.png`. Fizični preizkus novega prikaza še sledi.
