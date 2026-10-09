@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Navigacija in odpiranje opravil — aktivna 1.1.5+8
+
+Funkcionalni commit/push **`22ff222`**, izdajna priprava `0c2e332` in končni build commit **`b04c768`** so na `origin/codex/navigation-task-opening`. 715 Flutter PASS / 9 opt-in HTTP preskočenih; analiza brez napak/opozoril (37 obstoječih info), izdajna orodja 18 PASS in Firebase 7 PASS. Podpisani AAB, manifest z Android Back povratnim klicem, isti upload certifikat, bundletool/ZIP CRC, vseh osem 64-bitnih knjižnic pri 16 KiB ter native/Dart AOT Firebase konfiguracija so preverjeni. Google Play potrdi **Aktivno / 1.1.5 (8) — navigacija in hitrejša opravila**, na voljo internim preizkuševalcem **9. oktobra 2026 ob 07:32**. Izbran ostaja samo **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/navigation-task-opening/play-internal-1.1.5-8-active.jpg`. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561), [izvedba in meje](../NAVIGATION_AND_TASK_OPENING.md). Nov fizični preizkus, iOS in javna objava so ločeni koraki.
+
 ## Vsi prostori in skupni center obvestil — aktivna 1.1.4+7
 
 Funkcionalni commit/push `8c33716`, izdajna priprava `c6e4e95`. 677 Flutter PASS/9 opt-in HTTP preskočenih, analiza brez napak/opozoril (37 obstoječih info), 18 release in 7 Firebase testov PASS. Podpisana AAB gradnja, ZIP CRC, bundletool, isti Jivie upload certifikat, 16 KiB poravnava knjižnic in Firebase konfiguracija so preverjeni. Google Play potrdi **Aktivno / 1.1.4 (7) — Vsi prostori in obvestila**, na voljo internim preizkuševalcem **9. oktobra 2026 ob 06:21**. Izbran ostaja samo seznam **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/all-spaces-inbox/play-internal-1.1.4-7-active.jpg`. [Posodobitev](https://play.google.com/apps/internaltest/4701286726300038561), [izvedba in meje](../ALL_SPACES_AND_INBOX.md). Fizični preizkus novih tokov še čaka uporabnika; javna izdaja in iOS nista vključena.

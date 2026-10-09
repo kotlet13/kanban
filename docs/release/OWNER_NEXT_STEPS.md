@@ -1,6 +1,6 @@
 # Jivie — kaj še urediš ti
 
-Stanje: 9. oktober 2026. **Android 1.1.4 (7) je aktivno objavljen za interne uporabnike; testni strežnik ostaja FamilyHub 0.7.0.** Najprej preveri [nov pogled Vsi in usklajenost zvončka s centrom obvestil](../ALL_SPACES_AND_INBOX.md#kratek-preizkus-po-naslednji-mobilni-posodobitvi). Podrobni dokazi in omejitve so v [izdajnem dnevniku](NOTIFICATION_RELEASE_RUN.md) in [seznamu lastnikovih korakov](OWNER_ACTIONS.md).
+Stanje: 9. oktober 2026. **Android 1.1.5 (8) je aktivno objavljen za interne uporabnike; testni strežnik ostaja FamilyHub 0.7.0.** Najprej preveri [Nazaj, dvojni pritisk za izhod in hitrejše odpiranje opravil](../NAVIGATION_AND_TASK_OPENING.md#končno-preverjanje), nato [pogled Vsi in usklajenost zvončka s centrom obvestil](../ALL_SPACES_AND_INBOX.md#kratek-preizkus-po-naslednji-mobilni-posodobitvi). Podrobni dokazi in omejitve so v [izdajnem dnevniku](NOTIFICATION_RELEASE_RUN.md) in [seznamu lastnikovih korakov](OWNER_ACTIONS.md).
 
 1. **iOS:** odkleni Mac in obnovi obstoječo prijavo v **Xcode → Settings → Accounts**, ekipa TriparNA (`CXNM99632B`). Nato lahko pripravimo svežo iOS gradnjo iz nadgrajene kode, preverimo Apple obdelavo in uredimo TestFlight. Prejšnja popravljena razvojna gradnja še ni uspešna distribucijska izdaja.
 2. **Apple šifriranje:** odloči o izdajateljevi klasifikaciji šifriranja in državah distribucije. Kopije uporabljajo AES-256-GCM/PBKDF2, zato izjeme ne moremo samodejno označiti.
