@@ -12,7 +12,7 @@ class NativeInvitationService extends NativeDatabase
                 $invitation = $this->fromToken($params['token']);
                 $scope = $this->usable($invitation);
                 $user = $this->one('SELECT id FROM users WHERE LOWER(username)=?', [$invitation['recipient_username']]);
-                return ['invitation' => $this->wire($invitation), 'scope' => ['id' => $scope['id'], 'kind' => $scope['kind'], 'name' => $scope['name']], 'registrationAllowed' => !$user];
+                return ['invitation' => $this->wire($invitation), 'scope' => ['id' => $scope['id'], 'kind' => $scope['kind'], 'name' => $scope['name'], 'projectFinanceIncluded'=>$this->projectFinanceIncluded($scope)], 'registrationAllowed' => !$user];
             }
             $actor = $this->actor(); $user = $actor['user'];
             if ($operation === 'invitations.accept') {
@@ -138,12 +138,20 @@ class NativeInvitationService extends NativeDatabase
         } elseif ((int)$member['active'] !== 1 || $member['account_id'] !== $user['account_id']) {
             $this->change('UPDATE familyhub_members SET account_id=?,role=?,active=1 WHERE scope_id=? AND user_id=?', [$user['account_id'], $row['role'], $row['scope_id'], $user['id']]);
         }
+        (new NativeOrganizationAccess($this->container))->reconcileRevocations([$row['scope_id']],$user['account_id']);
+    }
+
+    private function projectFinanceIncluded($scope)
+    {
+        if (!$scope || $scope['kind']!=='project' || empty($scope['organization_id'])) { return false; }
+        $organization=$this->one('SELECT access_policy_version FROM familyhub_scopes WHERE id=?',[$scope['organization_id']]);
+        return (int)($organization['access_policy_version']??1)===2;
     }
 
     private function wire(array $row)
     {
         return ['id' => $row['id'], 'scopeId' => $row['scope_id'], 'recipientUsername' => $row['recipient_username'], 'role' => $row['role'],
-                'expiresAt' => (int)$row['expires_at'], 'acceptedAt' => $row['accepted_at'] === null ? null : (int)$row['accepted_at'],
+                'projectFinanceIncluded'=>$this->projectFinanceIncluded($this->one('SELECT * FROM familyhub_scopes WHERE id=?',[$row['scope_id']])), 'expiresAt' => (int)$row['expires_at'], 'acceptedAt' => $row['accepted_at'] === null ? null : (int)$row['accepted_at'],
                 'revokedAt' => $row['revoked_at'] === null ? null : (int)$row['revoked_at']];
     }
 }

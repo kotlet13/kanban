@@ -370,11 +370,16 @@ extension CollaborationPrivateRecoveryAttachment on CollaborationRepository {
           'SELECT cursor FROM scopes WHERE partition=? AND id=?',
           [p, scope.id],
         )).single['cursor'];
-        final page = await _callSession(session, epoch, 'sync2.pull', {
-          'scopeId': scope.id,
-          'cursor': cursor,
-          'limit': 100,
-        });
+        final page = await _callSession(
+          session,
+          epoch,
+          _recordContractVersion >= 4
+              ? 'sync4.pull'
+              : _recordContractVersion >= 3
+              ? 'sync3.pull'
+              : 'sync2.pull',
+          {'scopeId': scope.id, 'cursor': cursor, 'limit': 100},
+        );
         final next = readInt(page, 'cursor');
         more = readBool(page, 'hasMore');
         if (next < (cursor as int) || (more && next == cursor)) {

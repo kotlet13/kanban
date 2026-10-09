@@ -1664,8 +1664,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Events and task deadlines in one place.';
 
   @override
-  String get organizerFinanceIntro =>
-      'Personal income and expense entries on this device.';
+  String get organizerFinanceIntro => 'Income, expenses and planned costs.';
 
   @override
   String get organizerAddFinance => 'Add entry';
@@ -1772,7 +1771,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'There are no tasks in this project yet.';
 
   @override
-  String get organizerPersonal => 'Local · personal';
+  String get organizerPersonal => 'Personal';
 
   @override
   String get organizerSystemLanguage => 'Device language';
@@ -3681,7 +3680,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideLocalBody =>
-      'Tasks, plans, shopping and personal finances work without an account or connection. Start with one task or shopping list. Optional sync requires your explicit choice.';
+      'Start with a task or event in your personal space. Create households and organizations without an account; select a household for shopping lists, gardens and people. Data stays on your device; explicitly enable connection and synchronization.';
 
   @override
   String get guideTodayBody =>
@@ -3689,15 +3688,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guidePlansBody =>
-      'In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.';
+      'Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.';
 
   @override
   String get guideShoppingBody =>
-      'In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.';
+      'A household has its own shopping lists, gardens and people. Add items and mark purchases. Existing personal lists and gardens remain available; choose a household before assigning them.';
 
   @override
   String get guideMoreBody =>
-      'On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.';
+      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.';
 
   @override
   String get guideSkip => 'Skip';
@@ -4185,6 +4184,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guideMenuTitle => 'Menu and settings';
 
   @override
+  String get spacePickerCreateAction => 'New space';
+
+  @override
   String get spacePickerNewSpace => '+ New space';
 
   @override
@@ -4442,4 +4444,389 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allSpacesUpcoming => 'Today and overdue';
+
+  @override
+  String get organizerPressBackAgainToExit => 'Press back again to exit';
+
+  @override
+  String get spaceSettingsTitle => 'Space settings';
+
+  @override
+  String get spaceSettingsChoose =>
+      'Choose a shared space to manage members and invitations.';
+
+  @override
+  String get spaceSettingsConnect =>
+      'Connect an account to manage shared spaces.';
+
+  @override
+  String get spaceSettingsUnavailable =>
+      'This space is currently unavailable. Choose another shared space.';
+
+  @override
+  String get localSpaceDescription =>
+      'This device stores the space and its records. You explicitly enable connection and sharing later.';
+
+  @override
+  String get localSpaceState => 'Local · not synchronized';
+
+  @override
+  String get localSpaceAddress => 'Address (optional)';
+
+  @override
+  String get localSpaceRename => 'Edit space';
+
+  @override
+  String get localSpaceMembersDescription =>
+      'People are a record of persons. Account access and invitations require a server connection for the space.';
+
+  @override
+  String get localSpaceLinkAction => 'Connect and synchronize';
+
+  @override
+  String get legacyLocalData => 'Unassigned data';
+
+  @override
+  String get legacyLocalDescription =>
+      'These records remain on this device. Choose a household before moving them; connecting a server does not automatically share them.';
+
+  @override
+  String get localSpaceMoveToHousehold => 'Assign to household';
+
+  @override
+  String localSpaceMovePreview(String name, String household) {
+    return 'Move “$name” to household “$household”? The data becomes part of this space. If you later enable sharing, its permissions apply.';
+  }
+
+  @override
+  String get localSpaceChooseHousehold => 'Choose a household';
+
+  @override
+  String get localSpaceNoHouseholds =>
+      'First create a local household using the space picker.';
+
+  @override
+  String get localSpaceOfflineWork =>
+      'Your data remains on this device. Local work continues; invitations and server permission changes require a connection.';
+
+  @override
+  String get organizationAggregateDescription =>
+      'Activity from permitted projects. Each record retains its source space.';
+
+  @override
+  String get organizationLeader => 'Organization leader';
+
+  @override
+  String get organizationLeaderGrant => 'Grant leader role';
+
+  @override
+  String get organizationLeaderRemove => 'Remove leader role';
+
+  @override
+  String get organizationProjectFinanceVisibility =>
+      'Accepting this invitation includes access to all finances of this project. Private finances in other spaces remain separate.';
+
+  @override
+  String get localSpaceCreate => 'Create space';
+
+  @override
+  String get organizationAccessReview => 'Review project finance visibility';
+
+  @override
+  String get organizationAccessReviewDescription =>
+      'Project members will see all of their project finances. Organization leaders will see all existing and future projects and finances. Review who gains broader access before confirming.';
+
+  @override
+  String get organizationAccessApply => 'Confirm new visibility';
+
+  @override
+  String get organizationAccessCurrent =>
+      'Members see all finances of their projects. Leaders see all organization projects and their finances.';
+
+  @override
+  String get organizationAccessNoReaders =>
+      'No one gains additional access in this project.';
+
+  @override
+  String get organizationAccessPending =>
+      'The previous change has no confirmed result. Retry with the same request.';
+
+  @override
+  String get organizationAccessResume => 'Check change result';
+
+  @override
+  String get organizationAccessPreviewStale =>
+      'Visibility changed. Open a new preview.';
+
+  @override
+  String get organizationLeaderConfirm =>
+      'A leader sees all organization projects and their finances, including future projects. Editing remains controlled by separate permissions.';
+
+  @override
+  String get localSpaceConnectionChoose =>
+      'Select existing local spaces. Review the account, server and contents before uploading.';
+
+  @override
+  String get localSpaceConnectionPreview =>
+      'The listed spaces and their records will be connected. Signing in did not enable uploading. Invite members separately in space settings.';
+
+  @override
+  String localSpaceConnectionCounts(int records, int gardens) {
+    String _temp0 = intl.Intl.pluralLogic(
+      records,
+      locale: localeName,
+      other: '$records records',
+      one: '$records record',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      gardens,
+      locale: localeName,
+      other: '$gardens gardens',
+      one: '$gardens garden',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get localSpaceConnectionOtherAccount =>
+      'The space is linked to another account. Moving it to a new identity requires a separate review.';
+
+  @override
+  String get localSpaceConnectionUnsupported =>
+      'The server does not yet support uploading this content. The data remains on this device.';
+
+  @override
+  String get financeMembershipRead =>
+      'Read access from membership · no extra editing';
+
+  @override
+  String get financeMembershipReadDescription =>
+      'Members see all finances of their project. Here you grant only extra editing access; read access follows membership and leader roles.';
+
+  @override
+  String get privateSyncSourceDefault =>
+      'This option connects the default personal space. Select households and organizations separately.';
+
+  @override
+  String get localFinanceRecoveryIncomplete =>
+      'The finance view is incomplete. Some transfers and linked payments remain only in the original backup.';
+
+  @override
+  String localSpaceConnectionProjectCounts(
+    int tasks,
+    int finances,
+    int people,
+    int accounts,
+  ) {
+    return '$tasks tasks · $finances financial records · $people people · $accounts accounts';
+  }
+
+  @override
+  String get offlineRecoveryAction => 'Continue locally';
+
+  @override
+  String get offlineRecoveryIntro =>
+      'Create new local spaces from the available backup contents. Viewing and editing do not require the old server. Review the contents and limits before confirming.';
+
+  @override
+  String get offlineRecoveryArchive =>
+      'The original encrypted backup retains its source, pending server work, history and permissions. Some information is not converted into new editable records.';
+
+  @override
+  String get offlineRecoveryNoServerAccess =>
+      'The new local copy does not grant access to the old server or make you a manager of the original shared spaces.';
+
+  @override
+  String get offlineRecoveryFinanceUnavailable =>
+      'Finances without known read permission are excluded from the local copy.';
+
+  @override
+  String get offlineRecoveryBlocked =>
+      'Content with confirmed revoked access remains blocked. Disconnecting does not unlock it.';
+
+  @override
+  String get offlineRecoveryNothingAvailable =>
+      'This backup has no content available for recovery into a local space.';
+
+  @override
+  String get offlineRecoveryAcknowledge =>
+      'I understand the limits and want to create new local copies.';
+
+  @override
+  String get offlineRecoverySuccess =>
+      'Local spaces are ready. Select them above; the original encrypted backup is preserved.';
+
+  @override
+  String get paymentPaidPersonally => 'I paid personally';
+
+  @override
+  String get paymentMyAccount => 'My account or card';
+
+  @override
+  String get paymentChooseAccount => 'Choose an account';
+
+  @override
+  String get paymentNeedsPersonalAccount =>
+      'First add your account or card in the same currency in your personal space.';
+
+  @override
+  String get paymentNeedsRefundAccount =>
+      'First add an organization account in the same currency for reimbursement.';
+
+  @override
+  String get paymentPaidAt => 'Date of personal payment';
+
+  @override
+  String get paymentExpectRefund => 'I expect reimbursement';
+
+  @override
+  String get paymentExpectRefundYes => 'Yes, I expect reimbursement';
+
+  @override
+  String get paymentExpectRefundNo => 'No reimbursement expected';
+
+  @override
+  String get paymentHouseholdInclusion => 'Include in household view';
+
+  @override
+  String get paymentNoHousehold => 'Do not include in a household';
+
+  @override
+  String get paymentSourceExpenseOnly =>
+      'The expense stays in the organization. The selected account records the payment; other personal transactions are not shared.';
+
+  @override
+  String get paymentRecord => 'Record personal payment';
+
+  @override
+  String get paymentLinkedPayments => 'Personal payments and reimbursements';
+
+  @override
+  String get paymentLinkedExpense => 'Payment for an organization';
+
+  @override
+  String get paymentRemaining => 'Remaining reimbursement';
+
+  @override
+  String get paymentCashBurden => 'Cash burden after reimbursements';
+
+  @override
+  String get paymentNoRefundExpected => 'No reimbursement is expected.';
+
+  @override
+  String get paymentRefundAction => 'Record reimbursement';
+
+  @override
+  String paymentRefundDescription(String amount) {
+    return 'Remaining amount: $amount. Reimbursement reduces the payment burden and does not create new income.';
+  }
+
+  @override
+  String get paymentRefundReceived => 'Reimbursement';
+
+  @override
+  String get paymentRefundPaid => 'Reimbursement paid';
+
+  @override
+  String get paymentRefundAt => 'Reimbursement date';
+
+  @override
+  String get paymentRefundTooHigh =>
+      'The amount exceeds the remaining reimbursement.';
+
+  @override
+  String get paymentRefundAfterPayment =>
+      'Reimbursement cannot precede the personal payment.';
+
+  @override
+  String get paymentPending =>
+      'The payment is saved. Synchronization across the linked spaces is pending.';
+
+  @override
+  String get paymentWaitingSource =>
+      'The payment is saved locally. Explicitly connect the organization before sharing it.';
+
+  @override
+  String get paymentBlocked =>
+      'Synchronization was rejected. The data is preserved; these amounts are not confirmed totals.';
+
+  @override
+  String get paymentSourceRemoved => 'Payment history';
+
+  @override
+  String get paymentSourceRemovedDescription =>
+      'The original shared record is unavailable. Retained payments and reimbursements are history, not evidence of current access or a new receivable.';
+
+  @override
+  String get paymentProjectionDescription =>
+      'Personal payment view. The expense remains in the organization; reimbursement is not new income.';
+
+  @override
+  String get paymentRetry => 'Retry synchronization';
+
+  @override
+  String get paymentRefresh => 'Refresh linked payments';
+
+  @override
+  String get paymentIncompleteBalance =>
+      'A complete account balance also needs linked payment information.';
+
+  @override
+  String get paymentAlreadyLinked =>
+      'This expense already has a linked personal payment.';
+
+  @override
+  String paymentPublicationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count linked payments',
+      one: '$count linked payment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paymentPersonalDisplay => 'Personal payment';
+
+  @override
+  String get deletionLinkedFinancialFacts =>
+      'Linked payments and reimbursements';
+
+  @override
+  String get deletionLinkedFinancialRetention =>
+      'Keeping or transferring a space retains shared payment and reimbursement amounts, dates and historical references. Private projections and account links are removed. This cannot erase copies already downloaded.';
+
+  @override
+  String deletionLinkedScopeCounts(
+    String scope,
+    int retained,
+    int deleted,
+    int refunds,
+  ) {
+    return '$scope: $retained payments if kept; $deleted payments if deleted; $refunds approved reimbursements.';
+  }
+
+  @override
+  String get deletionRetainedExpenseResolution =>
+      'Retain the shared expense and approved payment and reimbursement history, removing my personal notes and title.';
+
+  @override
+  String get deletionPrivatePaymentProjections =>
+      'Private payment projections to remove';
+
+  @override
+  String get deletionSharedPaymentReceipts => 'Already shared payment history';
+
+  @override
+  String get deletionLinkedUnavailableScope => 'Previously shared space';
+
+  @override
+  String get spaceFinanceIntro => 'Income, expenses and planned costs.';
+
+  @override
+  String get spaceLocalShort => 'Local';
+
+  @override
+  String get spaceConnectedShort => 'Connected';
 }

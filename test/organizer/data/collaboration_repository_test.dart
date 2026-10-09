@@ -35,6 +35,12 @@ class FakeServer {
   final accountIds = {'alice': newSharedId(), 'bob': newSharedId()};
   final tokens = <String, String>{};
   final scopes = <String, Map<String, dynamic>>{};
+  final confirmedRevocations = <String, Set<String>>{};
+  void confirmRevocation(String scopeId, String username) {
+    members[scopeId]!.remove(username);
+    (confirmedRevocations[username] ??= <String>{}).add(scopeId);
+  }
+
   final members = <String, Map<String, String>>{};
   final records = <String, Map<String, Map<String, dynamic>>>{};
   final sequence = <String, int>{};
@@ -63,7 +69,12 @@ class FakeServer {
         'api': 'familyhub_native',
         'version': 1,
         'enabled': true,
-        'features': {'recordSync': true, 'inbox': false, 'finance': false},
+        'features': {
+          'recordSync': true,
+          'inbox': false,
+          'finance': false,
+          'scopeAccessChanges': true,
+        },
       };
     }
     if (operation == 'auth.login') {
@@ -90,6 +101,11 @@ class FakeServer {
     }
     if (operation == 'scopes.list') {
       return {
+        if (params['includeAccessChanges'] == true)
+          'revokedScopeIds': [
+            for (final id in confirmedRevocations[user] ?? <String>{})
+              if (scopes.containsKey(id) && !members[id]!.containsKey(user)) id,
+          ],
         'scopes': scopes.entries
             .where((r) => members[r.key]!.containsKey(user))
             .map((r) => {...r.value, 'role': members[r.key]![user]})
@@ -423,7 +439,7 @@ void main() {
       final scope = await shared(a, b);
       bt.offline = true;
       await b.createShoppingList(scopeId: scope, title: 'My unsent');
-      server.members[scope]!.remove('bob');
+      server.confirmRevocation(scope, 'bob');
       bt.offline = false;
       await b.syncNow();
       expect(b.state.blockedCount, 1);

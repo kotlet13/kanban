@@ -254,7 +254,7 @@ void main() {
       await repo.close();
       final restarted = await open();
       expect(restarted.state.selectedSpaceId, first);
-      server.members[first]!.remove('alice');
+      server.confirmRevocation(first, 'alice');
       await restarted.syncNow();
       expect(restarted.state.selectedSpaceId, first);
       expect(

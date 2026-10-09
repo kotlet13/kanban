@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/all_spaces_projection.dart';
 import 'collaboration_provider.dart';
 import 'organizer_provider.dart';
+import 'local_spaces_provider.dart';
 
 export '../domain/all_spaces_projection.dart';
 
@@ -24,6 +25,7 @@ final allSpacesProvider = Provider<AsyncValue<AllSpacesSnapshot>>((ref) {
   return AsyncData(
     projectAllSpaces(
       personal: snapshot,
+      localSpaces: ref.watch(localSpacesProvider).valueOrNull,
       shared: shared.isLoading || shared.hasError
           ? CollaborationState()
           : shared.valueOrNull ?? CollaborationState(),

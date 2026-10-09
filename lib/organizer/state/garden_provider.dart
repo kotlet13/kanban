@@ -4,10 +4,27 @@ import '../data/garden_repository.dart';
 import '../data/garden_storage.dart';
 import '../domain/garden_models.dart';
 import 'local_database_provider.dart';
+import 'collaboration_provider.dart';
+import '../data/collaboration_repository.dart' show SharedGardenStorage;
 
 final gardenRepositoryProvider = FutureProvider<GardenRepository>((ref) async {
   final db = await ref.watch(localDatabaseProvider.future);
-  final repository = GardenRepository(GardenStorage(db));
+  final selected = ref.watch(
+    collaborationProvider.select(
+      (state) => (
+        state.valueOrNull?.session?.partition,
+        state.valueOrNull?.selectedSpaceId,
+      ),
+    ),
+  );
+  final shared = await ref.watch(collaborationRepositoryProvider.future);
+  final scope = shared.state.scopes
+      .where((s) => s.id == selected.$2 && s.kind == SharedScopeKind.household)
+      .firstOrNull;
+  final storage = scope == null || selected.$1 == null
+      ? GardenStorage(db)
+      : SharedGardenStorage(shared, selected.$1!, scope.id);
+  final repository = GardenRepository(storage);
   ref.onDispose(() => unawaited(repository.close()));
   await repository.initialize();
   return repository;
@@ -51,16 +68,20 @@ class GardenController extends AsyncNotifier<GardenSnapshot> {
   Future<String> createGarden({
     required String name,
     String notes = '',
+    String? expectedWorkspaceKey,
     Iterable<GardenArea> areas = const [],
     Iterable<GardenSeason> seasons = const [],
   }) => _repo.createGarden(
     name: name,
     notes: notes,
+    expectedWorkspaceKey: expectedWorkspaceKey,
     areas: areas,
     seasons: seasons,
   );
-  Future<void> updateGarden(Garden garden) => _repo.updateGarden(garden);
-  Future<void> deleteGarden(Garden garden) => _repo.deleteGarden(garden);
+  Future<void> updateGarden(Garden garden, {String? expectedWorkspaceKey}) =>
+      _repo.updateGarden(garden, expectedWorkspaceKey: expectedWorkspaceKey);
+  Future<void> deleteGarden(Garden garden, {String? expectedWorkspaceKey}) =>
+      _repo.deleteGarden(garden, expectedWorkspaceKey: expectedWorkspaceKey);
   Future<void> saveSeason(Garden garden, GardenSeason season) =>
       _repo.saveSeason(garden, season);
   Future<void> deleteSeason(Garden garden, int year) =>

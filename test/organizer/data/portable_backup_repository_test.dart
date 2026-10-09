@@ -313,7 +313,7 @@ void main() {
       transport.server.scopes[scope]!['sequence'] = 123;
       await a.shared.syncNow();
       await a.backup.validatePreparedExport(preview.backupId);
-      transport.server.members[scope]!.remove('alice');
+      transport.server.confirmRevocation(scope, 'alice');
       await a.shared.syncNow();
       await expectLater(
         a.backup.validatePreparedExport(preview.backupId),

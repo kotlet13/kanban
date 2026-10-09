@@ -3009,7 +3009,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizerFinanceIntro.
   ///
   /// In en, this message translates to:
-  /// **'Personal income and expense entries on this device.'**
+  /// **'Income, expenses and planned costs.'**
   String get organizerFinanceIntro;
 
   /// No description provided for @organizerAddFinance.
@@ -3195,7 +3195,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizerPersonal.
   ///
   /// In en, this message translates to:
-  /// **'Local · personal'**
+  /// **'Personal'**
   String get organizerPersonal;
 
   /// No description provided for @organizerSystemLanguage.
@@ -6543,7 +6543,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideLocalBody.
   ///
   /// In en, this message translates to:
-  /// **'Tasks, plans, shopping and personal finances work without an account or connection. Start with one task or shopping list. Optional sync requires your explicit choice.'**
+  /// **'Start with a task or event in your personal space. Create households and organizations without an account; select a household for shopping lists, gardens and people. Data stays on your device; explicitly enable connection and synchronization.'**
   String get guideLocalBody;
 
   /// No description provided for @guideTodayBody.
@@ -6555,19 +6555,19 @@ abstract class AppLocalizations {
   /// No description provided for @guidePlansBody.
   ///
   /// In en, this message translates to:
-  /// **'In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.'**
+  /// **'Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.'**
   String get guidePlansBody;
 
   /// No description provided for @guideShoppingBody.
   ///
   /// In en, this message translates to:
-  /// **'In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.'**
+  /// **'A household has its own shopping lists, gardens and people. Add items and mark purchases. Existing personal lists and gardens remain available; choose a household before assigning them.'**
   String get guideShoppingBody;
 
   /// No description provided for @guideMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.'**
+  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.'**
   String get guideMoreBody;
 
   /// No description provided for @guideSkip.
@@ -7398,6 +7398,12 @@ abstract class AppLocalizations {
   /// **'Menu and settings'**
   String get guideMenuTitle;
 
+  /// No description provided for @spacePickerCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New space'**
+  String get spacePickerCreateAction;
+
   /// No description provided for @spacePickerNewSpace.
   ///
   /// In en, this message translates to:
@@ -7871,6 +7877,610 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today and overdue'**
   String get allSpacesUpcoming;
+
+  /// No description provided for @organizerPressBackAgainToExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get organizerPressBackAgainToExit;
+
+  /// No description provided for @spaceSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Space settings'**
+  String get spaceSettingsTitle;
+
+  /// No description provided for @spaceSettingsChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a shared space to manage members and invitations.'**
+  String get spaceSettingsChoose;
+
+  /// No description provided for @spaceSettingsConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an account to manage shared spaces.'**
+  String get spaceSettingsConnect;
+
+  /// No description provided for @spaceSettingsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This space is currently unavailable. Choose another shared space.'**
+  String get spaceSettingsUnavailable;
+
+  /// No description provided for @localSpaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This device stores the space and its records. You explicitly enable connection and sharing later.'**
+  String get localSpaceDescription;
+
+  /// No description provided for @localSpaceState.
+  ///
+  /// In en, this message translates to:
+  /// **'Local · not synchronized'**
+  String get localSpaceState;
+
+  /// No description provided for @localSpaceAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address (optional)'**
+  String get localSpaceAddress;
+
+  /// No description provided for @localSpaceRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit space'**
+  String get localSpaceRename;
+
+  /// No description provided for @localSpaceMembersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People are a record of persons. Account access and invitations require a server connection for the space.'**
+  String get localSpaceMembersDescription;
+
+  /// No description provided for @localSpaceLinkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect and synchronize'**
+  String get localSpaceLinkAction;
+
+  /// No description provided for @legacyLocalData.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned data'**
+  String get legacyLocalData;
+
+  /// No description provided for @legacyLocalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'These records remain on this device. Choose a household before moving them; connecting a server does not automatically share them.'**
+  String get legacyLocalDescription;
+
+  /// No description provided for @localSpaceMoveToHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign to household'**
+  String get localSpaceMoveToHousehold;
+
+  /// No description provided for @localSpaceMovePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Move “{name}” to household “{household}”? The data becomes part of this space. If you later enable sharing, its permissions apply.'**
+  String localSpaceMovePreview(String name, String household);
+
+  /// No description provided for @localSpaceChooseHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a household'**
+  String get localSpaceChooseHousehold;
+
+  /// No description provided for @localSpaceNoHouseholds.
+  ///
+  /// In en, this message translates to:
+  /// **'First create a local household using the space picker.'**
+  String get localSpaceNoHouseholds;
+
+  /// No description provided for @localSpaceOfflineWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data remains on this device. Local work continues; invitations and server permission changes require a connection.'**
+  String get localSpaceOfflineWork;
+
+  /// No description provided for @organizationAggregateDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity from permitted projects. Each record retains its source space.'**
+  String get organizationAggregateDescription;
+
+  /// No description provided for @organizationLeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Organization leader'**
+  String get organizationLeader;
+
+  /// No description provided for @organizationLeaderGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant leader role'**
+  String get organizationLeaderGrant;
+
+  /// No description provided for @organizationLeaderRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove leader role'**
+  String get organizationLeaderRemove;
+
+  /// No description provided for @organizationProjectFinanceVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting this invitation includes access to all finances of this project. Private finances in other spaces remain separate.'**
+  String get organizationProjectFinanceVisibility;
+
+  /// No description provided for @localSpaceCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create space'**
+  String get localSpaceCreate;
+
+  /// No description provided for @organizationAccessReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review project finance visibility'**
+  String get organizationAccessReview;
+
+  /// No description provided for @organizationAccessReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Project members will see all of their project finances. Organization leaders will see all existing and future projects and finances. Review who gains broader access before confirming.'**
+  String get organizationAccessReviewDescription;
+
+  /// No description provided for @organizationAccessApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new visibility'**
+  String get organizationAccessApply;
+
+  /// No description provided for @organizationAccessCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Members see all finances of their projects. Leaders see all organization projects and their finances.'**
+  String get organizationAccessCurrent;
+
+  /// No description provided for @organizationAccessNoReaders.
+  ///
+  /// In en, this message translates to:
+  /// **'No one gains additional access in this project.'**
+  String get organizationAccessNoReaders;
+
+  /// No description provided for @organizationAccessPending.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous change has no confirmed result. Retry with the same request.'**
+  String get organizationAccessPending;
+
+  /// No description provided for @organizationAccessResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Check change result'**
+  String get organizationAccessResume;
+
+  /// No description provided for @organizationAccessPreviewStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility changed. Open a new preview.'**
+  String get organizationAccessPreviewStale;
+
+  /// No description provided for @organizationLeaderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'A leader sees all organization projects and their finances, including future projects. Editing remains controlled by separate permissions.'**
+  String get organizationLeaderConfirm;
+
+  /// No description provided for @localSpaceConnectionChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Select existing local spaces. Review the account, server and contents before uploading.'**
+  String get localSpaceConnectionChoose;
+
+  /// No description provided for @localSpaceConnectionPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'The listed spaces and their records will be connected. Signing in did not enable uploading. Invite members separately in space settings.'**
+  String get localSpaceConnectionPreview;
+
+  /// No description provided for @localSpaceConnectionCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{records, plural, one{{records} record} other{{records} records}} · {gardens, plural, one{{gardens} garden} other{{gardens} gardens}}'**
+  String localSpaceConnectionCounts(int records, int gardens);
+
+  /// No description provided for @localSpaceConnectionOtherAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'The space is linked to another account. Moving it to a new identity requires a separate review.'**
+  String get localSpaceConnectionOtherAccount;
+
+  /// No description provided for @localSpaceConnectionUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not yet support uploading this content. The data remains on this device.'**
+  String get localSpaceConnectionUnsupported;
+
+  /// No description provided for @financeMembershipRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read access from membership · no extra editing'**
+  String get financeMembershipRead;
+
+  /// No description provided for @financeMembershipReadDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Members see all finances of their project. Here you grant only extra editing access; read access follows membership and leader roles.'**
+  String get financeMembershipReadDescription;
+
+  /// No description provided for @privateSyncSourceDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'This option connects the default personal space. Select households and organizations separately.'**
+  String get privateSyncSourceDefault;
+
+  /// No description provided for @localFinanceRecoveryIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The finance view is incomplete. Some transfers and linked payments remain only in the original backup.'**
+  String get localFinanceRecoveryIncomplete;
+
+  /// No description provided for @localSpaceConnectionProjectCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{tasks} tasks · {finances} financial records · {people} people · {accounts} accounts'**
+  String localSpaceConnectionProjectCounts(
+    int tasks,
+    int finances,
+    int people,
+    int accounts,
+  );
+
+  /// No description provided for @offlineRecoveryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue locally'**
+  String get offlineRecoveryAction;
+
+  /// No description provided for @offlineRecoveryIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new local spaces from the available backup contents. Viewing and editing do not require the old server. Review the contents and limits before confirming.'**
+  String get offlineRecoveryIntro;
+
+  /// No description provided for @offlineRecoveryArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'The original encrypted backup retains its source, pending server work, history and permissions. Some information is not converted into new editable records.'**
+  String get offlineRecoveryArchive;
+
+  /// No description provided for @offlineRecoveryNoServerAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'The new local copy does not grant access to the old server or make you a manager of the original shared spaces.'**
+  String get offlineRecoveryNoServerAccess;
+
+  /// No description provided for @offlineRecoveryFinanceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances without known read permission are excluded from the local copy.'**
+  String get offlineRecoveryFinanceUnavailable;
+
+  /// No description provided for @offlineRecoveryBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Content with confirmed revoked access remains blocked. Disconnecting does not unlock it.'**
+  String get offlineRecoveryBlocked;
+
+  /// No description provided for @offlineRecoveryNothingAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup has no content available for recovery into a local space.'**
+  String get offlineRecoveryNothingAvailable;
+
+  /// No description provided for @offlineRecoveryAcknowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand the limits and want to create new local copies.'**
+  String get offlineRecoveryAcknowledge;
+
+  /// No description provided for @offlineRecoverySuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Local spaces are ready. Select them above; the original encrypted backup is preserved.'**
+  String get offlineRecoverySuccess;
+
+  /// No description provided for @paymentPaidPersonally.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid personally'**
+  String get paymentPaidPersonally;
+
+  /// No description provided for @paymentMyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'My account or card'**
+  String get paymentMyAccount;
+
+  /// No description provided for @paymentChooseAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an account'**
+  String get paymentChooseAccount;
+
+  /// No description provided for @paymentNeedsPersonalAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'First add your account or card in the same currency in your personal space.'**
+  String get paymentNeedsPersonalAccount;
+
+  /// No description provided for @paymentNeedsRefundAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'First add an organization account in the same currency for reimbursement.'**
+  String get paymentNeedsRefundAccount;
+
+  /// No description provided for @paymentPaidAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of personal payment'**
+  String get paymentPaidAt;
+
+  /// No description provided for @paymentExpectRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'I expect reimbursement'**
+  String get paymentExpectRefund;
+
+  /// No description provided for @paymentExpectRefundYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I expect reimbursement'**
+  String get paymentExpectRefundYes;
+
+  /// No description provided for @paymentExpectRefundNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No reimbursement expected'**
+  String get paymentExpectRefundNo;
+
+  /// No description provided for @paymentHouseholdInclusion.
+  ///
+  /// In en, this message translates to:
+  /// **'Include in household view'**
+  String get paymentHouseholdInclusion;
+
+  /// No description provided for @paymentNoHousehold.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not include in a household'**
+  String get paymentNoHousehold;
+
+  /// No description provided for @paymentSourceExpenseOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The expense stays in the organization. The selected account records the payment; other personal transactions are not shared.'**
+  String get paymentSourceExpenseOnly;
+
+  /// No description provided for @paymentRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record personal payment'**
+  String get paymentRecord;
+
+  /// No description provided for @paymentLinkedPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal payments and reimbursements'**
+  String get paymentLinkedPayments;
+
+  /// No description provided for @paymentLinkedExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment for an organization'**
+  String get paymentLinkedExpense;
+
+  /// No description provided for @paymentRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining reimbursement'**
+  String get paymentRemaining;
+
+  /// No description provided for @paymentCashBurden.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash burden after reimbursements'**
+  String get paymentCashBurden;
+
+  /// No description provided for @paymentNoRefundExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'No reimbursement is expected.'**
+  String get paymentNoRefundExpected;
+
+  /// No description provided for @paymentRefundAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record reimbursement'**
+  String get paymentRefundAction;
+
+  /// No description provided for @paymentRefundDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining amount: {amount}. Reimbursement reduces the payment burden and does not create new income.'**
+  String paymentRefundDescription(String amount);
+
+  /// No description provided for @paymentRefundReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Reimbursement'**
+  String get paymentRefundReceived;
+
+  /// No description provided for @paymentRefundPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Reimbursement paid'**
+  String get paymentRefundPaid;
+
+  /// No description provided for @paymentRefundAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Reimbursement date'**
+  String get paymentRefundAt;
+
+  /// No description provided for @paymentRefundTooHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'The amount exceeds the remaining reimbursement.'**
+  String get paymentRefundTooHigh;
+
+  /// No description provided for @paymentRefundAfterPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Reimbursement cannot precede the personal payment.'**
+  String get paymentRefundAfterPayment;
+
+  /// No description provided for @paymentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment is saved. Synchronization across the linked spaces is pending.'**
+  String get paymentPending;
+
+  /// No description provided for @paymentWaitingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment is saved locally. Explicitly connect the organization before sharing it.'**
+  String get paymentWaitingSource;
+
+  /// No description provided for @paymentBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization was rejected. The data is preserved; these amounts are not confirmed totals.'**
+  String get paymentBlocked;
+
+  /// No description provided for @paymentSourceRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment history'**
+  String get paymentSourceRemoved;
+
+  /// No description provided for @paymentSourceRemovedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The original shared record is unavailable. Retained payments and reimbursements are history, not evidence of current access or a new receivable.'**
+  String get paymentSourceRemovedDescription;
+
+  /// No description provided for @paymentProjectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal payment view. The expense remains in the organization; reimbursement is not new income.'**
+  String get paymentProjectionDescription;
+
+  /// No description provided for @paymentRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry synchronization'**
+  String get paymentRetry;
+
+  /// No description provided for @paymentRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh linked payments'**
+  String get paymentRefresh;
+
+  /// No description provided for @paymentIncompleteBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'A complete account balance also needs linked payment information.'**
+  String get paymentIncompleteBalance;
+
+  /// No description provided for @paymentAlreadyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'This expense already has a linked personal payment.'**
+  String get paymentAlreadyLinked;
+
+  /// No description provided for @paymentPublicationCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} linked payment} other{{count} linked payments}}'**
+  String paymentPublicationCount(int count);
+
+  /// No description provided for @paymentPersonalDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal payment'**
+  String get paymentPersonalDisplay;
+
+  /// No description provided for @deletionLinkedFinancialFacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked payments and reimbursements'**
+  String get deletionLinkedFinancialFacts;
+
+  /// No description provided for @deletionLinkedFinancialRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping or transferring a space retains shared payment and reimbursement amounts, dates and historical references. Private projections and account links are removed. This cannot erase copies already downloaded.'**
+  String get deletionLinkedFinancialRetention;
+
+  /// No description provided for @deletionLinkedScopeCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{scope}: {retained} payments if kept; {deleted} payments if deleted; {refunds} approved reimbursements.'**
+  String deletionLinkedScopeCounts(
+    String scope,
+    int retained,
+    int deleted,
+    int refunds,
+  );
+
+  /// No description provided for @deletionRetainedExpenseResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Retain the shared expense and approved payment and reimbursement history, removing my personal notes and title.'**
+  String get deletionRetainedExpenseResolution;
+
+  /// No description provided for @deletionPrivatePaymentProjections.
+  ///
+  /// In en, this message translates to:
+  /// **'Private payment projections to remove'**
+  String get deletionPrivatePaymentProjections;
+
+  /// No description provided for @deletionSharedPaymentReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Already shared payment history'**
+  String get deletionSharedPaymentReceipts;
+
+  /// No description provided for @deletionLinkedUnavailableScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously shared space'**
+  String get deletionLinkedUnavailableScope;
+
+  /// No description provided for @spaceFinanceIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Income, expenses and planned costs.'**
+  String get spaceFinanceIntro;
+
+  /// No description provided for @spaceLocalShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get spaceLocalShort;
+
+  /// No description provided for @spaceConnectedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get spaceConnectedShort;
 }
 
 class _AppLocalizationsDelegate

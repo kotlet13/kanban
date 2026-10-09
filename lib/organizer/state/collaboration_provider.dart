@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'local_database_provider.dart';
 export 'local_database_provider.dart' show collaborationDatabaseFactoryProvider;
 import '../data/collaboration_repository.dart';
+import '../data/sqlite_organizer_storage.dart';
 import '../data/collaboration_transport.dart';
 import '../data/device_session_store.dart';
 import '../data/remote_push_store.dart';
 import '../data/account_deletion_store.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
-import 'organizer_provider.dart';
+import '../domain/local_space_models.dart';
+import '../domain/garden_models.dart';
+export '../domain/local_space_models.dart';
+export '../domain/organization_access_models.dart';
 
 export '../domain/collaboration_models.dart';
 export '../data/account_deletion_store.dart' show PendingAccountDeletion;
@@ -159,6 +163,60 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   }
 
   Future<PrivateSyncPreview> previewPrivateSync() => _repo.previewPrivateSync();
+  Future<LocalSpacesPublicationPreview> previewLocalSpacesPublication(
+    List<String> ids,
+  ) => _repo.previewLocalSpacesPublication(ids);
+  Future<void> publishLocalSpaces(LocalSpacesPublicationPreview preview) =>
+      _edit((repo) => repo.publishLocalSpaces(preview));
+  Future<SharedScope> updateScopeMetadata(
+    String scopeId,
+    String name,
+    String? address, {
+    required int expectedRevision,
+    String? requestId,
+  }) => _edit(
+    (repo) => repo.updateScopeMetadata(
+      scopeId,
+      name,
+      address,
+      expectedRevision: expectedRevision,
+      requestId: requestId,
+    ),
+  );
+  Future<bool> organizationAccessAvailable() =>
+      _repo.organizationAccessAvailable();
+  Future<OrganizationAccessPreview> previewOrganizationAccess(String id) =>
+      _repo.previewOrganizationAccess(id);
+  Future<SharedScope> applyOrganizationAccess(
+    String id,
+    String previewHash, {
+    String? requestId,
+  }) => _edit(
+    (repo) =>
+        repo.applyOrganizationAccess(id, previewHash, requestId: requestId),
+  );
+  Future<void> setOrganizationLeader(
+    String id,
+    String accountId,
+    bool enabled, {
+    String? requestId,
+  }) => _edit(
+    (repo) => repo.setOrganizationLeader(
+      id,
+      accountId,
+      enabled,
+      requestId: requestId,
+    ),
+  );
+  Future<void> resumeOrganizationAccessChange(String id) =>
+      _edit((repo) => repo.resumeOrganizationAccessChange(id));
+  Future<void> saveGarden(
+    String scopeId,
+    Garden garden, {
+    bool isNew = false,
+  }) => _edit((repo) => repo.saveGarden(scopeId, garden, isNew: isNew));
+  Future<void> deleteGarden(String scopeId, Garden garden) =>
+      _edit((repo) => repo.deleteGarden(scopeId, garden));
   Future<void> enablePrivateSync({required int expectedRevision}) =>
       _repo.enablePrivateSync(expectedRevision: expectedRevision);
   Future<void> pausePrivateSync() => _repo.pausePrivateSync();
@@ -456,7 +514,29 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     NotificationTarget target,
   ) async {
     if (!target.isPersonal) return _repo.openNotificationTarget(target);
-    final personal = await ref.read(organizerProvider.future);
+    final db = await ref.read(localDatabaseProvider.future);
+    final storage = SqliteOrganizerStorage(
+      db,
+      workspaceId: target.localWorkspaceId,
+    );
+    await storage.initialize();
+    final catalog = await db.rows('SELECT data FROM local_spaces WHERE id=?', [
+      target.localWorkspaceId,
+    ]);
+    if (catalog.isEmpty) {
+      return NotificationOpenResult(
+        status: NotificationOpenStatus.deleted,
+        target: target,
+      );
+    }
+    final personal = await storage.read();
+    // Bound catalog sources are parked; only the concrete shared target routes them.
+    if (personal.recordIds.isEmpty) {
+      return NotificationOpenResult(
+        status: NotificationOpenStatus.deleted,
+        target: target,
+      );
+    }
     final valid = target.records.every(
       (r) => switch (r.type) {
         'financeEntry' || 'personalFinanceEntry' => personal.financeEntries.any(
@@ -477,6 +557,13 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       target: target,
     );
   }
+
+  /// Refresh an already visible task without syncing the entire account.
+  Future<NotificationOpenResult> refreshVisibleTaskTarget(
+    NotificationTarget target,
+  ) => target.isPersonal
+      ? openNotificationTarget(target)
+      : _repo.refreshVisibleTaskTarget(target);
 
   Future<void> login({
     required String serverUrl,

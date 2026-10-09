@@ -1,5 +1,7 @@
 # Jivie: statična javna stran za cPanel
 
+Aktualni lokalni paket 9. oktobra 2026: `build/releases/jivie-website-2026-10-09.zip`. Vključuje popravljena SL/EN opisa AI prenosa in FCM. Prejšnji ZIP je ohranjen; za novo objavo uporabi novega. [Priprava Google Play](../docs/release/GOOGLE_PLAY_PUBLIC_PREPARATION.md) navaja preverjanja, hash in odprte korake pred javno mobilno oddajo.
+
 Izvor strani je v `public/`. Gradnjo HTML vodi `build_site.py`; ZIP vsebuje samo pregledani javni izhod. Ni odjemalec Flutter, podatkovni strežnik ali storitev upravljanega gostovanja. Ne vključuje baze, prijav, gesel, sej, spletnega obrazca s poverilnicami ali objave v trgovinah.
 
 ## Lokalna priprava

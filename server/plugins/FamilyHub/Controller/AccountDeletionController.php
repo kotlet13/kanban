@@ -30,7 +30,7 @@ class AccountDeletionController extends BaseController
         try {
             $service=new NativeService($this->container);
             $session=$service->dispatch('auth.login',['username'=>$this->request->getRawValue('username'),'password'=>$this->request->getRawValue('password'),'otp'=>$this->request->getRawValue('otp'),'deviceName'=>'Jivie account deletion website'],'',$_SERVER['REMOTE_ADDR']??'unknown');
-            $plan=$service->dispatch('account.deletion.preview',['policyVersion'=>2],'Bearer '.$session['token'],$_SERVER['REMOTE_ADDR']??'unknown');
+            $plan=$service->dispatch('account.deletion.preview',['policyVersion'=>3],'Bearer '.$session['token'],$_SERVER['REMOTE_ADDR']??'unknown');
             $this->render(['plan'=>$plan,'token'=>$session['token'],'operationId'=>$this->uuid(),'receiptToken'=>bin2hex(random_bytes(32))],null,200,$csrf);
         } catch (NativeError $error) { $this->render(null,$error->errorCode,$error->status,$csrf); }
         catch (\Throwable $error) { $this->render(null,'server_error',500,$csrf); }
@@ -44,7 +44,13 @@ class AccountDeletionController extends BaseController
             $transfers=[];$deletions=[];$resolutions=[];
             foreach ($input['owners']??[] as $sid=>$successor) { if ($successor==='deleteOwnedScope') { $deletions[]=$sid; } elseif ($successor!=='') { $transfers[]=['scopeId'=>$sid,'successorAccountId'=>$successor]; } }
             foreach ($input['structures']??[] as $value) { $p=explode(':',$value);if(!in_array(count($p),[2,3],true)){throw new NativeError('validation_error');}$action=$p[2]??'preserveStructure';if(!in_array($action,['preserveStructure','detachOrganization'],true)){throw new NativeError('validation_error');}$resolutions[]=['scopeId'=>$p[0],'recordId'=>$p[1],'action'=>$action]; }
-            $params=['policyVersion'=>2,'operationId'=>$input['operationId']??null,'receiptToken'=>$input['receiptToken']??null,'previewHash'=>$input['previewHash']??null,'password'=>$input['password']??null,'otp'=>$input['otp']??null,'confirmation'=>$input['confirmation']??null,'ownershipTransfers'=>$transfers,'ownedScopeDeletions'=>$deletions,'resolutions'=>$resolutions];
+            // Older already-issued forms used policy2. New forms carry the
+            // exact preview version, including across an unknown-result retry.
+            $policy = $input['policyVersion'] ?? '2';
+            if (!is_string($policy) || !preg_match('/^[123]$/D', $policy)) {
+                throw new NativeError('validation_error');
+            }
+            $params=['policyVersion'=>(int)$policy,'operationId'=>$input['operationId']??null,'receiptToken'=>$input['receiptToken']??null,'previewHash'=>$input['previewHash']??null,'password'=>$input['password']??null,'otp'=>$input['otp']??null,'confirmation'=>$input['confirmation']??null,'ownershipTransfers'=>$transfers,'ownedScopeDeletions'=>$deletions,'resolutions'=>$resolutions];
             $result=(new NativeService($this->container))->dispatch('account.deletion.confirm',$params,'Bearer '.($input['token']??''),$_SERVER['REMOTE_ADDR']??'unknown');
             $this->render(['result'=>$result,'operationId'=>$params['operationId'],'receiptToken'=>$params['receiptToken']],null,200,$this->anonymousCsrf($csrf));
         } catch (NativeError $error) {

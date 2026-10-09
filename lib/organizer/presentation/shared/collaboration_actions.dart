@@ -43,8 +43,7 @@ class CollaborationActions implements OrganizerCollectionActions {
   Widget wrapEditor(Widget editor) => SharingSessionBoundary(
     guard: _guard,
     visibleWhen: (state) =>
-        !state.sessionInvalid &&
-        !state.deletionPending &&
+        state.localAccessAllowed &&
         (state.scopes
                 .where((item) => item.id == scope.id)
                 .firstOrNull
@@ -315,8 +314,9 @@ class CollaborationActions implements OrganizerCollectionActions {
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: (editor) => wrapEditor(financeGuard?.wrap(editor) ?? editor),
       onSave: (draft) async {
-        if (financeGuard != null && !financeGuard.isCurrent)
+        if (financeGuard != null && !financeGuard.isCurrent) {
           throw const CollaborationException('finance_forbidden');
+        }
         // An acknowledgement of this timer edit updates bookkeeping revision.
         // Reuse it only when every business field and timer run is unchanged.
         if (timerTask != null &&
@@ -334,8 +334,10 @@ class CollaborationActions implements OrganizerCollectionActions {
             ..remove('createdByAccountId')
             ..remove('updatedByAccountId');
           if (latest != null &&
-              jsonEncode(business(latest)) == jsonEncode(business(timerTask!)))
+              jsonEncode(business(latest)) ==
+                  jsonEncode(business(timerTask!))) {
             timerTask = latest;
+          }
         }
         if (canEditCost && (draft.costEnabled || linkedCost != null)) {
           final current = timerTask;

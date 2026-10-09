@@ -51,6 +51,7 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Text(l.privateSyncSourceDefault),
                   Text(l.privateSyncUploadWarning),
                   const SizedBox(height: 16),
                   BackupCounts(counts: preview.recordCounts),
@@ -102,6 +103,7 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
             ),
             const SizedBox(height: 8),
             Text(l.privateSyncDescription),
+            Text(l.privateSyncSourceDefault),
             const SizedBox(height: 12),
             if (session == null) ...[
               Text(l.privateSyncUnavailable),

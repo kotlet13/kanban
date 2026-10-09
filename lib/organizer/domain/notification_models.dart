@@ -31,11 +31,27 @@ class NotificationTarget {
     this.serverId,
     this.accountId,
     this.scopeId,
+    String? localSpaceId,
     required Iterable<NotificationRecordTarget> records,
     Iterable<int> inboxIds = const [],
-  }) : records = List.unmodifiable(records),
-       inboxIds = List.unmodifiable(inboxIds);
+  }) : localSpaceId = localSpaceId == 'local' ? null : localSpaceId,
+       records = List.unmodifiable(records),
+       inboxIds = List.unmodifiable(inboxIds) {
+    if (localSpaceId != null &&
+        (localSpaceId.isEmpty ||
+            localSpaceId.length > 200 ||
+            serverUrl != null ||
+            serverId != null ||
+            accountId != null ||
+            scopeId != null)) {
+      throw const FormatException('Invalid local notification target');
+    }
+  }
   final String? serverUrl, serverId, accountId, scopeId;
+
+  /// Null in old device notifications means the default personal space.
+  final String? localSpaceId;
+  String get localWorkspaceId => localSpaceId ?? 'local';
   final List<NotificationRecordTarget> records;
   final List<int> inboxIds;
   bool get isPersonal =>
@@ -52,6 +68,7 @@ class NotificationTarget {
     'serverId': serverId,
     'accountId': accountId,
     'scopeId': scopeId,
+    if (localSpaceId != null) 'localSpaceId': localSpaceId,
     'records': records.map((r) => r.toJson()).toList(),
     'inboxIds': inboxIds,
   };
@@ -61,6 +78,7 @@ class NotificationTarget {
         serverId: readNullableString(j, 'serverId'),
         accountId: readNullableString(j, 'accountId'),
         scopeId: readNullableString(j, 'scopeId'),
+        localSpaceId: readNullableString(j, 'localSpaceId'),
         records: (j['records'] as List).map(
           (r) => NotificationRecordTarget.fromJson(r as Map<String, dynamic>),
         ),

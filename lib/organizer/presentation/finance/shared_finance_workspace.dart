@@ -12,6 +12,9 @@ import 'finance_planning_panel.dart';
 import 'finance_permissions_dialog.dart';
 import 'shared_finance_ledger.dart';
 import 'shared_finance_conflicts.dart';
+import '../../state/linked_payments_provider.dart';
+import 'linked_payment_forms.dart';
+import 'linked_payments_section.dart';
 
 class SharedFinanceWorkspace extends ConsumerWidget {
   const SharedFinanceWorkspace({
@@ -25,14 +28,36 @@ class SharedFinanceWorkspace extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n, policy = state.financePolicyForScope(scope.id);
     final actions = SharedFinanceActions(context, ref, scope, state);
+    final paymentSpace = PaymentSpaceRef(
+      scope.id,
+      partition: state.session?.partition,
+    );
+    final paymentsAsync = ref.watch(
+      linkedPaymentsProvider(paymentSpaceKey(paymentSpace)),
+    );
+    final payments = paymentsAsync.isLoading
+        ? null
+        : paymentsAsync.asData?.value;
+    final cashAvailable =
+        !policy.linkedPaymentsRequired ||
+        payments?.fresh == true && payments?.complete == true;
     if (!state.financeSupported) return Text(l.financeUnsupported);
     final data = state.dataForScope(scope.id);
+    final managed =
+        policy.managedByOrganizationPolicy ||
+        scope.accessPolicyVersion >= 2 &&
+            (scope.kind == SharedScopeKind.organization ||
+                scope.kind == SharedScopeKind.project);
+    final online =
+        !state.sessionInvalid &&
+        !state.deletionPending &&
+        state.session?.expiresAt.isAfter(DateTime.now()) == true;
     final owner =
         scope.role == SharedRole.owner && !scope.revoked && !scope.archived;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (owner)
+        if (owner && online)
           Wrap(
             spacing: 8,
             children: [
@@ -41,29 +66,30 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                 icon: const Icon(Icons.manage_accounts_outlined),
                 label: Text(l.financePermissions),
               ),
-              TextButton(
-                onPressed: () => actions.run(() async {
-                  final guard = SharingSessionGuard(context, ref);
-                  if (policy.enabled) {
-                    final confirmed = await confirmSharingAction(
-                      context,
-                      title: l.financeDisable,
-                      description: l.financeDisableDescription,
-                      confirmLabel: l.financeDisable,
-                      wrap: (child) =>
-                          SharingSessionBoundary(guard: guard, child: child),
+              if (!managed)
+                TextButton(
+                  onPressed: () => actions.run(() async {
+                    final guard = SharingSessionGuard(context, ref);
+                    if (policy.enabled) {
+                      final confirmed = await confirmSharingAction(
+                        context,
+                        title: l.financeDisable,
+                        description: l.financeDisableDescription,
+                        confirmLabel: l.financeDisable,
+                        wrap: (child) =>
+                            SharingSessionBoundary(guard: guard, child: child),
+                      );
+                      if (!confirmed) return;
+                    }
+                    await guard.controller.enableFinance(
+                      scope.id,
+                      !policy.enabled,
                     );
-                    if (!confirmed) return;
-                  }
-                  await guard.controller.enableFinance(
-                    scope.id,
-                    !policy.enabled,
-                  );
-                }),
-                child: Text(
-                  policy.enabled ? l.financeDisable : l.financeEnable,
+                  }),
+                  child: Text(
+                    policy.enabled ? l.financeDisable : l.financeEnable,
+                  ),
                 ),
-              ),
             ],
           ),
         if (state.financePendingCount > 0 ||
@@ -131,10 +157,36 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             ),
             snapshot: sharedFinancePlanningSnapshot(state, scope.id),
             sharedScopeId: scope.id,
+            payments: payments,
+            forecastAvailable: cashAvailable,
           ),
+          if (payments != null &&
+              (policy.linkedPaymentsRequired ||
+                  payments.events.isNotEmpty ||
+                  payments.projections.isNotEmpty ||
+                  payments.pendingCount > 0))
+            LinkedPaymentsSection(space: paymentSpace, snapshot: payments),
+          if (!cashAvailable) Text(l.paymentIncompleteBalance),
           SharedFinanceLedger(
             key: ValueKey('finance-${state.session!.partition}-${scope.id}'),
             scopeName: scope.name,
+            payments: payments,
+            cashAvailable: cashAvailable,
+            onPersonalPayment: canWritePaymentSource(ref, paymentSpace)
+                ? (entry) => showPersonalPaymentForm(
+                    context,
+                    ref,
+                    source: PaymentSourceRef(
+                      space: paymentSpace,
+                      entryId: entry.id,
+                      expectedRevision: entry.revision,
+                    ),
+                    title: entry.title,
+                    amountMinor: entry.amountMinor,
+                    currency: entry.currency,
+                    paidAt: entry.paidAt,
+                  )
+                : null,
             scopeId: scope.id,
             partition: state.session!.partition,
             accounts: data.financeAccounts,
@@ -155,9 +207,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                 policy.canWrite &&
                 !scope.blocked &&
                 !scope.archived &&
-                state.session!.expiresAt.isAfter(DateTime.now()) &&
-                state.lastError?.code != 'device_revoked' &&
-                state.lastError?.code != 'auth_required',
+                !state.deletionPending,
             onAccount: actions.account,
             onEntry: actions.entry,
             onTransfer: actions.transfer,

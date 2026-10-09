@@ -1,3 +1,5 @@
+import 'package:kanban/organizer/state/linked_payments_provider.dart';
+import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'package:kanban/organizer/state/portable_backup_provider.dart';
 import 'backup_ui_fixture.dart';
 import 'package:kanban/organizer/platform/backup_preferences_replay.dart';
@@ -14,6 +16,7 @@ import 'package:kanban/organizer/data/garden_repository.dart';
 import 'package:kanban/organizer/state/garden_provider.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
+import 'package:kanban/organizer/state/local_spaces_provider.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
 
@@ -43,6 +46,7 @@ Future<void> pumpOrganizer(
   Future<Map<String, Object?>> Function()? replayPreferences,
   CollaborationController? collaborationController,
   GlobalKey? repaintBoundaryKey,
+  LocalSpacesController? localSpacesController,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -56,8 +60,16 @@ Future<void> pumpOrganizer(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        linkedPaymentsProvider.overrideWith(
+          (ref, key) async => PaymentSnapshot(fresh: true),
+        ),
+        notificationLocalSnapshotsProvider.overrideWith(
+          (ref) async => [await ref.watch(organizerProvider.future)],
+        ),
         if (repaintBoundaryKey != null)
           invitationLinkSourceProvider.overrideWithValue(null),
+        if (localSpacesController != null)
+          localSpacesProvider.overrideWith(() => localSpacesController),
         if (collaborationController != null)
           collaborationProvider.overrideWith(() => collaborationController),
         if (gardenRepository != null)
@@ -85,6 +97,17 @@ Future<void> mobileTab(WidgetTester tester, String text) async {
   if (destination.evaluate().isNotEmpty) {
     await tester.tap(destination);
   } else {
+    if (find.byType(NavigationBar).evaluate().isNotEmpty) {
+      final more = find.widgetWithText(
+        NavigationDestination,
+        text == 'Calendar' || text == 'Projects' ? 'More' : 'Več',
+      );
+      await tester.tap(more);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, text).first);
+      await tester.pumpAndSettle();
+      return;
+    }
     if (find
         .byKey(const ValueKey('organizer-mobile-menu'))
         .evaluate()
@@ -140,8 +163,8 @@ void main() {
           );
           expect(store.writes, 0);
           final areas = locale == 'sl'
-              ? ['Načrti', 'Nakupi', 'Več']
-              : ['Plans', 'Shopping', 'More'];
+              ? ['Opravila', 'Projekti', 'Več']
+              : ['Tasks', 'Projects', 'More'];
           if (width < 900) {
             for (final area in areas) {
               await mobileTab(tester, area);
@@ -157,22 +180,8 @@ void main() {
           } else {
             for (final area
                 in locale == 'sl'
-                    ? [
-                        'Koledar',
-                        'Projekti',
-                        'Nakupi',
-                        'Finance',
-                        'Dom',
-                        'Nastavitve',
-                      ]
-                    : [
-                        'Calendar',
-                        'Projects',
-                        'Shopping',
-                        'Finances',
-                        'Home',
-                        'Settings',
-                      ]) {
+                    ? ['Koledar', 'Projekti', 'Finance', 'Nastavitve']
+                    : ['Calendar', 'Projects', 'Finances', 'Settings']) {
               await tester.tap(find.widgetWithText(ListTile, area));
               await tester.pumpAndSettle();
               expect(tester.takeException(), isNull);
@@ -200,7 +209,11 @@ void main() {
     'local project task and shopping CRUD survives navigation and app recreation',
     (tester) async {
       final store = MemoryOrganizerStorage();
-      await pumpOrganizer(tester, store);
+      await pumpOrganizer(
+        tester,
+        store,
+        localSpacesController: HouseholdFixtureController(),
+      );
       await tester.ensureVisible(
         find.widgetWithText(TextButton, 'Dodaj opravilo').first,
       );
@@ -211,9 +224,7 @@ void main() {
       await tester.tap(find.byType(Checkbox).first);
       await tester.pumpAndSettle();
       expect(store.snapshot.tasks.single.isCompleted, true);
-      await mobileTab(tester, 'Načrti');
-      await tester.tap(find.text('Projekti').first);
-      await tester.pumpAndSettle();
+      await mobileTab(tester, 'Projekti');
       await tester.tap(find.text('Nov projekt').first);
       await tester.pumpAndSettle();
       await saveTitle(tester, 'Prenova');
@@ -254,7 +265,7 @@ void main() {
       await tester.pumpAndSettle();
       await pumpOrganizer(tester, store);
       expect(store.snapshot.tasks.length, 2);
-      await mobileTab(tester, 'Načrti');
+      await mobileTab(tester, 'Opravila');
       expect(find.text('Izmeri kuhinjo'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -364,9 +375,7 @@ void main() {
         ],
       );
       await pumpOrganizer(tester, store, width: 320);
-      await mobileTab(tester, 'Načrti');
-      await tester.tap(find.text('Koledar').first);
-      await tester.pumpAndSettle();
+      await mobileTab(tester, 'Koledar');
       expect(tester.takeException(), isNull);
       await mobileTab(tester, 'Več');
       await tester.tap(find.widgetWithText(ListTile, 'Finance'));
@@ -387,16 +396,16 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       await mobileTab(tester, 'Več');
-      await tester.tap(find.widgetWithText(ListTile, 'Dom'));
+      await tester.tap(find.widgetWithText(ListTile, 'Projekti'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('projects-category-home')));
       await tester.pumpAndSettle();
       expect(find.text('Domača prenova z dolgim naslovom'), findsOneWidget);
       expect(find.text('Osebni načrt za naslednji mesec'), findsNothing);
       await tester.tap(find.text('Domača prenova z dolgim naslovom'));
       await tester.pumpAndSettle();
       await mobileTab(tester, 'Danes');
-      await mobileTab(tester, 'Več');
-      await tester.tap(find.widgetWithText(ListTile, 'Dom'));
-      await tester.pumpAndSettle();
+      await mobileTab(tester, 'Projekti');
       expect(find.text('V tem projektu še ni opravil.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -408,7 +417,9 @@ void main() {
     final store = MemoryOrganizerStorage();
     await pumpOrganizer(tester, store);
     await mobileTab(tester, 'Več');
-    await tester.tap(find.widgetWithText(ListTile, 'Dom'));
+    await tester.tap(find.widgetWithText(ListTile, 'Projekti'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('projects-category-home')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Nov projekt'));
     await tester.pumpAndSettle();
@@ -461,5 +472,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(store.snapshot.tasks.single.dueAt, due);
     },
+  );
+}
+
+class HouseholdFixtureController extends LocalSpacesController {
+  @override
+  Future<LocalSpacesState> build() async => LocalSpacesState(
+    selectedSpaceId: 'household-fixture',
+    spaces: [
+      const LocalSpace(
+        id: 'household-fixture',
+        name: 'Moj dom',
+        kind: LocalSpaceKind.household,
+      ),
+    ],
   );
 }

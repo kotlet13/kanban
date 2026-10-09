@@ -11,6 +11,9 @@ import '../planning/shared_agenda_page.dart';
 import '../inbox/notification_target_view.dart';
 import 'collaboration_actions.dart';
 import 'organization_workspace.dart';
+import '../all_spaces/all_spaces_page.dart';
+import '../../domain/all_spaces_projection.dart';
+import '../../domain/organizer_models.dart';
 import '../people/people_page.dart';
 import 'sharing_conflicts.dart';
 import 'sharing_errors.dart';
@@ -42,6 +45,7 @@ class SharingWorkspace extends ConsumerWidget {
     this.onProjectSelected,
     this.onMembers,
     this.showScopePicker = true,
+    this.onSource,
   });
   final SharingView view;
   final String? selectedScopeId;
@@ -53,6 +57,8 @@ class SharingWorkspace extends ConsumerWidget {
   final ValueChanged<String?>? onProjectSelected;
   final ValueChanged<String>? onMembers;
   final bool showScopePicker;
+  final Future<void> Function(AllSpacesSource, AllSpacesArea, String?)?
+  onSource;
 
   Future<void> _sync(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(collaborationProvider.notifier);
@@ -95,6 +101,7 @@ class SharingWorkspace extends ConsumerWidget {
                 onAction: onConnect,
               );
             }
+            if (!state.localAccessAllowed) return Text(l.sharingAccessRevoked);
             final scopes = state.scopes
                 .where((scope) => scope.kind != SharedScopeKind.personal)
                 .toList();
@@ -117,16 +124,46 @@ class SharingWorkspace extends ConsumerWidget {
               return Text(l.sharingAccessRevoked);
             }
             if (scope.kind == SharedScopeKind.organization &&
-                view != SharingView.finances &&
                 view != SharingView.people &&
                 view != SharingView.shopping) {
-              if (scope.revoked || state.sessionInvalid) {
+              if (scope.revoked || scope.blocked || !state.localAccessAllowed) {
                 return Text(l.sharingAccessRevoked);
               }
-              return OrganizationWorkspace(
-                organization: scope,
-                onProject: onScopeSelected,
-                onMembers: (id) => onMembers?.call(id),
+              if (view == SharingView.projects) {
+                return OrganizationWorkspace(
+                  organization: scope,
+                  onProject: onScopeSelected,
+                  onMembers: (id) => onMembers?.call(id),
+                );
+              }
+              final personal = OrganizerSnapshot();
+              final aggregate = projectAllSpaces(
+                personal: personal,
+                shared: state,
+              );
+              return AllSpacesPage(
+                key: ValueKey('organization-${scope.id}-$view'),
+                area: switch (view) {
+                  SharingView.agenda => AllSpacesArea.today,
+                  SharingView.timeline => AllSpacesArea.calendar,
+                  SharingView.finances => AllSpacesArea.finances,
+                  _ => AllSpacesArea.tasks,
+                },
+                snapshot: AllSpacesSnapshot(
+                  aggregate.sources.where(
+                    (source) =>
+                        source.scopeId == scope.id ||
+                        source.scope?.organizationId == scope.id,
+                  ),
+                ),
+                showDescription: false,
+                onSource:
+                    onSource ??
+                    (source, area, id) async {
+                      if (source.scopeId != null) {
+                        onScopeSelected(source.scopeId!);
+                      }
+                    },
               );
             }
             final data = state.dataForScope(scope.id);
@@ -135,7 +172,7 @@ class SharingWorkspace extends ConsumerWidget {
                 !state.session!.expiresAt.isAfter(DateTime.now()) ||
                 state.lastError?.code == 'device_revoked' ||
                 state.lastError?.code == 'auth_required';
-            final readOnly = !scope.canEdit || expired;
+            final readOnly = !scope.canEdit || !state.localAccessAllowed;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -226,15 +263,6 @@ class SharingWorkspace extends ConsumerWidget {
                             archived: !scope.archived,
                           ),
                         ),
-                      ),
-                    ),
-                  if (onMembers != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => onMembers!(scope.id),
-                        icon: const Icon(Icons.people_outline, size: 18),
-                        label: Text(l.sharingMembers),
                       ),
                     ),
                   const SizedBox(height: 24),

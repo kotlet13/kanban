@@ -3,7 +3,15 @@ import 'finance_reminder_plans.dart';
 import 'organizer_models.dart';
 
 class LocalInboxReminder {
-  const LocalInboxReminder(this.reminder, this.plan, this.remoteEntries);
+  const LocalInboxReminder(
+    this.reminder,
+    this.plan,
+    this.remoteEntries, {
+    this.task,
+    this.workspaceKey = 'local',
+  });
+  final LocalTask? task;
+  final String workspaceKey;
   final LocalReminder reminder;
   final ReminderPlan plan;
   final List<SharedInboxEntry> remoteEntries;
@@ -39,7 +47,10 @@ OrganizerInboxProjection projectOrganizerInbox({
   required CollaborationState shared,
   required List<ReminderPlan>? effectivePlans,
   required DateTime now,
+  Iterable<OrganizerSnapshot>? localSnapshots,
 }) {
+  final snapshots =
+      localSnapshots?.toList() ?? [if (personal != null) personal];
   ReminderPlan? latest(Iterable<ReminderPlan> plans) {
     final sorted = plans.toList()
       ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
@@ -51,34 +62,46 @@ OrganizerInboxProjection projectOrganizerInbox({
   );
   bool currentPlan(ReminderPlan plan) {
     if (plan.target.isPersonal) {
-      return personal?.workspaceKey == 'local' ||
-          (shared.session != null &&
-              !shared.sessionInvalid &&
-              personal?.workspaceKey ==
-                  'private:${shared.session!.partition}' &&
-              activeScope(shared.privateSync.scopeId));
+      return snapshots.any((snapshot) {
+        final defaultPrivate = snapshot.workspaceKey.startsWith('private:');
+        final localId = defaultPrivate ? 'local' : snapshot.workspaceKey;
+        return localId == plan.target.localWorkspaceId &&
+            (!defaultPrivate ||
+                shared.session != null &&
+                    shared.localAccessAllowed &&
+                    snapshot.workspaceKey ==
+                        'private:${shared.session!.partition}' &&
+                    activeScope(shared.privateSync.scopeId));
+      });
     }
     return shared.session != null &&
-        !shared.sessionInvalid &&
+        shared.localAccessAllowed &&
         plan.target.matches(shared.session!) &&
         activeScope(plan.target.scopeId);
   }
 
-  ReminderPlan? localPlan(LocalReminder reminder) => latest(
-    (effectivePlans ?? const <ReminderPlan>[]).where(
-      (p) =>
-          currentPlan(p) &&
-          p.target.records.any(
-            (r) =>
-                r.type == 'task' &&
-                (p.target.isPersonal
-                    ? r.recordId == reminder.taskId
-                    : p.target.scopeId == shared.privateSync.scopeId &&
-                          shared.personalRecordId(r.recordId) ==
-                              reminder.taskId),
-          ),
-    ),
-  );
+  ReminderPlan? localPlan(LocalReminder reminder, OrganizerSnapshot snapshot) =>
+      latest(
+        (effectivePlans ?? const <ReminderPlan>[]).where(
+          (p) =>
+              currentPlan(p) &&
+              (p.target.isPersonal
+                  ? p.target.localWorkspaceId ==
+                        (snapshot.workspaceKey.startsWith('private:')
+                            ? 'local'
+                            : snapshot.workspaceKey)
+                  : snapshot.workspaceKey.startsWith('private:')) &&
+              p.target.records.any(
+                (r) =>
+                    r.type == 'task' &&
+                    (p.target.isPersonal
+                        ? r.recordId == reminder.taskId
+                        : p.target.scopeId == shared.privateSync.scopeId &&
+                              shared.personalRecordId(r.recordId) ==
+                                  reminder.taskId),
+              ),
+        ),
+      );
   ReminderPlan? sharedPlan(SharedInboxEntry entry) => latest(
     (effectivePlans ?? const <ReminderPlan>[]).where(
       (p) =>
@@ -96,7 +119,7 @@ OrganizerInboxProjection projectOrganizerInbox({
       );
 
   bool eligible(SharedInboxEntry entry) {
-    if (shared.session == null || shared.sessionInvalid) return false;
+    if (shared.session == null || !shared.localAccessAllowed) return false;
     final scope = shared.scopes.where((s) => s.id == entry.scopeId).firstOrNull;
     if (scope == null || scope.revoked || scope.blocked || scope.archived) {
       return false;
@@ -150,23 +173,33 @@ OrganizerInboxProjection projectOrganizerInbox({
 
   final eligibleEntries = shared.inbox.where(eligible).toList();
   final locals = <LocalInboxReminder>[];
-  if (personal != null && effectivePlans != null) {
-    for (final reminder in personal.reminders) {
-      final task = personal.tasks
-          .where((t) => t.id == reminder.taskId)
-          .firstOrNull;
-      final plan = localPlan(reminder);
-      if (task == null ||
-          task.isCompleted ||
-          task.dueAt != reminder.dueAt ||
-          plan == null ||
-          plan.scheduledAt.isAfter(now)) {
-        continue;
+  if (effectivePlans != null) {
+    for (final personal in snapshots) {
+      for (final reminder in personal.reminders) {
+        final task = personal.tasks
+            .where((t) => t.id == reminder.taskId)
+            .firstOrNull;
+        final plan = localPlan(reminder, personal);
+        if (task == null ||
+            task.isCompleted ||
+            task.dueAt != reminder.dueAt ||
+            plan == null ||
+            plan.scheduledAt.isAfter(now)) {
+          continue;
+        }
+        final mirrors = eligibleEntries
+            .where((e) => e.kind == 'reminder.due' && matches(e, plan))
+            .toList();
+        locals.add(
+          LocalInboxReminder(
+            reminder,
+            plan,
+            mirrors,
+            task: task,
+            workspaceKey: personal.workspaceKey,
+          ),
+        );
       }
-      final mirrors = eligibleEntries
-          .where((e) => e.kind == 'reminder.due' && matches(e, plan))
-          .toList();
-      locals.add(LocalInboxReminder(reminder, plan, mirrors));
     }
   }
   final remote = <SharedInboxReminder>[];
@@ -192,9 +225,14 @@ OrganizerInboxProjection projectOrganizerInbox({
       a.group.entries.first.createdAt,
     ),
   );
-  final finance = personal == null || effectivePlans == null
+  final finance = effectivePlans == null
       ? <ReminderPlan>[]
-      : dueFinanceInboxPlans(personal: personal, shared: shared, now: now)
+      : dueFinanceInboxPlans(
+              personal: personal ?? OrganizerSnapshot(),
+              shared: shared,
+              now: now,
+              localSnapshots: snapshots,
+            )
             .map(
               (p) => effectivePlans
                   .where((e) => e.stableKey == p.stableKey)

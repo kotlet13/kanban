@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'package:kanban/organizer/state/portable_backup_provider.dart';
 import 'backup_ui_fixture.dart';
 import 'package:kanban/organizer/platform/backup_preferences_replay.dart';
@@ -36,6 +37,9 @@ Future<void> pumpSharing(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        notificationLocalSnapshotsProvider.overrideWith(
+          (ref) async => [await ref.watch(organizerProvider.future)],
+        ),
         portableBackupProvider.overrideWith(EmptyBackupUiController.new),
         backupPreferencesReplayProvider.overrideWith((ref) async => {}),
         organizerStorageProvider.overrideWithValue(
@@ -71,6 +75,12 @@ Future<void> openSharedShopping(
   double width = 390,
   String locale = 'sl',
 }) async {
+  final context = tester.element(find.byType(KanbanApp));
+  final container = ProviderScope.containerOf(context);
+  await container
+      .read(collaborationProvider.notifier)
+      .selectSpace(sharingScopeId);
+  await tester.pumpAndSettle();
   if (width < 900) {
     await personal.mobileTab(tester, locale == 'sl' ? 'Nakupi' : 'Shopping');
   } else {
@@ -79,10 +89,6 @@ Future<void> openSharedShopping(
     );
     await tester.pumpAndSettle();
   }
-  await tester.tap(
-    find.widgetWithText(ChoiceChip, locale == 'sl' ? 'Deljeno' : 'Shared'),
-  );
-  await tester.pumpAndSettle();
 }
 
 Future<void> enterSharing(WidgetTester tester, String id, String value) async {
@@ -101,15 +107,13 @@ Future<void> tapSharing(WidgetTester tester, String key) async {
 }
 
 Future<void> openMembers(WidgetTester tester) async {
-  await openAccount(tester);
-  await tester.ensureVisible(
-    find.widgetWithText(ListTile, sharingScope().name),
-  );
-  await tester.tap(find.widgetWithText(ListTile, sharingScope().name));
-  await tester.pumpAndSettle();
-  await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Člani'));
-  await tester.tap(find.widgetWithText(ChoiceChip, 'Člani'));
-  await tester.pumpAndSettle();
+  await personal.mobileTab(tester, 'Nastavitve prostora');
+  final scope = find.byKey(ValueKey('space-settings-scope-$sharingScopeId'));
+  if (scope.evaluate().isNotEmpty) {
+    await tester.ensureVisible(scope);
+    await tester.tap(scope);
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -401,6 +405,7 @@ void main() {
       controller.replace(
         CollaborationState(
           session: sharingSession(),
+          selectedSpaceId: sharingScopeId,
           scopes: [sharingScope(revoked: true, blocked: true)],
           data: {sharingScopeId: sharingData()},
           blockedCount: 1,

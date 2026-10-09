@@ -1667,7 +1667,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerFinanceIntro =>
-      'Osebni zapisi prihodkov in odhodkov na tej napravi.';
+      'Prihodki, odhodki in načrtovani stroški.';
 
   @override
   String get organizerAddFinance => 'Dodaj zapis';
@@ -1773,7 +1773,7 @@ class AppLocalizationsSl extends AppLocalizations {
   String get organizerNoMatchingTasks => 'V tem projektu še ni opravil.';
 
   @override
-  String get organizerPersonal => 'Lokalno · osebno';
+  String get organizerPersonal => 'Osebno';
 
   @override
   String get organizerSystemLanguage => 'Jezik naprave';
@@ -3687,7 +3687,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideLocalBody =>
-      'Opravila, načrti, nakupi in osebne finance delujejo brez računa in povezave. Začnite z enim opravilom ali nakupovalnim seznamom. Izbirna sinhronizacija potrebuje vašo izrecno vključitev.';
+      'Začni z opravilom ali dogodkom v osebnem prostoru. Gospodinjstvo in organizacijo lahko ustvariš brez računa; za nakupovalne sezname, vrtove in osebe izberi gospodinjstvo. Podatki ostanejo na napravi, povezavo in sinhronizacijo pa omogočiš izrecno.';
 
   @override
   String get guideTodayBody =>
@@ -3695,15 +3695,15 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guidePlansBody =>
-      'V Načrtih uredite opravila, projekte in dogodke. Dodajte termine in po potrebi povežite opravilo s projektom. Na večjem zaslonu jih dosežete tudi prek stranskega menija.';
+      'V Opravilih uredi opravila in njihove termine. Projekte in Koledar odpri neposredno iz menija. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.';
 
   @override
   String get guideShoppingBody =>
-      'V Nakupih ustvarite seznam, dodajte artikle in označite kupljeno. Osebni seznam ostane na napravi; kopiranje v skupni prostor je vaša izrecna odločitev.';
+      'Gospodinjstvo ima svoje nakupovalne sezname, vrtove in osebe. Dodaj artikle in označi kupljeno. Stari osebni seznami in vrtovi ostanejo dostopni; pred dodelitvijo gospodinjstvu izbereš cilj.';
 
   @override
   String get guideMoreBody =>
-      'Na telefonu odpri levi meni z gumbom ☰. Tam so neposredne povezave do financ, doma, vrta, oseb, obvestil, računa in nastavitev. Na tablici so dodatne možnosti v Več, na računalniku v stranskem meniju. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.';
+      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora.';
 
   @override
   String get guideSkip => 'Preskoči';
@@ -4195,6 +4195,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get guideMenuTitle => 'Meni in nastavitve';
 
   @override
+  String get spacePickerCreateAction => 'Nov prostor';
+
+  @override
   String get spacePickerNewSpace => '+ Nov prostor';
 
   @override
@@ -4449,4 +4452,393 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get allSpacesUpcoming => 'Današnje in zamujeno';
+
+  @override
+  String get organizerPressBackAgainToExit => 'Pritisni še enkrat za izhod';
+
+  @override
+  String get spaceSettingsTitle => 'Nastavitve prostora';
+
+  @override
+  String get spaceSettingsChoose =>
+      'Izberi skupni prostor za upravljanje članov in povabil.';
+
+  @override
+  String get spaceSettingsConnect =>
+      'Za upravljanje skupnih prostorov poveži račun.';
+
+  @override
+  String get spaceSettingsUnavailable =>
+      'Ta prostor trenutno ni dostopen. Izberi drug skupni prostor.';
+
+  @override
+  String get localSpaceDescription =>
+      'Prostor in njegove zapise hrani ta naprava. Povezavo in deljenje pozneje omogočiš izrecno.';
+
+  @override
+  String get localSpaceState => 'Lokalno · brez sinhronizacije';
+
+  @override
+  String get localSpaceAddress => 'Naslov (neobvezno)';
+
+  @override
+  String get localSpaceRename => 'Uredi prostor';
+
+  @override
+  String get localSpaceMembersDescription =>
+      'Osebe so evidenca ljudi. Dostop drugih računov in povabila zahtevajo povezavo prostora s strežnikom.';
+
+  @override
+  String get localSpaceLinkAction => 'Poveži in sinhroniziraj';
+
+  @override
+  String get legacyLocalData => 'Nedodeljeni podatki';
+
+  @override
+  String get legacyLocalDescription =>
+      'Ti podatki ostajajo na napravi. Pred prenosom v gospodinjstvo izberi cilj; povezava s strežnikom jih ne deli samodejno.';
+
+  @override
+  String get localSpaceMoveToHousehold => 'Dodeli gospodinjstvu';
+
+  @override
+  String localSpaceMovePreview(String name, String household) {
+    return 'Prenesi »$name« v gospodinjstvo »$household«? Podatki postanejo del tega prostora. Če pozneje omogočiš deljenje, zanje veljajo njegove pravice.';
+  }
+
+  @override
+  String get localSpaceChooseHousehold => 'Izberi gospodinjstvo';
+
+  @override
+  String get localSpaceNoHouseholds =>
+      'Najprej ustvari lokalno gospodinjstvo v izboru prostora.';
+
+  @override
+  String get localSpaceOfflineWork =>
+      'Podatki ostajajo na napravi. Lokalno delo se nadaljuje; povabila in spremembe strežniških pravic potrebujejo povezavo.';
+
+  @override
+  String get organizationAggregateDescription =>
+      'Dogajanje dovoljenih projektov. Vsak zapis ohrani izvorni prostor.';
+
+  @override
+  String get organizationLeader => 'Vodja organizacije';
+
+  @override
+  String get organizationLeaderGrant => 'Dodeli vodstveno vlogo';
+
+  @override
+  String get organizationLeaderRemove => 'Odvzemi vodstveno vlogo';
+
+  @override
+  String get organizationProjectFinanceVisibility =>
+      'Sprejem povabila vključuje vpogled v vse finance tega projekta. Zasebne finance drugih prostorov ostanejo ločene.';
+
+  @override
+  String get localSpaceCreate => 'Ustvari prostor';
+
+  @override
+  String get organizationAccessReview => 'Preglej vidnost projektnih financ';
+
+  @override
+  String get organizationAccessReviewDescription =>
+      'Člani projektov bodo videli vse njihove finance. Vodje organizacije bodo videli vse njene obstoječe in prihodnje projekte ter finance. Pred potrditvijo preglej, kdo dobi širši vpogled.';
+
+  @override
+  String get organizationAccessApply => 'Potrdi novo vidnost';
+
+  @override
+  String get organizationAccessCurrent =>
+      'Člani vidijo vse finance svojih projektov. Vodje vidijo vse projekte organizacije in njihove finance.';
+
+  @override
+  String get organizationAccessNoReaders =>
+      'V tem projektu nihče ne dobi dodatnega vpogleda.';
+
+  @override
+  String get organizationAccessPending =>
+      'Prejšnja sprememba še nima potrjenega izida. Ponovi preverjanje z istim zahtevkom.';
+
+  @override
+  String get organizationAccessResume => 'Preveri izid spremembe';
+
+  @override
+  String get organizationAccessPreviewStale =>
+      'Vidnost se je spremenila. Ponovno odpri predogled.';
+
+  @override
+  String get organizationLeaderConfirm =>
+      'Vodja vidi vse projekte organizacije in njihove finance, tudi prihodnje. Urejanje ostane določeno z drugimi dovoljenji.';
+
+  @override
+  String get localSpaceConnectionChoose =>
+      'Izberi obstoječe lokalne prostore. Pred prenosom pregledaš račun, strežnik in vsebino.';
+
+  @override
+  String get localSpaceConnectionPreview =>
+      'Povezujejo se navedeni prostori in njihovi zapisi. Prijava sama ni omogočila prenosa. Člane povabiš ločeno v nastavitvah prostora.';
+
+  @override
+  String localSpaceConnectionCounts(int records, int gardens) {
+    String _temp0 = intl.Intl.pluralLogic(
+      records,
+      locale: localeName,
+      other: '$records zapisov',
+      few: '$records zapisi',
+      two: '$records zapisa',
+      one: '$records zapis',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      gardens,
+      locale: localeName,
+      other: '$gardens vrtov',
+      few: '$gardens vrtovi',
+      two: '$gardens vrtova',
+      one: '$gardens vrt',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get localSpaceConnectionOtherAccount =>
+      'Prostor je povezan z drugim računom. Prenos pod novo identiteto potrebuje ločen predogled.';
+
+  @override
+  String get localSpaceConnectionUnsupported =>
+      'Strežnik še ne podpira prenosa te vsebine. Podatki ostajajo na napravi.';
+
+  @override
+  String get financeMembershipRead =>
+      'Branje iz članstva · brez dodatnega urejanja';
+
+  @override
+  String get financeMembershipReadDescription =>
+      'Člani vidijo vse finance svojega projekta. Tu določiš samo dodatno pravico urejanja; branje se upravlja s članstvom in vodstveno vlogo.';
+
+  @override
+  String get privateSyncSourceDefault =>
+      'Ta možnost poveže privzeti osebni prostor. Gospodinjstva in organizacije izbereš ločeno.';
+
+  @override
+  String get localFinanceRecoveryIncomplete =>
+      'Finančni pregled še ni popoln. Nekateri prenosi in povezana plačila so ohranjeni samo v izvirni kopiji.';
+
+  @override
+  String localSpaceConnectionProjectCounts(
+    int tasks,
+    int finances,
+    int people,
+    int accounts,
+  ) {
+    return '$tasks opravil · $finances finančnih zapisov · $people oseb · $accounts računov';
+  }
+
+  @override
+  String get offlineRecoveryAction => 'Nadaljuj lokalno';
+
+  @override
+  String get offlineRecoveryIntro =>
+      'Iz razpoložljive vsebine kopije ustvariš nove lokalne prostore. Za pregled in urejanje ne potrebujejo starega strežnika. Pred potrditvijo preglej vsebino in omejitve.';
+
+  @override
+  String get offlineRecoveryArchive =>
+      'Izvirna šifrirana kopija ostane ohranjena z izvorom, čakajočim strežniškim delom, zgodovino in dovoljenji. Vsega ne pretvorimo v nove urejljive zapise.';
+
+  @override
+  String get offlineRecoveryNoServerAccess =>
+      'Nova lokalna kopija ne odpre dostopa do starega strežnika in te ne postavi za upravitelja izvirnih skupnih prostorov.';
+
+  @override
+  String get offlineRecoveryFinanceUnavailable =>
+      'Finance brez potrjenega dovoljenja za branje se ne vključijo v lokalno kopijo.';
+
+  @override
+  String get offlineRecoveryBlocked =>
+      'Vsebina s potrjenim preklicem dostopa ostane blokirana. Odklop je ne odpre.';
+
+  @override
+  String get offlineRecoveryNothingAvailable =>
+      'V tej kopiji ni vsebine, ki bi jo lahko obnovili v lokalni prostor.';
+
+  @override
+  String get offlineRecoveryAcknowledge =>
+      'Razumem omejitve in želim ustvariti nove lokalne kopije.';
+
+  @override
+  String get offlineRecoverySuccess =>
+      'Lokalni prostori so pripravljeni. Izberi jih zgoraj; izvirna šifrirana kopija je ohranjena.';
+
+  @override
+  String get paymentPaidPersonally => 'Plačal sem osebno';
+
+  @override
+  String get paymentMyAccount => 'Moj račun ali kartica';
+
+  @override
+  String get paymentChooseAccount => 'Izberi račun';
+
+  @override
+  String get paymentNeedsPersonalAccount =>
+      'Najprej v osebnem prostoru dodaj svoj račun ali kartico v isti valuti.';
+
+  @override
+  String get paymentNeedsRefundAccount =>
+      'Za povračilo najprej dodaj račun organizacije v isti valuti.';
+
+  @override
+  String get paymentPaidAt => 'Datum osebnega plačila';
+
+  @override
+  String get paymentExpectRefund => 'Pričakujem povračilo';
+
+  @override
+  String get paymentExpectRefundYes => 'Da, pričakujem povračilo';
+
+  @override
+  String get paymentExpectRefundNo => 'Ne, ne pričakujem povračila';
+
+  @override
+  String get paymentHouseholdInclusion => 'Vključi v gospodinjski pregled';
+
+  @override
+  String get paymentNoHousehold => 'Ne vključi v gospodinjstvo';
+
+  @override
+  String get paymentSourceExpenseOnly =>
+      'Strošek ostane v organizaciji. Izbrani račun dobi bremenitev; podatkov drugih osebnih transakcij ne deliš.';
+
+  @override
+  String get paymentRecord => 'Zabeleži osebno plačilo';
+
+  @override
+  String get paymentLinkedPayments => 'Osebna plačila in povračila';
+
+  @override
+  String get paymentLinkedExpense => 'Plačilo za organizacijo';
+
+  @override
+  String get paymentRemaining => 'Še za povračilo';
+
+  @override
+  String get paymentCashBurden => 'Bremenitev po povračilih';
+
+  @override
+  String get paymentNoRefundExpected => 'Povračilo ni pričakovano.';
+
+  @override
+  String get paymentRefundAction => 'Zabeleži povračilo';
+
+  @override
+  String paymentRefundDescription(String amount) {
+    return 'Odprti znesek: $amount. Povračilo zapre del bremenitve in ne ustvari novega zaslužka.';
+  }
+
+  @override
+  String get paymentRefundReceived => 'Povračilo';
+
+  @override
+  String get paymentRefundPaid => 'Izplačano povračilo';
+
+  @override
+  String get paymentRefundAt => 'Datum povračila';
+
+  @override
+  String get paymentRefundTooHigh => 'Znesek presega odprto povračilo.';
+
+  @override
+  String get paymentRefundAfterPayment =>
+      'Povračilo ne more biti pred osebnim plačilom.';
+
+  @override
+  String get paymentPending =>
+      'Plačilo je shranjeno. Uskladitev povezanih prostorov še čaka.';
+
+  @override
+  String get paymentWaitingSource =>
+      'Plačilo je shranjeno lokalno. Za skupni prikaz najprej izrecno poveži organizacijo.';
+
+  @override
+  String get paymentBlocked =>
+      'Uskladitev je zavrnjena. Podatki so ohranjeni; zneskov ne štejemo kot potrjene.';
+
+  @override
+  String get paymentSourceRemoved => 'Zgodovina plačila';
+
+  @override
+  String get paymentSourceRemovedDescription =>
+      'Izvirni skupni zapis ni več na voljo. Ohranjena plačila in povračila so zgodovina, ne dokaz veljavnega dostopa ali nove terjatve.';
+
+  @override
+  String get paymentProjectionDescription =>
+      'Pregled osebnega plačila. Strošek ostane v organizaciji; povračilo ni nov zaslužek.';
+
+  @override
+  String get paymentRetry => 'Ponovi uskladitev';
+
+  @override
+  String get paymentRefresh => 'Osveži povezana plačila';
+
+  @override
+  String get paymentIncompleteBalance =>
+      'Za popolno stanje računa potrebujemo tudi podatke o povezanih plačilih.';
+
+  @override
+  String get paymentAlreadyLinked =>
+      'Ta strošek že ima povezano osebno plačilo.';
+
+  @override
+  String paymentPublicationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count povezanih plačil',
+      few: '$count povezana plačila',
+      two: '$count povezani plačili',
+      one: '$count povezano plačilo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paymentPersonalDisplay => 'Osebno plačilo';
+
+  @override
+  String get deletionLinkedFinancialFacts => 'Povezana plačila in povračila';
+
+  @override
+  String get deletionLinkedFinancialRetention =>
+      'Če prostor ohranite ali prenesete, ostanejo skupni zneski, datumi in zgodovinske reference plačil ter povračil. Osebni prikazi in povezave z zasebnimi računi se odstranijo. Že prenesenih kopij s tem ni mogoče izbrisati.';
+
+  @override
+  String deletionLinkedScopeCounts(
+    String scope,
+    int retained,
+    int deleted,
+    int refunds,
+  ) {
+    return '$scope: ob ohranitvi $retained plačil; ob izbrisu $deleted plačil; $refunds potrjenih povračil.';
+  }
+
+  @override
+  String get deletionRetainedExpenseResolution =>
+      'Ohrani skupni strošek in potrjeno zgodovino plačil ter povračil, odstrani moje osebne opombe in naziv.';
+
+  @override
+  String get deletionPrivatePaymentProjections =>
+      'Zasebni prikazi plačil za odstranitev';
+
+  @override
+  String get deletionSharedPaymentReceipts => 'Že deljena zgodovina plačil';
+
+  @override
+  String get deletionLinkedUnavailableScope => 'Prej deljeni prostor';
+
+  @override
+  String get spaceFinanceIntro => 'Prihodki, odhodki in načrtovani stroški.';
+
+  @override
+  String get spaceLocalShort => 'Lokalno';
+
+  @override
+  String get spaceConnectedShort => 'Povezano';
 }

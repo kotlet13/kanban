@@ -36,11 +36,17 @@ class OrganizerProjectsPage extends StatefulWidget {
 }
 
 class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
+  ProjectArea? _category;
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
     final visibleProjects = widget.snapshot.projects
-        .where((p) => !widget.home || p.area == ProjectArea.home)
+        .where(
+          (p) =>
+              (!widget.home || p.area == ProjectArea.home) &&
+              (_category == null || p.area == _category),
+        )
         .toList();
     final selected = visibleProjects
         .where((p) => p.id == widget.selectedId)
@@ -63,12 +69,42 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               : FilledButton.icon(
                   onPressed: () => widget.actions.project(
                     null,
-                    widget.home ? ProjectArea.home : ProjectArea.personal,
+                    widget.home
+                        ? ProjectArea.home
+                        : _category ?? ProjectArea.personal,
                   ),
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(l.organizerAddProject),
                 ),
         ),
+        if (!widget.home) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                key: const ValueKey('projects-category-all'),
+                label: Text(l.allSpacesTitle),
+                selected: _category == null,
+                onSelected: (_) => setState(() => _category = null),
+              ),
+              ChoiceChip(
+                key: const ValueKey('projects-category-home'),
+                label: Text(l.organizerHomeProjects),
+                selected: _category == ProjectArea.home,
+                onSelected: (_) => setState(() => _category = ProjectArea.home),
+              ),
+              ChoiceChip(
+                key: const ValueKey('projects-category-personal'),
+                label: Text(l.organizerPersonal),
+                selected: _category == ProjectArea.personal,
+                onSelected: (_) =>
+                    setState(() => _category = ProjectArea.personal),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
         if (visibleProjects.isEmpty)
           OrganizerEmpty(
             icon: Icons.folder_outlined,
@@ -80,7 +116,9 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                 ? null
                 : () => widget.actions.project(
                     null,
-                    widget.home ? ProjectArea.home : ProjectArea.personal,
+                    widget.home
+                        ? ProjectArea.home
+                        : _category ?? ProjectArea.personal,
                   ),
           ),
         for (final p in visibleProjects)

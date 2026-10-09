@@ -10,10 +10,10 @@ class PersonalWorkspaceGuard {
   PersonalWorkspaceGuard(BuildContext context, WidgetRef ref, this.workspaceKey)
     : _context = context,
       _container = ProviderScope.containerOf(context, listen: false),
-      _partition = workspaceKey == 'local'
+      _partition = !workspaceKey.startsWith('private:')
           ? null
           : ref.read(collaborationProvider).valueOrNull?.session?.partition,
-      _deviceId = workspaceKey == 'local'
+      _deviceId = !workspaceKey.startsWith('private:')
           ? null
           : ref.read(collaborationProvider).valueOrNull?.session?.deviceId;
   final BuildContext _context;
@@ -24,12 +24,18 @@ class PersonalWorkspaceGuard {
     if (!_context.mounted) return false;
     final personal = _container.read(organizerProvider).valueOrNull;
     if (personal?.workspaceKey != workspaceKey) return false;
-    if (workspaceKey == 'local') return true;
+    if (!workspaceKey.startsWith('private:')) return true;
     final shared = _container.read(collaborationProvider).valueOrNull;
-    return shared?.sessionInvalid != true &&
+    return shared?.localAccessAllowed == true &&
         shared?.session?.partition == _partition &&
         shared?.session?.deviceId == _deviceId &&
-        shared?.session?.expiresAt.isAfter(DateTime.now()) == true;
+        shared?.scopes.any(
+              (scope) =>
+                  scope.id == shared.privateSync.scopeId &&
+                  !scope.revoked &&
+                  !scope.blocked,
+            ) ==
+            true;
   }
 
   Widget wrap(Widget child) =>

@@ -1,0 +1,110 @@
+{
+  "screenshots": "Current Flutter widgets, synthetic local data, Android target, headless renderer; not Android device captures",
+  "files": [
+    {
+      "path": "assets/store/google-play/en/01-today.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "e0b7058f2784a69bcc5c4da010774337201609cff19bcf9dd0ecbd78e1a814dc"
+    },
+    {
+      "path": "assets/store/google-play/en/02-plans.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "c53b8ccc9b65ebcacaa1f341e770e53b44b3ffbaf497d8b0b0e4f8a52c5645e6"
+    },
+    {
+      "path": "assets/store/google-play/en/03-shopping.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "a05b86214744cc52799bb0e7556efecb890929486df1899e9bec220a60cb673f"
+    },
+    {
+      "path": "assets/store/google-play/en/04-finances.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "1ebe328055d167cfa604d441982da78391a4af9d7678c7b706420f4eed85500c"
+    },
+    {
+      "path": "assets/store/google-play/en/05-garden.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "ca039d877b10de65faeb527444f05f1fc7f21accadbd5c1b09b79321fe267d3e"
+    },
+    {
+      "path": "assets/store/google-play/en/06-finance-ledger.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "8600bf4292882c251b681ef9ae76c0c3d2f90c66aac01e4c0464aa51244bc7e8"
+    },
+    {
+      "path": "assets/store/google-play/feature-en-1024x500.png",
+      "width": 1024,
+      "height": 500,
+      "mode": "RGB",
+      "sha256": "b8513d6bfdf3519cf4d37312969eefabe27ae0d3fe428b08a1dd4142d60d9885"
+    },
+    {
+      "path": "assets/store/google-play/feature-sl-1024x500.png",
+      "width": 1024,
+      "height": 500,
+      "mode": "RGB",
+      "sha256": "9f1fc18c1134b72a3f06ee4616d6ad979bf11bcb4ab6836b5a04049d71902b46"
+    },
+    {
+      "path": "assets/store/google-play/icon-512.png",
+      "width": 512,
+      "height": 512,
+      "mode": "RGB",
+      "sha256": "b1211b0bfbf78d83350194a8f84626bfa9cf69f5b512c22de1ac87f4737dcc74"
+    },
+    {
+      "path": "assets/store/google-play/sl/01-today.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "8917c38e159869233d0ddff3a295ec9e9266619a301712365acbec3ad19a9dbb"
+    },
+    {
+      "path": "assets/store/google-play/sl/02-plans.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "192606e4f9f53806e8e61e23f439a1a6fd4944a6a8fe3af565ef3dbc1c33f94f"
+    },
+    {
+      "path": "assets/store/google-play/sl/03-shopping.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "76e9a28b339d0e7d7a57e66178bc9e0987561c3bf116fae97d6b3f7618f50b50"
+    },
+    {
+      "path": "assets/store/google-play/sl/04-finances.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "348610b71f726df4cacb859d575d3b280d44c598337b663b97a15053148ad720"
+    },
+    {
+      "path": "assets/store/google-play/sl/05-garden.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "6b3c2a1bda36c7ef20ac572abf366a2dfe0d149d47e660d22b78b6881c15f96c"
+    },
+    {
+      "path": "assets/store/google-play/sl/06-finance-ledger.png",
+      "width": 1080,
+      "height": 1920,
+      "mode": "RGBA",
+      "sha256": "545d029a470c8b7629aad5912ec4ffaab0bed7a59ca4c844486562810479624b"
+    }
+  ]
+}

@@ -1,15 +1,18 @@
 import 'organizer_models.dart';
 import 'shared_finance_models.dart';
+import 'linked_payment_models.dart';
 
 class FinanceForecastPoint {
   const FinanceForecastPoint({
     this.entry,
+    this.paymentMovement,
     required this.title,
     required this.date,
     required this.changeMinor,
     required this.runningMinor,
   });
   final FinanceEntry? entry;
+  final PaymentCashMovement? paymentMovement;
   final String title;
   final DateTime date;
   final BigInt changeMinor, runningMinor;
@@ -39,11 +42,17 @@ FinanceForecast forecastFinance(
   LocalFinanceAccount? account,
   bool unassignedOnly = false,
   Iterable<SharedFinanceTransfer> transfers = const [],
+  PaymentSnapshot? payments,
 }) {
+  final excluded = {
+    for (final event in payments?.events ?? const <PaymentEvent>[])
+      event.sourceEntryId,
+  };
   final entries = snapshot.financeEntries
       .where(
         (e) =>
             e.currency == currency &&
+            !excluded.contains(e.id) &&
             (account == null || e.ledgerAccountId == account.id) &&
             (!unassignedOnly || e.ledgerAccountId == null),
       )
@@ -91,6 +100,7 @@ FinanceForecast forecastFinance(
       <
           ({
             FinanceEntry? entry,
+            PaymentCashMovement? movement,
             String title,
             DateTime date,
             BigInt change,
@@ -100,6 +110,7 @@ FinanceForecast forecastFinance(
           for (final e in included)
             (
               entry: e,
+              movement: null,
               title: e.title,
               date: date(e)!,
               change:
@@ -120,6 +131,7 @@ FinanceForecast forecastFinance(
                       !t.occurredAt.isBefore(opening)))
                 (
                   entry: null,
+                  movement: null,
                   title: t.title,
                   date:
                       opening != null &&
@@ -131,6 +143,21 @@ FinanceForecast forecastFinance(
                       BigInt.from(t.amountMinor) *
                       BigInt.from(t.toAccountId == account.id ? 1 : -1),
                   id: t.id,
+                ),
+          if (!unassignedOnly)
+            for (final movement
+                in payments?.cashMovements ?? const <PaymentCashMovement>[])
+              if (movement.currency == currency &&
+                  (account == null || movement.accountId == account.id) &&
+                  !movement.paidAt.isAfter(through) &&
+                  (opening == null || !movement.paidAt.isBefore(opening)))
+                (
+                  entry: null,
+                  movement: movement,
+                  title: '',
+                  date: movement.paidAt,
+                  change: BigInt.from(movement.amountMinor),
+                  id: movement.id,
                 ),
         ]
         ..sort(
@@ -148,6 +175,7 @@ FinanceForecast forecastFinance(
       running += event.change;
       return FinanceForecastPoint(
         entry: event.entry,
+        paymentMovement: event.movement,
         title: event.title,
         date: event.date,
         changeMinor: event.change,

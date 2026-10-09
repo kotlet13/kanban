@@ -109,8 +109,10 @@ CollaborationState upgradeState({
   bool complete = true,
   bool revoked = false,
   SharedRole role = SharedRole.owner,
+  String? selectedSpaceId,
 }) => CollaborationState(
   session: sharingSession(),
+  selectedSpaceId: selectedSpaceId,
   scopes: [sharingScope(role: role, revoked: revoked)],
   data: {sharingScopeId: upgradeData()},
   members: {sharingScopeId: upgradeMembers()},
@@ -219,6 +221,13 @@ Future<void> openFinances(
   double width,
   String locale,
 ) async {
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(KanbanApp)),
+  );
+  await container
+      .read(collaborationProvider.notifier)
+      .selectSpace(sharingScopeId);
+  await tester.pumpAndSettle();
   if (width < 900) {
     await personal.mobileTab(tester, locale == 'sl' ? 'Več' : 'More');
   }
@@ -228,10 +237,6 @@ Future<void> openFinances(
   );
   await tester.ensureVisible(target);
   await tester.tap(target);
-  await tester.pumpAndSettle();
-  await tester.tap(
-    find.widgetWithText(ChoiceChip, locale == 'sl' ? 'Deljeno' : 'Shared'),
-  );
   await tester.pumpAndSettle();
 }
 
@@ -311,6 +316,7 @@ void main() {
           grant: SharedFinanceGrant.read,
           complete: false,
           role: SharedRole.viewer,
+          selectedSpaceId: sharingScopeId,
         ),
       );
       await tester.pump();

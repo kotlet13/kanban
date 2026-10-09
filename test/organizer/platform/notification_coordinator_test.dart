@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
@@ -41,6 +42,9 @@ Widget host(List<Override> overrides, Widget child) {
   return ProviderScope(
     overrides: [
       localDatabaseProvider.overrideWith((ref) async => database),
+      notificationLocalSnapshotsProvider.overrideWith(
+        (ref) async => [await ref.watch(organizerProvider.future)],
+      ),
       ...overrides,
     ],
     child: MaterialApp(

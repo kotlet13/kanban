@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/account_deletion_preview.dart';
+import 'package:kanban/organizer/data/account_deletion_store.dart';
 import 'package:kanban/organizer/domain/collaboration_models.dart';
 import '../ui/sharing_ui_fixture.dart' show sharingSession, sharingScopeId;
 
@@ -50,6 +51,51 @@ void main() {
       hasLength(1),
     );
   });
+  test(
+    'policy3 reviews conditional retained facts and persists exact request policy',
+    () {
+      final p = preview()..['policyVersion'] = 3;
+      p['linkedFinancialFacts'] = [
+        {
+          'scopeId': sharingScopeId,
+          'eventsRetainedIfScopeKept': 1,
+          'eventsDeletedIfScopeDeleted': 1,
+          'refundLegs': 2,
+          'reason': 'retained_shared_financial_fact',
+        },
+      ];
+      p['resolutions'] = [
+        {
+          'scopeId': sharingScopeId,
+          'recordId': sharingScopeId,
+          'type': 'financeEntry',
+          'action': 'preserveStructure',
+          'name': 'Expense',
+        },
+      ];
+      expect(
+        decodeAccountDeletionPreview(p, sharingSession())['policyVersion'],
+        3,
+      );
+      final pending = PendingAccountDeletion(
+        profile: sharingSession(),
+        operationId: sharingScopeId,
+        previewHash: 'a' * 64,
+        receiptToken: 'b' * 64,
+        review: p,
+        policyVersion: 3,
+      );
+      expect(
+        PendingAccountDeletion.fromJson(pending.toJson()).policyVersion,
+        3,
+      );
+      (p['linkedFinancialFacts'] as List).first['refundLegs'] = -1;
+      expect(
+        () => decodeAccountDeletionPreview(p, sharingSession()),
+        throwsA(isA<CollaborationException>()),
+      );
+    },
+  );
   final corruptions = <void Function(Map<String, dynamic>)>[
     (p) => (p['impact'] as Map)['personalRecords'] = 'many',
     (p) => ((p['ownedScopes'] as List).first as Map)['eligibleSuccessors'] = [

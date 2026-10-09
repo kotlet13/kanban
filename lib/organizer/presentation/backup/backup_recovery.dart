@@ -6,6 +6,7 @@ import '../../state/portable_backup_provider.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../shared/sharing_forms.dart';
+import 'offline_spaces_recovery.dart';
 
 class BackupRecoveryPanel extends ConsumerStatefulWidget {
   const BackupRecoveryPanel({super.key});
@@ -249,7 +250,16 @@ class _BackupRecoveryPanelState extends ConsumerState<BackupRecoveryPanel> {
                           '${preview.sourceServer ?? l.backupLocalOnly}\n${l.backupPending}: ${preview.pendingCount}',
                         ),
                         isThreeLine: true,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: IconButton(
+                          key: ValueKey('recover-locally-${preview.backupId}'),
+                          tooltip: l.offlineRecoveryAction,
+                          icon: const Icon(Icons.cloud_off_outlined),
+                          onPressed: () => showOfflineSpacesRecovery(
+                            context,
+                            ref,
+                            preview.backupId,
+                          ),
+                        ),
                         onTap: () => _review(preview),
                       ),
                   ],

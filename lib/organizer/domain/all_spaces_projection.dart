@@ -1,5 +1,6 @@
 import 'collaboration_models.dart';
 import 'organizer_models.dart';
+import 'local_space_models.dart';
 
 /// A concrete origin retained by every row of the aggregate read projection.
 /// Never use an aggregate identifier as a destination for a write.
@@ -7,6 +8,7 @@ class AllSpacesSource {
   const AllSpacesSource({
     required this.key,
     this.personal,
+    this.localSpace,
     this.scope,
     this.session,
     this.data,
@@ -17,6 +19,9 @@ class AllSpacesSource {
   });
   final String key;
   final OrganizerSnapshot? personal;
+  final LocalSpace? localSpace;
+  bool get isLocalSpace =>
+      personal != null && !personal!.workspaceKey.startsWith('private:');
   final SharedScope? scope;
   final AccountSession? session;
   final SharedScopeData? data;
@@ -28,20 +33,29 @@ class AllSpacesSource {
   bool get isPersonal => personal != null;
   String? get scopeId => scope?.id;
   String? get workspaceKey => personal?.workspaceKey;
-  String? get name => scope?.name;
+  String? get name => localSpace?.name ?? scope?.name;
 
   bool isCurrent(
     OrganizerSnapshot personal,
     CollaborationState shared, {
     bool financial = false,
+    LocalSpacesState? localSpaces,
   }) {
     final sameSession =
-        !shared.sessionInvalid &&
+        shared.localAccessAllowed &&
         shared.session?.partition == session?.partition &&
         shared.session?.deviceId == session?.deviceId;
+    if (isLocalSpace && localSpaces != null) {
+      final current = localSpaces.snapshots[workspaceKey];
+      return current != null &&
+          current.recordIds.containsAll(this.personal!.recordIds);
+    }
     if (isPersonal) {
-      return personal.workspaceKey == workspaceKey &&
-          (workspaceKey == 'local' ||
+      final authoritative = workspaceKey!.startsWith('private:')
+          ? localSpaces?.snapshots['local'] ?? personal
+          : personal;
+      return authoritative.workspaceKey == workspaceKey &&
+          (!workspaceKey!.startsWith('private:') ||
               (sameSession &&
                   shared.scopes.any(
                     (s) =>
@@ -73,6 +87,12 @@ class AllSpacesSource {
       serverId: remote ? session!.serverId : null,
       accountId: remote ? session!.accountId : null,
       scopeId: remote ? (isPersonal ? privateScopeId : scopeId) : null,
+      localSpaceId:
+          !remote &&
+              workspaceKey != 'local' &&
+              !workspaceKey!.startsWith('private:')
+          ? workspaceKey
+          : null,
       records: [
         NotificationRecordTarget(
           type: privateId != null && type == 'financeEntry'
@@ -183,10 +203,15 @@ class AllSpacesSnapshot {
 AllSpacesSnapshot projectAllSpaces({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
+  LocalSpacesState? localSpaces,
 }) {
+  final defaultPersonal = localSpaces?.snapshots['local'];
+  if (defaultPersonal?.workspaceKey.startsWith('private:') == true) {
+    personal = defaultPersonal!;
+  }
   final session = shared.session;
-  final authorized = session != null && !shared.sessionInvalid;
-  final bound = personal.workspaceKey != 'local';
+  final authorized = session != null && shared.localAccessAllowed;
+  final bound = personal.workspaceKey.startsWith('private:');
   final matchingPersonal =
       !bound ||
       (authorized && personal.workspaceKey == 'private:${session.partition}');
@@ -203,7 +228,12 @@ AllSpacesSnapshot projectAllSpaces({
         )
         .firstOrNull;
   }
-  if (matchingPersonal && (!bound || privateScope != null)) {
+  final selectedLocal = localSpaces?.spaces
+      .where((s) => s.id == personal.workspaceKey)
+      .firstOrNull;
+  if (matchingPersonal &&
+      selectedLocal?.binding == null &&
+      (!bound || privateScope != null)) {
     final canReadFinance =
         !bound || shared.financePolicyForScope(privateScope!.id).canRead;
     final complete =
@@ -223,13 +253,37 @@ AllSpacesSnapshot projectAllSpaces({
       AllSpacesSource(
         key: personal.workspaceKey,
         personal: safePersonal,
+        localSpace: localSpaces?.spaces
+            .where((s) => s.id == (bound ? 'local' : personal.workspaceKey))
+            .firstOrNull,
         session: bound ? session : null,
         privateScopeId: bound ? privateScope!.id : null,
         privateRecordIds: bound ? shared.privateRecordIds : const {},
         canReadFinance: canReadFinance,
-        financeComplete: complete,
+        financeComplete:
+            complete && !(selectedLocal?.financeRecoveryIncomplete ?? false),
       ),
     );
+  }
+  if (localSpaces != null) {
+    for (final space in localSpaces.spaces) {
+      // The active personal projection may include its private server rows.
+      if (space.binding != null) continue;
+      if (space.id == personal.workspaceKey || (bound && space.id == 'local')) {
+        continue;
+      }
+      final snapshot = localSpaces.snapshots[space.id];
+      if (snapshot == null) continue;
+      sources.add(
+        AllSpacesSource(
+          key: space.id,
+          personal: snapshot,
+          localSpace: space,
+          canReadFinance: true,
+          financeComplete: !space.financeRecoveryIncomplete,
+        ),
+      );
+    }
   }
   if (authorized) {
     for (final scope in shared.scopes.where(

@@ -397,9 +397,13 @@ class Garden {
 }
 
 class GardenSnapshot {
-  GardenSnapshot({this.revision = 0, Iterable<Garden> gardens = const []})
-    : gardens = List.unmodifiable(gardens);
+  GardenSnapshot({
+    this.revision = 0,
+    this.workspaceKey = 'local',
+    Iterable<Garden> gardens = const [],
+  }) : gardens = List.unmodifiable(gardens);
   final int revision;
+  final String workspaceKey;
   final List<Garden> gardens;
   static const maxBytes = 10 * 1024 * 1024;
   Set<String> get recordIds => {

@@ -103,6 +103,79 @@ class SharingUiController extends CollaborationController {
   void replace(CollaborationState value) => state = AsyncData(value);
   void switchAccount() =>
       replace(CollaborationState(session: sharingSession(second: true)));
+  @override
+  Future<void> selectSpace(String? id) async {
+    final current = state.requireValue;
+    if (id != null &&
+        !current.scopes.any((scope) => scope.id == id && !scope.revoked)) {
+      throw const CollaborationException('access_revoked');
+    }
+    replace(
+      CollaborationState(
+        session: current.session,
+        selectedSpaceId: id,
+        scopes: current.scopes,
+        data: current.data,
+        organizationsSupported: current.organizationsSupported,
+        localAccessAllowed: current.localAccessAllowed,
+        deletionPending: current.deletionPending,
+        householdPeopleSupported: current.householdPeopleSupported,
+        projectArchivingSupported: current.projectArchivingSupported,
+        financeSupported: current.financeSupported,
+        financePolicies: current.financePolicies,
+        financeSnapshotComplete: current.financeSnapshotComplete,
+        financeContractVersion: current.financeContractVersion,
+        recordContractVersion: current.recordContractVersion,
+        members: current.members,
+        privateSync: current.privateSync,
+        privateRecordIds: current.privateRecordIds,
+        inbox: current.inbox,
+        financeConflicts: current.financeConflicts,
+        financePendingCount: current.financePendingCount,
+        financeBlockedCount: current.financeBlockedCount,
+        conflicts: current.conflicts,
+        pendingCount: current.pendingCount,
+        blockedCount: current.blockedCount,
+        lastError: current.lastError,
+        sessionInvalid: current.sessionInvalid,
+      ),
+    );
+  }
+
+  @override
+  Future<void> selectAllSpaces() async {
+    final current = state.requireValue;
+    replace(
+      CollaborationState(
+        session: current.session,
+        allSpacesSelected: true,
+        scopes: current.scopes,
+        data: current.data,
+        organizationsSupported: current.organizationsSupported,
+        localAccessAllowed: current.localAccessAllowed,
+        deletionPending: current.deletionPending,
+        householdPeopleSupported: current.householdPeopleSupported,
+        projectArchivingSupported: current.projectArchivingSupported,
+        financeSupported: current.financeSupported,
+        financePolicies: current.financePolicies,
+        financeSnapshotComplete: current.financeSnapshotComplete,
+        financeContractVersion: current.financeContractVersion,
+        recordContractVersion: current.recordContractVersion,
+        members: current.members,
+        privateSync: current.privateSync,
+        privateRecordIds: current.privateRecordIds,
+        inbox: current.inbox,
+        financeConflicts: current.financeConflicts,
+        financePendingCount: current.financePendingCount,
+        financeBlockedCount: current.financeBlockedCount,
+        conflicts: current.conflicts,
+        pendingCount: current.pendingCount,
+        blockedCount: current.blockedCount,
+        lastError: current.lastError,
+      ),
+    );
+  }
+
   int? privateEnabledRevision;
   int privatePreviewLoads = 0;
   String? previewServer, previewToken;
@@ -327,6 +400,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: {
           scopeId: SharedScopeData(
@@ -355,6 +430,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: {
           scopeId: SharedScopeData(
@@ -412,6 +489,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: old.data,
       ),

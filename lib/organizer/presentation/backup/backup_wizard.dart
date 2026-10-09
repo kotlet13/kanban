@@ -13,6 +13,7 @@ import '../../state/portable_backup_provider.dart';
 import '../organizer_widgets.dart';
 import '../shared/sharing_errors.dart';
 import 'backup_counts.dart';
+import 'offline_spaces_recovery.dart';
 
 Future<void> showBackupWizard(BuildContext context, {required bool restore}) =>
     showDialog<void>(
@@ -38,9 +39,7 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
     return '${s?.partition}:${s?.deviceId}';
   }
 
-  bool get _validIdentity =>
-      _identity == _currentIdentity &&
-      ref.read(collaborationProvider).valueOrNull?.sessionInvalid != true;
+  bool get _validIdentity => _identity == _currentIdentity;
   bool _busy = false, _done = false;
   String? _error, _fileName, _saveMessage;
   Uint8List? _bytes;
@@ -277,9 +276,20 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
             children: [
               if (!current)
                 Text(l.sharingSessionExpired)
-              else if (_done)
-                Text(l.backupRestored)
-              else ...[
+              else if (_done) ...[
+                Text(l.backupRestored),
+                if (_preview?.hasRemoteRecovery == true)
+                  OutlinedButton.icon(
+                    key: const ValueKey('backup-continue-locally'),
+                    onPressed: () => showOfflineSpacesRecovery(
+                      context,
+                      ref,
+                      _preview!.backupId,
+                    ),
+                    icon: const Icon(Icons.cloud_off_outlined),
+                    label: Text(l.offlineRecoveryAction),
+                  ),
+              ] else ...[
                 Text(l.backupDescription),
                 const SizedBox(height: 12),
                 Text(l.backupPasswordHint),

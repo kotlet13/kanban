@@ -7,6 +7,8 @@ import '../../l10n/l10n.dart';
 import '../state/collaboration_provider.dart';
 import '../state/organizer_provider.dart';
 import '../state/reminder_snooze_provider.dart';
+import '../state/notification_local_spaces_provider.dart';
+import '../state/local_spaces_provider.dart';
 import 'local_notification_scheduler.dart';
 import 'notification_providers.dart';
 
@@ -28,7 +30,7 @@ class _LocalNotificationCoordinatorState
   int _generation = 0;
   Timer? _timer;
   String? _locale;
-  String? _financeMaterializedKey;
+  final _financeMaterializedKeys = <String>{};
   @override
   void initState() {
     super.initState();
@@ -92,18 +94,19 @@ class _LocalNotificationCoordinatorState
     final sharedState = ref.read(collaborationProvider);
     // Wait for the cached SQLite identity before removing shared alarms.
     if (sharedState.isLoading) return;
-    final personalState = ref.read(organizerProvider);
-    final personal = personalState.valueOrNull;
+    final snapshotsState = ref.read(notificationLocalSnapshotsProvider);
+    if (snapshotsState.isLoading) return;
+    final snapshots = snapshotsState.asData?.value;
     final shared = sharedState.valueOrNull;
     final identity =
         '${shared?.session?.partition}:${shared?.session?.deviceId}';
     final settingsState = ref.read(localReminderSettingsProvider);
     final settings = settingsState.valueOrNull;
-    if (settings == null || personal == null) {
-      if (personalState.hasError && !personalState.isLoading) {
+    if (settings == null || snapshots == null) {
+      if (snapshotsState.hasError && !snapshotsState.isLoading) {
         await _storageFailure(
-          personalState.error!,
-          personalState.stackTrace ?? StackTrace.current,
+          snapshotsState.error!,
+          snapshotsState.stackTrace ?? StackTrace.current,
           generation,
         );
       } else if (settingsState.hasError && !settingsState.isLoading) {
@@ -116,48 +119,51 @@ class _LocalNotificationCoordinatorState
       return;
     }
     final clock = ref.read(organizerClockProvider)().toLocal();
-    final financeKey = '${personal.workspaceKey}:${clock.year}-${clock.month}';
-    final privateScope = shared?.privateSync.scopeId;
-    final canMaterialize =
-        personal.workspaceKey == 'local' ||
-        (shared?.financeContractVersion == 2 &&
-            shared?.sessionInvalid != true &&
-            privateScope != null &&
-            shared!.financePolicyForScope(privateScope).canWrite &&
-            shared.financeSnapshotComplete[privateScope] == true);
-    final localRules = personal.financeRecurrenceRules
-        .where(
-          (r) =>
-              r.active &&
-              shared?.privateRecordIds.values.contains(r.id) != true,
-        )
-        .map((r) => r.id)
-        .toSet();
-    final sameWorkspace =
-        personal.workspaceKey == 'local' ||
-        (shared?.session != null &&
-            shared?.sessionInvalid != true &&
-            personal.workspaceKey == 'private:${shared!.session!.partition}');
-    if (sameWorkspace &&
-        (canMaterialize || localRules.isNotEmpty) &&
-        personal.financeRecurrenceRules.any((r) => r.active) &&
-        _financeMaterializedKey != financeKey) {
-      _financeMaterializedKey = financeKey;
-      try {
-        await ref
-            .read(organizerProvider.notifier)
-            .materializeFinanceOccurrences(
-              expectedWorkspaceKey: personal.workspaceKey,
-              ruleIds: canMaterialize ? null : localRules,
-            );
-      } catch (error, stack) {
-        if (mounted) {
-          ref.read(localNotificationDeviceStatusProvider.notifier).state =
-              AsyncError(error, stack);
+    for (final snapshot in snapshots) {
+      final private = snapshot.workspaceKey.startsWith('private:');
+      final localId = private ? 'local' : snapshot.workspaceKey;
+      final financeKey =
+          '${snapshot.workspaceKey}:${clock.year}-${clock.month}:${snapshot.financeRecurrenceRules.map((r) => '${r.id}:${r.revision}:${r.active}').join(',')}';
+      final privateScope = shared?.privateSync.scopeId;
+      final canMaterialize =
+          !private ||
+          (shared?.financeContractVersion != null &&
+              shared!.financeContractVersion == 2 &&
+              shared.localAccessAllowed &&
+              privateScope != null &&
+              shared.financePolicyForScope(privateScope).canWrite &&
+              shared.financeSnapshotComplete[privateScope] == true);
+      final localRules = snapshot.financeRecurrenceRules
+          .where(
+            (r) =>
+                r.active &&
+                (!private ||
+                    shared?.privateRecordIds.values.contains(r.id) != true),
+          )
+          .map((r) => r.id)
+          .toSet();
+      if ((canMaterialize || localRules.isNotEmpty) &&
+          snapshot.financeRecurrenceRules.any((r) => r.active) &&
+          !_financeMaterializedKeys.contains(financeKey)) {
+        _financeMaterializedKeys.add(financeKey);
+        try {
+          await ref.read(localSpacesProvider.future);
+          await ref
+              .read(localSpacesProvider.notifier)
+              .materializeFinanceOccurrences(
+                localId,
+                expectedWorkspaceKey: snapshot.workspaceKey,
+                ruleIds: canMaterialize ? null : localRules,
+              );
+        } catch (error, stack) {
+          _financeMaterializedKeys.remove(financeKey);
+          if (mounted) {
+            ref.read(localNotificationDeviceStatusProvider.notifier).state =
+                AsyncError(error, stack);
+          }
         }
+        if (!mounted || generation != _generation) return;
       }
-      if (!mounted || generation != _generation) return;
-      return _reconcile();
     }
     final l = context.l10n;
     List<ReminderPlan> plans;
@@ -221,7 +227,7 @@ class _LocalNotificationCoordinatorState
       _ready = next.hasValue;
       if (_ready) _reconcile();
     });
-    ref.listen(organizerProvider, (_, _) => _reconcile());
+    ref.listen(notificationLocalSnapshotsProvider, (_, _) => _reconcile());
     ref.listen(collaborationProvider, (_, _) => _reconcile());
     ref.listen(effectiveReminderPlansProvider, (_, next) {
       if (next.hasValue) _reconcile();

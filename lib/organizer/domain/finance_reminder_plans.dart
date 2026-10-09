@@ -6,6 +6,7 @@ import 'collaboration_models.dart';
 List<ReminderPlan> desiredFinanceReminderPlans({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
+  Iterable<OrganizerSnapshot>? localSnapshots,
 }) {
   final result = <ReminderPlan>[];
   final session = shared.session;
@@ -60,64 +61,83 @@ List<ReminderPlan> desiredFinanceReminderPlans({
   }
 
   final privateScope = shared.privateSync.scopeId;
-  final bound = personal.workspaceKey != 'local';
-  final canReadPrivate =
-      (session != null &&
-      personal.workspaceKey == 'private:${session.partition}' &&
-      shared.privateSync.enabled &&
-      !shared.sessionInvalid &&
-      privateScope != null &&
-      shared.financePolicyForScope(privateScope).canRead &&
-      shared.financeSnapshotComplete[privateScope] == true);
-  if (!bound ||
-      (session != null &&
-          !shared.sessionInvalid &&
-          personal.workspaceKey == 'private:${session.partition}')) {
-    for (final e in personal.financeEntries.where(
-      (e) =>
-          e.status == FinanceEntryStatus.planned && e.recurrenceRuleId != null,
-    )) {
-      final rule = personal.financeRecurrenceRules
-          .where((r) => r.id == e.recurrenceRuleId)
-          .firstOrNull;
-      if (rule == null) continue;
-      final isPrivate = bound && shared.privateRecordIds.values.contains(e.id);
-      if (isPrivate && !canReadPrivate) continue;
-      final remoteId =
-          shared.privateRecordIds.entries
-              .where((m) => m.value == e.id)
-              .firstOrNull
-              ?.key ??
-          e.id;
-      if (isPrivate &&
-          remotelyScheduled(privateScope!, 'personalFinanceEntry', remoteId)) {
-        continue;
+  for (final personal in localSnapshots ?? [personal]) {
+    final bound = personal.workspaceKey.startsWith('private:');
+    final canReadPrivate =
+        (session != null &&
+        personal.workspaceKey == 'private:${session.partition}' &&
+        shared.privateSync.enabled &&
+        shared.localAccessAllowed &&
+        privateScope != null &&
+        shared.financePolicyForScope(privateScope).canRead &&
+        shared.financeSnapshotComplete[privateScope] == true);
+    if (!bound ||
+        (session != null &&
+            shared.localAccessAllowed &&
+            personal.workspaceKey == 'private:${session.partition}')) {
+      for (final e in personal.financeEntries.where(
+        (e) =>
+            e.status == FinanceEntryStatus.planned &&
+            e.recurrenceRuleId != null,
+      )) {
+        final rule = personal.financeRecurrenceRules
+            .where((r) => r.id == e.recurrenceRuleId)
+            .firstOrNull;
+        if (rule == null) continue;
+        final isPrivate =
+            bound && shared.privateRecordIds.values.contains(e.id);
+        if (isPrivate && !canReadPrivate) continue;
+        final remoteId =
+            shared.privateRecordIds.entries
+                .where((m) => m.value == e.id)
+                .firstOrNull
+                ?.key ??
+            e.id;
+        if (isPrivate &&
+            remotelyScheduled(
+              privateScope!,
+              'personalFinanceEntry',
+              remoteId,
+            )) {
+          continue;
+        }
+        final target = NotificationTarget(
+          serverUrl: isPrivate ? session!.serverUrl : null,
+          serverId: isPrivate ? session!.serverId : null,
+          accountId: isPrivate ? session!.accountId : null,
+          scopeId: isPrivate ? privateScope : null,
+          localSpaceId: !bound && personal.workspaceKey != 'local'
+              ? personal.workspaceKey
+              : null,
+          records: [
+            NotificationRecordTarget(
+              type: isPrivate ? 'personalFinanceEntry' : 'financeEntry',
+              recordId: isPrivate ? remoteId : e.id,
+            ),
+          ],
+        );
+        salary(
+          rule,
+          e.id,
+          e.occurrenceKey,
+          e.plannedAt,
+          target,
+          isPrivate
+              ? '${session!.partition}:$privateScope'
+              : bound || personal.workspaceKey == 'local'
+              ? 'personal:local'
+              : 'local:${personal.workspaceKey}',
+        );
       }
-      final target = NotificationTarget(
-        serverUrl: isPrivate ? session!.serverUrl : null,
-        serverId: isPrivate ? session!.serverId : null,
-        accountId: isPrivate ? session!.accountId : null,
-        scopeId: isPrivate ? privateScope : null,
-        records: [
-          NotificationRecordTarget(
-            type: isPrivate ? 'personalFinanceEntry' : 'financeEntry',
-            recordId: isPrivate ? remoteId : e.id,
-          ),
-        ],
-      );
-      salary(
-        rule,
-        e.id,
-        e.occurrenceKey,
-        e.plannedAt,
-        target,
-        isPrivate ? '${session!.partition}:$privateScope' : 'personal:local',
-      );
     }
   }
-  if (session != null && !shared.sessionInvalid) {
+  if (session != null && shared.localAccessAllowed) {
     for (final scope in shared.scopes.where(
-      (s) => !s.revoked && !s.archived && s.kind != SharedScopeKind.personal,
+      (s) =>
+          !s.revoked &&
+          !s.archived &&
+          !s.blocked &&
+          s.kind != SharedScopeKind.personal,
     )) {
       if (!shared.financePolicyForScope(scope.id).canRead ||
           shared.financeSnapshotComplete[scope.id] != true ||
@@ -163,10 +183,12 @@ List<ReminderPlan> desiredFinanceReminderPlans({
 Set<String> allowedFinanceInboxReadNames({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
+  Iterable<OrganizerSnapshot>? localSnapshots,
 }) => {
   for (final p in desiredFinanceReminderPlans(
     personal: personal,
     shared: shared,
+    localSnapshots: localSnapshots,
   ))
     'finance_inbox_read:${p.stableKey}',
 };
@@ -177,11 +199,13 @@ List<ReminderPlan> dueFinanceInboxPlans({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
   required DateTime now,
+  Iterable<OrganizerSnapshot>? localSnapshots,
 }) {
   final latest = <String, ReminderPlan>{};
   for (final plan in desiredFinanceReminderPlans(
     personal: personal,
     shared: shared,
+    localSnapshots: localSnapshots,
   )) {
     if (plan.scheduledAt.isAfter(now)) continue;
     final key = jsonEncode(plan.target.toJson());

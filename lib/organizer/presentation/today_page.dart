@@ -4,7 +4,6 @@ import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
 import 'organizer_actions.dart';
 import 'organizer_widgets.dart';
-import 'planning/shared_today_overview.dart';
 import 'onboarding/getting_started.dart';
 
 class OrganizerTodayPage extends StatelessWidget {
@@ -13,6 +12,7 @@ class OrganizerTodayPage extends StatelessWidget {
     required this.snapshot,
     required this.actions,
     required this.onShopping,
+    this.showShopping = true,
     required this.onPlans,
     required this.onSharedAgenda,
     this.onGettingStarted,
@@ -20,6 +20,7 @@ class OrganizerTodayPage extends StatelessWidget {
   final OrganizerSnapshot snapshot;
   final OrganizerActions actions;
   final VoidCallback onShopping;
+  final bool showShopping;
   final VoidCallback onPlans;
   final ValueChanged<String> onSharedAgenda;
   final VoidCallback? onGettingStarted;
@@ -154,7 +155,7 @@ class OrganizerTodayPage extends StatelessWidget {
         ),
         if (onGettingStarted != null)
           GettingStartedHint(onStart: onGettingStarted!),
-        SharedTodayOverview(onAgenda: onSharedAgenda),
+
         LayoutBuilder(
           builder: (context, constraints) => constraints.maxWidth >= 820
               ? Row(
@@ -167,8 +168,10 @@ class OrganizerTodayPage extends StatelessWidget {
                       child: Column(
                         children: [
                           nextEvent,
-                          const SizedBox(height: 24),
-                          shopping,
+                          if (showShopping) ...[
+                            const SizedBox(height: 24),
+                            shopping,
+                          ],
                         ],
                       ),
                     ),
@@ -179,8 +182,7 @@ class OrganizerTodayPage extends StatelessWidget {
                     nextEvent,
                     const SizedBox(height: 24),
                     nextTasks,
-                    const SizedBox(height: 24),
-                    shopping,
+                    if (showShopping) ...[const SizedBox(height: 24), shopping],
                   ],
                 ),
         ),

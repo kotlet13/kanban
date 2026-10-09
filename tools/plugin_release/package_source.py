@@ -11,7 +11,11 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = Path(__file__).with_name('source_manifest.json')
 PUBLIC_README = Path(__file__).with_name('PUBLIC_README.md')
-PUBLIC_DOCUMENTS = {'docs/account-deletion-contract.md': ROOT / 'docs/server/account-deletion-contract.md'}
+PUBLIC_DOCUMENTS = {
+    'docs/account-deletion-contract.md': ROOT / 'docs/server/account-deletion-contract.md',
+    'docs/spaces-api-contract.md': ROOT / 'docs/server/spaces-api-contract.md',
+    'docs/linked-payments-api-contract.md': ROOT / 'docs/server/linked-payments-api-contract.md',
+}
 LIMIT = 2 * 1024 * 1024
 
 

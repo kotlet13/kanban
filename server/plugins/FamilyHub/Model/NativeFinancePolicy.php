@@ -70,6 +70,10 @@ class NativeFinancePolicy extends NativeDatabase
 
     public function noChildren($scope, $id, $type, $contractVersion = 1)
     {
+        if (in_array($type,['financeAccount','personalFinanceAccount'],true) &&
+            $this->one("SELECT movement_id FROM familyhub_payment_cash WHERE scope_id=? AND json_extract(data,'$.accountId')=? LIMIT 1", [$scope,$id])) {
+            throw new NativeError('linked_payment_source_locked',409);
+        }
         if ($contractVersion === 2) { return (new NativeFinancePlanningPolicy($this->container))->noChildren($scope,$id,$type); }
         if ($type !== 'financeAccount') { return; }
         foreach ($this->iterate('SELECT payload FROM familyhub_finance_records WHERE scope_id=? AND type IN (\'financeEntry\',\'financeTransfer\') AND deleted=0', [$scope]) as $row) {

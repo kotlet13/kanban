@@ -17,6 +17,9 @@ Future<void> showFinancePermissions(
     builder: (context) => SharingSessionBoundary(
       guard: guard,
       visibleWhen: (s) =>
+          !s.sessionInvalid &&
+          !s.deletionPending &&
+          s.session?.expiresAt.isAfter(DateTime.now()) == true &&
           s.scopes.any((v) => v.id == scopeId && !v.revoked && v.canManage),
       child: AlertDialog(
         title: Text(context.l10n.financePermissions),
@@ -63,24 +66,49 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
     return (grants: grants, members: members);
   }
 
-  String _label(SharedFinanceGrant grant) => switch (grant) {
-    SharedFinanceGrant.none => context.l10n.financeGrantNone,
-    SharedFinanceGrant.read => context.l10n.financeGrantRead,
-    SharedFinanceGrant.write => context.l10n.financeGrantWrite,
-  };
+  bool get _managed {
+    final scope = ref
+        .read(collaborationProvider)
+        .valueOrNull
+        ?.scopes
+        .where((s) => s.id == widget.scopeId)
+        .firstOrNull;
+    final policy = ref
+        .read(collaborationProvider)
+        .valueOrNull
+        ?.financePolicyForScope(widget.scopeId);
+    return policy?.managedByOrganizationPolicy == true ||
+        scope?.accessPolicyVersion == 2 &&
+            (scope?.kind == SharedScopeKind.project ||
+                scope?.kind == SharedScopeKind.organization);
+  }
+
+  String _label(SharedFinanceGrant grant) =>
+      _managed && grant != SharedFinanceGrant.write
+      ? context.l10n.financeMembershipRead
+      : switch (grant) {
+          SharedFinanceGrant.none => context.l10n.financeGrantNone,
+          SharedFinanceGrant.read => context.l10n.financeGrantRead,
+          SharedFinanceGrant.write => context.l10n.financeGrantWrite,
+        };
   Future<void> _edit(SharedMember member, SharedFinanceGrant grant) async {
     setState(() => _busy = true);
     await showSharingForm(
       context,
       title: member.displayName.isEmpty ? member.username : member.displayName,
+      description: _managed
+          ? context.l10n.financeMembershipReadDescription
+          : null,
       fields: [
         SharingField(
           id: 'grant',
           label: context.l10n.financePermissions,
-          initialValue: grant.name,
+          initialValue: _managed && grant != SharedFinanceGrant.write
+              ? 'none'
+              : grant.name,
           options: {
             'none': _label(SharedFinanceGrant.none),
-            'read': _label(SharedFinanceGrant.read),
+            if (!_managed) 'read': _label(SharedFinanceGrant.read),
             if (member.role != SharedRole.viewer)
               'write': _label(SharedFinanceGrant.write),
           },
@@ -90,9 +118,13 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
       errorMessage: (e) => sharingErrorMessage(context, e),
       wrap: (child) => SharingSessionBoundary(
         guard: widget.guard,
-        visibleWhen: (s) => s.scopes.any(
-          (v) => v.id == widget.scopeId && !v.revoked && v.canManage,
-        ),
+        visibleWhen: (s) =>
+            !s.sessionInvalid &&
+            !s.deletionPending &&
+            s.session?.expiresAt.isAfter(DateTime.now()) == true &&
+            s.scopes.any(
+              (v) => v.id == widget.scopeId && !v.revoked && v.canManage,
+            ),
         child: child,
       ),
       onSubmit: (values) async {
@@ -140,6 +172,7 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
         final members = cached.isNotEmpty ? cached : result.data!.members;
         return Column(
           children: [
+            if (_managed) Text(context.l10n.financeMembershipReadDescription),
             for (final member in members.where(
               (m) => m.active && m.accountId.isNotEmpty,
             ))

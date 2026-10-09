@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../domain/finance_forecast.dart';
+import '../../domain/linked_payment_models.dart';
+import '../../state/local_spaces_provider.dart';
 import '../../domain/organizer_models.dart';
 import '../../state/organizer_provider.dart';
 import '../../state/collaboration_provider.dart';
@@ -79,10 +81,12 @@ class FinancePlanningPanel extends ConsumerStatefulWidget {
     this.sharedScopeId,
     this.forecastAvailable = true,
     this.accountFilter,
+    this.payments,
   });
   final OrganizerSnapshot snapshot;
   final String? sharedScopeId;
   final bool forecastAvailable;
+  final PaymentSnapshot? payments;
 
   /// External ledger selection: * all, _none unassigned, otherwise account ID.
   final String? accountFilter;
@@ -121,7 +125,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
   }
 
   bool _privateOwned(String id) =>
-      widget.snapshot.workspaceKey != 'local' &&
+      widget.snapshot.workspaceKey.startsWith('private:') &&
       ref
               .read(collaborationProvider)
               .valueOrNull
@@ -137,7 +141,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
               2);
   OrganizerSnapshot _formSnapshot({String? existingId}) {
     final private =
-        widget.snapshot.workspaceKey != 'local' &&
+        widget.snapshot.workspaceKey.startsWith('private:') &&
         (existingId == null || _privateOwned(existingId));
     return widget.snapshot.copyWith(
       financeAccounts: widget.snapshot.financeAccounts.where(
@@ -160,7 +164,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
                 .scopes
                 .firstWhere((s) => s.id == widget.sharedScopeId)
                 .name
-          : snapshot.workspaceKey == 'local'
+          : !snapshot.workspaceKey.startsWith('private:')
           ? context.l10n.financePlanLocal
           : context.l10n.financePlanPrivate,
       requireAccount: _isShared,
@@ -292,7 +296,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
   Widget build(BuildContext context) {
     final l = context.l10n, snapshot = widget.snapshot;
     final state = ref.watch(collaborationProvider).valueOrNull;
-    final synced = _isShared || snapshot.workspaceKey != 'local';
+    final synced = _isShared || snapshot.workspaceKey.startsWith('private:');
     final available = !synced || state?.financeContractVersion == 2;
     final guard = _guard();
     final canWrite = available && guard.isCurrent;
@@ -349,6 +353,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
       account: account,
       unassignedOnly: widget.accountFilter == '_none',
       through: through,
+      payments: widget.payments,
       transfers: _isShared
           ? (state?.dataForScope(widget.sharedScopeId!).financeTransfers ?? [])
           : [],
@@ -487,6 +492,38 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(organizerDate(context, day.key)),
+              subtitle: day.value.paymentMovement == null
+                  ? null
+                  : Text(
+                      day.value.paymentMovement!.amountMinor > 0
+                          ? l.paymentRefundReceived
+                          : (_isShared &&
+                                    const {
+                                      SharedScopeKind.project,
+                                      SharedScopeKind.organization,
+                                    }.contains(
+                                      state?.scopes
+                                          .where(
+                                            (s) => s.id == widget.sharedScopeId,
+                                          )
+                                          .firstOrNull
+                                          ?.kind,
+                                    ) ||
+                                !_isShared &&
+                                    ref
+                                            .read(localSpacesProvider)
+                                            .valueOrNull
+                                            ?.spaces
+                                            .where(
+                                              (s) =>
+                                                  s.id == snapshot.workspaceKey,
+                                            )
+                                            .firstOrNull
+                                            ?.kind ==
+                                        LocalSpaceKind.organization)
+                          ? l.paymentRefundPaid
+                          : l.paymentPersonalDisplay,
+                    ),
               trailing: Text(
                 sharedMoneyLabel(context, day.value.runningMinor, currency),
               ),
@@ -510,7 +547,7 @@ class _PlanGuard {
            : null,
        finance = sharedScopeId != null
            ? FinanceAccessGuard(context, ref, sharedScopeId, write: true)
-           : snapshot.workspaceKey == 'local' ||
+           : !snapshot.workspaceKey.startsWith('private:') ||
                  (existingId != null &&
                      ref
                              .read(collaborationProvider)

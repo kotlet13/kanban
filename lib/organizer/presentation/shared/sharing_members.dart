@@ -31,7 +31,28 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   late Future<(List<SharedMember>, List<SharedInvitation>)> _future = _load();
   bool _busy = false;
 
+  bool _scopeIsCurrent(CollaborationState state) =>
+      !state.sessionInvalid &&
+      state.session?.expiresAt.isAfter(DateTime.now()) == true &&
+      !state.allSpacesSelected &&
+      state.selectedSpaceId == widget.scope.id &&
+      state.scopes.any(
+        (scope) =>
+            scope.id == widget.scope.id &&
+            !scope.revoked &&
+            !scope.blocked &&
+            scope.role == widget.scope.role &&
+            scope.archived == widget.scope.archived,
+      );
+
+  bool get _isCurrent {
+    if (!mounted || !_guard.isCurrent) return false;
+    final current = ref.read(collaborationProvider).valueOrNull;
+    return current != null && _scopeIsCurrent(current);
+  }
+
   Future<(List<SharedMember>, List<SharedInvitation>)> _load() async {
+    if (!_isCurrent) throw const CollaborationException('access_revoked');
     final controller = _guard.controller;
     final scope = widget.scope;
     final results = await Future.wait<Object>([
@@ -54,11 +75,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   Future<void> _run(Future<void> Function() action) async {
-    if (_busy) return;
+    if (_busy || !_isCurrent) return;
     setState(() => _busy = true);
     try {
       await action();
-      if (mounted && _guard.isCurrent) _refresh();
+      if (mounted && _isCurrent) _refresh();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +98,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     await showSharingForm(
       context,
       title: l.sharingInvitePerson,
+      description:
+          widget.scope.kind == SharedScopeKind.project &&
+              widget.scope.accessPolicyVersion >= 2
+          ? l.organizationProjectFinanceVisibility
+          : null,
       fields: [
         SharingField(id: 'recipient', label: l.username),
         SharingField(
@@ -88,8 +114,13 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       ],
       submitLabel: l.sharingCreateInvite,
       errorMessage: (error) => sharingErrorMessage(context, error),
-      wrap: (form) => SharingSessionBoundary(guard: _guard, child: form),
+      wrap: (form) => SharingSessionBoundary(
+        guard: _guard,
+        visibleWhen: _scopeIsCurrent,
+        child: form,
+      ),
       onSubmit: (values) async {
+        if (!_isCurrent) throw const CollaborationException('access_revoked');
         invitation = await _guard.controller.createInvitation(
           scopeId: scopeId,
           recipientUsername: values['recipient']!.trim(),
@@ -97,7 +128,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
         );
       },
     );
-    if (!mounted || !_guard.isCurrent || invitation == null) return;
+    if (!mounted || !_isCurrent || invitation == null) return;
     final created = invitation!;
     if (created.token != null) {
       await showDialog<void>(
@@ -105,6 +136,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
         barrierDismissible: false,
         builder: (context) => SharingSessionBoundary(
           guard: _guard,
+          visibleWhen: _scopeIsCurrent,
           child: AlertDialog(
             title: Text(l.sharingInvitation),
             content: SizedBox(
@@ -192,7 +224,35 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
         ),
       );
     }
-    if (mounted && _guard.isCurrent) _refresh();
+    if (mounted && _isCurrent) _refresh();
+  }
+
+  Future<void> _leader(SharedMember member) async {
+    final l = context.l10n;
+    final confirmed = await confirmSharingAction(
+      context,
+      title: member.organizationLeader
+          ? l.organizationLeaderRemove
+          : l.organizationLeaderGrant,
+      description: l.organizationLeaderConfirm,
+      confirmLabel: member.organizationLeader
+          ? l.organizationLeaderRemove
+          : l.organizationLeaderGrant,
+      wrap: (dialog) => SharingSessionBoundary(
+        guard: _guard,
+        visibleWhen: _scopeIsCurrent,
+        child: dialog,
+      ),
+    );
+    if (confirmed && mounted && _isCurrent) {
+      await _run(
+        () => _guard.controller.setOrganizationLeader(
+          widget.scope.id,
+          member.accountId,
+          !member.organizationLeader,
+        ),
+      );
+    }
   }
 
   Future<void> _remove(SharedMember member) async {
@@ -201,9 +261,13 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       title: context.l10n.sharingRemoveMember,
       description: context.l10n.sharingRemoveMemberConfirm,
       confirmLabel: context.l10n.sharingRemoveMember,
-      wrap: (dialog) => SharingSessionBoundary(guard: _guard, child: dialog),
+      wrap: (dialog) => SharingSessionBoundary(
+        guard: _guard,
+        visibleWhen: _scopeIsCurrent,
+        child: dialog,
+      ),
     );
-    if (confirmed && mounted) {
+    if (confirmed && mounted && _isCurrent) {
       await _run(
         () => _guard.controller.revokeMember(
           scopeId: widget.scope.id,
@@ -219,7 +283,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       return Text(context.l10n.privateSyncDescription);
     }
     ref.watch(collaborationProvider);
-    if (!_guard.isCurrent) return Text(context.l10n.sharingSessionExpired);
+    if (!_isCurrent) return Text(context.l10n.sharingSessionExpired);
     final l = context.l10n;
     return FutureBuilder<(List<SharedMember>, List<SharedInvitation>)>(
       future: _future,
@@ -275,14 +339,37 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                         : member.displayName,
                   ),
                   subtitle: Text(
-                    '${member.username} · ${sharingRoleLabel(context, member.role)}',
+                    '${member.username} · ${sharingRoleLabel(context, member.role)}${member.organizationLeader ? ' · ${l.organizationLeader}' : ''}',
                   ),
                   trailing:
                       widget.scope.canManage && member.role != SharedRole.owner
-                      ? IconButton(
-                          tooltip: l.sharingRemoveMember,
-                          onPressed: _busy ? null : () => _remove(member),
-                          icon: const Icon(Icons.person_remove_outlined),
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.scope.kind ==
+                                    SharedScopeKind.organization &&
+                                widget.scope.accessPolicyVersion >= 2 &&
+                                member.accountId.isNotEmpty)
+                              IconButton(
+                                key: ValueKey(
+                                  'organization-leader-${member.accountId}',
+                                ),
+                                tooltip: member.organizationLeader
+                                    ? l.organizationLeaderRemove
+                                    : l.organizationLeaderGrant,
+                                onPressed: _busy ? null : () => _leader(member),
+                                icon: Icon(
+                                  member.organizationLeader
+                                      ? Icons.manage_accounts
+                                      : Icons.manage_accounts_outlined,
+                                ),
+                              ),
+                            IconButton(
+                              tooltip: l.sharingRemoveMember,
+                              onPressed: _busy ? null : () => _remove(member),
+                              icon: const Icon(Icons.person_remove_outlined),
+                            ),
+                          ],
                         )
                       : null,
                 ),

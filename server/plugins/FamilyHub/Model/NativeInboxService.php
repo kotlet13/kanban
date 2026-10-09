@@ -36,7 +36,7 @@ class NativeInboxService extends NativeDatabase
                 $target = ['scopeId' => $row['scope_id'], 'type' => $row['target_type'], 'id' => $row['target_id']];
                 $record = $row['target_type'] === 'membership' ? null : $this->one('SELECT * FROM '.($finance ? 'familyhub_finance_records' : 'familyhub_records').' WHERE scope_id=? AND id=?', [$row['scope_id'], $row['target_id']]);
                 $clientVersion=$params[$finance ? 'financeContractVersion' : 'recordContractVersion'] ?? ($finance ? 1 : 2);
-                if (!is_int($clientVersion) || $clientVersion<1 || $clientVersion>($finance ? 2 : 3)) { throw new NativeError('validation_error'); }
+                if (!is_int($clientVersion) || $clientVersion<1 || $clientVersion>($finance ? 2 : 4)) { throw new NativeError('validation_error'); }
                 if ($record && (int)($record['contract_version']??1)>$clientVersion) { throw new NativeError($finance ? 'unsupported_version' : 'client_upgrade_required',409); }
                 $recordWire=$record ? (new NativeRecordPolicy($this->container))->wire($record,$finance ? 2 : $clientVersion) : null;
                 if ($finance && $recordWire) { $recordWire['contractVersion']=(int)($record['contract_version']??1); }

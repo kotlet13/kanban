@@ -82,7 +82,10 @@ class GardenUiController extends GardenController {
   @override
   Future<GardenSnapshot> build() async => GardenSnapshot(gardens: [garden]);
   @override
-  Future<void> updateGarden(Garden value) async {
+  Future<void> updateGarden(
+    Garden value, {
+    String? expectedWorkspaceKey,
+  }) async {
     saved = value;
     garden = value.copyWith(revision: value.revision + 1);
     state = AsyncData(GardenSnapshot(gardens: [garden]));

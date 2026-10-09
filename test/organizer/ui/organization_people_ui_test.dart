@@ -7,13 +7,16 @@ import 'package:kanban/organizer/presentation/shared/collaboration_actions.dart'
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
-import 'package:kanban/organizer/presentation/shared/space_picker.dart';
 import 'package:kanban/organizer/presentation/shared/organization_workspace.dart';
 import 'package:kanban/organizer/presentation/people/people_page.dart';
 import 'onboarding_ui_test.dart' show pumpPanel;
 import 'sharing_ui_fixture.dart';
 import 'organizer_ui_test.dart'
-    show MemoryOrganizerStorage, pumpOrganizer, mobileTab;
+    show
+        MemoryOrganizerStorage,
+        pumpOrganizer,
+        mobileTab,
+        HouseholdFixtureController;
 
 const orgId = '80000000-0000-4000-8000-000000000001';
 const org = SharedScope(
@@ -99,7 +102,12 @@ class CostUiController extends SharingUiController {
 void main() {
   for (final width in [390.0, 1440.0]) {
     testWidgets('People menu appears once at $width', (tester) async {
-      await pumpOrganizer(tester, MemoryOrganizerStorage(), width: width);
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        width: width,
+        localSpacesController: HouseholdFixtureController(),
+      );
       if (width < 600) {
         await mobileTab(tester, 'Več');
       }
@@ -109,47 +117,6 @@ void main() {
   }
 
   for (final width in [390.0, 1440.0]) {
-    testWidgets(
-      'organization lost reply Save retries same identity/body at $width',
-      (tester) async {
-        final controller = CreationController();
-        String? selected;
-        await pumpPanel(
-          tester,
-          controller,
-          OrganizerSpacePicker(
-            onSelected: (id) => selected = id,
-            onConnect: () {},
-          ),
-          width: width,
-        );
-        await tester.tap(find.byType(DropdownButton<String>).first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('+ Nov prostor').last);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Organizacija').last);
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.byType(TextField).first,
-          'New organization',
-        );
-        await tester.tap(find.byKey(const ValueKey('sharing-submit')));
-        await tester.pumpAndSettle();
-        expect(controller.requests.length, 1);
-        expect(selected, isNull);
-        await tester.tap(find.byKey(const ValueKey('sharing-submit')));
-        await tester.pumpAndSettle();
-        expect(controller.requests.length, 2);
-        expect(controller.requests[0], controller.requests[1]);
-        expect(controller.created.length, 1);
-        expect(selected, controller.requests.first['id']);
-        expect(tester.takeException(), isNull);
-      },
-    );
     testWidgets(
       'organization project lost reply preserves parent and request at $width',
       (tester) async {
@@ -296,14 +263,13 @@ void main() {
       await pumpPanel(
         tester,
         controller,
-        OrganizerSpacePicker(
-          onSelected: (id) => selected = id,
-          onConnect: () {},
+        OrganizationWorkspace(
+          organization: org,
+          onProject: (id) => selected = id,
+          onMembers: (_) {},
         ),
       );
-      await tester.tap(find.byType(DropdownButton<String>).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('+ Nov prostor').last);
+      await tester.tap(find.text('Dodaj projekt v organizacijo'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField).first,

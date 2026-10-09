@@ -393,29 +393,28 @@ void main() {
       expect(io.saves, 0);
     },
   );
-  testWidgets(
-    'same-device invalid session clears prepared encrypted bytes from the wizard',
-    (tester) async {
-      final backup = FakeBackupController(),
-          io = FakeBackupIo(),
-          controller = SharingUiController();
-      await pumpBackup(
-        tester,
-        backup,
-        io,
-        const BackupWizard(restore: false),
-        collaboration: controller,
-      );
-      await password(tester);
-      await click(tester, 'Pripravi šifrirano kopijo');
-      controller.replace(
-        CollaborationState(session: sharingSession(), sessionInvalid: true),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Shrani datoteko kopije'), findsNothing);
-      expect(io.saves, 0);
-    },
-  );
+  testWidgets('session expiry retains prepared local encrypted backup bytes', (
+    tester,
+  ) async {
+    final backup = FakeBackupController(),
+        io = FakeBackupIo(),
+        controller = SharingUiController();
+    await pumpBackup(
+      tester,
+      backup,
+      io,
+      const BackupWizard(restore: false),
+      collaboration: controller,
+    );
+    await password(tester);
+    await click(tester, 'Pripravi šifrirano kopijo');
+    controller.replace(
+      CollaborationState(session: sharingSession(), sessionInvalid: true),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Shrani datoteko kopije'), findsOneWidget);
+    expect(io.saves, 0);
+  });
   testWidgets(
     'unavailable secure account storage does not block a personal encrypted export',
     (tester) async {

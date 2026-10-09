@@ -55,6 +55,20 @@ extension CollaborationPrivateActions on CollaborationRepository {
     return rows.isNotEmpty && rows.single['paused'] == 0;
   }
 
+  Future<OrganizerSnapshot> _defaultPersonalPublicationSnapshot(
+    SqliteOrganizerStorage storage,
+  ) async {
+    final generation = await database.rows(
+      "SELECT value FROM local_meta WHERE name='organizer_generation'",
+    );
+    return (await storage.localSnapshot()).copyWith(
+      revision: generation.isEmpty
+          ? 0
+          : int.parse(generation.single['value'] as String),
+      workspaceKey: 'local',
+    );
+  }
+
   Future<PrivateSyncPreview> previewPrivateSync() async {
     final profile = _requireSession().profile;
     final storage = SqliteOrganizerStorage(
@@ -62,7 +76,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
       legacyFactory: HiveOrganizerStorage.open,
     );
     await storage.initialize();
-    final snapshot = await storage.read();
+    final snapshot = await _defaultPersonalPublicationSnapshot(storage);
     final local = await storage.localSnapshot();
     final issues = <String>[];
     final fakeBinding = {
@@ -146,7 +160,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
         legacyFactory: HiveOrganizerStorage.open,
       );
       await storage.initialize();
-      final source = await storage.read();
+      final source = await _defaultPersonalPublicationSnapshot(storage);
       if (source.revision != expectedRevision) {
         throw const OrganizerConflictException(
           'Personal workspace changed; review again',
@@ -181,7 +195,11 @@ extension CollaborationPrivateActions on CollaborationRepository {
         final pulled = await _callSession(
           session,
           epoch,
-          _recordContractVersion >= 3 ? 'sync3.pull' : 'sync2.pull',
+          _recordContractVersion >= 4
+              ? 'sync4.pull'
+              : _recordContractVersion >= 3
+              ? 'sync3.pull'
+              : 'sync2.pull',
           {'scopeId': scope.id, 'cursor': cursor, 'limit': 100},
         );
         more = readBool(pulled, 'hasMore');
@@ -214,7 +232,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
       await database.transaction(() async {
         _checkEpoch(epoch);
         await _validLease(p);
-        final current = await storage.read();
+        final current = await _defaultPersonalPublicationSnapshot(storage);
         if (current.revision != expectedRevision ||
             current.workspaceKey != source.workspaceKey) {
           throw const OrganizerConflictException(

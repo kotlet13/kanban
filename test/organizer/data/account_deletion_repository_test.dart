@@ -127,6 +127,107 @@ void main() {
   });
   tearDown(() => repo.close());
 
+  test(
+    'confirmed deletion purges linked private intents and keeps historical shared cash facts',
+    () async {
+      final p = repo.state.session!.partition;
+      final data = {
+        'eventId': 'payment',
+        'sourcePartition': p,
+        'reimbursements': [],
+      };
+      for (final key in ['remote:$p:source', 'local:other']) {
+        await repo.database.execute(
+          'INSERT INTO linked_payment_events VALUES(?,?,?)',
+          [
+            key,
+            'payment',
+            jsonEncode(key == 'local:other' ? {'unrelated': true} : data),
+          ],
+        );
+      }
+      for (final key in [
+        'remote:$p:private',
+        'local:private',
+        'local:household',
+      ]) {
+        await repo.database.execute(
+          'INSERT INTO linked_payment_projections VALUES(?,?,?)',
+          [
+            key,
+            'payment',
+            jsonEncode({
+              ...data,
+              'state': 'complete',
+              if (key != 'local:household') 'privateAccountId': 'card',
+            }),
+          ],
+        );
+        await repo.database.execute('INSERT INTO local_meta VALUES(?,?)', [
+          'linked_payment_complete:$key',
+          '{}',
+        ]);
+      }
+      await repo.database.execute(
+        'INSERT INTO linked_payment_cash VALUES(?,?,?)',
+        ['local:private', 'payment', '{}'],
+      );
+      await repo.database.execute(
+        "INSERT INTO linked_payment_intents VALUES(?,?,'pending')",
+        [
+          'remote-request',
+          jsonEncode({'partition': p}),
+        ],
+      );
+      await repo.database.execute(
+        "INSERT INTO linked_payment_intents VALUES(?,?,'waiting_source_publication')",
+        [
+          'local-request',
+          jsonEncode({
+            'personal': {'partition': p},
+          }),
+        ],
+      );
+      await repo.database.execute(
+        "INSERT INTO linked_payment_intents VALUES(?,?,'local_only')",
+        ['unrelated', '{}'],
+      );
+      final review = await repo.previewAccountDeletion();
+      await repo.confirmAccountDeletion(
+        previewHash: review['previewHash'] as String,
+        password: 'step-up',
+        review: review,
+      );
+      expect(
+        (await repo.database.rows(
+          'SELECT space_key FROM linked_payment_events',
+        )).single['space_key'],
+        'local:other',
+      );
+      final receipt = (await repo.database.rows(
+        'SELECT * FROM linked_payment_projections',
+      )).single;
+      expect(receipt['space_key'], 'local:household');
+      expect(jsonDecode(receipt['data'] as String)['state'], 'sourceRemoved');
+      expect(
+        await repo.database.rows('SELECT * FROM linked_payment_cash'),
+        isEmpty,
+      );
+      expect(
+        (await repo.database.rows(
+          'SELECT id FROM linked_payment_intents',
+        )).single['id'],
+        'unrelated',
+      );
+      expect(
+        await repo.database.rows(
+          "SELECT * FROM local_meta WHERE name LIKE 'linked_payment_complete:%'",
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   test('unsupported and offline previews do not submit deletion', () async {
     server.supported = false;
     await expectLater(

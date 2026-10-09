@@ -1,6 +1,14 @@
 # FamilyHub for Jivie
 
-FamilyHub **0.7.0 / schema 11** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+FamilyHub **0.9.0 / schema 13** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+
+## Spaces policy and gardens
+
+Version 0.8.0 adds explicit organization leadership, reviewed opt-in migration to project financial read membership, stable local-space publication and household garden synchronization. Existing organizations keep policy 1 until an owner reviews and applies the current access preview. Policy-2 members see all finances of their accepted projects; leaders see all existing/future organization projects. Editing requires separate direct roles/grants. Leadership is not a delivery subscription. `sync4` preserves format-2 household garden documents with bounded validation, revision conflicts and tombstones. Source updates and test results are separate from any hosted deployment. The exact versioned contract is in [docs/spaces-api-contract.md](docs/spaces-api-contract.md).
+
+## Linked personal payments
+
+Version 0.9.0 adds one canonical organization expense plus explicitly selected private/household cash and receivable projections. Reimbursement legs require source financial write authority, preserve request identities across retries, and never become duplicate expense/income rows. Private card identifiers remain private. Older clients must upgrade before reading financial scopes with linked payments. Complete snapshots are bounded to 512 KiB; larger histories return an explicit incomplete error. Account deletion policy 3 requires a fresh review of retained shared financial facts and private projection removal. See [docs/linked-payments-api-contract.md](docs/linked-payments-api-contract.md) for methods, limits and local-first recovery boundaries.
 
 ## License and requirements
 

@@ -7,6 +7,7 @@ import '../../domain/organizer_projections.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
 import '../../state/reminder_snooze_provider.dart';
+import '../../state/notification_local_spaces_provider.dart';
 import '../shared/sharing_errors.dart';
 
 Future<DateTime?> chooseReminderSnooze(
@@ -87,7 +88,6 @@ Future<void> snoozeReminder(
   final personal = ref.read(organizerProvider).valueOrNull;
   final shared = ref.read(collaborationProvider).valueOrNull;
   if (personal == null || shared == null) return;
-  final workspace = personal.workspaceKey;
   final partition = shared.session?.partition;
   final deviceId = shared.session?.deviceId;
   ReminderPlan? currentPlan() {
@@ -95,7 +95,6 @@ Future<void> snoozeReminder(
     final currentShared = ref.read(collaborationProvider).valueOrNull;
     if (currentPersonal == null ||
         currentShared == null ||
-        currentPersonal.workspaceKey != workspace ||
         currentShared.session?.partition != partition ||
         currentShared.session?.deviceId != deviceId) {
       return null;
@@ -103,6 +102,10 @@ Future<void> snoozeReminder(
     return desiredReminderPlans(
       personal: currentPersonal,
       shared: currentShared,
+      localSnapshots: ref
+          .read(notificationLocalSnapshotsProvider)
+          .asData
+          ?.value,
     ).where((p) => p.stableKey == selected.stableKey).firstOrNull;
   }
 
@@ -135,14 +138,9 @@ Future<void> snoozeReminder(
           .read(collaborationProvider.notifier)
           .openNotificationTarget(original.target);
       if (!context.mounted) return;
-      if (result.status == NotificationOpenStatus.offline ||
-          result.status == NotificationOpenStatus.requiresConnection) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.reminderSnoozeNeedsConnection)),
-        );
-        return;
-      }
-      if (result.status != NotificationOpenStatus.available) {
+      if (result.status != NotificationOpenStatus.available &&
+          result.status != NotificationOpenStatus.offline &&
+          result.status != NotificationOpenStatus.requiresConnection) {
         throw const CollaborationException('permission_revoked');
       }
     }

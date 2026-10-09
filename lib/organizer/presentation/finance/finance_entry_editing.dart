@@ -17,7 +17,7 @@ Future<void> editRecordedPersonalOccurrence(
   final guard = PersonalWorkspaceGuard(context, ref, snapshot.workspaceKey);
   final state = ref.read(collaborationProvider).valueOrNull;
   final private =
-      snapshot.workspaceKey != 'local' &&
+      snapshot.workspaceKey.startsWith('private:') &&
       state?.privateRecordIds.values.contains(entry.id) == true;
   final financial = private
       ? FinanceAccessGuard(
@@ -54,7 +54,7 @@ bool canConfirmPersonalFinanceEntry(
   }
   final state = ref.read(collaborationProvider).valueOrNull;
   final private =
-      snapshot.workspaceKey != 'local' &&
+      snapshot.workspaceKey.startsWith('private:') &&
       state?.privateRecordIds.values.contains(entry.id) == true;
   return !private ||
       state?.financeContractVersion == 2 &&
@@ -75,7 +75,7 @@ Future<void> confirmPersonalFinanceEntry(
   final guard = PersonalWorkspaceGuard(context, ref, snapshot.workspaceKey);
   final state = ref.read(collaborationProvider).valueOrNull;
   final private =
-      snapshot.workspaceKey != 'local' &&
+      snapshot.workspaceKey.startsWith('private:') &&
       state?.privateRecordIds.values.contains(entry.id) == true;
   final financial = private
       ? FinanceAccessGuard(

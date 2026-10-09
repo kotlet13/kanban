@@ -10,7 +10,6 @@ import 'sharing_auth.dart';
 import 'sharing_conflicts.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
-import 'sharing_members.dart';
 import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
 import 'sharing_status.dart';
@@ -18,6 +17,7 @@ import 'sharing_workspace.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 import '../onboarding/getting_started.dart';
 import '../onboarding/private_sync_panel.dart';
+import '../onboarding/local_space_connection_panel.dart';
 import '../onboarding/account_email_card.dart';
 import '../onboarding/account_deletion_panel.dart';
 
@@ -31,7 +31,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
     this.selectedProjectId,
     this.onListSelected,
     this.onProjectSelected,
-    this.showMembers = false,
+    this.authActive,
+    this.onAuthChanged,
+    this.onViewChanged,
+    this.onSpaceSettings,
     this.initialInvitation,
     this.onInvitationHandled,
     this.setupIntent,
@@ -46,7 +49,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
   final String? selectedProjectId;
   final ValueChanged<String?>? onListSelected;
   final ValueChanged<String?>? onProjectSelected;
-  final bool showMembers;
+  final bool? authActive;
+  final ValueChanged<bool>? onAuthChanged;
+  final ValueChanged<SharingView>? onViewChanged;
+  final ValueChanged<String?>? onSpaceSettings;
   @override
   ConsumerState<SharingAccountPage> createState() => _SharingAccountPageState();
 }
@@ -54,8 +60,15 @@ class SharingAccountPage extends ConsumerStatefulWidget {
 class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   bool _authActive = false;
   bool _busy = false;
-  late SharingView _view = widget.initialView;
-  late bool _members = widget.showMembers;
+  bool get _currentAuth => widget.authActive ?? _authActive;
+
+  void _selectAuth(bool active) {
+    if (widget.onAuthChanged != null) {
+      widget.onAuthChanged!(active);
+    } else {
+      setState(() => _authActive = active);
+    }
+  }
 
   Future<void> _run(Future<void> Function() action) async {
     if (_busy) return;
@@ -134,10 +147,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
       final remotelyRevoked = await guard.controller.signOut();
       if (mounted) {
         widget.onScopeSelected(null);
-        setState(() {
-          _authActive = false;
-          _members = false;
-        });
+        _selectAuth(false);
         if (!remotelyRevoked) {
           ScaffoldMessenger.of(
             context,
@@ -170,15 +180,15 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
           data: (state) {
             final session = state.session;
             if (session == null ||
-                _authActive ||
+                _currentAuth ||
                 widget.initialInvitation != null) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SharingAuthPanel(
-                    onStart: () => setState(() => _authActive = true),
+                    onStart: () => _selectAuth(true),
                     onConnected: () {
-                      setState(() => _authActive = false);
+                      _selectAuth(false);
                       widget.onInvitationHandled?.call();
                     },
                     initialServer:
@@ -190,7 +200,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                   ),
                   if (session != null)
                     TextButton(
-                      onPressed: () => setState(() => _authActive = false),
+                      onPressed: () => _selectAuth(false),
                       child: Text(l.sharingAccount),
                     ),
                 ],
@@ -257,8 +267,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                                 state.lastError?.code == 'device_revoked' ||
                                 !session.expiresAt.isAfter(DateTime.now()))
                               TextButton(
-                                onPressed: () =>
-                                    setState(() => _authActive = true),
+                                onPressed: () => _selectAuth(true),
                                 child: Text(l.sharingLoginAction),
                               ),
                           ],
@@ -267,10 +276,16 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     ),
                   ),
                 ),
+                if (widget.onSpaceSettings != null)
+                  ListTile(
+                    leading: const Icon(Icons.settings_outlined),
+                    title: Text(l.spaceSettingsTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => widget.onSpaceSettings!(selected?.id),
+                  ),
                 const SizedBox(height: 20),
-                PrivateSyncPanel(
-                  onConnect: () => setState(() => _authActive = true),
-                ),
+                PrivateSyncPanel(onConnect: () => _selectAuth(true)),
+                const LocalSpaceConnectionPanel(),
                 const SizedBox(height: 20),
                 AccountEmailCard(
                   key: ValueKey(
@@ -300,129 +315,14 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     child: Text(sharingErrorMessage(context, backgroundError)),
                   ),
                 const SizedBox(height: 20),
-                if (selected == null) ...[
-                  SharingStatus(
-                    state: state,
-                    onSync: () => _run(
-                      () => ref.read(collaborationProvider.notifier).syncNow(),
-                    ),
-                    onConflicts: () => showSharingConflicts(context, ref),
-                    onExport: () => exportSharingDrafts(context, ref),
+                SharingStatus(
+                  state: state,
+                  onSync: () => _run(
+                    () => ref.read(collaborationProvider.notifier).syncNow(),
                   ),
-                  const SizedBox(height: 24),
-                  OrganizerHeading(
-                    title: l.sharingSpaces,
-                    subtitle: l.sharingScopeDescription,
-                    action: FilledButton.icon(
-                      onPressed: _busy ? null : _createScope,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l.sharingCreateSpace),
-                    ),
-                  ),
-                  if (!state.scopes.any(
-                    (scope) => scope.kind != SharedScopeKind.personal,
-                  ))
-                    Text(l.sharingNoSpaces),
-                  for (final scope in state.scopes.where(
-                    (scope) => scope.kind != SharedScopeKind.personal,
-                  ))
-                    Card(
-                      child: ListTile(
-                        leading: Icon(
-                          scope.kind == SharedScopeKind.household
-                              ? Icons.home_outlined
-                              : Icons.folder_outlined,
-                        ),
-                        title: Text(scope.name),
-                        subtitle: Text(
-                          '${sharingScopeKindLabel(context, scope.kind)} · ${scope.revoked ? l.sharingRevoked : sharingRoleLabel(context, scope.role)}',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => widget.onScopeSelected(scope.id),
-                      ),
-                    ),
-                ] else ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => widget.onScopeSelected(null),
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: Text(l.sharingSpaces),
-                    ),
-                  ),
-                  Text(
-                    selected.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Text(
-                    '${sharingScopeKindLabel(context, selected.kind)} · ${sharingRoleLabel(context, selected.role)}',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<SharingView>(
-                          key: ValueKey('shared-view-$_view-$_members'),
-                          initialValue: _view,
-                          isExpanded: true,
-                          decoration: InputDecoration(labelText: l.sharingView),
-                          items: [
-                            for (final view in SharingView.values)
-                              DropdownMenuItem(
-                                value: view,
-                                child: Text(switch (view) {
-                                  SharingView.shopping => l.organizerShopping,
-                                  SharingView.projects => l.organizerProjects,
-                                  SharingView.tasks => l.organizerTasks,
-                                  SharingView.agenda => l.planningSharedToday,
-                                  SharingView.timeline => l.planningTimeline,
-                                  SharingView.finances => l.organizerFinances,
-                                  SharingView.people => l.peopleTitle,
-                                }, overflow: TextOverflow.ellipsis),
-                              ),
-                          ],
-                          onChanged: (view) {
-                            if (view != null) {
-                              setState(() {
-                                _view = view;
-                                _members = false;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      if (!selected.revoked) ...[
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          selected: _members,
-                          label: Text(l.sharingMembers),
-                          onSelected: (_) => setState(() => _members = true),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  if (_members && !selected.revoked)
-                    SharingMembersPage(
-                      key: ValueKey(
-                        'members-${session.partition}-${session.deviceId}-${selected.id}',
-                      ),
-                      scope: selected,
-                      session: session,
-                    )
-                  else
-                    SharingWorkspace(
-                      view: _view,
-                      showScopePicker: false,
-                      selectedScopeId: selected.id,
-                      onScopeSelected: (id) => widget.onScopeSelected(id),
-                      onConnect: () => setState(() => _authActive = true),
-                      selectedListId: widget.selectedListId,
-                      selectedProjectId: widget.selectedProjectId,
-                      onListSelected: widget.onListSelected,
-                      onProjectSelected: widget.onProjectSelected,
-                    ),
-                ],
+                  onConflicts: () => showSharingConflicts(context, ref),
+                  onExport: () => exportSharingDrafts(context, ref),
+                ),
               ],
             );
           },

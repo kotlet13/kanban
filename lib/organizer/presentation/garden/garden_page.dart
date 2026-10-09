@@ -6,6 +6,9 @@ import '../../domain/garden_models.dart';
 import '../../state/garden_provider.dart';
 import '../organizer_widgets.dart';
 import 'garden_editor.dart';
+import '../../state/local_spaces_provider.dart';
+import '../../state/collaboration_provider.dart';
+import '../shared/household_transfer.dart';
 
 class GardenPage extends ConsumerWidget {
   const GardenPage({super.key});
@@ -19,6 +22,7 @@ class GardenPage extends ConsumerWidget {
     WidgetRef ref,
     Garden garden,
   ) async {
+    final workspaceKey = ref.read(gardenProvider).valueOrNull?.workspaceKey;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -39,7 +43,9 @@ class GardenPage extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await ref.read(gardenProvider.notifier).deleteGarden(garden);
+      await ref
+          .read(gardenProvider.notifier)
+          .deleteGarden(garden, expectedWorkspaceKey: workspaceKey);
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(
@@ -52,11 +58,28 @@ class GardenPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    final shared = ref.watch(collaborationProvider).valueOrNull;
+    final remoteHousehold =
+        shared?.scopes.any(
+          (scope) =>
+              scope.id == shared.selectedSpaceId &&
+              scope.kind == SharedScopeKind.household &&
+              !scope.revoked,
+        ) ==
+        true;
+    final local = ref.watch(localSpacesProvider).valueOrNull?.selectedSpace;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         OrganizerHeading(title: l.gardenTitle, subtitle: l.gardenIntro),
-        Text(l.gardenLocalOnly, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          remoteHousehold
+              ? l.sharingShared
+              : local?.kind == LocalSpaceKind.household
+              ? l.localSpaceState
+              : l.legacyLocalDescription,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 20),
         ref
             .watch(gardenProvider)
@@ -114,10 +137,37 @@ class GardenPage extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               onTap: () => _open(context, garden: garden),
-                              trailing: IconButton(
-                                tooltip: l.delete,
-                                onPressed: () => _delete(context, ref, garden),
-                                icon: const Icon(Icons.delete_outline),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!remoteHousehold &&
+                                      local?.kind != LocalSpaceKind.household)
+                                    IconButton(
+                                      key: ValueKey(
+                                        'garden-assign-${garden.id}',
+                                      ),
+                                      tooltip: l.localSpaceMoveToHousehold,
+                                      icon: const Icon(Icons.home_outlined),
+                                      onPressed: () => transferToLocalHousehold(
+                                        context,
+                                        ref,
+                                        name: garden.name,
+                                        transfer: (id) => ref
+                                            .read(localSpacesProvider.notifier)
+                                            .assignGardenToHousehold(
+                                              garden.id,
+                                              id,
+                                              expectedRevision: garden.revision,
+                                            ),
+                                      ),
+                                    ),
+                                  IconButton(
+                                    tooltip: l.delete,
+                                    onPressed: () =>
+                                        _delete(context, ref, garden),
+                                    icon: const Icon(Icons.delete_outline),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

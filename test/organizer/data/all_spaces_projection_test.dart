@@ -205,7 +205,11 @@ void main() {
       expect(
         projectAllSpaces(
           personal: personal,
-          shared: CollaborationState(session: account, sessionInvalid: true),
+          shared: CollaborationState(
+            session: account,
+            sessionInvalid: true,
+            localAccessAllowed: false,
+          ),
         ).sources,
         isEmpty,
       );

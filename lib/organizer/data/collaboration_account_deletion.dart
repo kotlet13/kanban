@@ -16,12 +16,11 @@ extension CollaborationAccountDeletion on CollaborationRepository {
     if (!_accountDeletionSupported) {
       throw const CollaborationException('deletion_unavailable');
     }
-    final result = await _callSession(
-      session,
-      epoch,
-      'account.deletion.preview',
-      {if (_accountDeletionPolicyVersion >= 2) 'policyVersion': 2},
-    );
+    final result =
+        await _callSession(session, epoch, 'account.deletion.preview', {
+          if (_accountDeletionPolicyVersion >= 2)
+            'policyVersion': _accountDeletionPolicyVersion,
+        });
     return decodeAccountDeletionPreview(result, session.profile);
   }
 
@@ -87,6 +86,8 @@ extension CollaborationAccountDeletion on CollaborationRepository {
           resolutions: resolutions,
           ownedScopeDeletions: ownedScopeDeletions,
           review: review,
+          policyVersion:
+              review['policyVersion'] as int? ?? _accountDeletionPolicyVersion,
           receiptToken: List.generate(
             32,
             (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
@@ -118,7 +119,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
         'password': password,
         if (otp != null) 'otp': otp,
         'confirmation': 'DELETE',
-        if (_accountDeletionPolicyVersion >= 2) 'policyVersion': 2,
+        if (request.policyVersion >= 2) 'policyVersion': request.policyVersion,
       });
     } on CollaborationException catch (e) {
       if (previous == null &&
@@ -310,6 +311,79 @@ extension CollaborationAccountDeletion on CollaborationRepository {
         'DELETE FROM restored_backups WHERE source_partition=?',
         [p],
       );
+      // Payment sidecars can also live beside an explicitly selected local
+      // target. Remove private links and pending requests for this identity;
+      // retain only an already shared household receipt as historical facts.
+      for (final table in [
+        'linked_payment_events',
+        'linked_payment_projections',
+        'linked_payment_cash',
+      ]) {
+        final idColumn = table == 'linked_payment_cash'
+            ? 'movement_id'
+            : 'event_id';
+        for (final row in await database.rows('SELECT * FROM $table')) {
+          final key = row['space_key'] as String;
+          final data = CollaborationRepository._map(row['data']);
+          final remote = key.startsWith('remote:$p:');
+          final fromDeletedSource = data['sourcePartition'] == p;
+          if (remote ||
+              (fromDeletedSource && table == 'linked_payment_events')) {
+            await database.execute(
+              'DELETE FROM $table WHERE space_key=? AND $idColumn=?',
+              [key, row[idColumn]],
+            );
+          } else if (fromDeletedSource &&
+              table == 'linked_payment_projections') {
+            await database.execute('DELETE FROM local_meta WHERE name=?', [
+              'linked_payment_complete:$key',
+            ]);
+            if (data['privateAccountId'] != null) {
+              final movementIds = [
+                data['eventId'],
+                for (final leg in data['reimbursements'] as List)
+                  (leg as Map)['legId'],
+              ];
+              for (final id in movementIds) {
+                await database.execute(
+                  'DELETE FROM linked_payment_cash WHERE space_key=? AND movement_id=?',
+                  [key, id],
+                );
+              }
+              await database.execute(
+                'DELETE FROM linked_payment_projections WHERE space_key=? AND event_id=?',
+                [key, row['event_id']],
+              );
+            } else {
+              data['state'] = 'sourceRemoved';
+              await database.execute(
+                'UPDATE linked_payment_projections SET data=? WHERE space_key=? AND event_id=?',
+                [jsonEncode(data), key, row['event_id']],
+              );
+            }
+          }
+        }
+      }
+      for (final row in await database.rows(
+        'SELECT * FROM linked_payment_intents',
+      )) {
+        final data = CollaborationRepository._map(row['data']);
+        final source = data['source'];
+        final sourceSpace = source is Map ? source['space'] : null;
+        final references = [
+          sourceSpace,
+          data['personal'],
+          data['household'],
+          data['organizationAccountScope'],
+        ];
+        if (data['partition'] == p ||
+            references.any((ref) => ref is Map && ref['partition'] == p)) {
+          await database.execute(
+            'DELETE FROM linked_payment_intents WHERE id=?',
+            [row['id']],
+          );
+        }
+      }
       await database.execute('DELETE FROM accounts WHERE partition=?', [p]);
       // Exact comparison, without LIKE wildcard interpretation of server URLs.
       for (final row in await database.rows('SELECT name FROM local_meta')) {

@@ -3,7 +3,7 @@ part of 'collaboration_repository.dart';
 /// Atomic local record edits, dependency ordering and explicit personal copies.
 extension CollaborationRecordActions on CollaborationRepository {
   Future<void> _writable(String partition, String scopeId) async {
-    if (_sessionInvalidReason != null) {
+    if (_sessionInvalidReason == 'device_revoked') {
       throw CollaborationException(_sessionInvalidReason!);
     }
     final rows = await database.rows(
@@ -70,6 +70,11 @@ extension CollaborationRecordActions on CollaborationRepository {
     final scoped = SharedScope.fromJson(
       CollaborationRepository._map(scopeRow['data']),
     );
+    if (type == SharedRecordType.garden &&
+        (scoped.kind != SharedScopeKind.household ||
+            _recordContractVersion < 4)) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     final root =
         scoped.projectRootId ??
         (scoped.organizationId != null ? scoped.id : null);
@@ -251,7 +256,9 @@ extension CollaborationRecordActions on CollaborationRepository {
         scope,
         id,
         jsonEncode(request),
-        _recordContractVersion,
+        type == SharedRecordType.garden
+            ? 4
+            : (_recordContractVersion > 3 ? 3 : _recordContractVersion),
       ],
     );
   }

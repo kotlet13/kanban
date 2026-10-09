@@ -16,7 +16,7 @@ Za izbirno sinhronizacijo in sodelovanje povežete svoj združljivi strežnik Ka
 
 Lokalni opomniki uporabljajo sistem naprave. Oddaljeni kanal Firebase Cloud Messaging oziroma APNs še ni nastavljen za javno izdajo; pri samostojnem gostovanju ni samodejno na voljo. Osnovna uporaba ne zahteva tega kanala. Morebitna strežniška e-pošta zahteva ločeno nastavitev upravljavca in lahko uporablja preverjeni e-poštni naslov za varnostne kode ali omogočena obvestila.
 
-AI je izbirna napredna možnost v starejših Kanboard poteh. Če jo posebej nastavite in pošljete vsebino, se sporočilo ter izrecno dovoljeni projektni kontekst pošljeta k OpenAI z vašim API ključem. Lokalna zgodovina ostane v profilu. Osebni organizator deluje brez AI.
+AI je izbirna napredna možnost v starejših Kanboard poteh. Če jo posebej nastavite in pošljete sporočilo, projektni pogovor k OpenAI z vašim API ključem pošlje sporočilo, zgodovino pogovora in samodejno dodani projektni kontekst. Pregled 9. oktobra ni potrdil ločene privolitve za ta kontekst; to vrzel uredimo pred javno oddajo. Lokalna zgodovina ostane v profilu. Osebni organizator deluje brez AI.
 
 Prenosno kopijo `.vsakdan` ustvarite z geslom in shranite na izbrano lokacijo. Je šifrirana, ne vsebuje prijavnih sej ali priponk in ni popolna kopija strežnika. Stari JSON izvoz je nešifriran. Sami izberete mesto shranjevanja in upravljate kopije, ki ste jih izvozili.
 

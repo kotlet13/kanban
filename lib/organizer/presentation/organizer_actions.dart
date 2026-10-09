@@ -108,7 +108,11 @@ class OrganizerActions implements OrganizerCollectionActions {
 
   @override
   Future<void> task({LocalTask? task, String? projectId}) async {
-    final localIds = await controller.deviceLocalRecordIds();
+    // The loaded local projection already owns every record. Querying ownership
+    // here would wait behind unrelated queued writes before showing the editor.
+    final localIds = snapshot.workspaceKey == 'local'
+        ? snapshot.recordIds
+        : await controller.deviceLocalRecordIds();
     if (!context.mounted || !_guard.isCurrent) return;
     final existingLocal = task == null ? null : localIds.contains(task.id);
     var source = task;

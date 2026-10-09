@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
@@ -189,6 +190,18 @@ class AllSpacesController extends SharingUiController {
   AllSpacesController({CollaborationState? initial})
     : super(initial: initial ?? sharedData());
   final opened = <NotificationTarget>[];
+  Future<NotificationOpenResult> Function(NotificationTarget)? visibleRefresh;
+  @override
+  Future<NotificationOpenResult> refreshVisibleTaskTarget(
+    NotificationTarget target,
+  ) {
+    if (visibleRefresh != null) {
+      opened.add(target);
+      return visibleRefresh!(target);
+    }
+    return openNotificationTarget(target);
+  }
+
   @override
   Future<void> selectAllSpaces() async => replace(
     initial.session == null
@@ -291,6 +304,199 @@ Future<void> loadQaFonts(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'mapped private task opens immediately and hides retained data during refresh',
+    (tester) async {
+      final gate = Completer<NotificationOpenResult>();
+      final personal = WorkspaceController(
+        localData().copyWith(
+          workspaceKey: 'private:${sharingSession().partition}',
+        ),
+      );
+      final shared = AllSpacesController(
+        initial: CollaborationState(
+          session: sharingSession(),
+          allSpacesSelected: true,
+          privateSync: const PrivateSyncState(scopeId: 'private'),
+          privateRecordIds: const {'remote-task': 'same-task'},
+          scopes: const [
+            SharedScope(
+              id: 'private',
+              name: 'Zasebno',
+              kind: SharedScopeKind.personal,
+              role: SharedRole.owner,
+            ),
+          ],
+        ),
+      )..visibleRefresh = (_) => gate.future;
+      await pumpAll(tester, shared: shared, personal: personal);
+      await tester.tap(
+        find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(find.text('Uredi opravilo'), findsOneWidget);
+      expect(shared.opened.single.scopeId, 'private');
+      expect(shared.opened.single.records.single.recordId, 'remote-task');
+      personal.state = const AsyncLoading<OrganizerSnapshot>().copyWithPrevious(
+        AsyncData(personal.snapshot),
+      );
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(
+            'QA osebno opravilo z daljšim slovenskim naslovom',
+          ),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      personal.state = AsyncData(personal.snapshot);
+      gate.complete(
+        NotificationOpenResult(
+          status: NotificationOpenStatus.available,
+          target: shared.opened.single,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Uredi opravilo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final delayed in [true, false]) {
+    testWidgets(
+      'visible task opens on first frame with ${delayed ? '3s' : 'never completing'} refresh',
+      (tester) async {
+        final gate = Completer<NotificationOpenResult>();
+        final shared = AllSpacesController()
+          ..visibleRefresh = (target) => delayed
+              ? Future.delayed(
+                  const Duration(seconds: 3),
+                  () => NotificationOpenResult(
+                    status: NotificationOpenStatus.available,
+                    target: target,
+                  ),
+                )
+              : gate.future;
+        await pumpAll(tester, shared: shared);
+        await tester.tap(find.text('QA skupno opravilo'));
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(find.text('Uredi opravilo'), findsOneWidget);
+        expect(shared.opened, hasLength(1));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('Zapri'));
+        await tester.pumpAndSettle();
+        if (delayed) {
+          await tester.pump(const Duration(seconds: 3));
+        } else {
+          gate.complete(
+            NotificationOpenResult(
+              status: NotificationOpenStatus.available,
+              target: shared.opened.single,
+            ),
+          );
+        }
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets('rapid task taps create one dialog and one refresh', (
+    tester,
+  ) async {
+    final gate = Completer<NotificationOpenResult>();
+    final shared = AllSpacesController()..visibleRefresh = (_) => gate.future;
+    await pumpAll(tester, shared: shared);
+    final tile = tester.widget<ListTile>(
+      find.ancestor(
+        of: find.text('QA skupno opravilo'),
+        matching: find.byType(ListTile),
+      ),
+    );
+    tile.onTap!();
+    tile.onTap!();
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(shared.opened, hasLength(1));
+    gate.complete(
+      NotificationOpenResult(
+        status: NotificationOpenStatus.offline,
+        target: shared.opened.single,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Brez povezave'), findsWidgets);
+  });
+  for (final denial in [
+    'revoked',
+    'blocked',
+    'archived',
+    'account',
+    'device',
+  ]) {
+    testWidgets(
+      'visible task closes on $denial and late response cannot reopen it',
+      (tester) async {
+        final gate = Completer<NotificationOpenResult>();
+        final shared = AllSpacesController()
+          ..visibleRefresh = (_) => gate.future;
+        await pumpAll(tester, shared: shared);
+        await tester.tap(find.text('QA skupno opravilo'));
+        await tester.pumpAndSettle();
+        if (denial == 'account') {
+          shared.switchAccount();
+        } else if (denial == 'device') {
+          shared.replace(
+            CollaborationState(
+              session: AccountSession.fromJson({
+                ...sharingSession().toJson(),
+                'deviceId': 'new-device',
+              }),
+              scopes: shared.initial.scopes,
+              data: shared.initial.data,
+            ),
+          );
+        } else {
+          shared.replace(
+            CollaborationState(
+              session: sharingSession(),
+              scopes: [
+                SharedScope(
+                  id: sharingScopeId,
+                  name: 'Dom',
+                  kind: SharedScopeKind.household,
+                  role: SharedRole.owner,
+                  revoked: denial == 'revoked',
+                  blocked: denial == 'blocked',
+                  archived: denial == 'archived',
+                ),
+              ],
+              data: shared.initial.data,
+            ),
+          );
+        }
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        gate.complete(
+          NotificationOpenResult(
+            status: NotificationOpenStatus.available,
+            target: shared.opened.single,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   for (final width in [320.0, 390.0, 1280.0]) {
     for (final dark in [false, true]) {
       testWidgets('all areas $width dark=$dark preserve source and fit', (
@@ -302,7 +508,7 @@ void main() {
           if (area == AllSpacesArea.today || area == AllSpacesArea.tasks) {
             expect(find.text('QA skupno opravilo'), findsOneWidget);
             expect(find.text('QA preveri izvajalca'), findsOneWidget);
-            expect(find.textContaining('Lokalno · osebno'), findsWidgets);
+            expect(find.textContaining('Osebno'), findsWidgets);
             expect(find.textContaining(secondScope.name), findsWidgets);
           }
         }
@@ -384,7 +590,7 @@ void main() {
         find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
       );
       await tester.pumpAndSettle();
-      expect(shared.opened.single.isPersonal, isTrue);
+      expect(shared.opened, isEmpty);
       expect(find.text('Uredi opravilo'), findsOneWidget);
       await tester.tap(find.text('Uredi opravilo'));
       await tester.pumpAndSettle();
@@ -575,7 +781,7 @@ void main() {
       expect(find.byType(AllSpacesPage), findsOneWidget);
       await tester.tap(picker);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Lokalno · osebno').last);
+      await tester.tap(find.text('Osebno').last);
       await tester.pumpAndSettle();
       expect(find.byType(AllSpacesPage), findsNothing);
       expect(tester.takeException(), isNull);

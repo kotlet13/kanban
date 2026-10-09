@@ -108,9 +108,7 @@ void main() {
     (tester) async {
       final store = MemoryOrganizerStorage();
       await pumpOrganizer(tester, store, width: 320);
-      await mobileTab(tester, 'Načrti');
-      await tester.tap(find.text('Projekti').first);
-      await tester.pumpAndSettle();
+      await mobileTab(tester, 'Projekti');
       await tester.tap(find.text('Nov projekt').first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Faze in mejniki'));

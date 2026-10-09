@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/collaboration_provider.dart';
+import '../state/local_spaces_provider.dart';
+import '../state/linked_payments_provider.dart';
+import 'finance/linked_payment_forms.dart';
+import 'finance/linked_payments_section.dart';
+import 'finance/payment_presentation.dart';
 
 import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
@@ -48,17 +53,50 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final shared = ref.watch(collaborationProvider).valueOrNull;
-    if (snapshot.workspaceKey != 'local' &&
+    if (snapshot.workspaceKey.startsWith('private:') &&
         (shared?.session == null ||
-            shared?.sessionInvalid == true ||
             snapshot.workspaceKey != 'private:${shared!.session!.partition}')) {
       return const SizedBox.shrink();
     }
     final privateScopeId = shared?.privateSync.scopeId;
+    final paymentSpace = PaymentSpaceRef(
+      snapshot.workspaceKey.startsWith('private:')
+          ? 'local'
+          : snapshot.workspaceKey,
+    );
+    final paymentsAsync = ref.watch(
+      linkedPaymentsProvider(paymentSpaceKey(paymentSpace)),
+    );
+    final payments = paymentsForPersonalSnapshot(
+      snapshot,
+      shared,
+      paymentsAsync.isLoading ? null : paymentsAsync.asData?.value,
+    );
+    final paymentRequired =
+        !snapshot.workspaceKey.startsWith('private:') ||
+        shared
+                ?.financePolicyForScope(privateScopeId ?? '')
+                .linkedPaymentsRequired ==
+            true;
+    final paymentCashAvailable =
+        !paymentRequired ||
+        payments?.fresh == true && payments?.complete == true;
+    final localIncomplete =
+        ref
+            .watch(localSpacesProvider)
+            .valueOrNull
+            ?.spaces
+            .where((space) => space.id == snapshot.workspaceKey)
+            .firstOrNull
+            ?.financeRecoveryIncomplete ==
+        true;
     final complete =
-        shared?.privateSync.enabled != true ||
-        privateScopeId == null ||
-        shared?.financeSnapshotComplete[privateScopeId] == true;
+        paymentCashAvailable &&
+        !localIncomplete &&
+        (!snapshot.workspaceKey.startsWith('private:') ||
+            shared?.privateSync.enabled != true ||
+            privateScopeId == null ||
+            shared?.financeSnapshotComplete[privateScopeId] == true);
     final entries =
         snapshot.financeEntries
             .where((e) => e.status == FinanceEntryStatus.posted && _matches(e))
@@ -83,7 +121,7 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
           children: [
             OrganizerHeading(
               title: l.organizerFinances,
-              subtitle: l.organizerFinanceIntro,
+              subtitle: l.spaceFinanceIntro,
               action: FilledButton.icon(
                 onPressed: () => actions.finance(),
                 icon: const Icon(Icons.add, size: 18),
@@ -115,11 +153,24 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
               snapshot: snapshot,
               forecastAvailable: complete,
               accountFilter: _accountFilter,
+              payments: payments,
             ),
-            if (!complete)
+            if (payments != null &&
+                (paymentRequired ||
+                    payments.events.isNotEmpty ||
+                    payments.projections.isNotEmpty ||
+                    payments.pendingCount > 0))
+              LinkedPaymentsSection(space: paymentSpace, snapshot: payments),
+            if (!paymentCashAvailable && !localIncomplete)
+              Text(l.paymentIncompleteBalance),
+            if (!complete && (localIncomplete || paymentCashAvailable))
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: Text(l.privateFinanceIncomplete),
+                child: Text(
+                  localIncomplete
+                      ? l.localFinanceRecoveryIncomplete
+                      : l.privateFinanceIncomplete,
+                ),
               ),
             if (snapshot.financeEntries.isNotEmpty &&
                 entries.isEmpty &&
@@ -222,6 +273,33 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
                         entryId: entry.id,
                         workspaceKey: snapshot.workspaceKey,
                       ),
+                      if (entry.status == FinanceEntryStatus.posted &&
+                          entry.kind == FinanceEntryKind.expense &&
+                          canWritePaymentSource(ref, paymentSpace) &&
+                          payments?.fresh == true &&
+                          payments?.events.any(
+                                (e) => e.sourceEntryId == entry.id,
+                              ) !=
+                              true &&
+                          (payments?.pendingCount ?? 0) == 0)
+                        TextButton.icon(
+                          key: ValueKey('personal-payment-${entry.id}'),
+                          onPressed: () => showPersonalPaymentForm(
+                            context,
+                            ref,
+                            source: PaymentSourceRef(
+                              space: paymentSpace,
+                              entryId: entry.id,
+                              expectedRevision: entry.revision,
+                            ),
+                            title: entry.title,
+                            amountMinor: entry.amountMinor,
+                            currency: entry.currency,
+                            paidAt: entry.paidAt,
+                          ),
+                          icon: const Icon(Icons.credit_card_outlined),
+                          label: Text(l.paymentPaidPersonally),
+                        ),
                     ],
                   ),
                   trailing: Icon(
@@ -268,6 +346,33 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
                         entryId: entry.id,
                         workspaceKey: snapshot.workspaceKey,
                       ),
+                      if (entry.status == FinanceEntryStatus.posted &&
+                          entry.kind == FinanceEntryKind.expense &&
+                          canWritePaymentSource(ref, paymentSpace) &&
+                          payments?.fresh == true &&
+                          payments?.events.any(
+                                (e) => e.sourceEntryId == entry.id,
+                              ) !=
+                              true &&
+                          (payments?.pendingCount ?? 0) == 0)
+                        TextButton.icon(
+                          key: ValueKey('personal-payment-${entry.id}'),
+                          onPressed: () => showPersonalPaymentForm(
+                            context,
+                            ref,
+                            source: PaymentSourceRef(
+                              space: paymentSpace,
+                              entryId: entry.id,
+                              expectedRevision: entry.revision,
+                            ),
+                            title: entry.title,
+                            amountMinor: entry.amountMinor,
+                            currency: entry.currency,
+                            paidAt: entry.paidAt,
+                          ),
+                          icon: const Icon(Icons.credit_card_outlined),
+                          label: Text(l.paymentPaidPersonally),
+                        ),
                     ],
                   ),
                   trailing: Text(

@@ -11,12 +11,13 @@ class DeletionUiController extends SharingUiController {
     : super(initial: CollaborationState(session: sharingSession()));
   int loads = 0, confirms = 0;
   bool staleOnce = false;
+  Map<String, dynamic>? providedPreview;
   Map<String, dynamic>? reviewSent;
   List<Map<String, Object?>>? transfersSent, resolutionsSent;
   @override
   Future<Map<String, dynamic>> previewAccountDeletion() async {
     loads++;
-    return preview();
+    return providedPreview ?? preview();
   }
 
   @override
@@ -72,6 +73,117 @@ Future<void> choices(WidgetTester tester, {bool withPassword = true}) async {
 }
 
 void main() {
+  for (final width in [320.0, 1280.0]) {
+    for (final lang in ['sl', 'en']) {
+      testWidgets('policy3 conditional shared payment facts $width $lang', (
+        tester,
+      ) async {
+        final p = preview()..['policyVersion'] = 3;
+        p['impact'] = {
+          'privatePaymentProjectionsDeleted': 1,
+          'sharedPaymentReceiptsRetained': 1,
+        };
+        p['linkedFinancialFacts'] = [
+          {
+            'scopeId': sharingScopeId,
+            'eventsRetainedIfScopeKept': 1,
+            'eventsDeletedIfScopeDeleted': 1,
+            'refundLegs': 2,
+            'reason': 'retained_shared_financial_fact',
+          },
+        ];
+        p['resolutions'] = [
+          {
+            'scopeId': sharingScopeId,
+            'recordId': sharingScopeId,
+            'type': 'financeEntry',
+            'action': 'preserveStructure',
+            'name': 'Expense',
+          },
+        ];
+        final controller = DeletionUiController()..providedPreview = p;
+        await pumpPanel(
+          tester,
+          controller,
+          const AccountDeletionPanel(),
+          width: width,
+          language: lang,
+        );
+        await tester.tap(find.byIcon(Icons.person_remove_outlined));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining(
+            lang == 'sl' ? 'ob ohranitvi 1 plačil' : '1 payments if kept',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            lang == 'sl'
+                ? 'povezave z zasebnimi računi'
+                : 'Private projections and account links',
+          ),
+          findsOneWidget,
+        );
+        expect(controller.confirms, 0);
+        await choices(tester);
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('deletion-confirm')),
+        );
+        await tester.tap(find.byKey(const ValueKey('deletion-confirm')));
+        await tester.pumpAndSettle();
+        expect(controller.reviewSent!['policyVersion'], 3);
+        expect(
+          controller.resolutionsSent!.single['action'],
+          'preserveStructure',
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+  testWidgets('policy3 deleted source does not request expense retention', (
+    tester,
+  ) async {
+    final p = preview()..['policyVersion'] = 3;
+    (p['ownedScopes'] as List).first['canDeleteScope'] = true;
+    p['linkedFinancialFacts'] = [
+      {
+        'scopeId': sharingScopeId,
+        'eventsRetainedIfScopeKept': 1,
+        'eventsDeletedIfScopeDeleted': 1,
+        'refundLegs': 2,
+        'reason': 'retained_shared_financial_fact',
+      },
+    ];
+    p['resolutions'] = [
+      {
+        'scopeId': sharingScopeId,
+        'recordId': sharingScopeId,
+        'type': 'financeEntry',
+        'action': 'preserveStructure',
+        'name': 'Expense',
+      },
+    ];
+    final controller = DeletionUiController()..providedPreview = p;
+    await pumpPanel(tester, controller, const AccountDeletionPanel());
+    await tester.tap(find.byIcon(Icons.person_remove_outlined));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .byWidgetPredicate(
+            (w) => w is DropdownMenuItem<String> && w.value == 'delete',
+          )
+          .last,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Expense'), findsNothing);
+    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(controller.confirms, 0);
+    expect(tester.takeException(), isNull);
+  });
   for (final width in [320.0, 390.0, 1280.0]) {
     for (final lang in ['sl', 'en']) {
       for (final dark in [false, true]) {
