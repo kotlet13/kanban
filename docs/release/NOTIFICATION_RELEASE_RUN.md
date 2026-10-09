@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Organizacijska pomoč — aktivna 1.1.8+11
+
+Funkcionalni commit/push `6031375` in izdajna priprava `ff8a2da` sta na `origin/codex/navigation-task-opening`. Razlaga članstva in dostopa je prestavljena z organizacijskih zaslonov v **Začetek uporabe → Organizacija**. 28 ciljnih UI testov PASS, končna analiza 37 obstoječih info brez napak/opozoril; 18 izdajnih testov, source checker in podpisani AAB so preverjeni. **Google Play potrdi Aktivno / 1.1.8 (11) — preglednejša organizacija, na voljo internim preizkuševalcem 9. oktobra 2026 ob 13:30**, samo domači (15), brez sprememb podpore napravam. [Artefakt, SHA256 in dokazi](../UPGRADE_IMPLEMENTATION.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Dokaz: `build/qa/jivie-organization-help-release/play-internal-1.1.8-11-active.png`. Fizični preizkus novega prikaza še sledi.
+
 ## Zaprti izbor prostora — aktivna 1.1.7+10
 
 Funkcionalni commit/push `aad346d`, izdajna priprava `c2a2b9e` na `origin/codex/navigation-task-opening`. Popravek poravna ime/puščico v telefonski glavi in doda ikono vrste prostora ter zaobljen gumb. **48 ciljnih UI testov PASS**, analiza brez napak/opozoril (37 obstoječih info), 18 izdajnih testov in izvorni checker PASS. Podpisani AAB, isti upload certifikat, bundletool/ZIP CRC, 16 KiB knjižnice in native/Dart Firebase so preverjeni. Play potrdi **Aktivno / 1.1.7 (10) — ikona in poravnava izbora prostora**, na voljo internim preizkuševalcem **9. oktobra 2026 ob 12:21**, samo **domači (15)**, brez spremembe podpore napravam. [Artefakt in dokazi](SPACE_PICKER_RELEASE.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Fizični preizkus novega popravka še sledi.
