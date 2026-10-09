@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Vsi prostori in skupni center obvestil — priprava 1.1.4+7
+
+Po funkcionalnem commitu `8c33716` je uporabnik 9. oktobra izrecno naročil novo interno Android izdajo. Izdajna različica je 1.1.4+7; identiteta `si.triparna.jivie`, namenski upload podpis in obstoječa izbirna Firebase konfiguracija ostanejo isti. Preverjanje izvorne izdajne priprave je uspešno, 18 release in 7 Firebase testov PASS. Podpisana gradnja in nova aktivacija se preverita ločeno; trenutna aktivna izdaja 1.1.3+6 je zgodovinsko dokazilo spodaj. [Izvedba](../ALL_SPACES_AND_INBOX.md). Dokazi nove gradnje bodo v `build/qa/all-spaces-inbox/android-release-*`.
+
 ## Opomniki in Vrt — aktivna 1.1.3+6
 
 Funkcionalni commit `10a9e03` vključuje oddaljeno razporejanje in prenovo Vrta. 636 Flutter PASS/9 opt-in HTTP preskočenih, ločeno 2 dejanska HTTP testa; analiza 37 obstoječih info brez napak/opozoril. Po funkcionalnem commitu je izrecno pripravljena različica 1.1.3+6. Google Play potrdi **Aktivno / 1.1.3 (6) — opomniki in Vrt**, na voljo internim preizkuševalcem 8. oktobra ob **22:04**. Izbran je samo obstoječi seznam **domači (15)**; podpora napravam je nespremenjena. Dokaz: `build/qa/remote-reminders/play-internal-1.1.3-6-active.jpg`. [Povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Podpis, manifest, 16KiB native knjižnice in Firebase so preverjeni; SHA256 AAB `d61a7b45151813edc2205bc8ba580b2fe27fb00c00a9742a98536409a446377c`. [Izvedba in preverjanje](../REMOTE_REMINDERS.md), [Vrt](../GARDEN.md).
