@@ -4449,4 +4449,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get allSpacesUpcoming => 'Današnje in zamujeno';
+
+  @override
+  String get organizerPressBackAgainToExit => 'Pritisni še enkrat za izhod';
 }

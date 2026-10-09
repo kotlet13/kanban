@@ -24,8 +24,10 @@ class SqliteOrganizerStorage
   final Future<OrganizerStorage> Function()? legacyFactory;
   static const localWorkspace = 'local';
   @override
-  Future<Set<String>> deviceLocalRecordIds() async =>
-      (await localSnapshot()).recordIds;
+  Future<Set<String>> deviceLocalRecordIds() async => (await database.rows(
+    'SELECT id FROM personal_records WHERE workspace=?',
+    [localWorkspace],
+  )).map((row) => row['id'] as String).toSet();
   @override
   Stream<void> get changes => database.personalChanges.stream;
   static final _migrations = Expando<Future<void>>();

@@ -32,6 +32,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
     this.onListSelected,
     this.onProjectSelected,
     this.showMembers = false,
+    this.authActive,
+    this.onAuthChanged,
+    this.onViewChanged,
+    this.onMembersChanged,
     this.initialInvitation,
     this.onInvitationHandled,
     this.setupIntent,
@@ -47,6 +51,10 @@ class SharingAccountPage extends ConsumerStatefulWidget {
   final ValueChanged<String?>? onListSelected;
   final ValueChanged<String?>? onProjectSelected;
   final bool showMembers;
+  final bool? authActive;
+  final ValueChanged<bool>? onAuthChanged;
+  final ValueChanged<SharingView>? onViewChanged;
+  final ValueChanged<bool>? onMembersChanged;
   @override
   ConsumerState<SharingAccountPage> createState() => _SharingAccountPageState();
 }
@@ -56,6 +64,39 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   bool _busy = false;
   late SharingView _view = widget.initialView;
   late bool _members = widget.showMembers;
+
+  bool get _currentAuth => widget.authActive ?? _authActive;
+  SharingView get _currentView =>
+      widget.onViewChanged == null ? _view : widget.initialView;
+  bool get _currentMembers =>
+      widget.onMembersChanged == null ? _members : widget.showMembers;
+
+  void _selectAuth(bool active) {
+    if (widget.onAuthChanged != null) {
+      widget.onAuthChanged!(active);
+    } else {
+      setState(() => _authActive = active);
+    }
+  }
+
+  void _selectView(SharingView view) {
+    if (widget.onViewChanged != null) {
+      widget.onViewChanged!(view);
+    } else {
+      setState(() {
+        _view = view;
+        _members = false;
+      });
+    }
+  }
+
+  void _selectMembers(bool members) {
+    if (widget.onMembersChanged != null) {
+      widget.onMembersChanged!(members);
+    } else {
+      setState(() => _members = members);
+    }
+  }
 
   Future<void> _run(Future<void> Function() action) async {
     if (_busy) return;
@@ -134,10 +175,8 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
       final remotelyRevoked = await guard.controller.signOut();
       if (mounted) {
         widget.onScopeSelected(null);
-        setState(() {
-          _authActive = false;
-          _members = false;
-        });
+        _selectAuth(false);
+        _selectMembers(false);
         if (!remotelyRevoked) {
           ScaffoldMessenger.of(
             context,
@@ -170,15 +209,15 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
           data: (state) {
             final session = state.session;
             if (session == null ||
-                _authActive ||
+                _currentAuth ||
                 widget.initialInvitation != null) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SharingAuthPanel(
-                    onStart: () => setState(() => _authActive = true),
+                    onStart: () => _selectAuth(true),
                     onConnected: () {
-                      setState(() => _authActive = false);
+                      _selectAuth(false);
                       widget.onInvitationHandled?.call();
                     },
                     initialServer:
@@ -190,7 +229,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                   ),
                   if (session != null)
                     TextButton(
-                      onPressed: () => setState(() => _authActive = false),
+                      onPressed: () => _selectAuth(false),
                       child: Text(l.sharingAccount),
                     ),
                 ],
@@ -257,8 +296,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                                 state.lastError?.code == 'device_revoked' ||
                                 !session.expiresAt.isAfter(DateTime.now()))
                               TextButton(
-                                onPressed: () =>
-                                    setState(() => _authActive = true),
+                                onPressed: () => _selectAuth(true),
                                 child: Text(l.sharingLoginAction),
                               ),
                           ],
@@ -268,9 +306,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                PrivateSyncPanel(
-                  onConnect: () => setState(() => _authActive = true),
-                ),
+                PrivateSyncPanel(onConnect: () => _selectAuth(true)),
                 const SizedBox(height: 20),
                 AccountEmailCard(
                   key: ValueKey(
@@ -362,8 +398,10 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<SharingView>(
-                          key: ValueKey('shared-view-$_view-$_members'),
-                          initialValue: _view,
+                          key: ValueKey(
+                            'shared-view-$_currentView-$_currentMembers',
+                          ),
+                          initialValue: _currentView,
                           isExpanded: true,
                           decoration: InputDecoration(labelText: l.sharingView),
                           items: [
@@ -383,10 +421,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                           ],
                           onChanged: (view) {
                             if (view != null) {
-                              setState(() {
-                                _view = view;
-                                _members = false;
-                              });
+                              _selectView(view);
                             }
                           },
                         ),
@@ -394,15 +429,15 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                       if (!selected.revoked) ...[
                         const SizedBox(width: 8),
                         ChoiceChip(
-                          selected: _members,
+                          selected: _currentMembers,
                           label: Text(l.sharingMembers),
-                          onSelected: (_) => setState(() => _members = true),
+                          onSelected: (_) => _selectMembers(true),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 24),
-                  if (_members && !selected.revoked)
+                  if (_currentMembers && !selected.revoked)
                     SharingMembersPage(
                       key: ValueKey(
                         'members-${session.partition}-${session.deviceId}-${selected.id}',
@@ -412,11 +447,11 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     )
                   else
                     SharingWorkspace(
-                      view: _view,
+                      view: _currentView,
                       showScopePicker: false,
                       selectedScopeId: selected.id,
                       onScopeSelected: (id) => widget.onScopeSelected(id),
-                      onConnect: () => setState(() => _authActive = true),
+                      onConnect: () => _selectAuth(true),
                       selectedListId: widget.selectedListId,
                       selectedProjectId: widget.selectedProjectId,
                       onListSelected: widget.onListSelected,

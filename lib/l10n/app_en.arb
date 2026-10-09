@@ -1812,5 +1812,6 @@
   "allSpacesFinanceIncomplete": "Some spaces do not yet have a complete finance snapshot. Totals include only complete sources.",
   "allSpacesAllDates": "All dates",
   "allSpacesTodayEmpty": "No open tasks, events or expected payments for today.",
-  "allSpacesUpcoming": "Today and overdue"
+  "allSpacesUpcoming": "Today and overdue",
+  "organizerPressBackAgainToExit": "Press back again to exit"
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'l10n/l10n.dart';
 import 'features/auth/connect_page.dart';
 import 'organizer/presentation/organizer_shell.dart';
+import 'organizer/presentation/navigation/organizer_navigation_observer.dart';
 import 'features/ai/project_ai_chat_page.dart';
 import 'features/board/board_page.dart';
 import 'features/board/project_expenses_page.dart';
@@ -17,6 +18,7 @@ import 'features/tasks/task_details_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
+  observers: [OrganizerNavigationObserver()],
   routes: <RouteBase>[
     GoRoute(path: '/', builder: (context, state) => const OrganizerShell()),
     GoRoute(path: '/launch', redirect: (context, state) => '/'),

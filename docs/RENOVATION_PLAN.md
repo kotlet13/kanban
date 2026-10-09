@@ -6,6 +6,10 @@ Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. o
 
 **Aktualna usmeritev, pozneje 4. oktobra 2026:** uporabnik je po zahtevi za pregled pojasnil, da želi nadaljevati gradnjo in je z začetkom zadovoljen. Pregled stare kode in dosedanjih sprememb usmerja razvoj, ne ustavlja novih funkcij. Ohranitev starih lokalnih podatkov aplikacije ni pogoj; bistveno je iz strežnika zajeti vse obstoječe podatke kot preverjen lokalni arhiv s samostojnim brskalnikom. Staro aplikacijo in projekte lahko nato upokojimo. Obstoječi projekti so izhodišče za razumevanje potreb in morebiten izbrani prenos, ne obvezna živa združljivost. Finance ponovno zasnujemo. Spodnje izdelane etape so zapis dosedanjega razvoja, prihodnje etape pa se po ugotovitvah prilagodijo.
 
+## Nazaj in odpiranje opravil, 9. oktober 2026
+
+Uporabnik po Android preizkusu zahteva vračanje s sistemskim Nazaj na prejšnji zaslon, na začetnem zaslonu pa sporočilo **Pritisni še enkrat za izhod** in drugi pritisk za izhod. Hkrati poroča o približno trisekundnem zamiku pri odpiranju opravila. Izvedbo vodi [mejnik navigacije in opravil](NAVIGATION_AND_TASK_OPENING.md): zgodovina področij/podpogledov, prednost zapiranja dialogov ter odpiranje že vidnega opravila iz lokalne projekcije brez čakanja na sinhronizacijo celotnega računa. Pravice, finančne meje in zunanja obvestila ostanejo ločeno preverjeni. Izvedeno in preverjeno: **715 Flutter PASS / 9 opt-in HTTP preskočenih**, analiza brez napak/opozoril (37 obstoječih info), Android debug in web release gradnji. Različica ostaja 1.1.4+7; popravka še nista objavljena v novi interni izdaji.
+
 ## Vsi prostori in popravek centra obvestil, 9. oktober 2026
 
 Uporabnik je na Samsungu S25 pokazal prazen seznam obvestil ob še vedno označenem zvončku ter naročil izvedbo izbire **Vsi**. Ta združi pregled osebnih podatkov in dovoljenih aktivnih prostorov trenutnega računa, z oznako izvora pri vsakem zapisu. Dodajanje in urejanje ostaneta vezana na dejanski prostor; zasebna sinhronizirana kopija se ne šteje dvakrat. Finančni pregled ohrani ločene pravice, valute in načrtovane/knjižene vnose. Vrt ostaja lokalen.

@@ -1812,5 +1812,6 @@
   "allSpacesFinanceIncomplete": "Nekateri prostori še nimajo popolnega finančnega pregleda. Prikazani seštevki zajemajo samo popolne vire.",
   "allSpacesAllDates": "Vsi datumi",
   "allSpacesTodayEmpty": "Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.",
-  "allSpacesUpcoming": "Današnje in zamujeno"
+  "allSpacesUpcoming": "Današnje in zamujeno",
+  "organizerPressBackAgainToExit": "Pritisni še enkrat za izhod"
 }

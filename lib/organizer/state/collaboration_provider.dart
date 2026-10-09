@@ -478,6 +478,13 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     );
   }
 
+  /// Refresh an already visible task without syncing the entire account.
+  Future<NotificationOpenResult> refreshVisibleTaskTarget(
+    NotificationTarget target,
+  ) => target.isPersonal
+      ? openNotificationTarget(target)
+      : _repo.refreshVisibleTaskTarget(target);
+
   Future<void> login({
     required String serverUrl,
     required String username,

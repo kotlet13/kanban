@@ -89,6 +89,7 @@ class CollaborationRepository {
   bool _syncing = false;
   CollaborationException? _lastError;
   final _leaseOwner = newSharedId();
+  final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   Future<void> initialize() async {
     await database.rows('SELECT name FROM local_meta LIMIT 1');

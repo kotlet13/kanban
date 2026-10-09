@@ -7871,6 +7871,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today and overdue'**
   String get allSpacesUpcoming;
+
+  /// No description provided for @organizerPressBackAgainToExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get organizerPressBackAgainToExit;
 }
 
 class _AppLocalizationsDelegate

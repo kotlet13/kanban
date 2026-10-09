@@ -463,6 +463,50 @@ void main() {
       expect(result.target.records.single.recordId, remote);
       expect(c.shared.state.personalRecordId(remote), 'legacy-task-id');
       expect(c.personal.snapshot.tasks.single.id, 'legacy-task-id');
+      transport.server.calls.clear();
+      final refreshed = await c.shared.refreshVisibleTaskTarget(target);
+      expect(refreshed.status, NotificationOpenStatus.available);
+      expect(c.shared.state.personalRecordId(remote), 'legacy-task-id');
+      expect(c.personal.snapshot.tasks.single.id, 'legacy-task-id');
+      expect(transport.server.calls.map((call) => call.operation), [
+        'scopes.list',
+        'sync.pull',
+      ]);
+      expect(transport.server.calls.first.params['includePersonal'], isTrue);
+    },
+  );
+  test(
+    'ownership IDs stay local when the active projection also contains private tasks',
+    () async {
+      final transport = PersonalTransport(FakeServer()),
+          c = await client(transport);
+      await c.personal.createProject(title: 'Migrated project');
+      await c.personal.createTask(title: 'Migrated task');
+      final migratedIds = c.personal.snapshot.recordIds;
+      expect(await c.storage.deviceLocalRecordIds(), migratedIds);
+      await login(c.shared);
+      await c.shared.enablePrivateSync(
+        expectedRevision: (await c.shared.previewPrivateSync()).revision,
+      );
+      await c.personal.reload();
+      expect(await c.storage.deviceLocalRecordIds(), isEmpty);
+      await c.shared.signOut();
+      await c.personal.reload();
+      await c.personal.createTask(title: 'Device only');
+      final deviceIds = c.personal.snapshot.recordIds;
+      expect(await c.storage.deviceLocalRecordIds(), deviceIds);
+      await login(c.shared);
+      await c.personal.reload();
+      expect(c.personal.snapshot.workspaceKey, startsWith('private:'));
+      expect(
+        c.personal.snapshot.recordIds,
+        containsAll([...migratedIds, ...deviceIds]),
+      );
+      expect(await c.storage.deviceLocalRecordIds(), deviceIds);
+      expect(
+        (await c.storage.deviceLocalRecordIds()).intersection(migratedIds),
+        isEmpty,
+      );
     },
   );
 }

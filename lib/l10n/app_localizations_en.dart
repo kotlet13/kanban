@@ -4442,4 +4442,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allSpacesUpcoming => 'Today and overdue';
+
+  @override
+  String get organizerPressBackAgainToExit => 'Press back again to exit';
 }
