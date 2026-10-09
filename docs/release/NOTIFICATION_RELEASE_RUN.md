@@ -1,5 +1,9 @@
 # Obvestila in naslednja interna izdaja Jivie
 
+## Nastavitve prostora — aktivna 1.1.10+13
+
+Funkcionalni commit/push `391dd46`, izdajna priprava `2f54109` na `origin/codex/navigation-task-opening`. Člani in povabila so zbrani v enotnih Nastavitvah prostora; delovni zasloni so brez stalnih članskih gumbov. Dodajanje projekta organizacije ostane samo pri njenih projektih. Preverjeno: 134 ciljnih UI testov PASS / 1 obstoječi izbirni platformni render preskočen, analiza brez napak/opozoril (37 obstoječih info), 18 izdajnih testov, source checker in podpisani AAB. **Play potrdi Aktivno / 1.1.10 (13) — nastavitve prostora, na voljo notranjim preizkuševalcem 9. oktobra 2026 ob 15:43**, samo domači (15), brez sprememb podpore napravam. [Artefakt in SHA256](../UPGRADE_IMPLEMENTATION.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Dokaz: `build/qa/jivie-space-settings-release/play-internal-1.1.10-13-active.png`. Fizični preizkus še sledi; javna objava in iOS nista del tega koraka.
+
 ## Brez podvojenega naslova — aktivna 1.1.9+12
 
 Funkcionalni commit/push `714f47b`, izdajna priprava `30355ee` na `origin/codex/navigation-task-opening`. Organizacijski pogled ne ponavlja več naziva iz zgornjega izbora prostora. Preverjeno: 13 ciljnih UI testov, analiza brez napak/opozoril (37 obstoječih info), 18 izdajnih testov, source checker in končni podpisani AAB. **Play potrdi Aktivno / 1.1.9 (12) — brez podvojenega naslova, na voljo notranjim preizkuševalcem 9. oktobra 2026 ob 14:23**, samo domači (15), brez sprememb podpore napravam. [Artefakt in SHA256](../UPGRADE_IMPLEMENTATION.md), [posodobitev](https://play.google.com/apps/internaltest/4701286726300038561). Dokaz: `build/qa/jivie-organization-heading-release/play-internal-1.1.9-12-active.png`. Fizični preizkus še sledi.
