@@ -7,8 +7,29 @@ import 'organizer_repository.dart' show OrganizerConflictException;
 class GardenStorage {
   GardenStorage(this.database);
   final CollaborationDatabase database;
+  String get workspaceKey => database.selectedLocalWorkspaceId;
+  int get identityGeneration => database.personalIdentityGeneration;
   Stream<void> get changes => database.personalChanges.stream;
   Future<GardenSnapshot> read() => database.transaction(() async {
+    final all = await readAll();
+    final space = database.selectedLocalWorkspaceId;
+    final links = await database.rows(
+      'SELECT garden_id,space_id FROM garden_space_links',
+    );
+    final ownership = {
+      for (final link in links) link['garden_id']: link['space_id'],
+    };
+    return GardenSnapshot(
+      revision: all.revision,
+      workspaceKey: workspaceKey,
+      gardens: all.gardens.where(
+        (g) => space == 'local'
+            ? !ownership.containsKey(g.id)
+            : ownership[g.id] == space,
+      ),
+    );
+  });
+  Future<GardenSnapshot> readAll() => database.transaction(() async {
     final generation = await database.rows(
       "SELECT value FROM local_meta WHERE name='garden_generation'",
     );
@@ -38,9 +59,21 @@ class GardenStorage {
   Future<void> write(
     GardenSnapshot snapshot, {
     required int expectedRevision,
+    bool allSpaces = false,
+    String? expectedWorkspaceKey,
+    int? expectedIdentityGeneration,
   }) => database.transaction(() async {
     snapshot.validate();
-    final previous = await read();
+    if ((expectedWorkspaceKey != null &&
+            expectedWorkspaceKey != database.selectedLocalWorkspaceId) ||
+        (expectedIdentityGeneration != null &&
+            expectedIdentityGeneration !=
+                database.personalIdentityGeneration)) {
+      throw const OrganizerConflictException('Garden workspace changed');
+    }
+    final previous = allSpaces ? await readAll() : await read();
+    final identity = database.personalIdentityGeneration;
+    final space = database.selectedLocalWorkspaceId;
     if (previous.revision != expectedRevision) {
       throw const OrganizerConflictException(
         'Garden changed; reload before writing',
@@ -59,6 +92,10 @@ class GardenStorage {
               ? floor
               : garden.revision + 1,
         );
+        await database.execute(
+          'DELETE FROM garden_space_links WHERE garden_id=?',
+          [garden.id],
+        );
         await database.execute('DELETE FROM device_gardens WHERE id=?', [
           garden.id,
         ]);
@@ -66,6 +103,15 @@ class GardenStorage {
     }
     for (final garden in snapshot.gardens) {
       final existing = old[garden.id];
+      if (existing == null &&
+          !allSpaces &&
+          (await database.rows('SELECT id FROM device_gardens WHERE id=?', [
+            garden.id,
+          ])).isNotEmpty) {
+        throw const OrganizerConflictException(
+          'Garden belongs to another space',
+        );
+      }
       if (existing != null &&
           jsonEncode(existing.toJson()) == jsonEncode(garden.toJson())) {
         continue;
@@ -83,11 +129,29 @@ class GardenStorage {
         [committed.id, jsonEncode(committed.toJson())],
       );
       await _saveFloor(committed.id, committed.revision);
+      if (!allSpaces && existing == null && space != 'local') {
+        final household = await database.rows(
+          r"SELECT id FROM local_spaces WHERE id=? AND json_extract(data,'$.kind')='household'",
+          [space],
+        );
+        if (household.isEmpty) {
+          throw const OrganizerConflictException(
+            'Choose a household for a garden',
+          );
+        }
+        await database.execute(
+          'INSERT INTO garden_space_links(garden_id,space_id) VALUES(?,?)',
+          [committed.id, space],
+        );
+      }
     }
     await database.execute(
       "INSERT INTO local_meta(name,value) VALUES('garden_generation',?) ON CONFLICT(name) DO UPDATE SET value=excluded.value",
       [(expectedRevision + 1).toString()],
     );
+    if (identity != database.personalIdentityGeneration) {
+      throw const OrganizerConflictException('Garden workspace changed');
+    }
     await database.touchPersonal();
   });
 

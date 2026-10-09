@@ -75,9 +75,13 @@ class NativeFinancePlanningPolicy extends NativeDatabase
         }
         if ($p['taskId'] !== null) {
             if ($p['kind'] !== 'expense') { throw new NativeError('validation_error'); }
-            $task = $this->parent($scope,$p['taskId'],'task');
-            $due = json_decode($task['payload'],true,32,JSON_THROW_ON_ERROR)['dueAt'];
-            if (($due === null) !== ($p['plannedAt'] === null) || ($due !== null && new \DateTimeImmutable($due) != new \DateTimeImmutable($p['plannedAt']))) { throw new NativeError('task_cost_date_mismatch'); }
+            $linkedHistory = $current && $p['taskId'] === ($previous['taskId'] ?? null) &&
+                $this->one('SELECT event_id FROM familyhub_payment_events WHERE scope_id=? AND entry_id=?',[$scope,$current['id']]);
+            if (!$linkedHistory) {
+                $task = $this->parent($scope,$p['taskId'],'task');
+                $due = json_decode($task['payload'],true,32,JSON_THROW_ON_ERROR)['dueAt'];
+                if (($due === null) !== ($p['plannedAt'] === null) || ($due !== null && new \DateTimeImmutable($due) != new \DateTimeImmutable($p['plannedAt']))) { throw new NativeError('task_cost_date_mismatch'); }
+            }
             $this->uniqueReference($scope,$current['id'] ?? null,'taskId',$p['taskId']);
         }
         if (($p['recurrenceRuleId'] === null) !== ($p['occurrenceKey'] === null)) { throw new NativeError('validation_error'); }

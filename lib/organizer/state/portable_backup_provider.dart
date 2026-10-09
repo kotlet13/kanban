@@ -5,6 +5,8 @@ import '../data/sqlite_organizer_storage.dart';
 import '../data/organizer_storage.dart';
 import 'local_database_provider.dart';
 import 'collaboration_provider.dart';
+import '../domain/offline_recovery_models.dart';
+export '../domain/offline_recovery_models.dart';
 export '../data/portable_backup_repository.dart' show BackupUiPreferencesStore;
 export '../domain/private_sync_models.dart';
 
@@ -71,4 +73,13 @@ class PortableBackupController extends AsyncNotifier<void> {
     String id, {
     required String password,
   }) async => (await _repo).resumeRestoredWork(id, password: password);
+  Future<OfflineSpacesRecoveryPreview> reviewRestoredSpacesAsLocal(
+    String id,
+    String password,
+  ) async => (await _repo).reviewRestoredSpacesAsLocal(id, password);
+  Future<List<LocalSpace>> recoverRestoredSpacesAsLocal(
+    OfflineSpacesRecoveryPreview preview, {
+    required String password,
+  }) async =>
+      (await _repo).recoverRestoredSpacesAsLocal(preview, password: password);
 }

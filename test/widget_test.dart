@@ -16,8 +16,11 @@ void main() {
       matching: find.byType(DropdownButton<String>),
     );
     expect(spacePicker, findsOneWidget);
-    expect(tester.widget<DropdownButton<String>>(spacePicker).value, '');
-    expect(find.text('Lokalno · osebno'), findsOneWidget);
+    expect(
+      tester.widget<DropdownButton<String>>(spacePicker).value,
+      'local:local',
+    );
+    expect(find.text('Osebno'), findsOneWidget);
     expect(find.text('Jivie'), findsNothing);
     expect(find.text('Začni z enim opravilom.'), findsOneWidget);
     expect(storage.writes, 0);

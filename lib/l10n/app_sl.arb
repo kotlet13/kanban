@@ -800,7 +800,7 @@
   "organizerRemoveDate": "Odstrani datum",
   "organizerUpcoming": "Prihajajoče",
   "organizerCalendarIntro": "Dogodki in roki opravil na enem mestu.",
-  "organizerFinanceIntro": "Osebni zapisi prihodkov in odhodkov na tej napravi.",
+  "organizerFinanceIntro": "Prihodki, odhodki in načrtovani stroški.",
   "organizerAddFinance": "Dodaj zapis",
   "organizerEditFinance": "Uredi zapis",
   "organizerNoFinance": "Tvoj pregled se začne s prvim zapisom.",
@@ -831,7 +831,7 @@
   "organizerShoppingCount": "{count} na seznamih",
   "organizerTasksCount": "{count} opravil",
   "organizerNoMatchingTasks": "V tem projektu še ni opravil.",
-  "organizerPersonal": "Lokalno · osebno",
+  "organizerPersonal": "Osebno",
   "organizerSystemLanguage": "Jezik naprave",
   "@organizerProjectProgress": {
     "placeholders": {
@@ -1174,9 +1174,24 @@
   "financeUnsupportedCurrency": "Urejanje te valute še ni podprto. Znesek ostane ohranjen v najmanjših denarnih enotah.",
   "financeTotalBalance": "Skupno stanje",
   "inboxPushCategoriesNone": "V prostoru »{space}« ni izbranih vrst oddaljenih obvestil.",
-  "@inboxPushCategoriesNone": {"placeholders": {"space": {"type": "String"}}},
+  "@inboxPushCategoriesNone": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "inboxPushCategoriesSelected": "Prostor »{space}«: {count, plural, one{1 izbrana vrsta oddaljenih obvestil.} two{2 izbrani vrsti oddaljenih obvestil.} few{{count} izbrane vrste oddaljenih obvestil.} other{{count} izbranih vrst oddaljenih obvestil.}}",
-  "@inboxPushCategoriesSelected": {"placeholders": {"space": {"type": "String"}, "count": {"type": "int"}}},
+  "@inboxPushCategoriesSelected": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "inboxPushCategoriesDescription": "Vrste obvestil izbereš posebej za vsak prostor. Za razporejene opomnike spodaj vključi želeni kanal v razdelku Opomniki.",
   "remotePushRegistrationOnly": "Registracija poveže to napravo s tvojim računom. Vrste obvestil za posamezne prostore izbereš posebej.",
   "remoteReminderTitle": "Oddaljeni opomnik",
@@ -1478,11 +1493,11 @@
   "guideTitle": "Dobrodošli v Jivie",
   "guideOpen": "Kratek vodič po Jivie",
   "guideLocalTitle": "Začnite na svoji napravi",
-  "guideLocalBody": "Opravila, načrti, nakupi in osebne finance delujejo brez računa in povezave. Začnite z enim opravilom ali nakupovalnim seznamom. Izbirna sinhronizacija potrebuje vašo izrecno vključitev.",
+  "guideLocalBody": "Začni z opravilom ali dogodkom v osebnem prostoru. Gospodinjstvo in organizacijo lahko ustvariš brez računa; za nakupovalne sezname, vrtove in osebe izberi gospodinjstvo. Podatki ostanejo na napravi, povezavo in sinhronizacijo pa omogočiš izrecno.",
   "guideTodayBody": "Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.",
-  "guidePlansBody": "V Načrtih uredite opravila, projekte in dogodke. Dodajte termine in po potrebi povežite opravilo s projektom. Na večjem zaslonu jih dosežete tudi prek stranskega menija.",
-  "guideShoppingBody": "V Nakupih ustvarite seznam, dodajte artikle in označite kupljeno. Osebni seznam ostane na napravi; kopiranje v skupni prostor je vaša izrecna odločitev.",
-  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰. Tam so neposredne povezave do financ, doma, vrta, oseb, obvestil, računa in nastavitev. Na tablici so dodatne možnosti v Več, na računalniku v stranskem meniju. Nastavitve omogočajo temo, jezik, šifrirane kopije in ponoven ogled vodiča. Račun in strežnik sta neobvezna; prijava sama ne deli osebnih financ ali vključi sinhronizacije. Obvestila nastavite posebej.",
+  "guidePlansBody": "V Opravilih uredi opravila in njihove termine. Projekte in Koledar odpri neposredno iz menija. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.",
+  "guideShoppingBody": "Gospodinjstvo ima svoje nakupovalne sezname, vrtove in osebe. Dodaj artikle in označi kupljeno. Stari osebni seznami in vrtovi ostanejo dostopni; pred dodelitvijo gospodinjstvu izbereš cilj.",
+  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora.",
   "guideSkip": "Preskoči",
   "guideBack": "Nazaj",
   "guideNext": "Naprej",
@@ -1818,5 +1833,165 @@
   "spaceSettingsTitle": "Nastavitve prostora",
   "spaceSettingsChoose": "Izberi skupni prostor za upravljanje članov in povabil.",
   "spaceSettingsConnect": "Za upravljanje skupnih prostorov poveži račun.",
-  "spaceSettingsUnavailable": "Ta prostor trenutno ni dostopen. Izberi drug skupni prostor."
+  "spaceSettingsUnavailable": "Ta prostor trenutno ni dostopen. Izberi drug skupni prostor.",
+  "localSpaceDescription": "Prostor in njegove zapise hrani ta naprava. Povezavo in deljenje pozneje omogočiš izrecno.",
+  "localSpaceState": "Lokalno · brez sinhronizacije",
+  "localSpaceAddress": "Naslov (neobvezno)",
+  "localSpaceRename": "Uredi prostor",
+  "localSpaceMembersDescription": "Osebe so evidenca ljudi. Dostop drugih računov in povabila zahtevajo povezavo prostora s strežnikom.",
+  "localSpaceLinkAction": "Poveži in sinhroniziraj",
+  "legacyLocalData": "Nedodeljeni podatki",
+  "legacyLocalDescription": "Ti podatki ostajajo na napravi. Pred prenosom v gospodinjstvo izberi cilj; povezava s strežnikom jih ne deli samodejno.",
+  "localSpaceMoveToHousehold": "Dodeli gospodinjstvu",
+  "localSpaceMovePreview": "Prenesi »{name}« v gospodinjstvo »{household}«? Podatki postanejo del tega prostora. Če pozneje omogočiš deljenje, zanje veljajo njegove pravice.",
+  "localSpaceChooseHousehold": "Izberi gospodinjstvo",
+  "localSpaceNoHouseholds": "Najprej ustvari lokalno gospodinjstvo v izboru prostora.",
+  "localSpaceOfflineWork": "Podatki ostajajo na napravi. Lokalno delo se nadaljuje; povabila in spremembe strežniških pravic potrebujejo povezavo.",
+  "organizationAggregateDescription": "Dogajanje dovoljenih projektov. Vsak zapis ohrani izvorni prostor.",
+  "organizationLeader": "Vodja organizacije",
+  "organizationLeaderGrant": "Dodeli vodstveno vlogo",
+  "organizationLeaderRemove": "Odvzemi vodstveno vlogo",
+  "organizationProjectFinanceVisibility": "Sprejem povabila vključuje vpogled v vse finance tega projekta. Zasebne finance drugih prostorov ostanejo ločene.",
+  "@localSpaceMovePreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "localSpaceCreate": "Ustvari prostor",
+  "organizationAccessReview": "Preglej vidnost projektnih financ",
+  "organizationAccessReviewDescription": "Člani projektov bodo videli vse njihove finance. Vodje organizacije bodo videli vse njene obstoječe in prihodnje projekte ter finance. Pred potrditvijo preglej, kdo dobi širši vpogled.",
+  "organizationAccessApply": "Potrdi novo vidnost",
+  "organizationAccessCurrent": "Člani vidijo vse finance svojih projektov. Vodje vidijo vse projekte organizacije in njihove finance.",
+  "organizationAccessNoReaders": "V tem projektu nihče ne dobi dodatnega vpogleda.",
+  "organizationAccessPending": "Prejšnja sprememba še nima potrjenega izida. Ponovi preverjanje z istim zahtevkom.",
+  "organizationAccessResume": "Preveri izid spremembe",
+  "organizationAccessPreviewStale": "Vidnost se je spremenila. Ponovno odpri predogled.",
+  "organizationLeaderConfirm": "Vodja vidi vse projekte organizacije in njihove finance, tudi prihodnje. Urejanje ostane določeno z drugimi dovoljenji.",
+  "localSpaceConnectionChoose": "Izberi obstoječe lokalne prostore. Pred prenosom pregledaš račun, strežnik in vsebino.",
+  "localSpaceConnectionPreview": "Povezujejo se navedeni prostori in njihovi zapisi. Prijava sama ni omogočila prenosa. Člane povabiš ločeno v nastavitvah prostora.",
+  "localSpaceConnectionCounts": "{records, plural, one{{records} zapis} two{{records} zapisa} few{{records} zapisi} other{{records} zapisov}} · {gardens, plural, one{{gardens} vrt} two{{gardens} vrtova} few{{gardens} vrtovi} other{{gardens} vrtov}}",
+  "localSpaceConnectionOtherAccount": "Prostor je povezan z drugim računom. Prenos pod novo identiteto potrebuje ločen predogled.",
+  "localSpaceConnectionUnsupported": "Strežnik še ne podpira prenosa te vsebine. Podatki ostajajo na napravi.",
+  "financeMembershipRead": "Branje iz članstva · brez dodatnega urejanja",
+  "financeMembershipReadDescription": "Člani vidijo vse finance svojega projekta. Tu določiš samo dodatno pravico urejanja; branje se upravlja s članstvom in vodstveno vlogo.",
+  "@localSpaceConnectionCounts": {
+    "placeholders": {
+      "records": {
+        "type": "int"
+      },
+      "gardens": {
+        "type": "int"
+      }
+    }
+  },
+  "privateSyncSourceDefault": "Ta možnost poveže privzeti osebni prostor. Gospodinjstva in organizacije izbereš ločeno.",
+  "localFinanceRecoveryIncomplete": "Finančni pregled še ni popoln. Nekateri prenosi in povezana plačila so ohranjeni samo v izvirni kopiji.",
+  "localSpaceConnectionProjectCounts": "{tasks} opravil · {finances} finančnih zapisov · {people} oseb · {accounts} računov",
+  "@localSpaceConnectionProjectCounts": {
+    "placeholders": {
+      "tasks": {
+        "type": "int"
+      },
+      "finances": {
+        "type": "int"
+      },
+      "people": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineRecoveryAction": "Nadaljuj lokalno",
+  "offlineRecoveryIntro": "Iz razpoložljive vsebine kopije ustvariš nove lokalne prostore. Za pregled in urejanje ne potrebujejo starega strežnika. Pred potrditvijo preglej vsebino in omejitve.",
+  "offlineRecoveryArchive": "Izvirna šifrirana kopija ostane ohranjena z izvorom, čakajočim strežniškim delom, zgodovino in dovoljenji. Vsega ne pretvorimo v nove urejljive zapise.",
+  "offlineRecoveryNoServerAccess": "Nova lokalna kopija ne odpre dostopa do starega strežnika in te ne postavi za upravitelja izvirnih skupnih prostorov.",
+  "offlineRecoveryFinanceUnavailable": "Finance brez potrjenega dovoljenja za branje se ne vključijo v lokalno kopijo.",
+  "offlineRecoveryBlocked": "Vsebina s potrjenim preklicem dostopa ostane blokirana. Odklop je ne odpre.",
+  "offlineRecoveryNothingAvailable": "V tej kopiji ni vsebine, ki bi jo lahko obnovili v lokalni prostor.",
+  "offlineRecoveryAcknowledge": "Razumem omejitve in želim ustvariti nove lokalne kopije.",
+  "offlineRecoverySuccess": "Lokalni prostori so pripravljeni. Izberi jih zgoraj; izvirna šifrirana kopija je ohranjena.",
+  "paymentPaidPersonally": "Plačal sem osebno",
+  "paymentMyAccount": "Moj račun ali kartica",
+  "paymentChooseAccount": "Izberi račun",
+  "paymentNeedsPersonalAccount": "Najprej v osebnem prostoru dodaj svoj račun ali kartico v isti valuti.",
+  "paymentNeedsRefundAccount": "Za povračilo najprej dodaj račun organizacije v isti valuti.",
+  "paymentPaidAt": "Datum osebnega plačila",
+  "paymentExpectRefund": "Pričakujem povračilo",
+  "paymentExpectRefundYes": "Da, pričakujem povračilo",
+  "paymentExpectRefundNo": "Ne, ne pričakujem povračila",
+  "paymentHouseholdInclusion": "Vključi v gospodinjski pregled",
+  "paymentNoHousehold": "Ne vključi v gospodinjstvo",
+  "paymentSourceExpenseOnly": "Strošek ostane v organizaciji. Izbrani račun dobi bremenitev; podatkov drugih osebnih transakcij ne deliš.",
+  "paymentRecord": "Zabeleži osebno plačilo",
+  "paymentLinkedPayments": "Osebna plačila in povračila",
+  "paymentLinkedExpense": "Plačilo za organizacijo",
+  "paymentRemaining": "Še za povračilo",
+  "paymentCashBurden": "Bremenitev po povračilih",
+  "paymentNoRefundExpected": "Povračilo ni pričakovano.",
+  "paymentRefundAction": "Zabeleži povračilo",
+  "paymentRefundDescription": "Odprti znesek: {amount}. Povračilo zapre del bremenitve in ne ustvari novega zaslužka.",
+  "paymentRefundReceived": "Povračilo",
+  "paymentRefundPaid": "Izplačano povračilo",
+  "paymentRefundAt": "Datum povračila",
+  "paymentRefundTooHigh": "Znesek presega odprto povračilo.",
+  "paymentRefundAfterPayment": "Povračilo ne more biti pred osebnim plačilom.",
+  "paymentPending": "Plačilo je shranjeno. Uskladitev povezanih prostorov še čaka.",
+  "paymentWaitingSource": "Plačilo je shranjeno lokalno. Za skupni prikaz najprej izrecno poveži organizacijo.",
+  "paymentBlocked": "Uskladitev je zavrnjena. Podatki so ohranjeni; zneskov ne štejemo kot potrjene.",
+  "paymentSourceRemoved": "Zgodovina plačila",
+  "paymentSourceRemovedDescription": "Izvirni skupni zapis ni več na voljo. Ohranjena plačila in povračila so zgodovina, ne dokaz veljavnega dostopa ali nove terjatve.",
+  "paymentProjectionDescription": "Pregled osebnega plačila. Strošek ostane v organizaciji; povračilo ni nov zaslužek.",
+  "paymentRetry": "Ponovi uskladitev",
+  "paymentRefresh": "Osveži povezana plačila",
+  "paymentIncompleteBalance": "Za popolno stanje računa potrebujemo tudi podatke o povezanih plačilih.",
+  "paymentAlreadyLinked": "Ta strošek že ima povezano osebno plačilo.",
+  "paymentPublicationCount": "{count, plural, one{{count} povezano plačilo} two{{count} povezani plačili} few{{count} povezana plačila} other{{count} povezanih plačil}}",
+  "@paymentRefundDescription": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@paymentPublicationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentPersonalDisplay": "Osebno plačilo",
+  "deletionLinkedFinancialFacts": "Povezana plačila in povračila",
+  "deletionLinkedFinancialRetention": "Če prostor ohranite ali prenesete, ostanejo skupni zneski, datumi in zgodovinske reference plačil ter povračil. Osebni prikazi in povezave z zasebnimi računi se odstranijo. Že prenesenih kopij s tem ni mogoče izbrisati.",
+  "deletionLinkedScopeCounts": "{scope}: ob ohranitvi {retained} plačil; ob izbrisu {deleted} plačil; {refunds} potrjenih povračil.",
+  "deletionRetainedExpenseResolution": "Ohrani skupni strošek in potrjeno zgodovino plačil ter povračil, odstrani moje osebne opombe in naziv.",
+  "deletionPrivatePaymentProjections": "Zasebni prikazi plačil za odstranitev",
+  "deletionSharedPaymentReceipts": "Že deljena zgodovina plačil",
+  "deletionLinkedUnavailableScope": "Prej deljeni prostor",
+  "@deletionLinkedScopeCounts": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "retained": {
+        "type": "int"
+      },
+      "deleted": {
+        "type": "int"
+      },
+      "refunds": {
+        "type": "int"
+      }
+    }
+  },
+  "spaceFinanceIntro": "Prihodki, odhodki in načrtovani stroški.",
+  "spaceLocalShort": "Lokalno",
+  "spaceConnectedShort": "Povezano"
 }

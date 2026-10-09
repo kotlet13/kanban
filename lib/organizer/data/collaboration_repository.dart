@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cryptography/cryptography.dart' show Sha256;
 import 'dart:math';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
+import '../domain/local_space_models.dart';
+import '../domain/linked_payment_models.dart';
+import '../domain/garden_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
 import '../domain/shared_dates.dart';
@@ -15,8 +19,14 @@ import 'account_deletion_preview.dart';
 import 'sqlite_organizer_storage.dart';
 import 'portable_backup_document.dart';
 import 'organizer_storage.dart';
+import 'garden_storage.dart';
+import 'linked_payments_repository.dart';
 import 'organizer_repository.dart' show OrganizerConflictException;
 
+part 'collaboration_organization_access.dart';
+part 'collaboration_linked_payments.dart';
+part 'collaboration_local_space_publication.dart';
+part 'collaboration_garden_actions.dart';
 part 'collaboration_account_actions.dart';
 part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
@@ -75,6 +85,7 @@ class CollaborationRepository {
   bool _sessionRenewalSupported = false;
   Future<void>? _sessionRenewal;
   int? _sessionRenewalEpoch;
+  bool _scopeAccessChangesSupported = false;
   bool _organizationsSupported = false,
       _householdPeopleSupported = false,
       _projectArchivingSupported = false;
@@ -135,7 +146,9 @@ class CollaborationRepository {
       }
       if (!_session!.profile.expiresAt.isAfter(clock())) {
         _lastError = const CollaborationException('auth_required');
-      } else if (_sessionInvalidReason == null) {
+      }
+      // Authentication expiry does not revoke previously downloaded content.
+      if (_sessionInvalidReason != 'device_revoked') {
         database.activatePersonal(_session!.profile);
       }
     }
@@ -357,7 +370,7 @@ class CollaborationRepository {
       );
       final privateState = await _privateSyncState(profile);
       final runtimePrivateIds = <String, String>{};
-      if (_sessionInvalidReason == null && !deletionPending) {
+      if (!deletionPending) {
         for (final row in await database.rows(
           'SELECT r.id FROM records r JOIN personal_workspaces w ON w.partition=r.partition AND w.scope_id=r.scope_id WHERE r.partition=? AND w.enabled=1 UNION SELECT f.id FROM finance_records f JOIN personal_workspaces w ON w.partition=f.partition AND w.scope_id=f.scope_id WHERE f.partition=? AND w.enabled=1',
           [profile.partition, profile.partition],
@@ -381,6 +394,8 @@ class CollaborationRepository {
         session: profile,
         remotePushRegistration: _remotePushState,
         sessionInvalid: _sessionInvalidReason != null || deletionPending,
+        localAccessAllowed:
+            !deletionPending && _sessionInvalidReason != 'device_revoked',
         deletionPending: deletionPending,
         privateSync: privateState,
         privateRecordIds: runtimePrivateIds,
@@ -448,6 +463,7 @@ class CollaborationRepository {
         lists = <LocalShoppingList>[],
         items = <LocalShoppingItem>[];
     final people = <HouseholdPerson>[];
+    final gardens = <Garden>[];
     final personalFinanceEntries = <FinanceEntry>[];
     final events = <SharedEvent>[];
     for (final r in rows) {
@@ -463,6 +479,13 @@ class CollaborationRepository {
             : _map(r['remote'])['updatedByAccountId'],
       };
       switch (SharedRecordType.values.byName(r['type'] as String)) {
+        case SharedRecordType.garden:
+          gardens.add(
+            Garden.fromJson({
+              ..._map(r['payload']),
+              'revision': r['local_revision'],
+            }),
+          );
         case SharedRecordType.householdPerson:
           people.add(HouseholdPerson.fromJson(json));
         case SharedRecordType.event:
@@ -531,6 +554,7 @@ class CollaborationRepository {
           liveAccounts[e.toAccountId] != e.currency,
     );
     return SharedScopeData(
+      gardens: gardens,
       people: people,
       personalFinanceEntries: personalFinanceEntries,
       financeAccounts: financeAccounts,

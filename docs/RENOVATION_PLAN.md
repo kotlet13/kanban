@@ -2,6 +2,8 @@
 
 Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. oktobra 2026 odobril začetek gradnje ter vzporedni razvoj telefona in namizja. Glavni agent orkestrira; izvedbo opravljajo podagenti GPT 6.1 Sol / high. Ta dokument ne pomeni, da so vse spodaj opisane funkcije že izdelane.
 
+**Potrjena naslednja zasnova, 9. oktober 2026:** [načrt prostorov in povezanih financ](SPACES_NEXT_UPGRADE_PLAN.md) določa Osebno, gospodinjstva in organizacije, lokalni začetek istih prostorov ter poznejšo sinhronizacijo, pripravo več gospodinjstev in osebno plačane organizacijske stroške s povračili. Najnovejša odločitev: član projekta organizacije vidi vse njegove finance, skupina vodij organizacije pa vse njene projekte in njihove finance. To za organizacijske projekte nadomesti prejšnji predlog ločenega dovoljenja za branje projektnih financ; osebna/gospodinjska zasebnost ostane. Uporabnik je nato naročil začetek izvedbe; dejansko stanje vodi [izvedbeni dnevnik prostorov](SPACES_UPGRADE_IMPLEMENTATION.md), objava ostaja ločen korak.
+
 **Novo izvedbeno naročilo, 8. oktober 2026:** uporabnik je odobril izvedbo spodaj zapisanih nadgradenj. Vrstni red je popravki prikaza/prijave → commit in push → funkcionalne nadgradnje → commit in push → nova Android interna izdaja za obstoječe preizkuševalce. [Tekoča izvedba](UPGRADE_IMPLEMENTATION.md) vodi lastništvo, dokaze in aktualno dokončanost. Prejšnji zapisi »samo opomba« ohranijo izvor zahtev, niso več odlog njihove izvedbe. Javno produkcijsko izdajo, pravne potrditve in lastnikove iOS/dostopne korake še vedno obravnavamo ločeno.
 
 **Aktualna usmeritev, pozneje 4. oktobra 2026:** uporabnik je po zahtevi za pregled pojasnil, da želi nadaljevati gradnjo in je z začetkom zadovoljen. Pregled stare kode in dosedanjih sprememb usmerja razvoj, ne ustavlja novih funkcij. Ohranitev starih lokalnih podatkov aplikacije ni pogoj; bistveno je iz strežnika zajeti vse obstoječe podatke kot preverjen lokalni arhiv s samostojnim brskalnikom. Staro aplikacijo in projekte lahko nato upokojimo. Obstoječi projekti so izhodišče za razumevanje potreb in morebiten izbrani prenos, ne obvezna živa združljivost. Finance ponovno zasnujemo. Spodnje izdelane etape so zapis dosedanjega razvoja, prihodnje etape pa se po ugotovitvah prilagodijo.
@@ -25,6 +27,8 @@ Uporabnik je naročil dokončanje brez svoje prisotnosti, commit/push in združi
 - Nastavitve zdaj ločijo **registracijo telefona** od **izbire kategorij za posamezen prostor**. Povzetek pokaže vključene kategorije ali odsotnost izbire, opomniki pa so prvi in razširjeni. Uporabnikov izbor ostane izrecen; ne vključujemo samodejno vseh kategorij ali e-pošte.
 
 ## Potrjena smer
+
+- Dopolnitev 9. oktobra: tudi ob trajni izgubi strežnika lokalno ustvarjeni in upravičeno preneseni podatki ostanejo ohranjeni in uporabni na napravah. Restart in potek seje ne smeta zahtevati starega strežnika za lokalno delo ali kopijo/obnovo. [Načrt nadgradnje](SPACES_NEXT_UPGRADE_PLAN.md) določa tudi priponke, mejo še neprenesene vsebine, varno ponovno povezavo ter ločitev izpada od potrjenega preklica pravic. Nova izvedba je avtomatizirano preverjena; [dnevnik prostorov](SPACES_UPGRADE_IMPLEMENTATION.md) loči dokaze od preostalih omejitev finančne pretvorbe, priponk in fizičnega preizkusa.
 
 - Osrednja aplikacija za osebne načrte, prosti čas, dom, družino, projekte, nakupovanje in finance.
 - Osnovno ustvarjanje, branje in urejanje deluje brez strežnika in računa ter preživi ponovni zagon. Račun je namenjen izbirnemu sodelovanju in povezovanju naprav.

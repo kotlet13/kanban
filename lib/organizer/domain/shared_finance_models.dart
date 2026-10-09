@@ -1,5 +1,6 @@
 import 'shared_dates.dart';
 import 'organizer_models.dart';
+import 'linked_payment_models.dart';
 
 const _unsetFinance = Object();
 
@@ -21,22 +22,33 @@ class SharedFinancePolicy {
     this.enabled = false,
     this.grant = SharedFinanceGrant.none,
     this.revision = 0,
+    this.managedByOrganizationPolicy = false,
+    this.readAccessFromMembership = false,
+    this.linkedPaymentsRequired = false,
   });
   final bool enabled;
   final SharedFinanceGrant grant;
   final int revision;
+  final bool managedByOrganizationPolicy, readAccessFromMembership;
+  final bool linkedPaymentsRequired;
   bool get canRead => enabled && grant != SharedFinanceGrant.none;
   bool get canWrite => enabled && grant == SharedFinanceGrant.write;
   Map<String, Object?> toJson() => {
     'enabled': enabled,
     'grant': grant.name,
     'revision': revision,
+    'managedByOrganizationPolicy': managedByOrganizationPolicy,
+    'readAccessFromMembership': readAccessFromMembership,
+    'linkedPaymentsRequired': linkedPaymentsRequired,
   };
   factory SharedFinancePolicy.fromJson(Map<String, dynamic> j) =>
       SharedFinancePolicy(
         enabled: readBool(j, 'enabled'),
         grant: SharedFinanceGrant.values.byName(readString(j, 'grant')),
         revision: readInt(j, 'revision'),
+        managedByOrganizationPolicy: j['managedByOrganizationPolicy'] == true,
+        readAccessFromMembership: j['readAccessFromMembership'] == true,
+        linkedPaymentsRequired: j['linkedPaymentsRequired'] == true,
       );
 }
 
@@ -491,10 +503,15 @@ Map<String, SharedFinanceTotals> summarizeSharedFinance({
   required Iterable<SharedFinanceAccount> accounts,
   required Iterable<SharedFinanceEntry> entries,
   required Iterable<SharedFinanceTransfer> transfers,
+  PaymentSnapshot? payments,
 }) {
   final byId = {for (final a in accounts) a.id: a};
   final balances = <String, Map<String, BigInt>>{};
   final income = <String, BigInt>{}, expense = <String, BigInt>{};
+  final personalPaid = {
+    for (final event in payments?.events ?? const <PaymentEvent>[])
+      event.sourceEntryId,
+  };
   for (final a in byId.values) {
     (balances[a.currency] ??= {})[a.id] = BigInt.from(
       a.openingBalanceMinor ?? 0,
@@ -511,10 +528,24 @@ Map<String, SharedFinanceTotals> summarizeSharedFinance({
         positive = e.kind == FinanceEntryKind.income;
     final totals = positive ? income : expense;
     totals[e.currency] = (totals[e.currency] ?? BigInt.zero) + amount;
-    if (a.openingBalanceAt == null ||
-        !(e.paidAt ?? e.occurredAt).isBefore(a.openingBalanceAt!)) {
+    if (!personalPaid.contains(e.id) &&
+        (a.openingBalanceAt == null ||
+            !(e.paidAt ?? e.occurredAt).isBefore(a.openingBalanceAt!))) {
       balances[e.currency]![a.id] =
           balances[e.currency]![a.id]! + (positive ? amount : -amount);
+    }
+  }
+  for (final movement
+      in payments?.cashMovements ?? const <PaymentCashMovement>[]) {
+    final account = byId[movement.accountId];
+    if (account == null || account.currency != movement.currency) {
+      throw const FormatException('Invalid linked cash account');
+    }
+    if (account.openingBalanceAt == null ||
+        !movement.paidAt.isBefore(account.openingBalanceAt!)) {
+      balances[movement.currency]![account.id] =
+          balances[movement.currency]![account.id]! +
+          BigInt.from(movement.amountMinor);
     }
   }
   for (final t in transfers.where(

@@ -15,6 +15,8 @@ import 'onboarding_ui_test.dart' show pumpPanel;
 import 'organizer_ui_test.dart'
     show pumpOrganizer, mobileTab, MemoryOrganizerStorage;
 import 'sharing_ui_fixture.dart';
+import 'local_spaces_navigation_test.dart' show LocalSpaceUiController;
+import 'package:kanban/organizer/state/local_spaces_provider.dart';
 
 const selectedId = '70000000-0000-4000-8000-000000000001';
 const archivedId = '70000000-0000-4000-8000-000000000002';
@@ -301,7 +303,7 @@ void main() {
     );
     await openNewSpace(tester);
     expect(
-      find.textContaining('Na začetku vidi prostor samo ustvarjalec.'),
+      find.textContaining('Prostor in njegove zapise hrani ta naprava.'),
       findsOneWidget,
     );
     await tester.tap(find.text('Prekliči'));
@@ -314,27 +316,31 @@ void main() {
     expect(controller.requests, isEmpty);
     expect(selected, isNull);
   });
-  testWidgets('signed out action opens connection and stays local', (
-    tester,
-  ) async {
-    var connections = 0;
-    String? selected;
-    final controller = SharingUiController(initial: CollaborationState());
-    await pumpPanel(
-      tester,
-      controller,
-      OrganizerSpacePicker(
-        onSelected: (id) => selected = id,
-        onConnect: () => connections++,
-      ),
-    );
-    await openNewSpace(tester);
-    expect(connections, 1);
-    expect(selected, isNull);
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(tester.widget<DropdownButton<String>>(spaceButton()).value, '');
-  });
-  testWidgets('revoking the current session closes an open creation form', (
+  testWidgets(
+    'signed out action opens local creation and stays on selected space',
+    (tester) async {
+      var connections = 0;
+      String? selected;
+      final controller = SharingUiController(initial: CollaborationState());
+      await pumpPanel(
+        tester,
+        controller,
+        OrganizerSpacePicker(
+          onSelected: (id) => selected = id,
+          onConnect: () => connections++,
+        ),
+      );
+      await openNewSpace(tester);
+      expect(connections, 0);
+      expect(selected, isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        tester.widget<DropdownButton<String>>(spaceButton()).value,
+        'local:local',
+      );
+    },
+  );
+  testWidgets('revoking server session retains local space creation form', (
     tester,
   ) async {
     final controller = SpaceCreationController();
@@ -348,7 +354,7 @@ void main() {
     expect(find.byType(AlertDialog), findsOneWidget);
     controller.revokeSession();
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(AlertDialog), findsOneWidget);
     expect(controller.requests, isEmpty);
     expect(selected, isNull);
     expect(tester.takeException(), isNull);
@@ -394,79 +400,48 @@ void main() {
     expect(button.items!.where((item) => item.value == personalId), isEmpty);
     expect(find.text('Arhiviran projekt'), findsOneWidget);
   });
-  for (final kind in ['household', 'project', 'organization']) {
-    testWidgets('new space explicitly creates $kind with retry identity', (
-      tester,
-    ) async {
-      final controller = SpaceCreationController()..loseFirst = true;
-      String? selected;
-      await pumpPanel(
-        tester,
-        controller,
-        OrganizerSpacePicker(
-          onSelected: (id) => selected = id,
-          onConnect: () {},
-        ),
-      );
-      await openNewSpace(tester);
-      if (kind != 'household') {
-        await tester.tap(
-          find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
+  for (final kind in [LocalSpaceKind.household, LocalSpaceKind.organization]) {
+    testWidgets(
+      'picker creates local ${kind.name} regardless of server capabilities',
+      (tester) async {
+        final local = LocalSpaceUiController(LocalSpaceKind.personal);
+        String? selected;
+        final remote = SpaceCreationController(organizations: false);
+        await pumpPanel(
+          tester,
+          remote,
+          ProviderScope(
+            overrides: [localSpacesProvider.overrideWith(() => local)],
+            child: OrganizerSpacePicker(
+              onSelected: (_) {},
+              onLocalSelected: (id) => selected = id,
+              onConnect: () {},
+            ),
+          ),
         );
+        await openNewSpace(tester);
+        if (kind != LocalSpaceKind.household) {
+          await tester.tap(find.byKey(const ValueKey('sharing-kind')));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find
+                .text(
+                  kind == LocalSpaceKind.personal ? 'Osebno' : 'Organizacija',
+                )
+                .last,
+          );
+          await tester.pumpAndSettle();
+        }
+        await tester.enterText(find.byType(TextField).first, 'QA ${kind.name}');
+        await tester.tap(find.byKey(const ValueKey('sharing-submit')));
         await tester.pumpAndSettle();
-        await tester.tap(
-          find
-              .text(kind == 'project' ? 'Deljeni projekt' : 'Organizacija')
-              .last,
-        );
-        await tester.pumpAndSettle();
-      }
-      await tester.enterText(find.byType(TextField).first, 'Explicit $kind');
-      await tester.tap(find.byKey(const ValueKey('sharing-submit')));
-      await tester.pumpAndSettle();
-      expect(selected, isNull);
-      await tester.enterText(
-        find.byType(TextField).first,
-        'Changed after lost reply',
-      );
-      await tester.tap(find.byKey(const ValueKey('sharing-kind')));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find
-            .text(kind == 'household' ? 'Deljeni projekt' : 'Gospodinjstvo')
-            .last,
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('sharing-submit')));
-      await tester.pumpAndSettle();
-      expect(controller.requests.length, 2);
-      expect(controller.requests.first, controller.requests.last);
-      expect(controller.requests.first['kind'], kind);
-      expect(controller.requests.first['name'], 'Explicit $kind');
-      expect(selected, controller.requests.first['id']);
-    });
+        expect(local.created.single.kind, kind);
+        expect(selected, local.created.single.id);
+        expect(remote.requests, isEmpty);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
-  testWidgets(
-    'older capabilities offer household and project without organization',
-    (tester) async {
-      await pumpPanel(
-        tester,
-        SpaceCreationController(organizations: false),
-        OrganizerSpacePicker(onSelected: (_) {}, onConnect: () {}),
-      );
-      await openNewSpace(tester);
-      final kinds = tester.widget<DropdownButtonFormField<String>>(
-        find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
-      );
-      await tester.tap(
-        find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Deljeni projekt'), findsOneWidget);
-      expect(find.text('Organizacija'), findsNothing);
-      expect(kinds.enabled, isTrue);
-    },
-  );
   testWidgets('render actual phone header and space menus', (tester) async {
     // Widget tests use the square Ahem font by default. Load the app's actual
     // Cupertino families and Material glyphs for a readable review artifact.

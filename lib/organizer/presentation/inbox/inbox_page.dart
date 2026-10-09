@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
+import '../../state/local_spaces_provider.dart';
 import '../organizer_widgets.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
@@ -187,13 +188,24 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
           _card(
             title: l.inboxPersonalReminders(1),
             subtitle:
-                personal!.tasks
+                (item.task == null ? personal?.tasks ?? [] : [item.task!])
                     .where((t) => t.id == item.reminder.taskId)
                     .firstOrNull
                     ?.title ??
                 l.organizerTasks,
             read: item.isRead,
-            audience: l.inboxForMe,
+            audience: item.plan.target.localWorkspaceId == 'local'
+                ? l.inboxForMe
+                : ref
+                          .watch(localSpacesProvider)
+                          .valueOrNull
+                          ?.spaces
+                          .where(
+                            (s) => s.id == item.plan.target.localWorkspaceId,
+                          )
+                          .firstOrNull
+                          ?.name ??
+                      l.inboxForMe,
             onSnooze: () => _run(
               () => snoozeReminder(context, ref, item.plan),
               showProgress: false,
@@ -213,8 +225,12 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                     final guard = SharingSessionGuard(context, ref);
                     if (!item.reminder.isRead) {
                       await ref
-                          .read(organizerProvider.notifier)
-                          .markReminderRead(item.reminder.id);
+                          .read(localSpacesProvider.notifier)
+                          .markReminderRead(
+                            item.plan.target.localWorkspaceId,
+                            item.reminder.id,
+                            expectedWorkspaceKey: item.workspaceKey,
+                          );
                     }
                     if (item.remoteEntries.isNotEmpty && guard.isCurrent) {
                       await guard.controller.markInboxRead(

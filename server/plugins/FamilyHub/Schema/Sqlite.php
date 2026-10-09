@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 11;
+const VERSION = 13;
 
 function version_1(PDO $pdo)
 {
@@ -72,4 +72,14 @@ function version_10(PDO $pdo)
 function version_11(PDO $pdo)
 {
     OrganizationSchema::create($pdo, false);
+}
+
+function version_12(PDO $pdo)
+{
+    SpacesSchema::create($pdo, false);
+}
+
+function version_13(PDO $pdo)
+{
+    LinkedPaymentsSchema::create($pdo, false);
 }

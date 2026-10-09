@@ -24,17 +24,15 @@ class FinanceAccessGuard {
   final int? _revision;
   bool allows(CollaborationState state) {
     final policy = state.financePolicyForScope(scopeId);
-    return state.scopes.any(
+    return state.localAccessAllowed &&
+        state.scopes.any(
           (scope) =>
               scope.id == scopeId &&
               !scope.revoked &&
               (!write || !scope.blocked && !scope.archived),
         ) &&
         state.financeSnapshotComplete[scopeId] == true &&
-        (!write ||
-            (state.session?.expiresAt.isAfter(DateTime.now()) == true &&
-                state.lastError?.code != 'device_revoked' &&
-                state.lastError?.code != 'auth_required')) &&
+        (!write || !state.deletionPending) &&
         policy.revision == _revision &&
         (write ? policy.canWrite : policy.canRead);
   }

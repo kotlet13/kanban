@@ -5,6 +5,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/finance_inbox_provider.dart';
 import '../../state/inbox_projection_provider.dart';
+import '../../state/local_spaces_provider.dart';
 import 'reminder_snooze.dart';
 import '../shared/sharing_errors.dart';
 import 'notification_target_view.dart';
@@ -49,6 +50,28 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
     }
   }
 
+  String _source(ReminderPlan plan) {
+    if (plan.target.isPersonal) {
+      final space = ref
+          .read(localSpacesProvider)
+          .valueOrNull
+          ?.spaces
+          .where((s) => s.id == plan.target.localWorkspaceId)
+          .firstOrNull;
+      return space == null || space.name.isEmpty
+          ? context.l10n.organizerPersonal
+          : space.name;
+    }
+    return ref
+            .read(collaborationProvider)
+            .valueOrNull
+            ?.scopes
+            .where((s) => s.id == plan.target.scopeId)
+            .firstOrNull
+            ?.name ??
+        context.l10n.inboxInSharedSpace;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -88,7 +111,7 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                     : l.financePlanExpenseQuestion,
               ),
               subtitle: Text(
-                '${plan.target.isPersonal ? l.inboxForMe : l.inboxInSharedSpace} · ${organizerDateTime(context, plan.scheduledAt)}',
+                '${_source(plan)} · ${organizerDateTime(context, plan.scheduledAt)}',
               ),
               onTap: _busy
                   ? null

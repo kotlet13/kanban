@@ -1,6 +1,51 @@
 # Jivie — priprava javne Google Play izdaje
 
-Stanje 9. oktobra 2026. Uporabnik je naročil pripravo dokumentacije, opisov in grafik v Console; spletno stran in preizkus z dvema napravama bo uredil pozneje. **Spremembe niso oddane v pregled in produkcijska izdaja ni objavljena.** Trenutna interna izdaja ostaja **1.1.5 (8)**. V tej nalogi ni nove gradnje, spremembe verzije, strežnika ali objave v Git.
+Stanje 9. oktobra 2026. Uporabnik je naročil pripravo dokumentacije, opisov in grafik v Console. Po vrnitvi domov je izrecno naročil nadaljevanje obrazcev ter ustavitev pred izdelavo nove izdaje. **Spremembe niso oddane v pregled in produkcijska izdaja ni objavljena.** Ob pripravi obrazcev je bila interna izdaja **1.1.10 (13)**; poznejši ločeni izdajni korak je objavil **1.2.0 (14)** za interne uporabnike; [izdajni dnevnik](NOTIFICATION_RELEASE_RUN.md) vodi njen ločeni dokaz. Nadaljevanje obrazcev ne izdeluje nove gradnje, ne spreminja verzije ali strežnika.
+
+## Nadaljevanje z lastnikom — vsebinska ocena
+
+Lastnik je izbral **samo odrasle (18+)** in **prvo javno izdajo brez starega AI klepeta**. Na predlog prepovedi seksualno eksplicitne vsebine je odgovoril »verjetn bi blo dobr«; to je podpora smeri, ne dokaz že sprejetih uporabniških pogojev ali delujoče moderacije. Končno pravilo mora pred oddajo natančno opredeliti tudi goloto, saj vprašalnik ne sprašuje samo o pornografiji.
+
+IARC kategorijo in sprejem pogojev je do začetka tega nadaljevanja opravil uporabnik; agent pogojev ni ponovno sprejemal. Osnutek vprašalnika je shranjen in odprt na **Povzetku**, končni gumb **Shrani** za prenos ocene v Pregled objavljanja pa ni bil pritisnjen. Osnutek opisuje načrtovano javno kandidatko, ne nespremenjene interne 1.1.10 (13), v kateri je AI še dosegljiv.
+
+| Vprašanje | Odgovor v osnutku / pogoj |
+| --- | --- |
+| Vsebina za ocenjevanje v začetnem paketu | Ne; ta odgovor je ob začetku že izbral uporabnik. |
+| Izmenjava uporabniške vsebine | Da; skupni zapiski, komentarji in poljubne priponke. |
+| Deljena UGC kot glavni vir vsebine | Ne; osebni organizator z izbirnim sodelovanjem, brez javnega vsebinskega feeda. |
+| Deljenje golote | Začasno Ne za predlagano javno politiko; pred končno oddajo uskladiti obseg pravila in dejansko kandidatko. |
+| Javno deljenje nazornega resničnega nasilja | Ne; ni javne objave vsebine. |
+| Blokiranje / prijava uporabnikov ali vsebine / moderiranje klepeta | Ne / Ne / Ne po trenutnem izvornem pregledu. Odstranitev članstva ni osebna funkcija blokiranja. |
+| Interakcije samo s povabljenimi prijatelji | Da; zaprt dostop do skupne vsebine po članstvih. |
+| Promovirana spletna vsebina, vključno z AI | Začasno Ne **samo pod pogojem dejanske odstranitve dosegljivega generativnega AI iz javne kandidatke**. Če ostane pomoč pri naslovu/opisu ali druga AI pot, odgovor ponovno pregledati in označiti Da. |
+| Promoviranje starostno omejenih izdelkov/dejavnosti | Ne. |
+| Natančna lokacija drugim / digitalni nakupi / denarne ali kripto nagrade / brskalnik ali iskalnik / novice ali izobraževanje | Vsi Ne po izvornem pregledu. Nakupi so seznam, ne trgovinski checkout. |
+
+Izračunani **osnutek** kaže PEGI 3, ESRB Everyone, ClassInd/USK za vse starosti ter splošno 3+, z oznako Interakcija uporabnikov. To ni potrjena končna ocena, odobritev Google ali sprememba ciljne skupine: lastnikova ciljna skupina ostaja 18+. Pred oddajo ponovno preveriti končno kandidatko in odgovore. [Google navodila za ocenjevanje](https://support.google.com/googleplay/android-developer/answer/9859655?hl=en), [UGC](https://support.google.com/googleplay/android-developer/answer/11070862?hl=en), [glavni vir UGC](https://support.google.com/googleplay/android-developer/answer/12994051?hl=en) in [spletna vsebina](https://support.google.com/googleplay/android-developer/answer/11070055?hl=en).
+
+Izvorni podagent GPT-6.1 Sol / high je samo bralno preveril dosegljive stare Kanboard in AI poti ter odsotnost osebnega blokiranja, prijave, starostnega preverjanja in lastne vsebinske moderacije. Ni izvedel nove gradnje ali fizičnega testa. Novo pravilo o deljeni vsebini potrebuje dejanske uporabniške pogoje in možnost prijave pred javno oddajo; to ni izvedeno s tem obrazcem.
+
+### Preostali obrazci in dejanske prepreke
+
+- **Ciljna skupina 18+** je shranjena v Console po potrditvi preglednega dostopa. Izbrana je samo skupina »18 in več«; izbirna dodatna blokada prenosa za mladoletne ni vključena. Povzetek potrdi starost in »Sprememba je shranjena«. Sprememba ni poslana v pregled. Dokaz: `target-audience-18-saved.png` v spodnji QA mapi.
+- **Podrobnosti o prijavi** so dejansko shranjene: lastnik je neposredno vnesel geslo namenskega računa in shranil obrazec. Console prikazuje shranjen komplet preglednih podatkov ter potrdilo shranitve. Izbrano ostaja Da za omejeni dostop; strežnik in angleška navodila so navedeni. Dokaz brez gesla: `app-access-saved.png` v spodnji QA mapi. Normalno prijavo še preverimo pred oddajo.
+- **Javne povezave**: dejanski HTTP pregled 9. oktobra je vrnil `https://jivie.app/` 403, `/privacy/` 404 in `/delete-account/` 404. Spletnega dostopa nismo obšli z izklopom TLS; strani je treba objaviti ter ponovno preveriti pred izjavami o zasebnosti/izbrisu.
+- **Medijska dovoljenja**: pregled Console še kaže zahtevano izjavo zaradi dovoljenj v obstoječem svežnju. Potrebna je že zabeležena odstranitev nepotrebnih širokih dovoljenj v novi kandidatki, ne izmišljen razlog za galerijsko funkcijo.
+- **Varnost podatkov** ostaja osnutek do delujočih strani, dostopa za pregled in preverjanja dejanske nove kandidatke brez starega AI.
+
+Lastnik je nato dovolil uporabo obstoječega **jivie-test.triparna.si** z novim namenskim preglednim računom. Pripravljeni Kanboard obrazec je določal lokalnega uporabnika z vlogo User, brez obstoječega projekta ali skupine, brez e-poštnih obvestil in z angleškim jezikom. Lastnik je neposredno vnesel novo geslo ter shranil račun. Spletni profil potrjuje aktivno lokalno uporabniško vlogo, prazna skupinska članstva in izključeno 2FA. Geslo ni v klepetu, dokumentaciji ali izvorih. To še ni dokaz normalne Native prijave ali končnega Googlovega dostopa.
+
+Angleška navodila in uporabniško ime so pripravljeni v obrazcu Google Play; lastnik je geslo vnesel neposredno in potrdil shranitev. Agent je shranjeno stanje preveril v vidnem povzetku, brez branja gesla ali ponovnega odpiranja njegovega vnosa. To je shranjena izjava, ne potrjen Googlov pregled ali normalna prijava v kandidatki. Javni HTTPS Native `capabilities` na istem testnem strežniku je ponovno vrnil HTTP200, pričakovani `serverId`, record pogodbe [1,2,3] ter finance [1,2]. Različice živega vtičnika ne sklepamo iz spremenjenih lokalnih virov.
+
+**Namenski testni podatki so dejansko pripravljeni.** Ločeni CLI pomočnik zunaj spletnega korena je zahteval nespremenljive PHP izvore commita `de453f0`, FamilyHub0.7.0/schema11, točno testno bazo/strežnik ter samo nov navaden uporabniški račun. Pred izvedbo je bil preizkušen na ločeni MySQL8.4/Kanboard1.2.54 fixture: začetni zapis, ponovitev brez podvajanja, nespremenjen uporabnik2, preklic začasnih sej, odsotnost e-poštnih/push opravil in zavrnitev neznanega obstoječega zapisa brez sprememb baze. Testna infrastruktura je odstranjena. Izvirni pomočnik ima SHA256 `fb8f25e557938ef0afdd31401d9311b0e63118a740dcc085fecb9a8a84509043`; ujemanje prenosa in PHP8.4 lint sta na gostovanju potrjena.
+
+Živa izvedba je prek obstoječih Native storitev ustvarila samo dva lastna namenska prostora, projekt/opravilo, nakupovalni seznam/artikel ter račun in sintetični izdatek 5 EUR. Končni Native pregledi potrdijo seznam samo teh dveh prostorov in lastno članstvo. Ločen bralni pregled potrdi **2 prostora / 4 splošne zapise / 2 finančna zapisa / 0 aktivnih pripravljalnih sej**. Geslo ni bilo uporabljeno ali kopirano za seeding; žeton začasne pripravljalne seje je obstajal samo v pomnilniku in je preklican. Zato ta dokaz **ni** normalna prijava z geslom ali fizični prikaz v končni kandidatki. Ob neprestrezljivem SIGKILL bi bila možna standardna nepreklicana seja do izteka; pri tej dejanski izvedbi je njen preklic potrjen. Pomočnik ostane zaseben, CLI-only in zavrne neznane/spremenjene podatke; ni HTTP poti ali novega javnega API.
+
+Dokazi: `build/qa/google-play-public-continuation/review-user-created.png`, `seed-helper-local-test-evidence.json` in `review-data-live-verified.png`. Namenski prostori imajo izrecno sintetične oznake; to niso vzorčni začetni podatki običajnega uporabnika aplikacije. Googlov komplet podatkov je shranjen; normalno prijavo še preverimo pred končno oddajo.
+
+Osnovni pregledni tok: zagon lokalnega načina brez računa, dodajanje osebnih podatkov, nato povezava v Nastavitvah z namenskim računom in pregled namenskega prostora. Samostojni izbris bi trajno odstranil pregledni račun; za dejanski preizkus izbrisa uporabimo drug namenski testni račun, da stalni dostop za Google ostane ponovljiv. Običajna Native prijava, izolacija prostorov in testni podatki se preverijo ločeno pred končno oddajo. Poverilnic ne izmišljamo in jih ne shranjujemo v javni Git.
+
+Dokazi v ignorirani `build/qa/google-play-public-continuation/`: `iarc-sharing-draft.png`, `iarc-summary-draft.png`, `iarc-pegi-draft.png`. Nova izdaja, izvorne spremembe, oddaja v pregled in javna objava niso izvedene. Spodnja evidenca o prvi pripravi ostane zgodovina.
 
 ## Dejanske spremembe v Console
 

@@ -99,7 +99,9 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         [session.profile.partition, scopeId],
       );
       final pulled = await call(
-        _recordContractVersion >= 3
+        _recordContractVersion >= 4
+            ? 'sync4.pull'
+            : _recordContractVersion >= 3
             ? 'sync3.pull'
             : (_recordContractVersion >= 2 ? 'sync2.pull' : 'sync.pull'),
         {'scopeId': scopeId, 'cursor': rows.single['cursor'], 'limit': 100},

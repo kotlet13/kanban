@@ -58,7 +58,7 @@ void main() {
                 find.textContaining(
                   language == 'sl'
                       ? 'Na telefonu odpri levi meni'
-                      : 'On a phone, open the left menu',
+                      : 'On a phone, use the ☰ menu',
                 ),
                 findsOneWidget,
               );

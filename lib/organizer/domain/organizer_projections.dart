@@ -107,53 +107,72 @@ List<AgendaItem> dailyAgenda(
 List<ReminderPlan> desiredReminderPlans({
   required OrganizerSnapshot personal,
   required CollaborationState shared,
+  Iterable<OrganizerSnapshot>? localSnapshots,
 }) {
   final plans = <ReminderPlan>[
-    ...desiredFinanceReminderPlans(personal: personal, shared: shared),
+    ...desiredFinanceReminderPlans(
+      personal: personal,
+      shared: shared,
+      localSnapshots: localSnapshots,
+    ),
   ];
   final session = shared.session;
-  final matchingWorkspace =
-      personal.workspaceKey == 'local' ||
-      (session != null &&
-          !shared.sessionInvalid &&
-          personal.workspaceKey == 'private:${session.partition}');
-  // Private records are projected once by their server scope below. Their
-  // presentation IDs can differ from remote IDs after an import collision.
-  final privateIds = shared.privateRecordIds.values.toSet();
-  for (final t in personal.tasks.where(
-    (t) =>
-        matchingWorkspace &&
-        !privateIds.contains(t.id) &&
-        !t.isCompleted &&
-        t.dueAt != null,
-  )) {
-    plans.add(
-      ReminderPlan(
-        stableKey: 'personal:task:${t.id}:due',
-        scheduledAt: t.dueAt!.toUtc(),
-        reason: 'task_due',
-        target: NotificationTarget(
-          records: [NotificationRecordTarget(type: 'task', recordId: t.id)],
+  for (final personal in localSnapshots ?? [personal]) {
+    final localId = personal.workspaceKey.startsWith('private:')
+        ? 'local'
+        : personal.workspaceKey;
+    final namespace = localId == 'local' ? 'personal' : 'local:$localId';
+    final matchingWorkspace =
+        !personal.workspaceKey.startsWith('private:') ||
+        (session != null &&
+            shared.localAccessAllowed &&
+            personal.workspaceKey == 'private:${session.partition}');
+    // Private records are projected once by their server scope below. Their
+    // presentation IDs can differ from remote IDs after an import collision.
+    final privateIds = personal.workspaceKey.startsWith('private:')
+        ? shared.privateRecordIds.values.toSet()
+        : <String>{};
+    for (final t in personal.tasks.where(
+      (t) =>
+          matchingWorkspace &&
+          !privateIds.contains(t.id) &&
+          !t.isCompleted &&
+          t.dueAt != null,
+    )) {
+      plans.add(
+        ReminderPlan(
+          stableKey: '$namespace:task:${t.id}:due',
+          scheduledAt: t.dueAt!.toUtc(),
+          reason: 'task_due',
+          target: NotificationTarget(
+            localSpaceId: localId == 'local' ? null : localId,
+            records: [NotificationRecordTarget(type: 'task', recordId: t.id)],
+          ),
         ),
-      ),
-    );
-  }
-  for (final e in personal.events.where(
-    (e) => matchingWorkspace && !privateIds.contains(e.id),
-  )) {
-    plans.add(
-      ReminderPlan(
-        stableKey: 'personal:event:${e.id}:start',
-        scheduledAt: e.startsAt.toUtc(),
-        reason: 'event_start',
-        target: NotificationTarget(
-          records: [NotificationRecordTarget(type: 'event', recordId: e.id)],
+      );
+    }
+    for (final e in personal.events.where(
+      (e) => matchingWorkspace && !privateIds.contains(e.id),
+    )) {
+      plans.add(
+        ReminderPlan(
+          stableKey: '$namespace:event:${e.id}:start',
+          scheduledAt: e.startsAt.toUtc(),
+          reason: 'event_start',
+          target: NotificationTarget(
+            localSpaceId: localId == 'local' ? null : localId,
+            records: [NotificationRecordTarget(type: 'event', recordId: e.id)],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-  if (session == null || shared.sessionInvalid) return List.unmodifiable(plans);
-  for (final scope in shared.scopes.where((s) => !s.revoked && !s.archived)) {
+  if (session == null || !shared.localAccessAllowed) {
+    return List.unmodifiable(plans);
+  }
+  for (final scope in shared.scopes.where(
+    (s) => !s.revoked && !s.archived && !s.blocked,
+  )) {
     final prefs = shared.notificationPreferences[scope.id];
     final data = shared.dataForScope(scope.id);
     NotificationTarget target(String type, String id) => NotificationTarget(

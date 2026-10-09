@@ -92,9 +92,17 @@ void main() {
     'private personal editor closes immediately on account change before workspace refresh',
     (tester) async {
       final personal = WorkspaceController(
-            OrganizerSnapshot(workspaceKey: 'privateA'),
+            OrganizerSnapshot(
+              workspaceKey: 'private:${sharingSession().partition}',
+            ),
           ),
-          shared = SharingUiController();
+          shared = SharingUiController(
+            initial: CollaborationState(
+              session: sharingSession(),
+              scopes: [sharingScope()],
+              privateSync: const PrivateSyncState(scopeId: sharingScopeId),
+            ),
+          );
       await pumpWorkspace(tester, personal, shared);
       await tester.tap(find.text('Create'));
       await tester.pumpAndSettle();
@@ -124,9 +132,17 @@ void main() {
     (tester) async {
       final ownershipRead = Completer<Set<String>>();
       final personal = WorkspaceController(
-        OrganizerSnapshot(workspaceKey: 'privateA'),
+        OrganizerSnapshot(
+          workspaceKey: 'private:${sharingSession().partition}',
+        ),
       )..ownershipRead = ownershipRead.future;
-      final shared = SharingUiController();
+      final shared = SharingUiController(
+        initial: CollaborationState(
+          session: sharingSession(),
+          scopes: [sharingScope()],
+          privateSync: const PrivateSyncState(scopeId: sharingScopeId),
+        ),
+      );
       await pumpWorkspace(tester, personal, shared);
       await tester.tap(find.text('Create'));
       await tester.pump();

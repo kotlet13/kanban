@@ -120,7 +120,7 @@ extension CollaborationNotificationSync on CollaborationRepository {
       _checkEpoch(epoch);
       await _renewLease(p);
       final rows = await database.rows(
-        "SELECT * FROM commands WHERE partition=? AND state='pending' ORDER BY sequence LIMIT 1",
+        "SELECT * FROM commands WHERE partition=? AND state='pending' AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||commands.partition||':'||json_extract(commands.params,'\$.scopeId')) ORDER BY sequence LIMIT 1",
         [p],
       );
       if (rows.isEmpty) return;

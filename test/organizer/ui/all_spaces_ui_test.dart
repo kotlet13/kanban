@@ -508,7 +508,7 @@ void main() {
           if (area == AllSpacesArea.today || area == AllSpacesArea.tasks) {
             expect(find.text('QA skupno opravilo'), findsOneWidget);
             expect(find.text('QA preveri izvajalca'), findsOneWidget);
-            expect(find.textContaining('Lokalno · osebno'), findsWidgets);
+            expect(find.textContaining('Osebno'), findsWidgets);
             expect(find.textContaining(secondScope.name), findsWidgets);
           }
         }
@@ -781,7 +781,7 @@ void main() {
       expect(find.byType(AllSpacesPage), findsOneWidget);
       await tester.tap(picker);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Lokalno · osebno').last);
+      await tester.tap(find.text('Osebno').last);
       await tester.pumpAndSettle();
       expect(find.byType(AllSpacesPage), findsNothing);
       expect(tester.takeException(), isNull);

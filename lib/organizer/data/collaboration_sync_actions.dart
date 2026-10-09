@@ -39,7 +39,7 @@ extension CollaborationSyncActions on CollaborationRepository {
     );
   });
 
-  Future<void> syncNow() async {
+  Future<void> syncNow({bool resumePayments = true}) async {
     if (_syncing || _session == null || _closed) return;
     if (_sessionInvalidReason != null) {
       _lastError = CollaborationException(_sessionInvalidReason!);
@@ -63,9 +63,16 @@ extension CollaborationSyncActions on CollaborationRepository {
       await _syncRemotePushRegistration(session, epoch);
       final reply = await _callSession(session, epoch, 'scopes.list', {
         if (_privateSyncSupported) 'includePersonal': true,
+        if (_scopeAccessChangesSupported) 'includeAccessChanges': true,
         if (_organizationsSupported) 'includeOrganizations': true,
         if (_projectArchivingSupported) 'includeArchived': true,
       });
+      final revokedIds = _scopeAccessChangesSupported
+          ? (reply['revokedScopeIds'] as List).cast<String>().toSet()
+          : <String>{};
+      if (revokedIds.any((id) => !isSharedUuid(id))) {
+        throw const CollaborationException('invalid_response');
+      }
       final scopes = (reply['scopes'] as List)
           .map((r) => SharedScope.fromJson(r as Map<String, dynamic>))
           .toList();
@@ -80,25 +87,26 @@ extension CollaborationSyncActions on CollaborationRepository {
           final scope = SharedScope.fromJson(
             CollaborationRepository._map(row['data']),
           );
-          if (!scopes.any((r) => r.id == scope.id)) {
+          if (revokedIds.contains(scope.id) &&
+              !scopes.any((r) => r.id == scope.id)) {
             await _upsertScope(
               partition,
-              SharedScope(
-                id: scope.id,
-                name: scope.name,
-                kind: scope.kind,
-                role: scope.role,
-                organizationId: scope.organizationId,
-                projectRootId: scope.projectRootId,
-                requiredRecordContractVersion:
-                    scope.requiredRecordContractVersion,
-                revoked: true,
-              ),
+              SharedScope.fromJson({...scope.toJson(), 'revoked': true}),
+            );
+          } else if (!scopes.any((r) => r.id == scope.id) && !scope.revoked) {
+            // A missing row is not proof of revoked membership: a restored or
+            // incomplete server must not silently lock the only local copy.
+            await database.execute(
+              'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+              ['scope_reconciliation:$partition:${scope.id}', 'missing'],
             );
           }
         }
         for (final scope in scopes) {
           await _upsertScope(partition, scope);
+          await database.execute('DELETE FROM local_meta WHERE name=?', [
+            'scope_reconciliation:$partition:${scope.id}',
+          ]);
         }
       });
       if (_recordContractVersion >= 2) {
@@ -116,7 +124,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         _checkEpoch(epoch);
         await _renewLease(partition);
         final pending = await database.rows(
-          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND EXISTS(SELECT 1 FROM scopes s WHERE s.partition=o.partition AND s.id=o.scope_id AND COALESCE(json_extract(s.data,'$.archived'),0)=0) AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
+          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||o.partition||':'||o.scope_id) AND EXISTS(SELECT 1 FROM scopes s WHERE s.partition=o.partition AND s.id=o.scope_id AND COALESCE(json_extract(s.data,'$.archived'),0)=0) AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
           [partition],
         );
         if (pending.isEmpty) break;
@@ -175,8 +183,12 @@ extension CollaborationSyncActions on CollaborationRepository {
             session,
             epoch,
             financePair != null
-                ? 'sync3.pushTaskWithCost'
-                : (_recordContractVersion >= 3
+                ? (_recordContractVersion >= 4
+                      ? 'sync4.pushTaskWithCost'
+                      : 'sync3.pushTaskWithCost')
+                : (_recordContractVersion >= 4
+                      ? 'sync4.push'
+                      : _recordContractVersion >= 3
                       ? 'sync3.push'
                       : (op['wire_version'] == 2 ? 'sync2.push' : 'sync.push')),
             {
@@ -359,7 +371,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             final pulled = await _callSession(
               session,
               epoch,
-              _recordContractVersion >= 3
+              _recordContractVersion >= 4
+                  ? 'sync4.pull'
+                  : _recordContractVersion >= 3
                   ? 'sync3.pull'
                   : (_recordContractVersion >= 2 ? 'sync2.pull' : 'sync.pull'),
               {'scopeId': scope.id, 'cursor': cursor, 'limit': 100},
@@ -429,6 +443,21 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
       }
     }
+    if (resumePayments && epoch == _epoch && _lastError == null) {
+      try {
+        await LinkedPaymentsRepository(
+          database,
+          collaboration: this,
+        ).resumePending();
+      } on CollaborationException catch (error) {
+        if (epoch == _epoch) _lastError = error;
+      } catch (_) {
+        if (epoch == _epoch) {
+          _lastError = const CollaborationException('invalid_response');
+        }
+      }
+      if (epoch == _epoch) await refreshLocal();
+    }
   }
 
   Map<String, dynamic> _canonical(Object? value, {bool personal = false}) {
@@ -462,6 +491,11 @@ extension CollaborationSyncActions on CollaborationRepository {
         'revision': value['revision'],
       };
       switch (type) {
+        case SharedRecordType.garden:
+          if ((value['payload'] as Map)['id'] != value['id']) {
+            throw const CollaborationException('invalid_response');
+          }
+          Garden.fromJson(json);
         case SharedRecordType.householdPerson:
           HouseholdPerson.fromJson(json);
         case SharedRecordType.event:

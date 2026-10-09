@@ -5,6 +5,7 @@ import 'collaboration_provider.dart';
 import 'finance_inbox_provider.dart';
 import 'organizer_provider.dart';
 import 'reminder_snooze_provider.dart';
+import 'notification_local_spaces_provider.dart';
 
 final organizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
   ref,
@@ -18,6 +19,7 @@ final organizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
     personal: personal.isLoading || personal.hasError
         ? null
         : personal.valueOrNull,
+    localSnapshots: ref.watch(notificationLocalSnapshotsProvider).valueOrNull,
     shared: shared.isLoading || shared.hasError
         ? CollaborationState()
         : shared.valueOrNull ?? CollaborationState(),

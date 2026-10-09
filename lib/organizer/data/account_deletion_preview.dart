@@ -23,7 +23,7 @@ Map<String, dynamic> decodeAccountDeletionPreview(
 
   if (wire['serverId'] != profile.serverId ||
       wire['accountId'] != profile.accountId ||
-      !const [1, 2].contains(wire['policyVersion']) ||
+      !const [1, 2, 3].contains(wire['policyVersion']) ||
       wire['canDelete'] is! bool ||
       wire['previewHash'] is! String ||
       !RegExp(r'^[a-f0-9]{64}$').hasMatch(wire['previewHash'] as String)) {
@@ -55,7 +55,7 @@ Map<String, dynamic> decodeAccountDeletionPreview(
   for (final s in rows('sharedScopes')) {
     if (!isSharedUuid(s['id']) ||
         !text(s['name']) ||
-        !(wire['policyVersion'] == 2
+        !((wire['policyVersion'] as int) >= 2
                 ? const ['household', 'project', 'organization']
                 : const ['household', 'project'])
             .contains(s['kind']) ||
@@ -68,7 +68,7 @@ Map<String, dynamic> decodeAccountDeletionPreview(
     if (!isSharedUuid(s['id']) ||
         !ownedIds.add(s['id'] as String) ||
         !text(s['name']) ||
-        !(wire['policyVersion'] == 2
+        !((wire['policyVersion'] as int) >= 2
                 ? const ['household', 'project', 'organization']
                 : const ['household', 'project'])
             .contains(s['kind']) ||
@@ -93,13 +93,14 @@ Map<String, dynamic> decodeAccountDeletionPreview(
     if (!isSharedUuid(r['scopeId']) ||
         !isSharedUuid(r['recordId']) ||
         !resolutionIds.add('${r['scopeId']}:${r['recordId']}') ||
-        !(wire['policyVersion'] == 2
-                ? const [
+        !((wire['policyVersion'] as int) >= 2
+                ? [
                     'shoppingList',
                     'financeAccount',
                     'householdPerson',
                     'organizationProjectLink',
                     'project',
+                    if (wire['policyVersion'] == 3) 'financeEntry',
                   ]
                 : const ['shoppingList', 'financeAccount'])
             .contains(r['type']) ||
@@ -120,6 +121,24 @@ Map<String, dynamic> decodeAccountDeletionPreview(
               (r['openingBalanceMinor'] is! int ||
                   (r['openingBalanceMinor'] as int).abs() > 9000000000000)) ||
           (wire['policyVersion'] == 1 && r['openingBalanceMinor'] == null)) {
+        invalid();
+      }
+    }
+  }
+  if (wire['policyVersion'] == 3) {
+    for (final fact in rows('linkedFinancialFacts')) {
+      if ((fact['scopeId'] != null && !isSharedUuid(fact['scopeId'])) ||
+          fact['reason'] != 'retained_shared_financial_fact' ||
+          [
+            'eventsRetainedIfScopeKept',
+            'eventsDeletedIfScopeDeleted',
+            'refundLegs',
+          ].any(
+            (key) =>
+                fact[key] is! int ||
+                (fact[key] as int) < 0 ||
+                (fact[key] as int) > 9000000000000,
+          )) {
         invalid();
       }
     }

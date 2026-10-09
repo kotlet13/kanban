@@ -3,6 +3,7 @@ part of 'collaboration_repository.dart';
 /// Authentication, secure session lifecycle and explicit membership actions.
 extension CollaborationAccountActions on CollaborationRepository {
   Future<void> _loadCapabilities(String partition) async {
+    _scopeAccessChangesSupported = false;
     _organizationsSupported = false;
     _householdPeopleSupported = false;
     _projectArchivingSupported = false;
@@ -45,17 +46,23 @@ extension CollaborationAccountActions on CollaborationRepository {
         : 1;
     _accountDeletionPolicyVersion =
         (caps['accountDeletionPolicyVersions'] is List &&
-            (caps['accountDeletionPolicyVersions'] as List).contains(2))
+            (caps['accountDeletionPolicyVersions'] as List).contains(3))
+        ? 3
+        : (caps['accountDeletionPolicyVersions'] is List &&
+              (caps['accountDeletionPolicyVersions'] as List).contains(2))
         ? 2
         : 1;
     final features = caps['features'] as Map<String, dynamic>;
-    _recordContractVersion = versions is List && versions.contains(3)
+    _recordContractVersion = versions is List && versions.contains(4)
+        ? 4
+        : versions is List && versions.contains(3)
         ? 3
         : (versions is List && versions.contains(2) ? 2 : 1);
     _privateSyncSupported =
         features['privateSync'] == true &&
         features['personalFinanceEntry'] == true;
     _sessionRenewalSupported = features['sessionRenewal'] == true;
+    _scopeAccessChangesSupported = features['scopeAccessChanges'] == true;
     _organizationsSupported =
         features['organizations'] == true && _recordContractVersion >= 3;
     _householdPeopleSupported =
@@ -82,6 +89,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     );
     _checkEpoch(epoch);
     if (caps['serverId'] != session.profile.serverId) {
+      await _invalidateDeviceSession(session, epoch, 'server_identity_changed');
       throw const CollaborationException('server_identity_changed');
     }
     if (caps['api'] != 'familyhub_native' ||
@@ -163,6 +171,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _sessionInvalidReason = null;
     _pushStateCheckedAt = null;
     _remotePushState = const RemotePushRegistrationState();
+    _scopeAccessChangesSupported = false;
     _organizationsSupported = false;
     _householdPeopleSupported = false;
     _projectArchivingSupported = false;
@@ -316,6 +325,7 @@ extension CollaborationAccountActions on CollaborationRepository {
       params = {
         ...params,
         if (_privateSyncSupported) 'includePersonal': true,
+        if (_scopeAccessChangesSupported) 'includeAccessChanges': true,
         if (_organizationsSupported) 'includeOrganizations': true,
         if (_projectArchivingSupported) 'includeArchived': true,
       };
@@ -332,6 +342,21 @@ extension CollaborationAccountActions on CollaborationRepository {
       };
     }
     Map<String, dynamic> reply;
+    if (operation.startsWith('finance.') ||
+        operation.startsWith('finance2.') ||
+        operation == 'sync3.pushTaskWithCost' ||
+        operation == 'sync4.pushTaskWithCost') {
+      final cached = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['capabilities:${session.profile.partition}'],
+      );
+      if (cached.isNotEmpty &&
+          (CollaborationRepository._map(cached.single['value'])['features']
+                  as Map?)?['linkedPayments'] ==
+              true) {
+        params = {...params, 'linkedPaymentsAware': true};
+      }
+    }
     try {
       reply = await transport.call(
         serverUrl: session.profile.serverUrl,
@@ -377,7 +402,8 @@ extension CollaborationAccountActions on CollaborationRepository {
   ) async {
     _checkEpoch(epoch);
     _sessionInvalidReason = reason;
-    database.activatePersonal(null);
+    // Expiry preserves local content; a confirmed device revocation still closes it.
+    if (reason == 'device_revoked') database.activatePersonal(null);
     _remotePushState = RemotePushRegistrationState(
       identity: RemotePushIdentity.fromSession(session.profile),
       status: RemotePushRegistrationStatus.blocked,
@@ -454,6 +480,8 @@ extension CollaborationAccountActions on CollaborationRepository {
       'kind': kind.name,
       'name': name,
       if (organizationId != null) 'organizationId': organizationId,
+      if (kind == SharedScopeKind.organization && _scopeAccessChangesSupported)
+        'accessPolicyVersion': 2,
       'requestId': requestId ?? newSharedId(),
     });
     final scope = SharedScope.fromJson(reply['scope'] as Map<String, dynamic>);

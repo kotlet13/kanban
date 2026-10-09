@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'organizer_models.dart';
+import 'garden_models.dart';
 export 'household_person.dart';
 import 'shared_event.dart';
 import 'shared_finance_models.dart';
@@ -11,6 +12,7 @@ export 'shared_finance_models.dart';
 export 'notification_models.dart';
 export 'remote_push_models.dart';
 export 'private_sync_models.dart';
+export 'organization_access_models.dart';
 import 'private_sync_models.dart';
 
 enum SharedRole { owner, member, viewer }
@@ -31,6 +33,7 @@ class SpaceSelection {
 }
 
 enum SharedRecordType {
+  garden,
   project,
   task,
   shoppingList,
@@ -102,6 +105,12 @@ class SharedScope {
     this.organizationId,
     this.projectRootId,
     this.requiredRecordContractVersion = 1,
+    this.accessPolicyVersion = 1,
+    this.accessRevision = 0,
+    this.organizationLeader = false,
+    this.accessSource = 'direct',
+    this.address,
+    this.metadataRevision = 0,
     this.sequence = 0,
     this.archived = false,
     this.revoked = false,
@@ -112,6 +121,11 @@ class SharedScope {
   final SharedScopeKind kind;
   final String? organizationId, projectRootId;
   final int requiredRecordContractVersion, sequence;
+  final int accessPolicyVersion, accessRevision;
+  final bool organizationLeader;
+  final String accessSource;
+  final String? address;
+  final int metadataRevision;
   final SharedRole role;
   final bool archived;
   final bool revoked;
@@ -126,6 +140,12 @@ class SharedScope {
     'organizationId': organizationId,
     'projectRootId': projectRootId,
     'requiredRecordContractVersion': requiredRecordContractVersion,
+    'accessPolicyVersion': accessPolicyVersion,
+    'accessRevision': accessRevision,
+    'organizationLeader': organizationLeader,
+    'accessSource': accessSource,
+    'address': address,
+    'metadataRevision': metadataRevision,
     'sequence': sequence,
     'archived': archived,
     'role': role.name,
@@ -142,6 +162,20 @@ class SharedScope {
         ? json['requiredRecordContractVersion'] as int
         : 1,
     sequence: json['sequence'] is int ? json['sequence'] as int : 0,
+    accessPolicyVersion: json['accessPolicyVersion'] is int
+        ? json['accessPolicyVersion'] as int
+        : 1,
+    accessRevision: json['accessRevision'] is int
+        ? json['accessRevision'] as int
+        : 0,
+    organizationLeader: json['organizationLeader'] == true,
+    accessSource: json['accessSource'] is String
+        ? json['accessSource'] as String
+        : 'direct',
+    address: json['address'] as String?,
+    metadataRevision: json['metadataRevision'] is int
+        ? json['metadataRevision'] as int
+        : 0,
     archived: json['archived'] == true,
     role: SharedRole.values.byName(readString(json, 'role')),
     revoked: json['revoked'] == true,
@@ -157,6 +191,7 @@ class SharedMember {
     required this.displayName,
     required this.role,
     required this.active,
+    this.organizationLeader = false,
   });
   final int userId;
   final String accountId;
@@ -164,6 +199,7 @@ class SharedMember {
   final String displayName;
   final SharedRole role;
   final bool active;
+  final bool organizationLeader;
   Map<String, Object?> toJson() => {
     'userId': userId,
     'accountId': accountId,
@@ -171,6 +207,7 @@ class SharedMember {
     'displayName': displayName,
     'role': role.name,
     'active': active,
+    'organizationLeader': organizationLeader,
   };
   factory SharedMember.fromJson(Map<String, dynamic> json) => SharedMember(
     userId: readInt(json, 'userId'),
@@ -179,6 +216,7 @@ class SharedMember {
     displayName: readString(json, 'displayName'),
     role: SharedRole.values.byName(readString(json, 'role')),
     active: readBool(json, 'active'),
+    organizationLeader: json['organizationLeader'] == true,
   );
 }
 
@@ -277,6 +315,7 @@ class SharedConflict {
 
 class SharedScopeData {
   SharedScopeData({
+    Iterable<Garden> gardens = const [],
     Iterable<FinanceRecurrenceRule> financeRecurrenceRules = const [],
     Iterable<HouseholdPerson> people = const [],
     Iterable<SharedEvent> events = const [],
@@ -288,7 +327,8 @@ class SharedScopeData {
     Iterable<LocalTask> tasks = const [],
     Iterable<LocalShoppingList> shoppingLists = const [],
     Iterable<LocalShoppingItem> shoppingItems = const [],
-  }) : financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
+  }) : gardens = List.unmodifiable(gardens),
+       financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
        people = List.unmodifiable(people),
        events = List.unmodifiable(events),
        financeAccounts = List.unmodifiable(financeAccounts),
@@ -299,6 +339,7 @@ class SharedScopeData {
        tasks = List.unmodifiable(tasks),
        shoppingLists = List.unmodifiable(shoppingLists),
        shoppingItems = List.unmodifiable(shoppingItems);
+  final List<Garden> gardens;
   final List<FinanceRecurrenceRule> financeRecurrenceRules;
   final List<HouseholdPerson> people;
   final List<SharedEvent> events;
@@ -319,6 +360,7 @@ class CollaborationState {
     this.allSpacesSelected = false,
     this.pushProjectId,
     this.sessionInvalid = false,
+    this.localAccessAllowed = true,
     this.sessionRenewalSupported = false,
     this.organizationsSupported = false,
     this.householdPeopleSupported = false,
@@ -393,6 +435,10 @@ class CollaborationState {
   final RemotePushRegistrationState remotePushRegistration;
   final String? pushProjectId;
   final bool sessionInvalid;
+
+  /// Expired authentication preserves downloaded content; confirmed device
+  /// revocation and account deletion do not. Scope ACL remains checked separately.
+  final bool localAccessAllowed;
   final bool sessionRenewalSupported;
   final bool organizationsSupported,
       householdPeopleSupported,

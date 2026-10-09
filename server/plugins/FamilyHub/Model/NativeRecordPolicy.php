@@ -6,6 +6,7 @@ class NativeRecordPolicy extends NativeDatabase
 {
     public function validate($type, $payload, $scopeId, $current, $version)
     {
+        if ($type==='garden') { if ($version!==4) { throw new NativeError('client_upgrade_required',409); }return (new NativeGardenPolicy($this->container))->validate($payload,$scopeId,$current); }
         $personal = ($this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scopeId])['kind'] ?? '') === 'personal';
         if (!is_array($payload) || array_is_list($payload) || strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) > ($personal ? 524288 : 8192)) { throw new NativeError('validation_error'); }
         $specific = match ($type) {
@@ -20,9 +21,9 @@ class NativeRecordPolicy extends NativeDatabase
         if ($version >= 2 && in_array($type, ['project', 'task'], true)) {
             $specific = array_merge($specific, ['startAt', 'endAt'], $type === 'task' ? ['assigneeAccountIds'] : []);
         }
-        if ($version === 3 && $type === 'project') { $specific = array_merge($specific, ['phases','availabilityMinutes','availabilityPeriod']); }
-        if ($version === 3 && $type === 'task') { $specific = array_merge($specific, ['phaseId','estimateMinutes','availabilityMinutes','availabilityPeriod','timer','assigneePersonId','subjectPersonIds']); }
-        if ($type === 'householdPerson' && $version !== 3) { throw new NativeError('client_upgrade_required',409); }
+        if ($version >= 3 && $type === 'project') { $specific = array_merge($specific, ['phases','availabilityMinutes','availabilityPeriod']); }
+        if ($version >= 3 && $type === 'task') { $specific = array_merge($specific, ['phaseId','estimateMinutes','availabilityMinutes','availabilityPeriod','timer','assigneePersonId','subjectPersonIds']); }
+        if ($type === 'householdPerson' && $version < 3) { throw new NativeError('client_upgrade_required',409); }
         $this->fields($payload, array_merge($specific, ['createdAt', 'updatedAt']));
         $this->domainText($payload[$type === 'householdPerson' ? 'name' : 'title'], 300, 500, $personal); $this->date($payload['createdAt']); $this->date($payload['updatedAt']);
         if ($current && new \DateTimeImmutable(json_decode($current['payload'], true, 32, JSON_THROW_ON_ERROR)['createdAt']) != new \DateTimeImmutable($payload['createdAt'])) { throw new NativeError('created_at_immutable'); }
@@ -30,7 +31,7 @@ class NativeRecordPolicy extends NativeDatabase
             $this->domainText($payload['notes'],4096,50000,$personal,true);
             if (!is_bool($payload['archived'])) { throw new NativeError('validation_error'); }
         }
-        if ($version === 3 && in_array($type,['project','task'],true)) { $this->planning($type,$payload,$scopeId,$current); }
+        if ($version >= 3 && in_array($type,['project','task'],true)) { $this->planning($type,$payload,$scopeId,$current); }
         if ($type === 'project') {
             $this->domainText($payload['description'], 4096, 50000, $personal, true);
             if (!in_array($payload['area'], ['personal', 'home'], true)) { throw new NativeError('validation_error'); }
@@ -176,7 +177,7 @@ class NativeRecordPolicy extends NativeDatabase
             $payload += ['startAt' => null, 'endAt' => null];
             if ($row['type'] === 'task') { $payload += ['assigneeAccountIds' => []]; }
         }
-        if ($version === 3 && $payload !== null && in_array($row['type'],['project','task'],true)) {
+        if ($version >= 3 && $payload !== null && in_array($row['type'],['project','task'],true)) {
             $payload += ['availabilityMinutes'=>null,'availabilityPeriod'=>null];
             if ($row['type']==='project') { $payload += ['phases'=>[]]; }
             else { $payload += ['phaseId'=>null,'estimateMinutes'=>null,'timer'=>['elapsedSeconds'=>0,'runningSince'=>null,'runId'=>null],'assigneePersonId'=>null,'subjectPersonIds'=>[]]; }

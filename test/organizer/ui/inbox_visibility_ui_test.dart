@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,6 +59,7 @@ CollaborationState shared({
 }) => CollaborationState(
   session: signedIn ? sharingSession() : null,
   sessionInvalid: invalid,
+  localAccessAllowed: !invalid,
   selectedSpaceId: selected,
   inboxSupported: true,
   scopes: [
@@ -209,7 +211,7 @@ void main() {
     },
   );
   test(
-    'revoked blocked archived invalid session and disabled category cannot leave badge',
+    'revoked blocked archived confirmed invalid identity and disabled category cannot leave badge',
     () {
       for (final state in [
         shared(revoked: true),
@@ -363,6 +365,9 @@ void main() {
       final controller = InboxController();
       final container = ProviderContainer(
         overrides: [
+          notificationLocalSnapshotsProvider.overrideWith(
+            (ref) async => [await ref.watch(organizerProvider.future)],
+          ),
           organizerProvider.overrideWith(EmptyPersonal.new),
           collaborationProvider.overrideWith(() => controller),
           effectiveReminderPlansProvider.overrideWith((ref) async => []),
@@ -415,6 +420,9 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
+          notificationLocalSnapshotsProvider.overrideWith(
+            (ref) async => [await ref.watch(organizerProvider.future)],
+          ),
           organizerProvider.overrideWith(() => personal),
           collaborationProvider.overrideWith(
             () => SharingUiController(initial: CollaborationState()),
@@ -450,6 +458,9 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
+          notificationLocalSnapshotsProvider.overrideWith(
+            (ref) async => [await ref.watch(organizerProvider.future)],
+          ),
           organizerInboxProjectionProvider.overrideWith(
             (ref) => OrganizerInboxProjection(finance: [plan]),
           ),
@@ -487,6 +498,9 @@ void main() {
       }
       final container = ProviderContainer(
         overrides: [
+          notificationLocalSnapshotsProvider.overrideWith(
+            (ref) async => [await ref.watch(organizerProvider.future)],
+          ),
           collaborationProvider.overrideWith(() => controller),
           financeInboxStoreProvider.overrideWith((ref) async => store),
           organizerInboxProjectionProvider.overrideWith((ref) {
@@ -543,6 +557,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            notificationLocalSnapshotsProvider.overrideWith(
+              (ref) async => [await ref.watch(organizerProvider.future)],
+            ),
             organizerProvider.overrideWith(EmptyPersonal.new),
             collaborationProvider.overrideWith(() => controller),
             effectiveReminderPlansProvider.overrideWith((ref) async => []),

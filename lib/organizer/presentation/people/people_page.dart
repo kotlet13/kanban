@@ -8,6 +8,7 @@ import '../../state/collaboration_provider.dart';
 import '../shared/sharing_forms.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
+import '../personal_workspace_boundary.dart';
 
 class OrganizerPeoplePage extends ConsumerWidget {
   const OrganizerPeoplePage({
@@ -30,6 +31,10 @@ class OrganizerPeoplePage extends ConsumerWidget {
   ]) async {
     final l = context.l10n;
     final guard = scope == null ? null : SharingSessionGuard(context, ref);
+    final workspaceKey = ref.read(organizerProvider).valueOrNull?.workspaceKey;
+    final localGuard = scope == null && workspaceKey != null
+        ? PersonalWorkspaceGuard(context, ref, workspaceKey)
+        : null;
     await showSharingForm(
       context,
       title: person == null ? l.peopleAdd : l.peopleTitle,
@@ -50,16 +55,33 @@ class OrganizerPeoplePage extends ConsumerWidget {
       submitLabel: l.save,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard == null
-          ? null
+          ? localGuard?.wrap
           : (form) => SharingSessionBoundary(guard: guard, child: form),
       onSubmit: (values) async {
         final name = values['name']!.trim(), notes = values['notes'] ?? '';
         if (scope == null) {
+          if (localGuard?.isCurrent != true) {
+            throw const OrganizerConflictException(
+              'Personal workspace changed',
+            );
+          }
           final repo = await ref.read(organizerRepositoryProvider.future);
+          if (localGuard?.isCurrent != true) {
+            throw const OrganizerConflictException(
+              'Personal workspace changed',
+            );
+          }
           if (person == null) {
-            await repo.createPerson(name: name, notes: notes);
+            await repo.createPerson(
+              name: name,
+              notes: notes,
+              expectedWorkspaceKey: workspaceKey,
+            );
           } else {
-            await repo.updatePerson(person.copyWith(name: name, notes: notes));
+            await repo.updatePerson(
+              person.copyWith(name: name, notes: notes),
+              expectedWorkspaceKey: workspaceKey,
+            );
           }
         } else {
           if (person == null) {
@@ -84,10 +106,15 @@ class OrganizerPeoplePage extends ConsumerWidget {
     WidgetRef ref,
     HouseholdPerson person,
   ) async {
+    final workspaceKey = ref.read(organizerProvider).valueOrNull?.workspaceKey;
     try {
       if (scope == null) {
         final repo = await ref.read(organizerRepositoryProvider.future);
-        await repo.archivePerson(person, archived: !person.archived);
+        await repo.archivePerson(
+          person,
+          archived: !person.archived,
+          expectedWorkspaceKey: workspaceKey,
+        );
       } else {
         await ref
             .read(collaborationProvider.notifier)

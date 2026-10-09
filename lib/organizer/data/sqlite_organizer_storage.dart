@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import '../domain/garden_models.dart';
+import '../domain/local_space_models.dart';
 import 'garden_storage.dart';
 import '../domain/organizer_models.dart';
 import '../domain/shared_payload_validation.dart';
@@ -19,14 +20,16 @@ class SqliteOrganizerStorage
         ObservableOrganizerStorage,
         OrganizerOwnershipStorage,
         PersonalJsonBackupStorage {
-  SqliteOrganizerStorage(this.database, {this.legacyFactory});
+  SqliteOrganizerStorage(this.database, {this.legacyFactory, this.workspaceId});
+  final String? workspaceId;
+  String get _workspaceId => workspaceId ?? database.selectedLocalWorkspaceId;
   final CollaborationDatabase database;
   final Future<OrganizerStorage> Function()? legacyFactory;
   static const localWorkspace = 'local';
   @override
   Future<Set<String>> deviceLocalRecordIds() async => (await database.rows(
     'SELECT id FROM personal_records WHERE workspace=?',
-    [localWorkspace],
+    [_workspaceId],
   )).map((row) => row['id'] as String).toSet();
   @override
   Stream<void> get changes => database.personalChanges.stream;
@@ -42,6 +45,18 @@ class SqliteOrganizerStorage
   }
 
   Future<void> _initialize() async {
+    if (!database.localSelectionLoaded) {
+      final selected = await database.rows(
+        "SELECT value FROM local_meta WHERE name='selected_local_space'",
+      );
+      final id = selected.firstOrNull?['value'] as String? ?? localWorkspace;
+      final exists = await database.rows(
+        'SELECT id FROM local_spaces WHERE id=?',
+        [id],
+      );
+      database.selectedLocalWorkspaceId = exists.isEmpty ? localWorkspace : id;
+      database.localSelectionLoaded = true;
+    }
     if ((await database.rows('SELECT id FROM personal_workspaces WHERE id=?', [
       localWorkspace,
     ])).isNotEmpty) {
@@ -83,6 +98,7 @@ class SqliteOrganizerStorage
   }
 
   Future<Map<String, dynamic>?> activeBinding() async {
+    if (_workspaceId != localWorkspace) return null;
     final profile = database.personalProfile;
     if (profile == null) return null;
     final rows = await database.rows(
@@ -92,17 +108,41 @@ class SqliteOrganizerStorage
     return rows.firstOrNull;
   }
 
-  Future<OrganizerSnapshot> localSnapshot() async {
+  Future<OrganizerSnapshot> localSnapshot({
+    String workspace = localWorkspace,
+  }) async {
     final revision = await database.rows(
       'SELECT revision FROM personal_workspaces WHERE id=?',
-      [localWorkspace],
+      [workspace],
     );
     return snapshotFromRows(
       await database.rows('SELECT * FROM personal_records WHERE workspace=?', [
-        localWorkspace,
+        workspace,
       ]),
       revision: revision.firstOrNull?['revision'] as int? ?? 0,
     );
+  }
+
+  /// Default Personal remains authoritative regardless of the selected editor.
+  Future<OrganizerSnapshot> defaultPersonalSnapshot() async {
+    final local = await localSnapshot();
+    final profile = database.personalProfile;
+    if (profile == null) return local.copyWith(workspaceKey: localWorkspace);
+    final bindings = await database.rows(
+      'SELECT * FROM personal_workspaces WHERE id=? AND partition=? AND enabled=1',
+      ['private:${profile.partition}', profile.partition],
+    );
+    if (bindings.isEmpty) return local.copyWith(workspaceKey: localWorkspace);
+    try {
+      final private = await privateSnapshot(bindings.single);
+      return mergePersonalSnapshots(
+        local,
+        private,
+        revision: private.revision,
+      ).copyWith(workspaceKey: bindings.single['id'] as String);
+    } on PrivateAccessUnavailable {
+      return local.copyWith(workspaceKey: localWorkspace);
+    }
   }
 
   @override
@@ -115,15 +155,31 @@ class SqliteOrganizerStorage
       final revision = generation.isEmpty
           ? 0
           : int.parse(generation.single['value'] as String);
-      final local = await localSnapshot(), binding = await activeBinding();
+      final catalog = await database.rows(
+        'SELECT data FROM local_spaces WHERE id=?',
+        [_workspaceId],
+      );
+      if (catalog.isNotEmpty &&
+          LocalSpace.fromJson(
+                jsonDecode(catalog.single['data'] as String)
+                    as Map<String, dynamic>,
+              ).binding !=
+              null) {
+        return OrganizerSnapshot(
+          revision: revision,
+          workspaceKey: _workspaceId,
+        );
+      }
+      final local = await localSnapshot(workspace: _workspaceId),
+          binding = await activeBinding();
       if (binding == null) {
-        return local.copyWith(revision: revision, workspaceKey: 'local');
+        return local.copyWith(revision: revision, workspaceKey: _workspaceId);
       }
       OrganizerSnapshot private;
       try {
         private = await privateSnapshot(binding);
       } on PrivateAccessUnavailable {
-        return local.copyWith(revision: revision, workspaceKey: 'local');
+        return local.copyWith(revision: revision, workspaceKey: _workspaceId);
       }
       return mergePersonalSnapshots(
         local,
@@ -264,7 +320,7 @@ class SqliteOrganizerStorage
     snapshot.validate();
     await database.transaction(() async {
       final binding = await activeBinding(),
-          local = await localSnapshot(),
+          local = await localSnapshot(workspace: _workspaceId),
           previous = await read();
       if (snapshot.revision != previous.revision + 1 ||
           snapshot.workspaceKey != previous.workspaceKey) {
@@ -272,9 +328,87 @@ class SqliteOrganizerStorage
           'Personal workspace changed; reload before writing',
         );
       }
+      final catalog = await database.rows(
+        'SELECT data FROM local_spaces WHERE id=?',
+        [_workspaceId],
+      );
+      if (catalog.isNotEmpty &&
+          LocalSpace.fromJson(
+                jsonDecode(catalog.single['data'] as String)
+                    as Map<String, dynamic>,
+              ).binding !=
+              null) {
+        throw const OrganizerConflictException('Use the linked space to edit');
+      }
       final identity = database.personalIdentityGeneration;
       final old = {for (final r in snapshotRows(previous)) r.id: r},
           next = {for (final r in snapshotRows(snapshot)) r.id: r};
+      final lockedAccounts = <String>{};
+      for (final row in await database.rows(
+        'SELECT data FROM linked_payment_events WHERE space_key=?',
+        ['local:$_workspaceId'],
+      )) {
+        final event = jsonDecode(row['data'] as String) as Map<String, dynamic>;
+        final sourceId = event['sourceEntryId'];
+        final sourceAccount = old[sourceId]?.json['ledgerAccountId'];
+        if (sourceAccount is String) lockedAccounts.add(sourceAccount);
+        if (old[sourceId] != null &&
+            (next[sourceId] == null ||
+                [
+                  'amountMinor',
+                  'currency',
+                  'kind',
+                  'status',
+                  'paidAt',
+                  'occurredAt',
+                  'ledgerAccountId',
+                  'taskId',
+                  'projectId',
+                  'payerPersonId',
+                  'recipientPersonId',
+                  'recurrenceRuleId',
+                  'occurrenceKey',
+                ].any(
+                  (field) =>
+                      old[sourceId]!.json[field] != next[sourceId]!.json[field],
+                ))) {
+          throw const OrganizerConflictException(
+            'linked_payment_source_locked',
+          );
+        }
+      }
+      for (final table in [
+        'linked_payment_projections',
+        'linked_payment_cash',
+      ]) {
+        for (final row in await database.rows(
+          'SELECT data FROM $table WHERE space_key=?',
+          ['local:$_workspaceId'],
+        )) {
+          final json =
+              jsonDecode(row['data'] as String) as Map<String, dynamic>;
+          final account =
+              json[table == 'linked_payment_cash'
+                  ? 'accountId'
+                  : 'privateAccountId'];
+          if (account is String) lockedAccounts.add(account);
+        }
+      }
+      for (final id in lockedAccounts) {
+        final before = old[id]?.json, after = next[id]?.json;
+        if (before != null &&
+            (after == null ||
+                [
+                  'currency',
+                  'archived',
+                  'openingBalanceMinor',
+                  'openingBalanceAt',
+                ].any((field) => before[field] != after[field]))) {
+          throw const OrganizerConflictException(
+            'linked_payment_account_locked',
+          );
+        }
+      }
       final localIds = local.recordIds;
       // A record inherits the location of its existing local parents. Compute
       // the closure before allocating private identities or ordering writes.
@@ -395,7 +529,7 @@ class SqliteOrganizerStorage
             (b?.type ?? a?.type) == 'reminder') {
           final workspace = (binding != null && !localIds.contains(id))
               ? binding['id'] as String
-              : localWorkspace;
+              : _workspaceId;
           if (b == null) {
             if (a != null && a.type != 'reminder') {
               await savePersonalRevisionFloor(
@@ -464,7 +598,7 @@ class SqliteOrganizerStorage
   Future<String> exportPersonalJsonBackup() => database.transaction(
     () async => OrganizerBackupCodec.encode(
       await read(),
-      gardens: await GardenStorage(database).read(),
+      gardens: await GardenStorage(database).readAll(),
     ),
   );
 
@@ -479,7 +613,7 @@ class SqliteOrganizerStorage
         revision: current.revision + 1,
       ).copyWith(workspaceKey: current.workspaceKey);
       final gardenStorage = GardenStorage(database),
-          gardens = await gardenStorage.read();
+          gardens = await gardenStorage.readAll();
       final candidateGardens = document.gardens == null
           ? null
           : mergeGardenSnapshots(gardens, document.gardens!);
@@ -490,6 +624,7 @@ class SqliteOrganizerStorage
         await gardenStorage.write(
           candidateGardens,
           expectedRevision: gardens.revision,
+          allSpaces: true,
         );
       }
     });

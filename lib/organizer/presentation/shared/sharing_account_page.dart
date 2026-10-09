@@ -17,6 +17,7 @@ import 'sharing_workspace.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 import '../onboarding/getting_started.dart';
 import '../onboarding/private_sync_panel.dart';
+import '../onboarding/local_space_connection_panel.dart';
 import '../onboarding/account_email_card.dart';
 import '../onboarding/account_deletion_panel.dart';
 
@@ -59,27 +60,13 @@ class SharingAccountPage extends ConsumerStatefulWidget {
 class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   bool _authActive = false;
   bool _busy = false;
-  late SharingView _view = widget.initialView;
-
   bool get _currentAuth => widget.authActive ?? _authActive;
-  SharingView get _currentView =>
-      widget.onViewChanged == null ? _view : widget.initialView;
 
   void _selectAuth(bool active) {
     if (widget.onAuthChanged != null) {
       widget.onAuthChanged!(active);
     } else {
       setState(() => _authActive = active);
-    }
-  }
-
-  void _selectView(SharingView view) {
-    if (widget.onViewChanged != null) {
-      widget.onViewChanged!(view);
-    } else {
-      setState(() {
-        _view = view;
-      });
     }
   }
 
@@ -298,6 +285,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                   ),
                 const SizedBox(height: 20),
                 PrivateSyncPanel(onConnect: () => _selectAuth(true)),
+                const LocalSpaceConnectionPanel(),
                 const SizedBox(height: 20),
                 AccountEmailCard(
                   key: ValueKey(
@@ -327,110 +315,14 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     child: Text(sharingErrorMessage(context, backgroundError)),
                   ),
                 const SizedBox(height: 20),
-                if (selected == null) ...[
-                  SharingStatus(
-                    state: state,
-                    onSync: () => _run(
-                      () => ref.read(collaborationProvider.notifier).syncNow(),
-                    ),
-                    onConflicts: () => showSharingConflicts(context, ref),
-                    onExport: () => exportSharingDrafts(context, ref),
+                SharingStatus(
+                  state: state,
+                  onSync: () => _run(
+                    () => ref.read(collaborationProvider.notifier).syncNow(),
                   ),
-                  const SizedBox(height: 24),
-                  OrganizerHeading(
-                    title: l.sharingSpaces,
-                    subtitle: l.sharingScopeDescription,
-                    action: FilledButton.icon(
-                      onPressed: _busy ? null : _createScope,
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(l.sharingCreateSpace),
-                    ),
-                  ),
-                  if (!state.scopes.any(
-                    (scope) => scope.kind != SharedScopeKind.personal,
-                  ))
-                    Text(l.sharingNoSpaces),
-                  for (final scope in state.scopes.where(
-                    (scope) => scope.kind != SharedScopeKind.personal,
-                  ))
-                    Card(
-                      child: ListTile(
-                        leading: Icon(
-                          scope.kind == SharedScopeKind.household
-                              ? Icons.home_outlined
-                              : Icons.folder_outlined,
-                        ),
-                        title: Text(scope.name),
-                        subtitle: Text(
-                          '${sharingScopeKindLabel(context, scope.kind)} · ${scope.revoked ? l.sharingRevoked : sharingRoleLabel(context, scope.role)}',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => widget.onScopeSelected(scope.id),
-                      ),
-                    ),
-                ] else ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => widget.onScopeSelected(null),
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: Text(l.sharingSpaces),
-                    ),
-                  ),
-                  Text(
-                    selected.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Text(
-                    '${sharingScopeKindLabel(context, selected.kind)} · ${sharingRoleLabel(context, selected.role)}',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<SharingView>(
-                          key: ValueKey('shared-view-$_currentView'),
-                          initialValue: _currentView,
-                          isExpanded: true,
-                          decoration: InputDecoration(labelText: l.sharingView),
-                          items: [
-                            for (final view in SharingView.values)
-                              DropdownMenuItem(
-                                value: view,
-                                child: Text(switch (view) {
-                                  SharingView.shopping => l.organizerShopping,
-                                  SharingView.projects => l.organizerProjects,
-                                  SharingView.tasks => l.organizerTasks,
-                                  SharingView.agenda => l.planningSharedToday,
-                                  SharingView.timeline => l.planningTimeline,
-                                  SharingView.finances => l.organizerFinances,
-                                  SharingView.people => l.peopleTitle,
-                                }, overflow: TextOverflow.ellipsis),
-                              ),
-                          ],
-                          onChanged: (view) {
-                            if (view != null) {
-                              _selectView(view);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SharingWorkspace(
-                    view: _currentView,
-                    showScopePicker: false,
-                    selectedScopeId: selected.id,
-                    onScopeSelected: (id) => widget.onScopeSelected(id),
-                    onConnect: () => _selectAuth(true),
-                    selectedListId: widget.selectedListId,
-                    selectedProjectId: widget.selectedProjectId,
-                    onListSelected: widget.onListSelected,
-                    onProjectSelected: widget.onProjectSelected,
-                    onMembers: widget.onSpaceSettings,
-                  ),
-                ],
+                  onConflicts: () => showSharingConflicts(context, ref),
+                  onExport: () => exportSharingDrafts(context, ref),
+                ),
               ],
             );
           },

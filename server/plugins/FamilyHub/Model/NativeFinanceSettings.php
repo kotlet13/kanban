@@ -9,6 +9,7 @@ class NativeFinanceSettings extends NativeDatabase
         $this->fields($params, $operation === 'finance.enable' ? ['scopeId', 'enabled', 'requestId'] : ['scopeId', 'accountId', 'grant', 'requestId']);
         $scope = $this->uuid($params['scopeId']); $authorized = $this->scope($scope, $user['id'], false, true);
         if ($authorized['kind'] === 'personal') { throw new NativeError('personal_not_shareable', 403); }
+        if ($operation==='finance.enable' && ($params['enabled']??null)===false && (int)($authorized['effective_access_policy_version']??1)===2) { throw new NativeError('managed_by_organization_policy',409); }
         $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);
         $replay = $this->replayFinance($scope, $user['account_id'], $request, $hash); if ($replay) { return $replay['body']; }
         $insert = $this->sqlite ? 'INSERT OR IGNORE' : 'INSERT IGNORE'; $this->change($insert.' INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,0,0,0)', [$scope]);

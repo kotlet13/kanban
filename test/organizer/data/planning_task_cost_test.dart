@@ -333,6 +333,12 @@ void main() {
         "INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request) VALUES('old-op','p','s','r',?)",
         [body],
       );
+      await db.execute('DROP TABLE garden_space_links');
+      await db.execute('DROP TABLE local_spaces');
+      await db.execute('DROP TABLE linked_payment_cash');
+      await db.execute('DROP TABLE linked_payment_events');
+      await db.execute('DROP TABLE linked_payment_projections');
+      await db.execute('DROP TABLE linked_payment_intents');
       await db.execute('PRAGMA user_version=5');
       await db.close();
       db = CollaborationDatabase(NativeDatabase(file));
@@ -343,7 +349,7 @@ void main() {
       final operation = (await db.rows('SELECT * FROM finance_outbox')).single;
       expect(operation['request'], body);
       expect(operation['wire_version'], 1);
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 6);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 8);
       await db.close();
     },
   );
@@ -502,8 +508,8 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 3);
-      expect(doc['databaseVersion'], 6);
+      expect(doc['version'], 4);
+      expect(doc['databaseVersion'], 8);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},
       ]);
@@ -571,6 +577,9 @@ void main() {
       legacy['databaseVersion'] = 5;
       legacy.remove('operationPairs');
       legacy.remove('financeInboxReads');
+      legacy.remove('localSpaces');
+      legacy.remove('gardenSpaceLinks');
+      legacy.remove('linkedPayments');
       final json =
           jsonDecode(legacy['personal'] as String) as Map<String, dynamic>;
       json['schemaVersion'] = 2;

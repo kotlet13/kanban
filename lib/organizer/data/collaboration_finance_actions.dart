@@ -72,11 +72,15 @@ extension CollaborationFinanceActions on CollaborationRepository {
         enabled: policy.enabled,
         grant: policy.grant,
         revision: old.revision,
+        managedByOrganizationPolicy: policy.managedByOrganizationPolicy,
+        readAccessFromMembership: policy.readAccessFromMembership,
+        linkedPaymentsRequired: policy.linkedPaymentsRequired,
       );
     }
     if (deniedWithoutRevision ||
         old.enabled != policy.enabled ||
         old.grant != policy.grant ||
+        old.linkedPaymentsRequired != policy.linkedPaymentsRequired ||
         old.revision != policy.revision) {
       final generation = await _financeAccessGeneration(partition, scopeId);
       await database.execute(
@@ -206,6 +210,10 @@ extension CollaborationFinanceActions on CollaborationRepository {
     if (!isSharedUuid(id)) {
       throw const CollaborationException('validation_error');
     }
+    final linked = (await database.rows(
+      "SELECT event_id FROM linked_payment_events WHERE space_key=? AND json_extract(data,'\$.sourceEntryId')=?",
+      ['remote:$partition:$scopeId', id],
+    )).isNotEmpty;
     final rows = await database.rows(
       'SELECT * FROM finance_records WHERE partition=? AND scope_id=? AND id=?',
       [partition, scopeId, id],
@@ -224,6 +232,14 @@ extension CollaborationFinanceActions on CollaborationRepository {
     final previous = old?['payload'] == null
         ? null
         : CollaborationRepository._map(old!['payload']);
+    if (linked) {
+      if (deleted ||
+          payload == null ||
+          previous == null ||
+          !paymentFinancialFactsMatch(previous, payload)) {
+        throw const CollaborationException('linked_payment_source_locked');
+      }
+    }
     if (payload != null) {
       validateSharedFinancePayload(
         type,

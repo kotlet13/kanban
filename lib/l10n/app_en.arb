@@ -800,7 +800,7 @@
   "organizerRemoveDate": "Remove date",
   "organizerUpcoming": "Upcoming",
   "organizerCalendarIntro": "Events and task deadlines in one place.",
-  "organizerFinanceIntro": "Personal income and expense entries on this device.",
+  "organizerFinanceIntro": "Income, expenses and planned costs.",
   "organizerAddFinance": "Add entry",
   "organizerEditFinance": "Edit entry",
   "organizerNoFinance": "Your overview starts with the first entry.",
@@ -831,7 +831,7 @@
   "organizerShoppingCount": "{count} items on your lists",
   "organizerTasksCount": "{count} tasks",
   "organizerNoMatchingTasks": "There are no tasks in this project yet.",
-  "organizerPersonal": "Local · personal",
+  "organizerPersonal": "Personal",
   "organizerSystemLanguage": "Device language",
   "@organizerProjectProgress": {
     "placeholders": {
@@ -1174,9 +1174,24 @@
   "financeUnsupportedCurrency": "Editing this currency is not supported yet. The amount remains preserved in minor units.",
   "financeTotalBalance": "Total balance",
   "inboxPushCategoriesNone": "No remote notification types are selected for “{space}”.",
-  "@inboxPushCategoriesNone": {"placeholders": {"space": {"type": "String"}}},
+  "@inboxPushCategoriesNone": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "inboxPushCategoriesSelected": "Space “{space}”: {count, plural, one{1 remote notification type selected.} other{{count} remote notification types selected.}}",
-  "@inboxPushCategoriesSelected": {"placeholders": {"space": {"type": "String"}, "count": {"type": "int"}}},
+  "@inboxPushCategoriesSelected": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "inboxPushCategoriesDescription": "Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.",
   "remotePushRegistrationOnly": "Registration connects this device to your account. Choose notification types for individual spaces separately.",
   "remoteReminderTitle": "Remote reminder",
@@ -1478,11 +1493,11 @@
   "guideTitle": "Welcome to Jivie",
   "guideOpen": "A quick guide to Jivie",
   "guideLocalTitle": "Start on your device",
-  "guideLocalBody": "Tasks, plans, shopping and personal finances work without an account or connection. Start with one task or shopping list. Optional sync requires your explicit choice.",
+  "guideLocalBody": "Start with a task or event in your personal space. Create households and organizations without an account; select a household for shopping lists, gardens and people. Data stays on your device; explicitly enable connection and synchronization.",
   "guideTodayBody": "Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.",
-  "guidePlansBody": "In Plans, organize tasks, projects and events. Add dates and link a task to a project when useful. On a larger screen, you can also reach them from the sidebar.",
-  "guideShoppingBody": "In Shopping, create a list, add items and mark purchases. A personal list stays on your device; copying it to a shared space is your explicit choice.",
-  "guideMoreBody": "On a phone, open the left menu with the ☰ button for direct access to finances, home, garden, people, notifications, account and settings. On a tablet, extra options are in More; on a computer, use the sidebar. Settings offer theme, language, encrypted backups and this guide. An account and server are optional; signing in alone does not share personal finances or turn on sync. Set up notifications separately.",
+  "guidePlansBody": "Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.",
+  "guideShoppingBody": "A household has its own shopping lists, gardens and people. Add items and mark purchases. Existing personal lists and gardens remain available; choose a household before assigning them.",
+  "guideMoreBody": "On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.",
   "guideSkip": "Skip",
   "guideBack": "Back",
   "guideNext": "Next",
@@ -1818,5 +1833,165 @@
   "spaceSettingsTitle": "Space settings",
   "spaceSettingsChoose": "Choose a shared space to manage members and invitations.",
   "spaceSettingsConnect": "Connect an account to manage shared spaces.",
-  "spaceSettingsUnavailable": "This space is currently unavailable. Choose another shared space."
+  "spaceSettingsUnavailable": "This space is currently unavailable. Choose another shared space.",
+  "localSpaceDescription": "This device stores the space and its records. You explicitly enable connection and sharing later.",
+  "localSpaceState": "Local · not synchronized",
+  "localSpaceAddress": "Address (optional)",
+  "localSpaceRename": "Edit space",
+  "localSpaceMembersDescription": "People are a record of persons. Account access and invitations require a server connection for the space.",
+  "localSpaceLinkAction": "Connect and synchronize",
+  "legacyLocalData": "Unassigned data",
+  "legacyLocalDescription": "These records remain on this device. Choose a household before moving them; connecting a server does not automatically share them.",
+  "localSpaceMoveToHousehold": "Assign to household",
+  "localSpaceMovePreview": "Move “{name}” to household “{household}”? The data becomes part of this space. If you later enable sharing, its permissions apply.",
+  "localSpaceChooseHousehold": "Choose a household",
+  "localSpaceNoHouseholds": "First create a local household using the space picker.",
+  "localSpaceOfflineWork": "Your data remains on this device. Local work continues; invitations and server permission changes require a connection.",
+  "organizationAggregateDescription": "Activity from permitted projects. Each record retains its source space.",
+  "organizationLeader": "Organization leader",
+  "organizationLeaderGrant": "Grant leader role",
+  "organizationLeaderRemove": "Remove leader role",
+  "organizationProjectFinanceVisibility": "Accepting this invitation includes access to all finances of this project. Private finances in other spaces remain separate.",
+  "@localSpaceMovePreview": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "household": {
+        "type": "String"
+      }
+    }
+  },
+  "localSpaceCreate": "Create space",
+  "organizationAccessReview": "Review project finance visibility",
+  "organizationAccessReviewDescription": "Project members will see all of their project finances. Organization leaders will see all existing and future projects and finances. Review who gains broader access before confirming.",
+  "organizationAccessApply": "Confirm new visibility",
+  "organizationAccessCurrent": "Members see all finances of their projects. Leaders see all organization projects and their finances.",
+  "organizationAccessNoReaders": "No one gains additional access in this project.",
+  "organizationAccessPending": "The previous change has no confirmed result. Retry with the same request.",
+  "organizationAccessResume": "Check change result",
+  "organizationAccessPreviewStale": "Visibility changed. Open a new preview.",
+  "organizationLeaderConfirm": "A leader sees all organization projects and their finances, including future projects. Editing remains controlled by separate permissions.",
+  "localSpaceConnectionChoose": "Select existing local spaces. Review the account, server and contents before uploading.",
+  "localSpaceConnectionPreview": "The listed spaces and their records will be connected. Signing in did not enable uploading. Invite members separately in space settings.",
+  "localSpaceConnectionCounts": "{records, plural, one{{records} record} other{{records} records}} · {gardens, plural, one{{gardens} garden} other{{gardens} gardens}}",
+  "localSpaceConnectionOtherAccount": "The space is linked to another account. Moving it to a new identity requires a separate review.",
+  "localSpaceConnectionUnsupported": "The server does not yet support uploading this content. The data remains on this device.",
+  "financeMembershipRead": "Read access from membership · no extra editing",
+  "financeMembershipReadDescription": "Members see all finances of their project. Here you grant only extra editing access; read access follows membership and leader roles.",
+  "@localSpaceConnectionCounts": {
+    "placeholders": {
+      "records": {
+        "type": "int"
+      },
+      "gardens": {
+        "type": "int"
+      }
+    }
+  },
+  "privateSyncSourceDefault": "This option connects the default personal space. Select households and organizations separately.",
+  "localFinanceRecoveryIncomplete": "The finance view is incomplete. Some transfers and linked payments remain only in the original backup.",
+  "localSpaceConnectionProjectCounts": "{tasks} tasks · {finances} financial records · {people} people · {accounts} accounts",
+  "@localSpaceConnectionProjectCounts": {
+    "placeholders": {
+      "tasks": {
+        "type": "int"
+      },
+      "finances": {
+        "type": "int"
+      },
+      "people": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "offlineRecoveryAction": "Continue locally",
+  "offlineRecoveryIntro": "Create new local spaces from the available backup contents. Viewing and editing do not require the old server. Review the contents and limits before confirming.",
+  "offlineRecoveryArchive": "The original encrypted backup retains its source, pending server work, history and permissions. Some information is not converted into new editable records.",
+  "offlineRecoveryNoServerAccess": "The new local copy does not grant access to the old server or make you a manager of the original shared spaces.",
+  "offlineRecoveryFinanceUnavailable": "Finances without known read permission are excluded from the local copy.",
+  "offlineRecoveryBlocked": "Content with confirmed revoked access remains blocked. Disconnecting does not unlock it.",
+  "offlineRecoveryNothingAvailable": "This backup has no content available for recovery into a local space.",
+  "offlineRecoveryAcknowledge": "I understand the limits and want to create new local copies.",
+  "offlineRecoverySuccess": "Local spaces are ready. Select them above; the original encrypted backup is preserved.",
+  "paymentPaidPersonally": "I paid personally",
+  "paymentMyAccount": "My account or card",
+  "paymentChooseAccount": "Choose an account",
+  "paymentNeedsPersonalAccount": "First add your account or card in the same currency in your personal space.",
+  "paymentNeedsRefundAccount": "First add an organization account in the same currency for reimbursement.",
+  "paymentPaidAt": "Date of personal payment",
+  "paymentExpectRefund": "I expect reimbursement",
+  "paymentExpectRefundYes": "Yes, I expect reimbursement",
+  "paymentExpectRefundNo": "No reimbursement expected",
+  "paymentHouseholdInclusion": "Include in household view",
+  "paymentNoHousehold": "Do not include in a household",
+  "paymentSourceExpenseOnly": "The expense stays in the organization. The selected account records the payment; other personal transactions are not shared.",
+  "paymentRecord": "Record personal payment",
+  "paymentLinkedPayments": "Personal payments and reimbursements",
+  "paymentLinkedExpense": "Payment for an organization",
+  "paymentRemaining": "Remaining reimbursement",
+  "paymentCashBurden": "Cash burden after reimbursements",
+  "paymentNoRefundExpected": "No reimbursement is expected.",
+  "paymentRefundAction": "Record reimbursement",
+  "paymentRefundDescription": "Remaining amount: {amount}. Reimbursement reduces the payment burden and does not create new income.",
+  "paymentRefundReceived": "Reimbursement",
+  "paymentRefundPaid": "Reimbursement paid",
+  "paymentRefundAt": "Reimbursement date",
+  "paymentRefundTooHigh": "The amount exceeds the remaining reimbursement.",
+  "paymentRefundAfterPayment": "Reimbursement cannot precede the personal payment.",
+  "paymentPending": "The payment is saved. Synchronization across the linked spaces is pending.",
+  "paymentWaitingSource": "The payment is saved locally. Explicitly connect the organization before sharing it.",
+  "paymentBlocked": "Synchronization was rejected. The data is preserved; these amounts are not confirmed totals.",
+  "paymentSourceRemoved": "Payment history",
+  "paymentSourceRemovedDescription": "The original shared record is unavailable. Retained payments and reimbursements are history, not evidence of current access or a new receivable.",
+  "paymentProjectionDescription": "Personal payment view. The expense remains in the organization; reimbursement is not new income.",
+  "paymentRetry": "Retry synchronization",
+  "paymentRefresh": "Refresh linked payments",
+  "paymentIncompleteBalance": "A complete account balance also needs linked payment information.",
+  "paymentAlreadyLinked": "This expense already has a linked personal payment.",
+  "paymentPublicationCount": "{count, plural, one{{count} linked payment} other{{count} linked payments}}",
+  "@paymentRefundDescription": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "@paymentPublicationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentPersonalDisplay": "Personal payment",
+  "deletionLinkedFinancialFacts": "Linked payments and reimbursements",
+  "deletionLinkedFinancialRetention": "Keeping or transferring a space retains shared payment and reimbursement amounts, dates and historical references. Private projections and account links are removed. This cannot erase copies already downloaded.",
+  "deletionLinkedScopeCounts": "{scope}: {retained} payments if kept; {deleted} payments if deleted; {refunds} approved reimbursements.",
+  "deletionRetainedExpenseResolution": "Retain the shared expense and approved payment and reimbursement history, removing my personal notes and title.",
+  "deletionPrivatePaymentProjections": "Private payment projections to remove",
+  "deletionSharedPaymentReceipts": "Already shared payment history",
+  "deletionLinkedUnavailableScope": "Previously shared space",
+  "@deletionLinkedScopeCounts": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "retained": {
+        "type": "int"
+      },
+      "deleted": {
+        "type": "int"
+      },
+      "refunds": {
+        "type": "int"
+      }
+    }
+  },
+  "spaceFinanceIntro": "Income, expenses and planned costs.",
+  "spaceLocalShort": "Local",
+  "spaceConnectedShort": "Connected"
 }

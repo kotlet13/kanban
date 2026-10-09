@@ -5,8 +5,11 @@ class NativeFinanceService extends NativeDatabase
 {
     public function execute($operation, array $params)
     {
+        $linkedAware = $params['linkedPaymentsAware'] ?? false;
+        if (!is_bool($linkedAware)) { throw new NativeError('validation_error'); }
+        unset($params['linkedPaymentsAware']);
         $this->rate([['finance-ip:'.$this->ip, 1200, 60]]);
-        $result = $this->transaction(function () use ($operation, $params) {
+        $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
             $version = str_starts_with($operation,'finance2.') ? 2 : 1;
             $action = $version === 2 ? 'finance.'.substr($operation,9) : $operation;
             $user = $this->actor()['user']; $scope = $this->uuid($params['scopeId'] ?? null);
@@ -15,9 +18,11 @@ class NativeFinanceService extends NativeDatabase
                 $this->fields($params, ['scopeId']); $this->scope($scope, $user['id'], false, true);
                 $policy = $this->one('SELECT enabled,revision FROM familyhub_finance_policy WHERE scope_id=?', [$scope]);
                 $rows = $this->many('SELECT m.account_id,m.role,g.access_level FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id LEFT JOIN familyhub_finance_grants g ON g.scope_id=m.scope_id AND g.account_id=m.account_id WHERE m.scope_id=? AND m.active=1 AND u.is_active=1 ORDER BY m.account_id', [$scope]);
-                return ['enabled' => (bool)($policy['enabled'] ?? false), 'revision' => (int)($policy['revision'] ?? 0), 'grants' => array_map(fn ($r) => ['accountId' => $r['account_id'], 'grant' => $r['role'] === 'viewer' && $r['access_level'] === 'write' ? 'read' : ($r['access_level'] ?? 'none')], $rows)];
+                $effective=$this->scope($scope,$user['id']);$managed=(int)($effective['effective_access_policy_version']??1)===2;
+                return ['managedByOrganizationPolicy'=>$managed,'enabled' => (bool)($policy['enabled'] ?? false), 'revision' => (int)($policy['revision'] ?? 0)+(int)($effective['effective_access_revision']??0), 'grants' => array_map(fn ($r) => ['accountId' => $r['account_id'], 'grant' => $r['role'] === 'viewer' && $r['access_level'] === 'write' ? 'read' : (($r['access_level']??'none')==='none' && $managed && ($effective['kind']==='project' || (new NativeOrganizationAccess($this->container))->leader($effective,$r['account_id'])) ? 'read' : ($r['access_level'] ?? 'none'))], $rows)];
             }
             $acl = (new NativeFinanceAccess($this->container))->policy($scope, $user, $action === 'finance.push', $action !== 'finance.policy');
+            if ($acl['linkedPaymentsRequired'] && !$linkedAware) { throw new NativeError('client_upgrade_required',409); }
             if ($action === 'finance.policy') { $this->fields($params, ['scopeId']); return array_diff_key($acl, ['sequence' => true]); }
             if ($version < $acl['requiredContractVersion'] && $action !== 'finance.push') { throw new NativeError('unsupported_version',409); }
             if ($action === 'finance.pull') { return $this->pull($params, $scope, $acl); }
@@ -54,6 +59,16 @@ class NativeFinanceService extends NativeDatabase
             $details = ['serverRecord' => $current ? $this->wire($current) : null];
             $store->rememberFinance($scope, $user['account_id'], $opId, $hash, ['errorCode' => 'conflict', 'details' => $details], 409); return new NativeError('conflict', 409, $details);
         }
+        if ($this->one('SELECT event_id FROM familyhub_payment_events WHERE scope_id=? AND entry_id=?', [$scope,$id])) {
+            if ($op['deleted'] || !$current || !is_array($op['payload'])) { throw new NativeError('linked_payment_source_locked',409); }
+            $before=json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR);
+            foreach(array_unique(array_merge(array_keys($before),array_keys($op['payload']))) as $key) {
+                if(in_array($key,['title','notes','category','plannedAt','updatedAt'],true)) { continue; }
+                $old=$before[$key]??null;$next=$op['payload'][$key]??null;
+                $same=in_array($key,['paidAt','occurredAt','createdAt'],true) && $old!==null && $next!==null ? new \DateTimeImmutable($old)==new \DateTimeImmutable($next) : $old===$next;
+                if(!$same) { throw new NativeError('linked_payment_source_locked',409); }
+            }
+        }
         $policy = new NativeFinancePolicy($this->container);
         try {
             if ($op['deleted']) { if ($op['payload'] !== null) { throw new NativeError('validation_error'); } $policy->noChildren($scope, $id, $op['type'], max($version,$transportVersion)); }
@@ -76,6 +91,7 @@ class NativeFinanceService extends NativeDatabase
         }
         $record = $this->wire($this->one('SELECT * FROM familyhub_finance_records WHERE scope_id=? AND id=?', [$scope, $id]));
         $this->change('INSERT INTO familyhub_finance_audit VALUES(?,?,?,?,?,?,?,?)', [$scope, $id, $revision, $user['account_id'], $now, $current ? json_encode($this->wire($current), JSON_THROW_ON_ERROR) : null, json_encode($record, JSON_THROW_ON_ERROR), $opId]);
+        (new NativeLinkedPaymentService($this->container))->sourceRevisionChangedInTransaction($scope,$id,$revision);
         (new NativeNotificationWriter($this->container))->recordChanged($scope, $record, $current, $user['account_id'], true);
         (new NativeReminderService($this->container))->reconcile($scope, $record, $current);
         $response = ['status' => 'applied', 'record' => $record, 'cursor' => $sequence, 'accessRevision' => $acl['revision']+$upgrade, 'replayed' => false];
@@ -113,6 +129,8 @@ class NativeFinanceService extends NativeDatabase
         $id=$newTask['id'];
         $rows=$this->many("SELECT * FROM familyhub_finance_records WHERE scope_id=? AND deleted=0 AND type IN ('financeEntry','personalFinanceEntry') AND json_extract(payload,'$.taskId')=?",[$scope,$id]);
         foreach ($rows as $current) {
+            // Posted linked payment dates are financial history; task timeline edits remain independent.
+            if($this->one('SELECT event_id FROM familyhub_payment_events WHERE scope_id=? AND entry_id=?',[$scope,$current['id']])) { continue; }
             $payload=json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR);
             $before=$payload;
             if ($newTask['deleted']) { $payload['taskId']=null; }

@@ -18,6 +18,7 @@ import '../shared/collaboration_actions.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'reminder_snooze.dart';
+import 'local_notification_target.dart';
 import 'remote_reminder_editor.dart';
 
 Future<bool> showNotificationTarget(
@@ -30,6 +31,11 @@ Future<bool> showNotificationTarget(
   bool Function()? isCurrent,
 }) async {
   if (isCurrent?.call() == false) return false;
+  if (!await activateLocalNotificationTarget(context, ref, target) ||
+      !context.mounted ||
+      isCurrent?.call() == false) {
+    return false;
+  }
   final capturedSession = ref.read(collaborationProvider).valueOrNull?.session;
   try {
     final result = await ref
@@ -164,15 +170,19 @@ class NotificationTargetContent extends ConsumerWidget {
         (state?.session == null ||
             !target.matches(state!.session!) ||
             scope == null ||
-            scope.revoked)) {
+            scope.revoked ||
+            !state.localAccessAllowed)) {
       return Text(l.sharingAccessRevoked);
     }
-    if (scope?.kind == SharedScopeKind.personal &&
-        (state?.sessionInvalid == true ||
-            state?.session?.expiresAt.isAfter(DateTime.now()) != true)) {
-      return Text(l.sharingSessionExpired);
-    }
     if (personal == null) return const CircularProgressIndicator();
+    if (target.isPersonal &&
+        personal.workspaceKey != target.localWorkspaceId &&
+        !(target.localWorkspaceId == 'local' &&
+            personal.workspaceKey.startsWith('private:') &&
+            state?.localAccessAllowed == true &&
+            personal.workspaceKey == 'private:${state?.session?.partition}')) {
+      return Text(l.inboxDeleted);
+    }
     final personalPresentation =
         target.isPersonal || scope?.kind == SharedScopeKind.personal;
     final data = state?.dataForScope(target.scopeId ?? '');
@@ -190,7 +200,7 @@ class NotificationTargetContent extends ConsumerWidget {
     final OrganizerCollectionActions actions = sharedActions ?? personalActions;
     final canEdit =
         personalPresentation ||
-        (scope!.canEdit && state!.session!.expiresAt.isAfter(DateTime.now()));
+        (scope!.canEdit && state?.deletionPending != true);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

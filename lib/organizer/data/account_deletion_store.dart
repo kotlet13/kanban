@@ -14,6 +14,7 @@ class PendingAccountDeletion {
     this.ownedScopeDeletions = const [],
     this.serverAccepted = false,
     this.review = const {},
+    this.policyVersion = 1,
   });
   final AccountSession profile;
   final String operationId, previewHash, receiptToken;
@@ -21,6 +22,7 @@ class PendingAccountDeletion {
   final List<String> ownedScopeDeletions;
   final bool serverAccepted;
   final Map<String, dynamic> review;
+  final int policyVersion;
   Map<String, Object?> toJson() => {
     'profile': profile.toJson(),
     'operationId': operationId,
@@ -31,6 +33,7 @@ class PendingAccountDeletion {
     'ownedScopeDeletions': ownedScopeDeletions,
     'serverAccepted': serverAccepted,
     'review': review,
+    'policyVersion': policyVersion,
   };
   factory PendingAccountDeletion.fromJson(Map<String, dynamic> j) =>
       PendingAccountDeletion(
@@ -48,6 +51,10 @@ class PendingAccountDeletion {
             .cast<String>(),
         serverAccepted: j['serverAccepted'] == true,
         review: Map<String, dynamic>.from(j['review'] as Map? ?? {}),
+        policyVersion:
+            j['policyVersion'] as int? ??
+            (j['review'] as Map?)?['policyVersion'] as int? ??
+            1,
       );
 }
 

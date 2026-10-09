@@ -48,9 +48,22 @@ class FinanceInboxStore {
     }
     final record = target.records.single;
     if (target.isPersonal) {
+      final workspace = target.localWorkspaceId;
+      if (workspace != 'local') {
+        final catalog = await database.rows(
+          'SELECT data FROM local_spaces WHERE id=?',
+          [workspace],
+        );
+        if (catalog.isEmpty ||
+            (jsonDecode(catalog.single['data'] as String) as Map)['binding'] !=
+                null) {
+          throw const CollaborationException('permission_revoked');
+        }
+      }
+
       final rows = await database.rows(
-        "SELECT payload FROM personal_records WHERE workspace='local' AND id=? AND type='financeEntry'",
-        [record.recordId],
+        "SELECT payload FROM personal_records WHERE workspace=? AND id=? AND type='financeEntry'",
+        [workspace, record.recordId],
       );
       if (rows.isEmpty ||
           (jsonDecode(rows.first['payload'] as String) as Map)['status'] !=

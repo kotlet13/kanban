@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../domain/organizer_models.dart';
 import '../../domain/shared_finance_models.dart';
+import '../../domain/linked_payment_models.dart';
 import '../organizer_widgets.dart';
 import '../inbox/remote_reminder_editor.dart';
 import '../planning/task_plan_fields.dart';
@@ -24,6 +25,9 @@ class SharedFinanceLedger extends StatefulWidget {
     required this.onEntry,
     required this.onTransfer,
     required this.onAudit,
+    this.payments,
+    this.cashAvailable = true,
+    this.onPersonalPayment,
   });
   final String scopeName;
   final String? scopeId, partition;
@@ -32,6 +36,9 @@ class SharedFinanceLedger extends StatefulWidget {
   final List<SharedFinanceTransfer> transfers;
   final List<OrganizerPersonOption> people;
   final bool canWrite;
+  final bool cashAvailable;
+  final PaymentSnapshot? payments;
+  final ValueChanged<SharedFinanceEntry>? onPersonalPayment;
   final ValueChanged<SharedFinanceAccount?> onAccount;
   final ValueChanged<SharedFinanceEntry?> onEntry;
   final ValueChanged<SharedFinanceTransfer?> onTransfer;
@@ -116,6 +123,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
       accounts: widget.accounts,
       entries: widget.entries,
       transfers: widget.transfers,
+      payments: widget.payments,
     );
     final entries = widget.entries.where(
       (entry) =>
@@ -215,9 +223,10 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                             total.currency,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          Text(
-                            '${widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? l.financeTotalBalance : l.financePlanRecordedChange}: ${sharedMoneyLabel(context, widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? total.balanceMinor : total.incomeMinor - total.expenseMinor, total.currency)}',
-                          ),
+                          if (widget.cashAvailable)
+                            Text(
+                              '${widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? l.financeTotalBalance : l.financePlanRecordedChange}: ${sharedMoneyLabel(context, widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? total.balanceMinor : total.incomeMinor - total.expenseMinor, total.currency)}',
+                            ),
                           Text(
                             '${l.organizerIncome}: ${sharedMoneyLabel(context, total.incomeMinor, total.currency)}',
                           ),
@@ -244,7 +253,9 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                 onTap: widget.canWrite ? () => widget.onAccount(account) : null,
                 title: Text(account.name),
                 subtitle: Text(
-                  '${account.ownerAccountId == null ? l.financeJointAccount : _person(account.ownerAccountId)} · ${account.openingBalanceMinor == null ? l.financePlanRecordedChange : ''} ${sharedMoneyLabel(context, totals[account.currency]?.accountBalances[account.id] ?? BigInt.from(account.openingBalanceMinor ?? 0), account.currency)}',
+                  widget.cashAvailable
+                      ? '${account.ownerAccountId == null ? l.financeJointAccount : _person(account.ownerAccountId)} · ${account.openingBalanceMinor == null ? l.financePlanRecordedChange : ''} ${sharedMoneyLabel(context, totals[account.currency]?.accountBalances[account.id] ?? BigInt.from(account.openingBalanceMinor ?? 0), account.currency)}'
+                      : l.paymentIncompleteBalance,
                 ),
                 trailing: IconButton(
                   tooltip: l.financeAudit,
@@ -395,6 +406,20 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           if (row case SharedFinanceEntry e)
             if (e.category.isNotEmpty)
               Text('${context.l10n.financeCategory}: ${e.category}'),
+          if (row is SharedFinanceEntry &&
+              row.kind == FinanceEntryKind.expense &&
+              row.status == SharedFinanceStatus.posted &&
+              widget.onPersonalPayment != null &&
+              widget.payments?.fresh == true &&
+              widget.payments?.events.any((e) => e.sourceEntryId == row.id) !=
+                  true &&
+              (widget.payments?.pendingCount ?? 0) == 0)
+            TextButton.icon(
+              key: ValueKey('personal-payment-${row.id}'),
+              onPressed: () => widget.onPersonalPayment!(row),
+              icon: const Icon(Icons.credit_card_outlined),
+              label: Text(context.l10n.paymentPaidPersonally),
+            ),
           if (widget.canWrite)
             TextButton(
               onPressed: () => _edit(row),
@@ -433,10 +458,35 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               DataCell(
                 SizedBox(
                   width: 170,
-                  child: Text(
-                    _title(row),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _title(row),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (row is SharedFinanceEntry &&
+                          row.kind == FinanceEntryKind.expense &&
+                          row.status == SharedFinanceStatus.posted &&
+                          widget.onPersonalPayment != null &&
+                          widget.payments?.fresh == true &&
+                          widget.payments?.events.any(
+                                (e) => e.sourceEntryId == row.id,
+                              ) !=
+                              true &&
+                          (widget.payments?.pendingCount ?? 0) == 0)
+                        TextButton(
+                          key: ValueKey('personal-payment-${row.id}'),
+                          onPressed: () => widget.onPersonalPayment!(row),
+                          child: Text(
+                            context.l10n.paymentPaidPersonally,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 onTap: widget.canWrite ? () => _edit(row) : null,

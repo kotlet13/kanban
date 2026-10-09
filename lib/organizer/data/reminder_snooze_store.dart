@@ -33,9 +33,22 @@ class ReminderSnoozeStore {
     if (target.records.length != 1) return null;
     final record = target.records.single;
     if (target.isPersonal) {
+      final workspace = target.localWorkspaceId;
+      if (workspace != 'local') {
+        final catalog = await database.rows(
+          'SELECT data FROM local_spaces WHERE id=?',
+          [workspace],
+        );
+        if (catalog.isEmpty ||
+            (jsonDecode(catalog.single['data'] as String) as Map)['binding'] !=
+                null) {
+          return null;
+        }
+      }
+
       final rows = await database.rows(
-        "SELECT payload FROM personal_records WHERE workspace='local' AND id=? AND type=?",
-        [record.recordId, record.type],
+        "SELECT payload FROM personal_records WHERE workspace=? AND id=? AND type=?",
+        [workspace, record.recordId, record.type],
       );
       final payload = rows.firstOrNull?['payload'] as String?;
       return payload != null && _active(record.type, payload) ? payload : null;

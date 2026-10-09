@@ -11,7 +11,8 @@ import 'package:kanban/organizer/presentation/garden/garden_canvas.dart';
 import 'package:kanban/organizer/presentation/garden/garden_editor.dart';
 import 'package:kanban/organizer/presentation/garden/garden_page.dart';
 import 'package:kanban/organizer/state/garden_provider.dart';
-import 'organizer_ui_test.dart' show pumpOrganizer, MemoryOrganizerStorage;
+import 'organizer_ui_test.dart'
+    show pumpOrganizer, MemoryOrganizerStorage, HouseholdFixtureController;
 
 void main() {
   Future<GardenRepository> repository(WidgetTester tester) async {
@@ -311,6 +312,7 @@ void main() {
           width: 1280,
           height: height,
           gardenRepository: repo,
+          localSpacesController: HouseholdFixtureController(),
         );
         final gardenTile = find.widgetWithText(ListTile, 'Vrt');
         await tester.scrollUntilVisible(

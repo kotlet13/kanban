@@ -7,6 +7,8 @@ import '../../l10n/l10n.dart';
 import '../../widgets/jivie_brand_mark.dart';
 import '../domain/organizer_models.dart';
 import '../state/organizer_provider.dart';
+import '../state/local_spaces_provider.dart';
+import '../state/garden_provider.dart';
 import '../state/inbox_projection_provider.dart';
 import '../domain/all_spaces_projection.dart';
 import 'all_spaces/all_spaces_page.dart';
@@ -14,6 +16,7 @@ import 'all_spaces/all_spaces_rows.dart' show allSpacesSourceIsCurrent;
 import 'calendar_page.dart';
 import 'finance_page.dart';
 import 'garden/garden_page.dart';
+import 'garden/garden_space_chooser.dart';
 import 'organizer_actions.dart';
 import 'organizer_widgets.dart';
 import 'projects_page.dart';
@@ -24,6 +27,7 @@ import 'shared/sharing_account_page.dart';
 import 'shared/space_settings_page.dart';
 import 'shared/sharing_workspace.dart';
 import 'shared/space_picker.dart';
+import 'shared/household_transfer.dart';
 import 'people/people_page.dart';
 import 'shared/sharing_copy.dart';
 import '../state/collaboration_provider.dart';
@@ -67,6 +71,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     return _navigationState.location(
       spaceId: selection?.selectedSpaceId,
       allSpaces: selection?.allSpacesSelected == true,
+      localSpaceId:
+          ref.read(localSpacesProvider).valueOrNull?.selectedSpaceId ?? 'local',
     );
   }
 
@@ -108,7 +114,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     final revision = _navigationRevision;
     final current = _location;
     if (previous.spaceId != current.spaceId ||
-        previous.allSpaces != current.allSpaces) {
+        previous.allSpaces != current.allSpaces ||
+        previous.localSpaceId != current.localSpaceId) {
       _spaceRestorations++;
       try {
         final controller = ref.read(collaborationProvider.notifier);
@@ -116,6 +123,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           await controller.selectAllSpaces();
         } else {
           await controller.selectSpace(previous.spaceId);
+          if (previous.spaceId == null) {
+            await ref
+                .read(localSpacesProvider.notifier)
+                .selectSpace(previous.localSpaceId);
+          }
         }
       } catch (_) {
         if (mounted &&
@@ -144,11 +156,54 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   }
 
   bool get _isSharedArea =>
-      _navigationState.area == _Area.sharing ||
-      (_navigationState.area == _Area.shopping &&
-          _navigationState.sharedShopping) ||
-      (_navigationState.area == _Area.finances &&
-          _navigationState.sharedFinance);
+      ref.read(collaborationProvider).valueOrNull?.selectedSpaceId != null;
+  String _spaceKindLabel(BuildContext context) {
+    final shared = ref.read(collaborationProvider).valueOrNull;
+    final scope = shared?.scopes
+        .where((s) => s.id == shared.selectedSpaceId)
+        .firstOrNull;
+    final local = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+    if (scope?.kind == SharedScopeKind.organization ||
+        scope == null && local?.kind == LocalSpaceKind.organization) {
+      return context.l10n.organizationTitle;
+    }
+    if (scope?.kind == SharedScopeKind.household ||
+        scope == null && local?.kind == LocalSpaceKind.household) {
+      return context.l10n.sharingHousehold;
+    }
+    if (scope?.kind == SharedScopeKind.project) {
+      return context.l10n.organizerProjects;
+    }
+    return context.l10n.organizerPersonal;
+  }
+
+  bool get _spaceConnected =>
+      _isSharedArea ||
+      ref
+              .read(organizerProvider)
+              .valueOrNull
+              ?.workspaceKey
+              .startsWith('private:') ==
+          true;
+  IconData get _spaceKindIcon {
+    final shared = ref.read(collaborationProvider).valueOrNull;
+    if (shared?.allSpacesSelected == true) return Icons.dashboard_outlined;
+    final scope = shared?.scopes
+        .where((s) => s.id == shared.selectedSpaceId)
+        .firstOrNull;
+    final local = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+    if (scope?.kind == SharedScopeKind.organization ||
+        scope == null && local?.kind == LocalSpaceKind.organization) {
+      return Icons.business_outlined;
+    }
+    if (scope?.kind == SharedScopeKind.household ||
+        scope == null && local?.kind == LocalSpaceKind.household) {
+      return Icons.home_outlined;
+    }
+    if (scope?.kind == SharedScopeKind.project) return Icons.folder_outlined;
+    return Icons.person_outline;
+  }
+
   SetupIntent? _setupIntent;
   InvitationLink? _incomingInvitation;
   bool _openingInvite = false;
@@ -396,12 +451,22 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         personal: snapshot,
         list: list,
         onConnect: () => _navigate(_Area.sharing),
-        onPublished: (scopeId, id) => _changeNavigation(() {
-          _navigationState.sharedScopeId = scopeId;
-          _navigationState.sharedListId = id;
-          _navigationState.sharedShopping = true;
-          _navigationState.area = _Area.shopping;
-        }),
+        onPublished: (scopeId, id) async {
+          final identity = _accountIdentity;
+          await _selectSpace(scopeId);
+          if (!mounted ||
+              identity != _accountIdentity ||
+              ref.read(collaborationProvider).valueOrNull?.selectedSpaceId !=
+                  scopeId) {
+            return;
+          }
+          _changeNavigation(() {
+            _navigationState.sharedScopeId = scopeId;
+            _navigationState.sharedListId = id;
+            _navigationState.sharedShopping = true;
+            _navigationState.area = _Area.shopping;
+          });
+        },
       );
 
   Future<void> _copyProject(OrganizerSnapshot snapshot, LocalProject project) =>
@@ -411,12 +476,22 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         personal: snapshot,
         project: project,
         onConnect: () => _navigate(_Area.sharing),
-        onPublished: (scopeId, id) => _changeNavigation(() {
-          _navigationState.sharedScopeId = scopeId;
-          _navigationState.sharedProjectId = id;
-          _navigationState.sharingView = SharingView.projects;
-          _navigationState.area = _Area.sharing;
-        }),
+        onPublished: (scopeId, id) async {
+          final identity = _accountIdentity;
+          await _selectSpace(scopeId);
+          if (!mounted ||
+              identity != _accountIdentity ||
+              ref.read(collaborationProvider).valueOrNull?.selectedSpaceId !=
+                  scopeId) {
+            return;
+          }
+          _changeNavigation(() {
+            _navigationState.sharedScopeId = scopeId;
+            _navigationState.sharedProjectId = id;
+            _navigationState.sharingView = SharingView.projects;
+            _navigationState.area = _Area.projects;
+          });
+        },
       );
   Future<void> _selectSpace(String? id) async {
     final identity = _accountIdentity;
@@ -433,6 +508,43 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.sharingAccessRevoked)),
+        );
+      }
+    }
+  }
+
+  Future<void> _selectLocalSpace(String id) async {
+    if (_restoringSpace) return;
+    final space = ref
+        .read(localSpacesProvider)
+        .valueOrNull
+        ?.spaces
+        .where((s) => s.id == id)
+        .firstOrNull;
+    if (space?.binding != null) {
+      final shared = ref.read(collaborationProvider).valueOrNull;
+      if (space!.binding!.partition == shared?.session?.partition &&
+          shared?.scopes.any(
+                (s) => s.id == space.binding!.scopeId && !s.revoked,
+              ) ==
+              true) {
+        await _selectSpace(space.binding!.scopeId);
+      }
+      return;
+    }
+    final identity = _accountIdentity;
+    setState(() {
+      _clearNavigationHistory();
+      _navigationState.area = _Area.today;
+    });
+    try {
+      await ref.read(collaborationProvider.notifier).selectSpace(null);
+      if (!mounted || identity != _accountIdentity) return;
+      await ref.read(localSpacesProvider.notifier).selectSpace(id);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.organizerSaveError)),
         );
       }
     }
@@ -473,6 +585,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       await ref
           .read(collaborationProvider.notifier)
           .selectSpace(source.scopeId);
+      if (source.isLocalSpace) {
+        await ref
+            .read(localSpacesProvider.notifier)
+            .selectSpace(source.workspaceKey!);
+      }
     } catch (_) {
       if (mounted &&
           identity == _accountIdentity &&
@@ -606,11 +723,48 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     });
   }
 
+  List<_Area> _contentAreas() {
+    final shared = ref.watch(collaborationProvider).valueOrNull;
+    final personal = ref.watch(organizerProvider).valueOrNull;
+    final local = ref.watch(localSpacesProvider).valueOrNull?.selectedSpace;
+    final scope = shared?.scopes
+        .where((s) => s.id == shared.selectedSpaceId)
+        .firstOrNull;
+    final household =
+        scope?.kind == SharedScopeKind.household ||
+        (scope == null && local?.kind == LocalSpaceKind.household);
+    final all = shared?.allSpacesSelected == true;
+    final localPersonal =
+        scope == null &&
+        local?.kind != LocalSpaceKind.organization &&
+        !household;
+    final legacyGarden =
+        localPersonal &&
+        ref.watch(gardenProvider).valueOrNull?.gardens.isNotEmpty == true;
+    return [
+      _Area.today,
+      _Area.plans,
+      _Area.calendar,
+      _Area.projects,
+      _Area.finances,
+      if (household ||
+          all ||
+          (localPersonal && personal?.shoppingLists.isNotEmpty == true))
+        _Area.shopping,
+      if (household || all || legacyGarden) _Area.garden,
+      if (household ||
+          all ||
+          (localPersonal && personal?.people.isNotEmpty == true))
+        _Area.people,
+      _Area.inbox,
+    ];
+  }
+
   String _label(BuildContext context, _Area area) {
     final l = context.l10n;
     return switch (area) {
       _Area.today => l.organizerToday,
-      _Area.plans => l.organizerPlans,
+      _Area.plans => l.organizerTasks,
       _Area.calendar => l.organizerCalendar,
       _Area.projects => l.organizerProjects,
       _Area.shopping => l.organizerShopping,
@@ -678,6 +832,14 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       }
       _queueNotificationTarget();
     });
+    ref.listen(localSpacesProvider, (previous, next) {
+      if (previous?.valueOrNull?.selectedSpaceId !=
+              next.valueOrNull?.selectedSpaceId &&
+          previous?.valueOrNull != null &&
+          !_restoringSpace) {
+        setState(() => _clearNavigationHistory());
+      }
+    });
     ref.listen(organizerProvider, (_, _) => _queueNotificationTarget());
     ref.listen(
       pendingInvitationLinkProvider,
@@ -726,6 +888,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                       if (!phone) ...[
                         OrganizerSpacePicker(
                           onSelected: _selectSpace,
+                          onLocalSelected: _selectLocalSpace,
                           onAllSelected: _selectAllSpaces,
                           onConnect: () => _navigate(_Area.sharing),
                         ),
@@ -771,16 +934,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                 ? OrganizerMobileMenu(
                     items: [
                       for (final area in [
-                        _Area.today,
-                        _Area.plans,
-                        _Area.calendar,
-                        _Area.projects,
-                        _Area.shopping,
-                        _Area.finances,
-                        _Area.home,
-                        _Area.garden,
-                        _Area.people,
-                        _Area.inbox,
+                        ..._contentAreas(),
                         _Area.sharing,
                         _Area.spaceSettings,
                         _Area.settings,
@@ -832,6 +986,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                             child: OrganizerSpacePicker(
                               compact: true,
                               onSelected: _selectSpace,
+                              onLocalSelected: _selectLocalSpace,
                               onAllSelected: _selectAllSpaces,
                               onConnect: () => _navigate(_Area.sharing),
                             ),
@@ -876,7 +1031,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.person_outline,
+                                      _spaceKindIcon,
                                       size: 18,
                                       color: scheme.onSurfaceVariant,
                                     ),
@@ -884,16 +1039,14 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                     Text(
                                       allSpaces
                                           ? l.allSpacesTitle
-                                          : _isSharedArea
-                                          ? l.sharingShared
-                                          : l.organizerLocalSpace,
+                                          : _spaceKindLabel(context),
                                     ),
                                     const Spacer(),
                                     Text(
                                       allSpaces
                                           ? l.allSpacesSources
-                                          : _isSharedArea
-                                          ? l.sharingAccount
+                                          : _spaceConnected
+                                          ? l.spaceConnectedShort
                                           : l.organizerLocalOnly,
                                       style: Theme.of(
                                         context,
@@ -930,18 +1083,27 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                     indicatorColor: scheme.primaryContainer,
                     selectedIndex: switch (_navigationState.area) {
                       _Area.today => 0,
-                      _Area.plans || _Area.projects || _Area.calendar => 1,
-                      _Area.shopping => 2,
+                      _Area.plans => 1,
+                      _Area.shopping || _Area.projects => 2,
                       _ => 3,
                     },
                     onDestinationSelected: (i) => _navigate(
-                      [_Area.today, _Area.plans, _Area.shopping, _Area.more][i],
+                      [
+                        _Area.today,
+                        _Area.plans,
+                        _contentAreas().contains(_Area.shopping)
+                            ? _Area.shopping
+                            : _Area.projects,
+                        _Area.more,
+                      ][i],
                     ),
                     destinations: [
                       for (final area in [
                         _Area.today,
                         _Area.plans,
-                        _Area.shopping,
+                        _contentAreas().contains(_Area.shopping)
+                            ? _Area.shopping
+                            : _Area.projects,
                         _Area.more,
                       ])
                         NavigationDestination(
@@ -959,7 +1121,6 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   Widget _sidebar(BuildContext context) {
     final l = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    final shared = _isSharedArea;
     final allSpaces =
         ref.watch(collaborationProvider).valueOrNull?.allSpacesSelected == true;
     return Container(
@@ -995,18 +1156,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  for (final area in [
-                    _Area.today,
-                    _Area.inbox,
-                    _Area.plans,
-                    _Area.calendar,
-                    _Area.projects,
-                    _Area.shopping,
-                    _Area.finances,
-                    _Area.home,
-                    _Area.garden,
-                    _Area.people,
-                  ])
+                  for (final area in _contentAreas())
                     Padding(
                       padding: const EdgeInsets.only(bottom: 5),
                       child: ListTile(
@@ -1057,7 +1207,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                     radius: 17,
                     backgroundColor: scheme.primaryContainer,
                     child: Icon(
-                      Icons.person_outline,
+                      _spaceKindIcon,
                       color: scheme.primary,
                       size: 19,
                     ),
@@ -1070,18 +1220,16 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                         Text(
                           allSpaces
                               ? l.allSpacesTitle
-                              : shared
-                              ? l.sharingAccount
-                              : l.organizerLocalSpace,
+                              : _spaceKindLabel(context),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 3),
                         Text(
                           allSpaces
                               ? l.allSpacesSources
-                              : shared
-                              ? l.sharingShared
-                              : l.organizerPersonal,
+                              : _spaceConnected
+                              ? l.spaceConnectedShort
+                              : l.spaceLocalShort,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
@@ -1125,46 +1273,12 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         _Area.finances => AllSpacesArea.finances,
         _Area.home => AllSpacesArea.home,
         _Area.people => AllSpacesArea.people,
-        _ =>
-          _navigationState.planArea == _Area.projects
-              ? AllSpacesArea.projects
-              : _navigationState.planArea == _Area.calendar
-              ? AllSpacesArea.calendar
-              : AllSpacesArea.tasks,
+        _ => AllSpacesArea.tasks,
       };
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_navigationState.area == _Area.plans) ...[
-            SegmentedButton<_Area>(
-              segments: [
-                ButtonSegment(
-                  value: _Area.plans,
-                  label: Text(l.organizerTasks),
-                ),
-                ButtonSegment(
-                  value: _Area.projects,
-                  label: Text(l.organizerProjects),
-                ),
-                ButtonSegment(
-                  value: _Area.calendar,
-                  label: Text(l.organizerCalendar),
-                ),
-              ],
-              selected: {_navigationState.planArea},
-              showSelectedIcon: false,
-              onSelectionChanged: (value) => _changeNavigation(
-                () => _navigationState.planArea = value.single,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-          AllSpacesPage(
-            key: ValueKey('all-spaces-${area.name}'),
-            area: area,
-            onSource: _openAllSpacesSource,
-          ),
-        ],
+      return AllSpacesPage(
+        key: ValueKey('all-spaces-${area.name}'),
+        area: area,
+        onSource: _openAllSpacesSource,
       );
     }
     if (active != null &&
@@ -1185,40 +1299,15 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         _Area.shopping => SharingView.shopping,
         _Area.finances => SharingView.finances,
         _Area.people => SharingView.people,
-        _ =>
-          _navigationState.planArea == _Area.projects
-              ? SharingView.projects
-              : (_navigationState.planArea == _Area.calendar
-                    ? SharingView.timeline
-                    : SharingView.tasks),
+        _ => SharingView.tasks,
       };
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_navigationState.area == _Area.plans)
-            SegmentedButton<_Area>(
-              segments: [
-                ButtonSegment(
-                  value: _Area.plans,
-                  label: Text(l.organizerTasks),
-                ),
-                ButtonSegment(
-                  value: _Area.projects,
-                  label: Text(l.organizerProjects),
-                ),
-                ButtonSegment(
-                  value: _Area.calendar,
-                  label: Text(l.organizerCalendar),
-                ),
-              ],
-              selected: {_navigationState.planArea},
-              onSelectionChanged: (selection) => _changeNavigation(
-                () => _navigationState.planArea = selection.first,
-              ),
-            ),
           SharingWorkspace(
             view: view,
             selectedScopeId: active,
+            onSource: _openAllSpacesSource,
             showScopePicker: false,
             onScopeSelected: _selectSpace,
             onConnect: () => _navigate(_Area.sharing),
@@ -1240,7 +1329,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onTask: (task) => actions.task(task: task),
       ),
       _Area.today => OrganizerTodayPage(
-        onGettingStarted: _startSetup,
+        onGettingStarted:
+            ref.watch(localSpacesProvider).valueOrNull?.selectedSpace?.kind ==
+                LocalSpaceKind.personal
+            ? _startSetup
+            : null,
         onSharedAgenda: (scopeId) => _changeNavigation(() {
           _navigationState.sharedScopeId = scopeId;
           _navigationState.sharingView = SharingView.agenda;
@@ -1249,55 +1342,13 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         snapshot: snapshot,
         actions: actions,
         onShopping: () => _navigate(_Area.shopping),
+        showShopping: _contentAreas().contains(_Area.shopping),
         onPlans: () => _changeNavigation(() {
           _navigationState.planArea = _Area.plans;
           _navigationState.area = _Area.plans;
         }),
       ),
-      _Area.plans => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SegmentedButton<_Area>(
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all(
-                const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 13)),
-            ),
-            segments: [
-              ButtonSegment(value: _Area.plans, label: Text(l.organizerTasks)),
-              ButtonSegment(
-                value: _Area.projects,
-                label: Text(l.organizerProjects),
-              ),
-              ButtonSegment(
-                value: _Area.calendar,
-                label: Text(l.organizerCalendar),
-              ),
-            ],
-            selected: {_navigationState.planArea},
-            showSelectedIcon: false,
-            onSelectionChanged: (v) =>
-                _changeNavigation(() => _navigationState.planArea = v.single),
-          ),
-          const SizedBox(height: 24),
-          switch (_navigationState.planArea) {
-            _Area.calendar => OrganizerCalendarPage(
-              snapshot: snapshot,
-              actions: actions,
-            ),
-            _Area.projects => OrganizerProjectsPage(
-              snapshot: snapshot,
-              actions: actions,
-              selectedId: _navigationState.projectId,
-              onSelection: (id) =>
-                  _changeNavigation(() => _navigationState.projectId = id),
-              onShare: (project) => _copyProject(snapshot, project),
-            ),
-            _ => OrganizerTasksPage(snapshot: snapshot, actions: actions),
-          },
-        ],
-      ),
+      _Area.plans => OrganizerTasksPage(snapshot: snapshot, actions: actions),
       _Area.calendar => OrganizerCalendarPage(
         snapshot: snapshot,
         actions: actions,
@@ -1310,86 +1361,35 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _changeNavigation(() => _navigationState.projectId = id),
         onShare: (project) => _copyProject(snapshot, project),
       ),
-      _Area.shopping => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                selected: !_navigationState.sharedShopping,
-                label: Text(l.sharingPersonal),
-                onSelected: (_) => _changeNavigation(
-                  () => _navigationState.sharedShopping = false,
-                ),
+      _Area.shopping => OrganizerShoppingPage(
+        snapshot: snapshot,
+        actions: actions,
+        selectedId: _navigationState.shoppingId,
+        onSelection: (id) =>
+            _changeNavigation(() => _navigationState.shoppingId = id),
+        onShare: snapshot.workspaceKey == 'local'
+            ? (list) => _copyList(snapshot, list)
+            : null,
+        onMoveToHousehold:
+            ref.watch(localSpacesProvider).valueOrNull?.selectedSpace?.kind ==
+                LocalSpaceKind.household
+            ? null
+            : (list) => transferToLocalHousehold(
+                context,
+                ref,
+                name: list.title,
+                transfer: (id) => ref
+                    .read(localSpacesProvider.notifier)
+                    .moveShoppingListToHousehold(
+                      list.id,
+                      id,
+                      expectedRevision: list.revision,
+                    ),
               ),
-              ChoiceChip(
-                selected: _navigationState.sharedShopping,
-                label: Text(l.sharingShared),
-                onSelected: (_) => _changeNavigation(
-                  () => _navigationState.sharedShopping = true,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (_navigationState.sharedShopping)
-            SharingWorkspace(
-              view: SharingView.shopping,
-              selectedScopeId: _navigationState.sharedScopeId,
-              onScopeSelected: _selectScope,
-              selectedListId: _navigationState.sharedListId,
-              onListSelected: (id) =>
-                  _changeNavigation(() => _navigationState.sharedListId = id),
-              onConnect: () => _navigate(_Area.sharing),
-              onMembers: _openSpaceSettings,
-            )
-          else
-            OrganizerShoppingPage(
-              snapshot: snapshot,
-              actions: actions,
-              selectedId: _navigationState.shoppingId,
-              onSelection: (id) =>
-                  _changeNavigation(() => _navigationState.shoppingId = id),
-              onShare: (list) => _copyList(snapshot, list),
-            ),
-        ],
       ),
-      _Area.finances => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                selected: !_navigationState.sharedFinance,
-                label: Text(l.sharingPersonal),
-                onSelected: (_) => _changeNavigation(
-                  () => _navigationState.sharedFinance = false,
-                ),
-              ),
-              ChoiceChip(
-                selected: _navigationState.sharedFinance,
-                label: Text(l.sharingShared),
-                onSelected: (_) => _changeNavigation(
-                  () => _navigationState.sharedFinance = true,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (_navigationState.sharedFinance)
-            SharingWorkspace(
-              view: SharingView.finances,
-              selectedScopeId: _navigationState.sharedScopeId,
-              onScopeSelected: _selectScope,
-              onConnect: () => _navigate(_Area.sharing),
-            )
-          else
-            OrganizerFinancePage(snapshot: snapshot, actions: actions),
-        ],
+      _Area.finances => OrganizerFinancePage(
+        snapshot: snapshot,
+        actions: actions,
       ),
       _Area.home => OrganizerProjectsPage(
         key: const ValueKey('home'),
@@ -1407,7 +1407,25 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onConnect: () => _navigate(_Area.sharing),
       ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
-      _Area.garden => const GardenPage(),
+      _Area.garden =>
+        selection?.allSpacesSelected == true
+            ? GardenSpaceChooser(
+                onLocal: (id) async {
+                  final identity = _accountIdentity;
+                  await _selectLocalSpace(id);
+                  if (mounted && identity == _accountIdentity) {
+                    _navigate(_Area.garden);
+                  }
+                },
+                onShared: (id) async {
+                  final identity = _accountIdentity;
+                  await _selectSpace(id);
+                  if (mounted && identity == _accountIdentity) {
+                    _navigate(_Area.garden);
+                  }
+                },
+              )
+            : const GardenPage(),
       _Area.inbox => OrganizerInboxPage(
         onSettings: () => showInboxPreferences(context, ref),
         onAccount: () => _navigate(_Area.sharing),
@@ -1445,12 +1463,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             onTap: _startSetup,
           ),
           for (final area in [
+            ..._contentAreas().where(
+              (area) => area != _Area.today && area != _Area.plans,
+            ),
             _Area.sharing,
             _Area.spaceSettings,
-            _Area.finances,
-            _Area.home,
-            _Area.garden,
-            _Area.people,
             _Area.settings,
           ])
             ListTile(

@@ -1,8 +1,22 @@
-# FamilyHub 0.7.0
+# FamilyHub 0.9.0
+
+## Linked payments and source version
+
+Linked personal payments, explicit household cash projection, partial source-approved reimbursements and deletion policy3 are defined in [linked payment contract](../../../docs/server/linked-payments-api-contract.md). Canonical finance2 operations retain original hashes; the sidecar-aware transport gate prevents old clients from presenting a misleading ledger. This source version is distinct from hosted deployment evidence.
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
-Version 0.7.0 uses additive server schema 11, record contracts 1/2/3, finance contracts 1/2 and account-deletion policies 1/2. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.7.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/UPGRADE_IMPLEMENTATION.md` records the current release run. Historical 0.3–0.6 notes below remain applicable to their original features.
+Version 0.9.0 uses additive server schema 13, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.9.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/UPGRADE_IMPLEMENTATION.md` records the current release run. Historical 0.3–0.6 notes below remain applicable to their original features.
+
+## Spaces access and household gardens (0.8.0/schema 12)
+
+Existing organizations retain access policy 1. New callers explicitly request `accessPolicyVersion:2`; only an organization owner can migrate an existing organization after a current reader preview. Policy 2 grants accepted project members all project financial reading, and organization leaders all current/future projects plus their finances. The organization owner is a leader by default; other leaders must be accepted organization members. Direct project roles and explicit finance write grants still control editing. General organization finance is readable by leaders plus existing explicit grantees. Policy-2 finance is enabled on publication and cannot be disabled with the legacy switch. A leadership role does not subscribe to every project's notifications.
+
+Scope publication accepts a stable client UUID, durable `requestId`, optional household/organization address, and an original record-3 `projectPayload` for a child project's stable root. `scopes.updateMetadata` uses an owner-only metadata revision check. `scopes.list(includeAccessChanges:true)` returns explicit confirmed `revokedScopeIds`; a missing scope instead returns `scope_unavailable` and is not evidence of revoked membership. Local retention and restoration remain client obligations.
+
+`sync4.push/pull` shares exact format-2 household garden documents with revision checks, tombstones and immutable replay. Identity must match the record envelope. Each document is bounded to 512 KiB; oversized local gardens require an explicit error, never truncation. Other contracts remain supported; older clients reject scopes containing contract-4 records. Gardens currently do not generate generic shopping notifications.
+
+Schema 12 is additive and repeatable. The migration itself does not widen historic access; owner preview/apply is a separate operation. The source package and isolated test matrix do not deploy or migrate any hosted organization. Details are in the source repository's `docs/server/spaces-api-contract.md`.
 
 ## Native account and sharing API
 

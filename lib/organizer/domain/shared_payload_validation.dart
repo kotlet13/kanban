@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'collaboration_models.dart';
+import 'garden_models.dart';
 
 bool isSharedUuid(Object? value) =>
     value is String &&
@@ -24,11 +25,26 @@ void validateSharedPayload(
 }) {
   final version =
       contractVersion ?? sharedPayloadContractVersion(type.name, payload);
+  if (type == SharedRecordType.garden) {
+    if (version != 4 ||
+        personal ||
+        utf8.encode(jsonEncode(payload)).length > 524288) {
+      throw const CollaborationException('validation_error');
+    }
+    try {
+      final garden = Garden.fromJson(payload);
+      GardenSnapshot(gardens: [garden]).validate();
+    } on Object {
+      throw const CollaborationException('validation_error');
+    }
+    return;
+  }
   final keys = <String>{
     if (type != SharedRecordType.householdPerson) 'title',
     'createdAt',
     'updatedAt',
     ...switch (type) {
+      SharedRecordType.garden => <String>[],
       SharedRecordType.project => [
         'description',
         'area',
@@ -221,6 +237,8 @@ void validateSharedPayload(
     }
   }
   switch (type) {
+    case SharedRecordType.garden:
+      return;
     case SharedRecordType.householdPerson:
       validateSharedText(
         payload['notes'],
@@ -288,10 +306,11 @@ void validateSharedPayload(
   }
 }
 
-int sharedPayloadContractVersion(String type, Map payload) =>
-    type == 'householdPerson' ||
-        payload.containsKey('phases') ||
-        payload.containsKey('timer')
+int sharedPayloadContractVersion(String type, Map payload) => type == 'garden'
+    ? 4
+    : type == 'householdPerson' ||
+          payload.containsKey('phases') ||
+          payload.containsKey('timer')
     ? 3
     : (payload.containsKey('startAt') ? 2 : 1);
 

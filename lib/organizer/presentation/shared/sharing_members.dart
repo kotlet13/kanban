@@ -98,6 +98,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     await showSharingForm(
       context,
       title: l.sharingInvitePerson,
+      description:
+          widget.scope.kind == SharedScopeKind.project &&
+              widget.scope.accessPolicyVersion >= 2
+          ? l.organizationProjectFinanceVisibility
+          : null,
       fields: [
         SharingField(id: 'recipient', label: l.username),
         SharingField(
@@ -222,6 +227,34 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     if (mounted && _isCurrent) _refresh();
   }
 
+  Future<void> _leader(SharedMember member) async {
+    final l = context.l10n;
+    final confirmed = await confirmSharingAction(
+      context,
+      title: member.organizationLeader
+          ? l.organizationLeaderRemove
+          : l.organizationLeaderGrant,
+      description: l.organizationLeaderConfirm,
+      confirmLabel: member.organizationLeader
+          ? l.organizationLeaderRemove
+          : l.organizationLeaderGrant,
+      wrap: (dialog) => SharingSessionBoundary(
+        guard: _guard,
+        visibleWhen: _scopeIsCurrent,
+        child: dialog,
+      ),
+    );
+    if (confirmed && mounted && _isCurrent) {
+      await _run(
+        () => _guard.controller.setOrganizationLeader(
+          widget.scope.id,
+          member.accountId,
+          !member.organizationLeader,
+        ),
+      );
+    }
+  }
+
   Future<void> _remove(SharedMember member) async {
     final confirmed = await confirmSharingAction(
       context,
@@ -306,14 +339,37 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                         : member.displayName,
                   ),
                   subtitle: Text(
-                    '${member.username} · ${sharingRoleLabel(context, member.role)}',
+                    '${member.username} · ${sharingRoleLabel(context, member.role)}${member.organizationLeader ? ' · ${l.organizationLeader}' : ''}',
                   ),
                   trailing:
                       widget.scope.canManage && member.role != SharedRole.owner
-                      ? IconButton(
-                          tooltip: l.sharingRemoveMember,
-                          onPressed: _busy ? null : () => _remove(member),
-                          icon: const Icon(Icons.person_remove_outlined),
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.scope.kind ==
+                                    SharedScopeKind.organization &&
+                                widget.scope.accessPolicyVersion >= 2 &&
+                                member.accountId.isNotEmpty)
+                              IconButton(
+                                key: ValueKey(
+                                  'organization-leader-${member.accountId}',
+                                ),
+                                tooltip: member.organizationLeader
+                                    ? l.organizationLeaderRemove
+                                    : l.organizationLeaderGrant,
+                                onPressed: _busy ? null : () => _leader(member),
+                                icon: Icon(
+                                  member.organizationLeader
+                                      ? Icons.manage_accounts
+                                      : Icons.manage_accounts_outlined,
+                                ),
+                              ),
+                            IconButton(
+                              tooltip: l.sharingRemoveMember,
+                              onPressed: _busy ? null : () => _remove(member),
+                              icon: const Icon(Icons.person_remove_outlined),
+                            ),
+                          ],
                         )
                       : null,
                 ),

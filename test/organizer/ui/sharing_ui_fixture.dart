@@ -117,6 +117,26 @@ class SharingUiController extends CollaborationController {
         scopes: current.scopes,
         data: current.data,
         organizationsSupported: current.organizationsSupported,
+        localAccessAllowed: current.localAccessAllowed,
+        deletionPending: current.deletionPending,
+        householdPeopleSupported: current.householdPeopleSupported,
+        projectArchivingSupported: current.projectArchivingSupported,
+        financeSupported: current.financeSupported,
+        financePolicies: current.financePolicies,
+        financeSnapshotComplete: current.financeSnapshotComplete,
+        financeContractVersion: current.financeContractVersion,
+        recordContractVersion: current.recordContractVersion,
+        members: current.members,
+        privateSync: current.privateSync,
+        privateRecordIds: current.privateRecordIds,
+        inbox: current.inbox,
+        financeConflicts: current.financeConflicts,
+        financePendingCount: current.financePendingCount,
+        financeBlockedCount: current.financeBlockedCount,
+        conflicts: current.conflicts,
+        pendingCount: current.pendingCount,
+        blockedCount: current.blockedCount,
+        lastError: current.lastError,
         sessionInvalid: current.sessionInvalid,
       ),
     );
@@ -132,6 +152,26 @@ class SharingUiController extends CollaborationController {
         scopes: current.scopes,
         data: current.data,
         organizationsSupported: current.organizationsSupported,
+        localAccessAllowed: current.localAccessAllowed,
+        deletionPending: current.deletionPending,
+        householdPeopleSupported: current.householdPeopleSupported,
+        projectArchivingSupported: current.projectArchivingSupported,
+        financeSupported: current.financeSupported,
+        financePolicies: current.financePolicies,
+        financeSnapshotComplete: current.financeSnapshotComplete,
+        financeContractVersion: current.financeContractVersion,
+        recordContractVersion: current.recordContractVersion,
+        members: current.members,
+        privateSync: current.privateSync,
+        privateRecordIds: current.privateRecordIds,
+        inbox: current.inbox,
+        financeConflicts: current.financeConflicts,
+        financePendingCount: current.financePendingCount,
+        financeBlockedCount: current.financeBlockedCount,
+        conflicts: current.conflicts,
+        pendingCount: current.pendingCount,
+        blockedCount: current.blockedCount,
+        lastError: current.lastError,
       ),
     );
   }
@@ -360,6 +400,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: {
           scopeId: SharedScopeData(
@@ -388,6 +430,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: {
           scopeId: SharedScopeData(
@@ -445,6 +489,8 @@ class SharingUiController extends CollaborationController {
     replace(
       CollaborationState(
         session: old.session,
+        selectedSpaceId: old.selectedSpaceId,
+        allSpacesSelected: old.allSpacesSelected,
         scopes: old.scopes,
         data: old.data,
       ),

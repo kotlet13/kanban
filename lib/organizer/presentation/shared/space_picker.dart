@@ -1,11 +1,10 @@
-import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import 'sharing_forms.dart';
 import 'sharing_errors.dart';
-import 'sharing_session_boundary.dart';
+import '../../state/local_spaces_provider.dart';
 
 class OrganizerSpacePicker extends ConsumerWidget {
   const OrganizerSpacePicker({
@@ -14,36 +13,22 @@ class OrganizerSpacePicker extends ConsumerWidget {
     required this.onConnect,
     this.compact = false,
     this.onAllSelected,
+    this.onLocalSelected,
   });
   final ValueChanged<String?> onSelected;
   final VoidCallback onConnect;
   final bool compact;
   final VoidCallback? onAllSelected;
+  final ValueChanged<String>? onLocalSelected;
   static const allAction = 'all-spaces';
   static const createAction = 'create-space';
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final l = context.l10n, guard = SharingSessionGuard(context, ref);
-    final state = ref.read(collaborationProvider).valueOrNull;
-    if (state?.session == null ||
-        state!.sessionInvalid ||
-        !state.session!.expiresAt.isAfter(DateTime.now())) {
-      onConnect();
-      return;
-    }
-    String? id, submittedName, submittedKind;
-    bool currentSessionUsable() {
-      final current = ref.read(collaborationProvider).valueOrNull;
-      return guard.isCurrent &&
-          current != null &&
-          !current.sessionInvalid &&
-          current.session?.expiresAt.isAfter(DateTime.now()) == true;
-    }
-
-    final createId = newSharedId(), requestId = newSharedId();
+    final l = context.l10n;
+    String? id;
     await showSharingForm(
       context,
       title: l.spacePickerNewSpace,
-      description: l.spacePickerInitialVisibility,
+      description: l.localSpaceDescription,
       fields: [
         SharingField(id: 'name', label: l.sharingSpaceName),
         SharingField(
@@ -52,37 +37,38 @@ class OrganizerSpacePicker extends ConsumerWidget {
           initialValue: 'household',
           options: {
             'household': l.sharingHousehold,
-            'project': l.spacePickerSharedProject,
-            if (state.organizationsSupported)
-              'organization': l.organizationTitle,
+            'organization': l.organizationTitle,
           },
         ),
+        SharingField(
+          id: 'address',
+          label: l.localSpaceAddress,
+          required: false,
+        ),
       ],
-      submitLabel: l.sharingCreateSpace,
+      submitLabel: l.localSpaceCreate,
       errorMessage: (error) => sharingErrorMessage(context, error),
-      wrap: (form) => SharingSessionBoundary(
-        guard: guard,
-        visibleWhen: (current) =>
-            !current.sessionInvalid &&
-            current.session?.expiresAt.isAfter(DateTime.now()) == true,
-        child: form,
-      ),
       onSubmit: (values) async {
-        if (!currentSessionUsable()) {
-          throw const CollaborationException('auth_required');
-        }
-        id = await guard.controller.createScope(
-          submittedName ??= values['name']!.trim(),
-          kind: SharedScopeKind.values.byName(
-            submittedKind ??= values['kind']!,
-          ),
-          id: createId,
-          requestId: requestId,
-        );
+        final created = await ref
+            .read(localSpacesProvider.notifier)
+            .createSpace(
+              kind: LocalSpaceKind.values.byName(values['kind']!),
+              name: values['name']!.trim(),
+              address: values['address'] ?? '',
+            );
+        id = created.id;
       },
     );
-    if (context.mounted && currentSessionUsable() && id != null) {
-      onSelected(id);
+    if (context.mounted && id != null) _selectLocal(ref, id!);
+  }
+
+  void _selectLocal(WidgetRef ref, String id) {
+    if (onLocalSelected != null) {
+      onLocalSelected!(id);
+    } else {
+      ref.read(collaborationProvider.notifier).selectSpace(null);
+      ref.read(localSpacesProvider.notifier).selectSpace(id);
+      onSelected(null);
     }
   }
 
@@ -95,11 +81,16 @@ class OrganizerSpacePicker extends ConsumerWidget {
             .where((scope) => scope.kind != SharedScopeKind.personal)
             .toList() ??
         <SharedScope>[];
+    final local = ref.watch(localSpacesProvider).valueOrNull;
     final chosen = state?.selectedSpaceId;
+    final chosenLocal = local?.selectedSpace;
+    final localSpaces = local?.spaces ?? <LocalSpace>[];
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final allSelected = state?.allSpacesSelected == true;
-    final selectedValue = allSelected ? allAction : chosen ?? '';
+    final selectedValue = allSelected
+        ? allAction
+        : chosen ?? 'local:${local?.selectedSpaceId ?? 'local'}';
     DropdownMenuItem<String> menuItem({
       required String value,
       required String title,
@@ -139,11 +130,23 @@ class OrganizerSpacePicker extends ConsumerWidget {
         title: l.allSpacesTitle,
         icon: Icons.dashboard_outlined,
       ),
-      menuItem(
-        value: '',
-        title: l.organizerPersonal,
-        icon: Icons.person_outline,
-      ),
+      for (final space in localSpaces.where((space) => space.binding == null))
+        menuItem(
+          value: 'local:${space.id}',
+          title: space.name.isEmpty ? l.organizerPersonal : space.name,
+          subtitle: l.localSpaceState,
+          icon: switch (space.kind) {
+            LocalSpaceKind.personal => Icons.person_outline,
+            LocalSpaceKind.household => Icons.home_outlined,
+            LocalSpaceKind.organization => Icons.business_outlined,
+          },
+        ),
+      if (localSpaces.isEmpty)
+        menuItem(
+          value: 'local:local',
+          title: l.organizerPersonal,
+          icon: Icons.person_outline,
+        ),
       for (final scope in scopes.where((scope) => !scope.archived))
         menuItem(
           value: scope.id,
@@ -198,14 +201,20 @@ class OrganizerSpacePicker extends ConsumerWidget {
     final chosenLabel = allSelected
         ? l.allSpacesTitle
         : chosen == null
-        ? l.organizerPersonal
+        ? chosenLocal == null || chosenLocal.name.isEmpty
+              ? l.organizerPersonal
+              : chosenLocal.name
         : selectedScope == null || selectedScope.revoked
         ? l.sharingAccessRevoked
         : selectedScope.name;
     final chosenIcon = allSelected
         ? Icons.dashboard_outlined
         : chosen == null
-        ? Icons.person_outline
+        ? switch (chosenLocal?.kind) {
+            LocalSpaceKind.household => Icons.home_outlined,
+            LocalSpaceKind.organization => Icons.business_outlined,
+            _ => Icons.person_outline,
+          }
         : selectedScope == null || selectedScope.revoked
         ? Icons.lock_outline
         : scopeIcon(selectedScope);
@@ -291,8 +300,10 @@ class OrganizerSpacePicker extends ConsumerWidget {
                 }
               } else if (id == createAction) {
                 _create(context, ref);
+              } else if (id?.startsWith('local:') == true) {
+                _selectLocal(ref, id!.substring(6));
               } else {
-                onSelected(id == '' ? null : id);
+                onSelected(id);
               }
             },
           ),

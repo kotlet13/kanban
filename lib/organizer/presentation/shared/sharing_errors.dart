@@ -10,6 +10,15 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'space_bound_to_other_account' => l.localSpaceConnectionOtherAccount,
+    'additional_personal_sync_unsupported' ||
+    'garden_sync_unsupported' ||
+    'finance_sync_unsupported' ||
+    'client_upgrade_required' => l.localSpaceConnectionUnsupported,
+    'use_private_sync' => l.privateSyncDescription,
+    'organization_access_pending' => l.organizationAccessPending,
+    'organization_preview_stale' ||
+    'organization_access_preview_stale' => l.organizationAccessPreviewStale,
     'scope_archived' => l.scopeArchivedDescription,
     'single_project_guard' => l.organizationAccessDescription,
     'recurring_entry_managed_by_rule' ||
@@ -52,6 +61,9 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'unsupported_version' ||
     'native_disabled' => l.sharingUnsupported,
     'conflict' || 'stale_revision' => l.sharingConflictDescription,
+    'linked_payment_exists' => l.paymentAlreadyLinked,
+    'waiting_source_publication' => l.paymentWaitingSource,
+    'metadata_conflict' => l.sharingStaleEditor,
     'stale_edit' => l.sharingStaleEditor,
     'changes_blocked' => l.sharingBlockedDescription,
     'record_deleted' => l.sharingDeletedConflict,

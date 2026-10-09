@@ -2,6 +2,8 @@ import 'dart:convert';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/local_space_models.dart';
+import '../domain/linked_payment_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
 import '../domain/shared_dates.dart';
@@ -101,7 +103,7 @@ Map<String, dynamic> backupMap(Object? value) => value as Map<String, dynamic>;
 List<Map<String, dynamic>> backupRows(Map<String, dynamic> doc, String table) {
   final rows = (backupMap(doc['tables'])[table] as List)
       .cast<Map<String, dynamic>>();
-  if (table == 'finance_outbox' && doc['version'] != 3) {
+  if (table == 'finance_outbox' && (doc['version'] as int) < 3) {
     // Add envelope metadata only; the immutable request remains byte-for-byte.
     for (final row in rows) {
       row.putIfAbsent('wire_version', () => 1);
@@ -134,22 +136,38 @@ void validateBackupDocument(Map<String, dynamic> doc) {
           'completeness',
           'exclusions',
           if (doc['version'] != 1) 'gardens',
-          if (doc['version'] == 3) ...['operationPairs', 'financeInboxReads'],
+          if ((doc['version'] as int) >= 3) ...[
+            'operationPairs',
+            'financeInboxReads',
+          ],
+          if (doc['version'] == 4) ...[
+            'localSpaces',
+            'gardenSpaceLinks',
+            'linkedPayments',
+          ],
         }).isNotEmpty ||
         doc.length !=
             (doc['version'] == 1
                 ? 12
                 : doc['version'] == 2
                 ? 13
-                : 15) ||
+                : doc['version'] == 3
+                ? 15
+                : doc.containsKey('linkedPayments')
+                ? 18
+                : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3].contains(doc['version']) ||
-        doc['databaseVersion'] !=
-            (doc['version'] == 1
-                ? 4
-                : doc['version'] == 2
-                ? 5
-                : 6) ||
+        !const [1, 2, 3, 4].contains(doc['version']) ||
+        (doc['version'] == 4
+            ? !const [7, 8].contains(doc['databaseVersion'])
+            : doc['databaseVersion'] !=
+                  (doc['version'] == 1
+                      ? 4
+                      : doc['version'] == 2
+                      ? 5
+                      : doc['version'] == 3
+                      ? 6
+                      : 7)) ||
         !isSharedUuid(doc['id'] as String)) {
       throw const FormatException();
     }
@@ -164,6 +182,12 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       throw const FormatException();
     }
     backupGardens(doc)?.validate();
+    if (doc['version'] == 4) {
+      validateBackupLocalSpaces(doc);
+      if (doc['linkedPayments'] != null) {
+        validateLinkedPaymentsBackup(backupMap(doc['linkedPayments']));
+      }
+    }
     final source = doc['source'] == null ? null : backupMap(doc['source']);
     if (source != null &&
         (source.keys.toSet().difference({
@@ -173,6 +197,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
               'serverUrl',
               'username',
               'displayName',
+              if (doc['version'] == 4) 'deviceId',
             }).isNotEmpty ||
             !isSharedUuid(source['serverId'] as String) ||
             !isSharedUuid(source['accountId'] as String))) {
@@ -301,7 +326,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 recordTypes['${row['scope_id']}:${row['record_id']}'] ||
             (request['deleted'] == true) != (request['payload'] == null) ||
             (table == 'outbox' &&
-                !const [1, 2, 3].contains(row['wire_version']))) {
+                !const [1, 2, 3, 4].contains(row['wire_version']))) {
           throw const FormatException();
         }
         lastSequence = row['sequence'] as int;
@@ -619,7 +644,7 @@ int backupFinanceContractVersion(String type, Map<String, dynamic> p) =>
     : 1;
 
 void validateBackupOperationPairs(Map<String, dynamic> doc) {
-  if (doc['version'] != 3) return;
+  if ((doc['version'] as int) < 3) return;
   if (doc['operationPairs'] is! List) {
     throw const FormatException('Missing operation pairs');
   }
@@ -682,7 +707,7 @@ void validateBackupOperationPairs(Map<String, dynamic> doc) {
 }
 
 void validateBackupFinanceInboxReads(Map<String, dynamic> doc) {
-  if (doc['version'] != 3) return;
+  if ((doc['version'] as int) < 3) return;
   if (doc['financeInboxReads'] is! List ||
       (doc['financeInboxReads'] as List).length > 50000) {
     throw const FormatException('Invalid finance inbox receipts');
@@ -704,5 +729,39 @@ void validateBackupFinanceInboxReads(Map<String, dynamic> doc) {
       throw const FormatException('Invalid finance inbox receipt source');
     }
     readSharedDate(receipt, 'value');
+  }
+}
+
+void validateBackupLocalSpaces(Map<String, dynamic> doc) {
+  final spaces = doc['localSpaces'];
+  if (spaces is! List || spaces.length > 1000) {
+    throw const FormatException('Invalid local spaces');
+  }
+  final ids = <String>{}, households = <String>{};
+  for (final raw in spaces) {
+    final item = backupMap(raw);
+    if (item.length != 2 ||
+        !item.containsKey('space') ||
+        !item.containsKey('snapshot')) {
+      throw const FormatException('Invalid local space document');
+    }
+    final space = LocalSpace.fromJson(backupMap(item['space']));
+    if (!ids.add(space.id)) {
+      throw const FormatException('Duplicate local space');
+    }
+    if (space.kind == LocalSpaceKind.household) households.add(space.id);
+    final snapshot = OrganizerBackupCodec.decode(item['snapshot'] as String);
+    snapshot.validate();
+  }
+  final gardenIds = backupGardens(doc)!.gardens.map((g) => g.id).toSet();
+  final seen = <String>{};
+  for (final raw in doc['gardenSpaceLinks'] as List) {
+    final link = backupMap(raw);
+    if (link.length != 2 ||
+        !gardenIds.contains(link['garden_id']) ||
+        !households.contains(link['space_id']) ||
+        !seen.add(link['garden_id'] as String)) {
+      throw const FormatException('Invalid garden household');
+    }
   }
 }

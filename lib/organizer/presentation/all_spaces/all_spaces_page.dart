@@ -8,12 +8,24 @@ import '../../state/organizer_provider.dart';
 import '../organizer_widgets.dart';
 import 'all_spaces_rows.dart';
 import 'all_spaces_area.dart';
+import 'all_spaces_payments.dart';
 export 'all_spaces_area.dart';
 
 /// Aggregate presentation never becomes the write target. Opening a row uses
 /// its captured source; creating first switches to an explicitly chosen space.
 class AllSpacesPage extends ConsumerStatefulWidget {
-  const AllSpacesPage({super.key, required this.area, required this.onSource});
+  const AllSpacesPage({
+    super.key,
+    required this.area,
+    required this.onSource,
+    this.snapshot,
+    this.subtitle,
+    this.allowCreation = true,
+    this.showDescription = true,
+  });
+  final AllSpacesSnapshot? snapshot;
+  final String? subtitle;
+  final bool allowCreation, showDescription;
   final AllSpacesArea area;
   final Future<void> Function(
     AllSpacesSource source,
@@ -123,7 +135,9 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final value = ref.watch(allSpacesProvider);
+    final value = widget.snapshot == null
+        ? ref.watch(allSpacesProvider)
+        : AsyncData(widget.snapshot!);
     final now = ref.watch(organizerClockProvider)();
     final l = context.l10n;
     return value.when(
@@ -143,14 +157,19 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
           children: [
             OrganizerHeading(
               title: _title(context),
-              subtitle: widget.area == AllSpacesArea.finances
-                  ? l.allSpacesFinanceDescription
-                  : l.allSpacesDescription,
-              action: OutlinedButton.icon(
-                onPressed: () => _chooseTarget(snapshot),
-                icon: const Icon(Icons.add),
-                label: Text(l.allSpacesAdd),
-              ),
+              subtitle: !widget.showDescription
+                  ? null
+                  : widget.subtitle ??
+                        (widget.area == AllSpacesArea.finances
+                            ? l.allSpacesFinanceDescription
+                            : l.allSpacesDescription),
+              action: !widget.allowCreation
+                  ? null
+                  : OutlinedButton.icon(
+                      onPressed: () => _chooseTarget(snapshot),
+                      icon: const Icon(Icons.add),
+                      label: Text(l.allSpacesAdd),
+                    ),
             ),
             if (widget.area == AllSpacesArea.tasks) ...[
               Wrap(
@@ -190,6 +209,7 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
                         widget.onSource(source, AllSpacesArea.finances, null),
                   ),
               ],
+              AllSpacesPayments(snapshot: snapshot, onSource: widget.onSource),
               AllSpacesFinanceSummary(
                 snapshot: snapshot,
                 month: _month,

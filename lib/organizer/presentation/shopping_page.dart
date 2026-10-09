@@ -15,13 +15,14 @@ class OrganizerShoppingPage extends StatefulWidget {
     this.readOnly = false,
     this.scopeLabel,
     this.onShare,
+    this.onMoveToHousehold,
     this.emptyDescription,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
   final bool readOnly;
   final String? scopeLabel;
-  final ValueChanged<LocalShoppingList>? onShare;
+  final ValueChanged<LocalShoppingList>? onShare, onMoveToHousehold;
   final String? emptyDescription;
   final String? selectedId;
   final ValueChanged<String?> onSelection;
@@ -178,6 +179,16 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
               ),
           ],
         ),
+        if (widget.onMoveToHousehold != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: ValueKey('shopping-assign-${list.id}'),
+              onPressed: () => widget.onMoveToHousehold!(list),
+              icon: const Icon(Icons.home_outlined),
+              label: Text(l.localSpaceMoveToHousehold),
+            ),
+          ),
         if (widget.onShare != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 16),

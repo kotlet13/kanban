@@ -356,6 +356,12 @@ void main() {
       )).any((column) => column['name'] == 'wire_version'),
       isFalse,
     );
+    await original.execute('DROP TABLE garden_space_links');
+    await original.execute('DROP TABLE local_spaces');
+    await original.execute('DROP TABLE linked_payment_cash');
+    await original.execute('DROP TABLE linked_payment_events');
+    await original.execute('DROP TABLE linked_payment_projections');
+    await original.execute('DROP TABLE linked_payment_intents');
     await original.execute('PRAGMA user_version=4');
     await original.close();
     final upgraded = await client(file: file);
@@ -474,6 +480,9 @@ void main() {
       final gardenV2 = await a.backup.crypto.decrypt(bytes, password);
       gardenV2.remove('operationPairs');
       gardenV2.remove('financeInboxReads');
+      gardenV2.remove('localSpaces');
+      gardenV2.remove('gardenSpaceLinks');
+      gardenV2.remove('linkedPayments');
       gardenV2['version'] = 2;
       gardenV2['databaseVersion'] = 5;
       gardenV2['personal'] = legacyTaskBackup(a.personal.snapshot);
@@ -508,6 +517,9 @@ void main() {
       oldDoc.remove('gardens');
       oldDoc.remove('operationPairs');
       oldDoc.remove('financeInboxReads');
+      oldDoc.remove('localSpaces');
+      oldDoc.remove('gardenSpaceLinks');
+      oldDoc.remove('linkedPayments');
       oldDoc['version'] = 1;
       oldDoc['databaseVersion'] = 4;
       oldDoc['personal'] = legacyTaskBackup(a.personal.snapshot);

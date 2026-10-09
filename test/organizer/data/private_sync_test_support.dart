@@ -27,6 +27,7 @@ class PersonalTransport extends FakeTransport {
         'recordContractVersions': [1, 2],
         'features': {
           'recordSync': true,
+          'scopeAccessChanges': true,
           'finance': true,
           'privateSync': true,
           'personalFinanceEntry': true,

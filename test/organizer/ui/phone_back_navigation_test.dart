@@ -9,7 +9,7 @@ import 'package:kanban/app_router.dart';
 import 'package:kanban/organizer/domain/all_spaces_projection.dart';
 import 'package:kanban/organizer/presentation/all_spaces/all_spaces_page.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
-import 'package:kanban/organizer/presentation/shared/sharing_account_page.dart';
+import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/presentation/shared/sharing_workspace.dart';
 import 'package:kanban/organizer/presentation/projects_page.dart';
 import 'package:kanban/organizer/presentation/shopping_page.dart';
@@ -160,7 +160,7 @@ void main() {
     tester,
   ) async {
     await pumpOrganizer(tester, MemoryOrganizerStorage());
-    await mobileTab(tester, 'Nakupi');
+    await mobileTab(tester, 'Projekti');
     await mobileTab(tester, 'Nastavitve');
     await tester.tap(find.byTooltip('Obvestila'));
     await tester.pumpAndSettle();
@@ -168,7 +168,7 @@ void main() {
     await back(tester);
     expectArea('settings');
     await back(tester);
-    expectArea('shopping');
+    expectArea('projects');
     await back(tester);
     expectArea('today');
     expect(exits(), 0);
@@ -309,7 +309,7 @@ void main() {
         MemoryOrganizerStorage(),
         collaborationController: shared,
       );
-      await mobileTab(tester, 'Nakupi');
+      await mobileTab(tester, 'Opravila');
       await mobileTab(tester, 'Projekti');
       await mobileTab(tester, 'Nastavitve');
       shared.switchAccount();
@@ -322,51 +322,32 @@ void main() {
     },
   );
 
-  testWidgets('sharing scope, view and member drilldowns reverse in order', (
+  testWidgets('account and space settings reverse without embedding content', (
     tester,
   ) async {
-    final shared = SharingUiController();
+    final shared = SharingUiController(
+      initial: CollaborationState(
+        session: sharingSession(),
+        selectedSpaceId: sharingScopeId,
+        scopes: [sharingScope()],
+        data: {sharingScopeId: sharingData()},
+      ),
+    );
     await pumpOrganizer(
       tester,
       MemoryOrganizerStorage(),
       collaborationController: shared,
     );
+    await mobileTab(tester, 'Projekti');
     await mobileTab(tester, 'Račun in deljenje');
-    final page = tester.widget<SharingAccountPage>(
-      find.byType(SharingAccountPage),
-    );
-    page.onScopeSelected(sharingScopeId);
+    expect(find.byType(SharingWorkspace), findsNothing);
+    await tester.tap(find.widgetWithText(ListTile, 'Nastavitve prostora'));
     await tester.pumpAndSettle();
-    tester
-        .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-        .onViewChanged!(SharingView.projects);
-    await tester.pumpAndSettle();
-    tester
-        .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-        .onSpaceSettings!(sharingScopeId);
-    await tester.pumpAndSettle();
+    expectArea('spaceSettings');
     await back(tester);
     expectArea('sharing');
-    expect(
-      tester
-          .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-          .initialView,
-      SharingView.projects,
-    );
     await back(tester);
-    expect(
-      tester
-          .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-          .initialView,
-      SharingView.shopping,
-    );
-    await back(tester);
-    expect(
-      tester
-          .widget<SharingAccountPage>(find.byType(SharingAccountPage))
-          .selectedScopeId,
-      isNull,
-    );
+    expectArea('projects');
     await back(tester);
     expectArea('today');
     expect(exits(), 0);
@@ -509,9 +490,9 @@ void main() {
       // Binding fallback may forward a platform pop; the shell does not intercept
       // the root with the Android two-press policy on these platforms.
       if (platform == TargetPlatform.iOS) {
-        await mobileTab(tester, 'Nakupi');
+        await mobileTab(tester, 'Projekti');
       } else {
-        await tester.tap(find.widgetWithText(ListTile, 'Nakupi'));
+        await tester.tap(find.widgetWithText(ListTile, 'Projekti'));
         await tester.pumpAndSettle();
       }
       await back(tester);

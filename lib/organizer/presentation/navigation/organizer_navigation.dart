@@ -33,6 +33,7 @@ typedef OrganizerLocation = ({
   SharingView sharingView,
   bool sharingAuth,
   String? spaceId,
+  String localSpaceId,
   bool allSpaces,
 });
 
@@ -50,6 +51,7 @@ class OrganizerNavigationState {
   OrganizerLocation location({
     required String? spaceId,
     required bool allSpaces,
+    String localSpaceId = 'local',
   }) => (
     area: area,
     planArea: planArea,
@@ -64,6 +66,7 @@ class OrganizerNavigationState {
     sharingView: sharingView,
     sharingAuth: sharingAuth,
     spaceId: spaceId,
+    localSpaceId: localSpaceId,
     allSpaces: allSpaces,
   );
 

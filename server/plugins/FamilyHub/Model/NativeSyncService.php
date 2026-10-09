@@ -10,16 +10,19 @@ class NativeSyncService extends NativeDatabase
 
     public function execute($operation, array $params)
     {
-        $this->version = str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1);
+        $linkedAware = $params['linkedPaymentsAware'] ?? false;
+        if (!is_bool($linkedAware)) { throw new NativeError('validation_error'); }
+        unset($params['linkedPaymentsAware']);
+        $this->version = str_starts_with($operation, 'sync4.') ? 4 : (str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1));
         $this->rate([['sync-ip:'.$this->ip, 2400, 60]]);
-        try { $result = $this->transaction(function () use ($operation, $params) {
+        try { $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
             $actor = $this->actor(); $userId = $actor['user']['id'];
-            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull'], true)) { return $this->pull($params, $userId); }
-            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
-            $this->fields($params, ['scopeId', 'operation'], $this->version === 3 ? ['operationContractVersion', 'financeOperation', 'financeOperationContractVersion'] : []);
-            $payloadVersion = $this->version === 3 ? ($params['operationContractVersion'] ?? 3) : $this->version;
-            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3], true)) { throw new NativeError('validation_error'); }
-            $compound = $operation === 'sync3.pushTaskWithCost';
+            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull'], true)) { return $this->pull($params, $userId); }
+            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync4.push', 'sync4.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
+            $this->fields($params, ['scopeId', 'operation'], $this->version >= 3 ? ['operationContractVersion', 'financeOperation', 'financeOperationContractVersion'] : []);
+            $payloadVersion = $this->version >= 3 ? ($params['operationContractVersion'] ?? $this->version) : $this->version;
+            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3,4], true) || $payloadVersion>$this->version) { throw new NativeError('validation_error'); }
+            $compound = in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost'],true);
             if ($compound !== isset($params['financeOperation'])) { throw new NativeError('validation_error'); }
             $scopeId = $this->uuid($params['scopeId']);
             $scope = $this->scope($scopeId, $userId, true);
@@ -27,18 +30,22 @@ class NativeSyncService extends NativeDatabase
             if (!is_array($op)) { throw new NativeError('validation_error'); }
             $this->fields($op, ['opId', 'recordId', 'type', 'expectedRevision', 'deleted', 'payload']);
             $opId = $this->uuid($op['opId']); $recordId = $this->uuid($op['recordId']);
-            if (!in_array($op['type'], ($payloadVersion === 3 ? ['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'] : ($payloadVersion === 2 ? ['project', 'task', 'event', 'shoppingList', 'shoppingItem'] : ['project', 'task', 'shoppingList', 'shoppingItem'])), true) ||
+            if (!in_array($op['type'], ($payloadVersion >= 3 ? array_merge(['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'],$payloadVersion===4 ? ['garden'] : []) : ($payloadVersion === 2 ? ['project', 'task', 'event', 'shoppingList', 'shoppingItem'] : ['project', 'task', 'shoppingList', 'shoppingItem'])), true) ||
                     !is_int($op['expectedRevision']) || $op['expectedRevision'] < 0 || !is_bool($op['deleted'])) {
                 throw new NativeError('validation_error');
             }
-            if ($compound) { (new NativeFinanceAccess($this->container))->policy($scopeId, $actor['user'], true, true); }
+            if ($op['type']==='garden' && !$op['deleted'] && ($op['payload']['id']??null)!==$recordId) { throw new NativeError('validation_error'); }
+            if ($compound) {
+                $financeAcl = (new NativeFinanceAccess($this->container))->policy($scopeId, $actor['user'], true, true);
+                if ($financeAcl['linkedPaymentsRequired'] && !$linkedAware) { throw new NativeError('client_upgrade_required',409); }
+            }
             if ($scope['kind']==='organization' && $op['type']==='project') { throw new NativeError('organization_projects_use_scopes',403); }
             $projectRoot=$scope['project_root_id']??(!empty($scope['organization_id']) ? $scopeId : null);
             if ($projectRoot!==null && $op['type']==='project') {
                 if ($recordId!==$projectRoot || $op['deleted']) { throw new NativeError('project_scope_single_project',403); }
                 if (!$op['deleted']) { $this->text($op['payload']['title']??null,200); }
             }
-            $hashOperation = $compound ? $operation : ($payloadVersion === 1 ? 'sync.push' : 'sync'.$payloadVersion.'.push');
+            $hashOperation = $compound ? 'sync3.pushTaskWithCost' : ($payloadVersion === 1 ? 'sync.push' : 'sync'.$payloadVersion.'.push');
             $hashParams = $compound ? $params : ['scopeId'=>$params['scopeId'], 'operation'=>$op];
             $hash = $this->hashRequest($hashOperation, $hashParams);
             $replay = $this->replay($scopeId, $userId, $opId, $hash);
@@ -72,7 +79,8 @@ class NativeSyncService extends NativeDatabase
                 if ($compound) { throw new NativeError($error->errorCode,422,$details); }
                 return new NativeError($error->errorCode, 422, $details);
             }
-            $sequence = $this->advance($scope); $revision = $op['expectedRevision'] + 1;
+            $sequence = $this->advance($scope);
+            if ($payloadVersion===4) { $this->change('UPDATE familyhub_scopes SET required_record_contract=4 WHERE id=?',[$scopeId]); } $revision = $op['expectedRevision'] + 1;
             $updated = gmdate('Y-m-d\TH:i:s\Z');
             $payload = $op['deleted'] ? null : json_encode($op['payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             if ($current) {
@@ -97,7 +105,7 @@ class NativeSyncService extends NativeDatabase
                     if (!$existingCost || (json_decode($existingCost['payload'],true,32,JSON_THROW_ON_ERROR)['taskId']??null)!==$recordId) { throw new NativeError('validation_error'); }
                 }
                 try {
-                    $financeResponse = (new NativeFinanceService($this->container))->pushInTransaction($scopeId, $actor['user'], $financeOp, $operation, $params);
+                    $financeResponse = (new NativeFinanceService($this->container))->pushInTransaction($scopeId, $actor['user'], $financeOp, 'sync3.pushTaskWithCost', $params);
                 } catch (NativeError $error) {
                     throw new NativeError($error->errorCode,$error->status,['serverRecord'=>$current ? $this->wire($current) : null,'financeRecord'=>$error->details['serverRecord']??null]);
                 }
@@ -110,7 +118,7 @@ class NativeSyncService extends NativeDatabase
             return $response;
         });
         } catch (NativeError $error) {
-            if ($operation==='sync3.pushTaskWithCost' && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
+            if (in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost'],true) && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
                 // The compound transaction rolled back BOTH records, audit and
                 // notifications. Persist its immutable failed outcome separately
                 // after checking current rights again; never cache denied data.
@@ -118,7 +126,7 @@ class NativeSyncService extends NativeDatabase
                     $actor=$this->actor();$scope=$this->uuid($params['scopeId']);$id=$this->uuid($params['operation']['opId']);
                     $this->scope($scope,$actor['user']['id'],true);
                     (new NativeFinanceAccess($this->container))->policy($scope,$actor['user'],true,true);
-                    $hash=$this->hashRequest($operation,$params);$replay=$this->replay($scope,$actor['user']['id'],$id,$hash);
+                    $hash=$this->hashRequest('sync3.pushTaskWithCost',$params);$replay=$this->replay($scope,$actor['user']['id'],$id,$hash);
                     if(!$replay) $this->remember($scope,$actor['user']['id'],$id,$hash,['errorCode'=>$error->errorCode,'details'=>$error->details],$error->status);
                 });
             }

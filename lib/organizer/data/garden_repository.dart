@@ -54,19 +54,36 @@ class GardenRepository {
       rethrow;
     }
   });
-  Future<T> _change<T>((GardenSnapshot, T) Function(GardenSnapshot) change) =>
-      _queue(() async {
-        final previous = await storage.read();
-        final (candidate, result) = change(previous);
-        await storage.write(candidate, expectedRevision: previous.revision);
-        _snapshot = await storage.read();
-        _changes.add(snapshot);
-        storage.database.personalChanged();
-        return result;
-      });
+  Future<T> _change<T>(
+    (GardenSnapshot, T) Function(GardenSnapshot) change, {
+    String? expectedWorkspaceKey,
+  }) {
+    final generation = storage.identityGeneration;
+    final workspace = expectedWorkspaceKey ?? storage.workspaceKey;
+    return _queue(() async {
+      if (generation != storage.identityGeneration ||
+          workspace != storage.workspaceKey) {
+        throw const OrganizerConflictException('Garden workspace changed');
+      }
+      final previous = await storage.read();
+      final (candidate, result) = change(previous);
+      await storage.write(
+        candidate,
+        expectedRevision: previous.revision,
+        expectedWorkspaceKey: workspace,
+        expectedIdentityGeneration: generation,
+      );
+      _snapshot = await storage.read();
+      _changes.add(snapshot);
+      storage.database.personalChanged();
+      return result;
+    });
+  }
+
   Future<String> createGarden({
     required String name,
     String notes = '',
+    String? expectedWorkspaceKey,
     Iterable<GardenArea> areas = const [],
     Iterable<GardenSeason> seasons = const [],
   }) => _change((s) {
@@ -84,7 +101,7 @@ class GardenRepository {
       GardenSnapshot(revision: s.revision, gardens: [...s.gardens, garden]),
       id,
     );
-  });
+  }, expectedWorkspaceKey: expectedWorkspaceKey);
   Garden _current(GardenSnapshot s, Garden record) {
     final current = s.gardens.where((g) => g.id == record.id).firstOrNull;
     if (current == null ||
@@ -97,31 +114,33 @@ class GardenRepository {
     return current;
   }
 
-  Future<void> updateGarden(Garden garden) => _change<void>((s) {
-    final current = _current(s, garden), now = _clock().toUtc();
-    final updated = garden.copyWith(
-      name: garden.name.trim(),
-      revision: current.revision + 1,
-      updatedAt: now.isBefore(current.updatedAt) ? current.updatedAt : now,
-    );
-    return (
-      GardenSnapshot(
-        revision: s.revision,
-        gardens: s.gardens.map((g) => g.id == garden.id ? updated : g),
-      ),
-      null,
-    );
-  });
-  Future<void> deleteGarden(Garden garden) => _change<void>((s) {
-    _current(s, garden);
-    return (
-      GardenSnapshot(
-        revision: s.revision,
-        gardens: s.gardens.where((g) => g.id != garden.id),
-      ),
-      null,
-    );
-  });
+  Future<void> updateGarden(Garden garden, {String? expectedWorkspaceKey}) =>
+      _change<void>((s) {
+        final current = _current(s, garden), now = _clock().toUtc();
+        final updated = garden.copyWith(
+          name: garden.name.trim(),
+          revision: current.revision + 1,
+          updatedAt: now.isBefore(current.updatedAt) ? current.updatedAt : now,
+        );
+        return (
+          GardenSnapshot(
+            revision: s.revision,
+            gardens: s.gardens.map((g) => g.id == garden.id ? updated : g),
+          ),
+          null,
+        );
+      }, expectedWorkspaceKey: expectedWorkspaceKey);
+  Future<void> deleteGarden(Garden garden, {String? expectedWorkspaceKey}) =>
+      _change<void>((s) {
+        _current(s, garden);
+        return (
+          GardenSnapshot(
+            revision: s.revision,
+            gardens: s.gardens.where((g) => g.id != garden.id),
+          ),
+          null,
+        );
+      }, expectedWorkspaceKey: expectedWorkspaceKey);
   Future<void> saveSeason(Garden garden, GardenSeason season) => updateGarden(
     garden.copyWith(
       seasons: [...garden.seasons.where((s) => s.year != season.year), season],

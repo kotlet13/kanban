@@ -10,10 +10,10 @@ class NativeService extends NativeDatabase
         if ($operation === 'capabilities') {
             $pushConfigured=$enabled && NativeFcmConfig::configured();
             return ['api' => 'familyhub_native', 'version' => 1, 'serverId' => $supported ? $this->serverId() : null, 'enabled' => $enabled,
-                    'features' => ['projectArchiving'=>$enabled, 'financePlanning' => $enabled, 'taskCosts' => $enabled, 'organizations' => $enabled, 'householdPeople' => $enabled, 'richPlanning' => $enabled, 'accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'sessionRenewal' => $enabled, 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
+                    'organizationAccessPolicyVersions'=>[1,2], 'linkedPaymentContractVersions'=>[3], 'features' => ['linkedPayments'=>$enabled,'scopeMetadata'=>$enabled,'householdGardenSync'=>$enabled,'scopeAccessChanges'=>$enabled,'organizationLeadership'=>$enabled,'projectFinanceMembership'=>$enabled,'accessMigrationPreview'=>$enabled,'stableScopePublication'=>$enabled,'projectArchiving'=>$enabled, 'financePlanning' => $enabled, 'taskCosts' => $enabled, 'organizations' => $enabled, 'householdPeople' => $enabled, 'richPlanning' => $enabled, 'accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'sessionRenewal' => $enabled, 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
                                    'recordSync' => $enabled, 'collaboration' => $enabled, 'inbox' => $enabled, 'scheduledReminders' => $enabled, 'externalPush' => $pushConfigured, 'smtp' => $enabled && NativeSmtpTransport::configured(), 'finance' => $enabled, 'legacyProjectSharing' => false],
                     'pushProjectId'=>$pushConfigured ? FAMILYHUB_FCM_PROJECT_ID : null,
-                    'accountDeletionPolicyVersions'=>[1,2], 'financeContractVersions' => [1, 2], 'recordContractVersions' => [1, 2, 3], 'recordTypesV3' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'], 'recordTypesV2' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem'],
+                    'accountDeletionPolicyVersions'=>[1,2,3], 'financeContractVersions' => [1, 2], 'recordContractVersions' => [1, 2, 3, 4], 'recordTypesV4'=>['project','task','event','shoppingList','shoppingItem','householdPerson','garden'], 'recordTypesV3' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'], 'recordTypesV2' => ['project', 'task', 'event', 'shoppingList', 'shoppingItem'],
                     'recordTypes' => ['project', 'task', 'shoppingList', 'shoppingItem'], 'scopeKinds' => ['household', 'project', 'personal', 'organization']];
         }
         if (!$enabled) { throw new NativeError('feature_disabled', 503); }
@@ -23,10 +23,11 @@ class NativeService extends NativeDatabase
             'account' => str_starts_with($operation, 'account.deletion.') ? NativeAccountDeletionService::class : NativeAccountService::class,
             'scopes' => NativeScopeService::class,
             'invitations' => NativeInvitationService::class,
-            'sync', 'sync2', 'sync3' => NativeSyncService::class,
+            'sync', 'sync2', 'sync3', 'sync4' => NativeSyncService::class,
             'inbox' => NativeInboxService::class,
             'reminders' => NativeReminderService::class,
             'finance', 'finance2' => NativeFinanceService::class,
+            'finance3' => NativeLinkedPaymentService::class,
             'push' => NativePushService::class,
             default => throw new NativeError('unsupported_operation', 404),
         };

@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:cryptography/cryptography.dart' show Sha256;
+import '../domain/offline_recovery_models.dart';
+import '../domain/linked_payment_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/local_space_models.dart';
 import 'garden_storage.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
@@ -11,6 +15,8 @@ import 'organizer_storage.dart';
 import 'portable_backup_crypto.dart';
 import 'portable_backup_document.dart';
 import 'sqlite_organizer_storage.dart';
+import 'local_spaces_repository.dart';
+part 'portable_backup_local_recovery.dart';
 
 abstract interface class BackupUiPreferencesStore {
   Future<Map<String, Object?>> read();
@@ -222,6 +228,9 @@ class PortableBackupRepository {
       final allowedReceiptNames = allowedFinanceInboxReadNames(
         personal: visible,
         shared: selectedShared,
+        localSnapshots: (await LocalSpacesRepository(
+          database,
+        ).read()).snapshots.values,
       );
       final allowedFinancialScopes = (tables['scopes'] as List)
           .cast<Map<String, dynamic>>()
@@ -273,13 +282,47 @@ class PortableBackupRepository {
                 [binding['id']],
               ),
       };
+      Future<List<Map<String, dynamic>>> paymentRows(String table) async =>
+          (await database.rows('SELECT * FROM $table')).where((row) {
+            if (table == 'linked_payment_intents') {
+              final intent = backupMap(jsonDecode(row['data'] as String));
+              return intent['partition'] == null ||
+                  intent['partition'] == profile?.partition;
+            }
+            final key = row['space_key'] as String;
+            return key.startsWith('local:') ||
+                profile != null &&
+                    allowedFinancialScopes.any(
+                      (scope) => key == 'remote:${profile.partition}:$scope',
+                    );
+          }).toList();
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 3,
-        'databaseVersion': 6,
+        'version': 4,
+        'databaseVersion': 8,
+        'linkedPayments': {
+          'cashMovements': await paymentRows('linked_payment_cash'),
+          'events': await paymentRows('linked_payment_events'),
+          'projections': await paymentRows('linked_payment_projections'),
+          'intents': await paymentRows('linked_payment_intents'),
+        },
+        'localSpaces': [
+          for (final row in await database.rows(
+            "SELECT id,data FROM local_spaces ORDER BY id",
+          ))
+            {
+              'space': jsonDecode(row['data'] as String),
+              'snapshot': OrganizerBackupCodec.encode(
+                await storage.localSnapshot(workspace: row['id'] as String),
+              ),
+            },
+        ],
+        'gardenSpaceLinks': await database.rows(
+          'SELECT garden_id,space_id FROM garden_space_links ORDER BY garden_id',
+        ),
         'operationPairs': operationPairs,
         'financeInboxReads': financeInboxReads,
-        'gardens': (await GardenStorage(database).read()).toJson(),
+        'gardens': (await GardenStorage(database).readAll()).toJson(),
         'id': newSharedId(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'source': profile == null
@@ -291,6 +334,7 @@ class PortableBackupRepository {
                 'serverUrl': profile.serverUrl,
                 'username': profile.username,
                 'displayName': profile.displayName,
+                'deviceId': profile.deviceId,
               },
         'privateData': privateData,
         'personal': OrganizerBackupCodec.encode(
@@ -372,7 +416,7 @@ class PortableBackupRepository {
       }
       final current = await storage.localSnapshot();
       final gardenStorage = GardenStorage(database),
-          currentGardens = await gardenStorage.read();
+          currentGardens = await gardenStorage.readAll();
       final importedGardens = backupGardens(doc);
       GardenSnapshot? candidateGardens;
       OrganizerSnapshot candidate;
@@ -463,14 +507,168 @@ class PortableBackupRepository {
           );
         }
       }
+      if (doc['version'] == 4) {
+        final linked = doc['linkedPayments'];
+        if (linked is Map) {
+          if (mode == BackupRestoreMode.replace) {
+            final replaced = <String>{
+              'local',
+              for (final raw in doc['localSpaces'] as List)
+                backupMap(backupMap(raw)['space'])['id'] as String,
+            };
+            for (final spaceId in replaced) {
+              for (final table in [
+                'linked_payment_events',
+                'linked_payment_projections',
+                'linked_payment_cash',
+              ]) {
+                await database.execute('DELETE FROM $table WHERE space_key=?', [
+                  'local:$spaceId',
+                ]);
+              }
+            }
+            for (final row in await database.rows(
+              'SELECT id,data FROM linked_payment_intents',
+            )) {
+              final intent = backupMap(jsonDecode(row['data'] as String));
+              if (intent['partition'] == null && intent['source'] is Map) {
+                final source = PaymentSourceRef.fromJson(
+                  backupMap(intent['source']),
+                );
+                if (source.space.isLocal &&
+                    replaced.contains(source.space.id)) {
+                  await database.execute(
+                    'DELETE FROM linked_payment_intents WHERE id=?',
+                    [row['id']],
+                  );
+                }
+              }
+            }
+          }
+          for (final kind in [
+            'events',
+            'projections',
+            'intents',
+            'cashMovements',
+          ]) {
+            final table = kind == 'cashMovements'
+                ? 'linked_payment_cash'
+                : 'linked_payment_$kind';
+            for (final raw in linked[kind] as List? ?? const []) {
+              final row = backupMap(raw);
+              if (kind == 'intents') {
+                final intent = backupMap(jsonDecode(row['data'] as String));
+                final state =
+                    intent['partition'] == null &&
+                        intent['source'] is Map &&
+                        PaymentSourceRef.fromJson(
+                          backupMap(intent['source']),
+                        ).space.isLocal
+                    ? row['state']
+                    : 'quarantine';
+                final prior = await database.rows(
+                  'SELECT data FROM linked_payment_intents WHERE id=?',
+                  [row['id']],
+                );
+                if (prior.isNotEmpty &&
+                    prior.single['data'] != row['data'] &&
+                    mode == BackupRestoreMode.merge) {
+                  throw const CollaborationException('backup_conflict');
+                }
+                await database.execute(
+                  'INSERT INTO linked_payment_intents(id,data,state) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data,state=excluded.state',
+                  [row['id'], row['data'], state],
+                );
+              } else if ((row['space_key'] as String).startsWith('local:')) {
+                final column = kind == 'cashMovements'
+                    ? 'movement_id'
+                    : 'event_id';
+                final prior = await database.rows(
+                  'SELECT data FROM $table WHERE space_key=? AND $column=?',
+                  [row['space_key'], row[column]],
+                );
+                if (prior.isNotEmpty &&
+                    prior.single['data'] != row['data'] &&
+                    mode == BackupRestoreMode.merge) {
+                  throw const CollaborationException('backup_conflict');
+                }
+                await database.execute(
+                  'INSERT INTO $table(space_key,$column,data) VALUES(?,?,?) ON CONFLICT DO UPDATE SET data=excluded.data',
+                  [
+                    row['space_key'],
+                    row[kind == 'cashMovements' ? 'movement_id' : 'event_id'],
+                    row['data'],
+                  ],
+                );
+              }
+            }
+          }
+        }
+        for (final raw in doc['localSpaces'] as List) {
+          final item = backupMap(raw),
+              space = LocalSpace.fromJson(backupMap(item['space']));
+          if (space.id == 'local') {
+            await database.execute(
+              'UPDATE local_spaces SET data=? WHERE id=?',
+              [jsonEncode(space.toJson()), space.id],
+            );
+            continue;
+          }
+          final incoming = OrganizerBackupCodec.decode(
+            item['snapshot'] as String,
+          );
+          final existing = await database.rows(
+            'SELECT data FROM local_spaces WHERE id=?',
+            [space.id],
+          );
+          if (existing.isNotEmpty &&
+              existing.single['data'] != jsonEncode(space.toJson())) {
+            throw const CollaborationException('backup_conflict');
+          }
+          await database.execute(
+            'INSERT OR IGNORE INTO local_spaces(id,data) VALUES(?,?)',
+            [space.id, jsonEncode(space.toJson())],
+          );
+          await database.execute(
+            'INSERT OR IGNORE INTO personal_workspaces(id) VALUES(?)',
+            [space.id],
+          );
+          final previous = await storage.localSnapshot(workspace: space.id);
+          final next = mode == BackupRestoreMode.replace
+              ? incoming
+              : mergePersonalSnapshots(
+                  previous,
+                  incoming,
+                  revision: previous.revision,
+                );
+          await database.execute(
+            'DELETE FROM personal_records WHERE workspace=?',
+            [space.id],
+          );
+          for (final row in snapshotRows(next)) {
+            await commitPersonalRow(database, space.id, row);
+          }
+        }
+      }
       // A legacy v1 file has no garden section and must preserve local gardens.
       if (candidateGardens != null) {
         await gardenStorage.write(
           candidateGardens,
           expectedRevision: currentGardens.revision,
+          allSpaces: true,
         );
       }
+      if (doc['version'] == 4) {
+        for (final raw in doc['gardenSpaceLinks'] as List) {
+          final link = backupMap(raw);
+          await database.execute(
+            'INSERT INTO garden_space_links(garden_id,space_id) VALUES(?,?) ON CONFLICT(garden_id) DO UPDATE SET space_id=excluded.space_id',
+            [link['garden_id'], link['space_id']],
+          );
+        }
+      }
       if (!sourceDeleted) {
+        await _validateLocalLinkedPayments();
         await database.execute(
           'INSERT INTO restored_backups(id,created_at,source_partition,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
           [

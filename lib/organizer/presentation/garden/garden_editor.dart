@@ -30,6 +30,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   late List<GardenSeason> _seasons = [...?widget.garden?.seasons];
   late int? _year = (_seasons.map((s) => s.year).toList()..sort()).lastOrNull;
   final _draftId = newLocalId();
+  late final _workspaceKey =
+      ref.read(gardenProvider).valueOrNull?.workspaceKey ?? 'local';
   final _openedAt = DateTime.now();
   final _undo = <List<GardenArea>>[];
   GardenTool _tool = GardenTool.select;
@@ -142,6 +144,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       final controller = ref.read(gardenProvider.notifier);
       if (widget.garden == null) {
         await controller.createGarden(
+          expectedWorkspaceKey: _workspaceKey,
           name: _name.text.trim(),
           notes: _notes.text,
           areas: _areas,
@@ -155,6 +158,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
             areas: _areas,
             seasons: _seasons,
           ),
+          expectedWorkspaceKey: _workspaceKey,
         );
       }
       if (!mounted) return;

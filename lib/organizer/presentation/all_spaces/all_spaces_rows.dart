@@ -8,6 +8,7 @@ import '../finance/finance_money.dart';
 import '../organizer_widgets.dart';
 import 'all_spaces_area.dart';
 import '../../state/organizer_provider.dart';
+import '../../state/local_spaces_provider.dart';
 import '../../state/collaboration_provider.dart';
 import '../inbox/notification_target_view.dart';
 import '../inbox/visible_task_target_view.dart';
@@ -405,6 +406,7 @@ bool allSpacesSourceIsCurrent(
         personal,
         shared ?? CollaborationState(),
         financial: financial,
+        localSpaces: ref.read(localSpacesProvider).valueOrNull,
       );
 }
 

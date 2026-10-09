@@ -268,7 +268,9 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
         ) &&
         (p['resolutions'] as List? ?? []).every(
           (r) =>
-              (r as Map)['action'] == 'detachOrganization' &&
+              (r as Map)['type'] == 'financeEntry' &&
+                  _owners[r['scopeId']] == 'delete' ||
+              r['action'] == 'detachOrganization' &&
                   (_owners[r['scopeId']] != 'delete' ||
                       _owners[r['childScopeId']] == 'delete') ||
               _preserved.contains('${r['scopeId']}:${r['recordId']}'),
@@ -318,8 +320,10 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
         resolutions: [
           for (final r in preview['resolutions'] as List? ?? [])
             if (_preserved.contains(
-              '${(r as Map)['scopeId']}:${r['recordId']}',
-            ))
+                  '${(r as Map)['scopeId']}:${r['recordId']}',
+                ) &&
+                !(r['type'] == 'financeEntry' &&
+                    _owners[r['scopeId']] == 'delete'))
               {
                 'scopeId': r['scopeId'],
                 'recordId': r['recordId'],
@@ -453,6 +457,40 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                         Text(
                           '${(scope as Map)['name']} · ${_owners[scope['id']] == 'delete' ? l.deletionSpaceDeleted : l.deletionSharedRemains}',
                         ),
+                      if (p['policyVersion'] == 3 &&
+                          (p['linkedFinancialFacts'] as List).isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          l.deletionLinkedFinancialFacts,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(l.deletionLinkedFinancialRetention),
+                        for (final raw in p['linkedFinancialFacts'] as List)
+                          Builder(
+                            builder: (context) {
+                              final fact = raw as Map;
+                              String? name;
+                              for (final value in p['sharedScopes'] as List) {
+                                final scope = value as Map;
+                                if (scope['id'] == fact['scopeId']) {
+                                  name = scope['name'] as String;
+                                  break;
+                                }
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  l.deletionLinkedScopeCounts(
+                                    name ?? l.deletionLinkedUnavailableScope,
+                                    fact['eventsRetainedIfScopeKept'] as int,
+                                    fact['eventsDeletedIfScopeDeleted'] as int,
+                                    fact['refundLegs'] as int,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
                       for (final value in p['ownedScopes'] as List? ?? [])
                         Builder(
                           builder: (context) {
@@ -505,6 +543,10 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                         Builder(
                           builder: (context) {
                             final r = value as Map;
+                            if (r['type'] == 'financeEntry' &&
+                                _owners[r['scopeId']] == 'delete') {
+                              return const SizedBox.shrink();
+                            }
                             if (r['action'] == 'detachOrganization' &&
                                 (_owners[r['scopeId']] != 'delete' ||
                                     _owners[r['childScopeId']] == 'delete')) {
@@ -531,6 +573,8 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                               subtitle: Text(
                                 r['action'] == 'detachOrganization'
                                     ? l.deletionDetachOrganization
+                                    : r['type'] == 'financeEntry'
+                                    ? l.deletionRetainedExpenseResolution
                                     : '${l.deletionStructure}${r['currency'] == null || r['openingBalanceMinor'] == null ? '' : '\n${sharedMoneyLabel(context, BigInt.from(r['openingBalanceMinor'] as int), r['currency'] as String)}'}',
                               ),
                             );
@@ -635,6 +679,8 @@ String deletionImpactLabel(BuildContext context, String key) {
     'sharedRecordsUpdated' => l.deletionSharedRecordsUpdated,
     'sharedFinanceRecordsDeleted' => l.deletionSharedFinanceDeleted,
     'sharedFinanceRecordsUpdated' => l.deletionSharedFinanceUpdated,
+    'privatePaymentProjectionsDeleted' => l.deletionPrivatePaymentProjections,
+    'sharedPaymentReceiptsRetained' => l.deletionSharedPaymentReceipts,
     'kanboardTasksDeleted' => l.deletionLegacyTasks,
     'kanboardCommentsDeleted' => l.deletionLegacyComments,
     'kanboardFilesDeleted' => l.deletionLegacyFiles,

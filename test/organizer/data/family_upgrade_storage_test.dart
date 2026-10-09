@@ -41,7 +41,11 @@ class PaginatedFinanceTransport extends FakeTransport {
       return {
         ...caps,
         'recordContractVersions': [1, 2],
-        'features': {'recordSync': true, 'finance': true},
+        'features': {
+          'recordSync': true,
+          'finance': true,
+          'scopeAccessChanges': true,
+        },
       };
     }
     if (operation == 'scopes.members') {
@@ -630,7 +634,7 @@ void main() {
           activeTransport.membersCalls.where((id) => id == newScope).length,
           1,
         );
-        server.members[scope]!.remove('alice');
+        server.confirmRevocation(scope, 'alice');
         clock = clock.add(const Duration(seconds: 12));
         await repo.syncNow();
         expect(

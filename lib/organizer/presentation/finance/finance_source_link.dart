@@ -49,8 +49,7 @@ class _FinanceSourceLinkState extends ConsumerState<FinanceSourceLink> {
     FinanceAccessGuard? financial;
     PersonalWorkspaceGuard? guard;
     if (scopeId != null) {
-      if (shared?.session?.partition != partition ||
-          shared?.sessionInvalid == true) {
+      if (shared?.session?.partition != partition) {
         return const SizedBox.shrink();
       }
       financial = FinanceAccessGuard(context, ref, scopeId!);
@@ -74,7 +73,7 @@ class _FinanceSourceLinkState extends ConsumerState<FinanceSourceLink> {
           .firstOrNull;
       if (entry == null) return Text(l.financeSourceUnavailable);
       final private =
-          workspaceKey != 'local' &&
+          workspaceKey?.startsWith('private:') == true &&
           shared?.privateRecordIds.values.contains(entryId) == true;
       if (private) {
         final privateScope = shared?.privateSync.scopeId;

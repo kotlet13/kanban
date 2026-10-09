@@ -134,6 +134,10 @@ extension CollaborationFinanceSync on CollaborationRepository {
         if (!policy.canRead) continue;
         if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
         await _pullFinanceScope(session, epoch, scope.id);
+        if (policy.linkedPaymentsRequired) {
+          await fetchLinkedPayments(PaymentSpaceRef(scope.id, partition: p));
+          _checkEpoch(epoch);
+        }
       } on CollaborationApiException catch (e) {
         if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
           rethrow;

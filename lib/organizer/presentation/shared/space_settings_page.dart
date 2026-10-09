@@ -6,6 +6,12 @@ import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_members.dart';
+import '../../state/local_spaces_provider.dart';
+import 'local_space_settings.dart';
+import 'organization_access_settings.dart';
+import 'sharing_forms.dart';
+import 'sharing_session_boundary.dart';
+import '../../data/collaboration_repository.dart' show newSharedId;
 
 /// The only destination that displays shared-space members and invitations.
 /// A missing selection is an explicit chooser, including the All view.
@@ -21,9 +27,72 @@ class SpaceSettingsPage extends ConsumerWidget {
   final ValueChanged<String?> onScopeSelected;
   final VoidCallback onConnect;
 
+  Future<void> _editRemote(
+    BuildContext context,
+    WidgetRef ref,
+    SharedScope scope,
+  ) async {
+    final guard = SharingSessionGuard(context, ref);
+    final requestId = newSharedId();
+    String? name, address;
+    bool allows(CollaborationState state) =>
+        !state.sessionInvalid &&
+        !state.deletionPending &&
+        state.session?.expiresAt.isAfter(DateTime.now()) == true &&
+        state.selectedSpaceId == scope.id &&
+        !state.allSpacesSelected &&
+        state.scopes.any(
+          (s) =>
+              s.id == scope.id &&
+              s.canManage &&
+              !s.blocked &&
+              s.metadataRevision == scope.metadataRevision,
+        );
+    await showSharingForm(
+      context,
+      title: context.l10n.localSpaceRename,
+      fields: [
+        SharingField(
+          id: 'name',
+          label: context.l10n.sharingSpaceName,
+          initialValue: scope.name,
+        ),
+        SharingField(
+          id: 'address',
+          label: context.l10n.localSpaceAddress,
+          initialValue: scope.address ?? '',
+          required: false,
+        ),
+      ],
+      submitLabel: context.l10n.save,
+      errorMessage: (error) => sharingErrorMessage(context, error),
+      wrap: (form) => SharingSessionBoundary(
+        guard: guard,
+        visibleWhen: allows,
+        child: form,
+      ),
+      onSubmit: (values) async {
+        await guard.controller.updateScopeMetadata(
+          scope.id,
+          name ??= values['name']!.trim(),
+          address ??= values['address'] ?? '',
+          expectedRevision: scope.metadataRevision,
+          requestId: requestId,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    final shared = ref.watch(collaborationProvider).valueOrNull;
+    final local = ref.watch(localSpacesProvider).valueOrNull?.selectedSpace;
+    if (shared?.allSpacesSelected != true &&
+        shared?.selectedSpaceId == null &&
+        local != null) {
+      return LocalSpaceSettings(space: local, onConnect: onConnect);
+    }
     return ref
         .watch(collaborationProvider)
         .when(
@@ -55,7 +124,7 @@ class SpaceSettingsPage extends ConsumerWidget {
                 )
                 .toList();
             final selected =
-                usableSession &&
+                state.localAccessAllowed &&
                     !state.allSpacesSelected &&
                     state.selectedSpaceId == selectedScopeId
                 ? scopes
@@ -66,6 +135,28 @@ class SpaceSettingsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OrganizerHeading(title: l.spaceSettingsTitle),
+                if (!usableSession && selected != null) ...[
+                  Text(selected.name),
+                  Text(
+                    '${sharingScopeKindLabel(context, selected.kind)} · ${sharingRoleLabel(context, selected.role)}${selected.organizationLeader ? ' · ${l.organizationLeader}' : ''}',
+                  ),
+                  Text(l.localSpaceOfflineWork),
+                  for (final member
+                      in state
+                          .membersForScope(selected.id)
+                          .where((m) => m.active))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        member.displayName.isEmpty
+                            ? member.username
+                            : member.displayName,
+                      ),
+                      subtitle: Text(
+                        '${sharingRoleLabel(context, member.role)}${member.organizationLeader ? ' · ${l.organizationLeader}' : ''}',
+                      ),
+                    ),
+                ],
                 if (!usableSession) ...[
                   Text(
                     session == null
@@ -85,15 +176,46 @@ class SpaceSettingsPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ] else if (selected != null)
+                ] else if (selected != null) ...[
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(selected.name),
+                    subtitle: Text(
+                      [
+                        sharingScopeKindLabel(context, selected.kind),
+                        sharingRoleLabel(context, selected.role),
+                        if (selected.organizationLeader) l.organizationLeader,
+                        if (selected.address?.isNotEmpty == true)
+                          selected.address!,
+                        l.sharingShared,
+                      ].join(' · '),
+                    ),
+                    trailing:
+                        selected.canManage &&
+                            const {
+                              SharedScopeKind.household,
+                              SharedScopeKind.organization,
+                            }.contains(selected.kind)
+                        ? IconButton(
+                            key: const ValueKey('shared-space-edit'),
+                            tooltip: l.localSpaceRename,
+                            onPressed: () =>
+                                _editRemote(context, ref, selected),
+                            icon: const Icon(Icons.edit_outlined),
+                          )
+                        : null,
+                  ),
+                  if (selected.kind == SharedScopeKind.organization &&
+                      selected.canManage)
+                    OrganizationAccessSettings(scope: selected),
                   SharingMembersPage(
                     key: ValueKey(
                       'members-${session.partition}-${session.deviceId}-${selected.id}-${selected.role.name}-${selected.archived}',
                     ),
                     scope: selected,
                     session: session,
-                  )
-                else ...[
+                  ),
+                ] else ...[
                   Text(
                     selectedScopeId == null
                         ? l.spaceSettingsChoose

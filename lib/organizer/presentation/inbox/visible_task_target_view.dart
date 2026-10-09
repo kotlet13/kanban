@@ -7,6 +7,7 @@ import '../../state/organizer_provider.dart';
 import '../personal_workspace_boundary.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'notification_target_view.dart';
+import 'local_notification_target.dart';
 
 // A rapid second tap must not stack another detail route or refresh request.
 final _openingTasks = Expando<bool>();
@@ -19,6 +20,11 @@ Future<bool> showVisibleTaskTarget(
   NotificationTarget target, {
   bool Function()? isCurrent,
 }) async {
+  if (!await activateLocalNotificationTarget(context, ref, target) ||
+      !context.mounted ||
+      isCurrent?.call() == false) {
+    return false;
+  }
   final navigator = Navigator.of(context, rootNavigator: true);
   if (_openingTasks[navigator] == true ||
       isCurrent?.call() == false ||
@@ -78,10 +84,9 @@ bool _taskScopeAccessible(
   CollaborationState state,
   NotificationTarget target,
 ) =>
-    !state.sessionInvalid &&
+    state.localAccessAllowed &&
     state.session != null &&
     target.matches(state.session!) &&
-    state.session!.expiresAt.isAfter(DateTime.now()) &&
     state.scopes.any(
       (s) => s.id == target.scopeId && !s.revoked && !s.blocked && !s.archived,
     );
@@ -99,7 +104,15 @@ bool _taskIsVisible(WidgetRef ref, NotificationTarget target) {
   final state = sharedState.asData?.value;
   if (personal == null) return false;
   final id = target.records.single.recordId;
-  if (target.isPersonal) return personal.tasks.any((t) => t.id == id);
+  if (target.isPersonal) {
+    return (personal.workspaceKey == target.localWorkspaceId ||
+            target.localWorkspaceId == 'local' &&
+                personal.workspaceKey.startsWith('private:') &&
+                state?.localAccessAllowed == true &&
+                personal.workspaceKey ==
+                    'private:${state?.session?.partition}') &&
+        personal.tasks.any((t) => t.id == id);
+  }
   if (state == null || !_taskScopeAccessible(state, target)) return false;
   final scope = state.scopes.firstWhere((s) => s.id == target.scopeId);
   if (scope.kind == SharedScopeKind.personal) {

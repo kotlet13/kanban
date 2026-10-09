@@ -45,9 +45,9 @@ class NativeNotificationWriter extends NativeDatabase
         if ($settings['push']) { (new NativePushQueue($this->container))->enqueue((int)$row['id'],$recipient); }
     }
 
-    public function recordChanged($scope, array $record, $previous, $actorId, $finance = false)
+    public function recordChanged($scope, array $record, $previous, $actorId, $finance = false, $eventKey = null)
     {
-        if ($record['type'] === 'householdPerson') { return; }
+        if (in_array($record['type'],['householdPerson','garden'],true)) { return; }
         $type = $record['type']; $payload = $record['payload'];
         $before = $previous ? json_decode($previous['payload'] ?? 'null', true, 32, JSON_THROW_ON_ERROR) : null;
         $category = $finance ? 'finance' : match ($type) { 'task', 'project' => 'tasks', 'event' => 'events', default => 'shopping' };
@@ -56,6 +56,11 @@ class NativeNotificationWriter extends NativeDatabase
         if (!$record['deleted'] && $type === 'shoppingItem' && $payload['isChecked'] && !($before['isChecked'] ?? false)) { $base = 'checked'; }
         $assignees = ($payload ?? $before)['assigneeAccountIds'] ?? [];
         $rows = $this->many('SELECT m.account_id FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.active=1 AND u.is_active=1 ORDER BY m.account_id', [$scope]);
+        // Derived leaders receive project events only after explicit delivery preferences.
+        $subscribers=$this->many('SELECT DISTINCT account_id FROM familyhub_inbox_preferences WHERE scope_id=? AND category=?',[$scope,$category]);
+        $known=array_column($rows,'account_id');
+        foreach ($subscribers as $subscriber) { if (!in_array($subscriber['account_id'],$known,true)) { $rows[]=$subscriber; } }
+        usort($rows,fn($a,$b)=>strcmp($a['account_id'],$b['account_id']));
         $acl = new NativeFinanceAccess($this->container);
         foreach ($rows as $row) {
             $recipient = $row['account_id'];
@@ -63,7 +68,7 @@ class NativeNotificationWriter extends NativeDatabase
             $personal = in_array($recipient, $assignees, true);
             $assigned = $personal && !in_array($recipient, $before['assigneeAccountIds'] ?? [], true);
             $kind = $type.'.'.($assigned ? 'assigned' : $base);
-            $key = hash('sha256', $scope.':'.$type.':'.$record['id'].':'.$record['revision']);
+            $key = $eventKey ?? hash('sha256', $scope.':'.$type.':'.$record['id'].':'.$record['revision']);
             $this->insert($scope, $recipient, $actorId, $type, $record['id'], $record['revision'], $kind, $category,
                           $personal ? 'personal' : 'scope', $key, $payload['listId'] ?? ($payload['projectId'] ?? (in_array($type, ['task', 'event'], true) ? $scope : null)));
         }
