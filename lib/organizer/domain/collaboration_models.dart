@@ -17,6 +17,19 @@ enum SharedRole { owner, member, viewer }
 
 enum SharedScopeKind { household, project, personal, organization }
 
+enum SpaceSelectionKind { personal, all, shared }
+
+/// Presentation selection; an aggregate is never a server scope identifier.
+class SpaceSelection {
+  const SpaceSelection.personal()
+    : kind = SpaceSelectionKind.personal,
+      scopeId = null;
+  const SpaceSelection.all() : kind = SpaceSelectionKind.all, scopeId = null;
+  const SpaceSelection.shared(this.scopeId) : kind = SpaceSelectionKind.shared;
+  final SpaceSelectionKind kind;
+  final String? scopeId;
+}
+
 enum SharedRecordType {
   project,
   task,
@@ -303,6 +316,7 @@ class CollaborationState {
   CollaborationState({
     this.session,
     this.selectedSpaceId,
+    this.allSpacesSelected = false,
     this.pushProjectId,
     this.sessionInvalid = false,
     this.sessionRenewalSupported = false,
@@ -370,6 +384,12 @@ class CollaborationState {
       smtpSupported;
   final AccountSession? session;
   final String? selectedSpaceId;
+  final bool allSpacesSelected;
+  SpaceSelection get spaceSelection => allSpacesSelected
+      ? const SpaceSelection.all()
+      : selectedSpaceId == null
+      ? const SpaceSelection.personal()
+      : SpaceSelection.shared(selectedSpaceId);
   final RemotePushRegistrationState remotePushRegistration;
   final String? pushProjectId;
   final bool sessionInvalid;

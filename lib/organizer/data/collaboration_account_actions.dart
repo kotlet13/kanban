@@ -492,13 +492,15 @@ extension CollaborationAccountActions on CollaborationRepository {
   }
 
   Future<void> selectSpace(String? scopeId) async {
-    final session = _requireSession(), epoch = _epoch;
+    final session = scopeId == null ? _session : _requireSession(),
+        epoch = _epoch;
+    final partition = session?.profile.partition ?? 'local';
     await database.transaction(() async {
       _checkEpoch(epoch);
       if (scopeId != null) {
         final scopes = await database.rows(
           'SELECT data FROM scopes WHERE partition=? AND id=?',
-          [session.profile.partition, scopeId],
+          [partition, scopeId],
         );
         if (scopes.isEmpty ||
             SharedScope.fromJson(
@@ -510,7 +512,23 @@ extension CollaborationAccountActions on CollaborationRepository {
       _checkEpoch(epoch);
       await database.execute(
         'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
-        ['selected_space:${session.profile.partition}', scopeId ?? ''],
+        ['selected_space:$partition', scopeId ?? ''],
+      );
+      await database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+        ['all_spaces_selected:$partition', '0'],
+      );
+    });
+    await refreshLocal();
+  }
+
+  Future<void> selectAllSpaces() async {
+    final epoch = _epoch, partition = _session?.profile.partition ?? 'local';
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      await database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+        ['all_spaces_selected:$partition', '1'],
       );
     });
     await refreshLocal();

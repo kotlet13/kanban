@@ -6,6 +6,12 @@ Dokument vodi izvedbo, odločitve, preverjanja in odprto delo. Uporabnik je 4. o
 
 **Aktualna usmeritev, pozneje 4. oktobra 2026:** uporabnik je po zahtevi za pregled pojasnil, da želi nadaljevati gradnjo in je z začetkom zadovoljen. Pregled stare kode in dosedanjih sprememb usmerja razvoj, ne ustavlja novih funkcij. Ohranitev starih lokalnih podatkov aplikacije ni pogoj; bistveno je iz strežnika zajeti vse obstoječe podatke kot preverjen lokalni arhiv s samostojnim brskalnikom. Staro aplikacijo in projekte lahko nato upokojimo. Obstoječi projekti so izhodišče za razumevanje potreb in morebiten izbrani prenos, ne obvezna živa združljivost. Finance ponovno zasnujemo. Spodnje izdelane etape so zapis dosedanjega razvoja, prihodnje etape pa se po ugotovitvah prilagodijo.
 
+## Vsi prostori in popravek centra obvestil, 9. oktober 2026
+
+Uporabnik je na Samsungu S25 pokazal prazen seznam obvestil ob še vedno označenem zvončku ter naročil izvedbo izbire **Vsi**. Ta združi pregled osebnih podatkov in dovoljenih aktivnih prostorov trenutnega računa, z oznako izvora pri vsakem zapisu. Dodajanje in urejanje ostaneta vezana na dejanski prostor; zasebna sinhronizirana kopija se ne šteje dvakrat. Finančni pregled ohrani ločene pravice, valute in načrtovane/knjižene vnose. Vrt ostaja lokalen.
+
+Zvonček in center uporabljata skupna pravila vidnosti; dostavljeno oddaljeno obvestilo ne potrebuje še lokalnega alarma, da ostane vidno. Izvedbo, regresijske preizkuse, prikaz na različnih širinah in mejo do mobilne objave vodi [mejnik Vsi in obvestila](ALL_SPACES_AND_INBOX.md).
+
 ## Dopolnitev obvestil po preizkusu FCM, 8. oktober 2026
 
 Uporabnik je naročil dokončanje brez svoje prisotnosti, commit/push in združitev v privzeto vejo `main`, nato izrecno še novo interno Android izdajo. [Mejnik oddaljenih opomnikov](REMOTE_REMINDERS.md) vodi uporabniški tok, preverjanje in jutrišnji fizični preizkus.

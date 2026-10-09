@@ -26,13 +26,16 @@ Future<bool> showNotificationTarget(
   NotificationTarget target, {
   VoidCallback? onAccount,
   ValueChanged<String>? onMembers,
+  Widget Function(Widget)? wrap,
+  bool Function()? isCurrent,
 }) async {
+  if (isCurrent?.call() == false) return false;
   final capturedSession = ref.read(collaborationProvider).valueOrNull?.session;
   try {
     final result = await ref
         .read(collaborationProvider.notifier)
         .openNotificationTarget(target);
-    if (!context.mounted) return false;
+    if (!context.mounted || isCurrent?.call() == false) return false;
     final current = ref.read(collaborationProvider).valueOrNull;
     if (!target.isPersonal &&
         (capturedSession?.partition != current?.session?.partition ||
@@ -109,7 +112,7 @@ Future<bool> showNotificationTarget(
             ),
           ],
         );
-        return guard == null
+        final protectedDialog = guard == null
             ? dialog
             : SharingSessionBoundary(
                 guard: guard,
@@ -125,6 +128,7 @@ Future<bool> showNotificationTarget(
                         state.financePolicyForScope(target.scopeId!).canRead),
                 child: dialog,
               );
+        return wrap?.call(protectedDialog) ?? protectedDialog;
       },
     );
     return true;

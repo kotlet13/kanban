@@ -16,6 +16,7 @@ import 'package:kanban/organizer/presentation/inbox/inbox_page.dart';
 import 'package:kanban/organizer/presentation/inbox/notification_target_view.dart';
 import 'package:kanban/organizer/platform/local_notification_adapter.dart';
 import 'package:kanban/organizer/state/local_database_provider.dart';
+import 'package:kanban/organizer/state/inbox_projection_provider.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import '../platform/local_notification_adapter_test.dart' show FakeScheduler;
@@ -59,6 +60,7 @@ Future<void> pumpInbox(
   SqliteOrganizerStorage storage,
   DateTime Function() clock, {
   NotificationTarget? launch,
+  Future<Set<String>> Function()? readKeys,
 }) async {
   tester.view.physicalSize = const Size(390, 1000);
   tester.view.devicePixelRatio = 1;
@@ -67,6 +69,8 @@ Future<void> pumpInbox(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (readKeys != null)
+          financeInboxReadKeysProvider.overrideWith((ref) => readKeys()),
         collaborationProvider.overrideWith(
           () => SharingUiController(initial: CollaborationState()),
         ),
@@ -111,9 +115,14 @@ void main() {
       var now = DateTime(2026, 10, 30, 12);
       await pumpInbox(tester, fixture.db, fixture.storage, () => now);
       expect(find.text('Ali si že dobil plačo?'), findsOneWidget);
+      var container = ProviderScope.containerOf(
+        tester.element(find.byType(OrganizerInboxPage)),
+      );
+      expect(container.read(organizerInboxHasUnreadProvider), isTrue);
       await tester.tap(find.byTooltip('Označi kot prebrano'));
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.mark_email_read_outlined), findsOneWidget);
+      expect(container.read(organizerInboxHasUnreadProvider), isFalse);
       var snapshot = (await tester.runAsync(fixture.storage.read))!;
       final entry = snapshot.financeEntries.singleWhere(
         (e) => e.occurrenceKey == '2026-10',
@@ -137,6 +146,10 @@ void main() {
       await pumpInbox(tester, fixture.db, fixture.storage, () => now);
       expect(find.text('Ali si že dobil plačo?'), findsOneWidget);
       expect(find.byIcon(Icons.mark_email_unread_outlined), findsOneWidget);
+      container = ProviderScope.containerOf(
+        tester.element(find.byType(OrganizerInboxPage)),
+      );
+      expect(container.read(organizerInboxHasUnreadProvider), isTrue);
       await tester.tap(find.text('Ali si že dobil plačo?'));
       await tester.pumpAndSettle();
       expect(find.text('Potrdi dejanski znesek'), findsWidgets);
@@ -207,6 +220,39 @@ void main() {
       );
       expect(scheduler.permissionRequests, 0);
       expect(tester.takeException(), null);
+    },
+  );
+  testWidgets(
+    'receipt loading failure is visible and does not fabricate financial unread state',
+    (tester) async {
+      final fixture = (await tester.runAsync(seed))!;
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(fixture.db.close);
+      });
+      await pumpInbox(
+        tester,
+        fixture.db,
+        fixture.storage,
+        () => DateTime(2026, 10, 30, 12),
+        readKeys: () async => throw const CollaborationException('network'),
+      );
+      final context = tester.element(find.byType(OrganizerInboxPage));
+      final container = ProviderScope.containerOf(context);
+      expect(
+        find.text(AppLocalizations.of(context)!.sharingNetworkError),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.more_horiz), findsOneWidget);
+      expect(find.byIcon(Icons.mark_email_unread_outlined), findsNothing);
+      expect(container.read(organizerInboxHasUnreadProvider), isFalse);
+      final readButton = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (w) => w is IconButton && w.tooltip == 'Označi kot prebrano',
+        ),
+      );
+      expect(readButton.onPressed, isNull);
+      expect(tester.takeException(), isNull);
     },
   );
   test(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
-import '../../domain/organizer_models.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
 import '../organizer_widgets.dart';
@@ -10,9 +9,7 @@ import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'notification_target_view.dart';
 import 'finance_inbox_section.dart';
-import '../../domain/finance_reminder_plans.dart';
-import '../../state/finance_inbox_provider.dart';
-import '../../state/reminder_snooze_provider.dart';
+import '../../state/inbox_projection_provider.dart';
 import 'reminder_snooze.dart';
 
 enum _InboxFilter { all, personal, scope }
@@ -134,113 +131,26 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     final sharedAsync = ref.watch(collaborationProvider);
     final shared = sharedAsync.valueOrNull;
     final session = shared?.session;
-    final now =
-        ref.watch(financeInboxClockProvider).valueOrNull ??
-        ref.read(organizerClockProvider)();
-    final plans = ref.watch(effectiveReminderPlansProvider).valueOrNull;
-    ReminderPlan? planFor(String type, String id, {String? scopeId}) => plans
-        ?.where(
+    final inbox = ref.watch(organizerInboxProjectionProvider);
+    final groups = inbox.shared.where((item) {
+      final entry = item.group.entries.first;
+      return _filter == _InboxFilter.all ||
+          (_filter == _InboxFilter.personal
+              ? entry.audience == InboxAudience.personal
+              : entry.audience == InboxAudience.scope);
+    }).toList();
+    final localGroups = _filter == _InboxFilter.scope ? const [] : inbox.local;
+    final financePlans = inbox.finance
+        .where(
           (p) =>
-              p.target.scopeId == scopeId &&
-              p.target.records.any((r) => r.type == type && r.recordId == id),
+              _filter == _InboxFilter.all ||
+              (_filter == _InboxFilter.personal
+                  ? p.target.isPersonal ||
+                        p.target.scopeId == shared?.privateSync.scopeId
+                  : !p.target.isPersonal &&
+                        p.target.scopeId != shared?.privateSync.scopeId),
         )
-        .latestPlan;
-    ReminderPlan? localPlan(LocalReminder reminder) => plans
-        ?.where(
-          (p) => p.target.records.any(
-            (r) =>
-                r.type == 'task' &&
-                (p.target.isPersonal
-                    ? r.recordId == reminder.taskId
-                    : p.target.scopeId == shared?.privateSync.scopeId &&
-                          shared?.personalRecordId(r.recordId) ==
-                              reminder.taskId),
-          ),
-        )
-        .latestPlan;
-    final allGroups = groupSharedInbox(shared?.inbox ?? const []);
-    final seenReminderTargets = <String>{};
-    final groups = <SharedInboxGroup>[];
-    for (final group in allGroups) {
-      final candidates = group.entries.first.kind == 'reminder.due'
-          ? group.entries.map((e) => SharedInboxGroup([e]))
-          : [group];
-      for (final candidate in candidates) {
-        final entry = candidate.entries.first;
-        if (entry.kind == 'reminder.due') {
-          if (personal?.reminders.any(
-                (r) =>
-                    localPlan(r)?.target.scopeId == entry.scopeId &&
-                    localPlan(r)?.target.records.any(
-                          (t) =>
-                              t.type == entry.targetType &&
-                              t.recordId == entry.targetId,
-                        ) ==
-                        true,
-              ) ==
-              true) {
-            continue;
-          }
-          final key = '${entry.scopeId}:${entry.targetType}:${entry.targetId}';
-          if (!seenReminderTargets.add(key)) continue;
-          final plan = planFor(
-            entry.targetType,
-            entry.targetId,
-            scopeId: entry.scopeId,
-          );
-          if (plans == null || plan == null || plan.scheduledAt.isAfter(now)) {
-            continue;
-          }
-        }
-        if (_filter == _InboxFilter.all ||
-            (_filter == _InboxFilter.personal
-                ? entry.audience == InboxAudience.personal
-                : entry.audience == InboxAudience.scope)) {
-          groups.add(candidate);
-        }
-      }
-    }
-    final localGroups = <List<LocalReminder>>[];
-    if (_filter != _InboxFilter.scope && personal != null && plans != null) {
-      for (final reminder in personal.reminders) {
-        final plan = localPlan(reminder);
-        if (plan != null && !plan.scheduledAt.isAfter(now)) {
-          localGroups.add([reminder]);
-        }
-      }
-    }
-    final financePlans =
-        personal == null || shared == null
-              ? <ReminderPlan>[]
-              : dueFinanceInboxPlans(
-                      personal: personal,
-                      shared: shared,
-                      now: now,
-                    )
-                    .map(
-                      (p) => plans
-                          ?.where(
-                            (effective) => effective.stableKey == p.stableKey,
-                          )
-                          .firstOrNull,
-                    )
-                    .whereType<ReminderPlan>()
-                    .where(
-                      (p) =>
-                          !p.scheduledAt.isAfter(
-                            ref.read(organizerClockProvider)(),
-                          ) &&
-                          (_filter == _InboxFilter.all ||
-                              (_filter == _InboxFilter.personal
-                                  ? p.target.isPersonal ||
-                                        p.target.scopeId ==
-                                            shared.privateSync.scopeId
-                                  : !p.target.isPersonal &&
-                                        p.target.scopeId !=
-                                            shared.privateSync.scopeId)),
-                    )
-                    .toList()
-          ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -271,58 +181,62 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
         const SizedBox(height: 20),
         if (_busy && _showProgress) const LinearProgressIndicator(),
         if (financePlans.isNotEmpty) FinanceInboxSection(plans: financePlans),
-        for (final reminders in localGroups)
+        for (final item in localGroups)
           _card(
-            title: l.inboxPersonalReminders(reminders.length),
-            subtitle: reminders
-                .map(
-                  (r) =>
-                      personal!.tasks
-                          .where((t) => t.id == r.taskId)
-                          .firstOrNull
-                          ?.title ??
-                      l.organizerTasks,
-                )
-                .join(', '),
-            read: reminders.every((r) => r.isRead),
+            title: l.inboxPersonalReminders(1),
+            subtitle:
+                personal!.tasks
+                    .where((t) => t.id == item.reminder.taskId)
+                    .firstOrNull
+                    ?.title ??
+                l.organizerTasks,
+            read: item.isRead,
             audience: l.inboxForMe,
             onSnooze: () => _run(
-              () => snoozeReminder(context, ref, localPlan(reminders.single)!),
+              () => snoozeReminder(context, ref, item.plan),
               showProgress: false,
             ),
             onOpen: () => _run(() async {
               await showNotificationTarget(
                 context,
                 ref,
-                localPlan(reminders.single)!.target,
+                item.plan.target,
                 onAccount: widget.onAccount,
               );
             }),
-            onRead: reminders.every((r) => r.isRead)
+            onRead: item.isRead
                 ? null
                 : () => _run(() async {
-                    for (final reminder in reminders) {
-                      if (!reminder.isRead) {
-                        await ref
-                            .read(organizerProvider.notifier)
-                            .markReminderRead(reminder.id);
-                      }
+                    final guard = SharingSessionGuard(context, ref);
+                    if (!item.reminder.isRead) {
+                      await ref
+                          .read(organizerProvider.notifier)
+                          .markReminderRead(item.reminder.id);
+                    }
+                    if (item.remoteEntries.isNotEmpty && guard.isCurrent) {
+                      await guard.controller.markInboxRead(
+                        item.remoteEntries.map((e) => e.id).toList(),
+                      );
                     }
                   }),
           ),
         if (session != null)
-          for (final group in groups)
+          for (final item in groups)
             _card(
-              title: _kind(group.entries.first.kind, group.entries.length),
+              title: _kind(
+                item.group.entries.first.kind,
+                item.group.entries.length,
+              ),
               subtitle:
-                  '${shared!.scopes.where((s) => s.id == group.entries.first.scopeId).firstOrNull?.name ?? l.sharingShared} · ${organizerDateTime(context, group.entries.first.createdAt)}',
-              read: group.isRead,
-              audience: group.entries.first.audience == InboxAudience.personal
+                  '${shared!.scopes.where((s) => s.id == item.group.entries.first.scopeId).firstOrNull?.name ?? l.sharingShared} · ${organizerDateTime(context, item.group.entries.first.createdAt)}',
+              read: item.group.isRead,
+              audience:
+                  item.group.entries.first.audience == InboxAudience.personal
                   ? l.inboxForMe
                   : l.inboxInSharedSpace,
               onOpen: () {
                 final guard = SharingSessionGuard(context, ref);
-                final target = group.targetFor(session);
+                final target = item.group.targetFor(session);
                 _run(() async {
                   if (!guard.isCurrent) return;
                   await showNotificationTarget(
@@ -333,26 +247,18 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                   );
                 });
               },
-              onSnooze: group.entries.first.kind != 'reminder.due'
+              onSnooze: item.plan == null
                   ? null
                   : () => _run(
-                      () => snoozeReminder(
-                        context,
-                        ref,
-                        planFor(
-                          group.entries.first.targetType,
-                          group.entries.first.targetId,
-                          scopeId: group.entries.first.scopeId,
-                        )!,
-                      ),
+                      () => snoozeReminder(context, ref, item.plan!),
                       showProgress: false,
                     ),
               onRead: () {
                 final guard = SharingSessionGuard(context, ref);
                 _run(
                   () => guard.controller.markInboxRead(
-                    group.ids,
-                    read: !group.isRead,
+                    item.group.ids,
+                    read: !item.group.isRead,
                   ),
                 );
               },
@@ -368,14 +274,5 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
           Text(l.inboxSharedPreferencesUnavailable),
       ],
     );
-  }
-}
-
-// One selected alarm per target. An undelivered future snooze hides older events.
-extension on Iterable<ReminderPlan> {
-  ReminderPlan? get latestPlan {
-    final values = toList()
-      ..sort((a, b) => b.scheduledAt.compareTo(a.scheduledAt));
-    return values.firstOrNull;
   }
 }

@@ -7,6 +7,10 @@ import '../../l10n/l10n.dart';
 import '../../widgets/jivie_brand_mark.dart';
 import '../domain/organizer_models.dart';
 import '../state/organizer_provider.dart';
+import '../state/inbox_projection_provider.dart';
+import '../domain/all_spaces_projection.dart';
+import 'all_spaces/all_spaces_page.dart';
+import 'all_spaces/all_spaces_rows.dart' show allSpacesSourceIsCurrent;
 import 'calendar_page.dart';
 import 'finance_page.dart';
 import 'garden/garden_page.dart';
@@ -346,9 +350,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       );
   Future<void> _selectSpace(String? id) async {
     try {
-      if (ref.read(collaborationProvider).valueOrNull?.session != null) {
-        await ref.read(collaborationProvider.notifier).selectSpace(id);
-      }
+      await ref.read(collaborationProvider.notifier).selectSpace(id);
       if (!mounted) return;
       setState(() {
         _sharedScopeId = id;
@@ -363,6 +365,71 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         );
       }
     }
+  }
+
+  Future<void> _selectAllSpaces() async {
+    try {
+      await ref.read(collaborationProvider.notifier).selectAllSpaces();
+      if (!mounted) return;
+      setState(() {
+        _sharedScopeId = null;
+        _sharedListId = null;
+        _sharedProjectId = null;
+        _sharingMembers = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.organizerSaveError)),
+        );
+      }
+    }
+  }
+
+  Future<void> _openAllSpacesSource(
+    AllSpacesSource source,
+    AllSpacesArea area,
+    String? id,
+  ) async {
+    if (!allSpacesSourceIsCurrent(ref, source)) return;
+    await _selectSpace(source.scopeId);
+    if (!mounted || !allSpacesSourceIsCurrent(ref, source)) return;
+    final current = ref.read(collaborationProvider).asData?.value;
+    if (current == null ||
+        current.allSpacesSelected ||
+        current.selectedSpaceId != source.scopeId) {
+      return;
+    }
+    setState(() {
+      _area = switch (area) {
+        AllSpacesArea.today => _Area.today,
+        AllSpacesArea.tasks => _Area.plans,
+        AllSpacesArea.calendar => _Area.calendar,
+        AllSpacesArea.projects => _Area.projects,
+        AllSpacesArea.shopping => _Area.shopping,
+        AllSpacesArea.finances => _Area.finances,
+        AllSpacesArea.home => _Area.home,
+        AllSpacesArea.people => _Area.people,
+      };
+      _planArea = _Area.plans;
+      _sharedShopping = false;
+      _sharedFinance = false;
+      if (area == AllSpacesArea.shopping) {
+        if (source.isPersonal) {
+          _shoppingId = id;
+        } else {
+          _sharedListId = id;
+        }
+      }
+      if (area == AllSpacesArea.projects || area == AllSpacesArea.home) {
+        if (source.isPersonal) {
+          _projectId = id;
+          _homeProjectId = id;
+        } else {
+          _sharedProjectId = id;
+        }
+      }
+    });
   }
 
   void _navigate(_Area area) => setState(() => _area = area);
@@ -406,10 +473,9 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   Widget build(BuildContext context) {
     final data = ref.watch(organizerProvider);
     final l = context.l10n;
-    final shared = ref.watch(collaborationProvider).valueOrNull;
-    final hasUnread =
-        (data.valueOrNull?.reminders.any((r) => !r.isRead) ?? false) ||
-        (shared?.inbox.any((item) => !item.isRead) ?? false);
+    final hasUnread = ref.watch(organizerInboxHasUnreadProvider);
+    final allSpaces =
+        ref.watch(collaborationProvider).valueOrNull?.allSpacesSelected == true;
     ref.listen(
       notificationLaunchTargetProvider,
       (_, _) => _queueNotificationTarget(),
@@ -467,6 +533,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                       if (!phone) ...[
                         OrganizerSpacePicker(
                           onSelected: _selectSpace,
+                          onAllSelected: _selectAllSpaces,
                           onConnect: () => _navigate(_Area.sharing),
                         ),
                         const SizedBox(height: 16),
@@ -563,6 +630,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                           child: OrganizerSpacePicker(
                             compact: true,
                             onSelected: _selectSpace,
+                            onAllSelected: _selectAllSpaces,
                             onConnect: () => _navigate(_Area.sharing),
                           ),
                         )
@@ -612,13 +680,17 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
-                                    _isSharedArea
+                                    allSpaces
+                                        ? l.allSpacesTitle
+                                        : _isSharedArea
                                         ? l.sharingShared
                                         : l.organizerLocalSpace,
                                   ),
                                   const Spacer(),
                                   Text(
-                                    _isSharedArea
+                                    allSpaces
+                                        ? l.allSpacesSources
+                                        : _isSharedArea
                                         ? l.sharingAccount
                                         : l.organizerLocalOnly,
                                     style: Theme.of(
@@ -685,6 +757,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     final l = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final shared = _isSharedArea;
+    final allSpaces =
+        ref.watch(collaborationProvider).valueOrNull?.allSpacesSelected == true;
     return Container(
       width: 218,
       padding: const EdgeInsets.fromLTRB(14, 28, 14, 20),
@@ -783,12 +857,20 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          shared ? l.sharingAccount : l.organizerLocalSpace,
+                          allSpaces
+                              ? l.allSpacesTitle
+                              : shared
+                              ? l.sharingAccount
+                              : l.organizerLocalSpace,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          shared ? l.sharingShared : l.organizerPersonal,
+                          allSpaces
+                              ? l.allSpacesSources
+                              : shared
+                              ? l.sharingShared
+                              : l.organizerPersonal,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
@@ -811,10 +893,68 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     bool desktop,
   ) {
     final l = context.l10n;
-    final active = ref
-        .watch(collaborationProvider)
-        .valueOrNull
-        ?.selectedSpaceId;
+    final selection = ref.watch(collaborationProvider).valueOrNull;
+    final active = selection?.selectedSpaceId;
+    if (selection?.allSpacesSelected == true &&
+        const {
+          _Area.today,
+          _Area.plans,
+          _Area.calendar,
+          _Area.projects,
+          _Area.shopping,
+          _Area.finances,
+          _Area.home,
+          _Area.people,
+        }.contains(_area)) {
+      final area = switch (_area) {
+        _Area.today => AllSpacesArea.today,
+        _Area.calendar => AllSpacesArea.calendar,
+        _Area.projects => AllSpacesArea.projects,
+        _Area.shopping => AllSpacesArea.shopping,
+        _Area.finances => AllSpacesArea.finances,
+        _Area.home => AllSpacesArea.home,
+        _Area.people => AllSpacesArea.people,
+        _ =>
+          _planArea == _Area.projects
+              ? AllSpacesArea.projects
+              : _planArea == _Area.calendar
+              ? AllSpacesArea.calendar
+              : AllSpacesArea.tasks,
+      };
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_area == _Area.plans) ...[
+            SegmentedButton<_Area>(
+              segments: [
+                ButtonSegment(
+                  value: _Area.plans,
+                  label: Text(l.organizerTasks),
+                ),
+                ButtonSegment(
+                  value: _Area.projects,
+                  label: Text(l.organizerProjects),
+                ),
+                ButtonSegment(
+                  value: _Area.calendar,
+                  label: Text(l.organizerCalendar),
+                ),
+              ],
+              selected: {_planArea},
+              showSelectedIcon: false,
+              onSelectionChanged: (value) =>
+                  setState(() => _planArea = value.single),
+            ),
+            const SizedBox(height: 24),
+          ],
+          AllSpacesPage(
+            key: ValueKey('all-spaces-${area.name}'),
+            area: area,
+            onSource: _openAllSpacesSource,
+          ),
+        ],
+      );
+    }
     if (active != null &&
         const {
           _Area.today,

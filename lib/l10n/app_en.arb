@@ -1799,5 +1799,18 @@
   "gardenFamilyCucurbitaceae": "Cucurbits (Cucurbitaceae)",
   "gardenFamilyAmaryllidaceae": "Amaryllis family (Amaryllidaceae)",
   "gardenFamilyAmaranthaceae": "Amaranths (Amaranthaceae)",
-  "gardenFamilyPoaceae": "Grasses (Poaceae)"
+  "gardenFamilyPoaceae": "Grasses (Poaceae)",
+  "allSpacesSources": "Space overview",
+  "allSpacesTitle": "All",
+  "allSpacesDescription": "Your personal space and all accessible shared spaces. Every entry keeps its source.",
+  "allSpacesEmpty": "There are no entries in this view yet.",
+  "allSpacesChooseTarget": "Choose a space to add to",
+  "allSpacesChooseTargetDescription": "Open the intended space and add the entry there.",
+  "allSpacesOpenSource": "Open source space",
+  "allSpacesAdd": "Add to a space",
+  "allSpacesFinanceDescription": "Currency summaries include posted income and expenses from permitted, complete data. Transfers are not income or expenses.",
+  "allSpacesFinanceIncomplete": "Some spaces do not yet have a complete finance snapshot. Totals include only complete sources.",
+  "allSpacesAllDates": "All dates",
+  "allSpacesTodayEmpty": "No open tasks, events or expected payments for today.",
+  "allSpacesUpcoming": "Today and overdue"
 }

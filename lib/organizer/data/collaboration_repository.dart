@@ -166,7 +166,15 @@ class CollaborationRepository {
       return;
     }
     if (profile == null) {
-      state = CollaborationState(lastError: _lastError);
+      final selection = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['all_spaces_selected:local'],
+      );
+      if (epoch != _epoch || _closed) return;
+      state = CollaborationState(
+        lastError: _lastError,
+        allSpacesSelected: selection.firstOrNull?['value'] == '1',
+      );
     } else {
       final deletionPending = (await database.rows(
         'SELECT value FROM local_meta WHERE name=?',
@@ -342,6 +350,10 @@ class CollaborationRepository {
         'SELECT value FROM local_meta WHERE name=?',
         ['selected_space:${profile.partition}'],
       );
+      final allSpaces = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['all_spaces_selected:${profile.partition}'],
+      );
       final privateState = await _privateSyncState(profile);
       final runtimePrivateIds = <String, String>{};
       if (_sessionInvalidReason == null && !deletionPending) {
@@ -360,6 +372,7 @@ class CollaborationRepository {
       }
       if (epoch != _epoch || _closed) return;
       state = CollaborationState(
+        allSpacesSelected: allSpaces.firstOrNull?['value'] == '1',
         selectedSpaceId:
             selectedSpace.isEmpty || selectedSpace.first['value'] == ''
             ? null

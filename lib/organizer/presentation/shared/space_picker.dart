@@ -13,10 +13,13 @@ class OrganizerSpacePicker extends ConsumerWidget {
     required this.onSelected,
     required this.onConnect,
     this.compact = false,
+    this.onAllSelected,
   });
   final ValueChanged<String?> onSelected;
   final VoidCallback onConnect;
   final bool compact;
+  final VoidCallback? onAllSelected;
+  static const allAction = 'all-spaces';
   static const createAction = 'create-space';
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final l = context.l10n, guard = SharingSessionGuard(context, ref);
@@ -94,6 +97,7 @@ class OrganizerSpacePicker extends ConsumerWidget {
         <SharedScope>[];
     final chosen = state?.selectedSpaceId;
     final items = <DropdownMenuItem<String>>[
+      DropdownMenuItem(value: allAction, child: Text(l.allSpacesTitle)),
       DropdownMenuItem(
         value: '',
         child: Text(
@@ -152,7 +156,10 @@ class OrganizerSpacePicker extends ConsumerWidget {
     final selectedScope = scopes
         .where((scope) => scope.id == chosen)
         .firstOrNull;
-    final chosenLabel = chosen == null
+    final allSelected = state?.allSpacesSelected == true;
+    final chosenLabel = allSelected
+        ? l.allSpacesTitle
+        : chosen == null
         ? l.organizerPersonal
         : selectedScope == null || selectedScope.revoked
         ? l.sharingAccessRevoked
@@ -166,7 +173,7 @@ class OrganizerSpacePicker extends ConsumerWidget {
         ),
         child: DropdownButton<String>(
           key: ValueKey('active-space-${state?.session?.partition}-$chosen'),
-          value: chosen ?? '',
+          value: allSelected ? allAction : chosen ?? '',
           isExpanded: true,
           menuWidth: compact ? MediaQuery.sizeOf(context).width - 32 : null,
           itemHeight: (MediaQuery.textScalerOf(context).scale(16) + 24).clamp(
@@ -178,7 +185,13 @@ class OrganizerSpacePicker extends ConsumerWidget {
           icon: const Icon(Icons.expand_more),
           items: items,
           onChanged: (id) {
-            if (id == createAction) {
+            if (id == allAction) {
+              if (onAllSelected != null) {
+                onAllSelected!();
+              } else {
+                ref.read(collaborationProvider.notifier).selectAllSpaces();
+              }
+            } else if (id == createAction) {
               _create(context, ref);
             } else {
               onSelected(id == '' ? null : id);

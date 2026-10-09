@@ -2,6 +2,8 @@
 
 Jivie (izgovorjeno **dživi**) je brezplačen lokalni organizator osebnega in družinskega življenja: prostega časa, opravil, domačih projektov, nabave in financ. Flutter aplikacija je nastala iz Kanban Connect; izbirno strežniško sodelovanje razvijamo prek vtičnika FamilyHub za Kanboard.
 
+**Dopolnitev 9. oktobra:** [pogled Vsi in popravek centra obvestil](docs/ALL_SPACES_AND_INBOX.md) združita dovoljene osebne/skupne podatke ter uskladita vidne opomnike z oznako zvončka. Zapisi ohranijo izvor, finance ločene pravice in valute, izbira Vsi pa se shrani na napravi. Preverjeno s **677 Flutter PASS**, analizo brez napak/opozoril (37 obstoječih info) ter web release in Android debug gradnjo. Aktivna Android izdaja 1.1.3 (6) te dopolnitve še ne vsebuje.
+
 **Nova dopolnitev:** [oddaljeni razporejeni opomniki](docs/REMOTE_REMINDERS.md) omogočajo ustvarjanje, spremembo in preklic z jasnim stanjem strežniške potrditve. [Vrt](docs/GARDEN.md) ima trajne grede, letne sezone, več zasaditev, zgodovino in informativno primerjavo družin. Vrt ostaja lokalen. Preverjeno: **636 Flutter PASS**, 2 ločena dejanska HTTP testa in analiza brez napak/opozoril (37 obstoječih info). **Android 1.1.3 (6) je aktivno objavljen za domači (15)**; fizični preizkus novih tokov še sledi.
 
 **Kompaktna telefonska glava:** izbira prostora je prestavljena ob ikono v zgornji vrstici, ime Jivie ostane v meniju. Spustni seznam vsebuje **+ Nov prostor**, ločena vrstica in tipka sta odstranjeni. Preverjeno s **565 Flutter PASS** in analizo brez napak/opozoril (37 obstoječih info); **Android 1.1.2 (5) je aktivno objavljen za domači (15).** [Dokazi in predogled](docs/UPGRADE_IMPLEMENTATION.md).

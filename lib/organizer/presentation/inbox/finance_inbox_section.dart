@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
-import '../../domain/finance_reminder_plans.dart';
 import '../../state/collaboration_provider.dart';
-import '../../state/organizer_provider.dart';
 import '../../state/finance_inbox_provider.dart';
-import '../../state/reminder_snooze_provider.dart';
+import '../../state/inbox_projection_provider.dart';
 import 'reminder_snooze.dart';
 import '../shared/sharing_errors.dart';
 import 'notification_target_view.dart';
@@ -21,29 +19,17 @@ class FinanceInboxSection extends ConsumerStatefulWidget {
 
 class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
   bool _busy = false;
-  Set<String> _reads = {};
-  String? _loadedSignature;
   String? _error;
   bool _visible(ReminderPlan plan) {
     if (!mounted) return false;
-    final personal = ref.read(organizerProvider).valueOrNull;
-    final shared = ref.read(collaborationProvider).valueOrNull;
-    if (personal == null || shared == null) return false;
-    final effective = ref.read(effectiveReminderPlansProvider).valueOrNull;
-    if (effective == null) return false;
-    return dueFinanceInboxPlans(
-      personal: personal,
-      shared: shared,
-      now: ref.read(organizerClockProvider)(),
-    ).any(
-      (p) =>
-          p.stableKey == plan.stableKey &&
-          effective.any(
-            (e) =>
-                e.stableKey == p.stableKey &&
-                !e.scheduledAt.isAfter(ref.read(organizerClockProvider)()),
-          ),
-    );
+    return ref
+        .read(organizerInboxProjectionProvider)
+        .finance
+        .any(
+          (p) =>
+              p.stableKey == plan.stableKey &&
+              p.scheduledAt == plan.scheduledAt,
+        );
   }
 
   Future<void> _read(ReminderPlan plan) async {
@@ -55,7 +41,7 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
         throw const CollaborationException('finance_forbidden');
       }
       await store.markRead(plan, stillVisible: () => _visible(plan));
-      if (mounted && _visible(plan)) setState(() => _reads.add(plan.stableKey));
+      ref.invalidate(financeInboxReadKeysProvider);
     } catch (e) {
       if (mounted) setState(() => _error = sharingErrorMessage(context, e));
     } finally {
@@ -66,25 +52,19 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final signature = widget.plans.map((p) => p.stableKey).join('|');
-    if (_loadedSignature != signature) {
-      _loadedSignature = signature;
-      final plans = widget.plans;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        try {
-          final store = await ref.read(financeInboxStoreProvider.future);
-          final reads = await store.readKeys(plans);
-          if (mounted && _loadedSignature == signature) {
-            setState(() => _reads = reads);
-          }
-        } catch (e) {
-          if (mounted) setState(() => _error = sharingErrorMessage(context, e));
-        }
-      });
-    }
+    final readsAsync = ref.watch(financeInboxReadKeysProvider);
+    final reads = readsAsync.isLoading || readsAsync.hasError
+        ? null
+        : readsAsync.valueOrNull;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (readsAsync.isLoading) const LinearProgressIndicator(),
+        if (readsAsync.hasError)
+          Text(
+            sharingErrorMessage(context, readsAsync.error!),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         if (_error != null)
           Text(
             _error!,
@@ -94,7 +74,9 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
           Card(
             child: ListTile(
               leading: Icon(
-                _reads.contains(plan.stableKey)
+                reads == null
+                    ? Icons.more_horiz
+                    : reads.contains(plan.stableKey)
                     ? Icons.mark_email_read_outlined
                     : Icons.mark_email_unread_outlined,
               ),
@@ -135,7 +117,8 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                   IconButton(
                     tooltip: l.inboxMarkRead,
                     key: ValueKey('finance-inbox-read-${plan.stableKey}'),
-                    onPressed: _busy || _reads.contains(plan.stableKey)
+                    onPressed:
+                        _busy || reads == null || reads.contains(plan.stableKey)
                         ? null
                         : () => _read(plan),
                     icon: const Icon(Icons.done),

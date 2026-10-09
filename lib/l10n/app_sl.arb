@@ -1799,5 +1799,18 @@
   "gardenFamilyCucurbitaceae": "Bučevke (Cucurbitaceae)",
   "gardenFamilyAmaryllidaceae": "Narcisovke (Amaryllidaceae)",
   "gardenFamilyAmaranthaceae": "Ščirovke (Amaranthaceae)",
-  "gardenFamilyPoaceae": "Trave (Poaceae)"
+  "gardenFamilyPoaceae": "Trave (Poaceae)",
+  "allSpacesSources": "Pregled prostorov",
+  "allSpacesTitle": "Vsi",
+  "allSpacesDescription": "Pregled osebnega prostora in vseh dostopnih skupnih prostorov. Vsak zapis ohrani svoj izvor.",
+  "allSpacesEmpty": "V tem pregledu še ni zapisov.",
+  "allSpacesChooseTarget": "Izberi prostor za dodajanje",
+  "allSpacesChooseTargetDescription": "Odpri želeni prostor in dodaj zapis vanj.",
+  "allSpacesOpenSource": "Odpri izvorni prostor",
+  "allSpacesAdd": "Dodaj v prostor",
+  "allSpacesFinanceDescription": "Pregled po valutah vključuje knjižene prihodke in stroške iz dovoljenih, popolnih podatkov. Prenosi niso prihodki ali stroški.",
+  "allSpacesFinanceIncomplete": "Nekateri prostori še nimajo popolnega finančnega pregleda. Prikazani seštevki zajemajo samo popolne vire.",
+  "allSpacesAllDates": "Vsi datumi",
+  "allSpacesTodayEmpty": "Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.",
+  "allSpacesUpcoming": "Današnje in zamujeno"
 }

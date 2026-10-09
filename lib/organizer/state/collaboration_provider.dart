@@ -521,6 +521,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   );
   Future<bool> signOut() => _repo.signOut();
   Future<void> selectSpace(String? scopeId) => _repo.selectSpace(scopeId);
+  Future<void> selectAllSpaces() => _repo.selectAllSpaces();
   Future<void> archiveProjectScope(
     String scopeId, {
     required bool archived,

@@ -4405,4 +4405,48 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get gardenFamilyPoaceae => 'Trave (Poaceae)';
+
+  @override
+  String get allSpacesSources => 'Pregled prostorov';
+
+  @override
+  String get allSpacesTitle => 'Vsi';
+
+  @override
+  String get allSpacesDescription =>
+      'Pregled osebnega prostora in vseh dostopnih skupnih prostorov. Vsak zapis ohrani svoj izvor.';
+
+  @override
+  String get allSpacesEmpty => 'V tem pregledu še ni zapisov.';
+
+  @override
+  String get allSpacesChooseTarget => 'Izberi prostor za dodajanje';
+
+  @override
+  String get allSpacesChooseTargetDescription =>
+      'Odpri želeni prostor in dodaj zapis vanj.';
+
+  @override
+  String get allSpacesOpenSource => 'Odpri izvorni prostor';
+
+  @override
+  String get allSpacesAdd => 'Dodaj v prostor';
+
+  @override
+  String get allSpacesFinanceDescription =>
+      'Pregled po valutah vključuje knjižene prihodke in stroške iz dovoljenih, popolnih podatkov. Prenosi niso prihodki ali stroški.';
+
+  @override
+  String get allSpacesFinanceIncomplete =>
+      'Nekateri prostori še nimajo popolnega finančnega pregleda. Prikazani seštevki zajemajo samo popolne vire.';
+
+  @override
+  String get allSpacesAllDates => 'Vsi datumi';
+
+  @override
+  String get allSpacesTodayEmpty =>
+      'Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.';
+
+  @override
+  String get allSpacesUpcoming => 'Današnje in zamujeno';
 }

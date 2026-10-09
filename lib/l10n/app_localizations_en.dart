@@ -4398,4 +4398,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gardenFamilyPoaceae => 'Grasses (Poaceae)';
+
+  @override
+  String get allSpacesSources => 'Space overview';
+
+  @override
+  String get allSpacesTitle => 'All';
+
+  @override
+  String get allSpacesDescription =>
+      'Your personal space and all accessible shared spaces. Every entry keeps its source.';
+
+  @override
+  String get allSpacesEmpty => 'There are no entries in this view yet.';
+
+  @override
+  String get allSpacesChooseTarget => 'Choose a space to add to';
+
+  @override
+  String get allSpacesChooseTargetDescription =>
+      'Open the intended space and add the entry there.';
+
+  @override
+  String get allSpacesOpenSource => 'Open source space';
+
+  @override
+  String get allSpacesAdd => 'Add to a space';
+
+  @override
+  String get allSpacesFinanceDescription =>
+      'Currency summaries include posted income and expenses from permitted, complete data. Transfers are not income or expenses.';
+
+  @override
+  String get allSpacesFinanceIncomplete =>
+      'Some spaces do not yet have a complete finance snapshot. Totals include only complete sources.';
+
+  @override
+  String get allSpacesAllDates => 'All dates';
+
+  @override
+  String get allSpacesTodayEmpty =>
+      'No open tasks, events or expected payments for today.';
+
+  @override
+  String get allSpacesUpcoming => 'Today and overdue';
 }

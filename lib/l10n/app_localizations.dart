@@ -7793,6 +7793,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Grasses (Poaceae)'**
   String get gardenFamilyPoaceae;
+
+  /// No description provided for @allSpacesSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Space overview'**
+  String get allSpacesSources;
+
+  /// No description provided for @allSpacesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allSpacesTitle;
+
+  /// No description provided for @allSpacesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your personal space and all accessible shared spaces. Every entry keeps its source.'**
+  String get allSpacesDescription;
+
+  /// No description provided for @allSpacesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no entries in this view yet.'**
+  String get allSpacesEmpty;
+
+  /// No description provided for @allSpacesChooseTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a space to add to'**
+  String get allSpacesChooseTarget;
+
+  /// No description provided for @allSpacesChooseTargetDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the intended space and add the entry there.'**
+  String get allSpacesChooseTargetDescription;
+
+  /// No description provided for @allSpacesOpenSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source space'**
+  String get allSpacesOpenSource;
+
+  /// No description provided for @allSpacesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to a space'**
+  String get allSpacesAdd;
+
+  /// No description provided for @allSpacesFinanceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency summaries include posted income and expenses from permitted, complete data. Transfers are not income or expenses.'**
+  String get allSpacesFinanceDescription;
+
+  /// No description provided for @allSpacesFinanceIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Some spaces do not yet have a complete finance snapshot. Totals include only complete sources.'**
+  String get allSpacesFinanceIncomplete;
+
+  /// No description provided for @allSpacesAllDates.
+  ///
+  /// In en, this message translates to:
+  /// **'All dates'**
+  String get allSpacesAllDates;
+
+  /// No description provided for @allSpacesTodayEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No open tasks, events or expected payments for today.'**
+  String get allSpacesTodayEmpty;
+
+  /// No description provided for @allSpacesUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Today and overdue'**
+  String get allSpacesUpcoming;
 }
 
 class _AppLocalizationsDelegate
