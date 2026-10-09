@@ -1724,6 +1724,7 @@
   "financeNoFilterResults": "No entries for the selected account.",
   "reminderSnoozeDeviceOnly": "Snoozing applies on this device. The task or payment due date stays the same.",
   "guideMenuTitle": "Menu and settings",
+  "spacePickerCreateAction": "New space",
   "spacePickerNewSpace": "+ New space",
   "spacePickerInitialVisibility": "Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.",
   "spacePickerSharedProject": "Shared project",

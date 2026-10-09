@@ -4195,6 +4195,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get guideMenuTitle => 'Meni in nastavitve';
 
   @override
+  String get spacePickerCreateAction => 'Nov prostor';
+
+  @override
   String get spacePickerNewSpace => '+ Nov prostor';
 
   @override

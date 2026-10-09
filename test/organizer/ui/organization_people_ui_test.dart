@@ -125,7 +125,7 @@ void main() {
         );
         await tester.tap(find.byType(DropdownButton<String>).first);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('+ Nov prostor').last);
+        await tester.tap(find.text('Nov prostor').last);
         await tester.pumpAndSettle();
         await tester.tap(
           find.widgetWithText(DropdownButtonFormField<String>, 'Gospodinjstvo'),
@@ -303,7 +303,7 @@ void main() {
       );
       await tester.tap(find.byType(DropdownButton<String>).first);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('+ Nov prostor').last);
+      await tester.tap(find.text('Nov prostor').last);
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField).first,

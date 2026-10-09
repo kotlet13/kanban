@@ -1724,6 +1724,7 @@
   "financeNoFilterResults": "Za izbrani račun ni vnosov.",
   "reminderSnoozeDeviceOnly": "Odložitev velja na tej napravi. Rok opravila ali plačila ostane enak.",
   "guideMenuTitle": "Meni in nastavitve",
+  "spacePickerCreateAction": "Nov prostor",
   "spacePickerNewSpace": "+ Nov prostor",
   "spacePickerInitialVisibility": "Na začetku vidi prostor samo ustvarjalec. Izberi vrsto in ime; druge člane dodaš z izrecnim povabilom. Osebni podatki se ne prenesejo ali delijo samodejno.",
   "spacePickerSharedProject": "Deljeni projekt",

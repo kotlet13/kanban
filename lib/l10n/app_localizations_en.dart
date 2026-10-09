@@ -4185,6 +4185,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guideMenuTitle => 'Menu and settings';
 
   @override
+  String get spacePickerCreateAction => 'New space';
+
+  @override
   String get spacePickerNewSpace => '+ New space';
 
   @override

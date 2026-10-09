@@ -96,67 +96,105 @@ class OrganizerSpacePicker extends ConsumerWidget {
             .toList() ??
         <SharedScope>[];
     final chosen = state?.selectedSpaceId;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final allSelected = state?.allSpacesSelected == true;
+    final selectedValue = allSelected ? allAction : chosen ?? '';
+    DropdownMenuItem<String> menuItem({
+      required String value,
+      required String title,
+      required IconData icon,
+      String? subtitle,
+      bool enabled = true,
+      bool separated = false,
+    }) => DropdownMenuItem(
+      value: value,
+      enabled: enabled,
+      child: _SpacePickerMenuRow(
+        title: title,
+        subtitle: subtitle,
+        icon: icon,
+        selected: value == selectedValue,
+        enabled: enabled,
+        separated: separated,
+      ),
+    );
+    String scopeType(SharedScope scope) => switch (scope.kind) {
+      SharedScopeKind.household => l.sharingHousehold,
+      SharedScopeKind.project => l.spacePickerSharedProject,
+      SharedScopeKind.organization => l.organizationTitle,
+      SharedScopeKind.personal => l.organizerPersonal,
+    };
+    IconData scopeIcon(SharedScope scope) => scope.archived
+        ? Icons.inventory_2_outlined
+        : switch (scope.kind) {
+            SharedScopeKind.household => Icons.home_outlined,
+            SharedScopeKind.project => Icons.folder_outlined,
+            SharedScopeKind.organization => Icons.business_outlined,
+            SharedScopeKind.personal => Icons.person_outline,
+          };
     final items = <DropdownMenuItem<String>>[
-      DropdownMenuItem(value: allAction, child: Text(l.allSpacesTitle)),
-      DropdownMenuItem(
+      menuItem(
+        value: allAction,
+        title: l.allSpacesTitle,
+        icon: Icons.dashboard_outlined,
+      ),
+      menuItem(
         value: '',
-        child: Text(
-          l.organizerPersonal,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: l.organizerPersonal,
+        icon: Icons.person_outline,
       ),
       for (final scope in scopes.where((scope) => !scope.archived))
-        DropdownMenuItem(
+        menuItem(
           value: scope.id,
           enabled: !scope.revoked,
-          child: Text(
-            scope.revoked
-                ? '${scope.name} · ${l.sharingAccessRevoked}'
-                : scope.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: scope.revoked
+              ? '${scope.name} · ${l.sharingAccessRevoked}'
+              : scope.name,
+          subtitle: scopeType(scope),
+          icon: scopeIcon(scope),
         ),
       if (scopes.any((scope) => scope.archived))
         DropdownMenuItem(
           value: 'archived-section',
           enabled: false,
-          child: Text(
-            l.scopeArchivedProjects,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12, top: 12),
+            child: Text(
+              l.scopeArchivedProjects,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       for (final scope in scopes.where((scope) => scope.archived))
-        DropdownMenuItem(
+        menuItem(
           value: scope.id,
           enabled: !scope.revoked,
-          child: Text(scope.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          title: scope.name,
+          subtitle: scopeType(scope),
+          icon: scopeIcon(scope),
         ),
       if (chosen != null && !scopes.any((scope) => scope.id == chosen))
-        DropdownMenuItem(
+        menuItem(
           value: chosen,
           enabled: false,
-          child: Text(
-            l.sharingAccessRevoked,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: l.sharingAccessRevoked,
+          icon: Icons.lock_outline,
         ),
-      DropdownMenuItem(
+      menuItem(
         value: createAction,
-        child: Text(
-          l.spacePickerNewSpace,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: l.spacePickerCreateAction,
+        icon: Icons.add,
+        separated: true,
       ),
     ];
     final selectedScope = scopes
         .where((scope) => scope.id == chosen)
         .firstOrNull;
-    final allSelected = state?.allSpacesSelected == true;
     final chosenLabel = allSelected
         ? l.allSpacesTitle
         : chosen == null
@@ -171,32 +209,54 @@ class OrganizerSpacePicker extends ConsumerWidget {
           48,
           double.infinity,
         ),
-        child: DropdownButton<String>(
-          key: ValueKey('active-space-${state?.session?.partition}-$chosen'),
-          value: allSelected ? allAction : chosen ?? '',
-          isExpanded: true,
-          menuWidth: compact ? MediaQuery.sizeOf(context).width - 32 : null,
-          itemHeight: (MediaQuery.textScalerOf(context).scale(16) + 24).clamp(
-            48,
-            double.infinity,
+        child: Theme(
+          // DropdownButton captures this theme for its route. Keep native touch
+          // and keyboard focus visible without the default grey selection band.
+          data: theme.copyWith(
+            focusColor: colors.primary.withValues(alpha: .06),
           ),
-          style: Theme.of(context).textTheme.titleMedium,
-          underline: const SizedBox.shrink(),
-          icon: const Icon(Icons.expand_more),
-          items: items,
-          onChanged: (id) {
-            if (id == allAction) {
-              if (onAllSelected != null) {
-                onAllSelected!();
+          child: DropdownButton<String>(
+            key: ValueKey('active-space-${state?.session?.partition}-$chosen'),
+            value: selectedValue,
+            isExpanded: true,
+            menuWidth: (MediaQuery.sizeOf(context).width - 32).clamp(0, 380),
+            menuMaxHeight: (MediaQuery.sizeOf(context).height * .6).clamp(
+              0,
+              480,
+            ),
+            itemHeight: null,
+            borderRadius: BorderRadius.circular(20),
+            dropdownColor: colors.surface,
+            elevation: 8,
+            selectedItemBuilder: (context) => [
+              for (final _ in items)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    chosenLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            style: Theme.of(context).textTheme.titleMedium,
+            underline: const SizedBox.shrink(),
+            icon: const Icon(Icons.expand_more),
+            items: items,
+            onChanged: (id) {
+              if (id == allAction) {
+                if (onAllSelected != null) {
+                  onAllSelected!();
+                } else {
+                  ref.read(collaborationProvider.notifier).selectAllSpaces();
+                }
+              } else if (id == createAction) {
+                _create(context, ref);
               } else {
-                ref.read(collaborationProvider.notifier).selectAllSpaces();
+                onSelected(id == '' ? null : id);
               }
-            } else if (id == createAction) {
-              _create(context, ref);
-            } else {
-              onSelected(id == '' ? null : id);
-            }
-          },
+            },
+          ),
         ),
       ),
     );
@@ -206,5 +266,108 @@ class OrganizerSpacePicker extends ConsumerWidget {
             decoration: InputDecoration(labelText: l.spacePickerTitle),
             child: picker,
           );
+  }
+}
+
+class _SpacePickerMenuRow extends StatelessWidget {
+  const _SpacePickerMenuRow({
+    required this.title,
+    required this.icon,
+    required this.selected,
+    required this.enabled,
+    required this.separated,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final bool selected;
+  final bool enabled;
+  final bool separated;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final foreground = !enabled
+        ? theme.disabledColor
+        : selected || separated
+        ? colors.primary
+        : colors.onSurface;
+    return Semantics(
+      selected: selected,
+      enabled: enabled,
+      child: Tooltip(
+        message: subtitle == null ? title : '$title\n$subtitle',
+        excludeFromSemantics: true,
+        child: Container(
+          margin: EdgeInsets.only(top: separated ? 8 : 2, bottom: 2),
+          padding: EdgeInsets.only(top: separated ? 8 : 0),
+          decoration: separated
+              ? BoxDecoration(
+                  border: Border(top: BorderSide(color: colors.outlineVariant)),
+                )
+              : null,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? colors.primaryContainer : null,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 22,
+                  color: !enabled
+                      ? theme.disabledColor
+                      : selected || separated
+                      ? colors.primary
+                      : colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: foreground,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: enabled
+                                ? colors.onSurfaceVariant
+                                : theme.disabledColor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (selected) ...[
+                  const SizedBox(width: 10),
+                  Icon(Icons.check, size: 20, color: foreground),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

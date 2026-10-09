@@ -7398,6 +7398,12 @@ abstract class AppLocalizations {
   /// **'Menu and settings'**
   String get guideMenuTitle;
 
+  /// No description provided for @spacePickerCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New space'**
+  String get spacePickerCreateAction;
+
   /// No description provided for @spacePickerNewSpace.
   ///
   /// In en, this message translates to:

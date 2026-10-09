@@ -106,7 +106,7 @@ Finder spaceButton() => find
 Future<void> openNewSpace(WidgetTester tester) async {
   await tester.tap(spaceButton());
   await tester.pumpAndSettle();
-  await tester.tap(find.text('+ Nov prostor').last);
+  await tester.tap(find.text('Nov prostor').last);
   await tester.pumpAndSettle();
 }
 
@@ -151,7 +151,7 @@ void main() {
             await tester.tap(spaceButton());
             await tester.pumpAndSettle();
             expect(
-              find.text(language == 'sl' ? '+ Nov prostor' : '+ New space'),
+              find.text(language == 'sl' ? 'Nov prostor' : 'New space'),
               findsOneWidget,
             );
             expect(find.text('Hidden personal server scope'), findsNothing);
@@ -176,7 +176,7 @@ void main() {
         expect(find.byIcon(Icons.add_business_outlined), findsNothing);
         await tester.tap(spaceButton());
         await tester.pumpAndSettle();
-        expect(find.text('+ Nov prostor'), findsOneWidget);
+        expect(find.text('Nov prostor'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
@@ -363,7 +363,7 @@ void main() {
       expect(kinds.enabled, isTrue);
     },
   );
-  testWidgets('render actual empty phone calendar header', (tester) async {
+  testWidgets('render actual phone header and space menus', (tester) async {
     // Widget tests use the square Ahem font by default. Load the app's actual
     // Cupertino families and Material glyphs for a readable review artifact.
     await tester.runAsync(() async {
@@ -410,6 +410,51 @@ void main() {
       await file.writeAsBytes(bytes!.buffer.asUint8List());
       image.dispose();
     });
+    for (final theme in ['light', 'dark']) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        width: 390,
+        height: 844,
+        theme: theme,
+        repaintBoundaryKey: capture,
+        collaborationController: SharingUiController(
+          initial: CollaborationState(
+            session: sharingSession(),
+            allSpacesSelected: true,
+            scopes: const [
+              SharedScope(
+                id: selectedId,
+                name: 'preizkus obvestil',
+                kind: SharedScopeKind.project,
+                role: SharedRole.owner,
+              ),
+              SharedScope(
+                id: archivedId,
+                name: 'Doma',
+                kind: SharedScopeKind.household,
+                role: SharedRole.owner,
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.tap(spaceButton());
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        final boundary =
+            capture.currentContext!.findRenderObject() as RenderRepaintBoundary;
+        final image = await boundary.toImage(pixelRatio: 2);
+        final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+        final file = File('build/qa/jivie-space-picker/menu-phone-$theme.png');
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(bytes!.buffer.asUint8List());
+        image.dispose();
+      });
+      expect(tester.takeException(), isNull);
+    }
     expect(tester.takeException(), isNull);
   });
 }
