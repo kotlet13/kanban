@@ -1,5 +1,7 @@
 # Jivie in FamilyHub na cPanelu
 
+**Produkcija 9. oktobra:** uporabnik je izbral novo `jivie.triparna.si` s prazno bazo. Ločen [zapis produkcijske namestitve](PRODUCTION_SETUP.md) vodi izvedene korake in odprte pogoje; spodnji dokazi se nanašajo na testni strežnik.
+
 **Aktualno 8. oktobra:** ista testna namestitev je nadgrajena na FamilyHub 0.7.0/schema11 po preverjeni kopiji in izolirani obnovi. Razdelek 12 vodi nove dokaze; spodaj ostane prvotna namestitev 7. oktobra.
 
 Vodič za samostojno gostovanje, pripravljen 7. oktobra 2026 iz kode **FamilyHub 0.6.0 / schema10** za **Kanboard 1.2.54**. Po uporabnikovem dovoljenju je na novi ločeni testni poddomeni izvedena sveža namestitev; dejanske dokaze vodi razdelek 11. Stari Kanboard ostane nespremenjen. Jivie osebni način deluje brez strežnika; ta postopek omogoči izbirno sinhronizacijo, sodelovanje in strežniške storitve.
