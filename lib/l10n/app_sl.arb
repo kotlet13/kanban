@@ -1326,7 +1326,7 @@
   "organizationCreate": "Ustvari organizacijo",
   "organizationProjects": "Projekti organizacije",
   "organizationCreateProject": "Dodaj projekt v organizacijo",
-  "organizationAccessDescription": "Članstvo ne odpre vseh projektov ali financ. Dostop uredi za vsak projekt posebej.",
+  "organizationAccessDescription": "Povabilo v cel prostor vključuje vse njegove vsebine, finance in projekte, tudi prihodnje. Povabilo samo v projekt vključuje samo ta projekt. Član lahko v svojem obsegu tudi ureja, briše, povabi druge in upravlja člane.",
   "peopleTitle": "Osebe",
   "peopleAdd": "Dodaj osebo",
   "peopleName": "Ime",
@@ -1497,7 +1497,7 @@
   "guideTodayBody": "Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.",
   "guidePlansBody": "V Opravilih uredi opravila in njihove termine. Projekte in Koledar odpri neposredno iz menija. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.",
   "guideShoppingBody": "Gospodinjstvo ima svoje nakupovalne sezname, vrtove in osebe. Dodaj artikle in označi kupljeno. Stari osebni seznami in vrtovi ostanejo dostopni; pred dodelitvijo gospodinjstvu izbereš cilj.",
-  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora.",
+  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora. Povabilo v cel prostor vključuje vse njegove vsebine, finance in obstoječe ter prihodnje projekte. Povabilo samo v projekt se prikaže kot Deljen projekt in ne dodeli članstva v celotnem prostoru. Obseg dostopa je ločen od vloge.",
   "guideSkip": "Preskoči",
   "guideBack": "Nazaj",
   "guideNext": "Naprej",
@@ -2069,5 +2069,66 @@
   "syncStatusBlockedCount": "Zadržane spremembe",
   "syncStatusAccountScope": "Status, časi in število sprememb veljajo za ta račun in vse njegove prostore.",
   "syncStatusLocalScope": "Status velja za lokalno delo na tej napravi.",
-  "syncStatusServerChanged": "Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti."
+  "syncStatusServerChanged": "Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti.",
+  "sharingInviteScope": "Obseg povabila",
+  "sharingInviteWholeSpace": "Cel prostor",
+  "sharingInviteProjectOnly": "Samo projekt",
+  "sharingInviteSpaceDescription": "Povabljena oseba dobi dostop do vseh skupnih vsebin in financ tega prostora ter vseh njegovih obstoječih in prihodnjih projektov.",
+  "sharingInviteProjectDescription": "Povabljena oseba dobi dostop samo do izbranega projekta, njegovih opravil, dogodkov, obvestil in financ. Projekt se prikaže kot Deljen projekt; povabilo ne dodeli članstva v gospodinjstvu ali organizaciji.",
+  "sharingMemberFullDescription": "Član lahko v izbranem obsegu ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve, povabila in člane. Lastništvo ostane posebej zaščiteno.",
+  "sharingViewerDescription": "Oseba lahko bere vsebino in finance v izbranem obsegu. Urejanje in upravljanje sta izključena.",
+  "sharingLegacySpaceDescription": "Ta prostor uporablja starejša pravila dostopa. Članstvo še ne vključuje vseh projektov in financ. Lastnik lahko v Nastavitvah prostora pregleda in potrdi novo deljenje.",
+  "sharingLegacyProjectDescription": "To povabilo uporablja starejša pravila dostopa do projekta. Prikazane finančne pravice določa trenutna nastavitev strežnika.",
+  "sharingScopedUnsupported": "Strežnik še ne podpira ločenega povabila v cel prostor ali samo projekt. Skrbnik mora nadgraditi FamilyHub; obstoječi podatki in dostop ostanejo na voljo.",
+  "sharingScopeUpgradeRequired": "Pred povabilom v cel prostor mora lastnik pregledati in potrditi novo deljenje v Nastavitvah prostora.",
+  "sharingAccessReview": "Preglej deljenje prostora",
+  "sharingAccessReviewDescription": "Člani prostora bodo dobili dostop do vseh njegovih vsebin in financ ter vseh obstoječih in prihodnjih projektov. Člani lahko tudi urejajo, brišejo, povabijo druge in upravljajo člane. Osebe, povabljene samo v projekt, ohranijo projektni obseg. Pred potrditvijo preglej dodatni dostop. Stara čakajoča povabila bodo preklicana.",
+  "sharingAccessCurrent": "Članstvo v prostoru vključuje vse skupne vsebine in finance ter vse njegove obstoječe in prihodnje projekte. Povabilo samo v projekt velja samo za ta projekt.",
+  "sharingAccessApply": "Potrdi deljenje prostora",
+  "sharingAccessSourceSpace": "Članstvo v prostoru",
+  "sharingAccessSourceProject": "Članstvo v projektu",
+  "sharingAccessReadWrite": "Branje, urejanje in upravljanje",
+  "sharingAccessReadOnly": "Branje",
+  "sharingProjectSharingReview": "Preglej deljenje samo projekta",
+  "sharingProjectSharingDescription": "Projekt in njegovi povezani zapisi bodo dobili lasten obseg za deljenje. Obstoječi člani gospodinjstva ohranijo dostop. Novo povabilo velja samo za projekt in ne razkrije drugih vsebin gospodinjstva.",
+  "sharingProjectSharingApply": "Omogoči deljenje projekta",
+  "sharingProjectSharingBlocked": "Projekt ima finančne ali druge povezave z vsebino zunaj projekta. Te povezave je treba urediti pred ločenim deljenjem; povabilo v celo gospodinjstvo ne nadomesti povabila samo v projekt.",
+  "sharingProjectSharingAction": "Deli samo projekt",
+  "sharingAccessProjects": "Projekti, vključeni v prostor",
+  "sharingProjectMembersInherited": "Dostop iz članstva v celotnem prostoru",
+  "sharingProjectNewVisibility": "Projekt vidijo vsi člani prostora. Povabilo samo v ta projekt lahko pošlješ dodatnim sodelavcem; drugih vsebin prostora ne razkrije.",
+  "sharingProjectSharingCounts": "Zapisi: {records} · finančni zapisi: {finances} · opomniki: {reminders}",
+  "sharingAccessRevokedInvitations": "Čakajoča povabila za preklic: {count}",
+  "sharingProjectSharingPending": "Najprej uskladi čakajoče spremembe tega prostora in reši konflikte, nato ponovi pregled deljenja projekta.",
+  "sharingProjectDirectRemoval": "Odstrani neposredno članstvo v tem projektu? Dostop iz članstva v celotnem prostoru ostane, dokler je oseba član tega prostora.",
+  "@sharingProjectSharingCounts": {
+    "placeholders": {
+      "records": {
+        "type": "int"
+      },
+      "finances": {
+        "type": "int"
+      },
+      "reminders": {
+        "type": "int"
+      }
+    }
+  },
+  "@sharingAccessRevokedInvitations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharingRemoveProjectMembership": "Odstrani neposredno članstvo v projektu",
+  "sharingBlockSingleRoot": "Ta deljen projekt vsebuje več projektov ali nima projektnega korena. Pred spremembo mora predstavljati en sam projekt.",
+  "sharingBlockRecordUpgrade": "Projekt je shranjen v starejšem formatu. Najprej uskladi njegovo posodobitev.",
+  "sharingBlockUnrelatedContent": "Prostor vsebuje opravila ali dogodke, ki ne pripadajo temu projektu. Pred ločenim deljenjem preglej njihovo dodelitev.",
+  "sharingBlockAccount": "Finančni račun uporabljajo tudi zapisi zunaj projekta. Preglej njegove povezave v financah pred ločenim deljenjem.",
+  "sharingBlockPerson": "Oseba je povezana tudi z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane osebe in dodelitve.",
+  "sharingBlockRecurrence": "Ponavljajoče se finančno pravilo uporabljajo tudi zapisi zunaj projekta. Pred ločenim deljenjem preglej ponavljanja.",
+  "sharingBlockTransfer": "Finančni prenos povezuje projekt z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane račune in prenose.",
+  "sharingBlockLinkedPayment": "Povezano plačilo vključuje dodatne finančne evidence. Pred ločenim deljenjem preglej povezave plačil.",
+  "sharingBlockCollision": "Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje."
 }

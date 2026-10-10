@@ -54,6 +54,8 @@ class NativeSyncService extends NativeDatabase
                 $replay['body']['replayed'] = true;
                 return $replay['body'];
             }
+            $relocated=$this->one('SELECT target_scope_id FROM familyhub_record_relocations WHERE scope_id=? AND record_id=? AND finance=?',[$scopeId,$recordId,0]);
+            if ($relocated) { throw new NativeError('record_relocated',409); }
             $this->requireCompatible($scopeId);
             $current = $this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?', [$scopeId, $recordId]);
             if (($current && ((int)$current['revision'] !== $op['expectedRevision'] || (int)$current['deleted'] === 1 || $current['type'] !== $op['type'])) ||

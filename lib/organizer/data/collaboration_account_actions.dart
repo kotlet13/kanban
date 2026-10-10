@@ -21,6 +21,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _pushProjectId = null;
     _smtpSupported = false;
     _emailInvitationsSupported = false;
+    _scopedInvitationsSupported = false;
+    _spaceProjectMembershipSupported = false;
     final rows = await database.rows(
       'SELECT value FROM local_meta WHERE name=?',
       ['capabilities:$partition'],
@@ -79,6 +81,12 @@ extension CollaborationAccountActions on CollaborationRepository {
     _smtpSupported = features['smtp'] == true;
     _emailVerificationSupported = features['emailVerification'] == true;
     _passwordResetSupported = features['passwordReset'] == true;
+    _spaceProjectMembershipSupported =
+        features['spaceProjectMembership'] == true &&
+        (caps['spaceAccessPolicyVersions'] as List? ?? const []).contains(3);
+    _scopedInvitationsSupported =
+        features['scopedInvitations'] == true &&
+        (caps['invitationContractVersions'] as List? ?? const []).contains(3);
     _emailInvitationsSupported =
         features['emailInvitations'] == true &&
         (caps['invitationContractVersions'] as List? ?? const []).contains(2);
@@ -152,7 +160,9 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String password,
     bool allowLocalHttp = false,
     String deviceName = 'Jivie',
-  }) => invitationToken.startsWith('fhi2_')
+  }) =>
+      (invitationToken.startsWith('fhi2_') ||
+          invitationToken.startsWith('fhi3_'))
       ? registerWithEmailInvitation(
           serverUrl: serverUrl,
           invitationToken: invitationToken,
@@ -205,6 +215,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _pushProjectId = null;
     _smtpSupported = false;
     _emailInvitationsSupported = false;
+    _scopedInvitationsSupported = false;
+    _spaceProjectMembershipSupported = false;
     _lastError = null;
     await refreshLocal();
     await _clearPreviousSession(epoch, previous);
@@ -465,7 +477,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String token,
     bool allowLocalHttp = false,
   }) async {
-    if (token.startsWith('fhi2_')) {
+    if ((token.startsWith('fhi2_') || token.startsWith('fhi3_'))) {
       return previewEmailInvitation(
         serverUrl: serverUrl,
         token: token,
@@ -502,21 +514,51 @@ extension CollaborationAccountActions on CollaborationRepository {
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
     String? organizationId,
+    String? parentScopeId,
     String? id,
     String? requestId,
   }) async {
+    if (parentScopeId != null &&
+        !_spaceProjectMembershipSupported &&
+        parentScopeId != organizationId) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     if ((kind == SharedScopeKind.organization || organizationId != null) &&
         !_organizationsSupported) {
       throw const CollaborationException('client_upgrade_required');
     }
     validateSharedText(name, 200);
     final profile = _requireSession().profile, epoch = _epoch;
+    final parentId = parentScopeId ?? organizationId;
+    var usePolicy3 = _spaceProjectMembershipSupported;
+    if (kind == SharedScopeKind.project && parentId != null) {
+      final rows = await database.rows(
+        'SELECT data FROM scopes WHERE partition=? AND id=?',
+        [profile.partition, parentId],
+      );
+      _checkEpoch(epoch);
+      usePolicy3 =
+          usePolicy3 &&
+          rows.isNotEmpty &&
+          SharedScope.fromJson(
+                CollaborationRepository._map(rows.single['data']),
+              ).accessPolicyVersion ==
+              3;
+    }
     final reply = await _call('scopes.create', {
       'id': id ?? newSharedId(),
       'kind': kind.name,
       'name': name,
       if (organizationId != null) 'organizationId': organizationId,
-      if (kind == SharedScopeKind.organization && _scopeAccessChangesSupported)
+      if (parentScopeId != null && _spaceProjectMembershipSupported)
+        'parentScopeId': parentScopeId,
+      if (usePolicy3 &&
+          (kind == SharedScopeKind.organization ||
+              kind == SharedScopeKind.household ||
+              kind == SharedScopeKind.project))
+        'accessPolicyVersion': 3
+      else if (kind == SharedScopeKind.organization &&
+          _scopeAccessChangesSupported)
         'accessPolicyVersion': 2,
       'requestId': requestId ?? newSharedId(),
     });
@@ -524,6 +566,13 @@ extension CollaborationAccountActions on CollaborationRepository {
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _upsertScope(profile.partition, scope);
+      if (reply['projectRoot'] != null) {
+        await _applyRemote(
+          profile.partition,
+          scope.id,
+          _canonical(reply['projectRoot']),
+        );
+      }
     });
     await refreshLocal();
     return scope.id;
@@ -710,7 +759,9 @@ extension CollaborationAccountActions on CollaborationRepository {
   }
 
   Future<void> acceptInvitation(String token) async {
-    if (token.startsWith('fhi2_')) return acceptEmailInvitation(token: token);
+    if ((token.startsWith('fhi2_') || token.startsWith('fhi3_'))) {
+      return acceptEmailInvitation(token: token);
+    }
     final session = _requireSession(), epoch = _epoch;
     final reply = await _callSession(session, epoch, 'invitations.accept', {
       'token': token,

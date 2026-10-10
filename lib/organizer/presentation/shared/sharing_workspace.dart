@@ -5,6 +5,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import '../finance/shared_finance_workspace.dart';
+import '../finance/shared_finance_actions.dart';
 import '../projects_page.dart';
 import '../shopping_page.dart';
 import '../planning/shared_agenda_page.dart';
@@ -243,7 +244,7 @@ class SharingWorkspace extends ConsumerWidget {
                   aggregate.sources.where(
                     (source) =>
                         source.scopeId == scope.id ||
-                        source.scope?.organizationId == scope.id,
+                        source.scope?.parentSpaceId == scope.id,
                   ),
                 ),
                 showDescription: false,
@@ -277,6 +278,110 @@ class SharingWorkspace extends ConsumerWidget {
                     context,
                   ),
             );
+            final householdProjects =
+                scope.kind == SharedScopeKind.household &&
+                scope.accessPolicyVersion == 3 &&
+                state.spaceProjectMembershipSupported;
+            if (householdProjects && view == SharingView.projects) {
+              return OrganizationWorkspace(
+                organization: scope,
+                onProject: onScopeSelected,
+                onMembers: (id) => onMembers?.call(id),
+                titleAccessory: status,
+                legacyProjects: data.projects.isEmpty
+                    ? null
+                    : OrganizerProjectsPage(
+                        snapshot: sharedPresentationSnapshot(data),
+                        actions: actions,
+                        selectedId: selectedProjectId,
+                        onSelection: onProjectSelected ?? (_) {},
+                        readOnly: readOnly,
+                        allowProjectCreation: false,
+                        scopeLabel: '${scope.name} · ${l.sharingShared}',
+                      ),
+              );
+            }
+            if (householdProjects &&
+                const {
+                  SharingView.agenda,
+                  SharingView.timeline,
+                  SharingView.tasks,
+                  SharingView.finances,
+                }.contains(view) &&
+                state.scopes.any(
+                  (child) => child.parentSpaceId == scope.id && !child.revoked,
+                )) {
+              final aggregate = projectAllSpaces(
+                personal: OrganizerSnapshot(),
+                shared: state,
+              );
+              return AllSpacesPage(
+                key: ValueKey('household-${scope.id}-$view'),
+                titleAccessory: status,
+                allowCreation: !readOnly,
+                canCreateInSource: (source) =>
+                    source.scope?.canEdit == true &&
+                    (view != SharingView.finances ||
+                        state.financePolicyForScope(source.scopeId!).canWrite &&
+                            state.financeSnapshotComplete[source.scopeId] ==
+                                true),
+                onCreateSource: (source) async {
+                  final current = ref.read(collaborationProvider).valueOrNull;
+                  final target = current?.scopes
+                      .where((s) => s.id == source.scopeId)
+                      .firstOrNull;
+                  if (current == null ||
+                      target?.canEdit != true ||
+                      !current.localAccessAllowed ||
+                      current.session?.partition != state.session?.partition) {
+                    return;
+                  }
+                  final targetActions = CollaborationActions(
+                    context,
+                    ref,
+                    target!,
+                    current.dataForScope(target.id),
+                  );
+                  switch (view) {
+                    case SharingView.finances:
+                      if (current.financePolicyForScope(target.id).canWrite &&
+                          current.financeSnapshotComplete[target.id] == true) {
+                        await SharedFinanceActions(
+                          context,
+                          ref,
+                          target,
+                          current,
+                        ).entry();
+                      }
+                    case SharingView.timeline:
+                      await targetActions.event();
+                    default:
+                      await targetActions.task();
+                  }
+                },
+                area: switch (view) {
+                  SharingView.agenda => AllSpacesArea.today,
+                  SharingView.timeline => AllSpacesArea.calendar,
+                  SharingView.finances => AllSpacesArea.finances,
+                  _ => AllSpacesArea.tasks,
+                },
+                snapshot: AllSpacesSnapshot(
+                  aggregate.sources.where(
+                    (source) =>
+                        source.scopeId == scope.id ||
+                        source.scope?.parentSpaceId == scope.id,
+                  ),
+                ),
+                showDescription: false,
+                onSource:
+                    onSource ??
+                    (source, area, id) async {
+                      if (source.scopeId != null) {
+                        onScopeSelected(source.scopeId!);
+                      }
+                    },
+              );
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -309,7 +414,7 @@ class SharingWorkspace extends ConsumerWidget {
                   if (state.projectArchivingSupported &&
                       scope.canManage &&
                       (scope.projectRootId != null ||
-                          scope.organizationId != null))
+                          scope.parentSpaceId != null))
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
@@ -361,7 +466,7 @@ class SharingWorkspace extends ConsumerWidget {
                       reminderScopeId: scope.id,
                       allowProjectCreation:
                           scope.projectRootId == null &&
-                          scope.organizationId == null,
+                          scope.parentSpaceId == null,
                       key: ValueKey(
                         'shared-projects-${state.session!.partition}-${scope.id}',
                       ),

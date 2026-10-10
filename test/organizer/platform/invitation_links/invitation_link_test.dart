@@ -53,6 +53,36 @@ void main() {
       isNull,
     );
   });
+  test(
+    'version3 scoped link requires its exact version and preserves secure origin',
+    () {
+      final scoped = InvitationLink(
+        serverUrl: 'https://example.test/kanboard',
+        token: 'fhi3_${'c' * 64}',
+      );
+      expect(InvitationLink.tryParse(scoped.toUri())?.token, scoped.token);
+      for (final version in [null, '1', '2', '4']) {
+        expect(
+          InvitationLink.tryParse(
+            scoped.toUri().replace(
+              queryParameters: {
+                'server': scoped.serverUrl,
+                'token': scoped.token,
+                if (version != null) 'v': version,
+              },
+            ),
+          ),
+          isNull,
+        );
+      }
+      expect(
+        InvitationLink.tryParse(
+          scoped.toUri().replace(scheme: 'vsakdan'),
+        )?.token,
+        scoped.token,
+      );
+    },
+  );
   test('accepts legacy invitations and emits the Jivie scheme', () {
     final legacy = link('https://example.test/kanboard', scheme: 'vsakdan');
     final parsed = InvitationLink.tryParse(legacy)!;

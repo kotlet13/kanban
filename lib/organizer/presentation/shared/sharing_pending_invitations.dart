@@ -199,6 +199,7 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       } else {
         await _guard.controller.acceptPendingInvitation(
           invitation.invitationId!,
+          contractVersion: invitation.contractVersion,
         );
       }
       if (!mounted || !_guard.isCurrent) return;

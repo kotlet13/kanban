@@ -11,6 +11,7 @@ class NativeFinanceAccess extends NativeDatabase
         $grant = $this->one('SELECT access_level FROM familyhub_finance_grants WHERE scope_id=? AND account_id=?', [$scopeId, $user['account_id']]);
         $access = $grant['access_level'] ?? 'none';
         if ($access==='none' && (new NativeOrganizationAccess($this->container))->automaticFinanceRead($scope)) { $access='read'; }
+        if ((int)$scope['effective_access_policy_version']===3 && $scope['kind']!=='personal') { $access=$scope['role']==='viewer'?'read':'write'; }
         $enabled = $policy && (int)$policy['enabled'] === 1;
         if (($scope['role'] === 'viewer' || (int)($scope['archived'] ?? 0)===1) && $access === 'write') { $access = 'read'; }
         if ($write && (int)($scope['archived'] ?? 0)===1) { throw new NativeError('scope_archived',403); }
@@ -18,7 +19,7 @@ class NativeFinanceAccess extends NativeDatabase
         $linked = $this->one('SELECT event_id FROM familyhub_payment_events WHERE scope_id=? LIMIT 1', [$scopeId]) ||
             $this->one('SELECT event_id FROM familyhub_payment_projections WHERE scope_id=? LIMIT 1', [$scopeId]) ||
             $this->one('SELECT movement_id FROM familyhub_payment_cash WHERE scope_id=? LIMIT 1', [$scopeId]);
-        return ['linkedPaymentsRequired'=>(bool)$linked,'managedByOrganizationPolicy'=>(int)($scope['effective_access_policy_version']??1)===2,'readAccessFromMembership'=>(new NativeOrganizationAccess($this->container))->automaticFinanceRead($scope),'enabled' => (bool)$enabled, 'grant' => $access, 'revision' => (int)($policy['revision'] ?? 0)+(int)($scope['effective_access_revision']??0), 'sequence' => (int)($policy['sequence'] ?? 0), 'requiredContractVersion' => (int)($policy['required_contract_version'] ?? 1)];
+        return ['linkedPaymentsRequired'=>(bool)$linked,'managedByOrganizationPolicy'=>(int)($scope['effective_access_policy_version']??1)>=2,'readAccessFromMembership'=>(new NativeOrganizationAccess($this->container))->automaticFinanceRead($scope),'enabled' => (bool)$enabled, 'grant' => $access, 'revision' => (int)($policy['revision'] ?? 0)+(int)($scope['effective_access_revision']??0), 'sequence' => (int)($policy['sequence'] ?? 0), 'requiredContractVersion' => (int)($policy['required_contract_version'] ?? 1)];
     }
 
     /** Nonlocking visibility check for inbox, inside READ COMMITTED transaction. */
@@ -27,7 +28,7 @@ class NativeFinanceAccess extends NativeDatabase
         $effective=(new NativeOrganizationAccess($this->container))->visibleScope($scopeId,$accountId);
         if (!$effective) { return false; }
         $member = $this->one('SELECT m.role FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.account_id=? AND m.active=1 AND u.is_active=1', [$scopeId, $accountId]);
-        if (!$member && $effective['access_source']!=='leadership') { return false; }
+        if (!$member && !in_array($effective['access_source'],['leadership','spaceMembership'],true)) { return false; }
         $scope = $this->one('SELECT kind,owner_id FROM familyhub_scopes WHERE id=?', [$scopeId]);
         if (!$scope) { return false; }
         if ($scope['kind'] === 'personal') {

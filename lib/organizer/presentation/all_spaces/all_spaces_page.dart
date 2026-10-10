@@ -22,10 +22,16 @@ class AllSpacesPage extends ConsumerStatefulWidget {
     this.subtitle,
     this.allowCreation = true,
     this.showDescription = true,
+    this.titleAccessory,
+    this.onCreateSource,
+    this.canCreateInSource,
   });
   final AllSpacesSnapshot? snapshot;
   final String? subtitle;
   final bool allowCreation, showDescription;
+  final Widget? titleAccessory;
+  final Future<void> Function(AllSpacesSource source)? onCreateSource;
+  final bool Function(AllSpacesSource source)? canCreateInSource;
   final AllSpacesArea area;
   final Future<void> Function(
     AllSpacesSource source,
@@ -63,7 +69,9 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
             child: Text(context.l10n.allSpacesChooseTargetDescription),
           ),
-          for (final source in snapshot.sources)
+          for (final source in snapshot.sources.where(
+            (source) => widget.canCreateInSource?.call(source) ?? true,
+          ))
             SimpleDialogOption(
               onPressed: () => Navigator.pop(context, source),
               child: Text(allSpacesSourceLabel(context, source)),
@@ -72,7 +80,11 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
       ),
     );
     if (source != null && mounted) {
-      await widget.onSource(source, widget.area, null);
+      if (widget.onCreateSource != null) {
+        await widget.onCreateSource!(source);
+      } else {
+        await widget.onSource(source, widget.area, null);
+      }
     }
   }
 
@@ -157,6 +169,7 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
           children: [
             OrganizerHeading(
               title: _title(context),
+              titleAccessory: widget.titleAccessory,
               subtitle: !widget.showDescription
                   ? null
                   : widget.subtitle ??

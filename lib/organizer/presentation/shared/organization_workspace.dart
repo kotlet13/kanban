@@ -14,11 +14,14 @@ class OrganizationWorkspace extends ConsumerWidget {
     required this.onProject,
     required this.onMembers,
     this.allowProjectCreation = true,
+    this.legacyProjects,
+    this.titleAccessory,
   });
   final SharedScope organization;
   final ValueChanged<String> onProject;
   final ValueChanged<String> onMembers;
   final bool allowProjectCreation;
+  final Widget? legacyProjects, titleAccessory;
 
   bool _canCreateProject(CollaborationState? state, SharedScope scope) =>
       allowProjectCreation &&
@@ -33,11 +36,15 @@ class OrganizationWorkspace extends ConsumerWidget {
     final createId = newSharedId(), requestId = newSharedId();
     await showSharingForm(
       context,
-      title: l.organizationCreateProject,
+      title: organization.kind == SharedScopeKind.household
+          ? l.organizerAddProject
+          : l.organizationCreateProject,
       description:
-          '${l.organizationProjectPreview(organization.name)}\n\n${l.organizationProjectInitialVisibility}',
+          '${organization.kind == SharedScopeKind.household ? organization.name : l.organizationProjectPreview(organization.name)}\n\n${organization.accessPolicyVersion == 3 ? l.sharingProjectNewVisibility : l.organizationProjectInitialVisibility}',
       fields: [SharingField(id: 'name', label: l.organizerTitle)],
-      submitLabel: l.organizationCreateProject,
+      submitLabel: organization.kind == SharedScopeKind.household
+          ? l.organizerAddProject
+          : l.organizationCreateProject,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: (form) => SharingSessionBoundary(
         guard: guard,
@@ -53,7 +60,10 @@ class OrganizationWorkspace extends ConsumerWidget {
           kind: SharedScopeKind.project,
           id: createId,
           requestId: requestId,
-          organizationId: organization.id,
+          parentScopeId: organization.id,
+          organizationId: organization.kind == SharedScopeKind.organization
+              ? organization.id
+              : null,
         );
         await guard.controller.syncNow();
       },
@@ -67,7 +77,11 @@ class OrganizationWorkspace extends ConsumerWidget {
         child: AlertDialog(
           scrollable: true,
           title: Text(l.organizationProjectCreated),
-          content: Text(l.organizationProjectInitialVisibility),
+          content: Text(
+            organization.accessPolicyVersion == 3
+                ? l.sharingProjectNewVisibility
+                : l.organizationProjectInitialVisibility,
+          ),
           actions: [
             TextButton(
               key: const ValueKey('organization-created-open'),
@@ -99,7 +113,7 @@ class OrganizationWorkspace extends ConsumerWidget {
         state?.scopes
             .where(
               (scope) =>
-                  scope.organizationId == organization.id && !scope.revoked,
+                  scope.parentSpaceId == organization.id && !scope.revoked,
             )
             .toList() ??
         <SharedScope>[];
@@ -112,14 +126,21 @@ class OrganizationWorkspace extends ConsumerWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              l.organizationProjects,
+              organization.kind == SharedScopeKind.household
+                  ? l.organizerProjects
+                  : l.organizationProjects,
               style: Theme.of(context).textTheme.titleMedium,
             ),
+            if (titleAccessory != null) titleAccessory!,
             if (_canCreateProject(state, organization))
               FilledButton.icon(
                 onPressed: () => _create(context, ref),
                 icon: const Icon(Icons.add),
-                label: Text(l.organizationCreateProject),
+                label: Text(
+                  organization.kind == SharedScopeKind.household
+                      ? l.organizerAddProject
+                      : l.organizationCreateProject,
+                ),
               ),
           ],
         ),
@@ -142,7 +163,8 @@ class OrganizationWorkspace extends ConsumerWidget {
               onTap: () => onProject(project.id),
             ),
         ],
-        if (projects.isEmpty)
+        if (legacyProjects != null) legacyProjects!,
+        if (projects.isEmpty && legacyProjects == null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(l.organizerNoProjects),

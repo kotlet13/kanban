@@ -1326,7 +1326,7 @@
   "organizationCreate": "Create organization",
   "organizationProjects": "Organization projects",
   "organizationCreateProject": "Add organization project",
-  "organizationAccessDescription": "Membership does not grant access to every project or finances. Set access for each project separately.",
+  "organizationAccessDescription": "A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.",
   "peopleTitle": "People",
   "peopleAdd": "Add person",
   "peopleName": "Name",
@@ -1497,7 +1497,7 @@
   "guideTodayBody": "Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.",
   "guidePlansBody": "Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.",
   "guideShoppingBody": "A household has its own shopping lists, gardens and people. Add items and mark purchases. Existing personal lists and gardens remain available; choose a household before assigning them.",
-  "guideMoreBody": "On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.",
+  "guideMoreBody": "On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.",
   "guideSkip": "Skip",
   "guideBack": "Back",
   "guideNext": "Next",
@@ -2069,5 +2069,66 @@
   "syncStatusBlockedCount": "Blocked changes",
   "syncStatusAccountScope": "The status, times and change counts cover this account and all its spaces.",
   "syncStatusLocalScope": "This status covers local work on this device.",
-  "syncStatusServerChanged": "The server identity has changed. Your local data is preserved; reconnection needs to be checked."
+  "syncStatusServerChanged": "The server identity has changed. Your local data is preserved; reconnection needs to be checked.",
+  "sharingInviteScope": "Invitation scope",
+  "sharingInviteWholeSpace": "Whole space",
+  "sharingInviteProjectOnly": "Project only",
+  "sharingInviteSpaceDescription": "The invited person gains access to all shared content and finances in this space, including all its existing and future projects.",
+  "sharingInviteProjectDescription": "The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.",
+  "sharingMemberFullDescription": "A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.",
+  "sharingViewerDescription": "The person can read content and finances within the selected scope. Editing and administration are excluded.",
+  "sharingLegacySpaceDescription": "This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.",
+  "sharingLegacyProjectDescription": "This invitation uses older project access rules. Finance permissions follow the current server settings.",
+  "sharingScopedUnsupported": "The server does not yet support separate whole-space and project-only invitations. An administrator must update FamilyHub; existing data and access remain available.",
+  "sharingScopeUpgradeRequired": "Before inviting someone to the whole space, the owner must review and confirm the new sharing model in Space settings.",
+  "sharingAccessReview": "Review space sharing",
+  "sharingAccessReviewDescription": "Space members will gain access to all its content and finances, including all existing and future projects. Members can also edit, delete, invite others and manage members. People invited only to a project retain their project scope. Review additional access before confirming. Old pending invitations will be revoked.",
+  "sharingAccessCurrent": "Space membership includes all shared content and finances, and all its existing and future projects. A project-only invitation applies only to that project.",
+  "sharingAccessApply": "Confirm space sharing",
+  "sharingAccessSourceSpace": "Space membership",
+  "sharingAccessSourceProject": "Project membership",
+  "sharingAccessReadWrite": "Read, edit and manage",
+  "sharingAccessReadOnly": "Read",
+  "sharingProjectSharingReview": "Review project-only sharing",
+  "sharingProjectSharingDescription": "The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.",
+  "sharingProjectSharingApply": "Enable project sharing",
+  "sharingProjectSharingBlocked": "This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.",
+  "sharingProjectSharingAction": "Share project only",
+  "sharingAccessProjects": "Projects included in this space",
+  "sharingProjectMembersInherited": "Access through membership in the whole space",
+  "sharingProjectNewVisibility": "All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.",
+  "sharingProjectSharingCounts": "Records: {records} · finance records: {finances} · reminders: {reminders}",
+  "sharingAccessRevokedInvitations": "Pending invitations to revoke: {count}",
+  "sharingProjectSharingPending": "First synchronize pending changes in this space and resolve conflicts, then review project sharing again.",
+  "sharingProjectDirectRemoval": "Remove direct membership in this project? Access from membership in the whole space remains while the person is a member of that space.",
+  "@sharingProjectSharingCounts": {
+    "placeholders": {
+      "records": {
+        "type": "int"
+      },
+      "finances": {
+        "type": "int"
+      },
+      "reminders": {
+        "type": "int"
+      }
+    }
+  },
+  "@sharingAccessRevokedInvitations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharingRemoveProjectMembership": "Remove direct project membership",
+  "sharingBlockSingleRoot": "This shared project contains multiple projects or has no project root. It must represent a single project before changing sharing.",
+  "sharingBlockRecordUpgrade": "The project uses an older record format. Synchronize its update first.",
+  "sharingBlockUnrelatedContent": "The space includes tasks or events outside this project. Review their assignment before sharing the project separately.",
+  "sharingBlockAccount": "A financial account is also used by records outside this project. Review its finance links before sharing the project separately.",
+  "sharingBlockPerson": "A person is also linked to content outside this project. Review related people and assignments before sharing the project separately.",
+  "sharingBlockRecurrence": "A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.",
+  "sharingBlockTransfer": "A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.",
+  "sharingBlockLinkedPayment": "A linked payment includes additional finance records. Review payment links before sharing the project separately.",
+  "sharingBlockCollision": "A separate space already exists for this project. Refresh the space list and check its existing sharing."
 }

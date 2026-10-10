@@ -82,6 +82,12 @@ extension CollaborationNotificationActions on CollaborationRepository {
     Map<String, Object?> params,
     String key,
   ) async {
+    if (params['scopeId'] != null &&
+        (await database.rows('SELECT 1 FROM local_meta WHERE name=?', [
+          'project_sharing_pending:$partition:${params['scopeId']}',
+        ])).isNotEmpty) {
+      throw const CollaborationException('project_sharing_pending_changes');
+    }
     final id = params['requestId'] as String;
     await database.execute(
       'INSERT INTO commands(id,partition,operation,params,entity_key) VALUES(?,?,?,?,?)',

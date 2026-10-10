@@ -19,7 +19,7 @@ import 'private_sync_test_support.dart' show PersonalTransport;
 
 class PublicationTransport extends PersonalTransport {
   PublicationTransport(super.server);
-  bool modern = true, loseCreateReply = false;
+  bool modern = true, loseCreateReply = false, scoped = false;
   final createReplay = <String, Map<String, dynamic>>{};
   final wireCalls = <String>[];
   @override
@@ -38,9 +38,11 @@ class PublicationTransport extends PersonalTransport {
         'recordContractVersions': [1, 2, 3, 4],
         'financeContractVersions': [1, 2],
         'organizationAccessPolicyVersions': [1, 2],
+        if (scoped) 'spaceAccessPolicyVersions': [3],
         'features': <String, dynamic>{
           ...caps['features'] as Map,
           'organizations': true,
+          'spaceProjectMembership': scoped,
           'householdPeople': true,
           'scopeMetadata': modern,
           'stableScopePublication': modern,
@@ -62,8 +64,19 @@ class PublicationTransport extends PersonalTransport {
       final id = params['id'] as String;
       server.scopes[id]!.addAll({
         'organizationId': params['organizationId'],
-        'projectRootId': params['organizationId'] == null ? null : id,
-        'requiredRecordContractVersion': params['organizationId'] == null
+        'parentScopeId': params['parentScopeId'],
+        'parentScopeKind': params['parentScopeId'] != null
+            ? server.scopes[params['parentScopeId']]!['kind']
+            : null,
+        'accessPolicyVersion':
+            params['accessPolicyVersion'] ??
+            (params['parentScopeId'] != null ? 3 : 1),
+        'projectRootId':
+            params['organizationId'] == null && params['parentScopeId'] == null
+            ? null
+            : id,
+        'requiredRecordContractVersion':
+            params['organizationId'] == null && params['parentScopeId'] == null
             ? 1
             : 3,
       });
@@ -474,6 +487,91 @@ void main() {
       expect(transport.server.scopes.keys.toSet(), {org.id, project.id});
       expect(shared.state.lastError, isNull);
       expect(await db.rows('SELECT * FROM outbox'), isEmpty);
+    },
+  );
+  test(
+    'policy3 household publication separates projects without copying unrelated household content',
+    () async {
+      final (db, spaces, local, shared, transport) = await client();
+      transport.scoped = true;
+      final home = await spaces.createSpace(
+        kind: LocalSpaceKind.household,
+        name: 'Household',
+      );
+      await spaces.selectSpace(home.id);
+      await local.reload();
+      await local.createProject(title: 'Child project');
+      final project = local.snapshot.projects.single;
+      await local.createTask(title: 'Child task', projectId: project.id);
+      await local.createTask(title: 'Household private task');
+      await local.createPerson(
+        name: 'Unrelated person',
+        notes: 'Household notes',
+      );
+      final preview = await shared.previewLocalSpacesPublication([home.id]);
+      expect(preview.spaces.single.projects.single.id, project.id);
+      await shared.publishLocalSpaces(preview);
+      final child = shared.state.scopes.singleWhere((s) => s.id == project.id);
+      expect(child.parentSpaceId, home.id);
+      expect(child.parentScopeKind, SharedScopeKind.household);
+      expect(child.organizationId, isNull);
+      expect(
+        shared.state.dataForScope(project.id).projects.single.id,
+        project.id,
+      );
+      expect(
+        shared.state.dataForScope(project.id).tasks.single.title,
+        'Child task',
+      );
+      expect(shared.state.dataForScope(project.id).people, isEmpty);
+      expect(shared.state.dataForScope(home.id).projects, isEmpty);
+      expect(
+        shared.state.dataForScope(home.id).tasks.single.title,
+        'Household private task',
+      );
+      expect(
+        shared.state.dataForScope(home.id).people.single.notes,
+        'Household notes',
+      );
+      expect(await db.rows('SELECT * FROM outbox'), isEmpty);
+    },
+  );
+  test(
+    'capability upgrade preserves interrupted legacy household publication request and inline project destination',
+    () async {
+      final (db, spaces, local, shared, transport) = await client();
+      final home = await spaces.createSpace(
+        kind: LocalSpaceKind.household,
+        name: 'Legacy home',
+      );
+      await spaces.selectSpace(home.id);
+      await local.reload();
+      await local.createProject(title: 'Existing inline project');
+      final project = local.snapshot.projects.single;
+      await local.createTask(title: 'Existing task', projectId: project.id);
+      final preview = await shared.previewLocalSpacesPublication([home.id]);
+      transport.loseCreateReply = true;
+      await expectLater(
+        shared.publishLocalSpaces(preview),
+        throwsA(isA<CollaborationException>()),
+      );
+      final before = await db.rows('SELECT value FROM local_meta WHERE name=?', [
+        'space_publication_create:${shared.state.session!.partition}:${home.id}',
+      ]);
+      transport.scoped = true;
+      final updated = await shared.previewLocalSpacesPublication([home.id]);
+      expect(updated.spaces.single.projects, isEmpty);
+      await shared.publishLocalSpaces(updated);
+      final after = await db.rows('SELECT value FROM local_meta WHERE name=?', [
+        'space_publication_create:${shared.state.session!.partition}:${home.id}',
+      ]);
+      expect(jsonEncode(after), jsonEncode(before));
+      expect(transport.server.scopes.keys.toSet(), {home.id});
+      expect(shared.state.dataForScope(home.id).projects.single.id, project.id);
+      expect(
+        shared.state.dataForScope(home.id).tasks.single.projectId,
+        project.id,
+      );
     },
   );
 }

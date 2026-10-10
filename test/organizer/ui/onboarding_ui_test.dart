@@ -18,6 +18,7 @@ Future<void> pumpPanel(
   double width = 390,
   String language = 'sl',
   bool dark = false,
+  double textScale = 1,
 }) async {
   tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
@@ -36,6 +37,12 @@ Future<void> pumpPanel(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(brightness: dark ? Brightness.dark : Brightness.light),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: Scaffold(body: SingleChildScrollView(child: panel)),
       ),
     ),

@@ -5583,7 +5583,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizationAccessDescription.
   ///
   /// In en, this message translates to:
-  /// **'Membership does not grant access to every project or finances. Set access for each project separately.'**
+  /// **'A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.'**
   String get organizationAccessDescription;
 
   /// No description provided for @peopleTitle.
@@ -6567,7 +6567,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.'**
+  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.'**
   String get guideMoreBody;
 
   /// No description provided for @guideSkip.
@@ -8727,6 +8727,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server identity has changed. Your local data is preserved; reconnection needs to be checked.'**
   String get syncStatusServerChanged;
+
+  /// No description provided for @sharingInviteScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation scope'**
+  String get sharingInviteScope;
+
+  /// No description provided for @sharingInviteWholeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole space'**
+  String get sharingInviteWholeSpace;
+
+  /// No description provided for @sharingInviteProjectOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Project only'**
+  String get sharingInviteProjectOnly;
+
+  /// No description provided for @sharingInviteSpaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.'**
+  String get sharingInviteSpaceDescription;
+
+  /// No description provided for @sharingInviteProjectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.'**
+  String get sharingInviteProjectDescription;
+
+  /// No description provided for @sharingMemberFullDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.'**
+  String get sharingMemberFullDescription;
+
+  /// No description provided for @sharingViewerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The person can read content and finances within the selected scope. Editing and administration are excluded.'**
+  String get sharingViewerDescription;
+
+  /// No description provided for @sharingLegacySpaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.'**
+  String get sharingLegacySpaceDescription;
+
+  /// No description provided for @sharingLegacyProjectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation uses older project access rules. Finance permissions follow the current server settings.'**
+  String get sharingLegacyProjectDescription;
+
+  /// No description provided for @sharingScopedUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not yet support separate whole-space and project-only invitations. An administrator must update FamilyHub; existing data and access remain available.'**
+  String get sharingScopedUnsupported;
+
+  /// No description provided for @sharingScopeUpgradeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Before inviting someone to the whole space, the owner must review and confirm the new sharing model in Space settings.'**
+  String get sharingScopeUpgradeRequired;
+
+  /// No description provided for @sharingAccessReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review space sharing'**
+  String get sharingAccessReview;
+
+  /// No description provided for @sharingAccessReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Space members will gain access to all its content and finances, including all existing and future projects. Members can also edit, delete, invite others and manage members. People invited only to a project retain their project scope. Review additional access before confirming. Old pending invitations will be revoked.'**
+  String get sharingAccessReviewDescription;
+
+  /// No description provided for @sharingAccessCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Space membership includes all shared content and finances, and all its existing and future projects. A project-only invitation applies only to that project.'**
+  String get sharingAccessCurrent;
+
+  /// No description provided for @sharingAccessApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm space sharing'**
+  String get sharingAccessApply;
+
+  /// No description provided for @sharingAccessSourceSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Space membership'**
+  String get sharingAccessSourceSpace;
+
+  /// No description provided for @sharingAccessSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project membership'**
+  String get sharingAccessSourceProject;
+
+  /// No description provided for @sharingAccessReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Read, edit and manage'**
+  String get sharingAccessReadWrite;
+
+  /// No description provided for @sharingAccessReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get sharingAccessReadOnly;
+
+  /// No description provided for @sharingProjectSharingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review project-only sharing'**
+  String get sharingProjectSharingReview;
+
+  /// No description provided for @sharingProjectSharingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.'**
+  String get sharingProjectSharingDescription;
+
+  /// No description provided for @sharingProjectSharingApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable project sharing'**
+  String get sharingProjectSharingApply;
+
+  /// No description provided for @sharingProjectSharingBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.'**
+  String get sharingProjectSharingBlocked;
+
+  /// No description provided for @sharingProjectSharingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Share project only'**
+  String get sharingProjectSharingAction;
+
+  /// No description provided for @sharingAccessProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects included in this space'**
+  String get sharingAccessProjects;
+
+  /// No description provided for @sharingProjectMembersInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Access through membership in the whole space'**
+  String get sharingProjectMembersInherited;
+
+  /// No description provided for @sharingProjectNewVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.'**
+  String get sharingProjectNewVisibility;
+
+  /// No description provided for @sharingProjectSharingCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Records: {records} · finance records: {finances} · reminders: {reminders}'**
+  String sharingProjectSharingCounts(int records, int finances, int reminders);
+
+  /// No description provided for @sharingAccessRevokedInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending invitations to revoke: {count}'**
+  String sharingAccessRevokedInvitations(int count);
+
+  /// No description provided for @sharingProjectSharingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'First synchronize pending changes in this space and resolve conflicts, then review project sharing again.'**
+  String get sharingProjectSharingPending;
+
+  /// No description provided for @sharingProjectDirectRemoval.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove direct membership in this project? Access from membership in the whole space remains while the person is a member of that space.'**
+  String get sharingProjectDirectRemoval;
+
+  /// No description provided for @sharingRemoveProjectMembership.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove direct project membership'**
+  String get sharingRemoveProjectMembership;
+
+  /// No description provided for @sharingBlockSingleRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'This shared project contains multiple projects or has no project root. It must represent a single project before changing sharing.'**
+  String get sharingBlockSingleRoot;
+
+  /// No description provided for @sharingBlockRecordUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'The project uses an older record format. Synchronize its update first.'**
+  String get sharingBlockRecordUpgrade;
+
+  /// No description provided for @sharingBlockUnrelatedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'The space includes tasks or events outside this project. Review their assignment before sharing the project separately.'**
+  String get sharingBlockUnrelatedContent;
+
+  /// No description provided for @sharingBlockAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'A financial account is also used by records outside this project. Review its finance links before sharing the project separately.'**
+  String get sharingBlockAccount;
+
+  /// No description provided for @sharingBlockPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'A person is also linked to content outside this project. Review related people and assignments before sharing the project separately.'**
+  String get sharingBlockPerson;
+
+  /// No description provided for @sharingBlockRecurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.'**
+  String get sharingBlockRecurrence;
+
+  /// No description provided for @sharingBlockTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.'**
+  String get sharingBlockTransfer;
+
+  /// No description provided for @sharingBlockLinkedPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked payment includes additional finance records. Review payment links before sharing the project separately.'**
+  String get sharingBlockLinkedPayment;
+
+  /// No description provided for @sharingBlockCollision.
+  ///
+  /// In en, this message translates to:
+  /// **'A separate space already exists for this project. Refresh the space list and check its existing sharing.'**
+  String get sharingBlockCollision;
 }
 
 class _AppLocalizationsDelegate

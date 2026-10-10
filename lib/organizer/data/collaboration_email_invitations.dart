@@ -20,7 +20,7 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     required String token,
     bool allowLocalHttp = false,
   }) => _withInvitationStore(() async {
-    if (!RegExp(r'^fhi[12]_[a-f0-9]{64}$').hasMatch(token)) {
+    if (!RegExp(r'^fhi[123]_[a-f0-9]{64}$').hasMatch(token)) {
       throw const CollaborationException('invalid_invitation');
     }
     // Native invitation links and durable tokens always require HTTPS.
@@ -74,7 +74,7 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     }
     if ((caps['features'] as Map?)?['emailInvitations'] != true ||
         !(caps['invitationContractVersions'] as List? ?? const []).contains(
-          2,
+          pending?.token.startsWith('fhi3_') == true ? 3 : 2,
         )) {
       throw const CollaborationException('email_invitations_unavailable');
     }
@@ -91,7 +91,8 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       recipientUsername: invitation['recipientUsername'] as String? ?? '',
       recipientEmail: invitation['recipientEmail'] as String?,
       invitationId: readString(invitation, 'id'),
-      contractVersion: 2,
+      contractVersion: invitation['contractVersion'] as int? ?? 2,
+      accessScope: invitation['accessScope'] as String?,
       inviterName: reply['inviterName'] as String? ?? '',
       projectFinanceIncluded: scope['projectFinanceIncluded'] == true,
       requiresExplicitAcceptance: reply['requiresExplicitAcceptance'] == true,
@@ -149,12 +150,19 @@ extension CollaborationEmailInvitations on CollaborationRepository {
         pending.serverUrl == session.profile.serverUrl &&
         caps['serverId'] == session.profile.serverId;
     final reply = canRecoverAcceptance
-        ? await _callSession(session, epoch, 'invitations2.preview', {
-            'token': token,
-          })
+        ? await _callSession(
+            session,
+            epoch,
+            pending.token.startsWith('fhi3_')
+                ? 'invitations3.preview'
+                : 'invitations2.preview',
+            {'token': token},
+          )
         : await transport.call(
             serverUrl: pending.serverUrl,
-            operation: 'invitations2.preview',
+            operation: pending.token.startsWith('fhi3_')
+                ? 'invitations3.preview'
+                : 'invitations2.preview',
             params: {'token': token},
             allowLocalHttp: allowLocalHttp,
           );
@@ -199,7 +207,9 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     }
     await _authenticate(
       serverUrl,
-      'auth.registerInvitation2',
+      invitationToken.startsWith('fhi3_')
+          ? 'auth.registerInvitation3'
+          : 'auth.registerInvitation2',
       {
         'token': invitationToken,
         'username': username,
@@ -217,6 +227,7 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     required String recipientEmail,
     SharedRole role = SharedRole.member,
     String language = 'sl',
+    String? accessScope,
     String? requestId,
   }) async {
     final session = _requireSession(), epoch = _epoch;
@@ -224,13 +235,44 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     if (!_emailInvitationsSupported) {
       throw const CollaborationException('email_invitations_unavailable');
     }
-    final reply = await _callSession(session, epoch, 'invitations2.create', {
-      'scopeId': scopeId,
-      'recipientEmail': recipientEmail.trim(),
-      'role': role.name,
-      'language': language,
-      'requestId': requestId ?? newSharedId(),
-    });
+    final scopeRows = await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [session.profile.partition, scopeId],
+    );
+    _checkEpoch(epoch);
+    if (scopeRows.isEmpty) {
+      throw const CollaborationException('permission_revoked');
+    }
+    final scope = SharedScope.fromJson(
+      CollaborationRepository._map(scopeRows.single['data']),
+    );
+    final useScoped = scope.accessPolicyVersion == 3;
+    if (useScoped && !_scopedInvitationsSupported) {
+      throw const CollaborationException('client_upgrade_required');
+    }
+    final target =
+        accessScope ??
+        (scope.kind == SharedScopeKind.project ? 'project' : 'space');
+    if (accessScope != null && !useScoped) {
+      throw const CollaborationException('space_access_upgrade_required');
+    }
+    if (!{'space', 'project'}.contains(target) ||
+        (scope.kind == SharedScopeKind.project) != (target == 'project')) {
+      throw const CollaborationException('validation_error');
+    }
+    final reply = await _callSession(
+      session,
+      epoch,
+      useScoped ? 'invitations3.create' : 'invitations2.create',
+      {
+        'scopeId': scopeId,
+        'recipientEmail': recipientEmail.trim(),
+        if (useScoped) 'accessScope': target,
+        'role': role.name,
+        'language': language,
+        'requestId': requestId ?? newSharedId(),
+      },
+    );
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _invalidateMemberDirectory(session.profile.partition, scopeId);
@@ -251,14 +293,31 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       'invitations2.pending',
       const {},
     );
-    return (reply['invitations'] as List)
+    final result = (reply['invitations'] as List)
         .map((item) => _emailInvitationPreview(item as Map<String, dynamic>))
         .toList();
+    if (_scopedInvitationsSupported) {
+      final scoped = await _callSession(
+        session,
+        epoch,
+        'invitations3.pending',
+        const {},
+      );
+      result.addAll(
+        (scoped['invitations'] as List).map(
+          (item) => _emailInvitationPreview(item as Map<String, dynamic>),
+        ),
+      );
+    }
+    return {
+      for (final preview in result) preview.invitationId: preview,
+    }.values.toList();
   }
 
   Future<void> acceptEmailInvitation({
     String? token,
     String? invitationId,
+    int contractVersion = 2,
   }) async {
     if ((token == null) == (invitationId == null)) {
       throw const CollaborationException('invalid_invitation');
@@ -267,6 +326,13 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     await _negotiate(session, epoch);
     if (!_emailInvitationsSupported) {
       throw const CollaborationException('email_invitations_unavailable');
+    }
+    final version = token?.startsWith('fhi3_') == true ? 3 : contractVersion;
+    if (version != 2 && version != 3) {
+      throw const CollaborationException('invalid_invitation');
+    }
+    if (version == 3 && !_scopedInvitationsSupported) {
+      throw const CollaborationException('client_upgrade_required');
     }
     if (token != null) {
       await _withInvitationStore(() async {
@@ -317,10 +383,15 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     }
     Map<String, dynamic> reply;
     try {
-      reply = await _callSession(session, epoch, 'invitations2.accept', {
-        if (token != null) 'token': token,
-        if (invitationId != null) 'invitationId': invitationId,
-      });
+      reply = await _callSession(
+        session,
+        epoch,
+        version == 3 ? 'invitations3.accept' : 'invitations2.accept',
+        {
+          if (token != null) 'token': token,
+          if (invitationId != null) 'invitationId': invitationId,
+        },
+      );
     } on CollaborationApiException catch (error) {
       // A definitive rejection means the server did not accept this account.
       // Preserve the capability so its intended recipient can sign in instead.

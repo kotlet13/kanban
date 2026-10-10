@@ -15,6 +15,13 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'email_invitations_unavailable' ||
     'email_invitations_unsupported' ||
     'invitation_email_unavailable' => l.emailInviteUnsupported,
+    'scoped_invitations_unsupported' ||
+    'space_project_membership_unsupported' => l.sharingScopedUnsupported,
+    'space_access_upgrade_required' => l.sharingScopeUpgradeRequired,
+    'project_sharing_pending_changes' => l.sharingProjectSharingPending,
+    'project_sharing_blocked' ||
+    'project_sharing_dependency' ||
+    'project_sharing_dependencies' => l.sharingProjectSharingBlocked,
     'invitation_authentication_required' => l.emailInviteExistingAccount,
     'invitation_identity_mismatch' ||
     'invitation_recipient_mismatch' ||
@@ -29,7 +36,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'organization_preview_stale' ||
     'organization_access_preview_stale' => l.organizationAccessPreviewStale,
     'scope_archived' => l.scopeArchivedDescription,
-    'single_project_guard' => l.organizationAccessDescription,
+    'single_project_guard' => l.sharingInviteProjectDescription,
     'recurring_entry_managed_by_rule' ||
     'rule_currency_immutable' => l.financePlanManageRule,
     'requires_finance_resolution' => l.financePairedConflict,

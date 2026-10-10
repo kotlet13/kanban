@@ -1,5 +1,7 @@
 # Naslednja nadgradnja: prostori, organizacije in povezane finance
 
+**Dopolnitev 10. oktobra:** pravila članstva spodaj so zgodovinski načrt politike 2. Nova uporabnikova odločitev v [uskladitvi deljenja](SPACE_SHARING_ALIGNMENT.md) določa polne pravice članov celotnega prostora nad njegovo skupno vsebino in vsemi projekti; povabilo samo v projekt ostane ozko. Ta nova odločitev ima prednost, njen prehod in izvedba pa se preverjata ločeno.
+
 Datum dogovora: **9. oktober 2026**. Status: **izdelano in avtomatizirano preverjeno v izvoru; fizični preizkus in izdaja sledita ločeno**. Uporabnik je po dopolnitvi zahteve o izgubi strežnika naročil začetek nadgradnje. Spodnji načrt določa cilj; dejanske spremembe, preverjanja in preostale vrzeli vodi [izvedba nadgradnje prostorov](SPACES_UPGRADE_IMPLEMENTATION.md). Izhodišče in še aktivna interna Android izdaja sta **1.1.10 (13)**; dosedanje izdajne dokaze vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
 Uporabnik je potrdil spodnjo zasnovo in jo dopolnil s pravilom: **član projekta organizacije vidi vse finance tega projekta; skupina vodij organizacije vidi vse njene projekte in njihove finance**. Ta odločitev za organizacijske projekte nadomesti prejšnji predlog dodatnega ločenega dovoljenja za branje projektnih financ. Ne spreminja zasebnosti osebnih podatkov ali drugega gospodinjstva. Pravice urejanja niso samodejno enake pravicam branja.

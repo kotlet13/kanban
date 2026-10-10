@@ -34,6 +34,7 @@ class NativeInvitationService extends NativeDatabase
                 $scopeId = $this->uuid($params['scopeId']); $request = $this->uuid($params['requestId']);
                 $scope = $this->scope($scopeId, $user['id'], true, true);
                 if ($scope['kind'] === 'personal') { throw new NativeError('personal_not_shareable', 403); }
+                if ((int)$scope['effective_access_policy_version']===3) { throw new NativeError('client_upgrade_required',409); }
                 $username = $this->username($params['recipientUsername']);
                 if ($username === strtolower($user['username']) || !in_array($params['role'], ['member', 'viewer'], true)) { throw new NativeError('validation_error'); }
                 $duration = $params['expiresIn'] ?? 86400;
@@ -140,11 +141,17 @@ class NativeInvitationService extends NativeDatabase
         } elseif ((int)$member['active'] !== 1 || $member['account_id'] !== $user['account_id']) {
             $this->change('UPDATE familyhub_members SET account_id=?,role=?,active=1 WHERE scope_id=? AND user_id=?', [$user['account_id'], $row['role'], $row['scope_id'], $user['id']]);
         }
-        (new NativeOrganizationAccess($this->container))->reconcileRevocations([$row['scope_id']],$user['account_id']);
+        if ((int)($row['invitation_contract']??1)===3) {
+            if ($member && (int)$member['active']===1 && $member['account_id']===$user['account_id'] && $member['role']==='viewer' && $row['role']==='member') { $this->change("UPDATE familyhub_members SET role='member' WHERE scope_id=? AND user_id=?",[$row['scope_id'],$user['id']]); }
+            $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE id=?',[$row['scope_id']]);
+        }
+        (new NativeOrganizationAccess($this->container))->reconcileRevocations((new NativeOrganizationAccess($this->container))->relatedScopeIds($row['scope_id']),$user['account_id']);
     }
 
     protected function projectFinanceIncluded($scope)
     {
+        if ($scope && (int)($scope['access_policy_version']??1)===3) { return true; }
+        if ($scope && !empty($scope['parent_scope_id']) && (int)($this->one('SELECT access_policy_version FROM familyhub_scopes WHERE id=?',[$scope['parent_scope_id']])['access_policy_version']??1)===3) { return true; }
         if (!$scope || $scope['kind']!=='project' || empty($scope['organization_id'])) { return false; }
         $organization=$this->one('SELECT access_policy_version FROM familyhub_scopes WHERE id=?',[$scope['organization_id']]);
         return (int)($organization['access_policy_version']??1)===2;
@@ -152,7 +159,7 @@ class NativeInvitationService extends NativeDatabase
 
     protected function wire(array $row)
     {
-        return ['contractVersion'=>empty($row['recipient_email'])?1:2, 'recipientEmail'=>$row['recipient_email']??null, 'id' => $row['id'], 'scopeId' => $row['scope_id'], 'recipientUsername' => $row['recipient_username'], 'role' => $row['role'],
+        return ['accessScope'=>$row['access_scope']??null, 'sharedFinanceIncluded'=>(int)($row['invitation_contract']??1)===3, 'contractVersion'=>(int)($row['invitation_contract']??1)===3?3:(empty($row['recipient_email'])?1:2), 'recipientEmail'=>$row['recipient_email']??null, 'id' => $row['id'], 'scopeId' => $row['scope_id'], 'recipientUsername' => $row['recipient_username'], 'role' => $row['role'],
                 'projectFinanceIncluded'=>$this->projectFinanceIncluded($this->one('SELECT * FROM familyhub_scopes WHERE id=?',[$row['scope_id']])), 'expiresAt' => (int)$row['expires_at'], 'acceptedAt' => $row['accepted_at'] === null ? null : (int)$row['accepted_at'],
                 'revokedAt' => $row['revoked_at'] === null ? null : (int)$row['revoked_at']];
     }

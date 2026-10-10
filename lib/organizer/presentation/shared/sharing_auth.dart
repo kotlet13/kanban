@@ -5,6 +5,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
+import 'sharing_invitation_details.dart';
 import '../onboarding/account_recovery_actions.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 
@@ -397,14 +398,18 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                         if (_preview != null) ...[
                           Text(l.emailInviteSignIn),
                           const SizedBox(height: 12),
-                          Text(
-                            _preview!.scopeName,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${sharingRoleLabel(context, _preview!.role)} · ${l.sharingExpires} ${organizerDate(context, _preview!.expiresAt)}',
-                          ),
+                          if (_preview!.isEmailInvitation)
+                            SharingInvitationDetails(invitation: _preview!)
+                          else ...[
+                            Text(
+                              _preview!.scopeName,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${sharingRoleLabel(context, _preview!.role)} · ${l.sharingExpires} ${organizerDate(context, _preview!.expiresAt)}',
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           if (_preview!.canRegister)
                             Wrap(

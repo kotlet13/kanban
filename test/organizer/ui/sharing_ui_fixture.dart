@@ -118,7 +118,10 @@ class SharingUiController extends CollaborationController {
   Future<List<SharedInvitationPreview>> pendingInvitations() async =>
       incomingInvitations;
   @override
-  Future<void> acceptPendingInvitation(String invitationId) async {
+  Future<void> acceptPendingInvitation(
+    String invitationId, {
+    int contractVersion = 2,
+  }) async {
     if (invitationAcceptError != null) throw invitationAcceptError!;
     calls.add('acceptPending:$invitationId');
     incomingInvitations.removeWhere(
@@ -133,8 +136,10 @@ class SharingUiController extends CollaborationController {
     SharedRole role = SharedRole.member,
     String language = 'sl',
     String? requestId,
+    String? accessScope,
   }) async {
     emailInviteRequestIds.add(requestId);
+    emailInviteTargets.add((scopeId, accessScope, role));
     if (loseEmailCreateResponse) {
       loseEmailCreateResponse = false;
       throw const CollaborationException('network');
@@ -153,6 +158,7 @@ class SharingUiController extends CollaborationController {
   }
 
   final emailInviteRequestIds = <String?>[];
+  final emailInviteTargets = <(String, String?, SharedRole)>[];
   bool loseEmailCreateResponse = false;
   bool includeSecondMember = true;
   bool? enrollmentAllowLocalHttp;
@@ -182,6 +188,9 @@ class SharingUiController extends CollaborationController {
         scopes: current.scopes,
         data: current.data,
         emailInvitationsSupported: current.emailInvitationsSupported,
+        scopedInvitationsSupported: current.scopedInvitationsSupported,
+        spaceProjectMembershipSupported:
+            current.spaceProjectMembershipSupported,
         organizationsSupported: current.organizationsSupported,
         localAccessAllowed: current.localAccessAllowed,
         deletionPending: current.deletionPending,
@@ -218,6 +227,9 @@ class SharingUiController extends CollaborationController {
         scopes: current.scopes,
         data: current.data,
         emailInvitationsSupported: current.emailInvitationsSupported,
+        scopedInvitationsSupported: current.scopedInvitationsSupported,
+        spaceProjectMembershipSupported:
+            current.spaceProjectMembershipSupported,
         organizationsSupported: current.organizationsSupported,
         localAccessAllowed: current.localAccessAllowed,
         deletionPending: current.deletionPending,

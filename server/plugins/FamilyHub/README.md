@@ -1,4 +1,4 @@
-# FamilyHub 0.10.0
+# FamilyHub 0.11.0
 
 ## Email invitations (0.10.0/schema 14)
 
@@ -12,7 +12,7 @@ Linked personal payments, explicit household cash projection, partial source-app
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
-Version 0.10.0 uses additive server schema 14, invitation contracts 1/2, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.10.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
+Version 0.11.0 uses additive server schema 15, invitation contracts 1/2/3, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Space-sharing policy3 extends households, organizations and standalone project scopes with explicit inherited membership; existing roots require a fresh owner preview. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.11.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
 
 ## Spaces access and household gardens (0.8.0/schema 12)
 
@@ -100,3 +100,7 @@ Enable only with `FAMILYHUB_ENABLE_NATIVE_API=true` and `FAMILYHUB_ACCOUNT_MODE=
 Version 0.7.0 advertises `accountDeletionPolicyVersions:[1,2]`. Policy 2 requires explicit structural decisions for retained project roots/person profiles and organization-project detachment, and permits an unknown opening balance. The root and phase IDs remain valid for other contributors; founder text is anonymized and the scope name follows the retained root. Detaching a surviving child changes its organization link without changing its own members/finance grants. Inaccessible children use opaque confirmation IDs without disclosing their name, scope ID or finance contents. Account deletion still removes the real Kanboard account/devices; retaining a person profile does not retain authentication.
 
 The web deletion controller and form source use policy 2 and explicit preserve/detach actions. Mobile and website tests remain separate evidence: the older policy-1 web HTTP results do not establish the extended graph. Check repository `docs/server/account-deletion-contract.md` and the current release run for the final local web policy-2 result and hosting deployment evidence.
+
+## Space sharing policy3
+
+Version 0.11.0/schema15 adds explicit full-space and project-only email invitations. Full members collaborate on all shared content and finances, including future project children; project-only membership grants no parent access. Existing policies remain unchanged until an owner applies a fresh migration preview, which revokes pending older invitations. Household inline projects can be extracted atomically only with a closed dependency graph; reused household accounts, people, recurring rules and linked payments require resolving the reported blockers first. Personal records and private account projections remain private. This source version does not confirm any hosted deployment. See the packaged space-sharing API contract for methods and compatibility.

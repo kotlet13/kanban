@@ -79,7 +79,8 @@ class NativeAccountDeletionService extends NativeDatabase
             foreach ($params['ownershipTransfers']??[] as $transfer) {
                 $next=$this->one('SELECT user_id FROM familyhub_accounts WHERE account_id=?',[$transfer['successorAccountId']]);
                 $this->change("UPDATE familyhub_members SET role='member' WHERE scope_id=? AND user_id=?",[$transfer['scopeId'],$user['id']]);
-                $this->change("UPDATE familyhub_members SET role='owner' WHERE scope_id=? AND user_id=?",[$transfer['scopeId'],$next['user_id']]);
+                $this->change('DELETE FROM familyhub_members WHERE scope_id=? AND user_id=?',[$transfer['scopeId'],$next['user_id']]);
+                $this->change("INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,'owner',1)",[$transfer['scopeId'],$next['user_id'],$transfer['successorAccountId']]);
                 $this->change('UPDATE familyhub_scopes SET owner_id=?,sequence=sequence+1 WHERE id=?',[$next['user_id'],$transfer['scopeId']]);
             }
             $this->change('INSERT INTO familyhub_deletion_receipts(operation_id,token_hash,deleted_at) VALUES(?,?,?)',[$id,$hash,time()]);
@@ -148,7 +149,10 @@ class NativeAccountDeletionService extends NativeDatabase
                 $access=new NativeOrganizationAccess($this->container);
                 $readers=array_column($this->many('SELECT account_id FROM familyhub_members WHERE scope_id=? AND active=1',[$link['organizationId']]),'account_id');
                 $formerlyVisible=array_values(array_filter($readers,fn($aid)=>$access->visibleScope($link['childScopeId'],$aid)));
-                $this->change('UPDATE familyhub_scopes SET organization_id=NULL,sequence=sequence+1 WHERE id=? AND organization_id=?',[$link['childScopeId'],$link['organizationId']]);
+                $parentPolicy=$this->one('SELECT access_policy_version FROM familyhub_scopes WHERE id=?',[$link['organizationId']]);
+                $childPolicy=$this->one('SELECT access_policy_version FROM familyhub_scopes WHERE id=?',[$link['childScopeId']]);
+                $modern=(int)$parentPolicy['access_policy_version']===3;
+                $this->change('UPDATE familyhub_scopes SET organization_id=NULL,parent_scope_id=NULL,access_policy_version=?,access_revision=access_revision+?,sequence=sequence+1 WHERE id=? AND (organization_id=? OR parent_scope_id=?)',[$modern?3:(int)$childPolicy['access_policy_version'],$modern?1:0,$link['childScopeId'],$link['organizationId'],$link['organizationId']]);
                 foreach ($formerlyVisible as $aid) { $access->reconcileRevocations([$link['childScopeId']],$aid); }
                 (new NativeNotificationWriter($this->container))->visibilityChanged($formerlyVisible);
             }
@@ -293,14 +297,14 @@ class NativeAccountDeletionService extends NativeDatabase
         }
         $this->change('DELETE FROM familyhub_operations WHERE user_id=?',[$id]);
         $this->change('DELETE FROM familyhub_invitations WHERE creator_id=? OR accepted_by=? OR recipient_username=? OR recipient_account_id=?',[$id,$id,$user['username'],$user['account_id']]);
-        $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE kind=\'organization\' AND id IN (SELECT scope_id FROM familyhub_members WHERE user_id=? AND active=1)',[$id]);
+        $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE kind IN (\'organization\',\'household\',\'project\') AND id IN (SELECT scope_id FROM familyhub_members WHERE user_id=? AND active=1)',[$id]);
         $this->change('DELETE FROM familyhub_members WHERE user_id=?',[$id]);
         foreach ($scopes as $s) {
             if (($s['kind']==='personal' && (int)$s['owner_id']===$id) || in_array($s['id'],$deleteScopes,true)) {
                 $sid=$s['id'];
                 $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=?)',[$sid]);
                 $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=?)',[$sid]);
-                foreach (['familyhub_payment_events','familyhub_payment_projections','familyhub_payment_cash','familyhub_scope_revocations','familyhub_organization_leaders','familyhub_inbox','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_finance_audit','familyhub_finance_records','familyhub_finance_policy','familyhub_operations','familyhub_records','familyhub_invitations','familyhub_members','familyhub_personal_scopes'] as $table) { $this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$sid]); }
+                foreach (['familyhub_record_relocations','familyhub_payment_events','familyhub_payment_projections','familyhub_payment_cash','familyhub_scope_revocations','familyhub_organization_leaders','familyhub_inbox','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_finance_audit','familyhub_finance_records','familyhub_finance_policy','familyhub_operations','familyhub_records','familyhub_invitations','familyhub_members','familyhub_personal_scopes'] as $table) { $this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$sid]); }
                 $this->change('DELETE FROM familyhub_scopes WHERE id=?',[$sid]);
             } elseif (in_array($s['id'],$financeScopes,true)) {
                 $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$s['id']]);

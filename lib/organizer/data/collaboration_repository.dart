@@ -7,6 +7,7 @@ import '../domain/organizer_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/linked_payment_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/project_sharing_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
 import '../domain/shared_dates.dart';
@@ -25,6 +26,7 @@ import 'linked_payments_repository.dart';
 import 'organizer_repository.dart' show OrganizerConflictException;
 
 part 'collaboration_organization_access.dart';
+part 'collaboration_project_sharing.dart';
 part 'collaboration_linked_payments.dart';
 part 'collaboration_local_space_publication.dart';
 part 'collaboration_garden_actions.dart';
@@ -95,6 +97,8 @@ class CollaborationRepository {
       _projectArchivingSupported = false;
   bool _inboxSupported = false;
   bool _emailInvitationsSupported = false;
+  bool _scopedInvitationsSupported = false;
+  bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
@@ -212,6 +216,10 @@ class CollaborationRepository {
           database.personalProfile?.partition == profile.partition) {
         database.activatePersonal(null);
       }
+      final sharingPending = await database.rows(
+        'SELECT name FROM local_meta WHERE name LIKE ?',
+        ['project_sharing_pending:${profile.partition}:%'],
+      );
       final scopes = await database.rows(
         'SELECT data,blocked FROM scopes WHERE partition=? ORDER BY id',
         [profile.partition],
@@ -434,8 +442,15 @@ class CollaborationRepository {
         externalPushSupported: _externalPushSupported,
         smtpSupported: _smtpSupported,
         emailInvitationsSupported: _emailInvitationsSupported,
+        scopedInvitationsSupported: _scopedInvitationsSupported,
+        spaceProjectMembershipSupported: _spaceProjectMembershipSupported,
         members: members,
         scopes: parsedScopes,
+        projectSharingPendingScopeIds: sharingPending.map(
+          (row) => (row['name'] as String).substring(
+            'project_sharing_pending:${profile.partition}:'.length,
+          ),
+        ),
         data: data,
         pendingCount:
             (outbox.first['count'] as int) + commands + financeQueue.length,

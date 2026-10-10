@@ -3144,7 +3144,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizationAccessDescription =>
-      'Membership does not grant access to every project or finances. Set access for each project separately.';
+      'A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.';
 
   @override
   String get peopleTitle => 'People';
@@ -3696,7 +3696,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.';
+      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.';
 
   @override
   String get guideSkip => 'Skip';
@@ -4974,4 +4974,157 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncStatusServerChanged =>
       'The server identity has changed. Your local data is preserved; reconnection needs to be checked.';
+
+  @override
+  String get sharingInviteScope => 'Invitation scope';
+
+  @override
+  String get sharingInviteWholeSpace => 'Whole space';
+
+  @override
+  String get sharingInviteProjectOnly => 'Project only';
+
+  @override
+  String get sharingInviteSpaceDescription =>
+      'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.';
+
+  @override
+  String get sharingInviteProjectDescription =>
+      'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.';
+
+  @override
+  String get sharingMemberFullDescription =>
+      'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.';
+
+  @override
+  String get sharingViewerDescription =>
+      'The person can read content and finances within the selected scope. Editing and administration are excluded.';
+
+  @override
+  String get sharingLegacySpaceDescription =>
+      'This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.';
+
+  @override
+  String get sharingLegacyProjectDescription =>
+      'This invitation uses older project access rules. Finance permissions follow the current server settings.';
+
+  @override
+  String get sharingScopedUnsupported =>
+      'The server does not yet support separate whole-space and project-only invitations. An administrator must update FamilyHub; existing data and access remain available.';
+
+  @override
+  String get sharingScopeUpgradeRequired =>
+      'Before inviting someone to the whole space, the owner must review and confirm the new sharing model in Space settings.';
+
+  @override
+  String get sharingAccessReview => 'Review space sharing';
+
+  @override
+  String get sharingAccessReviewDescription =>
+      'Space members will gain access to all its content and finances, including all existing and future projects. Members can also edit, delete, invite others and manage members. People invited only to a project retain their project scope. Review additional access before confirming. Old pending invitations will be revoked.';
+
+  @override
+  String get sharingAccessCurrent =>
+      'Space membership includes all shared content and finances, and all its existing and future projects. A project-only invitation applies only to that project.';
+
+  @override
+  String get sharingAccessApply => 'Confirm space sharing';
+
+  @override
+  String get sharingAccessSourceSpace => 'Space membership';
+
+  @override
+  String get sharingAccessSourceProject => 'Project membership';
+
+  @override
+  String get sharingAccessReadWrite => 'Read, edit and manage';
+
+  @override
+  String get sharingAccessReadOnly => 'Read';
+
+  @override
+  String get sharingProjectSharingReview => 'Review project-only sharing';
+
+  @override
+  String get sharingProjectSharingDescription =>
+      'The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.';
+
+  @override
+  String get sharingProjectSharingApply => 'Enable project sharing';
+
+  @override
+  String get sharingProjectSharingBlocked =>
+      'This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.';
+
+  @override
+  String get sharingProjectSharingAction => 'Share project only';
+
+  @override
+  String get sharingAccessProjects => 'Projects included in this space';
+
+  @override
+  String get sharingProjectMembersInherited =>
+      'Access through membership in the whole space';
+
+  @override
+  String get sharingProjectNewVisibility =>
+      'All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.';
+
+  @override
+  String sharingProjectSharingCounts(int records, int finances, int reminders) {
+    return 'Records: $records · finance records: $finances · reminders: $reminders';
+  }
+
+  @override
+  String sharingAccessRevokedInvitations(int count) {
+    return 'Pending invitations to revoke: $count';
+  }
+
+  @override
+  String get sharingProjectSharingPending =>
+      'First synchronize pending changes in this space and resolve conflicts, then review project sharing again.';
+
+  @override
+  String get sharingProjectDirectRemoval =>
+      'Remove direct membership in this project? Access from membership in the whole space remains while the person is a member of that space.';
+
+  @override
+  String get sharingRemoveProjectMembership =>
+      'Remove direct project membership';
+
+  @override
+  String get sharingBlockSingleRoot =>
+      'This shared project contains multiple projects or has no project root. It must represent a single project before changing sharing.';
+
+  @override
+  String get sharingBlockRecordUpgrade =>
+      'The project uses an older record format. Synchronize its update first.';
+
+  @override
+  String get sharingBlockUnrelatedContent =>
+      'The space includes tasks or events outside this project. Review their assignment before sharing the project separately.';
+
+  @override
+  String get sharingBlockAccount =>
+      'A financial account is also used by records outside this project. Review its finance links before sharing the project separately.';
+
+  @override
+  String get sharingBlockPerson =>
+      'A person is also linked to content outside this project. Review related people and assignments before sharing the project separately.';
+
+  @override
+  String get sharingBlockRecurrence =>
+      'A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.';
+
+  @override
+  String get sharingBlockTransfer =>
+      'A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.';
+
+  @override
+  String get sharingBlockLinkedPayment =>
+      'A linked payment includes additional finance records. Review payment links before sharing the project separately.';
+
+  @override
+  String get sharingBlockCollision =>
+      'A separate space already exists for this project. Refresh the space list and check its existing sharing.';
 }

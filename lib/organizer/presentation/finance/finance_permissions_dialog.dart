@@ -55,6 +55,15 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
   >
   _future = _load();
   bool _busy = false;
+  bool get _scopeMembership =>
+      ref
+          .read(collaborationProvider)
+          .valueOrNull
+          ?.scopes
+          .where((s) => s.id == widget.scopeId)
+          .firstOrNull
+          ?.accessPolicyVersion ==
+      3;
   Future<({Map<String, SharedFinanceGrant> grants, List<SharedMember> members})>
   _load() async {
     final controller = widget.guard.controller;
@@ -172,7 +181,10 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
         final members = cached.isNotEmpty ? cached : result.data!.members;
         return Column(
           children: [
-            if (_managed) Text(context.l10n.financeMembershipReadDescription),
+            if (_scopeMembership)
+              Text(context.l10n.sharingAccessCurrent)
+            else if (_managed)
+              Text(context.l10n.financeMembershipReadDescription),
             for (final member in members.where(
               (m) => m.active && m.accountId.isNotEmpty,
             ))
@@ -183,21 +195,27 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
                       : member.displayName,
                 ),
                 subtitle: Text(sharingRoleLabel(context, member.role)),
-                trailing: TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () => _edit(
-                          member,
-                          result.data!.grants[member.accountId] ??
-                              SharedFinanceGrant.none,
+                trailing: _scopeMembership
+                    ? Text(
+                        member.role == SharedRole.viewer
+                            ? context.l10n.financeGrantRead
+                            : context.l10n.financeGrantWrite,
+                      )
+                    : TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => _edit(
+                                member,
+                                result.data!.grants[member.accountId] ??
+                                    SharedFinanceGrant.none,
+                              ),
+                        child: Text(
+                          _label(
+                            result.data!.grants[member.accountId] ??
+                                SharedFinanceGrant.none,
+                          ),
                         ),
-                  child: Text(
-                    _label(
-                      result.data!.grants[member.accountId] ??
-                          SharedFinanceGrant.none,
-                    ),
-                  ),
-                ),
+                      ),
               ),
           ],
         );

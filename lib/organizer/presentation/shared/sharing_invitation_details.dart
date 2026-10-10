@@ -26,6 +26,12 @@ class SharingInvitationDetails extends StatelessWidget {
           Text(l.emailInviteFrom(invitation.inviterName)),
           const SizedBox(height: 8),
         ],
+        if (invitation.contractVersion == 3)
+          Text(
+            invitation.accessScope == 'project'
+                ? l.sharingInviteProjectOnly
+                : l.sharingInviteWholeSpace,
+          ),
         Text(sharingRoleLabel(context, invitation.role)),
         if (invitation.recipientEmail != null)
           Text(l.emailInviteFor(invitation.recipientEmail!))
@@ -36,9 +42,29 @@ class SharingInvitationDetails extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(l.emailInviteExplicit),
-        if (invitation.projectFinanceIncluded) ...[
+        if (invitation.contractVersion == 3) ...[
+          const SizedBox(height: 12),
+          Text(
+            invitation.accessScope == 'project'
+                ? l.sharingInviteProjectDescription
+                : l.sharingInviteSpaceDescription,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            invitation.role == SharedRole.viewer
+                ? l.sharingViewerDescription
+                : l.sharingMemberFullDescription,
+          ),
+        ] else if (invitation.projectFinanceIncluded) ...[
           const SizedBox(height: 12),
           Text(l.organizationProjectFinanceVisibility),
+        ] else ...[
+          const SizedBox(height: 12),
+          Text(
+            invitation.kind == SharedScopeKind.project
+                ? l.sharingLegacyProjectDescription
+                : l.sharingLegacySpaceDescription,
+          ),
         ],
       ],
     );

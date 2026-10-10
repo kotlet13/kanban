@@ -3,6 +3,17 @@ part of 'collaboration_repository.dart';
 /// Atomic local record edits, dependency ordering and explicit personal copies.
 extension CollaborationRecordActions on CollaborationRepository {
   Future<void> _writable(String partition, String scopeId) async {
+    final sharing = await database.rows(
+      r"SELECT 1 FROM local_meta WHERE name=? OR (name LIKE ? AND json_extract(value,'$.projectId')=?)",
+      [
+        'project_sharing_pending:$partition:$scopeId',
+        'project_sharing_pending:$partition:%',
+        scopeId,
+      ],
+    );
+    if (sharing.isNotEmpty) {
+      throw const CollaborationException('project_sharing_pending_changes');
+    }
     if (_sessionInvalidReason == 'device_revoked') {
       throw CollaborationException(_sessionInvalidReason!);
     }
@@ -77,7 +88,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     }
     final root =
         scoped.projectRootId ??
-        (scoped.organizationId != null ? scoped.id : null);
+        (scoped.parentSpaceId != null ? scoped.id : null);
     if (root != null && type == SharedRecordType.project && id != root) {
       throw const CollaborationException('project_scope_single_project');
     }
@@ -637,7 +648,7 @@ extension CollaborationRecordActions on CollaborationRepository {
       );
       projectId ??=
           scoped.projectRootId ??
-          (scoped.organizationId != null ? scopeId : null);
+          (scoped.parentSpaceId != null ? scopeId : null);
       final row = LocalTask(
         id: id,
         title: title.trim(),

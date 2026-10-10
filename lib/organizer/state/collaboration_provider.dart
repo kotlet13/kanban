@@ -18,6 +18,8 @@ import '../domain/local_space_models.dart';
 import '../domain/garden_models.dart';
 export '../domain/local_space_models.dart';
 export '../domain/organization_access_models.dart';
+export '../domain/project_sharing_models.dart';
+import '../domain/project_sharing_models.dart';
 
 export '../domain/collaboration_models.dart';
 export '../data/account_deletion_store.dart' show PendingAccountDeletion;
@@ -252,6 +254,29 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       expectedRevision: expectedRevision,
       requestId: requestId,
     ),
+  );
+  Future<SharedScope?> resumeProjectSharing(String scopeId) =>
+      _edit((repo) => repo.resumeProjectSharing(scopeId));
+  Future<ProjectSharingPreview> previewProjectSharing(
+    String scopeId,
+    String projectId,
+  ) => _repo.previewProjectSharing(scopeId, projectId);
+  Future<SharedScope> applyProjectSharing(
+    ProjectSharingPreview preview, {
+    String? requestId,
+  }) =>
+      _edit((repo) => repo.applyProjectSharing(preview, requestId: requestId));
+  Future<void> resumeSpaceAccessChange(String id) =>
+      _edit((repo) => repo.resumeOrganizationAccessChange(id));
+  Future<bool> spaceAccessAvailable() => _repo.spaceAccessAvailable();
+  Future<SpaceAccessPreview> previewSpaceAccess(String id) =>
+      _repo.previewSpaceAccess(id);
+  Future<SharedScope> applySpaceAccess(
+    String id,
+    String previewHash, {
+    String? requestId,
+  }) => _edit(
+    (repo) => repo.applySpaceAccess(id, previewHash, requestId: requestId),
   );
   Future<bool> organizationAccessAvailable() =>
       _repo.organizationAccessAvailable();
@@ -711,12 +736,14 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
     String? organizationId,
+    String? parentScopeId,
     String? id,
     String? requestId,
   }) => _repo.createScope(
     name,
     kind: kind,
     organizationId: organizationId,
+    parentScopeId: parentScopeId,
     id: id,
     requestId: requestId,
   );
@@ -752,20 +779,27 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String recipientEmail,
     SharedRole role = SharedRole.member,
     String language = 'sl',
+    String? accessScope,
     String? requestId,
   }) => _repo.createEmailInvitation(
     scopeId: scopeId,
     recipientEmail: recipientEmail,
     role: role,
     language: language,
+    accessScope: accessScope,
     requestId: requestId,
   );
   Future<List<SharedInvitationPreview>> pendingInvitations() =>
       _repo.pendingInvitations();
-  Future<void> acceptPendingInvitation(String invitationId) =>
-      _pendingInvitationMutation(
-        () => _repo.acceptEmailInvitation(invitationId: invitationId),
-      );
+  Future<void> acceptPendingInvitation(
+    String invitationId, {
+    int contractVersion = 2,
+  }) => _pendingInvitationMutation(
+    () => _repo.acceptEmailInvitation(
+      invitationId: invitationId,
+      contractVersion: contractVersion,
+    ),
+  );
   Future<void> rememberInvitation({
     required String serverUrl,
     required String token,

@@ -133,7 +133,8 @@ class NativeRecordPolicy extends NativeDatabase
         if (!is_array($ids) || !array_is_list($ids) || count($ids) > 20 || count(array_unique($ids, SORT_REGULAR)) !== count($ids)) { throw new NativeError('validation_error'); }
         foreach ($ids as $id) {
             $this->uuid($id);
-            if (!(new NativeFinanceAccess($this->container))->visible($scopeId, $id) || !$this->one('SELECT m.account_id FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.account_id=? AND m.active=1 AND u.is_active=1', [$scopeId, $id])) { throw new NativeError('assignee_not_member'); }
+            $effective=(new NativeOrganizationAccess($this->container))->visibleScope($scopeId,$id);
+            if (!$effective || ((int)$effective['effective_access_policy_version']!==3 && !(new NativeOrganizationAccess($this->container))->directMember($scopeId,$id)) || !(new NativeFinanceAccess($this->container))->visible($scopeId, $id)) { throw new NativeError('assignee_not_member'); }
         }
     }
 

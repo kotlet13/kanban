@@ -27,7 +27,8 @@ class NativeDeletionPlan extends NativeDatabase
             $finance=$this->many('SELECT * FROM familyhub_finance_records WHERE scope_id=? ORDER BY id',[$sid]);
             $paymentEvents=$this->many('SELECT * FROM familyhub_payment_events WHERE scope_id=? ORDER BY event_id',[$sid]);
             $paymentProjections=$this->many('SELECT * FROM familyhub_payment_projections WHERE scope_id=? ORDER BY event_id',[$sid]);
-            $related=(bool)array_filter($paymentEvents,fn($e)=>$e['payer_account_id']===$account) || (int)$s['owner_id']===$id || count(array_filter($members,fn($m)=>(int)$m['user_id']===$id));
+            $effectiveMembers=(new NativeOrganizationAccess($this->container))->members($sid);
+            $related=(bool)(new NativeOrganizationAccess($this->container))->visibleScope($sid,$account) || (bool)array_filter($paymentEvents,fn($e)=>$e['payer_account_id']===$account) || (int)$s['owner_id']===$id || count(array_filter($members,fn($m)=>(int)$m['user_id']===$id));
             foreach (array_merge($generic,$finance) as $r) { if ($r['created_by']===$account || $r['updated_by']===$account || str_contains($r['payload']??'',$account)) { $related=true;break; } }
             if (!$related) { continue; }
             $versions[]=[$paymentEvents,$paymentProjections];
@@ -35,7 +36,7 @@ class NativeDeletionPlan extends NativeDatabase
                 $legs=0;foreach($paymentEvents as $event){$legs+=count(json_decode($event['data'],true,32,JSON_THROW_ON_ERROR)['reimbursements']);}
                 $linkedFacts[]=['scopeId'=>(new NativeFinanceAccess($this->container))->visible($sid,$account,true)?$sid:null,'eventsRetainedIfScopeKept'=>count($paymentEvents),'eventsDeletedIfScopeDeleted'=>count($paymentEvents),'refundLegs'=> $legs,'reason'=>'retained_shared_financial_fact'];
             }
-            $versions[]=[$s,$members,$generic,$finance,$this->one('SELECT * FROM familyhub_finance_policy WHERE scope_id=?',[$sid])];
+            $versions[]=[$s,$members,$effectiveMembers,$generic,$finance,$this->one('SELECT * FROM familyhub_finance_policy WHERE scope_id=?',[$sid])];
             if ($s['kind']==='personal' && (int)$s['owner_id']===$id) {
                 $impact['personalScopes']++;$impact['personalRecords']+=count($generic);$impact['personalFinanceRecords']+=count($finance);
                 if (count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id))) { $blocks[]=['code'=>'personal_scope_has_other_member','count'=>1,'scopeId'=>$sid]; }
@@ -43,12 +44,14 @@ class NativeDeletionPlan extends NativeDatabase
             }
             $member=array_values(array_filter($members,fn($m)=>(int)$m['user_id']===$id));
             if ($member) { $impact['sharedMemberships']++;if ((new NativeFinanceAccess($this->container))->visible($sid,$account)) { $shared[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'role'=>$member[0]['role']]; } }
+            if (!$member && (new NativeOrganizationAccess($this->container))->visibleScope($sid,$account)) { $shared[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'role'=>(new NativeOrganizationAccess($this->container))->visibleScope($sid,$account)['role']]; }
             if ((int)$s['owner_id']===$id) {
                 $eligible=array_values(array_filter($members,fn($m)=>(int)$m['user_id']!==$id && (int)$m['active']===1 && (int)$m['is_active']===1 && $this->one('SELECT user_id FROM familyhub_accounts WHERE account_id=? AND user_id=?',[$m['account_id'],$m['user_id']])));
-                $foreign=count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
+                if ((int)($s['access_policy_version']??1)===3 || !empty($s['parent_scope_id'])) { $eligible=array_map(fn($m)=>['user_id'=>$m['userId'],'account_id'=>$m['accountId'],'name'=>$m['displayName'],'username'=>$m['username']],array_values(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id))); }
+                $foreign=count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
                 $owned[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'canDeleteScope'=>!$foreign,'eligibleSuccessors'=>array_map(fn($m)=>['accountId'=>$m['account_id'],'displayName'=>$m['name'] ?: $m['username']],$eligible)];
-                if ($s['kind']==='organization') {
-                    foreach ($this->many('SELECT * FROM familyhub_scopes WHERE organization_id=? ORDER BY id',[$sid]) as $child) {
+                if (in_array($s['kind'],['organization','household'],true)) {
+                    foreach ($this->many('SELECT * FROM familyhub_scopes WHERE parent_scope_id=? OR organization_id=? ORDER BY id',[$sid,$sid]) as $child) {
                         $canRead=(new NativeFinanceAccess($this->container))->visible($child['id'],$account);
                         $opaque=hash_hmac('sha256','organization-link:'.$sid.':'.$child['id'],$this->fingerprint($user));
                         $token=substr($opaque,0,8).'-'.substr($opaque,8,4).'-4'.substr($opaque,13,3).'-a'.substr($opaque,17,3).'-'.substr($opaque,20,12);

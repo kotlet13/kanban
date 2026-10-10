@@ -3150,7 +3150,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizationAccessDescription =>
-      'Članstvo ne odpre vseh projektov ali financ. Dostop uredi za vsak projekt posebej.';
+      'Povabilo v cel prostor vključuje vse njegove vsebine, finance in projekte, tudi prihodnje. Povabilo samo v projekt vključuje samo ta projekt. Član lahko v svojem obsegu tudi ureja, briše, povabi druge in upravlja člane.';
 
   @override
   String get peopleTitle => 'Osebe';
@@ -3703,7 +3703,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora.';
+      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora. Povabilo v cel prostor vključuje vse njegove vsebine, finance in obstoječe ter prihodnje projekte. Povabilo samo v projekt se prikaže kot Deljen projekt in ne dodeli članstva v celotnem prostoru. Obseg dostopa je ločen od vloge.';
 
   @override
   String get guideSkip => 'Preskoči';
@@ -4984,4 +4984,157 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get syncStatusServerChanged =>
       'Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti.';
+
+  @override
+  String get sharingInviteScope => 'Obseg povabila';
+
+  @override
+  String get sharingInviteWholeSpace => 'Cel prostor';
+
+  @override
+  String get sharingInviteProjectOnly => 'Samo projekt';
+
+  @override
+  String get sharingInviteSpaceDescription =>
+      'Povabljena oseba dobi dostop do vseh skupnih vsebin in financ tega prostora ter vseh njegovih obstoječih in prihodnjih projektov.';
+
+  @override
+  String get sharingInviteProjectDescription =>
+      'Povabljena oseba dobi dostop samo do izbranega projekta, njegovih opravil, dogodkov, obvestil in financ. Projekt se prikaže kot Deljen projekt; povabilo ne dodeli članstva v gospodinjstvu ali organizaciji.';
+
+  @override
+  String get sharingMemberFullDescription =>
+      'Član lahko v izbranem obsegu ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve, povabila in člane. Lastništvo ostane posebej zaščiteno.';
+
+  @override
+  String get sharingViewerDescription =>
+      'Oseba lahko bere vsebino in finance v izbranem obsegu. Urejanje in upravljanje sta izključena.';
+
+  @override
+  String get sharingLegacySpaceDescription =>
+      'Ta prostor uporablja starejša pravila dostopa. Članstvo še ne vključuje vseh projektov in financ. Lastnik lahko v Nastavitvah prostora pregleda in potrdi novo deljenje.';
+
+  @override
+  String get sharingLegacyProjectDescription =>
+      'To povabilo uporablja starejša pravila dostopa do projekta. Prikazane finančne pravice določa trenutna nastavitev strežnika.';
+
+  @override
+  String get sharingScopedUnsupported =>
+      'Strežnik še ne podpira ločenega povabila v cel prostor ali samo projekt. Skrbnik mora nadgraditi FamilyHub; obstoječi podatki in dostop ostanejo na voljo.';
+
+  @override
+  String get sharingScopeUpgradeRequired =>
+      'Pred povabilom v cel prostor mora lastnik pregledati in potrditi novo deljenje v Nastavitvah prostora.';
+
+  @override
+  String get sharingAccessReview => 'Preglej deljenje prostora';
+
+  @override
+  String get sharingAccessReviewDescription =>
+      'Člani prostora bodo dobili dostop do vseh njegovih vsebin in financ ter vseh obstoječih in prihodnjih projektov. Člani lahko tudi urejajo, brišejo, povabijo druge in upravljajo člane. Osebe, povabljene samo v projekt, ohranijo projektni obseg. Pred potrditvijo preglej dodatni dostop. Stara čakajoča povabila bodo preklicana.';
+
+  @override
+  String get sharingAccessCurrent =>
+      'Članstvo v prostoru vključuje vse skupne vsebine in finance ter vse njegove obstoječe in prihodnje projekte. Povabilo samo v projekt velja samo za ta projekt.';
+
+  @override
+  String get sharingAccessApply => 'Potrdi deljenje prostora';
+
+  @override
+  String get sharingAccessSourceSpace => 'Članstvo v prostoru';
+
+  @override
+  String get sharingAccessSourceProject => 'Članstvo v projektu';
+
+  @override
+  String get sharingAccessReadWrite => 'Branje, urejanje in upravljanje';
+
+  @override
+  String get sharingAccessReadOnly => 'Branje';
+
+  @override
+  String get sharingProjectSharingReview => 'Preglej deljenje samo projekta';
+
+  @override
+  String get sharingProjectSharingDescription =>
+      'Projekt in njegovi povezani zapisi bodo dobili lasten obseg za deljenje. Obstoječi člani gospodinjstva ohranijo dostop. Novo povabilo velja samo za projekt in ne razkrije drugih vsebin gospodinjstva.';
+
+  @override
+  String get sharingProjectSharingApply => 'Omogoči deljenje projekta';
+
+  @override
+  String get sharingProjectSharingBlocked =>
+      'Projekt ima finančne ali druge povezave z vsebino zunaj projekta. Te povezave je treba urediti pred ločenim deljenjem; povabilo v celo gospodinjstvo ne nadomesti povabila samo v projekt.';
+
+  @override
+  String get sharingProjectSharingAction => 'Deli samo projekt';
+
+  @override
+  String get sharingAccessProjects => 'Projekti, vključeni v prostor';
+
+  @override
+  String get sharingProjectMembersInherited =>
+      'Dostop iz članstva v celotnem prostoru';
+
+  @override
+  String get sharingProjectNewVisibility =>
+      'Projekt vidijo vsi člani prostora. Povabilo samo v ta projekt lahko pošlješ dodatnim sodelavcem; drugih vsebin prostora ne razkrije.';
+
+  @override
+  String sharingProjectSharingCounts(int records, int finances, int reminders) {
+    return 'Zapisi: $records · finančni zapisi: $finances · opomniki: $reminders';
+  }
+
+  @override
+  String sharingAccessRevokedInvitations(int count) {
+    return 'Čakajoča povabila za preklic: $count';
+  }
+
+  @override
+  String get sharingProjectSharingPending =>
+      'Najprej uskladi čakajoče spremembe tega prostora in reši konflikte, nato ponovi pregled deljenja projekta.';
+
+  @override
+  String get sharingProjectDirectRemoval =>
+      'Odstrani neposredno članstvo v tem projektu? Dostop iz članstva v celotnem prostoru ostane, dokler je oseba član tega prostora.';
+
+  @override
+  String get sharingRemoveProjectMembership =>
+      'Odstrani neposredno članstvo v projektu';
+
+  @override
+  String get sharingBlockSingleRoot =>
+      'Ta deljen projekt vsebuje več projektov ali nima projektnega korena. Pred spremembo mora predstavljati en sam projekt.';
+
+  @override
+  String get sharingBlockRecordUpgrade =>
+      'Projekt je shranjen v starejšem formatu. Najprej uskladi njegovo posodobitev.';
+
+  @override
+  String get sharingBlockUnrelatedContent =>
+      'Prostor vsebuje opravila ali dogodke, ki ne pripadajo temu projektu. Pred ločenim deljenjem preglej njihovo dodelitev.';
+
+  @override
+  String get sharingBlockAccount =>
+      'Finančni račun uporabljajo tudi zapisi zunaj projekta. Preglej njegove povezave v financah pred ločenim deljenjem.';
+
+  @override
+  String get sharingBlockPerson =>
+      'Oseba je povezana tudi z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane osebe in dodelitve.';
+
+  @override
+  String get sharingBlockRecurrence =>
+      'Ponavljajoče se finančno pravilo uporabljajo tudi zapisi zunaj projekta. Pred ločenim deljenjem preglej ponavljanja.';
+
+  @override
+  String get sharingBlockTransfer =>
+      'Finančni prenos povezuje projekt z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane račune in prenose.';
+
+  @override
+  String get sharingBlockLinkedPayment =>
+      'Povezano plačilo vključuje dodatne finančne evidence. Pred ločenim deljenjem preglej povezave plačil.';
+
+  @override
+  String get sharingBlockCollision =>
+      'Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje.';
 }

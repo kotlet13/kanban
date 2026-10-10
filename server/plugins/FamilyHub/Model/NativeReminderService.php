@@ -25,9 +25,10 @@ class NativeReminderService extends NativeDatabase
             }
             $id = $this->uuid($params['id']); $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);
             $row = $this->one('SELECT * FROM familyhub_reminders WHERE id=?', [$id]);
-            if ($row && ($row['account_id'] !== $user['account_id'] || $row['scope_id'] !== $scope)) { throw new NativeError('permission_revoked', 403); }
+            if ($row && $row['account_id'] !== $user['account_id']) { throw new NativeError('permission_revoked',403); }
             if ($row && $this->financialRecordType($row['target_type'])) { (new NativeFinanceAccess($this->container))->policy($scope, $user); }
             $replay = $this->replay($scope, $user['id'], $request, $hash); if ($replay) { return $replay['body']; }
+            if ($row && $row['scope_id'] !== $scope) { throw new NativeError('permission_revoked',403); }
             if (!is_int($params['expectedRevision']) || $params['expectedRevision'] !== (int)($row['revision'] ?? 0)) { throw new NativeError('reminder_conflict', 409); }
             if ($operation === 'reminders.cancel') {
                 if (!$row) { throw new NativeError('reminder_missing', 404); }

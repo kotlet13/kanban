@@ -157,8 +157,9 @@ abstract class NativeDatabase extends Base
     protected function scope($id, $userId, $write = false, $owner = false)
     {
         // Parent before child: leadership changes and project reads share lock order.
-        $parent = $this->one('SELECT organization_id FROM familyhub_scopes WHERE id=?', [$id]);
-        if (!empty($parent['organization_id'])) { $this->one('SELECT id FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(), [$parent['organization_id']]); }
+        $parent = $this->one('SELECT organization_id,parent_scope_id FROM familyhub_scopes WHERE id=?', [$id]);
+        $parentId=$parent['parent_scope_id']??$parent['organization_id']??null;
+        if ($parentId) { $this->one('SELECT id FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(), [$parentId]); }
         $scope = $this->one('SELECT * FROM familyhub_scopes WHERE id = ?'.$this->lockSuffix(), [$id]);
         $member = $scope ? $this->one('SELECT * FROM familyhub_members WHERE scope_id = ? AND user_id = ?', [$id, $userId]) : null;
         $account = $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id = ?', [$userId]);
@@ -166,7 +167,7 @@ abstract class NativeDatabase extends Base
         if (!$account) { throw new NativeError('permission_revoked',403); }
         $directRole=$member && $member['account_id']===$account['account_id'] && (int)$member['active']===1 ? $member['role'] : null;
         $scope=(new NativeOrganizationAccess($this->container))->decorate($scope,$account['account_id'],$directRole);
-        if (!$scope || ($write && $scope['role'] === 'viewer') || ($owner && $scope['role'] !== 'owner')) {
+        if (!$scope || ($write && $scope['role'] === 'viewer') || ($owner && $scope['role'] !== 'owner' && !((int)$scope['effective_access_policy_version']===3 && $scope['role']==='member'))) {
             throw new NativeError('permission_revoked', 403);
         }
         if ($write && (int)($scope['archived']??0)===1) { throw new NativeError('scope_archived',403); }
@@ -187,7 +188,7 @@ abstract class NativeDatabase extends Base
 
     protected function scopeWire(array $scope)
     {
-        return ['id' => $scope['id'], 'address'=>$scope['address']??null,'metadataRevision'=>(int)($scope['metadata_revision']??0), 'kind' => $scope['kind'], 'name' => $scope['name'], 'role' => $scope['role'], 'sequence' => (int)$scope['sequence'], 'archived'=>(int)($scope['archived']??0)===1, 'organizationId' => $scope['organization_id'] ?? null, 'projectRootId'=>$scope['project_root_id']??(!empty($scope['organization_id']) ? $scope['id'] : null), 'requiredRecordContractVersion' => (int)($scope['required_record_contract'] ?? 1), 'accessPolicyVersion'=>(int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1), 'accessRevision'=>(int)($scope['effective_access_revision']??$scope['access_revision']??0), 'organizationLeader'=>(bool)($scope['organization_leader']??false), 'accessSource'=>$scope['access_source']??'direct'];
+        return ['id' => $scope['id'], 'address'=>$scope['address']??null,'metadataRevision'=>(int)($scope['metadata_revision']??0), 'kind' => $scope['kind'], 'name' => $scope['name'], 'role' => $scope['role'], 'sequence' => (int)$scope['sequence'], 'archived'=>(int)($scope['archived']??0)===1, 'parentScopeId'=>$scope['parent_scope_id']??$scope['organization_id']??null, 'parentScopeKind'=>$scope['parent_scope_kind']??null, 'organizationId' => $scope['organization_id'] ?? null, 'projectRootId'=>$scope['project_root_id']??(!empty($scope['organization_id']) ? $scope['id'] : null), 'requiredRecordContractVersion' => (int)($scope['required_record_contract'] ?? 1), 'accessPolicyVersion'=>(int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1), 'accessRevision'=>(int)($scope['effective_access_revision']??$scope['access_revision']??0), 'organizationLeader'=>(bool)($scope['organization_leader']??false), 'accessSource'=>$scope['access_source']??'direct'];
     }
 
     protected function userWire(array $user)

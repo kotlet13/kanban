@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 14;
+const VERSION = 15;
 
 function version_1(PDO $pdo)
 {
@@ -87,4 +87,9 @@ function version_13(PDO $pdo)
 function version_14(PDO $pdo)
 {
     EmailInvitationSchema::create($pdo, false);
+}
+
+function version_15(PDO $pdo)
+{
+    SharingSchema::create($pdo, false);
 }

@@ -210,7 +210,7 @@ class CollaborationActions implements OrganizerCollectionActions {
         project == null ||
             project.id ==
                 (scope.projectRootId ??
-                    (scope.organizationId != null ? scope.id : null))
+                    (scope.parentSpaceId != null ? scope.id : null))
         ? null
         : () => controller.deleteProject(scope.id, project.id),
   );
@@ -245,7 +245,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       projects: data.projects,
       householdPeople: data.people,
       projectSelectionEnabled:
-          scope.projectRootId == null && scope.organizationId == null,
+          scope.projectRootId == null && scope.parentSpaceId == null,
       costEditingEnabled: canEditCost,
       costAccountRequired: true,
       financeAccounts: [
@@ -299,7 +299,7 @@ class CollaborationActions implements OrganizerCollectionActions {
             task?.projectId ??
             projectId ??
             scope.projectRootId ??
-            (scope.organizationId != null ? scope.id : null),
+            (scope.parentSpaceId != null ? scope.id : null),
         date: task?.dueAt,
         startAt: task?.startAt,
         endAt: task?.endAt,
@@ -450,7 +450,7 @@ class CollaborationActions implements OrganizerCollectionActions {
     kind: OrganizerEditorKind.event,
     projects: data.projects,
     projectSelectionEnabled:
-        scope.projectRootId == null && scope.organizationId == null,
+        scope.projectRootId == null && scope.parentSpaceId == null,
     people: people,
     assignmentEnabled: true,
     creatorLabel: _creator(event?.createdByAccountId),
@@ -460,7 +460,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       projectId:
           event?.projectId ??
           scope.projectRootId ??
-          (scope.organizationId != null ? scope.id : null),
+          (scope.parentSpaceId != null ? scope.id : null),
       date: event?.startAt ?? DateTime.now(),
       endAt: event?.endAt,
       assigneeIds: event?.assigneeAccountIds ?? const [],

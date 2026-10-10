@@ -19,3 +19,5 @@ try {
     }
     echo json_encode(['mailCounts'=>$fixture['operation']==='test.invitationMail'?$result:null, 'ok' => true, 'scopeId' => $result['scope']['id'] ?? null, 'accountId' => $result['user']['accountId'] ?? null], JSON_THROW_ON_ERROR).PHP_EOL;
 } catch (\Kanboard\Plugin\FamilyHub\Model\NativeError $error) { echo json_encode(['ok' => false, 'error' => $error->errorCode], JSON_THROW_ON_ERROR).PHP_EOL; }
+
+catch (\Throwable $error) { echo json_encode(['ok'=>false,'errorClass'=>get_class($error),'errorCode'=>(string)$error->getCode()],JSON_THROW_ON_ERROR).PHP_EOL; }

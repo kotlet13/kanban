@@ -22,6 +22,28 @@ class SharingMembersPage extends ConsumerStatefulWidget {
 }
 
 class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
+  String _memberAccessLabel(SharedMember member) {
+    final l = context.l10n;
+    final inherited =
+        member.accessSource == 'spaceMembership' ||
+        member.accessSources.contains('spaceMembership');
+    final direct =
+        member.accessSource == 'direct' ||
+        member.accessSources.contains('direct');
+    return [
+      if (inherited) l.sharingProjectMembersInherited,
+      if (inherited && direct) l.sharingAccessSourceProject,
+      if (!inherited && member.organizationLeader) l.organizationLeader,
+    ].join(' · ');
+  }
+
+  bool _canRemoveMember(SharedMember member) =>
+      widget.scope.canManage &&
+      member.role != SharedRole.owner &&
+      (member.accessSource == 'direct' ||
+          member.accessSources.contains('direct')) &&
+      (member.membershipScopeId == null ||
+          member.membershipScopeId == widget.scope.id);
   late final _guard = SharingSessionGuard(
     context,
     ref,
@@ -41,6 +63,8 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
             !scope.revoked &&
             !scope.blocked &&
             scope.role == widget.scope.role &&
+            scope.accessPolicyVersion == widget.scope.accessPolicyVersion &&
+            scope.accessRevision == widget.scope.accessRevision &&
             scope.archived == widget.scope.archived,
       );
 
@@ -93,7 +117,10 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   Future<void> _invite() async {
     final l = context.l10n;
     final state = ref.read(collaborationProvider).valueOrNull;
-    if (state?.emailInvitationsSupported != true) {
+    final unsupportedScope =
+        widget.scope.accessPolicyVersion == 3 &&
+        state?.scopedInvitationsSupported != true;
+    if (state?.emailInvitationsSupported != true || unsupportedScope) {
       await showDialog<void>(
         context: context,
         builder: (context) => SharingSessionBoundary(
@@ -101,7 +128,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
           visibleWhen: _scopeIsCurrent,
           child: AlertDialog(
             title: Text(l.emailInviteTitle),
-            content: Text(l.emailInviteUnsupported),
+            content: Text(
+              unsupportedScope
+                  ? l.sharingScopedUnsupported
+                  : l.emailInviteUnsupported,
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -113,13 +144,38 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       );
       return;
     }
+    final scoped = state!.scopedInvitationsSupported;
+    final targets = <SharedScope>[
+      widget.scope,
+      if (scoped && widget.scope.kind != SharedScopeKind.project)
+        ...state.scopes.where(
+          (scope) =>
+              scope.parentSpaceId == widget.scope.id &&
+              scope.kind == SharedScopeKind.project &&
+              scope.canManage &&
+              !scope.blocked &&
+              !scope.archived,
+        ),
+    ];
+    final initialTarget = widget.scope.id;
     String? recipient, requestId, submittedKey;
     await showSharingForm(
       context,
       title: l.emailInviteTitle,
-      description:
-          '${l.emailInviteDescription}${widget.scope.kind == SharedScopeKind.project && widget.scope.accessPolicyVersion >= 2 ? '\n\n${l.organizationProjectFinanceVisibility}' : ''}',
+      description: l.emailInviteDescription,
       fields: [
+        if (scoped)
+          SharingField(
+            id: 'scope',
+            label: l.sharingInviteScope,
+            initialValue: initialTarget,
+            readOnly: targets.length == 1,
+            options: {
+              for (final target in targets)
+                target.id:
+                    '${target.kind == SharedScopeKind.project ? l.sharingInviteProjectOnly : l.sharingInviteWholeSpace} · ${target.name}',
+            },
+          ),
         SharingField(
           id: 'recipient',
           label: l.accountEmail,
@@ -136,6 +192,42 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
           options: {'member': l.sharingMember, 'viewer': l.sharingViewer},
         ),
       ],
+      detailsBuilder: (values) {
+        final target = targets.firstWhere(
+          (s) => s.id == (values['scope'] ?? initialTarget),
+        );
+        final fullAccess = scoped && target.accessPolicyVersion == 3;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              fullAccess
+                  ? target.kind == SharedScopeKind.project
+                        ? l.sharingInviteProjectDescription
+                        : l.sharingInviteSpaceDescription
+                  : target.kind == SharedScopeKind.project
+                  ? l.sharingLegacyProjectDescription
+                  : l.sharingLegacySpaceDescription,
+            ),
+            if (fullAccess) ...[
+              const SizedBox(height: 12),
+              Text(
+                values['role'] == 'viewer'
+                    ? l.sharingViewerDescription
+                    : l.sharingMemberFullDescription,
+              ),
+            ],
+            if (scoped && !fullAccess) ...[
+              const SizedBox(height: 12),
+              Text(l.sharingScopeUpgradeRequired),
+            ],
+            if (!scoped) ...[
+              const SizedBox(height: 12),
+              Text(l.sharingScopedUnsupported),
+            ],
+          ],
+        );
+      },
       submitLabel: l.emailInviteSend,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: (form) => SharingSessionBoundary(
@@ -145,14 +237,39 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       ),
       onSubmit: (values) async {
         if (!_isCurrent) throw const CollaborationException('access_revoked');
+        final target = targets.firstWhere(
+          (s) => s.id == (values['scope'] ?? initialTarget),
+        );
+        final currentTarget = ref
+            .read(collaborationProvider)
+            .requireValue
+            .scopes
+            .where((s) => s.id == target.id)
+            .firstOrNull;
+        if (currentTarget == null ||
+            !currentTarget.canManage ||
+            currentTarget.blocked ||
+            currentTarget.archived ||
+            currentTarget.accessPolicyVersion != target.accessPolicyVersion ||
+            currentTarget.accessRevision != target.accessRevision) {
+          throw const CollaborationException('access_revoked');
+        }
+        if (scoped && target.accessPolicyVersion != 3) {
+          throw const CollaborationException('space_access_upgrade_required');
+        }
         final email = values['recipient']!.trim().toLowerCase();
-        final key = '${widget.scope.id}:$email:${values['role']}';
+        final key = '${target.id}:$email:${values['role']}:$scoped';
         if (key != submittedKey) {
           submittedKey = key;
           requestId = newSharedId();
         }
         await _guard.controller.createEmailInvitation(
-          scopeId: widget.scope.id,
+          scopeId: target.id,
+          accessScope: scoped
+              ? target.kind == SharedScopeKind.project
+                    ? 'project'
+                    : 'space'
+              : null,
           recipientEmail: email,
           requestId: requestId,
           role: SharedRole.values.byName(values['role']!),
@@ -197,11 +314,23 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   Future<void> _remove(SharedMember member) async {
+    final directProject =
+        widget.scope.kind == SharedScopeKind.project &&
+        widget.scope.accessPolicyVersion == 3;
     final confirmed = await confirmSharingAction(
       context,
-      title: context.l10n.sharingRemoveMember,
-      description: context.l10n.sharingRemoveMemberConfirm,
-      confirmLabel: context.l10n.sharingRemoveMember,
+      title: directProject
+          ? context.l10n.sharingRemoveProjectMembership
+          : context.l10n.sharingRemoveMember,
+      description:
+          widget.scope.kind == SharedScopeKind.project &&
+              widget.scope.parentSpaceId != null &&
+              widget.scope.accessPolicyVersion == 3
+          ? context.l10n.sharingProjectDirectRemoval
+          : context.l10n.sharingRemoveMemberConfirm,
+      confirmLabel: directProject
+          ? context.l10n.sharingRemoveProjectMembership
+          : context.l10n.sharingRemoveMember,
       wrap: (dialog) => SharingSessionBoundary(
         guard: _guard,
         visibleWhen: _scopeIsCurrent,
@@ -280,16 +409,21 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                         : member.displayName,
                   ),
                   subtitle: Text(
-                    '${member.username} · ${sharingRoleLabel(context, member.role)}${member.organizationLeader ? ' · ${l.organizationLeader}' : ''}',
+                    [
+                      member.username,
+                      sharingRoleLabel(context, member.role),
+                      if (_memberAccessLabel(member).isNotEmpty)
+                        _memberAccessLabel(member),
+                    ].join(' · '),
                   ),
-                  trailing:
-                      widget.scope.canManage && member.role != SharedRole.owner
+                  trailing: _canRemoveMember(member)
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (widget.scope.kind ==
                                     SharedScopeKind.organization &&
-                                widget.scope.accessPolicyVersion >= 2 &&
+                                widget.scope.accessPolicyVersion == 2 &&
+                                widget.scope.role == SharedRole.owner &&
                                 member.accountId.isNotEmpty)
                               IconButton(
                                 key: ValueKey(
@@ -306,7 +440,12 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                                 ),
                               ),
                             IconButton(
-                              tooltip: l.sharingRemoveMember,
+                              tooltip:
+                                  widget.scope.kind ==
+                                          SharedScopeKind.project &&
+                                      widget.scope.accessPolicyVersion == 3
+                                  ? l.sharingRemoveProjectMembership
+                                  : l.sharingRemoveMember,
                               onPressed: _busy ? null : () => _remove(member),
                               icon: const Icon(Icons.person_remove_outlined),
                             ),

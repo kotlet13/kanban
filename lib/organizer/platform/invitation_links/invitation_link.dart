@@ -23,15 +23,17 @@ class InvitationLink {
         uri.fragment.isNotEmpty ||
         !{2, 3}.contains(uri.queryParametersAll.length) ||
         (uri.queryParametersAll.length == 3 &&
-            uri.queryParameters['v'] != '2') ||
+            !{'2', '3'}.contains(uri.queryParameters['v'])) ||
         !uri.queryParametersAll.keys.toSet().containsAll({'server', 'token'}) ||
         uri.queryParametersAll.values.any((values) => values.length != 1)) {
       return null;
     }
     final token = uri.queryParameters['token']!,
         server = uri.queryParameters['server']!;
-    if (!RegExp(r'^fhi[12]_[a-f0-9]{64}$').hasMatch(token) ||
-        (token.startsWith('fhi2_') != (uri.queryParameters['v'] == '2')) ||
+    if (!RegExp(r'^fhi[123]_[a-f0-9]{64}$').hasMatch(token) ||
+        (token.startsWith('fhi1_')
+            ? uri.queryParameters.containsKey('v')
+            : uri.queryParameters['v'] != token.substring(3, 4)) ||
         server.length > 2048) {
       return null;
     }
@@ -78,7 +80,7 @@ class InvitationLink {
     queryParameters: {
       'server': serverUrl,
       'token': token,
-      if (token.startsWith('fhi2_')) 'v': '2',
+      if (!token.startsWith('fhi1_')) 'v': token.substring(3, 4),
     },
   );
 }

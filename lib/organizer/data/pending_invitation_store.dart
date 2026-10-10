@@ -28,7 +28,7 @@ class PendingInvitation {
   };
   factory PendingInvitation.fromJson(Map<String, dynamic> json) {
     final token = json['token'] as String;
-    if (!RegExp(r'^fhi[12]_[a-f0-9]{64}$').hasMatch(token)) {
+    if (!RegExp(r'^fhi[123]_[a-f0-9]{64}$').hasMatch(token)) {
       throw const FormatException();
     }
     return PendingInvitation(

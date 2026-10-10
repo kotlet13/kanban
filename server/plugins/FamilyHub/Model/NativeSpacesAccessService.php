@@ -7,14 +7,19 @@ class NativeSpacesAccessService extends NativeDatabase
 
     public function inTransaction($operation, $params, $user)
     {
+        if (($params['targetVersion']??2)===3) { return (new NativeSpaceSharingAccessService($this->container))->inTransaction($operation,$params,$user); }
         $optional = match ($operation) {
             'scopes.setLeader' => ['accountId', 'enabled', 'requestId'],
-            'scopes.accessMigrationApply' => ['previewHash', 'requestId'],
+            'scopes.accessMigrationApply' => ['previewHash', 'requestId','targetVersion'],
+            'scopes.accessMigrationPreview' => ['targetVersion'],
             default => [],
         };
         $this->fields($params, ['scopeId'], $optional);
         $id = $this->uuid($params['scopeId']);
         $scope = $this->scope($id, $user['id'], false, true);
+        if (isset($params['targetVersion']) && $params['targetVersion']!==2) { throw new NativeError('validation_error'); }
+        if ((int)$scope['access_policy_version']>=3) { throw new NativeError('client_upgrade_required',409); }
+        if ($scope['role']!=='owner') { throw new NativeError('permission_revoked',403); }
         if ($scope['kind'] !== 'organization') {
             throw new NativeError('validation_error');
         }

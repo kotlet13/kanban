@@ -14,7 +14,7 @@ class NativeAuthService extends NativeDatabase
         if ($operation === 'auth.enroll') { return (new NativeEnrollmentService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
         if (str_starts_with($operation, 'auth.reset.')) { return (new NativePasswordResetService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
         if ($operation === 'auth.login') { return $this->login($params); }
-        if ($operation === 'auth.registerInvitation2') { return (new NativeEmailInvitationService($this->container, $this->bearer, $this->ip))->register($params); }
+        if (in_array($operation,['auth.registerInvitation2','auth.registerInvitation3'],true)) { return (new NativeEmailInvitationService($this->container, $this->bearer, $this->ip))->register($params,$operation==='auth.registerInvitation3'?3:2); }
         if ($operation === 'auth.register') {
             return (new NativeInvitationService($this->container, $this->bearer, $this->ip))->register($params);
         }

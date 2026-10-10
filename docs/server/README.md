@@ -1,10 +1,10 @@
 # Lokalno okolje in strežniški temelj
 
-To je izvedena razvojna osnova, ne namestitev v produkcijo. Lasten vtičnik `FamilyHub` 0.7.0 / schema11 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul z ločenimi pravicami; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
+To je razvojna osnova, ne namestitev v produkcijo. Izvor vtičnika `FamilyHub` 0.11.0 / schema15 razširi Kanboard 1.2.54 brez sprememb jedra. Native API dodaja prijavo, TOTP, naprave, povabljeno registracijo, dodelitve/dogodke, trajni inbox, opomnike in finančni modul; ločeno ostaja stari razvojni JSON-RPC dokaz projektnih povabil. Nova [pogodba deljenja](space-sharing-api-contract.md) poveže polno članstvo prostora z vsemi njegovimi projekti in skupnimi financami, povabilo samo v projekt pa ohrani omejeno na ta projekt. Izvorne in namestitvene dokaze vodi [uskladitev deljenja](../SPACE_SHARING_ALIGNMENT.md). Tri Docker okolja imajo ločene vsebnike, omrežja in poimenovane nosilce. Objavljena spletna vrata so vezana izključno na `127.0.0.1`. Drugih obstoječih Docker storitev ne upravljajo.
 
 Za konkretno samostojno namestitev na gostovanju glej [cPanel postopek](CPANEL_SETUP.md): staging, sveža kopija, dejanske poti/razširitve, ohranitev obstoječe konfiguracije, ločeni croni in meje izbrisa. Vodič ni dokaz produkcijske namestitve.
 
-Aktualni record3/finance2 dodajata organizacije z izrecnimi projektnimi pravicami, profile brez prijave, faze/časovnik in par opravilo–strošek ter mesečna finančna pravila. [Pogodbe](native-api-contract.md), [finančna pogodba](collaboration-api-contract.md) in [zaključni dokazi](../UPGRADE_IMPLEMENTATION.md) ločijo lokalne preizkuse od namestitve. Nov schema11 je additiven; stare konfiguracije, identitete in izvirne operacije se ohranijo.
+Zapisi record3/4 in finance2 vključujejo projekte, vrtove, profile brez prijave, faze/časovnik, par opravilo–strošek ter mesečna finančna pravila. Linked-payment3 je ločena evidenca povezanih plačil. [Pogodbe](native-api-contract.md) in [finančna pogodba](collaboration-api-contract.md) ohranjajo različice teles ter identitete starih operacij. Schema15 je dodatna migracija; starih dovoljenj ne razširi brez lastnikovega predogleda in potrditve nove politike.
 
 ## Zagon in preverjanje
 

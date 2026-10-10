@@ -103,6 +103,8 @@ class SharedScope {
     required this.kind,
     required this.role,
     this.organizationId,
+    this.parentScopeId,
+    this.parentScopeKind,
     this.projectRootId,
     this.requiredRecordContractVersion = 1,
     this.accessPolicyVersion = 1,
@@ -119,7 +121,10 @@ class SharedScope {
   final String id;
   final String name;
   final SharedScopeKind kind;
-  final String? organizationId, projectRootId;
+  final String? organizationId, projectRootId, parentScopeId;
+  final SharedScopeKind? parentScopeKind;
+  String? get parentSpaceId => parentScopeId ?? organizationId;
+  bool get isOwner => role == SharedRole.owner;
   final int requiredRecordContractVersion, sequence;
   final int accessPolicyVersion, accessRevision;
   final bool organizationLeader;
@@ -132,12 +137,17 @@ class SharedScope {
   final bool blocked;
   bool get canEdit =>
       !revoked && !archived && !blocked && role != SharedRole.viewer;
-  bool get canManage => !revoked && role == SharedRole.owner;
+  bool get canManage =>
+      !revoked &&
+      !blocked &&
+      (isOwner || (accessPolicyVersion == 3 && role == SharedRole.member));
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
     'kind': kind.name,
     'organizationId': organizationId,
+    'parentScopeId': parentScopeId,
+    'parentScopeKind': parentScopeKind?.name,
     'projectRootId': projectRootId,
     'requiredRecordContractVersion': requiredRecordContractVersion,
     'accessPolicyVersion': accessPolicyVersion,
@@ -157,6 +167,12 @@ class SharedScope {
     name: readString(json, 'name'),
     kind: SharedScopeKind.values.byName(readString(json, 'kind')),
     organizationId: readNullableString(json, 'organizationId'),
+    parentScopeId: readNullableString(json, 'parentScopeId'),
+    parentScopeKind: json['parentScopeKind'] is String
+        ? SharedScopeKind.values.byName(json['parentScopeKind'] as String)
+        : (json['organizationId'] != null
+              ? SharedScopeKind.organization
+              : null),
     projectRootId: readNullableString(json, 'projectRootId'),
     requiredRecordContractVersion: json['requiredRecordContractVersion'] is int
         ? json['requiredRecordContractVersion'] as int
@@ -179,7 +195,9 @@ class SharedScope {
     archived: json['archived'] == true,
     role: SharedRole.values.byName(readString(json, 'role')),
     revoked: json['revoked'] == true,
-    blocked: json['blocked'] == true,
+    blocked:
+        json['blocked'] == true ||
+        !const [1, 2, 3].contains(json['accessPolicyVersion'] as int? ?? 1),
   );
 }
 
@@ -192,9 +210,16 @@ class SharedMember {
     required this.role,
     required this.active,
     this.organizationLeader = false,
+    this.accessSource = 'direct',
+    this.membershipScopeId,
+    this.inheritedFromScopeId,
+    this.accessSources = const [],
   });
   final int userId;
   final String accountId;
+  final String accessSource;
+  final String? membershipScopeId, inheritedFromScopeId;
+  final List<String> accessSources;
   final String username;
   final String displayName;
   final SharedRole role;
@@ -208,6 +233,10 @@ class SharedMember {
     'role': role.name,
     'active': active,
     'organizationLeader': organizationLeader,
+    'accessSource': accessSource,
+    'membershipScopeId': membershipScopeId,
+    'inheritedFromScopeId': inheritedFromScopeId,
+    'accessSources': accessSources,
   };
   factory SharedMember.fromJson(Map<String, dynamic> json) => SharedMember(
     userId: readInt(json, 'userId'),
@@ -217,6 +246,12 @@ class SharedMember {
     role: SharedRole.values.byName(readString(json, 'role')),
     active: readBool(json, 'active'),
     organizationLeader: json['organizationLeader'] == true,
+    accessSource: json['accessSource'] as String? ?? 'direct',
+    membershipScopeId: json['membershipScopeId'] as String?,
+    inheritedFromScopeId: json['inheritedFromScopeId'] as String?,
+    accessSources: List.unmodifiable(
+      (json['accessSources'] as List? ?? const []).cast<String>(),
+    ),
   );
 }
 
@@ -230,6 +265,7 @@ class SharedInvitation {
     this.token,
     this.recipientEmail,
     this.contractVersion = 1,
+    this.accessScope,
     this.deliveryQueued = false,
     this.acceptedAt,
     this.revokedAt,
@@ -243,8 +279,9 @@ class SharedInvitation {
   final DateTime? revokedAt;
   final String? token, recipientEmail;
   final int contractVersion;
+  final String? accessScope;
   final bool deliveryQueued;
-  bool get isEmailInvitation => contractVersion == 2;
+  bool get isEmailInvitation => const [2, 3].contains(contractVersion);
   factory SharedInvitation.fromJson(
     Map<String, dynamic> json, {
     String? token,
@@ -272,6 +309,7 @@ class SharedInvitation {
     token: token,
     recipientEmail: json['recipientEmail'] as String?,
     contractVersion: json['contractVersion'] as int? ?? 1,
+    accessScope: json['accessScope'] as String?,
     deliveryQueued: json['deliveryQueued'] == true,
   );
 }
@@ -289,6 +327,7 @@ class SharedInvitationPreview {
     this.inviterName = '',
     this.invitationId,
     this.contractVersion = 1,
+    this.accessScope,
     this.projectFinanceIncluded = false,
     this.requiresExplicitAcceptance = false,
   });
@@ -302,8 +341,9 @@ class SharedInvitationPreview {
   final String? recipientEmail, invitationId;
   final String inviterName;
   final int contractVersion;
+  final String? accessScope;
   final bool projectFinanceIncluded, requiresExplicitAcceptance;
-  bool get isEmailInvitation => contractVersion == 2;
+  bool get isEmailInvitation => const [2, 3].contains(contractVersion);
   bool get canRegister => registrationAllowed;
 }
 
@@ -402,6 +442,8 @@ class CollaborationState {
     this.externalPushSupported = false,
     this.smtpSupported = false,
     this.emailInvitationsSupported = false,
+    this.scopedInvitationsSupported = false,
+    this.spaceProjectMembershipSupported = false,
     Map<String, List<SharedMember>> members = const {},
     Map<String, SharedFinancePolicy> financePolicies = const {},
     Iterable<SharedInboxEntry> inbox = const [],
@@ -409,6 +451,7 @@ class CollaborationState {
         const {},
     Iterable<SharedScheduledReminder> scheduledReminders = const [],
     Iterable<SharedScope> scopes = const [],
+    Iterable<String> projectSharingPendingScopeIds = const [],
     Map<String, SharedScopeData> data = const {},
     Iterable<SharedConflict> conflicts = const [],
     this.pendingCount = 0,
@@ -429,6 +472,9 @@ class CollaborationState {
        notificationPreferences = Map.unmodifiable(notificationPreferences),
        scheduledReminders = List.unmodifiable(scheduledReminders),
        scopes = List.unmodifiable(scopes),
+       projectSharingPendingScopeIds = Set.unmodifiable(
+         projectSharingPendingScopeIds,
+       ),
        data = UnmodifiableMapView(data),
        conflicts = List.unmodifiable(conflicts);
   final Map<String, List<SharedMember>> members;
@@ -444,7 +490,9 @@ class CollaborationState {
   final Map<String, bool> financeSnapshotComplete;
   final bool emailVerificationSupported,
       resetSupported,
-      emailInvitationsSupported;
+      emailInvitationsSupported,
+      scopedInvitationsSupported,
+      spaceProjectMembershipSupported;
   final bool inboxSupported,
       financeSupported,
       externalPushSupported,
@@ -475,6 +523,7 @@ class CollaborationState {
   String personalRecordId(String serverRecordId) =>
       privateRecordIds[serverRecordId] ?? serverRecordId;
   final List<SharedScope> scopes;
+  final Set<String> projectSharingPendingScopeIds;
   final Map<String, SharedScopeData> data;
   final List<SharedConflict> conflicts;
   final int pendingCount;
