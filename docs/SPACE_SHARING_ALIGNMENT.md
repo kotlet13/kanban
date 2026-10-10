@@ -1,5 +1,11 @@
 # Deljenje celotnega prostora ali posameznega projekta
 
+**Poznejši izdajni korak:** commit/push 70f6113, testni FamilyHub 0.11.0/schema15,
+aktivna interna Android 1.3.0 (15) in podpisana Mac 1.3.0 (15) so preverjeni.
+[Dokazi izdaje](release/SPACE_SHARING_RELEASE.md) nadomestijo spodnje zgodovinsko
+stanje »lokalno«. Doma še uporablja staro politiko do lastnikovega predogleda in
+potrditve; fizično urejanje med napravama še sledi.
+
 ## Potrjena odločitev — 10. oktober 2026
 
 Uporabnik je po dejanskem sprejemu povabila v Doma popravil preozko razumevanje

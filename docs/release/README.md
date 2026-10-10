@@ -1,5 +1,10 @@
 # Priprava prve izdaje Jivie
 
+**Aktualno, 10. oktober:** interna Android **1.3.0 (15)** je aktivna za domači (15)
+od 20:07; testni strežnik je **FamilyHub 0.11.0/schema15**. Podpisana Mac 1.3.0 (15)
+je odprta z ohranjeno prijavo takndev/Doma. [Dokazi in naslednji preizkus](SPACE_SHARING_RELEASE.md).
+Spodnja stanja 1.2.0 in starejših izdaj so zgodovina.
+
 Za nadaljevanje uporabljamo [skupno izdajno checklisto](RELEASE_CHECKLIST.md): najprej Android, nato Apple, z ločenimi koraki priprave, nove gradnje, pregleda in javne objave. Nadaljnje izrecno naročilo je omogočilo interno Android 1.2.0+14; javna kandidatka, pregled in javna objava ostajajo ločeni.
 
 **Priprava javne Google Play predstavitve, 9. oktober 2026:** shranjeni so SL/EN opisi, ikona, predstavitveni grafiki, po šest zaslonov ter preverjene osnovne izjave. Predstavitev je pripravljena za pošiljanje v pregled, aplikacija še ni oddana. [Aktualno stanje in odprti koraki](GOOGLE_PLAY_PUBLIC_PREPARATION.md), [izvorni pregled deklaracij](GOOGLE_PLAY_DECLARATIONS.md) in [izvor slik](store-assets/README.md) imajo prednost pred zgodovinskimi osnutki spodaj. Priprava predstavitve je nastala ob 1.1.5+8; aktualna interna izdaja je navedena spodaj.

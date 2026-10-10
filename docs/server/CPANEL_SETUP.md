@@ -416,3 +416,58 @@ in posnetki `hosted-upgrade-verified.jpg`, `landing-without-token.jpg` ter
 `workers-resumed.jpg`.
 Pred aktivacijo je omogočen `abort-before-activation` za schema13; po začetku DDL
 velja isti previdni postopek `capture-recovery` kot pri prejšnji nadgradnji.
+
+## 16. Deljenje prostorov 10. oktobra — FamilyHub 0.11.0 / schema15
+
+Na izrecno naročilo je nadgrajen samo **jivie-test.triparna.si**. Produkcija ni
+spremenjena. [Izdajni dnevnik](../release/SPACE_SHARING_RELEASE.md) vodi tudi
+novo interno Android in lokalno Mac gradnjo; tu so dokazi gostovanja.
+
+Paket `FamilyHub-0.11.0-sharing-source-final.zip` vsebuje **80 datotek, 73 PHP**,
+SHA256 `d6f0b91c7fe539442ee6b0b84c017e14ee5fd23801aecc0a26f9b451f456288f`.
+Paket pomočnikov ima SHA256
+`c57d52150693d15792792f40abcb0947edcaddfa3553eda6afd357cee43ddac7`.
+Oddaljene kontrolne vsote se ujemajo. [Omejeni postopek in lokalni testi](SHARING_UPGRADE_HELPER.md)
+so preverjeni z **32 sintetičnimi, 28 dejanskimi MariaDB in 10 paketnimi kontrolami**.
+
+Zasebna delovna mapa je `/home/tripar13/private/jivie-test/upgrade-0.11.0` (0700).
+Pomočnik je ustavil samo pet testnih cronov in vključil vzdrževanje; zunanji HTTP
+ob18:04:34 UTC vrne503. Prezgodnji zajem je varovalo65 sekund pravilno zavrnilo.
+Po izteku in pregledu procesov je zajem držal READ zaklepe vseh InnoDB tabel.
+
+Nova kopija je prenesena zunaj Git/spletnih map v
+`~/.local/share/jivie/backups/sharing-20261010/` (0700, datoteke0600). SHA256
+arhiva je `8b30d2da14799e1365cb69f766d9ad8d0c4fcf8f95b73d3889a1aa1e186aeb4e`,
+SQL `00b2f6bf35154633d695e37a78b49e1a238ae96f11900806efc4ad82422762ea`.
+Dejanska obnova v novi **MariaDB10.11.19, network=none**, brez aplikacije/delavcev,
+potrdi **85 tabel, 204 vrstice in 1.335 zasebnih datotek** (vključno s prejšnjimi
+kopijami), vse hashe, račune/gesla/enrollment in identiteto. Izolirani vsebnik je
+nato ustavljen. Vrnjeni dokaz obnove ima SHA256
+`1f787bf4bee3cff808765bd32d7c7bfb100d9d638c09c49ef969dcf40a7e956b`.
+
+Aktivacija schema14→15 preveri vse stare stolpce vseh tabel, račune, gesla,
+enrollment in konfiguracijo. Novi parent kopira samo izvirni organization_id,
+stara povabila ohranijo pogodbo1 in access_scope=NULL, relocation tabela je prazna.
+**Politike1/2 ostanejo enake**; njihov prehod potrebuje lastnikov predogled v
+aplikaciji. Originalna cron in `.htaccess` sta bajtno povrnjena.
+
+Javni HTTPS vrne200, nespremenjen serverId
+`95c11fe0-916c-48be-a3f6-999732846266`, invitation `[1,2,3]`, spaceAccess `[3]`,
+organizationAccess `[1,2,3]`; finance `[1,2]` in linkedPayment `[3]` ostaneta.
+SMTP, obnova gesla in FCM `jivie-e928a` ostanejo vključeni; bootstrap in stara
+Kanboardova povabila izključeni. Pet veljavno oblikovanih zahtev brez prijave
+vrne **401/auth_required**: scopes.list, invitations3.pending/create ter predogleda
+prehoda politike in projektne izločitve. Računa/povabila/pošte nismo ustvarili.
+
+Bralni preverjevalnik potrdi vseh80 nameščenih datotek, konfiguracijo, originalni
+cron in .htaccess, račune/gesla/enrollment ter identiteto. Loči shranjeno popolno
+aktivacijsko primerjavo od trenutnega stanja po odprtju, ko so normalni zapisi
+spet dovoljeni; ob18:08:04 UTC se ujema84 od85 starih tabel, vključno z vsemi
+starimi stolpci obsegov in povabil. Minutni delavci imajo veljavne nove JSON
+statuse ob18:08:01 UTC, dovoljenja0600. Končni pregled ob 18:10:09 UTC potrdi tudi petminutni cleanup ob18:10:02 UTC ter vsehpet nadaljnjih zagonov z veljavnim JSON in0600.
+
+Neskrivni dokazi so v `build/qa/sharing-hosted/`: before/after-capabilities,
+maintenance, restore-evidence, unauthenticated-checks, hosted-proof in posnetki.
+Zasebni arhiv in podrobni restore-proof ostajata zunaj repozitorija. Nova Mac
+gradnja je dejansko ohranila prijavo takndev in članstvo Doma; fizično skupno
+urejanje na obeh napravah ter nova dostava obvestila še sledita.
