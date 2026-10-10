@@ -38,6 +38,7 @@ CollaborationState selection({String? id, bool all = false}) =>
       selectedSpaceId: id,
       allSpacesSelected: all,
       organizationsSupported: true,
+      emailInvitationsSupported: true,
     );
 
 Future<void> openSettings(WidgetTester tester, double width) async {
@@ -291,6 +292,10 @@ void main() {
       await tester.tap(invite);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('sharing-recipient')), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const ValueKey('sharing-recipient')),
+        'recipient@capture.invalid',
+      );
       await controller.selectSpace(organizationId);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('sharing-recipient')), findsNothing);
@@ -301,7 +306,12 @@ void main() {
             .id,
         organizationId,
       );
-      expect(controller.calls.where((call) => call == 'invite'), isEmpty);
+      expect(
+        controller.calls.where(
+          (call) => call == 'invite' || call.startsWith('emailInvite:'),
+        ),
+        isEmpty,
+      );
     },
   );
   testWidgets('archiving the space closes an already open invitation', (
@@ -319,10 +329,15 @@ void main() {
     await tester.tap(find.text('Povabi osebo'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('sharing-recipient')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('sharing-recipient')),
+      'recipient@capture.invalid',
+    );
     controller.replace(
       CollaborationState(
         session: sharingSession(),
         selectedSpaceId: sharingScopeId,
+        emailInvitationsSupported: true,
         scopes: [
           SharedScope(
             id: sharingScopeId,
@@ -338,7 +353,12 @@ void main() {
     expect(find.byKey(const ValueKey('sharing-recipient')), findsNothing);
     expect(find.text('Povabi osebo'), findsNothing);
     expect(find.byType(SharingMembersPage), findsOneWidget);
-    expect(controller.calls.where((call) => call == 'invite'), isEmpty);
+    expect(
+      controller.calls.where(
+        (call) => call == 'invite' || call.startsWith('emailInvite:'),
+      ),
+      isEmpty,
+    );
   });
 
   testWidgets(

@@ -13,6 +13,7 @@ import '../domain/shared_dates.dart';
 import 'collaboration_database.dart';
 import 'collaboration_transport.dart';
 import 'device_session_store.dart';
+import 'pending_invitation_store.dart';
 import 'remote_push_store.dart';
 import 'account_deletion_store.dart';
 import 'account_deletion_preview.dart';
@@ -28,6 +29,7 @@ part 'collaboration_linked_payments.dart';
 part 'collaboration_local_space_publication.dart';
 part 'collaboration_garden_actions.dart';
 part 'collaboration_account_actions.dart';
+part 'collaboration_email_invitations.dart';
 part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
 part 'collaboration_person_actions.dart';
@@ -56,6 +58,7 @@ class CollaborationRepository {
     this.pushStore,
     this.ownsDatabase = true,
     this.deletionStore = const SecureAccountDeletionStore(),
+    this.invitationStore = const SecurePendingInvitationStore(),
   }) : clock = clock ?? DateTime.now;
   final CollaborationDatabase database;
   final CollaborationTransport transport;
@@ -63,6 +66,7 @@ class CollaborationRepository {
   final RemotePushStore? pushStore;
   final bool ownsDatabase;
   final AccountDeletionStore deletionStore;
+  final PendingInvitationStore invitationStore;
   final DateTime Function() clock;
   final _events = StreamController<CollaborationState>.broadcast();
   Stream<CollaborationState> get changes => _events.stream;
@@ -90,6 +94,7 @@ class CollaborationRepository {
       _householdPeopleSupported = false,
       _projectArchivingSupported = false;
   bool _inboxSupported = false;
+  bool _emailInvitationsSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
@@ -98,9 +103,17 @@ class CollaborationRepository {
   String? _pushProjectId;
   bool _closed = false;
   bool _syncing = false;
+  int? _syncEpoch, _fullSyncEpoch;
+  DateTime? _lastSyncAttemptAt, _lastSuccessfulSyncAt;
   CollaborationException? _lastError;
   final _leaseOwner = newSharedId();
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
+
+  void _resetSyncEvidence() {
+    _lastSyncAttemptAt = null;
+    _lastSuccessfulSyncAt = null;
+    _fullSyncEpoch = null;
+  }
 
   Future<void> initialize() async {
     await database.rows('SELECT name FROM local_meta LIMIT 1');
@@ -167,6 +180,7 @@ class CollaborationRepository {
       }
       _session = null;
       final endedEpoch = ++_epoch;
+      _resetSyncEvidence();
       if (database.personalProfile?.partition == profile.partition) {
         database.activatePersonal(null);
       }
@@ -419,6 +433,7 @@ class CollaborationRepository {
         resetSupported: _passwordResetSupported,
         externalPushSupported: _externalPushSupported,
         smtpSupported: _smtpSupported,
+        emailInvitationsSupported: _emailInvitationsSupported,
         members: members,
         scopes: parsedScopes,
         data: data,
@@ -428,7 +443,10 @@ class CollaborationRepository {
         notificationPreferences: notificationPreferences,
         scheduledReminders: reminders,
         blockedCount: (blocked.first['count'] as int) + blockedCommands,
-        isSyncing: _syncing,
+        isSyncing:
+            (_syncing && _syncEpoch == _epoch) || _fullSyncEpoch == _epoch,
+        lastSyncAttemptAt: _lastSyncAttemptAt,
+        lastSuccessfulSyncAt: _lastSuccessfulSyncAt,
         lastError: _lastError,
         conflicts: conflicts.map(
           (r) => SharedConflict(

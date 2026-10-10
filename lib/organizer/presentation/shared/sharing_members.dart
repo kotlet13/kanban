@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
+import '../../data/collaboration_repository.dart' show newSharedId;
 import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
-import '../../platform/invitation_links/invitation_link.dart';
 
 class SharingMembersPage extends ConsumerStatefulWidget {
   const SharingMembersPage({
@@ -92,19 +91,44 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   Future<void> _invite() async {
-    final scopeId = widget.scope.id;
-    SharedInvitation? invitation;
     final l = context.l10n;
+    final state = ref.read(collaborationProvider).valueOrNull;
+    if (state?.emailInvitationsSupported != true) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => SharingSessionBoundary(
+          guard: _guard,
+          visibleWhen: _scopeIsCurrent,
+          child: AlertDialog(
+            title: Text(l.emailInviteTitle),
+            content: Text(l.emailInviteUnsupported),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l.close),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+    String? recipient, requestId, submittedKey;
     await showSharingForm(
       context,
-      title: l.sharingInvitePerson,
+      title: l.emailInviteTitle,
       description:
-          widget.scope.kind == SharedScopeKind.project &&
-              widget.scope.accessPolicyVersion >= 2
-          ? l.organizationProjectFinanceVisibility
-          : null,
+          '${l.emailInviteDescription}${widget.scope.kind == SharedScopeKind.project && widget.scope.accessPolicyVersion >= 2 ? '\n\n${l.organizationProjectFinanceVisibility}' : ''}',
       fields: [
-        SharingField(id: 'recipient', label: l.username),
+        SharingField(
+          id: 'recipient',
+          label: l.accountEmail,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value, _) =>
+              RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value.trim())
+              ? null
+              : l.emailInviteInvalidEmail,
+        ),
         SharingField(
           id: 'role',
           label: l.sharingRole,
@@ -112,7 +136,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
           options: {'member': l.sharingMember, 'viewer': l.sharingViewer},
         ),
       ],
-      submitLabel: l.sharingCreateInvite,
+      submitLabel: l.emailInviteSend,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: (form) => SharingSessionBoundary(
         guard: _guard,
@@ -121,110 +145,27 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       ),
       onSubmit: (values) async {
         if (!_isCurrent) throw const CollaborationException('access_revoked');
-        invitation = await _guard.controller.createInvitation(
-          scopeId: scopeId,
-          recipientUsername: values['recipient']!.trim(),
+        final email = values['recipient']!.trim().toLowerCase();
+        final key = '${widget.scope.id}:$email:${values['role']}';
+        if (key != submittedKey) {
+          submittedKey = key;
+          requestId = newSharedId();
+        }
+        await _guard.controller.createEmailInvitation(
+          scopeId: widget.scope.id,
+          recipientEmail: email,
+          requestId: requestId,
           role: SharedRole.values.byName(values['role']!),
+          language: Localizations.localeOf(context).languageCode,
         );
+        recipient = values['recipient']!.trim();
       },
     );
-    if (!mounted || !_isCurrent || invitation == null) return;
-    final created = invitation!;
-    if (created.token != null) {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => SharingSessionBoundary(
-          guard: _guard,
-          visibleWhen: _scopeIsCurrent,
-          child: AlertDialog(
-            title: Text(l.sharingInvitation),
-            content: SizedBox(
-              width: 440,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${widget.scope.name} · ${created.recipientUsername}'),
-                    const SizedBox(height: 12),
-                    Text(l.sharingInviteCodeOnce),
-                    const SizedBox(height: 16),
-                    SelectableText(
-                      created.token!,
-                      key: const ValueKey('sharing-created-token'),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${l.sharingExpires} ${organizerDate(context, created.expiresAt)}',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              if (Uri.parse(widget.session.serverUrl).scheme == 'https')
-                TextButton.icon(
-                  onPressed: () async {
-                    try {
-                      await Clipboard.setData(
-                        ClipboardData(
-                          text: InvitationLink(
-                            serverUrl: widget.session.serverUrl,
-                            token: created.token!,
-                          ).toUri().toString(),
-                        ),
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l.sharingInviteCopied)),
-                        );
-                      }
-                    } catch (_) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l.sharingOperationFailed)),
-                        );
-                      }
-                    }
-                  },
-                  icon: const Icon(Icons.link),
-                  label: Text(l.inviteCopyLink),
-                ),
-              TextButton.icon(
-                onPressed: () async {
-                  try {
-                    await Clipboard.setData(
-                      ClipboardData(text: created.token!),
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l.sharingInviteCopied)),
-                      );
-                    }
-                  } catch (error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(sharingErrorMessage(context, error)),
-                        ),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.copy, size: 18),
-                label: Text(l.sharingCopyInvite),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l.close),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    if (mounted && _isCurrent) _refresh();
+    if (!mounted || !_isCurrent || recipient == null) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l.emailInviteQueued(recipient!))));
+    _refresh();
   }
 
   Future<void> _leader(SharedMember member) async {
@@ -385,7 +326,9 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
               for (final invitation in invitations)
                 Card(
                   child: ListTile(
-                    title: Text(invitation.recipientUsername),
+                    title: Text(
+                      invitation.recipientEmail ?? invitation.recipientUsername,
+                    ),
                     subtitle: Text(
                       '${sharingRoleLabel(context, invitation.role)} · ${invitation.acceptedAt != null
                           ? l.sharingAccepted

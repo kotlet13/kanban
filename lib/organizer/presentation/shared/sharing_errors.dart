@@ -10,6 +10,15 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'password_too_short' => l.accountPasswordTooShort,
+    'username_unavailable' => l.emailInviteUsernameUnavailable,
+    'email_invitations_unavailable' ||
+    'email_invitations_unsupported' ||
+    'invitation_email_unavailable' => l.emailInviteUnsupported,
+    'invitation_authentication_required' => l.emailInviteExistingAccount,
+    'invitation_identity_mismatch' ||
+    'invitation_recipient_mismatch' ||
+    'invitation_email_verification_required' => l.emailInviteWrongAccount,
     'space_bound_to_other_account' => l.localSpaceConnectionOtherAccount,
     'additional_personal_sync_unsupported' ||
     'garden_sync_unsupported' ||
@@ -39,6 +48,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'enrollment_unavailable' => l.accountEnrollmentUnavailable,
     'two_factor_required' => l.sharingLoginNeedsOtp,
     'invalid_credentials' => l.sharingInvalidCredentials,
+    'invitation_invalid' ||
     'invalid_invitation' ||
     'invitation_expired' ||
     'invitation_used' ||

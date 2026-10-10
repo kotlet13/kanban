@@ -13,6 +13,7 @@ import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/state/organizer_provider.dart';
 import 'package:kanban/organizer/presentation/shared/sharing_status.dart';
+import 'package:kanban/organizer/presentation/shared/sharing_conflicts.dart';
 
 import 'organizer_ui_test.dart' as personal;
 import 'sharing_ui_fixture.dart';
@@ -46,6 +47,9 @@ Future<void> pumpSharing(
           () async => storage ?? personal.MemoryOrganizerStorage(),
         ),
         collaborationProvider.overrideWith(() => controller),
+        securePendingInvitationProvider.overrideWith(
+          (ref) async => controller.savedInvitation,
+        ),
       ],
       child: const KanbanApp(),
     ),
@@ -137,13 +141,58 @@ void main() {
               findsNWidgets(width >= 900 ? 2 : 1),
             );
             expect(find.text('Mleko za skupno gospodinjstvo'), findsOneWidget);
+            final indicators = find.byType(SharingStatus);
+            for (var i = 0; i < indicators.evaluate().length; i++) {
+              expect(tester.getSize(indicators.at(i)), const Size(88, 48));
+            }
+            final cloud = find.byKey(
+              const ValueKey('sharing-sync-status-cloud'),
+            );
+            expect(cloud, findsOneWidget);
             expect(
-              tester.getSize(find.byType(SharingStatus)).height,
-              lessThanOrEqualTo(64),
+              tester.widget<IconButton>(cloud.first).tooltip,
+              startsWith(
+                locale == 'sl'
+                    ? 'Podrobnosti sinhronizacije:'
+                    : 'Synchronization details:',
+              ),
             );
             expect(
-              find.byTooltip(locale == 'sl' ? 'Uskladi zdaj' : 'Sync now'),
+              find.text(
+                locale == 'sl' ? 'Ni čakajočih sprememb' : 'No pending changes',
+              ),
+              findsNothing,
+            );
+            final contentBefore = tester.getRect(
+              find.text('Mleko za skupno gospodinjstvo'),
+            );
+            await tester.ensureVisible(cloud.first);
+            await tester.tap(cloud.first);
+            await tester.pumpAndSettle();
+            expect(
+              find.text(
+                locale == 'sl' ? 'Čakajoče spremembe: 0' : 'Pending changes: 0',
+              ),
               findsOneWidget,
+            );
+            expect(
+              tester
+                  .widget<TextButton>(
+                    find.byKey(const ValueKey('sharing-sync-dialog-refresh')),
+                  )
+                  .onPressed,
+              isNotNull,
+            );
+            await tester.tap(
+              find.widgetWithText(
+                TextButton,
+                locale == 'sl' ? 'Zapri' : 'Close',
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(
+              tester.getRect(find.text('Mleko za skupno gospodinjstvo')),
+              contentBefore,
             );
             expect(tester.takeException(), isNull);
             await openAccount(tester, width: width, locale: locale);
@@ -241,7 +290,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.calls, contains('item:Kruh'));
       expect(find.text('Kruh'), findsOneWidget);
-      expect(find.text('1 · Čaka na uskladitev'), findsOneWidget);
+      expect(find.text('1 · Čaka na uskladitev'), findsNothing);
+      await tapSharing(tester, 'sharing-sync-status-cloud');
+      expect(find.text('Čakajoče spremembe: 1'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Zapri'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byType(Checkbox).first);
       await tester.pumpAndSettle();
       expect(controller.calls, contains('check:true'));
@@ -320,7 +373,7 @@ void main() {
       await tester.ensureVisible(find.text('Povabi osebo'));
       await tester.tap(find.text('Povabi osebo'));
       await tester.pumpAndSettle();
-      await enterSharing(tester, 'recipient', 'second');
+      await enterSharing(tester, 'recipient', 'recipient@example.test');
       controller.switchAccount();
       await tester.pumpAndSettle();
       expect(find.text('Member Alpha'), findsNothing);
@@ -367,16 +420,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('account switch closes one-time token display', (tester) async {
+  testWidgets('email invitation queues without exposing bearer token', (
+    tester,
+  ) async {
     final controller = SharingUiController();
     await pumpSharing(tester, controller);
     await openMembers(tester);
     await tester.ensureVisible(find.text('Povabi osebo'));
     await tester.tap(find.text('Povabi osebo'));
     await tester.pumpAndSettle();
-    await enterSharing(tester, 'recipient', 'second');
+    await enterSharing(tester, 'recipient', 'recipient@example.test');
     await tapSharing(tester, 'sharing-submit');
-    expect(find.text('synthetic-invitation-token'), findsOneWidget);
+    expect(find.text('synthetic-invitation-token'), findsNothing);
+    expect(controller.calls, contains('emailInvite:recipient@example.test'));
+    expect(
+      find.textContaining('je pripravljeno za pošiljanje'),
+      findsOneWidget,
+    );
     controller.switchAccount();
     await tester.pumpAndSettle();
     expect(find.text('synthetic-invitation-token'), findsNothing);
@@ -414,7 +474,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Mleko za skupno gospodinjstvo'), findsNothing);
+      expect(find.text('Shrani moje neusklajene spremembe'), findsNothing);
+      await tapSharing(tester, 'sharing-sync-status-cloud');
       expect(find.text('Shrani moje neusklajene spremembe'), findsWidgets);
+      expect(find.text('Mleko za skupno gospodinjstvo'), findsNothing);
       expect(
         controller.calls.where((call) => call.startsWith('check:')),
         isEmpty,
@@ -444,7 +507,8 @@ void main() {
       );
       await pumpSharing(tester, controller, width: 320);
       await openSharedShopping(tester, width: 320);
-      await tester.tap(find.text('Preglej spremembe (1)'));
+      await tapSharing(tester, 'sharing-sync-status-cloud');
+      await tester.tap(find.widgetWithText(TextButton, 'Preglej spremembe'));
       await tester.pumpAndSettle();
       expect(find.text('Moje mleko'), findsOneWidget);
       expect(find.text('Drugo mleko'), findsOneWidget);
@@ -454,7 +518,13 @@ void main() {
       expect(controller.calls, contains('resolve:true'));
       controller.switchAccount();
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(SharingConflictsPage), findsNothing);
+      expect(find.text('Moje mleko'), findsNothing);
+      expect(find.text('Drugo mleko'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('sharing-sync-dialog-refresh')),
+        findsNothing,
+      );
       expect(tester.takeException(), isNull);
     },
   );

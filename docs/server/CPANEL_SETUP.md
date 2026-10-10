@@ -338,3 +338,81 @@ Neskrivni dokazi so v `build/qa/spaces-hosted/`: `helper-handoff.json`, `restore
 ### Povrnitev
 
 Pred aktivacijo je podprt `abort-before-activation`, ki ob nespremenjeni stari kodi/schema11/konfiguraciji obnovi le lastno vzdrževanje in originalni cron, brez brisanja ali obnove podatkov. Po začetku DDL ni samodejne povrnitve kode/SQL: `capture-recovery` pod vzdrževanjem ohrani trenutno stanje, za popravilo pa je treba upoštevati vse poznejše zapise in izbrise računov. Po odprtju sistema stare baze nikoli ne obnavljaj slepo čez nove podatke. Odstranitev vtičnika ne povrne sheme.
+
+## 15. E-poštna povabila 10. oktobra — FamilyHub 0.10.0 / schema14
+
+Na uporabnikovo naročilo novega toka povabil je nadgrajen samo **jivie-test.triparna.si**.
+Produkcijska naslova nista spremenjena. Obstoječi računi, gesla, seje, podatki in
+SMTP/FCM nastavitve so ohranjeni. Registracija prek novega e-poštnega povabila ne
+ustvari članstva; sledi ločeni sprejem v aplikaciji. [Pogodba](email-invitation-api-contract.md)
+in [izvedbeni dnevnik](../EMAIL_INVITATIONS.md) ločita izvor od fizičnega preizkusa.
+
+### Paket in priprava
+
+Pregledani `FamilyHub-0.10.0-email-source-final.zip` vsebuje **76 datotek, od tega
+70 PHP**. SHA256 je `5f85e5b6c6716b4eb1baaeecf9602cab8c1dd9f83f7eeb592714cfc9e4ed032e`.
+Novi [PHP pomočnik](../../server/scripts/upgrade-cpanel-jivie-email.php) in
+[shell ovoj](../../server/scripts/upgrade-cpanel-jivie-email.sh) sta omejena na
+testni naslov in schema13→14. Paket pomočnika ima SHA256
+`f3e456769a2072be7bc3bbbae91fe1e461fcf4d9e977fb2ca220788bdacc89d0`.
+Kontrolne vsote prenesenih paketov so se ujemale z lokalnimi. **32 kontrol pomočnika
+in 21 dejanskih MariaDB kontrol PASS**; preverjeni so tudi PHP lint, shell sintaksa
+in 10 testov omejenega pakiranja.
+
+Delovna mapa `/home/tripar13/private/jivie-test/upgrade-0.10.0` ima 0700.
+Pomočnik je ustavil istih pet testnih cronov in vključil vzdrževanje; zunanji HTTPS
+klic je ob 07:24:14 UTC potrdil 503. Prvi poskus zajema pred iztekom 65 sekund je
+bil pravilno zavrnjen. Po izteku roka in pregledu delavcev je zajem držal READ
+zaklepe vseh InnoDB tabel. Celotna kopija vključuje SQL, zasebne datoteke, prejšnji
+vtičnik, konfiguracijo ter originalni cron in `.htaccess`.
+
+### Preverjena dejanska obnova
+
+Arhiv je prenesen v zasebno lokalno mapo
+`~/.local/share/jivie/backups/email-invitations-20261010/` (0700; datoteke 0600),
+zunaj Git in spletnih map. SHA256 arhiva je
+`08f9b0cc27d79d5f9413dbc0000896fa7cd01efbcd9b85746a47a0038d56f7bc`, SQL pa
+`03fbdfed4567e75f6c044e247b1597cd8e15629ea1e146ae0847796816f6f39a`.
+
+[Preverjevalnik](../../server/scripts/verify-cpanel-jivie-backup.py) je v sveži
+**MariaDB 10.11.19, network=none, brez objavljenih vrat** obnovil in primerjal
+**84 tabel, 169 vrstic in 583 zasebnih datotek**, vključno z zgodovinskimi kopijami.
+Štetje vrstic izvzame samo različico sheme FamilyHub; primerjani so tudi računi,
+gesla, enrollment in identiteta. Aplikacija in poštni delavci v obnovi niso tekli;
+izolirani vsebnik je po preverjanju ustavljen. Dokaz obnove je bil vrnjen v zasebno
+strežniško mapo in preverjen pred aktivacijo.
+
+### Aktivacija in rezultat
+
+Migracija doda `recipient_email` in `recipient_account_id` kot nullable koloni
+ter prazno tabelo `familyhub_invitation_mail`. Pred ponovnim odprtjem so primerjani
+vsi stari stolpci vseh tabel, gesla, računi, enrollment in konfiguracija. Stara
+povabila ostanejo nespremenjena. Originalni cron in `.htaccess` sta bajtno obnovljena.
+
+Zunanji HTTPS API vrne 200, isti
+`serverId=95c11fe0-916c-48be-a3f6-999732846266`,
+`invitationContractVersions:[1,2]` in `features.emailInvitations:true`.
+Štirje veljavno oblikovani klici brez prijave (`invitations2.create`, `.pending`,
+`.accept`, `scopes.list`) vrnejo **401/auth_required**; niso ustvarili povabila ali
+poslali pošte. Prazno telo ustvarjanja najprej vrne 422/validation_error, zato ni
+uporabljeno kot dokaz avtorizacije.
+
+Bralni pregled ob **07:29:01 UTC** potrdi schema14, natančno vseh 76 datotek,
+iste konfiguracijske hashe, gesla/račune ter originalni cron in `.htaccess`.
+Minutni delavci reminders, account-mail, delivery in push imajo nov veljaven status
+od 07:29:01 UTC, 0600. Poznejši zajem `workers-resumed.jpg` potrdi tudi petminutni
+cleanup ob 07:30:01 UTC in nadaljnje minutne zagone ob 07:31:01 UTC.
+Obstoječi `account-mail.php` pošilja tudi nova povabila; nov cron ali ključ ni dodan.
+
+Javna stran `InvitationController` je preverjena prek HTTPS in v brskalniku.
+Ob odsotni kodi ne ponudi aktivnih gumbov; skrivnost veljavne povezave je v fragmentu.
+Resnična dostava v uporabnikov predal, odpiranje povezave na Macu ter eksplicitni
+sprejem z drugim računom še potrebujejo fizični preizkus. Nova Android izdaja ni
+bila oddana; obstoječa 1.2.0 (14) ostane združljiva s starimi povabili.
+
+Neskrivni dokazi so v `build/qa/email-invitations-hosted/`: zajema capabilities,
+vzdrževanje, dokaz obnove, preverjanje neprijavljenih zahtev, `hosted-proof.json`
+in posnetki `hosted-upgrade-verified.jpg`, `landing-without-token.jpg` ter
+`workers-resumed.jpg`.
+Pred aktivacijo je omogočen `abort-before-activation` za schema13; po začetku DDL
+velja isti previdni postopek `capture-recovery` kot pri prejšnji nadgradnji.

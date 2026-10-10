@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
-import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
+import 'sharing_invitation_details.dart';
 
 Future<void> showAcceptSharingInvite(
   BuildContext context,
@@ -37,6 +37,11 @@ Future<void> showAcceptSharingInvite(
     wrap: (form) => SharingSessionBoundary(guard: guard, child: form),
     onSubmit: (values) async {
       token = values['token']!.trim();
+      await guard.controller.rememberInvitation(
+        serverUrl: session.serverUrl,
+        token: token!,
+        allowLocalHttp: session.allowLocalHttp,
+      );
       preview = await guard.controller.previewInvitation(
         serverUrl: session.serverUrl,
         token: token!,
@@ -55,14 +60,15 @@ Future<void> showAcceptSharingInvite(
   await showSharingForm(
     context,
     title: l.sharingAcceptInvite,
-    description:
-        '${invitation.scopeName}\n${invitation.recipientUsername} · ${sharingRoleLabel(context, invitation.role)}\n${l.sharingExpires} ${organizerDate(context, invitation.expiresAt)}',
+    leading: SharingInvitationDetails(invitation: invitation),
     fields: const [],
     submitLabel: l.sharingAcceptInvite,
     errorMessage: (error) => sharingErrorMessage(context, error),
     wrap: (form) => SharingSessionBoundary(guard: guard, child: form),
     onSubmit: (_) async {
       await guard.controller.acceptInvitation(token!);
+      if (!guard.isCurrent) return;
+      await guard.controller.selectSpace(invitation.scopeId);
       accepted = true;
     },
   );

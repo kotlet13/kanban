@@ -21,14 +21,17 @@ class InvitationLink {
         uri.userInfo.isNotEmpty ||
         uri.hasPort ||
         uri.fragment.isNotEmpty ||
-        uri.queryParametersAll.length != 2 ||
+        !{2, 3}.contains(uri.queryParametersAll.length) ||
+        (uri.queryParametersAll.length == 3 &&
+            uri.queryParameters['v'] != '2') ||
         !uri.queryParametersAll.keys.toSet().containsAll({'server', 'token'}) ||
         uri.queryParametersAll.values.any((values) => values.length != 1)) {
       return null;
     }
     final token = uri.queryParameters['token']!,
         server = uri.queryParameters['server']!;
-    if (!RegExp(r'^fhi1_[a-f0-9]{64}$').hasMatch(token) ||
+    if (!RegExp(r'^fhi[12]_[a-f0-9]{64}$').hasMatch(token) ||
+        (token.startsWith('fhi2_') != (uri.queryParameters['v'] == '2')) ||
         server.length > 2048) {
       return null;
     }
@@ -72,6 +75,10 @@ class InvitationLink {
   Uri toUri() => Uri(
     scheme: 'jivie',
     host: 'invite',
-    queryParameters: {'server': serverUrl, 'token': token},
+    queryParameters: {
+      'server': serverUrl,
+      'token': token,
+      if (token.startsWith('fhi2_')) 'v': '2',
+    },
   );
 }

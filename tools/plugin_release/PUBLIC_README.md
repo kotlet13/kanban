@@ -1,6 +1,12 @@
 # FamilyHub for Jivie
 
-FamilyHub **0.9.0 / schema 13** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+FamilyHub **0.10.0 / schema 14** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+
+## Email invitations
+
+Version 0.10.0 adds invitations addressed to a verified email identity. The owner enters an email and role; the encrypted account-mail worker sends an expiring invitation link. New recipients choose their own username and password, existing users sign in, and both explicitly accept the invitation before obtaining membership. Registration itself grants no access to the invited space. The sender never receives the registration token or an account-existence result. Legacy username invitations remain available through the original contract. See [docs/email-invitation-api-contract.md](docs/email-invitation-api-contract.md) for compatibility, limits and identity checks.
+
+Email invitations require the existing account-mail encryption key and SMTP configuration, plus an administrator-configured HTTPS Kanboard application URL (or `FAMILYHUB_PUBLIC_URL`). Do not derive this address from an untrusted request header. The existing `cli/account-mail.php` worker also processes invitation messages; no additional cron is necessary. Enqueueing and SMTP acceptance do not prove delivery to the recipient's inbox. Links open a read-only landing page with an app link and code-copy fallback; opening a link never accepts membership.
 
 ## Spaces policy and gardens
 

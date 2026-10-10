@@ -1993,5 +1993,81 @@
   },
   "spaceFinanceIntro": "Prihodki, odhodki in načrtovani stroški.",
   "spaceLocalShort": "Lokalno",
-  "spaceConnectedShort": "Povezano"
+  "spaceConnectedShort": "Povezano",
+  "emailInviteTitle": "Povabi po e-pošti",
+  "emailInviteDescription": "Oseba prejme povezavo in kodo za povabilo. Račun lahko ustvari pozneje; članstvo potrdi sama.",
+  "emailInviteSend": "Pošlji povabilo",
+  "emailInviteQueued": "Povabilo za {email} je pripravljeno za pošiljanje.",
+  "@emailInviteQueued": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteQueuedShort": "E-pošta čaka na pošiljanje",
+  "emailInviteUnsupported": "Ta strežnik še ne podpira povabil po e-pošti. Skrbnik mora nadgraditi FamilyHub in nastaviti e-pošto. Stara povabila s kodo lahko še vedno sprejmeš.",
+  "emailInviteInvalidEmail": "Vpiši veljaven e-poštni naslov.",
+  "emailInvitePendingTitle": "Povabilo čaka na tvojo odločitev",
+  "emailInviteFrom": "Povabil/a te je {name}",
+  "@emailInviteFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteFor": "Povabilo za {email}",
+  "@emailInviteFor": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteExplicit": "Prijava ali ustvarjanje računa še ne pomeni članstva. Prostor odpreš po izrecnem sprejemu povabila.",
+  "emailInviteSignIn": "Najprej se prijavi ali ustvari račun. Povabilo ostane shranjeno.",
+  "emailInviteExistingAccount": "Za ta e-poštni naslov račun že obstaja. Prijavi se v obstoječi račun; povabilo bo ostalo shranjeno.",
+  "emailInviteWrongAccount": "Povabilo je namenjeno drugemu e-poštnemu naslovu. Prijavi se v pravi račun ali najprej potrdi njegov e-poštni naslov.",
+  "emailInviteDismiss": "Odstrani shranjeno povabilo",
+  "emailInviteAccepted": "Povabilo je sprejeto. Prostor je odprt.",
+  "accountSignedIn": "Prijavljen/a si kot {username}.",
+  "@accountSignedIn": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteCreateAccount": "Ustvari račun",
+  "emailInviteHaveAccount": "Že imam račun",
+  "accountCreatedInvitationSignInRequired": "Račun {username} je ustvarjen. Prijavi se, nato sprejmi shranjeno povabilo.",
+  "@accountCreatedInvitationSignInRequired": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteUsernameUnavailable": "To uporabniško ime je že zasedeno. Izberi drugo ime ali se prijavi v svoj račun.",
+  "accountPasswordTooShort": "Geslo mora imeti vsaj 12 znakov.",
+  "syncStatusTitle": "Sinhronizacija",
+  "syncStatusDetails": "Podrobnosti sinhronizacije",
+  "syncStatusSynced": "Usklajeno",
+  "syncStatusUnknown": "Uskladitev še ni potrjena",
+  "syncStatusPending": "Spremembe čakajo na uskladitev",
+  "syncStatusOffline": "Strežnik ni dosegljiv",
+  "syncStatusProblem": "Sinhronizacija potrebuje tvojo pozornost",
+  "syncStatusDeviceOnly": "Lokalno na tej napravi",
+  "syncStatusLastSuccess": "Zadnja uspešna uskladitev",
+  "syncStatusLastAttempt": "Zadnji poskus",
+  "syncStatusNeverAttempted": "Poskus še ni zabeležen",
+  "syncStatusNotConfirmed": "Še ni potrjena",
+  "syncStatusLastError": "Napaka",
+  "syncStatusPendingCount": "Čakajoče spremembe",
+  "syncStatusConflictsCount": "Sporne spremembe",
+  "syncStatusBlockedCount": "Zadržane spremembe",
+  "syncStatusAccountScope": "Status, časi in število sprememb veljajo za ta račun in vse njegove prostore.",
+  "syncStatusLocalScope": "Status velja za lokalno delo na tej napravi.",
+  "syncStatusServerChanged": "Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti."
 }

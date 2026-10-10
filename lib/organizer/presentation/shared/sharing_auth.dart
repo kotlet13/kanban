@@ -94,6 +94,11 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
       _error = null;
     });
     try {
+      await controller.rememberInvitation(
+        serverUrl: _server.text.trim(),
+        token: _token.text.trim(),
+        allowLocalHttp: _allowLocalHttp,
+      );
       final preview = await controller.previewInvitation(
         serverUrl: _server.text.trim(),
         token: _token.text.trim(),
@@ -102,13 +107,19 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
       if (mounted) {
         setState(() {
           _preview = preview;
-          _username.text = preview.recipientUsername;
+          if (!preview.isEmailInvitation) {
+            _username.text = preview.recipientUsername;
+          }
           _register = preview.canRegister;
         });
       }
     } catch (error) {
       if (mounted) {
         setState(() {
+          if (error is CollaborationException &&
+              error.code == 'invitation_authentication_required') {
+            _register = false;
+          }
           _error = sharingErrorMessage(context, error);
           _needsOtp =
               error is CollaborationException &&
@@ -158,13 +169,11 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
           deviceName: device,
           allowLocalHttp: _allowLocalHttp,
         );
-        if (token != null) await controller.acceptInvitation(token);
       }
       if (mounted) {
         _password.clear();
         _confirm.clear();
         _otp.clear();
-        _token.clear();
         if (registering) {
           final session = ref.read(collaborationProvider).valueOrNull?.session;
           if (session != null) {
@@ -176,6 +185,15 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
               ),
             );
           }
+        } else {
+          final session = ref.read(collaborationProvider).valueOrNull?.session;
+          if (session != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.l10n.accountSignedIn(session.username)),
+              ),
+            );
+          }
         }
         widget.onConnected();
       }
@@ -184,10 +202,18 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
         if (registering &&
             error is CollaborationException &&
             error.code == 'account_created_session_not_saved') {
+          if (_preview?.isEmailInvitation != true) {
+            await controller.clearPendingInvitation(expectedToken: token);
+            if (!mounted) return;
+          }
           _prepareCreatedAccountLogin(server, username);
           return;
         }
         setState(() {
+          if (error is CollaborationException &&
+              error.code == 'invitation_authentication_required') {
+            _register = false;
+          }
           _error = sharingErrorMessage(context, error);
           _needsOtp =
               error is CollaborationException &&
@@ -227,19 +253,25 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
   }
 
   void _prepareCreatedAccountLogin(String server, String username) {
+    final preserveInvitation = _preview?.isEmailInvitation == true;
     setState(() {
       _server.text = server;
       _username.text = username;
       _password.clear();
       _confirm.clear();
       _otp.clear();
-      _token.clear();
-      _preview = null;
-      _invitationMode = false;
+      // Email registration leaves membership pending, including after storage errors.
+      if (!preserveInvitation) {
+        _token.clear();
+        _preview = null;
+      }
+      _invitationMode = preserveInvitation;
       _register = false;
       _needsOtp = false;
       _error = null;
-      _notice = context.l10n.accountCreatedSignInRequired(username);
+      _notice = preserveInvitation
+          ? context.l10n.accountCreatedInvitationSignInRequired(username)
+          : context.l10n.accountCreatedSignInRequired(username);
     });
   }
 
@@ -363,6 +395,8 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                             child: Text(l.sharingPreviewInvite),
                           ),
                         if (_preview != null) ...[
+                          Text(l.emailInviteSignIn),
+                          const SizedBox(height: 12),
                           Text(
                             _preview!.scopeName,
                             style: Theme.of(context).textTheme.titleMedium,
@@ -373,14 +407,35 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                           ),
                           const SizedBox(height: 12),
                           if (_preview!.canRegister)
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(l.sharingRegister),
-                              value: _register,
-                              onChanged: _busy
-                                  ? null
-                                  : (value) =>
-                                        setState(() => _register = value),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ChoiceChip(
+                                  key: const ValueKey('sharing-create-account'),
+                                  label: Text(l.emailInviteCreateAccount),
+                                  selected: _register,
+                                  onSelected: _busy
+                                      ? null
+                                      : (_) => setState(() {
+                                          _register = true;
+                                          _error = null;
+                                        }),
+                                ),
+                                ChoiceChip(
+                                  key: const ValueKey(
+                                    'sharing-existing-account',
+                                  ),
+                                  label: Text(l.emailInviteHaveAccount),
+                                  selected: !_register,
+                                  onSelected: _busy
+                                      ? null
+                                      : (_) => setState(() {
+                                          _register = false;
+                                          _error = null;
+                                        }),
+                                ),
+                              ],
                             ),
                           TextButton(
                             onPressed: _busy
@@ -399,7 +454,8 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                           'username',
                           _username,
                           l.username,
-                          readOnly: _preview != null,
+                          readOnly:
+                              _preview != null && !_preview!.isEmailInvitation,
                         ),
                         if (_register)
                           _field('display-name', _name, l.sharingDisplayName),
@@ -447,9 +503,9 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                           onPressed: _busy ? null : _connect,
                           child: Text(
                             _register
-                                ? l.sharingRegisterAction
-                                : _invitationMode
-                                ? l.sharingAcceptInvite
+                                ? _preview?.isEmailInvitation == true
+                                      ? l.emailInviteCreateAccount
+                                      : l.sharingRegisterAction
                                 : l.sharingLoginAction,
                           ),
                         ),

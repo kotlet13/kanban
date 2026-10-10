@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'invitation_link_providers.dart';
+import 'invitation_link.dart';
+import '../../state/collaboration_provider.dart';
+import '../../data/pending_invitation_store.dart'
+    show PendingInvitationStoreSerialization;
 
 class InvitationLinkCoordinator extends ConsumerStatefulWidget {
   const InvitationLinkCoordinator({super.key, required this.child});
@@ -15,16 +19,9 @@ class InvitationLinkCoordinator extends ConsumerStatefulWidget {
 class _InvitationLinkCoordinatorState
     extends ConsumerState<InvitationLinkCoordinator> {
   StreamSubscription<Uri>? _subscription;
+  int _deliveryGeneration = 0;
   late final _receiver = InvitationLinkReceiver(
-    onLink: (link) {
-      if (mounted) {
-        final pending = ref.read(pendingInvitationLinkProvider);
-        if (pending?.token != link.token ||
-            pending?.serverUrl != link.serverUrl) {
-          ref.read(pendingInvitationLinkProvider.notifier).state = link;
-        }
-      }
-    },
+    onLink: (link) => unawaited(_receive(link)),
     onInvalid: () {
       if (mounted) ref.read(invitationLinkErrorProvider.notifier).state = true;
     },
@@ -35,7 +32,52 @@ class _InvitationLinkCoordinatorState
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
+  Future<void> _receive(InvitationLink link) async {
+    final generation = ++_deliveryGeneration;
+    try {
+      final store = ref.read(pendingInvitationStoreProvider);
+      await store.receiveLink(
+        serverUrl: link.serverUrl,
+        token: link.token,
+        isCurrent: () => mounted && generation == _deliveryGeneration,
+      );
+      if (!mounted || generation != _deliveryGeneration) return;
+      final pending = ref.read(pendingInvitationLinkProvider);
+      if (pending?.token != link.token ||
+          pending?.serverUrl != link.serverUrl) {
+        ref.read(pendingInvitationLinkProvider.notifier).state = link;
+      }
+      ref.invalidate(securePendingInvitationProvider);
+    } catch (_) {
+      if (mounted && generation == _deliveryGeneration) {
+        ref.read(invitationLinkErrorProvider.notifier).state = true;
+      }
+    }
+  }
+
   Future<void> _start() async {
+    try {
+      final pending = await ref.read(pendingInvitationStoreProvider).read();
+      if (!mounted) return;
+      if (pending != null) {
+        final session = pending.accountPartition == null
+            ? null
+            : await ref.read(deviceSessionStoreProvider).read();
+        if (!mounted) return;
+        if (pending.accountPartition == null ||
+            pending.accountPartition == session?.profile.partition) {
+          ref
+              .read(pendingInvitationLinkProvider.notifier)
+              .state = InvitationLink(
+            serverUrl: pending.serverUrl,
+            token: pending.token,
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) ref.read(invitationLinkErrorProvider.notifier).state = true;
+    }
+    if (!mounted) return;
     final source = ref.read(invitationLinkSourceProvider);
     if (source == null) return;
     try {

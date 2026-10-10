@@ -292,7 +292,7 @@ class NativeAccountDeletionService extends NativeDatabase
             }
         }
         $this->change('DELETE FROM familyhub_operations WHERE user_id=?',[$id]);
-        $this->change('DELETE FROM familyhub_invitations WHERE creator_id=? OR accepted_by=? OR recipient_username=?',[$id,$id,$user['username']]);
+        $this->change('DELETE FROM familyhub_invitations WHERE creator_id=? OR accepted_by=? OR recipient_username=? OR recipient_account_id=?',[$id,$id,$user['username'],$user['account_id']]);
         $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE kind=\'organization\' AND id IN (SELECT scope_id FROM familyhub_members WHERE user_id=? AND active=1)',[$id]);
         $this->change('DELETE FROM familyhub_members WHERE user_id=?',[$id]);
         foreach ($scopes as $s) {

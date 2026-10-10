@@ -28,6 +28,7 @@ class SharedFinanceLedger extends StatefulWidget {
     this.payments,
     this.cashAvailable = true,
     this.onPersonalPayment,
+    this.showHeading = true,
   });
   final String scopeName;
   final String? scopeId, partition;
@@ -37,6 +38,7 @@ class SharedFinanceLedger extends StatefulWidget {
   final List<OrganizerPersonOption> people;
   final bool canWrite;
   final bool cashAvailable;
+  final bool showHeading;
   final PaymentSnapshot? payments;
   final ValueChanged<SharedFinanceEntry>? onPersonalPayment;
   final ValueChanged<SharedFinanceAccount?> onAccount;
@@ -154,10 +156,11 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OrganizerHeading(
-          title: l.organizerFinances,
-          subtitle: widget.scopeName,
-        ),
+        if (widget.showHeading)
+          OrganizerHeading(
+            title: l.organizerFinances,
+            subtitle: widget.scopeName,
+          ),
         Text(l.financeSharedAccountsDescription),
         const SizedBox(height: 16),
         if (widget.canWrite)

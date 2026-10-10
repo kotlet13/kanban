@@ -16,6 +16,43 @@ void main() {
     expect(parsed.token, token);
     expect(parsed.toUri(), original);
   });
+  test('email version 2 link requires matching token and explicit version', () {
+    final email = InvitationLink(
+      serverUrl: 'https://example.test/kanboard',
+      token: 'fhi2_${'b' * 64}',
+    );
+    final parsed = InvitationLink.tryParse(email.toUri())!;
+    expect(parsed.token, email.token);
+    expect(parsed.toUri().queryParameters['v'], '2');
+    expect(
+      InvitationLink.tryParse(
+        email.toUri().replace(
+          queryParameters: {'server': email.serverUrl, 'token': email.token},
+        ),
+      ),
+      isNull,
+    );
+    expect(
+      InvitationLink.tryParse(
+        link('https://example.test').replace(
+          queryParameters: {
+            'server': 'https://example.test',
+            'token': token,
+            'v': '2',
+          },
+        ),
+      ),
+      isNull,
+    );
+    expect(
+      InvitationLink.tryParse(
+        email.toUri().replace(
+          queryParameters: {...email.toUri().queryParameters, 'extra': 'value'},
+        ),
+      ),
+      isNull,
+    );
+  });
   test('accepts legacy invitations and emits the Jivie scheme', () {
     final legacy = link('https://example.test/kanboard', scheme: 'vsakdan');
     final parsed = InvitationLink.tryParse(legacy)!;

@@ -10,6 +10,7 @@ class Plugin extends Base
 {
     public function initialize()
     {
+        $this->applicationAccessMap->add('InvitationController', 'show', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('NativeApiController', 'handle', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('AccountDeletionController', '*', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('EnrollmentController', '*', \Kanboard\Core\Security\Role::APP_ADMIN);
@@ -35,7 +36,7 @@ class Plugin extends Base
     }
 
     public function getPluginName() { return 'FamilyHub'; }
-    public function getPluginVersion() { return '0.9.0'; }
+    public function getPluginVersion() { return '0.10.0'; }
     public function getPluginAuthor() { return 'TriparNA'; }
     public function getPluginDescription() { return 'Opt-in native account, scope and record synchronization API.'; }
     public function getCompatibleVersion() { return '1.2.54'; }

@@ -20,6 +20,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _externalPushSupported = false;
     _pushProjectId = null;
     _smtpSupported = false;
+    _emailInvitationsSupported = false;
     final rows = await database.rows(
       'SELECT value FROM local_meta WHERE name=?',
       ['capabilities:$partition'],
@@ -78,6 +79,9 @@ extension CollaborationAccountActions on CollaborationRepository {
     _smtpSupported = features['smtp'] == true;
     _emailVerificationSupported = features['emailVerification'] == true;
     _passwordResetSupported = features['passwordReset'] == true;
+    _emailInvitationsSupported =
+        features['emailInvitations'] == true &&
+        (caps['invitationContractVersions'] as List? ?? const []).contains(2);
   }
 
   Future<void> _negotiate(DeviceSession session, int epoch) async {
@@ -148,22 +152,34 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String password,
     bool allowLocalHttp = false,
     String deviceName = 'Jivie',
-  }) => _authenticate(serverUrl, 'auth.register', {
-    'token': invitationToken,
-    'username': username,
-    'displayName': name,
-    'password': password,
-    'deviceName': deviceName,
-  }, allowLocalHttp);
+  }) => invitationToken.startsWith('fhi2_')
+      ? registerWithEmailInvitation(
+          serverUrl: serverUrl,
+          invitationToken: invitationToken,
+          username: username,
+          name: name,
+          password: password,
+          allowLocalHttp: allowLocalHttp,
+          deviceName: deviceName,
+        )
+      : _authenticate(serverUrl, 'auth.register', {
+          'token': invitationToken,
+          'username': username,
+          'displayName': name,
+          'password': password,
+          'deviceName': deviceName,
+        }, allowLocalHttp);
 
   Future<void> _authenticate(
     String server,
     String operation,
     Map<String, Object?> params,
-    bool localHttp,
-  ) async {
+    bool localHttp, {
+    String? expectedServerId,
+  }) async {
     final previous = _session;
     final epoch = ++_epoch;
+    _resetSyncEvidence();
     _session = null;
     database.activatePersonal(null);
     _pushIntent = null;
@@ -188,6 +204,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _externalPushSupported = false;
     _pushProjectId = null;
     _smtpSupported = false;
+    _emailInvitationsSupported = false;
     _lastError = null;
     await refreshLocal();
     await _clearPreviousSession(epoch, previous);
@@ -202,6 +219,9 @@ extension CollaborationAccountActions on CollaborationRepository {
       params: params,
       allowLocalHttp: localHttp,
     );
+    if (expectedServerId != null && reply['serverId'] != expectedServerId) {
+      throw const CollaborationException('server_identity_changed');
+    }
     final user = reply['user'] as Map<String, dynamic>,
         device = reply['device'] as Map<String, dynamic>;
     final session = DeviceSession(
@@ -259,12 +279,20 @@ extension CollaborationAccountActions on CollaborationRepository {
         );
       } catch (_) {}
       _checkEpoch(epoch);
-      if ((operation == 'auth.enroll' || operation == 'auth.register') &&
+      if ((operation == 'auth.enroll' ||
+              operation == 'auth.register' ||
+              operation == 'auth.registerInvitation2') &&
           !(error is CollaborationException &&
               const {'session_changed', 'closed'}.contains(error.code))) {
         throw const CollaborationException('account_created_session_not_saved');
       }
       rethrow;
+    }
+    if (operation == 'auth.register' && params['token'] is String) {
+      await _clearMatchingInvitation(
+        params['token'] as String,
+        serverUrl: base,
+      );
     }
     await refreshLocal();
     // Authentication succeeds independently of connectivity after the token is stored.
@@ -276,6 +304,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   Future<bool> signOut() async {
     final previous = _session;
     final epoch = ++_epoch;
+    _resetSyncEvidence();
     _session = null;
     database.activatePersonal(null);
     _pushIntent = null;
@@ -436,6 +465,13 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String token,
     bool allowLocalHttp = false,
   }) async {
+    if (token.startsWith('fhi2_')) {
+      return previewEmailInvitation(
+        serverUrl: serverUrl,
+        token: token,
+        allowLocalHttp: allowLocalHttp,
+      );
+    }
     final base = normalizeCollaborationServer(
       serverUrl,
       allowLocalHttp: allowLocalHttp,
@@ -674,6 +710,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   }
 
   Future<void> acceptInvitation(String token) async {
+    if (token.startsWith('fhi2_')) return acceptEmailInvitation(token: token);
     final session = _requireSession(), epoch = _epoch;
     final reply = await _callSession(session, epoch, 'invitations.accept', {
       'token': token,
@@ -685,6 +722,7 @@ extension CollaborationAccountActions on CollaborationRepository {
       _checkEpoch(epoch);
       await _invalidateMemberDirectory(session.profile.partition, scopeId);
     });
+    await _clearMatchingInvitation(token, serverUrl: session.profile.serverUrl);
     await syncNow();
   }
 

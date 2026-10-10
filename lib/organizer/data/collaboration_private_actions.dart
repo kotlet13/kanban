@@ -150,6 +150,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
     if (_syncing) await _syncDone?.future;
     _checkEpoch(epoch);
     _syncing = true;
+    _syncEpoch = epoch;
     final done = _syncDone = Completer<void>();
     var leased = false;
     try {
@@ -343,6 +344,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
         );
       }
       _syncing = false;
+      _syncEpoch = null;
       done.complete();
       await refreshLocal();
     }

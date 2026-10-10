@@ -23,10 +23,12 @@ class OrganizerHeading extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.action,
+    this.titleAccessory,
   });
   final String title;
   final String? subtitle;
   final Widget? action;
+  final Widget? titleAccessory;
   @override
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.only(
@@ -35,13 +37,23 @@ class OrganizerHeading extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontSize: MediaQuery.sizeOf(context).width < 600 ? 25 : 30,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -1,
-          ),
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 25 : 30,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -1,
+                ),
+              ),
+            ),
+            if (titleAccessory != null) ...[
+              const SizedBox(width: 8),
+              titleAccessory!,
+            ],
+          ],
         ),
         if (subtitle != null)
           Padding(

@@ -82,6 +82,7 @@ class SharingUiController extends CollaborationController {
           initial ??
           CollaborationState(
             session: sharingSession(),
+            emailInvitationsSupported: true,
             scopes: [sharingScope()],
             data: {sharingScopeId: sharingData()},
           );
@@ -89,6 +90,70 @@ class SharingUiController extends CollaborationController {
   final calls = <String>[];
   final loginAttempts = <String?>[];
   bool requireOtp = false;
+  bool emailPreview = false;
+  Object? invitationRegistrationError;
+  Object? invitationAcceptError;
+  Object? invitationPreviewError;
+  PendingInvitation? savedInvitation;
+  List<SharedInvitationPreview> incomingInvitations = [];
+  @override
+  Future<void> rememberInvitation({
+    required String serverUrl,
+    required String token,
+    bool allowLocalHttp = false,
+  }) async {
+    savedInvitation = PendingInvitation(serverUrl: serverUrl, token: token);
+    ref.invalidate(securePendingInvitationProvider);
+  }
+
+  @override
+  Future<void> clearPendingInvitation({String? expectedToken}) async {
+    if (expectedToken == null || savedInvitation?.token == expectedToken) {
+      savedInvitation = null;
+    }
+    ref.invalidate(securePendingInvitationProvider);
+  }
+
+  @override
+  Future<List<SharedInvitationPreview>> pendingInvitations() async =>
+      incomingInvitations;
+  @override
+  Future<void> acceptPendingInvitation(String invitationId) async {
+    if (invitationAcceptError != null) throw invitationAcceptError!;
+    calls.add('acceptPending:$invitationId');
+    incomingInvitations.removeWhere(
+      (item) => item.invitationId == invitationId,
+    );
+  }
+
+  @override
+  Future<SharedInvitation> createEmailInvitation({
+    required String scopeId,
+    required String recipientEmail,
+    SharedRole role = SharedRole.member,
+    String language = 'sl',
+    String? requestId,
+  }) async {
+    emailInviteRequestIds.add(requestId);
+    if (loseEmailCreateResponse) {
+      loseEmailCreateResponse = false;
+      throw const CollaborationException('network');
+    }
+    calls.add('emailInvite:$recipientEmail');
+    return SharedInvitation(
+      id: 'email-invite',
+      scopeId: scopeId,
+      recipientUsername: '',
+      recipientEmail: recipientEmail,
+      role: role,
+      expiresAt: DateTime.utc(2099),
+      contractVersion: 2,
+      deliveryQueued: true,
+    );
+  }
+
+  final emailInviteRequestIds = <String?>[];
+  bool loseEmailCreateResponse = false;
   bool includeSecondMember = true;
   bool? enrollmentAllowLocalHttp;
   int memberLoads = 0;
@@ -116,6 +181,7 @@ class SharingUiController extends CollaborationController {
         selectedSpaceId: id,
         scopes: current.scopes,
         data: current.data,
+        emailInvitationsSupported: current.emailInvitationsSupported,
         organizationsSupported: current.organizationsSupported,
         localAccessAllowed: current.localAccessAllowed,
         deletionPending: current.deletionPending,
@@ -151,6 +217,7 @@ class SharingUiController extends CollaborationController {
         allSpacesSelected: true,
         scopes: current.scopes,
         data: current.data,
+        emailInvitationsSupported: current.emailInvitationsSupported,
         organizationsSupported: current.organizationsSupported,
         localAccessAllowed: current.localAccessAllowed,
         deletionPending: current.deletionPending,
@@ -287,8 +354,13 @@ class SharingUiController extends CollaborationController {
   }) async {
     previewServer = serverUrl;
     previewToken = token;
+    if (invitationPreviewError != null) throw invitationPreviewError!;
     return SharedInvitationPreview(
       scopeName: 'Povabljeni dom',
+      recipientEmail: emailPreview ? 'recipient@example.test' : null,
+      inviterName: emailPreview ? 'Povabitelj' : '',
+      invitationId: emailPreview ? 'email-invite' : null,
+      contractVersion: emailPreview ? 2 : 1,
       scopeId: sharingScopeId,
       kind: SharedScopeKind.household,
       recipientUsername: 'second',
@@ -308,8 +380,10 @@ class SharingUiController extends CollaborationController {
     bool allowLocalHttp = false,
     String deviceName = 'Jivie',
   }) async {
+    if (invitationRegistrationError != null) throw invitationRegistrationError!;
     registeredUsername = username;
     registeredName = name;
+    if (!emailPreview) savedInvitation = null;
     replace(
       CollaborationState(
         session: sharingSession(second: true),
@@ -321,7 +395,10 @@ class SharingUiController extends CollaborationController {
 
   @override
   Future<void> acceptInvitation(String token) async {
+    if (invitationAcceptError != null) throw invitationAcceptError!;
     calls.add('accept');
+    if (savedInvitation?.token == token) savedInvitation = null;
+    ref.invalidate(securePendingInvitationProvider);
   }
 
   @override

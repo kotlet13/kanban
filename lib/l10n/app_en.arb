@@ -1993,5 +1993,81 @@
   },
   "spaceFinanceIntro": "Income, expenses and planned costs.",
   "spaceLocalShort": "Local",
-  "spaceConnectedShort": "Connected"
+  "spaceConnectedShort": "Connected",
+  "emailInviteTitle": "Invite by email",
+  "emailInviteDescription": "The person receives an invitation link and code. They can create an account later and choose whether to join.",
+  "emailInviteSend": "Send invitation",
+  "emailInviteQueued": "The invitation for {email} is ready to be sent.",
+  "@emailInviteQueued": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteQueuedShort": "Email queued for delivery",
+  "emailInviteUnsupported": "This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.",
+  "emailInviteInvalidEmail": "Enter a valid email address.",
+  "emailInvitePendingTitle": "An invitation is waiting for your decision",
+  "emailInviteFrom": "Invited by {name}",
+  "@emailInviteFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteFor": "Invitation for {email}",
+  "@emailInviteFor": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteExplicit": "Signing in or creating an account does not join the space. Accept the invitation explicitly to open it.",
+  "emailInviteSignIn": "First sign in or create an account. Your invitation stays saved.",
+  "emailInviteExistingAccount": "An account already exists for this email address. Sign in to that account; your invitation stays saved.",
+  "emailInviteWrongAccount": "This invitation is for another email address. Sign in to the correct account or verify its email address first.",
+  "emailInviteDismiss": "Remove saved invitation",
+  "emailInviteAccepted": "Invitation accepted. The space is open.",
+  "accountSignedIn": "You are signed in as {username}.",
+  "@accountSignedIn": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteCreateAccount": "Create an account",
+  "emailInviteHaveAccount": "I already have an account",
+  "accountCreatedInvitationSignInRequired": "Account {username} has been created. Sign in, then accept your saved invitation.",
+  "@accountCreatedInvitationSignInRequired": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInviteUsernameUnavailable": "This username is already taken. Choose another name or sign in to your account.",
+  "accountPasswordTooShort": "Your password must contain at least 12 characters.",
+  "syncStatusTitle": "Synchronization",
+  "syncStatusDetails": "Synchronization details",
+  "syncStatusSynced": "Synced",
+  "syncStatusUnknown": "Synchronization is not confirmed yet",
+  "syncStatusPending": "Changes are waiting to sync",
+  "syncStatusOffline": "Server is unreachable",
+  "syncStatusProblem": "Synchronization needs your attention",
+  "syncStatusDeviceOnly": "Local to this device",
+  "syncStatusLastSuccess": "Last successful synchronization",
+  "syncStatusLastAttempt": "Last attempt",
+  "syncStatusNeverAttempted": "No attempt has been recorded",
+  "syncStatusNotConfirmed": "Not confirmed yet",
+  "syncStatusLastError": "Error",
+  "syncStatusPendingCount": "Pending changes",
+  "syncStatusConflictsCount": "Conflicting changes",
+  "syncStatusBlockedCount": "Blocked changes",
+  "syncStatusAccountScope": "The status, times and change counts cover this account and all its spaces.",
+  "syncStatusLocalScope": "This status covers local work on this device.",
+  "syncStatusServerChanged": "The server identity has changed. Your local data is preserved; reconnection needs to be checked."
 }

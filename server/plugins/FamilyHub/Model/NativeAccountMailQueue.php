@@ -28,6 +28,10 @@ class NativeAccountMailQueue extends NativeDatabase
             $counts['examined']++;
             $counts[$this->deliver($row['token_id'], $lease, $transport, $deadline)]++;
         }
+        if ($counts['examined'] < $limit && microtime(true)+50 <= $deadline) {
+            $invitationCounts=(new NativeInvitationMailQueue($this->container))->run($limit-$counts['examined'],$transport,$deadline);
+            foreach ($counts as $key=>$count) { $counts[$key]+=$invitationCounts[$key]; }
+        }
         return $counts;
         } finally { $this->pdo->exec($this->sqlite ? 'PRAGMA busy_timeout='.$previousTimeout : 'SET SESSION innodb_lock_wait_timeout='.$previousTimeout); }
     }

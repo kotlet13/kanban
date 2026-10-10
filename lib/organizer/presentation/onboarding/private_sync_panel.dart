@@ -4,9 +4,10 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../shared/sharing_errors.dart';
+import '../shared/sharing_status.dart';
 import '../backup/backup_counts.dart';
 import '../finance/shared_finance_conflicts.dart';
-import '../shared/sharing_conflicts.dart';
+import '../shared/sharing_sync_conflicts.dart';
 
 class PrivateSyncPanel extends ConsumerStatefulWidget {
   const PrivateSyncPanel({super.key, required this.onConnect});
@@ -16,9 +17,17 @@ class PrivateSyncPanel extends ConsumerStatefulWidget {
 }
 
 class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
-  bool _busy = false;
+  final _busyStatus = ValueNotifier<bool>(false);
+  bool get _busy => _busyStatus.value;
+  @override
+  void dispose() {
+    _busyStatus.dispose();
+    super.dispose();
+  }
+
   Future<void> _run(Future<void> Function() action) async {
-    setState(() => _busy = true);
+    if (!mounted || _busy) return;
+    setState(() => _busyStatus.value = true);
     try {
       await action();
     } catch (e) {
@@ -28,7 +37,7 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busyStatus.value = false);
     }
   }
 
@@ -97,9 +106,59 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l.privateSyncTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l.privateSyncTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                SharingStatus(
+                  key: const ValueKey('private-sync-status'),
+                  state: state ?? CollaborationState(),
+                  privateSync: true,
+                  scopeId: sync?.scopeId,
+                  busyListenable: _busyStatus,
+                  onSync: () => _run(
+                    () => ref.read(collaborationProvider.notifier).syncNow(),
+                  ),
+                  onConflicts: () => showSharingSyncConflicts(context, ref),
+                  onConnect: widget.onConnect,
+                  detailsBuilder: (dialogContext, current, actionsEnabled) =>
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (current.privateSync.scopeId != null &&
+                              current.financeConflicts.any(
+                                (c) => c.scopeId == current.privateSync.scopeId,
+                              ))
+                            TextButton(
+                              onPressed: () {
+                                if (!mounted) return;
+                                final active = ref
+                                    .read(collaborationProvider)
+                                    .valueOrNull
+                                    ?.session;
+                                if (active?.partition !=
+                                        current.session?.partition ||
+                                    active?.deviceId !=
+                                        current.session?.deviceId) {
+                                  return;
+                                }
+                                showFinanceConflicts(
+                                  dialogContext,
+                                  ref,
+                                  current.privateSync.scopeId!,
+                                );
+                              },
+                              child: Text(l.financeConflicts),
+                            ),
+                        ],
+                      ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(l.privateSyncDescription),
@@ -117,20 +176,6 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
             else if (sync?.available != true)
               Text(l.privateSyncUnavailable)
             else if (sync!.enabled) ...[
-              Text(sync.paused ? l.privateSyncPaused : l.privateSyncOn),
-              Text('${l.privateSyncPending}: ${sync.pendingCount}'),
-              if (state!.conflicts.any((c) => c.scopeId == sync.scopeId))
-                TextButton(
-                  onPressed: () => showSharingConflicts(context, ref),
-                  child: Text(l.sharingConflicts),
-                ),
-              if (sync.scopeId != null &&
-                  state.financeConflicts.any((c) => c.scopeId == sync.scopeId))
-                TextButton(
-                  onPressed: () =>
-                      showFinanceConflicts(context, ref, sync.scopeId!),
-                  child: Text(l.financeConflicts),
-                ),
               if (sync.localPendingCount > 0) ...[
                 Text(l.privateSyncLocalPending),
                 TextButton(
@@ -156,14 +201,12 @@ class _PrivateSyncPanelState extends ConsumerState<PrivateSyncPanel> {
                 ),
               ),
             ] else ...[
-              Text(l.privateSyncOff),
               TextButton.icon(
                 onPressed: _busy ? null : () => _run(_enable),
                 icon: const Icon(Icons.devices),
                 label: Text(l.privateSyncReview),
               ),
             ],
-            if (_busy) const LinearProgressIndicator(),
           ],
         ),
       ),

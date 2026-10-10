@@ -7,12 +7,13 @@ import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import 'sharing_accept.dart';
 import 'sharing_auth.dart';
-import 'sharing_conflicts.dart';
+import 'sharing_sync_conflicts.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
 import 'sharing_status.dart';
+import 'sharing_pending_invitations.dart';
 import 'sharing_workspace.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 import '../onboarding/getting_started.dart';
@@ -37,11 +38,13 @@ class SharingAccountPage extends ConsumerStatefulWidget {
     this.onSpaceSettings,
     this.initialInvitation,
     this.onInvitationHandled,
+    this.onInvitationAccepted,
     this.setupIntent,
   });
   final String? selectedScopeId;
   final InvitationLink? initialInvitation;
   final VoidCallback? onInvitationHandled;
+  final ValueChanged<String>? onInvitationAccepted;
   final SetupIntent? setupIntent;
   final ValueChanged<String?> onScopeSelected;
   final SharingView initialView;
@@ -71,7 +74,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   }
 
   Future<void> _run(Future<void> Function() action) async {
-    if (_busy) return;
+    if (!mounted || _busy) return;
     setState(() => _busy = true);
     try {
       await action();
@@ -83,6 +86,20 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _syncNow() async {
+    if (!mounted) return;
+    final guard = SharingSessionGuard(context, ref);
+    try {
+      await guard.controller.syncNow();
+    } catch (error) {
+      if (mounted && guard.isCurrent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(sharingErrorMessage(context, error))),
+        );
+      }
     }
   }
 
@@ -160,7 +177,6 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final backgroundError = ref.watch(collaborationBackgroundErrorProvider);
     return ref
         .watch(collaborationProvider)
         .when(
@@ -179,9 +195,22 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
           ),
           data: (state) {
             final session = state.session;
-            if (session == null ||
-                _currentAuth ||
-                widget.initialInvitation != null) {
+            final pending = ref
+                .watch(securePendingInvitationProvider)
+                .valueOrNull;
+            final initialInvitation =
+                widget.initialInvitation ??
+                (session == null && pending != null
+                    ? InvitationLink(
+                        serverUrl: pending.serverUrl,
+                        token: pending.token,
+                      )
+                    : null);
+            final invitationNeedsAuth =
+                initialInvitation != null &&
+                (session == null ||
+                    session.serverUrl != initialInvitation.serverUrl);
+            if (session == null || _currentAuth || invitationNeedsAuth) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -192,11 +221,11 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                       widget.onInvitationHandled?.call();
                     },
                     initialServer:
-                        widget.initialInvitation?.serverUrl ??
+                        initialInvitation?.serverUrl ??
                         session?.serverUrl ??
                         '',
-                    initialToken: widget.initialInvitation?.token ?? '',
-                    invitationMode: widget.initialInvitation != null,
+                    initialToken: initialInvitation?.token ?? '',
+                    invitationMode: initialInvitation != null,
                   ),
                   if (session != null)
                     TextButton(
@@ -218,6 +247,13 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
               children: [
                 OrganizerHeading(
                   title: l.sharingAccount,
+                  titleAccessory: SharingStatus(
+                    state: state,
+                    onSync: _syncNow,
+                    onConflicts: () => showSharingSyncConflicts(context, ref),
+                    onExport: () => exportSharingDrafts(context, ref),
+                    onConnect: () => _selectAuth(true),
+                  ),
                   subtitle: session.displayName.isEmpty
                       ? session.username
                       : session.displayName,
@@ -254,7 +290,8 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                                       context,
                                       ref,
                                       onAccepted: (id) =>
-                                          widget.onScopeSelected(id),
+                                          (widget.onInvitationAccepted ??
+                                          widget.onScopeSelected)(id),
                                     ),
                               icon: const Icon(Icons.mail_outline, size: 18),
                               label: Text(l.sharingHaveInvite),
@@ -275,6 +312,17 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                       ],
                     ),
                   ),
+                ),
+                SharingPendingInvitations(
+                  key: ValueKey(
+                    'pending-${session.partition}-${session.deviceId}',
+                  ),
+                  session: session,
+                  supported: state.emailInvitationsSupported,
+                  onAccepted: (id) =>
+                      (widget.onInvitationAccepted ?? widget.onScopeSelected)(
+                        id,
+                      ),
                 ),
                 if (widget.onSpaceSettings != null)
                   ListTile(
@@ -309,20 +357,6 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     ),
                   ),
                 if (_busy) const LinearProgressIndicator(),
-                if (backgroundError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(sharingErrorMessage(context, backgroundError)),
-                  ),
-                const SizedBox(height: 20),
-                SharingStatus(
-                  state: state,
-                  onSync: () => _run(
-                    () => ref.read(collaborationProvider.notifier).syncNow(),
-                  ),
-                  onConflicts: () => showSharingConflicts(context, ref),
-                  onExport: () => exportSharingDrafts(context, ref),
-                ),
               ],
             );
           },

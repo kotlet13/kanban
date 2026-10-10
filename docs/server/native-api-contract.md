@@ -1,5 +1,7 @@
 # FamilyHub native API v1 — deljenje in sinhronizacija
 
+**Dopolnitev 10. oktobra 2026:** FamilyHub 0.10.0/schema14 doda [e-poštna povabila, pogodba2](email-invitation-api-contract.md). Nov uporabnik si izbere uporabniško ime in geslo; registracija ga prijavi, članstvo pa nastane šele ob ločenem sprejemu. Stari `auth.register`/`invitations.*` s povabilom na uporabniško ime ostanejo združljivi. Transport Native v1 se ne spremeni. Izvor, namestitev in fizični preizkus so ločeno navedeni v [dnevniku povabil](../EMAIL_INVITATIONS.md).
+
 Pogodba je usklajena z izvorom FamilyHub **0.7.0 / schema 11** 8. oktobra 2026. Transport ostane Native v1; različice zapisov so ločeno `recordContractVersions:[1,2,3]` in `financeContractVersions:[1,2]`. Različice 0.3–0.6 spodaj opisujejo zgodovino razširitev. Izvor in lokalni preizkusi niso dokaz nameščene 0.7.0 na gostovanju ali fizične dostave obvestil; aktualne rezultate vodi [izvedbeni dnevnik](../UPGRADE_IMPLEMENTATION.md). Ne gre za stare `familyHub*` JSON-RPC
 metode: podatki so v lastnih tabelah, brez pravic ali metapodatkov starih projektov.
 

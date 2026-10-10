@@ -14,6 +14,7 @@ class OrganizerShoppingPage extends StatefulWidget {
     required this.onSelection,
     this.readOnly = false,
     this.scopeLabel,
+    this.titleAccessory,
     this.onShare,
     this.onMoveToHousehold,
     this.emptyDescription,
@@ -22,6 +23,7 @@ class OrganizerShoppingPage extends StatefulWidget {
   final OrganizerCollectionActions actions;
   final bool readOnly;
   final String? scopeLabel;
+  final Widget? titleAccessory;
   final ValueChanged<LocalShoppingList>? onShare, onMoveToHousehold;
   final String? emptyDescription;
   final String? selectedId;
@@ -73,6 +75,7 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
       children: [
         OrganizerHeading(
           title: l.organizerShopping,
+          titleAccessory: widget.titleAccessory,
           subtitle: widget.scopeLabel ?? l.organizerShoppingIntro,
           action: widget.snapshot.shoppingLists.isEmpty || widget.readOnly
               ? null
@@ -168,6 +171,7 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             Expanded(
               child: OrganizerHeading(
                 title: list.title,
+                titleAccessory: back ? widget.titleAccessory : null,
                 subtitle: widget.scopeLabel ?? l.organizerPersonal,
               ),
             ),

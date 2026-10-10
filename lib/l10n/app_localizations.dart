@@ -8481,6 +8481,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connected'**
   String get spaceConnectedShort;
+
+  /// No description provided for @emailInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by email'**
+  String get emailInviteTitle;
+
+  /// No description provided for @emailInviteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The person receives an invitation link and code. They can create an account later and choose whether to join.'**
+  String get emailInviteDescription;
+
+  /// No description provided for @emailInviteSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invitation'**
+  String get emailInviteSend;
+
+  /// No description provided for @emailInviteQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'The invitation for {email} is ready to be sent.'**
+  String emailInviteQueued(String email);
+
+  /// No description provided for @emailInviteQueuedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Email queued for delivery'**
+  String get emailInviteQueuedShort;
+
+  /// No description provided for @emailInviteUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.'**
+  String get emailInviteUnsupported;
+
+  /// No description provided for @emailInviteInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get emailInviteInvalidEmail;
+
+  /// No description provided for @emailInvitePendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'An invitation is waiting for your decision'**
+  String get emailInvitePendingTitle;
+
+  /// No description provided for @emailInviteFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited by {name}'**
+  String emailInviteFrom(String name);
+
+  /// No description provided for @emailInviteFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation for {email}'**
+  String emailInviteFor(String email);
+
+  /// No description provided for @emailInviteExplicit.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in or creating an account does not join the space. Accept the invitation explicitly to open it.'**
+  String get emailInviteExplicit;
+
+  /// No description provided for @emailInviteSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'First sign in or create an account. Your invitation stays saved.'**
+  String get emailInviteSignIn;
+
+  /// No description provided for @emailInviteExistingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists for this email address. Sign in to that account; your invitation stays saved.'**
+  String get emailInviteExistingAccount;
+
+  /// No description provided for @emailInviteWrongAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation is for another email address. Sign in to the correct account or verify its email address first.'**
+  String get emailInviteWrongAccount;
+
+  /// No description provided for @emailInviteDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved invitation'**
+  String get emailInviteDismiss;
+
+  /// No description provided for @emailInviteAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted. The space is open.'**
+  String get emailInviteAccepted;
+
+  /// No description provided for @accountSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'You are signed in as {username}.'**
+  String accountSignedIn(String username);
+
+  /// No description provided for @emailInviteCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get emailInviteCreateAccount;
+
+  /// No description provided for @emailInviteHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get emailInviteHaveAccount;
+
+  /// No description provided for @accountCreatedInvitationSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {username} has been created. Sign in, then accept your saved invitation.'**
+  String accountCreatedInvitationSignInRequired(String username);
+
+  /// No description provided for @emailInviteUsernameUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This username is already taken. Choose another name or sign in to your account.'**
+  String get emailInviteUsernameUnavailable;
+
+  /// No description provided for @accountPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password must contain at least 12 characters.'**
+  String get accountPasswordTooShort;
+
+  /// No description provided for @syncStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization'**
+  String get syncStatusTitle;
+
+  /// No description provided for @syncStatusDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization details'**
+  String get syncStatusDetails;
+
+  /// No description provided for @syncStatusSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncStatusSynced;
+
+  /// No description provided for @syncStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization is not confirmed yet'**
+  String get syncStatusUnknown;
+
+  /// No description provided for @syncStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are waiting to sync'**
+  String get syncStatusPending;
+
+  /// No description provided for @syncStatusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Server is unreachable'**
+  String get syncStatusOffline;
+
+  /// No description provided for @syncStatusProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization needs your attention'**
+  String get syncStatusProblem;
+
+  /// No description provided for @syncStatusDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Local to this device'**
+  String get syncStatusDeviceOnly;
+
+  /// No description provided for @syncStatusLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last successful synchronization'**
+  String get syncStatusLastSuccess;
+
+  /// No description provided for @syncStatusLastAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last attempt'**
+  String get syncStatusLastAttempt;
+
+  /// No description provided for @syncStatusNeverAttempted.
+  ///
+  /// In en, this message translates to:
+  /// **'No attempt has been recorded'**
+  String get syncStatusNeverAttempted;
+
+  /// No description provided for @syncStatusNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed yet'**
+  String get syncStatusNotConfirmed;
+
+  /// No description provided for @syncStatusLastError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get syncStatusLastError;
+
+  /// No description provided for @syncStatusPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending changes'**
+  String get syncStatusPendingCount;
+
+  /// No description provided for @syncStatusConflictsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicting changes'**
+  String get syncStatusConflictsCount;
+
+  /// No description provided for @syncStatusBlockedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked changes'**
+  String get syncStatusBlockedCount;
+
+  /// No description provided for @syncStatusAccountScope.
+  ///
+  /// In en, this message translates to:
+  /// **'The status, times and change counts cover this account and all its spaces.'**
+  String get syncStatusAccountScope;
+
+  /// No description provided for @syncStatusLocalScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This status covers local work on this device.'**
+  String get syncStatusLocalScope;
+
+  /// No description provided for @syncStatusServerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server identity has changed. Your local data is preserved; reconnection needs to be checked.'**
+  String get syncStatusServerChanged;
 }
 
 class _AppLocalizationsDelegate

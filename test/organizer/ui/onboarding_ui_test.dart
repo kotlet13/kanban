@@ -25,7 +25,12 @@ Future<void> pumpPanel(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [collaborationProvider.overrideWith(() => controller)],
+      overrides: [
+        collaborationProvider.overrideWith(() => controller),
+        securePendingInvitationProvider.overrideWith(
+          (ref) async => controller.savedInvitation,
+        ),
+      ],
       child: MaterialApp(
         locale: Locale(language),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -335,6 +340,14 @@ void main() {
         ),
       );
       await pumpPanel(tester, controller, PrivateSyncPanel(onConnect: () {}));
+      final privateStatus = find.byKey(const ValueKey('private-sync-status'));
+      await tester.tap(
+        find.descendant(
+          of: privateStatus,
+          matching: find.byKey(const ValueKey('sharing-sync-status-cloud')),
+        ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sporne finančne spremembe'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Na tej napravi'));

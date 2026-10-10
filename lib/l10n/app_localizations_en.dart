@@ -4829,4 +4829,149 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spaceConnectedShort => 'Connected';
+
+  @override
+  String get emailInviteTitle => 'Invite by email';
+
+  @override
+  String get emailInviteDescription =>
+      'The person receives an invitation link and code. They can create an account later and choose whether to join.';
+
+  @override
+  String get emailInviteSend => 'Send invitation';
+
+  @override
+  String emailInviteQueued(String email) {
+    return 'The invitation for $email is ready to be sent.';
+  }
+
+  @override
+  String get emailInviteQueuedShort => 'Email queued for delivery';
+
+  @override
+  String get emailInviteUnsupported =>
+      'This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.';
+
+  @override
+  String get emailInviteInvalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get emailInvitePendingTitle =>
+      'An invitation is waiting for your decision';
+
+  @override
+  String emailInviteFrom(String name) {
+    return 'Invited by $name';
+  }
+
+  @override
+  String emailInviteFor(String email) {
+    return 'Invitation for $email';
+  }
+
+  @override
+  String get emailInviteExplicit =>
+      'Signing in or creating an account does not join the space. Accept the invitation explicitly to open it.';
+
+  @override
+  String get emailInviteSignIn =>
+      'First sign in or create an account. Your invitation stays saved.';
+
+  @override
+  String get emailInviteExistingAccount =>
+      'An account already exists for this email address. Sign in to that account; your invitation stays saved.';
+
+  @override
+  String get emailInviteWrongAccount =>
+      'This invitation is for another email address. Sign in to the correct account or verify its email address first.';
+
+  @override
+  String get emailInviteDismiss => 'Remove saved invitation';
+
+  @override
+  String get emailInviteAccepted => 'Invitation accepted. The space is open.';
+
+  @override
+  String accountSignedIn(String username) {
+    return 'You are signed in as $username.';
+  }
+
+  @override
+  String get emailInviteCreateAccount => 'Create an account';
+
+  @override
+  String get emailInviteHaveAccount => 'I already have an account';
+
+  @override
+  String accountCreatedInvitationSignInRequired(String username) {
+    return 'Account $username has been created. Sign in, then accept your saved invitation.';
+  }
+
+  @override
+  String get emailInviteUsernameUnavailable =>
+      'This username is already taken. Choose another name or sign in to your account.';
+
+  @override
+  String get accountPasswordTooShort =>
+      'Your password must contain at least 12 characters.';
+
+  @override
+  String get syncStatusTitle => 'Synchronization';
+
+  @override
+  String get syncStatusDetails => 'Synchronization details';
+
+  @override
+  String get syncStatusSynced => 'Synced';
+
+  @override
+  String get syncStatusUnknown => 'Synchronization is not confirmed yet';
+
+  @override
+  String get syncStatusPending => 'Changes are waiting to sync';
+
+  @override
+  String get syncStatusOffline => 'Server is unreachable';
+
+  @override
+  String get syncStatusProblem => 'Synchronization needs your attention';
+
+  @override
+  String get syncStatusDeviceOnly => 'Local to this device';
+
+  @override
+  String get syncStatusLastSuccess => 'Last successful synchronization';
+
+  @override
+  String get syncStatusLastAttempt => 'Last attempt';
+
+  @override
+  String get syncStatusNeverAttempted => 'No attempt has been recorded';
+
+  @override
+  String get syncStatusNotConfirmed => 'Not confirmed yet';
+
+  @override
+  String get syncStatusLastError => 'Error';
+
+  @override
+  String get syncStatusPendingCount => 'Pending changes';
+
+  @override
+  String get syncStatusConflictsCount => 'Conflicting changes';
+
+  @override
+  String get syncStatusBlockedCount => 'Blocked changes';
+
+  @override
+  String get syncStatusAccountScope =>
+      'The status, times and change counts cover this account and all its spaces.';
+
+  @override
+  String get syncStatusLocalScope =>
+      'This status covers local work on this device.';
+
+  @override
+  String get syncStatusServerChanged =>
+      'The server identity has changed. Your local data is preserved; reconnection needs to be checked.';
 }

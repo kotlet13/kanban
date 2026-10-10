@@ -191,7 +191,7 @@ $fresh=data(call('auth.login',['username'=>$names['recycled'],'password'=>$passw
 check($fresh['user']['accountId']!==$oldAccount,'recycled numeric user has new durable account UUID');
 check(error(call('auth.me',[],$sessions['recycled']['token']),'device_revoked',401),'recycled user cannot use former device');
 check(error(call('sync.pull',['scopeId'=>$recycledScope,'cursor'=>0],$fresh['token']),'permission_revoked',403),'recycled user cannot inherit former scope');
-check((new \Kanboard\Plugin\FamilyHub\Plugin($container))->getPluginVersion()==='0.9.0','packaged plugin version reports native feature');
+check((new \Kanboard\Plugin\FamilyHub\Plugin($container))->getPluginVersion()==='0.10.0','packaged plugin version reports native feature');
 // Durable rate-limiter test with a dedicated synthetic IP; no real user's limits.
 $rateId=hash('sha256','login-ip:192.0.2.123');
 $pdo->prepare('DELETE FROM familyhub_rate_limits WHERE id=?')->execute([$rateId]);

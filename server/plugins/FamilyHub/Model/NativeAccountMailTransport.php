@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** No global BCC, core queue, URLs or inbox preferences for security mail. */
 class NativeAccountMailTransport
 {
-    public function send($recipient, $purpose, $code, $id, $language)
+    public function send($recipient, $purpose, $code, $id, $language, array $details = [])
     {
         $config = NativeSmtpTransport::configuration();
         if (!$config || !filter_var($recipient, FILTER_VALIDATE_EMAIL) || ($config['localPlain'] && !str_ends_with(strtolower($recipient), '.invalid'))) { throw new NativeError('email_unavailable', 503); }
@@ -15,6 +15,13 @@ class NativeAccountMailTransport
         $english = $language === 'en';
         $title = $purpose === 'verify' ? ($english ? 'Confirm your email' : 'Potrdite e-pošto') : ($english ? 'Reset your password' : 'Ponastavite geslo');
         $body = ($english ? 'Enter this one-time code in the Jivie app:' : 'To enkratno kodo vnesite v aplikacijo Jivie:')."\n\n".$code."\n\n".($english ? 'If you did not request this, ignore the message.' : 'Če tega niste zahtevali, sporočilo prezrite.');
+        if ($purpose === 'invitation') {
+            $title=$english?'Invitation to Jivie':'Povabilo v Jivie';
+            $body=($details['inviterName']??'Jivie').($english?' invited you to ':' vas vabi v ').($details['scopeName']??'Jivie')."\n".
+                ($english?'Role: ':'Vloga: ').(($details['role']??'member')==='viewer'?($english?'Viewer':'Ogledovalec'):($english?'Member':'Član'))."\n\n".
+                ($english?'Open this invitation:':'Odprite povabilo:')."\n".$code."\n\n".
+                ($english?'Sign in or create an account, then explicitly accept the invitation. Opening this link does not grant access.':'Prijavite se ali ustvarite račun in nato izrecno sprejmite povabilo. Odprtje povezave ne dodeli dostopa.');
+        }
         $message = new \Swift_Message($title);
         $message->setId('familyhub.account.'.$id.'@'.substr(strrchr($config['from'], '@'), 1));
         $message->setFrom([$config['from'] => 'Jivie'])->setTo([$recipient])->setBody($body, 'text/plain', 'UTF-8');

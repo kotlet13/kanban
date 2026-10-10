@@ -4841,4 +4841,147 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get spaceConnectedShort => 'Povezano';
+
+  @override
+  String get emailInviteTitle => 'Povabi po e-pošti';
+
+  @override
+  String get emailInviteDescription =>
+      'Oseba prejme povezavo in kodo za povabilo. Račun lahko ustvari pozneje; članstvo potrdi sama.';
+
+  @override
+  String get emailInviteSend => 'Pošlji povabilo';
+
+  @override
+  String emailInviteQueued(String email) {
+    return 'Povabilo za $email je pripravljeno za pošiljanje.';
+  }
+
+  @override
+  String get emailInviteQueuedShort => 'E-pošta čaka na pošiljanje';
+
+  @override
+  String get emailInviteUnsupported =>
+      'Ta strežnik še ne podpira povabil po e-pošti. Skrbnik mora nadgraditi FamilyHub in nastaviti e-pošto. Stara povabila s kodo lahko še vedno sprejmeš.';
+
+  @override
+  String get emailInviteInvalidEmail => 'Vpiši veljaven e-poštni naslov.';
+
+  @override
+  String get emailInvitePendingTitle => 'Povabilo čaka na tvojo odločitev';
+
+  @override
+  String emailInviteFrom(String name) {
+    return 'Povabil/a te je $name';
+  }
+
+  @override
+  String emailInviteFor(String email) {
+    return 'Povabilo za $email';
+  }
+
+  @override
+  String get emailInviteExplicit =>
+      'Prijava ali ustvarjanje računa še ne pomeni članstva. Prostor odpreš po izrecnem sprejemu povabila.';
+
+  @override
+  String get emailInviteSignIn =>
+      'Najprej se prijavi ali ustvari račun. Povabilo ostane shranjeno.';
+
+  @override
+  String get emailInviteExistingAccount =>
+      'Za ta e-poštni naslov račun že obstaja. Prijavi se v obstoječi račun; povabilo bo ostalo shranjeno.';
+
+  @override
+  String get emailInviteWrongAccount =>
+      'Povabilo je namenjeno drugemu e-poštnemu naslovu. Prijavi se v pravi račun ali najprej potrdi njegov e-poštni naslov.';
+
+  @override
+  String get emailInviteDismiss => 'Odstrani shranjeno povabilo';
+
+  @override
+  String get emailInviteAccepted => 'Povabilo je sprejeto. Prostor je odprt.';
+
+  @override
+  String accountSignedIn(String username) {
+    return 'Prijavljen/a si kot $username.';
+  }
+
+  @override
+  String get emailInviteCreateAccount => 'Ustvari račun';
+
+  @override
+  String get emailInviteHaveAccount => 'Že imam račun';
+
+  @override
+  String accountCreatedInvitationSignInRequired(String username) {
+    return 'Račun $username je ustvarjen. Prijavi se, nato sprejmi shranjeno povabilo.';
+  }
+
+  @override
+  String get emailInviteUsernameUnavailable =>
+      'To uporabniško ime je že zasedeno. Izberi drugo ime ali se prijavi v svoj račun.';
+
+  @override
+  String get accountPasswordTooShort => 'Geslo mora imeti vsaj 12 znakov.';
+
+  @override
+  String get syncStatusTitle => 'Sinhronizacija';
+
+  @override
+  String get syncStatusDetails => 'Podrobnosti sinhronizacije';
+
+  @override
+  String get syncStatusSynced => 'Usklajeno';
+
+  @override
+  String get syncStatusUnknown => 'Uskladitev še ni potrjena';
+
+  @override
+  String get syncStatusPending => 'Spremembe čakajo na uskladitev';
+
+  @override
+  String get syncStatusOffline => 'Strežnik ni dosegljiv';
+
+  @override
+  String get syncStatusProblem => 'Sinhronizacija potrebuje tvojo pozornost';
+
+  @override
+  String get syncStatusDeviceOnly => 'Lokalno na tej napravi';
+
+  @override
+  String get syncStatusLastSuccess => 'Zadnja uspešna uskladitev';
+
+  @override
+  String get syncStatusLastAttempt => 'Zadnji poskus';
+
+  @override
+  String get syncStatusNeverAttempted => 'Poskus še ni zabeležen';
+
+  @override
+  String get syncStatusNotConfirmed => 'Še ni potrjena';
+
+  @override
+  String get syncStatusLastError => 'Napaka';
+
+  @override
+  String get syncStatusPendingCount => 'Čakajoče spremembe';
+
+  @override
+  String get syncStatusConflictsCount => 'Sporne spremembe';
+
+  @override
+  String get syncStatusBlockedCount => 'Zadržane spremembe';
+
+  @override
+  String get syncStatusAccountScope =>
+      'Status, časi in število sprememb veljajo za ta račun in vse njegove prostore.';
+
+  @override
+  String get syncStatusLocalScope =>
+      'Status velja za lokalno delo na tej napravi.';
+
+  @override
+  String get syncStatusServerChanged =>
+      'Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti.';
 }

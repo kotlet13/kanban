@@ -15,7 +15,7 @@ import '../all_spaces/all_spaces_page.dart';
 import '../../domain/all_spaces_projection.dart';
 import '../../domain/organizer_models.dart';
 import '../people/people_page.dart';
-import 'sharing_conflicts.dart';
+import 'sharing_sync_conflicts.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_recovery.dart';
@@ -71,6 +71,96 @@ class SharingWorkspace extends ConsumerWidget {
         );
       }
     }
+  }
+
+  String _title(BuildContext context) {
+    final l = context.l10n;
+    return switch (view) {
+      SharingView.shopping => l.organizerShopping,
+      SharingView.projects => l.organizerProjects,
+      SharingView.tasks => l.organizerTasks,
+      SharingView.agenda => l.planningSharedToday,
+      SharingView.timeline => l.planningTimeline,
+      SharingView.finances => l.organizerFinances,
+      SharingView.people => l.peopleTitle,
+    };
+  }
+
+  Widget _syncDetails(
+    BuildContext context,
+    WidgetRef ref,
+    CollaborationState state,
+    String scopeId,
+    bool actionsEnabled,
+    BuildContext originContext,
+  ) {
+    if (!originContext.mounted) return const SizedBox.shrink();
+    final originGuard = SharingSessionGuard(originContext, ref);
+    final scope = state.scopes.where((s) => s.id == scopeId).firstOrNull;
+    if (scope == null) return const SizedBox.shrink();
+    final l = context.l10n;
+    final actions = CollaborationActions(
+      context,
+      ref,
+      scope,
+      state.dataForScope(scopeId),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (scope.revoked) ...[
+          Text(l.sharingSaveDraftsDescription),
+          TextButton.icon(
+            onPressed: () {
+              if (!originContext.mounted || !originGuard.isCurrent) return;
+              exportSharingDrafts(context, ref);
+            },
+            icon: const Icon(Icons.file_download_outlined, size: 18),
+            label: Text(l.sharingSaveDrafts),
+          ),
+        ],
+        if (scope.blocked) ...[
+          Text(l.sharingBlockedDescription),
+          if (scope.role != SharedRole.viewer)
+            TextButton(
+              onPressed: actionsEnabled
+                  ? () async {
+                      if (!originContext.mounted || !originGuard.isCurrent) {
+                        return;
+                      }
+                      final confirmed = await confirmSharingAction(
+                        context,
+                        title: l.sharingResumeBlocked,
+                        description: l.sharingResumeBlockedDescription,
+                        confirmLabel: l.sharingResumeBlocked,
+                        wrap: (dialog) => SharingSessionBoundary(
+                          guard: actions.guard,
+                          child: dialog,
+                        ),
+                      );
+                      if (confirmed &&
+                          context.mounted &&
+                          originContext.mounted &&
+                          originGuard.isCurrent) {
+                        await actions.run(
+                          () =>
+                              actions.controller.resumeBlockedChanges(scopeId),
+                        );
+                      }
+                    }
+                  : null,
+              child: Text(l.sharingResumeBlocked),
+            ),
+        ],
+        if (view == SharingView.finances)
+          SharedFinanceSyncDetails(
+            state: state,
+            scopeId: scopeId,
+            actionsEnabled: actionsEnabled,
+          ),
+      ],
+    );
   }
 
   @override
@@ -168,11 +258,25 @@ class SharingWorkspace extends ConsumerWidget {
             }
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
-            final expired =
-                !state.session!.expiresAt.isAfter(DateTime.now()) ||
-                state.lastError?.code == 'device_revoked' ||
-                state.lastError?.code == 'auth_required';
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
+            final status = SharingStatus(
+              key: ValueKey('sharing-status-${scope.id}-$view'),
+              state: state,
+              scopeId: scope.id,
+              onSync: () => _sync(context, ref),
+              onConflicts: () => showSharingSyncConflicts(context, ref),
+              onExport: () => exportSharingDrafts(context, ref),
+              onConnect: onConnect,
+              detailsBuilder: (dialogContext, current, actionsEnabled) =>
+                  _syncDetails(
+                    dialogContext,
+                    ref,
+                    current,
+                    scope.id,
+                    actionsEnabled,
+                    context,
+                  ),
+            );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -184,54 +288,14 @@ class SharingWorkspace extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
-                SharingStatus(
-                  state: state,
-                  onSync: () => _sync(context, ref),
-                  onConflicts: () => showSharingConflicts(context, ref),
-                  onExport: () => exportSharingDrafts(context, ref),
-                ),
-                if (expired)
-                  TextButton(
-                    onPressed: onConnect,
-                    child: Text(l.sharingLoginAction),
-                  ),
                 if (scope.revoked) ...[
-                  const SizedBox(height: 20),
+                  OrganizerHeading(
+                    title: _title(context),
+                    titleAccessory: status,
+                  ),
                   Text(l.sharingAccessRevoked),
                   Text(l.sharingSaveDraftsDescription),
-                  TextButton.icon(
-                    onPressed: () => exportSharingDrafts(context, ref),
-                    icon: const Icon(Icons.file_download_outlined, size: 18),
-                    label: Text(l.sharingSaveDrafts),
-                  ),
                 ] else ...[
-                  if (scope.blocked) ...[
-                    const SizedBox(height: 16),
-                    Text(l.sharingBlockedDescription),
-                    if (scope.role != SharedRole.viewer && !expired)
-                      TextButton(
-                        onPressed: () async {
-                          final confirmed = await confirmSharingAction(
-                            context,
-                            title: l.sharingResumeBlocked,
-                            description: l.sharingResumeBlockedDescription,
-                            confirmLabel: l.sharingResumeBlocked,
-                            wrap: (dialog) => SharingSessionBoundary(
-                              guard: actions.guard,
-                              child: dialog,
-                            ),
-                          );
-                          if (confirmed && context.mounted) {
-                            await actions.run(
-                              () => actions.controller.resumeBlockedChanges(
-                                scope.id,
-                              ),
-                            );
-                          }
-                        },
-                        child: Text(l.sharingResumeBlocked),
-                      ),
-                  ],
                   if (readOnly && !scope.blocked)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
@@ -265,9 +329,9 @@ class SharingWorkspace extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 24),
                   switch (view) {
                     SharingView.people => OrganizerPeoplePage(
+                      titleAccessory: status,
                       people: data.people,
                       tasks: data.tasks,
                       scope: scope,
@@ -275,10 +339,12 @@ class SharingWorkspace extends ConsumerWidget {
                       onTask: (task) => actions.task(task: task),
                     ),
                     SharingView.finances => SharedFinanceWorkspace(
+                      titleAccessory: status,
                       scope: scope,
                       state: state,
                     ),
                     SharingView.shopping => OrganizerShoppingPage(
+                      titleAccessory: status,
                       key: ValueKey(
                         'shared-shopping-${state.session!.partition}-${scope.id}',
                       ),
@@ -291,6 +357,7 @@ class SharingWorkspace extends ConsumerWidget {
                       emptyDescription: l.sharingNoSharedListsDescription,
                     ),
                     SharingView.projects => OrganizerProjectsPage(
+                      titleAccessory: status,
                       reminderScopeId: scope.id,
                       allowProjectCreation:
                           scope.projectRootId == null &&
@@ -307,6 +374,7 @@ class SharingWorkspace extends ConsumerWidget {
                     ),
                     SharingView.agenda ||
                     SharingView.timeline => SharedAgendaPage(
+                      titleAccessory: status,
                       key: ValueKey(
                         'agenda-${state.session!.partition}-${scope.id}-$view',
                       ),
@@ -336,6 +404,7 @@ class SharingWorkspace extends ConsumerWidget {
                       ),
                     ),
                     SharingView.tasks => OrganizerTasksPage(
+                      titleAccessory: status,
                       reminderScopeId: scope.id,
                       snapshot: sharedPresentationSnapshot(data),
                       actions: actions,

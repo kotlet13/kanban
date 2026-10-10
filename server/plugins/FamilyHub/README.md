@@ -1,4 +1,10 @@
-# FamilyHub 0.9.0
+# FamilyHub 0.10.0
+
+## Email invitations (0.10.0/schema 14)
+
+An owner invites a recipient by email. The encrypted account-mail worker sends an expiring link; a new recipient chooses a username and password, while an existing recipient signs in. Registration does not join the scope. The recipient explicitly accepts the waiting invitation afterward. Verified email and durable account identity bind the recipient; the sender receives neither the secret nor an account-existence result. Existing username invitations remain supported.
+
+The additive migration preserves existing accounts, sessions, records and pending operations. It adds two nullable invitation columns and one encrypted mail queue. The existing account-mail cron and private SMTP/key configuration are reused. See the [email invitation contract](../../../docs/server/email-invitation-api-contract.md) for capabilities, retries, quotas and deployment limits. Passing isolated tests is separate from hosted installation and real mailbox delivery.
 
 ## Linked payments and source version
 
@@ -6,7 +12,7 @@ Linked personal payments, explicit household cash projection, partial source-app
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
-Version 0.9.0 uses additive server schema 13, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.9.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/UPGRADE_IMPLEMENTATION.md` records the current release run. Historical 0.3–0.6 notes below remain applicable to their original features.
+Version 0.10.0 uses additive server schema 14, invitation contracts 1/2, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.10.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
 
 ## Spaces access and household gardens (0.8.0/schema 12)
 
@@ -22,7 +28,7 @@ Schema 12 is additive and repeatable. The migration itself does not widen histor
 
 **Disabled by default.** Explicitly set `FAMILYHUB_ENABLE_NATIVE_API` to boolean `true` only after backing up and testing the deployment. Endpoint: `POST index.php?controller=NativeApiController&action=handle&plugin=FamilyHub`, body `{ "v":1, "op":"capabilities", "params":{} }`. HTTPS is required; untrusted `X-Forwarded-Proto` is not accepted. If terminating TLS at a proxy, configure exact trusted proxy IPs in `FAMILYHUB_TRUSTED_PROXY_IPS` (default empty). Configure browser origins explicitly in `FAMILYHUB_CORS_ORIGINS` if needed, with no wildcard or cookie credentials.
 
-Existing local Kanboard users log in with username/password and configured TOTP to receive a 30-day revocable bearer device token. Password/2FA changes and user deactivation invalidate devices. External authentication providers are explicitly unsupported. Registration requires an expiring named-username invitation; it does not verify email or create administrators. Bootstrap uses an existing user login, then creates an owned native scope.
+Existing local Kanboard users log in with username/password and configured TOTP to receive a 30-day revocable bearer device token. Password/2FA changes and user deactivation invalidate devices. External authentication providers are explicitly unsupported. Contract2 registration uses an emailed invitation and confirms its address through possession of that secret; it requires later explicit membership acceptance. Legacy contract1 registration uses an expiring named-username invitation, does not verify email and retains its original membership semantics. Neither creates administrators. Bootstrap uses an existing user login or the first-account enrollment code, then creates an owned native scope.
 
 Native household and standalone project scopes, memberships, invitations and project/task/shopping records live in **FamilyHub tables**. No legacy project membership or finance metadata is exposed. Record contract 2 adds task assignments/date ranges, shared events and server author provenance through sync2 operations. Persistent per-account inbox and bounded scheduled reminders have separate endpoints. Financial records use separate tables, explicit read/write grants and immutable audit history; they never enter generic sync. Core Kanboard web synchronization is not supported. Records use revision checks, durable operation IDs, serialized scope cursors and permanent tombstones. API requests recheck devices and membership. Email defaults off, including shopping; optional delivery needs separate SMTP configuration.
 

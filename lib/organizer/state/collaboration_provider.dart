@@ -8,6 +8,8 @@ import '../data/collaboration_repository.dart';
 import '../data/sqlite_organizer_storage.dart';
 import '../data/collaboration_transport.dart';
 import '../data/device_session_store.dart';
+import '../data/pending_invitation_store.dart';
+export '../data/pending_invitation_store.dart' show PendingInvitation;
 import '../data/remote_push_store.dart';
 import '../data/account_deletion_store.dart';
 import '../domain/collaboration_models.dart';
@@ -27,6 +29,29 @@ final collaborationTransportFactoryProvider =
 final deviceSessionStoreProvider = Provider<DeviceSessionStore>(
   (ref) => const SecureDeviceSessionStore(),
 );
+final pendingInvitationStoreProvider = Provider<PendingInvitationStore>(
+  (ref) => const SecurePendingInvitationStore(),
+);
+// Independent change signal: the pending projection depends on account state,
+// so the account controller must never invalidate that projection directly.
+final pendingInvitationRevisionProvider = StateProvider<int>((ref) => 0);
+final securePendingInvitationProvider = FutureProvider<PendingInvitation?>((
+  ref,
+) async {
+  ref.watch(pendingInvitationRevisionProvider);
+  final partition = ref.watch(
+    collaborationProvider.select(
+      (value) => value.valueOrNull?.session?.partition,
+    ),
+  );
+  final pending = await ref.watch(pendingInvitationStoreProvider).read();
+  if (pending?.accountPartition != null &&
+      pending!.accountPartition != partition) {
+    return null;
+  }
+  return pending;
+});
+
 final remotePushStoreProvider = Provider<RemotePushStore>(
   (ref) => const SecureRemotePushStore(),
 );
@@ -46,6 +71,7 @@ final collaborationRepositoryProvider = FutureProvider<CollaborationRepository>(
   (ref) async {
     final database = ref.watch(localDatabaseProvider.future);
     final pushStore = ref.watch(remotePushStoreProvider);
+    final invitationStore = ref.watch(pendingInvitationStoreProvider);
     final transportFactory = ref.watch(collaborationTransportFactoryProvider);
     final store = ref.watch(deviceSessionStoreProvider),
         clock = ref.watch(collaborationClockProvider);
@@ -59,6 +85,7 @@ final collaborationRepositoryProvider = FutureProvider<CollaborationRepository>(
         store,
         clock: clock,
         pushStore: pushStore,
+        invitationStore: invitationStore,
         ownsDatabase: false,
       );
       try {
@@ -103,23 +130,34 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     if (!active) return repository.state;
     _active = true;
     _repository = repository;
+    var identity = _backgroundIdentity(repository.state);
     subscription = repository.changes.listen((value) {
-      if (active) state = AsyncData(value);
+      if (!active) return;
+      final next = _backgroundIdentity(value);
+      if (next != identity) {
+        ref.read(collaborationBackgroundErrorProvider.notifier).state = null;
+        identity = next;
+      }
+      state = AsyncData(value);
     });
     var ticks = 0, busy = false;
     void refresh() {
       if (!active || busy) return;
       busy = true;
+      final startedIdentity = _backgroundIdentity(repository.state);
+      bool current() =>
+          active && _backgroundIsCurrent(repository, startedIdentity);
       unawaited(() async {
         try {
           await repository.refreshLocal();
+          if (!current()) return;
           if (ticks++ % 4 == 0) await repository.syncNow();
-          if (active) {
+          if (current()) {
             ref.read(collaborationBackgroundErrorProvider.notifier).state =
                 null;
           }
         } catch (error) {
-          if (active) {
+          if (current()) {
             ref.read(collaborationBackgroundErrorProvider.notifier).state =
                 error;
           }
@@ -146,17 +184,49 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     return _repository!;
   }
 
+  String? _backgroundIdentity(CollaborationState value) => value.session == null
+      ? null
+      : '${value.session!.partition}:${value.session!.deviceId}';
+
+  bool _backgroundIsCurrent(
+    CollaborationRepository repository,
+    String? identity,
+  ) =>
+      _active &&
+      identical(repository, _repository) &&
+      _backgroundIdentity(repository.state) == identity;
+
+  Future<T> _pendingInvitationMutation<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } finally {
+      // Failed HTTP calls can still have pinned a durable acceptance attempt.
+      // Refresh after both success and failure without creating a provider cycle.
+      if (_active) {
+        ref.read(pendingInvitationRevisionProvider.notifier).state++;
+      }
+    }
+  }
+
   Future<T> _edit<T>(Future<T> Function(CollaborationRepository) action) async {
-    final repo = _repo;
+    final repo = _repo, identity = _backgroundIdentity(_repo.state);
     final result = await action(repo);
-    if (_active) {
+    if (_backgroundIsCurrent(repo, identity)) {
       unawaited(
-        repo.syncNow().catchError((Object error) {
-          if (_active) {
-            ref.read(collaborationBackgroundErrorProvider.notifier).state =
-                error;
-          }
-        }),
+        repo.syncNow().then<void>(
+          (_) {
+            if (_backgroundIsCurrent(repo, identity)) {
+              ref.read(collaborationBackgroundErrorProvider.notifier).state =
+                  null;
+            }
+          },
+          onError: (Object error, StackTrace _) {
+            if (_backgroundIsCurrent(repo, identity)) {
+              ref.read(collaborationBackgroundErrorProvider.notifier).state =
+                  error;
+            }
+          },
+        ),
       );
     }
     return result;
@@ -588,23 +658,27 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String password,
     bool allowLocalHttp = false,
     String deviceName = 'Jivie',
-  }) => _repo.registerWithInvitation(
-    serverUrl: serverUrl,
-    invitationToken: invitationToken,
-    username: username,
-    name: name,
-    password: password,
-    allowLocalHttp: allowLocalHttp,
-    deviceName: deviceName,
+  }) => _pendingInvitationMutation(
+    () => _repo.registerWithInvitation(
+      serverUrl: serverUrl,
+      invitationToken: invitationToken,
+      username: username,
+      name: name,
+      password: password,
+      allowLocalHttp: allowLocalHttp,
+      deviceName: deviceName,
+    ),
   );
   Future<SharedInvitationPreview> previewInvitation({
     required String serverUrl,
     required String token,
     bool allowLocalHttp = false,
-  }) => _repo.previewInvitation(
-    serverUrl: serverUrl,
-    token: token,
-    allowLocalHttp: allowLocalHttp,
+  }) => _pendingInvitationMutation(
+    () => _repo.previewInvitation(
+      serverUrl: serverUrl,
+      token: token,
+      allowLocalHttp: allowLocalHttp,
+    ),
   );
   Future<bool> signOut() => _repo.signOut();
   Future<void> selectSpace(String? scopeId) => _repo.selectSpace(scopeId);
@@ -618,7 +692,21 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     archived: archived,
     requestId: requestId,
   );
-  Future<void> syncNow() => _repo.syncNow();
+  Future<void> syncNow() async {
+    final repo = _repo, identity = _backgroundIdentity(_repo.state);
+    try {
+      await repo.syncNow();
+      if (_backgroundIsCurrent(repo, identity)) {
+        ref.read(collaborationBackgroundErrorProvider.notifier).state = null;
+      }
+    } catch (error) {
+      if (_backgroundIsCurrent(repo, identity)) {
+        ref.read(collaborationBackgroundErrorProvider.notifier).state = error;
+      }
+      rethrow;
+    }
+  }
+
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
@@ -659,7 +747,45 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     recipientUsername: recipientUsername,
     role: role,
   );
-  Future<void> acceptInvitation(String token) => _repo.acceptInvitation(token);
+  Future<SharedInvitation> createEmailInvitation({
+    required String scopeId,
+    required String recipientEmail,
+    SharedRole role = SharedRole.member,
+    String language = 'sl',
+    String? requestId,
+  }) => _repo.createEmailInvitation(
+    scopeId: scopeId,
+    recipientEmail: recipientEmail,
+    role: role,
+    language: language,
+    requestId: requestId,
+  );
+  Future<List<SharedInvitationPreview>> pendingInvitations() =>
+      _repo.pendingInvitations();
+  Future<void> acceptPendingInvitation(String invitationId) =>
+      _pendingInvitationMutation(
+        () => _repo.acceptEmailInvitation(invitationId: invitationId),
+      );
+  Future<void> rememberInvitation({
+    required String serverUrl,
+    required String token,
+    bool allowLocalHttp = false,
+  }) => _pendingInvitationMutation(
+    () => _repo.rememberInvitation(
+      serverUrl: serverUrl,
+      token: token,
+      allowLocalHttp: allowLocalHttp,
+    ),
+  );
+
+  Future<void> clearPendingInvitation({String? expectedToken}) =>
+      _pendingInvitationMutation(
+        () => _repo.clearPendingInvitation(expectedToken: expectedToken),
+      );
+
+  Future<void> acceptInvitation(String token) =>
+      _pendingInvitationMutation(() => _repo.acceptInvitation(token));
+
   Future<void> revokeInvitation(String scopeId, String invitationId) =>
       _repo.revokeInvitation(scopeId, invitationId);
   Future<void> revokeMember({required String scopeId, required int userId}) =>

@@ -228,6 +228,9 @@ class SharedInvitation {
     required this.role,
     required this.expiresAt,
     this.token,
+    this.recipientEmail,
+    this.contractVersion = 1,
+    this.deliveryQueued = false,
     this.acceptedAt,
     this.revokedAt,
   });
@@ -238,7 +241,10 @@ class SharedInvitation {
   final DateTime expiresAt;
   final DateTime? acceptedAt;
   final DateTime? revokedAt;
-  final String? token;
+  final String? token, recipientEmail;
+  final int contractVersion;
+  final bool deliveryQueued;
+  bool get isEmailInvitation => contractVersion == 2;
   factory SharedInvitation.fromJson(
     Map<String, dynamic> json, {
     String? token,
@@ -264,6 +270,9 @@ class SharedInvitation {
           )
         : null,
     token: token,
+    recipientEmail: json['recipientEmail'] as String?,
+    contractVersion: json['contractVersion'] as int? ?? 1,
+    deliveryQueued: json['deliveryQueued'] == true,
   );
 }
 
@@ -276,6 +285,12 @@ class SharedInvitationPreview {
     required this.role,
     required this.expiresAt,
     required this.registrationAllowed,
+    this.recipientEmail,
+    this.inviterName = '',
+    this.invitationId,
+    this.contractVersion = 1,
+    this.projectFinanceIncluded = false,
+    this.requiresExplicitAcceptance = false,
   });
   final String scopeName;
   final String scopeId;
@@ -284,6 +299,11 @@ class SharedInvitationPreview {
   final SharedRole role;
   final DateTime expiresAt;
   final bool registrationAllowed;
+  final String? recipientEmail, invitationId;
+  final String inviterName;
+  final int contractVersion;
+  final bool projectFinanceIncluded, requiresExplicitAcceptance;
+  bool get isEmailInvitation => contractVersion == 2;
   bool get canRegister => registrationAllowed;
 }
 
@@ -381,6 +401,7 @@ class CollaborationState {
     this.resetSupported = false,
     this.externalPushSupported = false,
     this.smtpSupported = false,
+    this.emailInvitationsSupported = false,
     Map<String, List<SharedMember>> members = const {},
     Map<String, SharedFinancePolicy> financePolicies = const {},
     Iterable<SharedInboxEntry> inbox = const [],
@@ -393,6 +414,8 @@ class CollaborationState {
     this.pendingCount = 0,
     this.blockedCount = 0,
     this.isSyncing = false,
+    this.lastSyncAttemptAt,
+    this.lastSuccessfulSyncAt,
     this.lastError,
   }) : privateRecordIds = Map.unmodifiable(privateRecordIds),
        financeConflicts = List.unmodifiable(financeConflicts),
@@ -419,7 +442,9 @@ class CollaborationState {
   final List<SharedFinanceConflict> financeConflicts;
   final int financePendingCount, financeBlockedCount;
   final Map<String, bool> financeSnapshotComplete;
-  final bool emailVerificationSupported, resetSupported;
+  final bool emailVerificationSupported,
+      resetSupported,
+      emailInvitationsSupported;
   final bool inboxSupported,
       financeSupported,
       externalPushSupported,
@@ -455,6 +480,10 @@ class CollaborationState {
   final int pendingCount;
   final int blockedCount;
   final bool isSyncing;
+
+  /// Session-only account refresh evidence. Null means unknown after restart;
+  /// queued work/conflicts remain independent of a successful refresh.
+  final DateTime? lastSyncAttemptAt, lastSuccessfulSyncAt;
   final CollaborationException? lastError;
   SharedScopeData dataForScope(String scopeId) =>
       data[scopeId] ?? SharedScopeData();
