@@ -1,4 +1,4 @@
-# Očiščena Jivie — interna kandidatka 1.4.0 (18)
+# Očiščena Jivie — interna izdaja 1.4.0 (18)
 
 11. oktober 2026. Uporabnik je naročil nadaljevanje po odstranitvi starega vmesnika
 in združitvi na main. Funkcionalni commit je `7726d76`, združitev `b6832c2`;
@@ -35,17 +35,24 @@ podpori so obstoječa; SDK ali drugi paketi niso bili nadgrajeni.
 
 ## Trgovina in fizični preizkus
 
-**Paket je pripravljen, ni še naložen ali aktiviran.** Predviden cilj je obstoječi
-interni kanal in seznam domači (15). Zadnja potrjena aktivna izdaja je 1.3.2 (17);
-pred uploadom je treba preveriti živo evidenco, da build18 še ni porabljen.
+**Google Play potrjuje Aktivno / 1.4.0 (18) — poenotena Jivie**, na voljo notranjim
+preizkuševalcem **11. oktobra ob 12:41**. Naložen je točno zgoraj preverjeni AAB18;
+AAB17 je iz nove izdaje izključen. Podpora napravam ostaja nespremenjena (nič
+izgubljenih/novih modelov), objavljene so opombe SL in en-US.
 
-Prijavljena Google računa v izbranem brskalniku nista ponudila računa TriparNA
-`4991604398202512900` z evidenco Jivie `4972659047480717992`. Odprti osebni
-razvijalski račun ima drug ID in drugo aplikacijo; vanj paket ni bil naložen.
-Uporabnik je pozvan, naj se v odprtem Play Console prijavi v pravi račun.
-Nobene nove pravice, računi ali pogodbe niso bili ustvarjeni/sprejeti.
+V Codexovem brskalniku je bila uporabljena že shranjena prijava. Organizacijski
+račun je v konzoli poimenovan **TaknDevs**, potrjeni ID pa je TriparNA
+`4991604398202512900`, z evidenco Jivie `4972659047480717992`. Prejšnja trditev o
+manjkajoči pravi prijavi je bila posledica prezgodnje presoje imena računa.
+Nova prijava ali širjenje pravic nista bila potrebna. Izbran je samo obstoječi
+seznam **domači (15)**, drugi seznami niso izbrani. Interni kanal je
+`4701286726300038561`; [povezava za posodobitev](https://play.google.com/apps/internaltest/4701286726300038561).
 
-Po objavi preveri nadgradnjo obstoječe namestitve, ohranitev prijave/prostorov/podatkov,
+Dokaz objave: `play-internal-1.4.0-18-active.png` ter `play-release-evidence.json`
+v zgoraj navedeni QA mapi. Aktivacija ni javna objava ali potrditev namestitve na
+telefonu. Predhodne druge aplikacije/kanali in pogodbe niso spreminjani.
+
+Zdaj preveri nadgradnjo obstoječe namestitve, ohranitev prijave/prostorov/podatkov,
 novi meni/Nastavitve, lokalno opravilo/strošek in ponovni zagon brez omrežja,
 kopijo/obnovo ter dostavo/odpiranje obvestila drugega računa. To niso že potrjeni
 fizični rezultati te kandidatke. iOS, javna izdaja, UGC in preostale podatkovne meje

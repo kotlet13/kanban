@@ -2,13 +2,15 @@
 
 ## Namen in dogovorjeni obseg
 
-11. oktober — nadaljevanje po main merge: podpisana interna Android kandidatka
-**1.4.0 (18)** je pripravljena iz `7fb5ed9` na main (cleanup `7726d76`, merge
+11. oktober — nadaljevanje po main merge: podpisana interna Android izdaja
+**1.4.0 (18)** iz `7fb5ed9` na main (cleanup `7726d76`, merge
 `b6832c2`). 298 zamrznjenih vhodov, isti podpis/Firebase kot AAB17, manifest brez
 širokih media/storage dovoljenj, 16 KiB, 23 izdajnih in 7 Firebase kontrol PASS.
 [Dokazi in stanje oddaje](docs/release/CLEAN_ORGANIZER_RELEASE.md).
-Paket še ni naložen/aktiviran: v trenutnem brskalniku manjka pravi račun TriparNA,
-uporabnik je pozvan k prijavi. Zadnja potrjena aktivna interna ostaja 1.3.2 (17).
+Google Play potrjuje **Aktivno**, za isti seznam **domači (15)**, od **12:41**.
+Prava shranjena prijava je v Codexovem brskalniku; organizacijski račun se imenuje
+**TaknDevs**, njegov potrjeni ID `4991604398202512900` je račun TriparNA. Ne sklepaj
+o napačnem računu zgolj iz tega imena; prejšnja trditev o manjkajočem dostopu je popravljena.
 FamilyHub, iOS in javna objava niso spremenjeni; fizična nadgradnja še ni preverjena.
 
 11. oktober — uporabnik je naročil popolno odstranitev starega mobilnega vmesnika

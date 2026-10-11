@@ -1,10 +1,10 @@
 # Jivie — kaj še urediš ti
 
-**11. oktober — nova kandidatka:** podpisana **1.4.0 (18)** je pripravljena iz
-očiščenega main, [paket in kontrole](CLEAN_ORGANIZER_RELEASE.md). Za upload manjka
-prijava v pravi Play Console račun TriparNA. Zadnja potrjena aktivna interna je
-1.3.2 (17), FamilyHub je 0.11.2/schema15. Spodnji starejši izdajni podatki ne
-potrjujejo objave nove kandidatke. Po objavi preveri ohranitev obstoječih podatkov
+**11. oktober — nova interna izdaja:** podpisana **1.4.0 (18)** je **aktivna od
+12:41** za isti domači (15), [paket, kontrole in dokaz objave](CLEAN_ORGANIZER_RELEASE.md).
+Prava prijava je v Codexovem brskalniku; naziv računa TaknDevs pripada potrjenemu
+organizacijskemu računu TriparNA. FamilyHub je 0.11.2/schema15. Spodnji starejši
+izdajni podatki so zgodovinski. Posodobi prek internega kanala in preveri ohranitev obstoječih podatkov
 in prijave, novi meni/nastavitve, lokalno opravilo/finance brez omrežja in po restartu,
 kopijo/obnovo ter obvestilo od drugega računa. Zasebnost/podpora sta že objavljeni
 na jivie.app, AI in široka Android dovoljenja so odstranjeni. UGC, popolnost obnove

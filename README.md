@@ -1,5 +1,12 @@
 # Jivie
 
+**Interna 1.4.0 (18), 11. oktober ob 12:41:** očiščena Jivie je aktivno objavljena
+na istem internem Android kanalu za **domači (15)**. Podpis, 298 zamrznjenih vhodov,
+16 KiB, Firebase in manifest brez širokih medijskih dovoljenj so preverjeni.
+[Izdajni dokazi in fizični preizkus](docs/release/CLEAN_ORGANIZER_RELEASE.md).
+Objava je opravljena v Codexovem brskalniku z obstoječo organizacijsko prijavo.
+Nova namestitev na telefonu še potrebuje preizkus; iOS in javna izdaja ostajata ločena.
+
 **Zaključek odstranitve starega vmesnika, 11. oktober:** Jivie uporablja samo novi
 lokalni organizer in FamilyHub. Stari Kanboard zasloni, povezava, modeli, predpomnilnik,
 AI in njihove nepotrebne odvisnosti so odstranjeni. **942 Flutter PASS / 13 opt-in
