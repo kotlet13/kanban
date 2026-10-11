@@ -36,7 +36,7 @@ class Plugin extends Base
     }
 
     public function getPluginName() { return 'FamilyHub'; }
-    public function getPluginVersion() { return '0.11.1'; }
+    public function getPluginVersion() { return '0.11.2'; }
     public function getPluginAuthor() { return 'TriparNA'; }
     public function getPluginDescription() { return 'Opt-in native account, scope and record synchronization API.'; }
     public function getCompatibleVersion() { return '1.2.54'; }

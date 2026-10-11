@@ -2,11 +2,11 @@
 
 Read notifications are retained for seven days after the first server `readAt`, then their inbox references and email/push jobs are deleted. Repeating read=true preserves that time; marking unread before expiry cancels the deadline. Unread notifications remain, and source tasks/payments/reminders are unaffected. Existing `cli/reminders.php --limit=100` also runs bounded cleanup for all accounts; optional `cli/inbox-retention.php --limit=100` runs cleanup alone (maximum 500 deletions). Expired references are excluded from inbox APIs even with a cleanup backlog. Deletion changes the existing account visibility revision; clients reset old snapshots using the existing `visibility_changed` response. Schema15 and API shapes remain unchanged. Source preparation does not establish hosted deployment.
 
-FamilyHub **0.11.1 / schema 15** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+FamilyHub **0.11.2 / schema 15** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
 
 ## Notification defaults
 
-Version 0.11.1 retains schema 15. Missing category preferences enable in-app and push notifications while email and sound remain disabled. Explicit saved preferences retain priority. Device registration and operating-system permission are still separate; the patch does not register devices or deliver historic notifications.
+Version 0.11.2 retains schema 15. Read inbox notifications are retained for seven days from the first read; marking unread cancels retention. Cleanup uses the existing reminders cron and visibility revision. Missing category preferences enable in-app and push notifications while email and sound remain disabled. Explicit saved preferences retain priority. Device registration and operating-system permission are still separate; the patch does not register devices or deliver historic notifications.
 
 ## Whole-space and project-only sharing
 
