@@ -154,7 +154,7 @@ preverjanja ostajajo v [načrtu prenove](docs/RENOVATION_PLAN.md).
 Flutter/Dart, `flutter_riverpod`, `go_router` in FamilyHub Native API. Osebni in skupni
 podatki uporabljajo SQLite prek Drift 2.35.1; Hive ostaja potreben za branje in selitev
 obstoječih lokalnih podatkov organizerja. Dart `^3.12.0`, Flutter `>=3.44.0`,
-aplikacijska različica `1.4.0+18`. Interno Dart ime paketa `kanban` ohrani obstoječe
+aplikacijska različica `1.4.1+19`. Interno Dart ime paketa `kanban` ohrani obstoječe
 importe in ne določa javnega imena aplikacije. Namizne identitete so vezane na
 obstoječe baze in ključe, zato jih preimenovanje vmesnika ne spreminja.
 
