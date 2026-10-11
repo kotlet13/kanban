@@ -9,6 +9,7 @@ import '../../state/local_spaces_provider.dart';
 import 'reminder_snooze.dart';
 import '../shared/sharing_errors.dart';
 import 'notification_target_view.dart';
+import 'inbox_read_visuals.dart';
 
 class FinanceInboxSection extends ConsumerStatefulWidget {
   const FinanceInboxSection({
@@ -100,20 +101,20 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
           ),
         for (final plan in widget.plans)
           Card(
+            color: inboxCardColor(context, reads?.contains(plan.stableKey)),
             child: ListTile(
-              leading: Icon(
-                reads == null
-                    ? Icons.more_horiz
-                    : reads.contains(plan.stableKey)
-                    ? Icons.mark_email_read_outlined
-                    : Icons.mark_email_unread_outlined,
-              ),
+              contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              leading: const Icon(Icons.account_balance_wallet_outlined),
               title: Text(
                 plan.reason == 'salary_check'
                     ? l.financePlanSalaryQuestion
                     : plan.reason == 'income_check'
                     ? l.financePlanIncomeQuestion
                     : l.financePlanExpenseQuestion,
+                style: inboxTitleStyle(
+                  context,
+                  reads?.contains(plan.stableKey),
+                ),
               ),
               subtitle: Text(
                 '${_source(plan)} · ${organizerDateTime(context, plan.scheduledAt)}',
@@ -142,8 +143,11 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                           },
                     icon: const Icon(Icons.snooze_outlined),
                   ),
-                  IconButton(
-                    tooltip: l.inboxMarkRead,
+                  InboxReadStatusButton(
+                    read: reads?.contains(plan.stableKey),
+                    tooltip: reads?.contains(plan.stableKey) == true
+                        ? l.inboxRead
+                        : l.inboxMarkRead,
                     key: ValueKey('finance-inbox-read-${plan.stableKey}'),
                     onPressed:
                         _busy ||
@@ -152,7 +156,6 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                             reads.contains(plan.stableKey)
                         ? null
                         : () => _read(plan),
-                    icon: const Icon(Icons.done),
                   ),
                 ],
               ),

@@ -1,5 +1,7 @@
 # FamilyHub for Jivie
 
+Read notifications are retained for seven days after the first server `readAt`, then their inbox references and email/push jobs are deleted. Repeating read=true preserves that time; marking unread before expiry cancels the deadline. Unread notifications remain, and source tasks/payments/reminders are unaffected. Existing `cli/reminders.php --limit=100` also runs bounded cleanup for all accounts; optional `cli/inbox-retention.php --limit=100` runs cleanup alone (maximum 500 deletions). Expired references are excluded from inbox APIs even with a cleanup backlog. Deletion changes the existing account visibility revision; clients reset old snapshots using the existing `visibility_changed` response. Schema15 and API shapes remain unchanged. Source preparation does not establish hosted deployment.
+
 FamilyHub **0.11.1 / schema 15** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
 
 ## Notification defaults

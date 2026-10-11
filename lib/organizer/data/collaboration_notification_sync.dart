@@ -2,7 +2,52 @@ part of 'collaboration_repository.dart';
 
 /// Canonical inbox/read-state and reminder synchronization.
 extension CollaborationNotificationSync on CollaborationRepository {
+  /// Keep only a revision receipt after expiry so a delayed older server page
+  /// cannot resurrect a removed notification. Pending writes still need their
+  /// cached entry until acknowledgement and are hidden by the projection.
+  Future<void> _expireReadInbox(
+    String partition,
+    int epoch,
+  ) => database.transaction(() async {
+    _checkEpoch(epoch);
+    for (final row in await database.rows(
+      'SELECT id,data FROM inbox WHERE partition=?',
+      [partition],
+    )) {
+      final entry = SharedInboxEntry.fromJson(
+        CollaborationRepository._map(row['data']),
+      );
+      if (!inboxReadExpired(entry.readAt, clock())) continue;
+      final pending = await database.rows(
+        "SELECT 1 FROM commands WHERE partition=? AND entity_key=?",
+        [partition, 'inbox:${entry.id}'],
+      );
+      if (pending.isNotEmpty) continue;
+      await database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=MAX(CAST(value AS INTEGER),CAST(excluded.value AS INTEGER))',
+        ['inbox_expired:$partition:${entry.id}', entry.revision.toString()],
+      );
+      await database.execute('DELETE FROM inbox WHERE partition=? AND id=?', [
+        partition,
+        entry.id,
+      ]);
+      _checkEpoch(epoch);
+    }
+  });
+
   Future<void> _applyInbox(String partition, SharedInboxEntry entry) async {
+    final expired = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['inbox_expired:$partition:${entry.id}'],
+    );
+    if (expired.isNotEmpty) {
+      if (entry.revision <= int.parse(expired.single['value'] as String)) {
+        return;
+      }
+      await database.execute('DELETE FROM local_meta WHERE name=?', [
+        'inbox_expired:$partition:${entry.id}',
+      ]);
+    }
     if (entry.category == 'finance' &&
         !(await _cachedFinancePolicy(partition, entry.scopeId)).canRead) {
       await database.execute('DELETE FROM inbox WHERE partition=? AND id=?', [
@@ -27,6 +72,19 @@ extension CollaborationNotificationSync on CollaborationRepository {
       if (latest.revision > canonical.revision) canonical = latest;
     }
     final json = canonical.toJson();
+    if (old.isNotEmpty && canonical.isRead) {
+      final candidate = SharedInboxEntry.fromJson(
+        CollaborationRepository._map(old.first['data']),
+      );
+      // A server acknowledgement of an offline receipt must not restart its
+      // seven days at reconnection. A higher canonical revision may include
+      // an unseen unread/read cycle and must use the new server timestamp.
+      if (candidate.revision == canonical.revision &&
+          candidate.readAt != null &&
+          candidate.readAt!.isBefore(canonical.readAt!)) {
+        json['readAt'] = candidate.readAt!.toUtc().toIso8601String();
+      }
+    }
     if (queued.isNotEmpty && old.isNotEmpty) {
       final candidate = SharedInboxEntry.fromJson(
         CollaborationRepository._map(old.first['data']),
@@ -207,6 +265,40 @@ extension CollaborationNotificationSync on CollaborationRepository {
           }
         });
       } on CollaborationApiException catch (e) {
+        if (command['operation'] == 'inbox.read' &&
+            e.code == 'notification_missing') {
+          // A recipient notification may have expired on another device while
+          // this receipt was queued offline. It has no surviving target to edit
+          // and does not establish revocation of the underlying scope.
+          await database.transaction(() async {
+            _checkEpoch(epoch);
+            await _validLease(p);
+            _checkEpoch(epoch);
+            final old = await database.rows(
+              'SELECT data FROM inbox WHERE partition=? AND id=?',
+              [p, params['id']],
+            );
+            if (old.isNotEmpty) {
+              final entry = SharedInboxEntry.fromJson(
+                CollaborationRepository._map(old.single['data']),
+              );
+              await database.execute(
+                'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=MAX(CAST(value AS INTEGER),CAST(excluded.value AS INTEGER))',
+                ['inbox_expired:$p:${entry.id}', entry.revision.toString()],
+              );
+            }
+            await database.execute(
+              'DELETE FROM commands WHERE partition=? AND entity_key=?',
+              [p, command['entity_key']],
+            );
+            await database.execute(
+              'DELETE FROM inbox WHERE partition=? AND id=?',
+              [p, params['id']],
+            );
+            _checkEpoch(epoch);
+          });
+          continue;
+        }
         if (!const [
           'inbox_conflict',
           'conflict',

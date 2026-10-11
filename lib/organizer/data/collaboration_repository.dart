@@ -11,6 +11,7 @@ import '../domain/project_sharing_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
 import '../domain/shared_dates.dart';
+import '../domain/inbox_retention.dart';
 import 'collaboration_database.dart';
 import 'collaboration_transport.dart';
 import 'device_session_store.dart';
@@ -255,6 +256,7 @@ class CollaborationRepository {
           )).map((r) => SharedMember.fromJson(_map(r['data']))).toList();
         }
       }
+      await _expireReadInbox(profile.partition, epoch);
       final inbox =
           (await database.rows(
                 'SELECT data FROM inbox WHERE partition=? ORDER BY id DESC',

@@ -59,7 +59,7 @@ class NativeDeliveryService extends NativeDatabase
             $account = $user ? $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id=?', [$user['id']]) : null;
             $settings = $inbox ? (new NativeNotificationPreferences($this->container))->settings($inbox['scope_id'], $inbox['recipient_account_id'], $inbox['category']) : NativeNotificationPreferences::resolve();
             $visible = $inbox && !(int)($deliveryScope['archived']??0) && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'], $inbox['recipient_account_id'], $this->financialRecordType($inbox['target_type']));
-            if (!$user || (int)$user['is_active'] !== 1 || !$account || !$inbox || $account['account_id'] !== $inbox['recipient_account_id'] || !$visible || !($settings['email'] ?? false) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL) || (int)$job['expires_at'] <= time() || (int)$job['attempts'] > 5) {
+            if (!$user || (int)$user['is_active'] !== 1 || !$account || !$inbox || NativeInboxRetention::expired($inbox) || $account['account_id'] !== $inbox['recipient_account_id'] || !$visible || !($settings['email'] ?? false) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL) || (int)$job['expires_at'] <= time() || (int)$job['attempts'] > 5) {
                 $this->finish($id, $lease, 'cancelled'); return 'cancelled';
             }
             if (microtime(true) + 50 > $deadline) { $this->finish($id, $lease, 'pending', 60); return 'retry'; }

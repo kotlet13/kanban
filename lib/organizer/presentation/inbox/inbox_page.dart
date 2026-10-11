@@ -14,6 +14,7 @@ import '../../state/inbox_projection_provider.dart';
 import '../../state/inbox_read_action_provider.dart';
 import '../../domain/inbox_projection.dart';
 import 'reminder_snooze.dart';
+import 'inbox_read_visuals.dart';
 
 enum _InboxFilter { all, personal, scope }
 
@@ -90,6 +91,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     required String audience,
     VoidCallback? onSnooze,
   }) => Card(
+    color: inboxCardColor(context, read),
     child: ListTile(
       contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       leading: Icon(
@@ -97,10 +99,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
             ? Icons.notifications_none_outlined
             : Icons.notifications_active_outlined,
       ),
-      title: Text(
-        title,
-        style: read ? null : const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      title: Text(title, style: inboxTitleStyle(context, read)),
       subtitle: Text('$audience · $subtitle'),
       onTap: _busy ? null : onOpen,
       trailing: Row(
@@ -112,19 +111,14 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
               onPressed: _busy ? null : onSnooze,
               icon: const Icon(Icons.snooze_outlined),
             ),
-          IconButton(
+          InboxReadStatusButton(
+            read: read,
             tooltip: onRead == null
                 ? context.l10n.inboxRead
                 : read
                 ? context.l10n.inboxMarkUnread
                 : context.l10n.inboxMarkRead,
             onPressed: _busy ? null : onRead,
-            icon: Icon(
-              read
-                  ? Icons.mark_email_unread_outlined
-                  : Icons.mark_email_read_outlined,
-              size: 20,
-            ),
           ),
         ],
       ),

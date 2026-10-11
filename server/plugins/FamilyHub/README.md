@@ -1,5 +1,9 @@
 # FamilyHub 0.11.1
 
+## Read notification retention (local source addition)
+
+Read notifications expire seven days after their server `readAt` timestamp. Repeating read=true keeps the original deadline; unread clears it, and a later first read starts a new interval. Unread notifications are kept regardless of creation date. Retention deletes only notification references and their email/push jobs, leaving tasks, payments and source reminder state intact. The existing `cli/reminders.php --limit=100` cron runs bounded cleanup for all accounts even without due reminders; optional `cli/inbox-retention.php --limit=100` runs cleanup alone (maximum 500 deletions). Inbox requests also clean and filter expired references. Deletion increments the existing recipient visibility revision, requiring old sync cursors to reset via `visibility_changed`; no new wire contract, schema migration or server tombstone table is needed. This local source addition is separate from hosted installation and app releases.
+
 ## Notification defaults (0.11.1/schema 15)
 
 Absent category preferences now mean inApp and push enabled, email and sound disabled. Explicit saved settings retain priority. Device registration and operating-system permission remain separate; this patch neither registers devices nor replays old notifications. Read-all behavior belongs to the client and never completes tasks or payments. This is a code-only update from 0.11.0: schema 15 and all stored preferences remain unchanged.

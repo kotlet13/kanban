@@ -4332,6 +4332,12 @@ abstract class AppLocalizations {
   /// **'Read'**
   String get inboxRead;
 
+  /// No description provided for @inboxUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get inboxUnread;
+
   /// No description provided for @inboxPushDeviceDeliveryInactive.
   ///
   /// In en, this message translates to:

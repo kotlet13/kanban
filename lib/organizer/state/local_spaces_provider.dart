@@ -10,7 +10,10 @@ final localSpacesRepositoryProvider = FutureProvider<LocalSpacesRepository>((
   ref,
 ) async {
   await ref.watch(organizerRepositoryProvider.future);
-  return LocalSpacesRepository(await ref.watch(localDatabaseProvider.future));
+  return LocalSpacesRepository(
+    await ref.watch(localDatabaseProvider.future),
+    clock: ref.watch(organizerClockProvider),
+  );
 });
 final localSpacesProvider =
     AsyncNotifierProvider<LocalSpacesController, LocalSpacesState>(

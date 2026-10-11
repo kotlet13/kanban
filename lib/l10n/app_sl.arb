@@ -1045,6 +1045,7 @@
   "inboxInSharedSpace": "V skupnem prostoru",
   "inboxAll": "Vsa",
   "inboxRead": "Prebrano",
+  "inboxUnread": "Neprebrano",
   "inboxPushDeviceDeliveryInactive": "Nastavitve veljajo za registrirane naprave. Dostava potisnih obvestil na tej napravi trenutno ni vključena.",
   "inboxMarkAllRead": "Označi vse kot prebrano",
   "inboxMarkRead": "Označi kot prebrano",

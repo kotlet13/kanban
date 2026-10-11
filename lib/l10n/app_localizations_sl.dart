@@ -2399,6 +2399,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get inboxRead => 'Prebrano';
 
   @override
+  String get inboxUnread => 'Neprebrano';
+
+  @override
   String get inboxPushDeviceDeliveryInactive =>
       'Nastavitve veljajo za registrirane naprave. Dostava potisnih obvestil na tej napravi trenutno ni vključena.';
 

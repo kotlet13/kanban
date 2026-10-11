@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/inbox_projection.dart';
+import '../data/finance_inbox_store.dart';
 import 'collaboration_provider.dart';
 import 'finance_inbox_provider.dart';
 import 'organizer_provider.dart';
 import 'reminder_snooze_provider.dart';
 import 'notification_local_spaces_provider.dart';
 
-final organizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
+final rawOrganizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
   ref,
 ) {
-  final now =
-      ref.watch(financeInboxClockProvider).valueOrNull ??
-      ref.read(organizerClockProvider)();
+  ref.watch(financeInboxClockProvider);
+  final now = ref.read(organizerClockProvider)();
   final personal = ref.watch(organizerProvider);
   final shared = ref.watch(collaborationProvider);
   return projectOrganizerInbox(
@@ -28,8 +28,28 @@ final organizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
   );
 });
 
+final organizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
+  ref,
+) {
+  final raw = ref.watch(rawOrganizerInboxProjectionProvider);
+  // Keep known expiry suppression during a background receipt refresh. Keys
+  // include the account/scope (or persistent local space), so old account dates
+  // cannot hide another account's notification. The badge still treats a
+  // loading/error receipt state as unknown below.
+  final receipts = ref.watch(financeInboxReadKeysProvider).valueOrNull;
+  ref.watch(financeInboxClockProvider);
+  final now = ref.read(organizerClockProvider)();
+  return OrganizerInboxProjection(
+    local: raw.local,
+    shared: raw.shared,
+    finance: receipts is FinanceInboxReadKeys
+        ? raw.finance.where((p) => !receipts.expired(p.stableKey, now)).toList()
+        : raw.finance,
+  );
+});
+
 final financeInboxReadKeysProvider = FutureProvider<Set<String>>((ref) async {
-  final plans = ref.watch(organizerInboxProjectionProvider).finance;
+  final plans = ref.watch(rawOrganizerInboxProjectionProvider).finance;
   if (plans.isEmpty) return {};
   final store = await ref.watch(financeInboxStoreProvider.future);
   return store.readKeys(plans);

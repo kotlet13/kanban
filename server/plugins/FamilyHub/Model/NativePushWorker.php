@@ -25,7 +25,7 @@ class NativePushWorker extends NativeDatabase
                 $this->change('UPDATE familyhub_push_jobs SET state=\'pending\',next_attempt=?,lease_token=NULL,lease_until=NULL WHERE inbox_id=? AND device_id=? AND registration_revision=? AND lease_token=?',[time()+60,$job['inbox_id'],$job['device_id'],$job['registration_revision'],$lease]);
                 return ['status'=>'retry','coalesced'=>0];
             }
-            if ($valid && $visible && ($settings['push'] ?? false) && (int)$job['expires_at']>time() && (int)$job['attempts']<=5) {
+            if ($valid && $visible && !NativeInboxRetention::expired($inbox) && ($settings['push'] ?? false) && (int)$job['expires_at']>time() && (int)$job['attempts']<=5) {
                 $newer=$this->one('SELECT j.inbox_id FROM familyhub_push_jobs j JOIN familyhub_inbox i ON i.id=j.inbox_id WHERE j.device_id=? AND j.registration_revision=? AND j.state IN (\'pending\',\'processing\',\'sent\') AND j.inbox_id>? AND i.recipient_account_id=? AND i.scope_id=? AND i.group_key=? AND i.kind=? AND i.category=? AND i.audience=? ORDER BY j.inbox_id DESC LIMIT 1',[$job['device_id'],$job['registration_revision'],$job['inbox_id'],$inbox['recipient_account_id'],$inbox['scope_id'],$inbox['group_key'],$inbox['kind'],$inbox['category'],$inbox['audience']]);
                 if ($newer) {
                     $this->change('UPDATE familyhub_push_jobs SET state=\'coalesced\',lease_token=NULL,lease_until=NULL WHERE inbox_id=? AND device_id=? AND registration_revision=? AND lease_token=?',[$job['inbox_id'],$job['device_id'],$job['registration_revision'],$lease]);

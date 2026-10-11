@@ -61,8 +61,9 @@ Future<void> pumpInbox(
   DateTime Function() clock, {
   NotificationTarget? launch,
   Future<Set<String>> Function()? readKeys,
+  double width = 390,
 }) async {
-  tester.view.physicalSize = const Size(390, 1000);
+  tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -113,15 +114,39 @@ void main() {
         await tester.runAsync(fixture.db.close);
       });
       final now = DateTime(2026, 10, 30, 12);
-      await pumpInbox(tester, fixture.db, fixture.storage, () => now);
+      await pumpInbox(
+        tester,
+        fixture.db,
+        fixture.storage,
+        () => now,
+        width: 320,
+      );
       final container = ProviderScope.containerOf(
         tester.element(find.byType(OrganizerInboxPage)),
       );
       expect(container.read(organizerInboxHasUnreadProvider), isTrue);
+      expect(find.byIcon(Icons.mark_email_unread_outlined), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.text('Ali si že dobil plačo?'))
+            .style!
+            .fontWeight,
+        FontWeight.w700,
+      );
       final button = find.byKey(const ValueKey('inbox-mark-all-read'));
       await tester.tap(button);
       await tester.pumpAndSettle();
       expect(container.read(organizerInboxHasUnreadProvider), isFalse);
+      expect(find.byIcon(Icons.mark_email_read_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.mark_email_unread_outlined), findsNothing);
+      expect(find.byTooltip('Prebrano'), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.text('Ali si že dobil plačo?'))
+            .style!
+            .fontWeight,
+        FontWeight.w400,
+      );
       expect(tester.widget<TextButton>(button).onPressed, isNull);
       final snapshot = (await tester.runAsync(fixture.storage.read))!;
       final entry = snapshot.financeEntries.singleWhere(

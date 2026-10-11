@@ -503,7 +503,7 @@ void main() {
           ),
           collaborationProvider.overrideWith(() => controller),
           financeInboxStoreProvider.overrideWith((ref) async => store),
-          organizerInboxProjectionProvider.overrideWith((ref) {
+          rawOrganizerInboxProjectionProvider.overrideWith((ref) {
             final session = ref
                 .watch(collaborationProvider)
                 .asData
@@ -550,49 +550,93 @@ void main() {
       );
     },
   );
-  testWidgets(
-    'empty-All screenshot regression: delivered server event is visible and reading clears common badge provider',
-    (tester) async {
-      final controller = InboxController();
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            notificationLocalSnapshotsProvider.overrideWith(
-              (ref) async => [await ref.watch(organizerProvider.future)],
-            ),
-            organizerProvider.overrideWith(EmptyPersonal.new),
-            collaborationProvider.overrideWith(() => controller),
-            effectiveReminderPlansProvider.overrideWith((ref) async => []),
-            organizerClockProvider.overrideWithValue(() => now),
-            organizerReminderSchedulerProvider.overrideWithValue((_) => () {}),
-          ],
-          child: MaterialApp(
-            locale: const Locale('sl'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: OrganizerInboxPage(onSettings: () {}, onAccount: () {}),
+  for (final width in [320.0, 1200.0]) {
+    testWidgets(
+      'inbox status is current while tooltip toggles it at width $width',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final controller = InboxController();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              notificationLocalSnapshotsProvider.overrideWith(
+                (ref) async => [await ref.watch(organizerProvider.future)],
+              ),
+              organizerProvider.overrideWith(EmptyPersonal.new),
+              collaborationProvider.overrideWith(() => controller),
+              effectiveReminderPlansProvider.overrideWith((ref) async => []),
+              organizerClockProvider.overrideWithValue(() => now),
+              organizerReminderSchedulerProvider.overrideWithValue(
+                (_) => () {},
+              ),
+            ],
+            child: MaterialApp(
+              locale: const Locale('sl'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: SingleChildScrollView(
+                  child: OrganizerInboxPage(
+                    onSettings: () {},
+                    onAccount: () {},
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(OrganizerInboxPage)),
-      );
-      expect(find.text('Vsa'), findsOneWidget);
-      expect(find.byIcon(Icons.notifications_active_outlined), findsOneWidget);
-      expect(container.read(organizerInboxHasUnreadProvider), isTrue);
-      // No invalid null-plan snooze action is exposed for a server-only alarm.
-      expect(find.byIcon(Icons.snooze_outlined), findsNothing);
-      await tester.tap(find.byTooltip('Označi kot prebrano'));
-      await tester.pumpAndSettle();
-      expect(controller.readIds, [1]);
-      expect(container.read(organizerInboxHasUnreadProvider), isFalse);
-      expect(find.byIcon(Icons.notifications_none_outlined), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+        );
+        await tester.pumpAndSettle();
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(OrganizerInboxPage)),
+        );
+        expect(find.text('Vsa'), findsOneWidget);
+        expect(
+          find.byIcon(Icons.notifications_active_outlined),
+          findsOneWidget,
+        );
+        expect(find.byIcon(Icons.mark_email_unread_outlined), findsOneWidget);
+        expect(find.byIcon(Icons.mark_email_read_outlined), findsNothing);
+        final tile = tester.widget<ListTile>(find.byType(ListTile));
+        expect((tile.title! as Text).style!.fontWeight, FontWeight.w700);
+        expect(
+          tester
+              .widget<Icon>(find.byIcon(Icons.mark_email_unread_outlined))
+              .semanticLabel,
+          'Neprebrano',
+        );
+        expect(container.read(organizerInboxHasUnreadProvider), isTrue);
+        // No invalid null-plan snooze action is exposed for a server-only alarm.
+        expect(find.byIcon(Icons.snooze_outlined), findsNothing);
+        await tester.tap(find.byTooltip('Označi kot prebrano'));
+        await tester.pumpAndSettle();
+        expect(controller.readIds, [1]);
+        expect(container.read(organizerInboxHasUnreadProvider), isFalse);
+        expect(find.byIcon(Icons.notifications_none_outlined), findsOneWidget);
+        expect(find.byIcon(Icons.mark_email_read_outlined), findsOneWidget);
+        expect(find.byIcon(Icons.mark_email_unread_outlined), findsNothing);
+        expect(find.byTooltip('Označi kot neprebrano'), findsOneWidget);
+        expect(
+          (tester.widget<ListTile>(find.byType(ListTile)).title! as Text)
+              .style!
+              .fontWeight,
+          FontWeight.w400,
+        );
+        expect(
+          tester
+              .widget<Icon>(find.byIcon(Icons.mark_email_read_outlined))
+              .semanticLabel,
+          'Prebrano',
+        );
+        await tester.tap(find.byTooltip('Označi kot neprebrano'));
+        await tester.pumpAndSettle();
+        expect(container.read(organizerInboxHasUnreadProvider), isTrue);
+        expect(find.byIcon(Icons.mark_email_unread_outlined), findsOneWidget);
+        expect(find.byTooltip('Označi kot prebrano'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }

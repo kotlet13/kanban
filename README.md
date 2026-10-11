@@ -1,5 +1,7 @@
 # Jivie
 
+**Popravek centra obvestil, 11. oktober — lokalni izvor:** ovojnica kaže dejansko stanje prebranosti, neprebrana obvestila so krepkejša in poudarjena. Prebrana obvestila se odstranijo po sedmih dneh od branja; neprebrana ter izvorna opravila in finance ostanejo. [Izvedba, preverjanje in meje](docs/INBOX_READ_STATE_AND_RETENTION.md). Nameščena Android/Mac 1.3.1 (16) in testni strežnik teh sprememb še nimajo.
+
 **Obvestila, 11. oktober — interna 1.3.1 (16):** Android je aktiven za **domači (15)** od 07:30, nova podpisana Mac gradnja je odprta. Testni strežnik uporablja **FamilyHub 0.11.1/schema15**, po preverjeni obnovi 86 tabel, 247 vrstic in 2.849 zasebnih datotek. Dodana sta **Označi vse kot prebrano** in privzeti push za skupne spremembe; izrecni izklopi ostanejo ohranjeni. **963 Flutter PASS**, 582 ciljnih PHP kontrol PASS. Fizični push preizkus te izdaje še sledi; Mac ima center v aplikaciji. [Izdajni dokazi](docs/release/NOTIFICATION_DEFAULTS_RELEASE.md), [obseg](docs/NOTIFICATION_DEFAULTS_AND_READ_ALL.md).
 
 Jivie (izgovorjeno **dživi**) je brezplačen lokalni organizator osebnega in družinskega življenja: prostega časa, opravil, domačih projektov, nabave in financ. Flutter aplikacija je nastala iz Kanban Connect; izbirno strežniško sodelovanje razvijamo prek vtičnika FamilyHub za Kanboard.

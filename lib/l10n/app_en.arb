@@ -1045,6 +1045,7 @@
   "inboxInSharedSpace": "In a shared space",
   "inboxAll": "All",
   "inboxRead": "Read",
+  "inboxUnread": "Unread",
   "inboxPushDeviceDeliveryInactive": "These preferences apply to registered devices. Push delivery on this device is currently inactive.",
   "inboxMarkAllRead": "Mark all as read",
   "inboxMarkRead": "Mark as read",

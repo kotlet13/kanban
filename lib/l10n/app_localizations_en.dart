@@ -2400,6 +2400,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxRead => 'Read';
 
   @override
+  String get inboxUnread => 'Unread';
+
+  @override
   String get inboxPushDeviceDeliveryInactive =>
       'These preferences apply to registered devices. Push delivery on this device is currently inactive.';
 
