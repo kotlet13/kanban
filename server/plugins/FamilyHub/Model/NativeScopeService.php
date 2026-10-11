@@ -17,6 +17,7 @@ class NativeScopeService extends NativeDatabase
         return $this->transaction(function () use ($operation, $params) {
             $actor = $this->actor(); $user = $actor['user'];
             if (in_array($operation,['scopes.setLeader','scopes.accessMigrationPreview','scopes.accessMigrationApply'],true)) { return (new NativeSpacesAccessService($this->container))->inTransaction($operation,$params,$user); }
+            if (in_array($operation,['scopes.projectSharingPreview','scopes.projectSharingApply'],true)) { return (new NativeProjectSharingService($this->container))->inTransaction($operation,$params,$user); }
             if ($operation === 'scopes.list') {
                 $this->fields($params, [], ['includePersonal', 'includeOrganizations','includeArchived','includeAccessChanges']);
                 $includePersonal = $params['includePersonal'] ?? false;
@@ -26,7 +27,7 @@ class NativeScopeService extends NativeDatabase
                 if (!is_bool($includeArchived)) { throw new NativeError('validation_error'); }
                 if (!is_bool($includeOrganizations)) { throw new NativeError('validation_error'); }
                 if (!is_bool($includePersonal)) { throw new NativeError('validation_error'); }
-                $rows = $this->many('SELECT s.*,m.role FROM familyhub_scopes s LEFT JOIN familyhub_members m ON s.id=m.scope_id AND m.user_id=? AND m.account_id=? AND m.active=1 WHERE m.scope_id IS NOT NULL OR EXISTS (SELECT 1 FROM familyhub_members om JOIN familyhub_scopes o ON o.id=om.scope_id LEFT JOIN familyhub_organization_leaders l ON l.scope_id=o.id AND l.account_id=om.account_id WHERE o.id=s.organization_id AND o.access_policy_version=2 AND om.user_id=? AND om.account_id=? AND om.active=1 AND (om.role=\'owner\' OR l.account_id IS NOT NULL)) ORDER BY s.created_at,s.id', [$user['id'], $user['account_id'],$user['id'],$user['account_id']]);
+                $rows = $this->many('SELECT s.*,m.role FROM familyhub_scopes s LEFT JOIN familyhub_members m ON s.id=m.scope_id AND m.user_id=? AND m.account_id=? AND m.active=1 WHERE m.scope_id IS NOT NULL OR EXISTS (SELECT 1 FROM familyhub_members om JOIN familyhub_scopes o ON o.id=om.scope_id LEFT JOIN familyhub_organization_leaders l ON l.scope_id=o.id AND l.account_id=om.account_id WHERE (o.id=s.parent_scope_id OR o.id=s.organization_id) AND om.user_id=? AND om.account_id=? AND om.active=1 AND (o.access_policy_version=3 OR (o.access_policy_version=2 AND (om.role=\'owner\' OR l.account_id IS NOT NULL)))) ORDER BY s.created_at,s.id', [$user['id'], $user['account_id'],$user['id'],$user['account_id']]);
                 $access=new NativeOrganizationAccess($this->container);
                 $rows=array_values(array_filter(array_map(fn($row)=>$access->decorate($row,$user['account_id'],$row['role']),$rows)));
                 $rows=array_values(array_filter($rows,fn($row)=>$row['kind']!=='personal' || ((int)$row['owner_id']===(int)$user['id'] && $row['role']==='owner' && $this->one('SELECT scope_id FROM familyhub_personal_scopes WHERE account_id=? AND scope_id=?',[$user['account_id'],$row['id']]))));
@@ -38,19 +39,23 @@ class NativeScopeService extends NativeDatabase
                 return $result;
             }
             if ($operation === 'scopes.create') {
-                $this->fields($params, ['id', 'kind', 'name', 'requestId'], ['organizationId','accessPolicyVersion','projectPayload','address']);
+                $this->fields($params, ['id', 'kind', 'name', 'requestId'], ['organizationId','parentScopeId','accessPolicyVersion','projectPayload','address']);
                 $id = $this->uuid($params['id']); $request = $this->uuid($params['requestId']);
                 if (!in_array($params['kind'], ['household', 'project', 'organization'], true)) { throw new NativeError('validation_error'); }
                 $accessVersion=$params['accessPolicyVersion']??1;
-                if (!is_int($accessVersion) || !in_array($accessVersion,[1,2],true) || (isset($params['accessPolicyVersion']) && $params['kind']!=='organization')) { throw new NativeError('validation_error'); }
-                $organizationId = $params['organizationId'] ?? null;
-                if ($organizationId !== null) {
-                    $this->uuid($organizationId);
-                    if ($params['kind'] !== 'project') { throw new NativeError('validation_error'); }
-                    $organization = $this->scope($organizationId, $user['id'], true, true);
-                    if ($organization['kind'] !== 'organization') { throw new NativeError('validation_error'); }
+                if (!is_int($accessVersion) || !in_array($accessVersion,[1,2,3],true) || (isset($params['accessPolicyVersion']) && !in_array($params['kind'],['organization','household','project'],true)) || ($params['kind']==='household' && $accessVersion===2)) { throw new NativeError('validation_error'); }
+                $parentId = $params['parentScopeId'] ?? $params['organizationId'] ?? null;
+                $organizationId = null;
+                if ($parentId !== null) {
+                    $this->uuid($parentId);
+                    if ($params['kind'] !== 'project' || (isset($params['organizationId']) && $params['organizationId']!==$parentId)) { throw new NativeError('validation_error'); }
+                    $parent = $this->scope($parentId, $user['id'], true, true);
+                    if (!in_array($parent['kind'],['organization','household'],true) || ($parent['kind']==='household' && (int)$parent['access_policy_version']!==3)) { throw new NativeError('validation_error'); }
+                    if ($accessVersion===3 && (int)$parent['access_policy_version']!==3) { throw new NativeError('access_migration_required',409); }
+                    $organizationId=$parent['kind']==='organization'?$parentId:null;
+                    if ((int)$parent['access_policy_version']===3) { $accessVersion=3; }
                 }
-                if (isset($params['projectPayload']) && $organizationId===null) { throw new NativeError('validation_error'); }
+                if (isset($params['projectPayload']) && $parentId===null && !($params['kind']==='project' && $accessVersion===3)) { throw new NativeError('validation_error'); }
                 $address=$params['address']??null;
                 if ($address!==null) { $this->text($address,2000,true); }
                 $name = $this->text($params['name'], 200); $hash = $this->hashRequest($operation, $params);
@@ -61,13 +66,14 @@ class NativeScopeService extends NativeDatabase
                     if ($replay) { return $replay['body']; }
                     throw new NativeError('conflict', 409);
                 }
-                $contract = $organizationId !== null || $params['kind'] === 'organization' ? 3 : 1;
+                $projectRoot=$params['kind']==='project' && ($parentId!==null || $accessVersion===3);
+                $contract = $projectRoot || $params['kind'] === 'organization' ? 3 : 1;
                 $this->change('INSERT INTO familyhub_scopes(id,kind,name,owner_id,sequence,created_at,organization_id,required_record_contract) VALUES(?,?,?,?,0,?,?,?)', [$id, $params['kind'], $name, $user['id'], time(), $organizationId, $contract]);
-                $this->change('UPDATE familyhub_scopes SET access_policy_version=?,address=? WHERE id=?',[$accessVersion,$address,$id]);
+                $this->change('UPDATE familyhub_scopes SET access_policy_version=?,address=?,parent_scope_id=? WHERE id=?',[$accessVersion,$address,$parentId,$id]);
                 $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,\'owner\',1)', [$id, $user['id'], $user['account_id']]);
-                if ($organizationId!==null) { $this->change('UPDATE familyhub_scopes SET project_root_id=? WHERE id=?',[$id,$id]); }
+                if ($projectRoot) { $this->change('UPDATE familyhub_scopes SET project_root_id=? WHERE id=?',[$id,$id]); }
                 $sequence=0;
-                if ($organizationId!==null) {
+                if ($projectRoot) {
                     $stamp=gmdate('Y-m-d\TH:i:s\Z');
                     $payload=['title'=>$name,'description'=>'','area'=>'home','startAt'=>null,'endAt'=>null,'phases'=>[],'availabilityMinutes'=>null,'availabilityPeriod'=>null,'createdAt'=>$stamp,'updatedAt'=>$stamp];
                     if (isset($params['projectPayload'])) {
@@ -80,12 +86,12 @@ class NativeScopeService extends NativeDatabase
                     $this->change('UPDATE familyhub_scopes SET sequence=1 WHERE id=?',[$id]);
                 }
                 $effective=$this->scope($id,$user['id']);
-                if ((int)($effective['effective_access_policy_version']??1)===2) {
+                if ((int)($effective['effective_access_policy_version']??1)>=2) {
                     $this->change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)',[$id]);
                     $this->change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'write\')',[$id,$user['account_id']]);
                 }
                 $result = ['scope' => $this->scopeWire($effective)];
-                if ($organizationId!==null) { $result['projectRoot']=(new NativeRecordPolicy($this->container))->wire($this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$id,$id]),3); }
+                if ($projectRoot) { $result['projectRoot']=(new NativeRecordPolicy($this->container))->wire($this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$id,$id]),3); }
                 $this->remember($id, $user['id'], $request, $hash, $result);
                 return $result;
             }
@@ -122,6 +128,7 @@ class NativeScopeService extends NativeDatabase
                 $this->fields($params, ['scopeId']);
                 $id = $this->uuid($params['scopeId']); $authorized = $this->scope($id, $user['id']);
                 $rows = $this->many('SELECT m.user_id,m.role,u.username,u.name,m.account_id FROM familyhub_members m JOIN users u ON u.id=m.user_id JOIN familyhub_accounts a ON a.user_id=m.user_id AND a.account_id=m.account_id WHERE m.scope_id=? AND m.active=1 AND u.is_active=1 ORDER BY m.user_id', [$id]);
+                if ((int)$authorized['effective_access_policy_version']===3) { return ['members'=>(new NativeOrganizationAccess($this->container))->members($id)]; }
                 if ($authorized['kind']==='organization') { return ['members'=>(new NativeSpacesAccessService($this->container))->members($id)]; }
                 if ($authorized['kind'] === 'personal') { $rows = array_values(array_filter($rows, fn ($row) => $row['account_id'] === $user['account_id'])); }
                 return ['members' => array_map(fn ($row) => ['userId' => (int)$row['user_id'], 'accountId' => $row['account_id'], 'username' => $row['username'], 'displayName' => $row['name'] ?: $row['username'], 'role' => $row['role'], 'active' => true], $rows)];
@@ -139,7 +146,7 @@ class NativeScopeService extends NativeDatabase
                 if (!$member || $member['role'] === 'owner') { throw new NativeError('cannot_remove_owner'); }
                 $access=new NativeOrganizationAccess($this->container);$formerlyVisible=array_values(array_filter($access->relatedScopeIds($id),fn($sid)=>$access->visibleScope($sid,$member['account_id'])));
                 $this->change('UPDATE familyhub_members SET active=0 WHERE scope_id=? AND user_id=?', [$id, $params['userId']]);
-                if ($scope['kind']==='organization') {
+                if ($scope['kind']==='organization' || (int)$scope['effective_access_policy_version']===3) {
                     $this->change('DELETE FROM familyhub_organization_leaders WHERE scope_id=? AND account_id=?',[$id,$member['account_id']]);
                     $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE id=?',[$id]);
                 }

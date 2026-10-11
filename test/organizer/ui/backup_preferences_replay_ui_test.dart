@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban/app.dart';
-import 'package:kanban/state/providers.dart';
+import 'package:kanban/organizer/state/app_preferences_provider.dart';
 import 'organizer_ui_test.dart' show pumpOrganizer, MemoryOrganizerStorage;
 
 void main() {
@@ -20,7 +20,7 @@ void main() {
       ready.complete({'app_locale_code': 'en', 'app_theme_mode': 'dark'});
       await tester.pumpAndSettle();
       final container = ProviderScope.containerOf(
-        tester.element(find.byType(KanbanApp)),
+        tester.element(find.byType(JivieApp)),
       );
       expect(container.read(themeModeProvider), ThemeMode.dark);
       expect(container.read(appLocaleProvider)?.languageCode, 'en');

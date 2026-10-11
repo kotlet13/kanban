@@ -360,7 +360,7 @@ void main() {
               (ref) async => <String, Object?>{},
             ),
           ],
-          child: RepaintBoundary(key: key, child: const KanbanApp()),
+          child: RepaintBoundary(key: key, child: const JivieApp()),
         ),
       );
       await tester.pumpAndSettle();

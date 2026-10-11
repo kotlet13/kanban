@@ -25,8 +25,7 @@ extension CollaborationEventActions on CollaborationRepository {
     );
     _checkEpoch(epoch);
     projectId ??=
-        scoped.projectRootId ??
-        (scoped.organizationId != null ? scopeId : null);
+        scoped.projectRootId ?? (scoped.parentSpaceId != null ? scopeId : null);
     final event = SharedEvent(
       id: id,
       title: title.trim(),

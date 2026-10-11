@@ -338,3 +338,167 @@ Neskrivni dokazi so v `build/qa/spaces-hosted/`: `helper-handoff.json`, `restore
 ### Povrnitev
 
 Pred aktivacijo je podprt `abort-before-activation`, ki ob nespremenjeni stari kodi/schema11/konfiguraciji obnovi le lastno vzdrževanje in originalni cron, brez brisanja ali obnove podatkov. Po začetku DDL ni samodejne povrnitve kode/SQL: `capture-recovery` pod vzdrževanjem ohrani trenutno stanje, za popravilo pa je treba upoštevati vse poznejše zapise in izbrise računov. Po odprtju sistema stare baze nikoli ne obnavljaj slepo čez nove podatke. Odstranitev vtičnika ne povrne sheme.
+
+## 15. E-poštna povabila 10. oktobra — FamilyHub 0.10.0 / schema14
+
+Na uporabnikovo naročilo novega toka povabil je nadgrajen samo **jivie-test.triparna.si**.
+Produkcijska naslova nista spremenjena. Obstoječi računi, gesla, seje, podatki in
+SMTP/FCM nastavitve so ohranjeni. Registracija prek novega e-poštnega povabila ne
+ustvari članstva; sledi ločeni sprejem v aplikaciji. [Pogodba](email-invitation-api-contract.md)
+in [izvedbeni dnevnik](../EMAIL_INVITATIONS.md) ločita izvor od fizičnega preizkusa.
+
+### Paket in priprava
+
+Pregledani `FamilyHub-0.10.0-email-source-final.zip` vsebuje **76 datotek, od tega
+70 PHP**. SHA256 je `5f85e5b6c6716b4eb1baaeecf9602cab8c1dd9f83f7eeb592714cfc9e4ed032e`.
+Novi [PHP pomočnik](../../server/scripts/upgrade-cpanel-jivie-email.php) in
+[shell ovoj](../../server/scripts/upgrade-cpanel-jivie-email.sh) sta omejena na
+testni naslov in schema13→14. Paket pomočnika ima SHA256
+`f3e456769a2072be7bc3bbbae91fe1e461fcf4d9e977fb2ca220788bdacc89d0`.
+Kontrolne vsote prenesenih paketov so se ujemale z lokalnimi. **32 kontrol pomočnika
+in 21 dejanskih MariaDB kontrol PASS**; preverjeni so tudi PHP lint, shell sintaksa
+in 10 testov omejenega pakiranja.
+
+Delovna mapa `/home/tripar13/private/jivie-test/upgrade-0.10.0` ima 0700.
+Pomočnik je ustavil istih pet testnih cronov in vključil vzdrževanje; zunanji HTTPS
+klic je ob 07:24:14 UTC potrdil 503. Prvi poskus zajema pred iztekom 65 sekund je
+bil pravilno zavrnjen. Po izteku roka in pregledu delavcev je zajem držal READ
+zaklepe vseh InnoDB tabel. Celotna kopija vključuje SQL, zasebne datoteke, prejšnji
+vtičnik, konfiguracijo ter originalni cron in `.htaccess`.
+
+### Preverjena dejanska obnova
+
+Arhiv je prenesen v zasebno lokalno mapo
+`~/.local/share/jivie/backups/email-invitations-20261010/` (0700; datoteke 0600),
+zunaj Git in spletnih map. SHA256 arhiva je
+`08f9b0cc27d79d5f9413dbc0000896fa7cd01efbcd9b85746a47a0038d56f7bc`, SQL pa
+`03fbdfed4567e75f6c044e247b1597cd8e15629ea1e146ae0847796816f6f39a`.
+
+[Preverjevalnik](../../server/scripts/verify-cpanel-jivie-backup.py) je v sveži
+**MariaDB 10.11.19, network=none, brez objavljenih vrat** obnovil in primerjal
+**84 tabel, 169 vrstic in 583 zasebnih datotek**, vključno z zgodovinskimi kopijami.
+Štetje vrstic izvzame samo različico sheme FamilyHub; primerjani so tudi računi,
+gesla, enrollment in identiteta. Aplikacija in poštni delavci v obnovi niso tekli;
+izolirani vsebnik je po preverjanju ustavljen. Dokaz obnove je bil vrnjen v zasebno
+strežniško mapo in preverjen pred aktivacijo.
+
+### Aktivacija in rezultat
+
+Migracija doda `recipient_email` in `recipient_account_id` kot nullable koloni
+ter prazno tabelo `familyhub_invitation_mail`. Pred ponovnim odprtjem so primerjani
+vsi stari stolpci vseh tabel, gesla, računi, enrollment in konfiguracija. Stara
+povabila ostanejo nespremenjena. Originalni cron in `.htaccess` sta bajtno obnovljena.
+
+Zunanji HTTPS API vrne 200, isti
+`serverId=95c11fe0-916c-48be-a3f6-999732846266`,
+`invitationContractVersions:[1,2]` in `features.emailInvitations:true`.
+Štirje veljavno oblikovani klici brez prijave (`invitations2.create`, `.pending`,
+`.accept`, `scopes.list`) vrnejo **401/auth_required**; niso ustvarili povabila ali
+poslali pošte. Prazno telo ustvarjanja najprej vrne 422/validation_error, zato ni
+uporabljeno kot dokaz avtorizacije.
+
+Bralni pregled ob **07:29:01 UTC** potrdi schema14, natančno vseh 76 datotek,
+iste konfiguracijske hashe, gesla/račune ter originalni cron in `.htaccess`.
+Minutni delavci reminders, account-mail, delivery in push imajo nov veljaven status
+od 07:29:01 UTC, 0600. Poznejši zajem `workers-resumed.jpg` potrdi tudi petminutni
+cleanup ob 07:30:01 UTC in nadaljnje minutne zagone ob 07:31:01 UTC.
+Obstoječi `account-mail.php` pošilja tudi nova povabila; nov cron ali ključ ni dodan.
+
+Javna stran `InvitationController` je preverjena prek HTTPS in v brskalniku.
+Ob odsotni kodi ne ponudi aktivnih gumbov; skrivnost veljavne povezave je v fragmentu.
+Resnična dostava v uporabnikov predal, odpiranje povezave na Macu ter eksplicitni
+sprejem z drugim računom še potrebujejo fizični preizkus. Nova Android izdaja ni
+bila oddana; obstoječa 1.2.0 (14) ostane združljiva s starimi povabili.
+
+Neskrivni dokazi so v `build/qa/email-invitations-hosted/`: zajema capabilities,
+vzdrževanje, dokaz obnove, preverjanje neprijavljenih zahtev, `hosted-proof.json`
+in posnetki `hosted-upgrade-verified.jpg`, `landing-without-token.jpg` ter
+`workers-resumed.jpg`.
+Pred aktivacijo je omogočen `abort-before-activation` za schema13; po začetku DDL
+velja isti previdni postopek `capture-recovery` kot pri prejšnji nadgradnji.
+
+## 16. Deljenje prostorov 10. oktobra — FamilyHub 0.11.0 / schema15
+
+Na izrecno naročilo je nadgrajen samo **jivie-test.triparna.si**. Produkcija ni
+spremenjena. [Izdajni dnevnik](../release/SPACE_SHARING_RELEASE.md) vodi tudi
+novo interno Android in lokalno Mac gradnjo; tu so dokazi gostovanja.
+
+Paket `FamilyHub-0.11.0-sharing-source-final.zip` vsebuje **80 datotek, 73 PHP**,
+SHA256 `d6f0b91c7fe539442ee6b0b84c017e14ee5fd23801aecc0a26f9b451f456288f`.
+Paket pomočnikov ima SHA256
+`c57d52150693d15792792f40abcb0947edcaddfa3553eda6afd357cee43ddac7`.
+Oddaljene kontrolne vsote se ujemajo. [Omejeni postopek in lokalni testi](SHARING_UPGRADE_HELPER.md)
+so preverjeni z **32 sintetičnimi, 28 dejanskimi MariaDB in 10 paketnimi kontrolami**.
+
+Zasebna delovna mapa je `/home/tripar13/private/jivie-test/upgrade-0.11.0` (0700).
+Pomočnik je ustavil samo pet testnih cronov in vključil vzdrževanje; zunanji HTTP
+ob18:04:34 UTC vrne503. Prezgodnji zajem je varovalo65 sekund pravilno zavrnilo.
+Po izteku in pregledu procesov je zajem držal READ zaklepe vseh InnoDB tabel.
+
+Nova kopija je prenesena zunaj Git/spletnih map v
+`~/.local/share/jivie/backups/sharing-20261010/` (0700, datoteke0600). SHA256
+arhiva je `8b30d2da14799e1365cb69f766d9ad8d0c4fcf8f95b73d3889a1aa1e186aeb4e`,
+SQL `00b2f6bf35154633d695e37a78b49e1a238ae96f11900806efc4ad82422762ea`.
+Dejanska obnova v novi **MariaDB10.11.19, network=none**, brez aplikacije/delavcev,
+potrdi **85 tabel, 204 vrstice in 1.335 zasebnih datotek** (vključno s prejšnjimi
+kopijami), vse hashe, račune/gesla/enrollment in identiteto. Izolirani vsebnik je
+nato ustavljen. Vrnjeni dokaz obnove ima SHA256
+`1f787bf4bee3cff808765bd32d7c7bfb100d9d638c09c49ef969dcf40a7e956b`.
+
+Aktivacija schema14→15 preveri vse stare stolpce vseh tabel, račune, gesla,
+enrollment in konfiguracijo. Novi parent kopira samo izvirni organization_id,
+stara povabila ohranijo pogodbo1 in access_scope=NULL, relocation tabela je prazna.
+**Politike1/2 ostanejo enake**; njihov prehod potrebuje lastnikov predogled v
+aplikaciji. Originalna cron in `.htaccess` sta bajtno povrnjena.
+
+Javni HTTPS vrne200, nespremenjen serverId
+`95c11fe0-916c-48be-a3f6-999732846266`, invitation `[1,2,3]`, spaceAccess `[3]`,
+organizationAccess `[1,2,3]`; finance `[1,2]` in linkedPayment `[3]` ostaneta.
+SMTP, obnova gesla in FCM `jivie-e928a` ostanejo vključeni; bootstrap in stara
+Kanboardova povabila izključeni. Pet veljavno oblikovanih zahtev brez prijave
+vrne **401/auth_required**: scopes.list, invitations3.pending/create ter predogleda
+prehoda politike in projektne izločitve. Računa/povabila/pošte nismo ustvarili.
+
+Bralni preverjevalnik potrdi vseh80 nameščenih datotek, konfiguracijo, originalni
+cron in .htaccess, račune/gesla/enrollment ter identiteto. Loči shranjeno popolno
+aktivacijsko primerjavo od trenutnega stanja po odprtju, ko so normalni zapisi
+spet dovoljeni; ob18:08:04 UTC se ujema84 od85 starih tabel, vključno z vsemi
+starimi stolpci obsegov in povabil. Minutni delavci imajo veljavne nove JSON
+statuse ob18:08:01 UTC, dovoljenja0600. Končni pregled ob 18:10:09 UTC potrdi tudi petminutni cleanup ob18:10:02 UTC ter vsehpet nadaljnjih zagonov z veljavnim JSON in0600.
+
+Neskrivni dokazi so v `build/qa/sharing-hosted/`: before/after-capabilities,
+maintenance, restore-evidence, unauthenticated-checks, hosted-proof in posnetki.
+Zasebni arhiv in podrobni restore-proof ostajata zunaj repozitorija. Nova Mac
+gradnja je dejansko ohranila prijavo takndev in članstvo Doma; fizično skupno
+urejanje na obeh napravah ter nova dostava obvestila še sledita.
+
+
+## 17. Obvestila 11. oktobra — FamilyHub 0.11.1 / schema15
+
+Testni strežnik je nadgrajen iz 0.11.0 z [novim patch pomočnikom](NOTIFICATION_UPGRADE_HELPER.md).
+Sveža zasebna kopija je dejansko obnovljena v izolirani MariaDB 10.11.19:
+**86 tabel, 247 vrstic, 2.849 zasebnih datotek**, arhiv SHA256
+`7243db513e84dd187418e961952658557f6d23624d52aca8d80da15ab6b6da5c`.
+Vsebnik je ustavljen, kopija ostane zunaj repozitorija in spletnih map.
+
+Aktivacija brez DDL ohrani vse vrstice, shemo/indekse, račune/gesla/serverId,
+konfiguracijo in shranjene preference. Izvirni cron in .htaccess sta obnovljena.
+Read-only preverjalnik potrdi 81 datotečnih hashov, privzete kategorije ter
+nespremenjeno shranjeno nastavitev/izklop. Vseh pet delavcev je ob 07:30:01
+ustvarilo svež veljaven status (0600); zunanji HTTPS potrdi isti serverId,
+Native API, SMTP in externalPush. Novega fizičnega push testa še ni bilo.
+
+Končni pregledovalnik na strežniku je `upgrade-0.11.1/verify-hosted-final.php`,
+SHA256 `87ccb37cf63a9771e1e0131d8a5dc34a9ceae438ab3474f31b825e3ac0336320`.
+[Izdajni dokazi](../release/NOTIFICATION_DEFAULTS_RELEASE.md) vsebujejo različice,
+hashe in lokalne QA poti. Produkcija ostane nespremenjena.
+
+
+## Popravki prebranosti — 11. oktober, FamilyHub 0.11.2/schema15
+
+Testni `jivie-test.triparna.si` je nadgrajen z 0.11.1 na 0.11.2 brez migracije,
+po sveži izolirani obnovi MariaDB 10.11.19 (86 tabel, 273 vrstic, 5.886 zasebnih
+datotek). Računi/gesla, serverId, konfiguracija, izklopi obvestil ter izvirni cron
+so ohranjeni. Štirje delavci za obvestila imajo potrjen svež zagon po odprtju;
+nov zagon ločenega delavca izbrisa računov ni potrjen zaradi poteka cPanel seje.
+Produkcija je nespremenjena. [Dokazi in omejitve](../release/INBOX_RETENTION_RELEASE.md).

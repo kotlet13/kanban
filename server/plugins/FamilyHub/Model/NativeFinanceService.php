@@ -18,7 +18,8 @@ class NativeFinanceService extends NativeDatabase
                 $this->fields($params, ['scopeId']); $this->scope($scope, $user['id'], false, true);
                 $policy = $this->one('SELECT enabled,revision FROM familyhub_finance_policy WHERE scope_id=?', [$scope]);
                 $rows = $this->many('SELECT m.account_id,m.role,g.access_level FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id LEFT JOIN familyhub_finance_grants g ON g.scope_id=m.scope_id AND g.account_id=m.account_id WHERE m.scope_id=? AND m.active=1 AND u.is_active=1 ORDER BY m.account_id', [$scope]);
-                $effective=$this->scope($scope,$user['id']);$managed=(int)($effective['effective_access_policy_version']??1)===2;
+                $effective=$this->scope($scope,$user['id']);$managed=(int)($effective['effective_access_policy_version']??1)>=2;
+                if ((int)$effective['effective_access_policy_version']===3) { return ['managedByOrganizationPolicy'=>true,'enabled'=>(bool)($policy['enabled']??false),'revision'=>(int)($policy['revision']??0)+(int)$effective['effective_access_revision'],'grants'=>array_map(fn($m)=>['accountId'=>$m['accountId'],'grant'=>$m['role']==='viewer'?'read':'write'],(new NativeOrganizationAccess($this->container))->members($scope))]; }
                 return ['managedByOrganizationPolicy'=>$managed,'enabled' => (bool)($policy['enabled'] ?? false), 'revision' => (int)($policy['revision'] ?? 0)+(int)($effective['effective_access_revision']??0), 'grants' => array_map(fn ($r) => ['accountId' => $r['account_id'], 'grant' => $r['role'] === 'viewer' && $r['access_level'] === 'write' ? 'read' : (($r['access_level']??'none')==='none' && $managed && ($effective['kind']==='project' || (new NativeOrganizationAccess($this->container))->leader($effective,$r['account_id'])) ? 'read' : ($r['access_level'] ?? 'none'))], $rows)];
             }
             $acl = (new NativeFinanceAccess($this->container))->policy($scope, $user, $action === 'finance.push', $action !== 'finance.policy');
@@ -53,6 +54,8 @@ class NativeFinanceService extends NativeDatabase
             if ($replay['status'] !== 200) { return new NativeError($replay['body']['errorCode'], $replay['status'], $replay['body']['details']); }
             $replay['body']['replayed'] = true; return $replay['body'];
         }
+        $relocated=$this->one('SELECT target_scope_id FROM familyhub_record_relocations WHERE scope_id=? AND record_id=? AND finance=?',[$scope,$id,1]);
+        if ($relocated) { throw new NativeError('record_relocated',409); }
         if ($transportVersion < $acl['requiredContractVersion']) { throw new NativeError('unsupported_version',409); }
         $current = $this->one('SELECT * FROM familyhub_finance_records WHERE scope_id=? AND id=?', [$scope, $id]);
         if (($current && ((int)($current['contract_version'] ?? 1)>$version || (int)$current['revision'] !== $op['expectedRevision'] || (int)$current['deleted'] === 1 || $current['type'] !== $op['type'])) || (!$current && ($op['expectedRevision'] !== 0 || $op['deleted']))) {

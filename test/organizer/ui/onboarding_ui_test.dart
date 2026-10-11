@@ -18,6 +18,7 @@ Future<void> pumpPanel(
   double width = 390,
   String language = 'sl',
   bool dark = false,
+  double textScale = 1,
 }) async {
   tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
@@ -25,12 +26,23 @@ Future<void> pumpPanel(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [collaborationProvider.overrideWith(() => controller)],
+      overrides: [
+        collaborationProvider.overrideWith(() => controller),
+        securePendingInvitationProvider.overrideWith(
+          (ref) async => controller.savedInvitation,
+        ),
+      ],
       child: MaterialApp(
         locale: Locale(language),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: ThemeData(brightness: dark ? Brightness.dark : Brightness.light),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: Scaffold(body: SingleChildScrollView(child: panel)),
       ),
     ),
@@ -335,6 +347,14 @@ void main() {
         ),
       );
       await pumpPanel(tester, controller, PrivateSyncPanel(onConnect: () {}));
+      final privateStatus = find.byKey(const ValueKey('private-sync-status'));
+      await tester.tap(
+        find.descendant(
+          of: privateStatus,
+          matching: find.byKey(const ValueKey('sharing-sync-status-cloud')),
+        ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sporne finančne spremembe'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Na tej napravi'));

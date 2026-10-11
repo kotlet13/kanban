@@ -9,37 +9,13 @@ class AppLocalizationsSl extends AppLocalizations {
   AppLocalizationsSl([String locale = 'sl']) : super(locale);
 
   @override
-  String get kanbanConnect => 'Kanban povezava';
-
-  @override
   String get routeError => 'Napaka poti';
 
   @override
   String get unknownError => 'Neznana napaka';
 
   @override
-  String get kanboardWorkspace => 'Delovni prostor Kanboard';
-
-  @override
-  String get restoringSession => 'Obnavljanje seje...';
-
-  @override
-  String get connectToKanboard => 'Poveži se s Kanboardom';
-
-  @override
   String get projects => 'Projekti';
-
-  @override
-  String get projectDefaults => 'Privzete nastavitve projekta';
-
-  @override
-  String get aiSettings => 'Nastavitve AI';
-
-  @override
-  String get aiChat => 'AI klepet';
-
-  @override
-  String get connectionSettings => 'Nastavitve povezave';
 
   @override
   String get refresh => 'Osveži';
@@ -48,76 +24,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get logout => 'Odjava';
 
   @override
-  String get newProject => 'Nov projekt';
-
-  @override
-  String get couldNotLoadProjects => 'Projektov ni bilo mogoče naložiti';
-
-  @override
-  String get retry => 'Poskusi znova';
-
-  @override
-  String get noActiveSession => 'Ni aktivne seje';
-
-  @override
-  String get noActiveSessionConnectFirst =>
-      'Ni aktivne seje. Najprej se povežite.';
-
-  @override
-  String get connectToKanboardToContinue =>
-      'Za nadaljevanje se povežite s Kanboardom.';
-
-  @override
-  String get connect => 'Poveži';
-
-  @override
-  String get projectsWorkspace => 'Delovni prostor projektov';
-
-  @override
-  String get trackOrganizeAndOpenYourKanboardProjects =>
-      'Spremljajte, organizirajte in odpirajte svoje Kanboard projekte.';
-
-  @override
-  String get connectYourKanboardAccountToLoadProjectData =>
-      'Povežite svoj Kanboard račun za nalaganje podatkov projektov.';
-
-  @override
-  String get total => 'Skupaj';
-
-  @override
   String get active => 'Aktivni';
 
   @override
-  String get inactive => 'Neaktivni';
-
-  @override
-  String get noProjectsYet => 'Projektov še ni';
-
-  @override
-  String
-  get createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard =>
-      'Ustvarite svoj prvi projekt z akcijskim gumbom in začnite organizirati tablo.';
-
-  @override
-  String get openBoard => 'Odpri projekt';
-
-  @override
-  String get projectAttachments => 'Priponke projekta';
-
-  @override
   String get deleteProject => 'Izbriši projekt';
-
-  @override
-  String get noDescriptionYetOpenTheProjectToAddContext =>
-      'Opisa še ni. Odprite projekt in dodajte podrobnosti.';
-
-  @override
-  String get deleteProject2 => 'Izbrišem projekt?';
-
-  @override
-  String thisWillRemovePermanently(Object name) {
-    return 'To bo trajno odstranilo \"$name\".';
-  }
 
   @override
   String get cancel => 'Prekliči';
@@ -129,20 +39,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get createProject => 'Ustvari projekt';
 
   @override
-  String get editProject => 'Uredi projekt';
-
-  @override
   String get projectName => 'Ime projekta';
 
   @override
   String get description => 'Opis';
-
-  @override
-  String get projectColorSyncedViaMetadata =>
-      'Barva projekta (sinhronizirano prek metapodatkov)';
-
-  @override
-  String get noColor => 'Brez barve';
 
   @override
   String get save => 'Shrani';
@@ -151,384 +51,19 @@ class AppLocalizationsSl extends AppLocalizations {
   String get stop => 'Ustavi';
 
   @override
-  String get send => 'Pošlji';
-
-  @override
-  String attachments(Object name) {
-    return 'Priponke · $name';
-  }
-
-  @override
-  String get noProjectAttachmentsYet => 'Priponk projekta še ni.';
-
-  @override
-  String get download => 'Prenesi';
-
-  @override
-  String get addFiles => 'Dodaj datoteke';
-
-  @override
   String get close => 'Zapri';
-
-  @override
-  String get projectDefaults2 => 'Privzete nastavitve projekta';
 
   @override
   String get appLanguage => 'Jezik aplikacije';
 
   @override
-  String get followSystemKeepsLocaleAutomatic =>
-      'Sledenje sistemu ohranja samodejno izbiro jezika.';
-
-  @override
   String get language => 'Jezik';
-
-  @override
-  String get followSystemDefault => 'Sledi sistemu (privzeto)';
-
-  @override
-  String get english => 'Angleščina';
-
-  @override
-  String get slovene => 'Slovenščina';
-
-  @override
-  String get templateAppliedToEveryNewProjectCreatedFromThisApp =>
-      'Predloga se uporabi za vsak nov projekt, ustvarjen v tej aplikaciji.';
-
-  @override
-  String get leaveFieldsEmptyToKeepServerDefaults =>
-      'Polja pustite prazna za ohranitev privzetih nastavitev strežnika.';
-
-  @override
-  String get savingADefaultCurrencyAlsoAppliesItToAllExistingProjects =>
-      'Shranjevanje privzete valute jo uporabi tudi za vse obstoječe projekte.';
-
-  @override
-  String get defaultBoardColumns => 'Privzeti stolpci table';
-
-  @override
-  String get defaultBoardColumnsHint =>
-      'Ena vrstica na stolpec, npr.\\nBacklog\\nPripravljeno\\nV teku\\nKončano';
-
-  @override
-  String get defaultSwimlane => 'Privzeta steza';
-
-  @override
-  String get exampleMain => 'Primer: Glavno';
-
-  @override
-  String get exampleUSD => 'Primer: USD';
-
-  @override
-  String get defaultExpenseCurrency => 'Privzeta valuta stroškov';
 
   @override
   String get reset => 'Ponastavi';
 
   @override
-  String get enableAI => 'Omogoči AI';
-
-  @override
-  String get instantResponse => 'Takojšen odgovor';
-
-  @override
-  String get thinkingResponse => 'Razmislek (thinking)';
-
-  @override
-  String get thinkingEffort => 'Nivo razmisleka';
-
-  @override
-  String get effortLow => 'Nizek';
-
-  @override
-  String get effortMedium => 'Srednji';
-
-  @override
-  String get effortHigh => 'Visok';
-
-  @override
-  String get aiModel => 'AI model';
-
-  @override
-  String get openAiApiKey => 'OpenAI API ključ';
-
-  @override
-  String get openAiApiKeyIsRequired => 'OpenAI API ključ je obvezen.';
-
-  @override
-  String get testAIConnection => 'Preizkusi AI povezavo';
-
-  @override
-  String get fetchAvailableModels => 'Pridobi razpoložljive modele';
-
-  @override
-  String availableModelsFetched(Object count) {
-    return 'Pridobljenih modelov: $count.';
-  }
-
-  @override
-  String availableModelsFetchFailed(Object error) {
-    return 'Pridobivanje modelov ni uspelo: $error';
-  }
-
-  @override
-  String get aiSettingsSaved => 'AI nastavitve so shranjene.';
-
-  @override
-  String aiConnectionTestSucceeded(Object result) {
-    return 'AI test je uspel: $result';
-  }
-
-  @override
-  String aiConnectionTestFailed(Object error) {
-    return 'AI test ni uspel: $error';
-  }
-
-  @override
-  String get aiSettingsSecurityNotice =>
-      'Varnostna opomba: lokalni način ključa je manj varen. Vsak z dostopom do naprave/aplikacije lahko pridobi ta ključ.';
-
-  @override
-  String get saving => 'Shranjevanje...';
-
-  @override
-  String get saveDefaults => 'Shrani privzete';
-
-  @override
-  String get configureAiInSettings =>
-      'Pred uporabo AI funkcij najprej nastavite AI v nastavitvah.';
-
-  @override
-  String get aiNotEnabledForThisProject => 'AI za ta projekt ni omogočen.';
-
-  @override
-  String get aiProjectPolicySaved => 'Politika AI za projekt je shranjena.';
-
-  @override
-  String get aiActionPlanDetected => 'Zaznan je AI akcijski načrt';
-
-  @override
-  String aiActionsApplied(Object swimlanes, Object tasks) {
-    return 'Uporabljene akcije: steze $swimlanes, naloge $tasks.';
-  }
-
-  @override
-  String aiActionsAppliedDetailed(
-    Object swimlanes,
-    Object columns,
-    Object tasks,
-    Object moved,
-    Object skipped,
-  ) {
-    return 'Uporabljene akcije: steze $swimlanes, stolpci $columns, nove naloge $tasks, premaknjene naloge $moved, preskočeni premiki $skipped.';
-  }
-
-  @override
-  String get enableAIForProject => 'Omogoči AI za ta projekt';
-
-  @override
-  String get aiKeyMode => 'Način AI ključa';
-
-  @override
-  String get ownerKeyMode => 'Lastnikov ključ (deljeni stroški)';
-
-  @override
-  String get userKeyRequiredMode => 'Vsak uporabnik potrebuje svoj ključ';
-
-  @override
-  String get aiCostNoticeTitle => 'Obvestilo o stroških AI';
-
-  @override
-  String aiCostNoticeBody(Object owner) {
-    return 'Ta projekt uporablja način lastnikovega ključa. Uporaba AI se tukaj zaračuna uporabniku $owner.';
-  }
-
-  @override
-  String get iUnderstand => 'Razumem';
-
-  @override
-  String aiChatForProject(Object name) {
-    return 'AI klepet · $name';
-  }
-
-  @override
-  String get newChat => 'Nov klepet';
-
-  @override
-  String get continueChat => 'Nadaljuj klepet';
-
-  @override
-  String get exportChat => 'Izvozi klepet';
-
-  @override
-  String currentChatId(Object id) {
-    return 'Trenutni klepet: $id';
-  }
-
-  @override
-  String get noSavedChatsForProject =>
-      'Za ta projekt še ni shranjenih klepetov.';
-
-  @override
-  String get noMessagesToExport => 'Ni sporočil za izvoz.';
-
-  @override
-  String chatExportFailed(Object error) {
-    return 'Izvoz klepeta ni uspel: $error';
-  }
-
-  @override
-  String aiRequestFailed(Object error) {
-    return 'AI zahteva ni uspela: $error';
-  }
-
-  @override
-  String get aiIsTyping => 'AI piše ...';
-
-  @override
-  String get aiSuggestedTitle => 'AI predlagan naslov';
-
-  @override
-  String get aiSuggestedDescription => 'AI predlagan opis';
-
-  @override
-  String get aiImproveTitle => 'Izboljšaj naslov z AI';
-
-  @override
-  String get aiImproveDescription => 'Izboljšaj opis z AI';
-
-  @override
-  String get message => 'Sporočilo';
-
-  @override
-  String get projectDefaultsReset =>
-      'Privzete nastavitve projekta so ponastavljene.';
-
-  @override
-  String get resetDefaults => 'Ponastavim privzete?';
-
-  @override
-  String
-  get thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects =>
-      'To počisti prilagojene privzete nastavitve in uporabi privzete nastavitve strežnika Kanboard za nove projekte.';
-
-  @override
-  String get connectYourKanboardInstance => 'Povežite svojo Kanboard instanco';
-
-  @override
-  String get loadedSavedCredentials => 'Naložene shranjene poverilnice.';
-
-  @override
-  String connectedViaJsonrpcTokenAuthServerVersion(Object version) {
-    return 'Povezano prek avtentikacije jsonrpc z žetonom. Različica strežnika: $version';
-  }
-
-  @override
-  String connectedAsVersion(Object username, Object version) {
-    return 'Povezano kot $username. Različica: $version';
-  }
-
-  @override
-  String connectedSuccessfullyButServerVersionIsTarget1250(Object version) {
-    return 'Povezava je uspela, vendar je različica strežnika $version (cilj: 1.2.50).';
-  }
-
-  @override
-  String
-  connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken(
-    Object error,
-  ) {
-    return 'Povezava ni uspela: $error\nNamig: če ste kopirali \"API User Access\", poskusite z uporabniškim imenom \"jsonrpc\" in tem žetonom.';
-  }
-
-  @override
-  String get usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc =>
-      'Uporabite osebni žeton + uporabniško ime ali aplikacijski žeton z uporabniškim imenom \"jsonrpc\".';
-
-  @override
-  String get nothingToExportYetConnectOnceOrFillAllFieldsFirst =>
-      'Še ni nič za izvoz. Najprej se povežite ali izpolnite vsa polja.';
-
-  @override
-  String get scanThisCodeWithYourPhoneInTheConnectScreen =>
-      'Skenirajte to kodo s telefonom na zaslonu za povezavo.';
-
-  @override
-  String get couldNotRenderQRError => 'QR ni bilo mogoče prikazati.\n\$error';
-
-  @override
-  String get credentialsTransferQR => 'QR za prenos poverilnic';
-
-  @override
-  String get ifQRRenderingFailsCopyPasteTheTransferCode =>
-      'Če prikaz QR ne uspe, kopirajte/prilepite kodo za prenos.';
-
-  @override
-  String get securityNoteThisQRContainsYourAPITokenInPlainText =>
-      'Varnostna opomba: ta QR vsebuje vaš API žeton v navadnem besedilu.';
-
-  @override
-  String get transferCodeCopied => 'Koda za prenos je kopirana.';
-
-  @override
-  String get importedCredentialsFromTransferCode =>
-      'Poverilnice so uvožene iz kode za prenos.';
-
-  @override
-  String get credentialsImportedTapConnect =>
-      'Poverilnice so uvožene. Tapnite Poveži.';
-
-  @override
-  String get clipboardIsEmpty => 'Odložišče je prazno.';
-
-  @override
-  String invalidTransferCode(Object error) {
-    return 'Neveljavna koda za prenos: $error';
-  }
-
-  @override
-  String get qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere =>
-      'Skeniranje QR je na voljo na iOS/Android. Tukaj uporabite \"Prilepi kodo za prenos\".';
-
-  @override
-  String get serverURLIsRequired => 'URL strežnika je obvezen.';
-
-  @override
-  String get enterAValidURL => 'Vnesite veljaven URL.';
-
-  @override
-  String get usernameIsRequired => 'Uporabniško ime je obvezno.';
-
-  @override
-  String get tokenIsRequired => 'Žeton je obvezen.';
-
-  @override
-  String get passwordIsRequired => 'Geslo je obvezno.';
-
-  @override
-  String get credentials => 'Poverilnice';
-
-  @override
-  String get authMode => 'Način prijave';
-
-  @override
-  String get apiTokenMode => 'API žeton';
-
-  @override
-  String get passwordMode => 'Geslo';
-
-  @override
-  String get showTransferQR => 'Prikaži QR za prenos';
-
-  @override
-  String get pasteTransferCode => 'Prilepi kodo za prenos';
-
-  @override
   String get serverURL => 'URL strežnika';
-
-  @override
-  String get serverURLExample => 'https://kanboard.example.com';
 
   @override
   String get username => 'Uporabniško ime';
@@ -537,83 +72,7 @@ class AppLocalizationsSl extends AppLocalizations {
   String get password => 'Geslo';
 
   @override
-  String get personalAccessToken => 'Osebni dostopni žeton';
-
-  @override
-  String get useYourKanboardUsernameAndPassword =>
-      'Uporabite svoje Kanboard uporabniško ime in geslo.';
-
-  @override
-  String get testConnectionContinue => 'Preizkusi povezavo in nadaljuj';
-
-  @override
-  String get openProjects => 'Odpri projekte';
-
-  @override
-  String
-  get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc =>
-      'Opomba o prijavi: osebni žeton običajno uporablja vaše uporabniško ime; aplikacijski žeton običajno uporablja \"jsonrpc\".';
-
-  @override
-  String get authNotePasswordModeUsesYourKanboardLoginCredentials =>
-      'Opomba o prijavi: način z geslom uporablja vaše Kanboard prijavne podatke.';
-
-  @override
-  String get scanTransferQR => 'Skeniraj QR za prenos';
-
-  @override
-  String get transferCredentials => 'Prenesi poverilnice';
-
-  @override
-  String get copyCode => 'Kopiraj kodo';
-
-  @override
   String get done => 'Končano';
-
-  @override
-  String get boardStructure => 'Struktura table';
-
-  @override
-  String get searchTasks => 'Išči naloge';
-
-  @override
-  String get newGroceryList => 'Nov nakupovalni seznam';
-
-  @override
-  String get refreshBoard => 'Osveži tablo';
-
-  @override
-  String get showDoneTasks => 'Prikaži končane naloge';
-
-  @override
-  String get hideDoneTasks => 'Skrij končane naloge';
-
-  @override
-  String get lockTaskDrag => 'Zakleni vlečenje nalog';
-
-  @override
-  String get unlockTaskDrag => 'Odkleni vlečenje nalog';
-
-  @override
-  String get newTask => 'Nova naloga';
-
-  @override
-  String get groceryList => 'Nakupovalni seznam';
-
-  @override
-  String get expenses => 'Stroški';
-
-  @override
-  String get search => 'Iskanje';
-
-  @override
-  String get structure => 'Struktura';
-
-  @override
-  String get swimlanes => 'Steze';
-
-  @override
-  String get columns => 'Stolpci';
 
   @override
   String get tasks => 'Naloge';
@@ -622,222 +81,19 @@ class AppLocalizationsSl extends AppLocalizations {
   String get planned => 'Planirano';
 
   @override
-  String get spent => 'Porabljeno';
-
-  @override
-  String get remaining => 'Preostalo';
-
-  @override
-  String get noBudget => 'Ni proračuna';
-
-  @override
-  String get dropATaskHere => 'Spustite nalogo sem';
-
-  @override
-  String get unlockDragToMoveTasks => 'Odklenite vlečenje za premikanje nalog';
-
-  @override
   String get edit => 'Uredi';
-
-  @override
-  String get markDone => 'Označi kot končano';
-
-  @override
-  String get reopen => 'Ponovno odpri';
-
-  @override
-  String get taskSearch => 'Iskanje nalog';
-
-  @override
-  String deleteFailed(Object error) {
-    return 'Izbris ni uspel: $error';
-  }
-
-  @override
-  String statusUpdateFailed(Object error) {
-    return 'Posodobitev statusa ni uspela: $error';
-  }
-
-  @override
-  String moveFailed(Object error) {
-    return 'Premik ni uspel: $error';
-  }
-
-  @override
-  String get addColumn => 'Dodaj stolpec';
-
-  @override
-  String get editColumn => 'Uredi stolpec';
-
-  @override
-  String get deleteColumn => 'Izbrišem stolpec?';
-
-  @override
-  String deleteColumn2(Object name) {
-    return 'Izbrišem stolpec \"$name\"?';
-  }
-
-  @override
-  String get taskLimit => 'Omejitev nalog';
-
-  @override
-  String get addSwimlane => 'Dodaj stezo';
-
-  @override
-  String get editSwimlane => 'Uredi stezo';
-
-  @override
-  String get deleteSwimlane => 'Izbrišem stezo?';
-
-  @override
-  String deleteSwimlane2(Object name) {
-    return 'Izbrišem stezo \"$name\"?';
-  }
 
   @override
   String get name => 'Ime';
 
   @override
-  String structure2(Object name) {
-    return 'Struktura $name';
-  }
-
-  @override
-  String get query => 'Poizvedba';
-
-  @override
-  String get queryExampleStatusOpenCategoryBug => 'status:open category:bug';
-
-  @override
-  String get noResultsYet => 'Rezultatov še ni.';
-
-  @override
-  String get projectExpenses => 'Stroški projekta';
-
-  @override
-  String get financeTable => 'Finančna tabela';
-
-  @override
-  String get financeProject => 'Finančni projekt';
-
-  @override
-  String get financeProjectDescription =>
-      'Ta projekt se odpre neposredno v finančni tabeli.';
-
-  @override
-  String get sharedFinanceTable => 'Deljena finančna tabela';
-
-  @override
-  String get currentBalance => 'Trenutno stanje';
-
-  @override
-  String get projectionHorizon => 'Obdobje projekcije';
-
-  @override
-  String get showPastMonths => 'Prikaži pretekle mesece';
-
-  @override
-  String get includeSpentExternalExpensesInProjection =>
-      'Vključi porabljene zunanje stroške v projekcijo';
-
-  @override
-  String get unsavedFinanceChangesTitle => 'Neshranjene finančne spremembe';
-
-  @override
-  String get unsavedFinanceChangesMessage =>
-      'Nekateri finančni podatki še niso shranjeni. Želiš vseeno zapustiti stran?';
-
-  @override
-  String get leaveWithoutSaving => 'Zapusti brez shranjevanja';
-
-  @override
-  String get summedMonthlyIncome => 'Skupni mesečni prihodki';
-
-  @override
-  String get summedMonthlyExpenses => 'Skupni mesečni stroški';
-
-  @override
-  String get totalBalance => 'Skupno stanje';
-
-  @override
-  String get biggestIncomeExpenseGap =>
-      'Najnižji mesečni neto (prihodki - stroški)';
-
-  @override
-  String get months3 => '3 mesece';
-
-  @override
-  String get months6 => '6 mesecev';
-
-  @override
-  String get months12 => '12 mesecev';
-
-  @override
-  String get lowestProjectedBalance => 'Najnižje projicirano stanje';
-
-  @override
-  String get firstNegativeMonth => 'Prvi negativni mesec';
-
-  @override
-  String get endBalance => 'Končno stanje';
-
-  @override
-  String get recurringMonthlyEnabled => 'Mesečno ponavljajoče (omogočeno)';
-
-  @override
-  String get recurringIncomeMonthlyEnabled =>
-      'Mesečni ponavljajoči prihodki (omogočeno)';
-
-  @override
-  String get monthlyIncomesAndProjections => 'Mesečni prihodki in projekcije';
-
-  @override
   String get month => 'Mesec';
-
-  @override
-  String get incomeTotal => 'Skupaj prihodki';
-
-  @override
-  String get expensesTotal => 'Skupaj stroški';
-
-  @override
-  String get net => 'Razlika';
 
   @override
   String get closing => 'Končno';
 
   @override
-  String get contributor => 'Uporabnik';
-
-  @override
-  String get contributorOptional => 'Uporabnik (neobvezno)';
-
-  @override
   String get source => 'Vir';
-
-  @override
-  String get otherIncome => 'Drugi prihodki';
-
-  @override
-  String get otherExpense => 'Drugi stroški';
-
-  @override
-  String get recurringIncomes => 'Ponavljajoči prihodki';
-
-  @override
-  String get recurringExpenses => 'Ponavljajoči stroški';
-
-  @override
-  String get plannedIncomes => 'Načrtovani prihodki';
-
-  @override
-  String get plannedExpenses => 'Načrtovani stroški';
-
-  @override
-  String get expensesFromOtherProjects => 'Stroški iz drugih projektov';
-
-  @override
-  String get ongoing => 'tekoče';
 
   @override
   String get enabled => 'Omogočeno';
@@ -846,127 +102,13 @@ class AppLocalizationsSl extends AppLocalizations {
   String get category => 'Kategorija';
 
   @override
-  String get monthlyAmount => 'Mesečni znesek';
-
-  @override
-  String get startMonthYYYYMM => 'Začetni mesec (YYYY-MM)';
-
-  @override
-  String get endMonthOptionalYYYYMM => 'Končni mesec (YYYY-MM, neobvezno)';
-
-  @override
-  String get addRecurringExpense => 'Dodaj ponavljajoči strošek';
-
-  @override
-  String get editRecurringExpense => 'Uredi ponavljajoči strošek';
-
-  @override
-  String get recurringExpenseFieldsNotValid =>
-      'Polja za ponavljajoči strošek niso veljavna.';
-
-  @override
-  String get addRecurringIncome => 'Dodaj ponavljajoči prihodek';
-
-  @override
-  String get editRecurringIncome => 'Uredi ponavljajoči prihodek';
-
-  @override
-  String get recurringIncomeFieldsNotValid =>
-      'Polja za ponavljajoči prihodek niso veljavna.';
-
-  @override
-  String get addPlannedExpense => 'Dodaj načrtovani strošek';
-
-  @override
-  String get editPlannedExpense => 'Uredi načrtovani strošek';
-
-  @override
-  String get plannedExpenseFieldsNotValid =>
-      'Polja za načrtovani strošek niso veljavna.';
-
-  @override
-  String get addPlannedIncome => 'Dodaj načrtovani prihodek';
-
-  @override
-  String get editPlannedIncome => 'Uredi načrtovani prihodek';
-
-  @override
-  String get plannedIncomeFieldsNotValid =>
-      'Polja za načrtovani prihodek niso veljavna.';
-
-  @override
   String get amount => 'Znesek';
-
-  @override
-  String get amountHint => '0,00';
-
-  @override
-  String get monthYYYYMM => 'Mesec (YYYY-MM)';
-
-  @override
-  String get financeContributorMe => 'Jaz';
-
-  @override
-  String incomeForPerson(Object name) {
-    return 'Prihodek - $name';
-  }
-
-  @override
-  String get currentBalanceMustBeValidNumber =>
-      'Trenutno stanje mora biti veljavno število.';
-
-  @override
-  String get financeTableSaved => 'Finančna tabela je shranjena.';
-
-  @override
-  String financeTableSaveFailed(Object error) {
-    return 'Shranjevanje finančne tabele ni uspelo: $error';
-  }
-
-  @override
-  String get serverRejectedFinanceTableSave =>
-      'Strežnik je zavrnil shranjevanje finančne tabele.';
-
-  @override
-  String get expenseSettingsSaved => 'Nastavitve stroškov so shranjene.';
-
-  @override
-  String expenseSettingsFailed(Object error) {
-    return 'Nastavitve stroškov niso uspele: $error';
-  }
 
   @override
   String get deleteTask => 'Izbrišem nalogo?';
 
   @override
-  String deletePermanently(Object name) {
-    return 'Trajno izbrišem \"$name\"?';
-  }
-
-  @override
-  String get currencyCode => 'Koda valute';
-
-  @override
-  String get budget => 'Proračun';
-
-  @override
-  String get leaveEmptyForNoBudget => 'Pustite prazno za brez proračuna';
-
-  @override
   String get task => 'Naloga';
-
-  @override
-  String get newLabel => 'Novo';
-
-  @override
-  String get openStructure => 'Odpri strukturo';
-
-  @override
-  String get noBoardDataYet => 'Podatkov table še ni';
-
-  @override
-  String get pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes =>
-      'Povlecite za osvežitev ali odprite strukturo za nastavitev stolpcev in stez.';
 
   @override
   String get themeMode => 'Način teme';
@@ -984,169 +126,16 @@ class AppLocalizationsSl extends AppLocalizations {
   String get add => 'Dodaj';
 
   @override
-  String get additionalDetails => 'Dodatne podrobnosti';
-
-  @override
-  String get attachments2 => 'Priponke';
-
-  @override
-  String get comments => 'Komentarji';
-
-  @override
-  String get subtasks => 'Podnaloge';
-
-  @override
-  String get tags => 'Oznake';
-
-  @override
-  String get taskLinks => 'Povezave nalog';
-
-  @override
-  String get externalLinks => 'Zunanje povezave';
-
-  @override
-  String get link => 'Poveži';
-
-  @override
-  String get linkTitle => 'Naslov povezave';
-
-  @override
   String get type => 'Tip';
-
-  @override
-  String get dependency => 'Odvisnost';
 
   @override
   String get url => 'URL';
 
   @override
-  String columnSaveFailed(Object error) {
-    return 'Shranjevanje stolpca ni uspelo: $error';
-  }
-
-  @override
-  String columnDeletionFailed(Object error) {
-    return 'Brisanje stolpca ni uspelo: $error';
-  }
-
-  @override
-  String swimlaneSaveFailed(Object error) {
-    return 'Shranjevanje steze ni uspelo: $error';
-  }
-
-  @override
-  String swimlaneDeletionFailed(Object error) {
-    return 'Brisanje steze ni uspelo: $error';
-  }
-
-  @override
-  String projectSaveFailed(Object error) {
-    return 'Shranjevanje projekta ni uspelo: $error';
-  }
-
-  @override
-  String projectDeletionFailed(Object error) {
-    return 'Brisanje projekta ni uspelo: $error';
-  }
-
-  @override
-  String get apply => 'Uporabi';
-
-  @override
-  String get post => 'Objavi';
-
-  @override
-  String get noAttachmentsYet => 'Priponk še ni.';
-
-  @override
-  String get noCommentsYet => 'Komentarjev še ni.';
-
-  @override
-  String get noSubtasksYet => 'Podnalog še ni.';
-
-  @override
-  String get noTagsAssigned => 'Oznak ni dodeljenih.';
-
-  @override
-  String get noTaskLinks => 'Ni povezav nalog.';
-
-  @override
-  String get noExternalLinks => 'Ni zunanjih povezav.';
-
-  @override
-  String get newTask2 => 'Nova naloga';
-
-  @override
-  String get editTask => 'Uredi nalogo';
-
-  @override
   String get title => 'Naslov';
 
   @override
-  String get column => 'Stolpec';
-
-  @override
-  String get swimlane => 'Steza';
-
-  @override
-  String get assignee => 'Dodeljeno';
-
-  @override
-  String get unassigned => 'Nedodeljeno';
-
-  @override
-  String get priority => 'Prioriteta';
-
-  @override
-  String get dueDate => 'Rok';
-
-  @override
-  String get pickDateTime => 'Izberi datum/čas';
-
-  @override
   String get expense => 'Strošek';
-
-  @override
-  String get score => 'Ocena';
-
-  @override
-  String get pickDueDate => 'Izberi rok';
-
-  @override
-  String get clearDueDate => 'Počisti rok';
-
-  @override
-  String get newComment => 'Nov komentar';
-
-  @override
-  String get comment => 'Komentar';
-
-  @override
-  String get editComment => 'Uredi komentar';
-
-  @override
-  String get editSubtask => 'Uredi podnalogo';
-
-  @override
-  String get estimateH => 'Ocena (h)';
-
-  @override
-  String get spentH => 'Porabljeno (h)';
-
-  @override
-  String get newGroceryItem => 'Nova postavka';
-
-  @override
-  String get newSubtask => 'Nova podnaloga';
-
-  @override
-  String get addTagsCommaSeparated => 'Dodaj oznake (ločene z vejico)';
-
-  @override
-  String get relation => 'Relacija';
-
-  @override
-  String get linkedTaskID => 'ID povezane naloge';
 
   @override
   String get export => 'Izvozi';
@@ -1158,327 +147,18 @@ class AppLocalizationsSl extends AppLocalizations {
   String get project => 'Projekt';
 
   @override
-  String projectCreatedButDefaultsFailedToApply(Object error) {
-    return 'Projekt je ustvarjen, vendar privzetih nastavitev ni bilo mogoče uporabiti: $error';
-  }
-
-  @override
-  String get projectAttachmentsUploaded => 'Priponke projekta so naložene.';
-
-  @override
-  String uploadFailed(Object error) {
-    return 'Nalaganje ni uspelo: $error';
-  }
-
-  @override
-  String get attachmentContentMissing => 'Vsebina priponke manjka.';
-
-  @override
-  String downloadFailed(Object error) {
-    return 'Prenos ni uspel: $error';
-  }
-
-  @override
-  String filePickerFailed(Object error) {
-    return 'Izbira datotek ni uspela: $error';
-  }
-
-  @override
-  String attachmentPickerFailed(Object error) {
-    return 'Izbira priponke ni uspela: $error';
-  }
-
-  @override
-  String get attachmentUploadComplete => 'Nalaganje priponk je končano.';
-
-  @override
-  String attachmentUploadFailed(Object error) {
-    return 'Nalaganje priponk ni uspelo: $error';
-  }
-
-  @override
-  String get attachmentHasNoDownloadableContent =>
-      'Priponka nima vsebine za prenos.';
-
-  @override
-  String attachmentExportFailed(Object error) {
-    return 'Izvoz priponke ni uspel: $error';
-  }
-
-  @override
-  String attachmentDeleteFailed(Object error) {
-    return 'Brisanje priponke ni uspelo: $error';
-  }
-
-  @override
-  String commentSaveFailed(Object error) {
-    return 'Shranjevanje komentarja ni uspelo: $error';
-  }
-
-  @override
-  String commentUpdateFailed(Object error) {
-    return 'Posodobitev komentarja ni uspela: $error';
-  }
-
-  @override
-  String commentDeleteFailed(Object error) {
-    return 'Brisanje komentarja ni uspelo: $error';
-  }
-
-  @override
-  String subtaskCreateFailed(Object error) {
-    return 'Ustvarjanje podnaloge ni uspelo: $error';
-  }
-
-  @override
-  String subtaskUpdateFailed(Object error) {
-    return 'Posodobitev podnaloge ni uspela: $error';
-  }
-
-  @override
-  String subtaskDeleteFailed(Object error) {
-    return 'Brisanje podnaloge ni uspelo: $error';
-  }
-
-  @override
-  String tagUpdateFailed(Object error) {
-    return 'Posodobitev oznak ni uspela: $error';
-  }
-
-  @override
-  String get theGroceryListTagIsReservedForGroceryTasks =>
-      'Oznaka grocery-list je rezervirana za nakupovalne naloge.';
-
-  @override
-  String taskLinkFailed(Object error) {
-    return 'Povezovanje naloge ni uspelo: $error';
-  }
-
-  @override
-  String linkDeleteFailed(Object error) {
-    return 'Brisanje povezave ni uspelo: $error';
-  }
-
-  @override
-  String externalLinkFailed(Object error) {
-    return 'Zunanja povezava ni uspela: $error';
-  }
-
-  @override
-  String externalLinkDeleteFailed(Object error) {
-    return 'Brisanje zunanje povezave ni uspelo: $error';
-  }
-
-  @override
-  String taskStatusUpdateFailed(Object error) {
-    return 'Posodobitev statusa ni uspela: $error';
-  }
-
-  @override
-  String get serverRejectedTaskStatusUpdate =>
-      'Strežnik je zavrnil posodobitev statusa naloge.';
-
-  @override
-  String taskNumber(Object id) {
-    return 'Naloga #$id';
-  }
-
-  @override
-  String get taskMarkedDone => 'Naloga je označena kot končana.';
-
-  @override
-  String get taskReopened => 'Naloga je ponovno odprta.';
-
-  @override
   String get open => 'Odprto';
-
-  @override
-  String get reopenTask => 'Ponovno odpri nalogo';
-
-  @override
-  String get markAsDone => 'Označi kot končano';
-
-  @override
-  String get editTask2 => 'Uredi nalogo';
 
   @override
   String get createTask => 'Ustvari nalogo';
 
   @override
-  String get editGroceryList => 'Uredi nakupovalni seznam';
-
-  @override
-  String get createGroceryList => 'Ustvari nakupovalni seznam';
-
-  @override
-  String get groceryListTitle => 'Naslov nakupovalnega seznama';
-
-  @override
-  String get noGroceryItemsYet => 'Postavk še ni.';
-
-  @override
-  String get addItemsNowTheyWillBeCreatedWhenYouSave =>
-      'Dodajte postavke zdaj. Ustvarjene bodo ob shranjevanju.';
-
-  @override
-  String get titleIsRequired => 'Naslov je obvezen.';
-
-  @override
-  String get scoreMustBeAnInteger => 'Ocena mora biti celo število.';
-
-  @override
-  String serverRejectedAttachmentName(Object name) {
-    return 'Strežnik je zavrnil priponko \"$name\".';
-  }
-
-  @override
   String get amountMustBeAValidNumber => 'Znesek mora biti veljavno število.';
-
-  @override
-  String get taskWasNotCreated => 'Naloga ni bila ustvarjena.';
-
-  @override
-  String get enterATitleBeforeOpeningAdditionalDetails =>
-      'Pred odpiranjem dodatnih podrobnosti vnesite naslov.';
-
-  @override
-  String get taskMustBeSavedFirst => 'Nalogo je treba najprej shraniti.';
-
-  @override
-  String get saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks =>
-      'Najprej shranite nalogo, da boste lahko upravljali priponke, komentarje, podnaloge, oznake in povezave.';
-
-  @override
-  String get externalLinkTitleAndURLAreRequired =>
-      'Naslov in URL zunanje povezave sta obvezna.';
-
-  @override
-  String get enterAValidLinkedTaskID => 'Vnesite veljaven ID povezane naloge.';
-
-  @override
-  String get invalidURL => 'Neveljaven URL.';
-
-  @override
-  String get couldNotOpenURLCopiedToClipboard =>
-      'URL-ja ni bilo mogoče odpreti. Kopirano v odložišče.';
-
-  @override
-  String get attachmentsCommentsSubtasksTagsAndLinks =>
-      'Priponke, komentarji, podnaloge, oznake in povezave';
-
-  @override
-  String get tapToExpandAdvancedTaskDetails =>
-      'Tapnite za prikaz dodatnih podrobnosti naloge';
-
-  @override
-  String get advancedSectionsAreHidden => 'Napredni razdelki so skriti.';
-
-  @override
-  String get forNewTasksTheAppSavesFirstThenOpensAdvancedSections =>
-      'Pri novih nalogah aplikacija najprej shrani, nato odpre napredne razdelke.';
-
-  @override
-  String get internalLinkTypesUnavailableForThisUserProject =>
-      'Notranji tipi povezav niso na voljo za tega uporabnika/projekt.';
-
-  @override
-  String get noPermissionForInternalTaskLinksGetAllLinks =>
-      'Ni dovoljenja za notranje povezave nalog (`getAllLinks`).';
-
-  @override
-  String get linkedTo => 'povezano z';
-
-  @override
-  String userNumber(Object id) {
-    return 'Uporabnik #$id';
-  }
-
-  @override
-  String estHSpentH(Object est, Object spent) {
-    return 'Ocena ${est}h · Porabljeno ${spent}h';
-  }
-
-  @override
-  String get eG1250 => 'npr. 12,50';
-
-  @override
-  String
-  get macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement =>
-      'Manjka macOS dovoljenje za dostop do datotek. Po omogočitvi dovoljenja za branje uporabniško izbranih datotek ponovno zgradite aplikacijo.';
-
-  @override
-  String tasks2(Object count) {
-    return 'Naloge: $count';
-  }
-
-  @override
-  String columns2(Object count) {
-    return 'Stolpci: $count';
-  }
-
-  @override
-  String get noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns =>
-      'Za to stezo ni nastavljenih stolpcev. Za dodajanje stolpcev uporabite Strukturo.';
-
-  @override
-  String
-  get taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves =>
-      'Vlečenje nalog je odklenjeno. Med drsenjem premikajte naloge previdno ali tapnite zaklep, da preprečite nenamerne premike.';
-
-  @override
-  String
-  get taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks =>
-      'Vlečenje nalog je zaklenjeno, da lahko varno drsite. Ko želite premikati naloge, zgoraj tapnite odklep.';
-
-  @override
-  String
-  get dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax =>
-      'Povlecite in spustite naloge med stezami in stolpci. Za napredno sintakso uporabite Iskanje.';
-
-  @override
-  String get currencyMustBeA3LetterCode => 'Valuta mora biti 3-črkovna koda.';
-
-  @override
-  String get budgetMustBeAPositiveNumber =>
-      'Proračun mora biti pozitivno število.';
-
-  @override
-  String get useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow =>
-      'Uporabite sintakso poizvedb Kanboard. Primer: `status:open assignee:me due:tomorrow`';
-
-  @override
-  String get enterASearchQuery => 'Vnesite iskalno poizvedbo.';
-
-  @override
-  String boardStructure2(Object name) {
-    return 'Struktura table · $name';
-  }
-
-  @override
-  String get dragRowsToReorderChangesAreSavedImmediately =>
-      'Vlecite vrstice za spremembo vrstnega reda. Spremembe se shranijo takoj.';
-
-  @override
-  String get noColumnsYetAddOne => 'Stolpcev še ni. Dodajte prvega.';
-
-  @override
-  String get noSwimlanesYetAddOne => 'Stez še ni. Dodajte prvo.';
-
-  @override
-  String positionLimit(Object position, Object limit) {
-    return 'Položaj $position · Omejitev $limit';
-  }
 
   @override
   String position(Object position) {
     return 'Položaj $position';
   }
-
-  @override
-  String get horizontalStructureOfTheBoard => 'Vodoravna struktura table';
-
-  @override
-  String get verticalWorkGrouping => 'Navpično razvrščanje dela';
 
   @override
   String get organizerAppName => 'Jivie';
@@ -1516,9 +196,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerSettings => 'Nastavitve';
-
-  @override
-  String get organizerLocalSpace => 'Osebni prostor';
 
   @override
   String get organizerLocalOnly => 'Shranjeno na tej napravi';
@@ -1648,12 +325,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get organizerRetry => 'Poskusi znova';
 
   @override
-  String get organizerDate => 'Datum';
-
-  @override
-  String get organizerTime => 'Ura';
-
-  @override
   String get organizerNoDate => 'Brez roka';
 
   @override
@@ -1664,10 +335,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerCalendarIntro => 'Dogodki in roki opravil na enem mestu.';
-
-  @override
-  String get organizerFinanceIntro =>
-      'Prihodki, odhodki in načrtovani stroški.';
 
   @override
   String get organizerAddFinance => 'Dodaj zapis';
@@ -1690,22 +357,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get organizerInvalidMoney =>
       'Vpiši pozitiven znesek z največ dvema decimalkama.';
-
-  @override
-  String get organizerBalance => 'Razlika prihodkov in odhodkov';
-
-  @override
-  String get organizerConnection => 'Obstoječi Kanboard';
-
-  @override
-  String get organizerConnectionDescription =>
-      'Tvoji obstoječi projekti so še na strežniku Kanboard. Odpri jih s povezavo računa. Lokalni organizator jih še ne uvaža ali sinhronizira.';
-
-  @override
-  String get organizerConnect => 'Poveži račun';
-
-  @override
-  String get organizerOpenKanboard => 'Odpri Kanboard';
 
   @override
   String get organizerBackup => 'Varnostna kopija';
@@ -1731,21 +382,8 @@ class AppLocalizationsSl extends AppLocalizations {
   String get organizerRestored => 'Lokalni podatki so obnovljeni.';
 
   @override
-  String get organizerReminders => 'Opomniki';
-
-  @override
-  String get organizerNoReminders => 'Ni novih opomnikov.';
-
-  @override
-  String get organizerRemindersDescription =>
-      'Opomniki za roke opravil se pokažejo ob odprtju aplikacije.';
-
-  @override
   String get organizerHomeIntro =>
       'Domače načrte vodi s projekti in opravili v osebnem prostoru.';
-
-  @override
-  String get organizerBackToday => 'Nazaj na Danes';
 
   @override
   String get organizerDeleteConfirm => 'Izbrišem ta zapis?';
@@ -1765,11 +403,6 @@ class AppLocalizationsSl extends AppLocalizations {
   }
 
   @override
-  String organizerTasksCount(int count) {
-    return '$count opravil';
-  }
-
-  @override
   String get organizerNoMatchingTasks => 'V tem projektu še ni opravil.';
 
   @override
@@ -1779,13 +412,7 @@ class AppLocalizationsSl extends AppLocalizations {
   String get organizerSystemLanguage => 'Jezik naprave';
 
   @override
-  String get organizerRead => 'Prebrano';
-
-  @override
   String get organizerWithoutDate => 'Brez roka';
-
-  @override
-  String get organizerOverdue => 'Zapadlo';
 
   @override
   String get organizerHomeProjects => 'Domači projekti';
@@ -1812,28 +439,12 @@ class AppLocalizationsSl extends AppLocalizations {
       'Varna shramba ni na voljo. Poverilnice niso bile shranjene; preverite nastavitve varne shrambe naprave.';
 
   @override
-  String get credentialsSharingDisabled =>
-      'Gesel in osebnih API ključev ne delimo. Projektna povabila bodo omogočena, ko bo pripravljen varen postopek.';
-
-  @override
-  String get personalTokenHint =>
-      'Uporabite svoje uporabniško ime in osebni API ključ. Globalni ključ jsonrpc ni podprt.';
-
-  @override
   String get secureConnectionRequired =>
       'Uporabite HTTPS. HTTP je dovoljen samo za izrecno lokalno razvojno povezavo.';
 
   @override
   String get localDevelopmentConnection =>
       'Lokalna razvojna povezava (HTTP na tem računalniku)';
-
-  @override
-  String get aiSessionChanged =>
-      'Račun se je spremenil. Ta pogovor pripada prejšnji prijavi; odpri AI pomoč ponovno iz svojega projekta.';
-
-  @override
-  String get connectionFailed =>
-      'Povezava ni uspela. Preverite naslov strežnika, uporabniško ime in geslo ali osebni API ključ.';
 
   @override
   String get sharingAccount => 'Račun in deljenje';
@@ -1861,9 +472,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingHaveInvite => 'Imam povabilo';
 
   @override
-  String get sharingInvitation => 'Povabilo';
-
-  @override
   String get sharingInvitationCode => 'Koda povabila';
 
   @override
@@ -1877,16 +485,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingAcceptInvite => 'Sprejmi povabilo';
 
   @override
-  String get sharingRegister => 'Ustvari račun s povabilom';
-
-  @override
   String get sharingRegisterAction => 'Ustvari račun in sprejmi';
 
   @override
   String get sharingDisplayName => 'Ime za prikaz';
-
-  @override
-  String get sharingEmail => 'E-pošta';
 
   @override
   String get sharingConfirmPassword => 'Ponovi geslo';
@@ -1899,12 +501,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingDeviceName => 'Ime te naprave';
-
-  @override
-  String get sharingDeviceSession => 'Seja te naprave';
-
-  @override
-  String get sharingSpaces => 'Skupni prostori';
 
   @override
   String get sharingCreateSpace => 'Nov skupni prostor';
@@ -1938,9 +534,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingOwner => 'Lastnik';
 
   @override
-  String get sharingEditor => 'Ureja';
-
-  @override
   String get sharingViewer => 'Bere';
 
   @override
@@ -1950,20 +543,7 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingInvitePerson => 'Povabi osebo';
 
   @override
-  String get sharingCreateInvite => 'Ustvari povabilo';
-
-  @override
   String get sharingInvitations => 'Povabila';
-
-  @override
-  String get sharingCopyInvite => 'Kopiraj kodo';
-
-  @override
-  String get sharingInviteCopied => 'Koda povabila je kopirana.';
-
-  @override
-  String get sharingInviteCodeOnce =>
-      'Kodo shrani ali pošlji prejemniku zdaj. Pozneje je ne bo mogoče ponovno prikazati.';
 
   @override
   String get sharingRevokeInvite => 'Prekliči povabilo';
@@ -1976,27 +556,13 @@ class AppLocalizationsSl extends AppLocalizations {
       'Član po preklicu ne bo več mogel dostopati do tega prostora. Že prenesenih kopij ni mogoče izbrisati na daljavo.';
 
   @override
-  String get sharingSignOutDescription =>
-      'Osebni podatki ostanejo na napravi. Preveri čakajoče skupne spremembe pred odjavo.';
-
-  @override
   String get sharingSyncNow => 'Uskladi zdaj';
-
-  @override
-  String get sharingSynced => 'Usklajeno';
 
   @override
   String get sharingSyncing => 'Usklajujem …';
 
   @override
   String get sharingPending => 'Čaka na uskladitev';
-
-  @override
-  String get sharingOffline => 'Povezava ni na voljo';
-
-  @override
-  String get sharingSyncFailed =>
-      'Uskladitev ni uspela. Lokalne spremembe so ohranjene.';
 
   @override
   String get sharingConflicts => 'Spremembe potrebujejo odločitev';
@@ -2041,9 +607,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingPermissionDenied => 'Za to dejanje nimaš dovoljenja.';
 
   @override
-  String get sharingNoSharedLists => 'V tem prostoru še ni skupnega seznama.';
-
-  @override
   String get sharingNoSharedListsDescription =>
       'Ustvari seznam za sodelovanje. Osebni seznami se ne delijo samodejno.';
 
@@ -2052,20 +615,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingReadOnly => 'Samo za branje';
-
-  @override
-  String get sharingQuietShopping =>
-      'Spremembe nakupovalnega seznama so tihe; ne pošiljajo e-pošte.';
-
-  @override
-  String get sharingShareList => 'Deli ta seznam';
-
-  @override
-  String get sharingShareProject => 'Deli projekt in opravila';
-
-  @override
-  String get sharingShareConfirm =>
-      'V izbranem prostoru bo nastala skupna kopija. Osebna vsebina in finance se ne delijo samodejno.';
 
   @override
   String get sharingNoMembers => 'Ni podatkov o članih.';
@@ -2079,10 +628,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingConnectBeforeShared =>
       'Za skupne sezname poveži račun ali sprejmi povabilo.';
-
-  @override
-  String get sharingSaveBeforeSync =>
-      'Sprememba se najprej shrani na napravi, nato uskladi s prostorom.';
 
   @override
   String get sharingMember => 'Član';
@@ -2124,9 +669,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Skupni pogled bo po odjavi skrit. Osebni podatki ostanejo. Neusklajene skupne spremembe se ne pošljejo pod drugim računom; pred odjavo jih lahko izvoziš.';
 
   @override
-  String get sharingNoPending => 'Ni čakajočih sprememb';
-
-  @override
   String get sharingResumeBlocked => 'Nadaljuj usklajevanje mojih sprememb';
 
   @override
@@ -2151,9 +693,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingSessionEnds => 'Seja velja do';
-
-  @override
-  String get sharingSharedTasks => 'Skupna opravila';
 
   @override
   String get sharingConflictsButton => 'Preglej spremembe';
@@ -2193,10 +732,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingValidationError =>
       'Podatki niso veljavni. Preveri vnos in poskusi znova.';
-
-  @override
-  String get sharingRegistrationPasswordHint =>
-      'Novo geslo potrebuje vsaj 12 znakov (največ 72 bajtov).';
 
   @override
   String get sharingBlockedDescription =>
@@ -2257,9 +792,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get planningCreatedBy => 'Ustvaril/a';
-
-  @override
-  String get planningUpdatedBy => 'Nazadnje spremenil/a';
 
   @override
   String get planningInvalidSchedule => 'Konec ne sme biti pred začetkom.';
@@ -2399,6 +931,16 @@ class AppLocalizationsSl extends AppLocalizations {
   String get inboxRead => 'Prebrano';
 
   @override
+  String get inboxUnread => 'Neprebrano';
+
+  @override
+  String get inboxPushDeviceDeliveryInactive =>
+      'Nastavitve veljajo za registrirane naprave. Dostava potisnih obvestil na tej napravi trenutno ni vključena.';
+
+  @override
+  String get inboxMarkAllRead => 'Označi vse kot prebrano';
+
+  @override
   String get inboxMarkRead => 'Označi kot prebrano';
 
   @override
@@ -2533,9 +1075,6 @@ class AppLocalizationsSl extends AppLocalizations {
   }
 
   @override
-  String get inboxMemberJoined => 'Pridružil se je član';
-
-  @override
   String get inboxRecordUpdated => 'Zapis je spremenjen';
 
   @override
@@ -2555,9 +1094,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get inboxReminderDue => 'Čas je za opomnik';
-
-  @override
-  String get inboxOpenToView => 'Odpri za podrobnosti';
 
   @override
   String get inboxSharedPreferencesUnavailable =>
@@ -2683,9 +1219,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Ta strežnik še ne podpira nastavitev obvestil.';
 
   @override
-  String get inboxCategoryAssignments => 'Dodelitve';
-
-  @override
   String get inboxCategoryTasks => 'Opravila in načrti';
 
   @override
@@ -2739,11 +1272,11 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get inboxPushCategoriesDescription =>
-      'Vrste obvestil izbereš posebej za vsak prostor. Za razporejene opomnike spodaj vključi želeni kanal v razdelku Opomniki.';
+      'Potisna obvestila so privzeto vključena za vse vrste v prostoru. Posamezne vrste lahko spodaj izključiš. Dostava na napravo zahteva njeno izrecno omogočanje in registracijo.';
 
   @override
   String get remotePushRegistrationOnly =>
-      'Registracija poveže to napravo s tvojim računom. Vrste obvestil za posamezne prostore izbereš posebej.';
+      'Registracija poveže to napravo s tvojim računom. Potisna obvestila so privzeto vključena; posamezne vrste lahko izključiš v nastavitvah obvestil prostora.';
 
   @override
   String get remoteReminderTitle => 'Oddaljeni opomnik';
@@ -2874,10 +1407,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Prijavi se v račun, ki je prejel to obvestilo.';
 
   @override
-  String get remotePushDeviceUnavailable =>
-      'Najprej omogoči in registriraj oddaljena obvestila na tej napravi.';
-
-  @override
   String get setupTitle => 'Kako želiš začeti?';
 
   @override
@@ -2928,13 +1457,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get inviteLinkInvalid =>
       'Ta povezava ni veljavno povabilo. V aplikacijo lahko ročno vneseš strežnik in kodo.';
-
-  @override
-  String get inviteCopyLink => 'Kopiraj povezavo do povabila';
-
-  @override
-  String get inviteLinkPrepared =>
-      'Povezava odpre povabilo v nameščeni aplikaciji Jivie. Če se aplikacija ne odpre, v njej ročno vnesi strežnik in kodo.';
 
   @override
   String get accountFirstTitle => 'Prvi račun s kodo';
@@ -3123,9 +1645,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get taskCostRecipient => 'Prejemnik';
 
   @override
-  String get taskCostAuthor => 'Avtor vnosa';
-
-  @override
   String get taskCostNoDue =>
       'Brez roka opravila strošek nima načrtovanega datuma.';
 
@@ -3140,9 +1659,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get organizationTitle => 'Organizacija';
 
   @override
-  String get organizationCreate => 'Ustvari organizacijo';
-
-  @override
   String get organizationProjects => 'Projekti organizacije';
 
   @override
@@ -3150,7 +1666,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizationAccessDescription =>
-      'Članstvo ne odpre vseh projektov ali financ. Dostop uredi za vsak projekt posebej.';
+      'Povabilo v cel prostor vključuje vse njegove vsebine, finance in projekte, tudi prihodnje. Povabilo samo v projekt vključuje samo ta projekt. Član lahko v svojem obsegu tudi ureja, briše, povabi druge in upravlja člane.';
 
   @override
   String get peopleTitle => 'Osebe';
@@ -3338,12 +1854,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get financePlanRuleType => 'Vrsta ponavljanja';
 
   @override
-  String get financePlanSaved => 'Finančni načrt je shranjen.';
-
-  @override
-  String get financePlanOverdue => 'Še nepotrjeno';
-
-  @override
   String get financePlanBack => 'Nazaj';
 
   @override
@@ -3384,10 +1894,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get deletionDetachOrganization =>
       'Ohrani ta projekt kot samostojen prostor, ko se izbriše organizacija. Njegovi člani in finance ostanejo nespremenjeni.';
-
-  @override
-  String get deletionOrganizationLinks =>
-      'Projekti, ki se odvežejo od organizacije';
 
   @override
   String get financePlanIncomeQuestion => 'Ali si že prejel priliv?';
@@ -3481,9 +1987,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get privateSyncUnavailable =>
       'Za zasebno sinhronizacijo potrebuješ prijavo in podprt strežnik.';
-
-  @override
-  String get privateSyncPending => 'Čakajoče spremembe';
 
   @override
   String get privateSyncIssue =>
@@ -3629,10 +2132,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Osebne zapise lahko obnoviš lokalno. Nadaljevanje skupnega dela znova preveri račun in pravice.';
 
   @override
-  String get backupAccountDifferent =>
-      'Kopija je iz drugega računa. Skupno delo ostane zaščiteno do prijave v pravi račun.';
-
-  @override
   String get backupCompleteness =>
       'Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.';
 
@@ -3647,9 +2146,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get privateSyncLocalPending =>
       'Novi lokalni zapisi čakajo na tvoj pregled.';
-
-  @override
-  String get backupRecoveryState => 'Stanje obnovljenega dela';
 
   @override
   String get backupRecoveryReady => 'Lahko pregledaš in nadaljuješ';
@@ -3703,7 +2199,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora.';
+      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora. Povabilo v cel prostor vključuje vse njegove vsebine, finance in obstoječe ter prihodnje projekte. Povabilo samo v projekt se prikaže kot Deljen projekt in ne dodeli članstva v celotnem prostoru. Obseg dostopa je ločen od vloge.';
 
   @override
   String get guideSkip => 'Preskoči';
@@ -3885,9 +2381,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Skupna struktura brez pravice do podrobnosti';
 
   @override
-  String get deletionMinorUnits => 'najmanjših denarnih enot';
-
-  @override
   String get deletionRetainedEdits =>
       'Na strežniku se izbrišejo zapisi, ki jih je ustvaril vaš račun. Zapisi drugih ustvarjalcev ostanejo, tudi če ste urejali njihovo vsebino. Vaše identitetne povezave se odstranijo; urejanj posameznih polj ni mogoče ločiti po avtorju.';
 
@@ -3916,7 +2409,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get deletionLegacyLocal =>
-      'Ločeno shranjene stare Kanboard povezave, predpomnilniki in AI pogovori s tem niso odstranjeni. Stara povezava do izbrisanega računa ne bo več delovala.';
+      'Lokalno shranjeni podatki prejšnjih različic aplikacije ostanejo na tej napravi. Ta postopek jih ne odstrani.';
 
   @override
   String get deletionPersonalExport =>
@@ -3939,9 +2432,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get gardenNew => 'Nov vrt';
-
-  @override
-  String get gardenEdit => 'Uredi vrt';
 
   @override
   String get gardenName => 'Ime vrta';
@@ -4066,11 +2556,6 @@ class AppLocalizationsSl extends AppLocalizations {
   }
 
   @override
-  String gardenAreaPosition(int x, int y, int width, int height) {
-    return 'Levo $x %, zgoraj $y % · $width × $height %';
-  }
-
-  @override
   String get financePlanPendingEntries => 'Nepotrjeni vnosi';
 
   @override
@@ -4157,15 +2642,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get reminderSnoozeFutureRequired => 'Izberi čas v prihodnosti.';
 
   @override
-  String get reminderSnoozeNeedsConnection =>
-      'Za odložitev skupnega opomnika se poveži s strežnikom.';
-
-  @override
-  String reminderSnoozedUntil(String until) {
-    return 'Odloženo do $until';
-  }
-
-  @override
   String financeSourceTask(String title) {
     return 'Povezano opravilo: $title';
   }
@@ -4199,10 +2675,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get spacePickerNewSpace => '+ Nov prostor';
-
-  @override
-  String get spacePickerInitialVisibility =>
-      'Na začetku vidi prostor samo ustvarjalec. Izberi vrsto in ime; druge člane dodaš z izrecnim povabilom. Osebni podatki se ne prenesejo ali delijo samodejno.';
 
   @override
   String get spacePickerSharedProject => 'Deljeni projekt';
@@ -4270,10 +2742,6 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get gardenArchivedArea => 'Upokojena greda · zgodovina ohranjena';
-
-  @override
-  String get gardenArchiveHelp =>
-      'Upokojena greda se skrije z načrta. Njene zasaditve in zgodovina ostanejo v seznamu.';
 
   @override
   String get gardenSelectBed => 'Izberi gredo na načrtu ali seznamu.';
@@ -4451,9 +2919,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.';
 
   @override
-  String get allSpacesUpcoming => 'Današnje in zamujeno';
-
-  @override
   String get organizerPressBackAgainToExit => 'Pritisni še enkrat za izhod';
 
   @override
@@ -4492,9 +2957,6 @@ class AppLocalizationsSl extends AppLocalizations {
   String get localSpaceLinkAction => 'Poveži in sinhroniziraj';
 
   @override
-  String get legacyLocalData => 'Nedodeljeni podatki';
-
-  @override
   String get legacyLocalDescription =>
       'Ti podatki ostajajo na napravi. Pred prenosom v gospodinjstvo izberi cilj; povezava s strežnikom jih ne deli samodejno.';
 
@@ -4516,10 +2978,6 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get localSpaceOfflineWork =>
       'Podatki ostajajo na napravi. Lokalno delo se nadaljuje; povabila in spremembe strežniških pravic potrebujejo povezavo.';
-
-  @override
-  String get organizationAggregateDescription =>
-      'Dogajanje dovoljenih projektov. Vsak zapis ohrani izvorni prostor.';
 
   @override
   String get organizationLeader => 'Vodja organizacije';
@@ -4682,10 +3140,6 @@ class AppLocalizationsSl extends AppLocalizations {
       'Najprej v osebnem prostoru dodaj svoj račun ali kartico v isti valuti.';
 
   @override
-  String get paymentNeedsRefundAccount =>
-      'Za povračilo najprej dodaj račun organizacije v isti valuti.';
-
-  @override
   String get paymentPaidAt => 'Datum osebnega plačila';
 
   @override
@@ -4841,4 +3295,291 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get spaceConnectedShort => 'Povezano';
+
+  @override
+  String get emailInviteTitle => 'Povabi po e-pošti';
+
+  @override
+  String get emailInviteDescription =>
+      'Oseba prejme povezavo in kodo za povabilo. Račun lahko ustvari pozneje; članstvo potrdi sama.';
+
+  @override
+  String get emailInviteSend => 'Pošlji povabilo';
+
+  @override
+  String emailInviteQueued(String email) {
+    return 'Povabilo za $email je pripravljeno za pošiljanje.';
+  }
+
+  @override
+  String get emailInviteUnsupported =>
+      'Ta strežnik še ne podpira povabil po e-pošti. Skrbnik mora nadgraditi FamilyHub in nastaviti e-pošto. Stara povabila s kodo lahko še vedno sprejmeš.';
+
+  @override
+  String get emailInviteInvalidEmail => 'Vpiši veljaven e-poštni naslov.';
+
+  @override
+  String get emailInvitePendingTitle => 'Povabilo čaka na tvojo odločitev';
+
+  @override
+  String emailInviteFrom(String name) {
+    return 'Povabil/a te je $name';
+  }
+
+  @override
+  String emailInviteFor(String email) {
+    return 'Povabilo za $email';
+  }
+
+  @override
+  String get emailInviteExplicit =>
+      'Prijava ali ustvarjanje računa še ne pomeni članstva. Prostor odpreš po izrecnem sprejemu povabila.';
+
+  @override
+  String get emailInviteSignIn =>
+      'Najprej se prijavi ali ustvari račun. Povabilo ostane shranjeno.';
+
+  @override
+  String get emailInviteExistingAccount =>
+      'Za ta e-poštni naslov račun že obstaja. Prijavi se v obstoječi račun; povabilo bo ostalo shranjeno.';
+
+  @override
+  String get emailInviteWrongAccount =>
+      'Povabilo je namenjeno drugemu e-poštnemu naslovu. Prijavi se v pravi račun ali najprej potrdi njegov e-poštni naslov.';
+
+  @override
+  String get emailInviteDismiss => 'Odstrani shranjeno povabilo';
+
+  @override
+  String get emailInviteAccepted => 'Povabilo je sprejeto. Prostor je odprt.';
+
+  @override
+  String accountSignedIn(String username) {
+    return 'Prijavljen/a si kot $username.';
+  }
+
+  @override
+  String get emailInviteCreateAccount => 'Ustvari račun';
+
+  @override
+  String get emailInviteHaveAccount => 'Že imam račun';
+
+  @override
+  String accountCreatedInvitationSignInRequired(String username) {
+    return 'Račun $username je ustvarjen. Prijavi se, nato sprejmi shranjeno povabilo.';
+  }
+
+  @override
+  String get emailInviteUsernameUnavailable =>
+      'To uporabniško ime je že zasedeno. Izberi drugo ime ali se prijavi v svoj račun.';
+
+  @override
+  String get accountPasswordTooShort => 'Geslo mora imeti vsaj 12 znakov.';
+
+  @override
+  String get syncStatusTitle => 'Sinhronizacija';
+
+  @override
+  String get syncStatusDetails => 'Podrobnosti sinhronizacije';
+
+  @override
+  String get syncStatusSynced => 'Usklajeno';
+
+  @override
+  String get syncStatusUnknown => 'Uskladitev še ni potrjena';
+
+  @override
+  String get syncStatusPending => 'Spremembe čakajo na uskladitev';
+
+  @override
+  String get syncStatusOffline => 'Strežnik ni dosegljiv';
+
+  @override
+  String get syncStatusProblem => 'Sinhronizacija potrebuje tvojo pozornost';
+
+  @override
+  String get syncStatusDeviceOnly => 'Lokalno na tej napravi';
+
+  @override
+  String get syncStatusLastSuccess => 'Zadnja uspešna uskladitev';
+
+  @override
+  String get syncStatusLastAttempt => 'Zadnji poskus';
+
+  @override
+  String get syncStatusNeverAttempted => 'Poskus še ni zabeležen';
+
+  @override
+  String get syncStatusNotConfirmed => 'Še ni potrjena';
+
+  @override
+  String get syncStatusLastError => 'Napaka';
+
+  @override
+  String get syncStatusPendingCount => 'Čakajoče spremembe';
+
+  @override
+  String get syncStatusConflictsCount => 'Sporne spremembe';
+
+  @override
+  String get syncStatusBlockedCount => 'Zadržane spremembe';
+
+  @override
+  String get syncStatusAccountScope =>
+      'Status, časi in število sprememb veljajo za ta račun in vse njegove prostore.';
+
+  @override
+  String get syncStatusLocalScope =>
+      'Status velja za lokalno delo na tej napravi.';
+
+  @override
+  String get syncStatusServerChanged =>
+      'Identiteta strežnika se je spremenila. Lokalni podatki so ohranjeni; ponovno povezavo je treba preveriti.';
+
+  @override
+  String get sharingInviteScope => 'Obseg povabila';
+
+  @override
+  String get sharingInviteWholeSpace => 'Cel prostor';
+
+  @override
+  String get sharingInviteProjectOnly => 'Samo projekt';
+
+  @override
+  String get sharingInviteSpaceDescription =>
+      'Povabljena oseba dobi dostop do vseh skupnih vsebin in financ tega prostora ter vseh njegovih obstoječih in prihodnjih projektov.';
+
+  @override
+  String get sharingInviteProjectDescription =>
+      'Povabljena oseba dobi dostop samo do izbranega projekta, njegovih opravil, dogodkov, obvestil in financ. Projekt se prikaže kot Deljen projekt; povabilo ne dodeli članstva v gospodinjstvu ali organizaciji.';
+
+  @override
+  String get sharingMemberFullDescription =>
+      'Član lahko v izbranem obsegu ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve, povabila in člane. Lastništvo ostane posebej zaščiteno.';
+
+  @override
+  String get sharingViewerDescription =>
+      'Oseba lahko bere vsebino in finance v izbranem obsegu. Urejanje in upravljanje sta izključena.';
+
+  @override
+  String get sharingLegacySpaceDescription =>
+      'Ta prostor uporablja starejša pravila dostopa. Članstvo še ne vključuje vseh projektov in financ. Lastnik lahko v Nastavitvah prostora pregleda in potrdi novo deljenje.';
+
+  @override
+  String get sharingLegacyProjectDescription =>
+      'To povabilo uporablja starejša pravila dostopa do projekta. Prikazane finančne pravice določa trenutna nastavitev strežnika.';
+
+  @override
+  String get sharingScopedUnsupported =>
+      'Strežnik še ne podpira ločenega povabila v cel prostor ali samo projekt. Skrbnik mora nadgraditi FamilyHub; obstoječi podatki in dostop ostanejo na voljo.';
+
+  @override
+  String get sharingScopeUpgradeRequired =>
+      'Pred povabilom v cel prostor mora lastnik pregledati in potrditi novo deljenje v Nastavitvah prostora.';
+
+  @override
+  String get sharingAccessReview => 'Preglej deljenje prostora';
+
+  @override
+  String get sharingAccessReviewDescription =>
+      'Člani prostora bodo dobili dostop do vseh njegovih vsebin in financ ter vseh obstoječih in prihodnjih projektov. Člani lahko tudi urejajo, brišejo, povabijo druge in upravljajo člane. Osebe, povabljene samo v projekt, ohranijo projektni obseg. Pred potrditvijo preglej dodatni dostop. Stara čakajoča povabila bodo preklicana.';
+
+  @override
+  String get sharingAccessCurrent =>
+      'Članstvo v prostoru vključuje vse skupne vsebine in finance ter vse njegove obstoječe in prihodnje projekte. Povabilo samo v projekt velja samo za ta projekt.';
+
+  @override
+  String get sharingAccessApply => 'Potrdi deljenje prostora';
+
+  @override
+  String get sharingAccessSourceSpace => 'Članstvo v prostoru';
+
+  @override
+  String get sharingAccessSourceProject => 'Članstvo v projektu';
+
+  @override
+  String get sharingAccessReadWrite => 'Branje, urejanje in upravljanje';
+
+  @override
+  String get sharingProjectSharingReview => 'Preglej deljenje samo projekta';
+
+  @override
+  String get sharingProjectSharingDescription =>
+      'Projekt in njegovi povezani zapisi bodo dobili lasten obseg za deljenje. Obstoječi člani gospodinjstva ohranijo dostop. Novo povabilo velja samo za projekt in ne razkrije drugih vsebin gospodinjstva.';
+
+  @override
+  String get sharingProjectSharingApply => 'Omogoči deljenje projekta';
+
+  @override
+  String get sharingProjectSharingBlocked =>
+      'Projekt ima finančne ali druge povezave z vsebino zunaj projekta. Te povezave je treba urediti pred ločenim deljenjem; povabilo v celo gospodinjstvo ne nadomesti povabila samo v projekt.';
+
+  @override
+  String get sharingProjectSharingAction => 'Deli samo projekt';
+
+  @override
+  String get sharingProjectMembersInherited =>
+      'Dostop iz članstva v celotnem prostoru';
+
+  @override
+  String get sharingProjectNewVisibility =>
+      'Projekt vidijo vsi člani prostora. Povabilo samo v ta projekt lahko pošlješ dodatnim sodelavcem; drugih vsebin prostora ne razkrije.';
+
+  @override
+  String sharingProjectSharingCounts(int records, int finances, int reminders) {
+    return 'Zapisi: $records · finančni zapisi: $finances · opomniki: $reminders';
+  }
+
+  @override
+  String sharingAccessRevokedInvitations(int count) {
+    return 'Čakajoča povabila za preklic: $count';
+  }
+
+  @override
+  String get sharingProjectSharingPending =>
+      'Najprej uskladi čakajoče spremembe tega prostora in reši konflikte, nato ponovi pregled deljenja projekta.';
+
+  @override
+  String get sharingProjectDirectRemoval =>
+      'Odstrani neposredno članstvo v tem projektu? Dostop iz članstva v celotnem prostoru ostane, dokler je oseba član tega prostora.';
+
+  @override
+  String get sharingRemoveProjectMembership =>
+      'Odstrani neposredno članstvo v projektu';
+
+  @override
+  String get sharingBlockSingleRoot =>
+      'Ta deljen projekt vsebuje več projektov ali nima projektnega korena. Pred spremembo mora predstavljati en sam projekt.';
+
+  @override
+  String get sharingBlockRecordUpgrade =>
+      'Projekt je shranjen v starejšem formatu. Najprej uskladi njegovo posodobitev.';
+
+  @override
+  String get sharingBlockUnrelatedContent =>
+      'Prostor vsebuje opravila ali dogodke, ki ne pripadajo temu projektu. Pred ločenim deljenjem preglej njihovo dodelitev.';
+
+  @override
+  String get sharingBlockAccount =>
+      'Finančni račun uporabljajo tudi zapisi zunaj projekta. Preglej njegove povezave v financah pred ločenim deljenjem.';
+
+  @override
+  String get sharingBlockPerson =>
+      'Oseba je povezana tudi z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane osebe in dodelitve.';
+
+  @override
+  String get sharingBlockRecurrence =>
+      'Ponavljajoče se finančno pravilo uporabljajo tudi zapisi zunaj projekta. Pred ločenim deljenjem preglej ponavljanja.';
+
+  @override
+  String get sharingBlockTransfer =>
+      'Finančni prenos povezuje projekt z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane račune in prenose.';
+
+  @override
+  String get sharingBlockLinkedPayment =>
+      'Povezano plačilo vključuje dodatne finančne evidence. Pred ločenim deljenjem preglej povezave plačil.';
+
+  @override
+  String get sharingBlockCollision =>
+      'Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje.';
 }

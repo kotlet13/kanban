@@ -25,9 +25,10 @@ class NativeReminderService extends NativeDatabase
             }
             $id = $this->uuid($params['id']); $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);
             $row = $this->one('SELECT * FROM familyhub_reminders WHERE id=?', [$id]);
-            if ($row && ($row['account_id'] !== $user['account_id'] || $row['scope_id'] !== $scope)) { throw new NativeError('permission_revoked', 403); }
+            if ($row && $row['account_id'] !== $user['account_id']) { throw new NativeError('permission_revoked',403); }
             if ($row && $this->financialRecordType($row['target_type'])) { (new NativeFinanceAccess($this->container))->policy($scope, $user); }
             $replay = $this->replay($scope, $user['id'], $request, $hash); if ($replay) { return $replay['body']; }
+            if ($row && $row['scope_id'] !== $scope) { throw new NativeError('permission_revoked',403); }
             if (!is_int($params['expectedRevision']) || $params['expectedRevision'] !== (int)($row['revision'] ?? 0)) { throw new NativeError('reminder_conflict', 409); }
             if ($operation === 'reminders.cancel') {
                 if (!$row) { throw new NativeError('reminder_missing', 404); }
@@ -68,6 +69,7 @@ class NativeReminderService extends NativeDatabase
     public function runDue($limit = 100)
     {
         if (!is_int($limit) || $limit < 1 || $limit > 500 || !defined('FAMILYHUB_ENABLE_NATIVE_API') || FAMILYHUB_ENABLE_NATIVE_API !== true) { throw new NativeError('feature_disabled', 503); }
+        $retention = (new NativeInboxRetention($this->container))->run($limit);
         $rows = $this->many('SELECT r.id,r.scope_id FROM familyhub_reminders r JOIN familyhub_scopes s ON s.id=r.scope_id WHERE r.state=\'pending\' AND s.archived=0 AND r.remind_epoch<=? ORDER BY r.remind_epoch,r.id LIMIT '.$limit, [time()]);
         $delivered = 0; $cancelled = 0;
         foreach ($rows as $candidate) {
@@ -87,7 +89,7 @@ class NativeReminderService extends NativeDatabase
             });
             if ($state === 'delivered') { $delivered++; } elseif ($state === 'cancelled') { $cancelled++; }
         }
-        return ['examined' => count($rows), 'delivered' => $delivered, 'cancelled' => $cancelled, 'externalPush' => false, 'smtp' => false];
+        return ['examined' => count($rows), 'delivered' => $delivered, 'cancelled' => $cancelled, 'readNotificationsDeleted' => $retention['deleted'], 'externalPush' => false, 'smtp' => false];
     }
 
     private function target($scope, $type, $id)

@@ -181,14 +181,14 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
     };
     final items = <OfflineSpaceRecoveryItem>[];
     for (final scope in scopes.values) {
-      if (scope.organizationId != null &&
-          scopes.containsKey(scope.organizationId)) {
+      if (scope.parentSpaceId != null &&
+          scopes.containsKey(scope.parentSpaceId)) {
         continue;
       }
       final members = {
         scope.id,
         ...scopes.values
-            .where((s) => s.organizationId == scope.id)
+            .where((s) => s.parentSpaceId == scope.id)
             .map((s) => s.id),
       };
       final records = backupRows(doc, 'records')
@@ -294,7 +294,7 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
             .where(
               (r) =>
                   r['id'] == item.scopeId ||
-                  scopes[r['id']]?.organizationId == item.scopeId,
+                  scopes[r['id']]?.parentSpaceId == item.scopeId,
             )
             .toList();
         for (final row in scopeRows) {
@@ -323,7 +323,7 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
           ...scopes.values
               .where(
                 (s) =>
-                    s.organizationId == item.scopeId &&
+                    s.parentSpaceId == item.scopeId &&
                     !preview.blockedScopeIds.contains(s.id),
               )
               .map((s) => s.id),
@@ -426,7 +426,7 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
           if (type == 'financeEntry') {
             raw['ledgerAccountId'] ??= raw['accountId'];
             raw['projectId'] =
-                scopes[scope]?.organizationId != null ||
+                scopes[scope]?.parentSpaceId != null ||
                     scopes[scope]?.kind == SharedScopeKind.project
                 ? scopes[scope]?.projectRootId
                 : null;

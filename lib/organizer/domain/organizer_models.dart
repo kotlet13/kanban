@@ -639,6 +639,7 @@ class LocalReminder {
     required this.dueAt,
     required this.createdAt,
     required this.isRead,
+    this.readAt,
   });
 
   final String id;
@@ -647,14 +648,22 @@ class LocalReminder {
   final DateTime createdAt;
   final bool isRead;
 
-  LocalReminder copyWith({String? taskId, DateTime? dueAt, bool? isRead}) =>
-      LocalReminder(
-        id: id,
-        taskId: taskId ?? this.taskId,
-        dueAt: dueAt ?? this.dueAt,
-        createdAt: createdAt,
-        isRead: isRead ?? this.isRead,
-      );
+  /// Null on legacy read receipts until durable maintenance stamps them.
+  final DateTime? readAt;
+
+  LocalReminder copyWith({
+    String? taskId,
+    DateTime? dueAt,
+    bool? isRead,
+    DateTime? readAt,
+  }) => LocalReminder(
+    id: id,
+    taskId: taskId ?? this.taskId,
+    dueAt: dueAt ?? this.dueAt,
+    createdAt: createdAt,
+    isRead: isRead ?? this.isRead,
+    readAt: isRead == false ? null : readAt ?? this.readAt,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -662,6 +671,7 @@ class LocalReminder {
     'dueAt': dueAt.toUtc().toIso8601String(),
     'createdAt': createdAt.toUtc().toIso8601String(),
     'isRead': isRead,
+    if (readAt != null) 'readAt': readAt!.toUtc().toIso8601String(),
   };
 
   factory LocalReminder.fromJson(Map<String, dynamic> json) => LocalReminder(
@@ -670,6 +680,7 @@ class LocalReminder {
     dueAt: readDate(json, 'dueAt'),
     createdAt: readDate(json, 'createdAt'),
     isRead: readBool(json, 'isRead'),
+    readAt: readBool(json, 'isRead') ? readNullableDate(json, 'readAt') : null,
   );
 }
 

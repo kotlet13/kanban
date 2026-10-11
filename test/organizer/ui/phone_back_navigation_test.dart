@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban/app_router.dart';
+import 'package:kanban/organizer/presentation/garden/garden_editor.dart';
 import 'package:kanban/organizer/domain/all_spaces_projection.dart';
 import 'package:kanban/organizer/presentation/all_spaces/all_spaces_page.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
@@ -254,7 +255,7 @@ void main() {
     },
   );
 
-  testWidgets('dialogs and pushed router pages close before shell history', (
+  testWidgets('dialogs and garden editor close before shell history', (
     tester,
   ) async {
     await pumpOrganizer(tester, MemoryOrganizerStorage());
@@ -270,11 +271,14 @@ void main() {
     await back(tester);
     expect(find.text('Dialog'), findsNothing);
     expectArea('settings');
-    appRouter.push('/settings/ai');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute(builder: (_) => const GardenEditor()));
+    await tester.pumpAndSettle();
+    expect(find.byType(GardenEditor), findsOneWidget);
     expect(appRouter.canPop(), true);
     await back(tester);
+    expect(find.byType(GardenEditor), findsNothing);
     expectArea('settings');
     await back(tester);
     expectArea('today');

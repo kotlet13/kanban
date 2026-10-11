@@ -4,6 +4,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import 'sharing_errors.dart';
 import 'sharing_session_boundary.dart';
+import 'project_sharing_blockers.dart';
 
 class OrganizationAccessSettings extends ConsumerStatefulWidget {
   const OrganizationAccessSettings({super.key, required this.scope});
@@ -26,7 +27,9 @@ class _OrganizationAccessSettingsState
       !state.allSpacesSelected &&
       state.scopes.any(
         (scope) =>
-            scope.id == widget.scope.id && scope.canManage && !scope.blocked,
+            scope.id == widget.scope.id &&
+            scope.role == SharedRole.owner &&
+            !scope.blocked,
       );
 
   Future<void> _review() async {
@@ -36,9 +39,13 @@ class _OrganizationAccessSettingsState
       _error = null;
     });
     try {
-      final preview = await _guard.controller.previewOrganizationAccess(
-        widget.scope.id,
-      );
+      final scoped = ref
+          .read(collaborationProvider)
+          .requireValue
+          .spaceProjectMembershipSupported;
+      final preview = scoped
+          ? await _guard.controller.previewSpaceAccess(widget.scope.id)
+          : await _guard.controller.previewOrganizationAccess(widget.scope.id);
       if (!mounted ||
           !_guard.isCurrent ||
           !_allows(ref.read(collaborationProvider).requireValue)) {
@@ -52,13 +59,42 @@ class _OrganizationAccessSettingsState
           visibleWhen: _allows,
           child: AlertDialog(
             scrollable: true,
-            title: Text(context.l10n.organizationAccessReview),
+            title: Text(
+              scoped
+                  ? context.l10n.sharingAccessReview
+                  : context.l10n.organizationAccessReview,
+            ),
             content: SizedBox(
               width: 560,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(context.l10n.organizationAccessReviewDescription),
+                  Text(
+                    scoped
+                        ? widget.scope.kind == SharedScopeKind.project
+                              ? '${context.l10n.sharingInviteProjectDescription}\n\n${context.l10n.sharingMemberFullDescription}'
+                              : context.l10n.sharingAccessReviewDescription
+                        : context.l10n.organizationAccessReviewDescription,
+                  ),
+                  if (!preview.canApply)
+                    for (final code
+                        in preview.blockers
+                            .map((b) => b['code'] as String)
+                            .toSet())
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          projectSharingBlockerMessage(context, code),
+                        ),
+                      ),
+                  if (scoped) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      context.l10n.sharingAccessRevokedInvitations(
+                        preview.pendingInvitationsRevoked,
+                      ),
+                    ),
+                  ],
                   for (final project in preview.projects) ...[
                     const SizedBox(height: 16),
                     Text(
@@ -73,11 +109,21 @@ class _OrganizationAccessSettingsState
                         leading: const Icon(Icons.person_outline),
                         title: Text(reader.displayName),
                         subtitle: Text(
-                          reader.accessSource == 'leadership'
+                          reader.accessSource == 'spaceMembership'
+                              ? context.l10n.sharingAccessSourceSpace
+                              : reader.accessSource == 'leadership'
                               ? context.l10n.organizationLeader
                               : context.l10n.sharingMember,
                         ),
                       ),
+                    if (scoped)
+                      for (final writer in project.additionalWriters)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.edit_outlined),
+                          title: Text(writer.displayName),
+                          subtitle: Text(context.l10n.sharingAccessReadWrite),
+                        ),
                   ],
                 ],
               ),
@@ -89,8 +135,14 @@ class _OrganizationAccessSettingsState
               ),
               FilledButton(
                 key: const ValueKey('organization-access-confirm'),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(context.l10n.organizationAccessApply),
+                onPressed: preview.canApply
+                    ? () => Navigator.pop(context, true)
+                    : null,
+                child: Text(
+                  scoped
+                      ? context.l10n.sharingAccessApply
+                      : context.l10n.organizationAccessApply,
+                ),
               ),
             ],
           ),
@@ -100,10 +152,17 @@ class _OrganizationAccessSettingsState
           mounted &&
           _guard.isCurrent &&
           _allows(ref.read(collaborationProvider).requireValue)) {
-        await _guard.controller.applyOrganizationAccess(
-          widget.scope.id,
-          preview.previewHash,
-        );
+        if (scoped) {
+          await _guard.controller.applySpaceAccess(
+            widget.scope.id,
+            preview.previewHash,
+          );
+        } else {
+          await _guard.controller.applyOrganizationAccess(
+            widget.scope.id,
+            preview.previewHash,
+          );
+        }
       }
     } catch (error) {
       if (mounted) setState(() => _error = sharingErrorMessage(context, error));
@@ -124,7 +183,14 @@ class _OrganizationAccessSettingsState
       _error = null;
     });
     try {
-      await _guard.controller.resumeOrganizationAccessChange(widget.scope.id);
+      if (ref
+          .read(collaborationProvider)
+          .requireValue
+          .spaceProjectMembershipSupported) {
+        await _guard.controller.resumeSpaceAccessChange(widget.scope.id);
+      } else {
+        await _guard.controller.resumeOrganizationAccessChange(widget.scope.id);
+      }
     } catch (error) {
       if (mounted) setState(() => _error = sharingErrorMessage(context, error));
     } finally {
@@ -147,19 +213,28 @@ class _OrganizationAccessSettingsState
       return const SizedBox.shrink();
     }
     final l = context.l10n;
+    final scoped = state.spaceProjectMembershipSupported;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (scope.accessPolicyVersion >= 2)
+        if (scope.accessPolicyVersion == 3)
+          Text(
+            scope.kind == SharedScopeKind.project
+                ? l.sharingInviteProjectDescription
+                : l.sharingAccessCurrent,
+          )
+        else if (!scoped && scope.accessPolicyVersion >= 2)
           Text(l.organizationAccessCurrent)
-        else
+        else if (scope.role == SharedRole.owner)
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
               key: const ValueKey('organization-access-review'),
               onPressed: _busy ? null : _review,
               icon: const Icon(Icons.visibility_outlined),
-              label: Text(l.organizationAccessReview),
+              label: Text(
+                scoped ? l.sharingAccessReview : l.organizationAccessReview,
+              ),
             ),
           ),
         if (_busy && !_previewOpen) const LinearProgressIndicator(),

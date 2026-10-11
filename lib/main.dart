@@ -29,7 +29,7 @@ Future<void> main() async {
           PlatformBackupUiPreferencesStore(),
         ),
       ],
-      child: const KanbanApp(),
+      child: const JivieApp(),
     ),
   );
 }

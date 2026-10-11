@@ -29,8 +29,7 @@ class NativeNotificationWriter extends NativeDatabase
 
     public function insert($scope, $recipient, $actor, $type, $id, $revision, $kind, $category, $audience, $eventKey, $groupTarget = null)
     {
-        $preference = $this->one('SELECT settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$scope, $recipient, $category]);
-        $settings = $preference ? json_decode($preference['settings'], true, 32, JSON_THROW_ON_ERROR) : ['inApp' => true, 'email' => false, 'push' => false];
+        $settings = (new NativeNotificationPreferences($this->container))->settings($scope, $recipient, $category);
         if (!$settings['inApp'] && !$settings['email'] && !$settings['push']) { return; }
         $this->state($recipient);
         if ($this->one('SELECT id FROM familyhub_inbox WHERE event_key=? AND recipient_account_id=?', [$eventKey, $recipient])) { return; }
@@ -55,7 +54,7 @@ class NativeNotificationWriter extends NativeDatabase
         if (!$record['deleted'] && $type === 'task' && $payload['isCompleted'] && !($before['isCompleted'] ?? false)) { $base = 'completed'; }
         if (!$record['deleted'] && $type === 'shoppingItem' && $payload['isChecked'] && !($before['isChecked'] ?? false)) { $base = 'checked'; }
         $assignees = ($payload ?? $before)['assigneeAccountIds'] ?? [];
-        $rows = $this->many('SELECT m.account_id FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.active=1 AND u.is_active=1 ORDER BY m.account_id', [$scope]);
+        $rows = array_map(fn($m)=>['account_id'=>$m['accountId']],(new NativeOrganizationAccess($this->container))->members($scope));
         // Derived leaders receive project events only after explicit delivery preferences.
         $subscribers=$this->many('SELECT DISTINCT account_id FROM familyhub_inbox_preferences WHERE scope_id=? AND category=?',[$scope,$category]);
         $known=array_column($rows,'account_id');

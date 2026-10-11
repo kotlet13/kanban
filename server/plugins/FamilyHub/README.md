@@ -1,4 +1,18 @@
-# FamilyHub 0.9.0
+# FamilyHub 0.11.1
+
+## Read notification retention (local source addition)
+
+Read notifications expire seven days after their server `readAt` timestamp. Repeating read=true keeps the original deadline; unread clears it, and a later first read starts a new interval. Unread notifications are kept regardless of creation date. Retention deletes only notification references and their email/push jobs, leaving tasks, payments and source reminder state intact. The existing `cli/reminders.php --limit=100` cron runs bounded cleanup for all accounts even without due reminders; optional `cli/inbox-retention.php --limit=100` runs cleanup alone (maximum 500 deletions). Inbox requests also clean and filter expired references. Deletion increments the existing recipient visibility revision, requiring old sync cursors to reset via `visibility_changed`; no new wire contract, schema migration or server tombstone table is needed. This local source addition is separate from hosted installation and app releases.
+
+## Notification defaults (0.11.1/schema 15)
+
+Absent category preferences now mean inApp and push enabled, email and sound disabled. Explicit saved settings retain priority. Device registration and operating-system permission remain separate; this patch neither registers devices nor replays old notifications. Read-all behavior belongs to the client and never completes tasks or payments. This is a code-only update from 0.11.0: schema 15 and all stored preferences remain unchanged.
+
+## Email invitations (0.10.0/schema 14)
+
+An owner invites a recipient by email. The encrypted account-mail worker sends an expiring link; a new recipient chooses a username and password, while an existing recipient signs in. Registration does not join the scope. The recipient explicitly accepts the waiting invitation afterward. Verified email and durable account identity bind the recipient; the sender receives neither the secret nor an account-existence result. Existing username invitations remain supported.
+
+The additive migration preserves existing accounts, sessions, records and pending operations. It adds two nullable invitation columns and one encrypted mail queue. The existing account-mail cron and private SMTP/key configuration are reused. See the [email invitation contract](../../../docs/server/email-invitation-api-contract.md) for capabilities, retries, quotas and deployment limits. Passing isolated tests is separate from hosted installation and real mailbox delivery.
 
 ## Linked payments and source version
 
@@ -6,7 +20,7 @@ Linked personal payments, explicit household cash projection, partial source-app
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
-Version 0.9.0 uses additive server schema 13, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.9.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/UPGRADE_IMPLEMENTATION.md` records the current release run. Historical 0.3–0.6 notes below remain applicable to their original features.
+Version 0.11.1 uses additive server schema 15, invitation contracts 1/2/3, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Space-sharing policy3 extends households, organizations and standalone project scopes with explicit inherited membership; existing roots require a fresh owner preview. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.11.1 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
 
 ## Spaces access and household gardens (0.8.0/schema 12)
 
@@ -22,7 +36,7 @@ Schema 12 is additive and repeatable. The migration itself does not widen histor
 
 **Disabled by default.** Explicitly set `FAMILYHUB_ENABLE_NATIVE_API` to boolean `true` only after backing up and testing the deployment. Endpoint: `POST index.php?controller=NativeApiController&action=handle&plugin=FamilyHub`, body `{ "v":1, "op":"capabilities", "params":{} }`. HTTPS is required; untrusted `X-Forwarded-Proto` is not accepted. If terminating TLS at a proxy, configure exact trusted proxy IPs in `FAMILYHUB_TRUSTED_PROXY_IPS` (default empty). Configure browser origins explicitly in `FAMILYHUB_CORS_ORIGINS` if needed, with no wildcard or cookie credentials.
 
-Existing local Kanboard users log in with username/password and configured TOTP to receive a 30-day revocable bearer device token. Password/2FA changes and user deactivation invalidate devices. External authentication providers are explicitly unsupported. Registration requires an expiring named-username invitation; it does not verify email or create administrators. Bootstrap uses an existing user login, then creates an owned native scope.
+Existing local Kanboard users log in with username/password and configured TOTP to receive a 30-day revocable bearer device token. Password/2FA changes and user deactivation invalidate devices. External authentication providers are explicitly unsupported. Contract2 registration uses an emailed invitation and confirms its address through possession of that secret; it requires later explicit membership acceptance. Legacy contract1 registration uses an expiring named-username invitation, does not verify email and retains its original membership semantics. Neither creates administrators. Bootstrap uses an existing user login or the first-account enrollment code, then creates an owned native scope.
 
 Native household and standalone project scopes, memberships, invitations and project/task/shopping records live in **FamilyHub tables**. No legacy project membership or finance metadata is exposed. Record contract 2 adds task assignments/date ranges, shared events and server author provenance through sync2 operations. Persistent per-account inbox and bounded scheduled reminders have separate endpoints. Financial records use separate tables, explicit read/write grants and immutable audit history; they never enter generic sync. Core Kanboard web synchronization is not supported. Records use revision checks, durable operation IDs, serialized scope cursors and permanent tombstones. API requests recheck devices and membership. Email defaults off, including shopping; optional delivery needs separate SMTP configuration.
 
@@ -94,3 +108,7 @@ Enable only with `FAMILYHUB_ENABLE_NATIVE_API=true` and `FAMILYHUB_ACCOUNT_MODE=
 Version 0.7.0 advertises `accountDeletionPolicyVersions:[1,2]`. Policy 2 requires explicit structural decisions for retained project roots/person profiles and organization-project detachment, and permits an unknown opening balance. The root and phase IDs remain valid for other contributors; founder text is anonymized and the scope name follows the retained root. Detaching a surviving child changes its organization link without changing its own members/finance grants. Inaccessible children use opaque confirmation IDs without disclosing their name, scope ID or finance contents. Account deletion still removes the real Kanboard account/devices; retaining a person profile does not retain authentication.
 
 The web deletion controller and form source use policy 2 and explicit preserve/detach actions. Mobile and website tests remain separate evidence: the older policy-1 web HTTP results do not establish the extended graph. Check repository `docs/server/account-deletion-contract.md` and the current release run for the final local web policy-2 result and hosting deployment evidence.
+
+## Space sharing policy3
+
+Version 0.11.0/schema15 adds explicit full-space and project-only email invitations. Full members collaborate on all shared content and finances, including future project children; project-only membership grants no parent access. Existing policies remain unchanged until an owner applies a fresh migration preview, which revokes pending older invitations. Household inline projects can be extracted atomically only with a closed dependency graph; reused household accounts, people, recurring rules and linked payments require resolving the reported blockers first. Personal records and private account projections remain private. This source version does not confirm any hosted deployment. See the packaged space-sharing API contract for methods and compatibility.

@@ -16,6 +16,7 @@ class SharedAgendaPage extends StatefulWidget {
     required this.onOpen,
     this.onAddEvent,
     this.timeline = false,
+    this.titleAccessory,
     this.selectedProjectId,
     this.onProjectSelected,
   });
@@ -25,6 +26,7 @@ class SharedAgendaPage extends StatefulWidget {
   final ValueChanged<AgendaItem> onOpen;
   final VoidCallback? onAddEvent;
   final bool timeline;
+  final Widget? titleAccessory;
   final String? selectedProjectId;
   final ValueChanged<String?>? onProjectSelected;
   @override
@@ -119,6 +121,7 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
         if (widget.scope.archived) Text(l.scopeArchivedDescription),
         OrganizerHeading(
           title: widget.timeline ? l.planningTimeline : l.planningSharedToday,
+          titleAccessory: widget.titleAccessory,
           subtitle: widget.scope.name,
           action: widget.onAddEvent == null
               ? null

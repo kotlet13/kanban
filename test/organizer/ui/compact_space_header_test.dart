@@ -83,6 +83,7 @@ class SpaceCreationController extends SharingUiController {
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
     String? organizationId,
+    String? parentScopeId,
     String? id,
     String? requestId,
   }) async {

@@ -3,11 +3,10 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../l10n/l10n.dart';
 import '../../widgets/jivie_brand_mark.dart';
-import '../../state/providers.dart';
+import '../state/app_preferences_provider.dart';
 import 'organizer_actions.dart';
 import 'jivie_public_links.dart';
 import 'onboarding/first_time_guide.dart';
@@ -67,7 +66,6 @@ class OrganizerSettingsPage extends ConsumerWidget {
     final l = context.l10n;
     final theme = ref.watch(themeModeProvider);
     final locale = ref.watch(appLocaleProvider);
-    final session = ref.watch(sessionCredentialsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -221,33 +219,6 @@ class OrganizerSettingsPage extends ConsumerWidget {
         const SizedBox(height: 28),
         const AccountDeletionPanel(),
         const SizedBox(height: 28),
-        OrganizerSection(
-          title: l.organizerConnection,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l.organizerConnectionDescription),
-                  const SizedBox(height: 14),
-                  FilledButton.tonalIcon(
-                    onPressed: () => context.push(
-                      session == null ? '/connect' : '/projects',
-                    ),
-                    icon: const Icon(Icons.dns_outlined, size: 18),
-                    label: Text(
-                      session == null
-                          ? l.organizerConnect
-                          : l.organizerOpenKanboard,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
         const JiviePublicLinks(),
         const SizedBox(height: 16),
         AboutListTile(

@@ -7,6 +7,9 @@ import '../../state/linked_payments_provider.dart';
 import '../organizer_widgets.dart';
 import '../inbox/notification_target_view.dart' show organizerDateTime;
 import '../shared/sharing_errors.dart';
+import '../shared/sharing_status.dart';
+import '../shared/sharing_session_boundary.dart';
+import '../shared/sharing_sync_conflicts.dart';
 import 'finance_money.dart';
 import 'linked_payment_forms.dart';
 
@@ -24,31 +27,100 @@ class LinkedPaymentsSection extends ConsumerStatefulWidget {
 }
 
 class _LinkedPaymentsSectionState extends ConsumerState<LinkedPaymentsSection> {
-  bool _busy = false;
-  String? _error;
-  Future<void> _run({bool refresh = false}) async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _error = null;
+  final _busyStatus = ValueNotifier<bool>(false);
+  late final ValueNotifier<SharingStatusSupplement> _paymentStatus;
+  @override
+  void initState() {
+    super.initState();
+    _paymentStatus = ValueNotifier(_supplement());
+  }
+
+  SharingStatusSupplement _supplement() => SharingStatusSupplement(
+    pendingCount: widget.snapshot.pendingCount,
+    blockedCount: widget.snapshot.projections
+        .where((p) => p.state == PaymentProjectionState.blocked)
+        .length,
+    hasProblem: _error != null,
+    isOffline: _offline,
+    label: _statusLabel,
+    requiresRefresh: !widget.snapshot.fresh || !widget.snapshot.complete,
+  );
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _statusLabel = context.l10n.paymentLinkedPayments;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _publishStatus();
     });
+  }
+
+  void _publishStatus() {
+    if (mounted) _paymentStatus.value = _supplement();
+  }
+
+  @override
+  void didUpdateWidget(covariant LinkedPaymentsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.space.key != widget.space.key) {
+      _error = null;
+      _offline = false;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _publishStatus();
+    });
+  }
+
+  bool get _busy => _busyStatus.value;
+  @override
+  void dispose() {
+    _busyStatus.dispose();
+    _paymentStatus.dispose();
+    super.dispose();
+  }
+
+  String? _error;
+  bool _offline = false;
+  String? _statusLabel;
+  Future<void> _run({
+    bool refresh = false,
+    PaymentSpaceRef? expectedSpace,
+  }) async {
+    if (!mounted || _busy) return;
+    final space = expectedSpace ?? widget.space;
+    if (widget.space.key != space.key) return;
+    final guard = SharingSessionGuard(context, ref, allowSignedOut: true);
+    bool current() =>
+        mounted && widget.space.key == space.key && guard.isCurrent;
+    setState(() {
+      _busyStatus.value = true;
+      _error = null;
+      _offline = false;
+    });
+    _publishStatus();
     try {
       final container = ProviderScope.containerOf(context, listen: false);
       final repo = await container.read(
         linkedPaymentsRepositoryProvider.future,
       );
+      if (!current()) return;
       if (refresh) {
-        await repo.refresh(widget.space);
+        await repo.refresh(space);
       } else {
         await repo.resumePending();
       }
-      container.invalidate(
-        linkedPaymentsProvider(paymentSpaceKey(widget.space)),
-      );
+      if (current()) {
+        container.invalidate(linkedPaymentsProvider(paymentSpaceKey(space)));
+      }
     } catch (error) {
-      if (mounted) setState(() => _error = sharingErrorMessage(context, error));
+      if (current()) {
+        setState(() {
+          _error = sharingErrorMessage(context, error);
+          _offline = error is CollaborationException && error.code == 'network';
+        });
+        _publishStatus();
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busyStatus.value = false);
     }
   }
 
@@ -186,9 +258,10 @@ class _LinkedPaymentsSectionState extends ConsumerState<LinkedPaymentsSection> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(collaborationProvider);
+    final shared = ref.watch(collaborationProvider).valueOrNull;
     ref.watch(localSpacesProvider);
     final l = context.l10n, snapshot = widget.snapshot;
+    final originSpace = widget.space;
     if (snapshot.events.isEmpty &&
         snapshot.projections.isEmpty &&
         snapshot.pendingCount == 0 &&
@@ -200,32 +273,56 @@ class _LinkedPaymentsSectionState extends ConsumerState<LinkedPaymentsSection> {
       children: [
         OrganizerHeading(
           title: l.paymentLinkedPayments,
+          titleAccessory: SharingStatus(
+            key: ValueKey('linked-payments-sync-status-${originSpace.key}'),
+            state: shared ?? CollaborationState(),
+            scopeId: widget.space.partition == null ? null : widget.space.id,
+            allowLocalActions: widget.space.partition == null,
+            busyListenable: _busyStatus,
+            supplementListenable: _paymentStatus,
+            onSync: () => _run(
+              refresh: widget.snapshot.pendingCount == 0,
+              expectedSpace: originSpace,
+            ),
+            onConflicts: () => showSharingSyncConflicts(context, ref),
+            detailsBuilder: (dialogContext, current, actionsEnabled) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.snapshot.pendingCount > 0)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('resume-linked-payments'),
+                      onPressed: !actionsEnabled
+                          ? null
+                          : () => _run(expectedSpace: originSpace),
+                      icon: const Icon(Icons.sync_outlined),
+                      label: Text(l.paymentRetry),
+                    ),
+                  ),
+                if (!widget.snapshot.fresh)
+                  TextButton.icon(
+                    onPressed: !actionsEnabled
+                        ? null
+                        : () => _run(refresh: true, expectedSpace: originSpace),
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l.paymentRefresh),
+                  ),
+                if (_error != null)
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+              ],
+            ),
+          ),
           subtitle: snapshot.projections.isEmpty
               ? null
               : l.paymentProjectionDescription,
         ),
-        if (snapshot.pendingCount > 0)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              key: const ValueKey('resume-linked-payments'),
-              onPressed: _busy ? null : () => _run(),
-              icon: const Icon(Icons.sync_outlined),
-              label: Text(l.paymentRetry),
-            ),
-          ),
-        if (!snapshot.fresh)
-          TextButton.icon(
-            onPressed: _busy ? null : () => _run(refresh: true),
-            icon: const Icon(Icons.refresh),
-            label: Text(l.paymentRefresh),
-          ),
-        if (_error != null)
-          Text(
-            _error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        if (_busy) const LinearProgressIndicator(),
         for (final event in snapshot.events) _card(event),
         for (final projection in snapshot.projections)
           _card(projection.event, projection: projection),

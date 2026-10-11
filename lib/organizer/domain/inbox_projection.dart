@@ -1,6 +1,7 @@
 import 'collaboration_models.dart';
 import 'finance_reminder_plans.dart';
 import 'organizer_models.dart';
+import 'inbox_retention.dart';
 
 class LocalInboxReminder {
   const LocalInboxReminder(
@@ -119,6 +120,7 @@ OrganizerInboxProjection projectOrganizerInbox({
       );
 
   bool eligible(SharedInboxEntry entry) {
+    if (inboxReadExpired(entry.readAt, now)) return false;
     if (shared.session == null || !shared.localAccessAllowed) return false;
     final scope = shared.scopes.where((s) => s.id == entry.scopeId).firstOrNull;
     if (scope == null || scope.revoked || scope.blocked || scope.archived) {
@@ -181,6 +183,7 @@ OrganizerInboxProjection projectOrganizerInbox({
             .firstOrNull;
         final plan = localPlan(reminder, personal);
         if (task == null ||
+            (reminder.isRead && inboxReadExpired(reminder.readAt, now)) ||
             task.isCompleted ||
             task.dueAt != reminder.dueAt ||
             plan == null ||

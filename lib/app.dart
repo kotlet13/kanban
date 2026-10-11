@@ -7,21 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_router.dart';
 import 'l10n/l10n.dart';
-import 'state/providers.dart';
+import 'organizer/state/app_preferences_provider.dart';
 import 'organizer/platform/notification_coordinator.dart';
 import 'organizer/platform/backup_preferences_replay.dart';
 import 'organizer/presentation/onboarding/getting_started.dart';
 import 'organizer/platform/invitation_links/invitation_link_coordinator.dart';
 import 'organizer/platform/remote_push/remote_push_coordinator.dart';
 
-class KanbanApp extends ConsumerStatefulWidget {
-  const KanbanApp({super.key});
+class JivieApp extends ConsumerStatefulWidget {
+  const JivieApp({super.key});
 
   @override
-  ConsumerState<KanbanApp> createState() => _KanbanAppState();
+  ConsumerState<JivieApp> createState() => _JivieAppState();
 }
 
-class _KanbanAppState extends ConsumerState<KanbanApp> {
+class _JivieAppState extends ConsumerState<JivieApp> {
   bool _didLoadLocale = false;
   bool _didLoadThemeMode = false;
 

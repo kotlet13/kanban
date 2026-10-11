@@ -2,6 +2,67 @@ part of 'collaboration_repository.dart';
 
 /// Remote permission changes require a live identity and an explicit reviewed action.
 extension CollaborationOrganizationAccess on CollaborationRepository {
+  Future<bool> spaceAccessAvailable() async => _spaceProjectMembershipSupported;
+
+  Future<SpaceAccessPreview> previewSpaceAccess(String scopeId) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _spacePolicyOwner(session, epoch, scopeId);
+    final reply = await _callSession(
+      session,
+      epoch,
+      'scopes.accessMigrationPreview',
+      {'scopeId': scopeId, 'targetVersion': 3},
+    );
+    _checkEpoch(epoch);
+    final preview = SpaceAccessPreview.fromJson(reply);
+    if (preview.scopeId != scopeId || preview.toVersion != 3) {
+      throw const CollaborationException('invalid_response');
+    }
+    return preview;
+  }
+
+  Future<SharedScope> applySpaceAccess(
+    String scopeId,
+    String previewHash, {
+    String? requestId,
+  }) async {
+    final reply = await _organizationMutation(
+      scopeId,
+      'scopes.accessMigrationApply',
+      {'scopeId': scopeId, 'previewHash': previewHash, 'targetVersion': 3},
+      requestId: requestId,
+    );
+    return SharedScope.fromJson(reply['scope'] as Map<String, dynamic>);
+  }
+
+  Future<void> _spacePolicyOwner(
+    DeviceSession session,
+    int epoch,
+    String scopeId,
+  ) async {
+    final rows = await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [session.profile.partition, scopeId],
+    );
+    _checkEpoch(epoch);
+    if (rows.isEmpty) throw const CollaborationException('permission_revoked');
+    final scope = SharedScope.fromJson(
+      CollaborationRepository._map(rows.single['data']),
+    );
+    if (!scope.isOwner ||
+        scope.revoked ||
+        !{
+          SharedScopeKind.household,
+          SharedScopeKind.organization,
+          SharedScopeKind.project,
+        }.contains(scope.kind)) {
+      throw const CollaborationException('permission_revoked');
+    }
+    if (!_spaceProjectMembershipSupported) {
+      throw const CollaborationException('client_upgrade_required');
+    }
+  }
+
   Future<bool> organizationAccessAvailable() async {
     final session = _requireSession(), epoch = _epoch;
     final rows = await database.rows(
@@ -149,7 +210,7 @@ extension CollaborationOrganizationAccess on CollaborationRepository {
     final scope = SharedScope.fromJson(
       CollaborationRepository._map(rows.first['data']),
     );
-    if (scope.kind != SharedScopeKind.organization || !scope.canManage) {
+    if (scope.kind != SharedScopeKind.organization || !scope.isOwner) {
       throw const CollaborationException('permission_revoked');
     }
     if (!await organizationAccessAvailable()) {
@@ -165,7 +226,10 @@ extension CollaborationOrganizationAccess on CollaborationRepository {
     String? requestId,
   }) async {
     final session = _requireSession(), epoch = _epoch;
-    if (operation == 'scopes.updateMetadata') {
+    if (operation == 'scopes.accessMigrationApply' &&
+        desired['targetVersion'] == 3) {
+      await _spacePolicyOwner(session, epoch, scopeId);
+    } else if (operation == 'scopes.updateMetadata') {
       await _scopeMetadataOwner(session, epoch, scopeId);
     } else {
       await _organizationOwner(session, epoch, scopeId);
@@ -227,8 +291,12 @@ extension CollaborationOrganizationAccess on CollaborationRepository {
       );
       if (scope.id != scopeId ||
           (operation == 'scopes.accessMigrationApply' &&
-              (scope.kind != SharedScopeKind.organization ||
-                  scope.accessPolicyVersion != 2))) {
+              (scope.accessPolicyVersion != (params['targetVersion'] ?? 2) ||
+                  !{
+                    SharedScopeKind.organization,
+                    SharedScopeKind.household,
+                    SharedScopeKind.project,
+                  }.contains(scope.kind)))) {
         throw const CollaborationException('invalid_response');
       }
       await database.transaction(() async {

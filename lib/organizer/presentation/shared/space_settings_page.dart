@@ -9,6 +9,7 @@ import 'sharing_members.dart';
 import '../../state/local_spaces_provider.dart';
 import 'local_space_settings.dart';
 import 'organization_access_settings.dart';
+import 'project_sharing_settings.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
 import '../../data/collaboration_repository.dart' show newSharedId;
@@ -205,16 +206,38 @@ class SpaceSettingsPage extends ConsumerWidget {
                           )
                         : null,
                   ),
-                  if (selected.kind == SharedScopeKind.organization &&
-                      selected.canManage)
+                  if (const {
+                        SharedScopeKind.organization,
+                        SharedScopeKind.household,
+                        SharedScopeKind.project,
+                      }.contains(selected.kind) &&
+                      selected.parentSpaceId == null &&
+                      selected.role == SharedRole.owner &&
+                      (state.spaceProjectMembershipSupported ||
+                          selected.kind == SharedScopeKind.organization))
                     OrganizationAccessSettings(scope: selected),
+                  if (selected.role != SharedRole.owner &&
+                      selected.kind != SharedScopeKind.project)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        selected.accessPolicyVersion == 3
+                            ? l.sharingAccessCurrent
+                            : l.sharingLegacySpaceDescription,
+                      ),
+                    ),
                   SharingMembersPage(
                     key: ValueKey(
-                      'members-${session.partition}-${session.deviceId}-${selected.id}-${selected.role.name}-${selected.archived}',
+                      'members-${session.partition}-${session.deviceId}-${selected.id}-${selected.role.name}-${selected.archived}-${selected.accessPolicyVersion}-${selected.accessRevision}',
                     ),
                     scope: selected,
                     session: session,
                   ),
+                  if (selected.kind == SharedScopeKind.household)
+                    ProjectSharingSettings(
+                      scope: selected,
+                      onProjectSelected: (id) => onScopeSelected(id),
+                    ),
                 ] else ...[
                   Text(
                     selectedScopeId == null

@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 13;
+const VERSION = 15;
 
 function version_1(PDO $pdo)
 {
@@ -87,4 +87,14 @@ function version_12(PDO $pdo)
 function version_13(PDO $pdo)
 {
     LinkedPaymentsSchema::create($pdo, true);
+}
+
+function version_14(PDO $pdo)
+{
+    EmailInvitationSchema::create($pdo, true);
+}
+
+function version_15(PDO $pdo)
+{
+    SharingSchema::create($pdo, true);
 }

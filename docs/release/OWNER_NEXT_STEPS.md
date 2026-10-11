@@ -2,7 +2,25 @@
 
 Skupni vrstni red in potrditve vodi [izdajna checklista za Android in Apple](RELEASE_CHECKLIST.md). Spodaj ostane krajša predaja lastniku; zgodovinski izdajni dokazi ne pomenijo dokončanega novega kroga.
 
-Stanje: 9. oktober 2026. **Android 1.2.0 (14) je aktivno objavljen za domači (15); testni strežnik je nadgrajen na FamilyHub 0.9.0/schema13.** Najprej preveri ustvarjanje lokalnega gospodinjstva/organizacije, menije po vrsti prostora, povezovanje in finančni primer 30 EUR → povračili 10 + 20 EUR. Nato opraviva še preizkus brez strežnika in na drugi napravi. [Sprejemni koraki in omejitve](../SPACES_UPGRADE_IMPLEMENTATION.md#sprejemni-preizkus-po-vključitvi-celotne-spremembe). Uporabnik je potrdil dobro delovanje nove navigacije in odzivnosti. Po posodobitvi preveri **meni → Nastavitve prostora → Člani** za izbrani prostor in vračanje Nazaj. Pri Vsi/lokalnem načinu naj se najprej ponudi izrecna izbira skupnega prostora. [Delovni zasloni so brez stalnih članskih gumbov, podvojenega naziva in razlage; slednja je v Začetek uporabe → Organizacija](../UPGRADE_IMPLEMENTATION.md). Google Play ima zdaj shranjeno SL/EN predstavitev s slikami in osnovnimi izjavami; aplikacija še ni oddana v pregled. [Priprava javne izdaje in odprti koraki](GOOGLE_PLAY_PUBLIC_PREPARATION.md) loči dokazano stanje od preostalih popravkov.
+Stanje: **11. oktober 2026. Android 1.3.1 (16) je aktiven za domači (15), testni
+strežnik uporablja FamilyHub 0.11.1/schema15, nova Mac aplikacija je odprta kot
+takndev.** [Dokazi](NOTIFICATION_DEFAULTS_RELEASE.md).
+
+Za naslednji preizkus:
+
+1. Na telefonu posodobi Jivie prek [internega kanala](https://play.google.com/apps/internaltest/4701286726300038561).
+2. Preveri registracijo naprave in dovoljenje Androida, nato zakleni telefon.
+3. Na Macu kot takndev spremeni skupno opravilo/dogodek. Preveri telefonski push
+   in klik do prave vsebine; redni cron deluje na minuto. Lastne spremembe ne obveščajo avtorja.
+4. Preveri **Označi vse kot prebrano** in oznako zvončka. Izrecno shranjeni izklopi
+   ostanejo ohranjeni; po potrebi jih vključi v nastavitvah. Mac ima center obvestil,
+   oddaljeni sistemski push na Macu še ni izveden.
+
+Prehod politike Doma in skupno urejanje projekta/opravila s stroškom sta že potrjena.
+
+Prejšnji sprejemni koraki prostorov/financ ostajajo v
+[izvedbenem dnevniku](../SPACES_UPGRADE_IMPLEMENTATION.md#sprejemni-preizkus-po-vključitvi-celotne-spremembe).
+Javna Google Play priprava in njene odprte točke ostajajo ločene.
 
 **Zdaj za Google Play:** pregledni račun/navodila in ciljna skupina **18+** so shranjeni. IARC je pripravljen kot osnutek za prvo javno kandidatko brez starega AI; končno oceno uskladimo po izvedbi dogovorjenih sprememb. Objavi usklajeni paket spletne strani na `jivie.app` ter opravi dogovorjene fizične preizkuse. Medijska dovoljenja, UGC ukrepi in dokončna izjava Varnost podatkov ostajajo odprti. Nadgradnja prostorov je avtomatizirano preverjena ter po tvojem nadaljnjem naročilu objavljena kot interna 1.2.0 (14). Javna izdaja ostaja ločen korak. [Aktualni obrazci in dokazi](GOOGLE_PLAY_PUBLIC_PREPARATION.md).
 

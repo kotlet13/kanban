@@ -20,15 +20,20 @@ class OrganizationAccessProject {
     required this.name,
     required this.financeWasEnabled,
     required Iterable<OrganizationAccessReader> additionalReaders,
-  }) : additionalReaders = List.unmodifiable(additionalReaders);
+    Iterable<OrganizationAccessReader> additionalWriters = const [],
+  }) : additionalReaders = List.unmodifiable(additionalReaders),
+       additionalWriters = List.unmodifiable(additionalWriters);
   final String scopeId, name;
   final bool financeWasEnabled;
-  final List<OrganizationAccessReader> additionalReaders;
+  final List<OrganizationAccessReader> additionalReaders, additionalWriters;
   factory OrganizationAccessProject.fromJson(Map<String, dynamic> json) =>
       OrganizationAccessProject(
         scopeId: _string(json, 'scopeId'),
         name: _string(json, 'name'),
         financeWasEnabled: json['financeWasEnabled'] == true,
+        additionalWriters: (json['additionalWriters'] as List? ?? const []).map(
+          (value) => OrganizationAccessReader.fromJson(_map(value)),
+        ),
         additionalReaders: _list(
           json,
           'additionalReaders',
@@ -43,16 +48,25 @@ class OrganizationAccessPreview {
     required this.toVersion,
     required Iterable<OrganizationAccessProject> projects,
     required this.previewHash,
-  }) : projects = List.unmodifiable(projects);
+    this.pendingInvitationsRevoked = 0,
+    this.canApply = true,
+    Iterable<Map<String, dynamic>> blockers = const [],
+    Iterable<String> revokedInvitationIds = const [],
+  }) : projects = List.unmodifiable(projects),
+       revokedInvitationIds = List.unmodifiable(revokedInvitationIds),
+       blockers = List.unmodifiable(blockers);
   final String scopeId, previewHash;
-  final int fromVersion, toVersion;
+  final int fromVersion, toVersion, pendingInvitationsRevoked;
   final List<OrganizationAccessProject> projects;
+  final List<String> revokedInvitationIds;
+  final bool canApply;
+  final List<Map<String, dynamic>> blockers;
   factory OrganizationAccessPreview.fromJson(Map<String, dynamic> json) {
     final from = json['fromVersion'], to = json['toVersion'];
     final hash = _string(json, 'previewHash');
     if (from is! int ||
-        !const [1, 2].contains(from) ||
-        to != 2 ||
+        !const [1, 2, 3].contains(from) ||
+        !const [2, 3].contains(to) ||
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) {
       throw const FormatException('Invalid organization access preview');
     }
@@ -65,6 +79,15 @@ class OrganizationAccessPreview {
         'projects',
       ).map((value) => OrganizationAccessProject.fromJson(_map(value))),
       previewHash: hash,
+      canApply: json['canApply'] != false,
+      blockers: (json['blockers'] as List? ?? const []).map(
+        (value) => Map<String, dynamic>.unmodifiable(value as Map),
+      ),
+      pendingInvitationsRevoked:
+          json['pendingInvitationsRevoked'] as int? ??
+          (json['revokedInvitationIds'] as List? ?? const []).length,
+      revokedInvitationIds: (json['revokedInvitationIds'] as List? ?? const [])
+          .cast<String>(),
     );
   }
 }
@@ -91,3 +114,6 @@ Map<String, dynamic> _map(Object? value) {
   }
   return value;
 }
+
+/// The same reviewed transition also covers household spaces.
+typedef SpaceAccessPreview = OrganizationAccessPreview;

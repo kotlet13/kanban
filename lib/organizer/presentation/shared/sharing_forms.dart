@@ -40,6 +40,7 @@ Future<void> showSharingForm(
   required String title,
   String? description,
   Widget? leading,
+  Widget Function(Map<String, String>)? detailsBuilder,
   required List<SharingField> fields,
   required String submitLabel,
   required Future<void> Function(Map<String, String>) onSubmit,
@@ -55,6 +56,7 @@ Future<void> showSharingForm(
       title: title,
       description: description,
       leading: leading,
+      detailsBuilder: detailsBuilder,
       fields: fields,
       submitLabel: submitLabel,
       onSubmit: onSubmit,
@@ -76,6 +78,7 @@ class _SharingFormDialog extends StatefulWidget {
     required this.errorMessage,
     this.description,
     this.leading,
+    this.detailsBuilder,
     this.wrap,
     this.onDelete,
     this.deleteDescription,
@@ -83,6 +86,7 @@ class _SharingFormDialog extends StatefulWidget {
   final String title;
   final String? description;
   final Widget? leading;
+  final Widget Function(Map<String, String>)? detailsBuilder;
   final List<SharingField> fields;
   final String submitLabel;
   final Future<void> Function(Map<String, String>) onSubmit;
@@ -296,8 +300,9 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                               ],
                               onChanged: _busy || field.readOnly
                                   ? null
-                                  : (value) =>
-                                        _controllers[field.id]!.text = value!,
+                                  : (value) => setState(() {
+                                      _controllers[field.id]!.text = value!;
+                                    }),
                             )
                           : TextFormField(
                               key: ValueKey('sharing-${field.id}'),
@@ -341,6 +346,10 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                               },
                             ),
                     ),
+                  if (widget.detailsBuilder != null) ...[
+                    widget.detailsBuilder!(_values),
+                    const SizedBox(height: 16),
+                  ],
                   if (_error != null)
                     Text(
                       _error!,

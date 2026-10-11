@@ -265,6 +265,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
     final matches = current?.profile.partition == p;
     final epoch = matches ? ++_epoch : _epoch;
     if (matches) {
+      _resetSyncEvidence();
       _session = null;
       if (database.personalProfile?.partition == p) {
         database.activatePersonal(null);

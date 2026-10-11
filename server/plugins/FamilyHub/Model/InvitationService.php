@@ -17,7 +17,7 @@ class InvitationService extends Base
         $actor = $this->actor();
         return array(
             'plugin' => 'FamilyHub',
-            'plugin_version' => '0.5.0',
+            'plugin_version' => (new \Kanboard\Plugin\FamilyHub\Plugin($this->container))->getPluginVersion(),
             'contract_version' => 1,
             'kanboard_version' => APP_VERSION,
             'actor' => array('user_id' => (int) $actor['id'], 'username' => $actor['username']),

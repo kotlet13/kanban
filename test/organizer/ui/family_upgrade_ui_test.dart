@@ -222,7 +222,7 @@ Future<void> openFinances(
   String locale,
 ) async {
   final container = ProviderScope.containerOf(
-    tester.element(find.byType(KanbanApp)),
+    tester.element(find.byType(JivieApp)),
   );
   await container
       .read(collaborationProvider.notifier)
@@ -420,7 +420,7 @@ void main() {
               fake.FakeScheduler(),
             ),
           ],
-          child: const KanbanApp(),
+          child: const JivieApp(),
         ),
       );
       await tester.pumpAndSettle();
@@ -608,7 +608,7 @@ void main() {
               fake.FakeScheduler(),
             ),
           ],
-          child: const KanbanApp(),
+          child: const JivieApp(),
         ),
       );
       await tester.pumpAndSettle();
@@ -653,7 +653,7 @@ void main() {
               fake.FakeScheduler(),
             ),
           ],
-          child: const KanbanApp(),
+          child: const JivieApp(),
         ),
       );
       await tester.pumpAndSettle();

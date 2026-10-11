@@ -40,7 +40,13 @@ extension CollaborationSyncActions on CollaborationRepository {
   });
 
   Future<void> syncNow({bool resumePayments = true}) async {
-    if (_syncing || _session == null || _closed) return;
+    if (_syncing ||
+        _session == null ||
+        _closed ||
+        (resumePayments && _fullSyncEpoch == _epoch)) {
+      return;
+    }
+    _lastSyncAttemptAt = clock().toUtc();
     if (_sessionInvalidReason != null) {
       _lastError = CollaborationException(_sessionInvalidReason!);
       await refreshLocal();
@@ -50,8 +56,10 @@ extension CollaborationSyncActions on CollaborationRepository {
         epoch = _epoch,
         partition = _session!.profile.partition;
     _syncing = true;
+    _syncEpoch = epoch;
+    if (resumePayments) _fullSyncEpoch = epoch;
     final done = _syncDone = Completer<void>();
-    var leaseClaimed = false;
+    var leaseClaimed = false, completed = false;
     _lastError = null;
     try {
       leaseClaimed = await _claimLease(partition);
@@ -420,6 +428,8 @@ extension CollaborationSyncActions on CollaborationRepository {
         await _syncInbox(session, epoch);
         await _syncNotificationConfiguration(session, epoch, scopes);
       }
+      _checkEpoch(epoch);
+      completed = true;
     } on CollaborationException catch (error) {
       if (epoch == _epoch) _lastError = error;
     } catch (_) {
@@ -434,10 +444,27 @@ extension CollaborationSyncActions on CollaborationRepository {
             [session.profile.partition, _leaseOwner],
           );
         }
+      } catch (error) {
+        completed = false;
+        if (epoch == _epoch) {
+          _lastError = error is CollaborationException
+              ? error
+              : const CollaborationException('invalid_response');
+        }
+        rethrow;
       } finally {
         _syncing = false;
+        _syncEpoch = null;
+        if (resumePayments &&
+            (!completed || epoch != _epoch) &&
+            _fullSyncEpoch == epoch) {
+          _fullSyncEpoch = null;
+        }
         try {
           await refreshLocal();
+        } catch (_) {
+          if (resumePayments && _fullSyncEpoch == epoch) _fullSyncEpoch = null;
+          rethrow;
         } finally {
           done.complete();
         }
@@ -456,7 +483,24 @@ extension CollaborationSyncActions on CollaborationRepository {
           _lastError = const CollaborationException('invalid_response');
         }
       }
-      if (epoch == _epoch) await refreshLocal();
+    }
+    if (resumePayments && epoch == _epoch && !_closed) {
+      final previousSuccess = _lastSuccessfulSyncAt;
+      if (completed && _lastError == null) {
+        _lastSuccessfulSyncAt = clock().toUtc();
+      }
+      if (_fullSyncEpoch == epoch) _fullSyncEpoch = null;
+      try {
+        await refreshLocal();
+      } catch (error) {
+        if (epoch == _epoch) {
+          _lastSuccessfulSyncAt = previousSuccess;
+          _lastError = error is CollaborationException
+              ? error
+              : const CollaborationException('invalid_response');
+        }
+        rethrow;
+      }
     }
   }
 

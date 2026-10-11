@@ -10,7 +10,10 @@ final localSpacesRepositoryProvider = FutureProvider<LocalSpacesRepository>((
   ref,
 ) async {
   await ref.watch(organizerRepositoryProvider.future);
-  return LocalSpacesRepository(await ref.watch(localDatabaseProvider.future));
+  return LocalSpacesRepository(
+    await ref.watch(localDatabaseProvider.future),
+    clock: ref.watch(organizerClockProvider),
+  );
 });
 final localSpacesProvider =
     AsyncNotifierProvider<LocalSpacesController, LocalSpacesState>(
@@ -67,10 +70,12 @@ class LocalSpacesController extends AsyncNotifier<LocalSpacesState> {
     String localSpaceId,
     String reminderId, {
     required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
   }) => _repo.markReminderRead(
     localSpaceId,
     reminderId,
     expectedWorkspaceKey: expectedWorkspaceKey,
+    stillVisible: stillVisible,
   );
   Future<void> renameSpace(
     String id, {

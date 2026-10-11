@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../shared/sharing_forms.dart';
+import '../organizer_widgets.dart';
 import '../shared/sharing_recovery.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../planning/task_plan_fields.dart';
@@ -21,9 +22,11 @@ class SharedFinanceWorkspace extends ConsumerWidget {
     super.key,
     required this.scope,
     required this.state,
+    this.titleAccessory,
   });
   final SharedScope scope;
   final CollaborationState state;
+  final Widget? titleAccessory;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n, policy = state.financePolicyForScope(scope.id);
@@ -41,7 +44,18 @@ class SharedFinanceWorkspace extends ConsumerWidget {
     final cashAvailable =
         !policy.linkedPaymentsRequired ||
         payments?.fresh == true && payments?.complete == true;
-    if (!state.financeSupported) return Text(l.financeUnsupported);
+    if (!state.financeSupported) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          OrganizerHeading(
+            title: l.organizerFinances,
+            titleAccessory: titleAccessory,
+          ),
+          Text(l.financeUnsupported),
+        ],
+      );
+    }
     final data = state.dataForScope(scope.id);
     final managed =
         policy.managedByOrganizationPolicy ||
@@ -57,6 +71,10 @@ class SharedFinanceWorkspace extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        OrganizerHeading(
+          title: l.organizerFinances,
+          titleAccessory: titleAccessory,
+        ),
         if (owner && online)
           Wrap(
             spacing: 8,
@@ -92,63 +110,11 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                 ),
             ],
           ),
-        if (state.financePendingCount > 0 ||
-            state.financeBlockedCount > 0 ||
-            state.financeConflicts.isNotEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (state.financePendingCount > 0) Text(l.financePending),
-                  if (state.financeBlockedCount > 0) Text(l.financeBlocked),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      TextButton(
-                        onPressed: () => exportSharingDrafts(context, ref),
-                        child: Text(l.sharingSaveDrafts),
-                      ),
-                      if (state.financeConflicts.isNotEmpty)
-                        TextButton(
-                          onPressed: () =>
-                              showFinanceConflicts(context, ref, scope.id),
-                          child: Text(l.financeConflicts),
-                        ),
-                      if (state.financeBlockedCount > 0 && policy.canWrite)
-                        TextButton(
-                          onPressed: () => actions.run(() async {
-                            final guard = SharingSessionGuard(context, ref);
-                            final confirmed = await confirmSharingAction(
-                              context,
-                              title: l.sharingResumeBlocked,
-                              description: l.sharingResumeBlockedDescription,
-                              confirmLabel: l.sharingResumeBlocked,
-                              wrap: (child) => SharingSessionBoundary(
-                                guard: guard,
-                                child: child,
-                              ),
-                            );
-                            if (confirmed) {
-                              await guard.controller
-                                  .resumeBlockedFinanceChanges(scope.id);
-                            }
-                          }),
-                          child: Text(l.sharingResumeBlocked),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
         if (!policy.enabled)
           Text(l.financeDisabled)
         else if (!policy.canRead)
           Text(l.financeNoAccess)
         else if (state.financeSnapshotComplete[scope.id] != true) ...[
-          const LinearProgressIndicator(),
           Text(l.financeLoadingSnapshot),
         ] else ...[
           FinancePlanningPanel(
@@ -168,6 +134,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             LinkedPaymentsSection(space: paymentSpace, snapshot: payments),
           if (!cashAvailable) Text(l.paymentIncompleteBalance),
           SharedFinanceLedger(
+            showHeading: false,
             key: ValueKey('finance-${state.session!.partition}-${scope.id}'),
             scopeName: scope.name,
             payments: payments,
@@ -214,6 +181,84 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             onAudit: actions.audit,
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Sync recovery actions live with the cloud, while financial facts stay on the page.
+class SharedFinanceSyncDetails extends ConsumerWidget {
+  const SharedFinanceSyncDetails({
+    super.key,
+    required this.state,
+    required this.scopeId,
+    required this.actionsEnabled,
+  });
+  final CollaborationState state;
+  final String scopeId;
+  final bool actionsEnabled;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scope = state.scopes.where((s) => s.id == scopeId).firstOrNull;
+    if (scope == null) return const SizedBox.shrink();
+    final l = context.l10n, policy = state.financePolicyForScope(scopeId);
+    final actions = SharedFinanceActions(context, ref, scope, state);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (state.financePendingCount > 0 ||
+            state.financeBlockedCount > 0 ||
+            state.financeConflicts.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (state.financePendingCount > 0) Text(l.financePending),
+                if (state.financeBlockedCount > 0) Text(l.financeBlocked),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => exportSharingDrafts(context, ref),
+                      child: Text(l.sharingSaveDrafts),
+                    ),
+                    if (state.financeConflicts.isNotEmpty)
+                      TextButton(
+                        onPressed: () =>
+                            showFinanceConflicts(context, ref, scope.id),
+                        child: Text(l.financeConflicts),
+                      ),
+                    if (state.financeBlockedCount > 0 &&
+                        policy.canWrite &&
+                        actionsEnabled)
+                      TextButton(
+                        onPressed: () => actions.run(() async {
+                          final guard = SharingSessionGuard(context, ref);
+                          final confirmed = await confirmSharingAction(
+                            context,
+                            title: l.sharingResumeBlocked,
+                            description: l.sharingResumeBlockedDescription,
+                            confirmLabel: l.sharingResumeBlocked,
+                            wrap: (child) => SharingSessionBoundary(
+                              guard: guard,
+                              child: child,
+                            ),
+                          );
+                          if (confirmed) {
+                            await guard.controller.resumeBlockedFinanceChanges(
+                              scope.id,
+                            );
+                          }
+                        }),
+                        child: Text(l.sharingResumeBlocked),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

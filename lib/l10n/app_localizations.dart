@@ -98,12 +98,6 @@ abstract class AppLocalizations {
     Locale('sl'),
   ];
 
-  /// No description provided for @kanbanConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Kanban Connect'**
-  String get kanbanConnect;
-
   /// No description provided for @routeError.
   ///
   /// In en, this message translates to:
@@ -116,53 +110,11 @@ abstract class AppLocalizations {
   /// **'Unknown error'**
   String get unknownError;
 
-  /// No description provided for @kanboardWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Kanboard Workspace'**
-  String get kanboardWorkspace;
-
-  /// No description provided for @restoringSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Restoring session...'**
-  String get restoringSession;
-
-  /// No description provided for @connectToKanboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to Kanboard'**
-  String get connectToKanboard;
-
   /// No description provided for @projects.
   ///
   /// In en, this message translates to:
   /// **'Projects'**
   String get projects;
-
-  /// No description provided for @projectDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Project defaults'**
-  String get projectDefaults;
-
-  /// No description provided for @aiSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'AI settings'**
-  String get aiSettings;
-
-  /// No description provided for @aiChat.
-  ///
-  /// In en, this message translates to:
-  /// **'AI chat'**
-  String get aiChat;
-
-  /// No description provided for @connectionSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection settings'**
-  String get connectionSettings;
 
   /// No description provided for @refresh.
   ///
@@ -176,132 +128,17 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get logout;
 
-  /// No description provided for @newProject.
-  ///
-  /// In en, this message translates to:
-  /// **'New project'**
-  String get newProject;
-
-  /// No description provided for @couldNotLoadProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load projects'**
-  String get couldNotLoadProjects;
-
-  /// No description provided for @retry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get retry;
-
-  /// No description provided for @noActiveSession.
-  ///
-  /// In en, this message translates to:
-  /// **'No active session'**
-  String get noActiveSession;
-
-  /// No description provided for @noActiveSessionConnectFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'No active session. Connect first.'**
-  String get noActiveSessionConnectFirst;
-
-  /// No description provided for @connectToKanboardToContinue.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to Kanboard to continue.'**
-  String get connectToKanboardToContinue;
-
-  /// No description provided for @connect.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect'**
-  String get connect;
-
-  /// No description provided for @projectsWorkspace.
-  ///
-  /// In en, this message translates to:
-  /// **'Projects Workspace'**
-  String get projectsWorkspace;
-
-  /// No description provided for @trackOrganizeAndOpenYourKanboardProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'Track, organize, and open your Kanboard projects.'**
-  String get trackOrganizeAndOpenYourKanboardProjects;
-
-  /// No description provided for @connectYourKanboardAccountToLoadProjectData.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect your Kanboard account to load project data.'**
-  String get connectYourKanboardAccountToLoadProjectData;
-
-  /// No description provided for @total.
-  ///
-  /// In en, this message translates to:
-  /// **'Total'**
-  String get total;
-
   /// No description provided for @active.
   ///
   /// In en, this message translates to:
   /// **'Active'**
   String get active;
 
-  /// No description provided for @inactive.
-  ///
-  /// In en, this message translates to:
-  /// **'Inactive'**
-  String get inactive;
-
-  /// No description provided for @noProjectsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No projects yet'**
-  String get noProjectsYet;
-
-  /// No description provided for @createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your first project from the action button and start organizing your board.'**
-  String
-  get createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard;
-
-  /// No description provided for @openBoard.
-  ///
-  /// In en, this message translates to:
-  /// **'Open board'**
-  String get openBoard;
-
-  /// No description provided for @projectAttachments.
-  ///
-  /// In en, this message translates to:
-  /// **'Project attachments'**
-  String get projectAttachments;
-
   /// No description provided for @deleteProject.
   ///
   /// In en, this message translates to:
   /// **'Delete project'**
   String get deleteProject;
-
-  /// No description provided for @noDescriptionYetOpenTheProjectToAddContext.
-  ///
-  /// In en, this message translates to:
-  /// **'No description yet. Open the project to add context.'**
-  String get noDescriptionYetOpenTheProjectToAddContext;
-
-  /// No description provided for @deleteProject2.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete project?'**
-  String get deleteProject2;
-
-  /// No description provided for @thisWillRemovePermanently.
-  ///
-  /// In en, this message translates to:
-  /// **'This will remove \"{name}\" permanently.'**
-  String thisWillRemovePermanently(Object name);
 
   /// No description provided for @cancel.
   ///
@@ -321,12 +158,6 @@ abstract class AppLocalizations {
   /// **'Create project'**
   String get createProject;
 
-  /// No description provided for @editProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit project'**
-  String get editProject;
-
   /// No description provided for @projectName.
   ///
   /// In en, this message translates to:
@@ -338,18 +169,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Description'**
   String get description;
-
-  /// No description provided for @projectColorSyncedViaMetadata.
-  ///
-  /// In en, this message translates to:
-  /// **'Project color (synced via metadata)'**
-  String get projectColorSyncedViaMetadata;
-
-  /// No description provided for @noColor.
-  ///
-  /// In en, this message translates to:
-  /// **'No color'**
-  String get noColor;
 
   /// No description provided for @save.
   ///
@@ -363,47 +182,11 @@ abstract class AppLocalizations {
   /// **'Stop'**
   String get stop;
 
-  /// No description provided for @send.
-  ///
-  /// In en, this message translates to:
-  /// **'Send'**
-  String get send;
-
-  /// No description provided for @attachments.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachments · {name}'**
-  String attachments(Object name);
-
-  /// No description provided for @noProjectAttachmentsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No project attachments yet.'**
-  String get noProjectAttachmentsYet;
-
-  /// No description provided for @download.
-  ///
-  /// In en, this message translates to:
-  /// **'Download'**
-  String get download;
-
-  /// No description provided for @addFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Add files'**
-  String get addFiles;
-
   /// No description provided for @close.
   ///
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
-
-  /// No description provided for @projectDefaults2.
-  ///
-  /// In en, this message translates to:
-  /// **'Project Defaults'**
-  String get projectDefaults2;
 
   /// No description provided for @appLanguage.
   ///
@@ -411,89 +194,11 @@ abstract class AppLocalizations {
   /// **'App language'**
   String get appLanguage;
 
-  /// No description provided for @followSystemKeepsLocaleAutomatic.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow system keeps locale automatic.'**
-  String get followSystemKeepsLocaleAutomatic;
-
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
-
-  /// No description provided for @followSystemDefault.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow system (default)'**
-  String get followSystemDefault;
-
-  /// No description provided for @english.
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get english;
-
-  /// No description provided for @slovene.
-  ///
-  /// In en, this message translates to:
-  /// **'Slovene'**
-  String get slovene;
-
-  /// No description provided for @templateAppliedToEveryNewProjectCreatedFromThisApp.
-  ///
-  /// In en, this message translates to:
-  /// **'Template applied to every new project created from this app.'**
-  String get templateAppliedToEveryNewProjectCreatedFromThisApp;
-
-  /// No description provided for @leaveFieldsEmptyToKeepServerDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave fields empty to keep server defaults.'**
-  String get leaveFieldsEmptyToKeepServerDefaults;
-
-  /// No description provided for @savingADefaultCurrencyAlsoAppliesItToAllExistingProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'Saving a default currency also applies it to all existing projects.'**
-  String get savingADefaultCurrencyAlsoAppliesItToAllExistingProjects;
-
-  /// No description provided for @defaultBoardColumns.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Board Columns'**
-  String get defaultBoardColumns;
-
-  /// No description provided for @defaultBoardColumnsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'One per line, e.g.\\nBacklog\\nReady\\nIn Progress\\nDone'**
-  String get defaultBoardColumnsHint;
-
-  /// No description provided for @defaultSwimlane.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Swimlane'**
-  String get defaultSwimlane;
-
-  /// No description provided for @exampleMain.
-  ///
-  /// In en, this message translates to:
-  /// **'Example: Main'**
-  String get exampleMain;
-
-  /// No description provided for @exampleUSD.
-  ///
-  /// In en, this message translates to:
-  /// **'Example: USD'**
-  String get exampleUSD;
-
-  /// No description provided for @defaultExpenseCurrency.
-  ///
-  /// In en, this message translates to:
-  /// **'Default Expense Currency'**
-  String get defaultExpenseCurrency;
 
   /// No description provided for @reset.
   ///
@@ -501,513 +206,11 @@ abstract class AppLocalizations {
   /// **'Reset'**
   String get reset;
 
-  /// No description provided for @enableAI.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable AI'**
-  String get enableAI;
-
-  /// No description provided for @instantResponse.
-  ///
-  /// In en, this message translates to:
-  /// **'Instant response'**
-  String get instantResponse;
-
-  /// No description provided for @thinkingResponse.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking response'**
-  String get thinkingResponse;
-
-  /// No description provided for @thinkingEffort.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking effort'**
-  String get thinkingEffort;
-
-  /// No description provided for @effortLow.
-  ///
-  /// In en, this message translates to:
-  /// **'Low'**
-  String get effortLow;
-
-  /// No description provided for @effortMedium.
-  ///
-  /// In en, this message translates to:
-  /// **'Medium'**
-  String get effortMedium;
-
-  /// No description provided for @effortHigh.
-  ///
-  /// In en, this message translates to:
-  /// **'High'**
-  String get effortHigh;
-
-  /// No description provided for @aiModel.
-  ///
-  /// In en, this message translates to:
-  /// **'AI model'**
-  String get aiModel;
-
-  /// No description provided for @openAiApiKey.
-  ///
-  /// In en, this message translates to:
-  /// **'OpenAI API key'**
-  String get openAiApiKey;
-
-  /// No description provided for @openAiApiKeyIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'OpenAI API key is required.'**
-  String get openAiApiKeyIsRequired;
-
-  /// No description provided for @testAIConnection.
-  ///
-  /// In en, this message translates to:
-  /// **'Test AI connection'**
-  String get testAIConnection;
-
-  /// No description provided for @fetchAvailableModels.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetch available models'**
-  String get fetchAvailableModels;
-
-  /// No description provided for @availableModelsFetched.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetched {count} models.'**
-  String availableModelsFetched(Object count);
-
-  /// No description provided for @availableModelsFetchFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetching models failed: {error}'**
-  String availableModelsFetchFailed(Object error);
-
-  /// No description provided for @aiSettingsSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'AI settings saved.'**
-  String get aiSettingsSaved;
-
-  /// No description provided for @aiConnectionTestSucceeded.
-  ///
-  /// In en, this message translates to:
-  /// **'AI test succeeded: {result}'**
-  String aiConnectionTestSucceeded(Object result);
-
-  /// No description provided for @aiConnectionTestFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'AI test failed: {error}'**
-  String aiConnectionTestFailed(Object error);
-
-  /// No description provided for @aiSettingsSecurityNotice.
-  ///
-  /// In en, this message translates to:
-  /// **'Security notice: local key mode is less secure. Anyone with device/app access may extract this key.'**
-  String get aiSettingsSecurityNotice;
-
-  /// No description provided for @saving.
-  ///
-  /// In en, this message translates to:
-  /// **'Saving...'**
-  String get saving;
-
-  /// No description provided for @saveDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Save defaults'**
-  String get saveDefaults;
-
-  /// No description provided for @configureAiInSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure AI in settings before using assistant features.'**
-  String get configureAiInSettings;
-
-  /// No description provided for @aiNotEnabledForThisProject.
-  ///
-  /// In en, this message translates to:
-  /// **'AI is not enabled for this project.'**
-  String get aiNotEnabledForThisProject;
-
-  /// No description provided for @aiProjectPolicySaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Project AI policy saved.'**
-  String get aiProjectPolicySaved;
-
-  /// No description provided for @aiActionPlanDetected.
-  ///
-  /// In en, this message translates to:
-  /// **'AI action plan detected'**
-  String get aiActionPlanDetected;
-
-  /// No description provided for @aiActionsApplied.
-  ///
-  /// In en, this message translates to:
-  /// **'Applied actions: swimlanes {swimlanes}, tasks {tasks}.'**
-  String aiActionsApplied(Object swimlanes, Object tasks);
-
-  /// No description provided for @aiActionsAppliedDetailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Applied actions: swimlanes {swimlanes}, columns {columns}, new tasks {tasks}, moved tasks {moved}, skipped moves {skipped}.'**
-  String aiActionsAppliedDetailed(
-    Object swimlanes,
-    Object columns,
-    Object tasks,
-    Object moved,
-    Object skipped,
-  );
-
-  /// No description provided for @enableAIForProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable AI for this project'**
-  String get enableAIForProject;
-
-  /// No description provided for @aiKeyMode.
-  ///
-  /// In en, this message translates to:
-  /// **'AI key mode'**
-  String get aiKeyMode;
-
-  /// No description provided for @ownerKeyMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner key (shared costs)'**
-  String get ownerKeyMode;
-
-  /// No description provided for @userKeyRequiredMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Each user needs own key'**
-  String get userKeyRequiredMode;
-
-  /// No description provided for @aiCostNoticeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI usage cost notice'**
-  String get aiCostNoticeTitle;
-
-  /// No description provided for @aiCostNoticeBody.
-  ///
-  /// In en, this message translates to:
-  /// **'This project uses owner key mode. AI usage here is billed to {owner}.'**
-  String aiCostNoticeBody(Object owner);
-
-  /// No description provided for @iUnderstand.
-  ///
-  /// In en, this message translates to:
-  /// **'I understand'**
-  String get iUnderstand;
-
-  /// No description provided for @aiChatForProject.
-  ///
-  /// In en, this message translates to:
-  /// **'AI chat · {name}'**
-  String aiChatForProject(Object name);
-
-  /// No description provided for @newChat.
-  ///
-  /// In en, this message translates to:
-  /// **'New chat'**
-  String get newChat;
-
-  /// No description provided for @continueChat.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue chat'**
-  String get continueChat;
-
-  /// No description provided for @exportChat.
-  ///
-  /// In en, this message translates to:
-  /// **'Export chat'**
-  String get exportChat;
-
-  /// No description provided for @currentChatId.
-  ///
-  /// In en, this message translates to:
-  /// **'Current chat: {id}'**
-  String currentChatId(Object id);
-
-  /// No description provided for @noSavedChatsForProject.
-  ///
-  /// In en, this message translates to:
-  /// **'No saved chats for this project yet.'**
-  String get noSavedChatsForProject;
-
-  /// No description provided for @noMessagesToExport.
-  ///
-  /// In en, this message translates to:
-  /// **'No messages to export.'**
-  String get noMessagesToExport;
-
-  /// No description provided for @chatExportFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat export failed: {error}'**
-  String chatExportFailed(Object error);
-
-  /// No description provided for @aiRequestFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'AI request failed: {error}'**
-  String aiRequestFailed(Object error);
-
-  /// No description provided for @aiIsTyping.
-  ///
-  /// In en, this message translates to:
-  /// **'AI is typing...'**
-  String get aiIsTyping;
-
-  /// No description provided for @aiSuggestedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'AI-suggested title'**
-  String get aiSuggestedTitle;
-
-  /// No description provided for @aiSuggestedDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'AI-suggested description'**
-  String get aiSuggestedDescription;
-
-  /// No description provided for @aiImproveTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Improve title with AI'**
-  String get aiImproveTitle;
-
-  /// No description provided for @aiImproveDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Improve description with AI'**
-  String get aiImproveDescription;
-
-  /// No description provided for @message.
-  ///
-  /// In en, this message translates to:
-  /// **'Message'**
-  String get message;
-
-  /// No description provided for @projectDefaultsReset.
-  ///
-  /// In en, this message translates to:
-  /// **'Project defaults reset.'**
-  String get projectDefaultsReset;
-
-  /// No description provided for @resetDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset defaults?'**
-  String get resetDefaults;
-
-  /// No description provided for @thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'This clears custom defaults and uses Kanboard server defaults for new projects.'**
-  String
-  get thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects;
-
-  /// No description provided for @connectYourKanboardInstance.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect Your Kanboard Instance'**
-  String get connectYourKanboardInstance;
-
-  /// No description provided for @loadedSavedCredentials.
-  ///
-  /// In en, this message translates to:
-  /// **'Loaded saved credentials.'**
-  String get loadedSavedCredentials;
-
-  /// No description provided for @connectedViaJsonrpcTokenAuthServerVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected via jsonrpc token auth. Server version: {version}'**
-  String connectedViaJsonrpcTokenAuthServerVersion(Object version);
-
-  /// No description provided for @connectedAsVersion.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected as {username}. Version: {version}'**
-  String connectedAsVersion(Object username, Object version);
-
-  /// No description provided for @connectedSuccessfullyButServerVersionIsTarget1250.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected successfully, but server version is {version} (target: 1.2.50).'**
-  String connectedSuccessfullyButServerVersionIsTarget1250(Object version);
-
-  /// No description provided for @connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection failed: {error}\nTip: if you copied \"API User Access\", try username \"jsonrpc\" with that token.'**
-  String
-  connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken(
-    Object error,
-  );
-
-  /// No description provided for @usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc.
-  ///
-  /// In en, this message translates to:
-  /// **'Use personal token + username, or use application token with username \"jsonrpc\".'**
-  String get usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc;
-
-  /// No description provided for @nothingToExportYetConnectOnceOrFillAllFieldsFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing to export yet. Connect once or fill all fields first.'**
-  String get nothingToExportYetConnectOnceOrFillAllFieldsFirst;
-
-  /// No description provided for @scanThisCodeWithYourPhoneInTheConnectScreen.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan this code with your phone in the Connect screen.'**
-  String get scanThisCodeWithYourPhoneInTheConnectScreen;
-
-  /// No description provided for @couldNotRenderQRError.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not render QR.\n\$error'**
-  String get couldNotRenderQRError;
-
-  /// No description provided for @credentialsTransferQR.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials transfer QR'**
-  String get credentialsTransferQR;
-
-  /// No description provided for @ifQRRenderingFailsCopyPasteTheTransferCode.
-  ///
-  /// In en, this message translates to:
-  /// **'If QR rendering fails, copy/paste the transfer code.'**
-  String get ifQRRenderingFailsCopyPasteTheTransferCode;
-
-  /// No description provided for @securityNoteThisQRContainsYourAPITokenInPlainText.
-  ///
-  /// In en, this message translates to:
-  /// **'Security note: this QR contains your API token in plain text.'**
-  String get securityNoteThisQRContainsYourAPITokenInPlainText;
-
-  /// No description provided for @transferCodeCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfer code copied.'**
-  String get transferCodeCopied;
-
-  /// No description provided for @importedCredentialsFromTransferCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Imported credentials from transfer code.'**
-  String get importedCredentialsFromTransferCode;
-
-  /// No description provided for @credentialsImportedTapConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials imported. Tap Connect.'**
-  String get credentialsImportedTapConnect;
-
-  /// No description provided for @clipboardIsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Clipboard is empty.'**
-  String get clipboardIsEmpty;
-
-  /// No description provided for @invalidTransferCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid transfer code: {error}'**
-  String invalidTransferCode(Object error);
-
-  /// No description provided for @qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere.
-  ///
-  /// In en, this message translates to:
-  /// **'QR scanning is available on iOS/Android. Use \"Paste transfer code\" here.'**
-  String get qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere;
-
-  /// No description provided for @serverURLIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Server URL is required.'**
-  String get serverURLIsRequired;
-
-  /// No description provided for @enterAValidURL.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid URL.'**
-  String get enterAValidURL;
-
-  /// No description provided for @usernameIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Username is required.'**
-  String get usernameIsRequired;
-
-  /// No description provided for @tokenIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Token is required.'**
-  String get tokenIsRequired;
-
-  /// No description provided for @passwordIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Password is required.'**
-  String get passwordIsRequired;
-
-  /// No description provided for @credentials.
-  ///
-  /// In en, this message translates to:
-  /// **'Credentials'**
-  String get credentials;
-
-  /// No description provided for @authMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Auth mode'**
-  String get authMode;
-
-  /// No description provided for @apiTokenMode.
-  ///
-  /// In en, this message translates to:
-  /// **'API token'**
-  String get apiTokenMode;
-
-  /// No description provided for @passwordMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Password'**
-  String get passwordMode;
-
-  /// No description provided for @showTransferQR.
-  ///
-  /// In en, this message translates to:
-  /// **'Show transfer QR'**
-  String get showTransferQR;
-
-  /// No description provided for @pasteTransferCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Paste transfer code'**
-  String get pasteTransferCode;
-
   /// No description provided for @serverURL.
   ///
   /// In en, this message translates to:
   /// **'Server URL'**
   String get serverURL;
-
-  /// No description provided for @serverURLExample.
-  ///
-  /// In en, this message translates to:
-  /// **'https://kanboard.example.com'**
-  String get serverURLExample;
 
   /// No description provided for @username.
   ///
@@ -1021,156 +224,11 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get password;
 
-  /// No description provided for @personalAccessToken.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal access token'**
-  String get personalAccessToken;
-
-  /// No description provided for @useYourKanboardUsernameAndPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Use your Kanboard username and password.'**
-  String get useYourKanboardUsernameAndPassword;
-
-  /// No description provided for @testConnectionContinue.
-  ///
-  /// In en, this message translates to:
-  /// **'Test connection & continue'**
-  String get testConnectionContinue;
-
-  /// No description provided for @openProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'Open projects'**
-  String get openProjects;
-
-  /// No description provided for @authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc.
-  ///
-  /// In en, this message translates to:
-  /// **'Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".'**
-  String
-  get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc;
-
-  /// No description provided for @authNotePasswordModeUsesYourKanboardLoginCredentials.
-  ///
-  /// In en, this message translates to:
-  /// **'Auth note: password mode uses your Kanboard login credentials.'**
-  String get authNotePasswordModeUsesYourKanboardLoginCredentials;
-
-  /// No description provided for @scanTransferQR.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan transfer QR'**
-  String get scanTransferQR;
-
-  /// No description provided for @transferCredentials.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfer credentials'**
-  String get transferCredentials;
-
-  /// No description provided for @copyCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy code'**
-  String get copyCode;
-
   /// No description provided for @done.
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get done;
-
-  /// No description provided for @boardStructure.
-  ///
-  /// In en, this message translates to:
-  /// **'Board structure'**
-  String get boardStructure;
-
-  /// No description provided for @searchTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Search tasks'**
-  String get searchTasks;
-
-  /// No description provided for @newGroceryList.
-  ///
-  /// In en, this message translates to:
-  /// **'New grocery list'**
-  String get newGroceryList;
-
-  /// No description provided for @refreshBoard.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh board'**
-  String get refreshBoard;
-
-  /// No description provided for @showDoneTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Show done tasks'**
-  String get showDoneTasks;
-
-  /// No description provided for @hideDoneTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide done tasks'**
-  String get hideDoneTasks;
-
-  /// No description provided for @lockTaskDrag.
-  ///
-  /// In en, this message translates to:
-  /// **'Lock task drag'**
-  String get lockTaskDrag;
-
-  /// No description provided for @unlockTaskDrag.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlock task drag'**
-  String get unlockTaskDrag;
-
-  /// No description provided for @newTask.
-  ///
-  /// In en, this message translates to:
-  /// **'New task'**
-  String get newTask;
-
-  /// No description provided for @groceryList.
-  ///
-  /// In en, this message translates to:
-  /// **'Grocery list'**
-  String get groceryList;
-
-  /// No description provided for @expenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get expenses;
-
-  /// No description provided for @search.
-  ///
-  /// In en, this message translates to:
-  /// **'Search'**
-  String get search;
-
-  /// No description provided for @structure.
-  ///
-  /// In en, this message translates to:
-  /// **'Structure'**
-  String get structure;
-
-  /// No description provided for @swimlanes.
-  ///
-  /// In en, this message translates to:
-  /// **'Swimlanes'**
-  String get swimlanes;
-
-  /// No description provided for @columns.
-  ///
-  /// In en, this message translates to:
-  /// **'Columns'**
-  String get columns;
 
   /// No description provided for @tasks.
   ///
@@ -1184,131 +242,11 @@ abstract class AppLocalizations {
   /// **'Planned'**
   String get planned;
 
-  /// No description provided for @spent.
-  ///
-  /// In en, this message translates to:
-  /// **'Spent'**
-  String get spent;
-
-  /// No description provided for @remaining.
-  ///
-  /// In en, this message translates to:
-  /// **'Remaining'**
-  String get remaining;
-
-  /// No description provided for @noBudget.
-  ///
-  /// In en, this message translates to:
-  /// **'No budget'**
-  String get noBudget;
-
-  /// No description provided for @dropATaskHere.
-  ///
-  /// In en, this message translates to:
-  /// **'Drop a task here'**
-  String get dropATaskHere;
-
-  /// No description provided for @unlockDragToMoveTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlock drag to move tasks'**
-  String get unlockDragToMoveTasks;
-
   /// No description provided for @edit.
   ///
   /// In en, this message translates to:
   /// **'Edit'**
   String get edit;
-
-  /// No description provided for @markDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark done'**
-  String get markDone;
-
-  /// No description provided for @reopen.
-  ///
-  /// In en, this message translates to:
-  /// **'Reopen'**
-  String get reopen;
-
-  /// No description provided for @taskSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Task Search'**
-  String get taskSearch;
-
-  /// No description provided for @deleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete failed: {error}'**
-  String deleteFailed(Object error);
-
-  /// No description provided for @statusUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Status update failed: {error}'**
-  String statusUpdateFailed(Object error);
-
-  /// No description provided for @moveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Move failed: {error}'**
-  String moveFailed(Object error);
-
-  /// No description provided for @addColumn.
-  ///
-  /// In en, this message translates to:
-  /// **'Add column'**
-  String get addColumn;
-
-  /// No description provided for @editColumn.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit column'**
-  String get editColumn;
-
-  /// No description provided for @deleteColumn.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete column?'**
-  String get deleteColumn;
-
-  /// No description provided for @deleteColumn2.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete column \"{name}\"?'**
-  String deleteColumn2(Object name);
-
-  /// No description provided for @taskLimit.
-  ///
-  /// In en, this message translates to:
-  /// **'Task limit'**
-  String get taskLimit;
-
-  /// No description provided for @addSwimlane.
-  ///
-  /// In en, this message translates to:
-  /// **'Add swimlane'**
-  String get addSwimlane;
-
-  /// No description provided for @editSwimlane.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit swimlane'**
-  String get editSwimlane;
-
-  /// No description provided for @deleteSwimlane.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete swimlane?'**
-  String get deleteSwimlane;
-
-  /// No description provided for @deleteSwimlane2.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete swimlane \"{name}\"?'**
-  String deleteSwimlane2(Object name);
 
   /// No description provided for @name.
   ///
@@ -1316,203 +254,11 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get name;
 
-  /// No description provided for @structure2.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} structure'**
-  String structure2(Object name);
-
-  /// No description provided for @query.
-  ///
-  /// In en, this message translates to:
-  /// **'Query'**
-  String get query;
-
-  /// No description provided for @queryExampleStatusOpenCategoryBug.
-  ///
-  /// In en, this message translates to:
-  /// **'status:open category:bug'**
-  String get queryExampleStatusOpenCategoryBug;
-
-  /// No description provided for @noResultsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No results yet.'**
-  String get noResultsYet;
-
-  /// No description provided for @projectExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Project expenses'**
-  String get projectExpenses;
-
-  /// No description provided for @financeTable.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance table'**
-  String get financeTable;
-
-  /// No description provided for @financeProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance project'**
-  String get financeProject;
-
-  /// No description provided for @financeProjectDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Open this project directly in Finance table.'**
-  String get financeProjectDescription;
-
-  /// No description provided for @sharedFinanceTable.
-  ///
-  /// In en, this message translates to:
-  /// **'Shared finance table'**
-  String get sharedFinanceTable;
-
-  /// No description provided for @currentBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'Current balance'**
-  String get currentBalance;
-
-  /// No description provided for @projectionHorizon.
-  ///
-  /// In en, this message translates to:
-  /// **'Projection horizon'**
-  String get projectionHorizon;
-
-  /// No description provided for @showPastMonths.
-  ///
-  /// In en, this message translates to:
-  /// **'Show past months'**
-  String get showPastMonths;
-
-  /// No description provided for @includeSpentExternalExpensesInProjection.
-  ///
-  /// In en, this message translates to:
-  /// **'Include spent external expenses in projection'**
-  String get includeSpentExternalExpensesInProjection;
-
-  /// No description provided for @unsavedFinanceChangesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Unsaved finance changes'**
-  String get unsavedFinanceChangesTitle;
-
-  /// No description provided for @unsavedFinanceChangesMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Some finance data is not saved yet. Leave this page anyway?'**
-  String get unsavedFinanceChangesMessage;
-
-  /// No description provided for @leaveWithoutSaving.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave without saving'**
-  String get leaveWithoutSaving;
-
-  /// No description provided for @summedMonthlyIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Summed monthly income'**
-  String get summedMonthlyIncome;
-
-  /// No description provided for @summedMonthlyExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Summed monthly expenses'**
-  String get summedMonthlyExpenses;
-
-  /// No description provided for @totalBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'Total balance'**
-  String get totalBalance;
-
-  /// No description provided for @biggestIncomeExpenseGap.
-  ///
-  /// In en, this message translates to:
-  /// **'Lowest monthly net (income - expenses)'**
-  String get biggestIncomeExpenseGap;
-
-  /// No description provided for @months3.
-  ///
-  /// In en, this message translates to:
-  /// **'3 months'**
-  String get months3;
-
-  /// No description provided for @months6.
-  ///
-  /// In en, this message translates to:
-  /// **'6 months'**
-  String get months6;
-
-  /// No description provided for @months12.
-  ///
-  /// In en, this message translates to:
-  /// **'12 months'**
-  String get months12;
-
-  /// No description provided for @lowestProjectedBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'Lowest projected balance'**
-  String get lowestProjectedBalance;
-
-  /// No description provided for @firstNegativeMonth.
-  ///
-  /// In en, this message translates to:
-  /// **'First negative month'**
-  String get firstNegativeMonth;
-
-  /// No description provided for @endBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'End balance'**
-  String get endBalance;
-
-  /// No description provided for @recurringMonthlyEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring monthly (enabled)'**
-  String get recurringMonthlyEnabled;
-
-  /// No description provided for @recurringIncomeMonthlyEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring income monthly (enabled)'**
-  String get recurringIncomeMonthlyEnabled;
-
-  /// No description provided for @monthlyIncomesAndProjections.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly incomes & projections'**
-  String get monthlyIncomesAndProjections;
-
   /// No description provided for @month.
   ///
   /// In en, this message translates to:
   /// **'Month'**
   String get month;
-
-  /// No description provided for @incomeTotal.
-  ///
-  /// In en, this message translates to:
-  /// **'Income total'**
-  String get incomeTotal;
-
-  /// No description provided for @expensesTotal.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses total'**
-  String get expensesTotal;
-
-  /// No description provided for @net.
-  ///
-  /// In en, this message translates to:
-  /// **'Net'**
-  String get net;
 
   /// No description provided for @closing.
   ///
@@ -1520,71 +266,11 @@ abstract class AppLocalizations {
   /// **'Closing'**
   String get closing;
 
-  /// No description provided for @contributor.
-  ///
-  /// In en, this message translates to:
-  /// **'Contributor'**
-  String get contributor;
-
-  /// No description provided for @contributorOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Contributor (optional)'**
-  String get contributorOptional;
-
   /// No description provided for @source.
   ///
   /// In en, this message translates to:
   /// **'Source'**
   String get source;
-
-  /// No description provided for @otherIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Other income'**
-  String get otherIncome;
-
-  /// No description provided for @otherExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Other expense'**
-  String get otherExpense;
-
-  /// No description provided for @recurringIncomes.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring incomes'**
-  String get recurringIncomes;
-
-  /// No description provided for @recurringExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring expenses'**
-  String get recurringExpenses;
-
-  /// No description provided for @plannedIncomes.
-  ///
-  /// In en, this message translates to:
-  /// **'Planned incomes'**
-  String get plannedIncomes;
-
-  /// No description provided for @plannedExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Planned expenses'**
-  String get plannedExpenses;
-
-  /// No description provided for @expensesFromOtherProjects.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses from other projects'**
-  String get expensesFromOtherProjects;
-
-  /// No description provided for @ongoing.
-  ///
-  /// In en, this message translates to:
-  /// **'ongoing'**
-  String get ongoing;
 
   /// No description provided for @enabled.
   ///
@@ -1598,161 +284,11 @@ abstract class AppLocalizations {
   /// **'Category'**
   String get category;
 
-  /// No description provided for @monthlyAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly amount'**
-  String get monthlyAmount;
-
-  /// No description provided for @startMonthYYYYMM.
-  ///
-  /// In en, this message translates to:
-  /// **'Start month (YYYY-MM)'**
-  String get startMonthYYYYMM;
-
-  /// No description provided for @endMonthOptionalYYYYMM.
-  ///
-  /// In en, this message translates to:
-  /// **'End month (YYYY-MM, optional)'**
-  String get endMonthOptionalYYYYMM;
-
-  /// No description provided for @addRecurringExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Add recurring expense'**
-  String get addRecurringExpense;
-
-  /// No description provided for @editRecurringExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit recurring expense'**
-  String get editRecurringExpense;
-
-  /// No description provided for @recurringExpenseFieldsNotValid.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring expense fields are not valid.'**
-  String get recurringExpenseFieldsNotValid;
-
-  /// No description provided for @addRecurringIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Add recurring income'**
-  String get addRecurringIncome;
-
-  /// No description provided for @editRecurringIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit recurring income'**
-  String get editRecurringIncome;
-
-  /// No description provided for @recurringIncomeFieldsNotValid.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring income fields are not valid.'**
-  String get recurringIncomeFieldsNotValid;
-
-  /// No description provided for @addPlannedExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Add planned expense'**
-  String get addPlannedExpense;
-
-  /// No description provided for @editPlannedExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit planned expense'**
-  String get editPlannedExpense;
-
-  /// No description provided for @plannedExpenseFieldsNotValid.
-  ///
-  /// In en, this message translates to:
-  /// **'Planned expense fields are not valid.'**
-  String get plannedExpenseFieldsNotValid;
-
-  /// No description provided for @addPlannedIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Add planned income'**
-  String get addPlannedIncome;
-
-  /// No description provided for @editPlannedIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit planned income'**
-  String get editPlannedIncome;
-
-  /// No description provided for @plannedIncomeFieldsNotValid.
-  ///
-  /// In en, this message translates to:
-  /// **'Planned income fields are not valid.'**
-  String get plannedIncomeFieldsNotValid;
-
   /// No description provided for @amount.
   ///
   /// In en, this message translates to:
   /// **'Amount'**
   String get amount;
-
-  /// No description provided for @amountHint.
-  ///
-  /// In en, this message translates to:
-  /// **'0.00'**
-  String get amountHint;
-
-  /// No description provided for @monthYYYYMM.
-  ///
-  /// In en, this message translates to:
-  /// **'Month (YYYY-MM)'**
-  String get monthYYYYMM;
-
-  /// No description provided for @financeContributorMe.
-  ///
-  /// In en, this message translates to:
-  /// **'Me'**
-  String get financeContributorMe;
-
-  /// No description provided for @incomeForPerson.
-  ///
-  /// In en, this message translates to:
-  /// **'Income - {name}'**
-  String incomeForPerson(Object name);
-
-  /// No description provided for @currentBalanceMustBeValidNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Current balance must be a valid number.'**
-  String get currentBalanceMustBeValidNumber;
-
-  /// No description provided for @financeTableSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance table saved.'**
-  String get financeTableSaved;
-
-  /// No description provided for @financeTableSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance table save failed: {error}'**
-  String financeTableSaveFailed(Object error);
-
-  /// No description provided for @serverRejectedFinanceTableSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Server rejected finance table save.'**
-  String get serverRejectedFinanceTableSave;
-
-  /// No description provided for @expenseSettingsSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense settings saved.'**
-  String get expenseSettingsSaved;
-
-  /// No description provided for @expenseSettingsFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense settings failed: {error}'**
-  String expenseSettingsFailed(Object error);
 
   /// No description provided for @deleteTask.
   ///
@@ -1760,59 +296,11 @@ abstract class AppLocalizations {
   /// **'Delete task?'**
   String get deleteTask;
 
-  /// No description provided for @deletePermanently.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete \"{name}\" permanently?'**
-  String deletePermanently(Object name);
-
-  /// No description provided for @currencyCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Currency code'**
-  String get currencyCode;
-
-  /// No description provided for @budget.
-  ///
-  /// In en, this message translates to:
-  /// **'Budget'**
-  String get budget;
-
-  /// No description provided for @leaveEmptyForNoBudget.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave empty for no budget'**
-  String get leaveEmptyForNoBudget;
-
   /// No description provided for @task.
   ///
   /// In en, this message translates to:
   /// **'Task'**
   String get task;
-
-  /// No description provided for @newLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'New'**
-  String get newLabel;
-
-  /// No description provided for @openStructure.
-  ///
-  /// In en, this message translates to:
-  /// **'Open structure'**
-  String get openStructure;
-
-  /// No description provided for @noBoardDataYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No board data yet'**
-  String get noBoardDataYet;
-
-  /// No description provided for @pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes.
-  ///
-  /// In en, this message translates to:
-  /// **'Pull to refresh or open structure to configure columns and swimlanes.'**
-  String get pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes;
 
   /// No description provided for @themeMode.
   ///
@@ -1844,71 +332,11 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get add;
 
-  /// No description provided for @additionalDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Additional details'**
-  String get additionalDetails;
-
-  /// No description provided for @attachments2.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachments'**
-  String get attachments2;
-
-  /// No description provided for @comments.
-  ///
-  /// In en, this message translates to:
-  /// **'Comments'**
-  String get comments;
-
-  /// No description provided for @subtasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Subtasks'**
-  String get subtasks;
-
-  /// No description provided for @tags.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get tags;
-
-  /// No description provided for @taskLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'Task Links'**
-  String get taskLinks;
-
-  /// No description provided for @externalLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'External Links'**
-  String get externalLinks;
-
-  /// No description provided for @link.
-  ///
-  /// In en, this message translates to:
-  /// **'Link'**
-  String get link;
-
-  /// No description provided for @linkTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Link title'**
-  String get linkTitle;
-
   /// No description provided for @type.
   ///
   /// In en, this message translates to:
   /// **'Type'**
   String get type;
-
-  /// No description provided for @dependency.
-  ///
-  /// In en, this message translates to:
-  /// **'Dependency'**
-  String get dependency;
 
   /// No description provided for @url.
   ///
@@ -1916,239 +344,17 @@ abstract class AppLocalizations {
   /// **'URL'**
   String get url;
 
-  /// No description provided for @columnSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Column save failed: {error}'**
-  String columnSaveFailed(Object error);
-
-  /// No description provided for @columnDeletionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Column deletion failed: {error}'**
-  String columnDeletionFailed(Object error);
-
-  /// No description provided for @swimlaneSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Swimlane save failed: {error}'**
-  String swimlaneSaveFailed(Object error);
-
-  /// No description provided for @swimlaneDeletionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Swimlane deletion failed: {error}'**
-  String swimlaneDeletionFailed(Object error);
-
-  /// No description provided for @projectSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Project save failed: {error}'**
-  String projectSaveFailed(Object error);
-
-  /// No description provided for @projectDeletionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Project deletion failed: {error}'**
-  String projectDeletionFailed(Object error);
-
-  /// No description provided for @apply.
-  ///
-  /// In en, this message translates to:
-  /// **'Apply'**
-  String get apply;
-
-  /// No description provided for @post.
-  ///
-  /// In en, this message translates to:
-  /// **'Post'**
-  String get post;
-
-  /// No description provided for @noAttachmentsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No attachments yet.'**
-  String get noAttachmentsYet;
-
-  /// No description provided for @noCommentsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No comments yet.'**
-  String get noCommentsYet;
-
-  /// No description provided for @noSubtasksYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No subtasks yet.'**
-  String get noSubtasksYet;
-
-  /// No description provided for @noTagsAssigned.
-  ///
-  /// In en, this message translates to:
-  /// **'No tags assigned.'**
-  String get noTagsAssigned;
-
-  /// No description provided for @noTaskLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'No task links.'**
-  String get noTaskLinks;
-
-  /// No description provided for @noExternalLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'No external links.'**
-  String get noExternalLinks;
-
-  /// No description provided for @newTask2.
-  ///
-  /// In en, this message translates to:
-  /// **'New Task'**
-  String get newTask2;
-
-  /// No description provided for @editTask.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Task'**
-  String get editTask;
-
   /// No description provided for @title.
   ///
   /// In en, this message translates to:
   /// **'Title'**
   String get title;
 
-  /// No description provided for @column.
-  ///
-  /// In en, this message translates to:
-  /// **'Column'**
-  String get column;
-
-  /// No description provided for @swimlane.
-  ///
-  /// In en, this message translates to:
-  /// **'Swimlane'**
-  String get swimlane;
-
-  /// No description provided for @assignee.
-  ///
-  /// In en, this message translates to:
-  /// **'Assignee'**
-  String get assignee;
-
-  /// No description provided for @unassigned.
-  ///
-  /// In en, this message translates to:
-  /// **'Unassigned'**
-  String get unassigned;
-
-  /// No description provided for @priority.
-  ///
-  /// In en, this message translates to:
-  /// **'Priority'**
-  String get priority;
-
-  /// No description provided for @dueDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Due date'**
-  String get dueDate;
-
-  /// No description provided for @pickDateTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick date/time'**
-  String get pickDateTime;
-
   /// No description provided for @expense.
   ///
   /// In en, this message translates to:
   /// **'Expense'**
   String get expense;
-
-  /// No description provided for @score.
-  ///
-  /// In en, this message translates to:
-  /// **'Score'**
-  String get score;
-
-  /// No description provided for @pickDueDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick due date'**
-  String get pickDueDate;
-
-  /// No description provided for @clearDueDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear due date'**
-  String get clearDueDate;
-
-  /// No description provided for @newComment.
-  ///
-  /// In en, this message translates to:
-  /// **'New comment'**
-  String get newComment;
-
-  /// No description provided for @comment.
-  ///
-  /// In en, this message translates to:
-  /// **'Comment'**
-  String get comment;
-
-  /// No description provided for @editComment.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit comment'**
-  String get editComment;
-
-  /// No description provided for @editSubtask.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit subtask'**
-  String get editSubtask;
-
-  /// No description provided for @estimateH.
-  ///
-  /// In en, this message translates to:
-  /// **'Estimate (h)'**
-  String get estimateH;
-
-  /// No description provided for @spentH.
-  ///
-  /// In en, this message translates to:
-  /// **'Spent (h)'**
-  String get spentH;
-
-  /// No description provided for @newGroceryItem.
-  ///
-  /// In en, this message translates to:
-  /// **'New grocery item'**
-  String get newGroceryItem;
-
-  /// No description provided for @newSubtask.
-  ///
-  /// In en, this message translates to:
-  /// **'New subtask'**
-  String get newSubtask;
-
-  /// No description provided for @addTagsCommaSeparated.
-  ///
-  /// In en, this message translates to:
-  /// **'Add tags (comma separated)'**
-  String get addTagsCommaSeparated;
-
-  /// No description provided for @relation.
-  ///
-  /// In en, this message translates to:
-  /// **'Relation'**
-  String get relation;
-
-  /// No description provided for @linkedTaskID.
-  ///
-  /// In en, this message translates to:
-  /// **'Linked task ID'**
-  String get linkedTaskID;
 
   /// No description provided for @export.
   ///
@@ -2168,203 +374,11 @@ abstract class AppLocalizations {
   /// **'Project'**
   String get project;
 
-  /// No description provided for @projectCreatedButDefaultsFailedToApply.
-  ///
-  /// In en, this message translates to:
-  /// **'Project created, but defaults failed to apply: {error}'**
-  String projectCreatedButDefaultsFailedToApply(Object error);
-
-  /// No description provided for @projectAttachmentsUploaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Project attachments uploaded.'**
-  String get projectAttachmentsUploaded;
-
-  /// No description provided for @uploadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload failed: {error}'**
-  String uploadFailed(Object error);
-
-  /// No description provided for @attachmentContentMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment content missing.'**
-  String get attachmentContentMissing;
-
-  /// No description provided for @downloadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Download failed: {error}'**
-  String downloadFailed(Object error);
-
-  /// No description provided for @filePickerFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'File picker failed: {error}'**
-  String filePickerFailed(Object error);
-
-  /// No description provided for @attachmentPickerFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment picker failed: {error}'**
-  String attachmentPickerFailed(Object error);
-
-  /// No description provided for @attachmentUploadComplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment upload complete.'**
-  String get attachmentUploadComplete;
-
-  /// No description provided for @attachmentUploadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment upload failed: {error}'**
-  String attachmentUploadFailed(Object error);
-
-  /// No description provided for @attachmentHasNoDownloadableContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment has no downloadable content.'**
-  String get attachmentHasNoDownloadableContent;
-
-  /// No description provided for @attachmentExportFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment export failed: {error}'**
-  String attachmentExportFailed(Object error);
-
-  /// No description provided for @attachmentDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachment delete failed: {error}'**
-  String attachmentDeleteFailed(Object error);
-
-  /// No description provided for @commentSaveFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Comment save failed: {error}'**
-  String commentSaveFailed(Object error);
-
-  /// No description provided for @commentUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Comment update failed: {error}'**
-  String commentUpdateFailed(Object error);
-
-  /// No description provided for @commentDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Comment delete failed: {error}'**
-  String commentDeleteFailed(Object error);
-
-  /// No description provided for @subtaskCreateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Subtask create failed: {error}'**
-  String subtaskCreateFailed(Object error);
-
-  /// No description provided for @subtaskUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Subtask update failed: {error}'**
-  String subtaskUpdateFailed(Object error);
-
-  /// No description provided for @subtaskDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Subtask delete failed: {error}'**
-  String subtaskDeleteFailed(Object error);
-
-  /// No description provided for @tagUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Tag update failed: {error}'**
-  String tagUpdateFailed(Object error);
-
-  /// No description provided for @theGroceryListTagIsReservedForGroceryTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'The grocery-list tag is reserved for grocery tasks.'**
-  String get theGroceryListTagIsReservedForGroceryTasks;
-
-  /// No description provided for @taskLinkFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Task link failed: {error}'**
-  String taskLinkFailed(Object error);
-
-  /// No description provided for @linkDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Link delete failed: {error}'**
-  String linkDeleteFailed(Object error);
-
-  /// No description provided for @externalLinkFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'External link failed: {error}'**
-  String externalLinkFailed(Object error);
-
-  /// No description provided for @externalLinkDeleteFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'External link delete failed: {error}'**
-  String externalLinkDeleteFailed(Object error);
-
-  /// No description provided for @taskStatusUpdateFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Task status update failed: {error}'**
-  String taskStatusUpdateFailed(Object error);
-
-  /// No description provided for @serverRejectedTaskStatusUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'Server rejected task status update.'**
-  String get serverRejectedTaskStatusUpdate;
-
-  /// No description provided for @taskNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Task #{id}'**
-  String taskNumber(Object id);
-
-  /// No description provided for @taskMarkedDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Task marked done.'**
-  String get taskMarkedDone;
-
-  /// No description provided for @taskReopened.
-  ///
-  /// In en, this message translates to:
-  /// **'Task reopened.'**
-  String get taskReopened;
-
   /// No description provided for @open.
   ///
   /// In en, this message translates to:
   /// **'Open'**
   String get open;
-
-  /// No description provided for @reopenTask.
-  ///
-  /// In en, this message translates to:
-  /// **'Reopen task'**
-  String get reopenTask;
-
-  /// No description provided for @markAsDone.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark as done'**
-  String get markAsDone;
-
-  /// No description provided for @editTask2.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit task'**
-  String get editTask2;
 
   /// No description provided for @createTask.
   ///
@@ -2372,285 +386,17 @@ abstract class AppLocalizations {
   /// **'Create task'**
   String get createTask;
 
-  /// No description provided for @editGroceryList.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit grocery list'**
-  String get editGroceryList;
-
-  /// No description provided for @createGroceryList.
-  ///
-  /// In en, this message translates to:
-  /// **'Create grocery list'**
-  String get createGroceryList;
-
-  /// No description provided for @groceryListTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Grocery list title'**
-  String get groceryListTitle;
-
-  /// No description provided for @noGroceryItemsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No grocery items yet.'**
-  String get noGroceryItemsYet;
-
-  /// No description provided for @addItemsNowTheyWillBeCreatedWhenYouSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Add items now. They will be created when you save.'**
-  String get addItemsNowTheyWillBeCreatedWhenYouSave;
-
-  /// No description provided for @titleIsRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Title is required.'**
-  String get titleIsRequired;
-
-  /// No description provided for @scoreMustBeAnInteger.
-  ///
-  /// In en, this message translates to:
-  /// **'Score must be an integer.'**
-  String get scoreMustBeAnInteger;
-
-  /// No description provided for @serverRejectedAttachmentName.
-  ///
-  /// In en, this message translates to:
-  /// **'Server rejected attachment \"{name}\".'**
-  String serverRejectedAttachmentName(Object name);
-
   /// No description provided for @amountMustBeAValidNumber.
   ///
   /// In en, this message translates to:
   /// **'Amount must be a valid number.'**
   String get amountMustBeAValidNumber;
 
-  /// No description provided for @taskWasNotCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Task was not created.'**
-  String get taskWasNotCreated;
-
-  /// No description provided for @enterATitleBeforeOpeningAdditionalDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a title before opening additional details.'**
-  String get enterATitleBeforeOpeningAdditionalDetails;
-
-  /// No description provided for @taskMustBeSavedFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Task must be saved first.'**
-  String get taskMustBeSavedFirst;
-
-  /// No description provided for @saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'Save this task first to manage attachments, comments, subtasks, tags, and links.'**
-  String get saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks;
-
-  /// No description provided for @externalLinkTitleAndURLAreRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'External link title and URL are required.'**
-  String get externalLinkTitleAndURLAreRequired;
-
-  /// No description provided for @enterAValidLinkedTaskID.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid linked task ID.'**
-  String get enterAValidLinkedTaskID;
-
-  /// No description provided for @invalidURL.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid URL.'**
-  String get invalidURL;
-
-  /// No description provided for @couldNotOpenURLCopiedToClipboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not open URL. Copied to clipboard.'**
-  String get couldNotOpenURLCopiedToClipboard;
-
-  /// No description provided for @attachmentsCommentsSubtasksTagsAndLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'Attachments, comments, subtasks, tags and links'**
-  String get attachmentsCommentsSubtasksTagsAndLinks;
-
-  /// No description provided for @tapToExpandAdvancedTaskDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap to expand advanced task details'**
-  String get tapToExpandAdvancedTaskDetails;
-
-  /// No description provided for @advancedSectionsAreHidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced sections are hidden.'**
-  String get advancedSectionsAreHidden;
-
-  /// No description provided for @forNewTasksTheAppSavesFirstThenOpensAdvancedSections.
-  ///
-  /// In en, this message translates to:
-  /// **'For new tasks, the app saves first, then opens advanced sections.'**
-  String get forNewTasksTheAppSavesFirstThenOpensAdvancedSections;
-
-  /// No description provided for @internalLinkTypesUnavailableForThisUserProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Internal link types unavailable for this user/project.'**
-  String get internalLinkTypesUnavailableForThisUserProject;
-
-  /// No description provided for @noPermissionForInternalTaskLinksGetAllLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'No permission for internal task links (`getAllLinks`).'**
-  String get noPermissionForInternalTaskLinksGetAllLinks;
-
-  /// No description provided for @linkedTo.
-  ///
-  /// In en, this message translates to:
-  /// **'linked to'**
-  String get linkedTo;
-
-  /// No description provided for @userNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'User #{id}'**
-  String userNumber(Object id);
-
-  /// No description provided for @estHSpentH.
-  ///
-  /// In en, this message translates to:
-  /// **'Est {est}h · Spent {spent}h'**
-  String estHSpentH(Object est, Object spent);
-
-  /// No description provided for @eG1250.
-  ///
-  /// In en, this message translates to:
-  /// **'e.g. 12.50'**
-  String get eG1250;
-
-  /// No description provided for @macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement.
-  ///
-  /// In en, this message translates to:
-  /// **'macOS file access entitlement missing. Rebuild the app after enabling user-selected file read entitlement.'**
-  String
-  get macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement;
-
-  /// No description provided for @tasks2.
-  ///
-  /// In en, this message translates to:
-  /// **'Tasks: {count}'**
-  String tasks2(Object count);
-
-  /// No description provided for @columns2.
-  ///
-  /// In en, this message translates to:
-  /// **'Columns: {count}'**
-  String columns2(Object count);
-
-  /// No description provided for @noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns.
-  ///
-  /// In en, this message translates to:
-  /// **'No columns configured for this swimlane. Use Structure to add columns.'**
-  String get noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns;
-
-  /// No description provided for @taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves.
-  ///
-  /// In en, this message translates to:
-  /// **'Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.'**
-  String
-  get taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves;
-
-  /// No description provided for @taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.'**
-  String
-  get taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks;
-
-  /// No description provided for @dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.'**
-  String
-  get dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax;
-
-  /// No description provided for @currencyMustBeA3LetterCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Currency must be a 3-letter code.'**
-  String get currencyMustBeA3LetterCode;
-
-  /// No description provided for @budgetMustBeAPositiveNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Budget must be a positive number.'**
-  String get budgetMustBeAPositiveNumber;
-
-  /// No description provided for @useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow.
-  ///
-  /// In en, this message translates to:
-  /// **'Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`'**
-  String get useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow;
-
-  /// No description provided for @enterASearchQuery.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a search query.'**
-  String get enterASearchQuery;
-
-  /// No description provided for @boardStructure2.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} Board Structure'**
-  String boardStructure2(Object name);
-
-  /// No description provided for @dragRowsToReorderChangesAreSavedImmediately.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag rows to reorder. Changes are saved immediately.'**
-  String get dragRowsToReorderChangesAreSavedImmediately;
-
-  /// No description provided for @noColumnsYetAddOne.
-  ///
-  /// In en, this message translates to:
-  /// **'No columns yet. Add one.'**
-  String get noColumnsYetAddOne;
-
-  /// No description provided for @noSwimlanesYetAddOne.
-  ///
-  /// In en, this message translates to:
-  /// **'No swimlanes yet. Add one.'**
-  String get noSwimlanesYetAddOne;
-
-  /// No description provided for @positionLimit.
-  ///
-  /// In en, this message translates to:
-  /// **'Position {position} · Limit {limit}'**
-  String positionLimit(Object position, Object limit);
-
   /// No description provided for @position.
   ///
   /// In en, this message translates to:
   /// **'Position {position}'**
   String position(Object position);
-
-  /// No description provided for @horizontalStructureOfTheBoard.
-  ///
-  /// In en, this message translates to:
-  /// **'Horizontal structure of the board'**
-  String get horizontalStructureOfTheBoard;
-
-  /// No description provided for @verticalWorkGrouping.
-  ///
-  /// In en, this message translates to:
-  /// **'Vertical work grouping'**
-  String get verticalWorkGrouping;
 
   /// No description provided for @organizerAppName.
   ///
@@ -2723,12 +469,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get organizerSettings;
-
-  /// No description provided for @organizerLocalSpace.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal space'**
-  String get organizerLocalSpace;
 
   /// No description provided for @organizerLocalOnly.
   ///
@@ -2970,18 +710,6 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get organizerRetry;
 
-  /// No description provided for @organizerDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get organizerDate;
-
-  /// No description provided for @organizerTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Time'**
-  String get organizerTime;
-
   /// No description provided for @organizerNoDate.
   ///
   /// In en, this message translates to:
@@ -3005,12 +733,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Events and task deadlines in one place.'**
   String get organizerCalendarIntro;
-
-  /// No description provided for @organizerFinanceIntro.
-  ///
-  /// In en, this message translates to:
-  /// **'Income, expenses and planned costs.'**
-  String get organizerFinanceIntro;
 
   /// No description provided for @organizerAddFinance.
   ///
@@ -3054,36 +776,6 @@ abstract class AppLocalizations {
   /// **'Enter a positive amount with at most two decimal places.'**
   String get organizerInvalidMoney;
 
-  /// No description provided for @organizerBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'Income minus expenses'**
-  String get organizerBalance;
-
-  /// No description provided for @organizerConnection.
-  ///
-  /// In en, this message translates to:
-  /// **'Existing Kanboard'**
-  String get organizerConnection;
-
-  /// No description provided for @organizerConnectionDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Your existing projects are still on your Kanboard server. Connect your account to open them. The local organizer does not import or sync them yet.'**
-  String get organizerConnectionDescription;
-
-  /// No description provided for @organizerConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect account'**
-  String get organizerConnect;
-
-  /// No description provided for @organizerOpenKanboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Open Kanboard'**
-  String get organizerOpenKanboard;
-
   /// No description provided for @organizerBackup.
   ///
   /// In en, this message translates to:
@@ -3126,35 +818,11 @@ abstract class AppLocalizations {
   /// **'Local data restored.'**
   String get organizerRestored;
 
-  /// No description provided for @organizerReminders.
-  ///
-  /// In en, this message translates to:
-  /// **'Reminders'**
-  String get organizerReminders;
-
-  /// No description provided for @organizerNoReminders.
-  ///
-  /// In en, this message translates to:
-  /// **'No new reminders.'**
-  String get organizerNoReminders;
-
-  /// No description provided for @organizerRemindersDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Task deadline reminders appear when you open the app.'**
-  String get organizerRemindersDescription;
-
   /// No description provided for @organizerHomeIntro.
   ///
   /// In en, this message translates to:
   /// **'Organize home plans with projects and tasks in your personal space.'**
   String get organizerHomeIntro;
-
-  /// No description provided for @organizerBackToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Back to Today'**
-  String get organizerBackToday;
 
   /// No description provided for @organizerDeleteConfirm.
   ///
@@ -3180,12 +848,6 @@ abstract class AppLocalizations {
   /// **'{count} items on your lists'**
   String organizerShoppingCount(int count);
 
-  /// No description provided for @organizerTasksCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} tasks'**
-  String organizerTasksCount(int count);
-
   /// No description provided for @organizerNoMatchingTasks.
   ///
   /// In en, this message translates to:
@@ -3204,23 +866,11 @@ abstract class AppLocalizations {
   /// **'Device language'**
   String get organizerSystemLanguage;
 
-  /// No description provided for @organizerRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Read'**
-  String get organizerRead;
-
   /// No description provided for @organizerWithoutDate.
   ///
   /// In en, this message translates to:
   /// **'Without a deadline'**
   String get organizerWithoutDate;
-
-  /// No description provided for @organizerOverdue.
-  ///
-  /// In en, this message translates to:
-  /// **'Overdue'**
-  String get organizerOverdue;
 
   /// No description provided for @organizerHomeProjects.
   ///
@@ -3264,18 +914,6 @@ abstract class AppLocalizations {
   /// **'Secure storage is unavailable. Credentials were not saved; check this device’s secure storage settings.'**
   String get secureStorageUnavailable;
 
-  /// No description provided for @credentialsSharingDisabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Passwords and personal API keys are not shared. Project invitations will be available when the secure flow is ready.'**
-  String get credentialsSharingDisabled;
-
-  /// No description provided for @personalTokenHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Use your username and personal API token. The global jsonrpc key is not supported.'**
-  String get personalTokenHint;
-
   /// No description provided for @secureConnectionRequired.
   ///
   /// In en, this message translates to:
@@ -3287,18 +925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Local development connection (HTTP on this computer)'**
   String get localDevelopmentConnection;
-
-  /// No description provided for @aiSessionChanged.
-  ///
-  /// In en, this message translates to:
-  /// **'The account changed. This chat belongs to the previous session; reopen AI help from your project.'**
-  String get aiSessionChanged;
-
-  /// No description provided for @connectionFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection failed. Check the server address, username and password or personal API token.'**
-  String get connectionFailed;
 
   /// No description provided for @sharingAccount.
   ///
@@ -3348,12 +974,6 @@ abstract class AppLocalizations {
   /// **'I have an invitation'**
   String get sharingHaveInvite;
 
-  /// No description provided for @sharingInvitation.
-  ///
-  /// In en, this message translates to:
-  /// **'Invitation'**
-  String get sharingInvitation;
-
   /// No description provided for @sharingInvitationCode.
   ///
   /// In en, this message translates to:
@@ -3378,12 +998,6 @@ abstract class AppLocalizations {
   /// **'Accept invitation'**
   String get sharingAcceptInvite;
 
-  /// No description provided for @sharingRegister.
-  ///
-  /// In en, this message translates to:
-  /// **'Create an account with an invitation'**
-  String get sharingRegister;
-
   /// No description provided for @sharingRegisterAction.
   ///
   /// In en, this message translates to:
@@ -3395,12 +1009,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display name'**
   String get sharingDisplayName;
-
-  /// No description provided for @sharingEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'Email'**
-  String get sharingEmail;
 
   /// No description provided for @sharingConfirmPassword.
   ///
@@ -3425,18 +1033,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This device’s name'**
   String get sharingDeviceName;
-
-  /// No description provided for @sharingDeviceSession.
-  ///
-  /// In en, this message translates to:
-  /// **'This device’s session'**
-  String get sharingDeviceSession;
-
-  /// No description provided for @sharingSpaces.
-  ///
-  /// In en, this message translates to:
-  /// **'Shared spaces'**
-  String get sharingSpaces;
 
   /// No description provided for @sharingCreateSpace.
   ///
@@ -3498,12 +1094,6 @@ abstract class AppLocalizations {
   /// **'Owner'**
   String get sharingOwner;
 
-  /// No description provided for @sharingEditor.
-  ///
-  /// In en, this message translates to:
-  /// **'Can edit'**
-  String get sharingEditor;
-
   /// No description provided for @sharingViewer.
   ///
   /// In en, this message translates to:
@@ -3522,35 +1112,11 @@ abstract class AppLocalizations {
   /// **'Invite someone'**
   String get sharingInvitePerson;
 
-  /// No description provided for @sharingCreateInvite.
-  ///
-  /// In en, this message translates to:
-  /// **'Create invitation'**
-  String get sharingCreateInvite;
-
   /// No description provided for @sharingInvitations.
   ///
   /// In en, this message translates to:
   /// **'Invitations'**
   String get sharingInvitations;
-
-  /// No description provided for @sharingCopyInvite.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy code'**
-  String get sharingCopyInvite;
-
-  /// No description provided for @sharingInviteCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Invitation code copied.'**
-  String get sharingInviteCopied;
-
-  /// No description provided for @sharingInviteCodeOnce.
-  ///
-  /// In en, this message translates to:
-  /// **'Save or send the code now. It cannot be displayed again later.'**
-  String get sharingInviteCodeOnce;
 
   /// No description provided for @sharingRevokeInvite.
   ///
@@ -3570,23 +1136,11 @@ abstract class AppLocalizations {
   /// **'Once removed, this member can no longer access this space. Previously downloaded copies cannot be erased remotely.'**
   String get sharingRemoveMemberConfirm;
 
-  /// No description provided for @sharingSignOutDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal data stays on this device. Check pending shared changes before signing out.'**
-  String get sharingSignOutDescription;
-
   /// No description provided for @sharingSyncNow.
   ///
   /// In en, this message translates to:
   /// **'Sync now'**
   String get sharingSyncNow;
-
-  /// No description provided for @sharingSynced.
-  ///
-  /// In en, this message translates to:
-  /// **'Synced'**
-  String get sharingSynced;
 
   /// No description provided for @sharingSyncing.
   ///
@@ -3599,18 +1153,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting to sync'**
   String get sharingPending;
-
-  /// No description provided for @sharingOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'Connection unavailable'**
-  String get sharingOffline;
-
-  /// No description provided for @sharingSyncFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync failed. Local changes have been kept.'**
-  String get sharingSyncFailed;
 
   /// No description provided for @sharingConflicts.
   ///
@@ -3684,12 +1226,6 @@ abstract class AppLocalizations {
   /// **'You do not have permission for this action.'**
   String get sharingPermissionDenied;
 
-  /// No description provided for @sharingNoSharedLists.
-  ///
-  /// In en, this message translates to:
-  /// **'This space has no shared list yet.'**
-  String get sharingNoSharedLists;
-
   /// No description provided for @sharingNoSharedListsDescription.
   ///
   /// In en, this message translates to:
@@ -3707,30 +1243,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read only'**
   String get sharingReadOnly;
-
-  /// No description provided for @sharingQuietShopping.
-  ///
-  /// In en, this message translates to:
-  /// **'Shopping list changes are quiet; they do not send email.'**
-  String get sharingQuietShopping;
-
-  /// No description provided for @sharingShareList.
-  ///
-  /// In en, this message translates to:
-  /// **'Share this list'**
-  String get sharingShareList;
-
-  /// No description provided for @sharingShareProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Share project and tasks'**
-  String get sharingShareProject;
-
-  /// No description provided for @sharingShareConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'A shared copy will be created in the selected space. Personal content and finances are not shared automatically.'**
-  String get sharingShareConfirm;
 
   /// No description provided for @sharingNoMembers.
   ///
@@ -3755,12 +1267,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect an account or accept an invitation to use shared lists.'**
   String get sharingConnectBeforeShared;
-
-  /// No description provided for @sharingSaveBeforeSync.
-  ///
-  /// In en, this message translates to:
-  /// **'Changes are saved on this device first, then synced with the space.'**
-  String get sharingSaveBeforeSync;
 
   /// No description provided for @sharingMember.
   ///
@@ -3828,12 +1334,6 @@ abstract class AppLocalizations {
   /// **'The shared view will be hidden after signing out. Personal data remains. Unsynced shared changes are not sent under another account; you can export them before signing out.'**
   String get sharingPendingSignOut;
 
-  /// No description provided for @sharingNoPending.
-  ///
-  /// In en, this message translates to:
-  /// **'No pending changes'**
-  String get sharingNoPending;
-
   /// No description provided for @sharingResumeBlocked.
   ///
   /// In en, this message translates to:
@@ -3881,12 +1381,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Session expires'**
   String get sharingSessionEnds;
-
-  /// No description provided for @sharingSharedTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'Shared tasks'**
-  String get sharingSharedTasks;
 
   /// No description provided for @sharingConflictsButton.
   ///
@@ -3947,12 +1441,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The data is invalid. Check your input and try again.'**
   String get sharingValidationError;
-
-  /// No description provided for @sharingRegistrationPasswordHint.
-  ///
-  /// In en, this message translates to:
-  /// **'A new password needs at least 12 characters (at most 72 bytes).'**
-  String get sharingRegistrationPasswordHint;
 
   /// No description provided for @sharingBlockedDescription.
   ///
@@ -4061,12 +1549,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Created by'**
   String get planningCreatedBy;
-
-  /// No description provided for @planningUpdatedBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Last updated by'**
-  String get planningUpdatedBy;
 
   /// No description provided for @planningInvalidSchedule.
   ///
@@ -4332,6 +1814,24 @@ abstract class AppLocalizations {
   /// **'Read'**
   String get inboxRead;
 
+  /// No description provided for @inboxUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get inboxUnread;
+
+  /// No description provided for @inboxPushDeviceDeliveryInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'These preferences apply to registered devices. Push delivery on this device is currently inactive.'**
+  String get inboxPushDeviceDeliveryInactive;
+
+  /// No description provided for @inboxMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get inboxMarkAllRead;
+
   /// No description provided for @inboxMarkRead.
   ///
   /// In en, this message translates to:
@@ -4494,12 +1994,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} item was added} other{{count} items were added}}'**
   String inboxShoppingItemsCreated(int count);
 
-  /// No description provided for @inboxMemberJoined.
-  ///
-  /// In en, this message translates to:
-  /// **'A member joined'**
-  String get inboxMemberJoined;
-
   /// No description provided for @inboxRecordUpdated.
   ///
   /// In en, this message translates to:
@@ -4541,12 +2035,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It is time for a reminder'**
   String get inboxReminderDue;
-
-  /// No description provided for @inboxOpenToView.
-  ///
-  /// In en, this message translates to:
-  /// **'Open for details'**
-  String get inboxOpenToView;
 
   /// No description provided for @inboxSharedPreferencesUnavailable.
   ///
@@ -4776,12 +2264,6 @@ abstract class AppLocalizations {
   /// **'This server does not support notification preferences yet.'**
   String get inboxPreferencesUnsupported;
 
-  /// No description provided for @inboxCategoryAssignments.
-  ///
-  /// In en, this message translates to:
-  /// **'Assignments'**
-  String get inboxCategoryAssignments;
-
   /// No description provided for @inboxCategoryTasks.
   ///
   /// In en, this message translates to:
@@ -4863,13 +2345,13 @@ abstract class AppLocalizations {
   /// No description provided for @inboxPushCategoriesDescription.
   ///
   /// In en, this message translates to:
-  /// **'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.'**
+  /// **'Push notifications are enabled by default for all types in a space. You can turn individual types off below. Delivery to a device requires explicitly enabling and registering that device.'**
   String get inboxPushCategoriesDescription;
 
   /// No description provided for @remotePushRegistrationOnly.
   ///
   /// In en, this message translates to:
-  /// **'Registration connects this device to your account. Choose notification types for individual spaces separately.'**
+  /// **'Registration connects this device to your account. Push notifications are enabled by default; you can turn individual types off in the space notification settings.'**
   String get remotePushRegistrationOnly;
 
   /// No description provided for @remoteReminderTitle.
@@ -5082,12 +2564,6 @@ abstract class AppLocalizations {
   /// **'Sign in to the account that received this notification.'**
   String get remotePushLoginForOpen;
 
-  /// No description provided for @remotePushDeviceUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'First enable and register remote notifications on this device.'**
-  String get remotePushDeviceUnavailable;
-
   /// No description provided for @setupTitle.
   ///
   /// In en, this message translates to:
@@ -5177,18 +2653,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This link is not a valid invitation. You can enter the server and code manually in the app.'**
   String get inviteLinkInvalid;
-
-  /// No description provided for @inviteCopyLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy invitation link'**
-  String get inviteCopyLink;
-
-  /// No description provided for @inviteLinkPrepared.
-  ///
-  /// In en, this message translates to:
-  /// **'The link opens the invitation in the installed Jivie app. If the app does not open, enter the server and code manually in the app.'**
-  String get inviteLinkPrepared;
 
   /// No description provided for @accountFirstTitle.
   ///
@@ -5532,12 +2996,6 @@ abstract class AppLocalizations {
   /// **'Recipient'**
   String get taskCostRecipient;
 
-  /// No description provided for @taskCostAuthor.
-  ///
-  /// In en, this message translates to:
-  /// **'Entry author'**
-  String get taskCostAuthor;
-
   /// No description provided for @taskCostNoDue.
   ///
   /// In en, this message translates to:
@@ -5562,12 +3020,6 @@ abstract class AppLocalizations {
   /// **'Organization'**
   String get organizationTitle;
 
-  /// No description provided for @organizationCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'Create organization'**
-  String get organizationCreate;
-
   /// No description provided for @organizationProjects.
   ///
   /// In en, this message translates to:
@@ -5583,7 +3035,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizationAccessDescription.
   ///
   /// In en, this message translates to:
-  /// **'Membership does not grant access to every project or finances. Set access for each project separately.'**
+  /// **'A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.'**
   String get organizationAccessDescription;
 
   /// No description provided for @peopleTitle.
@@ -5934,18 +3386,6 @@ abstract class AppLocalizations {
   /// **'Recurrence type'**
   String get financePlanRuleType;
 
-  /// No description provided for @financePlanSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'The financial plan is saved.'**
-  String get financePlanSaved;
-
-  /// No description provided for @financePlanOverdue.
-  ///
-  /// In en, this message translates to:
-  /// **'Still unconfirmed'**
-  String get financePlanOverdue;
-
   /// No description provided for @financePlanBack.
   ///
   /// In en, this message translates to:
@@ -6023,12 +3463,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.'**
   String get deletionDetachOrganization;
-
-  /// No description provided for @deletionOrganizationLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'Projects detached from an organization'**
-  String get deletionOrganizationLinks;
 
   /// No description provided for @financePlanIncomeQuestion.
   ///
@@ -6185,12 +3619,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Private synchronization requires sign-in and a supported server.'**
   String get privateSyncUnavailable;
-
-  /// No description provided for @privateSyncPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending changes'**
-  String get privateSyncPending;
 
   /// No description provided for @privateSyncIssue.
   ///
@@ -6444,12 +3872,6 @@ abstract class AppLocalizations {
   /// **'Personal records can be restored locally. Resuming shared work checks the account and permissions again.'**
   String get backupAccountMatches;
 
-  /// No description provided for @backupAccountDifferent.
-  ///
-  /// In en, this message translates to:
-  /// **'The backup belongs to another account. Shared work stays protected until you sign in to the matching account.'**
-  String get backupAccountDifferent;
-
   /// No description provided for @backupCompleteness.
   ///
   /// In en, this message translates to:
@@ -6473,12 +3895,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New local records are awaiting your review.'**
   String get privateSyncLocalPending;
-
-  /// No description provided for @backupRecoveryState.
-  ///
-  /// In en, this message translates to:
-  /// **'Recovered work status'**
-  String get backupRecoveryState;
 
   /// No description provided for @backupRecoveryReady.
   ///
@@ -6567,7 +3983,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.'**
+  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.'**
   String get guideMoreBody;
 
   /// No description provided for @guideSkip.
@@ -6876,12 +4292,6 @@ abstract class AppLocalizations {
   /// **'Shared structure without permission to view details'**
   String get deletionUnnamedStructure;
 
-  /// No description provided for @deletionMinorUnits.
-  ///
-  /// In en, this message translates to:
-  /// **'minor currency units'**
-  String get deletionMinorUnits;
-
   /// No description provided for @deletionRetainedEdits.
   ///
   /// In en, this message translates to:
@@ -6933,7 +4343,7 @@ abstract class AppLocalizations {
   /// No description provided for @deletionLegacyLocal.
   ///
   /// In en, this message translates to:
-  /// **'Separately stored legacy Kanboard connections, caches and AI conversations are not removed by this action. A legacy connection to the deleted account will no longer work.'**
+  /// **'Locally stored data from earlier application versions remain on this device. This action does not remove them.'**
   String get deletionLegacyLocal;
 
   /// No description provided for @deletionPersonalExport.
@@ -6971,12 +4381,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New garden'**
   String get gardenNew;
-
-  /// No description provided for @gardenEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit garden'**
-  String get gardenEdit;
 
   /// No description provided for @gardenName.
   ///
@@ -7188,12 +4592,6 @@ abstract class AppLocalizations {
   /// **'{count} areas'**
   String gardenAreaCount(int count);
 
-  /// No description provided for @gardenAreaPosition.
-  ///
-  /// In en, this message translates to:
-  /// **'Left {x}%, top {y}% · {width} × {height}%'**
-  String gardenAreaPosition(int x, int y, int width, int height);
-
   /// No description provided for @financePlanPendingEntries.
   ///
   /// In en, this message translates to:
@@ -7338,18 +4736,6 @@ abstract class AppLocalizations {
   /// **'Choose a future time.'**
   String get reminderSnoozeFutureRequired;
 
-  /// No description provided for @reminderSnoozeNeedsConnection.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to the server to snooze a shared reminder.'**
-  String get reminderSnoozeNeedsConnection;
-
-  /// No description provided for @reminderSnoozedUntil.
-  ///
-  /// In en, this message translates to:
-  /// **'Snoozed until {until}'**
-  String reminderSnoozedUntil(String until);
-
   /// No description provided for @financeSourceTask.
   ///
   /// In en, this message translates to:
@@ -7409,12 +4795,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+ New space'**
   String get spacePickerNewSpace;
-
-  /// No description provided for @spacePickerInitialVisibility.
-  ///
-  /// In en, this message translates to:
-  /// **'Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.'**
-  String get spacePickerInitialVisibility;
 
   /// No description provided for @spacePickerSharedProject.
   ///
@@ -7541,12 +4921,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retired bed · history preserved'**
   String get gardenArchivedArea;
-
-  /// No description provided for @gardenArchiveHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'A retired bed is hidden from the plan. Its plantings and history remain in the list.'**
-  String get gardenArchiveHelp;
 
   /// No description provided for @gardenSelectBed.
   ///
@@ -7872,12 +5246,6 @@ abstract class AppLocalizations {
   /// **'No open tasks, events or expected payments for today.'**
   String get allSpacesTodayEmpty;
 
-  /// No description provided for @allSpacesUpcoming.
-  ///
-  /// In en, this message translates to:
-  /// **'Today and overdue'**
-  String get allSpacesUpcoming;
-
   /// No description provided for @organizerPressBackAgainToExit.
   ///
   /// In en, this message translates to:
@@ -7944,12 +5312,6 @@ abstract class AppLocalizations {
   /// **'Connect and synchronize'**
   String get localSpaceLinkAction;
 
-  /// No description provided for @legacyLocalData.
-  ///
-  /// In en, this message translates to:
-  /// **'Unassigned data'**
-  String get legacyLocalData;
-
   /// No description provided for @legacyLocalDescription.
   ///
   /// In en, this message translates to:
@@ -7985,12 +5347,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your data remains on this device. Local work continues; invitations and server permission changes require a connection.'**
   String get localSpaceOfflineWork;
-
-  /// No description provided for @organizationAggregateDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Activity from permitted projects. Each record retains its source space.'**
-  String get organizationAggregateDescription;
 
   /// No description provided for @organizationLeader.
   ///
@@ -8218,12 +5574,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'First add your account or card in the same currency in your personal space.'**
   String get paymentNeedsPersonalAccount;
-
-  /// No description provided for @paymentNeedsRefundAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'First add an organization account in the same currency for reimbursement.'**
-  String get paymentNeedsRefundAccount;
 
   /// No description provided for @paymentPaidAt.
   ///
@@ -8481,6 +5831,480 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connected'**
   String get spaceConnectedShort;
+
+  /// No description provided for @emailInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by email'**
+  String get emailInviteTitle;
+
+  /// No description provided for @emailInviteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The person receives an invitation link and code. They can create an account later and choose whether to join.'**
+  String get emailInviteDescription;
+
+  /// No description provided for @emailInviteSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invitation'**
+  String get emailInviteSend;
+
+  /// No description provided for @emailInviteQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'The invitation for {email} is ready to be sent.'**
+  String emailInviteQueued(String email);
+
+  /// No description provided for @emailInviteUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.'**
+  String get emailInviteUnsupported;
+
+  /// No description provided for @emailInviteInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get emailInviteInvalidEmail;
+
+  /// No description provided for @emailInvitePendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'An invitation is waiting for your decision'**
+  String get emailInvitePendingTitle;
+
+  /// No description provided for @emailInviteFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited by {name}'**
+  String emailInviteFrom(String name);
+
+  /// No description provided for @emailInviteFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation for {email}'**
+  String emailInviteFor(String email);
+
+  /// No description provided for @emailInviteExplicit.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in or creating an account does not join the space. Accept the invitation explicitly to open it.'**
+  String get emailInviteExplicit;
+
+  /// No description provided for @emailInviteSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'First sign in or create an account. Your invitation stays saved.'**
+  String get emailInviteSignIn;
+
+  /// No description provided for @emailInviteExistingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists for this email address. Sign in to that account; your invitation stays saved.'**
+  String get emailInviteExistingAccount;
+
+  /// No description provided for @emailInviteWrongAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation is for another email address. Sign in to the correct account or verify its email address first.'**
+  String get emailInviteWrongAccount;
+
+  /// No description provided for @emailInviteDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved invitation'**
+  String get emailInviteDismiss;
+
+  /// No description provided for @emailInviteAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted. The space is open.'**
+  String get emailInviteAccepted;
+
+  /// No description provided for @accountSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'You are signed in as {username}.'**
+  String accountSignedIn(String username);
+
+  /// No description provided for @emailInviteCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get emailInviteCreateAccount;
+
+  /// No description provided for @emailInviteHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get emailInviteHaveAccount;
+
+  /// No description provided for @accountCreatedInvitationSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Account {username} has been created. Sign in, then accept your saved invitation.'**
+  String accountCreatedInvitationSignInRequired(String username);
+
+  /// No description provided for @emailInviteUsernameUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This username is already taken. Choose another name or sign in to your account.'**
+  String get emailInviteUsernameUnavailable;
+
+  /// No description provided for @accountPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password must contain at least 12 characters.'**
+  String get accountPasswordTooShort;
+
+  /// No description provided for @syncStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization'**
+  String get syncStatusTitle;
+
+  /// No description provided for @syncStatusDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization details'**
+  String get syncStatusDetails;
+
+  /// No description provided for @syncStatusSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get syncStatusSynced;
+
+  /// No description provided for @syncStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization is not confirmed yet'**
+  String get syncStatusUnknown;
+
+  /// No description provided for @syncStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes are waiting to sync'**
+  String get syncStatusPending;
+
+  /// No description provided for @syncStatusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Server is unreachable'**
+  String get syncStatusOffline;
+
+  /// No description provided for @syncStatusProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization needs your attention'**
+  String get syncStatusProblem;
+
+  /// No description provided for @syncStatusDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Local to this device'**
+  String get syncStatusDeviceOnly;
+
+  /// No description provided for @syncStatusLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last successful synchronization'**
+  String get syncStatusLastSuccess;
+
+  /// No description provided for @syncStatusLastAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last attempt'**
+  String get syncStatusLastAttempt;
+
+  /// No description provided for @syncStatusNeverAttempted.
+  ///
+  /// In en, this message translates to:
+  /// **'No attempt has been recorded'**
+  String get syncStatusNeverAttempted;
+
+  /// No description provided for @syncStatusNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not confirmed yet'**
+  String get syncStatusNotConfirmed;
+
+  /// No description provided for @syncStatusLastError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get syncStatusLastError;
+
+  /// No description provided for @syncStatusPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending changes'**
+  String get syncStatusPendingCount;
+
+  /// No description provided for @syncStatusConflictsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicting changes'**
+  String get syncStatusConflictsCount;
+
+  /// No description provided for @syncStatusBlockedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked changes'**
+  String get syncStatusBlockedCount;
+
+  /// No description provided for @syncStatusAccountScope.
+  ///
+  /// In en, this message translates to:
+  /// **'The status, times and change counts cover this account and all its spaces.'**
+  String get syncStatusAccountScope;
+
+  /// No description provided for @syncStatusLocalScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This status covers local work on this device.'**
+  String get syncStatusLocalScope;
+
+  /// No description provided for @syncStatusServerChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server identity has changed. Your local data is preserved; reconnection needs to be checked.'**
+  String get syncStatusServerChanged;
+
+  /// No description provided for @sharingInviteScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation scope'**
+  String get sharingInviteScope;
+
+  /// No description provided for @sharingInviteWholeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole space'**
+  String get sharingInviteWholeSpace;
+
+  /// No description provided for @sharingInviteProjectOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Project only'**
+  String get sharingInviteProjectOnly;
+
+  /// No description provided for @sharingInviteSpaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.'**
+  String get sharingInviteSpaceDescription;
+
+  /// No description provided for @sharingInviteProjectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.'**
+  String get sharingInviteProjectDescription;
+
+  /// No description provided for @sharingMemberFullDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.'**
+  String get sharingMemberFullDescription;
+
+  /// No description provided for @sharingViewerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The person can read content and finances within the selected scope. Editing and administration are excluded.'**
+  String get sharingViewerDescription;
+
+  /// No description provided for @sharingLegacySpaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.'**
+  String get sharingLegacySpaceDescription;
+
+  /// No description provided for @sharingLegacyProjectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This invitation uses older project access rules. Finance permissions follow the current server settings.'**
+  String get sharingLegacyProjectDescription;
+
+  /// No description provided for @sharingScopedUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The server does not yet support separate whole-space and project-only invitations. An administrator must update FamilyHub; existing data and access remain available.'**
+  String get sharingScopedUnsupported;
+
+  /// No description provided for @sharingScopeUpgradeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Before inviting someone to the whole space, the owner must review and confirm the new sharing model in Space settings.'**
+  String get sharingScopeUpgradeRequired;
+
+  /// No description provided for @sharingAccessReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review space sharing'**
+  String get sharingAccessReview;
+
+  /// No description provided for @sharingAccessReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Space members will gain access to all its content and finances, including all existing and future projects. Members can also edit, delete, invite others and manage members. People invited only to a project retain their project scope. Review additional access before confirming. Old pending invitations will be revoked.'**
+  String get sharingAccessReviewDescription;
+
+  /// No description provided for @sharingAccessCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Space membership includes all shared content and finances, and all its existing and future projects. A project-only invitation applies only to that project.'**
+  String get sharingAccessCurrent;
+
+  /// No description provided for @sharingAccessApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm space sharing'**
+  String get sharingAccessApply;
+
+  /// No description provided for @sharingAccessSourceSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Space membership'**
+  String get sharingAccessSourceSpace;
+
+  /// No description provided for @sharingAccessSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project membership'**
+  String get sharingAccessSourceProject;
+
+  /// No description provided for @sharingAccessReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Read, edit and manage'**
+  String get sharingAccessReadWrite;
+
+  /// No description provided for @sharingProjectSharingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review project-only sharing'**
+  String get sharingProjectSharingReview;
+
+  /// No description provided for @sharingProjectSharingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.'**
+  String get sharingProjectSharingDescription;
+
+  /// No description provided for @sharingProjectSharingApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable project sharing'**
+  String get sharingProjectSharingApply;
+
+  /// No description provided for @sharingProjectSharingBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.'**
+  String get sharingProjectSharingBlocked;
+
+  /// No description provided for @sharingProjectSharingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Share project only'**
+  String get sharingProjectSharingAction;
+
+  /// No description provided for @sharingProjectMembersInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Access through membership in the whole space'**
+  String get sharingProjectMembersInherited;
+
+  /// No description provided for @sharingProjectNewVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.'**
+  String get sharingProjectNewVisibility;
+
+  /// No description provided for @sharingProjectSharingCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Records: {records} · finance records: {finances} · reminders: {reminders}'**
+  String sharingProjectSharingCounts(int records, int finances, int reminders);
+
+  /// No description provided for @sharingAccessRevokedInvitations.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending invitations to revoke: {count}'**
+  String sharingAccessRevokedInvitations(int count);
+
+  /// No description provided for @sharingProjectSharingPending.
+  ///
+  /// In en, this message translates to:
+  /// **'First synchronize pending changes in this space and resolve conflicts, then review project sharing again.'**
+  String get sharingProjectSharingPending;
+
+  /// No description provided for @sharingProjectDirectRemoval.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove direct membership in this project? Access from membership in the whole space remains while the person is a member of that space.'**
+  String get sharingProjectDirectRemoval;
+
+  /// No description provided for @sharingRemoveProjectMembership.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove direct project membership'**
+  String get sharingRemoveProjectMembership;
+
+  /// No description provided for @sharingBlockSingleRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'This shared project contains multiple projects or has no project root. It must represent a single project before changing sharing.'**
+  String get sharingBlockSingleRoot;
+
+  /// No description provided for @sharingBlockRecordUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'The project uses an older record format. Synchronize its update first.'**
+  String get sharingBlockRecordUpgrade;
+
+  /// No description provided for @sharingBlockUnrelatedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'The space includes tasks or events outside this project. Review their assignment before sharing the project separately.'**
+  String get sharingBlockUnrelatedContent;
+
+  /// No description provided for @sharingBlockAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'A financial account is also used by records outside this project. Review its finance links before sharing the project separately.'**
+  String get sharingBlockAccount;
+
+  /// No description provided for @sharingBlockPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'A person is also linked to content outside this project. Review related people and assignments before sharing the project separately.'**
+  String get sharingBlockPerson;
+
+  /// No description provided for @sharingBlockRecurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.'**
+  String get sharingBlockRecurrence;
+
+  /// No description provided for @sharingBlockTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.'**
+  String get sharingBlockTransfer;
+
+  /// No description provided for @sharingBlockLinkedPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked payment includes additional finance records. Review payment links before sharing the project separately.'**
+  String get sharingBlockLinkedPayment;
+
+  /// No description provided for @sharingBlockCollision.
+  ///
+  /// In en, this message translates to:
+  /// **'A separate space already exists for this project. Refresh the space list and check its existing sharing.'**
+  String get sharingBlockCollision;
 }
 
 class _AppLocalizationsDelegate

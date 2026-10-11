@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../domain/collaboration_models.dart' show CollaborationException;
 import '../domain/local_space_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
@@ -8,8 +9,10 @@ import 'organizer_repository.dart';
 import 'sqlite_organizer_storage.dart';
 
 class LocalSpacesRepository {
-  LocalSpacesRepository(this.database);
+  LocalSpacesRepository(this.database, {DateTime Function()? clock})
+    : clock = clock ?? DateTime.now;
   final CollaborationDatabase database;
+  final DateTime Function() clock;
   Stream<void> get changes => database.personalChanges.stream;
   Future<LocalSpacesState> read() => database.transaction(() async {
     final storage = SqliteOrganizerStorage(database);
@@ -21,6 +24,40 @@ class LocalSpacesRepository {
               ),
             )
             .toList();
+    // All local spaces feed the inbox, including spaces that have never been
+    // opened in the editor. Start legacy read receipts once in durable storage.
+    final identity = database.personalIdentityGeneration;
+    final workspaces = {
+      for (final space in spaces)
+        if (space.binding == null) space.id,
+      if (database.personalProfile != null)
+        'private:${database.personalProfile!.partition}',
+    };
+    var migrated = false;
+    for (final workspace in workspaces) {
+      for (final row in await database.rows(
+        "SELECT id,payload FROM personal_records WHERE workspace=? AND type='reminder'",
+        [workspace],
+      )) {
+        final reminder = LocalReminder.fromJson(
+          jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+        );
+        if (!reminder.isRead || reminder.readAt != null) continue;
+        await database.execute(
+          'UPDATE personal_records SET payload=? WHERE workspace=? AND id=?',
+          [
+            jsonEncode(reminder.copyWith(readAt: clock().toUtc()).toJson()),
+            workspace,
+            row['id'],
+          ],
+        );
+        migrated = true;
+      }
+    }
+    if (identity != database.personalIdentityGeneration) {
+      throw const CollaborationException('session_changed');
+    }
+    if (migrated) await database.touchPersonal();
     return LocalSpacesState(
       spaces: spaces,
       selectedSpaceId: database.selectedLocalWorkspaceId,
@@ -70,7 +107,7 @@ class LocalSpacesRepository {
   }) async {
     final storage = SqliteOrganizerStorage(database, workspaceId: localSpaceId);
     await storage.initialize();
-    final repo = OrganizerRepository(storage);
+    final repo = OrganizerRepository(storage, clock: clock);
     await repo.initialize();
     try {
       await repo.materializeFinanceOccurrences(
@@ -87,16 +124,26 @@ class LocalSpacesRepository {
     String localSpaceId,
     String reminderId, {
     required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
   }) async {
-    final storage = SqliteOrganizerStorage(database, workspaceId: localSpaceId);
+    final identity = database.personalIdentityGeneration;
+    bool current() =>
+        identity == database.personalIdentityGeneration &&
+        (stillVisible?.call() ?? true);
+    if (!current()) throw const CollaborationException('session_changed');
+    final storage = SqliteOrganizerStorage(
+      database,
+      workspaceId: localSpaceId,
+      writeAllowed: current,
+    );
     await storage.initialize();
-    final repo = OrganizerRepository(storage);
+    final repo = OrganizerRepository(storage, clock: clock);
     await repo.initialize();
     try {
-      if (repo.snapshot.workspaceKey != expectedWorkspaceKey) {
+      if (!current() || repo.snapshot.workspaceKey != expectedWorkspaceKey) {
         throw const OrganizerConflictException('Reminder workspace changed');
       }
-      await repo.markReminderRead(reminderId);
+      await repo.markReminderRead(reminderId, stillVisible: current);
     } finally {
       await repo.close();
     }

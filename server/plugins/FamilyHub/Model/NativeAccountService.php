@@ -34,14 +34,17 @@ class NativeAccountService extends NativeDatabase
                 $tokens = new NativeAccountTokens($this->container);
                 $row = $tokens->valid($params['token'], 'verify', $user);
                 if (!$identity || $identity['pending_email'] !== $row['email'] || (int)$identity['revision'] !== (int)$row['identity_revision']) { throw new NativeError('account_token_invalid', 404); }
+                $other=$this->one('SELECT account_id FROM familyhub_email_identities WHERE email=? AND verified_at IS NOT NULL AND account_id<>?',[$row['email'],$user['account_id']]);
+                if ($other) { throw new NativeError('email_unavailable',409); }
                 $tokens->consume($row);
                 $this->change('UPDATE familyhub_email_identities SET email=?,verified_at=?,pending_email=NULL WHERE account_id=?', [$row['email'], time(), $user['account_id']]);
+                $this->change('UPDATE familyhub_invitations SET recipient_account_id=? WHERE recipient_email=? AND recipient_account_id IS NULL',[$user['account_id'],$row['email']]);
                 $this->change('UPDATE users SET email=? WHERE id=?', [$row['email'], $user['id']]);
                 $tokens->revoke($user['account_id'], 'reset');
                 return ['verified' => true];
             }
             throw new NativeError('unsupported_operation', 404);
-        });
+        },$operation==='account.email.confirm');
         if ($result instanceof NativeError) { throw $result; }
         return $result;
     }

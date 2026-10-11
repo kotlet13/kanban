@@ -20,7 +20,13 @@ class SqliteOrganizerStorage
         ObservableOrganizerStorage,
         OrganizerOwnershipStorage,
         PersonalJsonBackupStorage {
-  SqliteOrganizerStorage(this.database, {this.legacyFactory, this.workspaceId});
+  SqliteOrganizerStorage(
+    this.database, {
+    this.legacyFactory,
+    this.workspaceId,
+    this.writeAllowed,
+  });
+  final bool Function()? writeAllowed;
   final String? workspaceId;
   String get _workspaceId => workspaceId ?? database.selectedLocalWorkspaceId;
   final CollaborationDatabase database;
@@ -317,8 +323,20 @@ class SqliteOrganizerStorage
 
   @override
   Future<void> write(OrganizerSnapshot snapshot) async {
+    final identity = database.personalIdentityGeneration;
+    void checkWrite() {
+      if (identity != database.personalIdentityGeneration ||
+          (writeAllowed != null && !writeAllowed!())) {
+        throw const OrganizerConflictException(
+          'Personal identity or reminder visibility changed; reload',
+        );
+      }
+    }
+
+    checkWrite();
     snapshot.validate();
     await database.transaction(() async {
+      checkWrite();
       final binding = await activeBinding(),
           local = await localSnapshot(workspace: _workspaceId),
           previous = await read();
@@ -340,7 +358,7 @@ class SqliteOrganizerStorage
               null) {
         throw const OrganizerConflictException('Use the linked space to edit');
       }
-      final identity = database.personalIdentityGeneration;
+      checkWrite();
       final old = {for (final r in snapshotRows(previous)) r.id: r},
           next = {for (final r in snapshotRows(snapshot)) r.id: r};
       final lockedAccounts = <String>{};
@@ -589,7 +607,9 @@ class SqliteOrganizerStorage
           'Personal identity changed; reload',
         );
       }
+      checkWrite();
       await database.touchPersonal();
+      checkWrite();
     });
     database.personalChanged();
   }

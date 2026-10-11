@@ -18,6 +18,7 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.readOnly = false,
     this.allowProjectCreation = true,
     this.scopeLabel,
+    this.titleAccessory,
     this.reminderScopeId,
     this.onShare,
   });
@@ -26,6 +27,7 @@ class OrganizerProjectsPage extends StatefulWidget {
   final bool readOnly;
   final bool allowProjectCreation;
   final String? scopeLabel;
+  final Widget? titleAccessory;
   final String? reminderScopeId;
   final ValueChanged<LocalProject>? onShare;
   final bool home;
@@ -56,6 +58,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
       children: [
         OrganizerHeading(
           title: widget.home ? l.organizerHome : l.organizerProjects,
+          titleAccessory: widget.titleAccessory,
           subtitle:
               widget.scopeLabel ??
               (widget.home
@@ -230,6 +233,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
             Expanded(
               child: OrganizerHeading(
                 title: project.title,
+                titleAccessory: back ? widget.titleAccessory : null,
                 subtitle: project.description.isEmpty
                     ? (widget.scopeLabel ?? l.organizerPersonal)
                     : project.description,
@@ -316,12 +320,14 @@ class OrganizerTasksPage extends StatelessWidget {
     required this.actions,
     this.readOnly = false,
     this.scopeLabel,
+    this.titleAccessory,
     this.reminderScopeId,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
   final bool readOnly;
   final String? scopeLabel;
+  final Widget? titleAccessory;
   final String? reminderScopeId;
   @override
   Widget build(BuildContext context) {
@@ -351,6 +357,7 @@ class OrganizerTasksPage extends StatelessWidget {
       children: [
         OrganizerHeading(
           title: l.organizerTasks,
+          titleAccessory: titleAccessory,
           subtitle: scopeLabel,
           action: readOnly
               ? null

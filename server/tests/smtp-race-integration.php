@@ -69,7 +69,7 @@ $process=proc_open([PHP_BINARY,'/familyhub-tests/smtp-capture.php',$output,(stri
 if (!is_resource($process)) { throw new RuntimeException('Capture unavailable'); }
 stream_set_timeout($pipes[1],5); if (trim(fgets($pipes[1]))!=='ready') { throw new RuntimeException('Capture not ready'); }
 try {
-    foreach (['membership','finance','preference','deactivate','deletion','email'] as $action) {
+    foreach (['membership','finance','preference','deactivate','deletion','email','retention'] as $action) {
         $fixture=scenario($action); $before=count(capture()); $child=mutation($fixture);
         $delivery=new LeaseBarrierDelivery($container,function() use($child) { startMutation($child); finishMutation($child); });
         $counts=$delivery->run(1); $messages=array_slice(capture(),$before);
@@ -80,7 +80,7 @@ try {
         check(!$jobs || ((int)$jobs[0]['attempts']===1 && $jobs[0]['lease_token']===null),'durable attempt preserved and lease completed after '.$action);
     }
     if (!in_array('--leased-only',$argv,true)) {
-        foreach (['email','membership','preference','finance','deletion'] as $action) {
+        foreach (['email','membership','preference','finance','deletion','retention'] as $action) {
             $fixture=scenario($action); $before=count(capture()); $child=mutation($fixture);
             $transport=new class($child) extends NativeSmtpTransport {
                 private $child;

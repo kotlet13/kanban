@@ -10,6 +10,22 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'password_too_short' => l.accountPasswordTooShort,
+    'username_unavailable' => l.emailInviteUsernameUnavailable,
+    'email_invitations_unavailable' ||
+    'email_invitations_unsupported' ||
+    'invitation_email_unavailable' => l.emailInviteUnsupported,
+    'scoped_invitations_unsupported' ||
+    'space_project_membership_unsupported' => l.sharingScopedUnsupported,
+    'space_access_upgrade_required' => l.sharingScopeUpgradeRequired,
+    'project_sharing_pending_changes' => l.sharingProjectSharingPending,
+    'project_sharing_blocked' ||
+    'project_sharing_dependency' ||
+    'project_sharing_dependencies' => l.sharingProjectSharingBlocked,
+    'invitation_authentication_required' => l.emailInviteExistingAccount,
+    'invitation_identity_mismatch' ||
+    'invitation_recipient_mismatch' ||
+    'invitation_email_verification_required' => l.emailInviteWrongAccount,
     'space_bound_to_other_account' => l.localSpaceConnectionOtherAccount,
     'additional_personal_sync_unsupported' ||
     'garden_sync_unsupported' ||
@@ -20,7 +36,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'organization_preview_stale' ||
     'organization_access_preview_stale' => l.organizationAccessPreviewStale,
     'scope_archived' => l.scopeArchivedDescription,
-    'single_project_guard' => l.organizationAccessDescription,
+    'single_project_guard' => l.sharingInviteProjectDescription,
     'recurring_entry_managed_by_rule' ||
     'rule_currency_immutable' => l.financePlanManageRule,
     'requires_finance_resolution' => l.financePairedConflict,
@@ -39,6 +55,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'enrollment_unavailable' => l.accountEnrollmentUnavailable,
     'two_factor_required' => l.sharingLoginNeedsOtp,
     'invalid_credentials' => l.sharingInvalidCredentials,
+    'invitation_invalid' ||
     'invalid_invitation' ||
     'invitation_expired' ||
     'invitation_used' ||

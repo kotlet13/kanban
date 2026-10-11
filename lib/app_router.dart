@@ -3,126 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'l10n/l10n.dart';
-import 'features/auth/connect_page.dart';
 import 'organizer/presentation/organizer_shell.dart';
 import 'organizer/presentation/navigation/organizer_navigation_observer.dart';
-import 'features/ai/project_ai_chat_page.dart';
-import 'features/board/board_page.dart';
-import 'features/board/project_expenses_page.dart';
-import 'features/board/project_finance_table_page.dart';
-import 'features/board/board_structure_page.dart';
-import 'features/projects/projects_page.dart';
-import 'features/settings/ai_settings_page.dart';
-import 'features/settings/project_defaults_page.dart';
-import 'features/tasks/task_details_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   observers: [OrganizerNavigationObserver()],
   routes: <RouteBase>[
     GoRoute(path: '/', builder: (context, state) => const OrganizerShell()),
-    GoRoute(path: '/launch', redirect: (context, state) => '/'),
-    GoRoute(path: '/connect', builder: (context, state) => const ConnectPage()),
-    GoRoute(
-      path: '/projects',
-      builder: (context, state) => const ProjectsPage(),
-    ),
-    GoRoute(
-      path: '/settings/project-defaults',
-      builder: (context, state) => const ProjectDefaultsPage(),
-    ),
-    GoRoute(
-      path: '/settings/ai',
-      builder: (context, state) => const AiSettingsPage(),
-    ),
-    GoRoute(
-      path: '/board/:projectId',
-      builder: (context, state) {
-        final projectId =
-            int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-        final projectName =
-            state.uri.queryParameters['projectName'] ?? context.l10n.project;
-        final projectColorHex = state.uri.queryParameters['projectColor'];
-        return BoardPage(
-          projectId: projectId,
-          projectName: projectName,
-          projectColorHex: projectColorHex,
-        );
-      },
-      routes: <RouteBase>[
-        GoRoute(
-          path: 'structure',
-          builder: (context, state) {
-            final projectId =
-                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-            final projectName =
-                state.uri.queryParameters['projectName'] ??
-                context.l10n.project;
-            return BoardStructurePage(
-              projectId: projectId,
-              projectName: projectName,
-            );
-          },
-        ),
-        GoRoute(
-          path: 'task',
-          builder: (context, state) {
-            final projectId =
-                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-            final taskId = int.tryParse(
-              state.uri.queryParameters['taskId'] ?? '',
-            );
-            return TaskDetailsPage(projectId: projectId, taskId: taskId);
-          },
-        ),
-        GoRoute(
-          path: 'ai-chat',
-          builder: (context, state) {
-            final projectId =
-                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-            final projectName =
-                state.uri.queryParameters['projectName'] ??
-                context.l10n.project;
-            return ProjectAiChatPage(
-              projectId: projectId,
-              projectName: projectName,
-            );
-          },
-        ),
-        GoRoute(
-          path: 'expenses',
-          builder: (context, state) {
-            final projectId =
-                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-            final projectName =
-                state.uri.queryParameters['projectName'] ??
-                context.l10n.project;
-            final projectColorHex = state.uri.queryParameters['projectColor'];
-            return ProjectExpensesPage(
-              projectId: projectId,
-              projectName: projectName,
-              projectColorHex: projectColorHex,
-            );
-          },
-        ),
-        GoRoute(
-          path: 'finance-table',
-          builder: (context, state) {
-            final projectId =
-                int.tryParse(state.pathParameters['projectId'] ?? '') ?? 0;
-            final projectName =
-                state.uri.queryParameters['projectName'] ??
-                context.l10n.project;
-            final projectColorHex = state.uri.queryParameters['projectColor'];
-            return ProjectFinanceTablePage(
-              projectId: projectId,
-              projectName: projectName,
-              projectColorHex: projectColorHex,
-            );
-          },
-        ),
-      ],
-    ),
   ],
   errorBuilder: (context, state) {
     final isApple = switch (Theme.of(context).platform) {

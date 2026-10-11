@@ -1,5 +1,6 @@
 <?php
 // Synthetic keys, in-memory HTTP capture, never calls Google or real devices.
+define('FAMILYHUB_SMTP_HOST','127.0.0.1');define('FAMILYHUB_SMTP_PORT',25252);define('FAMILYHUB_SMTP_ENCRYPTION','none');define('FAMILYHUB_SMTP_ALLOW_LOCAL_PLAINTEXT',true);define('FAMILYHUB_SMTP_FROM','sender@capture.invalid');
 require '/var/www/app/app/common.php';
 if (!defined('FAMILYHUB_DEVELOPMENT_MODE') || FAMILYHUB_DEVELOPMENT_MODE !== true) { throw new RuntimeException('Development only'); }
 use Kanboard\Plugin\FamilyHub\Model\NativeFcmConfig;
@@ -110,6 +111,62 @@ try {
     check($message['android']['notification']['channel_id']==='familyhub_push_silent_v1' && !isset($message['apns']['payload']['aps']['sound']) && strlen($message['apns']['headers']['apns-collapse-id'])===64,'silent platform channel/APNs respects preference and bounded collapse ID');
     check(strpos(json_encode($message),$scope)===false && strpos(json_encode($message),'amountMinor')===false && strpos(json_encode($message),'task.assigned')===false,'payload leaks no scope/kind/financial content');
     check((new NativePushQueue($container))->run(20,$transport)['accepted']===0,'repeated cron does not resend accepted jobs');
+    // No preference rows: API, writer and worker must use the same defaults.
+    $defaultScope=uuid();
+    change('INSERT INTO familyhub_scopes(id,kind,name,owner_id,sequence,created_at) VALUES(?,\'household\',\'Default notifications\',?,0,?)',[$defaultScope,$sessions['a']['user']['id'],time()]);
+    foreach (['a','b'] as $person) { change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,?,1)',[$defaultScope,$sessions[$person]['user']['id'],$accounts[$person],$person==='a'?'owner':'member']); }
+    change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)',[$defaultScope]);change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'read\')',[$defaultScope,$accounts['a']]);
+    $defaults=$inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences'];
+    foreach ($defaults as $category=>$preference) {
+        check($preference===['inApp'=>true,'sound'=>false,'push'=>true,'email'=>false],'unsaved '.$category.' enables push while email remains opt-in');
+    }
+    $defaultIds=[];$revision=1000;
+    foreach (['tasks'=>'task','events'=>'event','shopping'=>'shoppingItem','finance'=>'financeEntry','reminders'=>'task','membership'=>'membership'] as $category=>$type) {
+        $defaultIds[]=emit($defaultScope,$accounts['a'],++$revision,$type,$category,'default.'.$category);
+    }
+    check(count(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id IN ('.implode(',',array_fill(0,count($defaultIds),'?')).')',$defaultIds))===12,'unsaved categories enqueue for both registered devices');
+    check(query('SELECT d.* FROM familyhub_deliveries d JOIN familyhub_inbox i ON i.id=d.inbox_id WHERE i.scope_id=?',[$defaultScope])===[],'configured SMTP still queues no email without opt-in');
+    $before=count($captured);$result=(new NativePushQueue($container))->run(20,$transport);
+    check($result['accepted']===12 && count($captured)===$before+12,'worker delivers all categories with no saved preference rows');
+    $off=['inApp'=>true,'sound'=>false,'push'=>false,'email'=>false];
+    foreach (array_keys($defaults) as $category) {
+        $saved=$inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>$category,'settings'=>$off,'requestId'=>uuid()])['preferences'];
+        check($saved[$category]===$off,'explicit '.$category.' push opt-out survives preference response');
+        $id=emit($defaultScope,$accounts['a'],++$revision,'task',$category,'muted.'.$category);
+        check(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id=?',[$id])===[],'explicit '.$category.' opt-out prevents enqueue');
+    }
+    $on=array_replace($off,['push'=>true]);
+    $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$on,'requestId'=>uuid()]);
+    $lateOff=emit($defaultScope,$accounts['a'],++$revision);
+    $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$off,'requestId'=>uuid()]);
+    $before=count($captured);$result=(new NativePushQueue($container))->run(20,$transport);
+    check($result['cancelled']===2 && count($captured)===$before,'push opt-out after enqueue cancels both deliveries before transport');
+    change('UPDATE familyhub_inbox_preferences SET settings=? WHERE scope_id=? AND account_id=? AND category=\'tasks\'',[json_encode(['push'=>false]),$defaultScope,$accounts['a']]);
+    check($inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences']['tasks']===$off,'partial saved settings fill missing fields and preserve explicit false');
+    change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=?',[$defaultScope]);
+    $service=new \Kanboard\Plugin\FamilyHub\Model\NativeService($container);$stamp=gmdate('Y-m-d\TH:i:s\Z');$list=uuid();
+    $changes=[
+        ['task',uuid(),['title'=>'Shared task','notes'=>'','projectId'=>null,'dueAt'=>null,'isCompleted'=>false,'startAt'=>null,'endAt'=>null,'assigneeAccountIds'=>[],'createdAt'=>$stamp,'updatedAt'=>$stamp]],
+        ['event',uuid(),['title'=>'Shared event','notes'=>'','projectId'=>null,'startAt'=>$stamp,'endAt'=>null,'assigneeAccountIds'=>[],'createdAt'=>$stamp,'updatedAt'=>$stamp]],
+        ['shoppingList',$list,['title'=>'Shared list','createdAt'=>$stamp,'updatedAt'=>$stamp]],
+        ['shoppingItem',uuid(),['listId'=>$list,'title'=>'Shared item','quantity'=>'','isChecked'=>false,'createdAt'=>$stamp,'updatedAt'=>$stamp]],
+    ];
+    foreach ($changes as [$type,$id,$payload]) {
+        $service->dispatch('sync2.push',['scopeId'=>$defaultScope,'operation'=>['opId'=>uuid(),'recordId'=>$id,'type'=>$type,'expectedRevision'=>0,'deleted'=>false,'payload'=>$payload]],'Bearer '.$sessions['b']['token'],$prefix);
+        $rows=query('SELECT id,recipient_account_id FROM familyhub_inbox WHERE scope_id=? AND target_id=?',[$defaultScope,$id]);
+        check(count($rows)===1 && $rows[0]['recipient_account_id']===$accounts['a'],'actual '.$type.' change notifies unassigned member and excludes actor');
+        check(count(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id=?',[$rows[0]['id']]))===2,'actual '.$type.' change queues default push without project configuration');
+        // Drain each change independently: list/item grouping is otherwise intentionally coalesced.
+        check((new NativePushQueue($container))->run(20,$transport)['accepted']===2,'actual '.$type.' change reaches both registered device transports');
+    }
+    change('UPDATE familyhub_scopes SET access_policy_version=3 WHERE id=?',[$defaultScope]);
+    $child=$service->dispatch('scopes.create',['id'=>uuid(),'kind'=>'project','name'=>'Inherited notifications','parentScopeId'=>$defaultScope,'requestId'=>uuid()],'Bearer '.$sessions['b']['token'],$prefix)['scope']['id'];
+    check(query('SELECT * FROM familyhub_members WHERE scope_id=? AND account_id=?',[$child,$accounts['a']])===[] && query('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=?',[$child])===[],'inherited project recipient has no direct membership or preference configuration');
+    $childTask=uuid();$childPayload=array_replace($changes[0][2],['projectId'=>$child,'phaseId'=>null,'estimateMinutes'=>null,'availabilityMinutes'=>null,'availabilityPeriod'=>null,'timer'=>['elapsedSeconds'=>0,'runningSince'=>null,'runId'=>null],'assigneePersonId'=>null,'subjectPersonIds'=>[]]);
+    $service->dispatch('sync3.push',['scopeId'=>$child,'operationContractVersion'=>3,'operation'=>['opId'=>uuid(),'recordId'=>$childTask,'type'=>'task','expectedRevision'=>0,'deleted'=>false,'payload'=>$childPayload]],'Bearer '.$sessions['b']['token'],$prefix);
+    $rows=query('SELECT id,recipient_account_id FROM familyhub_inbox WHERE scope_id=? AND target_id=?',[$child,$childTask]);
+    check(count($rows)===1 && $rows[0]['recipient_account_id']===$accounts['a'] && count(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id=?',[$rows[0]['id']]))===2,'full space member receives default child project push without individual configuration');
+    check((new NativePushQueue($container))->run(20,$transport)['accepted']===2,'inherited project push passes current delivery permissions');
     $old=emit($scope,$accounts['a'],5);register($a,$token2,1,'en');
     check(query('SELECT state FROM familyhub_push_jobs WHERE inbox_id=? AND device_id=?',[$old,$devices[0]])[0]['state']==='cancelled','token rotation cancels old-generation jobs');
     check(rejected(fn()=>register($a,$token1,0),'push_conflict'),'stale retry cannot rotate newer token backwards');
@@ -137,6 +194,7 @@ try {
     check(rejected(fn()=>(new NativePushQueue($container))->run(51,$transport),'validation_error'),'cron rejects unbounded batch limit');
     change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,\'tasks\',?)',[$scope,$accounts['b'],json_encode($settings)]);
     $expired=emit($scope,$accounts['b'],20);change('UPDATE familyhub_push_jobs SET expires_at=0 WHERE inbox_id=?',[$expired]);$before=count($captured);check((new NativePushQueue($container))->run(20,$transport)['cancelled']===1 && count($captured)===$before,'expired push job never calls provider');
+    $readExpired=emit($scope,$accounts['b'],26);change('UPDATE familyhub_inbox SET read_at=? WHERE id=?',[\Kanboard\Plugin\FamilyHub\Model\NativeInboxRetention::cutoff(),$readExpired]);$before=count($captured);check((new NativePushQueue($container))->run(20,$transport)['cancelled']===1 && count($captured)===$before && count(query('SELECT id FROM familyhub_inbox WHERE id=?',[$readExpired]))===1,'expired read notification prevents push even before cleanup with valid job lifetime');
     $leased=emit($scope,$accounts['b'],21);change('UPDATE familyhub_push_jobs SET state=\'processing\',lease_until=? WHERE inbox_id=?',[time()+120,$leased]);check((new NativePushQueue($container))->run(20,$transport)['examined']===0,'unexpired worker lease prevents competing dispatch');change('UPDATE familyhub_push_jobs SET lease_until=0 WHERE inbox_id=?',[$leased]);check((new NativePushQueue($container))->run(20,$transport)['accepted']===1,'expired worker lease recovers bounded delivery');
     change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)',[$scope]);change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'read\')',[$scope,$accounts['b']]);change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,\'finance\',?)',[$scope,$accounts['b'],json_encode($settings)]);
     $financial=emit($scope,$accounts['b'],22,'financeEntry','finance','financeEntry.created');change('UPDATE familyhub_finance_grants SET access_level=\'none\' WHERE scope_id=? AND account_id=?',[$scope,$accounts['b']]);$before=count($captured);check((new NativePushQueue($container))->run(20,$transport)['cancelled']===1 && count($captured)===$before,'revoked financial grant prevents reference delivery');

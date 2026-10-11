@@ -18,12 +18,14 @@ class OrganizerPeoplePage extends ConsumerWidget {
     this.scope,
     this.onTask,
     this.readOnly = false,
+    this.titleAccessory,
   });
   final List<HouseholdPerson> people;
   final List<LocalTask> tasks;
   final SharedScope? scope;
   final Future<void> Function(LocalTask)? onTask;
   final bool readOnly;
+  final Widget? titleAccessory;
   Future<void> _edit(
     BuildContext context,
     WidgetRef ref, [
@@ -138,9 +140,19 @@ class OrganizerPeoplePage extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
-                l.peopleTitle,
-                style: Theme.of(context).textTheme.headlineSmall,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      l.peopleTitle,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  if (titleAccessory != null) ...[
+                    const SizedBox(width: 8),
+                    titleAccessory!,
+                  ],
+                ],
               ),
             ),
             if (!readOnly)

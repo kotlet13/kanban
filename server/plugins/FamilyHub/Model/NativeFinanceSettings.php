@@ -9,7 +9,7 @@ class NativeFinanceSettings extends NativeDatabase
         $this->fields($params, $operation === 'finance.enable' ? ['scopeId', 'enabled', 'requestId'] : ['scopeId', 'accountId', 'grant', 'requestId']);
         $scope = $this->uuid($params['scopeId']); $authorized = $this->scope($scope, $user['id'], false, true);
         if ($authorized['kind'] === 'personal') { throw new NativeError('personal_not_shareable', 403); }
-        if ($operation==='finance.enable' && ($params['enabled']??null)===false && (int)($authorized['effective_access_policy_version']??1)===2) { throw new NativeError('managed_by_organization_policy',409); }
+        if ($operation==='finance.enable' && ($params['enabled']??null)===false && (int)($authorized['effective_access_policy_version']??1)>=2) { throw new NativeError('managed_by_organization_policy',409); }
         $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);
         $replay = $this->replayFinance($scope, $user['account_id'], $request, $hash); if ($replay) { return $replay['body']; }
         $insert = $this->sqlite ? 'INSERT OR IGNORE' : 'INSERT IGNORE'; $this->change($insert.' INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,0,0,0)', [$scope]);
@@ -22,6 +22,7 @@ class NativeFinanceSettings extends NativeDatabase
             $account = $this->uuid($params['accountId']);
             if (!in_array($params['grant'], ['none', 'read', 'write'], true)) { throw new NativeError('validation_error'); }
             $member = $this->one('SELECT m.role FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.account_id=? AND m.active=1 AND u.is_active=1', [$scope, $account]);
+            if ((int)$authorized['effective_access_policy_version']===3) { $member=(new NativeOrganizationAccess($this->container))->visibleScope($scope,$account); }
             if (!$member || ($member['role'] === 'viewer' && $params['grant'] === 'write')) { throw new NativeError('invalid_finance_grant'); }
             $this->grant($scope, $account, $params['grant']);
             $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?', [$scope]);

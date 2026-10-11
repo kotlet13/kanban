@@ -1,5 +1,12 @@
 # Google Play: odgovori za Jivie 1.1.5 (8)
 
+**11. oktober — nova priprava brez AI:** [dejanska odstranitev in končni Android
+manifest](NO_AI_FIRST_RELEASE.md) imata prednost pred spodnjim zgodovinskim
+inventarjem kandidatke 8. Nova koda nima AI/OpenAI poti in širokih media/storage
+dovoljenj. Objavljeni kontakt je `support@jivie.app`. To ne spreminja že shranjenih
+Console odgovorov ali stare interne 1.3.2; končni obrazci morajo upoštevati tudi
+različice, ki dejansko ostanejo v distribuciji. UGC in druge podatkovne poti ostajajo.
+
 **Dopolnitev 9. oktobra z lastnikom:** prva javna izdaja je namenjena samo odraslim (18+) in bo brez starega AI klepeta. Interna 1.1.10 (13) AI še vsebuje; poznejša interna 1.2.0 (14) ga prav tako še ne odstrani; spodnji inventar kandidatke8 ostane zgodovinski dokaz, odločitev sama ne odstrani funkcije. Izračunani IARC osnutek za načrtovano kandidatko brez AI še ni dokončno oddan. Pred končnim odgovorom o spletni vsebini je treba preveriti tudi pomoč pri naslovu/opisu opravila in vse druge generativne poti. Lastnik podpira predlagano prepoved seksualno eksplicitne vsebine; natančno pravilo glede golote in izvedba uporabniških pogojev/prijave vsebine še potrebujeta uskladitev. [Aktualni obrazci, odgovori in prepreke](GOOGLE_PLAY_PUBLIC_PREPARATION.md#nadaljevanje-z-lastnikom--vsebinska-ocena) imajo prednost pred prejšnjim nepotrjenim predlogom občinstva spodaj.
 
 Pregled 9. oktobra 2026 za `si.triparna.jivie`. To je priprava odgovorov iz kode in obstoječe Android kandidatke, **ne dokaz shranjenih izjav v Console, pravne potrditve ali dovoljenje za javno objavo**. Zgodovinski [inventar zasebnosti](PRIVACY_AND_DATA_SAFETY.md) ostane uporaben; spodaj so dodatne ugotovitve za kandidatko 8. [Pogoji javne izdaje](READINESS.md) vsebujejo tudi stare različice in zato sami niso aktualno stanje vseh obrazcev.

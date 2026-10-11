@@ -155,6 +155,17 @@ extension CollaborationFinanceActions on CollaborationRepository {
   }
 
   Future<void> _financeWritable(String partition, String scopeId) async {
+    final sharing = await database.rows(
+      r"SELECT 1 FROM local_meta WHERE name=? OR (name LIKE ? AND json_extract(value,'$.projectId')=?)",
+      [
+        'project_sharing_pending:$partition:$scopeId',
+        'project_sharing_pending:$partition:%',
+        scopeId,
+      ],
+    );
+    if (sharing.isNotEmpty) {
+      throw const CollaborationException('project_sharing_pending_changes');
+    }
     if (!_financeSupported) {
       throw const CollaborationException('feature_disabled');
     }

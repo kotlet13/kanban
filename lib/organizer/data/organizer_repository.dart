@@ -35,6 +35,7 @@ class OrganizerRepository {
   Future<void> reload() => _enqueue(() async {
     try {
       _snapshot = await storage.read();
+      await _stampLegacyReadReminders();
       _changes.add(snapshot);
     } catch (error, stack) {
       _snapshot = null;
@@ -73,8 +74,22 @@ class OrganizerRepository {
 
   Future<OrganizerSnapshot> initialize() => _enqueue(() async {
     _snapshot ??= await storage.read();
+    await _stampLegacyReadReminders();
     return snapshot;
   });
+
+  Future<void> _stampLegacyReadReminders() async {
+    if (!snapshot.reminders.any((r) => r.isRead && r.readAt == null)) return;
+    final now = _now();
+    await _persist(
+      snapshot.copyWith(
+        revision: snapshot.revision + 1,
+        reminders: snapshot.reminders.map(
+          (r) => r.isRead && r.readAt == null ? r.copyWith(readAt: now) : r,
+        ),
+      ),
+    );
+  }
 
   Future<void> _change(OrganizerSnapshot Function(OrganizerSnapshot) change) =>
       _enqueue(() async {
@@ -556,11 +571,20 @@ class OrganizerRepository {
     );
   });
 
-  Future<void> markReminderRead(String id) => _change((s) {
+  Future<void> markReminderRead(
+    String id, {
+    bool read = true,
+    bool Function()? stillVisible,
+  }) => _change((s) {
+    if (stillVisible != null && !stillVisible()) {
+      throw const OrganizerConflictException('Reminder is no longer visible');
+    }
     _find(s.reminders, id, (v) => v.id);
     return s.copyWith(
       reminders: s.reminders.map(
-        (v) => v.id == id ? v.copyWith(isRead: true) : v,
+        (v) => v.id == id
+            ? v.copyWith(isRead: read, readAt: read ? v.readAt ?? _now() : null)
+            : v,
       ),
     );
   });
@@ -655,7 +679,9 @@ OrganizerSnapshot _withReminders(OrganizerSnapshot snapshot, DateTime now) {
     if (!task.isCompleted && task.dueAt != null && !task.dueAt!.isAfter(now)) {
       final id = reminderId(task);
       reminders.add(
-        previous[id] ??
+        (previous[id]?.isRead == true && previous[id]?.readAt == null
+                ? previous[id]!.copyWith(readAt: now)
+                : previous[id]) ??
             LocalReminder(
               id: id,
               taskId: task.id,

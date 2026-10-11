@@ -1,5 +1,28 @@
 # Jivie — priprava javne Google Play izdaje
 
+**Zaključek starega UI, 11. oktober:** odstranjen je tudi preostali stari Kanboard
+vmesnik in njegove odvisnosti. Novi organizer/FamilyHub ostajata, brez spremembe
+različice ali podatkovnih identitet. [Končni dokazi](LEGACY_INTERFACE_REMOVAL.md)
+imajo prednost pred inventarjem starega UI spodaj; dejanska interna distribucija
+in Console obrazci se s commitom/združitvijo kode ne spremenijo.
+
+**11. oktober — AI in dovoljenja odpravljena v izvoru:** po uporabnikovem naročilu
+je odstranjen celoten stari AI, vključno s pomočjo pri opravilih in neposrednimi potmi.
+Preverjevalni Android AAB nima več širokih media/storage dovoljenj; SL/EN zasebnost
+je objavljena z delujočim `support@jivie.app`. [Dokazi](NO_AI_FIRST_RELEASE.md)
+imajo prednost pred starejšimi opisi odprte odstranitve AI/dovoljenj spodaj.
+Interna 1.3.2 (17) in shranjeni Console obrazci ostajajo prejšnji; naslednja kandidatka
+potrebuje lastno različico, distribucijo in fizični file picker/open/share preizkus.
+UGC, končne deklaracije, podatkovna obnova in iOS ostajajo ločeno delo.
+
+**Novejši korak 11. oktobra 2026:** predstavitvena stran `jivie.app` je objavljena.
+Začetna stran, pomoč, zasebnost in izbris ter njihove angleške različice vračajo
+HTTPS 200 in se ujemajo s preverjenim paketom; HTTP se preusmeri na HTTPS.
+[Dokazi objave](../../website/README.md) imajo prednost pred spodnjimi zgodovinskimi
+403/404. Besedila so usklajena z 1.3.2, vključno z omejitvami kopije in še dosegljivim
+AI. Končne Data safety/IARC izjave, UGC ukrepi, umik AI in javna mobilna oddaja s tem
+niso zaključeni; v Console v tem koraku ni bilo sprememb.
+
 Stanje 9. oktobra 2026. Uporabnik je naročil pripravo dokumentacije, opisov in grafik v Console. Po vrnitvi domov je izrecno naročil nadaljevanje obrazcev ter ustavitev pred izdelavo nove izdaje. **Spremembe niso oddane v pregled in produkcijska izdaja ni objavljena.** Ob pripravi obrazcev je bila interna izdaja **1.1.10 (13)**; poznejši ločeni izdajni korak je objavil **1.2.0 (14)** za interne uporabnike; [izdajni dnevnik](NOTIFICATION_RELEASE_RUN.md) vodi njen ločeni dokaz. Nadaljevanje obrazcev ne izdeluje nove gradnje, ne spreminja verzije ali strežnika.
 
 ## Nadaljevanje z lastnikom — vsebinska ocena

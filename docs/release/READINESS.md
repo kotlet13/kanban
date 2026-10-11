@@ -1,5 +1,13 @@
 # Jivie — pogoji za javno izdajo
 
+**11. oktober — trenutni izvor:** [stari UI in AI sta odstranjena](LEGACY_INTERFACE_REMOVAL.md),
+Android manifest nima širokih media/storage dovoljenj, javne SL/EN strani z
+`support@jivie.app` so [objavljene in preverjene](../../website/README.md).
+942 Flutter PASS / 13 opt-in preskočenih, analiza brez ugotovitev ter Android/web,
+iOS simulator in izolirani Mac build PASS. To popravi spodnje zgodovinske opise,
+ne potrjuje nove trgovinske distribucije. UGC, popolnost obnove/priponk, končna
+deklaracija in fizična kandidatka ostajajo odprti.
+
 To je seznam odprtih pogojev, ne potrdilo skladnosti. Zadnji pregled: 7. oktober 2026. Lokalne spremembe ne spreminjajo računa v trgovini, produkcijskega strežnika ali osebnih podatkov. [Izvorni preverjevalnik](../../tools/release/README.md) odkrije del teh napak; dejanska dokazila so še potrebna.
 
 Aktualno, 8. oktober: Android **1.1.3 (6)** je potrjeno aktiven na internem kanalu za domači (15). Svež AAB je podpisan in preverjen; 636 Flutter testov PASS, analiza brez napak/opozoril s 37 obstoječimi info. iOS prvi upload prejšnje1.0.1 (2) je Apple zavrnil; popravek medijskih API referenc je lokalno preverjen, svež distribucijski izvoz čaka obstoječo Xcode prijavo. [Tekoči izidi](NOTIFICATION_RELEASE_RUN.md) in [koraki lastnika](OWNER_ACTIONS.md) imajo prednost pred spodnjimi zgodovinskimi pogoji prve izdaje. Javna izdaja in APNs še nista potrjena. Android FCM je uporabnik na zaklenjenem Samsungu S25 že potrdil skupaj s klikom do pravega opravila; novi obrazec razporejenih opomnikov potrebuje ločen fizični preizkus.

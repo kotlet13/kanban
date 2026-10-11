@@ -36,6 +36,19 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         CollaborationRepository._map(rows.single['data']),
       );
       final snapshot = await storage.localSnapshot(workspace: id);
+      final savedCreation = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['space_publication_create:${session.profile.partition}:$id'],
+      );
+      final splitProjects =
+          space.kind == LocalSpaceKind.organization ||
+          (space.kind == LocalSpaceKind.household &&
+              _spaceProjectMembershipSupported &&
+              (savedCreation.isEmpty ||
+                  CollaborationRepository._map(
+                        savedCreation.single['value'],
+                      )['accessPolicyVersion'] ==
+                      3));
       final gardens = await database.rows(
         'SELECT g.payload FROM device_gardens g JOIN garden_space_links l ON l.garden_id=g.id WHERE l.space_id=? ORDER BY g.id',
         [id],
@@ -50,7 +63,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           recordCount: snapshot.recordIds.length,
           gardenCount: gardens.length,
           linkedPaymentCount: linked.length,
-          projects: space.kind == LocalSpaceKind.organization
+          projects: splitProjects
               ? [
                   for (final project in snapshot.projects)
                     LocalProjectPublicationDestination(
@@ -106,7 +119,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           _financeContractVersion < 2) {
         issues.add('finance_sync_unsupported');
       }
-      if (space.kind == LocalSpaceKind.organization &&
+      if (splitProjects &&
           snapshot.financeEntries.any(
             (entry) =>
                 entry.projectId != null && entry.recurrenceRuleId != null,
@@ -114,7 +127,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         // Rules remain at organization level; server references are scope-local.
         issues.add('cross_scope_recurrence_rule');
       }
-      if (space.kind == LocalSpaceKind.organization &&
+      if (splitProjects &&
           snapshot.financeEntries.any((entry) {
             final task = snapshot.tasks
                 .where((t) => t.id == entry.taskId)
@@ -166,8 +179,12 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         space.name,
         address: space.address,
       );
+      final splitProjects =
+          space.kind == LocalSpaceKind.organization ||
+          (space.kind == LocalSpaceKind.household &&
+              parent.accessPolicyVersion == 3);
       final projectScopes = <String, SharedScope>{};
-      if (space.kind == LocalSpaceKind.organization) {
+      if (splitProjects) {
         for (final project in snapshot.projects) {
           projectScopes[project.id] = await _ensureLocalPublishedScope(
             session,
@@ -175,7 +192,10 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
             project.id,
             SharedScopeKind.project,
             project.title,
-            organizationId: parent.id,
+            organizationId: space.kind == LocalSpaceKind.organization
+                ? parent.id
+                : null,
+            parentScopeId: _spaceProjectMembershipSupported ? parent.id : null,
             projectPayload: _payload(project.toJson()),
           );
         }
@@ -248,7 +268,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
               _payload(person.toJson()),
             );
           }
-          final projects = space.kind == LocalSpaceKind.organization
+          final projects = splitProjects
               ? snapshot.projects.where((p) => p.id == destination)
               : snapshot.projects;
           for (final project in projects) {
@@ -262,7 +282,12 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           }
           for (final task in snapshot.tasks.where(
             (t) =>
-                _publicationDestination(space, t.projectId, parent.id) ==
+                _publicationDestination(
+                  space,
+                  t.projectId,
+                  parent.id,
+                  splitProjects: splitProjects,
+                ) ==
                 destination,
           )) {
             await _putPublicationRecord(
@@ -275,7 +300,12 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           }
           for (final event in snapshot.events.where(
             (e) =>
-                _publicationDestination(space, e.projectId, parent.id) ==
+                _publicationDestination(
+                  space,
+                  e.projectId,
+                  parent.id,
+                  splitProjects: splitProjects,
+                ) ==
                 destination,
           )) {
             final payload = _payload(event.toJson());
@@ -317,6 +347,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
               snapshot,
               destination,
               parent.id,
+              splitProjects: splitProjects,
             );
           }
         }
@@ -377,11 +408,17 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
     ],
   };
 
+  bool _splitPublicationProjects(LocalSpace space) =>
+      space.kind == LocalSpaceKind.organization ||
+      (space.kind == LocalSpaceKind.household &&
+          _spaceProjectMembershipSupported);
+
   String _publicationDestination(
     LocalSpace space,
     String? projectId,
-    String parent,
-  ) => space.kind == LocalSpaceKind.organization && projectId != null
+    String parent, {
+    bool? splitProjects,
+  }) => (splitProjects ?? _splitPublicationProjects(space)) && projectId != null
       ? projectId
       : parent;
   Future<String> _publicationRequestId(
@@ -409,6 +446,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
     SharedScopeKind kind,
     String name, {
     String? organizationId,
+    String? parentScopeId,
     String? address,
     Map<String, Object?>? projectPayload,
   }) async {
@@ -429,9 +467,15 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
               'create',
             ),
             if (organizationId != null) 'organizationId': organizationId,
+            if (parentScopeId != null) 'parentScopeId': parentScopeId,
             if (address != null) 'address': address,
             if (projectPayload != null) 'projectPayload': projectPayload,
-            if (kind == SharedScopeKind.organization) 'accessPolicyVersion': 2,
+            if (_spaceProjectMembershipSupported &&
+                (kind == SharedScopeKind.organization ||
+                    kind == SharedScopeKind.household))
+              'accessPolicyVersion': 3
+            else if (kind == SharedScopeKind.organization)
+              'accessPolicyVersion': 2,
           };
     if (saved.isEmpty) {
       await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
@@ -443,7 +487,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
     final scope = SharedScope.fromJson(result['scope'] as Map<String, dynamic>);
     if (scope.id != id ||
         scope.kind != kind ||
-        scope.organizationId != organizationId) {
+        scope.parentSpaceId != (parentScopeId ?? organizationId)) {
       throw const CollaborationException('invalid_response');
     }
     await database.transaction(() async {
@@ -484,12 +528,18 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
     LocalSpace space,
     OrganizerSnapshot snapshot,
     String destination,
-    String parent,
-  ) async {
+    String parent, {
+    bool? splitProjects,
+  }) async {
     final entries = snapshot.financeEntries
         .where(
           (e) =>
-              _publicationDestination(space, e.projectId, parent) ==
+              _publicationDestination(
+                space,
+                e.projectId,
+                parent,
+                splitProjects: splitProjects,
+              ) ==
               destination,
         )
         .toList();

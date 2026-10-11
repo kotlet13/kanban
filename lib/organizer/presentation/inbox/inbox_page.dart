@@ -11,7 +11,10 @@ import '../shared/sharing_session_boundary.dart';
 import 'notification_target_view.dart';
 import 'finance_inbox_section.dart';
 import '../../state/inbox_projection_provider.dart';
+import '../../state/inbox_read_action_provider.dart';
+import '../../domain/inbox_projection.dart';
 import 'reminder_snooze.dart';
+import 'inbox_read_visuals.dart';
 
 enum _InboxFilter { all, personal, scope }
 
@@ -37,6 +40,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     bool showProgress = true,
   }) async {
     if (_busy) return;
+    final guard = SharingSessionGuard(context, ref, allowSignedOut: true);
     setState(() {
       _busy = true;
       _showProgress = showProgress;
@@ -44,7 +48,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     try {
       await action();
     } catch (error) {
-      if (mounted) {
+      if (mounted && guard.isCurrent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(sharingErrorMessage(context, error))),
         );
@@ -87,6 +91,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
     required String audience,
     VoidCallback? onSnooze,
   }) => Card(
+    color: inboxCardColor(context, read),
     child: ListTile(
       contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       leading: Icon(
@@ -94,10 +99,7 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
             ? Icons.notifications_none_outlined
             : Icons.notifications_active_outlined,
       ),
-      title: Text(
-        title,
-        style: read ? null : const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      title: Text(title, style: inboxTitleStyle(context, read)),
       subtitle: Text('$audience · $subtitle'),
       onTap: _busy ? null : onOpen,
       trailing: Row(
@@ -109,19 +111,14 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
               onPressed: _busy ? null : onSnooze,
               icon: const Icon(Icons.snooze_outlined),
             ),
-          IconButton(
+          InboxReadStatusButton(
+            read: read,
             tooltip: onRead == null
                 ? context.l10n.inboxRead
                 : read
                 ? context.l10n.inboxMarkUnread
                 : context.l10n.inboxMarkRead,
             onPressed: _busy ? null : onRead,
-            icon: Icon(
-              read
-                  ? Icons.mark_email_unread_outlined
-                  : Icons.mark_email_read_outlined,
-              size: 20,
-            ),
           ),
         ],
       ),
@@ -142,7 +139,9 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
               ? entry.audience == InboxAudience.personal
               : entry.audience == InboxAudience.scope);
     }).toList();
-    final localGroups = _filter == _InboxFilter.scope ? const [] : inbox.local;
+    final localGroups = _filter == _InboxFilter.scope
+        ? const <LocalInboxReminder>[]
+        : inbox.local;
     final financePlans = inbox.finance
         .where(
           (p) =>
@@ -154,6 +153,17 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                         p.target.scopeId != shared?.privateSync.scopeId),
         )
         .toList();
+    final visible = OrganizerInboxProjection(
+      local: localGroups,
+      shared: groups,
+      finance: financePlans,
+    );
+    final financeReads = ref.watch(financeInboxReadKeysProvider);
+    final canReadAll = visible.hasUnread(
+      financeReads.isLoading || financeReads.hasError
+          ? null
+          : financeReads.valueOrNull,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -177,13 +187,29 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
                   _InboxFilter.personal => l.inboxForMe,
                   _InboxFilter.scope => l.inboxInSharedSpace,
                 }),
-                onSelected: (_) => setState(() => _filter = filter),
+                onSelected: _busy
+                    ? null
+                    : (_) => setState(() => _filter = filter),
               ),
+            TextButton.icon(
+              key: const ValueKey('inbox-mark-all-read'),
+              icon: const Icon(Icons.done_all),
+              label: Text(l.inboxMarkAllRead),
+              onPressed: _busy || !canReadAll
+                  ? null
+                  : () => _run(
+                      () => ref.read(inboxReadActionProvider)(
+                        visible,
+                        expectedSession: session,
+                      ),
+                    ),
+            ),
           ],
         ),
         const SizedBox(height: 20),
         if (_busy && _showProgress) const LinearProgressIndicator(),
-        if (financePlans.isNotEmpty) FinanceInboxSection(plans: financePlans),
+        if (financePlans.isNotEmpty)
+          FinanceInboxSection(plans: financePlans, enabled: !_busy),
         for (final item in localGroups)
           _card(
             title: l.inboxPersonalReminders(1),

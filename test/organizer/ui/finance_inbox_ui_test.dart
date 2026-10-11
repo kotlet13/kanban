@@ -61,8 +61,9 @@ Future<void> pumpInbox(
   DateTime Function() clock, {
   NotificationTarget? launch,
   Future<Set<String>> Function()? readKeys,
+  double width = 390,
 }) async {
-  tester.view.physicalSize = const Size(390, 1000);
+  tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -103,6 +104,68 @@ Future<void> pumpInbox(
 }
 
 void main() {
+  testWidgets(
+    'mark-all financial receipt survives rebuild without posting payment',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final fixture = (await tester.runAsync(seed))!;
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(fixture.db.close);
+      });
+      final now = DateTime(2026, 10, 30, 12);
+      await pumpInbox(
+        tester,
+        fixture.db,
+        fixture.storage,
+        () => now,
+        width: 320,
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(OrganizerInboxPage)),
+      );
+      expect(container.read(organizerInboxHasUnreadProvider), isTrue);
+      expect(find.byIcon(Icons.mark_email_unread_outlined), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.text('Ali si že dobil plačo?'))
+            .style!
+            .fontWeight,
+        FontWeight.w700,
+      );
+      final button = find.byKey(const ValueKey('inbox-mark-all-read'));
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(container.read(organizerInboxHasUnreadProvider), isFalse);
+      expect(find.byIcon(Icons.mark_email_read_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.mark_email_unread_outlined), findsNothing);
+      expect(find.byTooltip('Prebrano'), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.text('Ali si že dobil plačo?'))
+            .style!
+            .fontWeight,
+        FontWeight.w400,
+      );
+      expect(tester.widget<TextButton>(button).onPressed, isNull);
+      final snapshot = (await tester.runAsync(fixture.storage.read))!;
+      final entry = snapshot.financeEntries.singleWhere(
+        (e) => e.occurrenceKey == '2026-10',
+      );
+      expect(entry.status, FinanceEntryStatus.planned);
+      expect(entry.amountMinor, 120000);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await pumpInbox(tester, fixture.db, fixture.storage, () => now);
+      final fresh = ProviderScope.containerOf(
+        tester.element(find.byType(OrganizerInboxPage)),
+      );
+      expect(fresh.read(organizerInboxHasUnreadProvider), isFalse);
+      expect(find.byIcon(Icons.mark_email_read_outlined), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   testWidgets(
     'Friday read receipt survives rebuild; Monday remains one new unconfirmed question; confirmation books same entry',

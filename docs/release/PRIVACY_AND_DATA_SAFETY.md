@@ -1,5 +1,22 @@
 # Osnutek zasebnosti in deklaracij Jivie
 
+**Zaključna odstranitev starega odjemalca, 11. oktober:** stari Kanboard UI, njegov
+JSON-RPC prenos, komentarji/priponke v tem UI in AI niso več dosegljive poti nove
+kandidatke. [Dokazi in ohranjene odvisnosti](LEGACY_INTERFACE_REMOVAL.md).
+Aktualni izvorni inventar zajema lokalni organizer, FamilyHub račune/seje/sinhronizacijo,
+prostore/finance/povabila, obvestila/FCM/SMTP ter kopije/obnovo in sistemsko deljenje
+izvozov. Širokih medijskih dovoljenj in open_filex ni več. Spodnji inventar ostaja
+zgodovinski; končne Console deklaracije uskladimo z dejansko distribuirano kandidatko.
+
+**11. oktober 2026 — prva javna kandidatka brez AI:** uporabnik je naročil dejansko
+odstranitev vseh starih AI poti, transporta in pomočnikov. Aktualni dokazi ter meje
+so v [NO_AI_FIRST_RELEASE.md](NO_AI_FIRST_RELEASE.md). Objavljena SL/EN zasebnost
+in kontakt `support@jivie.app` imata prednost pred spodnjim zgodovinskim inventarjem
+7.–9. oktobra. Stare interne izdaje AI še vsebujejo; sprememba izvora ne spreminja
+že nameščenih aplikacij ali shranjenih Console odgovorov. Preostale poti sodelovanja,
+priponk, FCM in SMTP ostajajo predmet deklaracij; odsotnost AI ne pomeni odsotnosti
+prenosov podatkov. [Objavljeno spletno besedilo](../../website/README.md).
+
 **Dopolnitev 9. oktobra 2026:** aktualni inventar kandidatke 1.1.5 (8), vključno z native SDK, medijskimi dovoljenji in vrzelmi starega AI toka, je v [Google Play deklaracijah](GOOGLE_PLAY_DECLARATIONS.md). Stanje dejansko izpolnjenih obrazcev je v [pripravi javne izdaje](GOOGLE_PLAY_PUBLIC_PREPARATION.md). Spodnje zgodovinske predloge uskladimo s končno kandidatko; niso potrditev Console ali javne politike.
 
 Pregled izvorne kode 7. oktobra 2026. To je delovni inventar in osnutek besedil, **ni objavljena politika ali dokončno izpolnjen obrazec trgovine**. Uporabnik je kot izdajatelja določil TriparNA; javni naziv in kontakt `zadruga@triparna.si` sta preverjena na uradni strani. [Osnutek javnih vsebin](WEBSITE_CONTENT.md) navaja vir in meje do samostojnih strežnikov. Veljavna pravna podlaga, dejanska hramba, ponudniki/obdelovalci, države gostovanja ter objavljeni URL-ji še niso dokončno potrjeni. Ne trdimo skladnosti z GDPR ali drugimi predpisi. Končni upravljavec mora potrditi resnično konfiguracijo in prakso; podpisana izdaja mora ustrezati deklaraciji.

@@ -76,6 +76,7 @@ extension CollaborationBackupActions on CollaborationRepository {
     if (_syncing) await _syncDone?.future;
     _checkEpoch(epoch);
     _syncing = true;
+    _syncEpoch = epoch;
     final done = _syncDone = Completer<void>();
     var leased = false;
     try {
@@ -317,6 +318,7 @@ extension CollaborationBackupActions on CollaborationRepository {
         );
       }
       _syncing = false;
+      _syncEpoch = null;
       done.complete();
     }
     await refreshLocal();
@@ -335,6 +337,7 @@ extension CollaborationPrivateRecoveryAttachment on CollaborationRepository {
     if (_syncing) await _syncDone?.future;
     _checkEpoch(epoch);
     _syncing = true;
+    _syncEpoch = epoch;
     final done = _syncDone = Completer<void>();
     var leased = false;
     try {
@@ -421,6 +424,7 @@ extension CollaborationPrivateRecoveryAttachment on CollaborationRepository {
         );
       }
       _syncing = false;
+      _syncEpoch = null;
       done.complete();
     }
     database.personalChanged();

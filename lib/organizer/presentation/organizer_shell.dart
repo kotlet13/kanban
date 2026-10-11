@@ -24,6 +24,7 @@ import 'settings_page.dart';
 import 'shopping_page.dart';
 import 'today_page.dart';
 import 'shared/sharing_account_page.dart';
+import 'shared/sharing_errors.dart';
 import 'shared/space_settings_page.dart';
 import 'shared/sharing_workspace.dart';
 import 'shared/space_picker.dart';
@@ -39,7 +40,6 @@ import 'inbox/notification_target_view.dart';
 import 'onboarding/getting_started.dart';
 import '../platform/invitation_links/invitation_link.dart';
 import '../platform/invitation_links/invitation_link_providers.dart';
-import 'shared/sharing_accept.dart';
 import 'navigation/organizer_mobile_menu.dart';
 import 'navigation/organizer_navigation.dart';
 import 'navigation/organizer_back_boundary.dart';
@@ -267,28 +267,22 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         );
         return;
       }
-      final session = ref.read(collaborationProvider).valueOrNull?.session;
-      if (session != null &&
-          Uri.parse(
-                session.serverUrl,
-              ).normalizePath().toString().replaceAll(RegExp(r'/+$'), '') ==
-              Uri.parse(
-                link.serverUrl,
-              ).normalizePath().toString().replaceAll(RegExp(r'/+$'), '')) {
-        await showAcceptSharingInvite(
-          context,
-          ref,
-          initialToken: link.token,
-          onAccepted: (id) => _changeNavigation(() {
-            _navigationState.sharedScopeId = id;
-            _navigationState.area = _Area.sharing;
-          }),
+      await ref
+          .read(collaborationProvider.notifier)
+          .rememberInvitation(serverUrl: link.serverUrl, token: link.token);
+      if (!mounted) return;
+      final current = ref.read(collaborationProvider).valueOrNull?.session;
+      if ('${current?.partition}:${current?.deviceId}' != identity) return;
+      _changeNavigation(() {
+        _incomingInvitation = link;
+        _navigationState.area = _Area.sharing;
+        _navigationState.sharingAuth = false;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(sharingErrorMessage(context, error))),
         );
-      } else {
-        _changeNavigation(() {
-          _incomingInvitation = link;
-          _navigationState.area = _Area.sharing;
-        });
       }
     } finally {
       _openingInvite = false;
@@ -1435,6 +1429,19 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         setupIntent: _setupIntent,
         initialInvitation: _incomingInvitation,
         onInvitationHandled: () => setState(() => _incomingInvitation = null),
+        onInvitationAccepted: (id) {
+          final state = ref.read(collaborationProvider).valueOrNull;
+          if (state?.selectedSpaceId != id || state?.sessionInvalid != false) {
+            return;
+          }
+          _changeNavigation(() {
+            _incomingInvitation = null;
+            _navigationState.sharedScopeId = id;
+            _navigationState.area = _Area.today;
+            _navigationState.sharedListId = null;
+            _navigationState.sharedProjectId = null;
+          });
+        },
         selectedScopeId: _navigationState.sharedScopeId,
         onScopeSelected: _selectScope,
         initialView: _navigationState.sharingView,

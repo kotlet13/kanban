@@ -43,7 +43,7 @@ Future<void> showPublishPersonalCopy(
             scope.kind != SharedScopeKind.personal &&
             scope.kind != SharedScopeKind.organization &&
             (project == null ||
-                (scope.projectRootId == null && scope.organizationId == null)),
+                (scope.projectRootId == null && scope.parentSpaceId == null)),
       )
       .toList();
   if (scopes.isEmpty) {

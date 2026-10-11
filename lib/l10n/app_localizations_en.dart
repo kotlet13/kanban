@@ -9,37 +9,13 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get kanbanConnect => 'Kanban Connect';
-
-  @override
   String get routeError => 'Route error';
 
   @override
   String get unknownError => 'Unknown error';
 
   @override
-  String get kanboardWorkspace => 'Kanboard Workspace';
-
-  @override
-  String get restoringSession => 'Restoring session...';
-
-  @override
-  String get connectToKanboard => 'Connect to Kanboard';
-
-  @override
   String get projects => 'Projects';
-
-  @override
-  String get projectDefaults => 'Project defaults';
-
-  @override
-  String get aiSettings => 'AI settings';
-
-  @override
-  String get aiChat => 'AI chat';
-
-  @override
-  String get connectionSettings => 'Connection settings';
 
   @override
   String get refresh => 'Refresh';
@@ -48,74 +24,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
-  String get newProject => 'New project';
-
-  @override
-  String get couldNotLoadProjects => 'Could not load projects';
-
-  @override
-  String get retry => 'Retry';
-
-  @override
-  String get noActiveSession => 'No active session';
-
-  @override
-  String get noActiveSessionConnectFirst => 'No active session. Connect first.';
-
-  @override
-  String get connectToKanboardToContinue => 'Connect to Kanboard to continue.';
-
-  @override
-  String get connect => 'Connect';
-
-  @override
-  String get projectsWorkspace => 'Projects Workspace';
-
-  @override
-  String get trackOrganizeAndOpenYourKanboardProjects =>
-      'Track, organize, and open your Kanboard projects.';
-
-  @override
-  String get connectYourKanboardAccountToLoadProjectData =>
-      'Connect your Kanboard account to load project data.';
-
-  @override
-  String get total => 'Total';
-
-  @override
   String get active => 'Active';
 
   @override
-  String get inactive => 'Inactive';
-
-  @override
-  String get noProjectsYet => 'No projects yet';
-
-  @override
-  String
-  get createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard =>
-      'Create your first project from the action button and start organizing your board.';
-
-  @override
-  String get openBoard => 'Open board';
-
-  @override
-  String get projectAttachments => 'Project attachments';
-
-  @override
   String get deleteProject => 'Delete project';
-
-  @override
-  String get noDescriptionYetOpenTheProjectToAddContext =>
-      'No description yet. Open the project to add context.';
-
-  @override
-  String get deleteProject2 => 'Delete project?';
-
-  @override
-  String thisWillRemovePermanently(Object name) {
-    return 'This will remove \"$name\" permanently.';
-  }
 
   @override
   String get cancel => 'Cancel';
@@ -127,20 +39,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createProject => 'Create project';
 
   @override
-  String get editProject => 'Edit project';
-
-  @override
   String get projectName => 'Project name';
 
   @override
   String get description => 'Description';
-
-  @override
-  String get projectColorSyncedViaMetadata =>
-      'Project color (synced via metadata)';
-
-  @override
-  String get noColor => 'No color';
 
   @override
   String get save => 'Save';
@@ -149,383 +51,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stop => 'Stop';
 
   @override
-  String get send => 'Send';
-
-  @override
-  String attachments(Object name) {
-    return 'Attachments · $name';
-  }
-
-  @override
-  String get noProjectAttachmentsYet => 'No project attachments yet.';
-
-  @override
-  String get download => 'Download';
-
-  @override
-  String get addFiles => 'Add files';
-
-  @override
   String get close => 'Close';
-
-  @override
-  String get projectDefaults2 => 'Project Defaults';
 
   @override
   String get appLanguage => 'App language';
 
   @override
-  String get followSystemKeepsLocaleAutomatic =>
-      'Follow system keeps locale automatic.';
-
-  @override
   String get language => 'Language';
-
-  @override
-  String get followSystemDefault => 'Follow system (default)';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get slovene => 'Slovene';
-
-  @override
-  String get templateAppliedToEveryNewProjectCreatedFromThisApp =>
-      'Template applied to every new project created from this app.';
-
-  @override
-  String get leaveFieldsEmptyToKeepServerDefaults =>
-      'Leave fields empty to keep server defaults.';
-
-  @override
-  String get savingADefaultCurrencyAlsoAppliesItToAllExistingProjects =>
-      'Saving a default currency also applies it to all existing projects.';
-
-  @override
-  String get defaultBoardColumns => 'Default Board Columns';
-
-  @override
-  String get defaultBoardColumnsHint =>
-      'One per line, e.g.\\nBacklog\\nReady\\nIn Progress\\nDone';
-
-  @override
-  String get defaultSwimlane => 'Default Swimlane';
-
-  @override
-  String get exampleMain => 'Example: Main';
-
-  @override
-  String get exampleUSD => 'Example: USD';
-
-  @override
-  String get defaultExpenseCurrency => 'Default Expense Currency';
 
   @override
   String get reset => 'Reset';
 
   @override
-  String get enableAI => 'Enable AI';
-
-  @override
-  String get instantResponse => 'Instant response';
-
-  @override
-  String get thinkingResponse => 'Thinking response';
-
-  @override
-  String get thinkingEffort => 'Thinking effort';
-
-  @override
-  String get effortLow => 'Low';
-
-  @override
-  String get effortMedium => 'Medium';
-
-  @override
-  String get effortHigh => 'High';
-
-  @override
-  String get aiModel => 'AI model';
-
-  @override
-  String get openAiApiKey => 'OpenAI API key';
-
-  @override
-  String get openAiApiKeyIsRequired => 'OpenAI API key is required.';
-
-  @override
-  String get testAIConnection => 'Test AI connection';
-
-  @override
-  String get fetchAvailableModels => 'Fetch available models';
-
-  @override
-  String availableModelsFetched(Object count) {
-    return 'Fetched $count models.';
-  }
-
-  @override
-  String availableModelsFetchFailed(Object error) {
-    return 'Fetching models failed: $error';
-  }
-
-  @override
-  String get aiSettingsSaved => 'AI settings saved.';
-
-  @override
-  String aiConnectionTestSucceeded(Object result) {
-    return 'AI test succeeded: $result';
-  }
-
-  @override
-  String aiConnectionTestFailed(Object error) {
-    return 'AI test failed: $error';
-  }
-
-  @override
-  String get aiSettingsSecurityNotice =>
-      'Security notice: local key mode is less secure. Anyone with device/app access may extract this key.';
-
-  @override
-  String get saving => 'Saving...';
-
-  @override
-  String get saveDefaults => 'Save defaults';
-
-  @override
-  String get configureAiInSettings =>
-      'Configure AI in settings before using assistant features.';
-
-  @override
-  String get aiNotEnabledForThisProject =>
-      'AI is not enabled for this project.';
-
-  @override
-  String get aiProjectPolicySaved => 'Project AI policy saved.';
-
-  @override
-  String get aiActionPlanDetected => 'AI action plan detected';
-
-  @override
-  String aiActionsApplied(Object swimlanes, Object tasks) {
-    return 'Applied actions: swimlanes $swimlanes, tasks $tasks.';
-  }
-
-  @override
-  String aiActionsAppliedDetailed(
-    Object swimlanes,
-    Object columns,
-    Object tasks,
-    Object moved,
-    Object skipped,
-  ) {
-    return 'Applied actions: swimlanes $swimlanes, columns $columns, new tasks $tasks, moved tasks $moved, skipped moves $skipped.';
-  }
-
-  @override
-  String get enableAIForProject => 'Enable AI for this project';
-
-  @override
-  String get aiKeyMode => 'AI key mode';
-
-  @override
-  String get ownerKeyMode => 'Owner key (shared costs)';
-
-  @override
-  String get userKeyRequiredMode => 'Each user needs own key';
-
-  @override
-  String get aiCostNoticeTitle => 'AI usage cost notice';
-
-  @override
-  String aiCostNoticeBody(Object owner) {
-    return 'This project uses owner key mode. AI usage here is billed to $owner.';
-  }
-
-  @override
-  String get iUnderstand => 'I understand';
-
-  @override
-  String aiChatForProject(Object name) {
-    return 'AI chat · $name';
-  }
-
-  @override
-  String get newChat => 'New chat';
-
-  @override
-  String get continueChat => 'Continue chat';
-
-  @override
-  String get exportChat => 'Export chat';
-
-  @override
-  String currentChatId(Object id) {
-    return 'Current chat: $id';
-  }
-
-  @override
-  String get noSavedChatsForProject => 'No saved chats for this project yet.';
-
-  @override
-  String get noMessagesToExport => 'No messages to export.';
-
-  @override
-  String chatExportFailed(Object error) {
-    return 'Chat export failed: $error';
-  }
-
-  @override
-  String aiRequestFailed(Object error) {
-    return 'AI request failed: $error';
-  }
-
-  @override
-  String get aiIsTyping => 'AI is typing...';
-
-  @override
-  String get aiSuggestedTitle => 'AI-suggested title';
-
-  @override
-  String get aiSuggestedDescription => 'AI-suggested description';
-
-  @override
-  String get aiImproveTitle => 'Improve title with AI';
-
-  @override
-  String get aiImproveDescription => 'Improve description with AI';
-
-  @override
-  String get message => 'Message';
-
-  @override
-  String get projectDefaultsReset => 'Project defaults reset.';
-
-  @override
-  String get resetDefaults => 'Reset defaults?';
-
-  @override
-  String
-  get thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects =>
-      'This clears custom defaults and uses Kanboard server defaults for new projects.';
-
-  @override
-  String get connectYourKanboardInstance => 'Connect Your Kanboard Instance';
-
-  @override
-  String get loadedSavedCredentials => 'Loaded saved credentials.';
-
-  @override
-  String connectedViaJsonrpcTokenAuthServerVersion(Object version) {
-    return 'Connected via jsonrpc token auth. Server version: $version';
-  }
-
-  @override
-  String connectedAsVersion(Object username, Object version) {
-    return 'Connected as $username. Version: $version';
-  }
-
-  @override
-  String connectedSuccessfullyButServerVersionIsTarget1250(Object version) {
-    return 'Connected successfully, but server version is $version (target: 1.2.50).';
-  }
-
-  @override
-  String
-  connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken(
-    Object error,
-  ) {
-    return 'Connection failed: $error\nTip: if you copied \"API User Access\", try username \"jsonrpc\" with that token.';
-  }
-
-  @override
-  String get usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc =>
-      'Use personal token + username, or use application token with username \"jsonrpc\".';
-
-  @override
-  String get nothingToExportYetConnectOnceOrFillAllFieldsFirst =>
-      'Nothing to export yet. Connect once or fill all fields first.';
-
-  @override
-  String get scanThisCodeWithYourPhoneInTheConnectScreen =>
-      'Scan this code with your phone in the Connect screen.';
-
-  @override
-  String get couldNotRenderQRError => 'Could not render QR.\n\$error';
-
-  @override
-  String get credentialsTransferQR => 'Credentials transfer QR';
-
-  @override
-  String get ifQRRenderingFailsCopyPasteTheTransferCode =>
-      'If QR rendering fails, copy/paste the transfer code.';
-
-  @override
-  String get securityNoteThisQRContainsYourAPITokenInPlainText =>
-      'Security note: this QR contains your API token in plain text.';
-
-  @override
-  String get transferCodeCopied => 'Transfer code copied.';
-
-  @override
-  String get importedCredentialsFromTransferCode =>
-      'Imported credentials from transfer code.';
-
-  @override
-  String get credentialsImportedTapConnect =>
-      'Credentials imported. Tap Connect.';
-
-  @override
-  String get clipboardIsEmpty => 'Clipboard is empty.';
-
-  @override
-  String invalidTransferCode(Object error) {
-    return 'Invalid transfer code: $error';
-  }
-
-  @override
-  String get qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere =>
-      'QR scanning is available on iOS/Android. Use \"Paste transfer code\" here.';
-
-  @override
-  String get serverURLIsRequired => 'Server URL is required.';
-
-  @override
-  String get enterAValidURL => 'Enter a valid URL.';
-
-  @override
-  String get usernameIsRequired => 'Username is required.';
-
-  @override
-  String get tokenIsRequired => 'Token is required.';
-
-  @override
-  String get passwordIsRequired => 'Password is required.';
-
-  @override
-  String get credentials => 'Credentials';
-
-  @override
-  String get authMode => 'Auth mode';
-
-  @override
-  String get apiTokenMode => 'API token';
-
-  @override
-  String get passwordMode => 'Password';
-
-  @override
-  String get showTransferQR => 'Show transfer QR';
-
-  @override
-  String get pasteTransferCode => 'Paste transfer code';
-
-  @override
   String get serverURL => 'Server URL';
-
-  @override
-  String get serverURLExample => 'https://kanboard.example.com';
 
   @override
   String get username => 'Username';
@@ -534,83 +72,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
 
   @override
-  String get personalAccessToken => 'Personal access token';
-
-  @override
-  String get useYourKanboardUsernameAndPassword =>
-      'Use your Kanboard username and password.';
-
-  @override
-  String get testConnectionContinue => 'Test connection & continue';
-
-  @override
-  String get openProjects => 'Open projects';
-
-  @override
-  String
-  get authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc =>
-      'Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".';
-
-  @override
-  String get authNotePasswordModeUsesYourKanboardLoginCredentials =>
-      'Auth note: password mode uses your Kanboard login credentials.';
-
-  @override
-  String get scanTransferQR => 'Scan transfer QR';
-
-  @override
-  String get transferCredentials => 'Transfer credentials';
-
-  @override
-  String get copyCode => 'Copy code';
-
-  @override
   String get done => 'Done';
-
-  @override
-  String get boardStructure => 'Board structure';
-
-  @override
-  String get searchTasks => 'Search tasks';
-
-  @override
-  String get newGroceryList => 'New grocery list';
-
-  @override
-  String get refreshBoard => 'Refresh board';
-
-  @override
-  String get showDoneTasks => 'Show done tasks';
-
-  @override
-  String get hideDoneTasks => 'Hide done tasks';
-
-  @override
-  String get lockTaskDrag => 'Lock task drag';
-
-  @override
-  String get unlockTaskDrag => 'Unlock task drag';
-
-  @override
-  String get newTask => 'New task';
-
-  @override
-  String get groceryList => 'Grocery list';
-
-  @override
-  String get expenses => 'Expenses';
-
-  @override
-  String get search => 'Search';
-
-  @override
-  String get structure => 'Structure';
-
-  @override
-  String get swimlanes => 'Swimlanes';
-
-  @override
-  String get columns => 'Columns';
 
   @override
   String get tasks => 'Tasks';
@@ -619,222 +81,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planned => 'Planned';
 
   @override
-  String get spent => 'Spent';
-
-  @override
-  String get remaining => 'Remaining';
-
-  @override
-  String get noBudget => 'No budget';
-
-  @override
-  String get dropATaskHere => 'Drop a task here';
-
-  @override
-  String get unlockDragToMoveTasks => 'Unlock drag to move tasks';
-
-  @override
   String get edit => 'Edit';
-
-  @override
-  String get markDone => 'Mark done';
-
-  @override
-  String get reopen => 'Reopen';
-
-  @override
-  String get taskSearch => 'Task Search';
-
-  @override
-  String deleteFailed(Object error) {
-    return 'Delete failed: $error';
-  }
-
-  @override
-  String statusUpdateFailed(Object error) {
-    return 'Status update failed: $error';
-  }
-
-  @override
-  String moveFailed(Object error) {
-    return 'Move failed: $error';
-  }
-
-  @override
-  String get addColumn => 'Add column';
-
-  @override
-  String get editColumn => 'Edit column';
-
-  @override
-  String get deleteColumn => 'Delete column?';
-
-  @override
-  String deleteColumn2(Object name) {
-    return 'Delete column \"$name\"?';
-  }
-
-  @override
-  String get taskLimit => 'Task limit';
-
-  @override
-  String get addSwimlane => 'Add swimlane';
-
-  @override
-  String get editSwimlane => 'Edit swimlane';
-
-  @override
-  String get deleteSwimlane => 'Delete swimlane?';
-
-  @override
-  String deleteSwimlane2(Object name) {
-    return 'Delete swimlane \"$name\"?';
-  }
 
   @override
   String get name => 'Name';
 
   @override
-  String structure2(Object name) {
-    return '$name structure';
-  }
-
-  @override
-  String get query => 'Query';
-
-  @override
-  String get queryExampleStatusOpenCategoryBug => 'status:open category:bug';
-
-  @override
-  String get noResultsYet => 'No results yet.';
-
-  @override
-  String get projectExpenses => 'Project expenses';
-
-  @override
-  String get financeTable => 'Finance table';
-
-  @override
-  String get financeProject => 'Finance project';
-
-  @override
-  String get financeProjectDescription =>
-      'Open this project directly in Finance table.';
-
-  @override
-  String get sharedFinanceTable => 'Shared finance table';
-
-  @override
-  String get currentBalance => 'Current balance';
-
-  @override
-  String get projectionHorizon => 'Projection horizon';
-
-  @override
-  String get showPastMonths => 'Show past months';
-
-  @override
-  String get includeSpentExternalExpensesInProjection =>
-      'Include spent external expenses in projection';
-
-  @override
-  String get unsavedFinanceChangesTitle => 'Unsaved finance changes';
-
-  @override
-  String get unsavedFinanceChangesMessage =>
-      'Some finance data is not saved yet. Leave this page anyway?';
-
-  @override
-  String get leaveWithoutSaving => 'Leave without saving';
-
-  @override
-  String get summedMonthlyIncome => 'Summed monthly income';
-
-  @override
-  String get summedMonthlyExpenses => 'Summed monthly expenses';
-
-  @override
-  String get totalBalance => 'Total balance';
-
-  @override
-  String get biggestIncomeExpenseGap =>
-      'Lowest monthly net (income - expenses)';
-
-  @override
-  String get months3 => '3 months';
-
-  @override
-  String get months6 => '6 months';
-
-  @override
-  String get months12 => '12 months';
-
-  @override
-  String get lowestProjectedBalance => 'Lowest projected balance';
-
-  @override
-  String get firstNegativeMonth => 'First negative month';
-
-  @override
-  String get endBalance => 'End balance';
-
-  @override
-  String get recurringMonthlyEnabled => 'Recurring monthly (enabled)';
-
-  @override
-  String get recurringIncomeMonthlyEnabled =>
-      'Recurring income monthly (enabled)';
-
-  @override
-  String get monthlyIncomesAndProjections => 'Monthly incomes & projections';
-
-  @override
   String get month => 'Month';
-
-  @override
-  String get incomeTotal => 'Income total';
-
-  @override
-  String get expensesTotal => 'Expenses total';
-
-  @override
-  String get net => 'Net';
 
   @override
   String get closing => 'Closing';
 
   @override
-  String get contributor => 'Contributor';
-
-  @override
-  String get contributorOptional => 'Contributor (optional)';
-
-  @override
   String get source => 'Source';
-
-  @override
-  String get otherIncome => 'Other income';
-
-  @override
-  String get otherExpense => 'Other expense';
-
-  @override
-  String get recurringIncomes => 'Recurring incomes';
-
-  @override
-  String get recurringExpenses => 'Recurring expenses';
-
-  @override
-  String get plannedIncomes => 'Planned incomes';
-
-  @override
-  String get plannedExpenses => 'Planned expenses';
-
-  @override
-  String get expensesFromOtherProjects => 'Expenses from other projects';
-
-  @override
-  String get ongoing => 'ongoing';
 
   @override
   String get enabled => 'Enabled';
@@ -843,127 +102,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get category => 'Category';
 
   @override
-  String get monthlyAmount => 'Monthly amount';
-
-  @override
-  String get startMonthYYYYMM => 'Start month (YYYY-MM)';
-
-  @override
-  String get endMonthOptionalYYYYMM => 'End month (YYYY-MM, optional)';
-
-  @override
-  String get addRecurringExpense => 'Add recurring expense';
-
-  @override
-  String get editRecurringExpense => 'Edit recurring expense';
-
-  @override
-  String get recurringExpenseFieldsNotValid =>
-      'Recurring expense fields are not valid.';
-
-  @override
-  String get addRecurringIncome => 'Add recurring income';
-
-  @override
-  String get editRecurringIncome => 'Edit recurring income';
-
-  @override
-  String get recurringIncomeFieldsNotValid =>
-      'Recurring income fields are not valid.';
-
-  @override
-  String get addPlannedExpense => 'Add planned expense';
-
-  @override
-  String get editPlannedExpense => 'Edit planned expense';
-
-  @override
-  String get plannedExpenseFieldsNotValid =>
-      'Planned expense fields are not valid.';
-
-  @override
-  String get addPlannedIncome => 'Add planned income';
-
-  @override
-  String get editPlannedIncome => 'Edit planned income';
-
-  @override
-  String get plannedIncomeFieldsNotValid =>
-      'Planned income fields are not valid.';
-
-  @override
   String get amount => 'Amount';
-
-  @override
-  String get amountHint => '0.00';
-
-  @override
-  String get monthYYYYMM => 'Month (YYYY-MM)';
-
-  @override
-  String get financeContributorMe => 'Me';
-
-  @override
-  String incomeForPerson(Object name) {
-    return 'Income - $name';
-  }
-
-  @override
-  String get currentBalanceMustBeValidNumber =>
-      'Current balance must be a valid number.';
-
-  @override
-  String get financeTableSaved => 'Finance table saved.';
-
-  @override
-  String financeTableSaveFailed(Object error) {
-    return 'Finance table save failed: $error';
-  }
-
-  @override
-  String get serverRejectedFinanceTableSave =>
-      'Server rejected finance table save.';
-
-  @override
-  String get expenseSettingsSaved => 'Expense settings saved.';
-
-  @override
-  String expenseSettingsFailed(Object error) {
-    return 'Expense settings failed: $error';
-  }
 
   @override
   String get deleteTask => 'Delete task?';
 
   @override
-  String deletePermanently(Object name) {
-    return 'Delete \"$name\" permanently?';
-  }
-
-  @override
-  String get currencyCode => 'Currency code';
-
-  @override
-  String get budget => 'Budget';
-
-  @override
-  String get leaveEmptyForNoBudget => 'Leave empty for no budget';
-
-  @override
   String get task => 'Task';
-
-  @override
-  String get newLabel => 'New';
-
-  @override
-  String get openStructure => 'Open structure';
-
-  @override
-  String get noBoardDataYet => 'No board data yet';
-
-  @override
-  String get pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes =>
-      'Pull to refresh or open structure to configure columns and swimlanes.';
 
   @override
   String get themeMode => 'Theme mode';
@@ -981,169 +126,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add => 'Add';
 
   @override
-  String get additionalDetails => 'Additional details';
-
-  @override
-  String get attachments2 => 'Attachments';
-
-  @override
-  String get comments => 'Comments';
-
-  @override
-  String get subtasks => 'Subtasks';
-
-  @override
-  String get tags => 'Tags';
-
-  @override
-  String get taskLinks => 'Task Links';
-
-  @override
-  String get externalLinks => 'External Links';
-
-  @override
-  String get link => 'Link';
-
-  @override
-  String get linkTitle => 'Link title';
-
-  @override
   String get type => 'Type';
-
-  @override
-  String get dependency => 'Dependency';
 
   @override
   String get url => 'URL';
 
   @override
-  String columnSaveFailed(Object error) {
-    return 'Column save failed: $error';
-  }
-
-  @override
-  String columnDeletionFailed(Object error) {
-    return 'Column deletion failed: $error';
-  }
-
-  @override
-  String swimlaneSaveFailed(Object error) {
-    return 'Swimlane save failed: $error';
-  }
-
-  @override
-  String swimlaneDeletionFailed(Object error) {
-    return 'Swimlane deletion failed: $error';
-  }
-
-  @override
-  String projectSaveFailed(Object error) {
-    return 'Project save failed: $error';
-  }
-
-  @override
-  String projectDeletionFailed(Object error) {
-    return 'Project deletion failed: $error';
-  }
-
-  @override
-  String get apply => 'Apply';
-
-  @override
-  String get post => 'Post';
-
-  @override
-  String get noAttachmentsYet => 'No attachments yet.';
-
-  @override
-  String get noCommentsYet => 'No comments yet.';
-
-  @override
-  String get noSubtasksYet => 'No subtasks yet.';
-
-  @override
-  String get noTagsAssigned => 'No tags assigned.';
-
-  @override
-  String get noTaskLinks => 'No task links.';
-
-  @override
-  String get noExternalLinks => 'No external links.';
-
-  @override
-  String get newTask2 => 'New Task';
-
-  @override
-  String get editTask => 'Edit Task';
-
-  @override
   String get title => 'Title';
 
   @override
-  String get column => 'Column';
-
-  @override
-  String get swimlane => 'Swimlane';
-
-  @override
-  String get assignee => 'Assignee';
-
-  @override
-  String get unassigned => 'Unassigned';
-
-  @override
-  String get priority => 'Priority';
-
-  @override
-  String get dueDate => 'Due date';
-
-  @override
-  String get pickDateTime => 'Pick date/time';
-
-  @override
   String get expense => 'Expense';
-
-  @override
-  String get score => 'Score';
-
-  @override
-  String get pickDueDate => 'Pick due date';
-
-  @override
-  String get clearDueDate => 'Clear due date';
-
-  @override
-  String get newComment => 'New comment';
-
-  @override
-  String get comment => 'Comment';
-
-  @override
-  String get editComment => 'Edit comment';
-
-  @override
-  String get editSubtask => 'Edit subtask';
-
-  @override
-  String get estimateH => 'Estimate (h)';
-
-  @override
-  String get spentH => 'Spent (h)';
-
-  @override
-  String get newGroceryItem => 'New grocery item';
-
-  @override
-  String get newSubtask => 'New subtask';
-
-  @override
-  String get addTagsCommaSeparated => 'Add tags (comma separated)';
-
-  @override
-  String get relation => 'Relation';
-
-  @override
-  String get linkedTaskID => 'Linked task ID';
 
   @override
   String get export => 'Export';
@@ -1155,327 +147,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get project => 'Project';
 
   @override
-  String projectCreatedButDefaultsFailedToApply(Object error) {
-    return 'Project created, but defaults failed to apply: $error';
-  }
-
-  @override
-  String get projectAttachmentsUploaded => 'Project attachments uploaded.';
-
-  @override
-  String uploadFailed(Object error) {
-    return 'Upload failed: $error';
-  }
-
-  @override
-  String get attachmentContentMissing => 'Attachment content missing.';
-
-  @override
-  String downloadFailed(Object error) {
-    return 'Download failed: $error';
-  }
-
-  @override
-  String filePickerFailed(Object error) {
-    return 'File picker failed: $error';
-  }
-
-  @override
-  String attachmentPickerFailed(Object error) {
-    return 'Attachment picker failed: $error';
-  }
-
-  @override
-  String get attachmentUploadComplete => 'Attachment upload complete.';
-
-  @override
-  String attachmentUploadFailed(Object error) {
-    return 'Attachment upload failed: $error';
-  }
-
-  @override
-  String get attachmentHasNoDownloadableContent =>
-      'Attachment has no downloadable content.';
-
-  @override
-  String attachmentExportFailed(Object error) {
-    return 'Attachment export failed: $error';
-  }
-
-  @override
-  String attachmentDeleteFailed(Object error) {
-    return 'Attachment delete failed: $error';
-  }
-
-  @override
-  String commentSaveFailed(Object error) {
-    return 'Comment save failed: $error';
-  }
-
-  @override
-  String commentUpdateFailed(Object error) {
-    return 'Comment update failed: $error';
-  }
-
-  @override
-  String commentDeleteFailed(Object error) {
-    return 'Comment delete failed: $error';
-  }
-
-  @override
-  String subtaskCreateFailed(Object error) {
-    return 'Subtask create failed: $error';
-  }
-
-  @override
-  String subtaskUpdateFailed(Object error) {
-    return 'Subtask update failed: $error';
-  }
-
-  @override
-  String subtaskDeleteFailed(Object error) {
-    return 'Subtask delete failed: $error';
-  }
-
-  @override
-  String tagUpdateFailed(Object error) {
-    return 'Tag update failed: $error';
-  }
-
-  @override
-  String get theGroceryListTagIsReservedForGroceryTasks =>
-      'The grocery-list tag is reserved for grocery tasks.';
-
-  @override
-  String taskLinkFailed(Object error) {
-    return 'Task link failed: $error';
-  }
-
-  @override
-  String linkDeleteFailed(Object error) {
-    return 'Link delete failed: $error';
-  }
-
-  @override
-  String externalLinkFailed(Object error) {
-    return 'External link failed: $error';
-  }
-
-  @override
-  String externalLinkDeleteFailed(Object error) {
-    return 'External link delete failed: $error';
-  }
-
-  @override
-  String taskStatusUpdateFailed(Object error) {
-    return 'Task status update failed: $error';
-  }
-
-  @override
-  String get serverRejectedTaskStatusUpdate =>
-      'Server rejected task status update.';
-
-  @override
-  String taskNumber(Object id) {
-    return 'Task #$id';
-  }
-
-  @override
-  String get taskMarkedDone => 'Task marked done.';
-
-  @override
-  String get taskReopened => 'Task reopened.';
-
-  @override
   String get open => 'Open';
-
-  @override
-  String get reopenTask => 'Reopen task';
-
-  @override
-  String get markAsDone => 'Mark as done';
-
-  @override
-  String get editTask2 => 'Edit task';
 
   @override
   String get createTask => 'Create task';
 
   @override
-  String get editGroceryList => 'Edit grocery list';
-
-  @override
-  String get createGroceryList => 'Create grocery list';
-
-  @override
-  String get groceryListTitle => 'Grocery list title';
-
-  @override
-  String get noGroceryItemsYet => 'No grocery items yet.';
-
-  @override
-  String get addItemsNowTheyWillBeCreatedWhenYouSave =>
-      'Add items now. They will be created when you save.';
-
-  @override
-  String get titleIsRequired => 'Title is required.';
-
-  @override
-  String get scoreMustBeAnInteger => 'Score must be an integer.';
-
-  @override
-  String serverRejectedAttachmentName(Object name) {
-    return 'Server rejected attachment \"$name\".';
-  }
-
-  @override
   String get amountMustBeAValidNumber => 'Amount must be a valid number.';
-
-  @override
-  String get taskWasNotCreated => 'Task was not created.';
-
-  @override
-  String get enterATitleBeforeOpeningAdditionalDetails =>
-      'Enter a title before opening additional details.';
-
-  @override
-  String get taskMustBeSavedFirst => 'Task must be saved first.';
-
-  @override
-  String get saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks =>
-      'Save this task first to manage attachments, comments, subtasks, tags, and links.';
-
-  @override
-  String get externalLinkTitleAndURLAreRequired =>
-      'External link title and URL are required.';
-
-  @override
-  String get enterAValidLinkedTaskID => 'Enter a valid linked task ID.';
-
-  @override
-  String get invalidURL => 'Invalid URL.';
-
-  @override
-  String get couldNotOpenURLCopiedToClipboard =>
-      'Could not open URL. Copied to clipboard.';
-
-  @override
-  String get attachmentsCommentsSubtasksTagsAndLinks =>
-      'Attachments, comments, subtasks, tags and links';
-
-  @override
-  String get tapToExpandAdvancedTaskDetails =>
-      'Tap to expand advanced task details';
-
-  @override
-  String get advancedSectionsAreHidden => 'Advanced sections are hidden.';
-
-  @override
-  String get forNewTasksTheAppSavesFirstThenOpensAdvancedSections =>
-      'For new tasks, the app saves first, then opens advanced sections.';
-
-  @override
-  String get internalLinkTypesUnavailableForThisUserProject =>
-      'Internal link types unavailable for this user/project.';
-
-  @override
-  String get noPermissionForInternalTaskLinksGetAllLinks =>
-      'No permission for internal task links (`getAllLinks`).';
-
-  @override
-  String get linkedTo => 'linked to';
-
-  @override
-  String userNumber(Object id) {
-    return 'User #$id';
-  }
-
-  @override
-  String estHSpentH(Object est, Object spent) {
-    return 'Est ${est}h · Spent ${spent}h';
-  }
-
-  @override
-  String get eG1250 => 'e.g. 12.50';
-
-  @override
-  String
-  get macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement =>
-      'macOS file access entitlement missing. Rebuild the app after enabling user-selected file read entitlement.';
-
-  @override
-  String tasks2(Object count) {
-    return 'Tasks: $count';
-  }
-
-  @override
-  String columns2(Object count) {
-    return 'Columns: $count';
-  }
-
-  @override
-  String get noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns =>
-      'No columns configured for this swimlane. Use Structure to add columns.';
-
-  @override
-  String
-  get taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves =>
-      'Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.';
-
-  @override
-  String
-  get taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks =>
-      'Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.';
-
-  @override
-  String
-  get dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax =>
-      'Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.';
-
-  @override
-  String get currencyMustBeA3LetterCode => 'Currency must be a 3-letter code.';
-
-  @override
-  String get budgetMustBeAPositiveNumber => 'Budget must be a positive number.';
-
-  @override
-  String get useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow =>
-      'Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`';
-
-  @override
-  String get enterASearchQuery => 'Enter a search query.';
-
-  @override
-  String boardStructure2(Object name) {
-    return '$name Board Structure';
-  }
-
-  @override
-  String get dragRowsToReorderChangesAreSavedImmediately =>
-      'Drag rows to reorder. Changes are saved immediately.';
-
-  @override
-  String get noColumnsYetAddOne => 'No columns yet. Add one.';
-
-  @override
-  String get noSwimlanesYetAddOne => 'No swimlanes yet. Add one.';
-
-  @override
-  String positionLimit(Object position, Object limit) {
-    return 'Position $position · Limit $limit';
-  }
 
   @override
   String position(Object position) {
     return 'Position $position';
   }
-
-  @override
-  String get horizontalStructureOfTheBoard =>
-      'Horizontal structure of the board';
-
-  @override
-  String get verticalWorkGrouping => 'Vertical work grouping';
 
   @override
   String get organizerAppName => 'Jivie';
@@ -1513,9 +196,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizerSettings => 'Settings';
-
-  @override
-  String get organizerLocalSpace => 'Personal space';
 
   @override
   String get organizerLocalOnly => 'Saved on this device';
@@ -1645,12 +325,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get organizerRetry => 'Try again';
 
   @override
-  String get organizerDate => 'Date';
-
-  @override
-  String get organizerTime => 'Time';
-
-  @override
   String get organizerNoDate => 'No due date';
 
   @override
@@ -1662,9 +336,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get organizerCalendarIntro =>
       'Events and task deadlines in one place.';
-
-  @override
-  String get organizerFinanceIntro => 'Income, expenses and planned costs.';
 
   @override
   String get organizerAddFinance => 'Add entry';
@@ -1687,22 +358,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get organizerInvalidMoney =>
       'Enter a positive amount with at most two decimal places.';
-
-  @override
-  String get organizerBalance => 'Income minus expenses';
-
-  @override
-  String get organizerConnection => 'Existing Kanboard';
-
-  @override
-  String get organizerConnectionDescription =>
-      'Your existing projects are still on your Kanboard server. Connect your account to open them. The local organizer does not import or sync them yet.';
-
-  @override
-  String get organizerConnect => 'Connect account';
-
-  @override
-  String get organizerOpenKanboard => 'Open Kanboard';
 
   @override
   String get organizerBackup => 'Backup';
@@ -1728,21 +383,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get organizerRestored => 'Local data restored.';
 
   @override
-  String get organizerReminders => 'Reminders';
-
-  @override
-  String get organizerNoReminders => 'No new reminders.';
-
-  @override
-  String get organizerRemindersDescription =>
-      'Task deadline reminders appear when you open the app.';
-
-  @override
   String get organizerHomeIntro =>
       'Organize home plans with projects and tasks in your personal space.';
-
-  @override
-  String get organizerBackToday => 'Back to Today';
 
   @override
   String get organizerDeleteConfirm => 'Delete this entry?';
@@ -1762,11 +404,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String organizerTasksCount(int count) {
-    return '$count tasks';
-  }
-
-  @override
   String get organizerNoMatchingTasks =>
       'There are no tasks in this project yet.';
 
@@ -1777,13 +414,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get organizerSystemLanguage => 'Device language';
 
   @override
-  String get organizerRead => 'Read';
-
-  @override
   String get organizerWithoutDate => 'Without a deadline';
-
-  @override
-  String get organizerOverdue => 'Overdue';
 
   @override
   String get organizerHomeProjects => 'Home projects';
@@ -1810,28 +441,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Secure storage is unavailable. Credentials were not saved; check this device’s secure storage settings.';
 
   @override
-  String get credentialsSharingDisabled =>
-      'Passwords and personal API keys are not shared. Project invitations will be available when the secure flow is ready.';
-
-  @override
-  String get personalTokenHint =>
-      'Use your username and personal API token. The global jsonrpc key is not supported.';
-
-  @override
   String get secureConnectionRequired =>
       'Use HTTPS. HTTP is allowed only for an explicit local development connection.';
 
   @override
   String get localDevelopmentConnection =>
       'Local development connection (HTTP on this computer)';
-
-  @override
-  String get aiSessionChanged =>
-      'The account changed. This chat belongs to the previous session; reopen AI help from your project.';
-
-  @override
-  String get connectionFailed =>
-      'Connection failed. Check the server address, username and password or personal API token.';
 
   @override
   String get sharingAccount => 'Account and sharing';
@@ -1859,9 +474,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharingHaveInvite => 'I have an invitation';
 
   @override
-  String get sharingInvitation => 'Invitation';
-
-  @override
   String get sharingInvitationCode => 'Invitation code';
 
   @override
@@ -1875,16 +487,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharingAcceptInvite => 'Accept invitation';
 
   @override
-  String get sharingRegister => 'Create an account with an invitation';
-
-  @override
   String get sharingRegisterAction => 'Create account and accept';
 
   @override
   String get sharingDisplayName => 'Display name';
-
-  @override
-  String get sharingEmail => 'Email';
 
   @override
   String get sharingConfirmPassword => 'Confirm password';
@@ -1897,12 +503,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingDeviceName => 'This device’s name';
-
-  @override
-  String get sharingDeviceSession => 'This device’s session';
-
-  @override
-  String get sharingSpaces => 'Shared spaces';
 
   @override
   String get sharingCreateSpace => 'New shared space';
@@ -1936,9 +536,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharingOwner => 'Owner';
 
   @override
-  String get sharingEditor => 'Can edit';
-
-  @override
   String get sharingViewer => 'Can view';
 
   @override
@@ -1948,20 +545,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharingInvitePerson => 'Invite someone';
 
   @override
-  String get sharingCreateInvite => 'Create invitation';
-
-  @override
   String get sharingInvitations => 'Invitations';
-
-  @override
-  String get sharingCopyInvite => 'Copy code';
-
-  @override
-  String get sharingInviteCopied => 'Invitation code copied.';
-
-  @override
-  String get sharingInviteCodeOnce =>
-      'Save or send the code now. It cannot be displayed again later.';
 
   @override
   String get sharingRevokeInvite => 'Revoke invitation';
@@ -1974,26 +558,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Once removed, this member can no longer access this space. Previously downloaded copies cannot be erased remotely.';
 
   @override
-  String get sharingSignOutDescription =>
-      'Personal data stays on this device. Check pending shared changes before signing out.';
-
-  @override
   String get sharingSyncNow => 'Sync now';
-
-  @override
-  String get sharingSynced => 'Synced';
 
   @override
   String get sharingSyncing => 'Syncing …';
 
   @override
   String get sharingPending => 'Waiting to sync';
-
-  @override
-  String get sharingOffline => 'Connection unavailable';
-
-  @override
-  String get sharingSyncFailed => 'Sync failed. Local changes have been kept.';
 
   @override
   String get sharingConflicts => 'Changes need a decision';
@@ -2039,9 +610,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'You do not have permission for this action.';
 
   @override
-  String get sharingNoSharedLists => 'This space has no shared list yet.';
-
-  @override
   String get sharingNoSharedListsDescription =>
       'Create a list to collaborate. Personal lists are not shared automatically.';
 
@@ -2050,20 +618,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingReadOnly => 'Read only';
-
-  @override
-  String get sharingQuietShopping =>
-      'Shopping list changes are quiet; they do not send email.';
-
-  @override
-  String get sharingShareList => 'Share this list';
-
-  @override
-  String get sharingShareProject => 'Share project and tasks';
-
-  @override
-  String get sharingShareConfirm =>
-      'A shared copy will be created in the selected space. Personal content and finances are not shared automatically.';
 
   @override
   String get sharingNoMembers => 'No member information available.';
@@ -2077,10 +631,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingConnectBeforeShared =>
       'Connect an account or accept an invitation to use shared lists.';
-
-  @override
-  String get sharingSaveBeforeSync =>
-      'Changes are saved on this device first, then synced with the space.';
 
   @override
   String get sharingMember => 'Member';
@@ -2123,9 +673,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The shared view will be hidden after signing out. Personal data remains. Unsynced shared changes are not sent under another account; you can export them before signing out.';
 
   @override
-  String get sharingNoPending => 'No pending changes';
-
-  @override
   String get sharingResumeBlocked => 'Resume syncing my changes';
 
   @override
@@ -2150,9 +697,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingSessionEnds => 'Session expires';
-
-  @override
-  String get sharingSharedTasks => 'Shared tasks';
 
   @override
   String get sharingConflictsButton => 'Review changes';
@@ -2192,10 +736,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingValidationError =>
       'The data is invalid. Check your input and try again.';
-
-  @override
-  String get sharingRegistrationPasswordHint =>
-      'A new password needs at least 12 characters (at most 72 bytes).';
 
   @override
   String get sharingBlockedDescription =>
@@ -2256,9 +796,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planningCreatedBy => 'Created by';
-
-  @override
-  String get planningUpdatedBy => 'Last updated by';
 
   @override
   String get planningInvalidSchedule => 'The end cannot be before the start.';
@@ -2400,6 +937,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxRead => 'Read';
 
   @override
+  String get inboxUnread => 'Unread';
+
+  @override
+  String get inboxPushDeviceDeliveryInactive =>
+      'These preferences apply to registered devices. Push delivery on this device is currently inactive.';
+
+  @override
+  String get inboxMarkAllRead => 'Mark all as read';
+
+  @override
   String get inboxMarkRead => 'Mark as read';
 
   @override
@@ -2526,9 +1073,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get inboxMemberJoined => 'A member joined';
-
-  @override
   String get inboxRecordUpdated => 'A record was updated';
 
   @override
@@ -2548,9 +1092,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxReminderDue => 'It is time for a reminder';
-
-  @override
-  String get inboxOpenToView => 'Open for details';
 
   @override
   String get inboxSharedPreferencesUnavailable =>
@@ -2680,9 +1221,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This server does not support notification preferences yet.';
 
   @override
-  String get inboxCategoryAssignments => 'Assignments';
-
-  @override
   String get inboxCategoryTasks => 'Tasks and plans';
 
   @override
@@ -2734,11 +1272,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxPushCategoriesDescription =>
-      'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.';
+      'Push notifications are enabled by default for all types in a space. You can turn individual types off below. Delivery to a device requires explicitly enabling and registering that device.';
 
   @override
   String get remotePushRegistrationOnly =>
-      'Registration connects this device to your account. Choose notification types for individual spaces separately.';
+      'Registration connects this device to your account. Push notifications are enabled by default; you can turn individual types off in the space notification settings.';
 
   @override
   String get remoteReminderTitle => 'Remote reminder';
@@ -2868,10 +1406,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in to the account that received this notification.';
 
   @override
-  String get remotePushDeviceUnavailable =>
-      'First enable and register remote notifications on this device.';
-
-  @override
   String get setupTitle => 'How would you like to start?';
 
   @override
@@ -2922,13 +1456,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get inviteLinkInvalid =>
       'This link is not a valid invitation. You can enter the server and code manually in the app.';
-
-  @override
-  String get inviteCopyLink => 'Copy invitation link';
-
-  @override
-  String get inviteLinkPrepared =>
-      'The link opens the invitation in the installed Jivie app. If the app does not open, enter the server and code manually in the app.';
 
   @override
   String get accountFirstTitle => 'First account with a code';
@@ -3117,9 +1644,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskCostRecipient => 'Recipient';
 
   @override
-  String get taskCostAuthor => 'Entry author';
-
-  @override
   String get taskCostNoDue =>
       'Without a task due date, the cost has no planned date.';
 
@@ -3134,9 +1658,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get organizationTitle => 'Organization';
 
   @override
-  String get organizationCreate => 'Create organization';
-
-  @override
   String get organizationProjects => 'Organization projects';
 
   @override
@@ -3144,7 +1665,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizationAccessDescription =>
-      'Membership does not grant access to every project or finances. Set access for each project separately.';
+      'A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.';
 
   @override
   String get peopleTitle => 'People';
@@ -3332,12 +1853,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financePlanRuleType => 'Recurrence type';
 
   @override
-  String get financePlanSaved => 'The financial plan is saved.';
-
-  @override
-  String get financePlanOverdue => 'Still unconfirmed';
-
-  @override
   String get financePlanBack => 'Back';
 
   @override
@@ -3378,10 +1893,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deletionDetachOrganization =>
       'Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.';
-
-  @override
-  String get deletionOrganizationLinks =>
-      'Projects detached from an organization';
 
   @override
   String get financePlanIncomeQuestion => 'Have you received this income?';
@@ -3475,9 +1986,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privateSyncUnavailable =>
       'Private synchronization requires sign-in and a supported server.';
-
-  @override
-  String get privateSyncPending => 'Pending changes';
 
   @override
   String get privateSyncIssue =>
@@ -3622,10 +2130,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Personal records can be restored locally. Resuming shared work checks the account and permissions again.';
 
   @override
-  String get backupAccountDifferent =>
-      'The backup belongs to another account. Shared work stays protected until you sign in to the matching account.';
-
-  @override
   String get backupCompleteness =>
       'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.';
 
@@ -3640,9 +2144,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privateSyncLocalPending =>
       'New local records are awaiting your review.';
-
-  @override
-  String get backupRecoveryState => 'Recovered work status';
 
   @override
   String get backupRecoveryReady => 'Ready to review and resume';
@@ -3696,7 +2197,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings.';
+      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.';
 
   @override
   String get guideSkip => 'Skip';
@@ -3873,9 +2374,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Shared structure without permission to view details';
 
   @override
-  String get deletionMinorUnits => 'minor currency units';
-
-  @override
   String get deletionRetainedEdits =>
       'Server records created by your account are deleted. Records created by others remain, including your edits to their content. Your identity references are removed; individual field edits cannot be separated by author.';
 
@@ -3904,7 +2402,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deletionLegacyLocal =>
-      'Separately stored legacy Kanboard connections, caches and AI conversations are not removed by this action. A legacy connection to the deleted account will no longer work.';
+      'Locally stored data from earlier application versions remain on this device. This action does not remove them.';
 
   @override
   String get deletionPersonalExport =>
@@ -3926,9 +2424,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gardenNew => 'New garden';
-
-  @override
-  String get gardenEdit => 'Edit garden';
 
   @override
   String get gardenName => 'Garden name';
@@ -4053,11 +2548,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String gardenAreaPosition(int x, int y, int width, int height) {
-    return 'Left $x%, top $y% · $width × $height%';
-  }
-
-  @override
   String get financePlanPendingEntries => 'Unconfirmed entries';
 
   @override
@@ -4144,15 +2634,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderSnoozeFutureRequired => 'Choose a future time.';
 
   @override
-  String get reminderSnoozeNeedsConnection =>
-      'Connect to the server to snooze a shared reminder.';
-
-  @override
-  String reminderSnoozedUntil(String until) {
-    return 'Snoozed until $until';
-  }
-
-  @override
   String financeSourceTask(String title) {
     return 'Linked task: $title';
   }
@@ -4188,10 +2669,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spacePickerNewSpace => '+ New space';
-
-  @override
-  String get spacePickerInitialVisibility =>
-      'Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.';
 
   @override
   String get spacePickerSharedProject => 'Shared project';
@@ -4259,10 +2736,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gardenArchivedArea => 'Retired bed · history preserved';
-
-  @override
-  String get gardenArchiveHelp =>
-      'A retired bed is hidden from the plan. Its plantings and history remain in the list.';
 
   @override
   String get gardenSelectBed => 'Select a bed on the plan or in the list.';
@@ -4443,9 +2916,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No open tasks, events or expected payments for today.';
 
   @override
-  String get allSpacesUpcoming => 'Today and overdue';
-
-  @override
   String get organizerPressBackAgainToExit => 'Press back again to exit';
 
   @override
@@ -4484,9 +2954,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get localSpaceLinkAction => 'Connect and synchronize';
 
   @override
-  String get legacyLocalData => 'Unassigned data';
-
-  @override
   String get legacyLocalDescription =>
       'These records remain on this device. Choose a household before moving them; connecting a server does not automatically share them.';
 
@@ -4508,10 +2975,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get localSpaceOfflineWork =>
       'Your data remains on this device. Local work continues; invitations and server permission changes require a connection.';
-
-  @override
-  String get organizationAggregateDescription =>
-      'Activity from permitted projects. Each record retains its source space.';
 
   @override
   String get organizationLeader => 'Organization leader';
@@ -4670,10 +3133,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'First add your account or card in the same currency in your personal space.';
 
   @override
-  String get paymentNeedsRefundAccount =>
-      'First add an organization account in the same currency for reimbursement.';
-
-  @override
   String get paymentPaidAt => 'Date of personal payment';
 
   @override
@@ -4829,4 +3288,293 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spaceConnectedShort => 'Connected';
+
+  @override
+  String get emailInviteTitle => 'Invite by email';
+
+  @override
+  String get emailInviteDescription =>
+      'The person receives an invitation link and code. They can create an account later and choose whether to join.';
+
+  @override
+  String get emailInviteSend => 'Send invitation';
+
+  @override
+  String emailInviteQueued(String email) {
+    return 'The invitation for $email is ready to be sent.';
+  }
+
+  @override
+  String get emailInviteUnsupported =>
+      'This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.';
+
+  @override
+  String get emailInviteInvalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get emailInvitePendingTitle =>
+      'An invitation is waiting for your decision';
+
+  @override
+  String emailInviteFrom(String name) {
+    return 'Invited by $name';
+  }
+
+  @override
+  String emailInviteFor(String email) {
+    return 'Invitation for $email';
+  }
+
+  @override
+  String get emailInviteExplicit =>
+      'Signing in or creating an account does not join the space. Accept the invitation explicitly to open it.';
+
+  @override
+  String get emailInviteSignIn =>
+      'First sign in or create an account. Your invitation stays saved.';
+
+  @override
+  String get emailInviteExistingAccount =>
+      'An account already exists for this email address. Sign in to that account; your invitation stays saved.';
+
+  @override
+  String get emailInviteWrongAccount =>
+      'This invitation is for another email address. Sign in to the correct account or verify its email address first.';
+
+  @override
+  String get emailInviteDismiss => 'Remove saved invitation';
+
+  @override
+  String get emailInviteAccepted => 'Invitation accepted. The space is open.';
+
+  @override
+  String accountSignedIn(String username) {
+    return 'You are signed in as $username.';
+  }
+
+  @override
+  String get emailInviteCreateAccount => 'Create an account';
+
+  @override
+  String get emailInviteHaveAccount => 'I already have an account';
+
+  @override
+  String accountCreatedInvitationSignInRequired(String username) {
+    return 'Account $username has been created. Sign in, then accept your saved invitation.';
+  }
+
+  @override
+  String get emailInviteUsernameUnavailable =>
+      'This username is already taken. Choose another name or sign in to your account.';
+
+  @override
+  String get accountPasswordTooShort =>
+      'Your password must contain at least 12 characters.';
+
+  @override
+  String get syncStatusTitle => 'Synchronization';
+
+  @override
+  String get syncStatusDetails => 'Synchronization details';
+
+  @override
+  String get syncStatusSynced => 'Synced';
+
+  @override
+  String get syncStatusUnknown => 'Synchronization is not confirmed yet';
+
+  @override
+  String get syncStatusPending => 'Changes are waiting to sync';
+
+  @override
+  String get syncStatusOffline => 'Server is unreachable';
+
+  @override
+  String get syncStatusProblem => 'Synchronization needs your attention';
+
+  @override
+  String get syncStatusDeviceOnly => 'Local to this device';
+
+  @override
+  String get syncStatusLastSuccess => 'Last successful synchronization';
+
+  @override
+  String get syncStatusLastAttempt => 'Last attempt';
+
+  @override
+  String get syncStatusNeverAttempted => 'No attempt has been recorded';
+
+  @override
+  String get syncStatusNotConfirmed => 'Not confirmed yet';
+
+  @override
+  String get syncStatusLastError => 'Error';
+
+  @override
+  String get syncStatusPendingCount => 'Pending changes';
+
+  @override
+  String get syncStatusConflictsCount => 'Conflicting changes';
+
+  @override
+  String get syncStatusBlockedCount => 'Blocked changes';
+
+  @override
+  String get syncStatusAccountScope =>
+      'The status, times and change counts cover this account and all its spaces.';
+
+  @override
+  String get syncStatusLocalScope =>
+      'This status covers local work on this device.';
+
+  @override
+  String get syncStatusServerChanged =>
+      'The server identity has changed. Your local data is preserved; reconnection needs to be checked.';
+
+  @override
+  String get sharingInviteScope => 'Invitation scope';
+
+  @override
+  String get sharingInviteWholeSpace => 'Whole space';
+
+  @override
+  String get sharingInviteProjectOnly => 'Project only';
+
+  @override
+  String get sharingInviteSpaceDescription =>
+      'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.';
+
+  @override
+  String get sharingInviteProjectDescription =>
+      'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.';
+
+  @override
+  String get sharingMemberFullDescription =>
+      'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.';
+
+  @override
+  String get sharingViewerDescription =>
+      'The person can read content and finances within the selected scope. Editing and administration are excluded.';
+
+  @override
+  String get sharingLegacySpaceDescription =>
+      'This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.';
+
+  @override
+  String get sharingLegacyProjectDescription =>
+      'This invitation uses older project access rules. Finance permissions follow the current server settings.';
+
+  @override
+  String get sharingScopedUnsupported =>
+      'The server does not yet support separate whole-space and project-only invitations. An administrator must update FamilyHub; existing data and access remain available.';
+
+  @override
+  String get sharingScopeUpgradeRequired =>
+      'Before inviting someone to the whole space, the owner must review and confirm the new sharing model in Space settings.';
+
+  @override
+  String get sharingAccessReview => 'Review space sharing';
+
+  @override
+  String get sharingAccessReviewDescription =>
+      'Space members will gain access to all its content and finances, including all existing and future projects. Members can also edit, delete, invite others and manage members. People invited only to a project retain their project scope. Review additional access before confirming. Old pending invitations will be revoked.';
+
+  @override
+  String get sharingAccessCurrent =>
+      'Space membership includes all shared content and finances, and all its existing and future projects. A project-only invitation applies only to that project.';
+
+  @override
+  String get sharingAccessApply => 'Confirm space sharing';
+
+  @override
+  String get sharingAccessSourceSpace => 'Space membership';
+
+  @override
+  String get sharingAccessSourceProject => 'Project membership';
+
+  @override
+  String get sharingAccessReadWrite => 'Read, edit and manage';
+
+  @override
+  String get sharingProjectSharingReview => 'Review project-only sharing';
+
+  @override
+  String get sharingProjectSharingDescription =>
+      'The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.';
+
+  @override
+  String get sharingProjectSharingApply => 'Enable project sharing';
+
+  @override
+  String get sharingProjectSharingBlocked =>
+      'This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.';
+
+  @override
+  String get sharingProjectSharingAction => 'Share project only';
+
+  @override
+  String get sharingProjectMembersInherited =>
+      'Access through membership in the whole space';
+
+  @override
+  String get sharingProjectNewVisibility =>
+      'All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.';
+
+  @override
+  String sharingProjectSharingCounts(int records, int finances, int reminders) {
+    return 'Records: $records · finance records: $finances · reminders: $reminders';
+  }
+
+  @override
+  String sharingAccessRevokedInvitations(int count) {
+    return 'Pending invitations to revoke: $count';
+  }
+
+  @override
+  String get sharingProjectSharingPending =>
+      'First synchronize pending changes in this space and resolve conflicts, then review project sharing again.';
+
+  @override
+  String get sharingProjectDirectRemoval =>
+      'Remove direct membership in this project? Access from membership in the whole space remains while the person is a member of that space.';
+
+  @override
+  String get sharingRemoveProjectMembership =>
+      'Remove direct project membership';
+
+  @override
+  String get sharingBlockSingleRoot =>
+      'This shared project contains multiple projects or has no project root. It must represent a single project before changing sharing.';
+
+  @override
+  String get sharingBlockRecordUpgrade =>
+      'The project uses an older record format. Synchronize its update first.';
+
+  @override
+  String get sharingBlockUnrelatedContent =>
+      'The space includes tasks or events outside this project. Review their assignment before sharing the project separately.';
+
+  @override
+  String get sharingBlockAccount =>
+      'A financial account is also used by records outside this project. Review its finance links before sharing the project separately.';
+
+  @override
+  String get sharingBlockPerson =>
+      'A person is also linked to content outside this project. Review related people and assignments before sharing the project separately.';
+
+  @override
+  String get sharingBlockRecurrence =>
+      'A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.';
+
+  @override
+  String get sharingBlockTransfer =>
+      'A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.';
+
+  @override
+  String get sharingBlockLinkedPayment =>
+      'A linked payment includes additional finance records. Review payment links before sharing the project separately.';
+
+  @override
+  String get sharingBlockCollision =>
+      'A separate space already exists for this project. Refresh the space list and check its existing sharing.';
 }

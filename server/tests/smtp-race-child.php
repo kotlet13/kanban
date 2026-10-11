@@ -18,6 +18,12 @@ try {
     $recipient = 'Bearer '.$fixture['recipientToken'];
     $scope = $fixture['scope'];
     switch ($fixture['action']) {
+        case 'retention':
+            $pdo=$container['db']->getConnection();
+            $q=$pdo->prepare('UPDATE familyhub_inbox SET read_at=? WHERE id=?');
+            $q->execute([\Kanboard\Plugin\FamilyHub\Model\NativeInboxRetention::cutoff(),$fixture['inboxId']]);$q->closeCursor();
+            (new \Kanboard\Plugin\FamilyHub\Model\NativeInboxService($container, $recipient, $fixture['ip']))->execute('inbox.list', []);
+            break;
         case 'deliveryCrash':
             $transport = new class extends \Kanboard\Plugin\FamilyHub\Model\NativeSmtpTransport {
                 public function send($recipient, $inboxId, $accountId) {
