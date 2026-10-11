@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+11. oktober — po izrecnem naročilu nove Android gradnje s popravki je podpisana
+**1.4.1 (19)** dejansko **Aktivno** na istem internem kanalu za **domači (15)**,
+od **21:55**. Metadata `1b7e7f6` so main/origin; vsebujejo `d627bbe`, `1284ca3`
+in `3d91b37`. 300 zamrznjenih vhodov, isti podpis/Firebase kot AAB18, enakih osem
+dovoljenj brez širokih media/storage, bundle/CRC/16 KiB in 23+7 izdajnih kontrol
+PASS. Funkcionalnih 1002 PASS/13 skips in čiste analize brez novih sprememb nismo
+ponavljali. [Dokazi](docs/release/ANDROID_FIXES_RELEASE.md). Fizična nadgradnja19
+še ni potrjena. Console zasebnost je shranjena, Data safety je osnutek desetih
+kategorij. IARC ponovno zahteva neoznačen sprejem pogojev; agent ga ni sprejel.
+Aktualni deljeni organizer še nima terms/reportcontent/reportuser toka, ki ga
+Google zahteva tudi za zaprte skupine. Javna kandidatka ni oddana/odobrena;
+naslednji korak so te konkretne zahteve, ne nov splošni testni krog. Strežniki,
+iOS, SDK in odvisnosti niso spremenjeni.
+
 ## Namen in dogovorjeni obseg
 
 11. oktober — zaključeni dovoljeni deli fizičnega test2 izpada: dejanska strežniška

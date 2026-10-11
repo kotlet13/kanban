@@ -1,5 +1,13 @@
 # Jivie — kaj še urediš ti
 
+**11. oktober, 21:55 — popravki so objavljeni:** Android **1.4.1 (19)** je
+aktiven za isti domači (15); [dokazi](ANDROID_FIXES_RELEASE.md). Vključuje
+popravke izbora prostora, prvega osebnega plačila, predogleda kopije in izvoza
+med izpadom. Nova fizična nadgradnja še ni potrjena. Naslednja javna opravila
+so dejanski tok pogojev/prijave deljene vsebine in uporabnikov, končni Data
+safety obrazec ter ponovno zahtevano IARC soglasje; zasebnost je že shranjena
+v Play. Prejšnji opisi izdaj spodaj so zgodovinski.
+
 **11. oktober — nova interna izdaja:** podpisana **1.4.0 (18)** je **aktivna od
 12:41** za isti domači (15), [paket, kontrole in dokaz objave](CLEAN_ORGANIZER_RELEASE.md).
 Prava prijava je v Codexovem brskalniku; naziv računa TaknDevs pripada potrjenemu
