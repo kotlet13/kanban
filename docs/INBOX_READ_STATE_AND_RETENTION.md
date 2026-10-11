@@ -69,7 +69,7 @@ Preverjeno na končnem izvoru:
 Flutter dnevniki: `build/qa/inbox-retention-20261011/`.
 UI posnetki: `build/qa/inbox-read-state/`.
 
-Gostovani FamilyHub 0.11.1/schema15 ter
-objavljena Android in odprta Mac 1.3.1 (16) te spremembe še nimajo. Ta korak
-ne pomeni nove izdaje ali namestitve. Sprememba ne briše obstoječih varnostnih
+Po naslednjem izrecnem naročilu je testni strežnik nadgrajen na FamilyHub
+0.11.2/schema15, Android 1.3.2 (17) je aktiven interno, nova Mac gradnja je
+odprta. [Izdajni dokazi](release/INBOX_RETENTION_RELEASE.md). Sprememba ne briše obstoječih varnostnih
 kopij; pravila arhivske hrambe niso predmet tega popravka.

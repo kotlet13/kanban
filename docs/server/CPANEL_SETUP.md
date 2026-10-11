@@ -492,3 +492,13 @@ Končni pregledovalnik na strežniku je `upgrade-0.11.1/verify-hosted-final.php`
 SHA256 `87ccb37cf63a9771e1e0131d8a5dc34a9ceae438ab3474f31b825e3ac0336320`.
 [Izdajni dokazi](../release/NOTIFICATION_DEFAULTS_RELEASE.md) vsebujejo različice,
 hashe in lokalne QA poti. Produkcija ostane nespremenjena.
+
+
+## Popravki prebranosti — 11. oktober, FamilyHub 0.11.2/schema15
+
+Testni `jivie-test.triparna.si` je nadgrajen z 0.11.1 na 0.11.2 brez migracije,
+po sveži izolirani obnovi MariaDB 10.11.19 (86 tabel, 273 vrstic, 5.886 zasebnih
+datotek). Računi/gesla, serverId, konfiguracija, izklopi obvestil ter izvirni cron
+so ohranjeni. Štirje delavci za obvestila imajo potrjen svež zagon po odprtju;
+nov zagon ločenega delavca izbrisa računov ni potrjen zaradi poteka cPanel seje.
+Produkcija je nespremenjena. [Dokazi in omejitve](../release/INBOX_RETENTION_RELEASE.md).
