@@ -149,7 +149,7 @@ void main() {
           await tester.pumpWidget(
             UncontrolledProviderScope(
               container: container,
-              child: const KanbanApp(),
+              child: const JivieApp(),
             ),
           );
           await tester.pumpAndSettle();

@@ -1,5 +1,13 @@
 # Jivie
 
+**Zaključek odstranitve starega vmesnika, 11. oktober:** Jivie uporablja samo novi
+lokalni organizer in FamilyHub. Stari Kanboard zasloni, povezava, modeli, predpomnilnik,
+AI in njihove nepotrebne odvisnosti so odstranjeni. **942 Flutter PASS / 13 opt-in
+preskočenih**, analiza brez ugotovitev; Android, web, iOS simulator in izolirana
+macOS gradnja uspešne. Shranjeni podatki in platformne identitete ostanejo ohranjeni.
+[Obseg, dokazila in meje](docs/release/LEGACY_INTERFACE_REMOVAL.md).
+To ni nova trgovinska izdaja; nameščena interna 1.3.2 (17) ostaja prejšnja gradnja.
+
 **Popravek centra obvestil, 11. oktober — interna 1.3.2 (17):** ovojnica kaže dejansko stanje prebranosti, neprebrana obvestila so krepkejša in poudarjena. Prebrana obvestila se odstranijo po sedmih dneh od branja; neprebrana ter izvorna opravila in finance ostanejo. [Izvedba, preverjanje in meje](docs/INBOX_READ_STATE_AND_RETENTION.md). Android je aktiven za **domači (15)** od 08:26, nova podpisana Mac gradnja je odprta. Testni strežnik uporablja **FamilyHub 0.11.2/schema15**, po preverjeni obnovi 86 tabel, 273 vrstic in 5.886 zasebnih datotek. Računi in podatki so ohranjeni. [Izdajni dokazi](docs/release/INBOX_RETENTION_RELEASE.md).
 
 **Obvestila, 11. oktober — interna 1.3.1 (16):** Android je aktiven za **domači (15)** od 07:30, nova podpisana Mac gradnja je odprta. Testni strežnik uporablja **FamilyHub 0.11.1/schema15**, po preverjeni obnovi 86 tabel, 247 vrstic in 2.849 zasebnih datotek. Dodana sta **Označi vse kot prebrano** in privzeti push za skupne spremembe; izrecni izklopi ostanejo ohranjeni. **963 Flutter PASS**, 582 ciljnih PHP kontrol PASS. Fizični push preizkus te izdaje še sledi; Mac ima center v aplikaciji. [Izdajni dokazi](docs/release/NOTIFICATION_DEFAULTS_RELEASE.md), [obseg](docs/NOTIFICATION_DEFAULTS_AND_READ_ALL.md).
@@ -88,13 +96,13 @@ Prejšnja funkcionalna etapa je preverila **297 Flutter testov in tri dodatne de
 
 Aktivna SQLite baza, ohranjeni Hive ter napredni JSON izvozi nimajo dodatnega šifriranja. Prenosni format `.vsakdan` uporablja AES-256-GCM in geslo kopije. Osebna projekcija ostaja omejena na 10 MiB/50.000 zapisov; transakcije preverjajo revizijo in identiteto. Preizkusi dveh naprav ne pomenijo potrjene uskladitve prikaza v več sočasnih procesih iste namestitve.
 
-## Utrjena obstoječa povezava
+## Prijava in lokalni podatki
 
-Nove poverilnice in AI ključi se shranjujejo samo v varni shrambi. Stare kopije se odstranijo po preverjenem prenosu; napaka se pokaže uporabniku brez rezervnega plaintext zapisa. Kanboardove zahteve zahtevajo HTTPS in preverjajo izvor vsake preusmeritve. Za lokalni Docker je na prijavnem zaslonu izrecna izjema samo za `localhost`, `127.0.0.1` in `::1`. Privilegirani poskus z uporabnikom `jsonrpc`, QR izvoz gesel in dnevniki z vsebino uporabniških zahtev so odstranjeni.
-
-Predpomnilnik, AI pogovori in projektne privolitve so ločeni po strežniku in računu. Odjava počisti zadevni obseg in zavrne pozne zapise že začetih zahtev; osebnega organizatorja ne izbriše. Stari skupni ključi predpomnilnika in AI pogovorov ostanejo na disku, vendar jih nova identiteta ne prevzame samodejno. Predpomnilnik se ponovno prenese; za uvoz starih AI pogovorov je treba najprej izrecno določiti lastništvo.
-
-macOS Debug/Profile za lokalno gradnjo z adhoc podpisom ne dodaja `keychain-access-groups`; Xcode je zavrnil tudi prazen seznam brez razvojnega certifikata. Release ohrani skupino z `AppIdentifierPrefix` in potrebuje dejanski Apple razvojni/distribucijski podpis. Dostop do Keychaina na podpisani napravi še ni preverjen; če varna hramba zavrne dostop, tudi prijava jasno odpove. Lokalni organizator od nje ni odvisen.
+Sodelovanje uporablja FamilyHub Native API, namenske seje naprav in varno shrambo.
+Lokalna osebna uporaba ne potrebuje prijave. Ob nadgradnji se podatki ali ključi
+nekdanjega odjemalca ne brišejo in ne prevzamejo kot nova seja. Format kopij,
+SQLite/Hive identitete in namizne podatkovne poti ostajajo združljivi.
+[Odstranitev starega vmesnika in dokazi](docs/release/LEGACY_INTERFACE_REMOVAL.md).
 
 ## Namen aplikacije
 
@@ -127,24 +135,21 @@ Za spletno deljenje sta vključena pripeta SQLite WASM in Drift worker. Nepodprt
 
 Konceptualno izhodišče: [Local-first software, Ink & Switch](https://www.inkandswitch.com/essay/local-first/) in [Flutter offline-first](https://docs.flutter.dev/app-architecture/design-patterns/offline-first). Rezultati dejanskih testov so v [mejniku](docs/SHARING_MILESTONE.md).
 
-## Izhodišče: obstoječi Kanboardov odjemalec
+## Izhodišče prenove
 
-| Področje | Izhodišče pred prenovo |
-| --- | --- |
-| Povezava | URL Kanboarda, uporabniško ime in geslo ali API žeton; shranjevanje in prenos poverilnic prek QR/kode |
-| Projekti | Ustvarjanje in urejanje, barve, projektne datoteke, upravljanje uporabnikov in projektnih vlog |
-| Opravila | Kanban stolpci in plavalne steze, premikanje, podnaloge, komentarji, oznake, roki, ure, priponke in povezave |
-| Nabava | Nakupovalni seznam kot posebna oblika naloge s podnalogami |
-| Finance | Projektni stroški in proračun, mesečni prihodki, ponavljajoči in načrtovani prihodki/odhodki ter projekcija stanja |
-| AI | Projektni pogovor in pomoč pri naslovih/opisih nalog; neobvezna funkcionalnost |
-| Lokalna hramba | Hive za predpomnilnik projektov in tabel, SharedPreferences za nastavitve ter integracija varne hrambe |
-| Jeziki in videz | Slovenščina in angleščina prek ARB, svetla/temna tema, Material in Cupertino komponente |
-
-Ta seznam opisuje implementacijo, ne potrjenega delovanja vseh poti z živim strežnikom. Posebej prijava, deljenje in priponke potrebujejo integracijske preizkuse z različnimi uporabniškimi vlogami.
+Stari Kanban Connect je služil kot razvojno izhodišče. Njegov uporabniški vmesnik,
+JSON-RPC odjemalec, modeli in predpomnilnik so odstranjeni. Jivie uporablja lastni
+lokalni organizer in izbirno sodelovanje prek FamilyHub. Zgodovinske odločitve in
+preverjanja ostajajo v [načrtu prenove](docs/RENOVATION_PLAN.md).
 
 ## Tehnična osnova
 
-Flutter/Dart, `flutter_riverpod`, `go_router`, Native API in podedovani HTTP JSON-RPC. Novi osebni in skupni podatki uporabljajo SQLite prek Drift 2.35.1; Hive ostaja ohranjen vir selitve in shramba starega odjemalca. Omejitvi v `pubspec.yaml` sta Dart `^3.12.0` in Flutter `>=3.44.0`; preverjamo s Flutter 3.47.2 / Dart 3.13.2. Nova ločena mobilna aplikacija Jivie začne pri `1.0.0+1`; stari Kanban Connect je ostal pri `1.0.12+12`. Interno Dart ime paketa `kanban` ostane zaradi združljivih importov in ne določa imena v trgovini.
+Flutter/Dart, `flutter_riverpod`, `go_router` in FamilyHub Native API. Osebni in skupni
+podatki uporabljajo SQLite prek Drift 2.35.1; Hive ostaja potreben za branje in selitev
+obstoječih lokalnih podatkov organizerja. Dart `^3.12.0`, Flutter `>=3.44.0`,
+aplikacijska različica `1.3.2+17`. Interno Dart ime paketa `kanban` ohrani obstoječe
+importe in ne določa javnega imena aplikacije. Namizne identitete so vezane na
+obstoječe baze in ključe, zato jih preimenovanje vmesnika ne spreminja.
 
 ```text
 lib/
@@ -152,20 +157,11 @@ lib/
   organizer/domain/                    Lokalni zapisi, revizije in preverjanje
   organizer/data/, organizer/state/     Osebni/skupni SQLite, seje, sinhronizacija, kopije
   organizer/presentation/               Novi mobilni in namizni organizator
-  features/auth/                       Povezava in obnova seje
-  features/projects/                   Projekti, datoteke in deljenje
-  features/board/                      Tabla, struktura in finance
-  features/board/finance/               Izračuni finančne projekcije
-  features/tasks/                      Urejevalnik nalog
-  features/ai/, features/settings/      AI in nastavitve
-  kanboard/                            API in JSON-RPC transport
-  models/                              Podatkovni modeli
-  state/                               Riverpod providerji
-  storage/                             Lokalna hramba
+  organizer/platform/                  Obvestila, povezave, datoteke in prilagoditve naprav
+  storage/                             Nastavitve jezika in teme
   l10n/                                ARB in generirani prevodi
   widgets/                             Skupne komponente
 test/
-  finance/finance_projection_test.dart  Štirje testi finančnih izračunov
   widget_test.dart                     Preizkus začetnega zaslona
   organizer/                           Lokalna shramba in prilagodljivi zasloni
 server/                                Lokalni Docker, FamilyHub, PHP testi
@@ -176,11 +172,11 @@ docs/server/                           Strežniško okolje in pogodba API
 
 Repozitorij vsebuje platformne mape za Android, iOS, macOS, Windows, Linux in web. Zagon zdaj zaščiti namizne klice z `kIsWeb` in `defaultTargetPlatform`. Preverjene so gradnje za splet, macOS, iOS simulator in Android debug APK; to še ne potrjuje vseh platformnih vtičnikov in podpisanih izdaj. Flutter 3.47.2 je pri gradnji preselil Apple projekta na Swift Package Manager ob sočasni uporabi CocoaPods za preostale vtičnike, iOS na UIScene ter najmanjši različici na **iOS 15 / macOS 12**. Windows in Linux še nista preverjena.
 
-Android uporablja Gradle 8.14 s pripetim SHA256, Android Gradle Plugin 8.11.1 in Kotlin 2.2.20; to so minimalne različice, ki jih je zahtevala diagnostika tega Flutter SDK. Razvojna konfiguracija deluje brez zasebne datoteke `android/key.properties`; izdaja zahteva vse podpisne nastavitve in veljaven keystore ter nikoli tiho ne uporabi razvojnega podpisa.
+Android uporablja Gradle 8.14 s pripetim SHA256, Android Gradle Plugin 8.11.1 in Kotlin 2.2.20; to so minimalne različice, ki jih je zahtevala diagnostika tega Flutter SDK. Razvojna konfiguracija deluje brez zasebne datoteke `android/jivie-key.properties`; izdaja zahteva vse podpisne nastavitve in veljaven keystore ter nikoli tiho ne uporabi razvojnega podpisa.
 
 ## Lokalni razvoj
 
-Potrebni so Flutter SDK in razvojna orodja za izbrano platformo. Za osebni organizator Kanboard ni potreben. Za testiranje starega odjemalca uporabi lokalni Docker in lasten testni račun. Običajni Dart testi ne potrebujejo živega strežnika. Posebni opt-in HTTP preizkus zahteva sintetično lokalno testno okolje; navodila so v dokumentu mejnika.
+Potrebni so Flutter SDK in razvojna orodja za izbrano platformo. Za osebni organizator Kanboard ni potreben. Za testiranje FamilyHub uporabi izolirano lokalno okolje in sintetične račune. Običajni Dart testi ne potrebujejo živega strežnika. Posebni opt-in HTTP preizkus zahteva sintetično lokalno testno okolje; navodila so v dokumentu mejnika.
 
 ```sh
 flutter --version

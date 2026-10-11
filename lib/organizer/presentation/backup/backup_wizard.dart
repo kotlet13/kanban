@@ -4,7 +4,7 @@ import 'backup_file_io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
-import '../../../state/providers.dart';
+import '../../state/app_preferences_provider.dart';
 import '../../platform/notification_providers.dart';
 import '../onboarding/getting_started.dart';
 import '../../state/collaboration_provider.dart';

@@ -51,7 +51,7 @@ Future<void> pumpSharing(
           (ref) async => controller.savedInvitation,
         ),
       ],
-      child: const KanbanApp(),
+      child: const JivieApp(),
     ),
   );
   await tester.pumpAndSettle();
@@ -79,7 +79,7 @@ Future<void> openSharedShopping(
   double width = 390,
   String locale = 'sl',
 }) async {
-  final context = tester.element(find.byType(KanbanApp));
+  final context = tester.element(find.byType(JivieApp));
   final container = ProviderScope.containerOf(context);
   await container
       .read(collaborationProvider.notifier)

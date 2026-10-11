@@ -1,744 +1,58 @@
 {
   "@@locale": "en",
-  "kanbanConnect": "Kanban Connect",
   "routeError": "Route error",
   "unknownError": "Unknown error",
-  "kanboardWorkspace": "Kanboard Workspace",
-  "restoringSession": "Restoring session...",
-  "connectToKanboard": "Connect to Kanboard",
   "projects": "Projects",
-  "projectDefaults": "Project defaults",
-  "aiSettings": "AI settings",
-  "aiChat": "AI chat",
-  "connectionSettings": "Connection settings",
   "refresh": "Refresh",
   "logout": "Logout",
-  "newProject": "New project",
-  "couldNotLoadProjects": "Could not load projects",
-  "retry": "Retry",
-  "noActiveSession": "No active session",
-  "noActiveSessionConnectFirst": "No active session. Connect first.",
-  "connectToKanboardToContinue": "Connect to Kanboard to continue.",
-  "connect": "Connect",
-  "projectsWorkspace": "Projects Workspace",
-  "trackOrganizeAndOpenYourKanboardProjects": "Track, organize, and open your Kanboard projects.",
-  "connectYourKanboardAccountToLoadProjectData": "Connect your Kanboard account to load project data.",
-  "total": "Total",
   "active": "Active",
-  "inactive": "Inactive",
-  "noProjectsYet": "No projects yet",
-  "createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard": "Create your first project from the action button and start organizing your board.",
-  "openBoard": "Open board",
-  "projectAttachments": "Project attachments",
   "deleteProject": "Delete project",
-  "noDescriptionYetOpenTheProjectToAddContext": "No description yet. Open the project to add context.",
-  "deleteProject2": "Delete project?",
-  "thisWillRemovePermanently": "This will remove \"{name}\" permanently.",
   "cancel": "Cancel",
   "delete": "Delete",
   "createProject": "Create project",
-  "editProject": "Edit project",
   "projectName": "Project name",
   "description": "Description",
-  "projectColorSyncedViaMetadata": "Project color (synced via metadata)",
-  "noColor": "No color",
   "save": "Save",
   "stop": "Stop",
-  "send": "Send",
-  "attachments": "Attachments · {name}",
-  "noProjectAttachmentsYet": "No project attachments yet.",
-  "download": "Download",
-  "addFiles": "Add files",
   "close": "Close",
-  "projectDefaults2": "Project Defaults",
   "appLanguage": "App language",
-  "followSystemKeepsLocaleAutomatic": "Follow system keeps locale automatic.",
   "language": "Language",
-  "followSystemDefault": "Follow system (default)",
-  "english": "English",
-  "slovene": "Slovene",
-  "templateAppliedToEveryNewProjectCreatedFromThisApp": "Template applied to every new project created from this app.",
-  "leaveFieldsEmptyToKeepServerDefaults": "Leave fields empty to keep server defaults.",
-  "savingADefaultCurrencyAlsoAppliesItToAllExistingProjects": "Saving a default currency also applies it to all existing projects.",
-  "defaultBoardColumns": "Default Board Columns",
-  "defaultBoardColumnsHint": "One per line, e.g.\\nBacklog\\nReady\\nIn Progress\\nDone",
-  "defaultSwimlane": "Default Swimlane",
-  "exampleMain": "Example: Main",
-  "exampleUSD": "Example: USD",
-  "defaultExpenseCurrency": "Default Expense Currency",
   "reset": "Reset",
-  "enableAI": "Enable AI",
-  "instantResponse": "Instant response",
-  "thinkingResponse": "Thinking response",
-  "thinkingEffort": "Thinking effort",
-  "effortLow": "Low",
-  "effortMedium": "Medium",
-  "effortHigh": "High",
-  "aiModel": "AI model",
-  "openAiApiKey": "OpenAI API key",
-  "openAiApiKeyIsRequired": "OpenAI API key is required.",
-  "testAIConnection": "Test AI connection",
-  "fetchAvailableModels": "Fetch available models",
-  "availableModelsFetched": "Fetched {count} models.",
-  "availableModelsFetchFailed": "Fetching models failed: {error}",
-  "aiSettingsSaved": "AI settings saved.",
-  "aiConnectionTestSucceeded": "AI test succeeded: {result}",
-  "aiConnectionTestFailed": "AI test failed: {error}",
-  "aiSettingsSecurityNotice": "Security notice: local key mode is less secure. Anyone with device/app access may extract this key.",
-  "saving": "Saving...",
-  "saveDefaults": "Save defaults",
-  "configureAiInSettings": "Configure AI in settings before using assistant features.",
-  "aiNotEnabledForThisProject": "AI is not enabled for this project.",
-  "aiProjectPolicySaved": "Project AI policy saved.",
-  "aiActionPlanDetected": "AI action plan detected",
-  "aiActionsApplied": "Applied actions: swimlanes {swimlanes}, tasks {tasks}.",
-  "aiActionsAppliedDetailed": "Applied actions: swimlanes {swimlanes}, columns {columns}, new tasks {tasks}, moved tasks {moved}, skipped moves {skipped}.",
-  "enableAIForProject": "Enable AI for this project",
-  "aiKeyMode": "AI key mode",
-  "ownerKeyMode": "Owner key (shared costs)",
-  "userKeyRequiredMode": "Each user needs own key",
-  "aiCostNoticeTitle": "AI usage cost notice",
-  "aiCostNoticeBody": "This project uses owner key mode. AI usage here is billed to {owner}.",
-  "iUnderstand": "I understand",
-  "aiChatForProject": "AI chat · {name}",
-  "newChat": "New chat",
-  "continueChat": "Continue chat",
-  "exportChat": "Export chat",
-  "currentChatId": "Current chat: {id}",
-  "noSavedChatsForProject": "No saved chats for this project yet.",
-  "noMessagesToExport": "No messages to export.",
-  "chatExportFailed": "Chat export failed: {error}",
-  "aiRequestFailed": "AI request failed: {error}",
-  "aiIsTyping": "AI is typing...",
-  "aiSuggestedTitle": "AI-suggested title",
-  "aiSuggestedDescription": "AI-suggested description",
-  "aiImproveTitle": "Improve title with AI",
-  "aiImproveDescription": "Improve description with AI",
-  "message": "Message",
-  "projectDefaultsReset": "Project defaults reset.",
-  "resetDefaults": "Reset defaults?",
-  "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "This clears custom defaults and uses Kanboard server defaults for new projects.",
-  "connectYourKanboardInstance": "Connect Your Kanboard Instance",
-  "loadedSavedCredentials": "Loaded saved credentials.",
-  "connectedViaJsonrpcTokenAuthServerVersion": "Connected via jsonrpc token auth. Server version: {version}",
-  "connectedAsVersion": "Connected as {username}. Version: {version}",
-  "connectedSuccessfullyButServerVersionIsTarget1250": "Connected successfully, but server version is {version} (target: 1.2.50).",
-  "connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": "Connection failed: {error}\nTip: if you copied \"API User Access\", try username \"jsonrpc\" with that token.",
-  "usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc": "Use personal token + username, or use application token with username \"jsonrpc\".",
-  "nothingToExportYetConnectOnceOrFillAllFieldsFirst": "Nothing to export yet. Connect once or fill all fields first.",
-  "scanThisCodeWithYourPhoneInTheConnectScreen": "Scan this code with your phone in the Connect screen.",
-  "couldNotRenderQRError": "Could not render QR.\n$error",
-  "credentialsTransferQR": "Credentials transfer QR",
-  "ifQRRenderingFailsCopyPasteTheTransferCode": "If QR rendering fails, copy/paste the transfer code.",
-  "securityNoteThisQRContainsYourAPITokenInPlainText": "Security note: this QR contains your API token in plain text.",
-  "transferCodeCopied": "Transfer code copied.",
-  "importedCredentialsFromTransferCode": "Imported credentials from transfer code.",
-  "credentialsImportedTapConnect": "Credentials imported. Tap Connect.",
-  "clipboardIsEmpty": "Clipboard is empty.",
-  "invalidTransferCode": "Invalid transfer code: {error}",
-  "qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere": "QR scanning is available on iOS/Android. Use \"Paste transfer code\" here.",
-  "serverURLIsRequired": "Server URL is required.",
-  "enterAValidURL": "Enter a valid URL.",
-  "usernameIsRequired": "Username is required.",
-  "tokenIsRequired": "Token is required.",
-  "passwordIsRequired": "Password is required.",
-  "credentials": "Credentials",
-  "authMode": "Auth mode",
-  "apiTokenMode": "API token",
-  "passwordMode": "Password",
-  "showTransferQR": "Show transfer QR",
-  "pasteTransferCode": "Paste transfer code",
   "serverURL": "Server URL",
-  "serverURLExample": "https://kanboard.example.com",
   "username": "Username",
   "password": "Password",
-  "personalAccessToken": "Personal access token",
-  "useYourKanboardUsernameAndPassword": "Use your Kanboard username and password.",
-  "testConnectionContinue": "Test connection & continue",
-  "openProjects": "Open projects",
-  "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Auth note: personal token usually uses your username; application token usually uses username \"jsonrpc\".",
-  "authNotePasswordModeUsesYourKanboardLoginCredentials": "Auth note: password mode uses your Kanboard login credentials.",
-  "scanTransferQR": "Scan transfer QR",
-  "transferCredentials": "Transfer credentials",
-  "copyCode": "Copy code",
   "done": "Done",
-  "boardStructure": "Board structure",
-  "searchTasks": "Search tasks",
-  "newGroceryList": "New grocery list",
-  "refreshBoard": "Refresh board",
-  "showDoneTasks": "Show done tasks",
-  "hideDoneTasks": "Hide done tasks",
-  "lockTaskDrag": "Lock task drag",
-  "unlockTaskDrag": "Unlock task drag",
-  "newTask": "New task",
-  "groceryList": "Grocery list",
-  "expenses": "Expenses",
-  "search": "Search",
-  "structure": "Structure",
-  "swimlanes": "Swimlanes",
-  "columns": "Columns",
   "tasks": "Tasks",
   "planned": "Planned",
-  "spent": "Spent",
-  "remaining": "Remaining",
-  "noBudget": "No budget",
-  "dropATaskHere": "Drop a task here",
-  "unlockDragToMoveTasks": "Unlock drag to move tasks",
   "edit": "Edit",
-  "markDone": "Mark done",
-  "reopen": "Reopen",
-  "taskSearch": "Task Search",
-  "deleteFailed": "Delete failed: {error}",
-  "statusUpdateFailed": "Status update failed: {error}",
-  "moveFailed": "Move failed: {error}",
-  "addColumn": "Add column",
-  "editColumn": "Edit column",
-  "deleteColumn": "Delete column?",
-  "deleteColumn2": "Delete column \"{name}\"?",
-  "taskLimit": "Task limit",
-  "addSwimlane": "Add swimlane",
-  "editSwimlane": "Edit swimlane",
-  "deleteSwimlane": "Delete swimlane?",
-  "deleteSwimlane2": "Delete swimlane \"{name}\"?",
   "name": "Name",
-  "structure2": "{name} structure",
-  "query": "Query",
-  "queryExampleStatusOpenCategoryBug": "status:open category:bug",
-  "noResultsYet": "No results yet.",
-  "projectExpenses": "Project expenses",
-  "financeTable": "Finance table",
-  "financeProject": "Finance project",
-  "financeProjectDescription": "Open this project directly in Finance table.",
-  "sharedFinanceTable": "Shared finance table",
-  "currentBalance": "Current balance",
-  "projectionHorizon": "Projection horizon",
-  "showPastMonths": "Show past months",
-  "includeSpentExternalExpensesInProjection": "Include spent external expenses in projection",
-  "unsavedFinanceChangesTitle": "Unsaved finance changes",
-  "unsavedFinanceChangesMessage": "Some finance data is not saved yet. Leave this page anyway?",
-  "leaveWithoutSaving": "Leave without saving",
-  "summedMonthlyIncome": "Summed monthly income",
-  "summedMonthlyExpenses": "Summed monthly expenses",
-  "totalBalance": "Total balance",
-  "biggestIncomeExpenseGap": "Lowest monthly net (income - expenses)",
-  "months3": "3 months",
-  "months6": "6 months",
-  "months12": "12 months",
-  "lowestProjectedBalance": "Lowest projected balance",
-  "firstNegativeMonth": "First negative month",
-  "endBalance": "End balance",
-  "recurringMonthlyEnabled": "Recurring monthly (enabled)",
-  "recurringIncomeMonthlyEnabled": "Recurring income monthly (enabled)",
-  "monthlyIncomesAndProjections": "Monthly incomes & projections",
   "month": "Month",
-  "incomeTotal": "Income total",
-  "expensesTotal": "Expenses total",
-  "net": "Net",
   "closing": "Closing",
-  "contributor": "Contributor",
-  "contributorOptional": "Contributor (optional)",
   "source": "Source",
-  "otherIncome": "Other income",
-  "otherExpense": "Other expense",
-  "recurringIncomes": "Recurring incomes",
-  "recurringExpenses": "Recurring expenses",
-  "plannedIncomes": "Planned incomes",
-  "plannedExpenses": "Planned expenses",
-  "expensesFromOtherProjects": "Expenses from other projects",
-  "ongoing": "ongoing",
   "enabled": "Enabled",
   "category": "Category",
-  "monthlyAmount": "Monthly amount",
-  "startMonthYYYYMM": "Start month (YYYY-MM)",
-  "endMonthOptionalYYYYMM": "End month (YYYY-MM, optional)",
-  "addRecurringExpense": "Add recurring expense",
-  "editRecurringExpense": "Edit recurring expense",
-  "recurringExpenseFieldsNotValid": "Recurring expense fields are not valid.",
-  "addRecurringIncome": "Add recurring income",
-  "editRecurringIncome": "Edit recurring income",
-  "recurringIncomeFieldsNotValid": "Recurring income fields are not valid.",
-  "addPlannedExpense": "Add planned expense",
-  "editPlannedExpense": "Edit planned expense",
-  "plannedExpenseFieldsNotValid": "Planned expense fields are not valid.",
-  "addPlannedIncome": "Add planned income",
-  "editPlannedIncome": "Edit planned income",
-  "plannedIncomeFieldsNotValid": "Planned income fields are not valid.",
   "amount": "Amount",
-  "amountHint": "0.00",
-  "monthYYYYMM": "Month (YYYY-MM)",
-  "financeContributorMe": "Me",
-  "incomeForPerson": "Income - {name}",
-  "currentBalanceMustBeValidNumber": "Current balance must be a valid number.",
-  "financeTableSaved": "Finance table saved.",
-  "financeTableSaveFailed": "Finance table save failed: {error}",
-  "serverRejectedFinanceTableSave": "Server rejected finance table save.",
-  "expenseSettingsSaved": "Expense settings saved.",
-  "expenseSettingsFailed": "Expense settings failed: {error}",
   "deleteTask": "Delete task?",
-  "deletePermanently": "Delete \"{name}\" permanently?",
-  "currencyCode": "Currency code",
-  "budget": "Budget",
-  "leaveEmptyForNoBudget": "Leave empty for no budget",
   "task": "Task",
-  "newLabel": "New",
-  "openStructure": "Open structure",
-  "noBoardDataYet": "No board data yet",
-  "pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes": "Pull to refresh or open structure to configure columns and swimlanes.",
   "themeMode": "Theme mode",
   "systemTheme": "System theme",
   "lightTheme": "Light theme",
   "darkTheme": "Dark theme",
   "add": "Add",
-  "additionalDetails": "Additional details",
-  "attachments2": "Attachments",
-  "comments": "Comments",
-  "subtasks": "Subtasks",
-  "tags": "Tags",
-  "taskLinks": "Task Links",
-  "externalLinks": "External Links",
-  "link": "Link",
-  "linkTitle": "Link title",
   "type": "Type",
-  "dependency": "Dependency",
   "url": "URL",
-  "columnSaveFailed": "Column save failed: {error}",
-  "columnDeletionFailed": "Column deletion failed: {error}",
-  "swimlaneSaveFailed": "Swimlane save failed: {error}",
-  "swimlaneDeletionFailed": "Swimlane deletion failed: {error}",
-  "projectSaveFailed": "Project save failed: {error}",
-  "projectDeletionFailed": "Project deletion failed: {error}",
-  "apply": "Apply",
-  "post": "Post",
-  "noAttachmentsYet": "No attachments yet.",
-  "noCommentsYet": "No comments yet.",
-  "noSubtasksYet": "No subtasks yet.",
-  "noTagsAssigned": "No tags assigned.",
-  "noTaskLinks": "No task links.",
-  "noExternalLinks": "No external links.",
-  "newTask2": "New Task",
-  "editTask": "Edit Task",
   "title": "Title",
-  "column": "Column",
-  "swimlane": "Swimlane",
-  "assignee": "Assignee",
-  "unassigned": "Unassigned",
-  "priority": "Priority",
-  "dueDate": "Due date",
-  "pickDateTime": "Pick date/time",
   "expense": "Expense",
-  "score": "Score",
-  "pickDueDate": "Pick due date",
-  "clearDueDate": "Clear due date",
-  "newComment": "New comment",
-  "comment": "Comment",
-  "editComment": "Edit comment",
-  "editSubtask": "Edit subtask",
-  "estimateH": "Estimate (h)",
-  "spentH": "Spent (h)",
-  "newGroceryItem": "New grocery item",
-  "newSubtask": "New subtask",
-  "addTagsCommaSeparated": "Add tags (comma separated)",
-  "relation": "Relation",
-  "linkedTaskID": "Linked task ID",
   "export": "Export",
   "remove": "Remove",
   "project": "Project",
-  "projectCreatedButDefaultsFailedToApply": "Project created, but defaults failed to apply: {error}",
-  "projectAttachmentsUploaded": "Project attachments uploaded.",
-  "uploadFailed": "Upload failed: {error}",
-  "attachmentContentMissing": "Attachment content missing.",
-  "downloadFailed": "Download failed: {error}",
-  "filePickerFailed": "File picker failed: {error}",
-  "attachmentPickerFailed": "Attachment picker failed: {error}",
-  "attachmentUploadComplete": "Attachment upload complete.",
-  "attachmentUploadFailed": "Attachment upload failed: {error}",
-  "attachmentHasNoDownloadableContent": "Attachment has no downloadable content.",
-  "attachmentExportFailed": "Attachment export failed: {error}",
-  "attachmentDeleteFailed": "Attachment delete failed: {error}",
-  "commentSaveFailed": "Comment save failed: {error}",
-  "commentUpdateFailed": "Comment update failed: {error}",
-  "commentDeleteFailed": "Comment delete failed: {error}",
-  "subtaskCreateFailed": "Subtask create failed: {error}",
-  "subtaskUpdateFailed": "Subtask update failed: {error}",
-  "subtaskDeleteFailed": "Subtask delete failed: {error}",
-  "tagUpdateFailed": "Tag update failed: {error}",
-  "theGroceryListTagIsReservedForGroceryTasks": "The grocery-list tag is reserved for grocery tasks.",
-  "taskLinkFailed": "Task link failed: {error}",
-  "linkDeleteFailed": "Link delete failed: {error}",
-  "externalLinkFailed": "External link failed: {error}",
-  "externalLinkDeleteFailed": "External link delete failed: {error}",
-  "taskStatusUpdateFailed": "Task status update failed: {error}",
-  "serverRejectedTaskStatusUpdate": "Server rejected task status update.",
-  "taskNumber": "Task #{id}",
-  "taskMarkedDone": "Task marked done.",
-  "taskReopened": "Task reopened.",
   "open": "Open",
-  "reopenTask": "Reopen task",
-  "markAsDone": "Mark as done",
-  "editTask2": "Edit task",
   "createTask": "Create task",
-  "editGroceryList": "Edit grocery list",
-  "createGroceryList": "Create grocery list",
-  "groceryListTitle": "Grocery list title",
-  "noGroceryItemsYet": "No grocery items yet.",
-  "addItemsNowTheyWillBeCreatedWhenYouSave": "Add items now. They will be created when you save.",
-  "titleIsRequired": "Title is required.",
-  "scoreMustBeAnInteger": "Score must be an integer.",
-  "serverRejectedAttachmentName": "Server rejected attachment \"{name}\".",
   "amountMustBeAValidNumber": "Amount must be a valid number.",
-  "taskWasNotCreated": "Task was not created.",
-  "enterATitleBeforeOpeningAdditionalDetails": "Enter a title before opening additional details.",
-  "taskMustBeSavedFirst": "Task must be saved first.",
-  "saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks": "Save this task first to manage attachments, comments, subtasks, tags, and links.",
-  "externalLinkTitleAndURLAreRequired": "External link title and URL are required.",
-  "enterAValidLinkedTaskID": "Enter a valid linked task ID.",
-  "invalidURL": "Invalid URL.",
-  "couldNotOpenURLCopiedToClipboard": "Could not open URL. Copied to clipboard.",
-  "attachmentsCommentsSubtasksTagsAndLinks": "Attachments, comments, subtasks, tags and links",
-  "tapToExpandAdvancedTaskDetails": "Tap to expand advanced task details",
-  "advancedSectionsAreHidden": "Advanced sections are hidden.",
-  "forNewTasksTheAppSavesFirstThenOpensAdvancedSections": "For new tasks, the app saves first, then opens advanced sections.",
-  "internalLinkTypesUnavailableForThisUserProject": "Internal link types unavailable for this user/project.",
-  "noPermissionForInternalTaskLinksGetAllLinks": "No permission for internal task links (`getAllLinks`).",
-  "linkedTo": "linked to",
-  "userNumber": "User #{id}",
-  "estHSpentH": "Est {est}h · Spent {spent}h",
-  "eG1250": "e.g. 12.50",
-  "macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement": "macOS file access entitlement missing. Rebuild the app after enabling user-selected file read entitlement.",
-  "tasks2": "Tasks: {count}",
-  "columns2": "Columns: {count}",
-  "noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns": "No columns configured for this swimlane. Use Structure to add columns.",
-  "taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves": "Task drag is unlocked. Move tasks carefully while scrolling, or tap lock to prevent accidental moves.",
-  "taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks": "Task drag is locked so you can scroll safely. Tap unlock in the top bar when you want to move tasks.",
-  "dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax": "Drag and drop tasks across swimlanes and columns. Use Search for advanced query syntax.",
-  "currencyMustBeA3LetterCode": "Currency must be a 3-letter code.",
-  "budgetMustBeAPositiveNumber": "Budget must be a positive number.",
-  "useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow": "Use Kanboard query syntax. Example: `status:open assignee:me due:tomorrow`",
-  "enterASearchQuery": "Enter a search query.",
-  "boardStructure2": "{name} Board Structure",
-  "dragRowsToReorderChangesAreSavedImmediately": "Drag rows to reorder. Changes are saved immediately.",
-  "noColumnsYetAddOne": "No columns yet. Add one.",
-  "noSwimlanesYetAddOne": "No swimlanes yet. Add one.",
-  "positionLimit": "Position {position} · Limit {limit}",
   "position": "Position {position}",
-  "horizontalStructureOfTheBoard": "Horizontal structure of the board",
-  "verticalWorkGrouping": "Vertical work grouping",
-  "@thisWillRemovePermanently": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@attachments": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@connectedViaJsonrpcTokenAuthServerVersion": {
-    "placeholders": {
-      "version": {}
-    }
-  },
-  "@connectedAsVersion": {
-    "placeholders": {
-      "username": {},
-      "version": {}
-    }
-  },
-  "@connectedSuccessfullyButServerVersionIsTarget1250": {
-    "placeholders": {
-      "version": {}
-    }
-  },
-  "@connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@invalidTransferCode": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@statusUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@moveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deleteColumn2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@deleteSwimlane2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@structure2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@expenseSettingsFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deletePermanently": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@columnSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@columnDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@swimlaneSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@swimlaneDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectCreatedButDefaultsFailedToApply": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@uploadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@downloadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@filePickerFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentPickerFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentUploadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentExportFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskCreateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@tagUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskLinkFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@linkDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@externalLinkFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@externalLinkDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskStatusUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskNumber": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@userNumber": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@estHSpentH": {
-    "placeholders": {
-      "est": {},
-      "spent": {}
-    }
-  },
-  "@tasks2": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@columns2": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@boardStructure2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@positionLimit": {
-    "placeholders": {
-      "position": {},
-      "limit": {}
-    }
-  },
   "@position": {
     "placeholders": {
       "position": {}
-    }
-  },
-  "@aiConnectionTestSucceeded": {
-    "placeholders": {
-      "result": {}
-    }
-  },
-  "@aiConnectionTestFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@availableModelsFetched": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@availableModelsFetchFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@aiCostNoticeBody": {
-    "placeholders": {
-      "owner": {}
-    }
-  },
-  "@aiActionsApplied": {
-    "placeholders": {
-      "swimlanes": {},
-      "tasks": {}
-    }
-  },
-  "@aiActionsAppliedDetailed": {
-    "placeholders": {
-      "swimlanes": {},
-      "columns": {},
-      "tasks": {},
-      "moved": {},
-      "skipped": {}
-    }
-  },
-  "@aiChatForProject": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@currentChatId": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@chatExportFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@aiRequestFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@incomeForPerson": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@financeTableSaveFailed": {
-    "placeholders": {
-      "error": {}
     }
   },
   "organizerAppName": "Jivie",
@@ -753,7 +67,6 @@
   "organizerFinances": "Finances",
   "organizerHome": "Home",
   "organizerSettings": "Settings",
-  "organizerLocalSpace": "Personal space",
   "organizerLocalOnly": "Saved on this device",
   "organizerLocalDescription": "Tasks and plans live on this device. No account needed.",
   "organizerTodayIntro": "Room for what matters today.",
@@ -794,13 +107,10 @@
   "organizerSaveError": "Could not save the change. Please try again.",
   "organizerLoadError": "Could not open local data.",
   "organizerRetry": "Try again",
-  "organizerDate": "Date",
-  "organizerTime": "Time",
   "organizerNoDate": "No due date",
   "organizerRemoveDate": "Remove date",
   "organizerUpcoming": "Upcoming",
   "organizerCalendarIntro": "Events and task deadlines in one place.",
-  "organizerFinanceIntro": "Income, expenses and planned costs.",
   "organizerAddFinance": "Add entry",
   "organizerEditFinance": "Edit entry",
   "organizerNoFinance": "Your overview starts with the first entry.",
@@ -808,11 +118,6 @@
   "organizerExpense": "Expense",
   "organizerCurrency": "Currency",
   "organizerInvalidMoney": "Enter a positive amount with at most two decimal places.",
-  "organizerBalance": "Income minus expenses",
-  "organizerConnection": "Existing Kanboard",
-  "organizerConnectionDescription": "Your existing projects are still on your Kanboard server. Connect your account to open them. The local organizer does not import or sync them yet.",
-  "organizerConnect": "Connect account",
-  "organizerOpenKanboard": "Open Kanboard",
   "organizerBackup": "Backup",
   "organizerBackupDescription": "Export local records to a JSON file or restore them from a backup. The file is not encrypted; store it in a safe place.",
   "organizerExport": "Export backup",
@@ -820,16 +125,11 @@
   "organizerRestoreWarning": "Restoring adds records from the backup. If the backup contains records that already exist, the entire import is rejected. Export your current backup first.",
   "organizerRestoreConfirm": "Restore",
   "organizerRestored": "Local data restored.",
-  "organizerReminders": "Reminders",
-  "organizerNoReminders": "No new reminders.",
-  "organizerRemindersDescription": "Task deadline reminders appear when you open the app.",
   "organizerHomeIntro": "Organize home plans with projects and tasks in your personal space.",
-  "organizerBackToday": "Back to Today",
   "organizerDeleteConfirm": "Delete this entry?",
   "organizerDeleteProjectNote": "Tasks, events and finance entries are kept without a project.",
   "organizerProjectProgress": "{done} of {total} completed",
   "organizerShoppingCount": "{count} items on your lists",
-  "organizerTasksCount": "{count} tasks",
   "organizerNoMatchingTasks": "There are no tasks in this project yet.",
   "organizerPersonal": "Personal",
   "organizerSystemLanguage": "Device language",
@@ -850,16 +150,7 @@
       }
     }
   },
-  "@organizerTasksCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "organizerRead": "Read",
   "organizerWithoutDate": "Without a deadline",
-  "organizerOverdue": "Overdue",
   "organizerHomeProjects": "Home projects",
   "organizerProjectArea": "Area",
   "organizerPersonalArea": "Personal",
@@ -867,12 +158,8 @@
   "organizerConflict": "The record changed or the backup contains existing records. Open the latest version of the record; a conflicting import is rejected.",
   "organizerInvalidData": "The data is invalid or the backup format is unsupported.",
   "secureStorageUnavailable": "Secure storage is unavailable. Credentials were not saved; check this device’s secure storage settings.",
-  "credentialsSharingDisabled": "Passwords and personal API keys are not shared. Project invitations will be available when the secure flow is ready.",
-  "personalTokenHint": "Use your username and personal API token. The global jsonrpc key is not supported.",
   "secureConnectionRequired": "Use HTTPS. HTTP is allowed only for an explicit local development connection.",
   "localDevelopmentConnection": "Local development connection (HTTP on this computer)",
-  "aiSessionChanged": "The account changed. This chat belongs to the previous session; reopen AI help from your project.",
-  "connectionFailed": "Connection failed. Check the server address, username and password or personal API token.",
   "sharingAccount": "Account and sharing",
   "sharingIntro": "Personal data stays on this device. Connect an account when you want to use shared lists and projects.",
   "sharingPersonal": "Personal",
@@ -881,21 +168,16 @@
   "sharingLogin": "Sign in",
   "sharingLoginAction": "Sign in",
   "sharingHaveInvite": "I have an invitation",
-  "sharingInvitation": "Invitation",
   "sharingInvitationCode": "Invitation code",
   "sharingInvitationHint": "Paste the code sent by the person you want to collaborate with.",
   "sharingPreviewInvite": "Check invitation",
   "sharingAcceptInvite": "Accept invitation",
-  "sharingRegister": "Create an account with an invitation",
   "sharingRegisterAction": "Create account and accept",
   "sharingDisplayName": "Display name",
-  "sharingEmail": "Email",
   "sharingConfirmPassword": "Confirm password",
   "sharingPasswordMismatch": "Passwords do not match.",
   "sharingTwoFactorCode": "Two-factor authentication code",
   "sharingDeviceName": "This device’s name",
-  "sharingDeviceSession": "This device’s session",
-  "sharingSpaces": "Shared spaces",
   "sharingCreateSpace": "New shared space",
   "sharingSpaceName": "Space name",
   "sharingScopeType": "Space type",
@@ -906,25 +188,16 @@
   "sharingChooseSpace": "Choose a shared space",
   "sharingMembers": "Members",
   "sharingOwner": "Owner",
-  "sharingEditor": "Can edit",
   "sharingViewer": "Can view",
   "sharingRole": "Role",
   "sharingInvitePerson": "Invite someone",
-  "sharingCreateInvite": "Create invitation",
   "sharingInvitations": "Invitations",
-  "sharingCopyInvite": "Copy code",
-  "sharingInviteCopied": "Invitation code copied.",
-  "sharingInviteCodeOnce": "Save or send the code now. It cannot be displayed again later.",
   "sharingRevokeInvite": "Revoke invitation",
   "sharingRemoveMember": "Remove member",
   "sharingRemoveMemberConfirm": "Once removed, this member can no longer access this space. Previously downloaded copies cannot be erased remotely.",
-  "sharingSignOutDescription": "Personal data stays on this device. Check pending shared changes before signing out.",
   "sharingSyncNow": "Sync now",
-  "sharingSynced": "Synced",
   "sharingSyncing": "Syncing …",
   "sharingPending": "Waiting to sync",
-  "sharingOffline": "Connection unavailable",
-  "sharingSyncFailed": "Sync failed. Local changes have been kept.",
   "sharingConflicts": "Changes need a decision",
   "sharingConflictDescription": "The same record also changed elsewhere. Compare both versions and choose which to keep.",
   "sharingLocalVersion": "On this device",
@@ -937,19 +210,13 @@
   "sharingInvalidInvite": "The invitation is invalid, expired, or already used.",
   "sharingSessionExpired": "Your session expired. Sign in again; personal data stays on this device.",
   "sharingPermissionDenied": "You do not have permission for this action.",
-  "sharingNoSharedLists": "This space has no shared list yet.",
   "sharingNoSharedListsDescription": "Create a list to collaborate. Personal lists are not shared automatically.",
   "sharingCreateSharedList": "New shared list",
   "sharingReadOnly": "Read only",
-  "sharingQuietShopping": "Shopping list changes are quiet; they do not send email.",
-  "sharingShareList": "Share this list",
-  "sharingShareProject": "Share project and tasks",
-  "sharingShareConfirm": "A shared copy will be created in the selected space. Personal content and finances are not shared automatically.",
   "sharingNoMembers": "No member information available.",
   "sharingNoInvitations": "No active invitations.",
   "sharingGoToAccount": "Open account and sharing",
   "sharingConnectBeforeShared": "Connect an account or accept an invitation to use shared lists.",
-  "sharingSaveBeforeSync": "Changes are saved on this device first, then synced with the space.",
   "sharingMember": "Member",
   "sharingRequired": "Complete this field.",
   "sharingSaveDrafts": "Save my unsynced changes",
@@ -961,7 +228,6 @@
   "sharingInvalidCredentials": "Sign-in failed. Check your username, password, and any two-factor code.",
   "sharingSelectDestination": "Where should the shared copy be created?",
   "sharingPendingSignOut": "The shared view will be hidden after signing out. Personal data remains. Unsynced shared changes are not sent under another account; you can export them before signing out.",
-  "sharingNoPending": "No pending changes",
   "sharingResumeBlocked": "Resume syncing my changes",
   "sharingResumeBlockedDescription": "Access has been restored. Previously blocked changes are sent only when you explicitly resume syncing.",
   "sharingOfflineSignOut": "Signed out on this device. Server session revocation could not be confirmed; that session remains valid until revoked or expired.",
@@ -970,7 +236,6 @@
   "sharingRevoked": "Revoked",
   "sharingExpired": "Expired",
   "sharingSessionEnds": "Session expires",
-  "sharingSharedTasks": "Shared tasks",
   "sharingConflictsButton": "Review changes",
   "sharingDeletedVersion": "This version is absent or the record has been deleted.",
   "sharingNetworkError": "Connection unavailable. Unsynced changes stay on this device; try syncing again.",
@@ -981,7 +246,6 @@
   "sharingUnsupportedAuth": "This sign-in method is not supported. Use a supported local user account on the server for sharing.",
   "sharingIncompatibleServer": "The server version is not compatible with sharing in this app. Check the server plugin; local data stays on this device.",
   "sharingValidationError": "The data is invalid. Check your input and try again.",
-  "sharingRegistrationPasswordHint": "A new password needs at least 12 characters (at most 72 bytes).",
   "sharingBlockedDescription": "These changes are blocked because access was revoked. You can export them. Restored access requires an explicit choice to resume them.",
   "sharingAdvancedLogin": "Additional sign-in options",
   "sharingMoreDetails": "Record details",
@@ -1000,7 +264,6 @@
   "planningEnd": "End",
   "planningDue": "Due",
   "planningCreatedBy": "Created by",
-  "planningUpdatedBy": "Last updated by",
   "planningInvalidSchedule": "The end cannot be before the start.",
   "planningSharedToday": "Today in this shared space",
   "planningTimeline": "Timeline",
@@ -1117,7 +380,6 @@
       }
     }
   },
-  "inboxMemberJoined": "A member joined",
   "inboxRecordUpdated": "A record was updated",
   "inboxRecordDeleted": "A record was deleted",
   "inboxTaskCompleted": "A task was completed",
@@ -1125,7 +387,6 @@
   "inboxFinanceChanged": "A shared finance change",
   "inboxProjectChanged": "A project change",
   "inboxReminderDue": "It is time for a reminder",
-  "inboxOpenToView": "Open for details",
   "inboxSharedPreferencesUnavailable": "This server does not support notification preferences yet.",
   "planningFullDay": "Full shared day",
   "sharingView": "View",
@@ -1164,7 +425,6 @@
   "inboxChannelEmail": "Email",
   "inboxChannelUnavailable": "This channel is unavailable on this server.",
   "inboxPreferencesUnsupported": "This server does not support notification preferences yet.",
-  "inboxCategoryAssignments": "Assignments",
   "inboxCategoryTasks": "Tasks and plans",
   "inboxCategoryShopping": "Shopping",
   "inboxCategoryMembers": "Members",
@@ -1232,7 +492,6 @@
   "remotePushError": "Remote notifications could not be prepared. Retry; the inbox remains available.",
   "remotePushRetry": "Check notifications again",
   "remotePushLoginForOpen": "Sign in to the account that received this notification.",
-  "remotePushDeviceUnavailable": "First enable and register remote notifications on this device.",
   "setupTitle": "How would you like to start?",
   "setupIntro": "Choose how you want to use Jivie. You can change how you use the app in settings later.",
   "setupHint": "Your personal space already works without an account. Optionally connect your devices or create a shared home.",
@@ -1248,8 +507,6 @@
   "inviteOpenWarning": "Check the server address. Invitations are not accepted automatically; preview it first.",
   "inviteOpenContinue": "Continue to invitation",
   "inviteLinkInvalid": "This link is not a valid invitation. You can enter the server and code manually in the app.",
-  "inviteCopyLink": "Copy invitation link",
-  "inviteLinkPrepared": "The link opens the invitation in the installed Jivie app. If the app does not open, enter the server and code manually in the app.",
   "accountFirstTitle": "First account with a code",
   "accountFirstDescription": "The server operator provides a one-use setup code. This creates a regular user account. Once the first account exists, others join by invitation.",
   "accountBootstrapCode": "Operator setup code",
@@ -1321,12 +578,10 @@
   "taskCostUnassignedAccount": "No account selected",
   "taskCostPayer": "Payer",
   "taskCostRecipient": "Recipient",
-  "taskCostAuthor": "Entry author",
   "taskCostNoDue": "Without a task due date, the cost has no planned date.",
   "taskCostDetachHint": "Removing the link preserves the financial entry.",
   "spacePickerTitle": "Space",
   "organizationTitle": "Organization",
-  "organizationCreate": "Create organization",
   "organizationProjects": "Organization projects",
   "organizationCreateProject": "Add organization project",
   "organizationAccessDescription": "A whole-space invitation includes all its content, finances and projects, including future projects. A project-only invitation includes only that project. Members can also edit, delete, invite others and manage members within their scope.",
@@ -1388,8 +643,6 @@
   "financePlanSymbolicAccount": "This is a named ledger account; it does not move money or connect to a bank.",
   "financePlanEmpty": "No dated entries in the selected period.",
   "financePlanRuleType": "Recurrence type",
-  "financePlanSaved": "The financial plan is saved.",
-  "financePlanOverdue": "Still unconfirmed",
   "financePlanBack": "Back",
   "financePlanNext": "Next",
   "financePlanDateNeeded": "Choose a date.",
@@ -1403,7 +656,6 @@
   "financePlanRecordedChange": "Recorded net change",
   "financePairedConflict": "Review the task and cost conflict in finances.",
   "deletionDetachOrganization": "Keep this project as an independent space when the organization is deleted. Its members and finances remain unchanged.",
-  "deletionOrganizationLinks": "Projects detached from an organization",
   "financePlanIncomeQuestion": "Have you received this income?",
   "financePlanExpenseQuestion": "Has this obligation been paid?",
   "financePlanIncomeReminderBody": "Have you received this income? Open the expected entry and confirm the actual amount.",
@@ -1437,7 +689,6 @@
   "privateSyncPause": "Pause synchronization",
   "privateSyncResume": "Resume synchronization",
   "privateSyncUnavailable": "Private synchronization requires sign-in and a supported server.",
-  "privateSyncPending": "Pending changes",
   "privateSyncIssue": "Resolve incompatible or conflicting records before enabling. Personal data stays on this device.",
   "backupTitle": "Encrypted backup",
   "backupDescription": "A password protects this copy of personal records, settings and authorized shared work. Credentials are excluded. This does not add encryption to the active database.",
@@ -1480,12 +731,10 @@
   "backupSourceServer": "Backup server",
   "backupLocalOnly": "Device only",
   "backupAccountMatches": "Personal records can be restored locally. Resuming shared work checks the account and permissions again.",
-  "backupAccountDifferent": "The backup belongs to another account. Shared work stays protected until you sign in to the matching account.",
   "backupCompleteness": "The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.",
   "backupTooLarge": "The backup exceeds the 64 MiB limit. Your data was not changed.",
   "backupMergeConflict": "The backup contains different content with an existing ID. Merge was rejected; your data was not changed.",
   "privateSyncLocalPending": "New local records are awaiting your review.",
-  "backupRecoveryState": "Recovered work status",
   "backupRecoveryReady": "Ready to review and resume",
   "backupLegacyJson": "Legacy unencrypted JSON export",
   "backupIncomplete": "Some cached spaces in this backup are incomplete. They need to sync again after restoration.",
@@ -1562,7 +811,6 @@
   "deletionRetryReview": "This retry uses the same decisions and the same preview below. Enter your password and TOTP again. If the preview is stale, the server rejects deletion and requires a new review.",
   "deletionDeleteOwnedScope": "Permanently delete this space and its content too",
   "deletionUnnamedStructure": "Shared structure without permission to view details",
-  "deletionMinorUnits": "minor currency units",
   "deletionRetainedEdits": "Server records created by your account are deleted. Records created by others remain, including your edits to their content. Your identity references are removed; individual field edits cannot be separated by author.",
   "jiviePrivacyLink": "Privacy",
   "jivieHelpLink": "Help and support",
@@ -1571,14 +819,13 @@
   "deletionSpaceDeleted": "This shared space and its content will be permanently deleted.",
   "deletionCancelPending": "Cancel pending request",
   "deletionCancelled": "The server confirmed cancellation. This request can no longer delete the account. Review the impact again to delete it.",
-  "deletionLegacyLocal": "Separately stored legacy Kanboard connections, caches and AI conversations are not removed by this action. A legacy connection to the deleted account will no longer work.",
+  "deletionLegacyLocal": "Locally stored data from earlier application versions remain on this device. This action does not remove them.",
   "deletionPersonalExport": "Export personal data for local recovery",
   "deletionJsonWarning": "This standalone copy contains currently accessible personal records, including private synced records. JSON is not encrypted; save it securely. It contains no shared work, sessions or sync bindings. After deletion, explicitly import it in local mode through Settings. Do not upload recovered data to another account without your explicit choice.",
   "gardenTitle": "Garden",
   "gardenIntro": "Keep planting notes and arrange beds, plants or other areas by hand.",
   "gardenLocalOnly": "On this device · no sync or sharing",
   "gardenNew": "New garden",
-  "gardenEdit": "Edit garden",
   "gardenName": "Garden name",
   "gardenNameRequired": "Enter a garden name.",
   "gardenEmptyTitle": "Your first garden",
@@ -1631,23 +878,6 @@
   "@gardenAreaCount": {
     "placeholders": {
       "count": {
-        "type": "int"
-      }
-    }
-  },
-  "gardenAreaPosition": "Left {x}%, top {y}% · {width} × {height}%",
-  "@gardenAreaPosition": {
-    "placeholders": {
-      "x": {
-        "type": "int"
-      },
-      "y": {
-        "type": "int"
-      },
-      "width": {
-        "type": "int"
-      },
-      "height": {
         "type": "int"
       }
     }
@@ -1711,15 +941,6 @@
   "reminderSnoozeChooseTime": "Choose date and time",
   "reminderSnoozeSaved": "Reminder snoozed.",
   "reminderSnoozeFutureRequired": "Choose a future time.",
-  "reminderSnoozeNeedsConnection": "Connect to the server to snooze a shared reminder.",
-  "reminderSnoozedUntil": "Snoozed until {until}",
-  "@reminderSnoozedUntil": {
-    "placeholders": {
-      "until": {
-        "type": "String"
-      }
-    }
-  },
   "financeSourceTask": "Linked task: {title}",
   "@financeSourceTask": {
     "placeholders": {
@@ -1744,7 +965,6 @@
   "guideMenuTitle": "Menu and settings",
   "spacePickerCreateAction": "New space",
   "spacePickerNewSpace": "+ New space",
-  "spacePickerInitialVisibility": "Initially only the creator can access this space. Choose its type and name; other people gain access only through an explicit invitation. Personal data is never moved or shared automatically.",
   "spacePickerSharedProject": "Shared project",
   "gardenSeason": "Season",
   "gardenNewSeason": "New season",
@@ -1766,7 +986,6 @@
   "gardenArchiveArea": "Retire bed",
   "gardenRestoreArea": "Restore bed",
   "gardenArchivedArea": "Retired bed · history preserved",
-  "gardenArchiveHelp": "A retired bed is hidden from the plan. Its plantings and history remain in the list.",
   "gardenSelectBed": "Select a bed on the plan or in the list.",
   "gardenSeasonPlantings": "Crops in selected season",
   "gardenNoPlantings": "This bed has no crops in the selected season yet.",
@@ -1831,7 +1050,6 @@
   "allSpacesFinanceIncomplete": "Some spaces do not yet have a complete finance snapshot. Totals include only complete sources.",
   "allSpacesAllDates": "All dates",
   "allSpacesTodayEmpty": "No open tasks, events or expected payments for today.",
-  "allSpacesUpcoming": "Today and overdue",
   "organizerPressBackAgainToExit": "Press back again to exit",
   "spaceSettingsTitle": "Space settings",
   "spaceSettingsChoose": "Choose a shared space to manage members and invitations.",
@@ -1843,14 +1061,12 @@
   "localSpaceRename": "Edit space",
   "localSpaceMembersDescription": "People are a record of persons. Account access and invitations require a server connection for the space.",
   "localSpaceLinkAction": "Connect and synchronize",
-  "legacyLocalData": "Unassigned data",
   "legacyLocalDescription": "These records remain on this device. Choose a household before moving them; connecting a server does not automatically share them.",
   "localSpaceMoveToHousehold": "Assign to household",
   "localSpaceMovePreview": "Move “{name}” to household “{household}”? The data becomes part of this space. If you later enable sharing, its permissions apply.",
   "localSpaceChooseHousehold": "Choose a household",
   "localSpaceNoHouseholds": "First create a local household using the space picker.",
   "localSpaceOfflineWork": "Your data remains on this device. Local work continues; invitations and server permission changes require a connection.",
-  "organizationAggregateDescription": "Activity from permitted projects. Each record retains its source space.",
   "organizationLeader": "Organization leader",
   "organizationLeaderGrant": "Grant leader role",
   "organizationLeaderRemove": "Remove leader role",
@@ -1924,7 +1140,6 @@
   "paymentMyAccount": "My account or card",
   "paymentChooseAccount": "Choose an account",
   "paymentNeedsPersonalAccount": "First add your account or card in the same currency in your personal space.",
-  "paymentNeedsRefundAccount": "First add an organization account in the same currency for reimbursement.",
   "paymentPaidAt": "Date of personal payment",
   "paymentExpectRefund": "I expect reimbursement",
   "paymentExpectRefundYes": "Yes, I expect reimbursement",
@@ -2008,7 +1223,6 @@
       }
     }
   },
-  "emailInviteQueuedShort": "Email queued for delivery",
   "emailInviteUnsupported": "This server does not support email invitations yet. Ask its administrator to update FamilyHub and configure email. Existing invitation codes can still be accepted.",
   "emailInviteInvalidEmail": "Enter a valid email address.",
   "emailInvitePendingTitle": "An invitation is waiting for your decision",
@@ -2091,13 +1305,11 @@
   "sharingAccessSourceSpace": "Space membership",
   "sharingAccessSourceProject": "Project membership",
   "sharingAccessReadWrite": "Read, edit and manage",
-  "sharingAccessReadOnly": "Read",
   "sharingProjectSharingReview": "Review project-only sharing",
   "sharingProjectSharingDescription": "The project and its linked records will gain a separate sharing scope. Existing household members retain access. New invitations apply only to this project and do not expose other household content.",
   "sharingProjectSharingApply": "Enable project sharing",
   "sharingProjectSharingBlocked": "This project has finance or other links to content outside the project. Resolve those links before sharing it separately; inviting someone to the entire household does not replace a project-only invitation.",
   "sharingProjectSharingAction": "Share project only",
-  "sharingAccessProjects": "Projects included in this space",
   "sharingProjectMembersInherited": "Access through membership in the whole space",
   "sharingProjectNewVisibility": "All space members can see this project. You can invite additional collaborators to this project only, without exposing other space content.",
   "sharingProjectSharingCounts": "Records: {records} · finance records: {finances} · reminders: {reminders}",

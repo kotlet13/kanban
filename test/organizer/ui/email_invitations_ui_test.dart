@@ -227,7 +227,7 @@ void main() {
           await openMembers(tester);
         } else {
           final container = ProviderScope.containerOf(
-            tester.element(find.byType(KanbanApp)),
+            tester.element(find.byType(JivieApp)),
           );
           await container
               .read(collaborationProvider.notifier)

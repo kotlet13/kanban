@@ -1,744 +1,58 @@
 {
   "@@locale": "sl",
-  "kanbanConnect": "Kanban povezava",
   "routeError": "Napaka poti",
   "unknownError": "Neznana napaka",
-  "kanboardWorkspace": "Delovni prostor Kanboard",
-  "restoringSession": "Obnavljanje seje...",
-  "connectToKanboard": "Poveži se s Kanboardom",
   "projects": "Projekti",
-  "projectDefaults": "Privzete nastavitve projekta",
-  "aiSettings": "Nastavitve AI",
-  "aiChat": "AI klepet",
-  "connectionSettings": "Nastavitve povezave",
   "refresh": "Osveži",
   "logout": "Odjava",
-  "newProject": "Nov projekt",
-  "couldNotLoadProjects": "Projektov ni bilo mogoče naložiti",
-  "retry": "Poskusi znova",
-  "noActiveSession": "Ni aktivne seje",
-  "noActiveSessionConnectFirst": "Ni aktivne seje. Najprej se povežite.",
-  "connectToKanboardToContinue": "Za nadaljevanje se povežite s Kanboardom.",
-  "connect": "Poveži",
-  "projectsWorkspace": "Delovni prostor projektov",
-  "trackOrganizeAndOpenYourKanboardProjects": "Spremljajte, organizirajte in odpirajte svoje Kanboard projekte.",
-  "connectYourKanboardAccountToLoadProjectData": "Povežite svoj Kanboard račun za nalaganje podatkov projektov.",
-  "total": "Skupaj",
   "active": "Aktivni",
-  "inactive": "Neaktivni",
-  "noProjectsYet": "Projektov še ni",
-  "createYourFirstProjectFromTheActionButtonAndStartOrganizingYourBoard": "Ustvarite svoj prvi projekt z akcijskim gumbom in začnite organizirati tablo.",
-  "openBoard": "Odpri projekt",
-  "projectAttachments": "Priponke projekta",
   "deleteProject": "Izbriši projekt",
-  "noDescriptionYetOpenTheProjectToAddContext": "Opisa še ni. Odprite projekt in dodajte podrobnosti.",
-  "deleteProject2": "Izbrišem projekt?",
-  "thisWillRemovePermanently": "To bo trajno odstranilo \"{name}\".",
   "cancel": "Prekliči",
   "delete": "Izbriši",
   "createProject": "Ustvari projekt",
-  "editProject": "Uredi projekt",
   "projectName": "Ime projekta",
   "description": "Opis",
-  "projectColorSyncedViaMetadata": "Barva projekta (sinhronizirano prek metapodatkov)",
-  "noColor": "Brez barve",
   "save": "Shrani",
   "stop": "Ustavi",
-  "send": "Pošlji",
-  "attachments": "Priponke · {name}",
-  "noProjectAttachmentsYet": "Priponk projekta še ni.",
-  "download": "Prenesi",
-  "addFiles": "Dodaj datoteke",
   "close": "Zapri",
-  "projectDefaults2": "Privzete nastavitve projekta",
   "appLanguage": "Jezik aplikacije",
-  "followSystemKeepsLocaleAutomatic": "Sledenje sistemu ohranja samodejno izbiro jezika.",
   "language": "Jezik",
-  "followSystemDefault": "Sledi sistemu (privzeto)",
-  "english": "Angleščina",
-  "slovene": "Slovenščina",
-  "templateAppliedToEveryNewProjectCreatedFromThisApp": "Predloga se uporabi za vsak nov projekt, ustvarjen v tej aplikaciji.",
-  "leaveFieldsEmptyToKeepServerDefaults": "Polja pustite prazna za ohranitev privzetih nastavitev strežnika.",
-  "savingADefaultCurrencyAlsoAppliesItToAllExistingProjects": "Shranjevanje privzete valute jo uporabi tudi za vse obstoječe projekte.",
-  "defaultBoardColumns": "Privzeti stolpci table",
-  "defaultBoardColumnsHint": "Ena vrstica na stolpec, npr.\\nBacklog\\nPripravljeno\\nV teku\\nKončano",
-  "defaultSwimlane": "Privzeta steza",
-  "exampleMain": "Primer: Glavno",
-  "exampleUSD": "Primer: USD",
-  "defaultExpenseCurrency": "Privzeta valuta stroškov",
   "reset": "Ponastavi",
-  "enableAI": "Omogoči AI",
-  "instantResponse": "Takojšen odgovor",
-  "thinkingResponse": "Razmislek (thinking)",
-  "thinkingEffort": "Nivo razmisleka",
-  "effortLow": "Nizek",
-  "effortMedium": "Srednji",
-  "effortHigh": "Visok",
-  "aiModel": "AI model",
-  "openAiApiKey": "OpenAI API ključ",
-  "openAiApiKeyIsRequired": "OpenAI API ključ je obvezen.",
-  "testAIConnection": "Preizkusi AI povezavo",
-  "fetchAvailableModels": "Pridobi razpoložljive modele",
-  "availableModelsFetched": "Pridobljenih modelov: {count}.",
-  "availableModelsFetchFailed": "Pridobivanje modelov ni uspelo: {error}",
-  "aiSettingsSaved": "AI nastavitve so shranjene.",
-  "aiConnectionTestSucceeded": "AI test je uspel: {result}",
-  "aiConnectionTestFailed": "AI test ni uspel: {error}",
-  "aiSettingsSecurityNotice": "Varnostna opomba: lokalni način ključa je manj varen. Vsak z dostopom do naprave/aplikacije lahko pridobi ta ključ.",
-  "saving": "Shranjevanje...",
-  "saveDefaults": "Shrani privzete",
-  "configureAiInSettings": "Pred uporabo AI funkcij najprej nastavite AI v nastavitvah.",
-  "aiNotEnabledForThisProject": "AI za ta projekt ni omogočen.",
-  "aiProjectPolicySaved": "Politika AI za projekt je shranjena.",
-  "aiActionPlanDetected": "Zaznan je AI akcijski načrt",
-  "aiActionsApplied": "Uporabljene akcije: steze {swimlanes}, naloge {tasks}.",
-  "aiActionsAppliedDetailed": "Uporabljene akcije: steze {swimlanes}, stolpci {columns}, nove naloge {tasks}, premaknjene naloge {moved}, preskočeni premiki {skipped}.",
-  "enableAIForProject": "Omogoči AI za ta projekt",
-  "aiKeyMode": "Način AI ključa",
-  "ownerKeyMode": "Lastnikov ključ (deljeni stroški)",
-  "userKeyRequiredMode": "Vsak uporabnik potrebuje svoj ključ",
-  "aiCostNoticeTitle": "Obvestilo o stroških AI",
-  "aiCostNoticeBody": "Ta projekt uporablja način lastnikovega ključa. Uporaba AI se tukaj zaračuna uporabniku {owner}.",
-  "iUnderstand": "Razumem",
-  "aiChatForProject": "AI klepet · {name}",
-  "newChat": "Nov klepet",
-  "continueChat": "Nadaljuj klepet",
-  "exportChat": "Izvozi klepet",
-  "currentChatId": "Trenutni klepet: {id}",
-  "noSavedChatsForProject": "Za ta projekt še ni shranjenih klepetov.",
-  "noMessagesToExport": "Ni sporočil za izvoz.",
-  "chatExportFailed": "Izvoz klepeta ni uspel: {error}",
-  "aiRequestFailed": "AI zahteva ni uspela: {error}",
-  "aiIsTyping": "AI piše ...",
-  "aiSuggestedTitle": "AI predlagan naslov",
-  "aiSuggestedDescription": "AI predlagan opis",
-  "aiImproveTitle": "Izboljšaj naslov z AI",
-  "aiImproveDescription": "Izboljšaj opis z AI",
-  "message": "Sporočilo",
-  "projectDefaultsReset": "Privzete nastavitve projekta so ponastavljene.",
-  "resetDefaults": "Ponastavim privzete?",
-  "thisClearsCustomDefaultsAndUsesKanboardServerDefaultsForNewProjects": "To počisti prilagojene privzete nastavitve in uporabi privzete nastavitve strežnika Kanboard za nove projekte.",
-  "connectYourKanboardInstance": "Povežite svojo Kanboard instanco",
-  "loadedSavedCredentials": "Naložene shranjene poverilnice.",
-  "connectedViaJsonrpcTokenAuthServerVersion": "Povezano prek avtentikacije jsonrpc z žetonom. Različica strežnika: {version}",
-  "connectedAsVersion": "Povezano kot {username}. Različica: {version}",
-  "connectedSuccessfullyButServerVersionIsTarget1250": "Povezava je uspela, vendar je različica strežnika {version} (cilj: 1.2.50).",
-  "connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": "Povezava ni uspela: {error}\nNamig: če ste kopirali \"API User Access\", poskusite z uporabniškim imenom \"jsonrpc\" in tem žetonom.",
-  "usePersonalTokenUsernameOrUseApplicationTokenWithUsernameJsonrpc": "Uporabite osebni žeton + uporabniško ime ali aplikacijski žeton z uporabniškim imenom \"jsonrpc\".",
-  "nothingToExportYetConnectOnceOrFillAllFieldsFirst": "Še ni nič za izvoz. Najprej se povežite ali izpolnite vsa polja.",
-  "scanThisCodeWithYourPhoneInTheConnectScreen": "Skenirajte to kodo s telefonom na zaslonu za povezavo.",
-  "couldNotRenderQRError": "QR ni bilo mogoče prikazati.\n$error",
-  "credentialsTransferQR": "QR za prenos poverilnic",
-  "ifQRRenderingFailsCopyPasteTheTransferCode": "Če prikaz QR ne uspe, kopirajte/prilepite kodo za prenos.",
-  "securityNoteThisQRContainsYourAPITokenInPlainText": "Varnostna opomba: ta QR vsebuje vaš API žeton v navadnem besedilu.",
-  "transferCodeCopied": "Koda za prenos je kopirana.",
-  "importedCredentialsFromTransferCode": "Poverilnice so uvožene iz kode za prenos.",
-  "credentialsImportedTapConnect": "Poverilnice so uvožene. Tapnite Poveži.",
-  "clipboardIsEmpty": "Odložišče je prazno.",
-  "invalidTransferCode": "Neveljavna koda za prenos: {error}",
-  "qrScanningIsAvailableOnIOSAndroidUsePasteTransferCodeHere": "Skeniranje QR je na voljo na iOS/Android. Tukaj uporabite \"Prilepi kodo za prenos\".",
-  "serverURLIsRequired": "URL strežnika je obvezen.",
-  "enterAValidURL": "Vnesite veljaven URL.",
-  "usernameIsRequired": "Uporabniško ime je obvezno.",
-  "tokenIsRequired": "Žeton je obvezen.",
-  "passwordIsRequired": "Geslo je obvezno.",
-  "credentials": "Poverilnice",
-  "authMode": "Način prijave",
-  "apiTokenMode": "API žeton",
-  "passwordMode": "Geslo",
-  "showTransferQR": "Prikaži QR za prenos",
-  "pasteTransferCode": "Prilepi kodo za prenos",
   "serverURL": "URL strežnika",
-  "serverURLExample": "https://kanboard.example.com",
   "username": "Uporabniško ime",
   "password": "Geslo",
-  "personalAccessToken": "Osebni dostopni žeton",
-  "useYourKanboardUsernameAndPassword": "Uporabite svoje Kanboard uporabniško ime in geslo.",
-  "testConnectionContinue": "Preizkusi povezavo in nadaljuj",
-  "openProjects": "Odpri projekte",
-  "authNotePersonalTokenUsuallyUsesYourUsernameApplicationTokenUsuallyUsesUsernameJsonrpc": "Opomba o prijavi: osebni žeton običajno uporablja vaše uporabniško ime; aplikacijski žeton običajno uporablja \"jsonrpc\".",
-  "authNotePasswordModeUsesYourKanboardLoginCredentials": "Opomba o prijavi: način z geslom uporablja vaše Kanboard prijavne podatke.",
-  "scanTransferQR": "Skeniraj QR za prenos",
-  "transferCredentials": "Prenesi poverilnice",
-  "copyCode": "Kopiraj kodo",
   "done": "Končano",
-  "boardStructure": "Struktura table",
-  "searchTasks": "Išči naloge",
-  "newGroceryList": "Nov nakupovalni seznam",
-  "refreshBoard": "Osveži tablo",
-  "showDoneTasks": "Prikaži končane naloge",
-  "hideDoneTasks": "Skrij končane naloge",
-  "lockTaskDrag": "Zakleni vlečenje nalog",
-  "unlockTaskDrag": "Odkleni vlečenje nalog",
-  "newTask": "Nova naloga",
-  "groceryList": "Nakupovalni seznam",
-  "expenses": "Stroški",
-  "search": "Iskanje",
-  "structure": "Struktura",
-  "swimlanes": "Steze",
-  "columns": "Stolpci",
   "tasks": "Naloge",
   "planned": "Planirano",
-  "spent": "Porabljeno",
-  "remaining": "Preostalo",
-  "noBudget": "Ni proračuna",
-  "dropATaskHere": "Spustite nalogo sem",
-  "unlockDragToMoveTasks": "Odklenite vlečenje za premikanje nalog",
   "edit": "Uredi",
-  "markDone": "Označi kot končano",
-  "reopen": "Ponovno odpri",
-  "taskSearch": "Iskanje nalog",
-  "deleteFailed": "Izbris ni uspel: {error}",
-  "statusUpdateFailed": "Posodobitev statusa ni uspela: {error}",
-  "moveFailed": "Premik ni uspel: {error}",
-  "addColumn": "Dodaj stolpec",
-  "editColumn": "Uredi stolpec",
-  "deleteColumn": "Izbrišem stolpec?",
-  "deleteColumn2": "Izbrišem stolpec \"{name}\"?",
-  "taskLimit": "Omejitev nalog",
-  "addSwimlane": "Dodaj stezo",
-  "editSwimlane": "Uredi stezo",
-  "deleteSwimlane": "Izbrišem stezo?",
-  "deleteSwimlane2": "Izbrišem stezo \"{name}\"?",
   "name": "Ime",
-  "structure2": "Struktura {name}",
-  "query": "Poizvedba",
-  "queryExampleStatusOpenCategoryBug": "status:open category:bug",
-  "noResultsYet": "Rezultatov še ni.",
-  "projectExpenses": "Stroški projekta",
-  "financeTable": "Finančna tabela",
-  "financeProject": "Finančni projekt",
-  "financeProjectDescription": "Ta projekt se odpre neposredno v finančni tabeli.",
-  "sharedFinanceTable": "Deljena finančna tabela",
-  "currentBalance": "Trenutno stanje",
-  "projectionHorizon": "Obdobje projekcije",
-  "showPastMonths": "Prikaži pretekle mesece",
-  "includeSpentExternalExpensesInProjection": "Vključi porabljene zunanje stroške v projekcijo",
-  "unsavedFinanceChangesTitle": "Neshranjene finančne spremembe",
-  "unsavedFinanceChangesMessage": "Nekateri finančni podatki še niso shranjeni. Želiš vseeno zapustiti stran?",
-  "leaveWithoutSaving": "Zapusti brez shranjevanja",
-  "summedMonthlyIncome": "Skupni mesečni prihodki",
-  "summedMonthlyExpenses": "Skupni mesečni stroški",
-  "totalBalance": "Skupno stanje",
-  "biggestIncomeExpenseGap": "Najnižji mesečni neto (prihodki - stroški)",
-  "months3": "3 mesece",
-  "months6": "6 mesecev",
-  "months12": "12 mesecev",
-  "lowestProjectedBalance": "Najnižje projicirano stanje",
-  "firstNegativeMonth": "Prvi negativni mesec",
-  "endBalance": "Končno stanje",
-  "recurringMonthlyEnabled": "Mesečno ponavljajoče (omogočeno)",
-  "recurringIncomeMonthlyEnabled": "Mesečni ponavljajoči prihodki (omogočeno)",
-  "monthlyIncomesAndProjections": "Mesečni prihodki in projekcije",
   "month": "Mesec",
-  "incomeTotal": "Skupaj prihodki",
-  "expensesTotal": "Skupaj stroški",
-  "net": "Razlika",
   "closing": "Končno",
-  "contributor": "Uporabnik",
-  "contributorOptional": "Uporabnik (neobvezno)",
   "source": "Vir",
-  "otherIncome": "Drugi prihodki",
-  "otherExpense": "Drugi stroški",
-  "recurringIncomes": "Ponavljajoči prihodki",
-  "recurringExpenses": "Ponavljajoči stroški",
-  "plannedIncomes": "Načrtovani prihodki",
-  "plannedExpenses": "Načrtovani stroški",
-  "expensesFromOtherProjects": "Stroški iz drugih projektov",
-  "ongoing": "tekoče",
   "enabled": "Omogočeno",
   "category": "Kategorija",
-  "monthlyAmount": "Mesečni znesek",
-  "startMonthYYYYMM": "Začetni mesec (YYYY-MM)",
-  "endMonthOptionalYYYYMM": "Končni mesec (YYYY-MM, neobvezno)",
-  "addRecurringExpense": "Dodaj ponavljajoči strošek",
-  "editRecurringExpense": "Uredi ponavljajoči strošek",
-  "recurringExpenseFieldsNotValid": "Polja za ponavljajoči strošek niso veljavna.",
-  "addRecurringIncome": "Dodaj ponavljajoči prihodek",
-  "editRecurringIncome": "Uredi ponavljajoči prihodek",
-  "recurringIncomeFieldsNotValid": "Polja za ponavljajoči prihodek niso veljavna.",
-  "addPlannedExpense": "Dodaj načrtovani strošek",
-  "editPlannedExpense": "Uredi načrtovani strošek",
-  "plannedExpenseFieldsNotValid": "Polja za načrtovani strošek niso veljavna.",
-  "addPlannedIncome": "Dodaj načrtovani prihodek",
-  "editPlannedIncome": "Uredi načrtovani prihodek",
-  "plannedIncomeFieldsNotValid": "Polja za načrtovani prihodek niso veljavna.",
   "amount": "Znesek",
-  "amountHint": "0,00",
-  "monthYYYYMM": "Mesec (YYYY-MM)",
-  "financeContributorMe": "Jaz",
-  "incomeForPerson": "Prihodek - {name}",
-  "currentBalanceMustBeValidNumber": "Trenutno stanje mora biti veljavno število.",
-  "financeTableSaved": "Finančna tabela je shranjena.",
-  "financeTableSaveFailed": "Shranjevanje finančne tabele ni uspelo: {error}",
-  "serverRejectedFinanceTableSave": "Strežnik je zavrnil shranjevanje finančne tabele.",
-  "expenseSettingsSaved": "Nastavitve stroškov so shranjene.",
-  "expenseSettingsFailed": "Nastavitve stroškov niso uspele: {error}",
   "deleteTask": "Izbrišem nalogo?",
-  "deletePermanently": "Trajno izbrišem \"{name}\"?",
-  "currencyCode": "Koda valute",
-  "budget": "Proračun",
-  "leaveEmptyForNoBudget": "Pustite prazno za brez proračuna",
   "task": "Naloga",
-  "newLabel": "Novo",
-  "openStructure": "Odpri strukturo",
-  "noBoardDataYet": "Podatkov table še ni",
-  "pullToRefreshOrOpenStructureToConfigureColumnsAndSwimlanes": "Povlecite za osvežitev ali odprite strukturo za nastavitev stolpcev in stez.",
   "themeMode": "Način teme",
   "systemTheme": "Sistemska tema",
   "lightTheme": "Svetla tema",
   "darkTheme": "Temna tema",
   "add": "Dodaj",
-  "additionalDetails": "Dodatne podrobnosti",
-  "attachments2": "Priponke",
-  "comments": "Komentarji",
-  "subtasks": "Podnaloge",
-  "tags": "Oznake",
-  "taskLinks": "Povezave nalog",
-  "externalLinks": "Zunanje povezave",
-  "link": "Poveži",
-  "linkTitle": "Naslov povezave",
   "type": "Tip",
-  "dependency": "Odvisnost",
   "url": "URL",
-  "columnSaveFailed": "Shranjevanje stolpca ni uspelo: {error}",
-  "columnDeletionFailed": "Brisanje stolpca ni uspelo: {error}",
-  "swimlaneSaveFailed": "Shranjevanje steze ni uspelo: {error}",
-  "swimlaneDeletionFailed": "Brisanje steze ni uspelo: {error}",
-  "projectSaveFailed": "Shranjevanje projekta ni uspelo: {error}",
-  "projectDeletionFailed": "Brisanje projekta ni uspelo: {error}",
-  "apply": "Uporabi",
-  "post": "Objavi",
-  "noAttachmentsYet": "Priponk še ni.",
-  "noCommentsYet": "Komentarjev še ni.",
-  "noSubtasksYet": "Podnalog še ni.",
-  "noTagsAssigned": "Oznak ni dodeljenih.",
-  "noTaskLinks": "Ni povezav nalog.",
-  "noExternalLinks": "Ni zunanjih povezav.",
-  "newTask2": "Nova naloga",
-  "editTask": "Uredi nalogo",
   "title": "Naslov",
-  "column": "Stolpec",
-  "swimlane": "Steza",
-  "assignee": "Dodeljeno",
-  "unassigned": "Nedodeljeno",
-  "priority": "Prioriteta",
-  "dueDate": "Rok",
-  "pickDateTime": "Izberi datum/čas",
   "expense": "Strošek",
-  "score": "Ocena",
-  "pickDueDate": "Izberi rok",
-  "clearDueDate": "Počisti rok",
-  "newComment": "Nov komentar",
-  "comment": "Komentar",
-  "editComment": "Uredi komentar",
-  "editSubtask": "Uredi podnalogo",
-  "estimateH": "Ocena (h)",
-  "spentH": "Porabljeno (h)",
-  "newGroceryItem": "Nova postavka",
-  "newSubtask": "Nova podnaloga",
-  "addTagsCommaSeparated": "Dodaj oznake (ločene z vejico)",
-  "relation": "Relacija",
-  "linkedTaskID": "ID povezane naloge",
   "export": "Izvozi",
   "remove": "Odstrani",
   "project": "Projekt",
-  "projectCreatedButDefaultsFailedToApply": "Projekt je ustvarjen, vendar privzetih nastavitev ni bilo mogoče uporabiti: {error}",
-  "projectAttachmentsUploaded": "Priponke projekta so naložene.",
-  "uploadFailed": "Nalaganje ni uspelo: {error}",
-  "attachmentContentMissing": "Vsebina priponke manjka.",
-  "downloadFailed": "Prenos ni uspel: {error}",
-  "filePickerFailed": "Izbira datotek ni uspela: {error}",
-  "attachmentPickerFailed": "Izbira priponke ni uspela: {error}",
-  "attachmentUploadComplete": "Nalaganje priponk je končano.",
-  "attachmentUploadFailed": "Nalaganje priponk ni uspelo: {error}",
-  "attachmentHasNoDownloadableContent": "Priponka nima vsebine za prenos.",
-  "attachmentExportFailed": "Izvoz priponke ni uspel: {error}",
-  "attachmentDeleteFailed": "Brisanje priponke ni uspelo: {error}",
-  "commentSaveFailed": "Shranjevanje komentarja ni uspelo: {error}",
-  "commentUpdateFailed": "Posodobitev komentarja ni uspela: {error}",
-  "commentDeleteFailed": "Brisanje komentarja ni uspelo: {error}",
-  "subtaskCreateFailed": "Ustvarjanje podnaloge ni uspelo: {error}",
-  "subtaskUpdateFailed": "Posodobitev podnaloge ni uspela: {error}",
-  "subtaskDeleteFailed": "Brisanje podnaloge ni uspelo: {error}",
-  "tagUpdateFailed": "Posodobitev oznak ni uspela: {error}",
-  "theGroceryListTagIsReservedForGroceryTasks": "Oznaka grocery-list je rezervirana za nakupovalne naloge.",
-  "taskLinkFailed": "Povezovanje naloge ni uspelo: {error}",
-  "linkDeleteFailed": "Brisanje povezave ni uspelo: {error}",
-  "externalLinkFailed": "Zunanja povezava ni uspela: {error}",
-  "externalLinkDeleteFailed": "Brisanje zunanje povezave ni uspelo: {error}",
-  "taskStatusUpdateFailed": "Posodobitev statusa ni uspela: {error}",
-  "serverRejectedTaskStatusUpdate": "Strežnik je zavrnil posodobitev statusa naloge.",
-  "taskNumber": "Naloga #{id}",
-  "taskMarkedDone": "Naloga je označena kot končana.",
-  "taskReopened": "Naloga je ponovno odprta.",
   "open": "Odprto",
-  "reopenTask": "Ponovno odpri nalogo",
-  "markAsDone": "Označi kot končano",
-  "editTask2": "Uredi nalogo",
   "createTask": "Ustvari nalogo",
-  "editGroceryList": "Uredi nakupovalni seznam",
-  "createGroceryList": "Ustvari nakupovalni seznam",
-  "groceryListTitle": "Naslov nakupovalnega seznama",
-  "noGroceryItemsYet": "Postavk še ni.",
-  "addItemsNowTheyWillBeCreatedWhenYouSave": "Dodajte postavke zdaj. Ustvarjene bodo ob shranjevanju.",
-  "titleIsRequired": "Naslov je obvezen.",
-  "scoreMustBeAnInteger": "Ocena mora biti celo število.",
-  "serverRejectedAttachmentName": "Strežnik je zavrnil priponko \"{name}\".",
   "amountMustBeAValidNumber": "Znesek mora biti veljavno število.",
-  "taskWasNotCreated": "Naloga ni bila ustvarjena.",
-  "enterATitleBeforeOpeningAdditionalDetails": "Pred odpiranjem dodatnih podrobnosti vnesite naslov.",
-  "taskMustBeSavedFirst": "Nalogo je treba najprej shraniti.",
-  "saveTaskFirstToManageAttachmentsCommentsSubtasksTagsAndLinks": "Najprej shranite nalogo, da boste lahko upravljali priponke, komentarje, podnaloge, oznake in povezave.",
-  "externalLinkTitleAndURLAreRequired": "Naslov in URL zunanje povezave sta obvezna.",
-  "enterAValidLinkedTaskID": "Vnesite veljaven ID povezane naloge.",
-  "invalidURL": "Neveljaven URL.",
-  "couldNotOpenURLCopiedToClipboard": "URL-ja ni bilo mogoče odpreti. Kopirano v odložišče.",
-  "attachmentsCommentsSubtasksTagsAndLinks": "Priponke, komentarji, podnaloge, oznake in povezave",
-  "tapToExpandAdvancedTaskDetails": "Tapnite za prikaz dodatnih podrobnosti naloge",
-  "advancedSectionsAreHidden": "Napredni razdelki so skriti.",
-  "forNewTasksTheAppSavesFirstThenOpensAdvancedSections": "Pri novih nalogah aplikacija najprej shrani, nato odpre napredne razdelke.",
-  "internalLinkTypesUnavailableForThisUserProject": "Notranji tipi povezav niso na voljo za tega uporabnika/projekt.",
-  "noPermissionForInternalTaskLinksGetAllLinks": "Ni dovoljenja za notranje povezave nalog (`getAllLinks`).",
-  "linkedTo": "povezano z",
-  "userNumber": "Uporabnik #{id}",
-  "estHSpentH": "Ocena {est}h · Porabljeno {spent}h",
-  "eG1250": "npr. 12,50",
-  "macosFileAccessEntitlementMissingRebuildTheAppAfterEnablingUserSelectedFileReadEntitlement": "Manjka macOS dovoljenje za dostop do datotek. Po omogočitvi dovoljenja za branje uporabniško izbranih datotek ponovno zgradite aplikacijo.",
-  "tasks2": "Naloge: {count}",
-  "columns2": "Stolpci: {count}",
-  "noColumnsConfiguredForThisSwimlaneUseStructureToAddColumns": "Za to stezo ni nastavljenih stolpcev. Za dodajanje stolpcev uporabite Strukturo.",
-  "taskDragIsUnlockedMoveTasksCarefullyWhileScrollingOrTapLockToPreventAccidentalMoves": "Vlečenje nalog je odklenjeno. Med drsenjem premikajte naloge previdno ali tapnite zaklep, da preprečite nenamerne premike.",
-  "taskDragIsLockedSoYouCanScrollSafelyTapUnlockInTheTopBarWhenYouWantToMoveTasks": "Vlečenje nalog je zaklenjeno, da lahko varno drsite. Ko želite premikati naloge, zgoraj tapnite odklep.",
-  "dragAndDropTasksAcrossSwimlanesAndColumnsUseSearchForAdvancedQuerySyntax": "Povlecite in spustite naloge med stezami in stolpci. Za napredno sintakso uporabite Iskanje.",
-  "currencyMustBeA3LetterCode": "Valuta mora biti 3-črkovna koda.",
-  "budgetMustBeAPositiveNumber": "Proračun mora biti pozitivno število.",
-  "useKanboardQuerySyntaxExampleStatusOpenAssigneeMeDueTomorrow": "Uporabite sintakso poizvedb Kanboard. Primer: `status:open assignee:me due:tomorrow`",
-  "enterASearchQuery": "Vnesite iskalno poizvedbo.",
-  "boardStructure2": "Struktura table · {name}",
-  "dragRowsToReorderChangesAreSavedImmediately": "Vlecite vrstice za spremembo vrstnega reda. Spremembe se shranijo takoj.",
-  "noColumnsYetAddOne": "Stolpcev še ni. Dodajte prvega.",
-  "noSwimlanesYetAddOne": "Stez še ni. Dodajte prvo.",
-  "positionLimit": "Položaj {position} · Omejitev {limit}",
   "position": "Položaj {position}",
-  "horizontalStructureOfTheBoard": "Vodoravna struktura table",
-  "verticalWorkGrouping": "Navpično razvrščanje dela",
-  "@thisWillRemovePermanently": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@attachments": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@connectedViaJsonrpcTokenAuthServerVersion": {
-    "placeholders": {
-      "version": {}
-    }
-  },
-  "@connectedAsVersion": {
-    "placeholders": {
-      "username": {},
-      "version": {}
-    }
-  },
-  "@connectedSuccessfullyButServerVersionIsTarget1250": {
-    "placeholders": {
-      "version": {}
-    }
-  },
-  "@connectionFailedTipIfYouCopiedAPIUserAccessTryUsernameJsonrpcWithThatToken": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@invalidTransferCode": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@statusUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@moveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deleteColumn2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@deleteSwimlane2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@structure2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@expenseSettingsFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@deletePermanently": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@columnSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@columnDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@swimlaneSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@swimlaneDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectDeletionFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@projectCreatedButDefaultsFailedToApply": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@uploadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@downloadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@filePickerFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentPickerFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentUploadFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentExportFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@attachmentDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentSaveFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@commentDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskCreateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@subtaskDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@tagUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskLinkFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@linkDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@externalLinkFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@externalLinkDeleteFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskStatusUpdateFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@taskNumber": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@userNumber": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@estHSpentH": {
-    "placeholders": {
-      "est": {},
-      "spent": {}
-    }
-  },
-  "@tasks2": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@columns2": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@boardStructure2": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@positionLimit": {
-    "placeholders": {
-      "position": {},
-      "limit": {}
-    }
-  },
   "@position": {
     "placeholders": {
       "position": {}
-    }
-  },
-  "@aiConnectionTestSucceeded": {
-    "placeholders": {
-      "result": {}
-    }
-  },
-  "@aiConnectionTestFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@availableModelsFetched": {
-    "placeholders": {
-      "count": {}
-    }
-  },
-  "@availableModelsFetchFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@aiCostNoticeBody": {
-    "placeholders": {
-      "owner": {}
-    }
-  },
-  "@aiActionsApplied": {
-    "placeholders": {
-      "swimlanes": {},
-      "tasks": {}
-    }
-  },
-  "@aiActionsAppliedDetailed": {
-    "placeholders": {
-      "swimlanes": {},
-      "columns": {},
-      "tasks": {},
-      "moved": {},
-      "skipped": {}
-    }
-  },
-  "@aiChatForProject": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@currentChatId": {
-    "placeholders": {
-      "id": {}
-    }
-  },
-  "@chatExportFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@aiRequestFailed": {
-    "placeholders": {
-      "error": {}
-    }
-  },
-  "@incomeForPerson": {
-    "placeholders": {
-      "name": {}
-    }
-  },
-  "@financeTableSaveFailed": {
-    "placeholders": {
-      "error": {}
     }
   },
   "organizerAppName": "Jivie",
@@ -753,7 +67,6 @@
   "organizerFinances": "Finance",
   "organizerHome": "Dom",
   "organizerSettings": "Nastavitve",
-  "organizerLocalSpace": "Osebni prostor",
   "organizerLocalOnly": "Shranjeno na tej napravi",
   "organizerLocalDescription": "Opravila in načrti so na tej napravi. Račun ni potreben.",
   "organizerTodayIntro": "Prostor za stvari, ki so danes pomembne.",
@@ -794,13 +107,10 @@
   "organizerSaveError": "Spremembe ni bilo mogoče shraniti. Poskusi znova.",
   "organizerLoadError": "Lokalnih podatkov ni bilo mogoče odpreti.",
   "organizerRetry": "Poskusi znova",
-  "organizerDate": "Datum",
-  "organizerTime": "Ura",
   "organizerNoDate": "Brez roka",
   "organizerRemoveDate": "Odstrani datum",
   "organizerUpcoming": "Prihajajoče",
   "organizerCalendarIntro": "Dogodki in roki opravil na enem mestu.",
-  "organizerFinanceIntro": "Prihodki, odhodki in načrtovani stroški.",
   "organizerAddFinance": "Dodaj zapis",
   "organizerEditFinance": "Uredi zapis",
   "organizerNoFinance": "Tvoj pregled se začne s prvim zapisom.",
@@ -808,11 +118,6 @@
   "organizerExpense": "Odhodek",
   "organizerCurrency": "Valuta",
   "organizerInvalidMoney": "Vpiši pozitiven znesek z največ dvema decimalkama.",
-  "organizerBalance": "Razlika prihodkov in odhodkov",
-  "organizerConnection": "Obstoječi Kanboard",
-  "organizerConnectionDescription": "Tvoji obstoječi projekti so še na strežniku Kanboard. Odpri jih s povezavo računa. Lokalni organizator jih še ne uvaža ali sinhronizira.",
-  "organizerConnect": "Poveži račun",
-  "organizerOpenKanboard": "Odpri Kanboard",
   "organizerBackup": "Varnostna kopija",
   "organizerBackupDescription": "Izvozi lokalne zapise v datoteko JSON ali jih obnovi iz kopije. Datoteka ni šifrirana; shrani jo na varno mesto.",
   "organizerExport": "Izvozi kopijo",
@@ -820,16 +125,11 @@
   "organizerRestoreWarning": "Obnova doda zapise iz kopije. Če kopija vsebuje že obstoječe zapise, se celoten uvoz zavrne. Najprej izvozi trenutno kopijo.",
   "organizerRestoreConfirm": "Obnovi",
   "organizerRestored": "Lokalni podatki so obnovljeni.",
-  "organizerReminders": "Opomniki",
-  "organizerNoReminders": "Ni novih opomnikov.",
-  "organizerRemindersDescription": "Opomniki za roke opravil se pokažejo ob odprtju aplikacije.",
   "organizerHomeIntro": "Domače načrte vodi s projekti in opravili v osebnem prostoru.",
-  "organizerBackToday": "Nazaj na Danes",
   "organizerDeleteConfirm": "Izbrišem ta zapis?",
   "organizerDeleteProjectNote": "Opravila, dogodki in finančni zapisi ostanejo brez projekta.",
   "organizerProjectProgress": "{done} od {total} opravljenih",
   "organizerShoppingCount": "{count} na seznamih",
-  "organizerTasksCount": "{count} opravil",
   "organizerNoMatchingTasks": "V tem projektu še ni opravil.",
   "organizerPersonal": "Osebno",
   "organizerSystemLanguage": "Jezik naprave",
@@ -850,16 +150,7 @@
       }
     }
   },
-  "@organizerTasksCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "organizerRead": "Prebrano",
   "organizerWithoutDate": "Brez roka",
-  "organizerOverdue": "Zapadlo",
   "organizerHomeProjects": "Domači projekti",
   "organizerProjectArea": "Področje",
   "organizerPersonalArea": "Osebno",
@@ -867,12 +158,8 @@
   "organizerConflict": "Zapis se je vmes spremenil ali kopija vsebuje obstoječe zapise. Odpri zadnjo različico zapisa; uvoz nasprotujoče kopije je zavrnjen.",
   "organizerInvalidData": "Podatki niso veljavni ali oblika kopije ni podprta.",
   "secureStorageUnavailable": "Varna shramba ni na voljo. Poverilnice niso bile shranjene; preverite nastavitve varne shrambe naprave.",
-  "credentialsSharingDisabled": "Gesel in osebnih API ključev ne delimo. Projektna povabila bodo omogočena, ko bo pripravljen varen postopek.",
-  "personalTokenHint": "Uporabite svoje uporabniško ime in osebni API ključ. Globalni ključ jsonrpc ni podprt.",
   "secureConnectionRequired": "Uporabite HTTPS. HTTP je dovoljen samo za izrecno lokalno razvojno povezavo.",
   "localDevelopmentConnection": "Lokalna razvojna povezava (HTTP na tem računalniku)",
-  "aiSessionChanged": "Račun se je spremenil. Ta pogovor pripada prejšnji prijavi; odpri AI pomoč ponovno iz svojega projekta.",
-  "connectionFailed": "Povezava ni uspela. Preverite naslov strežnika, uporabniško ime in geslo ali osebni API ključ.",
   "sharingAccount": "Račun in deljenje",
   "sharingIntro": "Osebni podatki ostanejo na napravi. Poveži račun, ko želiš uporabljati skupne sezname in projekte.",
   "sharingPersonal": "Osebno",
@@ -881,21 +168,16 @@
   "sharingLogin": "Prijava",
   "sharingLoginAction": "Prijavi se",
   "sharingHaveInvite": "Imam povabilo",
-  "sharingInvitation": "Povabilo",
   "sharingInvitationCode": "Koda povabila",
   "sharingInvitationHint": "Prilepi kodo, ki ti jo je poslala oseba, s katero želiš sodelovati.",
   "sharingPreviewInvite": "Preveri povabilo",
   "sharingAcceptInvite": "Sprejmi povabilo",
-  "sharingRegister": "Ustvari račun s povabilom",
   "sharingRegisterAction": "Ustvari račun in sprejmi",
   "sharingDisplayName": "Ime za prikaz",
-  "sharingEmail": "E-pošta",
   "sharingConfirmPassword": "Ponovi geslo",
   "sharingPasswordMismatch": "Gesli se ne ujemata.",
   "sharingTwoFactorCode": "Koda dvostopenjske prijave",
   "sharingDeviceName": "Ime te naprave",
-  "sharingDeviceSession": "Seja te naprave",
-  "sharingSpaces": "Skupni prostori",
   "sharingCreateSpace": "Nov skupni prostor",
   "sharingSpaceName": "Ime prostora",
   "sharingScopeType": "Vrsta prostora",
@@ -906,25 +188,16 @@
   "sharingChooseSpace": "Izberi skupni prostor",
   "sharingMembers": "Člani",
   "sharingOwner": "Lastnik",
-  "sharingEditor": "Ureja",
   "sharingViewer": "Bere",
   "sharingRole": "Vloga",
   "sharingInvitePerson": "Povabi osebo",
-  "sharingCreateInvite": "Ustvari povabilo",
   "sharingInvitations": "Povabila",
-  "sharingCopyInvite": "Kopiraj kodo",
-  "sharingInviteCopied": "Koda povabila je kopirana.",
-  "sharingInviteCodeOnce": "Kodo shrani ali pošlji prejemniku zdaj. Pozneje je ne bo mogoče ponovno prikazati.",
   "sharingRevokeInvite": "Prekliči povabilo",
   "sharingRemoveMember": "Odstrani člana",
   "sharingRemoveMemberConfirm": "Član po preklicu ne bo več mogel dostopati do tega prostora. Že prenesenih kopij ni mogoče izbrisati na daljavo.",
-  "sharingSignOutDescription": "Osebni podatki ostanejo na napravi. Preveri čakajoče skupne spremembe pred odjavo.",
   "sharingSyncNow": "Uskladi zdaj",
-  "sharingSynced": "Usklajeno",
   "sharingSyncing": "Usklajujem …",
   "sharingPending": "Čaka na uskladitev",
-  "sharingOffline": "Povezava ni na voljo",
-  "sharingSyncFailed": "Uskladitev ni uspela. Lokalne spremembe so ohranjene.",
   "sharingConflicts": "Spremembe potrebujejo odločitev",
   "sharingConflictDescription": "Isti zapis se je spremenil tudi drugje. Primerjaj obe različici in izberi, katero želiš obdržati.",
   "sharingLocalVersion": "Na tej napravi",
@@ -937,19 +210,13 @@
   "sharingInvalidInvite": "Povabilo ni veljavno, je poteklo ali je že porabljeno.",
   "sharingSessionExpired": "Seja je potekla. Ponovno se prijavi; osebni podatki ostanejo na napravi.",
   "sharingPermissionDenied": "Za to dejanje nimaš dovoljenja.",
-  "sharingNoSharedLists": "V tem prostoru še ni skupnega seznama.",
   "sharingNoSharedListsDescription": "Ustvari seznam za sodelovanje. Osebni seznami se ne delijo samodejno.",
   "sharingCreateSharedList": "Nov skupni seznam",
   "sharingReadOnly": "Samo za branje",
-  "sharingQuietShopping": "Spremembe nakupovalnega seznama so tihe; ne pošiljajo e-pošte.",
-  "sharingShareList": "Deli ta seznam",
-  "sharingShareProject": "Deli projekt in opravila",
-  "sharingShareConfirm": "V izbranem prostoru bo nastala skupna kopija. Osebna vsebina in finance se ne delijo samodejno.",
   "sharingNoMembers": "Ni podatkov o članih.",
   "sharingNoInvitations": "Ni aktivnih povabil.",
   "sharingGoToAccount": "Odpri račun in deljenje",
   "sharingConnectBeforeShared": "Za skupne sezname poveži račun ali sprejmi povabilo.",
-  "sharingSaveBeforeSync": "Sprememba se najprej shrani na napravi, nato uskladi s prostorom.",
   "sharingMember": "Član",
   "sharingRequired": "Izpolni to polje.",
   "sharingSaveDrafts": "Shrani moje neusklajene spremembe",
@@ -961,7 +228,6 @@
   "sharingInvalidCredentials": "Prijava ni uspela. Preveri uporabniško ime, geslo in morebitno dvostopenjsko kodo.",
   "sharingSelectDestination": "Kam želiš ustvariti skupno kopijo?",
   "sharingPendingSignOut": "Skupni pogled bo po odjavi skrit. Osebni podatki ostanejo. Neusklajene skupne spremembe se ne pošljejo pod drugim računom; pred odjavo jih lahko izvoziš.",
-  "sharingNoPending": "Ni čakajočih sprememb",
   "sharingResumeBlocked": "Nadaljuj usklajevanje mojih sprememb",
   "sharingResumeBlockedDescription": "Dostop je ponovno dovoljen. Prej zadržane spremembe se pošljejo šele, ko izrecno nadaljuješ usklajevanje.",
   "sharingOfflineSignOut": "Odjava na napravi je uspela. Preklica seje na strežniku ni bilo mogoče potrditi; seja bo tam veljavna do preklica ali poteka.",
@@ -970,7 +236,6 @@
   "sharingRevoked": "Preklicano",
   "sharingExpired": "Poteklo",
   "sharingSessionEnds": "Seja velja do",
-  "sharingSharedTasks": "Skupna opravila",
   "sharingConflictsButton": "Preglej spremembe",
   "sharingDeletedVersion": "Te različice ni oziroma je zapis izbrisan.",
   "sharingNetworkError": "Povezava ni na voljo. Neusklajene spremembe ostanejo na napravi; poskusi uskladiti znova.",
@@ -981,7 +246,6 @@
   "sharingUnsupportedAuth": "Ta način prijave ni podprt. Za deljenje uporabi podprt lokalni uporabniški račun na strežniku.",
   "sharingIncompatibleServer": "Različica strežnika ni združljiva z deljenjem v tej aplikaciji. Preveri strežniški vtičnik; lokalni podatki ostanejo na napravi.",
   "sharingValidationError": "Podatki niso veljavni. Preveri vnos in poskusi znova.",
-  "sharingRegistrationPasswordHint": "Novo geslo potrebuje vsaj 12 znakov (največ 72 bajtov).",
   "sharingBlockedDescription": "Te spremembe so zadržane zaradi preklicanega dostopa. Lahko jih izvoziš. Po ponovni pridobitvi dostopa zahtevajo izrecno nadaljevanje.",
   "sharingAdvancedLogin": "Dodatne možnosti prijave",
   "sharingMoreDetails": "Podrobnosti zapisa",
@@ -1000,7 +264,6 @@
   "planningEnd": "Konec",
   "planningDue": "Rok",
   "planningCreatedBy": "Ustvaril/a",
-  "planningUpdatedBy": "Nazadnje spremenil/a",
   "planningInvalidSchedule": "Konec ne sme biti pred začetkom.",
   "planningSharedToday": "Danes v skupnem prostoru",
   "planningTimeline": "Časovnica",
@@ -1117,7 +380,6 @@
       }
     }
   },
-  "inboxMemberJoined": "Pridružil se je član",
   "inboxRecordUpdated": "Zapis je spremenjen",
   "inboxRecordDeleted": "Zapis je izbrisan",
   "inboxTaskCompleted": "Opravilo je zaključeno",
@@ -1125,7 +387,6 @@
   "inboxFinanceChanged": "Sprememba v skupnih financah",
   "inboxProjectChanged": "Sprememba projekta",
   "inboxReminderDue": "Čas je za opomnik",
-  "inboxOpenToView": "Odpri za podrobnosti",
   "inboxSharedPreferencesUnavailable": "Ta strežnik še ne podpira nastavitev obvestil.",
   "planningFullDay": "Celoten skupni dan",
   "sharingView": "Pogled",
@@ -1164,7 +425,6 @@
   "inboxChannelEmail": "E-pošta",
   "inboxChannelUnavailable": "Kanal na tem strežniku ni na voljo.",
   "inboxPreferencesUnsupported": "Ta strežnik še ne podpira nastavitev obvestil.",
-  "inboxCategoryAssignments": "Dodelitve",
   "inboxCategoryTasks": "Opravila in načrti",
   "inboxCategoryShopping": "Nakupi",
   "inboxCategoryMembers": "Člani",
@@ -1232,7 +492,6 @@
   "remotePushError": "Oddaljenih obvestil ni bilo mogoče pripraviti. Poskusi znova; center obvestil ostaja na voljo.",
   "remotePushRetry": "Preveri obvestila znova",
   "remotePushLoginForOpen": "Prijavi se v račun, ki je prejel to obvestilo.",
-  "remotePushDeviceUnavailable": "Najprej omogoči in registriraj oddaljena obvestila na tej napravi.",
   "setupTitle": "Kako želiš začeti?",
   "setupIntro": "Izberi, kako želiš uporabljati Jivie. Svoj način lahko kasneje spremeniš v nastavitvah.",
   "setupHint": "Osebni prostor že deluje brez računa. Po želji poveži svoje naprave ali ustvari skupni dom.",
@@ -1248,8 +507,6 @@
   "inviteOpenWarning": "Preveri naslov strežnika. Povabilo se ne sprejme samodejno; najprej ga pregledaš.",
   "inviteOpenContinue": "Nadaljuj do povabila",
   "inviteLinkInvalid": "Ta povezava ni veljavno povabilo. V aplikacijo lahko ročno vneseš strežnik in kodo.",
-  "inviteCopyLink": "Kopiraj povezavo do povabila",
-  "inviteLinkPrepared": "Povezava odpre povabilo v nameščeni aplikaciji Jivie. Če se aplikacija ne odpre, v njej ročno vnesi strežnik in kodo.",
   "accountFirstTitle": "Prvi račun s kodo",
   "accountFirstDescription": "Upravljavec strežnika ti izda enkratno začetno kodo. Ustvariš navaden uporabniški račun. Po prvem računu se drugi pridružijo s povabilom.",
   "accountBootstrapCode": "Začetna koda upravljavca",
@@ -1321,12 +578,10 @@
   "taskCostUnassignedAccount": "Brez izbire računa",
   "taskCostPayer": "Plačnik",
   "taskCostRecipient": "Prejemnik",
-  "taskCostAuthor": "Avtor vnosa",
   "taskCostNoDue": "Brez roka opravila strošek nima načrtovanega datuma.",
   "taskCostDetachHint": "Odstranitev povezave ohrani finančni zapis.",
   "spacePickerTitle": "Prostor",
   "organizationTitle": "Organizacija",
-  "organizationCreate": "Ustvari organizacijo",
   "organizationProjects": "Projekti organizacije",
   "organizationCreateProject": "Dodaj projekt v organizacijo",
   "organizationAccessDescription": "Povabilo v cel prostor vključuje vse njegove vsebine, finance in projekte, tudi prihodnje. Povabilo samo v projekt vključuje samo ta projekt. Član lahko v svojem obsegu tudi ureja, briše, povabi druge in upravlja člane.",
@@ -1388,8 +643,6 @@
   "financePlanSymbolicAccount": "To je poimenovan račun za evidenco; denarja ne premika in se ne povezuje z banko.",
   "financePlanEmpty": "V izbranem obdobju ni datiranih vnosov.",
   "financePlanRuleType": "Vrsta ponavljanja",
-  "financePlanSaved": "Finančni načrt je shranjen.",
-  "financePlanOverdue": "Še nepotrjeno",
   "financePlanBack": "Nazaj",
   "financePlanNext": "Naprej",
   "financePlanDateNeeded": "Izberi datum.",
@@ -1403,7 +656,6 @@
   "financePlanRecordedChange": "Evidentirana neto sprememba",
   "financePairedConflict": "Konflikt opravila in stroška preglej v financah.",
   "deletionDetachOrganization": "Ohrani ta projekt kot samostojen prostor, ko se izbriše organizacija. Njegovi člani in finance ostanejo nespremenjeni.",
-  "deletionOrganizationLinks": "Projekti, ki se odvežejo od organizacije",
   "financePlanIncomeQuestion": "Ali si že prejel priliv?",
   "financePlanExpenseQuestion": "Ali je obveznost že plačana?",
   "financePlanIncomeReminderBody": "Ali si že prejel priliv? Odpri pričakovani vnos in potrdi dejanski znesek.",
@@ -1437,7 +689,6 @@
   "privateSyncPause": "Začasno ustavi sinhronizacijo",
   "privateSyncResume": "Nadaljuj sinhronizacijo",
   "privateSyncUnavailable": "Za zasebno sinhronizacijo potrebuješ prijavo in podprt strežnik.",
-  "privateSyncPending": "Čakajoče spremembe",
   "privateSyncIssue": "Pred vključitvijo odpravi nezdružljive ali sporne zapise. Osebni podatki ostanejo na napravi.",
   "backupTitle": "Šifrirana varnostna kopija",
   "backupDescription": "Kopija varuje osebne zapise, nastavitve in dovoljeno skupno delo z geslom. Poverilnic ne vključuje. Aktivna baza s tem ne postane dodatno šifrirana.",
@@ -1480,12 +731,10 @@
   "backupSourceServer": "Strežnik kopije",
   "backupLocalOnly": "Samo na napravi",
   "backupAccountMatches": "Osebne zapise lahko obnoviš lokalno. Nadaljevanje skupnega dela znova preveri račun in pravice.",
-  "backupAccountDifferent": "Kopija je iz drugega računa. Skupno delo ostane zaščiteno do prijave v pravi račun.",
   "backupCompleteness": "Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.",
   "backupTooLarge": "Kopija je večja od dovoljene omejitve 64 MiB. Podatki niso bili spremenjeni.",
   "backupMergeConflict": "Kopija vsebuje drugačno vsebino z istim ID. Združitev je zavrnjena; podatki niso spremenjeni.",
   "privateSyncLocalPending": "Novi lokalni zapisi čakajo na tvoj pregled.",
-  "backupRecoveryState": "Stanje obnovljenega dela",
   "backupRecoveryReady": "Lahko pregledaš in nadaljuješ",
   "backupLegacyJson": "Prejšnji izvoz JSON brez šifriranja",
   "backupIncomplete": "Nekateri preneseni prostori v kopiji niso popolni. Po obnovi jih je treba znova uskladiti.",
@@ -1562,7 +811,6 @@
   "deletionRetryReview": "Ponovitev uporablja iste odločitve in isti predogled spodaj. Geslo in TOTP vnesite ponovno. Če je predogled zastarel, strežnik zavrne izbris in zahteva nov pregled.",
   "deletionDeleteOwnedScope": "Trajno izbriši tudi ta prostor in njegovo vsebino",
   "deletionUnnamedStructure": "Skupna struktura brez pravice do podrobnosti",
-  "deletionMinorUnits": "najmanjših denarnih enot",
   "deletionRetainedEdits": "Na strežniku se izbrišejo zapisi, ki jih je ustvaril vaš račun. Zapisi drugih ustvarjalcev ostanejo, tudi če ste urejali njihovo vsebino. Vaše identitetne povezave se odstranijo; urejanj posameznih polj ni mogoče ločiti po avtorju.",
   "jiviePrivacyLink": "Zasebnost",
   "jivieHelpLink": "Pomoč in podpora",
@@ -1571,14 +819,13 @@
   "deletionSpaceDeleted": "Ta skupni prostor in njegova vsebina bosta trajno izbrisana.",
   "deletionCancelPending": "Prekliči čakajočo zahtevo",
   "deletionCancelled": "Strežnik je potrdil preklic. Ta zahteva računa ne more več izbrisati. Za izbris ponovno preglejte posledice.",
-  "deletionLegacyLocal": "Ločeno shranjene stare Kanboard povezave, predpomnilniki in AI pogovori s tem niso odstranjeni. Stara povezava do izbrisanega računa ne bo več delovala.",
+  "deletionLegacyLocal": "Lokalno shranjeni podatki prejšnjih različic aplikacije ostanejo na tej napravi. Ta postopek jih ne odstrani.",
   "deletionPersonalExport": "Izvozi osebne podatke za lokalno obnovo",
   "deletionJsonWarning": "Ta samostojna kopija vsebuje trenutno dostopne osebne zapise, tudi zasebno sinhronizirane. JSON ni šifriran; shranite ga na varno. Ne vsebuje skupnega dela, sej ali sinhronizacijskih povezav. Po izbrisu ga lahko izrecno uvozite v lokalni način prek nastavitev. Obnovljenih podatkov ne prenesite v drug račun brez svoje izrecne odločitve.",
   "gardenTitle": "Vrt",
   "gardenIntro": "Zapiši zasaditve in ročno razporedi grede, rastline ali druge površine.",
   "gardenLocalOnly": "Na tej napravi · brez sinhronizacije in deljenja",
   "gardenNew": "Nov vrt",
-  "gardenEdit": "Uredi vrt",
   "gardenName": "Ime vrta",
   "gardenNameRequired": "Vpiši ime vrta.",
   "gardenEmptyTitle": "Tvoj prvi vrt",
@@ -1631,23 +878,6 @@
   "@gardenAreaCount": {
     "placeholders": {
       "count": {
-        "type": "int"
-      }
-    }
-  },
-  "gardenAreaPosition": "Levo {x} %, zgoraj {y} % · {width} × {height} %",
-  "@gardenAreaPosition": {
-    "placeholders": {
-      "x": {
-        "type": "int"
-      },
-      "y": {
-        "type": "int"
-      },
-      "width": {
-        "type": "int"
-      },
-      "height": {
         "type": "int"
       }
     }
@@ -1711,15 +941,6 @@
   "reminderSnoozeChooseTime": "Izberi datum in čas",
   "reminderSnoozeSaved": "Opomnik je odložen.",
   "reminderSnoozeFutureRequired": "Izberi čas v prihodnosti.",
-  "reminderSnoozeNeedsConnection": "Za odložitev skupnega opomnika se poveži s strežnikom.",
-  "reminderSnoozedUntil": "Odloženo do {until}",
-  "@reminderSnoozedUntil": {
-    "placeholders": {
-      "until": {
-        "type": "String"
-      }
-    }
-  },
   "financeSourceTask": "Povezano opravilo: {title}",
   "@financeSourceTask": {
     "placeholders": {
@@ -1744,7 +965,6 @@
   "guideMenuTitle": "Meni in nastavitve",
   "spacePickerCreateAction": "Nov prostor",
   "spacePickerNewSpace": "+ Nov prostor",
-  "spacePickerInitialVisibility": "Na začetku vidi prostor samo ustvarjalec. Izberi vrsto in ime; druge člane dodaš z izrecnim povabilom. Osebni podatki se ne prenesejo ali delijo samodejno.",
   "spacePickerSharedProject": "Deljeni projekt",
   "gardenSeason": "Sezona",
   "gardenNewSeason": "Nova sezona",
@@ -1766,7 +986,6 @@
   "gardenArchiveArea": "Upokoji gredo",
   "gardenRestoreArea": "Obnovi gredo",
   "gardenArchivedArea": "Upokojena greda · zgodovina ohranjena",
-  "gardenArchiveHelp": "Upokojena greda se skrije z načrta. Njene zasaditve in zgodovina ostanejo v seznamu.",
   "gardenSelectBed": "Izberi gredo na načrtu ali seznamu.",
   "gardenSeasonPlantings": "Kulture v izbrani sezoni",
   "gardenNoPlantings": "Ta greda v izbrani sezoni še nima kultur.",
@@ -1831,7 +1050,6 @@
   "allSpacesFinanceIncomplete": "Nekateri prostori še nimajo popolnega finančnega pregleda. Prikazani seštevki zajemajo samo popolne vire.",
   "allSpacesAllDates": "Vsi datumi",
   "allSpacesTodayEmpty": "Za danes ni odprtih opravil, dogodkov ali pričakovanih plačil.",
-  "allSpacesUpcoming": "Današnje in zamujeno",
   "organizerPressBackAgainToExit": "Pritisni še enkrat za izhod",
   "spaceSettingsTitle": "Nastavitve prostora",
   "spaceSettingsChoose": "Izberi skupni prostor za upravljanje članov in povabil.",
@@ -1843,14 +1061,12 @@
   "localSpaceRename": "Uredi prostor",
   "localSpaceMembersDescription": "Osebe so evidenca ljudi. Dostop drugih računov in povabila zahtevajo povezavo prostora s strežnikom.",
   "localSpaceLinkAction": "Poveži in sinhroniziraj",
-  "legacyLocalData": "Nedodeljeni podatki",
   "legacyLocalDescription": "Ti podatki ostajajo na napravi. Pred prenosom v gospodinjstvo izberi cilj; povezava s strežnikom jih ne deli samodejno.",
   "localSpaceMoveToHousehold": "Dodeli gospodinjstvu",
   "localSpaceMovePreview": "Prenesi »{name}« v gospodinjstvo »{household}«? Podatki postanejo del tega prostora. Če pozneje omogočiš deljenje, zanje veljajo njegove pravice.",
   "localSpaceChooseHousehold": "Izberi gospodinjstvo",
   "localSpaceNoHouseholds": "Najprej ustvari lokalno gospodinjstvo v izboru prostora.",
   "localSpaceOfflineWork": "Podatki ostajajo na napravi. Lokalno delo se nadaljuje; povabila in spremembe strežniških pravic potrebujejo povezavo.",
-  "organizationAggregateDescription": "Dogajanje dovoljenih projektov. Vsak zapis ohrani izvorni prostor.",
   "organizationLeader": "Vodja organizacije",
   "organizationLeaderGrant": "Dodeli vodstveno vlogo",
   "organizationLeaderRemove": "Odvzemi vodstveno vlogo",
@@ -1924,7 +1140,6 @@
   "paymentMyAccount": "Moj račun ali kartica",
   "paymentChooseAccount": "Izberi račun",
   "paymentNeedsPersonalAccount": "Najprej v osebnem prostoru dodaj svoj račun ali kartico v isti valuti.",
-  "paymentNeedsRefundAccount": "Za povračilo najprej dodaj račun organizacije v isti valuti.",
   "paymentPaidAt": "Datum osebnega plačila",
   "paymentExpectRefund": "Pričakujem povračilo",
   "paymentExpectRefundYes": "Da, pričakujem povračilo",
@@ -2008,7 +1223,6 @@
       }
     }
   },
-  "emailInviteQueuedShort": "E-pošta čaka na pošiljanje",
   "emailInviteUnsupported": "Ta strežnik še ne podpira povabil po e-pošti. Skrbnik mora nadgraditi FamilyHub in nastaviti e-pošto. Stara povabila s kodo lahko še vedno sprejmeš.",
   "emailInviteInvalidEmail": "Vpiši veljaven e-poštni naslov.",
   "emailInvitePendingTitle": "Povabilo čaka na tvojo odločitev",
@@ -2091,13 +1305,11 @@
   "sharingAccessSourceSpace": "Članstvo v prostoru",
   "sharingAccessSourceProject": "Članstvo v projektu",
   "sharingAccessReadWrite": "Branje, urejanje in upravljanje",
-  "sharingAccessReadOnly": "Branje",
   "sharingProjectSharingReview": "Preglej deljenje samo projekta",
   "sharingProjectSharingDescription": "Projekt in njegovi povezani zapisi bodo dobili lasten obseg za deljenje. Obstoječi člani gospodinjstva ohranijo dostop. Novo povabilo velja samo za projekt in ne razkrije drugih vsebin gospodinjstva.",
   "sharingProjectSharingApply": "Omogoči deljenje projekta",
   "sharingProjectSharingBlocked": "Projekt ima finančne ali druge povezave z vsebino zunaj projekta. Te povezave je treba urediti pred ločenim deljenjem; povabilo v celo gospodinjstvo ne nadomesti povabila samo v projekt.",
   "sharingProjectSharingAction": "Deli samo projekt",
-  "sharingAccessProjects": "Projekti, vključeni v prostor",
   "sharingProjectMembersInherited": "Dostop iz članstva v celotnem prostoru",
   "sharingProjectNewVisibility": "Projekt vidijo vsi člani prostora. Povabilo samo v ta projekt lahko pošlješ dodatnim sodelavcem; drugih vsebin prostora ne razkrije.",
   "sharingProjectSharingCounts": "Zapisi: {records} · finančni zapisi: {finances} · opomniki: {reminders}",

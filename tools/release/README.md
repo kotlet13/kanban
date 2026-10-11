@@ -8,6 +8,19 @@ python3 -m unittest discover -s tools/release -v
 python3 -m unittest discover -s tools/firebase -v
 ```
 
+For the first public candidate, decode the **built** APK/AAB manifest and run:
+
+```sh
+python3 tools/release/check_android_permissions.py build/qa/no-ai-first-release/android-manifest.xml
+```
+
+This separate artifact check rejects broad shared-storage and media permissions,
+including SDK-limited declarations and the `uses-permission-sdk-23` variant.
+It refuses source manifests with unresolved merge directives. Notification,
+network and app-private FileProvider access remain available. Test file picking,
+opening and sharing on Android as well; the source checker alone cannot prove
+the library manifests were merged correctly.
+
 Source checks cover Android/iOS application identities and labels, localized app name, current release `1.3.2+17`, SL/EN listing length limits, Android API 36+, separate Jivie release signing input/guard, debug signing fallback, Android mipmap sizes and the iOS icon catalog. Icons must be real, complete PNGs with valid CRCs/pixels, declared dimensions and multiple colors; iOS icons must be fully opaque. The tool accepts 8-bit noninterlaced RGB/RGBA/gray/palette PNGs. It cannot verify visual quality, trademark clearance, old-icon similarity, generated native manifests or signed binaries. A source pass is not release readiness.
 
 For the full public checklist, copy `release_inputs.example.json` outside the repo (for example into the ignored `build/qa/jivie/` directory), fill the three real public HTTPS URLs, set only genuinely verified attestations to `true`, and choose whether this build includes remote push. Never add passwords, signing values, private keys, service-account JSON, reviewer credentials or production data to that file.

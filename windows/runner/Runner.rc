@@ -89,8 +89,9 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            // Storage plugins derive existing data/credential paths from these
-            // CompanyName and ProductName values. Preserve them until migration.
+            // path_provider_windows and flutter_secure_storage_windows derive existing
+            // data/credential paths from CompanyName and ProductName. Keep these
+            // storage identities; FileDescription and the window title show Jivie.
             VALUE "CompanyName", "com.example" "\0"
             VALUE "FileDescription", "Jivie" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"

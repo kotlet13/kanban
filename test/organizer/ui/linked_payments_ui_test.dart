@@ -325,7 +325,7 @@ void main() {
               scheduler.FakeScheduler(),
             ),
           ],
-          child: RepaintBoundary(key: key, child: const KanbanApp()),
+          child: RepaintBoundary(key: key, child: const JivieApp()),
         ),
       );
       await tester.pumpAndSettle();
@@ -397,7 +397,7 @@ void main() {
       }
 
       final container = ProviderScope.containerOf(
-        tester.element(find.byType(KanbanApp)),
+        tester.element(find.byType(JivieApp)),
       );
       Future<void> select(String id) async {
         await container.read(localSpacesProvider.notifier).selectSpace(id);

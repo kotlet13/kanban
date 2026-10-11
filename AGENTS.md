@@ -2,6 +2,39 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — uporabnik je naročil popolno odstranitev starega mobilnega vmesnika
+in njegovih odvisnosti ter združitev na main. `lib/features`, `lib/kanboard`, stari
+modeli/providerji/credential/cache/default storage in vse stare poti so odstranjeni.
+Glavni razred je `JivieApp`; novi organizer, FamilyHub, nastavitve, finance in kopije
+ostanejo. open_filex/qr_flutter/qr in stari ikoni so odstranjeni, druge zaklenjene
+odvisnosti/SDK nespremenjeni. Podatkovni formati, baze, Hive in namizne identitete
+so ohranjeni; poverilnice/predpomnilnik starega odjemalca in AI ključi se ne berejo
+ali brišejo. **942 Flutter PASS /
+13 opt-in preskočenih**, analiza **No issues found**, Android/web/iOS simulator ter
+izolirani macOS Debug PASS. [Aktualni dokazi](docs/release/LEGACY_INTERFACE_REMOVAL.md)
+imajo prednost pred starejšimi opisi dosegljivega Kanboard UI spodaj.
+Različica in nameščene interne aplikacije, Play, iOS ter FamilyHub niso spremenjeni.
+
+11. oktober — prva javna izdaja je izrecno **brez AI**. Stari klepet, nastavitve,
+pomoč pri opravilih, neposredne poti, providerji in OpenAI transport so odstranjeni
+iz izvora. Končni preverjevalni AAB nima širokih storage/media dovoljenj iz open_filex;
+FileProvider in obvestila ostanejo. Stari lokalni podatki/ključi se ob nadgradnji
+ne brišejo ali nalagajo. SL/EN zasebnost je objavljena s podporo `support@jivie.app`
+(uporabnik potrdi delujoč predal). Po njegovi nadaljnji izrecni korekciji javna
+zasebnost nima odstavka o AI ali razvojni zgodovini; opisuje prvo dejansko izdajo.
+972 Flutter PASS / 13 opt-in preskočenih, analiza 31 podedovanih info brez napak
+ali opozoril; [aktualni dokazi in meje](docs/release/NO_AI_FIRST_RELEASE.md).
+Različica, nameščene interne aplikacije, Play, iOS in FamilyHub ostajajo nespremenjeni.
+
+11. oktober: predstavitvena stran **jivie.app** je po uporabnikovem naročilu objavljena
+na ločenem cPanel računu `jivie`, `/home/jivie/public_html`. Vseh osem SL/EN strani
+(predstavitev, pomoč, zasebnost, izbris) je preverjenih s HTTPS 200 in ujemanjem paketa;
+HTTP se preusmeri na HTTPS. Obstoječe PHP nastavitve in `.well-known` so ohranjene,
+kopija in prenosni ZIP sta zunaj javne mape. [Dokazi objave](website/README.md) imajo
+prednost pred starejšimi 403/404. Besedilo sledi 1.3.2 in pošteno ohrani razkritje še
+dosegljivega AI ter omejitve obnove. To ni javna mobilna objava, končna trgovinska
+deklaracija ali poseg v FamilyHub produkcijo; njihove odprte postavke ostanejo.
+
 Najnovejša dopolnitev 11. oktobra je [popravek prebranosti in sedemdnevna hramba obvestil](docs/INBOX_READ_STATE_AND_RETENTION.md). Ikona kaže trenutno stanje, namig dejanje; neprebrano je krepkejše in barvno poudarjeno. Rok teče od readAt, ne createdAt; ponovljeno branje ne podaljša roka, unread ga prekliče. Strežniško čiščenje uporablja obstoječi cron opomnikov in visibility_revision na schema15. Minimalna lokalna potrdila preprečujejo ponovno ustvarjanje opomnikov iz še odprtih opravil/financ. `notification_missing` pri zastarelem inbox.read ne sme blokirati celotnega prostora. Izvedba je objavljena: funkcionalni `74aa41c`, različica `eafb30b` in strežniška priprava `8de8cc7` so na `origin/codex/email-invitations`. Android **1.3.2 (17)** je aktiven za **domači (15)** od 08:26; nova podpisana Mac gradnja je odprta z ohranjeno prijavo takndev. Testni strežnik je **FamilyHub 0.11.2/schema15**, po dejanski izolirani obnovi **86 tabel, 273 vrstic in 5.886 zasebnih datotek**, brez ponastavitve podatkov. [Izdajni dokazi](docs/release/INBOX_RETENTION_RELEASE.md) imajo prednost pred starejšimi stanji spodaj. Produkcija, iOS, javna objava in main niso spremenjeni.
 
 Najnovejši izdajni korak 11. oktobra: funkcionalni **bdf36d9** in različica **13e8f46** sta na `origin/codex/email-invitations`. Android **1.3.1 (16)** je aktiven za **domači (15)** od 07:30, nova podpisana Mac gradnja je odprta kot takndev. Testni strežnik uporablja **FamilyHub 0.11.1/schema15**, brez migracije ali spremembe shranjenih preferenc, po sveži izolirani obnovi **86 tabel, 247 vrstic, 2.849 zasebnih datotek**. Vseh pet rednih delavcev je po odprtju potrjeno svežih. [Izdajni dokazi](docs/release/NOTIFICATION_DEFAULTS_RELEASE.md) imajo prednost pred starejšimi stanji spodaj. Fizični Android push preizkus nove izdaje še sledi; Mac ima center v aplikaciji, ne oddaljenega sistemskega push. Produkcija, javna objava, iOS in main niso spremenjeni.

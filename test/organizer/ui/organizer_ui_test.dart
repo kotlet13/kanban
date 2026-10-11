@@ -9,7 +9,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kanban/app.dart';
-import 'package:kanban/features/auth/connect_page.dart';
 import 'package:kanban/app_router.dart';
 import 'package:kanban/organizer/data/organizer_storage.dart';
 import 'package:kanban/organizer/data/garden_repository.dart';
@@ -47,12 +46,14 @@ Future<void> pumpOrganizer(
   CollaborationController? collaborationController,
   GlobalKey? repaintBoundaryKey,
   LocalSpacesController? localSpacesController,
+  Map<String, Object> initialPreferences = const {},
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   SharedPreferences.setMockInitialValues({
+    ...initialPreferences,
     'app_locale_code': locale,
     'app_theme_mode': theme,
   });
@@ -85,8 +86,8 @@ Future<void> pumpOrganizer(
         organizerStorageProvider.overrideWithValue(() async => storage),
       ],
       child: repaintBoundaryKey == null
-          ? const KanbanApp()
-          : RepaintBoundary(key: repaintBoundaryKey, child: const KanbanApp()),
+          ? const JivieApp()
+          : RepaintBoundary(key: repaintBoundaryKey, child: const JivieApp()),
     ),
   );
   await tester.pumpAndSettle();
@@ -296,22 +297,6 @@ void main() {
     },
   );
 
-  testWidgets(
-    'existing Kanboard stays explicitly reachable without local synchronization',
-    (tester) async {
-      await pumpOrganizer(tester, MemoryOrganizerStorage());
-      await mobileTab(tester, 'Več');
-      await tester.tap(find.widgetWithText(ListTile, 'Nastavitve'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Obstoječi Kanboard'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Poveži račun'));
-      await tester.tap(find.text('Poveži račun'));
-      await tester.pumpAndSettle();
-      expect(find.byType(ConnectPage), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
   testWidgets(
     'populated 320px screens handle long records and home categorization',
     (tester) async {
