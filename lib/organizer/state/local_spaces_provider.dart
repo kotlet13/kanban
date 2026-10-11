@@ -4,6 +4,7 @@ import '../data/local_spaces_repository.dart';
 import '../domain/local_space_models.dart';
 import 'local_database_provider.dart';
 import 'organizer_provider.dart';
+import 'collaboration_provider.dart' show collaborationProvider;
 export '../domain/local_space_models.dart';
 
 final localSpacesRepositoryProvider = FutureProvider<LocalSpacesRepository>((
@@ -22,8 +23,17 @@ final localSpacesProvider =
 
 class LocalSpacesController extends AsyncNotifier<LocalSpacesState> {
   LocalSpacesRepository? _repository;
+  bool _selectionListenerAttached = false;
   @override
   Future<LocalSpacesState> build() async {
+    if (!_selectionListenerAttached) {
+      _selectionListenerAttached = true;
+      listenSelf((_, next) {
+        if (next.valueOrNull != null && ref.exists(collaborationProvider)) {
+          ref.read(collaborationProvider.notifier).followSelectedLocalBinding();
+        }
+      });
+    }
     var active = true;
     StreamSubscription<void>? subscription;
     ref.onDispose(() {

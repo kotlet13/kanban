@@ -604,12 +604,16 @@ extension CollaborationAccountActions on CollaborationRepository {
     await syncNow();
   }
 
-  Future<void> selectSpace(String? scopeId) async {
+  Future<void> selectSpace(
+    String? scopeId, {
+    bool Function()? stillCurrent,
+  }) async {
     final session = scopeId == null ? _session : _requireSession(),
         epoch = _epoch;
     final partition = session?.profile.partition ?? 'local';
     await database.transaction(() async {
       _checkEpoch(epoch);
+      if (stillCurrent?.call() == false) return;
       if (scopeId != null) {
         final scopes = await database.rows(
           'SELECT data FROM scopes WHERE partition=? AND id=?',
@@ -623,6 +627,7 @@ extension CollaborationAccountActions on CollaborationRepository {
         }
       }
       _checkEpoch(epoch);
+      if (stillCurrent?.call() == false) return;
       await database.execute(
         'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
         ['selected_space:$partition', scopeId ?? ''],

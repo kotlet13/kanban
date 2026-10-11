@@ -130,11 +130,20 @@ class OrganizerSpacePicker extends ConsumerWidget {
         title: l.allSpacesTitle,
         icon: Icons.dashboard_outlined,
       ),
-      for (final space in localSpaces.where((space) => space.binding == null))
+      // A published selected space can arrive before its remote scope or before
+      // selection follows the binding. Keep its exact value until that handoff.
+      for (final space in localSpaces.where(
+        (space) =>
+            space.binding == null ||
+            !allSelected &&
+                chosen == null &&
+                space.id == local?.selectedSpaceId,
+      ))
         menuItem(
           value: 'local:${space.id}',
           title: space.name.isEmpty ? l.organizerPersonal : space.name,
-          subtitle: l.localSpaceState,
+          subtitle: space.binding == null ? l.localSpaceState : null,
+          enabled: space.binding == null,
           icon: switch (space.kind) {
             LocalSpaceKind.personal => Icons.person_outline,
             LocalSpaceKind.household => Icons.home_outlined,

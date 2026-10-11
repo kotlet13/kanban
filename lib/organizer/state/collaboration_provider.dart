@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'local_database_provider.dart';
+import 'local_spaces_provider.dart' show localSpacesProvider;
 export 'local_database_provider.dart' show collaborationDatabaseFactoryProvider;
 import '../data/collaboration_repository.dart';
 import '../data/sqlite_organizer_storage.dart';
@@ -115,6 +116,10 @@ final collaborationProvider =
 class CollaborationController extends AsyncNotifier<CollaborationState> {
   CollaborationRepository? _repository;
   bool _active = false;
+  bool _followingLocalBinding = false;
+  int _spaceSelectionGeneration = 0;
+  ({String partition, String localId, String scopeId, bool available})?
+  _lastLocalBindingCandidate;
   @override
   Future<CollaborationState> build() async {
     var active = true;
@@ -141,6 +146,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
         identity = next;
       }
       state = AsyncData(value);
+      followSelectedLocalBinding();
     });
     var ticks = 0, busy = false;
     void refresh() {
@@ -176,7 +182,74 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     });
     WidgetsBinding.instance.addObserver(observer);
     scheduleMicrotask(refresh);
+    followSelectedLocalBinding();
     return repository.state;
+  }
+
+  void followSelectedLocalBinding() {
+    // Account-only consumers must not open the organizer or its legacy storage.
+    // The active local-space controller notifies us when its catalogue changes.
+    if (!_active ||
+        _followingLocalBinding ||
+        !ref.exists(localSpacesProvider)) {
+      return;
+    }
+    final repository = _repo;
+    final shared = repository.state;
+    final local = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+    final binding = local?.binding;
+    final candidate = binding == null
+        ? null
+        : (
+            partition: binding.partition,
+            localId: local!.id,
+            scopeId: binding.scopeId,
+            available:
+                binding.partition == shared.session?.partition &&
+                shared.scopes.any(
+                  (scope) =>
+                      scope.id == binding.scopeId &&
+                      scope.kind != SharedScopeKind.personal &&
+                      !scope.revoked,
+                ),
+          );
+    if (candidate == _lastLocalBindingCandidate) return;
+    _lastLocalBindingCandidate = candidate;
+    if (candidate?.available != true ||
+        shared.allSpacesSelected ||
+        shared.selectedSpaceId != null) {
+      return;
+    }
+    final generation = _spaceSelectionGeneration;
+    final identity = _backgroundIdentity(shared);
+    bool current() {
+      if (!_backgroundIsCurrent(repository, identity)) return false;
+      final latest = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+      return generation == _spaceSelectionGeneration &&
+          !repository.state.allSpacesSelected &&
+          repository.state.selectedSpaceId == null &&
+          repository.database.selectedLocalWorkspaceId == candidate!.localId &&
+          latest?.id == candidate.localId &&
+          latest?.binding?.partition == candidate.partition &&
+          latest?.binding?.scopeId == candidate.scopeId;
+    }
+
+    _followingLocalBinding = true;
+    scheduleMicrotask(() async {
+      try {
+        if (!current()) return;
+        // Selection is local bookkeeping; it also works with a cached scope
+        // while offline. The binding pins the exact server/account identity.
+        await repository.selectSpace(candidate!.scopeId, stillCurrent: current);
+      } catch (error) {
+        if (_backgroundIsCurrent(repository, identity)) {
+          ref.read(collaborationBackgroundErrorProvider.notifier).state = error;
+        }
+      } finally {
+        _followingLocalBinding = false;
+        followSelectedLocalBinding();
+      }
+    });
   }
 
   CollaborationRepository get _repo {
@@ -717,8 +790,16 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     ),
   );
   Future<bool> signOut() => _repo.signOut();
-  Future<void> selectSpace(String? scopeId) => _repo.selectSpace(scopeId);
-  Future<void> selectAllSpaces() => _repo.selectAllSpaces();
+  Future<void> selectSpace(String? scopeId) {
+    _spaceSelectionGeneration++;
+    return _repo.selectSpace(scopeId);
+  }
+
+  Future<void> selectAllSpaces() {
+    _spaceSelectionGeneration++;
+    return _repo.selectAllSpaces();
+  }
+
   Future<void> archiveProjectScope(
     String scopeId, {
     required bool archived,
