@@ -105,15 +105,28 @@ class HttpCollaborationTransport implements CollaborationTransport {
       if (streamed.statusCode >= 300 && streamed.statusCode < 400) {
         throw const CollaborationException('redirect_rejected');
       }
-      final decoded = jsonDecode(utf8.decode(bytes));
+      final transientFailure =
+          streamed.statusCode >= 500 && streamed.statusCode < 600;
+      final Object? decoded;
+      try {
+        decoded = jsonDecode(utf8.decode(bytes));
+      } on FormatException {
+        if (transientFailure) {
+          throw const CollaborationException('network');
+        }
+        rethrow;
+      }
       if (decoded is! Map<String, dynamic> || decoded['v'] != 1) {
+        if (transientFailure &&
+            (decoded is! Map<String, dynamic> || !decoded.containsKey('v'))) {
+          throw const CollaborationException('network');
+        }
         throw const CollaborationException('incompatible_server');
       }
-      if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-        final error = decoded['error'];
-        if (error is! Map<String, dynamic> || error['code'] is! String) {
-          throw const CollaborationException('invalid_response');
-        }
+      // A valid Native denial remains authoritative even if a proxy changes
+      // its HTTP status. Unavailability must never erase an explicit revocation.
+      final error = decoded['error'];
+      if (error is Map<String, dynamic> && error['code'] is String) {
         throw CollaborationApiException(
           error['code'] as String,
           details: error['details'] is Map<String, dynamic>
@@ -121,7 +134,10 @@ class HttpCollaborationTransport implements CollaborationTransport {
               : const {},
         );
       }
-      if (decoded['data'] is! Map<String, dynamic>) {
+      if (streamed.statusCode < 200 ||
+          streamed.statusCode >= 300 ||
+          decoded.containsKey('error') ||
+          decoded['data'] is! Map<String, dynamic>) {
         throw const CollaborationException('invalid_response');
       }
       return decoded['data'] as Map<String, dynamic>;
