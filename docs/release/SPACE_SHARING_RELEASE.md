@@ -72,3 +72,22 @@ Dokazi: `build/qa/jivie-sharing-mac-20261010/verification-summary.json`,
 Po obeh novih namestitvah preverimo urejanje med računoma, podedovan dostop do
 obstoječega in novega projekta, projektno omejeno povabilo, finance in preklic
 posamezne poti dostopa. Fizični preizkus ne sledi samodejno iz avtomatiziranih testov.
+
+
+## Uporabnikov fizični preizkus — 11. oktober 2026
+
+Uporabnik je potrdil posodobitev Androida in prehod politike prostora. Nato je
+potrdil, da drugi račun na Macu vidi nov projekt in opravilo iz prostora Doma
+brez dodatnega projektnega povabila. Po navodilih za spremembo naslova in roka
+na Macu ter dodajanje stroška 12 EUR je na telefonu potrdil vse prikaze, vključno
+s povezanim stroškom, datumom in odsotnostjo podvojitve. To je uporabnikova
+potrditev dejanskega preizkusa, ne ločen neposredni pregled baze.
+
+Obvestila o skupnih spremembah so po uporabnikovi potrditvi vidna pod zvončkom
+na obeh napravah. Sistemski push za te spremembe s tem ni potrjen; namizni push
+še ni implementiran. Uporabnik je zahteval gumb »Označi vse kot prebrano« in
+privzeto vključene kategorije push z možnostjo izklopa. To je naslednja lokalna
+nadgradnja, ne že vključena funkcija izdaje 1.3.0 (15).
+
+Urejanje v nasprotni smeri, projektno omejen zunanji račun, sočasni konflikt in
+preklic članstva v tem fizičnem preizkusu še niso potrjeni.

@@ -39,6 +39,9 @@ class FinanceInboxStore {
         'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
         [name(plan.stableKey), clock().toUtc().toIso8601String()],
       );
+      if (identity != database.personalIdentityGeneration || !stillVisible()) {
+        throw const CollaborationException('session_changed');
+      }
     });
   }
 

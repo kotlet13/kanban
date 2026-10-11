@@ -2399,6 +2399,13 @@ class AppLocalizationsSl extends AppLocalizations {
   String get inboxRead => 'Prebrano';
 
   @override
+  String get inboxPushDeviceDeliveryInactive =>
+      'Nastavitve veljajo za registrirane naprave. Dostava potisnih obvestil na tej napravi trenutno ni vključena.';
+
+  @override
+  String get inboxMarkAllRead => 'Označi vse kot prebrano';
+
+  @override
   String get inboxMarkRead => 'Označi kot prebrano';
 
   @override
@@ -2739,11 +2746,11 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get inboxPushCategoriesDescription =>
-      'Vrste obvestil izbereš posebej za vsak prostor. Za razporejene opomnike spodaj vključi želeni kanal v razdelku Opomniki.';
+      'Potisna obvestila so privzeto vključena za vse vrste v prostoru. Posamezne vrste lahko spodaj izključiš. Dostava na napravo zahteva njeno izrecno omogočanje in registracijo.';
 
   @override
   String get remotePushRegistrationOnly =>
-      'Registracija poveže to napravo s tvojim računom. Vrste obvestil za posamezne prostore izbereš posebej.';
+      'Registracija poveže to napravo s tvojim računom. Potisna obvestila so privzeto vključena; posamezne vrste lahko izključiš v nastavitvah obvestil prostora.';
 
   @override
   String get remoteReminderTitle => 'Oddaljeni opomnik';

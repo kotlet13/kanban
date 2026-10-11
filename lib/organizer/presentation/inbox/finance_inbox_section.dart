@@ -11,7 +11,12 @@ import '../shared/sharing_errors.dart';
 import 'notification_target_view.dart';
 
 class FinanceInboxSection extends ConsumerStatefulWidget {
-  const FinanceInboxSection({super.key, required this.plans});
+  const FinanceInboxSection({
+    super.key,
+    required this.plans,
+    this.enabled = true,
+  });
+  final bool enabled;
   final List<ReminderPlan> plans;
   @override
   ConsumerState<FinanceInboxSection> createState() =>
@@ -113,7 +118,7 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
               subtitle: Text(
                 '${_source(plan)} · ${organizerDateTime(context, plan.scheduledAt)}',
               ),
-              onTap: _busy
+              onTap: _busy || !widget.enabled
                   ? null
                   : () async {
                       if (!_visible(plan)) return;
@@ -125,7 +130,7 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                   IconButton(
                     tooltip: l.reminderSnooze,
                     key: ValueKey('finance-inbox-snooze-${plan.stableKey}'),
-                    onPressed: _busy
+                    onPressed: _busy || !widget.enabled
                         ? null
                         : () async {
                             setState(() => _busy = true);
@@ -141,7 +146,10 @@ class _FinanceInboxSectionState extends ConsumerState<FinanceInboxSection> {
                     tooltip: l.inboxMarkRead,
                     key: ValueKey('finance-inbox-read-${plan.stableKey}'),
                     onPressed:
-                        _busy || reads == null || reads.contains(plan.stableKey)
+                        _busy ||
+                            !widget.enabled ||
+                            reads == null ||
+                            reads.contains(plan.stableKey)
                         ? null
                         : () => _read(plan),
                     icon: const Icon(Icons.done),

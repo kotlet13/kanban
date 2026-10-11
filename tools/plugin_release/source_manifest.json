@@ -32,6 +32,7 @@
   "Model/NativeInvitationMailQueue.php",
   "Model/NativeInvitationService.php",
   "Model/NativeLinkedPaymentService.php",
+  "Model/NativeNotificationPreferences.php",
   "Model/NativeNotificationWriter.php",
   "Model/NativeOrganizationAccess.php",
   "Model/NativePasswordResetService.php",

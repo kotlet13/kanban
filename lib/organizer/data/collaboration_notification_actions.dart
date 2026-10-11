@@ -95,11 +95,22 @@ extension CollaborationNotificationActions on CollaborationRepository {
     );
   }
 
-  Future<void> markInboxRead(Iterable<int> ids, {bool read = true}) async {
+  Future<void> markInboxRead(
+    Iterable<int> ids, {
+    bool read = true,
+    String? expectedPartition,
+    bool Function(int)? stillEligible,
+  }) async {
     final session = _requireSession(), epoch = _epoch;
+    if (expectedPartition != null &&
+        session.profile.partition != expectedPartition) {
+      throw const CollaborationException('session_changed');
+    }
+    final captured = ids.toSet();
     await database.transaction(() async {
       _checkEpoch(epoch);
-      for (final id in ids.toSet()) {
+      for (final id in captured) {
+        if (stillEligible != null && !stillEligible(id)) continue;
         final rows = await database.rows(
           'SELECT data FROM inbox WHERE partition=? AND id=?',
           [session.profile.partition, id],
@@ -110,9 +121,34 @@ extension CollaborationNotificationActions on CollaborationRepository {
         final entry = SharedInboxEntry.fromJson(
           CollaborationRepository._map(rows.first['data']),
         );
-        if (!state.scopes.any((s) => s.id == entry.scopeId && !s.revoked)) {
+        final scope = await _readableReminderScope(
+          session.profile.partition,
+          entry.scopeId,
+        );
+        if (scope.blocked || scope.archived) {
           throw const CollaborationException('permission_revoked');
         }
+        if (entry.category == 'finance' ||
+            isFinancialRecordType(entry.targetType)) {
+          final access = await database.rows(
+            'SELECT finance_blocked,finance_complete FROM scopes WHERE partition=? AND id=?',
+            [session.profile.partition, entry.scopeId],
+          );
+          if (access.isEmpty ||
+              access.single['finance_blocked'] == 1 ||
+              access.single['finance_complete'] != 1) {
+            throw const CollaborationException('finance_forbidden');
+          }
+          if (!(await _cachedFinancePolicy(
+            session.profile.partition,
+            entry.scopeId,
+          )).canRead) {
+            throw const CollaborationException('finance_forbidden');
+          }
+        }
+        _checkEpoch(epoch);
+        if (stillEligible != null && !stillEligible(id)) continue;
+        if (entry.isRead == read) continue;
         await _enqueueCommand(session.profile.partition, 'inbox.read', {
           'id': id,
           'read': read,
@@ -126,7 +162,12 @@ extension CollaborationNotificationActions on CollaborationRepository {
           'UPDATE inbox SET data=? WHERE partition=? AND id=?',
           [jsonEncode(json), session.profile.partition, id],
         );
+        _checkEpoch(epoch);
+        if (stillEligible != null && !stillEligible(id)) {
+          throw const CollaborationException('permission_revoked');
+        }
       }
+      _checkEpoch(epoch);
     });
     await refreshLocal();
   }

@@ -1045,6 +1045,8 @@
   "inboxInSharedSpace": "In a shared space",
   "inboxAll": "All",
   "inboxRead": "Read",
+  "inboxPushDeviceDeliveryInactive": "These preferences apply to registered devices. Push delivery on this device is currently inactive.",
+  "inboxMarkAllRead": "Mark all as read",
   "inboxMarkRead": "Mark as read",
   "inboxMarkUnread": "Mark as unread",
   "inboxEmpty": "There are no notifications in this view yet.",
@@ -1192,8 +1194,8 @@
       }
     }
   },
-  "inboxPushCategoriesDescription": "Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.",
-  "remotePushRegistrationOnly": "Registration connects this device to your account. Choose notification types for individual spaces separately.",
+  "inboxPushCategoriesDescription": "Push notifications are enabled by default for all types in a space. You can turn individual types off below. Delivery to a device requires explicitly enabling and registering that device.",
+  "remotePushRegistrationOnly": "Registration connects this device to your account. Push notifications are enabled by default; you can turn individual types off in the space notification settings.",
   "remoteReminderTitle": "Remote reminder",
   "remoteReminderDescription": "This reminder is only for your account. The server saves it in your inbox; phone or email delivery depends on your settings and connection.",
   "remoteReminderDate": "Reminder date",

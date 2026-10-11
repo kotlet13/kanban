@@ -1,5 +1,15 @@
 # Nastavitev dostave obvestil
 
+## Nova privzeta nastavitev v izvoru — 11. oktober 2026
+
+[Privzeti push in skupno označevanje prebranega](NOTIFICATION_DEFAULTS_AND_READ_ALL.md)
+spreminjata nastavitve kategorij, ne vključitve naprav. Brez izrecno shranjene
+izjeme so kategorije push vključene; uporabniški izklop ostane veljaven. E-pošta
+in zvok ostaneta privzeto izključena. Nastavitve kategorij lahko uporabnik ureja
+tudi na napravi brez aktivne dostave. Namizni oddaljeni push še ni podprt.
+Ta sprememba še ni nameščena na gostovanje ali objavljena v novi gradnji.
+
+
 Center obvestil in lokalni opomniki delujejo brez Firebase. Uporabnik je 5. oktobra 2026 odobril pripravo Firebase Cloud Messaging (FCM), 7. oktobra pa pripravil klientovi konfiguraciji projekta `jivie-e928a` za Android/iOS `si.triparna.jivie`. Izvedba in preverjanja te priprave se vodijo v [mejniku Firebase](FIREBASE_PREPARATION.md). FCM je 8. oktobra preverjen na fizičnem Samsungu S25; APNs še ni potrjen.
 
 ## Trenutna klientova nastavitev

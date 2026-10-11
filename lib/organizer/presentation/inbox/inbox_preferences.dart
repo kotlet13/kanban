@@ -102,10 +102,11 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
         ? <String>[]
         : [
             for (final category in categories.entries)
-              if (state!.notificationPreferences[scope.id]
-                      ?.forCategory(category.key)
-                      .push ==
-                  true)
+              if ((state!.notificationPreferences[scope.id]?.forCategory(
+                        category.key,
+                      ) ??
+                      const SharedNotificationSettings())
+                  .push)
                 category.value,
           ];
     final deviceReady = ref.watch(remotePushDeviceReadyProvider);
@@ -162,6 +163,7 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
             if (pushCategories.isNotEmpty) Text(pushCategories.join(', ')),
             const SizedBox(height: 8),
             Text(l.inboxPushCategoriesDescription),
+            if (!deviceReady) Text(l.inboxPushDeviceDeliveryInactive),
             const SizedBox(height: 8),
             for (final category in categories.entries)
               Builder(
@@ -238,10 +240,8 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
                             email: settings.email,
                           ),
                         ),
-                        available: state.externalPushSupported && deviceReady,
-                        unavailableMessage: state.externalPushSupported
-                            ? l.remotePushDeviceUnavailable
-                            : l.inboxChannelUnavailable,
+                        available: state.externalPushSupported,
+                        unavailableMessage: l.inboxChannelUnavailable,
                       ),
                       toggle(
                         l.inboxChannelEmail,

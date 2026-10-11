@@ -235,7 +235,7 @@ class SharedNotificationSettings {
   const SharedNotificationSettings({
     this.inApp = true,
     this.sound = false,
-    this.push = false,
+    this.push = true,
     this.email = false,
   });
   final bool inApp, sound, push, email;
@@ -247,10 +247,10 @@ class SharedNotificationSettings {
   };
   factory SharedNotificationSettings.fromJson(Map<String, dynamic> j) =>
       SharedNotificationSettings(
-        inApp: readBool(j, 'inApp'),
-        sound: readBool(j, 'sound'),
-        push: readBool(j, 'push'),
-        email: readBool(j, 'email'),
+        inApp: j.containsKey('inApp') ? readBool(j, 'inApp') : true,
+        sound: j.containsKey('sound') ? readBool(j, 'sound') : false,
+        push: j.containsKey('push') ? readBool(j, 'push') : true,
+        email: j.containsKey('email') ? readBool(j, 'email') : false,
       );
 }
 

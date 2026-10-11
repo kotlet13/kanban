@@ -568,6 +568,17 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       _edit((repo) => repo.deleteFinanceTransfer(scopeId, id));
   Future<void> markInboxRead(Iterable<int> ids, {bool read = true}) =>
       _edit((repo) => repo.markInboxRead(ids, read: read));
+  Future<void> markVisibleInboxRead(
+    Iterable<int> ids, {
+    required String expectedPartition,
+    required bool Function(int) stillEligible,
+  }) => _edit(
+    (repo) => repo.markInboxRead(
+      ids,
+      expectedPartition: expectedPartition,
+      stillEligible: stillEligible,
+    ),
+  );
   Future<void> setNotificationPreferences({
     required String scopeId,
     required String category,

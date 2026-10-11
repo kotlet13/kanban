@@ -67,10 +67,12 @@ class LocalSpacesController extends AsyncNotifier<LocalSpacesState> {
     String localSpaceId,
     String reminderId, {
     required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
   }) => _repo.markReminderRead(
     localSpaceId,
     reminderId,
     expectedWorkspaceKey: expectedWorkspaceKey,
+    stillVisible: stillVisible,
   );
   Future<void> renameSpace(
     String id, {

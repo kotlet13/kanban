@@ -2400,6 +2400,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxRead => 'Read';
 
   @override
+  String get inboxPushDeviceDeliveryInactive =>
+      'These preferences apply to registered devices. Push delivery on this device is currently inactive.';
+
+  @override
+  String get inboxMarkAllRead => 'Mark all as read';
+
+  @override
   String get inboxMarkRead => 'Mark as read';
 
   @override
@@ -2734,11 +2741,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inboxPushCategoriesDescription =>
-      'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.';
+      'Push notifications are enabled by default for all types in a space. You can turn individual types off below. Delivery to a device requires explicitly enabling and registering that device.';
 
   @override
   String get remotePushRegistrationOnly =>
-      'Registration connects this device to your account. Choose notification types for individual spaces separately.';
+      'Registration connects this device to your account. Push notifications are enabled by default; you can turn individual types off in the space notification settings.';
 
   @override
   String get remoteReminderTitle => 'Remote reminder';

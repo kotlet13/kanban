@@ -1,5 +1,13 @@
 # Izbirna FCM dostava — pogodba 0.4.0
 
+> Dopolnitev izvora 11. oktobra 2026: vse kategorije brez shranjene izjeme
+> uporabljajo `push=true`, `inApp=true`, `email=false`, `sound=false`. Shranjene
+> nastavitve imajo prednost. API, writer in oba pošiljatelja uporabljajo
+> `NativeNotificationPreferences`; pravice in registracija naprav se ne
+> spremenijo. Nobenega ponovnega pošiljanja preteklih obvestil ni. Gostovana
+> namestitev te spremembe še ni potrjena. [Dokazi](../NOTIFICATION_DEFAULTS_AND_READ_ALL.md).
+
+
 Izvedeno 5. oktobra 2026 in preverjeno s sintetičnimi napravami ter nadomestnim transportom. Resnična konfiguracija Firebase in zunanja dostava še nista preverjeni. Native envelope v1/actor ACL ostaneta nespremenjena. FamilyHub inbox je kanoničen; FCM je samo izbirni dostavni kanal. Firebase auth/baza/Analytics niso del tega adapterja.
 
 - `push.state {}` → `{registration:{registered:bool,platform:"android"|"ios"|null,language:"sl"|"en"|null,revision:int,updatedAt:UTC|null}}`; samo trenutna bearer naprava, brez FCM žetona/hash/šifropisa.

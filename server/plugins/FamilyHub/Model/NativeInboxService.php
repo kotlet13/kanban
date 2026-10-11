@@ -3,7 +3,7 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 
 class NativeInboxService extends NativeDatabase
 {
-    const CATEGORIES = ['tasks', 'events', 'shopping', 'finance', 'reminders', 'membership'];
+    const CATEGORIES = NativeNotificationPreferences::CATEGORIES;
 
     public function execute($operation, array $params)
     {
@@ -86,8 +86,8 @@ class NativeInboxService extends NativeDatabase
             $this->change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$scope, $user['account_id'], $params['category']]);
             $this->change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,?,?)', [$scope, $user['account_id'], $params['category'], json_encode($params['settings'], JSON_THROW_ON_ERROR)]);
         }
-        $preferences = array_fill_keys(self::CATEGORIES, ['inApp' => true, 'sound' => false, 'push' => false, 'email' => false]);
-        foreach ($this->many('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=?', [$scope, $user['account_id']]) as $row) { $preferences[$row['category']] = json_decode($row['settings'], true, 32, JSON_THROW_ON_ERROR); }
+        $preferences = array_fill_keys(self::CATEGORIES, NativeNotificationPreferences::resolve());
+        foreach ($this->many('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=?', [$scope, $user['account_id']]) as $row) { $preferences[$row['category']] = NativeNotificationPreferences::resolve($row['settings']); }
         $response = ['preferences' => $preferences];
         if ($write) { $this->remember($scope, $user['id'], $request, $hash, $response); }
         return $response;

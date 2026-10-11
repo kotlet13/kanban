@@ -24,6 +24,7 @@ CollaborationState preferencesState({
   bool secondAccount = false,
   String selected = sharingScopeId,
   bool secondPush = false,
+  bool defaults = false,
 }) => CollaborationState(
   session: sharingSession(second: secondAccount),
   selectedSpaceId: selected,
@@ -33,15 +34,37 @@ CollaborationState preferencesState({
   pushProjectId: lifecycle.config.projectId,
   scopes: [sharingScope(), secondScope],
   notificationPreferences: {
-    sharingScopeId: SharedNotificationPreferences(scopeId: sharingScopeId),
+    sharingScopeId: SharedNotificationPreferences(
+      scopeId: sharingScopeId,
+      categories: defaults
+          ? const {}
+          : {
+              for (final category in [
+                'reminders',
+                'tasks',
+                'events',
+                'shopping',
+                'membership',
+                'finance',
+              ])
+                category: const SharedNotificationSettings(push: false),
+            },
+    ),
     secondScopeId: SharedNotificationPreferences(
       scopeId: secondScopeId,
-      categories: secondPush
-          ? const {
-              'reminders': SharedNotificationSettings(push: true),
-              'tasks': SharedNotificationSettings(push: true),
-            }
-          : const {},
+      categories: {
+        for (final category in [
+          'reminders',
+          'tasks',
+          'events',
+          'shopping',
+          'membership',
+          'finance',
+        ])
+          category: SharedNotificationSettings(
+            push: secondPush && ['reminders', 'tasks'].contains(category),
+          ),
+      },
     ),
   },
 );
@@ -86,6 +109,57 @@ Future<void> selectScope(WidgetTester tester, String name) async {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test('push defaults survive missing fields and preserve explicit optout', () {
+    const settings = SharedNotificationSettings();
+    expect(settings.push, isTrue);
+    expect(settings.inApp, isTrue);
+    expect(settings.email, isFalse);
+    expect(settings.sound, isFalse);
+    expect(SharedNotificationSettings.fromJson({}).push, isTrue);
+    expect(SharedNotificationSettings.fromJson({'push': false}).push, isFalse);
+    expect(
+      SharedNotificationSettings.fromJson({'inApp': false}).inApp,
+      isFalse,
+    );
+    final prefs = SharedNotificationPreferences(scopeId: sharingScopeId);
+    for (final category in [
+      'reminders',
+      'tasks',
+      'events',
+      'shopping',
+      'membership',
+      'finance',
+    ]) {
+      expect(prefs.forCategory(category).push, isTrue);
+    }
+  });
+  testWidgets(
+    'default push categories can be opted out before device registration',
+    (tester) async {
+      final controller = PreferencesController(
+        preferencesState(defaults: true),
+      );
+      final sdk = lifecycle.FakeSdk();
+      await tester.pumpWidget(
+        push.host(controller, sdk, child: const InboxPreferences()),
+      );
+      await tester.pumpAndSettle();
+      expect(summaryText(tester), contains('5'));
+      final finder = reminderSwitch('Oddaljena sistemska obvestila');
+      final toggle = tester.widget<SwitchListTile>(finder);
+      expect(toggle.value, isTrue);
+      expect(toggle.onChanged, isNotNull);
+      expect(sdk.calls, isEmpty);
+      await tester.ensureVisible(finder);
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+      expect(controller.writes.single.settings.push, isFalse);
+      expect(controller.writes.single.settings.inApp, isTrue);
+      expect(sdk.calls, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'device registration leaves scope categories and local reminders unchanged',
     (tester) async {
@@ -120,8 +194,10 @@ void main() {
             .state
             .requireValue
             .notificationPreferences[sharingScopeId]!
-            .categories,
-        isEmpty,
+            .categories
+            .values
+            .every((s) => !s.push),
+        isTrue,
       );
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('organizer_local_reminders_enabled_v1'), isNull);

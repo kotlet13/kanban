@@ -4332,6 +4332,18 @@ abstract class AppLocalizations {
   /// **'Read'**
   String get inboxRead;
 
+  /// No description provided for @inboxPushDeviceDeliveryInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'These preferences apply to registered devices. Push delivery on this device is currently inactive.'**
+  String get inboxPushDeviceDeliveryInactive;
+
+  /// No description provided for @inboxMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get inboxMarkAllRead;
+
   /// No description provided for @inboxMarkRead.
   ///
   /// In en, this message translates to:
@@ -4863,13 +4875,13 @@ abstract class AppLocalizations {
   /// No description provided for @inboxPushCategoriesDescription.
   ///
   /// In en, this message translates to:
-  /// **'Choose notification types separately for each space. For scheduled reminders, enable the channel you want in Reminders below.'**
+  /// **'Push notifications are enabled by default for all types in a space. You can turn individual types off below. Delivery to a device requires explicitly enabling and registering that device.'**
   String get inboxPushCategoriesDescription;
 
   /// No description provided for @remotePushRegistrationOnly.
   ///
   /// In en, this message translates to:
-  /// **'Registration connects this device to your account. Choose notification types for individual spaces separately.'**
+  /// **'Registration connects this device to your account. Push notifications are enabled by default; you can turn individual types off in the space notification settings.'**
   String get remotePushRegistrationOnly;
 
   /// No description provided for @remoteReminderTitle.

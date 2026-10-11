@@ -29,8 +29,7 @@ class NativeNotificationWriter extends NativeDatabase
 
     public function insert($scope, $recipient, $actor, $type, $id, $revision, $kind, $category, $audience, $eventKey, $groupTarget = null)
     {
-        $preference = $this->one('SELECT settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$scope, $recipient, $category]);
-        $settings = $preference ? json_decode($preference['settings'], true, 32, JSON_THROW_ON_ERROR) : ['inApp' => true, 'email' => false, 'push' => false];
+        $settings = (new NativeNotificationPreferences($this->container))->settings($scope, $recipient, $category);
         if (!$settings['inApp'] && !$settings['email'] && !$settings['push']) { return; }
         $this->state($recipient);
         if ($this->one('SELECT id FROM familyhub_inbox WHERE event_key=? AND recipient_account_id=?', [$eventKey, $recipient])) { return; }

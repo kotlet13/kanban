@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../domain/collaboration_models.dart' show CollaborationException;
 import '../domain/local_space_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
@@ -87,16 +88,26 @@ class LocalSpacesRepository {
     String localSpaceId,
     String reminderId, {
     required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
   }) async {
-    final storage = SqliteOrganizerStorage(database, workspaceId: localSpaceId);
+    final identity = database.personalIdentityGeneration;
+    bool current() =>
+        identity == database.personalIdentityGeneration &&
+        (stillVisible?.call() ?? true);
+    if (!current()) throw const CollaborationException('session_changed');
+    final storage = SqliteOrganizerStorage(
+      database,
+      workspaceId: localSpaceId,
+      writeAllowed: current,
+    );
     await storage.initialize();
     final repo = OrganizerRepository(storage);
     await repo.initialize();
     try {
-      if (repo.snapshot.workspaceKey != expectedWorkspaceKey) {
+      if (!current() || repo.snapshot.workspaceKey != expectedWorkspaceKey) {
         throw const OrganizerConflictException('Reminder workspace changed');
       }
-      await repo.markReminderRead(reminderId);
+      await repo.markReminderRead(reminderId, stillVisible: current);
     } finally {
       await repo.close();
     }

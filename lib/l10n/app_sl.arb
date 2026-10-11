@@ -1045,6 +1045,8 @@
   "inboxInSharedSpace": "V skupnem prostoru",
   "inboxAll": "Vsa",
   "inboxRead": "Prebrano",
+  "inboxPushDeviceDeliveryInactive": "Nastavitve veljajo za registrirane naprave. Dostava potisnih obvestil na tej napravi trenutno ni vključena.",
+  "inboxMarkAllRead": "Označi vse kot prebrano",
   "inboxMarkRead": "Označi kot prebrano",
   "inboxMarkUnread": "Označi kot neprebrano",
   "inboxEmpty": "Za ta pogled še ni obvestil.",
@@ -1192,8 +1194,8 @@
       }
     }
   },
-  "inboxPushCategoriesDescription": "Vrste obvestil izbereš posebej za vsak prostor. Za razporejene opomnike spodaj vključi želeni kanal v razdelku Opomniki.",
-  "remotePushRegistrationOnly": "Registracija poveže to napravo s tvojim računom. Vrste obvestil za posamezne prostore izbereš posebej.",
+  "inboxPushCategoriesDescription": "Potisna obvestila so privzeto vključena za vse vrste v prostoru. Posamezne vrste lahko spodaj izključiš. Dostava na napravo zahteva njeno izrecno omogočanje in registracijo.",
+  "remotePushRegistrationOnly": "Registracija poveže to napravo s tvojim računom. Potisna obvestila so privzeto vključena; posamezne vrste lahko izključiš v nastavitvah obvestil prostora.",
   "remoteReminderTitle": "Oddaljeni opomnik",
   "remoteReminderDescription": "Opomnik je namenjen samo tvojemu računu. Strežnik ga shrani v center obvestil; dostava na telefon ali e-pošto je odvisna od tvojih nastavitev in povezave.",
   "remoteReminderDate": "Datum opomnika",

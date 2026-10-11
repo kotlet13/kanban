@@ -556,14 +556,20 @@ class OrganizerRepository {
     );
   });
 
-  Future<void> markReminderRead(String id) => _change((s) {
-    _find(s.reminders, id, (v) => v.id);
-    return s.copyWith(
-      reminders: s.reminders.map(
-        (v) => v.id == id ? v.copyWith(isRead: true) : v,
-      ),
-    );
-  });
+  Future<void> markReminderRead(String id, {bool Function()? stillVisible}) =>
+      _change((s) {
+        if (stillVisible != null && !stillVisible()) {
+          throw const OrganizerConflictException(
+            'Reminder is no longer visible',
+          );
+        }
+        _find(s.reminders, id, (v) => v.id);
+        return s.copyWith(
+          reminders: s.reminders.map(
+            (v) => v.id == id ? v.copyWith(isRead: true) : v,
+          ),
+        );
+      });
 
   Future<void> refreshReminders() => _enqueue(() async {
     _snapshot ??= await storage.read();
