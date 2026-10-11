@@ -2,6 +2,17 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — uporabnik je pripravil kopiji na Macu/Androidu in poročal o ničlah.
+[Preverjanje](docs/server/SERVER_LOSS_TEST.md#predogled-ničel--11-oktober) je pokazalo
+zavajajoč predogled: osebni števci ne štejejo ločenih prenesenih zapisov/financ in
+drugih lokalnih prostorov, čeprav jih izvoz vključuje. Macov skupni projekt je še
+viden; shranjena šifrirana kopija je ohranjena zasebno in strukturno preverjena,
+z uporabnikovim geslom dejansko odprta: osebno0, 2 strežniška obsega, 0 prikazanih
+operacij. Obnova ni potrjena. 39 ciljnih testov PASS ni fizični dokaz obnovljene
+vsebine. Popravek predogleda in regresija oseben0/skupno>0 še nista izvedena;
+Mac je po kopiji standardno odjavljen iz test1; obrazec prvega računa test2
+(slt_test) čaka na uporabnikovo kodo/novo geslo/oddajo. Noben strežnik ni odstranjen.
+
 11. oktober — uporabnik je naročil preizkus izgube strežnika z novim ločenim
 `jivie-test2.triparna.si`, prijavo/urejanjem in kasnejšo odstranitvijo. [Protokol](docs/server/SERVER_LOSS_TEST.md)
 loči sinhronizacijo, dejansko kopijo, izpad, offline/restart/expiry ter samostojno obnovo.
@@ -11,8 +22,9 @@ domena z veljavnim TLS in nova baza tripar13_jivietest2; uporabnik je sam oddal
 Softaculous namestitev Kanboard 1.2.54. FamilyHub 0.11.2/schema15 je dejansko
 nameščen: nova identiteta f48b41ae-c6bb-4f2d-ae13-0aa7fa255993, ohranjeno jedro/DB
 vrstice, 83 datotek vtičnika; config/data sta zasebna, HTTP301→HTTPS, SMTP/FCM
-izključena. Skrbniška spletna prijava je potrjena; prvi aplikacijski račun in
-kopije pred menjavo prijave še čakajo. Mac 1.3.2 (17) ohrani takndev/test1/Vsi. Prva faza izgube je
+izključena. Skrbniška spletna prijava je potrjena; prvi aplikacijski račun še čaka.
+Izhodišče Mac 1.3.2 (17) je takndev/test1/Vsi; dejansko preverjanje kopije in odjava
+sta v novejšem dodatku zgoraj. Prva faza izgube je
 reverzibilna samo za test2; trajni cPanel izbris potrebuje konkretno potrditev pri
 dejanju in predhodno preverjeno kopijo. Fizični A–F so še ČAKA, običajna seja je 30 dni.
 

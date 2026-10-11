@@ -57,7 +57,55 @@ lokalno delo in obnovo po izgubi strežnika. Ne vključuje popravkov aplikacije.
   potrdi račun takndev, obstoječi test1 in izbor Vsi. Začetni prehodni lokalni prikaz
   pred naložitvijo ni dokaz izgube prijave. Mac dialog šifrirane kopije je pripravljen
   za uporabnikovo geslo. Android različica in dejansko odprti kopiji obeh naprav
-  še čakata; računov še nismo zamenjali.
+  še čakata; račun na tej točki še ni zamenjan.
+
+## Predogled ničel — 11. oktober
+
+Uporabnik je poročal o pretežno praznem predogledu na Macu in ničlah na Androidu.
+To še ni dokaz praznega izvoza: `BackupPreview.personalCounts` zajame samo privzeti
+lokalni osebni snapshot in vrtove; `tables.records`, `finance_records`, druge
+`localSpaces` in linked-payment sidecar so v šifriranem dokumentu ločeni. UI jih v
+teh številkah ne pokaže. `scopeCount` vključuje tudi zasebni sync scope, ne samo
+skupnih prostorov; `pendingCount` izpušča linked-payment intents. Relevantna logika
+je med 1.3.2 (17) in 1.4.0 (18) enaka. Pred javno izdajo je potreben jasnejši
+predogled vsebine in regresija »osebno 0, prenesena vsebina >0«; to ni že izveden
+popravek in samo pregled kode ne potrjuje vsebine uporabnikove kopije.
+
+Macov UI še pokaže obstoječi skupni projekt ter Doma in projektni obseg. Uporabnik
+je kopijo že shranil na Desktop; ohranjena dodatna zasebna kopija ima **43.704
+bajtov**, veljavno ovojnico1/PBKDF2-600000/AES-256-GCM, šifriran payload **32.608
+bajtov** in SHA256 `c83998bbd3ed1346909890b441d5582811910202e25f1eb96e901d3b6c81fdbe`.
+Izvirnik ostane ohranjen. Šifrirane datoteke in geslo niso v Git/QA; zapisani so le
+metapodatki. Shranjena datoteka je nato z uporabnikovim geslom dejansko
+odprta in strogo preverjena v aplikaciji: račun takndev/test1, osebni števci0,
+**2 strežniška obsega in 0 prikazanih neusklajenih operacij**, brez opozorila o
+nepopolnih obsegih. Predogled je zaprt brez potrditve obnove. To potrdi
+avtenticirano dešifriranje in obliko kopije, ne fizične obnove posameznih skupnih
+zapisov. Androidovo kopijo
+je potrdil uporabnik, njena datoteka in različica aplikacije še nista neodvisno
+preverjeni.
+
+**39 ciljnih Flutter testov PASS** za portable backup, lokalno samostojno obnovo,
+lokalne prostore, povezana plačila in backup UI: zajem/obnova opravila z novim
+lokalnim ID in ohranjenim šifriranim izvirnikom, finance brez podvojitve,
+finančna zavrnitev/nepopolnost, lokalni vrtovi in payment/refund/cash roundtrip.
+Obstoječi UI test uporablja fake osebne števce; ne pokrije sedanjega zavajajočega
+prikaza ničel. Ti testi niso fizični rezultati A–F.
+
+## Prvi testni račun — pripravljeno
+
+Po dejanskem pregledu shranjene Macove kopije je Mac po standardni poti odjavljen
+iz takndev/test1; skupni pogled se skrije, osebni zapisi ostanejo. Račun test1,
+jegovo članstvo, baza in datoteke niso izbrisani. Običajna odjava prekliče samo
+Macovo staro sejo; trditev o nespremenjenih starih capabilities zgoraj se nanaša
+na pripravo gostovanja, ne na odsotnost običajnega napravnega prometa.
+
+V Macovem obrazcu »Prvi račun s kodo« je dejansko vpisano
+`https://jivie-test2.triparna.si/`, sintetično uporabniško ime `slt_test` in prikazno
+ime »Preizkus izgube strežnika«. Uporabnik sam izda kodo v prijavljenem spletnem
+FamilyHub enrollment, jo prenese v obrazec in vnese/potrdi/odda novo geslo.
+Koda, geslo in seje se ne beležijo v dokaze. Uspešna izdelava novega računa in
+sinhronizacija obeh naprav še čakata; vsebinske faze A–F še niso izvedene.
 
 ## Pred začetkom
 
