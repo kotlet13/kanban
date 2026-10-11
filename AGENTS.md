@@ -2,6 +2,22 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — zaključeni dovoljeni deli fizičnega test2 izpada: dejanska strežniška
+kopija obnovljena v izolirani MariaDB 10.11.19 (86 tabel/134 vrstic/2 datoteki,
+vsi hashi PASS). Test2 začasno HTTP503; Mac ohrani podatke, ustvari/uredi task
+in finančni 7 EUR; ponovni zagon ohrani vrsto 3. Odkriti blokiran izvoz HTTP503 je
+popravljen **3d91b37 na main/origin**: **1002 Flutter PASS / 13 opt-in preskočenih**,
+analiza brez ugotovitev; veljavne zavrnitve pravic ostanejo failclosed. Nova podpisana
+Mac 1.4.0 (18), 297 ujemajočih vhodov/iste podpisne identitete, dejansko shrani JSON
+2 task + 1 finance brez skrivnosti. Isti test2 je vrnjen: HTTP200/isti serverId,
+Usklajeno/vrsta 0; read-only baza potrdi 3 zapise in 3 receipts 200 za izvirne opId,
+vsak enkrat. Končni gospodinjski ledger 131/75/25 EUR, skupaj 231, prihodki 50/odhodki 19.
+Nič ni trajno izbrisano. [Končni izid in meje](docs/server/SERVER_LOSS_TEST.md#končni-izid-tega-preizkusa--11-oktober-2059).
+Uporabnik je odsoten in izrecno dovolil izpust nedosegljivih testov: fizični
+povračili 10/20, Android offline/expiry, novi celotni klientski šifrirani kopiji in
+samostojna obnova praznega profila so NEPREVERJENO. Živi Android18 novih
+popravkov še nima. Ne razglasi celotnega A–F ali javne izdaje za dokončane.
+
 11. oktober — dejanski dvosmerni preizkus test2 potrdi Androidove trenutne finance
 138/75/25 EUR in novo `Slt android` na Macu; uporabnik potrdi tudi Androidov hladni
 zagon ter projektni strošek 30 EUR/stanje 70 EUR. Priprava odkrije prvi payment

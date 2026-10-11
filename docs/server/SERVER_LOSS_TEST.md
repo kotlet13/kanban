@@ -1,6 +1,6 @@
 # Izguba testnega strežnika — Android in Mac
 
-**11. oktober 2026 · začetna objava/prenos potrjena, celotni A–F še čakajo.**
+**11. oktober 2026 · Macov začasni izpad, lokalno delo, ponovni zagon, izvoz in ponovna uskladitev potrjeni; celotni A–F so delno preverjeni.**
 Lokalna priprava je končana: svež Kanboard 1.2.54/FamilyHub 0.11.2 paket ima
 SHA256 `9c6d62d6a2e8670b2604b5849569688d2695c6c72319132e644b627660df0ae6`,
 2185 datotek, CRC/inventar, 77 PHP lint in 10 paketnih testov PASS. Dodatni
@@ -228,6 +228,113 @@ crypto encode/decode in SL/EN widget regresij. Ciljna in celotna analiza sta bre
 ugotovitev. **Celotni sklop 965 PASS / 13 opt-in preskočenih**, analiza brez ugotovitev;
 podpisana nova Mac gradnja še sledi; Androidova
 trgovinska izdaja 18 teh novih popravkov še nima.
+
+## Dejanski izpad in ohranitev na Macu — 11. oktober
+
+Popravka prvega plačila/predogleda sta **1284ca3 na main/origin**. Nova podpisana
+Mac **1.4.0 (18)** je izdelana in odprta: 297 zamrznjenih vhodov, deep/strict
+podpis PASS, isti certifikat/profil/entitlements/ključna veriga, nespremenjene
+odvisnosti in SDK ter ohranjen prejšnji artefakt. Dejanski novi gumb prvega plačila
+je viden. Uporabnikov natančni klik modrega gumba odpre pravilen obrazec; klik
+naziva stroška odpre editor (zaprt brez sprememb). CUA nested AX klik ni bil
+zanesljiv; to ni potrjena napaka izdelka.
+
+Skozi pravi obrazec je potrjeno osebno plačilo **30 EUR** s `SLT kartica`, z
+zahtevo za povračilo in brez vključitve v gospodinjstvo. Projekt ima še vedno en
+strošek **30 EUR**, njegov račun je po osebnem plačilu spet **100 EUR**. Osebni
+filter kartice potrdi **−30 EUR** in terjatev **30 EUR**. Uporabnik potrdi tudi
+prenos osebnega taska/kartice na Android. Fizični povračili **10/20 EUR sta
+izpuščeni**, ker samodejni klik na njun gumb ni uspel, uporabnik pa je nato
+izrecno odšel od računalnika in naročil izpustitev nedosegljivih testov.
+Ciljni testi povračil niso nadomestilo tega fizičnega dokaza.
+
+Dejanska gostovana kopija je zajeta po zaprtju Maca, prek prijavljenega cPanel
+File Manager prenesena in premaknjena v zasebno lokalno mapo0700/file0600 zunaj
+Gita in spletne mape. ZIP **31.797 bajtov / 8 vhodov**, SHA256
+`5b2e3953be561ed18e85b36d0af2b4cab0d0e267da40cd66d2b8bb0205ab0a4c`.
+Dejanska obnova v sveži **MariaDB 10.11.19, network none, brez portov/bind mountov**
+potrdi **86 tabel, 134 vrstic, 2 datoteki in 2 imenika**; vse row/file/definition/
+config/marker vrednosti se ujemajo. Računi/gesla/seje/identiteta so ohranjeni,
+PHP/delavci niso zagnani, lokalni obnovitveni kontejner je nato ustavljen.
+Varni dokaz: `build/qa/server-loss-test-20261011/test2-live-restore-proof.json`.
+To je strežniška kopija, ne nova šifrirana prenosna kopija obeh klientov.
+
+Samo test2 je nato **začasno** zaprt z varovanim preimenovanjem enabled markerja
+v `native-api.enabled.server-loss-20261011-disabled`. API za capabilities dejansko
+vrne **HTTP503**, navaden spletni pogled »Test2 setup is closed.«. Stari test1
+ostane HTTP200 z enakimi javnimi capabilities/serverId. Nobena tabela/datoteka/
+račun ni izbrisan. Za vrnitev se obnovi isti marker, ne spreminja identitete.
+
+Macov hladni zagon med izpadom ohrani prenesene podatke. Dejanski UI potrdi
+projektni en strošek30/račun100/osebno terjatev30, gospodinjske finance138/75/25,
+vrtnote/1območje, seznam/artikel, dogodek ter obe opravili. Med izpadom je novo
+`SLT Mac offline`, obstoječe `SLT gospodinjstvo Mac` postane
+`SLT gospodinjstvo Mac - offline`, dodan pa je običajen knjižen lokalni strošek
+`SLT finance Mac offline 7` na SLT glavni. Lokalni ledger je131/75/25,
+skupaj231, prihodek50/odhodek19. Vse tri operacije ostanejo **čakajoče3**,
+konflikti0/zadržano0. Drugi dejanski hladni zagon iste podatke in vrsto3 ohrani.
+Cloud pokaže potrebuje pozornost in zadnji uspeh **Še ni potrjena**, ne zelenega
+uspeha iz prejšnjega zagona.
+
+Izvoz neusklajenih sprememb trenutno ne odpre file pickerja: običajni HTML/plain
+HTTP503 se v transportu spremeni v `invalid_response`, export z finančnim delom
+pa zavrne to napako. UI zato napačno predlaga združljivost vtičnika. To je nova
+konkretna izdajna vrzel; transportni popravek in realna regresija sta v delu.
+Izvirne lokalne operacije niso izbrisane; zadnja živa kopija je pred temi tremi
+operacijami. Pred nadaljevanjem se preveri dejanski izvoz in vrnitev istega test2.
+
+Androidov izpad/novo delo brez povezave, potek 30-dnevne seje, nova šifrirana
+klientska kopija in samostojna obnova na praznem profilu ostanejo **NEPREVERJENO**.
+Gesel/novih ključev ne vnašamo v imenu odsotnega uporabnika. Web release gradnja
+1284ca3 je uspešna, vendar ni dokaz fizične samostojne obnove. Trajni izbris in
+zamenjava identitete strežnika nista izvedena.
+
+## Končni izid tega preizkusa — 11. oktober, 20:59
+
+Transportni popravek **3d91b37** je na main/origin. **1002 Flutter PASS / 13 opt-in
+preskočenih**, analiza brez ugotovitev; 48 ciljnih transportnih/izvoznih kontrol
+vključi pravi loopback HTTP503 in resnični kontroler. Neprotokolni text/HTML ali
+JSON brez Native verzije pri HTTP5xx pomeni network; veljaven Native error ostane
+zavrnitev tudi pri503/200. Eksplicitna napačna verzija/tip, redirect in >2MiB
+ostanejo strogo zavrnjeni. Exporter/picker, API/shema, SDK/odvisnosti in app
+različica niso spremenjeni.
+
+Nova podpisana Mac **1.4.0 (18)** iz 3d91b37 je dejansko odprta z isto prijavo in
+vrsto 3. 297 vhodov/podpis/certifikat/profil/ključna veriga ter nespremenjeni
+prejšnji artefakt so preverjeni v `mac-http-outage-fix/verification-summary.json`.
+Med še vedno dejanskim HTTP503 kaže **Strežnik ni dosegljiv**, ne nezdružljivosti
+ali zelenega uspeha. Pravi GUI izvoz zdaj odpre native Save Panel in shrani
+zasebno datoteko **2.827 bajtov**, SHA256
+`4d01722c9371c42ec4d4208b9ecd569a0b11f1a2b5f09ae305789362b05656f6`.
+Dejanska datoteka vsebuje **2 splošni operaciji in 1 finančno**, vse tri pričakovane
+spremembe, pravo test2 identiteto ter nobenih overitvenih skrivnosti. Ostane
+0700/0600 zunaj Gita; izvoz ne izprazni vrste. To je namenski JSON čakajočega dela,
+ne celotna šifrirana prenosna kopija.
+
+Izvirni marker je nato vrnjen ob preverjenem istem SHA config/marker. Test2
+zopet vrne **HTTP200**, isto identiteto in povsem enake javne capabilities kot
+pred izpadom. App po uskladitvi kaže **Usklajeno, čakajoče 0, konflikti 0,
+zadržano 0**, nov dejanski uspeh 20:59. Ločen read-only pregled samo prave test2
+baze potrdi vse **3 zapise**, pričakovane vsebine in revizije ter natanko en
+uspešen **200 receipt za vsak izvirni opId iz shranjenega izvoza**. Zapis se ni
+podvojil ali izgubil. Ledger po potrditvi ostane **131/75/25 EUR**, skupaj231,
+prihodek50/odhodek19. Mac ostane odprt na teh financah. Baza ni obnovljena čez
+živo instanco, identiteta ni zamenjana in nič ni trajno izbrisano.
+
+| Del | Dejanski izid |
+| --- | --- |
+| A: dve napravi | Mac→Android vsebina/finance in Android→Mac task potrjeni; Androidov hladni zagon potrjen uporabnikovo. |
+| B: kopije | Stara Macova šifrirana kopija dejansko odprta; nova strežniška test2 kopija dejansko izolirano obnovljena; novi celotni šifrirani klientski kopiji NEPREVERJENO. |
+| C: izpad | Samo test2 HTTP503; test1 iste capabilities/HTTP200; reverzibilno, brez izbrisa. |
+| D: delo/restart/izvoz | Mac novi task/urejanje/finančni7, vrsta3 pred/po zagonu in dejanski izvoz PASS. Androidov offline del in potek30-dnevne seje NEPREVERJENO. |
+| E: samostojna obnova | Prazen profil brez starega strežnika NEPREVERJENO; ni bilo nove klientske kopije/gesla odsotnega uporabnika. FinanceTransfer/oddaljeni linked sidecar še imajo znano omejitev aktivacije. |
+| F: vrnitev | Isti serverId/config, vrsta3→0, 3 izvirni opId receipts200 ter vsak zapis enkrat PASS. Zamenjana identiteta/trajni izbris NEPREVERJENO. |
+
+Fizični povračili10/20 ostaneta izpuščeni. Izdani Android18 še nima novih
+popravkov pickerja, prvega plačila, predogleda in HTTP5xx izvoza. Pred javno
+izdajo ostane nova distribucijska gradnja ter samostojna klientska obnova z jasno
+preverjenimi finančnimi omejitvami. Ta izid ni potrditev celotne samostojne obnove
+ali dokončane javne izdaje.
 
 ## Pred začetkom
 
