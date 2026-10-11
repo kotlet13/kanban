@@ -1,5 +1,15 @@
 # Jivie — kaj še urediš ti
 
+**11. oktober — nova kandidatka:** podpisana **1.4.0 (18)** je pripravljena iz
+očiščenega main, [paket in kontrole](CLEAN_ORGANIZER_RELEASE.md). Za upload manjka
+prijava v pravi Play Console račun TriparNA. Zadnja potrjena aktivna interna je
+1.3.2 (17), FamilyHub je 0.11.2/schema15. Spodnji starejši izdajni podatki ne
+potrjujejo objave nove kandidatke. Po objavi preveri ohranitev obstoječih podatkov
+in prijave, novi meni/nastavitve, lokalno opravilo/finance brez omrežja in po restartu,
+kopijo/obnovo ter obvestilo od drugega računa. Zasebnost/podpora sta že objavljeni
+na jivie.app, AI in široka Android dovoljenja so odstranjeni. UGC, popolnost obnove
+in končne trgovinske deklaracije še ostajajo za javno izdajo.
+
 Skupni vrstni red in potrditve vodi [izdajna checklista za Android in Apple](RELEASE_CHECKLIST.md). Spodaj ostane krajša predaja lastniku; zgodovinski izdajni dokazi ne pomenijo dokončanega novega kroga.
 
 Stanje: **11. oktober 2026. Android 1.3.1 (16) je aktiven za domači (15), testni

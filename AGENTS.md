@@ -2,6 +2,15 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — nadaljevanje po main merge: podpisana interna Android kandidatka
+**1.4.0 (18)** je pripravljena iz `7fb5ed9` na main (cleanup `7726d76`, merge
+`b6832c2`). 298 zamrznjenih vhodov, isti podpis/Firebase kot AAB17, manifest brez
+širokih media/storage dovoljenj, 16 KiB, 23 izdajnih in 7 Firebase kontrol PASS.
+[Dokazi in stanje oddaje](docs/release/CLEAN_ORGANIZER_RELEASE.md).
+Paket še ni naložen/aktiviran: v trenutnem brskalniku manjka pravi račun TriparNA,
+uporabnik je pozvan k prijavi. Zadnja potrjena aktivna interna ostaja 1.3.2 (17).
+FamilyHub, iOS in javna objava niso spremenjeni; fizična nadgradnja še ni preverjena.
+
 11. oktober — uporabnik je naročil popolno odstranitev starega mobilnega vmesnika
 in njegovih odvisnosti ter združitev na main. `lib/features`, `lib/kanboard`, stari
 modeli/providerji/credential/cache/default storage in vse stare poti so odstranjeni.
