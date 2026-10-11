@@ -57,3 +57,10 @@ novi meni/Nastavitve, lokalno opravilo/strošek in ponovni zagon brez omrežja,
 kopijo/obnovo ter dostavo/odpiranje obvestila drugega računa. To niso že potrjeni
 fizični rezultati te kandidatke. iOS, javna izdaja, UGC in preostale podatkovne meje
 ostajajo ločeni koraki.
+
+## Uporabnikov pregled po objavi
+
+11. oktobra uporabnik sporoči: »ja jst mislim da vse normalno deluje kolkr gledam«.
+Zabeležena je njegova splošna ocena običajnega delovanja po objavi kandidatke.
+Ločen sprejemni preizkus kopije/obnove, ponovnega zagona brez omrežja in obvestila
+drugega računa še sledi; naprava in nameščena različica v tej potrditvi nista navedeni.
