@@ -11,7 +11,8 @@ domena z veljavnim TLS in nova baza tripar13_jivietest2; uporabnik je sam oddal
 Softaculous namestitev Kanboard 1.2.54. FamilyHub 0.11.2/schema15 je dejansko
 nameščen: nova identiteta f48b41ae-c6bb-4f2d-ae13-0aa7fa255993, ohranjeno jedro/DB
 vrstice, 83 datotek vtičnika; config/data sta zasebna, HTTP301→HTTPS, SMTP/FCM
-izključena. Skrbniška spletna prijava in prvi aplikacijski račun še čakata. Prva faza izgube je
+izključena. Skrbniška spletna prijava je potrjena; prvi aplikacijski račun in
+kopije pred menjavo prijave še čakajo. Mac 1.3.2 (17) ohrani takndev/test1/Vsi. Prva faza izgube je
 reverzibilna samo za test2; trajni cPanel izbris potrebuje konkretno potrditev pri
 dejanju in predhodno preverjeno kopijo. Fizični A–F so še ČAKA, običajna seja je 30 dni.
 

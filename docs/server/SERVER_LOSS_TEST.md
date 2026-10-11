@@ -49,8 +49,15 @@ lokalno delo in obnovo po izgubi strežnika. Ne vključuje popravkov aplikacije.
 - Pred gostovanim posegom je lokalni izolirani PHP 8.4.24/MariaDB 10.11.19 preizkus
   potrdil vseh sedem faz, zaporo običajnega CLI bootstrap in povrnitev datotek.
   Povrnitev ni bila izvedena na gostovanju; nobena baza ali datoteka ni izbrisana.
-- V Codexu je odprta skrbniška prijava za uporabnika `jivie_test2_admin`.
-  Fizični preizkus, kopije obeh naprav, novi aplikacijski račun in prvi sync še čakajo.
+- Uporabnik se je dejansko prijavil kot `jivie_test2_admin`; spletni About potrdi
+  **PHP 8.4.26/litespeed** in **MariaDB 10.11.19**. Odprta je FamilyHub enrollment
+  stran; enkratna koda še ni izdana, aplikacijski račun še ni ustvarjen.
+- Pred menjavo računa je odprta podpisana Mac **1.3.2 (17)** iz
+  `build/qa/jivie-retention-mac-20261011/SignedProducts/Debug/Jivie.app`; po naložitvi
+  potrdi račun takndev, obstoječi test1 in izbor Vsi. Začetni prehodni lokalni prikaz
+  pred naložitvijo ni dokaz izgube prijave. Mac dialog šifrirane kopije je pripravljen
+  za uporabnikovo geslo. Android različica in dejansko odprti kopiji obeh naprav
+  še čakata; računov še nismo zamenjali.
 
 ## Pred začetkom
 
