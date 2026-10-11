@@ -1,4 +1,8 @@
-# FamilyHub 0.11.0
+# FamilyHub 0.11.1
+
+## Notification defaults (0.11.1/schema 15)
+
+Absent category preferences now mean inApp and push enabled, email and sound disabled. Explicit saved settings retain priority. Device registration and operating-system permission remain separate; this patch neither registers devices nor replays old notifications. Read-all behavior belongs to the client and never completes tasks or payments. This is a code-only update from 0.11.0: schema 15 and all stored preferences remain unchanged.
 
 ## Email invitations (0.10.0/schema 14)
 
@@ -12,7 +16,7 @@ Linked personal payments, explicit household cash projection, partial source-app
 
 Kanboard 1.2.54 plugin. Native HTTP contract v1 and separate legacy JSON-RPC proof contract v1. No Kanboard core changes or bundled third-party dependencies. Requires PHP 8.1+ (tested PHP 8.4.24).
 
-Version 0.11.0 uses additive server schema 15, invitation contracts 1/2/3, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Space-sharing policy3 extends households, organizations and standalone project scopes with explicit inherited membership; existing roots require a fresh owner preview. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.11.0 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
+Version 0.11.1 uses additive server schema 15, invitation contracts 1/2/3, record contracts 1/2/3/4, canonical finance contracts 1/2, linked payment sidecar3 and account-deletion policies 1/2/3. Space-sharing policy3 extends households, organizations and standalone project scopes with explicit inherited membership; existing roots require a fresh owner preview. Its source and isolated local HTTP/integration checks are separate from deployment evidence: a package or passing local test does not establish that 0.11.1 is installed on hosting or that a real phone received/displayed FCM/APNs notifications. Repository `docs/EMAIL_INVITATIONS.md` records this change; historical 0.3–0.9 notes below remain applicable to their original features.
 
 ## Spaces access and household gardens (0.8.0/schema 12)
 

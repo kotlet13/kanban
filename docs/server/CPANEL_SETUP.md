@@ -471,3 +471,24 @@ maintenance, restore-evidence, unauthenticated-checks, hosted-proof in posnetki.
 Zasebni arhiv in podrobni restore-proof ostajata zunaj repozitorija. Nova Mac
 gradnja je dejansko ohranila prijavo takndev in članstvo Doma; fizično skupno
 urejanje na obeh napravah ter nova dostava obvestila še sledita.
+
+
+## 17. Obvestila 11. oktobra — FamilyHub 0.11.1 / schema15
+
+Testni strežnik je nadgrajen iz 0.11.0 z [novim patch pomočnikom](NOTIFICATION_UPGRADE_HELPER.md).
+Sveža zasebna kopija je dejansko obnovljena v izolirani MariaDB 10.11.19:
+**86 tabel, 247 vrstic, 2.849 zasebnih datotek**, arhiv SHA256
+`7243db513e84dd187418e961952658557f6d23624d52aca8d80da15ab6b6da5c`.
+Vsebnik je ustavljen, kopija ostane zunaj repozitorija in spletnih map.
+
+Aktivacija brez DDL ohrani vse vrstice, shemo/indekse, račune/gesla/serverId,
+konfiguracijo in shranjene preference. Izvirni cron in .htaccess sta obnovljena.
+Read-only preverjalnik potrdi 81 datotečnih hashov, privzete kategorije ter
+nespremenjeno shranjeno nastavitev/izklop. Vseh pet delavcev je ob 07:30:01
+ustvarilo svež veljaven status (0600); zunanji HTTPS potrdi isti serverId,
+Native API, SMTP in externalPush. Novega fizičnega push testa še ni bilo.
+
+Končni pregledovalnik na strežniku je `upgrade-0.11.1/verify-hosted-final.php`,
+SHA256 `87ccb37cf63a9771e1e0131d8a5dc34a9ceae438ab3474f31b825e3ac0336320`.
+[Izdajni dokazi](../release/NOTIFICATION_DEFAULTS_RELEASE.md) vsebujejo različice,
+hashe in lokalne QA poti. Produkcija ostane nespremenjena.

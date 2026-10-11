@@ -31,9 +31,11 @@ branjem nastavitev z novega strežnika. GET ne ustvari eksplicitne strežniške
 nastavitve. Čakajoča uporabnikova sprememba ima prednost. Stari strežnik še naprej
 vrne svoje stare vrednosti do svoje nadgradnje.
 
-To je sprememba izvora. Trenutno nameščeni testni strežnik in izdaja 1.3.0 (15)
-še nimata te nadgradnje; nova gradnja, namestitev in fizični push preizkus imajo
-ločene dokaze. Oddaljeni sistemski push za macOS še ni izveden.
+Po izrecnem naročilu izdaje sta testni strežnik **0.11.1/schema15** in interna
+Android **1.3.1 (16)** nadgrajena; nova podpisana Mac gradnja je odprta.
+[Izdajni dokazi](release/NOTIFICATION_DEFAULTS_RELEASE.md) ločijo dejansko
+namestitev od še čakajočega fizičnega push preizkusa. Oddaljeni sistemski push
+za macOS še ni izveden.
 
 ## Preverjanje
 

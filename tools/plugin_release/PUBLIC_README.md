@@ -1,6 +1,10 @@
 # FamilyHub for Jivie
 
-FamilyHub **0.11.0 / schema 15** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+FamilyHub **0.11.1 / schema 15** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+
+## Notification defaults
+
+Version 0.11.1 retains schema 15. Missing category preferences enable in-app and push notifications while email and sound remain disabled. Explicit saved preferences retain priority. Device registration and operating-system permission are still separate; the patch does not register devices or deliver historic notifications.
 
 ## Whole-space and project-only sharing
 

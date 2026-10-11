@@ -2,18 +2,21 @@
 
 Skupni vrstni red in potrditve vodi [izdajna checklista za Android in Apple](RELEASE_CHECKLIST.md). Spodaj ostane krajša predaja lastniku; zgodovinski izdajni dokazi ne pomenijo dokončanega novega kroga.
 
-Stanje: **10. oktober 2026. Android 1.3.0 (15) je aktiven za domači (15), testni
-strežnik uporablja FamilyHub 0.11.0/schema15, nova Mac aplikacija je odprta kot
-takndev v Doma.** [Dokazi](SPACE_SHARING_RELEASE.md).
+Stanje: **11. oktober 2026. Android 1.3.1 (16) je aktiven za domači (15), testni
+strežnik uporablja FamilyHub 0.11.1/schema15, nova Mac aplikacija je odprta kot
+takndev.** [Dokazi](NOTIFICATION_DEFAULTS_RELEASE.md).
 
 Za naslednji preizkus:
 
 1. Na telefonu posodobi Jivie prek [internega kanala](https://play.google.com/apps/internaltest/4701286726300038561).
-2. Kot lastnik prostora Doma odpri **Nastavitve prostora**, preglej dodatne pravice
-   in potrdi prehod na novo deljenje. Nadgradnja strežnika ga ni potrdila namesto tebe.
-3. Na Macu ostani prijavljen kot takndev. Preveriva, da drugi član vidi in ureja
-   obstoječi ter nov projekt, opravila in finance; nato preveriva še povabilo samo
-   v projekt brez dostopa do drugih delov prostora ter obvestila.
+2. Preveri registracijo naprave in dovoljenje Androida, nato zakleni telefon.
+3. Na Macu kot takndev spremeni skupno opravilo/dogodek. Preveri telefonski push
+   in klik do prave vsebine; redni cron deluje na minuto. Lastne spremembe ne obveščajo avtorja.
+4. Preveri **Označi vse kot prebrano** in oznako zvončka. Izrecno shranjeni izklopi
+   ostanejo ohranjeni; po potrebi jih vključi v nastavitvah. Mac ima center obvestil,
+   oddaljeni sistemski push na Macu še ni izveden.
+
+Prehod politike Doma in skupno urejanje projekta/opravila s stroškom sta že potrjena.
 
 Prejšnji sprejemni koraki prostorov/financ ostajajo v
 [izvedbenem dnevniku](../SPACES_UPGRADE_IMPLEMENTATION.md#sprejemni-preizkus-po-vključitvi-celotne-spremembe).
