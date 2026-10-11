@@ -2,6 +2,19 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — uporabnik je naročil preizkus izgube strežnika z novim ločenim
+`jivie-test2.triparna.si`, prijavo/urejanjem in kasnejšo odstranitvijo. [Protokol](docs/server/SERVER_LOSS_TEST.md)
+loči sinhronizacijo, dejansko kopijo, izpad, offline/restart/expiry ter samostojno obnovo.
+Svež zaprti Kanboard 1.2.54/FamilyHub 0.11.2 paket je lokalno preverjen; SMTP/FCM
+ključi drugih namestitev se ne kopirajo. Na računu tripar13 je ustvarjena ločena
+domena z veljavnim TLS in nova baza tripar13_jivietest2; uporabnik je sam oddal
+Softaculous namestitev Kanboard 1.2.54. FamilyHub 0.11.2/schema15 je dejansko
+nameščen: nova identiteta f48b41ae-c6bb-4f2d-ae13-0aa7fa255993, ohranjeno jedro/DB
+vrstice, 83 datotek vtičnika; config/data sta zasebna, HTTP301→HTTPS, SMTP/FCM
+izključena. Skrbniška spletna prijava in prvi aplikacijski račun še čakata. Prva faza izgube je
+reverzibilna samo za test2; trajni cPanel izbris potrebuje konkretno potrditev pri
+dejanju in predhodno preverjeno kopijo. Fizični A–F so še ČAKA, običajna seja je 30 dni.
+
 11. oktober — nadaljevanje po main merge: podpisana interna Android izdaja
 **1.4.0 (18)** iz `7fb5ed9` na main (cleanup `7726d76`, merge
 `b6832c2`). 298 zamrznjenih vhodov, isti podpis/Firebase kot AAB17, manifest brez
