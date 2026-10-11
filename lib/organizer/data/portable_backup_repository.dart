@@ -17,6 +17,7 @@ import 'portable_backup_document.dart';
 import 'sqlite_organizer_storage.dart';
 import 'local_spaces_repository.dart';
 part 'portable_backup_local_recovery.dart';
+part 'portable_backup_preview.dart';
 
 abstract interface class BackupUiPreferencesStore {
   Future<Map<String, Object?>> read();
@@ -365,6 +366,7 @@ class PortableBackupRepository {
     final local = backupPersonal(doc),
         source = doc['source'] == null ? null : backupMap(doc['source']);
     final scopes = backupRows(doc, 'scopes');
+    final summary = _backupContentSummary(doc);
     return BackupPreview(
       backupId: doc['id'] as String,
       createdAt: DateTime.parse(doc['createdAt'] as String),
@@ -372,13 +374,17 @@ class PortableBackupRepository {
       personalCounts: {
         ...personalCounts(local),
         if (backupGardens(doc) != null)
-          'gardens': backupGardens(doc)!.gardens.length,
+          'gardens':
+              backupGardens(doc)!.gardens.length -
+              (doc['gardenSpaceLinks'] as List? ?? const []).length,
       },
       scopeCount: scopes.length,
       pendingCount:
           backupRows(doc, 'outbox').length +
           backupRows(doc, 'finance_outbox').length +
-          backupRows(doc, 'commands').length,
+          backupRows(doc, 'commands').length +
+          summary.linkedPendingCount,
+      contentSummary: summary,
       hasRemoteRecovery: scopes.isNotEmpty,
       sourceAccount: source?['displayName'] as String?,
       sourceServer: source?['serverUrl'] as String?,

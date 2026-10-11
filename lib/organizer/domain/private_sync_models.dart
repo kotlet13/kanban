@@ -40,6 +40,32 @@ class AccountStatus {
 
 enum BackupRestoreMode { merge, replace }
 
+/// Derived from a validated copy, never a claim that its server data is active.
+class BackupContentSummary {
+  BackupContentSummary({
+    this.localSpaceCount = 0,
+    this.personalScopeCount = 0,
+    this.retainedLocalSpaceCount = 0,
+    Map<String, int> localCounts = const {},
+    Map<String, int> retainedLocalCounts = const {},
+    Map<String, int> downloadedCounts = const {},
+    Map<String, int> linkedPaymentCounts = const {},
+    this.linkedPendingCount = 0,
+    this.blockedCount = 0,
+    this.deletedRecordCount = 0,
+    this.standaloneFinanceLimited = false,
+  }) : localCounts = Map.unmodifiable(localCounts),
+       retainedLocalCounts = Map.unmodifiable(retainedLocalCounts),
+       downloadedCounts = Map.unmodifiable(downloadedCounts),
+       linkedPaymentCounts = Map.unmodifiable(linkedPaymentCounts);
+
+  final int localSpaceCount, personalScopeCount, retainedLocalSpaceCount;
+  final Map<String, int> retainedLocalCounts;
+  final Map<String, int> localCounts, downloadedCounts, linkedPaymentCounts;
+  final int linkedPendingCount, blockedCount, deletedRecordCount;
+  final bool standaloneFinanceLimited;
+}
+
 class BackupPreview {
   BackupPreview({
     required this.backupId,
@@ -51,6 +77,7 @@ class BackupPreview {
     required this.hasRemoteRecovery,
     this.sourceAccount,
     this.sourceServer,
+    this.contentSummary,
     Iterable<String> incompleteScopes = const [],
     Iterable<String> exclusions = const [],
   }) : personalCounts = Map.unmodifiable(personalCounts),
@@ -62,6 +89,9 @@ class BackupPreview {
   final Map<String, int> personalCounts;
   final bool hasRemoteRecovery;
   final String? sourceAccount, sourceServer;
+  // Old stored previews have no detailed summary. Opening their encrypted copy
+  // derives it again without changing the portable format or stored preview keys.
+  final BackupContentSummary? contentSummary;
   final List<String> incompleteScopes, exclusions;
 }
 

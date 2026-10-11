@@ -1,6 +1,6 @@
 # Izguba testnega strežnika — Android in Mac
 
-**11. oktober 2026 · sprejemni protokol, fizični rezultati še niso potrjeni.**
+**11. oktober 2026 · začetna objava/prenos potrjena, celotni A–F še čakajo.**
 Lokalna priprava je končana: svež Kanboard 1.2.54/FamilyHub 0.11.2 paket ima
 SHA256 `9c6d62d6a2e8670b2604b5849569688d2695c6c72319132e644b627660df0ae6`,
 2185 datotek, CRC/inventar, 77 PHP lint in 10 paketnih testov PASS. Dodatni
@@ -11,13 +11,13 @@ ločena domena z rootom `/home/tripar13/jivie-test2.triparna.si`; AutoSSL ima ve
 certifikat do 9. januarja 2027. Uporabnik je sam oddal namestitev z novim geslom;
 Softaculous je potrdil uspešno namestitev Kanboard 1.2.54 z novo bazo
 `tripar13_jivietest2`. FamilyHub **0.11.2/schema15** je nato nameščen in dejansko preverjen;
-fizični preizkus še sledi. Dokazi so v
+celotni preizkus še sledi. Dokazi so v
 ignorirani `build/qa/server-loss-test-20261011/`, ZIP v `build/releases/test2-server-20261011/`.
 
 Preizkus uporablja samo novo `https://jivie-test2.triparna.si`, sintetične podatke,
 Android **1.4.0 (18)** in dejansko odprto Mac gradnjo, katere različico in izvor
 zabeležimo pred začetkom. Namen je preveriti ohranitev prenesenih podatkov,
-lokalno delo in obnovo po izgubi strežnika. Ne vključuje popravkov aplikacije.
+lokalno delo in obnovo po izgubi strežnika. Ugotovljene napake in njihovi ločeni popravki so navedeni spodaj.
 
 ## Dejanska priprava gostovanja — 11. oktober
 
@@ -92,7 +92,7 @@ finančna zavrnitev/nepopolnost, lokalni vrtovi in payment/refund/cash roundtrip
 Obstoječi UI test uporablja fake osebne števce; ne pokrije sedanjega zavajajočega
 prikaza ničel. Ti testi niso fizični rezultati A–F.
 
-## Prvi testni račun — pripravljeno
+## Prvi testni račun — potrjeno
 
 Po dejanskem pregledu shranjene Macove kopije je Mac po standardni poti odjavljen
 iz takndev/test1; skupni pogled se skrije, osebni zapisi ostanejo. Račun test1,
@@ -104,8 +104,130 @@ V Macovem obrazcu »Prvi račun s kodo« je dejansko vpisano
 `https://jivie-test2.triparna.si/`, sintetično uporabniško ime `slt_test` in prikazno
 ime »Preizkus izgube strežnika«. Uporabnik sam izda kodo v prijavljenem spletnem
 FamilyHub enrollment, jo prenese v obrazec in vnese/potrdi/odda novo geslo.
-Koda, geslo in seje se ne beležijo v dokaze. Uspešna izdelava novega računa in
-sinhronizacija obeh naprav še čakata; vsebinske faze A–F še niso izvedene.
+Koda, geslo in seje se ne beležijo v dokaze. Uporabnik je račun dejansko ustvaril;
+Mac potrdi `slt_test` na test2. Neodvisni HTTPS capabilities potrdi isto novo
+identiteto in zaprt prvi enrollment. Sinhronizacija obeh naprav in celotni A–F
+še niso potrjeni.
+
+## Prva fizična objava in popravek izbora
+
+Na Macu je ustvarjeno lokalno **SLT gospodinjstvo**, opravilo
+`SLT gospodinjstvo Mac`, dogodek `SLT dogodek Mac`, seznam `SLT nakupi Mac` z
+artiklom `SLT artikel Mac` ter `SLT vrt Mac` z zapisom in eno gredo. Predogled
+»Poveži in sinhroniziraj« pokaže **4 zapise in 1 vrt** ter izrecno pravi račun/test2.
+Po potrditvi dejanski read-only pregled samo `tripar13_jivietest2` potrdi po en
+live `task`, `event`, `shoppingList`, `shoppingItem` in `garden`: **5 skupaj**.
+Prenos je uspel; podatki niso ponastavljeni ali ponovno ustvarjeni neposredno v bazi.
+
+Fizična objava je razkrila **DropdownButton assertion**: izbrana lokalna vrednost
+ostane `local:<ID>`, meni pa objavljeni vezani lokalni prostor odstrani iz postavk.
+Selektor pokaže rdeči ErrorWidget in stari lokalni kontekst. Isti picker blob je v
+1.3.2 (17) in main/1.4.0 (18); ne gre za poseben star Mac ostanek. Izvorni popravek
+izbere točno pripadajoči scope istega računa, med vmesnim stanjem ohrani onemogočeno
+izbrano postavko ter pred SQL zapisom preveri generacijo/identiteto/lokalni binding.
+Uporabnikova izbira drugega lokalnega prostora/Vsi in menjava računa ustavita
+zastareli prehod. Shema, API telesa, gostovanje in app različica ostanejo isti.
+
+Pravi prvotni assertion je reproduciran v izoliranem negativnem widget preizkusu;
+**74 začetnih ciljnih PASS / 1 opt-in preskočen**, vključno s sedmimi regresijami z
+resničnima providerjema, SQLite, publication transportom ter kontrolo poznih SQL
+zapisov. Širši prvi sklop je nato zaznal 4 napake v prvotnih povabilih: nova aktivna
+odvisnost je po nepotrebnem odpirala lokalno platformno bazo/organizer. Končna
+izvedba lokalni katalog bere samo, če je že aktiven, in ga ne aktivira iz
+računskega toka. Prvotni testi povabil so nespremenjeni; nova osma regresija
+potrdi, da lokalni/organizer/database providerji v account-only toku ostanejo
+neustvarjeni. Končno **950 Flutter PASS / 13 opt-in preskočenih**, analiza brez
+ugotovitev; funkcionalni **d627bbe** je na main/origin. Sveža podpisana Mac
+**1.4.0 (18)** iz d627bbe je izdelana in dejansko odprta z ohranjeno prijavo slt_test.
+295 zamrznjenih vhodov se ujema, podpis je strogo preverjen; certifikat/profil,
+ključna veriga, odvisnosti in SDK so ohranjeni. Hladni zagon pokaže povezano
+SLT gospodinjstvo brez napake. Nova dejanska objava lokalne SLT organizacija
+z enim projektom in dvema opraviloma tudi uspešno preide v povezani izbor. Izdani Android (18) tega
+novega popravka še nima; nove trgovinske izdaje s tem korakom ne trdimo.
+
+Dodatno pojasnilo protokola: dejanski + Nov prostor ponudi gospodinjstvo/organizacijo.
+Osebni del pripravljamo kot obstoječe **Osebno / Moje naprave** z ločenim izrecnim
+predogledom, ne izmišljamo nedosegljivega dodatnega osebnega prostora v UI.
+
+Uporabnik je nato na Androidu potrdil prijavo v test2 in prikaz opravila, dogodka,
+nakupov ter vrta v SLT gospodinjstvo na **1.4.0**. Izdajni build18 je v Play aktiven,
+številke nameščenega builda pa ni posebej navedel. To je dejanski uporabnikov
+prenos na drugo napravo; dodatne organizacijske/osebne/finančne vsebine, ponovni
+zagoni in izpad še niso potrjeni.
+
+## Dejanska finančna osnova na Macu — 11. oktober
+
+Vsi spodnji zapisi so ustvarjeni skozi aplikacijo na test2, brez SQL vstavljanja.
+V **SLT gospodinjstvo** so knjiženi prihodek 50 EUR, odhodek 12 EUR ter notranji
+prenos 25 EUR. Ledger pokaže **SLT glavni 138 EUR, SLT A 75 EUR, SLT B 25 EUR**,
+skupaj **238 EUR**, prihodek **50 EUR**, odhodek **12 EUR**. Prenos ne ustvari novega
+prihodka ali odhodka. Zgornje kartice mesečnega načrta kažejo začetna stanja
+100/100/0, zato za kontrolo dejanskega stanja uporabimo spodnji ledger.
+Dokaz: `build/qa/server-loss-test-20261011/mac-finance-baseline.png`.
+Uporabnik na Androidu potrdi ista trenutna stanja in ustvari opravilo **`Slt android`**.
+Mac nato dejansko pokaže isto novo opravilo ob svojem `SLT gospodinjstvo Mac`;
+prenos osnovne vsebine/financ Mac → Android in novega taska Android → Mac je
+potrjen. Uporabnik je opazil tudi zgornje kartice 100/0/100 EUR; to so začetna
+stanja mesečnega načrta, spodnji ledger ostaja 75/25/138 EUR. Uporabnik nato potrdi tudi Androidovo popolno zaprtje/ponovni zagon ter
+ohranjene gospodinjske podatke, vrt in zneske; organizacijo/projekt s stroškom
+30 EUR in stanjem 70 EUR je pregledal ter potrdil »vse štima«.
+
+Privzeto **Osebno** ima opravilo `SLT osebno Mac` in račun `SLT kartica` z začetnim
+stanjem 0 EUR. Ločen predogled Moje naprave potrdi en task/en financialAccount,
+potem je zasebna sinhronizacija izrecno vključena. Glava kaže Povezano; podnaslov
+Osebno v pickerju še napačno pravi Lokalno/brez sinhronizacije. Ta manjša
+neusklajenost prikaza še ni popravljena.
+
+**SLT organizacija** ima svoj task in povezani **SLT projekt** s projektnim taskom.
+Projektni ledger ima račun `SLT projektni` z začetnim stanjem 100 EUR ter en
+knjižen strošek `SLT projekt strošek 30`: trenutno stanje **70 EUR**, odhodek
+**30 EUR**. Organizacijski skupni pregled isti strošek pokaže enkrat.
+Dejanje »Plačal sem osebno« in linked-payment razdelek se v trenutnem dejanskem
+projektnem prikazu še ne pokažeta niti po uskladitvi. Vzrok preverjamo; osebno
+plačilo/povračili nista ustvarjena in tega dela ne označujemo PASS.
+
+Pred nadaljevanjem dejanski Macov status potrdi **Usklajeno** ter 0 čakajočih,
+spornih in zadržanih sprememb; dokaz `mac-pre-outage-sync.png` v isti QA mapi.
+
+Ločen test2-only CLI backup helper je naložen v zasebni install, SHA256
+`a612a97d0a8a578502604f741bec3007d5a6da68fa28c85480ebb32c319c7053` in 0600
+sta preverjena. Dejansko gostovano **read-only --check** potrdi pravo identiteto,
+0.11.2/schema15, **1 račun, 2 napravi, 86 tabel in 2 zasebni datoteki**.
+Marker ostane vključen. Lokalni sintetični export/restore druge izolirane mock baze
+v MariaDB 10.11.19 brez omrežja je PASS (87 tabel/43 vrstic/4 datoteke/2 imenika,
+vsi row/file/definition/config/marker hashi enaki); to ni obnovljena gostovana baza.
+Gostovani izvoz in njegova dejanska izolirana obnova še nista izvedena.
+
+Strežnik ostaja dosegljiv, marker ni odstranjen, nobena baza ni izbrisana.
+Nova kopija test2, izpad in samostojna obnova še čakajo.
+
+## Dva popravka, odkrita med pripravo
+
+**Prvo osebno plačilo novega projekta.** Prazna nova evidenca plačil še nima
+`linkedPaymentsRequired`; prejšnji sync jo je zato izpustil. UI pa pravilno zahteva
+resničen svež sidecar, preden ponudi prvo osebno plačilo. Popravek v
+`collaboration_finance_sync.dart` ob oglaševani zmožnosti prenese pravi začetni
+finance3 posnetek tudi za zapisovalni vir organizacije/projekta. Ne postavlja
+umetnega fresh. Gospodinjstvo, viewer in strežnik brez zmožnosti ne dobijo novih
+bootstrap zahtev. API/strežnik/shema ostanejo isti.
+**21 ciljnih PASS**, od tega 9 novih resničnih repository/provider/UI regresij:
+prvo plačilo lokalni in zasebno sinhronizirani kartici, napačen scope, omrežje,
+zavrnitve, odjava ter sprememba finančnih pravic med odgovorom. Prvotna HEAD koda
+negativno potrdi odsotni gumb. `build/qa/linked-payment-bootstrap/` ima dokaze.
+Fizično plačilo s tem popravkom še sledi; trenutna odprta Mac gradnja je d627bbe.
+
+**Pregleden predogled kopije.** Iz istega že validiranega dokumenta izračuna
+ločene osebne, druge lokalne, prenesene in ohranjene izhodiščne zapise, finance
+ter evidence plačil. Privzeti osebni snapshot in po objavi ohranjeni lokalni
+posnetki niso sešteti kot dodatni aktivni prostori. Zasebni/skupni obsegi so
+ločeni; nedokončani linked-payment intents so vključeni v čakajoče delo.
+Opozorilo o omejeni samostojni aktivaciji prenosov/povezanih financ ostane jasno.
+Format4/schema8, izvoz in trajni preview JSON ključi so nespremenjeni.
+**45 različnih ciljnih PASS**, od tega 6 novih dejanskih SQLite/repository,
+crypto encode/decode in SL/EN widget regresij. Ciljna in celotna analiza sta brez
+ugotovitev. **Celotni sklop 965 PASS / 13 opt-in preskočenih**, analiza brez ugotovitev;
+podpisana nova Mac gradnja še sledi; Androidova
+trgovinska izdaja 18 teh novih popravkov še nima.
 
 ## Pred začetkom
 
@@ -125,8 +247,8 @@ sinhronizacija obeh naprav še čakata; vsebinske faze A–F še niso izvedene.
 ## Sintetična vsebina
 
 Na telefonu in Macu se prijavimo v **isti novi testni račun**. Ustvarimo povezane
-prostore `SLT osebno`, `SLT gospodinjstvo`, `SLT organizacija` in organizacijski
-projekt `SLT projekt`. Zasebno sinhronizacijo in objavo lokalnih podatkov potrdimo
+osebni del **Osebno / Moje naprave**, prostora `SLT gospodinjstvo`,
+`SLT organizacija` in organizacijski projekt `SLT projekt`. Zasebno sinhronizacijo in objavo lokalnih podatkov potrdimo
 izrecno. V vsakem prostoru dodamo po eno opravilo; v gospodinjstvu še nakupovalni
 seznam, dogodek in vrt. Opravilo na telefonu in drugo na Macu označimo z različnim
 besedilom, da je razviden izvor spremembe.

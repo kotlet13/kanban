@@ -13,14 +13,22 @@ class BackupCounts extends StatelessWidget {
       'financeAccount' ||
       'personalFinanceAccount' => l.financeAccounts,
       'financeRecurrenceRules' || 'financeRecurrenceRule' => l.financePlanRules,
-      'projects' => l.organizerProjects,
-      'tasks' => l.organizerTasks,
-      'shoppingLists' => l.organizerShopping,
-      'shoppingItems' => l.backupShoppingItems,
-      'events' => l.organizerCalendar,
-      'financeEntries' || 'personalFinanceEntry' => l.organizerFinances,
+      'projects' || 'project' => l.organizerProjects,
+      'tasks' || 'task' => l.organizerTasks,
+      'shoppingLists' || 'shoppingList' => l.organizerShopping,
+      'shoppingItems' || 'shoppingItem' => l.backupShoppingItems,
+      'events' || 'event' => l.organizerCalendar,
+      'financeEntries' ||
+      'financeEntry' ||
+      'personalFinanceEntry' => l.organizerFinances,
+      'financeTransfer' => l.backupFinanceTransfers,
       'reminders' => l.inboxCategoryReminders,
-      'gardens' => l.gardenTitle,
+      'gardens' || 'garden' => l.gardenTitle,
+      'inbox' => l.inboxTitle,
+      'scheduled_reminders' => l.backupScheduledReminders,
+      'paymentEvents' => l.backupPaymentEvents,
+      'paymentProjections' => l.backupPaymentProjections,
+      'paymentCashMovements' => l.backupPaymentCashMovements,
       _ => l.backupOtherRecords,
     };
     return Column(

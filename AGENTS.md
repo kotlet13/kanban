@@ -2,6 +2,35 @@
 
 ## Namen in dogovorjeni obseg
 
+11. oktober — dejanski dvosmerni preizkus test2 potrdi Androidove trenutne finance
+138/75/25 EUR in novo `Slt android` na Macu; uporabnik potrdi tudi Androidov hladni
+zagon ter projektni strošek 30 EUR/stanje 70 EUR. Priprava odkrije prvi payment
+bootstrap (prazen finance3 snapshot se ni prenesel) in zavajajoč predogled kopije.
+Oba popravka sta lokalno preverjena: **965 Flutter PASS / 13 opt-in preskočenih**,
+analiza brez ugotovitev. Predogled loči osebno/drugo lokalno/preneseno/ohranjena
+izhodišča ter evidence plačil; format/schema/izvoz so isti. Nova podpisana Mac
+gradnja in dejansko plačilo/kopija še sledita; izdani Android18 novih popravkov
+še nima. Test2 backup helper hosted read-only check potrdi1 račun/2 napravi/
+86 tabel/2 zasebni datoteki; gostovani export+dejanska obnova še čakata.
+[Dokazi](docs/server/SERVER_LOSS_TEST.md#dva-popravka-odkrita-med-pripravo).
+Strežnik je dosegljiv, nič ni izbrisano, celoten A–F ni zaključen.
+
+11. oktober — račun slt_test na ločenem test2 je ustvarjen in potrjen. Mac je
+objavil SLT gospodinjstvo (4 zapisi + vrt); read-only baza potrdi vseh 5 vrst po 1.
+Android uporabnik potrdi isto vsebino na 1.4.0. Fizična objava je odkrila star
+DropdownButton assertion po vezavi izbranega lokalnega prostora. Funkcionalni
+**d627bbe** je na main/origin: prehod sledi točnemu bindingu istega računa; pozna
+izbira ne prepiše uporabnikove izbire/Vsi ali novega računa. Lokalni katalog se iz
+account-only toka ne odpre po nepotrebnem. **950 Flutter PASS / 13 opt-in
+preskočenih**, analiza brez ugotovitev; 8 novih real-provider/SQLite regresij.
+[Dokazi in stanje](docs/server/SERVER_LOSS_TEST.md#prva-fizična-objava-in-popravek-izbora).
+Nova podpisana Mac 1.4.0 (18) je odprta z ohranjeno prijavo; dejanska nova objava
+organizacije/projekta potrdi prehod brez napake. Finančni ledger gospodinjstva
+potrdi 138/75/25 EUR, skupaj 238 EUR, prihodek 50/odhodek 12 EUR. Osebno
+plačilo projektnega stroška še čaka na pregled nedosegljivega UI dejanja; Android18 v Play še nima tega popravka,
+appverzija/strežnik/shema/SDK niso zvišani ali nadgrajeni. Celotni A–F še čakajo,
+strežnik ni izključen ali izbrisan.
+
 11. oktober — uporabnik je pripravil kopiji na Macu/Androidu in poročal o ničlah.
 [Preverjanje](docs/server/SERVER_LOSS_TEST.md#predogled-ničel--11-oktober) je pokazalo
 zavajajoč predogled: osebni števci ne štejejo ločenih prenesenih zapisov/financ in
@@ -10,8 +39,8 @@ viden; shranjena šifrirana kopija je ohranjena zasebno in strukturno preverjena
 z uporabnikovim geslom dejansko odprta: osebno0, 2 strežniška obsega, 0 prikazanih
 operacij. Obnova ni potrjena. 39 ciljnih testov PASS ni fizični dokaz obnovljene
 vsebine. Popravek predogleda in regresija oseben0/skupno>0 še nista izvedena;
-Mac je po kopiji standardno odjavljen iz test1; obrazec prvega računa test2
-(slt_test) čaka na uporabnikovo kodo/novo geslo/oddajo. Noben strežnik ni odstranjen.
+Mac je po kopiji standardno odjavljen iz test1; novi slt_test je po uporabnikovi
+oddaji potrjen v novejšem dodatku zgoraj. Noben strežnik ni odstranjen.
 
 11. oktober — uporabnik je naročil preizkus izgube strežnika z novim ločenim
 `jivie-test2.triparna.si`, prijavo/urejanjem in kasnejšo odstranitvijo. [Protokol](docs/server/SERVER_LOSS_TEST.md)

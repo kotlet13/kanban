@@ -3713,8 +3713,128 @@ abstract class AppLocalizations {
   /// No description provided for @backupScopes.
   ///
   /// In en, this message translates to:
-  /// **'Shared spaces in backup'**
+  /// **'Server spaces in backup'**
   String get backupScopes;
+
+  /// No description provided for @backupPersonalContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal local records'**
+  String get backupPersonalContent;
+
+  /// No description provided for @backupLocalSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Other local spaces'**
+  String get backupLocalSpaces;
+
+  /// No description provided for @backupRetainedLocalSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Retained local originals of connected spaces'**
+  String get backupRetainedLocalSpaces;
+
+  /// No description provided for @backupRetainedLocalExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These are local records from before connection. They may overlap with downloaded records and are not additional shared content.'**
+  String get backupRetainedLocalExplanation;
+
+  /// No description provided for @backupStandaloneFinanceLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'When continuing locally without the server, some financial transfers and linked payments remain in the original encrypted backup; they are not activated as a complete local finance view.'**
+  String get backupStandaloneFinanceLimit;
+
+  /// No description provided for @backupDownloadedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded server records'**
+  String get backupDownloadedContent;
+
+  /// No description provided for @backupPrivateSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Private personal spaces'**
+  String get backupPrivateSpaces;
+
+  /// No description provided for @backupSharedSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared spaces'**
+  String get backupSharedSpaces;
+
+  /// No description provided for @backupNoRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Records'**
+  String get backupNoRecords;
+
+  /// No description provided for @backupLinkedPaymentContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked payment records'**
+  String get backupLinkedPaymentContent;
+
+  /// No description provided for @backupPaymentEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get backupPaymentEvents;
+
+  /// No description provided for @backupPaymentProjections.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal and household payment views'**
+  String get backupPaymentProjections;
+
+  /// No description provided for @backupPaymentCashMovements.
+  ///
+  /// In en, this message translates to:
+  /// **'Reimbursement cash movements'**
+  String get backupPaymentCashMovements;
+
+  /// No description provided for @backupPendingPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Of these, pending linked payments'**
+  String get backupPendingPayments;
+
+  /// No description provided for @backupBlockedOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Of these, blocked or conflicting work'**
+  String get backupBlockedOperations;
+
+  /// No description provided for @backupDeletedRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Retained record deletions'**
+  String get backupDeletedRecords;
+
+  /// No description provided for @backupScheduledReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Server reminders'**
+  String get backupScheduledReminders;
+
+  /// No description provided for @backupFinanceTransfers.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfers between financial accounts'**
+  String get backupFinanceTransfers;
+
+  /// No description provided for @backupCountsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts show the content stored in the backup. Downloaded records are initially kept separately after restoration; their count does not confirm activation or a complete finance view.'**
+  String get backupCountsExplanation;
+
+  /// No description provided for @backupPaymentCountsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A payment and its personal or household views are separate records of the same event. Their counts do not represent additional expenses or income.'**
+  String get backupPaymentCountsExplanation;
 
   /// No description provided for @backupPending.
   ///
@@ -3875,7 +3995,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupCompleteness.
   ///
   /// In en, this message translates to:
-  /// **'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.'**
+  /// **'The backup includes personal content, other local spaces, permitted downloaded records, financial records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.'**
   String get backupCompleteness;
 
   /// No description provided for @backupTooLarge.

@@ -2037,7 +2037,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupCreatedAt => 'Created';
 
   @override
-  String get backupScopes => 'Shared spaces in backup';
+  String get backupScopes => 'Server spaces in backup';
+
+  @override
+  String get backupPersonalContent => 'Personal local records';
+
+  @override
+  String get backupLocalSpaces => 'Other local spaces';
+
+  @override
+  String get backupRetainedLocalSpaces =>
+      'Retained local originals of connected spaces';
+
+  @override
+  String get backupRetainedLocalExplanation =>
+      'These are local records from before connection. They may overlap with downloaded records and are not additional shared content.';
+
+  @override
+  String get backupStandaloneFinanceLimit =>
+      'When continuing locally without the server, some financial transfers and linked payments remain in the original encrypted backup; they are not activated as a complete local finance view.';
+
+  @override
+  String get backupDownloadedContent => 'Downloaded server records';
+
+  @override
+  String get backupPrivateSpaces => 'Private personal spaces';
+
+  @override
+  String get backupSharedSpaces => 'Shared spaces';
+
+  @override
+  String get backupNoRecords => 'Records';
+
+  @override
+  String get backupLinkedPaymentContent => 'Linked payment records';
+
+  @override
+  String get backupPaymentEvents => 'Payments';
+
+  @override
+  String get backupPaymentProjections => 'Personal and household payment views';
+
+  @override
+  String get backupPaymentCashMovements => 'Reimbursement cash movements';
+
+  @override
+  String get backupPendingPayments => 'Of these, pending linked payments';
+
+  @override
+  String get backupBlockedOperations => 'Of these, blocked or conflicting work';
+
+  @override
+  String get backupDeletedRecords => 'Retained record deletions';
+
+  @override
+  String get backupScheduledReminders => 'Server reminders';
+
+  @override
+  String get backupFinanceTransfers => 'Transfers between financial accounts';
+
+  @override
+  String get backupCountsExplanation =>
+      'Counts show the content stored in the backup. Downloaded records are initially kept separately after restoration; their count does not confirm activation or a complete finance view.';
+
+  @override
+  String get backupPaymentCountsExplanation =>
+      'A payment and its personal or household views are separate records of the same event. Their counts do not represent additional expenses or income.';
 
   @override
   String get backupPending => 'Unsent operations in backup';
@@ -2131,7 +2196,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupCompleteness =>
-      'The backup includes personal content, permitted cached records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.';
+      'The backup includes personal content, other local spaces, permitted downloaded records, financial records and unsynced work. Server data that has not been downloaded to this device is excluded. Reminder snoozes apply only on this device and are not included.';
 
   @override
   String get backupTooLarge =>

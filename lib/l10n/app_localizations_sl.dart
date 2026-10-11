@@ -2038,7 +2038,73 @@ class AppLocalizationsSl extends AppLocalizations {
   String get backupCreatedAt => 'Ustvarjena';
 
   @override
-  String get backupScopes => 'Skupni prostori v kopiji';
+  String get backupScopes => 'Strežniški prostori v kopiji';
+
+  @override
+  String get backupPersonalContent => 'Osebni lokalni zapisi';
+
+  @override
+  String get backupLocalSpaces => 'Drugi lokalni prostori';
+
+  @override
+  String get backupRetainedLocalSpaces =>
+      'Ohranjena lokalna izhodišča povezanih prostorov';
+
+  @override
+  String get backupRetainedLocalExplanation =>
+      'To so lokalni zapisi pred povezavo. Lahko se prekrivajo s prenesenimi zapisi in niso dodatna skupna vsebina.';
+
+  @override
+  String get backupStandaloneFinanceLimit =>
+      'Pri samostojnem nadaljevanju brez strežnika nekateri finančni prenosi in povezana plačila ostanejo v izvirni šifrirani kopiji; ne aktivirajo se kot popoln lokalni finančni pregled.';
+
+  @override
+  String get backupDownloadedContent => 'Preneseni strežniški zapisi';
+
+  @override
+  String get backupPrivateSpaces => 'Zasebni osebni prostori';
+
+  @override
+  String get backupSharedSpaces => 'Skupni prostori';
+
+  @override
+  String get backupNoRecords => 'Zapisi';
+
+  @override
+  String get backupLinkedPaymentContent => 'Evidence povezanih plačil';
+
+  @override
+  String get backupPaymentEvents => 'Plačila';
+
+  @override
+  String get backupPaymentProjections =>
+      'Osebni in gospodinjski pregledi plačil';
+
+  @override
+  String get backupPaymentCashMovements => 'Denarni premiki povračil';
+
+  @override
+  String get backupPendingPayments => 'Od tega čakajoča povezana plačila';
+
+  @override
+  String get backupBlockedOperations => 'Od tega blokirano ali konfliktno delo';
+
+  @override
+  String get backupDeletedRecords => 'Ohranjeni izbrisi zapisov';
+
+  @override
+  String get backupScheduledReminders => 'Strežniški opomniki';
+
+  @override
+  String get backupFinanceTransfers => 'Prenosi med finančnimi računi';
+
+  @override
+  String get backupCountsExplanation =>
+      'Števci prikazujejo shranjeno vsebino kopije. Preneseni zapisi se po obnovi najprej ohranijo ločeno; števec ne potrjuje njihove aktivacije ali popolnega finančnega pregleda.';
+
+  @override
+  String get backupPaymentCountsExplanation =>
+      'Plačilo in njegovi osebni ali gospodinjski pregledi so ločene evidence istega dogodka. Njihovo število ne pomeni dodatnih stroškov ali prihodkov.';
 
   @override
   String get backupPending => 'Neusklajene operacije v kopiji';
@@ -2133,7 +2199,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get backupCompleteness =>
-      'Kopija vključuje osebno vsebino in dovoljene prenesene zapise ter neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.';
+      'Kopija vključuje osebno vsebino, druge lokalne prostore, dovoljene prenesene zapise, finančne evidence in neusklajeno delo. Strežniških podatkov, ki niso bili preneseni na napravo, ne zajame. Odložitve opomnikov veljajo samo na tej napravi in niso vključene.';
 
   @override
   String get backupTooLarge =>

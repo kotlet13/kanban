@@ -121,6 +121,16 @@ extension CollaborationFinanceSync on CollaborationRepository {
     List<SharedScope> scopes,
   ) async {
     final p = session.profile.partition;
+    final capabilities = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['capabilities:$p'],
+    );
+    _checkEpoch(epoch);
+    final linkedPaymentsSupported =
+        capabilities.isNotEmpty &&
+        (CollaborationRepository._map(capabilities.single['value'])['features']
+                as Map?)?['linkedPayments'] ==
+            true;
     for (final scope in scopes) {
       if (!await _privateScopeAllowed(p, scope)) continue;
       await _renewLease(p);
@@ -134,7 +144,13 @@ extension CollaborationFinanceSync on CollaborationRepository {
         if (!policy.canRead) continue;
         if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
         await _pullFinanceScope(session, epoch, scope.id);
-        if (policy.linkedPaymentsRequired) {
+        // A first personal payment needs a verified empty sidecar snapshot too.
+        // `required` only becomes true once a linked financial fact exists.
+        if (policy.linkedPaymentsRequired ||
+            linkedPaymentsSupported &&
+                policy.canWrite &&
+                (scope.kind == SharedScopeKind.organization ||
+                    scope.organizationId != null)) {
           await fetchLinkedPayments(PaymentSpaceRef(scope.id, partition: p));
           _checkEpoch(epoch);
         }

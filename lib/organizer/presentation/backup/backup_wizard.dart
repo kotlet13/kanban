@@ -12,7 +12,7 @@ import '../../state/organizer_provider.dart';
 import '../../state/portable_backup_provider.dart';
 import '../organizer_widgets.dart';
 import '../shared/sharing_errors.dart';
-import 'backup_counts.dart';
+import 'backup_content_preview.dart';
 import 'offline_spaces_recovery.dart';
 
 Future<void> showBackupWizard(BuildContext context, {required bool restore}) =>
@@ -321,9 +321,7 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
                     '${l.backupSourceServer}: ${_preview!.sourceServer ?? l.backupLocalOnly}',
                   ),
                   Text(l.backupAccountMatches),
-                  BackupCounts(counts: _preview!.personalCounts),
-                  Text('${l.backupScopes}: ${_preview!.scopeCount}'),
-                  Text('${l.backupPending}: ${_preview!.pendingCount}'),
+                  BackupContentPreview(preview: _preview!),
                   const SizedBox(height: 12),
                   Text(l.backupCredentialsExcluded),
                   if (_preview!.hasRemoteRecovery)
