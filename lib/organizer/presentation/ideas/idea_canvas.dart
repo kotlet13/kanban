@@ -105,6 +105,24 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
   final List<IdeaPoint> _points = [];
   bool _fitted = false;
   @override
+  void didUpdateWidget(covariant IdeaCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tool != widget.tool ||
+        oldWidget.editable != widget.editable ||
+        oldWidget.board.id != widget.board.id) {
+      _clearGesture();
+    }
+  }
+
+  void _clearGesture() {
+    _start = null;
+    _working = null;
+    _original = null;
+    _resize = false;
+    _points.clear();
+  }
+
+  @override
   void dispose() {
     _transform.dispose();
     super.dispose();
@@ -300,6 +318,7 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    final editingGesture = widget.editable && widget.tool != IdeaTool.pan;
     final elements = [...widget.board.elements];
     if (_working != null) {
       elements.removeWhere((e) => e.id == _working!.id);
@@ -341,21 +360,15 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
                       key: const ValueKey('idea-canvas'),
                       dragStartBehavior: DragStartBehavior.down,
                       behavior: HitTestBehavior.opaque,
-                      onPanStart: widget.editable && widget.tool != IdeaTool.pan
-                          ? _begin
+                      onPanStart: editingGesture ? _begin : null,
+                      onPanUpdate: editingGesture ? _update : null,
+                      // Even a lone onPanCancel creates a child pan recognizer.
+                      // Remove every edit pan callback in viewport mode so the
+                      // InteractiveViewer owns both one- and two-finger gestures.
+                      onPanCancel: editingGesture
+                          ? () => setState(_clearGesture)
                           : null,
-                      onPanUpdate:
-                          widget.editable && widget.tool != IdeaTool.pan
-                          ? _update
-                          : null,
-                      onPanCancel: () => setState(() {
-                        _start = null;
-                        _working = null;
-                        _original = null;
-                      }),
-                      onPanEnd: widget.editable && widget.tool != IdeaTool.pan
-                          ? _end
-                          : null,
+                      onPanEnd: editingGesture ? _end : null,
                       onTapUp: widget.tool == IdeaTool.select
                           ? (d) => widget.onSelected(
                               ideaHitTest(elements, d.localPosition)?.id,
