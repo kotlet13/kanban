@@ -70,7 +70,10 @@ Future<void> _capture(WidgetTester tester, GlobalKey key, String name) async {
         key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
     final image = await boundary.toImage(pixelRatio: 2);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    final file = File('build/qa/unified-mobile-ux/$name.png');
+    final folder = Platform.environment['JIVIE_UI_CAPTURE_PLAY'] == '1'
+        ? 'build/qa/unified-mobile-ux/play-capture-source'
+        : 'build/qa/unified-mobile-ux';
+    final file = File('$folder/$name.png');
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes!.buffer.asUint8List());
     image.dispose();
@@ -78,6 +81,7 @@ Future<void> _capture(WidgetTester tester, GlobalKey key, String name) async {
 }
 
 void main() {
+  final playCapture = Platform.environment['JIVIE_UI_CAPTURE_PLAY'] == '1';
   for (final scenario in [
     (
       platform: TargetPlatform.android,
@@ -94,6 +98,10 @@ void main() {
       scale: 2.0,
     ),
   ]) {
+    if (playCapture &&
+        (scenario.platform != TargetPlatform.android || scenario.width != 360)) {
+      continue;
+    }
     final name =
         '${scenario.platform.name}-${scenario.width.toInt()}-${scenario.theme}-${scenario.scale}';
     testWidgets('unified navigation visual review $name', (tester) async {
@@ -121,7 +129,7 @@ void main() {
         tester,
         store,
         width: scenario.width,
-        height: 844,
+        height: playCapture ? 640 : 844,
         theme: scenario.theme,
         repaintBoundaryKey: key,
         localSpacesController: LocalSpaceUiController(LocalSpaceKind.personal),
@@ -135,6 +143,16 @@ void main() {
         },
       );
       final initialWrites = store.writes;
+      // Let asynchronously decoded header assets paint before the first PNG.
+      // Re-enter Pulse through the same real navigation used by later captures.
+      await mobileTab(tester, 'Planer');
+      await mobileTab(tester, 'Utrip');
+      if (Platform.environment['JIVIE_UI_CAPTURE'] == '1') {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pumpAndSettle();
+      }
       for (final tab in ['Utrip', 'Planer', 'Prostor', 'Več']) {
         await mobileTab(tester, tab);
         expect(find.byType(NavigationDestination), findsNWidgets(4));

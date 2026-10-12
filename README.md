@@ -1,5 +1,13 @@
 # Jivie
 
+**12. oktober,21:04 — interna1.7.0(25) Aktivno:** nova podoba Utrip/Planer/Prostor/
+Več je objavljena za isti domači(15). Podpis/Firebase/8 dovoljenj ohranjeni,
+320 zamrznjenih vhodov in vse izdajne kontrole PASS.
+[Izdajni dokazi](docs/release/UNIFIED_UX_RELEASE.md). **jivie.app posodobljen**
+z novo galerijo in SL/EN predstavitvijo;16 živih HTTPS/hash PASS po sveži kopiji.
+6 novih Android posnetkov/opisi so shranjeni v Play osnutek. Fizična posodobitev
+telefona še sledi; javna mobilna in Apple izdaja nista izvedeni.
+
 **12. oktober — enoten mobilni vmesnik:** Utrip · Planer · Prostor · Več so stalni
 cilji za Android/iOS in namizje. Planer združuje opravila, koledar in Idejnik;
 Utrip prikazuje dejanske dogodke, naslednjih sedem dni in projekte. Skupna svetla/

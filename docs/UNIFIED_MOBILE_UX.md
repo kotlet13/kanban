@@ -1,5 +1,11 @@
 # Enoten Jivie: Android in iOS
 
+**Nadaljnja izdaja12.oktobra:** Android **1.7.0(25) Aktivno od21:04** na istem
+internem kanalu domači(15). [Izdajni dokazi](release/UNIFIED_UX_RELEASE.md).
+Spletna predstavitev in galerija sta objavljeni na jivie.app; nove slike in opisi
+v Play so shranjen osnutek. Spodnje stanje1.6.1 in odsotnost nove izdaje opisujeta
+zaključek same izvedbe pred tem izrecno naročenim izdajnim korakom.
+
 Dogovor 12. oktobra 2026: skupna informacijska arhitektura in grafitno-modra
 podoba. Izvedbo vodi glavni agent, ločene dele pripravljajo GPT-6.1 Sol / high.
 Ta smer nadomesti prejšnji telefonski predal kot glavno navigacijo.

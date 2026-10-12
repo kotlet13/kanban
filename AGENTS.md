@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+12. oktober,21:04 — nova interna **Android1.7.0(25) je Aktivno** za isti domači(15).
+Vsebuje enoten Utrip/Planer/Prostor/Več iz50fd551. Ena podpisana AAB25,320
+zamrznjenih vhodov, isti upload podpis/Firebase/8 dovoljenj kot24; bundle/CRC/
+16KiB/23+7 izdajnih kontrol in source checker PASS. Prejšnjih651 funkcionalnih
+PASS/1skip in čiste analize ne ponavljamo. [Dokazi](docs/release/UNIFIED_UX_RELEASE.md).
+Po nadaljnjem naročilu **jivie.app dejansko posodobljen**:8HTML/CSS/7 novih
+posnetkov, vseh16 HTTPS200 in točen hash. Sveža zasebna kopija17 datotek
+dejansko preverjena;8 drugih datotek/config/.htaccess ohranjenih. SL/EN
+zasebnost/izbris imata isto vidno vsebino. [Spletni dokazi](website/README.md).
+6 novih720×1280 Android widget posnetkov in SL/en-US opisa dejansko shranjenih
+v Play osnutek; stare slike ostanejo v knjižnici. Posnetki uporabljajo izolirane
+vzorčne podatke; niso dokaz fizičnega telefona. Fizična nadgradnja25 še sledi.
+FamilyHub/test2/produkcija, podatki/sheme, SDK/locks/iOS/Mac in javna mobilna
+oddaja niso spremenjeni. DataSafety/IARC ostajata ločeno odprto delo.
+
 12. oktober — uporabnik je naročil skupen Android/iOS UX in podagente Sol6.1/high.
 **Utrip · Planer · Prostor · Več** so izvedeni kot štirje stalni cilji; ta usmeritev
 ima prednost pred starejšim telefonskim predalom. Planer: Opravila/Koledar/Idejnik.

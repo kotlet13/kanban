@@ -1,5 +1,35 @@
 # Jivie: statična javna stran za cPanel
 
+**12. oktober — nova podoba in posnetki dejansko objavljeni.** SL/EN predstavitev
+in pomoč sledita Utrip/Planer/Prostor/Več. Dodanih7 posnetkov iz dejanskega izrisa
+vmesnika z izoliranimi vzorčnimi podatki in jasnim opisom predogleda. Android
+je v internem preizkušanju; stran ne trdi, da je javna mobilna/iOS izdaja že na voljo.
+Vidno besedilo zasebnosti in izbrisa je ohranjeno; skupni CSS ima nov cache token.
+
+Račun **jivie**, document root `/home/jivie/public_html` sta ponovno potrjena
+v cPanel Domains. Pred zamenjavo je ustvarjena zasebna kopija celotnega korena
+`/home/jivie/private/website-unified-20261012/before-public_html.tar.gz`, SHA256
+`b3bab72b7263a571c43a00318558d8de8aefa1521e853179770b26d2b00a8f89`;
+vseh17 obstoječih datotek je dejansko primerjanih s kopijo. Preverjeni helper
+namesti samo8HTML/CSS/7PNG in potrdi8 ostalih datotek z istimi bajti/pravicami/
+lastništvom; PHP/.htaccess/.well-known in drugi assets ostanejo ohranjeni.
+ZIP in helper sta zunaj javnega korena. Ni spremembe DNS/HTTPS nastavitev.
+
+Paket `build/releases/jivie-website-2026-10-12-unified.zip`,16 datotek,
+SHA256 `e76539fb45a2f071f6b6484eae2824b036e8c2876b89009fca635ebb714a48af`.
+Vseh16 javnih URL vrne HTTPS200 in točen izvorni hash. Lokalni SL/EN prikazi
+1440/390/320 in dejanski javni mobilni390 so brez horizontalnega prelivanja;
+slike imajo alt/dimenzije, povezave in fragmenti so preverjeni.
+Dokazi: `build/qa/unified-ux-release-20261012/website-{package,live-verification,
+deployment-evidence}.json`, `website-published.jpg` in `website-mobile.jpg`.
+Izvorni allowlist in lokalni pregled sta v `build/qa/unified-mobile-ux/`.
+
+Za Play je6 novih Android posnetkov720×1280 brez obrezovanja ali prekrivnih
+napisov shranjenih v osnutek skupaj z aktualnima SL/en-US opisoma. Slike uporabljajo
+vzorčne podatke; angleška objava uporabi novo privzeto galerijo. Stare slike
+ostanejo v knjižnici. Javna trgovinska objava ni oddana.
+[Aktivna interna Android1.7.0(25)](../docs/release/UNIFIED_UX_RELEASE.md).
+
 **12. oktober,15:36 — objava izvedena po prijavi s shranjenim geslom.** Račun
 **jivie**, domena/document root preverjena z DomainInfo: `/home/jivie/public_html`.
 Paket8HTML spodaj je objavljen; vseh8 javnih URL vrača HTTPS200 in točen izvorni
