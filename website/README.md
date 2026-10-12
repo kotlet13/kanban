@@ -1,5 +1,16 @@
 # Jivie: statična javna stran za cPanel
 
+**12. oktober — Android zasebnost, spletna objava čaka prijavo.** Play Data safety
+ima shranjen osnutek vseh 11 vrst s fotografijami; [dokazi in naslednji korak](../docs/release/ANDROID_PHOTOS_DATA_SAFETY.md).
+Prijava v ločen cPanel račun **jivie** je potekla, uporabnik ni pri računalniku;
+objave ni bilo. Oba javna privacy URL vračata HTTPS200 s starim besedilom 11. oktobra.
+Pripravljen je preverjen paket **8 HTML**, `build/releases/jivie-website-2026-10-12-photos-html.zip`,
+SHA256 `e175fdd8c48e38314e27ca102ffdbf271199aa8b5be5270d27b16901257ed6bc`.
+CRC/allowlist in bajtno ujemanje z izvorom PASS; sveži časovni žigi za pogojni cache.
+Po prijavi objavimo samo HTML v `/home/jivie/public_html` po zasebni kopiji,
+z ohranjenimi PHP nastavitvami, `.htaccess`, `.well-known` in assets. Paket je lokalen,
+ne dokaz namestitve; stare pakete ohranimo. Javna oddaja in Apple nista izvedena.
+
 **12. oktober — Idejnik, lokalno pripravljen izvor:** predstavitev/pomoč in SL/EN
 zasebnost zdaj zajemajo uredljive table, izbrane normalizirane fotografije,
 izbirno deljenje in zasebno sinhronizacijo, dejanski predpomnilnik/kopije ter

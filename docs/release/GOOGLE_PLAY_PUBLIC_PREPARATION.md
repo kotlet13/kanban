@@ -1,5 +1,14 @@
 # Jivie — priprava javne Google Play izdaje
 
+**12. oktober — aktualna interna 1.6.1 (24), Data safety osnutek shranjen.**
+Vseh 11 vrst, vključno s Photos, ima dokončana vprašanja uporabe/namena;
+končni predogled in »Shrani kot osnutek« sta dejansko potrjena.
+[Inventar, odgovori in dokazi](ANDROID_PHOTOS_DATA_SAFETY.md) imajo prednost pred
+spodnjimi starejšimi deklaracijami. Izjava ni poslana v pregled ali javno objavljena.
+Spletna zasebnost s fotografijami je pripravljena, objava pa čaka prijavo **jivie**:
+seja je potekla, lastnik je odsoten. IARC/pogoji, končni pregled javne kandidatke
+in oddaja niso opravljeni v tem koraku. Android gradnja/dovoljenja in Apple so nespremenjeni.
+
 **Zaključek starega UI, 11. oktober:** odstranjen je tudi preostali stari Kanboard
 vmesnik in njegove odvisnosti. Novi organizer/FamilyHub ostajata, brez spremembe
 različice ali podatkovnih identitet. [Končni dokazi](LEGACY_INTERFACE_REMOVAL.md)

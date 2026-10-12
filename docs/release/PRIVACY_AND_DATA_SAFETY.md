@@ -1,5 +1,14 @@
 # Osnutek zasebnosti in deklaracij Jivie
 
+**12. oktober — Android fotografije: shranjen Console osnutek.** Aktualna interna
+1.6.1 (24) ima izpolnjenih vseh 11 vrst, tudi Photos; vseh enajst je izbirnih,
+Collected Yes / Shared No / Ephemeral No z nameni iz
+[aktualnega inventarja in izvedbe](ANDROID_PHOTOS_DATA_SAFETY.md).
+»Shrani kot osnutek« je dejansko potrjen, brez oddaje v pregled ali javne objave.
+SL/EN zasebnost s fotografijami je pripravljena, vendar je spletna objava ustavljena
+zaradi potekle prijave računa jivie in odsotnega lastnika. Spodnji lokalni/zunanji
+zgodovinski statusi imajo ta novejši dodatek. Dovoljenja, gradnja in Apple so nespremenjeni.
+
 **Idejnik, 12. oktober — lokalni izvor:** novi modul dodaja besedilo/risbe in
 normalizirane fotografije PNG/JPEG. Izključno lokalno delo ne pošilja vsebine.
 Shrani v deljenem prostoru ali izrecni vklop zasebne sinhronizacije pošlje

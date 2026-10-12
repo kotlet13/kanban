@@ -1,5 +1,12 @@
 # Jivie
 
+**12. oktober — Android fotografije:** vseh 11 vrst Data safety, vključno s Photos,
+je izpolnjenih in dejansko shranjenih kot osnutek. Ni oddaje v pregled/javne objave.
+SL/EN spletna zasebnost je pripravljena, objava čaka poteklo prijavo **jivie** in
+vrnitev lastnika. [Matrika in dokazi](docs/release/ANDROID_PHOTOS_DATA_SAFETY.md).
+Android1.6.1(24)/8 dovoljenj/strežniki nespremenjeni, Apple odložen; uporabnik je
+potrdil fizično delovanje popravljene rokice.
+
 **12. oktober,12:36 — interna1.6.1(24):** popravljena rokica Idejnika po
 risanju/izbiri/pinch/reentry,20 ciljnih UI PASS in čista ciljna analiza.
 Aktivno za isti domači(15), podpis/Firebase/8 dovoljenj ohranjeni.

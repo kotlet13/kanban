@@ -1,5 +1,17 @@
 # Navodila za delo na projektu
 
+12. oktober — Android fotografije: **Data safety vseh11 vrst dejansko shranjen kot
+osnutek** za trenutno interno1.6.1(24). Photos dodan, vsi odgovori uporabe/namena
+izpolnjeni; CollectedYes/SharedNo/OptionalYes/EphemeralNo, HTTPS in obstoječi
+privacy/delete URL. [Matrika in dokaz izvedbe](docs/release/ANDROID_PHOTOS_DATA_SAFETY.md).
+Ni oddaje v pregled ali javne objave. SL/EN zasebnost je pripravljena v preverjenem
+8HTML paketu; **spletna objava čaka prijavo cPanel jivie**, ker je seja potekla in
+lastnik ni pri računalniku. Ne uporabi tripar13 kot nadomestila. Koda/gradnja/
+8dovoljenj/SDK/strežniki so isti; Apple je izrecno odložen. Uporabnik je potrdil,
+da popravljena rokica/pan/zoom na Androidu zdaj deluje. Naslednji korak je spletna
+objava z zasebno kopijo in HTTPS/cache preverjanjem, nato ločena oddaja deklaracije;
+ne nov splošni testni krog ali nova gradnja samo zaradi deklaracije.
+
 12. oktober — po fizični Android prijavi zamrznjene rokice je popravek
 **Android1.6.1(24) Aktivno za domači(15) od12:36**. Funkcionalnif6520a0/
 metadata196b711, [dokazi](docs/release/IDEAS_PAN_ZOOM_RELEASE.md). Sam onPanCancel
