@@ -1,5 +1,10 @@
 # Idejnik — uredljive table
 
+**Poznejši naročeni izdajni korak:** test2 je nadgrajen na FamilyHub0.13/schema17,
+Android1.6.0(23) je Aktivno za domači(15) od12. oktobra11:52.
+[Dejanski izdajni dokazi](release/IDEAS_RELEASE.md) imajo prednost pred spodnjim
+izhodiščem priprave. Fizična posodobitev telefona še ni potrjena.
+
 12. oktober 2026. Uporabnik je po pregledu načrta naročil izvedbo. Izhodišče je
 main1e79460, Android1.5.2(22), izvor in test2 FamilyHub0.12.0/schema16. Ta dokument
 ločuje dogovor, lokalno izvedbo in dejanske dokaze. Nova gostovana namestitev ali
@@ -149,11 +154,11 @@ Fixture z naključnimi poverilnicami je ločeno0700/0600 in ni v Gitu ali paketi
 - Bajtno ujemanje izvorov, dovoljenih datotek in CRC obeh ZIP je PASS. Spletni
   generator ohrani moderacijo in ima SL/EN opis fotografij/kopij, brez AI zgodovine.
 
-To je lokalno izvedena nadgradnja. Test1/test2/produkcija, splet jivie.app,
-nameščeni Android1.5.2(22), iOS in Mac niso nadgrajeni. Ni nove podpisane ali
-objavljene trgovinske različice. Gostovana namestitev mora najprej preveriti GD
-in dejansko svežo kopijo z obnovo sedanje schema16, vključno s celotnim zasebnim
-datotečnim drevesom; starega helper15 ne uporabljamo kot potrdilo17. Fizični
+Po nadaljnjem naročilu je ta nadgradnja nameščena na test2 in objavljena kot
+interna Android1.6.0(23); [izdajni dokazi](release/IDEAS_RELEASE.md) opisujejo
+dejanski GD, svežo kopijo/obnovo16 in ohranitev vseh podatkov pri prehodu17.
+Test1/produkcija, splet jivie.app ter iOS/Mac ostanejo nespremenjeni. Telefon
+še ni fizično potrjeno posodobljen. Pre-upgrade helper16 ne potrjuje kopije17. Fizični
 preizkus telefona/FCM in nastavljena dostava SMTP sledita namestitvi, lokalni
 HTTP/widget dokazi tega ne nadomestijo. Obvestilna opravila in upravičenost so
 preverjeni, fizična dostava ni nova trditev.

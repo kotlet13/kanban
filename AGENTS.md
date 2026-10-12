@@ -1,5 +1,25 @@
 # Navodila za delo na projektu
 
+12. oktober — po naročilu naslednjega koraka je **test2 FamilyHub0.13.0/schema17**
+in **Android1.6.0(23) Aktivno za domači(15) od11:52**. Funkcionalni03ce0de/
+metadata528185a, [dokazi](docs/release/IDEAS_RELEASE.md). Sveža dejanska kopija
+obnovljena v izolirani MariaDB10.11.19 (networknone/noports/nobinds):90 tabel/
+149 vrstic/2 datoteki/2 imenika, vsi row/create/file/config/marker hashi PASS.
+GDJPEGPNG pozitivno tudi v spletnem API. Guarded helper0c2747de… po dejanskem
+65s drain doda2 prazni tabeli, namesti96 datotek, ohrani149 vrstic/definicije/
+identitete/config/data/core/HTTPS/cron/SMTP/FCM; samo metadata16→17. Stari
+vtičnik in kopije ostanejo zasebno, trenutni IDf48b/account1/devices2 isti.
+HTTP200/ideas+ideaAssets/record5, anonimne slike/sync5 so401, obstoječi admin
+reports dosegljiv; noben Native sprejem/prijava/ukrep ni oddan. Test1 ostane
+0.11.2/schema15/HTTP200/95c1. Aktualna0.13 kopija mora zajeti vse podatkovno
+drevo s fotografijami; stari helper16 po migraciji ni dokaz kopije17.
+Ena podpisana AAB23,317 frozen inputs/isti cert+Firebase+8perms kot22, brez
+kamere/širokihmedia/storage, bundle/CRC/16KiB/23+7/source PASS.22 ohranjen in
+iz nove izdaje izključen,0 izgubljenih/novih naprav. Telefon fizično še ni
+posodobljeno potrjen. Mac/iOS/produkcija/splet/javna oddaja niso spremenjeni.
+Na test2 FCM/SMTP ostaneta OFF; obvestilni center je podprt, oddaljena dostava
+ni nov fizični dokaz. DataSafety/IARC/javno preverjanje še sledijo.
+
 12. oktober — uporabnik je naročil izvedbo **Idejnika**: lokalno izvedene uredljive
 table z besedilom/lističi/risbami, fotografijami in nanje vezanimi oznakami,
 premikom/merilom/rotacijo, pan/zoom ter undo/redo. Lokalni osebni/gospodinjski/

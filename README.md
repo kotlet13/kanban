@@ -1,5 +1,12 @@
 # Jivie
 
+**12. oktober,11:52 — interna1.6.0(23):** Idejnik s fotografijami je Aktivno za
+isti domači(15). Test2 je FamilyHub0.13.0/schema17 po sveži dejanski obnovi
+90 tabel/149 vrstic/2 datotek in ohranjenem prehodu na92 tabel. Isti računi,
+identiteta, podpis, Firebase in8 dovoljenj; brez novih media/storage/kamera pravic.
+[Dokazi in fizični naslednji korak](docs/release/IDEAS_RELEASE.md). Telefon še ni
+potrjeno posodobljen; Mac/iOS/splet/produkcija/javna oddaja niso spremenjeni.
+
 **12. oktober — Idejnik, lokalno izveden:** uredljive table z besedilom, risbami,
 normaliziranimi fotografijami in nanje vezanimi oznakami. Lokalni prostori ter
 izbirno deljenje gospodinjstva/organizacije/projekta; osnutki, obvestila, konflikti,
