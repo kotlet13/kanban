@@ -1,5 +1,13 @@
 # Jivie — priprava javne Google Play izdaje
 
+**12. oktober,21:38 — IARC za trenutno Android1.7.0(25) Končano.** Vprašalnik
+je usklajen z dejansko prijavo uporabnikov/vsebine, povzetek dokončno shranjen
+v Pregled objavljanja; PEGI3 in Interakcija uporabnikov. Korak1 je bil že končan,
+novega sprejema pogojev ni bilo. [Dokazi in vsi odgovori](IARC_1_7_0.md).
+Prejšnja ovira IARC ni več aktualna; Data safety še potrebuje končno shranitev,
+javna kandidatka in celotna oddaja Googlu še nista izvedeni. Nova gradnja ni
+potrebna; priprava uporablja že izdano AAB25, desktop delo ostane ločeno.
+
 **12. oktober,15:36 — javni privacy URL usklajen s fotografijami.** Prijava s
 shranjenim geslom v račun jivie je uspela; SL/EN zasebnost je objavljena in
 HTTPS/bajtno/cache preverjena. [Dokazi](ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).

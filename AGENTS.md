@@ -1,5 +1,13 @@
 # Navodila za delo na projektu
 
+12. oktober,21:38 — **IARC za Android1.7.0(25) dejansko Končano**, PEGI3/
+Interakcija uporabnikov; prijava uporabnikov/vsebine popravljena naDa.
+Korak1 je že končan, novega sprejema pogojev ni bilo; končni povzetek shranjen
+v Pregled objavljanja, ne celotna oddaja Googlu ali javna mobilna objava.
+[Dokazi in matrika](docs/release/IARC_1_7_0.md). DataSafety še potrebuje končno
+shranitev. Koda/gradnja/dovoljenja/strežniki/Apple in tekoče desktop spremembe
+ostanejo; uporabljamo isto AAB25, ne ponavljamo funkcionalnega testnega kroga.
+
 12. oktober,21:04 — nova interna **Android1.7.0(25) je Aktivno** za isti domači(15).
 Vsebuje enoten Utrip/Planer/Prostor/Več iz50fd551. Ena podpisana AAB25,320
 zamrznjenih vhodov, isti upload podpis/Firebase/8 dovoljenj kot24; bundle/CRC/
