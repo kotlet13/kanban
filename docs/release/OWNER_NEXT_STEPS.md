@@ -1,5 +1,11 @@
 # Jivie — kaj še urediš ti
 
+**12. oktober, 07:32:** Android **1.5.0 (20)** je aktiven za isti domači (15);
+test2 je FamilyHub 0.12.0/schema16. [Dokazi](MODERATION_RELEASE.md). Posodobi prek
+internega kanala ter fizično preveri izrecni sprejem/preklic pravil, predogled in
+prijavo vsebine/člana ter skrbniško obravnavo. Test1 ostaja 0.11.2; novo Mac gradnjo
+še namestimo. Ni javne izdaje ali objave pripravljene dopolnitve spletne zasebnosti.
+
 **11. oktober, 21:55 — popravki so objavljeni:** Android **1.4.1 (19)** je
 aktiven za isti domači (15); [dokazi](ANDROID_FIXES_RELEASE.md). Vključuje
 popravke izbora prostora, prvega osebnega plačila, predogleda kopije in izvoza

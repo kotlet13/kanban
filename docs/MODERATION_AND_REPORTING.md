@@ -1,5 +1,10 @@
 # Pravila deljenja in prijave — lokalna nadgradnja Jivie / FamilyHub
 
+**Poznejši izdajni korak 12. oktobra:** test2 je dejansko nadgrajen na
+FamilyHub 0.12.0/schema16 po sveži preverjeni obnovi 86/141/2, Android 1.5.0 (20) pa je
+aktiven za domači (15) od 07:32. [Dokazi in meje](release/MODERATION_RELEASE.md)
+imajo prednost pred spodnjim stanjem prvotne lokalne priprave.
+
 12. oktober 2026. Uporabnik je naročil nadgradnjo odjemalca in vtičnika, z delom
 lokalno ter prijavo, namestitvijo in fizičnim preizkusom po vrnitvi domov.
 Portali niso bili uporabljeni. To je preverjena lokalna izvedba, ne potrditev

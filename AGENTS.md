@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+12. oktober — po nadaljnjem izrecnem naročilu sta izvedena gostovana namestitev
+in interna izdaja: **test2 FamilyHub 0.12.0/schema16**, **Android 1.5.0 (20) Aktivno
+za domači (15) od 07:32**. Metadata 9275d92; [dokazi](docs/release/MODERATION_RELEASE.md).
+Sveža dejanska kopija obnovljena v izolirani MariaDB 10.11.19: 86 tabel/141 vrstic/
+2 datoteki, vsi hashi PASS. Helper bda2dcd4... po 65s praznjenju prometa doda 4 prazne tabele,
+namesti 91 datotek, ohrani vse stare vrstice/definicije/identitete/config/data/core/
+HTTPS/SMTP/FCM/cron; originalni plugin/kopiji ostanejo zasebno. HTTP200/isti f48b
+serverId, moderation1+pravila1, javna SL/EN politika in obstoječi admin reports
+dejansko dosegljivi. Noben Native sprejem/prijava/ukrep ni oddan v imenu lastnika.
+Podpis/Firebase/dovoljenja kot 19, 303 zamrznjenih vhodov, bundle/CRC/16KiB/23+7 kontrol PASS.
+Test1 ostaja 0.11.2/schema15/HTTP200/isti 95c1ID; produkcija, iOS, jivie.app nespremenjeni.
+Telefon še ni fizično nadgrajen; nova Mac gradnja še ni nameščena (stara zaprta
+za ustavitev sinhronizacije). Fizični tok in javna oddaja še sledita. Stari backup helper15 po
+migraciji ne potrjuje kopije16. Ne razglasi celotne javne izdaje ali obnove za končano.
+
 12. oktober — uporabnik je naročil nadgradnjo prijav/pravil v Jivie in FamilyHub,
 z delom lokalno; portali, gostovana namestitev in fizični preizkus sledijo doma.
 **FamilyHub0.12.0/schema16** in odjemalčev tok sta lokalno izvedena: izrecni

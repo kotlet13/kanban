@@ -1,5 +1,10 @@
 # Jivie
 
+**12. oktober, 07:32 — izdaja pravil/prijav:** Android **1.5.0 (20)** je aktiven na
+internem kanalu domači (15), test2 uporablja **FamilyHub 0.12.0/schema16** po preverjeni
+kopiji/obnovi in ohranitvi podatkov. [Dokazi](docs/release/MODERATION_RELEASE.md).
+Fizična nadgradnja in tok prijav še sledita; test1/produkcija/javna oddaja niso spremenjeni.
+
 **12. oktober — lokalna nadgradnja pravil in prijav:** Jivie in
 FamilyHub0.12.0/schema16 sta pripravljena z izrecnim sprejemom pravil, prijavami
 skrbniku izbranega strežnika ter obravnavo. **1028 Flutter PASS**, dejanski
