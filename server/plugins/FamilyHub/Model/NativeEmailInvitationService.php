@@ -31,6 +31,7 @@ class NativeEmailInvitationService extends NativeInvitationService
                 return $this->previewWire($row,$this->usable($row),true);
             }
             $user=$this->actor()['user'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if ($operation==='invitations2.pending') {
                 $this->fields($params,[]);
                 $identity=$this->verifiedIdentity($user['account_id']);

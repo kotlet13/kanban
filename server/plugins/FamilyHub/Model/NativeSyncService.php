@@ -17,6 +17,7 @@ class NativeSyncService extends NativeDatabase
         $this->rate([['sync-ip:'.$this->ip, 2400, 60]]);
         try { $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
             $actor = $this->actor(); $userId = $actor['user']['id'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull'], true)) { return $this->pull($params, $userId); }
             if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync4.push', 'sync4.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
             $this->fields($params, ['scopeId', 'operation'], $this->version >= 3 ? ['operationContractVersion', 'financeOperation', 'financeOperationContractVersion'] : []);

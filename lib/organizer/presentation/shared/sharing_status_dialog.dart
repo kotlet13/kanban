@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -251,6 +252,18 @@ class _SharingStatusDialog extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
+                  if (state.lastError?.code == 'policy_acceptance_required')
+                    TextButton.icon(
+                      key: const ValueKey('sync-review-shared-rules'),
+                      onPressed: actionsEnabled
+                          ? () => showSharedContentPolicy(
+                              context,
+                              scopeId: scopeId,
+                            )
+                          : null,
+                      icon: const Icon(Icons.policy_outlined),
+                      label: Text(l.moderationPolicyTitle),
+                    ),
                   if (state.session != null || allowLocalActions)
                     TextButton.icon(
                       key: const ValueKey('sharing-sync-dialog-refresh'),

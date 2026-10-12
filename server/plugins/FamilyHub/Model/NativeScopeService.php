@@ -16,6 +16,7 @@ class NativeScopeService extends NativeDatabase
         }
         return $this->transaction(function () use ($operation, $params) {
             $actor = $this->actor(); $user = $actor['user'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if (in_array($operation,['scopes.setLeader','scopes.accessMigrationPreview','scopes.accessMigrationApply'],true)) { return (new NativeSpacesAccessService($this->container))->inTransaction($operation,$params,$user); }
             if (in_array($operation,['scopes.projectSharingPreview','scopes.projectSharingApply'],true)) { return (new NativeProjectSharingService($this->container))->inTransaction($operation,$params,$user); }
             if ($operation === 'scopes.list') {
@@ -144,17 +145,7 @@ class NativeScopeService extends NativeDatabase
                 if ($replay) { return $replay['body']; }
                 $member = $this->one('SELECT * FROM familyhub_members WHERE scope_id = ? AND user_id = ?', [$id, $params['userId']]);
                 if (!$member || $member['role'] === 'owner') { throw new NativeError('cannot_remove_owner'); }
-                $access=new NativeOrganizationAccess($this->container);$formerlyVisible=array_values(array_filter($access->relatedScopeIds($id),fn($sid)=>$access->visibleScope($sid,$member['account_id'])));
-                $this->change('UPDATE familyhub_members SET active=0 WHERE scope_id=? AND user_id=?', [$id, $params['userId']]);
-                if ($scope['kind']==='organization' || (int)$scope['effective_access_policy_version']===3) {
-                    $this->change('DELETE FROM familyhub_organization_leaders WHERE scope_id=? AND account_id=?',[$id,$member['account_id']]);
-                    $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE id=?',[$id]);
-                }
-                $this->change('UPDATE familyhub_finance_grants SET access_level=\'none\' WHERE scope_id=? AND account_id=?', [$id, $member['account_id']]);
-                $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?', [$id]);
-                if ($member['account_id']) { $access=new NativeOrganizationAccess($this->container);$access->reconcileRevocations($formerlyVisible,$member['account_id']); }
-                if ($member['account_id']) { (new NativeNotificationWriter($this->container))->visibilityChanged([$member['account_id']]); }
-                $this->advance($scope);
+                (new NativeMembershipRevocation($this->container))->apply($scope,$member['account_id'],$params['userId']);
                 $result = ['removed' => true]; $this->remember($id, $user['id'], $request, $hash, $result);
                 return $result;
             }

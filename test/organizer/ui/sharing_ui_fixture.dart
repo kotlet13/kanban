@@ -76,6 +76,22 @@ SharedScopeData sharingData() => SharedScopeData(
 
 class SharingUiController extends CollaborationController {
   @override
+  Future<SharedContentPolicy> sharedContentPolicy({String? scopeId}) async {
+    final session = state.valueOrNull?.session ?? initial.session!;
+    return SharedContentPolicy(
+      serverId: session.serverId,
+      partition: session.partition,
+      deviceId: session.deviceId,
+      policyVersion: 1,
+      title: 'Shared rules',
+      textSl: 'Pravila deljenja.',
+      textEn: 'Shared content rules.',
+      recipientName: 'Server administrator',
+      accepted: true,
+    );
+  }
+
+  @override
   Future<List<PendingAccountDeletion>> pendingAccountDeletions() async => [];
   SharingUiController({CollaborationState? initial})
     : initial =

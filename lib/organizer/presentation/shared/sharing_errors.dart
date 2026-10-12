@@ -10,6 +10,17 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'policy_acceptance_cancelled' => l.moderationPolicyRequired,
+    'report_stale' ||
+    'report_not_found' ||
+    'target_not_found' => l.moderationPreviewStale,
+    'policy_acceptance_required' => l.moderationPolicyRequired,
+    'moderation_upgrade_required' ||
+    'moderation_unsupported' => l.moderationUpgradeRequired,
+    'report_preview_stale' ||
+    'report_target_missing' ||
+    'report_target_unavailable' => l.moderationPreviewStale,
+    'report_offline' => l.moderationOffline,
     'password_too_short' => l.accountPasswordTooShort,
     'username_unavailable' => l.emailInviteUsernameUnavailable,
     'email_invitations_unavailable' ||

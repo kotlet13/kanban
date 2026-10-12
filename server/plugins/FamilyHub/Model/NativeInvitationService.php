@@ -15,6 +15,7 @@ class NativeInvitationService extends NativeDatabase
                 return ['invitation' => $this->wire($invitation), 'scope' => ['id' => $scope['id'], 'kind' => $scope['kind'], 'name' => $scope['name'], 'projectFinanceIncluded'=>$this->projectFinanceIncluded($scope)], 'registrationAllowed' => !$user];
             }
             $actor = $this->actor(); $user = $actor['user'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if ($operation === 'invitations.accept') {
                 $this->fields($params, ['token']);
                 $invitation = $this->fromToken($params['token']);

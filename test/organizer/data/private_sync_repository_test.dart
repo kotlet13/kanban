@@ -191,6 +191,39 @@ void main() {
     },
   );
   test(
+    'personal private sync proceeds without shared consent and through a terms endpoint outage',
+    () async {
+      final transport = PersonalTransport(FakeServer());
+      transport.server.moderationAccepted = false;
+      final a = await client(transport);
+      await a.personal.createTask(title: 'Private task');
+      await login(a.shared);
+      final preview = await a.shared.previewPrivateSync();
+      await a.shared.enablePrivateSync(expectedRevision: preview.revision);
+      await a.personal.reload();
+      expect(a.shared.state.pendingCount, 0);
+      expect(
+        transport.server.records.values.single.values.single['payload'],
+        containsPair('title', 'Private task'),
+      );
+      await a.personal.updateTask(
+        a.personal.snapshot.tasks.single.copyWith(title: 'Private changed'),
+      );
+      transport.server.beforeCall = (op, token, params) async {
+        if (op == 'moderation.policyStatus') {
+          throw const CollaborationException('network');
+        }
+      };
+      await a.shared.syncNow();
+      expect(a.shared.state.pendingCount, 0);
+      expect(a.shared.state.lastError?.code, 'network');
+      expect(
+        transport.server.records.values.single.values.single['payload'],
+        containsPair('title', 'Private changed'),
+      );
+    },
+  );
+  test(
     'explicit private opt-in preserves links, finance and legacy IDs, no upload by login; two SQLite clients sync',
     () async {
       final transport = PersonalTransport(FakeServer());

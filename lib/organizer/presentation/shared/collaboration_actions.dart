@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'dart:convert';
 import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
@@ -61,6 +62,14 @@ class CollaborationActions implements OrganizerCollectionActions {
   @override
   Future<void> run(Future<void> Function() action) async {
     try {
+      if (!await showSharedContentPolicy(
+        context,
+        scopeId: scope.id,
+        allowOfflineDraft: true,
+      )) {
+        return;
+      }
+      if (!context.mounted || !guard.isCurrent) return;
       await action();
     } catch (error) {
       if (context.mounted) {
@@ -76,6 +85,14 @@ class CollaborationActions implements OrganizerCollectionActions {
     required String listId,
     required String title,
   }) async {
+    if (!await showSharedContentPolicy(
+      context,
+      scopeId: scope.id,
+      allowOfflineDraft: true,
+    )) {
+      throw const CollaborationException('policy_acceptance_cancelled');
+    }
+    if (!context.mounted || !guard.isCurrent) return;
     await controller.createShoppingItem(
       scopeId: scope.id,
       listId: listId,
@@ -98,6 +115,7 @@ class CollaborationActions implements OrganizerCollectionActions {
     heading: list == null
         ? context.l10n.sharingCreateSharedList
         : context.l10n.organizerEditList,
+    sharedPolicyScopeId: scope.id,
     kind: OrganizerEditorKind.shoppingList,
     draft: OrganizerDraft(title: list?.title ?? ''),
     errorMessage: (error) => sharingErrorMessage(context, error),
@@ -127,6 +145,7 @@ class CollaborationActions implements OrganizerCollectionActions {
         heading: item == null
             ? context.l10n.organizerAddItem
             : context.l10n.organizerEditItem,
+        sharedPolicyScopeId: scope.id,
         kind: OrganizerEditorKind.shoppingItem,
         draft: OrganizerDraft(
           title: item?.title ?? '',
@@ -163,6 +182,7 @@ class CollaborationActions implements OrganizerCollectionActions {
     heading: project == null
         ? context.l10n.organizerAddProject
         : context.l10n.organizerEditProject,
+    sharedPolicyScopeId: scope.id,
     kind: OrganizerEditorKind.project,
     draft: OrganizerDraft(
       title: project?.title ?? '',
@@ -241,6 +261,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       heading: task == null
           ? context.l10n.organizerAddTask
           : context.l10n.organizerEditTask,
+      sharedPolicyScopeId: scope.id,
       kind: OrganizerEditorKind.task,
       projects: data.projects,
       householdPeople: data.people,
@@ -271,6 +292,13 @@ class CollaborationActions implements OrganizerCollectionActions {
                   3
           ? null
           : () async {
+              if (!await showSharedContentPolicy(
+                context,
+                scopeId: scope.id,
+                allowOfflineDraft: true,
+              )) {
+                return timerTask!;
+              }
               timerTask = await controller.toggleTaskTimer(
                 scope.id,
                 timerTask!,
@@ -447,6 +475,7 @@ class CollaborationActions implements OrganizerCollectionActions {
     heading: event == null
         ? context.l10n.organizerAddEvent
         : context.l10n.organizerEditEvent,
+    sharedPolicyScopeId: scope.id,
     kind: OrganizerEditorKind.event,
     projects: data.projects,
     projectSelectionEnabled:

@@ -27,6 +27,8 @@ class PersonalTransport extends FakeTransport {
         'recordContractVersions': [1, 2],
         'features': {
           'recordSync': true,
+          'sharedContentPolicy': server.moderationSupported,
+          'contentReporting': server.moderationSupported,
           'scopeAccessChanges': true,
           'finance': true,
           'privateSync': true,

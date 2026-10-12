@@ -14,6 +14,8 @@ class Plugin extends Base
         $this->applicationAccessMap->add('NativeApiController', 'handle', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('AccountDeletionController', '*', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('EnrollmentController', '*', \Kanboard\Core\Security\Role::APP_ADMIN);
+        $this->applicationAccessMap->add('ModerationController', '*', \Kanboard\Core\Security\Role::APP_ADMIN);
+        $this->template->hook->attach('template:config:sidebar', 'FamilyHub:moderation/sidebar');
         $this->template->hook->attach('template:config:sidebar', 'FamilyHub:enrollment/sidebar');
         $this->api->getMiddlewareHandler()->withMiddleware(new IdentityMiddleware($this->container));
         $service = new InvitationService($this->container);
@@ -36,7 +38,7 @@ class Plugin extends Base
     }
 
     public function getPluginName() { return 'FamilyHub'; }
-    public function getPluginVersion() { return '0.11.2'; }
+    public function getPluginVersion() { return '0.12.0'; }
     public function getPluginAuthor() { return 'TriparNA'; }
     public function getPluginDescription() { return 'Opt-in native account, scope and record synchronization API.'; }
     public function getCompatibleVersion() { return '1.2.54'; }

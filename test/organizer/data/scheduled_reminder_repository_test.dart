@@ -44,6 +44,8 @@ class ReminderTransport extends FakeTransport {
         'financeContractVersions': [1, 2],
         'features': {
           'recordSync': true,
+          'sharedContentPolicy': server.moderationSupported,
+          'contentReporting': server.moderationSupported,
           'inbox': true,
           'finance': financeEnabled,
         },
@@ -202,6 +204,48 @@ Future<String> put(
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  test(
+    'pending shared reminder alone exposes consent while existing remote cancellation remains usable',
+    () async {
+      final f = await fixture();
+      addTearDown(f.repo.close);
+      final existing = await put(f);
+      await f.repo.syncNow();
+      final old = f.repo.state.scheduledReminders.singleWhere(
+        (r) => r.id == existing,
+      );
+      final second = await f.repo.createTask(
+        scopeId: f.scope,
+        title: 'Second reminder target',
+      );
+      await f.repo.syncNow();
+      f.transport.server.moderationAccepted = false;
+      await f.repo.putReminder(
+        scopeId: f.scope,
+        targetType: 'task',
+        targetId: second,
+        remindAt: later,
+      );
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError?.code, 'policy_acceptance_required');
+      expect(
+        (await f.repo.database.rows(
+          'SELECT state FROM commands',
+        )).single['state'],
+        'pending',
+      );
+      await f.repo.cancelReminder(old);
+      await f.repo.syncNow();
+      expect(
+        (await f.repo.database.rows(
+          'SELECT state FROM commands',
+        )).single['state'],
+        'pending',
+      );
+      expect(f.transport.reminders[existing]?['state'], 'cancelled');
+      expect(f.repo.state.lastError?.code, 'policy_acceptance_required');
+    },
+  );
   test(
     'future date, UUID, revision and immutable target guards leave no commands',
     () async {

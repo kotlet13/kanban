@@ -1,4 +1,16 @@
-# FamilyHub 0.11.1
+# FamilyHub 0.12.0
+
+## Shared content rules and private reports (0.12.0/schema 16, local source)
+
+Moderation contract 1 adds explicit account/server policy acceptance before new shared content writes. Personal local use and personal private synchronization remain available; joining, reading, reporting, archive/removal/revocation safety actions and private payment projection do not require acceptance. Old clients receive `policy_acceptance_required` before a shared write commits, without deletion of local work. Acceptance is rechecked inside each write transaction.
+
+An authenticated member previews one authorized record's bounded title/name/notes/description, one financial entry's text (financial ACL required), or one visible member identity. The exact preview hash, including current revision and account/server identity, is required on submission. Report details are at most 2,000 UTF-8 bytes; categories, fields and UUID request IDs are strict. The server applies report quotas and durable idempotency; reports are private to this self-hosted server's administrators and are not sent to TriparNA automatically.
+
+Administrators use **Configuration → FamilyHub reports** through their Kanboard administrator web session over HTTPS, with POST and CSRF checks. The page lists 25 reports and up to 50 recent audit decisions per report. Decisions require a note and revision check; removal/restriction/undo also require an explicit confirmation checkbox. Removing a leaf produces a normal record tombstone; a project root or parent with live children instead has its reported text removed while preserving structural dependencies. Financial history is never deleted through moderation. Scoped member restrictions preserve original membership, grants and leadership, update access/finance revisions and notification visibility, and can be undone. Undo does not restore an independently removed membership. A scope owner's personal account remains accessible.
+
+Resolved or dismissed report evidence, free-form details and audit notes expire 180 days after resolution. Unresolved reports remain for review. The existing `cli/reminders.php` cron and administrator page each redact at most 100 eligible reports per run. Report/request/scope/target IDs, hashes, category, decision status/revisions/timestamps and administrator audit IDs remain as minimal receipts/audit metadata after retention. Account deletion removes acceptance and reports/audits submitted by the account, reporting that user, or reporting entries authored by it, as disclosed in the deletion preview; related blocks and administrator audit identity are removed. Deleting an owned scope also removes its reports and audits, with a conditional count on each owned-scope deletion preview. This policy is the new implementation, not a claim about prior operator practices.
+
+See the [moderation API contract](../../../docs/server/moderation-api-contract.md). Schema 16 is additive; server identities, accounts, sessions, record/finance formats and original pending operations stay compatible. Passing the isolated synthetic matrix and packaging checks is separate from any hosting installation or public release.
 
 ## Read notification retention (local source addition)
 

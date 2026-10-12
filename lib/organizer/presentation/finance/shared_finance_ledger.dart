@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -386,6 +387,12 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                   targetType: 'financeEntry',
                   targetId: row.id,
                 ),
+              if (widget.scopeId != null)
+                ContentReportButton(
+                  scopeId: widget.scopeId!,
+                  targetType: 'finance',
+                  targetId: _id(row),
+                ),
               IconButton(
                 tooltip: context.l10n.financeAudit,
                 onPressed: () => widget.onAudit(_id(row)),
@@ -450,6 +457,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           context.l10n.financeAudit,
           context.l10n.organizerTasks,
           context.l10n.remoteReminderTitle,
+          context.l10n.moderationReportContent,
         ])
           DataColumn(label: Text(label)),
       ],
@@ -525,6 +533,15 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                         targetId: row.id,
                       )
                     : const SizedBox.shrink(),
+              ),
+              DataCell(
+                widget.scopeId == null
+                    ? const SizedBox.shrink()
+                    : ContentReportButton(
+                        scopeId: widget.scopeId!,
+                        targetType: 'finance',
+                        targetId: _id(row),
+                      ),
               ),
             ],
           ),

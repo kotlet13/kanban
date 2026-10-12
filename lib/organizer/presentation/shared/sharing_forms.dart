@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -48,6 +49,7 @@ Future<void> showSharingForm(
   Widget Function(Widget)? wrap,
   Future<void> Function()? onDelete,
   String? deleteDescription,
+  String? sharedPolicyScopeId,
 }) => showDialog<void>(
   context: context,
   barrierDismissible: false,
@@ -64,6 +66,7 @@ Future<void> showSharingForm(
       wrap: wrap,
       onDelete: onDelete,
       deleteDescription: deleteDescription,
+      sharedPolicyScopeId: sharedPolicyScopeId,
     );
     return wrap?.call(form) ?? form;
   },
@@ -82,6 +85,7 @@ class _SharingFormDialog extends StatefulWidget {
     this.wrap,
     this.onDelete,
     this.deleteDescription,
+    this.sharedPolicyScopeId,
   });
   final String title;
   final String? description;
@@ -94,6 +98,7 @@ class _SharingFormDialog extends StatefulWidget {
   final Widget Function(Widget)? wrap;
   final Future<void> Function()? onDelete;
   final String? deleteDescription;
+  final String? sharedPolicyScopeId;
   @override
   State<_SharingFormDialog> createState() => _SharingFormDialogState();
 }
@@ -146,13 +151,27 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
       _error = null;
     });
     try {
+      if (widget.sharedPolicyScopeId != null &&
+          !await showSharedContentPolicy(
+            context,
+            scopeId: widget.sharedPolicyScopeId,
+            allowOfflineDraft: true,
+          )) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (!mounted) return;
       await widget.onSubmit(_values);
       if (mounted) Navigator.pop(context);
     } catch (error) {
+      final accepted =
+          mounted && await resolveSharedPolicyError(context, error);
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = widget.errorMessage(error);
+          _error = accepted
+              ? context.l10n.moderationPolicySaveAgain
+              : widget.errorMessage(error);
         });
       }
     }
@@ -177,10 +196,14 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
       await widget.onDelete!();
       if (mounted) Navigator.pop(context);
     } catch (error) {
+      final accepted =
+          mounted && await resolveSharedPolicyError(context, error);
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = widget.errorMessage(error);
+          _error = accepted
+              ? context.l10n.moderationPolicySaveAgain
+              : widget.errorMessage(error);
         });
       }
     }

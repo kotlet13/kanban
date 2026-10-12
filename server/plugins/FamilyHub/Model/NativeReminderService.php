@@ -8,6 +8,7 @@ class NativeReminderService extends NativeDatabase
         $this->rate([['reminders-ip:'.$this->ip, 600, 60]]);
         return $this->transaction(function () use ($operation, $params) {
             $user = $this->actor()['user'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             $this->fields($params, match ($operation) {
                 'reminders.list' => ['scopeId'],
                 'reminders.put' => ['id', 'scopeId', 'targetType', 'targetId', 'remindAt', 'expectedRevision', 'requestId'],

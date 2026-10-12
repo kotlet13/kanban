@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -19,6 +20,7 @@ Future<void> showFinancePlanWizard(
   required Widget Function(Widget) wrap,
   required String scopeDescription,
   bool requireAccount = false,
+  String? sharedPolicyScopeId,
 }) => showDialog<void>(
   context: context,
   barrierDismissible: false,
@@ -28,6 +30,7 @@ Future<void> showFinancePlanWizard(
       onSave: onSave,
       scopeDescription: scopeDescription,
       requireAccount: requireAccount,
+      sharedPolicyScopeId: sharedPolicyScopeId,
     ),
   ),
 );
@@ -39,11 +42,13 @@ class FinancePlanWizard extends StatefulWidget {
     required this.onSave,
     required this.scopeDescription,
     this.requireAccount = false,
+    this.sharedPolicyScopeId,
   });
   final OrganizerSnapshot snapshot;
   final FinancePlanSubmit onSave;
   final String scopeDescription;
   final bool requireAccount;
+  final String? sharedPolicyScopeId;
   @override
   State<FinancePlanWizard> createState() => _FinancePlanWizardState();
 }
@@ -95,6 +100,16 @@ class _FinancePlanWizardState extends State<FinancePlanWizard> {
     });
     try {
       final rules = _chosen.map((d) => d.rule(accountId: _accountId)).toList();
+      if (widget.sharedPolicyScopeId != null &&
+          !await showSharedContentPolicy(
+            context,
+            scopeId: widget.sharedPolicyScopeId,
+            allowOfflineDraft: true,
+          )) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (!mounted) return;
       await widget.onSave(_accounts, rules);
       if (mounted) Navigator.pop(context);
     } catch (error) {

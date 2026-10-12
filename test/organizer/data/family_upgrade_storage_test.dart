@@ -43,6 +43,8 @@ class PaginatedFinanceTransport extends FakeTransport {
         'recordContractVersions': [1, 2],
         'features': {
           'recordSync': true,
+          'sharedContentPolicy': server.moderationSupported,
+          'contentReporting': server.moderationSupported,
           'finance': true,
           'scopeAccessChanges': true,
         },

@@ -242,6 +242,71 @@ void main() {
   }
 
   test(
+    'pending shared linked payment alone exposes consent and remains retryable',
+    () async {
+      final (db, spaces, org, home, privateAccount, orgAccount, entry) =
+          await fixture();
+      addTearDown(db.close);
+      final (shared, transport, payments) = await connected(db);
+      await shared.publishLocalSpaces(
+        await shared.previewLocalSpacesPublication([org.id]),
+      );
+      final remote = PaymentSpaceRef(
+        org.id,
+        partition: shared.state.session!.partition,
+      );
+      transport.server.moderationAccepted = false;
+      await shared.syncNow();
+      await expectLater(
+        payments.recordPersonalPayment(
+          PaymentSourceRef(
+            space: remote,
+            entryId: entry,
+            expectedRevision: shared.state
+                .dataForScope(org.id)
+                .financeEntries
+                .single
+                .revision,
+          ),
+          personal: const PaymentSpaceRef('local'),
+          personalAccountId: privateAccount,
+          paidAt: DateTime.now().toUtc(),
+          expectReimbursement: true,
+        ),
+        throwsA(
+          isA<CollaborationException>().having(
+            (e) => e.code,
+            'code',
+            'policy_acceptance_required',
+          ),
+        ),
+      );
+      expect(
+        (await db.rows(
+          'SELECT state FROM linked_payment_intents',
+        )).single['state'],
+        'pending',
+      );
+      expect(transport.paymentEvents, isEmpty);
+      await shared.syncNow();
+      expect(shared.state.lastError?.code, 'policy_acceptance_required');
+      expect(shared.state.pendingCount, 0);
+      expect(shared.state.financePendingCount, 0);
+      await shared.acceptSharedContentPolicy(
+        await shared.sharedContentPolicy(),
+      );
+      expect(transport.paymentEvents, isEmpty);
+      await shared.syncNow();
+      expect(
+        (await db.rows(
+          'SELECT state FROM linked_payment_intents',
+        )).single['state'],
+        'complete',
+      );
+      expect(transport.paymentEvents.length, 1);
+    },
+  );
+  test(
     'immutable old commit receipt cannot downgrade a newer cached refund',
     () async {
       final (db, spaces, org, home, privateAccount, orgAccount, entry) =

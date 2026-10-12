@@ -83,9 +83,12 @@ class PushTransport extends FakeTransport {
         'version': 1,
         'enabled': true,
         'recordContractVersions': [1],
+        if (server.moderationSupported) 'moderationContractVersions': [1],
         'pushProjectId': enabled ? projectId : null,
         'features': {
           'recordSync': true,
+          'sharedContentPolicy': server.moderationSupported,
+          'contentReporting': server.moderationSupported,
           'inbox': false,
           'finance': false,
           'externalPush': enabled,

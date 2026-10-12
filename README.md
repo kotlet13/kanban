@@ -1,5 +1,12 @@
 # Jivie
 
+**12. oktober — lokalna nadgradnja pravil in prijav:** Jivie in
+FamilyHub0.12.0/schema16 sta pripravljena z izrecnim sprejemom pravil, prijavami
+skrbniku izbranega strežnika ter obravnavo. **1028 Flutter PASS**, dejanski
+Dart/HTTP, 192 PHP kontrol in ohranitev podatkov pri migraciji na treh bazah.
+[Izvedba in naslednji korak](docs/MODERATION_AND_REPORTING.md). Gostovanje še ni
+nadgrajeno; aktivna interna **1.4.1 (19)** teh novih funkcij še nima.
+
 **Interna 1.4.0 (18), 11. oktober ob 12:41:** očiščena Jivie je aktivno objavljena
 na istem internem Android kanalu za **domači (15)**. Podpis, 298 zamrznjenih vhodov,
 16 KiB, Firebase in manifest brez širokih medijskih dovoljenj so preverjeni.

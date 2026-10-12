@@ -163,6 +163,7 @@ Future<void> showPersonalPaymentForm(
   await showSharingForm(
     context,
     title: l.paymentPaidPersonally,
+    sharedPolicyScopeId: source.space.isLocal ? null : source.space.id,
     description:
         '$title · ${sharedMoneyLabel(context, BigInt.from(amountMinor), currency)}\n${l.paymentSourceExpenseOnly}',
     fields: [
@@ -295,6 +296,7 @@ Future<void> showPaymentRefundForm(
   await showSharingForm(
     context,
     title: l.paymentRefundAction,
+    sharedPolicyScopeId: source.isLocal ? null : source.id,
     description: l.paymentRefundDescription(
       sharedMoneyLabel(
         context,

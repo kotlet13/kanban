@@ -168,6 +168,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
           ? context.l10n.financePlanLocal
           : context.l10n.financePlanPrivate,
       requireAccount: _isShared,
+      sharedPolicyScopeId: widget.sharedScopeId,
       onSave: (accounts, rules) async {
         guard.check();
         if (_isShared) {
@@ -197,6 +198,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
     final draft = await showFinanceAccountForm(
       context,
       account: account,
+      sharedPolicyScopeId: widget.sharedScopeId,
       wrap: guard.wrap,
     );
     if (draft == null) return;
@@ -255,6 +257,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
       context,
       snapshot: _formSnapshot(existingId: rule?.id),
       rule: rule,
+      sharedPolicyScopeId: widget.sharedScopeId,
       wrap: guard.wrap,
     );
     if (draft == null) return;

@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -259,6 +260,10 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
                         targetType: item.type,
                         targetId: item.id,
                       ),
+                    ContentReportButton(
+                      scopeId: widget.scope.id,
+                      targetId: item.id,
+                    ),
                     const Icon(Icons.chevron_right, size: 18),
                   ],
                 ),

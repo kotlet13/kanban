@@ -47,6 +47,9 @@ class FakeServer {
   final replay = <String, ({String request, Map<String, dynamic> reply})>{};
   final calls =
       <({String operation, String? token, Map<String, Object?> params})>[];
+  bool moderationSupported = true;
+  bool moderationAccepted = true;
+  bool rejectPolicyAcceptance = false;
   bool loseNextPushReply = false;
   Future<void> Function(
     String operation,
@@ -66,14 +69,31 @@ class FakeServer {
       return {
         'serverId': serverId,
         'recordContractVersions': [1],
+        if (moderationSupported) 'moderationContractVersions': [1],
         'api': 'familyhub_native',
         'version': 1,
         'enabled': true,
         'features': {
           'recordSync': true,
+          'contentReporting': moderationSupported,
+          'sharedContentPolicy': moderationSupported,
           'inbox': false,
           'finance': false,
           'scopeAccessChanges': true,
+        },
+      };
+    }
+    if (operation == 'moderation.policy') {
+      return {
+        'serverId': serverId,
+        'contractVersion': 1,
+        'policyVersion': 1,
+        'title': 'Shared content rules',
+        'textSl': 'Pravila deljenja.',
+        'textEn': 'Shared content rules.',
+        'recipient': {
+          'kind': 'serverAdministrator',
+          'name': 'FamilyHub server administrator',
         },
       };
     }
@@ -110,6 +130,19 @@ class FakeServer {
             .where((r) => members[r.key]!.containsKey(user))
             .map((r) => {...r.value, 'role': members[r.key]![user]})
             .toList(),
+      };
+    }
+    if (operation == 'moderation.policyStatus' ||
+        operation == 'moderation.acceptPolicy') {
+      if (operation == 'moderation.acceptPolicy' && !rejectPolicyAcceptance) {
+        moderationAccepted = true;
+      }
+      return {
+        'serverId': serverId,
+        'accountId': accountIds[user],
+        'policyVersion': 1,
+        'accepted': moderationAccepted,
+        'acceptedAt': moderationAccepted ? '2026-10-12T12:00:00Z' : null,
       };
     }
     final scope = params['scopeId'] as String?;

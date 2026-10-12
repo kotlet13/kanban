@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -226,6 +227,21 @@ class SpaceSettingsPage extends ConsumerWidget {
                             : l.sharingLegacySpaceDescription,
                       ),
                     ),
+                  ListTile(
+                    key: const ValueKey('shared-content-rules'),
+                    leading: const Icon(Icons.policy_outlined),
+                    title: Text(l.moderationPolicyTitle),
+                    subtitle: Text(
+                      state.sharedContentPolicy?.accepted == true
+                          ? l.moderationPolicyAccepted
+                          : l.moderationPolicyRequired,
+                    ),
+                    onTap: () => showSharedContentPolicy(
+                      context,
+                      scopeId: selected.id,
+                      review: true,
+                    ),
+                  ),
                   SharingMembersPage(
                     key: ValueKey(
                       'members-${session.partition}-${session.deviceId}-${selected.id}-${selected.role.name}-${selected.archived}-${selected.accessPolicyVersion}-${selected.accessRevision}',

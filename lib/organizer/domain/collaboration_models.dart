@@ -1,3 +1,5 @@
+import 'moderation_models.dart';
+export 'moderation_models.dart';
 import 'dart:collection';
 
 import 'organizer_models.dart';
@@ -416,6 +418,8 @@ class SharedScopeData {
 class CollaborationState {
   CollaborationState({
     this.session,
+    this.moderationSupported = false,
+    this.sharedContentPolicy,
     this.selectedSpaceId,
     this.allSpacesSelected = false,
     this.pushProjectId,
@@ -497,6 +501,8 @@ class CollaborationState {
       financeSupported,
       externalPushSupported,
       smtpSupported;
+  final bool moderationSupported;
+  final SharedContentPolicy? sharedContentPolicy;
   final AccountSession? session;
   final String? selectedSpaceId;
   final bool allSpacesSelected;

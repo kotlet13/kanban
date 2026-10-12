@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,6 +150,12 @@ class OrganizationWorkspace extends ConsumerWidget {
             key: ValueKey('organization-project-${project.id}'),
             leading: const Icon(Icons.folder_outlined),
             title: Text(project.name),
+            trailing: project.projectRootId == null
+                ? null
+                : ContentReportButton(
+                    scopeId: project.id,
+                    targetId: project.projectRootId ?? project.id,
+                  ),
             onTap: () => onProject(project.id),
           ),
         if (projects.any((project) => project.archived)) ...[
@@ -160,6 +167,12 @@ class OrganizationWorkspace extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.archive_outlined),
               title: Text(project.name),
+              trailing: project.projectRootId == null
+                  ? null
+                  : ContentReportButton(
+                      scopeId: project.id,
+                      targetId: project.projectRootId ?? project.id,
+                    ),
               onTap: () => onProject(project.id),
             ),
         ],

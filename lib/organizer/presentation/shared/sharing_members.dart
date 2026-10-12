@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -416,42 +417,47 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                         _memberAccessLabel(member),
                     ].join(' · '),
                   ),
-                  trailing: _canRemoveMember(member)
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.scope.kind ==
-                                    SharedScopeKind.organization &&
-                                widget.scope.accessPolicyVersion == 2 &&
-                                widget.scope.role == SharedRole.owner &&
-                                member.accountId.isNotEmpty)
-                              IconButton(
-                                key: ValueKey(
-                                  'organization-leader-${member.accountId}',
-                                ),
-                                tooltip: member.organizationLeader
-                                    ? l.organizationLeaderRemove
-                                    : l.organizationLeaderGrant,
-                                onPressed: _busy ? null : () => _leader(member),
-                                icon: Icon(
-                                  member.organizationLeader
-                                      ? Icons.manage_accounts
-                                      : Icons.manage_accounts_outlined,
-                                ),
-                              ),
-                            IconButton(
-                              tooltip:
-                                  widget.scope.kind ==
-                                          SharedScopeKind.project &&
-                                      widget.scope.accessPolicyVersion == 3
-                                  ? l.sharingRemoveProjectMembership
-                                  : l.sharingRemoveMember,
-                              onPressed: _busy ? null : () => _remove(member),
-                              icon: const Icon(Icons.person_remove_outlined),
-                            ),
-                          ],
-                        )
-                      : null,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (member.accountId.isNotEmpty &&
+                          member.accountId != widget.session.accountId)
+                        ContentReportButton(
+                          scopeId: widget.scope.id,
+                          targetType: 'user',
+                          targetId: member.accountId,
+                        ),
+                      if (_canRemoveMember(member) &&
+                          widget.scope.kind == SharedScopeKind.organization &&
+                          widget.scope.accessPolicyVersion == 2 &&
+                          widget.scope.role == SharedRole.owner &&
+                          member.accountId.isNotEmpty)
+                        IconButton(
+                          key: ValueKey(
+                            'organization-leader-${member.accountId}',
+                          ),
+                          tooltip: member.organizationLeader
+                              ? l.organizationLeaderRemove
+                              : l.organizationLeaderGrant,
+                          onPressed: _busy ? null : () => _leader(member),
+                          icon: Icon(
+                            member.organizationLeader
+                                ? Icons.manage_accounts
+                                : Icons.manage_accounts_outlined,
+                          ),
+                        ),
+                      if (_canRemoveMember(member))
+                        IconButton(
+                          tooltip:
+                              widget.scope.kind == SharedScopeKind.project &&
+                                  widget.scope.accessPolicyVersion == 3
+                              ? l.sharingRemoveProjectMembership
+                              : l.sharingRemoveMember,
+                          onPressed: _busy ? null : () => _remove(member),
+                          icon: const Icon(Icons.person_remove_outlined),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             if (widget.scope.canManage) ...[

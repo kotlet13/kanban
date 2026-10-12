@@ -1,3 +1,5 @@
+import '../shared/content_moderation.dart';
+import '../../state/collaboration_provider.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -141,6 +143,25 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       _error = null;
     });
     try {
+      final shared = ref.read(collaborationProvider).valueOrNull;
+      final scope = shared?.scopes
+          .where(
+            (s) =>
+                s.id == shared.selectedSpaceId &&
+                s.kind == SharedScopeKind.household &&
+                !s.revoked,
+          )
+          .firstOrNull;
+      if (scope != null &&
+          !await showSharedContentPolicy(
+            context,
+            scopeId: scope.id,
+            allowOfflineDraft: true,
+          )) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (!mounted) return;
       final controller = ref.read(gardenProvider.notifier);
       if (widget.garden == null) {
         await controller.createGarden(

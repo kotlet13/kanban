@@ -26,6 +26,7 @@ import 'garden_storage.dart';
 import 'linked_payments_repository.dart';
 import 'organizer_repository.dart' show OrganizerConflictException;
 
+part 'collaboration_moderation.dart';
 part 'collaboration_organization_access.dart';
 part 'collaboration_project_sharing.dart';
 part 'collaboration_linked_payments.dart';
@@ -96,6 +97,10 @@ class CollaborationRepository {
   bool _organizationsSupported = false,
       _householdPeopleSupported = false,
       _projectArchivingSupported = false;
+  bool _moderationSupported = false;
+  bool? _moderationAccepted;
+  int? _moderationVerifiedEpoch;
+  SharedContentPolicy? _sharedContentPolicy;
   bool _inboxSupported = false;
   bool _emailInvitationsSupported = false;
   bool _scopedInvitationsSupported = false;
@@ -115,6 +120,9 @@ class CollaborationRepository {
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    _moderationVerifiedEpoch = null;
+    _moderationAccepted = null;
+    _sharedContentPolicy = null;
     _lastSyncAttemptAt = null;
     _lastSuccessfulSyncAt = null;
     _fullSyncEpoch = null;
@@ -416,6 +424,8 @@ class CollaborationRepository {
             ? null
             : selectedSpace.first['value'] as String,
         session: profile,
+        moderationSupported: _moderationSupported,
+        sharedContentPolicy: _sharedContentPolicy,
         remotePushRegistration: _remotePushState,
         sessionInvalid: _sessionInvalidReason != null || deletionPending,
         localAccessAllowed:

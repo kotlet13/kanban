@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -160,6 +161,11 @@ class GardenPage extends ConsumerWidget {
                                               expectedRevision: garden.revision,
                                             ),
                                       ),
+                                    ),
+                                  if (remoteHousehold)
+                                    ContentReportButton(
+                                      scopeId: shared!.selectedSpaceId!,
+                                      targetId: garden.id,
                                     ),
                                   IconButton(
                                     tooltip: l.delete,

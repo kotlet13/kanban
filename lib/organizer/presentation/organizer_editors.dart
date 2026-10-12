@@ -1,3 +1,4 @@
+import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -101,6 +102,7 @@ Future<void> showOrganizerEditor(
   Future<void> Function()? onDelete,
   String Function(Object)? errorMessage,
   Widget Function(Widget)? wrap,
+  String? sharedPolicyScopeId,
 }) => showDialog<void>(
   context: context,
   builder: (context) {
@@ -125,6 +127,7 @@ Future<void> showOrganizerEditor(
       onDelete: onDelete,
       errorMessage: errorMessage,
       wrap: wrap,
+      sharedPolicyScopeId: sharedPolicyScopeId,
     );
     return wrap?.call(editor) ?? editor;
   },
@@ -152,6 +155,7 @@ class _RecordEditor extends StatefulWidget {
     this.onDelete,
     this.errorMessage,
     this.wrap,
+    this.sharedPolicyScopeId,
   });
   final String heading;
   final OrganizerEditorKind kind;
@@ -171,6 +175,7 @@ class _RecordEditor extends StatefulWidget {
   final Future<void> Function()? onDelete;
   final String Function(Object)? errorMessage;
   final Widget Function(Widget)? wrap;
+  final String? sharedPolicyScopeId;
   @override
   State<_RecordEditor> createState() => _RecordEditorState();
 }
@@ -231,15 +236,28 @@ class _RecordEditorState extends State<_RecordEditor> {
       _failure = null;
     });
     try {
+      if (widget.sharedPolicyScopeId != null &&
+          !await showSharedContentPolicy(
+            context,
+            scopeId: widget.sharedPolicyScopeId,
+            allowOfflineDraft: true,
+          )) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      if (!mounted) return;
       await widget.onSave(draft);
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
+      final accepted =
+          mounted && await resolveSharedPolicyError(context, error);
       if (mounted) {
         setState(() {
           _busy = false;
-          _failure =
-              widget.errorMessage?.call(error) ??
-              organizerErrorMessage(context, error);
+          _failure = accepted
+              ? context.l10n.moderationPolicySaveAgain
+              : widget.errorMessage?.call(error) ??
+                    organizerErrorMessage(context, error);
         });
       }
     }
@@ -277,12 +295,15 @@ class _RecordEditorState extends State<_RecordEditor> {
       await widget.onDelete!();
       if (mounted) Navigator.pop(context);
     } catch (error) {
+      final accepted =
+          mounted && await resolveSharedPolicyError(context, error);
       if (mounted) {
         setState(() {
           _busy = false;
-          _failure =
-              widget.errorMessage?.call(error) ??
-              organizerErrorMessage(context, error);
+          _failure = accepted
+              ? context.l10n.moderationPolicySaveAgain
+              : widget.errorMessage?.call(error) ??
+                    organizerErrorMessage(context, error);
         });
       }
     }

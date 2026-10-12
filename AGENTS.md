@@ -1,5 +1,23 @@
 # Navodila za delo na projektu
 
+12. oktober — uporabnik je naročil nadgradnjo prijav/pravil v Jivie in FamilyHub,
+z delom lokalno; portali, gostovana namestitev in fizični preizkus sledijo doma.
+**FamilyHub0.12.0/schema16** in odjemalčev tok sta lokalno izvedena: izrecni
+strežniško uveljavljeni sprejem pred skupnimi uploadi, omejeni spletni predogled
+in prijave vsebine/vidnih članov, APP_ADMIN TLS/CSRF obravnava, revizijsko varni
+ukrepi in odpravljive omejitve prostora. Prijave ostanejo na izbranem strežniku,
+ne pri TriparNA/cPanel ponudniku. Lokalno/zasebno delo, branje, joining/reporting
+in varnostni preklici so ločeni; pending/opId/izvoz ostanejo. **1028 Flutter PASS /
+14 opt-in skips**, ločen dejanski Dart/HTTP PASS, analiza brez ugotovitev,
+**192 PHP kontrol / 3 migracije15→16 / 83 PHP lint PASS**, Android debug PASS.
+Izvorna/paketna/Firebase preverjanja so uspešna. [Dokazi, paketi in naslednji
+korak](docs/MODERATION_AND_REPORTING.md). Portali niso uporabljeni, nobena živa
+namestitev ni nadgrajena: testni strežniki ostanejo0.11.2/schema15 in aktivni
+Android1.4.1(19) **nima novih prijav**. Appverzija/SDK/locks/podpis niso spremenjeni;
+novo podpisano kodo različice pripravimo po vrnitvi. SL/EN zasebnost je pripravljena
+lokalno, ne objavljena. IARC/DataSafety/javni pregled še niso zaključeni. Meje
+obnove iz server-loss dnevnika ostanejo; ne razglasi celotne javne izdaje za končano.
+
 11. oktober — po izrecnem naročilu nove Android gradnje s popravki je podpisana
 **1.4.1 (19)** dejansko **Aktivno** na istem internem kanalu za **domači (15)**,
 od **21:55**. Metadata `1b7e7f6` so main/origin; vsebujejo `d627bbe`, `1284ca3`

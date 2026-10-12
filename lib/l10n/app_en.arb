@@ -1365,5 +1365,48 @@
   "sharingBlockRecurrence": "A recurring finance rule is also used by records outside this project. Review recurring entries before sharing the project separately.",
   "sharingBlockTransfer": "A finance transfer links this project to content outside it. Review the related accounts and transfers before sharing the project separately.",
   "sharingBlockLinkedPayment": "A linked payment includes additional finance records. Review payment links before sharing the project separately.",
-  "sharingBlockCollision": "A separate space already exists for this project. Refresh the space list and check its existing sharing."
+  "sharingBlockCollision": "A separate space already exists for this project. Refresh the space list and check its existing sharing.",
+  "moderationReportContent": "Report content",
+  "moderationReportUser": "Report user",
+  "moderationReportReason": "Reason",
+  "moderationReportDetails": "Details (optional)",
+  "moderationReportPrivacy": "This report goes only to the administrator of your selected server. TriparNA does not receive it. Only the data shown below, your account identity, the reason and details are sent. No account token or entire workspace is included.",
+  "moderationRecipient": "Recipient: {recipient} · {host}",
+  "@moderationRecipient": {
+    "placeholders": {
+      "recipient": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "moderationReportedData": "Data included in this report",
+  "moderationSendReport": "Send report",
+  "moderationReportSent": "The server administrator received your report.",
+  "moderationReportRetry": "Delivery could not be confirmed. Retry sends the same report once; your reason and details are kept unchanged.",
+  "moderationReasonHarassment": "Harassment or bullying",
+  "moderationReasonHate": "Hate speech",
+  "moderationReasonSexual": "Sexual content",
+  "moderationReasonViolence": "Violence or threats",
+  "moderationReasonIllegal": "Illegal content",
+  "moderationReasonSpam": "Spam or deception",
+  "moderationReasonPrivacy": "Privacy violation",
+  "moderationReasonOther": "Other",
+  "moderationDetailsLimit": "Details can contain at most 2,000 UTF-8 bytes. Shorten the text.",
+  "moderationUpgradeRequired": "Reporting and sharing rules require FamilyHub 0.12.0 or later on your selected server. Ask its administrator to upgrade. Local use, reading and backups remain available.",
+  "moderationOffline": "Reporting requires a connection to your selected server. Your local data and unsent changes remain available. Try again when the server is reachable.",
+  "moderationPreviewStale": "The reported content or your access has changed. Close this form and open a new report to review the current data.",
+  "moderationPolicyTitle": "Rules for shared content",
+  "moderationPolicyDescription": "Before publishing or sending changes to a shared space, review and accept this server’s rules. Personal and local use does not require acceptance.",
+  "moderationPolicyCheckbox": "I have read and accept these shared-content rules.",
+  "moderationPolicyAccept": "Accept rules",
+  "moderationPolicyAccepted": "You have accepted these rules.",
+  "moderationPolicySaveAgain": "Rules accepted. Save again to send this change.",
+  "moderationPolicyRequired": "Accept this server’s shared-content rules before sending shared changes. Local drafts remain saved.",
+  "moderationRetention": "Report details are removed 180 days after review is closed. Open reports remain available for review. The administrator may restrict access to the selected shared space; your personal account remains.",
+  "moderationRecordIdentifier": "Record identifier",
+  "moderationAccountIdentifier": "Account identifier",
+  "moderationReportedType": "Reported type"
 }

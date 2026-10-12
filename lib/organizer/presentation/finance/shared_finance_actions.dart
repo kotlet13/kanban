@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +47,9 @@ class SharedFinanceActions {
     try {
       await action();
     } catch (error) {
+      if (context.mounted && await resolveSharedPolicyError(context, error)) {
+        return;
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(sharingErrorMessage(context, error))),
@@ -61,6 +65,7 @@ class SharedFinanceActions {
       context,
       title: account == null ? l.financeAddAccount : l.financeEditAccount,
       description: l.financeSharedAccountsDescription,
+      sharedPolicyScopeId: scope.id,
       fields: [
         SharingField(
           id: 'name',
@@ -198,6 +203,7 @@ class SharedFinanceActions {
       return showRecordedFinanceOccurrenceEditor(
         context,
         entry: local,
+        sharedPolicyScopeId: scope.id,
         wrap: guard.wrap,
         onSave: (draft) => guard.controller.updateFinanceEntry(
           scope.id,
@@ -214,6 +220,7 @@ class SharedFinanceActions {
     return showSharingForm(
       context,
       title: entry == null ? l.organizerAddFinance : l.financeEditEntry,
+      sharedPolicyScopeId: scope.id,
       fields: [
         SharingField(
           id: 'title',
@@ -369,6 +376,7 @@ class SharedFinanceActions {
       context,
       title: transfer == null ? l.financeAddTransfer : l.financeEditTransfer,
       description: l.financeTransferDescription,
+      sharedPolicyScopeId: scope.id,
       fields: [
         SharingField(
           id: 'title',

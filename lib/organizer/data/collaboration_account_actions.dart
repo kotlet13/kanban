@@ -11,6 +11,10 @@ extension CollaborationAccountActions on CollaborationRepository {
     _recordContractVersion = 1;
     _financeContractVersion = 1;
     _accountDeletionPolicyVersion = 1;
+    _moderationSupported = false;
+    _moderationVerifiedEpoch = null;
+    _moderationAccepted = null;
+    _sharedContentPolicy = null;
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
@@ -71,6 +75,15 @@ extension CollaborationAccountActions on CollaborationRepository {
     _householdPeopleSupported =
         features['householdPeople'] == true && _recordContractVersion >= 3;
     _projectArchivingSupported = features['projectArchiving'] == true;
+    _moderationSupported =
+        features['sharedContentPolicy'] == true &&
+        features['contentReporting'] == true &&
+        (caps['moderationContractVersions'] as List? ?? const []).contains(1);
+    if (!_moderationSupported) {
+      _moderationVerifiedEpoch = null;
+      _moderationAccepted = null;
+      _sharedContentPolicy = null;
+    }
     _inboxSupported = features['inbox'] == true;
     _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
@@ -205,6 +218,10 @@ extension CollaborationAccountActions on CollaborationRepository {
     _recordContractVersion = 1;
     _financeContractVersion = 1;
     _accountDeletionPolicyVersion = 1;
+    _moderationSupported = false;
+    _moderationVerifiedEpoch = null;
+    _moderationAccepted = null;
+    _sharedContentPolicy = null;
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
@@ -338,8 +355,9 @@ extension CollaborationAccountActions on CollaborationRepository {
     DeviceSession session,
     int epoch,
     String operation,
-    Map<String, Object?> params,
-  ) async {
+    Map<String, Object?> params, {
+    bool capabilitiesVerified = false,
+  }) async {
     _checkEpoch(epoch);
     if (_sessionInvalidReason != null) {
       throw CollaborationException(_sessionInvalidReason!);
@@ -382,6 +400,13 @@ extension CollaborationAccountActions on CollaborationRepository {
           'recordContractVersion': _recordContractVersion,
       };
     }
+    if (await _requiresSharedContentPolicy(session, operation, params)) {
+      await _guardSharedUpload(
+        session,
+        epoch,
+        capabilitiesVerified: capabilitiesVerified,
+      );
+    }
     Map<String, dynamic> reply;
     if (operation.startsWith('finance.') ||
         operation.startsWith('finance2.') ||
@@ -408,6 +433,11 @@ extension CollaborationAccountActions on CollaborationRepository {
       );
     } on CollaborationException catch (e) {
       _checkEpoch(epoch);
+      if (e.code == 'policy_acceptance_required') {
+        _moderationVerifiedEpoch = null;
+        _moderationAccepted = false;
+        _sharedContentPolicy = null;
+      }
       if (const {
             'device_revoked',
             'auth_required',

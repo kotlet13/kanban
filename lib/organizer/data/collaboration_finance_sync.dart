@@ -235,6 +235,10 @@ extension CollaborationFinanceSync on CollaborationRepository {
     String? recordId,
     int? beforeSequence,
   }) async {
+    if (!_sharedUploadsAllowed &&
+        !await _isPersonalScope(session.profile.partition, scope)) {
+      return;
+    }
     final p = session.profile.partition;
     while (true) {
       await _renewLease(p);

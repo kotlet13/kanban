@@ -1365,5 +1365,48 @@
   "sharingBlockRecurrence": "Ponavljajoče se finančno pravilo uporabljajo tudi zapisi zunaj projekta. Pred ločenim deljenjem preglej ponavljanja.",
   "sharingBlockTransfer": "Finančni prenos povezuje projekt z vsebino zunaj projekta. Pred ločenim deljenjem preglej povezane račune in prenose.",
   "sharingBlockLinkedPayment": "Povezano plačilo vključuje dodatne finančne evidence. Pred ločenim deljenjem preglej povezave plačil.",
-  "sharingBlockCollision": "Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje."
+  "sharingBlockCollision": "Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje.",
+  "moderationReportContent": "Prijavi vsebino",
+  "moderationReportUser": "Prijavi uporabnika",
+  "moderationReportReason": "Razlog",
+  "moderationReportDetails": "Podrobnosti (neobvezno)",
+  "moderationReportPrivacy": "Prijava gre samo skrbniku izbranega strežnika. TriparNA je ne prejme. Pošljejo se samo spodaj prikazani podatki, identiteta vašega računa, razlog in podrobnosti. Žeton računa in celoten prostor nista vključena.",
+  "moderationRecipient": "Prejemnik: {recipient} · {host}",
+  "@moderationRecipient": {
+    "placeholders": {
+      "recipient": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "moderationReportedData": "Podatki, vključeni v prijavo",
+  "moderationSendReport": "Pošlji prijavo",
+  "moderationReportSent": "Skrbnik strežnika je prejel vašo prijavo.",
+  "moderationReportRetry": "Dostave ni bilo mogoče potrditi. Ponovni poskus pošlje isto prijavo samo enkrat; razlog in podrobnosti ostanejo nespremenjeni.",
+  "moderationReasonHarassment": "Nadlegovanje ali ustrahovanje",
+  "moderationReasonHate": "Sovražni govor",
+  "moderationReasonSexual": "Spolna vsebina",
+  "moderationReasonViolence": "Nasilje ali grožnje",
+  "moderationReasonIllegal": "Nezakonita vsebina",
+  "moderationReasonSpam": "Neželena vsebina ali zavajanje",
+  "moderationReasonPrivacy": "Kršitev zasebnosti",
+  "moderationReasonOther": "Drugo",
+  "moderationDetailsLimit": "Podrobnosti lahko vsebujejo največ 2.000 bajtov UTF-8. Skrajšajte besedilo.",
+  "moderationUpgradeRequired": "Prijave in pravila deljenja zahtevajo FamilyHub 0.12.0 ali novejši na izbranem strežniku. Skrbnika prosite za nadgradnjo. Lokalna uporaba, branje in kopije ostanejo na voljo.",
+  "moderationOffline": "Za prijavo je potrebna povezava z izbranim strežnikom. Lokalni podatki in neposlane spremembe ostanejo na voljo. Poskusite znova, ko bo strežnik dosegljiv.",
+  "moderationPreviewStale": "Prijavljena vsebina ali vaš dostop se je spremenil. Zaprite obrazec in odprite novo prijavo za pregled trenutnih podatkov.",
+  "moderationPolicyTitle": "Pravila skupne vsebine",
+  "moderationPolicyDescription": "Pred objavo ali pošiljanjem sprememb v skupni prostor preglejte in sprejmite pravila tega strežnika. Osebna in lokalna uporaba ne zahtevata sprejema.",
+  "moderationPolicyCheckbox": "Prebral/-a sem in sprejemam ta pravila skupne vsebine.",
+  "moderationPolicyAccept": "Sprejmi pravila",
+  "moderationPolicyAccepted": "Ta pravila ste sprejeli.",
+  "moderationPolicySaveAgain": "Pravila so sprejeta. Ponovno shranite za pošiljanje te spremembe.",
+  "moderationPolicyRequired": "Pred pošiljanjem skupnih sprememb sprejmite pravila skupne vsebine tega strežnika. Lokalni osnutki ostanejo shranjeni.",
+  "moderationRetention": "Podrobnosti prijave se odstranijo 180 dni po zaključku obravnave. Odprte prijave ostanejo za obravnavo. Skrbnik lahko omeji dostop do izbranega skupnega prostora; osebni račun ostane.",
+  "moderationRecordIdentifier": "Identifikator zapisa",
+  "moderationAccountIdentifier": "Identifikator računa",
+  "moderationReportedType": "Vrsta prijavljenega zapisa"
 }

@@ -926,6 +926,29 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
         repo.resolveConflict(conflictId: conflictId, keepLocal: keepLocal),
   );
   Future<String> exportUnsentWork() => _repo.exportUnsentWork();
+  Future<SharedContentPolicy> sharedContentPolicy({String? scopeId}) =>
+      _repo.sharedContentPolicy(scopeId: scopeId);
+  Future<void> acceptSharedContentPolicy(SharedContentPolicy policy) =>
+      _repo.acceptSharedContentPolicy(policy);
+  Future<ContentReportPreview> previewContentReport({
+    required String scopeId,
+    required String targetType,
+    required String targetId,
+  }) => _repo.previewContentReport(
+    scopeId: scopeId,
+    targetType: targetType,
+    targetId: targetId,
+  );
+  Future<ContentReportReceipt> submitContentReport({
+    required ContentReportPreview preview,
+    required String reason,
+    String details = '',
+  }) => _repo.submitContentReport(
+    preview: preview,
+    reason: reason,
+    details: details,
+  );
+
   Future<String> createShoppingList({
     required String scopeId,
     required String title,

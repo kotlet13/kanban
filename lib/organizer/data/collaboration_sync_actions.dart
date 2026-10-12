@@ -67,6 +67,24 @@ extension CollaborationSyncActions on CollaborationRepository {
       _checkEpoch(epoch);
       await refreshLocal();
       await _negotiate(session, epoch);
+      // Authentication preflight belongs to the sync transaction: a failed or
+      // lost renewal must stop this attempt instead of being mistaken for a
+      // terms endpoint outage and immediately retried by the next API read.
+      await _renewDeviceSessionIfNeeded(session, epoch);
+      if (_moderationSupported) {
+        try {
+          await _refreshModerationStatus(session, epoch);
+        } on CollaborationException catch (error) {
+          _checkEpoch(epoch);
+          if (_sessionInvalidReason != null) rethrow;
+          // Terms service failure defers shared uploads, while personal sync and
+          // authorized downloads continue independently.
+          _moderationAccepted = null;
+          _moderationVerifiedEpoch = null;
+          _sharedContentPolicy = null;
+          _lastError = error;
+        }
+      }
       await _retryRemotePushCleanups(epoch);
       await _syncRemotePushRegistration(session, epoch);
       final reply = await _callSession(session, epoch, 'scopes.list', {
@@ -132,8 +150,8 @@ extension CollaborationSyncActions on CollaborationRepository {
         _checkEpoch(epoch);
         await _renewLease(partition);
         final pending = await database.rows(
-          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||o.partition||':'||o.scope_id) AND EXISTS(SELECT 1 FROM scopes s WHERE s.partition=o.partition AND s.id=o.scope_id AND COALESCE(json_extract(s.data,'$.archived'),0)=0) AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
-          [partition],
+          r"SELECT o.* FROM outbox o LEFT JOIN personal_workspaces w ON w.partition=o.partition AND w.scope_id=o.scope_id WHERE o.partition=? AND o.state='pending' AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||o.partition||':'||o.scope_id) AND (?=1 OR EXISTS(SELECT 1 FROM scopes m WHERE m.partition=o.partition AND m.id=o.scope_id AND json_extract(m.data,'$.kind')='personal')) AND EXISTS(SELECT 1 FROM scopes s WHERE s.partition=o.partition AND s.id=o.scope_id AND COALESCE(json_extract(s.data,'$.archived'),0)=0) AND (w.id IS NULL OR (w.enabled=1 AND w.paused=0)) AND NOT(json_extract(o.request,'$.type')='project' AND json_extract(o.request,'$.deleted')=1 AND EXISTS(SELECT 1 FROM finance_records f JOIN finance_outbox q ON q.partition=f.partition AND q.scope_id=f.scope_id AND q.record_id=f.id WHERE f.partition=o.partition AND f.scope_id=o.scope_id AND (json_extract(f.remote,'$.payload.projectId')=o.record_id OR json_extract(q.request,'$.payload.projectId')=o.record_id))) ORDER BY o.sequence LIMIT 1",
+          [partition, _sharedUploadsAllowed ? 1 : 0],
         );
         if (pending.isEmpty) break;
         final op = pending.first, scopeId = op['scope_id'] as String;
@@ -268,6 +286,8 @@ extension CollaborationSyncActions on CollaborationRepository {
           _checkEpoch(epoch);
           if ((financePair != null &&
                   !const {
+                    'policy_acceptance_required',
+                    'moderation_upgrade_required',
                     'finance_forbidden',
                     'permission_revoked',
                     'auth_required',
@@ -429,6 +449,17 @@ extension CollaborationSyncActions on CollaborationRepository {
         await _syncNotificationConfiguration(session, epoch, scopes);
       }
       _checkEpoch(epoch);
+      if (!_sharedUploadsAllowed &&
+          (await database.rows(
+            "SELECT 1 FROM outbox o JOIN scopes s ON s.partition=o.partition AND s.id=o.scope_id WHERE o.partition=? AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM finance_outbox o JOIN scopes s ON s.partition=o.partition AND s.id=o.scope_id WHERE o.partition=? AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM commands c JOIN scopes s ON s.partition=c.partition AND s.id=json_extract(c.params,'\$.scopeId') WHERE c.partition=? AND c.operation='reminders.put' AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM linked_payment_intents i JOIN scopes s ON s.partition=json_extract(i.data,'\$.partition') AND s.id=json_extract(i.data,'\$.source.space.id') WHERE s.partition=? AND i.state='pending' AND json_extract(i.data,'\$.operation')!='finance3.paymentProject' AND json_extract(s.data,'\$.kind')!='personal' LIMIT 1",
+            [partition, partition, partition, partition],
+          )).isNotEmpty) {
+        _lastError ??= CollaborationException(
+          _moderationSupported
+              ? 'policy_acceptance_required'
+              : 'moderation_upgrade_required',
+        );
+      }
       completed = true;
     } on CollaborationException catch (error) {
       if (epoch == _epoch) _lastError = error;

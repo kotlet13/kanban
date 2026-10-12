@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -210,6 +211,17 @@ class NotificationTargetContent extends ConsumerWidget {
             child: Text(l.inboxOfflineView),
           ),
         for (final record in target.records) ...[
+          if (!personalPresentation && record.type != 'membership')
+            Align(
+              alignment: Alignment.centerRight,
+              child: ContentReportButton(
+                scopeId: scope!.id,
+                targetId: localId(record),
+                targetType: record.type.startsWith('finance')
+                    ? 'finance'
+                    : 'record',
+              ),
+            ),
           if (record.type == 'membership') ...[
             Text(l.inboxJoinedScope),
             for (final member

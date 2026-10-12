@@ -9,6 +9,7 @@ class NativeLinkedPaymentService extends NativeDatabase
         $this->rate([['linked-payment-ip:'.$this->ip, 1200, 60]]);
         return $this->transaction(function () use ($operation, $params) {
             $user = $this->actor()['user'];
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             $scope = $this->uuid($params['scopeId'] ?? null);
             if ($operation === 'finance3.payments') {
                 $this->fields($params, ['scopeId']);

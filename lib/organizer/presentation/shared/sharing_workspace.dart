@@ -1,3 +1,4 @@
+import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -65,6 +66,11 @@ class SharingWorkspace extends ConsumerWidget {
     final controller = ref.read(collaborationProvider.notifier);
     try {
       await controller.syncNow();
+      final current = ref.read(collaborationProvider).valueOrNull;
+      if (current?.lastError?.code == 'policy_acceptance_required' &&
+          context.mounted) {
+        await showSharedContentPolicy(context);
+      }
     } catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -293,6 +299,7 @@ class SharingWorkspace extends ConsumerWidget {
                     : OrganizerProjectsPage(
                         snapshot: sharedPresentationSnapshot(data),
                         actions: actions,
+                        reportScopeId: scope.id,
                         selectedId: selectedProjectId,
                         onSelection: onProjectSelected ?? (_) {},
                         readOnly: readOnly,
@@ -455,6 +462,7 @@ class SharingWorkspace extends ConsumerWidget {
                       ),
                       snapshot: sharedPresentationSnapshot(data),
                       actions: actions,
+                      reportScopeId: scope.id,
                       selectedId: selectedListId,
                       onSelection: onListSelected ?? (_) {},
                       readOnly: readOnly,
@@ -464,6 +472,7 @@ class SharingWorkspace extends ConsumerWidget {
                     SharingView.projects => OrganizerProjectsPage(
                       titleAccessory: status,
                       reminderScopeId: scope.id,
+                      reportScopeId: scope.id,
                       allowProjectCreation:
                           scope.projectRootId == null &&
                           scope.parentSpaceId == null,
@@ -511,6 +520,7 @@ class SharingWorkspace extends ConsumerWidget {
                     SharingView.tasks => OrganizerTasksPage(
                       titleAccessory: status,
                       reminderScopeId: scope.id,
+                      reportScopeId: scope.id,
                       snapshot: sharedPresentationSnapshot(data),
                       actions: actions,
                       readOnly: readOnly,

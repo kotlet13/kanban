@@ -23,6 +23,7 @@ int parseOpeningBalanceMinor(String input) {
 Future<LocalFinanceAccount?> showFinanceAccountForm(
   BuildContext context, {
   LocalFinanceAccount? account,
+  String? sharedPolicyScopeId,
   Widget Function(Widget)? wrap,
 }) async {
   final l = context.l10n;
@@ -33,6 +34,7 @@ Future<LocalFinanceAccount?> showFinanceAccountForm(
     context,
     title: account == null ? l.financeAddAccount : l.financeEditAccount,
     description: l.financePlanSymbolicAccount,
+    sharedPolicyScopeId: sharedPolicyScopeId,
     fields: [
       SharingField(
         id: 'finance-account-name',
@@ -142,6 +144,7 @@ Future<FinanceRecurrenceRule?> showFinanceRuleForm(
   BuildContext context, {
   required OrganizerSnapshot snapshot,
   FinanceRecurrenceRule? rule,
+  String? sharedPolicyScopeId,
   Widget Function(Widget)? wrap,
 }) async {
   final l = context.l10n, id = rule?.id ?? newLocalId();
@@ -150,6 +153,7 @@ Future<FinanceRecurrenceRule?> showFinanceRuleForm(
   await showSharingForm(
     context,
     title: rule == null ? l.financePlanAddRule : l.financePlanEditRule,
+    sharedPolicyScopeId: sharedPolicyScopeId,
     description:
         '${l.financePlanMonthEnd}\n${l.financePlanWeekend}\n${l.financePlanReminderOptIn}',
     fields: [
@@ -334,6 +338,7 @@ Future<void> showFinanceOccurrenceConfirmation(
   await showSharingForm(
     context,
     title: l.financePlanConfirm,
+    sharedPolicyScopeId: sourceScopeId,
     description: entry.title,
     leading: sourceWorkspaceKey == null && sourceScopeId == null
         ? null
@@ -394,11 +399,13 @@ Future<void> showRecordedFinanceOccurrenceEditor(
   BuildContext context, {
   required FinanceEntry entry,
   required Future<void> Function(FinanceEntry) onSave,
+  String? sharedPolicyScopeId,
   Widget Function(Widget)? wrap,
 }) => showSharingForm(
   context,
   title: context.l10n.organizerEditFinance,
   description: context.l10n.financePlanManageRule,
+  sharedPolicyScopeId: sharedPolicyScopeId,
   fields: [
     SharingField(
       id: 'recorded-title',

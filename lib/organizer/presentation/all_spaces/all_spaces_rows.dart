@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -340,10 +341,23 @@ class AllSpacesRowTile extends StatelessWidget {
               leading: Icon(row.icon),
               title: Text(row.title),
               subtitle: Text(metadata),
-              trailing: IconButton(
-                tooltip: l.allSpacesOpenSource,
-                onPressed: onSource,
-                icon: const Icon(Icons.chevron_right),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!row.source.isPersonal && row.source.scopeId != null)
+                    ContentReportButton(
+                      scopeId: row.source.scopeId!,
+                      targetId: row.id,
+                      targetType: row.type.startsWith('finance')
+                          ? 'finance'
+                          : 'record',
+                    ),
+                  IconButton(
+                    tooltip: l.allSpacesOpenSource,
+                    onPressed: onSource,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
               ),
               onTap: onOpen,
             )
@@ -352,6 +366,14 @@ class AllSpacesRowTile extends StatelessWidget {
               title: Text(row.title),
               subtitle: Text(metadata),
               children: [
+                if (!row.source.isPersonal && row.source.scopeId != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ContentReportButton(
+                      scopeId: row.source.scopeId!,
+                      targetId: row.id,
+                    ),
+                  ),
                 if (row.notes.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -382,6 +404,9 @@ class _ChildRow extends ConsumerWidget {
         if (row.notes.isNotEmpty && row.type == 'shoppingItem') row.notes,
       ].join(' · '),
     ),
+    trailing: !row.source.isPersonal && row.source.scopeId != null
+        ? ContentReportButton(scopeId: row.source.scopeId!, targetId: row.id)
+        : null,
     onTap: () => openAllSpacesRow(context, ref, row),
   );
 }

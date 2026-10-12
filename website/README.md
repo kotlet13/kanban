@@ -1,5 +1,12 @@
 # Jivie: statična javna stran za cPanel
 
+**12. oktober — lokalno pripravljena dopolnitev:** SL/EN zasebnost opisuje novi
+tok pravil in prijav FamilyHub0.12.0: izrecni sprejem, prejemnik na izbranem
+strežniku, omejeni posnetek, hramba po zaključku in vpliv izbrisa računa. Ta
+dopolnitev **ni objavljena**; živa stran še uporablja preverjeno besedilo
+11. oktobra. Pripravljeni paket bo uporabljen skupaj z nadgradnjo po vrnitvi
+lastnika. [Izvedba in meje](../docs/MODERATION_AND_REPORTING.md).
+
 **Vsebinska korekcija 11. oktobra 2026:** po izrecni uporabnikovi korekciji je celoten
 odstavek o AI in internih/testnih izdajah odstranjen iz obeh javnih politik. Zasebnost
 opisuje podatkovne poti prve izdaje, brez razvojne zgodovine. Paket osmih HTML

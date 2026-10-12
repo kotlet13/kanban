@@ -84,6 +84,7 @@ class NativeAccountDeletionService extends NativeDatabase
                 $this->change('UPDATE familyhub_scopes SET owner_id=?,sequence=sequence+1 WHERE id=?',[$next['user_id'],$transfer['scopeId']]);
             }
             $this->change('INSERT INTO familyhub_deletion_receipts(operation_id,token_hash,deleted_at) VALUES(?,?,?)',[$id,$hash,time()]);
+            $this->purgeModeration($user,$deleteScopes);
             $this->applyShared($graph,$user,$deleteScopes);
             $this->purge($user,$scopes,$deleteScopes);
             $this->purgeLegacy($user,$graph['privateProjects'],$id);
@@ -91,6 +92,20 @@ class NativeAccountDeletionService extends NativeDatabase
         }, true);
         if ($result instanceof NativeError) { throw $result; }
         return isset($result['operationId']) ? $this->finishFiles($result['operationId']) : $result;
+    }
+
+    private function purgeModeration($user,$deleteScopes)
+    {
+        $account=$user['account_id'];
+        foreach ($deleteScopes as $sid) {
+            $reports=$this->many('SELECT id FROM familyhub_moderation_reports WHERE scope_id=?',[$sid]);
+            foreach ($reports as $report) { $this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$report['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$report['id']]); }
+        }
+        $rows=$this->many("SELECT id FROM familyhub_moderation_reports r WHERE reporter_account_id=? OR (target_type='user' AND target_id=?) OR EXISTS(SELECT 1 FROM familyhub_records g WHERE r.target_type='record' AND g.scope_id=r.scope_id AND g.id=r.target_id AND g.created_by=?) OR EXISTS(SELECT 1 FROM familyhub_finance_records f WHERE r.target_type='finance' AND f.scope_id=r.scope_id AND f.id=r.target_id AND f.created_by=?)",[$account,$account,$account,$account]);
+        foreach ($rows as $row) { $this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$row['id']]); }
+        $this->change('DELETE FROM familyhub_policy_acceptances WHERE account_id=?',[$account]);
+        $this->change('DELETE FROM familyhub_moderation_blocks WHERE account_id=?',[$account]);
+        $this->change('DELETE FROM familyhub_moderation_audit WHERE admin_id=?',[$user['id']]);
     }
 
     private function receiptHash($value)
@@ -304,7 +319,7 @@ class NativeAccountDeletionService extends NativeDatabase
                 $sid=$s['id'];
                 $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=?)',[$sid]);
                 $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=?)',[$sid]);
-                foreach (['familyhub_record_relocations','familyhub_payment_events','familyhub_payment_projections','familyhub_payment_cash','familyhub_scope_revocations','familyhub_organization_leaders','familyhub_inbox','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_finance_audit','familyhub_finance_records','familyhub_finance_policy','familyhub_operations','familyhub_records','familyhub_invitations','familyhub_members','familyhub_personal_scopes'] as $table) { $this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$sid]); }
+                foreach (['familyhub_moderation_blocks','familyhub_record_relocations','familyhub_payment_events','familyhub_payment_projections','familyhub_payment_cash','familyhub_scope_revocations','familyhub_organization_leaders','familyhub_inbox','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_finance_audit','familyhub_finance_records','familyhub_finance_policy','familyhub_operations','familyhub_records','familyhub_invitations','familyhub_members','familyhub_personal_scopes'] as $table) { $this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$sid]); }
                 $this->change('DELETE FROM familyhub_scopes WHERE id=?',[$sid]);
             } elseif (in_array($s['id'],$financeScopes,true)) {
                 $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$s['id']]);

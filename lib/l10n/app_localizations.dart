@@ -6425,6 +6425,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A separate space already exists for this project. Refresh the space list and check its existing sharing.'**
   String get sharingBlockCollision;
+
+  /// No description provided for @moderationReportContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Report content'**
+  String get moderationReportContent;
+
+  /// No description provided for @moderationReportUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Report user'**
+  String get moderationReportUser;
+
+  /// No description provided for @moderationReportReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get moderationReportReason;
+
+  /// No description provided for @moderationReportDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details (optional)'**
+  String get moderationReportDetails;
+
+  /// No description provided for @moderationReportPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'This report goes only to the administrator of your selected server. TriparNA does not receive it. Only the data shown below, your account identity, the reason and details are sent. No account token or entire workspace is included.'**
+  String get moderationReportPrivacy;
+
+  /// No description provided for @moderationRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient: {recipient} · {host}'**
+  String moderationRecipient(String recipient, String host);
+
+  /// No description provided for @moderationReportedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data included in this report'**
+  String get moderationReportedData;
+
+  /// No description provided for @moderationSendReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report'**
+  String get moderationSendReport;
+
+  /// No description provided for @moderationReportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'The server administrator received your report.'**
+  String get moderationReportSent;
+
+  /// No description provided for @moderationReportRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery could not be confirmed. Retry sends the same report once; your reason and details are kept unchanged.'**
+  String get moderationReportRetry;
+
+  /// No description provided for @moderationReasonHarassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or bullying'**
+  String get moderationReasonHarassment;
+
+  /// No description provided for @moderationReasonHate.
+  ///
+  /// In en, this message translates to:
+  /// **'Hate speech'**
+  String get moderationReasonHate;
+
+  /// No description provided for @moderationReasonSexual.
+  ///
+  /// In en, this message translates to:
+  /// **'Sexual content'**
+  String get moderationReasonSexual;
+
+  /// No description provided for @moderationReasonViolence.
+  ///
+  /// In en, this message translates to:
+  /// **'Violence or threats'**
+  String get moderationReasonViolence;
+
+  /// No description provided for @moderationReasonIllegal.
+  ///
+  /// In en, this message translates to:
+  /// **'Illegal content'**
+  String get moderationReasonIllegal;
+
+  /// No description provided for @moderationReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or deception'**
+  String get moderationReasonSpam;
+
+  /// No description provided for @moderationReasonPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy violation'**
+  String get moderationReasonPrivacy;
+
+  /// No description provided for @moderationReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get moderationReasonOther;
+
+  /// No description provided for @moderationDetailsLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Details can contain at most 2,000 UTF-8 bytes. Shorten the text.'**
+  String get moderationDetailsLimit;
+
+  /// No description provided for @moderationUpgradeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting and sharing rules require FamilyHub 0.12.0 or later on your selected server. Ask its administrator to upgrade. Local use, reading and backups remain available.'**
+  String get moderationUpgradeRequired;
+
+  /// No description provided for @moderationOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Reporting requires a connection to your selected server. Your local data and unsent changes remain available. Try again when the server is reachable.'**
+  String get moderationOffline;
+
+  /// No description provided for @moderationPreviewStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The reported content or your access has changed. Close this form and open a new report to review the current data.'**
+  String get moderationPreviewStale;
+
+  /// No description provided for @moderationPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules for shared content'**
+  String get moderationPolicyTitle;
+
+  /// No description provided for @moderationPolicyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Before publishing or sending changes to a shared space, review and accept this server’s rules. Personal and local use does not require acceptance.'**
+  String get moderationPolicyDescription;
+
+  /// No description provided for @moderationPolicyCheckbox.
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and accept these shared-content rules.'**
+  String get moderationPolicyCheckbox;
+
+  /// No description provided for @moderationPolicyAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept rules'**
+  String get moderationPolicyAccept;
+
+  /// No description provided for @moderationPolicyAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'You have accepted these rules.'**
+  String get moderationPolicyAccepted;
+
+  /// No description provided for @moderationPolicySaveAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules accepted. Save again to send this change.'**
+  String get moderationPolicySaveAgain;
+
+  /// No description provided for @moderationPolicyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept this server’s shared-content rules before sending shared changes. Local drafts remain saved.'**
+  String get moderationPolicyRequired;
+
+  /// No description provided for @moderationRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Report details are removed 180 days after review is closed. Open reports remain available for review. The administrator may restrict access to the selected shared space; your personal account remains.'**
+  String get moderationRetention;
+
+  /// No description provided for @moderationRecordIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Record identifier'**
+  String get moderationRecordIdentifier;
+
+  /// No description provided for @moderationAccountIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Account identifier'**
+  String get moderationAccountIdentifier;
+
+  /// No description provided for @moderationReportedType.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported type'**
+  String get moderationReportedType;
 }
 
 class _AppLocalizationsDelegate

@@ -13,6 +13,7 @@ class NativeFinanceService extends NativeDatabase
             $version = str_starts_with($operation,'finance2.') ? 2 : 1;
             $action = $version === 2 ? 'finance.'.substr($operation,9) : $operation;
             $user = $this->actor()['user']; $scope = $this->uuid($params['scopeId'] ?? null);
+            (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if (in_array($operation, ['finance.enable', 'finance.grant'], true)) { return (new NativeFinanceSettings($this->container))->changePolicy($operation, $params, $user); }
             if ($operation === 'finance.grants') {
                 $this->fields($params, ['scopeId']); $this->scope($scope, $user['id'], false, true);

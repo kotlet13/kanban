@@ -127,7 +127,10 @@ class NativeDeletionPlan extends NativeDatabase
         $impact['sharedPaymentReceiptsRetained']=$this->n('familyhub_payment_projections',"owner_account_id=? AND json_extract(data,'$.privateAccountId') IS NULL",[$account]);
         if ($linkedFacts || $impact['privatePaymentProjectionsDeleted'] || $impact['sharedPaymentReceiptsRetained']) { $policy=3; }
         $impact['organizationProjectsDetached']=count($organizationLinks);
-        $plan=['serverId'=>$this->serverId(),'accountId'=>$account,'policyVersion'=>$policy,'canDelete'=>!$blocks,'blockers'=>$blocks,'impact'=>$impact,'sharedScopes'=>$shared,'ownedScopes'=>$owned,'resolutions'=>$resolutions];
+        $impact['sharedContentAcceptancesDeleted']=$this->n('familyhub_policy_acceptances','account_id=?',[$account]);
+        $impact['moderationReportsDeleted']=$this->n('familyhub_moderation_reports',"reporter_account_id=? OR (target_type='user' AND target_id=?) OR EXISTS(SELECT 1 FROM familyhub_records g WHERE target_type='record' AND g.scope_id=familyhub_moderation_reports.scope_id AND g.id=target_id AND g.created_by=?) OR EXISTS(SELECT 1 FROM familyhub_finance_records f WHERE target_type='finance' AND f.scope_id=familyhub_moderation_reports.scope_id AND f.id=target_id AND f.created_by=?)",[$account,$account,$account,$account]);
+        foreach ($owned as &$ownedScope) { $ownedScope['moderationReportsDeletedIfScopeDeleted']=$this->n('familyhub_moderation_reports','scope_id=?',[$ownedScope['id']]); }unset($ownedScope);
+        $plan=['serverId' =>$this->serverId(),'accountId'=>$account,'policyVersion'=>$policy,'canDelete'=>!$blocks,'blockers'=>$blocks,'impact'=>$impact,'sharedScopes'=>$shared,'ownedScopes'=>$owned,'resolutions'=>$resolutions];
         if ($policy===3) { $plan['linkedFinancialFacts']=$linkedFacts; }
         $plan['previewHash']=hash('sha256',$this->canonical([$plan,$versions,$this->fingerprint($user)]));
         return ['wire'=>$plan,'mutations'=>$mutations,'organizationLinks'=>$organizationLinks,'privateProjects'=>array_column($private,'id')];

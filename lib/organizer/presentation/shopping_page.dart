@@ -1,3 +1,4 @@
+import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
@@ -15,6 +16,7 @@ class OrganizerShoppingPage extends StatefulWidget {
     this.readOnly = false,
     this.scopeLabel,
     this.titleAccessory,
+    this.reportScopeId,
     this.onShare,
     this.onMoveToHousehold,
     this.emptyDescription,
@@ -23,6 +25,7 @@ class OrganizerShoppingPage extends StatefulWidget {
   final OrganizerCollectionActions actions;
   final bool readOnly;
   final String? scopeLabel;
+  final String? reportScopeId;
   final Widget? titleAccessory;
   final ValueChanged<LocalShoppingList>? onShare, onMoveToHousehold;
   final String? emptyDescription;
@@ -116,7 +119,12 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                         .length,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: widget.reportScopeId == null
+                    ? const Icon(Icons.chevron_right)
+                    : ContentReportButton(
+                        scopeId: widget.reportScopeId!,
+                        targetId: list.id,
+                      ),
                 onTap: () {
                   setState(() => _showAll = false);
                   widget.onSelection(list.id);
@@ -175,6 +183,11 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                 subtitle: widget.scopeLabel ?? l.organizerPersonal,
               ),
             ),
+            if (widget.reportScopeId != null)
+              ContentReportButton(
+                scopeId: widget.reportScopeId!,
+                targetId: list.id,
+              ),
             if (!widget.readOnly)
               IconButton(
                 tooltip: l.organizerEditList,
@@ -299,6 +312,11 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             ),
           ),
         ),
+        if (widget.reportScopeId != null)
+          ContentReportButton(
+            scopeId: widget.reportScopeId!,
+            targetId: item.id,
+          ),
       ],
     ),
   );

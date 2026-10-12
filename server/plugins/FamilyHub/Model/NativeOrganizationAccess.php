@@ -7,6 +7,7 @@ class NativeOrganizationAccess extends NativeDatabase
 
     public function leader($organization, $accountId)
     {
+        if ($organization && $this->one('SELECT scope_id FROM familyhub_moderation_blocks WHERE scope_id=? AND account_id=?',[$organization['id'],$accountId])) { return false; }
         if (!$organization || $organization['kind'] !== 'organization' || (int)$organization['access_policy_version'] !== 2) {
             return false;
         }
@@ -16,11 +17,13 @@ class NativeOrganizationAccess extends NativeDatabase
 
     public function directMember($scopeId, $accountId)
     {
+        if ($this->one('SELECT scope_id FROM familyhub_moderation_blocks WHERE scope_id=? AND account_id=?',[$scopeId,$accountId])) { return null; }
         return $this->one('SELECT m.*,u.username,u.name FROM familyhub_members m JOIN familyhub_accounts a ON a.account_id=m.account_id AND a.user_id=m.user_id JOIN users u ON u.id=a.user_id WHERE m.scope_id=? AND m.account_id=? AND m.active=1 AND u.is_active=1', [$scopeId, $accountId]);
     }
 
     public function decorate($scope, $accountId, $directRole = null)
     {
+        if (!$scope || $this->one('SELECT scope_id FROM familyhub_moderation_blocks WHERE scope_id=? AND account_id=?',[$scope['id'],$accountId])) { return null; }
         $parentId = $scope['parent_scope_id'] ?? $scope['organization_id'] ?? null;
         $parent = $parentId ? $this->one('SELECT * FROM familyhub_scopes WHERE id=?', [$parentId]) : null;
         $organization = $scope['kind'] === 'organization' ? $scope : ($parent && $parent['kind']==='organization' ? $parent : null);

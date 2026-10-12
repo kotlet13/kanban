@@ -1,3 +1,4 @@
+import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
@@ -20,6 +21,7 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.scopeLabel,
     this.titleAccessory,
     this.reminderScopeId,
+    this.reportScopeId,
     this.onShare,
   });
   final OrganizerSnapshot snapshot;
@@ -29,6 +31,7 @@ class OrganizerProjectsPage extends StatefulWidget {
   final String? scopeLabel;
   final Widget? titleAccessory;
   final String? reminderScopeId;
+  final String? reportScopeId;
   final ValueChanged<LocalProject>? onShare;
   final bool home;
   final String? selectedId;
@@ -175,6 +178,11 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
+                  if (widget.reportScopeId != null)
+                    ContentReportButton(
+                      scopeId: widget.reportScopeId!,
+                      targetId: project.id,
+                    ),
                   const Icon(Icons.chevron_right, size: 20),
                 ],
               ),
@@ -239,6 +247,11 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                     : project.description,
               ),
             ),
+            if (widget.reportScopeId != null)
+              ContentReportButton(
+                scopeId: widget.reportScopeId!,
+                targetId: project.id,
+              ),
             if (!widget.readOnly)
               IconButton(
                 tooltip: l.organizerEditProject,
@@ -290,13 +303,22 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                       OrganizerTaskRow(
                         task: task,
                         snapshot: widget.snapshot,
-                        trailing: widget.reminderScopeId == null
-                            ? null
-                            : RemoteReminderButton(
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.reportScopeId != null)
+                              ContentReportButton(
+                                scopeId: widget.reportScopeId!,
+                                targetId: task.id,
+                              ),
+                            if (widget.reminderScopeId != null)
+                              RemoteReminderButton(
                                 scopeId: widget.reminderScopeId!,
                                 targetType: 'task',
                                 targetId: task.id,
                               ),
+                          ],
+                        ),
                         onEdit: widget.readOnly
                             ? null
                             : () => widget.actions.task(task: task),
@@ -322,6 +344,7 @@ class OrganizerTasksPage extends StatelessWidget {
     this.scopeLabel,
     this.titleAccessory,
     this.reminderScopeId,
+    this.reportScopeId,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
@@ -329,6 +352,7 @@ class OrganizerTasksPage extends StatelessWidget {
   final String? scopeLabel;
   final Widget? titleAccessory;
   final String? reminderScopeId;
+  final String? reportScopeId;
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -340,13 +364,19 @@ class OrganizerTasksPage extends StatelessWidget {
     Widget row(LocalTask task) => OrganizerTaskRow(
       task: task,
       snapshot: snapshot,
-      trailing: reminderScopeId == null
-          ? null
-          : RemoteReminderButton(
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (reportScopeId != null)
+            ContentReportButton(scopeId: reportScopeId!, targetId: task.id),
+          if (reminderScopeId != null)
+            RemoteReminderButton(
               scopeId: reminderScopeId!,
               targetType: 'task',
               targetId: task.id,
             ),
+        ],
+      ),
       onEdit: readOnly ? null : () => actions.task(task: task),
       onCompleted: readOnly
           ? null

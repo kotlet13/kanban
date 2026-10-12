@@ -178,8 +178,8 @@ extension CollaborationNotificationSync on CollaborationRepository {
       _checkEpoch(epoch);
       await _renewLease(p);
       final rows = await database.rows(
-        "SELECT * FROM commands WHERE partition=? AND state='pending' AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||commands.partition||':'||json_extract(commands.params,'\$.scopeId')) ORDER BY sequence LIMIT 1",
-        [p],
+        "SELECT * FROM commands WHERE partition=? AND state='pending' AND (?=1 OR operation!='reminders.put' OR EXISTS(SELECT 1 FROM scopes s WHERE s.partition=commands.partition AND s.id=json_extract(commands.params,'\$.scopeId') AND json_extract(s.data,'\$.kind')='personal')) AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||commands.partition||':'||json_extract(commands.params,'\$.scopeId')) ORDER BY sequence LIMIT 1",
+        [p, _sharedUploadsAllowed ? 1 : 0],
       );
       if (rows.isEmpty) return;
       final command = rows.first,

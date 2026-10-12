@@ -3642,4 +3642,117 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingBlockCollision =>
       'A separate space already exists for this project. Refresh the space list and check its existing sharing.';
+
+  @override
+  String get moderationReportContent => 'Report content';
+
+  @override
+  String get moderationReportUser => 'Report user';
+
+  @override
+  String get moderationReportReason => 'Reason';
+
+  @override
+  String get moderationReportDetails => 'Details (optional)';
+
+  @override
+  String get moderationReportPrivacy =>
+      'This report goes only to the administrator of your selected server. TriparNA does not receive it. Only the data shown below, your account identity, the reason and details are sent. No account token or entire workspace is included.';
+
+  @override
+  String moderationRecipient(String recipient, String host) {
+    return 'Recipient: $recipient · $host';
+  }
+
+  @override
+  String get moderationReportedData => 'Data included in this report';
+
+  @override
+  String get moderationSendReport => 'Send report';
+
+  @override
+  String get moderationReportSent =>
+      'The server administrator received your report.';
+
+  @override
+  String get moderationReportRetry =>
+      'Delivery could not be confirmed. Retry sends the same report once; your reason and details are kept unchanged.';
+
+  @override
+  String get moderationReasonHarassment => 'Harassment or bullying';
+
+  @override
+  String get moderationReasonHate => 'Hate speech';
+
+  @override
+  String get moderationReasonSexual => 'Sexual content';
+
+  @override
+  String get moderationReasonViolence => 'Violence or threats';
+
+  @override
+  String get moderationReasonIllegal => 'Illegal content';
+
+  @override
+  String get moderationReasonSpam => 'Spam or deception';
+
+  @override
+  String get moderationReasonPrivacy => 'Privacy violation';
+
+  @override
+  String get moderationReasonOther => 'Other';
+
+  @override
+  String get moderationDetailsLimit =>
+      'Details can contain at most 2,000 UTF-8 bytes. Shorten the text.';
+
+  @override
+  String get moderationUpgradeRequired =>
+      'Reporting and sharing rules require FamilyHub 0.12.0 or later on your selected server. Ask its administrator to upgrade. Local use, reading and backups remain available.';
+
+  @override
+  String get moderationOffline =>
+      'Reporting requires a connection to your selected server. Your local data and unsent changes remain available. Try again when the server is reachable.';
+
+  @override
+  String get moderationPreviewStale =>
+      'The reported content or your access has changed. Close this form and open a new report to review the current data.';
+
+  @override
+  String get moderationPolicyTitle => 'Rules for shared content';
+
+  @override
+  String get moderationPolicyDescription =>
+      'Before publishing or sending changes to a shared space, review and accept this server’s rules. Personal and local use does not require acceptance.';
+
+  @override
+  String get moderationPolicyCheckbox =>
+      'I have read and accept these shared-content rules.';
+
+  @override
+  String get moderationPolicyAccept => 'Accept rules';
+
+  @override
+  String get moderationPolicyAccepted => 'You have accepted these rules.';
+
+  @override
+  String get moderationPolicySaveAgain =>
+      'Rules accepted. Save again to send this change.';
+
+  @override
+  String get moderationPolicyRequired =>
+      'Accept this server’s shared-content rules before sending shared changes. Local drafts remain saved.';
+
+  @override
+  String get moderationRetention =>
+      'Report details are removed 180 days after review is closed. Open reports remain available for review. The administrator may restrict access to the selected shared space; your personal account remains.';
+
+  @override
+  String get moderationRecordIdentifier => 'Record identifier';
+
+  @override
+  String get moderationAccountIdentifier => 'Account identifier';
+
+  @override
+  String get moderationReportedType => 'Reported type';
 }

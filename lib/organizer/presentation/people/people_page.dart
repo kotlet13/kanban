@@ -1,3 +1,4 @@
+import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
@@ -55,12 +56,14 @@ class OrganizerPeoplePage extends ConsumerWidget {
         ),
       ],
       submitLabel: l.save,
+      sharedPolicyScopeId: scope?.id,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard == null
           ? localGuard?.wrap
           : (form) => SharingSessionBoundary(guard: guard, child: form),
       onSubmit: (values) async {
         final name = values['name']!.trim(), notes = values['notes'] ?? '';
+
         if (scope == null) {
           if (localGuard?.isCurrent != true) {
             throw const OrganizerConflictException(
@@ -174,6 +177,9 @@ class OrganizerPeoplePage extends ConsumerWidget {
           ExpansionTile(
             key: ValueKey('person-${person.id}'),
             title: Text(person.name),
+            trailing: scope == null
+                ? null
+                : ContentReportButton(scopeId: scope!.id, targetId: person.id),
             subtitle: person.archived ? Text(l.peopleArchived) : null,
             children: [
               if (person.notes.isNotEmpty) ListTile(title: Text(person.notes)),

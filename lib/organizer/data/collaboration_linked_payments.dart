@@ -31,7 +31,13 @@ extension CollaborationLinkedPayments on CollaborationRepository {
     if (features is! Map || features['linkedPayments'] != true) {
       throw const CollaborationException('client_upgrade_required');
     }
-    final reply = await _callSession(session, epoch, operation, params);
+    final reply = await _callSession(
+      session,
+      epoch,
+      operation,
+      params,
+      capabilitiesVerified: true,
+    );
     _checkEpoch(epoch);
     return reply;
   }

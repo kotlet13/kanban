@@ -3648,4 +3648,117 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingBlockCollision =>
       'Za ta projekt že obstaja ločen prostor. Osveži seznam prostorov in preveri obstoječe deljenje.';
+
+  @override
+  String get moderationReportContent => 'Prijavi vsebino';
+
+  @override
+  String get moderationReportUser => 'Prijavi uporabnika';
+
+  @override
+  String get moderationReportReason => 'Razlog';
+
+  @override
+  String get moderationReportDetails => 'Podrobnosti (neobvezno)';
+
+  @override
+  String get moderationReportPrivacy =>
+      'Prijava gre samo skrbniku izbranega strežnika. TriparNA je ne prejme. Pošljejo se samo spodaj prikazani podatki, identiteta vašega računa, razlog in podrobnosti. Žeton računa in celoten prostor nista vključena.';
+
+  @override
+  String moderationRecipient(String recipient, String host) {
+    return 'Prejemnik: $recipient · $host';
+  }
+
+  @override
+  String get moderationReportedData => 'Podatki, vključeni v prijavo';
+
+  @override
+  String get moderationSendReport => 'Pošlji prijavo';
+
+  @override
+  String get moderationReportSent =>
+      'Skrbnik strežnika je prejel vašo prijavo.';
+
+  @override
+  String get moderationReportRetry =>
+      'Dostave ni bilo mogoče potrditi. Ponovni poskus pošlje isto prijavo samo enkrat; razlog in podrobnosti ostanejo nespremenjeni.';
+
+  @override
+  String get moderationReasonHarassment => 'Nadlegovanje ali ustrahovanje';
+
+  @override
+  String get moderationReasonHate => 'Sovražni govor';
+
+  @override
+  String get moderationReasonSexual => 'Spolna vsebina';
+
+  @override
+  String get moderationReasonViolence => 'Nasilje ali grožnje';
+
+  @override
+  String get moderationReasonIllegal => 'Nezakonita vsebina';
+
+  @override
+  String get moderationReasonSpam => 'Neželena vsebina ali zavajanje';
+
+  @override
+  String get moderationReasonPrivacy => 'Kršitev zasebnosti';
+
+  @override
+  String get moderationReasonOther => 'Drugo';
+
+  @override
+  String get moderationDetailsLimit =>
+      'Podrobnosti lahko vsebujejo največ 2.000 bajtov UTF-8. Skrajšajte besedilo.';
+
+  @override
+  String get moderationUpgradeRequired =>
+      'Prijave in pravila deljenja zahtevajo FamilyHub 0.12.0 ali novejši na izbranem strežniku. Skrbnika prosite za nadgradnjo. Lokalna uporaba, branje in kopije ostanejo na voljo.';
+
+  @override
+  String get moderationOffline =>
+      'Za prijavo je potrebna povezava z izbranim strežnikom. Lokalni podatki in neposlane spremembe ostanejo na voljo. Poskusite znova, ko bo strežnik dosegljiv.';
+
+  @override
+  String get moderationPreviewStale =>
+      'Prijavljena vsebina ali vaš dostop se je spremenil. Zaprite obrazec in odprite novo prijavo za pregled trenutnih podatkov.';
+
+  @override
+  String get moderationPolicyTitle => 'Pravila skupne vsebine';
+
+  @override
+  String get moderationPolicyDescription =>
+      'Pred objavo ali pošiljanjem sprememb v skupni prostor preglejte in sprejmite pravila tega strežnika. Osebna in lokalna uporaba ne zahtevata sprejema.';
+
+  @override
+  String get moderationPolicyCheckbox =>
+      'Prebral/-a sem in sprejemam ta pravila skupne vsebine.';
+
+  @override
+  String get moderationPolicyAccept => 'Sprejmi pravila';
+
+  @override
+  String get moderationPolicyAccepted => 'Ta pravila ste sprejeli.';
+
+  @override
+  String get moderationPolicySaveAgain =>
+      'Pravila so sprejeta. Ponovno shranite za pošiljanje te spremembe.';
+
+  @override
+  String get moderationPolicyRequired =>
+      'Pred pošiljanjem skupnih sprememb sprejmite pravila skupne vsebine tega strežnika. Lokalni osnutki ostanejo shranjeni.';
+
+  @override
+  String get moderationRetention =>
+      'Podrobnosti prijave se odstranijo 180 dni po zaključku obravnave. Odprte prijave ostanejo za obravnavo. Skrbnik lahko omeji dostop do izbranega skupnega prostora; osebni račun ostane.';
+
+  @override
+  String get moderationRecordIdentifier => 'Identifikator zapisa';
+
+  @override
+  String get moderationAccountIdentifier => 'Identifikator računa';
+
+  @override
+  String get moderationReportedType => 'Vrsta prijavljenega zapisa';
 }
