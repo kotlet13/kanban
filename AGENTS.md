@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+12. oktober — po fizični Android prijavi zamrznjene rokice je popravek
+**Android1.6.1(24) Aktivno za domači(15) od12:36**. Funkcionalnif6520a0/
+metadata196b711, [dokazi](docs/release/IDEAS_PAN_ZOOM_RELEASE.md). Sam onPanCancel
+je ohranjal otroški PanGestureRecognizer in kradel viewerjeve poteze; ves
+risarski komplet je zdaj skupaj izključen v hand/read-only načinu. Menjava
+orodja/ACL/boardID prekliče nedokončano potezo; podatki/fotografije/osnutki/
+formati/strežnik ostanejo. Pred-fixdejanski pan odpove360/800/1280,
+20 ciljni UI PASS/čista ciljna analiza; novi testi dejansko pan/pinchajo po
+risanju/izbiri/dviguprsta/reentry in ne spreminjajo JSON table. Ena podpisana
+AAB24,317 frozeninputs/isti cert+Firebase+8perms kot23/bundle/CRC/16KiB/23+7
+source PASS;23 ohranjen in iz nove izdaje izključen,0 novih/izgubljenih naprav.
+Uporabnik je potrdil osnovno fizično delo Idejnika na Androidu; fizični
+preizkus popravljenih potez24 še ni potrjen. FamilyHub0.13/schema17,
+gostovanje, SDK/locks, iOS/Mac/splet/javna objava niso spremenjeni.
+
 12. oktober — po naročilu naslednjega koraka je **test2 FamilyHub0.13.0/schema17**
 in **Android1.6.0(23) Aktivno za domači(15) od11:52**. Funkcionalni03ce0de/
 metadata528185a, [dokazi](docs/release/IDEAS_RELEASE.md). Sveža dejanska kopija

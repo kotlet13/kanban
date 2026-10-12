@@ -24,10 +24,10 @@ na platnu na360/800/1280. Po popravku **20 ciljnih testov PASS**, ciljna analiza
 pinch na samem platnu, dvig enega prsta in nadaljnji pan, ponoven vstop, bralni
 pogled ter menjavo orodja/pravice s prstom še na zaslonu. Sprememba pogleda ne
 spremeni JSON table in ne pokliče podatkovnega zapisovanja. Preostalih14 so
-obstoječi real-provider testi fotografij, urejanja, kopij prikaza, prijav in
+obstoječi real-provider testi fotografij, urejanja, predogledov, prijav in
 konfliktov. Dokazi so v `build/qa/ideas/gesture-{before,final,targeted,analyze}.log`.
 
-Popravek je namenjen interni Android1.6.1(24); dejanska gradnja/objava se
-zabeležita v ločenem izdajnem dokazilu. Fizičnega popravljenega obnašanja na
+Popravek je objavljen v interni Android1.6.1(24), Aktivno od12:36;
+[dejanska gradnja in objava](release/IDEAS_PAN_ZOOM_RELEASE.md). Fizičnega popravljenega obnašanja na
 uporabnikovem telefonu še ne trdimo. FamilyHub0.13/schema17, gostovanje,
 SDK/odvisnosti/podpisi, iOS/Mac in javna izdaja se pri tem ne spreminjajo.

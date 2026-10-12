@@ -1,5 +1,10 @@
 # Jivie
 
+**12. oktober,12:36 — interna1.6.1(24):** popravljena rokica Idejnika po
+risanju/izbiri/pinch/reentry,20 ciljnih UI PASS in čista ciljna analiza.
+Aktivno za isti domači(15), podpis/Firebase/8 dovoljenj ohranjeni.
+[Dokazi](docs/release/IDEAS_PAN_ZOOM_RELEASE.md). Fizični preizkus popravka še sledi.
+
 **12. oktober,11:52 — interna1.6.0(23):** Idejnik s fotografijami je Aktivno za
 isti domači(15). Test2 je FamilyHub0.13.0/schema17 po sveži dejanski obnovi
 90 tabel/149 vrstic/2 datotek in ohranjenem prehodu na92 tabel. Isti računi,
