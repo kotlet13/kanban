@@ -1,5 +1,10 @@
 # Jivie
 
+**12. oktober,08:54 — interna1.5.2(22):** prijava vsebine ob naslovu, spodaj
+poravnana ikona brisanja, Prekliči in ikona Shrani. Sorodni urejevalniki so
+usklajeni;133 ciljnihUI PASS/čista analiza. Aktivno za isti domači(15),
+[dokazi](docs/release/EDITOR_ACTIONS_RELEASE.md). Fizična nadgradnja še sledi.
+
 **12. oktober, 08:22 — interna1.5.1(21):** prijave so v meniju »…« ali podrobnostih,
 pregledi brez stalnih zastavic. Aktivno za isti domači (15), podpis in Firebase
 ohranjena. [Dokazi](docs/release/CONTEXTUAL_REPORTS_RELEASE.md). Fizična nadgradnja

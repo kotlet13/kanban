@@ -1,12 +1,20 @@
 # Navodila za delo na projektu
 
+12. oktober — korekcija urejevalnikov je objavljena: **Android1.5.2(22) Aktivno
+od08:54** za isti domači(15). Funkcionalni02cbfec/metadata1c39057, [dokazi](docs/release/EDITOR_ACTIONS_RELEASE.md).
+Prijava ob naslovu; ena vrstica redDelete/Cancel/Saveicon v sorodnihCRUD obrazcih.
+133 ciljnihUI PASS/analizaNoissues;305 frozeninputs, isti podpis/Firebase/8perms
+kot21, bundle/CRC/16KiB/23+7kontrol PASS. Ena podpisanagradnja; AAB20/21 ohranjena.
+Naložen22/21izključen,0 izgubljenih/novihnaprav. Telefon fizično še ni nadgrajen;
+strežniki/sheme/podatki/iOS/Mac/javna izdaja niso spremenjeni.
+
 12. oktober — dodatna izrecna korekcija urejevalnikov: obstoječi gumb »Prijavi
 vsebino« sodi ob naslov obrazca. Spodaj ena poravnana vrstica: rdeča ikona
 brisanja, besedilni Prekliči, ikona Shrani z namigom. Ne vračaj navpičnega
 OverflowBar razporejanja teh dejanj. Uskladi sorodne obrazce Shrani, ne spreminjaj
 semantike registracije/povabil/potrditev/oddaje prijave. [Dogovor in obseg](docs/EDITOR_ACTIONS_LAYOUT.md).
-Ta korekcija je po interni1.5.1(21); nova Android objava s tem prikazom še ni
-izvedena. Poverilnice, strežniki, sheme in pravice ostanejo isti.
+Ta korekcija je po interni1.5.1(21), pozneje objavljena v1.5.2(22).
+Poverilnice, strežniki, sheme in pravice ostanejo isti.
 
 12. oktober — po izrecnem naročilu je interna **Android1.5.1(21) Aktivno od08:22**
 za isti **domači(15)**. Funkcionalni aa1db2b/metadata1ba60b6; stalne zastavice

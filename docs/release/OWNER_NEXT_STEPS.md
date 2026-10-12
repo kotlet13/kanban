@@ -1,5 +1,10 @@
 # Jivie — kaj še urediš ti
 
+**12. oktober,08:54:** interna **1.5.2(22)** je aktivna za domači(15),
+[dokazi](EDITOR_ACTIONS_RELEASE.md). Posodobi prek internega kanala: prijava je
+ob naslovu obrazca, brisanje/Prekliči/Shrani spodaj v eni vrstici. Novo fizično
+nadgradnjo/prikaz še preverimo; strežnik ostaja isti.
+
 **12. oktober, 08:22:** interna **1.5.1 (21)** je aktivna za isti **domači (15)**.
 [Dokazi](CONTEXTUAL_REPORTS_RELEASE.md). Posodobi prek internega kanala; prijava
 vsebine je pod »…« ali v podrobnostih, uporabnika pa v meniju ob članu. Fizično

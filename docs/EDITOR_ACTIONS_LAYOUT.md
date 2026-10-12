@@ -16,7 +16,9 @@ ohranijo svojo semantiko. Vrt ohrani shranjevanje v glavi; podrejeni urejevalnik
 uporabijo isto vrstico. Opomnik ohrani razliko med zaprtjem obrazca in preklicem
 že ustvarjenega opomnika.
 
-Gre za spremembo prikaza po izdaji **1.5.1 (21)**, ne dokaz nove nameščene gradnje.
+Gre za spremembo prikaza po izdaji **1.5.1 (21)**, pozneje objavljeno v interni
+**1.5.2 (22)** od08:54. [Izdajni dokazi](release/EDITOR_ACTIONS_RELEASE.md).
+Nova fizična namestitev na telefon še ni potrjena.
 Shranjevanje, validacija, potrditve brisanja, busy stanje, session/finance guardi,
 pravice, pogodba prijave in podatkovne sheme ostanejo isti. Sprememba ne posega
 v FamilyHub ali gostovanje.
