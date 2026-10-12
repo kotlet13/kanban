@@ -3755,4 +3755,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moderationReportedType => 'Reported type';
+
+  @override
+  String get moderationMoreActions => 'More actions';
 }

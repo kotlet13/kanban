@@ -1,4 +1,4 @@
-import '../shared/content_moderation.dart';
+import '../shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
@@ -177,13 +177,34 @@ class OrganizerPeoplePage extends ConsumerWidget {
           ExpansionTile(
             key: ValueKey('person-${person.id}'),
             title: Text(person.name),
-            trailing: scope == null
-                ? null
-                : ContentReportButton(scopeId: scope!.id, targetId: person.id),
             subtitle: person.archived ? Text(l.peopleArchived) : null,
             children: [
               if (person.notes.isNotEmpty) ListTile(title: Text(person.notes)),
-              if (!readOnly)
+              if (scope != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SharedContentActionsMenu(
+                    scopeId: scope!.id,
+                    targetId: person.id,
+                    actions: [
+                      if (!readOnly)
+                        ContentMenuAction(
+                          label: l.edit,
+                          icon: Icons.edit_outlined,
+                          onSelected: () => _edit(context, ref, person),
+                        ),
+                      if (!readOnly)
+                        ContentMenuAction(
+                          label: person.archived
+                              ? l.peopleRestore
+                              : l.peopleArchive,
+                          icon: Icons.archive_outlined,
+                          onSelected: () => _archive(context, ref, person),
+                        ),
+                    ],
+                  ),
+                )
+              else if (!readOnly)
                 Wrap(
                   children: [
                     TextButton(
@@ -210,6 +231,12 @@ class OrganizerPeoplePage extends ConsumerWidget {
                         : Icons.radio_button_unchecked,
                   ),
                   title: Text(task.title),
+                  trailing: readOnly && scope != null
+                      ? SharedContentActionsMenu(
+                          scopeId: scope!.id,
+                          targetId: task.id,
+                        )
+                      : null,
                   onTap: readOnly || onTask == null
                       ? null
                       : () => onTask!(task),

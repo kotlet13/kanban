@@ -1408,5 +1408,6 @@
   "moderationRetention": "Podrobnosti prijave se odstranijo 180 dni po zaključku obravnave. Odprte prijave ostanejo za obravnavo. Skrbnik lahko omeji dostop do izbranega skupnega prostora; osebni račun ostane.",
   "moderationRecordIdentifier": "Identifikator zapisa",
   "moderationAccountIdentifier": "Identifikator računa",
-  "moderationReportedType": "Vrsta prijavljenega zapisa"
+  "moderationReportedType": "Vrsta prijavljenega zapisa",
+  "moderationMoreActions": "Več dejanj"
 }

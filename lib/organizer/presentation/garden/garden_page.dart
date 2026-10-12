@@ -1,4 +1,3 @@
-import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,9 +13,16 @@ import '../shared/household_transfer.dart';
 class GardenPage extends ConsumerWidget {
   const GardenPage({super.key});
 
-  Future<void> _open(BuildContext context, {Garden? garden}) => Navigator.of(
-    context,
-  ).push<void>(MaterialPageRoute(builder: (_) => GardenEditor(garden: garden)));
+  Future<void> _open(
+    BuildContext context, {
+    Garden? garden,
+    String? reportScopeId,
+  }) => Navigator.of(context).push<void>(
+    MaterialPageRoute(
+      builder: (_) =>
+          GardenEditor(garden: garden, reportScopeId: reportScopeId),
+    ),
+  );
 
   Future<void> _delete(
     BuildContext context,
@@ -137,7 +143,13 @@ class GardenPage extends ConsumerWidget {
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              onTap: () => _open(context, garden: garden),
+                              onTap: () => _open(
+                                context,
+                                garden: garden,
+                                reportScopeId: remoteHousehold
+                                    ? shared!.selectedSpaceId
+                                    : null,
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -161,11 +173,6 @@ class GardenPage extends ConsumerWidget {
                                               expectedRevision: garden.revision,
                                             ),
                                       ),
-                                    ),
-                                  if (remoteHousehold)
-                                    ContentReportButton(
-                                      scopeId: shared!.selectedSpaceId!,
-                                      targetId: garden.id,
                                     ),
                                   IconButton(
                                     tooltip: l.delete,

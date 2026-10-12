@@ -1,4 +1,4 @@
-import 'shared/content_moderation.dart';
+import 'shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
@@ -119,12 +119,7 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                         .length,
                   ),
                 ),
-                trailing: widget.reportScopeId == null
-                    ? const Icon(Icons.chevron_right)
-                    : ContentReportButton(
-                        scopeId: widget.reportScopeId!,
-                        targetId: list.id,
-                      ),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   setState(() => _showAll = false);
                   widget.onSelection(list.id);
@@ -184,11 +179,19 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
               ),
             ),
             if (widget.reportScopeId != null)
-              ContentReportButton(
+              SharedContentActionsMenu(
                 scopeId: widget.reportScopeId!,
                 targetId: list.id,
-              ),
-            if (!widget.readOnly)
+                actions: [
+                  if (!widget.readOnly)
+                    ContentMenuAction(
+                      label: l.organizerEditList,
+                      icon: Icons.edit_outlined,
+                      onSelected: () => widget.actions.shoppingList(list),
+                    ),
+                ],
+              )
+            else if (!widget.readOnly)
               IconButton(
                 tooltip: l.organizerEditList,
                 onPressed: () => widget.actions.shoppingList(list),
@@ -312,8 +315,8 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             ),
           ),
         ),
-        if (widget.reportScopeId != null)
-          ContentReportButton(
+        if (widget.readOnly && widget.reportScopeId != null)
+          SharedContentActionsMenu(
             scopeId: widget.reportScopeId!,
             targetId: item.id,
           ),

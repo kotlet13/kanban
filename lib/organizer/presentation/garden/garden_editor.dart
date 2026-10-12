@@ -1,3 +1,4 @@
+import '../shared/content_actions_menu.dart';
 import '../shared/content_moderation.dart';
 import '../../state/collaboration_provider.dart';
 import 'dart:convert';
@@ -18,8 +19,9 @@ import 'garden_area_list.dart';
 
 /// The editor owns an uncommitted draft. Opening or cancelling never writes.
 class GardenEditor extends ConsumerStatefulWidget {
-  const GardenEditor({super.key, this.garden});
+  const GardenEditor({super.key, this.garden, this.reportScopeId});
   final Garden? garden;
+  final String? reportScopeId;
   @override
   ConsumerState<GardenEditor> createState() => _GardenEditorState();
 }
@@ -485,6 +487,12 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
             onPressed: _busy ? null : _leave,
           ),
           actions: [
+            if (widget.reportScopeId != null && widget.garden != null)
+              SharedContentActionsMenu(
+                scopeId: widget.reportScopeId!,
+                targetId: widget.garden!.id,
+                enabled: !_busy,
+              ),
             TextButton(
               key: const ValueKey('garden-save'),
               onPressed: _busy ? null : _save,

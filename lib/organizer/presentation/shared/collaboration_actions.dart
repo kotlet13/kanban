@@ -116,6 +116,15 @@ class CollaborationActions implements OrganizerCollectionActions {
         ? context.l10n.sharingCreateSharedList
         : context.l10n.organizerEditList,
     sharedPolicyScopeId: scope.id,
+    onReport: list == null
+        ? null
+        : () => showContentReport(
+            context,
+            ref,
+            scopeId: scope.id,
+            targetType: 'record',
+            targetId: list.id,
+          ),
     kind: OrganizerEditorKind.shoppingList,
     draft: OrganizerDraft(title: list?.title ?? ''),
     errorMessage: (error) => sharingErrorMessage(context, error),
@@ -146,6 +155,15 @@ class CollaborationActions implements OrganizerCollectionActions {
             ? context.l10n.organizerAddItem
             : context.l10n.organizerEditItem,
         sharedPolicyScopeId: scope.id,
+        onReport: item == null
+            ? null
+            : () => showContentReport(
+                context,
+                ref,
+                scopeId: scope.id,
+                targetType: 'record',
+                targetId: item.id,
+              ),
         kind: OrganizerEditorKind.shoppingItem,
         draft: OrganizerDraft(
           title: item?.title ?? '',
@@ -183,6 +201,15 @@ class CollaborationActions implements OrganizerCollectionActions {
         ? context.l10n.organizerAddProject
         : context.l10n.organizerEditProject,
     sharedPolicyScopeId: scope.id,
+    onReport: project == null
+        ? null
+        : () => showContentReport(
+            context,
+            ref,
+            scopeId: scope.id,
+            targetType: 'record',
+            targetId: project.id,
+          ),
     kind: OrganizerEditorKind.project,
     draft: OrganizerDraft(
       title: project?.title ?? '',
@@ -262,6 +289,15 @@ class CollaborationActions implements OrganizerCollectionActions {
           ? context.l10n.organizerAddTask
           : context.l10n.organizerEditTask,
       sharedPolicyScopeId: scope.id,
+      onReport: task == null
+          ? null
+          : () => showContentReport(
+              context,
+              ref,
+              scopeId: scope.id,
+              targetType: 'record',
+              targetId: task.id,
+            ),
       kind: OrganizerEditorKind.task,
       projects: data.projects,
       householdPeople: data.people,
@@ -476,6 +512,15 @@ class CollaborationActions implements OrganizerCollectionActions {
         ? context.l10n.organizerAddEvent
         : context.l10n.organizerEditEvent,
     sharedPolicyScopeId: scope.id,
+    onReport: event == null
+        ? null
+        : () => showContentReport(
+            context,
+            ref,
+            scopeId: scope.id,
+            targetType: 'record',
+            targetId: event.id,
+          ),
     kind: OrganizerEditorKind.event,
     projects: data.projects,
     projectSelectionEnabled:

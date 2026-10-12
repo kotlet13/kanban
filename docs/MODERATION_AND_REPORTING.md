@@ -1,5 +1,34 @@
 # Pravila deljenja in prijave — lokalna nadgradnja Jivie / FamilyHub
 
+## Uporabnikova korekcija prikaza — 12. oktober
+
+Stalna zastavica ob vsakem skupnem zapisu ni potrjena oblikovna smer. Prijava
+je prestavljena v meni »…« ali dejanske podrobnosti zapisa; prijava uporabnika
+je v meniju ob članu v Nastavitvah prostora. Pregledi projektov, seznamov,
+vrtov, agende in Vsi ohranijo običajno odpiranje vsebine. Finance združijo
+urejanje, zgodovino, opomnik in prijavo v eno mesto za dejanja.
+
+To je lokalna sprememba prikaza po izdaji20. Objavljeni AAB **1.5.0 (20)** še
+vsebuje prejšnje zastavice; novega paketa ali namestitve s to korekcijo še ni.
+Pogodba prijave, izrecna oddaja, pravila, FamilyHub0.12.0/schema16 in shranjeni
+podatki ostanejo isti. Prijava mora ostati dosegljiva tudi z bralnim dostopom.
+Odpiranje ali preklic menija ne pridobi predogleda in ne odda prijave; predogled
+se pridobi šele ob izbiri prijave, oddaja pa z izrecnim gumbom v obrazcu.
+
+[Googlova pravila UGC](https://support.google.com/googleplay/android-developer/answer/18258653?hl=en-ph)
+zahtevajo funkcijo prijave v aplikaciji, ne določajo stalne zastavice ob vrstici.
+To ni potrditev Googlovega pregleda konkretne izvedbe.
+
+Preverjanje te korekcije: **201 ciljnih UI testov PASS**, analiza **No issues found**,
+v desetih prizadetih
+zbirkah, vključno s 16 novimi primeri menija in obstoječim obrazcem prijave ter
+opomniki. Pregledi so preverjeni na 360/800/1280 točkah, bralna prijava, preklic
+brez oddaje, izrecna oddaja, urejanje/zgodovina in odstranitev starejšega člana
+brez accountId ostanejo dosegljivi. Odprt meni preživi običajno osvežitev istega
+računa; menjava računa ali arhiviranje preprečita staro izbiro brez API klica.
+Sintetična telefonska posnetka v `build/qa/report-menu-declutter/` sta vizualno
+pregledana; to ni dokaz namestitve na fizični Android.
+
 **Poznejši izdajni korak 12. oktobra:** test2 je dejansko nadgrajen na
 FamilyHub 0.12.0/schema16 po sveži preverjeni obnovi 86/141/2, Android 1.5.0 (20) pa je
 aktiven za domači (15) od 07:32. [Dokazi in meje](release/MODERATION_RELEASE.md)

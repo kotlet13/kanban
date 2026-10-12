@@ -6623,6 +6623,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reported type'**
   String get moderationReportedType;
+
+  /// No description provided for @moderationMoreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moderationMoreActions;
 }
 
 class _AppLocalizationsDelegate

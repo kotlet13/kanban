@@ -201,11 +201,17 @@ void main() {
         findsNothing,
       );
       await tester.ensureVisible(
-        find.byKey(const ValueKey('organization-leader-member')),
+        find.byKey(
+          const ValueKey('content-actions-user-$sharingScopeId-member'),
+        ),
       );
       await tester.tap(
-        find.byKey(const ValueKey('organization-leader-member')),
+        find.byKey(
+          const ValueKey('content-actions-user-$sharingScopeId-member'),
+        ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dodeli vodstveno vlogo'));
       await tester.pumpAndSettle();
       expect(controller.leadership, isEmpty);
       await tester.tap(

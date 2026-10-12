@@ -1,4 +1,4 @@
-import 'shared/content_moderation.dart';
+import 'shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
@@ -178,11 +178,6 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
-                  if (widget.reportScopeId != null)
-                    ContentReportButton(
-                      scopeId: widget.reportScopeId!,
-                      targetId: project.id,
-                    ),
                   const Icon(Icons.chevron_right, size: 20),
                 ],
               ),
@@ -248,11 +243,19 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               ),
             ),
             if (widget.reportScopeId != null)
-              ContentReportButton(
+              SharedContentActionsMenu(
                 scopeId: widget.reportScopeId!,
                 targetId: project.id,
-              ),
-            if (!widget.readOnly)
+                actions: [
+                  if (!widget.readOnly)
+                    ContentMenuAction(
+                      label: l.organizerEditProject,
+                      icon: Icons.edit_outlined,
+                      onSelected: () => widget.actions.project(project),
+                    ),
+                ],
+              )
+            else if (!widget.readOnly)
               IconButton(
                 tooltip: l.organizerEditProject,
                 onPressed: () => widget.actions.project(project),
@@ -306,12 +309,15 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (widget.reportScopeId != null)
-                              ContentReportButton(
+                            if (widget.readOnly && widget.reportScopeId != null)
+                              SharedContentActionsMenu(
                                 scopeId: widget.reportScopeId!,
                                 targetId: task.id,
+                                reminderType: 'task',
                               ),
-                            if (widget.reminderScopeId != null)
+                            if (widget.reminderScopeId != null &&
+                                (!widget.readOnly ||
+                                    widget.reportScopeId == null))
                               RemoteReminderButton(
                                 scopeId: widget.reminderScopeId!,
                                 targetType: 'task',
@@ -367,9 +373,13 @@ class OrganizerTasksPage extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (reportScopeId != null)
-            ContentReportButton(scopeId: reportScopeId!, targetId: task.id),
-          if (reminderScopeId != null)
+          if (readOnly && reportScopeId != null)
+            SharedContentActionsMenu(
+              scopeId: reportScopeId!,
+              targetId: task.id,
+              reminderType: 'task',
+            ),
+          if (reminderScopeId != null && (!readOnly || reportScopeId == null))
             RemoteReminderButton(
               scopeId: reminderScopeId!,
               targetType: 'task',

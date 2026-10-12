@@ -406,8 +406,18 @@ void main() {
     final controller = SharingUiController();
     await pumpSharing(tester, controller);
     await openMembers(tester);
-    await tester.ensureVisible(find.byTooltip('Odstrani člana'));
-    await tester.tap(find.byTooltip('Odstrani člana'));
+    await tester.ensureVisible(
+      find.byKey(
+        const ValueKey('content-actions-user-$sharingScopeId-member-2'),
+      ),
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey('content-actions-user-$sharingScopeId-member-2'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Odstrani člana'));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
     controller.switchAccount();

@@ -1408,5 +1408,6 @@
   "moderationRetention": "Report details are removed 180 days after review is closed. Open reports remain available for review. The administrator may restrict access to the selected shared space; your personal account remains.",
   "moderationRecordIdentifier": "Record identifier",
   "moderationAccountIdentifier": "Account identifier",
-  "moderationReportedType": "Reported type"
+  "moderationReportedType": "Reported type",
+  "moderationMoreActions": "More actions"
 }

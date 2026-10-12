@@ -1,4 +1,4 @@
-import '../shared/content_moderation.dart';
+import '../shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -6,7 +6,6 @@ import '../../domain/organizer_models.dart';
 import '../../domain/shared_finance_models.dart';
 import '../../domain/linked_payment_models.dart';
 import '../organizer_widgets.dart';
-import '../inbox/remote_reminder_editor.dart';
 import '../planning/task_plan_fields.dart';
 import 'finance_money.dart';
 import 'finance_source_link.dart';
@@ -364,6 +363,36 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     }
   }
 
+  Widget _rowActions(Object row) => widget.scopeId == null
+      ? IconButton(
+          tooltip: context.l10n.financeAudit,
+          onPressed: () => widget.onAudit(_id(row)),
+          icon: const Icon(Icons.history, size: 20),
+        )
+      : SharedContentActionsMenu(
+          scopeId: widget.scopeId!,
+          targetId: _id(row),
+          targetType: 'finance',
+          reminderType:
+              row is SharedFinanceEntry &&
+                  row.status == SharedFinanceStatus.planned
+              ? 'financeEntry'
+              : null,
+          actions: [
+            if (widget.canWrite)
+              ContentMenuAction(
+                label: context.l10n.edit,
+                icon: Icons.edit_outlined,
+                onSelected: () => _edit(row),
+              ),
+            ContentMenuAction(
+              label: context.l10n.financeAudit,
+              icon: Icons.history,
+              onSelected: () => widget.onAudit(_id(row)),
+            ),
+          ],
+        );
+
   Widget _card(Object row) => Card(
     child: Padding(
       padding: const EdgeInsets.all(16),
@@ -379,25 +408,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
-              if (row is SharedFinanceEntry &&
-                  row.status == SharedFinanceStatus.planned &&
-                  widget.scopeId != null)
-                RemoteReminderButton(
-                  scopeId: widget.scopeId!,
-                  targetType: 'financeEntry',
-                  targetId: row.id,
-                ),
-              if (widget.scopeId != null)
-                ContentReportButton(
-                  scopeId: widget.scopeId!,
-                  targetType: 'finance',
-                  targetId: _id(row),
-                ),
-              IconButton(
-                tooltip: context.l10n.financeAudit,
-                onPressed: () => widget.onAudit(_id(row)),
-                icon: const Icon(Icons.history, size: 20),
-              ),
+              _rowActions(row),
             ],
           ),
           if (row case SharedFinanceEntry e)
@@ -430,7 +441,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               icon: const Icon(Icons.credit_card_outlined),
               label: Text(context.l10n.paymentPaidPersonally),
             ),
-          if (widget.canWrite)
+          if (widget.scopeId == null && widget.canWrite)
             TextButton(
               onPressed: () => _edit(row),
               child: Text(context.l10n.edit),
@@ -454,10 +465,11 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           context.l10n.financeAccount,
           context.l10n.financePayerRecipient,
           context.l10n.financeEnteredBy,
-          context.l10n.financeAudit,
+          widget.scopeId == null
+              ? context.l10n.financeAudit
+              : context.l10n.moderationMoreActions,
           context.l10n.organizerTasks,
-          context.l10n.remoteReminderTitle,
-          context.l10n.moderationReportContent,
+          if (widget.scopeId == null) context.l10n.remoteReminderTitle,
         ])
           DataColumn(label: Text(label)),
       ],
@@ -507,13 +519,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               DataCell(SizedBox(width: 160, child: Text(_accountText(row)))),
               DataCell(SizedBox(width: 220, child: Text(_personText(row)))),
               DataCell(Text(_author(row))),
-              DataCell(
-                IconButton(
-                  tooltip: context.l10n.financeAudit,
-                  onPressed: () => widget.onAudit(_id(row)),
-                  icon: const Icon(Icons.history, size: 18),
-                ),
-              ),
+              DataCell(_rowActions(row)),
               DataCell(
                 row is SharedFinanceEntry && widget.scopeId != null
                     ? FinanceSourceLink(
@@ -523,26 +529,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                       )
                     : const SizedBox.shrink(),
               ),
-              DataCell(
-                row is SharedFinanceEntry &&
-                        row.status == SharedFinanceStatus.planned &&
-                        widget.scopeId != null
-                    ? RemoteReminderButton(
-                        scopeId: widget.scopeId!,
-                        targetType: 'financeEntry',
-                        targetId: row.id,
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              DataCell(
-                widget.scopeId == null
-                    ? const SizedBox.shrink()
-                    : ContentReportButton(
-                        scopeId: widget.scopeId!,
-                        targetType: 'finance',
-                        targetId: _id(row),
-                      ),
-              ),
+              if (widget.scopeId == null) const DataCell(SizedBox.shrink()),
             ],
           ),
       ],

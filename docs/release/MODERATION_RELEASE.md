@@ -1,5 +1,10 @@
 # Pravila in prijave — test2 ter interna Android 1.5.0 (20)
 
+**Poznejša korekcija prikaza:** uporabnik je zavrnil stalne zastavice ob vrsticah.
+[Prijava v meniju ali podrobnostih](../MODERATION_AND_REPORTING.md#uporabnikova-korekcija-prikaza--12-oktober)
+je sprememba izvora po tej izdaji. Spodaj navedeni zamrznjeni AAB20 je ne vsebuje;
+njegovi hashi in dokaz aktivne objave ostanejo veljavni za prvotni paket.
+
 12. oktober 2026. Po uporabnikovem nadaljnjem naročilu je dejansko nameščen
 **FamilyHub0.12.0/schema16 samo na jivie-test2.triparna.si**. Google Play potrjuje
 **Aktivno / 1.5.0 (20)** za isti interni kanal in isti seznam **domači (15)**,

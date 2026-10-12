@@ -100,6 +100,7 @@ Future<void> showOrganizerEditor(
   Future<LocalTask> Function()? onTimerToggle,
   String? creatorLabel,
   Future<void> Function()? onDelete,
+  Future<void> Function()? onReport,
   String Function(Object)? errorMessage,
   Widget Function(Widget)? wrap,
   String? sharedPolicyScopeId,
@@ -125,6 +126,7 @@ Future<void> showOrganizerEditor(
       creatorLabel: creatorLabel,
       onSave: onSave,
       onDelete: onDelete,
+      onReport: onReport,
       errorMessage: errorMessage,
       wrap: wrap,
       sharedPolicyScopeId: sharedPolicyScopeId,
@@ -153,6 +155,7 @@ class _RecordEditor extends StatefulWidget {
     this.creatorLabel,
     required this.onSave,
     this.onDelete,
+    this.onReport,
     this.errorMessage,
     this.wrap,
     this.sharedPolicyScopeId,
@@ -173,6 +176,7 @@ class _RecordEditor extends StatefulWidget {
   final String? creatorLabel;
   final Future<void> Function(OrganizerDraft) onSave;
   final Future<void> Function()? onDelete;
+  final Future<void> Function()? onReport;
   final String Function(Object)? errorMessage;
   final Widget Function(Widget)? wrap;
   final String? sharedPolicyScopeId;
@@ -728,6 +732,11 @@ class _RecordEditorState extends State<_RecordEditor> {
         ),
       ),
       actions: [
+        if (widget.onReport != null)
+          TextButton(
+            onPressed: _busy ? null : widget.onReport,
+            child: Text(l.moderationReportContent),
+          ),
         if (widget.onDelete != null)
           IconButton(
             tooltip: l.delete,

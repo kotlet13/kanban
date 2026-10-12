@@ -1,4 +1,4 @@
-import '../shared/content_moderation.dart';
+import '../shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -214,7 +214,7 @@ class NotificationTargetContent extends ConsumerWidget {
           if (!personalPresentation && record.type != 'membership')
             Align(
               alignment: Alignment.centerRight,
-              child: ContentReportButton(
+              child: SharedContentActionsMenu(
                 scopeId: scope!.id,
                 targetId: localId(record),
                 targetType: record.type.startsWith('finance')

@@ -42,40 +42,87 @@ class RemoteReminderButton extends ConsumerWidget {
         active ? Icons.notifications_active_outlined : Icons.add_alert_outlined,
         size: 20,
       ),
-      onPressed: () {
-        final guard = SharingSessionGuard(context, ref);
-        final selectedSpaceId = state.selectedSpaceId;
-        final financePolicyRevision = targetType == 'financeEntry'
-            ? state.financePolicyForScope(scopeId).revision
-            : null;
-        showDialog<void>(
-          context: context,
-          builder: (_) => SharingSessionBoundary(
-            guard: guard,
-            visibleWhen: (current) =>
-                current.selectedSpaceId == selectedSpaceId &&
-                (financePolicyRevision == null ||
-                    current.financePolicyForScope(scopeId).revision ==
-                        financePolicyRevision) &&
-                remoteReminderTargetAvailable(
-                  current,
-                  scopeId,
-                  targetType,
-                  targetId,
-                ),
-            child: _RemoteReminderDialog(
-              scopeId: scopeId,
-              targetType: targetType,
-              targetId: targetId,
-              guard: guard,
-              selectedSpaceId: selectedSpaceId,
-              financePolicyRevision: financePolicyRevision,
-            ),
-          ),
-        );
-      },
+      onPressed: () => showRemoteReminderEditor(
+        context,
+        ref,
+        scopeId: scopeId,
+        targetType: targetType,
+        targetId: targetId,
+      ),
     );
   }
+}
+
+String? remoteReminderActionLabel(
+  BuildContext context,
+  CollaborationState state,
+  String scopeId,
+  String targetType,
+  String targetId,
+) {
+  if (!remoteReminderTargetAvailable(state, scopeId, targetType, targetId)) {
+    return null;
+  }
+  final active = _reminders(
+    state,
+    scopeId,
+    targetType,
+    targetId,
+  ).any((r) => r.state == 'pending');
+  final canSchedule =
+      state.scopes.where((s) => s.id == scopeId).firstOrNull?.canEdit == true;
+  if (!canSchedule && !active) return null;
+  return !canSchedule
+      ? context.l10n.remoteReminderCancel
+      : active
+      ? context.l10n.remoteReminderEdit
+      : context.l10n.remoteReminderAdd;
+}
+
+void showRemoteReminderEditor(
+  BuildContext context,
+  WidgetRef ref, {
+  required String scopeId,
+  required String targetType,
+  required String targetId,
+}) {
+  final state = ref.read(collaborationProvider).valueOrNull;
+  if (state == null ||
+      remoteReminderActionLabel(
+            context,
+            state,
+            scopeId,
+            targetType,
+            targetId,
+          ) ==
+          null) {
+    return;
+  }
+  final guard = SharingSessionGuard(context, ref);
+  final selectedSpaceId = state.selectedSpaceId;
+  final financePolicyRevision = targetType == 'financeEntry'
+      ? state.financePolicyForScope(scopeId).revision
+      : null;
+  showDialog<void>(
+    context: context,
+    builder: (_) => SharingSessionBoundary(
+      guard: guard,
+      visibleWhen: (current) =>
+          current.selectedSpaceId == selectedSpaceId &&
+          (financePolicyRevision == null ||
+              current.financePolicyForScope(scopeId).revision ==
+                  financePolicyRevision) &&
+          remoteReminderTargetAvailable(current, scopeId, targetType, targetId),
+      child: _RemoteReminderDialog(
+        scopeId: scopeId,
+        targetType: targetType,
+        targetId: targetId,
+        guard: guard,
+        selectedSpaceId: selectedSpaceId,
+        financePolicyRevision: financePolicyRevision,
+      ),
+    ),
+  );
 }
 
 bool remoteReminderTargetAvailable(

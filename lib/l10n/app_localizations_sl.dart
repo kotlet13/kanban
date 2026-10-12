@@ -3761,4 +3761,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get moderationReportedType => 'Vrsta prijavljenega zapisa';
+
+  @override
+  String get moderationMoreActions => 'Več dejanj';
 }
