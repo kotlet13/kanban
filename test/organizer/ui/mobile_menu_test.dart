@@ -37,6 +37,9 @@ void main() {
               matching: find.byType(Scrollable),
             ),
           );
+          await tester.ensureVisible(target);
+          await tester.pumpAndSettle();
+          expect(target.hitTestable(), findsOneWidget);
           await tester.tap(target);
           await tester.pumpAndSettle();
           expect(

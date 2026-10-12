@@ -1,3 +1,6 @@
+import '../ideas/ideas_page.dart';
+import '../ideas/idea_editor.dart';
+import '../../state/idea_provider.dart';
 import '../shared/content_actions_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,6 +88,14 @@ Future<bool> showNotificationTarget(
     if (!target.isPersonal &&
         (current?.session == null || !target.matches(current!.session!))) {
       return false;
+    }
+    if (target.records.length == 1 && target.records.single.type == 'idea') {
+      return await openIdeaNotificationBoard(
+        context,
+        ref,
+        target,
+        target.records.single.recordId,
+      );
     }
     if (await _openFinanceConfirmation(context, ref, target)) return true;
     if (!context.mounted) return false;
@@ -241,6 +252,17 @@ class NotificationTargetContent extends ConsumerWidget {
                   onMembers!(scope.id);
                 },
                 child: Text(l.sharingMembers),
+              ),
+          ] else if (record.type == 'idea') ...[
+            for (final board in (data?.ideas ?? <IdeaBoard>[]).where(
+              (b) => b.id == record.recordId,
+            ))
+              IdeaCard(
+                board: board,
+                workspaceKey:
+                    'shared:${state!.session!.partition}:${scope!.id}',
+                onOpen: () =>
+                    openIdeaNotificationBoard(context, ref, target, board.id),
               ),
           ] else if (record.type == 'task') ...[
             for (final task in snapshot.tasks.where(

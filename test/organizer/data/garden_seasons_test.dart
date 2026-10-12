@@ -383,7 +383,7 @@ void main() {
         expect(gardenRotationWarnings(restored, 2027).single.previousYears, [
           2026,
         ]);
-        expect((await db.rows('PRAGMA user_version')).single.values.single, 8);
+        expect((await db.rows('PRAGMA user_version')).single.values.single, 9);
       } finally {
         await repo.close();
         await db.close();
@@ -601,7 +601,7 @@ void main() {
       const password = 'Seasonal garden backup password';
       final bytes = await source.backup.exportEncryptedBackup(password);
       final decrypted = await source.backup.crypto.decrypt(bytes, password);
-      expect(decrypted['version'], 4);
+      expect(decrypted['version'], 5);
       expect(decrypted['gardens']['version'], 2);
       validateBackupDocument(decrypted);
       await encryptedTarget.backup.restoreEncryptedBackup(

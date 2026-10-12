@@ -14,6 +14,10 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'report_stale' ||
     'report_not_found' ||
     'target_not_found' => l.moderationPreviewStale,
+    'ideas_unsupported' ||
+    'idea_unsupported' ||
+    'idea_assets_unsupported' => l.ideasUnsupported,
+    'idea_asset_missing' || 'asset_unavailable' => l.ideasMissingPhoto,
     'policy_acceptance_required' => l.moderationPolicyRequired,
     'moderation_upgrade_required' ||
     'moderation_unsupported' => l.moderationUpgradeRequired,

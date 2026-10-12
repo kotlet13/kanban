@@ -86,6 +86,7 @@ class NativeAccountDeletionService extends NativeDatabase
             $this->change('INSERT INTO familyhub_deletion_receipts(operation_id,token_hash,deleted_at) VALUES(?,?,?)',[$id,$hash,time()]);
             $this->purgeModeration($user,$deleteScopes);
             $this->applyShared($graph,$user,$deleteScopes);
+            $this->queueIdeaFiles($id,$user,$deleteScopes);
             $this->purge($user,$scopes,$deleteScopes);
             $this->purgeLegacy($user,$graph['privateProjects'],$id);
             return ['operationId'=>$id];
@@ -94,15 +95,34 @@ class NativeAccountDeletionService extends NativeDatabase
         return isset($result['operationId']) ? $this->finishFiles($result['operationId']) : $result;
     }
 
+    private function queueIdeaFiles($operation,$user,$deleteScopes)
+    {
+        foreach ($this->many('SELECT * FROM familyhub_idea_assets') as $r) {
+            $scope=$this->one('SELECT kind,owner_id FROM familyhub_scopes WHERE id=?',[$r['scope_id']]);
+            $remove=in_array($r['scope_id'],$deleteScopes,true) || ($scope && $scope['kind']==='personal' && (int)$scope['owner_id']===(int)$user['id']);
+            // Shared boards retained by deletion policy keep their images; only owner-only unfinished uploads are private.
+            if (!$remove && $r['owner_account_id']===$user['account_id']) {
+                $board=$this->one("SELECT payload FROM familyhub_records WHERE scope_id=? AND id=? AND type='idea' AND deleted=0",[$r['scope_id'],$r['board_id']]);
+                $referenced=$board && (new NativeIdeaAssetService($this->container))->references(json_decode($board['payload'],true,32,JSON_THROW_ON_ERROR),$r['sha256']);
+                $retained=$this->one('SELECT report_id FROM familyhub_idea_report_assets WHERE scope_id=? AND board_id=? AND sha256=? LIMIT 1',[$r['scope_id'],$r['board_id'],$r['sha256']]);
+                if (!$referenced && !$retained) { $remove=true; }
+            }
+            if (!$remove) { if ($r['owner_account_id']===$user['account_id']) { $this->change("UPDATE familyhub_idea_assets SET owner_account_id='' WHERE scope_id=? AND board_id=? AND sha256=?",[$r['scope_id'],$r['board_id'],$r['sha256']]); }continue; }
+            $path='familyhub/ideas/'.hash('sha256',$r['scope_id'].':'.$r['board_id']).'/'.$r['sha256'];
+            $this->change('INSERT INTO familyhub_deletion_files(operation_id,path_hash,path) VALUES(?,?,?)',[$operation,hash('sha256',$path),$path]);
+            $this->change('DELETE FROM familyhub_idea_assets WHERE scope_id=? AND board_id=? AND sha256=?',[$r['scope_id'],$r['board_id'],$r['sha256']]);
+        }
+    }
+
     private function purgeModeration($user,$deleteScopes)
     {
         $account=$user['account_id'];
         foreach ($deleteScopes as $sid) {
             $reports=$this->many('SELECT id FROM familyhub_moderation_reports WHERE scope_id=?',[$sid]);
-            foreach ($reports as $report) { $this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$report['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$report['id']]); }
+            foreach ($reports as $report) { $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?',[$report['id']]);$this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$report['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$report['id']]); }
         }
         $rows=$this->many("SELECT id FROM familyhub_moderation_reports r WHERE reporter_account_id=? OR (target_type='user' AND target_id=?) OR EXISTS(SELECT 1 FROM familyhub_records g WHERE r.target_type='record' AND g.scope_id=r.scope_id AND g.id=r.target_id AND g.created_by=?) OR EXISTS(SELECT 1 FROM familyhub_finance_records f WHERE r.target_type='finance' AND f.scope_id=r.scope_id AND f.id=r.target_id AND f.created_by=?)",[$account,$account,$account,$account]);
-        foreach ($rows as $row) { $this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$row['id']]); }
+        foreach ($rows as $row) { $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$row['id']]); }
         $this->change('DELETE FROM familyhub_policy_acceptances WHERE account_id=?',[$account]);
         $this->change('DELETE FROM familyhub_moderation_blocks WHERE account_id=?',[$account]);
         $this->change('DELETE FROM familyhub_moderation_audit WHERE admin_id=?',[$user['id']]);
@@ -275,6 +295,11 @@ class NativeAccountDeletionService extends NativeDatabase
     {
         foreach ($this->many('SELECT path FROM familyhub_deletion_files WHERE operation_id=?',[$id]) as $row) {
             try {
+                if (preg_match('/^familyhub\/ideas\/[a-f0-9]{64}\/[a-f0-9]{64}$/D',$row['path'])) {
+                    $ideaPath=DATA_DIR.'/'.$row['path'];if ((is_file($ideaPath) || is_link($ideaPath)) && !@unlink($ideaPath)) { continue; }
+                    if (file_exists($ideaPath) || is_link($ideaPath)) { continue; }
+                    $this->change('DELETE FROM familyhub_deletion_files WHERE operation_id=? AND path=?',[$id,$row['path']]);continue;
+                }
                 if (!method_exists($this->objectStorage,'getSanitizedFilePath')) { continue; }
                 $path=$this->objectStorage->getSanitizedFilePath($row['path']);
                 if (file_exists($path) || is_link($path)) {

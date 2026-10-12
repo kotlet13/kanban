@@ -1,3 +1,7 @@
+import '../state/idea_provider.dart';
+import 'ideas/idea_editor.dart';
+import 'ideas/ideas_page.dart';
+import 'ideas/ideas_all_spaces_page.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -740,6 +744,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.plans,
       _Area.calendar,
       _Area.projects,
+      _Area.ideas,
       _Area.finances,
       if (household ||
           all ||
@@ -765,6 +770,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.finances => l.organizerFinances,
       _Area.home => l.organizerHome,
       _Area.garden => l.gardenTitle,
+      _Area.ideas => l.ideasTitle,
       _Area.more => l.organizerMore,
       _Area.settings => l.organizerSettings,
       _Area.spaceSettings => l.spaceSettingsTitle,
@@ -783,6 +789,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.finances => Icons.account_balance_wallet_outlined,
     _Area.home => Icons.home_outlined,
     _Area.garden => Icons.yard_outlined,
+    _Area.ideas => Icons.lightbulb_outline,
     _Area.more => Icons.grid_view_outlined,
     _Area.settings => Icons.tune_outlined,
     _Area.spaceSettings => Icons.settings_outlined,
@@ -1239,6 +1246,52 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     );
   }
 
+  Future<void> _openIdeaSource({
+    required bool shared,
+    required String spaceId,
+    String? boardId,
+  }) async {
+    final identity = _accountIdentity;
+    if (shared) {
+      await _selectSpace(spaceId);
+    } else {
+      await _selectLocalSpace(spaceId);
+    }
+    if (!mounted || identity != _accountIdentity) return;
+    final snapshot = await ref.read(ideaProvider.future);
+    if (!shared &&
+        boardId != null &&
+        snapshot.workspaceKey != spaceId &&
+        mounted &&
+        identity == _accountIdentity) {
+      await openLocalIdeaViewer(
+        context,
+        ref,
+        spaceId: spaceId,
+        boardId: boardId,
+        onReviewPrivate: () {
+          if (mounted && identity == _accountIdentity) _navigate(_Area.sharing);
+        },
+      );
+      return;
+    }
+    if (!mounted ||
+        identity != _accountIdentity ||
+        (shared
+            ? snapshot.sharedScopeId != spaceId
+            : snapshot.workspaceKey != spaceId)) {
+      return;
+    }
+    final board = boardId == null
+        ? null
+        : snapshot.boards.where((b) => b.id == boardId).firstOrNull;
+    if (boardId != null && board == null ||
+        boardId == null && !snapshot.canEdit) {
+      return;
+    }
+    await openIdeaEditor(context, ref, board: board);
+  }
+
   Widget _content(
     BuildContext context,
     OrganizerSnapshot snapshot,
@@ -1248,6 +1301,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     final l = context.l10n;
     final selection = ref.watch(collaborationProvider).valueOrNull;
     final active = selection?.selectedSpaceId;
+    if (_navigationState.area == _Area.ideas) {
+      return selection?.allSpacesSelected == true
+          ? IdeasAllSpacesPage(onOpenSource: _openIdeaSource)
+          : const IdeasPage();
+    }
     if (selection?.allSpacesSelected == true &&
         const {
           _Area.today,
@@ -1401,6 +1459,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onConnect: () => _navigate(_Area.sharing),
       ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
+      _Area.ideas => const IdeasPage(),
       _Area.garden =>
         selection?.allSpacesSelected == true
             ? GardenSpaceChooser(

@@ -94,6 +94,7 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
       'tasks': l.inboxCategoryTasks,
       'events': l.inboxCategoryEvents,
       'shopping': l.inboxCategoryShopping,
+      'ideas': l.ideasTitle,
       'membership': l.inboxCategoryMembers,
       if (scope != null && state!.financePolicyForScope(scope.id).canRead)
         'finance': l.inboxCategoryFinance,

@@ -99,7 +99,9 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         [session.profile.partition, scopeId],
       );
       final pulled = await call(
-        _recordContractVersion >= 4
+        _recordContractVersion >= 5
+            ? 'sync5.pull'
+            : _recordContractVersion >= 4
             ? 'sync4.pull'
             : _recordContractVersion >= 3
             ? 'sync3.pull'
@@ -186,6 +188,7 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         for (final id in target.inboxIds) {
           final reply = await _callSession(session, epoch, 'inbox.open', {
             'id': id,
+            if (_recordContractVersion >= 5) 'recordContractVersion': 5,
           });
           final wire = reply['target'] as Map<String, dynamic>;
           if (wire['scopeId'] != target.scopeId ||

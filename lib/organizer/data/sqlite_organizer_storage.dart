@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import '../domain/garden_models.dart';
+import '../domain/idea_models.dart';
 import '../domain/local_space_models.dart';
 import 'garden_storage.dart';
 import '../domain/organizer_models.dart';
@@ -246,6 +247,9 @@ class SqliteOrganizerStorage
       );
       for (final record in records) {
         revision += record['local_revision'] as int;
+        // Editable idea boards and their photos are projected by IdeaStorage;
+        // they are not ordinary text rows in OrganizerSnapshot.
+        if (record['type'] == 'idea') continue;
         final remote = record['remote'] == null
             ? null
             : jsonDecode(record['remote'] as String) as Map<String, dynamic>;
@@ -319,6 +323,109 @@ class SqliteOrganizerStorage
       return task == null || task.isCompleted || task.dueAt != reminder.dueAt;
     });
     return snapshotFromRows(rows, revision: revision);
+  }
+
+  Future<void> _detachDeletedProjectIdeas(
+    Set<String> projects,
+    Map<String, dynamic>? binding,
+    Set<String> localIds,
+  ) async {
+    final now = DateTime.now().toUtc();
+    IdeaBoard detach(IdeaBoard b) => b.copyWith(
+      clearProjectId: true,
+      revision: b.revision + 1,
+      updatedAt: now.isBefore(b.updatedAt) ? b.updatedAt : now,
+    );
+    var localChanged = false;
+    for (final row in await database.rows(
+      "SELECT i.id,i.payload FROM device_ideas i LEFT JOIN idea_space_links l ON l.idea_id=i.id WHERE COALESCE(l.space_id,'local')=?",
+      [_workspaceId],
+    )) {
+      final board = IdeaBoard.fromJson(
+        jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+      );
+      if (!projects.contains(board.projectId)) continue;
+      final next = detach(board)..validate();
+      await database.execute('UPDATE device_ideas SET payload=? WHERE id=?', [
+        jsonEncode(next.toJson()),
+        next.id,
+      ]);
+      await database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+        ['idea_record_revision:${next.id}', next.revision.toString()],
+      );
+      localChanged = true;
+    }
+    if (localChanged) {
+      await database.execute(
+        "INSERT INTO local_meta(name,value) VALUES('idea_generation','1') ON CONFLICT(name) DO UPDATE SET value=CAST(value AS INTEGER)+1",
+      );
+    }
+    final draftProjects = <String>{...projects},
+        workspaces = <String>{_workspaceId};
+    if (binding != null) {
+      final partition = binding['partition'], scope = binding['scope_id'];
+      workspaces.add('shared:$partition:$scope');
+      final remoteProjects = <String>{};
+      for (final project in projects.where((id) => !localIds.contains(id))) {
+        final maps = await database.rows(
+          'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
+          [binding['id'], project],
+        );
+        if (maps.isNotEmpty) {
+          remoteProjects.add(maps.single['remote_id'] as String);
+        }
+      }
+      draftProjects.addAll(remoteProjects);
+      for (final row in await database.rows(
+        "SELECT id,payload,local_revision FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0",
+        [partition, scope],
+      )) {
+        final board = IdeaBoard.fromJson(
+          jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+        );
+        if (!remoteProjects.contains(board.projectId)) continue;
+        final maps = await database.rows(
+          'SELECT id FROM personal_record_map WHERE workspace=? AND remote_id=?',
+          [binding['id'], row['id']],
+        );
+        final localId = maps.isEmpty
+            ? row['id'] as String
+            : maps.single['id'] as String;
+        await queuePrivateRecord(
+          database,
+          binding,
+          localId,
+          'idea',
+          detach(board).toJson(),
+        );
+      }
+    }
+    for (final workspace in workspaces) {
+      for (final row in await database.rows(
+        'SELECT id,payload,base FROM idea_drafts WHERE workspace=?',
+        [workspace],
+      )) {
+        final board = IdeaBoard.fromJson(
+          jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+        );
+        if (!draftProjects.contains(board.projectId)) continue;
+        final base = row['base'] == null
+            ? null
+            : IdeaBoard.fromJson(
+                jsonDecode(row['base'] as String) as Map<String, dynamic>,
+              );
+        await database.execute(
+          'UPDATE idea_drafts SET payload=?,base=? WHERE workspace=? AND id=?',
+          [
+            jsonEncode(detach(board).toJson()),
+            base == null ? null : jsonEncode(detach(base).toJson()),
+            workspace,
+            row['id'],
+          ],
+        );
+      }
+    }
   }
 
   @override
@@ -479,6 +586,13 @@ class SqliteOrganizerStorage
             'Device-local records cannot reference private parents',
           );
         }
+      }
+      final deletedProjects = old.values
+          .where((r) => r.type == 'project' && !next.containsKey(r.id))
+          .map((r) => r.id)
+          .toSet();
+      if (deletedProjects.isNotEmpty) {
+        await _detachDeletedProjectIdeas(deletedProjects, binding, localIds);
       }
       final changedIds = {...old.keys, ...next.keys}.toList()
         ..sort((a, b) {
@@ -809,6 +923,10 @@ Future<void> queuePrivateRecord(
       ..remove('revision')
       ..remove('createdByAccountId')
       ..remove('updatedByAccountId');
+    if (type == 'idea') {
+      payload['id'] = id;
+      payload['revision'] = source['revision'] ?? 0;
+    }
     for (final field in [
       'projectId',
       'listId',
@@ -917,6 +1035,12 @@ Future<void> queuePrivateRecord(
       old.firstOrNull?['remote'],
     ],
   );
+  if (type == 'idea' && old.firstOrNull?['payload'] != null) {
+    await db.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
+      'idea_op_base:$p:${request['opId']}',
+      old.first['payload'],
+    ]);
+  }
   await db.execute(
     'INSERT INTO $outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,?)',
     [request['opId'], p, scope, id, jsonEncode(request), wireVersion],
@@ -1046,6 +1170,7 @@ bool privateFinancialType(String localType) => const [
   'personalFinanceAccount',
 ].contains(localType);
 int privateRecordWireVersion(String type, Map<String, Object?> source) {
+  if (type == 'idea') return 5;
   if (type == 'householdPerson') return 3;
   if (const [
     'financeAccount',

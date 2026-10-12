@@ -1,6 +1,10 @@
 part of 'collaboration_repository.dart';
 
 extension CollaborationPrivateActions on CollaborationRepository {
+  Future<List<IdeaBoard>> _privateIdeaCandidates() async {
+    return _localPublicationIdeas('local');
+  }
+
   Future<PrivateSyncState> _privateSyncState(AccountSession profile) async {
     final rows = await database.rows(
       'SELECT * FROM personal_workspaces WHERE id=? AND enabled=1',
@@ -15,6 +19,8 @@ extension CollaborationPrivateActions on CollaborationRepository {
       'SELECT COUNT(*) AS n FROM finance_outbox WHERE partition=? AND scope_id=?',
       [profile.partition, binding?['scope_id']],
     );
+    final localIdeas = await _privateIdeaCandidates();
+    final localDrafts = await _localPublicationIdeaDrafts('local');
     return PrivateSyncState(
       available: _privateSyncSupported,
       enabled: binding != null,
@@ -22,10 +28,14 @@ extension CollaborationPrivateActions on CollaborationRepository {
       partition: profile.partition,
       scopeId: binding?['scope_id'] as String?,
       localPendingCount:
-          (await database.rows(
+          ((await database.rows(
                 "SELECT COUNT(*) AS n FROM personal_records WHERE workspace='local' AND type!='reminder'",
               )).single['n']
-              as int,
+              as int) +
+          localIdeas.length +
+          localDrafts
+              .where((d) => !localIdeas.any((b) => b.id == d['id']))
+              .length,
       pendingCount: (pending.single['n'] as int) + (finance.single['n'] as int),
     );
   }
@@ -78,6 +88,8 @@ extension CollaborationPrivateActions on CollaborationRepository {
     await storage.initialize();
     final snapshot = await _defaultPersonalPublicationSnapshot(storage);
     final local = await storage.localSnapshot();
+    final localIdeas = await _privateIdeaCandidates();
+    final localDrafts = await _localPublicationIdeaDrafts('local');
     final issues = <String>[];
     final fakeBinding = {
       'id': 'preview',
@@ -123,13 +135,63 @@ extension CollaborationPrivateActions on CollaborationRepository {
       }
     }
     final state = await _privateSyncState(profile);
+    final candidates = [
+      ...localIdeas,
+      for (final draft in localDrafts)
+        IdeaBoard.fromJson(CollaborationRepository._map(draft['payload'])),
+      for (final draft in localDrafts.where((d) => d['base'] != null))
+        IdeaBoard.fromJson(CollaborationRepository._map(draft['base'])),
+    ];
+    final caps = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['capabilities:${profile.partition}'],
+    );
+    final features = caps.isEmpty
+        ? const <String, dynamic>{}
+        : CollaborationRepository._map(caps.single['value'])['features'] as Map;
+    if (candidates.isNotEmpty &&
+        (_recordContractVersion < 5 ||
+            features['ideas'] != true ||
+            candidates.any((b) => b.assets.isNotEmpty) &&
+                features['ideaAssets'] != true)) {
+      issues.add('ideas_upgrade_required');
+    }
+    for (final board in candidates) {
+      try {
+        board.validate();
+        if (board.projectId != null &&
+            !local.projects.any((p) => p.id == board.projectId)) {
+          issues.add('idea_project_missing');
+        }
+        for (final asset in board.assets) {
+          final rows = await database.rows(
+            'SELECT bytes FROM idea_assets WHERE workspace=? AND sha256=?',
+            ['local', asset.sha256],
+          );
+          if (rows.isEmpty) {
+            issues.add('idea_asset_missing');
+            continue;
+          }
+          await verifyIdeaAsset(
+            asset,
+            Uint8List.fromList(rows.single['bytes'] as List<int>),
+          );
+        }
+      } on FormatException {
+        issues.add('private_record_invalid:idea');
+      }
+    }
     final existing = await database.rows(
       'SELECT COUNT(*) AS n FROM records WHERE partition=? AND scope_id=? AND deleted=0',
       [profile.partition, state.scopeId ?? fakeBinding['scope_id']],
     );
     return PrivateSyncPreview(
       revision: snapshot.revision,
-      recordCounts: personalCounts(local),
+      recordCounts: {
+        ...personalCounts(local),
+        if (localIdeas.isNotEmpty) 'ideas': localIdeas.length,
+        if (localDrafts.isNotEmpty) 'ideaDrafts': localDrafts.length,
+      },
       existingRemoteCount: existing.single['n'] as int,
       issues: issues,
     );
@@ -143,6 +205,9 @@ extension CollaborationPrivateActions on CollaborationRepository {
     final preview = await previewPrivateSync();
     if (preview.issues.any((issue) => issue.endsWith('upgrade_required'))) {
       throw const CollaborationException('client_upgrade_required');
+    }
+    if (!preview.canEnable) {
+      throw const CollaborationException('validation_error');
     }
     if (!_privateSyncSupported) {
       throw const CollaborationException('private_sync_unavailable');
@@ -196,7 +261,9 @@ extension CollaborationPrivateActions on CollaborationRepository {
         final pulled = await _callSession(
           session,
           epoch,
-          _recordContractVersion >= 4
+          _recordContractVersion >= 5
+              ? 'sync5.pull'
+              : _recordContractVersion >= 4
               ? 'sync4.pull'
               : _recordContractVersion >= 3
               ? 'sync3.pull'
@@ -324,6 +391,185 @@ extension CollaborationPrivateActions on CollaborationRepository {
             cost.json['taskId'] as String,
             cost.id,
           );
+        }
+        // Ideas have their own editable asset/draft store. Import only the
+        // explicitly reviewed anonymous candidates, preserving their originals.
+        final importedIdeas = await _privateIdeaCandidates();
+        final importedDrafts = await _localPublicationIdeaDrafts('local');
+        for (final board in importedIdeas) {
+          final remoteId = isSharedUuid(board.id) ? board.id : newSharedId();
+          final projects = board.projectId == null
+              ? const <Map<String, dynamic>>[]
+              : await database.rows(
+                  'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
+                  [w, board.projectId],
+                );
+          if (board.projectId != null && projects.isEmpty) {
+            throw const OrganizerConflictException(
+              'Missing private idea project',
+            );
+          }
+          final imported = board.copyWith(
+            id: remoteId,
+            projectId: projects.firstOrNull?['remote_id'] as String?,
+            clearProjectId: board.projectId == null,
+          );
+          final existing = await database.rows(
+            'SELECT id FROM records WHERE partition=? AND scope_id=? AND id=?',
+            [p, scope.id, remoteId],
+          );
+          if (existing.isNotEmpty) {
+            throw const OrganizerConflictException('Private idea ID collision');
+          }
+          await _copyPublicationIdeaAssets('local', p, scope.id, imported);
+          await _put(
+            p,
+            scope.id,
+            SharedRecordType.idea,
+            imported.id,
+            imported.toJson(),
+          );
+          await database.execute(
+            'INSERT INTO personal_record_map(workspace,id,remote_id,type) VALUES(?,?,?,?)',
+            [w, board.id, remoteId, 'idea'],
+          );
+        }
+        for (final draft in importedDrafts) {
+          final original = IdeaBoard.fromJson(
+            CollaborationRepository._map(draft['payload']),
+          );
+          var maps = await database.rows(
+            'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
+            [w, original.id],
+          );
+          if (maps.isEmpty) {
+            await database.execute(
+              'INSERT INTO personal_record_map(workspace,id,remote_id,type) VALUES(?,?,?,?)',
+              [w, original.id, original.id, 'idea'],
+            );
+            maps = [
+              {'remote_id': original.id},
+            ];
+          }
+          Future<IdeaBoard> mapped(IdeaBoard value) async {
+            final project = value.projectId == null
+                ? const <Map<String, dynamic>>[]
+                : await database.rows(
+                    'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
+                    [w, value.projectId],
+                  );
+            if (value.projectId != null && project.isEmpty) {
+              throw const OrganizerConflictException(
+                'Missing private draft project',
+              );
+            }
+            return value.copyWith(
+              id: maps.single['remote_id'] as String,
+              projectId: project.firstOrNull?['remote_id'] as String?,
+              clearProjectId: value.projectId == null,
+            );
+          }
+
+          final board = await mapped(original);
+          final base = draft['base'] == null
+              ? null
+              : await mapped(
+                  IdeaBoard.fromJson(
+                    CollaborationRepository._map(draft['base']),
+                  ),
+                );
+          await _copyPublicationIdeaAssets('local', p, scope.id, board);
+          if (base != null) {
+            await _copyPublicationIdeaAssets('local', p, scope.id, base);
+          }
+          await database.execute(
+            'INSERT INTO idea_drafts(workspace,id,payload,base) VALUES(?,?,?,?) ON CONFLICT(workspace,id) DO NOTHING',
+            [
+              'shared:$p:${scope.id}',
+              board.id,
+              jsonEncode(board.toJson()),
+              base == null ? null : jsonEncode(base.toJson()),
+            ],
+          );
+        }
+        if (importedIdeas.isNotEmpty || importedDrafts.isNotEmpty) {
+          final name = 'idea_import_archive:$p';
+          final prior = await database.rows(
+            'SELECT value FROM local_meta WHERE name=?',
+            [name],
+          );
+          final journal = prior.isEmpty
+              ? <String, dynamic>{
+                  'partition': p,
+                  'scopeId': scope.id,
+                  'boards': <Object?>[],
+                  'drafts': <Object?>[],
+                }
+              : CollaborationRepository._map(prior.single['value']);
+          if (journal['partition'] != p || journal['scopeId'] != scope.id) {
+            throw const OrganizerConflictException(
+              'Private idea archive identity changed',
+            );
+          }
+          (journal['boards'] as List).addAll(
+            importedIdeas.map((b) => b.toJson()),
+          );
+          (journal['drafts'] as List).addAll(importedDrafts);
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+            [name, jsonEncode(journal)],
+          );
+          for (final board in importedIdeas) {
+            await database.execute('DELETE FROM device_ideas WHERE id=?', [
+              board.id,
+            ]);
+          }
+          for (final draft in importedDrafts) {
+            await database.execute(
+              'DELETE FROM idea_drafts WHERE workspace=? AND id=?',
+              ['local', draft['id']],
+            );
+          }
+          // Imported sources are archived under this account, so they cannot
+          // resurface as anonymous editable content after logout or deletion.
+          final preserved = <String>{};
+          for (final board in await _localPublicationIdeas('local')) {
+            preserved.addAll(board.assets.map((a) => a.sha256));
+          }
+          for (final draft in await _localPublicationIdeaDrafts('local')) {
+            preserved.addAll(
+              IdeaBoard.fromJson(
+                CollaborationRepository._map(draft['payload']),
+              ).assets.map((a) => a.sha256),
+            );
+            if (draft['base'] != null) {
+              preserved.addAll(
+                IdeaBoard.fromJson(
+                  CollaborationRepository._map(draft['base']),
+                ).assets.map((a) => a.sha256),
+              );
+            }
+          }
+          final migrated = [
+            ...importedIdeas,
+            for (final draft in importedDrafts)
+              IdeaBoard.fromJson(
+                CollaborationRepository._map(draft['payload']),
+              ),
+            for (final draft in importedDrafts.where((d) => d['base'] != null))
+              IdeaBoard.fromJson(CollaborationRepository._map(draft['base'])),
+          ];
+          for (final hash
+              in migrated
+                  .expand((b) => b.assets)
+                  .map((a) => a.sha256)
+                  .toSet()
+                  .difference(preserved)) {
+            await database.execute(
+              'DELETE FROM idea_assets WHERE workspace=? AND sha256=?',
+              ['local', hash],
+            );
+          }
         }
         await database.execute(
           'UPDATE personal_workspaces SET enabled=1,paused=0,migration_snapshot=? WHERE id=?',

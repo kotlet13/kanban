@@ -3764,4 +3764,185 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get moderationMoreActions => 'Več dejanj';
+
+  @override
+  String get ideasTitle => 'Idejnik';
+
+  @override
+  String get ideasAdd => 'Nova ideja';
+
+  @override
+  String get ideasEmpty =>
+      'Zberi ideje na enem mestu. Dodaj zapisek, fotografijo ali risbo.';
+
+  @override
+  String get ideasSearch => 'Poišči ideje';
+
+  @override
+  String get ideasUntitled => 'Ideja brez naslova';
+
+  @override
+  String get ideasSelect => 'Izberi in premakni';
+
+  @override
+  String get ideasPan => 'Premik in povečava';
+
+  @override
+  String get ideasText => 'Besedilo';
+
+  @override
+  String get ideasSticky => 'Listek';
+
+  @override
+  String get ideasPhoto => 'Dodaj fotografijo';
+
+  @override
+  String get ideasPen => 'Pisalo';
+
+  @override
+  String get ideasHighlighter => 'Označevalnik';
+
+  @override
+  String get ideasEraser => 'Radirka';
+
+  @override
+  String get ideasLine => 'Črta';
+
+  @override
+  String get ideasArrow => 'Puščica';
+
+  @override
+  String get ideasRectangle => 'Pravokotnik';
+
+  @override
+  String get ideasEllipse => 'Elipsa';
+
+  @override
+  String get ideasUndo => 'Razveljavi';
+
+  @override
+  String get ideasRedo => 'Uveljavi';
+
+  @override
+  String get ideasRotate => 'Zavrti izbrani element';
+
+  @override
+  String get ideasSize => 'Velikost';
+
+  @override
+  String get ideasColor => 'Barva pisala';
+
+  @override
+  String get ideasWidth => 'Debelina črte';
+
+  @override
+  String get ideasDraft =>
+      'Osnutek je shranjen na tej napravi. Shrani objavi dokončano idejo.';
+
+  @override
+  String get ideasDraftError =>
+      'Osnutka ni bilo mogoče shraniti. Urejevalnik naj ostane odprt; poskusi znova.';
+
+  @override
+  String get ideasReadOnly =>
+      'Samo ogled. Urejanje v tem prostoru ni na voljo.';
+
+  @override
+  String get ideasMissingPhoto => 'Fotografija na tej napravi ni na voljo';
+
+  @override
+  String get ideasPhotoError => 'Izberi fotografijo JPEG ali PNG do 20 MB.';
+
+  @override
+  String get ideasDeleteElement => 'Izbriši izbrani element';
+
+  @override
+  String get ideasEditText => 'Uredi besedilo';
+
+  @override
+  String get ideasHelp =>
+      'Izberi za premik ali spremembo velikosti. Risba na fotografiji ostane pripeta nanjo. Za povečavo z dvema prstoma ali koleščkom izberi Premik.';
+
+  @override
+  String get ideasProject => 'Projekt (neobvezno)';
+
+  @override
+  String get ideasNoProject => 'Brez projekta';
+
+  @override
+  String get ideasDeleteConfirm => 'Izbrišem to idejo?';
+
+  @override
+  String get ideasDraftResume => 'Nadaljuj lokalni osnutek';
+
+  @override
+  String get ideasResetView => 'Prikaži celo tablo';
+
+  @override
+  String get ideasAttachNote => 'Dodaj listek ob izbrani fotografiji';
+
+  @override
+  String get ideasRefreshPhotos => 'Prenesi manjkajoče fotografije';
+
+  @override
+  String get ideasSaveError =>
+      'Ideje ni bilo mogoče shraniti. Osnutek ostane na tej napravi.';
+
+  @override
+  String get ideasCanvasLabel => 'Tabla ideje';
+
+  @override
+  String get ideasElements => 'Elementi';
+
+  @override
+  String get ideasDraftHint => 'Shrani potrdi spremembe v izbranem prostoru.';
+
+  @override
+  String get ideasDraftPending => 'Shranjujem osnutek na tej napravi …';
+
+  @override
+  String get ideasDrafts => 'Lokalni osnutki';
+
+  @override
+  String get ideasReportDescription =>
+      'Prijava vključuje celotno tablo, njene opombe, risbe in tukaj prikazane fotografije. Pred oddajo jo preglejte s premikanjem in povečavo.';
+
+  @override
+  String get ideasReportUnavailable =>
+      'Celotnega predogleda table ni bilo mogoče naložiti. Prijavo lahko oddate, ko so prikazane tudi njene fotografije.';
+
+  @override
+  String get ideasUnsupported =>
+      'Za deljenje idej in fotografij strežnik potrebuje FamilyHub 0.13.0 ali novejši. Lokalni osnutki ostanejo na voljo.';
+
+  @override
+  String get deletionPrivateIdeaAssets =>
+      'Odstranjene zasebne fotografije Idejnika';
+
+  @override
+  String get deletionStagedIdeaAssets =>
+      'Odstranjene fotografije Idejnika v pripravi';
+
+  @override
+  String get inboxIdeaCreated => 'Dodana je skupna ideja';
+
+  @override
+  String get inboxIdeaChanged => 'Skupna ideja je posodobljena';
+
+  @override
+  String get ideasPhotoLimit => 'Ideja lahko vsebuje največ 20 fotografij.';
+
+  @override
+  String get ideasConflictPhotos =>
+      'Pred izbiro različice naložite manjkajoče fotografije. Ogled primerjave ne spremeni table.';
+
+  @override
+  String get ideasCountLabel => 'Ideje';
+
+  @override
+  String get ideaDraftsCountLabel => 'Osnutki idej';
+
+  @override
+  String get ideasLocalSeparate =>
+      'Ta tabla ostane lokalna na tej napravi. Osebna sinhronizacija uporablja drug prostor. Tabla je tukaj na voljo za ogled in varnostno kopijo; ne objavi se samodejno.';
 }

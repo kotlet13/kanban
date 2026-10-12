@@ -228,10 +228,11 @@ void main() {
       expect(s.linkedPendingCount, 1);
       expect(p.pendingCount, 1);
       expect(s.standaloneFinanceLimited, true);
-      // No new portable fields, version or schema; UI counters come from this
+      // UI counters come from the expanded authenticated content5 document.
+      // They describe this
       // exact authenticated document, not from the currently selected workspace.
-      expect(f.document['version'], 4);
-      expect(f.document['databaseVersion'], 8);
+      expect(f.document['version'], 5);
+      expect(f.document['databaseVersion'], 9);
       expect(f.document.keys.toSet(), {
         'format',
         'version',
@@ -242,6 +243,11 @@ void main() {
         'operationPairs',
         'financeInboxReads',
         'gardens',
+        'ideas',
+        'ideaSpaceLinks',
+        'ideaAssets',
+        'ideaDrafts',
+        'ideaOperationHistory',
         'id',
         'createdAt',
         'source',

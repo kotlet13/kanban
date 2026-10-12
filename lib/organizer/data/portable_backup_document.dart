@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/idea_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/linked_payment_models.dart';
 import '../domain/shared_payload_validation.dart';
@@ -140,10 +141,17 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'operationPairs',
             'financeInboxReads',
           ],
-          if (doc['version'] == 4) ...[
+          if ((doc['version'] as int) >= 4) ...[
             'localSpaces',
             'gardenSpaceLinks',
             'linkedPayments',
+          ],
+          if (doc['version'] == 5) ...[
+            'ideas',
+            'ideaSpaceLinks',
+            'ideaAssets',
+            'ideaDrafts',
+            'ideaOperationHistory',
           ],
         }).isNotEmpty ||
         doc.length !=
@@ -153,13 +161,17 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 13
                 : doc['version'] == 3
                 ? 15
+                : doc['version'] == 5
+                ? 23
                 : doc.containsKey('linkedPayments')
                 ? 18
                 : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3, 4].contains(doc['version']) ||
-        (doc['version'] == 4
-            ? !const [7, 8].contains(doc['databaseVersion'])
+        !const [1, 2, 3, 4, 5].contains(doc['version']) ||
+        ((doc['version'] as int) >= 4
+            ? !(doc['version'] == 5 ? const [9] : const [7, 8]).contains(
+                doc['databaseVersion'],
+              )
             : doc['databaseVersion'] !=
                   (doc['version'] == 1
                       ? 4
@@ -182,7 +194,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       throw const FormatException();
     }
     backupGardens(doc)?.validate();
-    if (doc['version'] == 4) {
+    if (doc['version'] == 5) validateBackupIdeas(doc);
+    if ((doc['version'] as int) >= 4) {
       validateBackupLocalSpaces(doc);
       if (doc['linkedPayments'] != null) {
         validateLinkedPaymentsBackup(backupMap(doc['linkedPayments']));
@@ -197,7 +210,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
               'serverUrl',
               'username',
               'displayName',
-              if (doc['version'] == 4) 'deviceId',
+              if ((doc['version'] as int) >= 4) 'deviceId',
             }).isNotEmpty ||
             !isSharedUuid(source['serverId'] as String) ||
             !isSharedUuid(source['accountId'] as String))) {
@@ -246,6 +259,11 @@ void validateBackupDocument(Map<String, dynamic> doc) {
         }
         if (table == 'records') {
           SharedRecordType.values.byName(row['type'] as String);
+          if (row['type'] == 'idea' && (doc['version'] as int) < 5) {
+            throw const FormatException(
+              'Idea records require image-capable backup content5',
+            );
+          }
         } else {
           SharedFinanceRecordType.values.byName(row['type'] as String);
         }
@@ -326,7 +344,10 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 recordTypes['${row['scope_id']}:${row['record_id']}'] ||
             (request['deleted'] == true) != (request['payload'] == null) ||
             (table == 'outbox' &&
-                !const [1, 2, 3, 4].contains(row['wire_version']))) {
+                !(doc['version'] == 5
+                        ? const [1, 2, 3, 4, 5]
+                        : const [1, 2, 3, 4])
+                    .contains(row['wire_version']))) {
           throw const FormatException();
         }
         lastSequence = row['sequence'] as int;
@@ -372,7 +393,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       final m = backupMap(value);
       if (binding == null ||
           m['workspace'] != binding['id'] ||
-          !const [
+          ![
             'project',
             'task',
             'event',
@@ -382,6 +403,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'personalFinanceAccount',
             'financeRecurrenceRule',
             'householdPerson',
+            if (doc['version'] == 5) 'idea',
           ].contains(m['type']) ||
           m.keys.toSet().difference({
             'workspace',
@@ -762,6 +784,194 @@ void validateBackupLocalSpaces(Map<String, dynamic> doc) {
         !households.contains(link['space_id']) ||
         !seen.add(link['garden_id'] as String)) {
       throw const FormatException('Invalid garden household');
+    }
+  }
+}
+
+IdeaSnapshot? backupIdeas(Map<String, dynamic> doc) =>
+    doc['version'] == 5 ? IdeaSnapshot.fromJson(backupMap(doc['ideas'])) : null;
+void validateBackupIdeas(Map<String, dynamic> doc) {
+  final ideas = backupIdeas(doc)!;
+  ideas.validate();
+  final spaces = {
+    for (final r in doc['localSpaces'] as List) (r as Map)['space']['id'],
+  };
+  final source = doc['source'] == null
+      ? null
+      : backupMap(doc['source'])['partition'];
+  final allowedWorkspaces = <String>{
+    ...spaces.cast<String>(),
+    for (final r in backupRows(doc, 'scopes')) 'shared:$source:${r['id']}',
+  };
+  final ids = ideas.boards.map((b) => b.id).toSet(), linked = <String>{};
+  for (final r in doc['ideaSpaceLinks'] as List) {
+    final v = backupMap(r);
+    ideaKeys(v, {'idea_id', 'space_id'});
+    if (!ids.contains(v['idea_id']) ||
+        !spaces.contains(v['space_id']) ||
+        !linked.add(v['idea_id'] as String)) {
+      throw const FormatException('Invalid idea space link');
+    }
+  }
+  final required = <String, IdeaAsset>{};
+  void require(IdeaBoard b, String workspace) {
+    for (final a in b.assets) {
+      required['$workspace:${a.sha256}'] = a;
+    }
+  }
+
+  final ownership = {
+    for (final r in doc['ideaSpaceLinks'] as List)
+      (r as Map)['idea_id']: r['space_id'],
+  };
+  for (final b in ideas.boards) {
+    require(b, ownership[b.id] as String? ?? 'local');
+  }
+  for (final raw in backupRows(doc, 'records')) {
+    if (raw['type'] == 'idea' && raw['payload'] != null) {
+      require(
+        IdeaBoard.fromJson(backupMap(jsonDecode(raw['payload'] as String))),
+        'shared:$source:${raw['scope_id']}',
+      );
+    }
+  }
+  for (final raw in doc['ideaDrafts'] as List) {
+    final r = backupMap(raw);
+    require(
+      IdeaBoard.fromJson(backupMap(jsonDecode(r['payload'] as String))),
+      r['workspace'] as String,
+    );
+    if (r['base'] != null) {
+      require(
+        IdeaBoard.fromJson(backupMap(jsonDecode(r['base'] as String))),
+        r['workspace'] as String,
+      );
+    }
+  }
+  final keys = <String>{};
+  for (final r in doc['ideaAssets'] as List) {
+    final v = backupMap(r);
+    ideaKeys(v, {'workspace', 'sha256', 'metadata', 'data'});
+    if (!allowedWorkspaces.contains(v['workspace'])) {
+      throw const FormatException('Invalid idea image workspace');
+    }
+    final asset = IdeaAsset.fromJson(
+      backupMap(jsonDecode(v['metadata'] as String)),
+    );
+    final expected = required['${v['workspace']}:${asset.sha256}'];
+    if (expected != null &&
+        jsonEncode(expected.toJson()) != jsonEncode(asset.toJson())) {
+      throw const FormatException('Idea image metadata mismatch');
+    }
+    if (v['sha256'] != asset.sha256 ||
+        base64Decode(v['data'] as String).length != asset.size ||
+        !keys.add('${v['workspace']}:${asset.sha256}')) {
+      throw const FormatException('Invalid idea image archive');
+    }
+  }
+  for (final key in required.keys) {
+    if (!keys.contains(key) &&
+        !(doc['completeness'] as List).contains('idea_asset_missing:$key')) {
+      throw const FormatException('Missing idea image must be declared');
+    }
+  }
+  for (final r in doc['ideaOperationHistory'] as List) {
+    final row = backupMap(r);
+    ideaKeys(row, {'name', 'value'});
+    final name = row['name'] as String;
+    if (name == 'idea_import_archive:$source') {
+      final archived = backupMap(jsonDecode(row['value'] as String));
+      ideaKeys(archived, {'partition', 'scopeId', 'boards', 'drafts'});
+      if (archived['partition'] != source ||
+          !allowedWorkspaces.contains(
+            'shared:$source:${archived['scopeId']}',
+          )) {
+        throw const FormatException('Invalid idea import archive source');
+      }
+      ideaId(archived['scopeId'] as String);
+      final originalIds = <String>{};
+      for (final raw in archived['boards'] as List) {
+        final b = IdeaBoard.fromJson(backupMap(raw));
+        if (!originalIds.add(b.id)) {
+          throw const FormatException('Duplicate archived idea');
+        }
+      }
+      for (final raw in archived['drafts'] as List) {
+        final d = backupMap(raw);
+        ideaKeys(d, {'workspace', 'id', 'payload', 'base'});
+        if (d['workspace'] != 'local') {
+          throw const FormatException('Invalid original idea draft workspace');
+        }
+        final b = IdeaBoard.fromJson(
+          backupMap(jsonDecode(d['payload'] as String)),
+        );
+        if (b.id != d['id']) {
+          throw const FormatException('Invalid original idea draft identity');
+        }
+        if (d['base'] != null) {
+          IdeaBoard.fromJson(backupMap(jsonDecode(d['base'] as String)));
+        }
+      }
+    } else if (name.startsWith('idea_op_base:$source:')) {
+      final opId = name.substring('idea_op_base:$source:'.length);
+      ideaId(opId);
+      IdeaBoard.fromJson(backupMap(jsonDecode(row['value'] as String)));
+    } else if (name.startsWith('idea_rebased_op:$source:')) {
+      final old = backupMap(jsonDecode(row['value'] as String));
+      ideaKeys(old, {
+        'op_id',
+        'scope_id',
+        'request',
+        'wire_version',
+        if (old.containsKey('base')) 'base',
+      });
+      if (name != 'idea_rebased_op:$source:${old['op_id']}' ||
+          old['wire_version'] != 5 ||
+          !allowedWorkspaces.contains('shared:$source:${old['scope_id']}')) {
+        throw const FormatException('Invalid idea operation source');
+      }
+      final request = backupMap(jsonDecode(old['request'] as String));
+      ideaKeys(request, {
+        'opId',
+        'recordId',
+        'type',
+        'expectedRevision',
+        'deleted',
+        'payload',
+      });
+      ideaId(request['opId'] as String);
+      ideaId(request['recordId'] as String);
+      if (request['opId'] != old['op_id'] ||
+          request['type'] != 'idea' ||
+          request['expectedRevision'] is! int ||
+          (request['expectedRevision'] as int) < 0 ||
+          request['deleted'] is! bool ||
+          (request['deleted'] == true) != (request['payload'] == null)) {
+        throw const FormatException('Invalid idea operation envelope');
+      }
+      if (request['payload'] != null) {
+        final b = IdeaBoard.fromJson(backupMap(request['payload']));
+        if (b.id != request['recordId']) {
+          throw const FormatException('Invalid idea operation identity');
+        }
+      }
+      if (old['base'] != null) {
+        IdeaBoard.fromJson(backupMap(jsonDecode(old['base'] as String)));
+      }
+    } else {
+      throw const FormatException('Invalid idea operation history');
+    }
+  }
+  for (final r in doc['ideaDrafts'] as List) {
+    final v = backupMap(r);
+    ideaKeys(v, {'workspace', 'id', 'payload', 'base'});
+    if (!allowedWorkspaces.contains(v['workspace'])) {
+      throw const FormatException('Invalid idea draft workspace');
+    }
+    final b = IdeaBoard.fromJson(backupMap(jsonDecode(v['payload'] as String)));
+    if (b.id != v['id']) throw const FormatException('Invalid idea draft');
+    if (v['base'] != null) {
+      IdeaBoard.fromJson(backupMap(jsonDecode(v['base'] as String)));
     }
   }
 }

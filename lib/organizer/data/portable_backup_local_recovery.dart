@@ -368,6 +368,26 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
             );
           }
         }
+        final draftPrefix = 'shared:${backupMap(doc['source'])['partition']}:';
+        final sourceDrafts = (doc['ideaDrafts'] as List? ?? const [])
+            .cast<Map<String, dynamic>>()
+            .where(
+              (r) =>
+                  (r['workspace'] as String).startsWith(draftPrefix) &&
+                  group.contains(
+                    (r['workspace'] as String).substring(draftPrefix.length),
+                  ),
+            )
+            .toList();
+        for (final draft in sourceDrafts) {
+          final scope = (draft['workspace'] as String).substring(
+            draftPrefix.length,
+          );
+          collect(scope, jsonDecode(draft['payload'] as String));
+          if (draft['base'] != null) {
+            collect(scope, jsonDecode(draft['base'] as String));
+          }
+        }
         Object? remap(String scope, Object? value, {String? field}) {
           if (value is Map) {
             return {
@@ -391,7 +411,9 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
           return value;
         }
 
-        final localRows = <Map<String, dynamic>>[], gardens = <Garden>[];
+        final localRows = <Map<String, dynamic>>[],
+            gardens = <Garden>[],
+            ideas = <IdeaBoard>[];
         for (final row in [...ordinary, ...finance]) {
           if (row['deleted'] == 1 || row['payload'] == null) continue;
           final scope = row['scope_id'] as String, type = row['type'] as String;
@@ -436,6 +458,10 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
             raw.putIfAbsent('openingBalanceAt', () => null);
           }
           final payload = backupMap(remap(scope, raw));
+          if (type == 'idea') {
+            ideas.add(IdeaBoard.fromJson(payload));
+            continue;
+          }
           if (type == 'garden') {
             gardens.add(Garden.fromJson(payload));
             continue;
@@ -482,6 +508,84 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
             'INSERT INTO garden_space_links(garden_id,space_id) VALUES(?,?)',
             [garden.id, space.id],
           );
+        }
+        for (final board in ideas) {
+          await database.execute(
+            'INSERT INTO device_ideas(id,payload) VALUES(?,?)',
+            [board.id, jsonEncode(board.toJson())],
+          );
+          await database.execute(
+            'INSERT INTO idea_space_links(idea_id,space_id) VALUES(?,?)',
+            [board.id, space.id],
+          );
+          for (final asset in board.assets) {
+            final original = (doc['ideaAssets'] as List? ?? const [])
+                .cast<Map<String, dynamic>>()
+                .where(
+                  (r) =>
+                      r['sha256'] == asset.sha256 &&
+                      group.any(
+                        (scope) =>
+                            r['workspace'] ==
+                            'shared:${backupMap(doc['source'])['partition']}:$scope',
+                      ),
+                )
+                .firstOrNull;
+            if (original != null) {
+              await database.execute(
+                'INSERT INTO idea_assets(workspace,sha256,metadata,bytes) VALUES(?,?,?,?) ON CONFLICT(workspace,sha256) DO NOTHING',
+                [
+                  space.id,
+                  asset.sha256,
+                  original['metadata'],
+                  Uint8List.fromList(base64Decode(original['data'] as String)),
+                ],
+              );
+            }
+          }
+        }
+        for (final draft in sourceDrafts) {
+          final scope = (draft['workspace'] as String).substring(
+            draftPrefix.length,
+          );
+          final restored = IdeaBoard.fromJson(
+            backupMap(remap(scope, jsonDecode(draft['payload'] as String))),
+          );
+          final base = draft['base'] == null
+              ? null
+              : IdeaBoard.fromJson(
+                  backupMap(remap(scope, jsonDecode(draft['base'] as String))),
+                );
+          await database.execute(
+            'INSERT INTO idea_drafts(workspace,id,payload,base) VALUES(?,?,?,?) ON CONFLICT(workspace,id) DO NOTHING',
+            [
+              space.id,
+              restored.id,
+              jsonEncode(restored.toJson()),
+              base == null ? null : jsonEncode(base.toJson()),
+            ],
+          );
+          for (final asset in [...restored.assets, ...?base?.assets]) {
+            final original = (doc['ideaAssets'] as List? ?? const [])
+                .cast<Map<String, dynamic>>()
+                .where(
+                  (r) =>
+                      r['sha256'] == asset.sha256 &&
+                      r['workspace'] == '$draftPrefix$scope',
+                )
+                .firstOrNull;
+            if (original != null) {
+              await database.execute(
+                'INSERT INTO idea_assets(workspace,sha256,metadata,bytes) VALUES(?,?,?,?) ON CONFLICT(workspace,sha256) DO NOTHING',
+                [
+                  space.id,
+                  asset.sha256,
+                  original['metadata'],
+                  Uint8List.fromList(base64Decode(original['data'] as String)),
+                ],
+              );
+            }
+          }
         }
         result.add(space);
       }

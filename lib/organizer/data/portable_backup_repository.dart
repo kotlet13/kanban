@@ -4,6 +4,9 @@ import 'package:cryptography/cryptography.dart' show Sha256;
 import '../domain/offline_recovery_models.dart';
 import '../domain/linked_payment_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/idea_models.dart';
+import 'idea_storage.dart';
+import 'idea_repository.dart' show verifyIdeaAsset;
 import '../domain/local_space_models.dart';
 import 'garden_storage.dart';
 import '../domain/collaboration_models.dart';
@@ -18,6 +21,7 @@ import 'sqlite_organizer_storage.dart';
 import 'local_spaces_repository.dart';
 part 'portable_backup_local_recovery.dart';
 part 'portable_backup_preview.dart';
+part 'portable_backup_ideas.dart';
 
 abstract interface class BackupUiPreferencesStore {
   Future<Map<String, Object?>> read();
@@ -56,7 +60,7 @@ class PortableBackupRepository {
     'FCM tokens and opt-in',
     'OS permissions and scheduled delivery IDs',
     'device_reminder_snoozes',
-    'server attachments and complete server database',
+    'other server attachments and complete server database',
     'other signed-out accounts',
   ];
   Future<String> _rightsStamp() async {
@@ -299,8 +303,9 @@ class PortableBackupRepository {
           }).toList();
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 4,
-        'databaseVersion': 8,
+        'version': 5,
+        'databaseVersion': 9,
+        ...await _exportIdeas(tables, completeness),
         'linkedPayments': {
           'cashMovements': await paymentRows('linked_payment_cash'),
           'events': await paymentRows('linked_payment_events'),
@@ -359,6 +364,7 @@ class PortableBackupRepository {
   Future<Map<String, dynamic>> _decode(List<int> bytes, String password) async {
     final doc = await crypto.decrypt(bytes, password);
     validateBackupDocument(doc);
+    await _verifyIdeaArchive(doc);
     return doc;
   }
 
@@ -373,6 +379,10 @@ class PortableBackupRepository {
       personalRevision: local.revision,
       personalCounts: {
         ...personalCounts(local),
+        if (backupIdeas(doc) != null)
+          'ideas':
+              backupIdeas(doc)!.boards.length -
+              (doc['ideaSpaceLinks'] as List).length,
         if (backupGardens(doc) != null)
           'gardens':
               backupGardens(doc)!.gardens.length -
@@ -513,7 +523,7 @@ class PortableBackupRepository {
           );
         }
       }
-      if (doc['version'] == 4) {
+      if ((doc['version'] as int) >= 4) {
         final linked = doc['linkedPayments'];
         if (linked is Map) {
           if (mode == BackupRestoreMode.replace) {
@@ -664,7 +674,7 @@ class PortableBackupRepository {
           allSpaces: true,
         );
       }
-      if (doc['version'] == 4) {
+      if ((doc['version'] as int) >= 4) {
         for (final raw in doc['gardenSpaceLinks'] as List) {
           final link = backupMap(raw);
           await database.execute(
@@ -673,6 +683,7 @@ class PortableBackupRepository {
           );
         }
       }
+      if (doc['version'] == 5) await _restoreIdeas(doc, mode);
       if (!sourceDeleted) {
         await _validateLocalLinkedPayments();
         await database.execute(

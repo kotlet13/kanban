@@ -61,10 +61,7 @@ class _LocalSpaceConnectionPanelState
                       contentPadding: EdgeInsets.zero,
                       title: Text(item.space.name),
                       subtitle: Text(
-                        context.l10n.localSpaceConnectionCounts(
-                          item.recordCount,
-                          item.gardenCount,
-                        ),
+                        '${context.l10n.localSpaceConnectionCounts(item.recordCount, item.gardenCount)} · ${context.l10n.ideasCountLabel}: ${item.ideaCount} · ${context.l10n.ideaDraftsCountLabel}: ${item.ideaDraftCount}',
                       ),
                     ),
                     if (item.linkedPaymentCount > 0)
@@ -81,12 +78,7 @@ class _LocalSpaceConnectionPanelState
                           leading: const Icon(Icons.folder_outlined),
                           title: Text(project.name),
                           subtitle: Text(
-                            context.l10n.localSpaceConnectionProjectCounts(
-                              project.taskCount,
-                              project.financeCount,
-                              project.personCount,
-                              project.accountCount,
-                            ),
+                            '${context.l10n.localSpaceConnectionProjectCounts(project.taskCount, project.financeCount, project.personCount, project.accountCount)} · ${context.l10n.ideasCountLabel}: ${project.ideaCount} · ${context.l10n.ideaDraftsCountLabel}: ${project.ideaDraftCount}',
                           ),
                         ),
                       ),

@@ -1,6 +1,86 @@
 part of 'collaboration_repository.dart';
 
 extension CollaborationLocalSpacePublication on CollaborationRepository {
+  Future<List<IdeaBoard>> _localPublicationIdeas(String spaceId) async => [
+    for (final row in await database.rows(
+      spaceId == 'local'
+          ? 'SELECT i.payload FROM device_ideas i WHERE NOT EXISTS(SELECT 1 FROM idea_space_links l WHERE l.idea_id=i.id) ORDER BY i.id'
+          : 'SELECT i.payload FROM device_ideas i JOIN idea_space_links l ON l.idea_id=i.id WHERE l.space_id=? ORDER BY i.id',
+      spaceId == 'local' ? const [] : [spaceId],
+    ))
+      IdeaBoard.fromJson(CollaborationRepository._map(row['payload'])),
+  ];
+
+  Future<List<Map<String, dynamic>>> _localPublicationIdeaDrafts(
+    String workspace,
+  ) => database.rows(
+    'SELECT workspace,id,payload,base FROM idea_drafts WHERE workspace=? ORDER BY id',
+    [workspace],
+  );
+
+  Future<void> _copyPublicationIdeaDraft(
+    Map<String, dynamic> draft,
+    String partition,
+    String destination,
+  ) async {
+    final board = IdeaBoard.fromJson(
+      CollaborationRepository._map(draft['payload']),
+    );
+    await _copyPublicationIdeaAssets(
+      draft['workspace'] as String,
+      partition,
+      destination,
+      board,
+    );
+    if (draft['base'] != null) {
+      await _copyPublicationIdeaAssets(
+        draft['workspace'] as String,
+        partition,
+        destination,
+        IdeaBoard.fromJson(CollaborationRepository._map(draft['base'])),
+      );
+    }
+    await database.execute(
+      'INSERT INTO idea_drafts(workspace,id,payload,base) VALUES(?,?,?,?) ON CONFLICT(workspace,id) DO NOTHING',
+      [
+        'shared:$partition:$destination',
+        board.id,
+        draft['payload'],
+        draft['base'],
+      ],
+    );
+  }
+
+  Future<void> _copyPublicationIdeaAssets(
+    String sourceWorkspace,
+    String partition,
+    String destination,
+    IdeaBoard board,
+  ) async {
+    for (final asset in board.assets) {
+      final rows = await database.rows(
+        'SELECT metadata,bytes FROM idea_assets WHERE workspace=? AND sha256=?',
+        [sourceWorkspace, asset.sha256],
+      );
+      if (rows.isEmpty ||
+          jsonEncode(CollaborationRepository._map(rows.single['metadata'])) !=
+              jsonEncode(asset.toJson())) {
+        throw const CollaborationException('idea_asset_missing');
+      }
+      final bytes = Uint8List.fromList(rows.single['bytes'] as List<int>);
+      await verifyIdeaAsset(asset, bytes);
+      await database.execute(
+        'INSERT INTO idea_assets(workspace,sha256,metadata,bytes) VALUES(?,?,?,?) ON CONFLICT(workspace,sha256) DO NOTHING',
+        [
+          'shared:$partition:$destination',
+          asset.sha256,
+          jsonEncode(asset.toJson()),
+          bytes,
+        ],
+      );
+    }
+  }
+
   Future<LocalSpacesPublicationPreview> previewLocalSpacesPublication(
     List<String> spaceIds, {
     bool refreshCapabilities = true,
@@ -36,6 +116,8 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         CollaborationRepository._map(rows.single['data']),
       );
       final snapshot = await storage.localSnapshot(workspace: id);
+      final ideas = await _localPublicationIdeas(id);
+      final ideaDrafts = await _localPublicationIdeaDrafts(id);
       final savedCreation = await database.rows(
         'SELECT value FROM local_meta WHERE name=?',
         ['space_publication_create:${session.profile.partition}:$id'],
@@ -62,6 +144,8 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           space: space,
           recordCount: snapshot.recordIds.length,
           gardenCount: gardens.length,
+          ideaCount: ideas.length,
+          ideaDraftCount: ideaDrafts.length,
           linkedPaymentCount: linked.length,
           projects: splitProjects
               ? [
@@ -84,6 +168,20 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
                           .map((e) => e.ledgerAccountId ?? e.currency)
                           .toSet()
                           .length,
+                      ideaCount: ideas
+                          .where((idea) => idea.projectId == project.id)
+                          .length,
+                      ideaDraftCount: ideaDrafts
+                          .where(
+                            (draft) =>
+                                IdeaBoard.fromJson(
+                                  CollaborationRepository._map(
+                                    draft['payload'],
+                                  ),
+                                ).projectId ==
+                                project.id,
+                          )
+                          .length,
                     ),
                 ]
               : const [],
@@ -93,6 +191,8 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         Map<String, Object?>.of(space.toJson())..remove('binding'),
         snapshot.toJson(),
         gardens,
+        ideas.map((idea) => idea.toJson()).toList(),
+        ideaDrafts,
         linked,
       ]);
       if (space.binding != null &&
@@ -112,6 +212,50 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
       }
       if (gardens.isNotEmpty && _recordContractVersion < 4) {
         issues.add('garden_sync_unsupported');
+      }
+      final ideaCandidates = [
+        ...ideas,
+        for (final draft in ideaDrafts)
+          IdeaBoard.fromJson(CollaborationRepository._map(draft['payload'])),
+        for (final draft in ideaDrafts.where((d) => d['base'] != null))
+          IdeaBoard.fromJson(CollaborationRepository._map(draft['base'])),
+      ];
+      if (ideaCandidates.isNotEmpty &&
+          (_recordContractVersion < 5 ||
+              features['ideas'] != true ||
+              features['ideaAssets'] != true &&
+                  ideaCandidates.any((idea) => idea.assets.isNotEmpty))) {
+        issues.add('ideas_sync_unsupported');
+      }
+      for (final idea in ideaCandidates) {
+        if (idea.projectId != null &&
+            !snapshot.projects.any((project) => project.id == idea.projectId)) {
+          issues.add('idea_project_missing');
+        }
+        for (final asset in idea.assets) {
+          final rows = await database.rows(
+            'SELECT metadata,bytes FROM idea_assets WHERE workspace=? AND sha256=?',
+            [id, asset.sha256],
+          );
+          if (rows.isEmpty) {
+            issues.add('idea_asset_missing');
+            continue;
+          }
+          try {
+            if (jsonEncode(
+                  CollaborationRepository._map(rows.single['metadata']),
+                ) !=
+                jsonEncode(asset.toJson())) {
+              throw const FormatException('Idea image metadata mismatch');
+            }
+            await verifyIdeaAsset(
+              asset,
+              Uint8List.fromList(rows.single['bytes'] as List<int>),
+            );
+          } on FormatException {
+            issues.add('idea_asset_missing');
+          }
+        }
       }
       if ((snapshot.financeEntries.isNotEmpty ||
               snapshot.financeAccounts.isNotEmpty ||
@@ -361,6 +505,43 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
             SharedRecordType.garden,
             row['id'] as String,
             CollaborationRepository._map(row['payload']),
+          );
+        }
+        for (final idea in await _localPublicationIdeas(space.id)) {
+          final destination = _publicationDestination(
+            space,
+            idea.projectId,
+            parent.id,
+            splitProjects: splitProjects,
+          );
+          await _copyPublicationIdeaAssets(
+            space.id,
+            session.profile.partition,
+            destination,
+            idea,
+          );
+          await _putPublicationRecord(
+            session.profile.partition,
+            destination,
+            SharedRecordType.idea,
+            idea.id,
+            idea.toJson(),
+          );
+        }
+        for (final draft in await _localPublicationIdeaDrafts(space.id)) {
+          final board = IdeaBoard.fromJson(
+            CollaborationRepository._map(draft['payload']),
+          );
+          final destination = _publicationDestination(
+            space,
+            board.projectId,
+            parent.id,
+            splitProjects: splitProjects,
+          );
+          await _copyPublicationIdeaDraft(
+            draft,
+            session.profile.partition,
+            destination,
           );
         }
         final linked = LocalSpace(

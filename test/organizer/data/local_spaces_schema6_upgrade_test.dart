@@ -56,7 +56,7 @@ void main() {
       final scope = await shared.createScope('Original shared');
       transport.offline = true;
       await shared.createTask(scopeId: scope, title: 'Pending original');
-      // Reconstruct the actual v6 schema: only these two tables are added by v7.
+      // Reconstruct actual v6: remove every table introduced by v7–v9.
       final beforePersonal = await db.rows(
         'SELECT * FROM personal_records ORDER BY workspace,id',
       );
@@ -74,6 +74,14 @@ void main() {
       expect(beforeOutbox, isNotEmpty);
       await shared.close();
       await local.close();
+      for (final table in [
+        'idea_space_links',
+        'device_ideas',
+        'idea_assets',
+        'idea_drafts',
+      ]) {
+        await db.execute('DROP TABLE $table');
+      }
       await db.execute('DROP TABLE garden_space_links');
       await db.execute('DROP TABLE local_spaces');
       await db.execute('DROP TABLE linked_payment_cash');
@@ -99,7 +107,7 @@ void main() {
         await shared.close();
         await db.close();
       });
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 8);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 9);
       expect(
         await db.rows('SELECT * FROM personal_records ORDER BY workspace,id'),
         beforePersonal,
@@ -138,8 +146,8 @@ void main() {
         await backup.exportEncryptedBackup(password),
         password,
       );
-      expect(document['version'], 4);
-      expect(document['databaseVersion'], 8);
+      expect(document['version'], 5);
+      expect(document['databaseVersion'], 9);
       expect((document['localSpaces'] as List).single['space']['id'], 'local');
       expect((document['tables'] as Map)['outbox'], beforeOutbox);
     },

@@ -129,7 +129,11 @@ class NativeDeletionPlan extends NativeDatabase
         $impact['organizationProjectsDetached']=count($organizationLinks);
         $impact['sharedContentAcceptancesDeleted']=$this->n('familyhub_policy_acceptances','account_id=?',[$account]);
         $impact['moderationReportsDeleted']=$this->n('familyhub_moderation_reports',"reporter_account_id=? OR (target_type='user' AND target_id=?) OR EXISTS(SELECT 1 FROM familyhub_records g WHERE target_type='record' AND g.scope_id=familyhub_moderation_reports.scope_id AND g.id=target_id AND g.created_by=?) OR EXISTS(SELECT 1 FROM familyhub_finance_records f WHERE target_type='finance' AND f.scope_id=familyhub_moderation_reports.scope_id AND f.id=target_id AND f.created_by=?)",[$account,$account,$account,$account]);
-        foreach ($owned as &$ownedScope) { $ownedScope['moderationReportsDeletedIfScopeDeleted']=$this->n('familyhub_moderation_reports','scope_id=?',[$ownedScope['id']]); }unset($ownedScope);
+        // The review also binds private/staged images: a later upload cannot be erased under an old preview.
+        $ideaAssets=$this->many('SELECT a.scope_id,a.board_id,a.sha256,a.owner_account_id,a.mime,a.size,a.width,a.height,a.received,a.complete,a.published,a.created_at,s.kind,s.owner_id FROM familyhub_idea_assets a LEFT JOIN familyhub_scopes s ON s.id=a.scope_id WHERE a.owner_account_id=? OR s.owner_id=? ORDER BY a.scope_id,a.board_id,a.sha256',[$account,$id]);
+        $versions[]=$ideaAssets;$impact['privateIdeaAssetsDeleted']=0;$impact['stagedIdeaAssetsDeleted']=0;
+        foreach($ideaAssets as $asset){if($asset['kind']==='personal'&&(int)$asset['owner_id']===$id){$impact['privateIdeaAssetsDeleted']++;}elseif($asset['owner_account_id']===$account&&!(int)$asset['published']){$impact['stagedIdeaAssetsDeleted']++;}}
+        foreach ($owned as &$ownedScope) { $ownedScope['ideaAssetsDeletedIfScopeDeleted']=$this->n('familyhub_idea_assets','scope_id=?',[$ownedScope['id']]);$ownedScope['moderationReportsDeletedIfScopeDeleted']=$this->n('familyhub_moderation_reports','scope_id=?',[$ownedScope['id']]); }unset($ownedScope);
         $plan=['serverId' =>$this->serverId(),'accountId'=>$account,'policyVersion'=>$policy,'canDelete'=>!$blocks,'blockers'=>$blocks,'impact'=>$impact,'sharedScopes'=>$shared,'ownedScopes'=>$owned,'resolutions'=>$resolutions];
         if ($policy===3) { $plan['linkedFinancialFacts']=$linkedFacts; }
         $plan['previewHash']=hash('sha256',$this->canonical([$plan,$versions,$this->fingerprint($user)]));

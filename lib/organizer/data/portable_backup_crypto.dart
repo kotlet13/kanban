@@ -6,7 +6,8 @@ import '../domain/collaboration_models.dart';
 
 /// Portable authenticated envelope. Passwords and keys are never persisted.
 class PortableBackupCrypto {
-  static const maxBytes = 64 * 1024 * 1024;
+  static const maxBytes = 128 * 1024 * 1024;
+  static const maxPlainBytes = 96 * 1024 * 1024;
   static const iterations = 600000;
   final _cipher = AesGcm.with256bits();
   final _kdf = Pbkdf2.hmacSha256(iterations: iterations, bits: 256);
@@ -34,7 +35,7 @@ class PortableBackupCrypto {
       'nonce': base64Encode(nonce),
     };
     final plain = utf8.encode(jsonEncode(document));
-    if (plain.length > maxBytes ~/ 2) {
+    if (plain.length > maxPlainBytes) {
       throw const CollaborationException('backup_too_large');
     }
     final key = await _kdf.deriveKey(
@@ -48,7 +49,7 @@ class PortableBackupCrypto {
         nonce: nonce,
         aad: utf8.encode(jsonEncode(header)),
       );
-      return Uint8List.fromList(
+      final result = Uint8List.fromList(
         utf8.encode(
           jsonEncode({
             ...header,
@@ -57,6 +58,10 @@ class PortableBackupCrypto {
           }),
         ),
       );
+      if (result.length > maxBytes) {
+        throw const CollaborationException('backup_too_large');
+      }
+      return result;
     } finally {
       key.destroy();
     }
@@ -82,11 +87,14 @@ class PortableBackupCrypto {
       salt = base64Decode(envelope['salt'] as String);
       nonce = base64Decode(envelope['nonce'] as String);
       ciphertext = base64Decode(envelope['ciphertext'] as String);
+      if (ciphertext.length > maxPlainBytes) {
+        throw const FormatException('Backup plaintext exceeds bound');
+      }
       mac = base64Decode(envelope['mac'] as String);
       if (salt.length != 16 ||
           nonce.length != 12 ||
           mac.length != 16 ||
-          ciphertext.length > maxBytes ~/ 2) {
+          ciphertext.length > maxPlainBytes) {
         throw const FormatException();
       }
     } on Object {

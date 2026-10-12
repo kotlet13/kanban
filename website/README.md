@@ -1,5 +1,16 @@
 # Jivie: statična javna stran za cPanel
 
+**12. oktober — Idejnik, lokalno pripravljen izvor:** predstavitev/pomoč in SL/EN
+zasebnost zdaj zajemajo uredljive table, izbrane normalizirane fotografije,
+izbirno deljenje in zasebno sinhronizacijo, dejanski predpomnilnik/kopije ter
+prijavo celotne table s fotografijami. Generator vsebuje tudi prej ločeno
+pripravljeni odsek pravil in prijav, zato ga ponovno generiranje ne izgubi.
+To besedilo **ni objavljeno**; živa stran ostaja preverjeno besedilo 11. oktobra.
+[Izvedba Idejnika](../docs/IDEAS_IMPLEMENTATION.md).
+Lokalni paket `build/releases/jivie-website-2026-10-12-ideas.zip` ima15 datotek,
+SHA256 `e33f55353c451f3eea91a49e505c5bd6cb7d3534e3c88395b4b464adfbaf72c0`;
+CRC in bajtno ujemanje vseh dovoljenih izvorov sta preverjena.18 paketnih testov PASS.
+
 **12. oktober — lokalno pripravljena dopolnitev:** SL/EN zasebnost opisuje novi
 tok pravil in prijav FamilyHub0.12.0: izrecni sprejem, prejemnik na izbranem
 strežniku, omejeni posnetek, hramba po zaključku in vpliv izbrisa računa. Ta

@@ -1,5 +1,29 @@
 # Navodila za delo na projektu
 
+12. oktober — uporabnik je naročil izvedbo **Idejnika**: lokalno izvedene uredljive
+table z besedilom/lističi/risbami, fotografijami in nanje vezanimi oznakami,
+premikom/merilom/rotacijo, pan/zoom ter undo/redo. Lokalni osebni/gospodinjski/
+organizacijski/projektni prostori, Vsi z izrecnim ciljem, osnutki ločeni od Save.
+Deljenje ima dejanske zasebne foto bajte, sync5/record5, obvestila ideas, združitev
+različnih elementov/ohranjeni konflikt, celotno prijavo s fotografijami.
+**Odjemalec schema9/kopija5, FamilyHub0.13.0/schema17 v izvoru**. Stare kopije in
+izvirne čakajoče operacije ostanejo. Šifrirana samostojna obnova table/fotografije
+brez starega strežnika je dejansko PASS. Izrecni zasebni prenos in lokalna objava
+kopirata tudi osnutke brez objave; predogled pokaže ločene števce. Anonimni osebni
+izvirniki se po prenosu ne obudijo pri odjavi. Viewer lahko bere/prijavi ob
+zapisovalnem blocked, brez pravic urejanja; preklicane politike niso obite.
+**1060 Flutter uspešnih/14 opt-in preskokov**, vseh18 prejšnjih testnih predpostavk
+razrešenih v12 podatkovnih/28 UI PASS,42 ciljni UI/13 novi podatkovni PASS, dejanski
+Dart/HTTP PASS.468 PHP kontrol na3 bazah,3 migracije16→17 z ohranjenimi hashi/
+definicijami/identiteto,8 admin kontrol,87 PHP lint,18 paketnih PASS. Analiza brez
+ugotovitev, Android debug/web release PASS, istih8 dovoljenj brez kamere/širokih
+media/storage. image4.7.2 je že zaklenjen, premaknjen v runtime; SDK/locks verzije
+nespremenjene. [Izvedba/paketa/naslednji korak](docs/IDEAS_IMPLEMENTATION.md).
+**Ni nove gostovane ali trgovinske izdaje**: test2 ostaja0.12/schema16, aktivni
+Android1.5.2(22), iOS/Mac/splet/produkcija nespremenjeni. Pred gostovano17 sta
+nujna GD in sveža dejanska kopija/obnova16 s celotnim zasebnim datotečnim drevesom.
+SL/EN zasebnost je lokalno usklajena s fotografijami, Console/javna oddaja ne.
+
 12. oktober — korekcija urejevalnikov je objavljena: **Android1.5.2(22) Aktivno
 od08:54** za isti domači(15). Funkcionalni02cbfec/metadata1c39057, [dokazi](docs/release/EDITOR_ACTIONS_RELEASE.md).
 Prijava ob naslovu; ena vrstica redDelete/Cancel/Saveicon v sorodnihCRUD obrazcih.

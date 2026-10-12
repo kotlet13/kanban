@@ -1,3 +1,5 @@
+import '../ideas/idea_conflict_preview.dart';
+import '../../domain/idea_models.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -45,6 +47,16 @@ class SharingConflictsPage extends ConsumerStatefulWidget {
 
 class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
   String? _busyId;
+  final Map<String, bool> _ideaPreviews = {};
+  String _previewKey(SharedConflict conflict, bool local) =>
+      '${conflict.id}:${local ? 'local' : 'remote'}:${jsonEncode((local ? conflict.localPayload : conflict.remotePayload)?['elements'] ?? []).hashCode}';
+  bool _ready(SharedConflict conflict) =>
+      conflict.recordType != SharedRecordType.idea ||
+      (conflict.localPayload == null ||
+              _ideaPreviews[_previewKey(conflict, true)] == true) &&
+          (conflict.remotePayload == null ||
+              _ideaPreviews[_previewKey(conflict, false)] == true);
+
   Future<void> _resolve(SharedConflict conflict, bool keepLocal) async {
     setState(() => _busyId = conflict.id);
     try {
@@ -63,7 +75,12 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
     }
   }
 
-  Widget _version(String title, Map<String, dynamic>? payload) {
+  Widget _version(
+    String title,
+    Map<String, dynamic>? payload, {
+    SharedConflict? conflict,
+    bool local = false,
+  }) {
     final l = context.l10n;
     return Card(
       child: Padding(
@@ -75,6 +92,18 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
             const SizedBox(height: 10),
             if (payload == null)
               Text(l.sharingDeletedVersion)
+            else if (conflict?.recordType == SharedRecordType.idea)
+              IdeaConflictPreview(
+                key: ValueKey(_previewKey(conflict!, local)),
+                board: IdeaBoard.fromJson(payload),
+                scopeId: conflict.scopeId,
+                onReady: (value) {
+                  final key = _previewKey(conflict, local);
+                  if (mounted && _ideaPreviews[key] != value) {
+                    setState(() => _ideaPreviews[key] = value);
+                  }
+                },
+              )
             else ...[
               Text(
                 '${payload['title'] ?? ''}',
@@ -157,6 +186,8 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                               child: _version(
                                 l.sharingLocalVersion,
                                 conflict.localPayload,
+                                conflict: conflict,
+                                local: true,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -164,6 +195,7 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                               child: _version(
                                 l.sharingRemoteVersion,
                                 conflict.remotePayload,
+                                conflict: conflict,
                               ),
                             ),
                           ],
@@ -173,10 +205,13 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                             _version(
                               l.sharingLocalVersion,
                               conflict.localPayload,
+                              conflict: conflict,
+                              local: true,
                             ),
                             _version(
                               l.sharingRemoteVersion,
                               conflict.remotePayload,
+                              conflict: conflict,
                             ),
                           ],
                         ),
@@ -197,6 +232,7 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                     FilledButton(
                       onPressed:
                           _busyId != null ||
+                              !_ready(conflict) ||
                               conflict.remoteDeleted ||
                               {
                                 'record_deleted',
@@ -218,6 +254,7 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                     OutlinedButton(
                       onPressed:
                           _busyId != null ||
+                              !_ready(conflict) ||
                               !(state.scopes
                                       .where(
                                         (scope) => scope.id == conflict.scopeId,

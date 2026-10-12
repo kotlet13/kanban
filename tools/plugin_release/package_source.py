@@ -18,6 +18,7 @@ PUBLIC_DOCUMENTS = {
     'docs/email-invitation-api-contract.md': ROOT / 'docs/server/email-invitation-api-contract.md',
     'docs/space-sharing-api-contract.md': ROOT / 'docs/server/space-sharing-api-contract.md',
     'docs/moderation-api-contract.md': ROOT / 'docs/server/moderation-api-contract.md',
+    'docs/ideas-api-contract.md': ROOT / 'docs/server/ideas-api-contract.md',
 }
 LIMIT = 2 * 1024 * 1024
 

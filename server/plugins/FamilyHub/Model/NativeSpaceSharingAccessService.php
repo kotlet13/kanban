@@ -18,7 +18,7 @@ class NativeSpaceSharingAccessService extends NativeDatabase
         if (!($preview['canApply']??true)) { throw new NativeError('access_migration_blocked',409,['blockers'=>$preview['blockers']]); }
         if (!is_string($params['previewHash']??null) || !hash_equals($preview['previewHash'],$params['previewHash'])) { throw new NativeError('access_preview_changed',409); }
         if ((int)$scope['access_policy_version']!==3) {
-            if ($scope['kind']==='project' && empty($scope['project_root_id'])) { $root=$this->one("SELECT id FROM familyhub_records WHERE scope_id=? AND type='project' AND deleted=0",[$id]);$this->change('UPDATE familyhub_scopes SET project_root_id=?,required_record_contract=3 WHERE id=?',[$root['id'],$id]); }
+            if ($scope['kind']==='project' && empty($scope['project_root_id'])) { $root=$this->one("SELECT id FROM familyhub_records WHERE scope_id=? AND type='project' AND deleted=0",[$id]);$this->change('UPDATE familyhub_scopes SET project_root_id=?,required_record_contract=? WHERE id=?',[$root['id'],max(3,(int)$scope['required_record_contract']),$id]); }
             $this->change('UPDATE familyhub_scopes SET access_policy_version=3,access_revision=access_revision+1,sequence=sequence+1 WHERE id=?',[$id]);
             $insert=$this->sqlite?'INSERT OR IGNORE':'INSERT IGNORE';$affected=[];
             foreach ((new NativeOrganizationAccess($this->container))->relatedScopeIds($id) as $sid) {
@@ -41,7 +41,7 @@ class NativeSpaceSharingAccessService extends NativeDatabase
         if ($scope['kind']==='project') { $roots=$this->many("SELECT * FROM familyhub_records WHERE scope_id=? AND type='project' AND deleted=0",[$id]);if (count($roots)!==1) { $blockers[]=['code'=>'project_scope_requires_single_root']; }
             $records=$this->many('SELECT * FROM familyhub_records WHERE scope_id=? ORDER BY id',[$id]);$fingerprint[]=$records;
             foreach ($records as $r) { if ((int)$r['deleted']) { continue; }$payload=json_decode($r['payload'],true,32,JSON_THROW_ON_ERROR);if ($r['type']==='project' && (int)$r['contract_version']<3) { $blockers[]=['code'=>'project_record_upgrade_required','recordId'=>$r['id']]; }
-                if (in_array($r['type'],['task','event'],true) && (count($roots)!==1 || ($payload['projectId']??null)!==$roots[0]['id'])) { $blockers[]=['code'=>'project_scope_unrelated_content','recordId'=>$r['id']]; } } }
+                if (in_array($r['type'],['task','event','idea'],true) && (count($roots)!==1 || ($payload['projectId']??null)!==$roots[0]['id'])) { $blockers[]=['code'=>'project_scope_unrelated_content','recordId'=>$r['id']]; } } }
         foreach ($access->relatedScopeIds($id) as $sid) {
             $target=$this->one('SELECT * FROM familyhub_scopes WHERE id=?',[$sid]);$members=$access->members($sid);$policy=$this->one('SELECT * FROM familyhub_finance_policy WHERE scope_id=?',[$sid]);$grants=$this->many('SELECT * FROM familyhub_finance_grants WHERE scope_id=? ORDER BY account_id',[$sid]);
             $invitations=$this->many('SELECT * FROM familyhub_invitations WHERE scope_id=? AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at>? ORDER BY id',[$sid,time()]);$fingerprint[]=[$target,$members,$policy,$grants,$invitations];

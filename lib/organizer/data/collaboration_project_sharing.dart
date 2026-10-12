@@ -208,6 +208,55 @@ extension CollaborationProjectSharing on CollaborationRepository {
                             rows.single['payload']))) {
               throw const CollaborationException('invalid_response');
             }
+            if (table == 'records' &&
+                rows.single['type'] == 'idea' &&
+                rows.single['payload'] != null) {
+              final board = IdeaBoard.fromJson(
+                CollaborationRepository._map(rows.single['payload']),
+              );
+              final oldWorkspace = 'shared:$partition:${preview.scopeId}',
+                  newWorkspace = 'shared:$partition:${scope.id}';
+              for (final asset in board.assets) {
+                final cached = await database.rows(
+                  'SELECT metadata,bytes FROM idea_assets WHERE workspace=? AND sha256=?',
+                  [oldWorkspace, asset.sha256],
+                );
+                if (cached.isNotEmpty) {
+                  final bytes = Uint8List.fromList(
+                    cached.single['bytes'] as List<int>,
+                  );
+                  await verifyIdeaAsset(asset, bytes);
+                  await database.execute(
+                    'INSERT INTO idea_assets(workspace,sha256,metadata,bytes) VALUES(?,?,?,?) ON CONFLICT(workspace,sha256) DO NOTHING',
+                    [
+                      newWorkspace,
+                      asset.sha256,
+                      cached.single['metadata'],
+                      bytes,
+                    ],
+                  );
+                }
+              }
+              final drafts = await database.rows(
+                'SELECT payload,base FROM idea_drafts WHERE workspace=? AND id=?',
+                [oldWorkspace, id],
+              );
+              if (drafts.isNotEmpty) {
+                await database.execute(
+                  'INSERT INTO idea_drafts(workspace,id,payload,base) VALUES(?,?,?,?) ON CONFLICT(workspace,id) DO NOTHING',
+                  [
+                    newWorkspace,
+                    id,
+                    drafts.single['payload'],
+                    drafts.single['base'],
+                  ],
+                );
+                await database.execute(
+                  'DELETE FROM idea_drafts WHERE workspace=? AND id=?',
+                  [oldWorkspace, id],
+                );
+              }
+            }
             final row = {...rows.single, 'scope_id': scope.id};
             final columns = row.keys.join(',');
             await database.execute(

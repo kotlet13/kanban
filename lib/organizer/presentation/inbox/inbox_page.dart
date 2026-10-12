@@ -61,6 +61,8 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
   String _kind(String kind, int count) {
     final l = context.l10n;
     return switch (kind) {
+      'idea.created' => l.inboxIdeaCreated,
+      'idea.updated' => l.inboxIdeaChanged,
       'task.created' => l.inboxTaskCreated(count),
       'task.assigned' => l.inboxTasksAssigned(count),
       'task.completed' => l.inboxTaskCompleted,

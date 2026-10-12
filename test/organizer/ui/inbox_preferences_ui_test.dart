@@ -46,6 +46,7 @@ CollaborationState preferencesState({
                 'shopping',
                 'membership',
                 'finance',
+                'ideas',
               ])
                 category: const SharedNotificationSettings(push: false),
             },
@@ -60,6 +61,7 @@ CollaborationState preferencesState({
           'shopping',
           'membership',
           'finance',
+          'ideas',
         ])
           category: SharedNotificationSettings(
             push: secondPush && ['reminders', 'tasks'].contains(category),
@@ -129,6 +131,7 @@ void main() {
       'shopping',
       'membership',
       'finance',
+      'ideas',
     ]) {
       expect(prefs.forCategory(category).push, isTrue);
     }
@@ -144,7 +147,7 @@ void main() {
         push.host(controller, sdk, child: const InboxPreferences()),
       );
       await tester.pumpAndSettle();
-      expect(summaryText(tester), contains('5'));
+      expect(summaryText(tester), contains('6'));
       final finder = reminderSwitch('Oddaljena sistemska obvestila');
       final toggle = tester.widget<SwitchListTile>(finder);
       expect(toggle.value, isTrue);

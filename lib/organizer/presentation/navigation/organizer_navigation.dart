@@ -9,6 +9,7 @@ enum OrganizerArea {
   finances,
   home,
   garden,
+  ideas,
   more,
   settings,
   spaceSettings,

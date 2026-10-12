@@ -18,10 +18,11 @@ class NativeModerationService extends NativeDatabase
         $parts=explode('.',$operation);$group=$parts[0];$action=$parts[1]??'';
         $mutating=($group==='scopes' && in_array($action,['create','updateMetadata','setLeader','accessMigrationApply','projectSharingApply'],true)) ||
             (in_array($group,['invitations','invitations2','invitations3'],true) && $action==='create') ||
-            (in_array($group,['sync','sync2','sync3','sync4'],true) && in_array($action,['push','pushTaskWithCost'],true)) ||
+            (in_array($group,['sync','sync2','sync3','sync4','sync5'],true) && in_array($action,['push','pushTaskWithCost'],true)) ||
             (in_array($group,['finance','finance2'],true) && in_array($action,['push','enable','grant'],true)) ||
             ($group==='finance3' && in_array($action,['paymentCommit','paymentReimburse'],true)) ||
             ($group==='reminders' && in_array($action,['put'],true));
+        if ($group==='ideas' && $action==='asset' && in_array($parts[2]??'', ['begin','chunk','complete'],true)) { $mutating=true; }
         if (!$mutating) { return; }
         $user=$this->actor(false)['user'];
         if (isset($params['scopeId'])) {
@@ -70,6 +71,7 @@ class NativeModerationService extends NativeDatabase
             if (!hash_equals($preview['previewHash'],$params['previewHash'])) { throw new NativeError('report_preview_changed',409); }
             $id=$this->newUuid();$created=time();
             $this->change('INSERT INTO familyhub_moderation_reports(id,reporter_account_id,request_id,request_hash,scope_id,target_type,target_id,target_revision,preview_hash,reason,details,snapshot,created_at,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[$id,$user['account_id'],$request,$hash,$scope['id'],$params['targetType'],$params['targetId'],$preview['targetRevision'],$preview['previewHash'],$params['reason'],$params['details'],$this->canonical($preview),$created,'submitted']);
+            if (($preview['subject']['type']??'')==='idea') { (new NativeIdeaAssetService($this->container))->retainReport($id,$scope['id'],$params['targetId'],$preview['evidence']['assets']); }
             return $this->receipt(['id'=>$id,'created_at'=>$created]);
         },true);
     }
@@ -91,6 +93,8 @@ class NativeModerationService extends NativeDatabase
             $payload=json_decode($row['payload'],true,32,JSON_THROW_ON_ERROR);$type=$row['type'];$revision=(int)$row['revision'];$title=(string)($payload['title']??$payload['name']??$type);
             // Bounded single-entry text only: no attachments, related entries or private payment graph.
             $evidence=['id'=>$target,'type'=>$type,'revision'=>$revision];
+            if ($type==='idea' && !NativeIdeaAssetService::available()) { throw new NativeError('ideas_unavailable',503); }
+            if ($type==='idea') { $evidence=['id'=>$target,'type'=>$type,'revision'=>$revision,'board'=>$payload,'assets'=>(new NativeIdeaAssetService($this->container))->evidence($scopeId,$target,$payload)]; }
             foreach (['title','name','notes','description'] as $field) { if (is_string($payload[$field]??null)) { $evidence[$field]=mb_strcut($payload[$field],0,$field==='notes'||$field==='description'?2000:200,'UTF-8'); } }
         }
         $preview=['serverId'=>$this->serverId(),'accountId'=>$user['account_id'],'scopeId'=>$scopeId,'targetType'=>$kind,'targetId'=>$target,'targetRevision'=>$revision,'subject'=>['title'=>mb_strcut($title,0,200,'UTF-8'),'type'=>$type],'evidence'=>$evidence,'recipient'=>$this->recipient()];
@@ -103,6 +107,7 @@ class NativeModerationService extends NativeDatabase
             $ids=array_column($this->many('SELECT id FROM familyhub_moderation_reports WHERE resolved_at IS NOT NULL AND resolved_at<=? AND redacted_at IS NULL ORDER BY resolved_at,id LIMIT 100',[time()-180*86400]),'id');
             foreach ($ids as $id) {
                 $this->change('UPDATE familyhub_moderation_reports SET snapshot=NULL,details=NULL,redacted_at=? WHERE id=?',[time(),$id]);
+                $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?',[$id]);
                 $this->change("UPDATE familyhub_moderation_audit SET note='[Retention expired]' WHERE report_id=?",[$id]);
             }
             return count($ids);

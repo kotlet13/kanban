@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** Shared defaults for preference reads, event creation and delivery rechecks. */
 class NativeNotificationPreferences extends NativeDatabase
 {
-    const CATEGORIES = ['tasks', 'events', 'shopping', 'finance', 'reminders', 'membership'];
+    const CATEGORIES = ['tasks', 'events', 'shopping', 'finance', 'reminders', 'membership','ideas'];
 
     public static function resolve($saved = null)
     {

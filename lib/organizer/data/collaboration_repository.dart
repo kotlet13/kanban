@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart' show Sha256;
 import 'dart:math';
 import '../domain/collaboration_models.dart';
@@ -7,6 +8,9 @@ import '../domain/organizer_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/linked_payment_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/idea_models.dart';
+import 'idea_storage.dart';
+import 'idea_repository.dart' show verifyIdeaAsset;
 import '../domain/project_sharing_models.dart';
 import '../domain/shared_payload_validation.dart';
 import '../domain/shared_finance_validation.dart';
@@ -32,6 +36,7 @@ part 'collaboration_project_sharing.dart';
 part 'collaboration_linked_payments.dart';
 part 'collaboration_local_space_publication.dart';
 part 'collaboration_garden_actions.dart';
+part 'collaboration_idea_actions.dart';
 part 'collaboration_account_actions.dart';
 part 'collaboration_email_invitations.dart';
 part 'collaboration_session_renewal.dart';
@@ -509,6 +514,7 @@ class CollaborationRepository {
         items = <LocalShoppingItem>[];
     final people = <HouseholdPerson>[];
     final gardens = <Garden>[];
+    final ideas = <IdeaBoard>[];
     final personalFinanceEntries = <FinanceEntry>[];
     final events = <SharedEvent>[];
     for (final r in rows) {
@@ -524,6 +530,13 @@ class CollaborationRepository {
             : _map(r['remote'])['updatedByAccountId'],
       };
       switch (SharedRecordType.values.byName(r['type'] as String)) {
+        case SharedRecordType.idea:
+          ideas.add(
+            IdeaBoard.fromJson({
+              ..._map(r['payload']),
+              'revision': r['local_revision'],
+            }),
+          );
         case SharedRecordType.garden:
           gardens.add(
             Garden.fromJson({
@@ -599,6 +612,7 @@ class CollaborationRepository {
           liveAccounts[e.toAccountId] != e.currency,
     );
     return SharedScopeData(
+      ideas: ideas,
       gardens: gardens,
       people: people,
       personalFinanceEntries: personalFinanceEntries,

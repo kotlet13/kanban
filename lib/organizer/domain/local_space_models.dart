@@ -84,10 +84,14 @@ class LocalSpacePublicationItem {
     required this.gardenCount,
     this.projects = const [],
     this.linkedPaymentCount = 0,
+    this.ideaCount = 0,
+    this.ideaDraftCount = 0,
   });
   final LocalSpace space;
   final int recordCount, gardenCount;
   final int linkedPaymentCount;
+  final int ideaCount;
+  final int ideaDraftCount;
   final List<LocalProjectPublicationDestination> projects;
 }
 
@@ -115,7 +119,11 @@ class LocalProjectPublicationDestination {
     required this.financeCount,
     required this.personCount,
     required this.accountCount,
+    this.ideaCount = 0,
+    this.ideaDraftCount = 0,
   });
   final String id, name;
   final int taskCount, financeCount, personCount, accountCount;
+  final int ideaCount;
+  final int ideaDraftCount;
 }

@@ -1,3 +1,4 @@
+import '../ideas/idea_report_preview.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ bool _onlineSession(CollaborationState state) =>
 
 bool _reportScope(CollaborationState state, String scopeId) =>
     _onlineSession(state) &&
-    state.scopes.any((s) => s.id == scopeId && !s.revoked && !s.blocked);
+    state.scopes.any((s) => s.id == scopeId && s.canRead);
 
 /// Explicit server-specific consent. No acceptance is recorded by opening it.
 Future<bool> showSharedContentPolicy(
@@ -403,6 +404,7 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
   String? _error;
   bool _busy = false;
   bool _attempted = false;
+  bool _ideaReady = false;
   @override
   void dispose() {
     _details.dispose();
@@ -410,7 +412,11 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
   }
 
   Future<void> _send() async {
-    if (_busy || _reason == null) return;
+    if (_busy ||
+        _reason == null ||
+        widget.preview.type == 'idea' && !_ideaReady) {
+      return;
+    }
     if (utf8.encode(_details.text.trim()).length > 2000) {
       setState(() => _error = context.l10n.moderationDetailsLimit);
       return;
@@ -483,7 +489,22 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
-                ReportEvidenceView(evidence: widget.preview.evidence),
+                if (widget.preview.type == 'idea')
+                  IdeaReportPreview(
+                    preview: widget.preview,
+                    onReady: (value) {
+                      if (mounted) setState(() => _ideaReady = value);
+                    },
+                  ),
+                ReportEvidenceView(
+                  evidence: Map<String, dynamic>.fromEntries(
+                    widget.preview.evidence.entries.where(
+                      (e) =>
+                          widget.preview.type != 'idea' ||
+                          e.key != 'board' && e.key != 'assets',
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   key: const ValueKey('report-reason'),
@@ -539,7 +560,12 @@ class _ContentReportDialogState extends State<ContentReportDialog> {
           ),
           FilledButton(
             key: const ValueKey('report-send'),
-            onPressed: _busy || _reason == null ? null : _send,
+            onPressed:
+                _busy ||
+                    _reason == null ||
+                    widget.preview.type == 'idea' && !_ideaReady
+                ? null
+                : _send,
             child: Text(_attempted ? l.organizerRetry : l.moderationSendReport),
           ),
         ],

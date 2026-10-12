@@ -60,7 +60,9 @@ extension CollaborationAccountActions on CollaborationRepository {
         ? 2
         : 1;
     final features = caps['features'] as Map<String, dynamic>;
-    _recordContractVersion = versions is List && versions.contains(4)
+    _recordContractVersion = versions is List && versions.contains(5)
+        ? 5
+        : versions is List && versions.contains(4)
         ? 4
         : versions is List && versions.contains(3)
         ? 3
@@ -411,7 +413,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     if (operation.startsWith('finance.') ||
         operation.startsWith('finance2.') ||
         operation == 'sync3.pushTaskWithCost' ||
-        operation == 'sync4.pushTaskWithCost') {
+        operation == 'sync4.pushTaskWithCost' || operation=='sync5.pushTaskWithCost') {
       final cached = await database.rows(
         'SELECT value FROM local_meta WHERE name=?',
         ['capabilities:${session.profile.partition}'],

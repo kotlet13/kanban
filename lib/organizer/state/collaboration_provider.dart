@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +18,7 @@ import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/garden_models.dart';
+import '../domain/idea_models.dart';
 export '../domain/local_space_models.dart';
 export '../domain/organization_access_models.dart';
 export '../domain/project_sharing_models.dart';
@@ -948,6 +950,10 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     reason: reason,
     details: details,
   );
+  Future<Uint8List> loadReportIdeaAsset(
+    ContentReportPreview preview,
+    IdeaAsset asset,
+  ) => _repo.loadReportIdeaAsset(preview, asset);
 
   Future<String> createShoppingList({
     required String scopeId,

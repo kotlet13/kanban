@@ -88,7 +88,10 @@ void main() {
       expect(controller.chosen, ['qa-household']);
       expect(find.text('QA ciljni račun'), findsOneWidget);
       expect(find.text(sharingSession().serverUrl), findsOneWidget);
-      expect(find.text('4 zapisi · 1 vrt'), findsOneWidget);
+      expect(
+        find.text('4 zapisi · 1 vrt · Ideje: 0 · Osnutki idej: 0'),
+        findsOneWidget,
+      );
       await tester.tap(find.byKey(const ValueKey('confirm-space-connection')));
       await tester.pumpAndSettle();
       expect(controller.published, 1);

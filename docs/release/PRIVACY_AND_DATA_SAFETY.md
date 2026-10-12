@@ -1,5 +1,31 @@
 # Osnutek zasebnosti in deklaracij Jivie
 
+**Idejnik, 12. oktober — lokalni izvor:** novi modul dodaja besedilo/risbe in
+normalizirane fotografije PNG/JPEG. Izključno lokalno delo ne pošilja vsebine.
+Shrani v deljenem prostoru ali izrecni vklop zasebne sinhronizacije pošlje
+podprte table in fotografije na izbrani strežnik; dostop sledi pravicam prostora.
+Fotografije se pred hrambo ponovno kodirajo brez vgrajenih metapodatkov;
+ne beremo galerije v ozadju in ne dodajamo kamere ali širokih medijskih dovoljenj.
+Aktivna SQLite/hramba strežnika nista dodatno šifrirani od pošiljatelja do prejemnika;
+prenos je HTTPS, prenosna kopija pa ostaja posebej šifrirana z uporabnikovim geslom.
+
+Prijava table po uporabnikovem predogledu pošlje skrbniku istega strežnika
+natančne elemente in njihove fotografije. Osnutki sami ne sprožijo obvestila;
+izrecno shranjevanje uporablja obstoječe kanale in kategorijo `ideas`.
+Preneseni preverjeni bajti so v lokalnem predpomnilniku, kopiji vsebine5 in
+samostojni obnovi; manjkajoča fotografija označi nepopolnost.
+
+Pri deklaraciji nove distribuirane kandidatke je treba dopolniti vsaj
+**Photos and videos → Photos**, ob obstoječi uporabniški vsebini in identifikatorjih.
+Prenos na uporabnikov strežnik je še vedno prenos z naprave; lokalnost osnovnega
+načina sama ne pomeni »No data collected«. Namen je delovanje aplikacije,
+fotografije so izbirne. Opredelitev »shared« preverimo po dejanskem toku in
+pogojih izrecnega uporabniškega deljenja, ne avtomatično po imenu self-hosted.
+[Google, uradna navodila Data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en).
+SL/EN spletni izvor je usklajen lokalno, **ni objavljen**. Console, gostovanje,
+Android različica in javna oddaja s tem niso spremenjeni.
+[Izvedba in preverjanje](../IDEAS_IMPLEMENTATION.md).
+
 **Zaključna odstranitev starega odjemalca, 11. oktober:** stari Kanboard UI, njegov
 JSON-RPC prenos, komentarji/priponke v tem UI in AI niso več dosegljive poti nove
 kandidatke. [Dokazi in ohranjene odvisnosti](LEGACY_INTERFACE_REMOVAL.md).

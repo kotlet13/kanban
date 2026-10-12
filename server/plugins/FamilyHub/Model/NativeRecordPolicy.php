@@ -6,7 +6,8 @@ class NativeRecordPolicy extends NativeDatabase
 {
     public function validate($type, $payload, $scopeId, $current, $version)
     {
-        if ($type==='garden') { if ($version!==4) { throw new NativeError('client_upgrade_required',409); }return (new NativeGardenPolicy($this->container))->validate($payload,$scopeId,$current); }
+        if ($type==='idea') { if ($version!==5) { throw new NativeError('client_upgrade_required',409); }return (new NativeIdeaPolicy($this->container))->validate($payload,$scopeId,$current); }
+        if ($type==='garden') { if ($version<4) { throw new NativeError('client_upgrade_required',409); }return (new NativeGardenPolicy($this->container))->validate($payload,$scopeId,$current); }
         $personal = ($this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scopeId])['kind'] ?? '') === 'personal';
         if (!is_array($payload) || array_is_list($payload) || strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) > ($personal ? 524288 : 8192)) { throw new NativeError('validation_error'); }
         $specific = match ($type) {
@@ -157,7 +158,7 @@ class NativeRecordPolicy extends NativeDatabase
                 foreach (['payerPersonId','recipientPersonId','createdByPersonId'] as $field) { if (($p[$field]??null)===$id) { throw new NativeError('live_children'); } }
             }
         }
-        $types = $type === 'project' ? ['task', 'event'] : ($type === 'shoppingList' ? ['shoppingItem'] : []);
+        $types = $type === 'project' ? ['task', 'event','idea'] : ($type === 'shoppingList' ? ['shoppingItem'] : []);
         if ($type === 'project') {
             foreach ($this->iterate('SELECT payload FROM familyhub_finance_records WHERE scope_id=? AND type=\'personalFinanceEntry\' AND deleted=0', [$scope]) as $row) {
                 if ((json_decode($row['payload'], true, 32, JSON_THROW_ON_ERROR)['projectId'] ?? null) === $id) { throw new NativeError('live_children'); }

@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 16;
+const VERSION = 17;
 
 function version_1(PDO $pdo)
 {
@@ -97,4 +97,9 @@ function version_15(PDO $pdo)
 function version_16(PDO $pdo)
 {
     ModerationSchema::create($pdo, false);
+}
+
+function version_17(PDO $pdo)
+{
+    IdeasSchema::create($pdo, false);
 }

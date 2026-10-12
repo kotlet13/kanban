@@ -357,6 +357,14 @@ void main() {
       isFalse,
     );
     await original.execute('DROP TABLE garden_space_links');
+    for (final table in [
+      'idea_space_links',
+      'device_ideas',
+      'idea_assets',
+      'idea_drafts',
+    ]) {
+      await original.execute('DROP TABLE $table');
+    }
     await original.execute('DROP TABLE local_spaces');
     await original.execute('DROP TABLE linked_payment_cash');
     await original.execute('DROP TABLE linked_payment_events');
@@ -483,6 +491,15 @@ void main() {
       gardenV2.remove('localSpaces');
       gardenV2.remove('gardenSpaceLinks');
       gardenV2.remove('linkedPayments');
+      for (final field in [
+        'ideas',
+        'ideaSpaceLinks',
+        'ideaAssets',
+        'ideaDrafts',
+        'ideaOperationHistory',
+      ]) {
+        gardenV2.remove(field);
+      }
       gardenV2['version'] = 2;
       gardenV2['databaseVersion'] = 5;
       gardenV2['personal'] = legacyTaskBackup(a.personal.snapshot);
@@ -520,6 +537,15 @@ void main() {
       oldDoc.remove('localSpaces');
       oldDoc.remove('gardenSpaceLinks');
       oldDoc.remove('linkedPayments');
+      for (final field in [
+        'ideas',
+        'ideaSpaceLinks',
+        'ideaAssets',
+        'ideaDrafts',
+        'ideaOperationHistory',
+      ]) {
+        oldDoc.remove(field);
+      }
       oldDoc['version'] = 1;
       oldDoc['databaseVersion'] = 4;
       oldDoc['personal'] = legacyTaskBackup(a.personal.snapshot);

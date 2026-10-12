@@ -3758,4 +3758,184 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moderationMoreActions => 'More actions';
+
+  @override
+  String get ideasTitle => 'Ideas';
+
+  @override
+  String get ideasAdd => 'New idea';
+
+  @override
+  String get ideasEmpty =>
+      'Keep your ideas together. Add a note, photo or drawing.';
+
+  @override
+  String get ideasSearch => 'Search ideas';
+
+  @override
+  String get ideasUntitled => 'Untitled idea';
+
+  @override
+  String get ideasSelect => 'Select and move';
+
+  @override
+  String get ideasPan => 'Pan and zoom';
+
+  @override
+  String get ideasText => 'Text';
+
+  @override
+  String get ideasSticky => 'Sticky note';
+
+  @override
+  String get ideasPhoto => 'Add photo';
+
+  @override
+  String get ideasPen => 'Pen';
+
+  @override
+  String get ideasHighlighter => 'Highlighter';
+
+  @override
+  String get ideasEraser => 'Eraser';
+
+  @override
+  String get ideasLine => 'Line';
+
+  @override
+  String get ideasArrow => 'Arrow';
+
+  @override
+  String get ideasRectangle => 'Rectangle';
+
+  @override
+  String get ideasEllipse => 'Ellipse';
+
+  @override
+  String get ideasUndo => 'Undo';
+
+  @override
+  String get ideasRedo => 'Redo';
+
+  @override
+  String get ideasRotate => 'Rotate selected element';
+
+  @override
+  String get ideasSize => 'Size';
+
+  @override
+  String get ideasColor => 'Ink colour';
+
+  @override
+  String get ideasWidth => 'Line width';
+
+  @override
+  String get ideasDraft =>
+      'Draft saved on this device. Save publishes the completed idea.';
+
+  @override
+  String get ideasDraftError =>
+      'Draft could not be saved. Keep the editor open and try again.';
+
+  @override
+  String get ideasReadOnly =>
+      'Viewing only. Editing is unavailable in this space.';
+
+  @override
+  String get ideasMissingPhoto => 'Photo unavailable on this device';
+
+  @override
+  String get ideasPhotoError => 'Choose a JPEG or PNG photo up to 20 MB.';
+
+  @override
+  String get ideasDeleteElement => 'Delete selected element';
+
+  @override
+  String get ideasEditText => 'Edit text';
+
+  @override
+  String get ideasHelp =>
+      'Select to move or resize. Draw on a photo to attach marks to it. Use Pan to zoom with two fingers or the mouse wheel.';
+
+  @override
+  String get ideasProject => 'Project (optional)';
+
+  @override
+  String get ideasNoProject => 'Without project';
+
+  @override
+  String get ideasDeleteConfirm => 'Delete this idea?';
+
+  @override
+  String get ideasDraftResume => 'Resume local draft';
+
+  @override
+  String get ideasResetView => 'Fit board';
+
+  @override
+  String get ideasAttachNote => 'Add note beside selected photo';
+
+  @override
+  String get ideasRefreshPhotos => 'Download missing photos';
+
+  @override
+  String get ideasSaveError =>
+      'The idea could not be saved. Your draft is kept on this device.';
+
+  @override
+  String get ideasCanvasLabel => 'Idea board';
+
+  @override
+  String get ideasElements => 'Elements';
+
+  @override
+  String get ideasDraftHint => 'Save confirms changes in the selected space.';
+
+  @override
+  String get ideasDraftPending => 'Saving draft on this device…';
+
+  @override
+  String get ideasDrafts => 'Local drafts';
+
+  @override
+  String get ideasReportDescription =>
+      'This report includes the complete board, its notes, drawings and the photos shown here. Pan and zoom to inspect it before sending.';
+
+  @override
+  String get ideasReportUnavailable =>
+      'The complete board preview could not be loaded. The report cannot be sent until its photos have been reviewed.';
+
+  @override
+  String get ideasUnsupported =>
+      'Your server needs FamilyHub 0.13.0 or later to share ideas and photos. Local drafts remain available.';
+
+  @override
+  String get deletionPrivateIdeaAssets => 'Private idea photos removed';
+
+  @override
+  String get deletionStagedIdeaAssets =>
+      'Idea photos awaiting publication removed';
+
+  @override
+  String get inboxIdeaCreated => 'A new idea was shared';
+
+  @override
+  String get inboxIdeaChanged => 'A shared idea was updated';
+
+  @override
+  String get ideasPhotoLimit => 'An idea can include up to 20 photos.';
+
+  @override
+  String get ideasConflictPhotos =>
+      'Load missing photos before choosing a version. Viewing the comparison does not change the board.';
+
+  @override
+  String get ideasCountLabel => 'Ideas';
+
+  @override
+  String get ideaDraftsCountLabel => 'Idea drafts';
+
+  @override
+  String get ideasLocalSeparate =>
+      'This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically.';
 }

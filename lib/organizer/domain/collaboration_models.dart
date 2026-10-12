@@ -4,6 +4,7 @@ import 'dart:collection';
 
 import 'organizer_models.dart';
 import 'garden_models.dart';
+import 'idea_models.dart';
 export 'household_person.dart';
 import 'shared_event.dart';
 import 'shared_finance_models.dart';
@@ -35,6 +36,7 @@ class SpaceSelection {
 }
 
 enum SharedRecordType {
+  idea,
   garden,
   project,
   task,
@@ -137,6 +139,10 @@ class SharedScope {
   final bool archived;
   final bool revoked;
   final bool blocked;
+
+  /// Cached write/outbox blocking does not revoke an active reader's access.
+  /// Unknown sharing policies still require a compatible client.
+  bool get canRead => !revoked && const [1, 2, 3].contains(accessPolicyVersion);
   bool get canEdit =>
       !revoked && !archived && !blocked && role != SharedRole.viewer;
   bool get canManage =>
@@ -377,6 +383,7 @@ class SharedConflict {
 
 class SharedScopeData {
   SharedScopeData({
+    Iterable<IdeaBoard> ideas = const [],
     Iterable<Garden> gardens = const [],
     Iterable<FinanceRecurrenceRule> financeRecurrenceRules = const [],
     Iterable<HouseholdPerson> people = const [],
@@ -389,7 +396,8 @@ class SharedScopeData {
     Iterable<LocalTask> tasks = const [],
     Iterable<LocalShoppingList> shoppingLists = const [],
     Iterable<LocalShoppingItem> shoppingItems = const [],
-  }) : gardens = List.unmodifiable(gardens),
+  }) : ideas = List.unmodifiable(ideas),
+       gardens = List.unmodifiable(gardens),
        financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
        people = List.unmodifiable(people),
        events = List.unmodifiable(events),
@@ -401,6 +409,7 @@ class SharedScopeData {
        tasks = List.unmodifiable(tasks),
        shoppingLists = List.unmodifiable(shoppingLists),
        shoppingItems = List.unmodifiable(shoppingItems);
+  final List<IdeaBoard> ideas;
   final List<Garden> gardens;
   final List<FinanceRecurrenceRule> financeRecurrenceRules;
   final List<HouseholdPerson> people;

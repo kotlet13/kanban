@@ -146,7 +146,13 @@ void main() {
       ),
       findsOneWidget,
     );
-    final remove = find.byTooltip('Odstrani neposredno članstvo v projektu');
+    final menu = find.byKey(
+      const ValueKey('content-actions-user-$childId-inherited'),
+    );
+    await tester.ensureVisible(menu);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    final remove = find.text('Odstrani neposredno članstvo v projektu');
     await tester.ensureVisible(remove);
     await tester.tap(remove);
     await tester.pumpAndSettle();

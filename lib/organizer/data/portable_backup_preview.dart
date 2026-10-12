@@ -43,6 +43,15 @@ BackupContentSummary _backupContentSummary(Map<String, dynamic> doc) {
         : retained;
     target.update('gardens', (n) => n + 1, ifAbsent: () => 1);
   }
+  for (final raw in doc['ideaSpaceLinks'] as List? ?? const []) {
+    final space = localSpaces.firstWhere(
+      (r) => backupMap(r['space'])['id'] == raw['space_id'],
+    );
+    final target = backupMap(space['space'])['binding'] == null
+        ? localCounts
+        : retained;
+    target.update('ideas', (n) => n + 1, ifAbsent: () => 1);
+  }
   final downloaded = <String, int>{};
   var deleted = 0;
   for (final table in ['records', 'finance_records']) {

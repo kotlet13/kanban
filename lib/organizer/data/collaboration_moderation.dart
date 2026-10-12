@@ -1,6 +1,79 @@
 part of 'collaboration_repository.dart';
 
 extension CollaborationModeration on CollaborationRepository {
+  /// Loads only an immutable image named by this exact authorized preview.
+  /// A hash alone is never an authorization or a cross-workspace cache key.
+  Future<Uint8List> loadReportIdeaAsset(
+    ContentReportPreview preview,
+    IdeaAsset asset,
+  ) async {
+    final session = _requireSession(), epoch = _epoch;
+    _checkModerationContext(
+      session,
+      preview.partition,
+      preview.serverId,
+      preview.deviceId,
+    );
+    if (preview.targetType != 'record' || preview.type != 'idea') {
+      throw const CollaborationException('invalid_response');
+    }
+    final board = IdeaBoard.fromJson(
+      Map<String, dynamic>.from(preview.evidence['board'] as Map),
+    );
+    if (board.id != preview.targetId ||
+        !board.assets.any(
+          (a) => jsonEncode(a.toJson()) == jsonEncode(asset.toJson()),
+        )) {
+      throw const CollaborationException('invalid_response');
+    }
+    await _writableReadIdea(
+      session.profile.partition,
+      preview.scopeId,
+      board.id,
+    );
+    final bytes = <int>[];
+    while (bytes.length < asset.size) {
+      final offset = bytes.length;
+      final reply = await _callSession(session, epoch, 'ideas.asset.get', {
+        'scopeId': preview.scopeId,
+        'boardId': board.id,
+        'sha256': asset.sha256,
+        'offset': offset,
+        'limit': 262144,
+      });
+      if (reply['sha256'] != asset.sha256 ||
+          reply['size'] != asset.size ||
+          reply['offset'] != offset ||
+          reply['mime'] != asset.mime ||
+          reply['width'] != asset.width ||
+          reply['height'] != asset.height) {
+        throw const CollaborationException('invalid_response');
+      }
+      final chunk = base64Decode(reply['data'] as String);
+      if (chunk.isEmpty ||
+          chunk.length > 262144 ||
+          bytes.length + chunk.length > asset.size) {
+        throw const CollaborationException('invalid_response');
+      }
+      bytes.addAll(chunk);
+    }
+    final result = Uint8List.fromList(bytes);
+    await verifyIdeaAsset(asset, result);
+    _checkEpoch(epoch);
+    _checkModerationContext(
+      session,
+      preview.partition,
+      preview.serverId,
+      preview.deviceId,
+    );
+    await _writableReadIdea(
+      session.profile.partition,
+      preview.scopeId,
+      board.id,
+    );
+    return result;
+  }
+
   void _moderationIdentity(
     DeviceSession session,
     Map<String, dynamic> reply, {

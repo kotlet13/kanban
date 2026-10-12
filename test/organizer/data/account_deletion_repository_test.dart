@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/account_deletion_store.dart';
@@ -258,6 +259,31 @@ void main() {
         "INSERT INTO restored_backups(id,created_at,source_partition,data) VALUES('old','now',?,'{}')",
         [profile.partition],
       );
+      final owned = 'shared:${profile.partition}:$scope';
+      final unrelated = 'shared:${profile.partition}other:$scope';
+      for (final workspace in [owned, 'local', unrelated]) {
+        await repo.database.execute(
+          'INSERT INTO idea_assets(workspace,sha256,metadata,bytes) VALUES(?,?,?,?)',
+          [
+            workspace,
+            'test-sha',
+            '{}',
+            Uint8List.fromList([1, 2, 3]),
+          ],
+        );
+        await repo.database.execute(
+          'INSERT INTO idea_drafts(workspace,id,payload,base) VALUES(?,?,?,?)',
+          [workspace, 'test-draft', '{}', null],
+        );
+      }
+      await repo.database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?)',
+        ['idea_op_base:${profile.partition}:old-acknowledged', '{}'],
+      );
+      await repo.database.execute(
+        'INSERT INTO local_meta(name,value) VALUES(?,?)',
+        ['idea_rebased_op:${profile.partition}:old-rebased', '{}'],
+      );
       final oldSession = sessions.value;
       final preview = await repo.previewAccountDeletion();
       await repo.confirmAccountDeletion(
@@ -293,6 +319,22 @@ void main() {
           'deleted_account:${profile.partition}',
         ]),
         hasLength(1),
+      );
+      for (final table in ['idea_assets', 'idea_drafts']) {
+        expect(
+          (await repo.database.rows(
+            'SELECT DISTINCT workspace FROM $table',
+          )).map((r) => r['workspace']).toSet(),
+          {'local', unrelated},
+        );
+      }
+      expect(
+        await repo.database
+            .rows('SELECT name FROM local_meta WHERE name=? OR name=?', [
+              'idea_op_base:${profile.partition}:old-acknowledged',
+              'idea_rebased_op:${profile.partition}:old-rebased',
+            ]),
+        isEmpty,
       );
       // A crash or old secure-store image cannot reopen the deleted identity.
       sessions.value = oldSession;

@@ -333,6 +333,15 @@ void main() {
         "INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request) VALUES('old-op','p','s','r',?)",
         [body],
       );
+      // Remove all later additions before lowering the disk schema marker.
+      for (final table in [
+        'idea_space_links',
+        'device_ideas',
+        'idea_assets',
+        'idea_drafts',
+      ]) {
+        await db.execute('DROP TABLE $table');
+      }
       await db.execute('DROP TABLE garden_space_links');
       await db.execute('DROP TABLE local_spaces');
       await db.execute('DROP TABLE linked_payment_cash');
@@ -349,7 +358,7 @@ void main() {
       final operation = (await db.rows('SELECT * FROM finance_outbox')).single;
       expect(operation['request'], body);
       expect(operation['wire_version'], 1);
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 8);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 9);
       await db.close();
     },
   );
@@ -508,8 +517,8 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 4);
-      expect(doc['databaseVersion'], 8);
+      expect(doc['version'], 5);
+      expect(doc['databaseVersion'], 9);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},
       ]);
@@ -580,6 +589,17 @@ void main() {
       legacy.remove('localSpaces');
       legacy.remove('gardenSpaceLinks');
       legacy.remove('linkedPayments');
+      for (final field in [
+        'ideas',
+        'ideaSpaceLinks',
+        'ideaAssets',
+        'ideaDrafts',
+        'ideaOperationHistory',
+      ]) {
+        legacy.remove(field);
+      }
+      // The original empty garden section used its first snapshot format.
+      legacy['gardens'] = {'version': 1, 'revision': 0, 'gardens': <Object?>[]};
       final json =
           jsonDecode(legacy['personal'] as String) as Map<String, dynamic>;
       json['schemaVersion'] = 2;

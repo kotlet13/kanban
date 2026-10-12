@@ -13,17 +13,17 @@ class NativeSyncService extends NativeDatabase
         $linkedAware = $params['linkedPaymentsAware'] ?? false;
         if (!is_bool($linkedAware)) { throw new NativeError('validation_error'); }
         unset($params['linkedPaymentsAware']);
-        $this->version = str_starts_with($operation, 'sync4.') ? 4 : (str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1));
+        $this->version = str_starts_with($operation, 'sync5.') ? 5 : (str_starts_with($operation, 'sync4.') ? 4 : (str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1)));
         $this->rate([['sync-ip:'.$this->ip, 2400, 60]]);
         try { $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
             $actor = $this->actor(); $userId = $actor['user']['id'];
             (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
-            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull'], true)) { return $this->pull($params, $userId); }
-            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync4.push', 'sync4.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
+            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull', 'sync5.pull'], true)) { return $this->pull($params, $userId); }
+            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync5.push', 'sync4.push', 'sync4.pushTaskWithCost', 'sync5.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
             $this->fields($params, ['scopeId', 'operation'], $this->version >= 3 ? ['operationContractVersion', 'financeOperation', 'financeOperationContractVersion'] : []);
             $payloadVersion = $this->version >= 3 ? ($params['operationContractVersion'] ?? $this->version) : $this->version;
-            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3,4], true) || $payloadVersion>$this->version) { throw new NativeError('validation_error'); }
-            $compound = in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost'],true);
+            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3,4,5], true) || $payloadVersion>$this->version) { throw new NativeError('validation_error'); }
+            $compound = in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost'],true);
             if ($compound !== isset($params['financeOperation'])) { throw new NativeError('validation_error'); }
             $scopeId = $this->uuid($params['scopeId']);
             $scope = $this->scope($scopeId, $userId, true);
@@ -31,11 +31,12 @@ class NativeSyncService extends NativeDatabase
             if (!is_array($op)) { throw new NativeError('validation_error'); }
             $this->fields($op, ['opId', 'recordId', 'type', 'expectedRevision', 'deleted', 'payload']);
             $opId = $this->uuid($op['opId']); $recordId = $this->uuid($op['recordId']);
-            if (!in_array($op['type'], ($payloadVersion >= 3 ? array_merge(['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'],$payloadVersion===4 ? ['garden'] : []) : ($payloadVersion === 2 ? ['project', 'task', 'event', 'shoppingList', 'shoppingItem'] : ['project', 'task', 'shoppingList', 'shoppingItem'])), true) ||
+            if (!in_array($op['type'], ($payloadVersion >= 3 ? array_merge(['project', 'task', 'event', 'shoppingList', 'shoppingItem', 'householdPerson'],$payloadVersion>=4 ? array_merge(['garden'],$payloadVersion>=5?['idea']:[]) : []) : ($payloadVersion === 2 ? ['project', 'task', 'event', 'shoppingList', 'shoppingItem'] : ['project', 'task', 'shoppingList', 'shoppingItem'])), true) ||
                     !is_int($op['expectedRevision']) || $op['expectedRevision'] < 0 || !is_bool($op['deleted'])) {
                 throw new NativeError('validation_error');
             }
-            if ($op['type']==='garden' && !$op['deleted'] && ($op['payload']['id']??null)!==$recordId) { throw new NativeError('validation_error'); }
+            if ($op['type']==='idea' && !NativeIdeaAssetService::available()) { throw new NativeError('ideas_unavailable',503); }
+            if (in_array($op['type'],['garden','idea'],true) && !$op['deleted'] && ($op['payload']['id']??null)!==$recordId) { throw new NativeError('validation_error'); }
             if ($compound) {
                 $financeAcl = (new NativeFinanceAccess($this->container))->policy($scopeId, $actor['user'], true, true);
                 if ($financeAcl['linkedPaymentsRequired'] && !$linkedAware) { throw new NativeError('client_upgrade_required',409); }
@@ -82,8 +83,9 @@ class NativeSyncService extends NativeDatabase
                 if ($compound) { throw new NativeError($error->errorCode,422,$details); }
                 return new NativeError($error->errorCode, 422, $details);
             }
+            if ($op['type']==='idea' && !$op['deleted']) { (new NativeIdeaAssetService($this->container))->publish($scopeId,$recordId,$op['payload'],$actor['user']['account_id']); }
             $sequence = $this->advance($scope);
-            if ($payloadVersion===4) { $this->change('UPDATE familyhub_scopes SET required_record_contract=4 WHERE id=?',[$scopeId]); } $revision = $op['expectedRevision'] + 1;
+            if ($op['type']==='garden' || $op['type']==='idea') { $this->change('UPDATE familyhub_scopes SET required_record_contract=? WHERE id=?',[max((int)($scope['required_record_contract']??1),$op['type']==='idea'?5:4),$scopeId]); } $revision = $op['expectedRevision'] + 1;
             $updated = gmdate('Y-m-d\TH:i:s\Z');
             $payload = $op['deleted'] ? null : json_encode($op['payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             if ($current) {
@@ -121,7 +123,7 @@ class NativeSyncService extends NativeDatabase
             return $response;
         });
         } catch (NativeError $error) {
-            if (in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost'],true) && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
+            if (in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost'],true) && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
                 // The compound transaction rolled back BOTH records, audit and
                 // notifications. Persist its immutable failed outcome separately
                 // after checking current rights again; never cache denied data.
@@ -146,11 +148,12 @@ class NativeSyncService extends NativeDatabase
         $this->requireCompatible($scopeId);
         $limit = $params['limit'] ?? 100;
         if (!is_int($params['cursor']) || $params['cursor'] < 0 || $params['cursor'] > (int)$scope['sequence'] || !is_int($limit) || $limit < 1 || $limit > 500) { throw new NativeError('invalid_cursor'); }
+        $limit=$this->version>=4?min($limit,20):$limit;
         $rows = $this->many('SELECT * FROM familyhub_records WHERE scope_id=? AND sequence>? ORDER BY sequence LIMIT '.($limit + 1), [$scopeId, $params['cursor']]);
-        $records = []; $bytes = 0;
+        $records = []; $bytes = 0;$wireBudget=$this->version>=5?1572864:self::MAX_PAGE_BYTES;
         foreach ($rows as $row) {
-            $record = $this->wire($row); $size = strlen(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-            if (count($records) >= $limit || ($records && $bytes + $size > self::MAX_PAGE_BYTES)) { break; }
+            $record = $this->wire($row); $size = strlen(json_encode($record, JSON_THROW_ON_ERROR));
+            if (count($records) >= $limit || ($records && $bytes + $size > $wireBudget)) { break; }
             $records[] = $record; $bytes += $size;
         }
         $hasMore = count($rows) > count($records);

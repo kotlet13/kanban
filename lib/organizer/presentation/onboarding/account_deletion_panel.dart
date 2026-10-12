@@ -679,6 +679,8 @@ String deletionImpactLabel(BuildContext context, String key) {
     'sharedRecordsUpdated' => l.deletionSharedRecordsUpdated,
     'sharedFinanceRecordsDeleted' => l.deletionSharedFinanceDeleted,
     'sharedFinanceRecordsUpdated' => l.deletionSharedFinanceUpdated,
+    'privateIdeaAssetsDeleted' => l.deletionPrivateIdeaAssets,
+    'stagedIdeaAssetsDeleted' => l.deletionStagedIdeaAssets,
     'privatePaymentProjectionsDeleted' => l.deletionPrivatePaymentProjections,
     'sharedPaymentReceiptsRetained' => l.deletionSharedPaymentReceipts,
     'kanboardTasksDeleted' => l.deletionLegacyTasks,

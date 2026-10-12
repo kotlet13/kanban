@@ -281,6 +281,25 @@ extension CollaborationAccountDeletion on CollaborationRepository {
         'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
         ['deleted_account:$p', '1'],
       );
+      for (final row in await database.rows(
+        'SELECT op_id FROM outbox WHERE partition=?',
+        [p],
+      )) {
+        await database.execute('DELETE FROM local_meta WHERE name=?', [
+          'idea_op_base:$p:${row['op_id']}',
+        ]);
+      }
+      for (final table in ['idea_assets', 'idea_drafts']) {
+        for (final row in await database.rows(
+          'SELECT DISTINCT workspace FROM $table',
+        )) {
+          if ((row['workspace'] as String).startsWith('shared:$p:')) {
+            await database.execute('DELETE FROM $table WHERE workspace=?', [
+              row['workspace'],
+            ]);
+          }
+        }
+      }
       for (final table in [
         'outbox',
         'conflicts',

@@ -14,6 +14,22 @@ class ModerationController extends BaseController
         $this->response->withHeader('Cache-Control','no-store')->withHeader('Referrer-Policy','no-referrer')->withHeader('X-Content-Type-Options','nosniff');
     }
     public function index() { $this->authorize();$this->render(); }
+    public function board()
+    {
+        $this->authorize();(new NativeModerationService($this->container))->purgeExpired();
+        try {
+            $board=(new NativeModerationAdminService($this->container))->board($this->userSession->getId(),$this->request->getStringParam('reportId'));
+            $this->response->withHeader('Content-Type','image/png')->withHeader('Content-Security-Policy',"default-src 'none'; frame-ancestors 'none'; base-uri 'none'")->withBody($board['bytes'])->send();
+        }catch(NativeError $error){$this->response->withStatusCode($error->status)->withHeader('Content-Type','text/plain; charset=utf-8')->withBody($error->errorCode)->send();}
+    }
+    public function asset()
+    {
+        $this->authorize();(new NativeModerationService($this->container))->purgeExpired();
+        try {
+            $asset=(new NativeModerationAdminService($this->container))->asset($this->userSession->getId(),$this->request->getStringParam('reportId'),$this->request->getStringParam('sha256'));
+            $this->response->withHeader('Content-Type',$asset['mime'])->withHeader('Content-Security-Policy',"default-src 'none'; frame-ancestors 'none'; base-uri 'none'")->withHeader('Content-Disposition','inline; filename="reported-idea.'.($asset['mime']==='image/png'?'png':'jpg').'"')->withBody($asset['bytes'])->send();
+        } catch (NativeError $error) { $this->response->withStatusCode($error->status)->withHeader('Content-Type','text/plain; charset=utf-8')->withBody($error->errorCode)->send(); }
+    }
     public function review()
     {
         $this->authorize();if (!$this->request->isPost()) { throw new AccessForbiddenException(); }$this->checkCSRFForm();

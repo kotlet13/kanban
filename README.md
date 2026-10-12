@@ -1,5 +1,14 @@
 # Jivie
 
+**12. oktober — Idejnik, lokalno izveden:** uredljive table z besedilom, risbami,
+normaliziranimi fotografijami in nanje vezanimi oznakami. Lokalni prostori ter
+izbirno deljenje gospodinjstva/organizacije/projekta; osnutki, obvestila, konflikti,
+kopije in obnova brez starega strežnika. Izvor FamilyHub0.13.0/schema17, odjemalec
+schema9/kopija5. Preverjeni dejanski Dart/HTTP, tri strežniške baze in migracije,
+42 ciljni UI/13 novi podatkovni testi ter Android/web gradnji; analiza brez ugotovitev.
+[Dokazi in meje](docs/IDEAS_IMPLEMENTATION.md). Gostovanje, aktivni Android1.5.2(22),
+iOS/Mac, splet in javna oddaja s tem niso nadgrajeni.
+
 **12. oktober,08:54 — interna1.5.2(22):** prijava vsebine ob naslovu, spodaj
 poravnana ikona brisanja, Prekliči in ikona Shrani. Sorodni urejevalniki so
 usklajeni;133 ciljnihUI PASS/čista analiza. Aktivno za isti domači(15),

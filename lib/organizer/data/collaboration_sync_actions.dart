@@ -205,14 +205,31 @@ extension CollaborationSyncActions on CollaborationRepository {
               scopeId,
             );
           }
+          final ideaRequest = CollaborationRepository._map(op['request']);
+          if (ideaRequest['type'] == 'idea' &&
+              ideaRequest['payload'] != null &&
+              ideaRequest['deleted'] != true) {
+            await _uploadIdeaAssets(
+              session,
+              epoch,
+              scopeId,
+              IdeaBoard.fromJson(
+                Map<String, dynamic>.from(ideaRequest['payload'] as Map),
+              ),
+            );
+          }
           final applied = await _callSession(
             session,
             epoch,
             financePair != null
-                ? (_recordContractVersion >= 4
+                ? (_recordContractVersion >= 5
+                      ? 'sync5.pushTaskWithCost'
+                      : _recordContractVersion >= 4
                       ? 'sync4.pushTaskWithCost'
                       : 'sync3.pushTaskWithCost')
-                : (_recordContractVersion >= 4
+                : (_recordContractVersion >= 5
+                      ? 'sync5.push'
+                      : _recordContractVersion >= 4
                       ? 'sync4.push'
                       : _recordContractVersion >= 3
                       ? 'sync3.push'
@@ -256,6 +273,9 @@ extension CollaborationSyncActions on CollaborationRepository {
               'DELETE FROM outbox WHERE op_id=? AND partition=?',
               [op['op_id'], partition],
             );
+            await database.execute('DELETE FROM local_meta WHERE name=?', [
+              'idea_op_base:$partition:${op['op_id']}',
+            ]);
             if (financePair != null) {
               if (financeGeneration !=
                       await _financeAccessGeneration(partition, scopeId) ||
@@ -316,6 +336,17 @@ extension CollaborationSyncActions on CollaborationRepository {
                     error.details['serverRecord'],
                     personal: await _isPersonalScope(partition, scopeId),
                   );
+            if (error.code == 'conflict' &&
+                canonical != null &&
+                await _rebaseIdeaConflict(
+                  partition,
+                  scopeId,
+                  op,
+                  canonical,
+                  epoch,
+                )) {
+              continue;
+            }
             await database.transaction(() async {
               _checkEpoch(epoch);
               await _validLease(partition);
@@ -399,7 +430,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             final pulled = await _callSession(
               session,
               epoch,
-              _recordContractVersion >= 4
+              _recordContractVersion >= 5
+                  ? 'sync5.pull'
+                  : _recordContractVersion >= 4
                   ? 'sync4.pull'
                   : _recordContractVersion >= 3
                   ? 'sync3.pull'
@@ -438,6 +471,35 @@ extension CollaborationSyncActions on CollaborationRepository {
             } else {
               rethrow;
             }
+          }
+        }
+      }
+      if (_recordContractVersion >= 5) {
+        for (final scope in scopes) {
+          if (!await _privateScopeAllowed(partition, scope)) continue;
+          for (final row in await database.rows(
+            "SELECT payload FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0",
+            [partition, scope.id],
+          )) {
+            await downloadIdeaAssets(
+              scope.id,
+              IdeaBoard.fromJson(CollaborationRepository._map(row['payload'])),
+            );
+          }
+          for (final row in await database.rows(
+            "SELECT remote FROM conflicts WHERE partition=? AND scope_id=? AND type='idea' AND remote IS NOT NULL",
+            [partition, scope.id],
+          )) {
+            final canonical = CollaborationRepository._map(row['remote']);
+            if (canonical['deleted'] == true || canonical['payload'] == null) {
+              continue;
+            }
+            await downloadIdeaAssets(
+              scope.id,
+              IdeaBoard.fromJson(
+                Map<String, dynamic>.from(canonical['payload'] as Map),
+              ),
+            );
           }
         }
       }
@@ -566,6 +628,11 @@ extension CollaborationSyncActions on CollaborationRepository {
         'revision': value['revision'],
       };
       switch (type) {
+        case SharedRecordType.idea:
+          if ((value['payload'] as Map)['id'] != value['id']) {
+            throw const CollaborationException('invalid_response');
+          }
+          IdeaBoard.fromJson(json);
         case SharedRecordType.garden:
           if ((value['payload'] as Map)['id'] != value['id']) {
             throw const CollaborationException('invalid_response');

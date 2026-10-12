@@ -2,7 +2,11 @@
 
 Read notifications are retained for seven days after the first server `readAt`, then their inbox references and email/push jobs are deleted. Repeating read=true preserves that time; marking unread before expiry cancels the deadline. Unread notifications remain, and source tasks/payments/reminders are unaffected. Existing `cli/reminders.php --limit=100` also runs bounded cleanup for all accounts; optional `cli/inbox-retention.php --limit=100` runs cleanup alone (maximum 500 deletions). Expired references are excluded from inbox APIs even with a cleanup backlog. Deletion changes the existing account visibility revision; clients reset old snapshots using the existing `visibility_changed` response. Schema15 and API shapes remain unchanged. Source preparation does not establish hosted deployment.
 
-FamilyHub **0.12.0 / schema 16** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+FamilyHub **0.13.0 / schema 17** is a Kanboard plugin for optional self-hosted accounts, private synchronization and shared household/project spaces in Jivie. Jivie's personal local use does not require this server. Managed hosting is not included. This repository contains plugin source only, with a fresh publication history; it does not contain the mobile application's history or production configuration/data.
+
+## Editable idea boards
+
+Version0.13.0 adds local-first editable boards with text, photos, drawing and image-attached annotations, plus authorized household/organization/project sharing. `sync5` adds the idea record without rewriting old operations. Image transfers are authenticated, bounded and private, with verified hashes and no public attachment URLs. Explicit board saves produce the `ideas` notification category; image chunks do not notify. Reports retain the complete board and private photos for administrator review. GD PNG/JPEG support is required; missing support is advertised and rejects new writes while older content remains usable. Back up all schema17 tables and the entire private `DATA_DIR/familyhub/ideas` tree. See [the idea-board contract](docs/ideas-api-contract.md). Source preparation does not establish a hosted upgrade.
 
 ## Notification defaults
 

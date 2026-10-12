@@ -6629,6 +6629,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More actions'**
   String get moderationMoreActions;
+
+  /// No description provided for @ideasTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ideas'**
+  String get ideasTitle;
+
+  /// No description provided for @ideasAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'New idea'**
+  String get ideasAdd;
+
+  /// No description provided for @ideasEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your ideas together. Add a note, photo or drawing.'**
+  String get ideasEmpty;
+
+  /// No description provided for @ideasSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search ideas'**
+  String get ideasSearch;
+
+  /// No description provided for @ideasUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled idea'**
+  String get ideasUntitled;
+
+  /// No description provided for @ideasSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select and move'**
+  String get ideasSelect;
+
+  /// No description provided for @ideasPan.
+  ///
+  /// In en, this message translates to:
+  /// **'Pan and zoom'**
+  String get ideasPan;
+
+  /// No description provided for @ideasText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get ideasText;
+
+  /// No description provided for @ideasSticky.
+  ///
+  /// In en, this message translates to:
+  /// **'Sticky note'**
+  String get ideasSticky;
+
+  /// No description provided for @ideasPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get ideasPhoto;
+
+  /// No description provided for @ideasPen.
+  ///
+  /// In en, this message translates to:
+  /// **'Pen'**
+  String get ideasPen;
+
+  /// No description provided for @ideasHighlighter.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlighter'**
+  String get ideasHighlighter;
+
+  /// No description provided for @ideasEraser.
+  ///
+  /// In en, this message translates to:
+  /// **'Eraser'**
+  String get ideasEraser;
+
+  /// No description provided for @ideasLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Line'**
+  String get ideasLine;
+
+  /// No description provided for @ideasArrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow'**
+  String get ideasArrow;
+
+  /// No description provided for @ideasRectangle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangle'**
+  String get ideasRectangle;
+
+  /// No description provided for @ideasEllipse.
+  ///
+  /// In en, this message translates to:
+  /// **'Ellipse'**
+  String get ideasEllipse;
+
+  /// No description provided for @ideasUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get ideasUndo;
+
+  /// No description provided for @ideasRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get ideasRedo;
+
+  /// No description provided for @ideasRotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate selected element'**
+  String get ideasRotate;
+
+  /// No description provided for @ideasSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get ideasSize;
+
+  /// No description provided for @ideasColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Ink colour'**
+  String get ideasColor;
+
+  /// No description provided for @ideasWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Line width'**
+  String get ideasWidth;
+
+  /// No description provided for @ideasDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved on this device. Save publishes the completed idea.'**
+  String get ideasDraft;
+
+  /// No description provided for @ideasDraftError.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft could not be saved. Keep the editor open and try again.'**
+  String get ideasDraftError;
+
+  /// No description provided for @ideasReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewing only. Editing is unavailable in this space.'**
+  String get ideasReadOnly;
+
+  /// No description provided for @ideasMissingPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo unavailable on this device'**
+  String get ideasMissingPhoto;
+
+  /// No description provided for @ideasPhotoError.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a JPEG or PNG photo up to 20 MB.'**
+  String get ideasPhotoError;
+
+  /// No description provided for @ideasDeleteElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected element'**
+  String get ideasDeleteElement;
+
+  /// No description provided for @ideasEditText.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit text'**
+  String get ideasEditText;
+
+  /// No description provided for @ideasHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select to move or resize. Draw on a photo to attach marks to it. Use Pan to zoom with two fingers or the mouse wheel.'**
+  String get ideasHelp;
+
+  /// No description provided for @ideasProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project (optional)'**
+  String get ideasProject;
+
+  /// No description provided for @ideasNoProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Without project'**
+  String get ideasNoProject;
+
+  /// No description provided for @ideasDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this idea?'**
+  String get ideasDeleteConfirm;
+
+  /// No description provided for @ideasDraftResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume local draft'**
+  String get ideasDraftResume;
+
+  /// No description provided for @ideasResetView.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit board'**
+  String get ideasResetView;
+
+  /// No description provided for @ideasAttachNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add note beside selected photo'**
+  String get ideasAttachNote;
+
+  /// No description provided for @ideasRefreshPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Download missing photos'**
+  String get ideasRefreshPhotos;
+
+  /// No description provided for @ideasSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'The idea could not be saved. Your draft is kept on this device.'**
+  String get ideasSaveError;
+
+  /// No description provided for @ideasCanvasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Idea board'**
+  String get ideasCanvasLabel;
+
+  /// No description provided for @ideasElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Elements'**
+  String get ideasElements;
+
+  /// No description provided for @ideasDraftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save confirms changes in the selected space.'**
+  String get ideasDraftHint;
+
+  /// No description provided for @ideasDraftPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving draft on this device…'**
+  String get ideasDraftPending;
+
+  /// No description provided for @ideasDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Local drafts'**
+  String get ideasDrafts;
+
+  /// No description provided for @ideasReportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This report includes the complete board, its notes, drawings and the photos shown here. Pan and zoom to inspect it before sending.'**
+  String get ideasReportDescription;
+
+  /// No description provided for @ideasReportUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The complete board preview could not be loaded. The report cannot be sent until its photos have been reviewed.'**
+  String get ideasReportUnavailable;
+
+  /// No description provided for @ideasUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server needs FamilyHub 0.13.0 or later to share ideas and photos. Local drafts remain available.'**
+  String get ideasUnsupported;
+
+  /// No description provided for @deletionPrivateIdeaAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Private idea photos removed'**
+  String get deletionPrivateIdeaAssets;
+
+  /// No description provided for @deletionStagedIdeaAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Idea photos awaiting publication removed'**
+  String get deletionStagedIdeaAssets;
+
+  /// No description provided for @inboxIdeaCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'A new idea was shared'**
+  String get inboxIdeaCreated;
+
+  /// No description provided for @inboxIdeaChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'A shared idea was updated'**
+  String get inboxIdeaChanged;
+
+  /// No description provided for @ideasPhotoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'An idea can include up to 20 photos.'**
+  String get ideasPhotoLimit;
+
+  /// No description provided for @ideasConflictPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Load missing photos before choosing a version. Viewing the comparison does not change the board.'**
+  String get ideasConflictPhotos;
+
+  /// No description provided for @ideasCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ideas'**
+  String get ideasCountLabel;
+
+  /// No description provided for @ideaDraftsCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Idea drafts'**
+  String get ideaDraftsCountLabel;
+
+  /// No description provided for @ideasLocalSeparate.
+  ///
+  /// In en, this message translates to:
+  /// **'This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically.'**
+  String get ideasLocalSeparate;
 }
 
 class _AppLocalizationsDelegate

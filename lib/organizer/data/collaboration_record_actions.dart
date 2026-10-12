@@ -81,6 +81,9 @@ extension CollaborationRecordActions on CollaborationRepository {
     final scoped = SharedScope.fromJson(
       CollaborationRepository._map(scopeRow['data']),
     );
+    if (type == SharedRecordType.idea && _recordContractVersion < 5) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     if (type == SharedRecordType.garden &&
         (scoped.kind != SharedScopeKind.household ||
             _recordContractVersion < 4)) {
@@ -94,7 +97,9 @@ extension CollaborationRecordActions on CollaborationRepository {
     }
     if (root != null &&
         payload != null &&
-        (type == SharedRecordType.task || type == SharedRecordType.event) &&
+        (type == SharedRecordType.task ||
+            type == SharedRecordType.event ||
+            type == SharedRecordType.idea) &&
         payload['projectId'] != root) {
       throw const CollaborationException('parent_missing');
     }
@@ -106,7 +111,9 @@ extension CollaborationRecordActions on CollaborationRepository {
       );
       final parentId = type == SharedRecordType.shoppingItem
           ? payload['listId']
-          : (type == SharedRecordType.task || type == SharedRecordType.event)
+          : (type == SharedRecordType.task ||
+                type == SharedRecordType.event ||
+                type == SharedRecordType.idea)
           ? payload['projectId']
           : null;
       if (parentId != null) {
@@ -259,6 +266,12 @@ extension CollaborationRecordActions on CollaborationRepository {
         deleted ? 1 : 0,
       ],
     );
+    if (type == SharedRecordType.idea && old?['payload'] != null) {
+      await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
+        'idea_op_base:$partition:${request['opId']}',
+        old!['payload'],
+      ]);
+    }
     await database.execute(
       'INSERT INTO outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,?)',
       [
@@ -267,7 +280,9 @@ extension CollaborationRecordActions on CollaborationRepository {
         scope,
         id,
         jsonEncode(request),
-        type == SharedRecordType.garden
+        type == SharedRecordType.idea
+            ? 5
+            : type == SharedRecordType.garden
             ? 4
             : (_recordContractVersion > 3 ? 3 : _recordContractVersion),
       ],
@@ -771,6 +786,49 @@ extension CollaborationRecordActions on CollaborationRepository {
         SharedRecordType.event,
         event.id,
         _payload(row.toJson()),
+      );
+    }
+    for (final idea in data.ideas.where((b) => b.projectId == id)) {
+      final now = _now;
+      final row = idea.copyWith(
+        clearProjectId: true,
+        revision: idea.revision + 1,
+        updatedAt: now.isBefore(idea.updatedAt) ? idea.updatedAt : now,
+      );
+      await _put(
+        p,
+        scopeId,
+        SharedRecordType.idea,
+        idea.id,
+        row.toJson(),
+        expectedLocalRevision: idea.revision,
+      );
+    }
+    final workspace = 'shared:$p:$scopeId';
+    for (final row in await database.rows(
+      'SELECT id,payload,base FROM idea_drafts WHERE workspace=?',
+      [workspace],
+    )) {
+      final draft = IdeaBoard.fromJson(
+        CollaborationRepository._map(row['payload']),
+      );
+      if (draft.projectId != id) continue;
+      final base = row['base'] == null
+          ? null
+          : IdeaBoard.fromJson(CollaborationRepository._map(row['base']));
+      IdeaBoard detach(IdeaBoard b) => b.copyWith(
+        clearProjectId: true,
+        revision: b.revision + 1,
+        updatedAt: _now.isBefore(b.updatedAt) ? b.updatedAt : _now,
+      );
+      await database.execute(
+        'UPDATE idea_drafts SET payload=?,base=? WHERE workspace=? AND id=?',
+        [
+          jsonEncode(detach(draft).toJson()),
+          base == null ? null : jsonEncode(detach(base).toJson()),
+          workspace,
+          row['id'],
+        ],
       );
     }
     await _put(p, scopeId, SharedRecordType.project, id, null, deleted: true);

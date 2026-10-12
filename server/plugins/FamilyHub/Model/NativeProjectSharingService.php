@@ -17,8 +17,10 @@ class NativeProjectSharingService extends NativeDatabase
         if ($operation==='scopes.projectSharingPreview') { return $preview; }
         if (!is_string($params['previewHash']??null) || !hash_equals($preview['previewHash'],$params['previewHash'])) { throw new NativeError('project_sharing_preview_changed',409); }
         if (!$preview['canApply']) { throw new NativeError('project_sharing_blocked',409,['blockers'=>$preview['blockers']]); }
+        $recordContract=3;foreach($graph['records'] as $r){$recordContract=max($recordContract,(int)$r['contract_version']);}
         $project=$graph['records'][$pid];$payload=json_decode($project['payload'],true,32,JSON_THROW_ON_ERROR);
         $this->change('INSERT INTO familyhub_scopes(id,kind,name,owner_id,sequence,created_at,required_record_contract,project_root_id,parent_scope_id,access_policy_version) VALUES(?,\'project\',?,?,0,?,3,?,?,3)',[$pid,$payload['title'],$scope['owner_id'],time(),$pid,$sid]);
+        $this->change('UPDATE familyhub_scopes SET required_record_contract=? WHERE id=?',[$recordContract,$pid]);
         $owner=$this->one('SELECT * FROM familyhub_members WHERE scope_id=? AND role=\'owner\' AND active=1',[$sid]);
         if (!$owner) { throw new NativeError('permission_revoked',403); }
         $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,\'owner\',1)',[$pid,$owner['user_id'],$owner['account_id']]);
@@ -29,6 +31,7 @@ class NativeProjectSharingService extends NativeDatabase
             foreach ($records as $id=>$row) {
                 $sequence++;$copy=$row;$copy['scope_id']=$pid;$copy['sequence']=$sequence;
                 $columns=array_keys($copy);$this->change('INSERT INTO '.$table.'('.implode(',',$columns).') VALUES('.implode(',',array_fill(0,count($columns),'?')).')',array_values($copy));
+                if (!$finance && $row['type']==='idea' && !(int)$row['deleted']) { (new NativeIdeaAssetService($this->container))->relocate($sid,$pid,$id,json_decode($row['payload'],true,32,JSON_THROW_ON_ERROR)); }
                 $this->change('UPDATE '.$policy.' SET sequence=sequence+1 WHERE '.$key.'=?',[$sid]);
                 $sourceSequence=$this->one('SELECT sequence FROM '.$policy.' WHERE '.$key.'=?',[$sid])['sequence'];
                 $this->change('UPDATE '.$table.' SET deleted=1,payload=NULL,revision=revision+1,sequence=?,updated_at=? WHERE scope_id=? AND id=?',[$sourceSequence,gmdate('Y-m-d\TH:i:s\Z'),$sid,$id]);
@@ -53,7 +56,7 @@ class NativeProjectSharingService extends NativeDatabase
         if ((int)$project[0]['contract_version']<3) { $blockers[]=['code'=>'project_record_upgrade_required','recordId'=>$pid]; }
         foreach ($all as $row) {
             $p=json_decode($row['payload']??'null',true,32,JSON_THROW_ON_ERROR);
-            if ($row['id']===$pid || (in_array($row['type'],['task','event'],true) && ($p['projectId']??null)===$pid)) {
+            if ($row['id']===$pid || (in_array($row['type'],['task','event','idea'],true) && ($p['projectId']??null)===$pid)) {
                 $selected[$row['id']]=$row;
                 if ($row['type']==='task') { $taskIds[]=$row['id']; }
                 foreach (array_merge([$p['assigneePersonId']??null],$p['subjectPersonIds']??[]) as $person) { if ($person!==null) { $personIds[$person]=true; } }

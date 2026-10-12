@@ -13,8 +13,23 @@ class NativeModerationAdminService extends NativeDatabase
     {
         $this->admin($adminId);$page=max(0,min(100000,(int)$page));
         $rows=$this->many('SELECT * FROM familyhub_moderation_reports ORDER BY created_at DESC,id LIMIT 26 OFFSET '.($page*25));
-        foreach ($rows as &$row) { $row['audit']=$this->many('SELECT admin_id,action,note,created_at,review_revision FROM familyhub_moderation_audit WHERE report_id=? ORDER BY review_revision DESC LIMIT 50',[$row['id']]); }unset($row);
+        foreach ($rows as &$row) { $snapshot=$row['snapshot']===null?[]:json_decode($row['snapshot'],true,32,JSON_THROW_ON_ERROR);$row['ideaImage']=isset($snapshot['evidence']['board']);$row['ideaAssets']=$snapshot['evidence']['assets']??[];$row['ideaTexts']=[];foreach($snapshot['evidence']['board']['elements']??[] as $element){if(is_string($element['text']??null)&&$element['text']!=='')$row['ideaTexts'][]=$element['text'];}$row['audit']=$this->many('SELECT admin_id,action,note,created_at,review_revision FROM familyhub_moderation_audit WHERE report_id=? ORDER BY review_revision DESC LIMIT 50',[$row['id']]); }unset($row);
         return ['reports'=>array_slice($rows,0,25),'page'=>$page,'hasNext'=>count($rows)>25];
+    }
+    public function board($adminId,$reportId)
+    {
+        $this->admin($adminId);$this->uuid($reportId);if(!NativeIdeaAssetService::available()){throw new NativeError('ideas_unavailable',503);}$r=$this->one('SELECT * FROM familyhub_moderation_reports WHERE id=? AND redacted_at IS NULL AND snapshot IS NOT NULL',[$reportId]);
+        if(!$r){throw new NativeError('report_target_unavailable',404);}$image=(new NativeIdeaRenderer($this->container))->reportImage($r);
+        if($image===null){throw new NativeError('report_target_unavailable',404);}return ['mime'=>'image/png','bytes'=>base64_decode(explode(',',$image,2)[1])];
+    }
+    /** Full immutable report photo; web APP_ADMIN/TLS remains required by controller. */
+    public function asset($adminId,$reportId,$sha)
+    {
+        $this->admin($adminId);$this->uuid($reportId);
+        if (!is_string($sha) || !preg_match('/^[a-f0-9]{64}$/D',$sha)) { throw new NativeError('validation_error'); }
+        $r=$this->one('SELECT a.* FROM familyhub_idea_assets a JOIN familyhub_idea_report_assets ar ON ar.scope_id=a.scope_id AND ar.board_id=a.board_id AND ar.sha256=a.sha256 JOIN familyhub_moderation_reports r ON r.id=ar.report_id WHERE r.id=? AND a.sha256=? AND r.redacted_at IS NULL AND r.snapshot IS NOT NULL',[$reportId,$sha]);
+        if (!$r) { throw new NativeError('report_target_unavailable',404); }
+        return ['mime'=>$r['mime'],'bytes'=>(new NativeIdeaAssetService($this->container))->bytes($r)];
     }
     public function review($adminId,array $params)
     {

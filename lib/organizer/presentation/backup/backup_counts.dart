@@ -24,6 +24,8 @@ class BackupCounts extends StatelessWidget {
       'financeTransfer' => l.backupFinanceTransfers,
       'reminders' => l.inboxCategoryReminders,
       'gardens' || 'garden' => l.gardenTitle,
+      'ideas' || 'idea' => l.ideasCountLabel,
+      'ideaDrafts' => l.ideaDraftsCountLabel,
       'inbox' => l.inboxTitle,
       'scheduled_reminders' => l.backupScheduledReminders,
       'paymentEvents' => l.backupPaymentEvents,

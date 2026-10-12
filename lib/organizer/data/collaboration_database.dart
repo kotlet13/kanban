@@ -7,7 +7,7 @@ import '../domain/collaboration_models.dart' show AccountSession;
 class CollaborationDatabase extends GeneratedDatabase {
   CollaborationDatabase(super.executor);
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
   String selectedLocalWorkspaceId = 'local';
   bool localSelectionLoaded = false;
   void activateLocalWorkspace(String id) {
@@ -48,12 +48,13 @@ class CollaborationDatabase extends GeneratedDatabase {
         ..._upgrade6,
         ..._upgrade7,
         ..._upgrade8,
+        ..._upgrade9,
       ]) {
         await customStatement(statement);
       }
     },
     onUpgrade: (_, from, to) async {
-      if (from < 1 || from > 7 || to != 8) {
+      if (from < 1 || from > 8 || to != 9) {
         throw const FormatException('Unsupported shared database schema');
       }
       if (from < 2) {
@@ -86,7 +87,12 @@ class CollaborationDatabase extends GeneratedDatabase {
           await customStatement(statement);
         }
       }
-      for (final statement in _upgrade8) {
+      if (from < 8) {
+        for (final statement in _upgrade8) {
+          await customStatement(statement);
+        }
+      }
+      for (final statement in _upgrade9) {
         await customStatement(statement);
       }
     },
@@ -171,6 +177,13 @@ class CollaborationDatabase extends GeneratedDatabase {
     'CREATE TABLE linked_payment_events(space_key TEXT NOT NULL,event_id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(space_key,event_id))',
     'CREATE TABLE linked_payment_projections(space_key TEXT NOT NULL,event_id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(space_key,event_id))',
     'CREATE TABLE linked_payment_intents(id TEXT PRIMARY KEY,data TEXT NOT NULL,state TEXT NOT NULL)',
+  ];
+
+  static const _upgrade9 = [
+    'CREATE TABLE device_ideas(id TEXT PRIMARY KEY,payload TEXT NOT NULL)',
+    'CREATE TABLE idea_space_links(idea_id TEXT PRIMARY KEY,space_id TEXT NOT NULL,FOREIGN KEY(space_id) REFERENCES local_spaces(id))',
+    'CREATE TABLE idea_assets(workspace TEXT NOT NULL,sha256 TEXT NOT NULL,metadata TEXT NOT NULL,bytes BLOB NOT NULL,PRIMARY KEY(workspace,sha256))',
+    'CREATE TABLE idea_drafts(workspace TEXT NOT NULL,id TEXT NOT NULL,payload TEXT NOT NULL,base TEXT,PRIMARY KEY(workspace,id))',
   ];
 
   Future<List<Map<String, dynamic>>> rows(

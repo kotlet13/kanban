@@ -49,7 +49,7 @@ class NativeNotificationWriter extends NativeDatabase
         if (in_array($record['type'],['householdPerson','garden'],true)) { return; }
         $type = $record['type']; $payload = $record['payload'];
         $before = $previous ? json_decode($previous['payload'] ?? 'null', true, 32, JSON_THROW_ON_ERROR) : null;
-        $category = $finance ? 'finance' : match ($type) { 'task', 'project' => 'tasks', 'event' => 'events', default => 'shopping' };
+        $category = $finance ? 'finance' : match ($type) { 'task', 'project' => 'tasks', 'idea' => 'ideas', 'event' => 'events', default => 'shopping' };
         $base = $record['deleted'] ? 'deleted' : ($previous ? 'updated' : 'created');
         if (!$record['deleted'] && $type === 'task' && $payload['isCompleted'] && !($before['isCompleted'] ?? false)) { $base = 'completed'; }
         if (!$record['deleted'] && $type === 'shoppingItem' && $payload['isChecked'] && !($before['isChecked'] ?? false)) { $base = 'checked'; }
