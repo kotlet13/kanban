@@ -56,6 +56,7 @@ class OrganizerPeoplePage extends ConsumerWidget {
         ),
       ],
       submitLabel: l.save,
+      compactSaveActions: true,
       sharedPolicyScopeId: scope?.id,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard == null

@@ -155,7 +155,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Shrani'))
+            .widget<IconButton>(
+              find.descendant(
+                of: find.byKey(const ValueKey('remote-reminder-save')),
+                matching: find.byType(IconButton),
+              ),
+            )
             .onPressed,
         isNull,
       );
@@ -209,7 +214,7 @@ void main() {
       await pump(tester, controller);
       await tester.tap(find.byTooltip('Uredi oddaljeni opomnik'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Shrani'));
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
       await tester.pumpAndSettle();
       expect(find.text('Izberi čas v prihodnosti.'), findsOneWidget);
       expect(controller.calls, isEmpty);
@@ -285,7 +290,7 @@ void main() {
         find.byKey(const ValueKey('remote-reminder-date')),
         findsOneWidget,
       );
-      await tester.tap(find.text('Shrani'));
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
       await tester.pumpAndSettle();
       expect(controller.calls, ['put']);
       expect(controller.savedRevision, 0);
@@ -309,7 +314,7 @@ void main() {
       await tester.tap(find.byTooltip('Uredi oddaljeni opomnik'));
       await tester.pumpAndSettle();
       expect(find.text('Termin je shranjen na strežniku.'), findsOneWidget);
-      await tester.tap(find.text('Shrani'));
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
       await tester.pumpAndSettle();
       expect(controller.savedId, reminderId);
       expect(controller.savedRevision, 4);
@@ -345,11 +350,16 @@ void main() {
       if (status == 'blocked') {
         expect(
           tester
-              .widget<FilledButton>(find.widgetWithText(FilledButton, 'Shrani'))
+              .widget<IconButton>(
+                find.descendant(
+                  of: find.byKey(const ValueKey('remote-reminder-save')),
+                  matching: find.byType(IconButton),
+                ),
+              )
               .onPressed,
           isNotNull,
         );
-        await tester.tap(find.text('Shrani'));
+        await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
         await tester.pumpAndSettle();
         expect(controller.calls, ['put']);
         expect(controller.savedId, reminderId);
@@ -402,7 +412,7 @@ void main() {
     await pump(tester, controller);
     await tester.tap(find.byTooltip('Dodaj oddaljeni opomnik'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Shrani'));
+    await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.textContaining('čaka na strežnik'), findsNothing);
@@ -431,7 +441,7 @@ void main() {
       expect(tester.takeException(), isNull);
       Navigator.of(tester.element(find.byType(DatePickerDialog))).pop();
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Shrani'));
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
       await tester.pumpAndSettle();
       expect(controller.savedAt, future.toUtc());
     },
@@ -456,7 +466,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Shrani'));
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
       await tester.pumpAndSettle();
       expect(controller.calls, isEmpty);
       expect(find.byType(AlertDialog), findsOneWidget);

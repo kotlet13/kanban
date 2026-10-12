@@ -456,7 +456,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Ogled').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Shrani').last);
+      await tester.tap(find.byKey(const ValueKey('sharing-submit')));
       await tester.pumpAndSettle();
       expect(
         controller.grants[sharingSession(second: true).accountId],

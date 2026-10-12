@@ -67,6 +67,7 @@ class SpaceSettingsPage extends ConsumerWidget {
         ),
       ],
       submitLabel: context.l10n.save,
+      compactSaveActions: true,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: (form) => SharingSessionBoundary(
         guard: guard,

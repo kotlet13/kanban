@@ -1,3 +1,4 @@
+import 'editor_actions.dart';
 import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -398,8 +399,10 @@ class _RecordEditorState extends State<_RecordEditor> {
       titlePadding: compact ? const EdgeInsets.fromLTRB(16, 16, 16, 8) : null,
       contentPadding: compact ? const EdgeInsets.fromLTRB(16, 8, 16, 12) : null,
       actionsPadding: compact ? const EdgeInsets.fromLTRB(12, 0, 12, 12) : null,
-      title: Text(
-        widget.heading,
+      title: EditorHeading(
+        title: widget.heading,
+        onReport: widget.onReport,
+        busy: _busy,
         style: compact
             ? Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)
             : null,
@@ -732,34 +735,12 @@ class _RecordEditorState extends State<_RecordEditor> {
         ),
       ),
       actions: [
-        if (widget.onReport != null)
-          TextButton(
-            onPressed: _busy ? null : widget.onReport,
-            child: Text(l.moderationReportContent),
-          ),
-        if (widget.onDelete != null)
-          IconButton(
-            tooltip: l.delete,
-            onPressed: _busy ? null : _delete,
-            icon: Icon(
-              Icons.delete_outline,
-              color: Theme.of(context).colorScheme.error,
-            ),
-          ),
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('organizer-save'),
-          onPressed: _busy ? null : _save,
-          child: _busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(l.save),
+        EditorActionsRow(
+          saveKey: const ValueKey('organizer-save'),
+          busy: _busy,
+          onCancel: () => Navigator.pop(context),
+          onSave: _save,
+          onDelete: widget.onDelete == null ? null : _delete,
         ),
       ],
     );

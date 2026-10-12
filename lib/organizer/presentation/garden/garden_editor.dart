@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import '../shared/content_actions_menu.dart';
 import '../shared/content_moderation.dart';
 import '../../state/collaboration_provider.dart';
@@ -493,16 +494,10 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
                 targetId: widget.garden!.id,
                 enabled: !_busy,
               ),
-            TextButton(
+            EditorSaveButton(
               key: const ValueKey('garden-save'),
-              onPressed: _busy ? null : _save,
-              child: _busy
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l.gardenSave),
+              onPressed: _save,
+              busy: _busy,
             ),
             const SizedBox(width: 8),
           ],

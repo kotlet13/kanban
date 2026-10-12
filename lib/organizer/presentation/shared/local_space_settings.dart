@@ -36,6 +36,7 @@ class LocalSpaceSettings extends ConsumerWidget {
         ),
       ],
       submitLabel: l.save,
+      compactSaveActions: true,
       errorMessage: (error) => sharingErrorMessage(context, error),
       onSubmit: (values) => ref
           .read(localSpacesProvider.notifier)

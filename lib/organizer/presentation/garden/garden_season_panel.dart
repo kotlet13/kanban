@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../data/organizer_repository.dart' show newLocalId;
@@ -183,14 +184,10 @@ class _SeasonFormState extends State<_SeasonForm> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('garden-season-save'),
-          onPressed: _save,
-          child: Text(l.save),
+        EditorActionsRow(
+          saveKey: const ValueKey('garden-season-save'),
+          onCancel: () => Navigator.pop(context),
+          onSave: _save,
         ),
       ],
     );

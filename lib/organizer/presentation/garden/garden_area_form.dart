@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -196,14 +197,10 @@ class _AreaFormState extends State<_AreaForm> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('garden-area-save'),
-          onPressed: _save,
-          child: Text(l.save),
+        EditorActionsRow(
+          saveKey: const ValueKey('garden-area-save'),
+          onCancel: () => Navigator.pop(context),
+          onSave: _save,
         ),
       ],
     );

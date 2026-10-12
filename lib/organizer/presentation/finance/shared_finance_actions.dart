@@ -121,6 +121,7 @@ class SharedFinanceActions {
         ),
       ],
       submitLabel: l.save,
+      compactSaveActions: true,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard.wrap,
       onSubmit: (values) async {
@@ -301,6 +302,7 @@ class SharedFinanceActions {
         ),
       ],
       submitLabel: l.save,
+      compactSaveActions: true,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard.wrap,
       onSubmit: (values) async {
@@ -437,6 +439,7 @@ class SharedFinanceActions {
         ),
       ],
       submitLabel: l.save,
+      compactSaveActions: true,
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard.wrap,
       onSubmit: (values) async {

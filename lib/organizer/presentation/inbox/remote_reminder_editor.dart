@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -502,24 +503,23 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
         ),
       ),
       actions: [
-        if (_editing != null && currentReminder?.state == 'pending')
-          TextButton(
-            onPressed: _busy ? null : () => _submit(cancel: true),
-            child: Text(l.remoteReminderCancel),
-          ),
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: Text(l.close),
-        ),
-        FilledButton(
-          onPressed: _busy || !canSchedule ? null : _submit,
-          child: _busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        EditorActionsRow(
+          saveKey: const ValueKey('remote-reminder-save'),
+          busy: _busy,
+          saveEnabled: canSchedule,
+          cancelLabel: l.close,
+          onCancel: () => Navigator.pop(context),
+          onSave: _submit,
+          leadingAction: _editing != null && currentReminder?.state == 'pending'
+              ? TextButton(
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                  onPressed: _busy ? null : () => _submit(cancel: true),
+                  child: Text(
+                    l.remoteReminderCancel,
+                    textAlign: TextAlign.center,
+                  ),
                 )
-              : Text(l.save),
+              : null,
         ),
       ],
     );

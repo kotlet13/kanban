@@ -97,6 +97,7 @@ Future<LocalFinanceAccount?> showFinanceAccountForm(
         ),
     ],
     submitLabel: l.save,
+    compactSaveActions: true,
     errorMessage: (e) => financePlanningErrorMessage(context, e),
     wrap: wrap,
     onSubmit: (v) async {
@@ -276,6 +277,7 @@ Future<FinanceRecurrenceRule?> showFinanceRuleForm(
       ),
     ],
     submitLabel: l.save,
+    compactSaveActions: true,
     errorMessage: (e) => financePlanningErrorMessage(context, e),
     wrap: wrap,
     onSubmit: (v) async {
@@ -443,6 +445,7 @@ Future<void> showRecordedFinanceOccurrenceEditor(
     ),
   ],
   submitLabel: context.l10n.save,
+  compactSaveActions: true,
   errorMessage: (e) => financePlanningErrorMessage(context, e),
   wrap: wrap,
   onSubmit: (v) => onSave(

@@ -124,6 +124,7 @@ class _FinancePermissionsState extends ConsumerState<_FinancePermissions> {
         ),
       ],
       submitLabel: context.l10n.save,
+      compactSaveActions: true,
       errorMessage: (e) => sharingErrorMessage(context, e),
       wrap: (child) => SharingSessionBoundary(
         guard: widget.guard,

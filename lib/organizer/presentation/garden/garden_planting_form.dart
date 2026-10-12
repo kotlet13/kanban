@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -202,14 +203,10 @@ class _PlantingFormState extends State<_PlantingForm> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l.cancel),
-        ),
-        FilledButton(
-          key: const ValueKey('garden-planting-save'),
-          onPressed: _save,
-          child: Text(l.save),
+        EditorActionsRow(
+          saveKey: const ValueKey('garden-planting-save'),
+          onCancel: () => Navigator.pop(context),
+          onSave: _save,
         ),
       ],
     );

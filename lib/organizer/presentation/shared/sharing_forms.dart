@@ -1,3 +1,4 @@
+import '../editor_actions.dart';
 import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -50,6 +51,7 @@ Future<void> showSharingForm(
   Future<void> Function()? onDelete,
   String? deleteDescription,
   String? sharedPolicyScopeId,
+  bool compactSaveActions = false,
 }) => showDialog<void>(
   context: context,
   barrierDismissible: false,
@@ -67,6 +69,7 @@ Future<void> showSharingForm(
       onDelete: onDelete,
       deleteDescription: deleteDescription,
       sharedPolicyScopeId: sharedPolicyScopeId,
+      compactSaveActions: compactSaveActions,
     );
     return wrap?.call(form) ?? form;
   },
@@ -86,6 +89,7 @@ class _SharingFormDialog extends StatefulWidget {
     this.onDelete,
     this.deleteDescription,
     this.sharedPolicyScopeId,
+    this.compactSaveActions = false,
   });
   final String title;
   final String? description;
@@ -99,6 +103,7 @@ class _SharingFormDialog extends StatefulWidget {
   final Future<void> Function()? onDelete;
   final String? deleteDescription;
   final String? sharedPolicyScopeId;
+  final bool compactSaveActions;
   @override
   State<_SharingFormDialog> createState() => _SharingFormDialogState();
 }
@@ -386,27 +391,37 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
           ),
         ),
         actions: [
-          if (widget.onDelete != null)
-            IconButton(
-              tooltip: context.l10n.delete,
-              onPressed: _busy ? null : _delete,
-              icon: const Icon(Icons.delete_outline),
+          if (widget.compactSaveActions)
+            EditorActionsRow(
+              saveKey: const ValueKey('sharing-submit'),
+              busy: _busy,
+              onCancel: () => Navigator.pop(context),
+              onSave: _submit,
+              onDelete: widget.onDelete == null ? null : _delete,
+            )
+          else ...[
+            if (widget.onDelete != null)
+              IconButton(
+                tooltip: context.l10n.delete,
+                onPressed: _busy ? null : _delete,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            TextButton(
+              onPressed: _busy ? null : () => Navigator.pop(context),
+              child: Text(context.l10n.cancel),
             ),
-          TextButton(
-            onPressed: _busy ? null : () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            key: const ValueKey('sharing-submit'),
-            onPressed: _busy ? null : _submit,
-            child: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(widget.submitLabel),
-          ),
+            FilledButton(
+              key: const ValueKey('sharing-submit'),
+              onPressed: _busy ? null : _submit,
+              child: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(widget.submitLabel),
+            ),
+          ],
         ],
       ),
     );

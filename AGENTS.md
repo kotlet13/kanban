@@ -1,5 +1,13 @@
 # Navodila za delo na projektu
 
+12. oktober — dodatna izrecna korekcija urejevalnikov: obstoječi gumb »Prijavi
+vsebino« sodi ob naslov obrazca. Spodaj ena poravnana vrstica: rdeča ikona
+brisanja, besedilni Prekliči, ikona Shrani z namigom. Ne vračaj navpičnega
+OverflowBar razporejanja teh dejanj. Uskladi sorodne obrazce Shrani, ne spreminjaj
+semantike registracije/povabil/potrditev/oddaje prijave. [Dogovor in obseg](docs/EDITOR_ACTIONS_LAYOUT.md).
+Ta korekcija je po interni1.5.1(21); nova Android objava s tem prikazom še ni
+izvedena. Poverilnice, strežniki, sheme in pravice ostanejo isti.
+
 12. oktober — po izrecnem naročilu je interna **Android1.5.1(21) Aktivno od08:22**
 za isti **domači(15)**. Funkcionalni aa1db2b/metadata1ba60b6; stalne zastavice
 so prestavljene v meni/podrobnosti. [Dokazi](docs/release/CONTEXTUAL_REPORTS_RELEASE.md).
