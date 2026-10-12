@@ -1,0 +1,20 @@
+<?php
+// Dedicated secondary PDO, schema15 seeded before applying the additive16 migration.
+require '/var/www/app/app/common.php';if(session_status()===PHP_SESSION_ACTIVE){session_abort();}
+if(!defined('FAMILYHUB_DEVELOPMENT_MODE')||!FAMILYHUB_DEVELOPMENT_MODE){throw new RuntimeException('Synthetic only');}
+$source=$container['db']->getConnection();$mysql=$source->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql';
+$fixture=$mysql?new PDO('mysql:host=database;dbname=moderation_migration16;charset=utf8mb4',DB_USERNAME,DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]):new PDO('sqlite::memory:',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$schema= $mysql?'Mysql.php':'Sqlite.php';require_once '/var/www/app/plugins/FamilyHub/Schema/'.$schema;
+$fixture->exec('CREATE TABLE users (id INTEGER PRIMARY KEY,username VARCHAR(64),password VARCHAR(255),role VARCHAR(30))');$fixture->exec('CREATE TABLE projects (id INTEGER PRIMARY KEY)');
+for($v=1;$v<=15;$v++){call_user_func('Kanboard\\Plugin\\FamilyHub\\Schema\\version_'.$v,$fixture);}
+function copyRows($table,$columns=null){global$source,$fixture;$rows=$source->query('SELECT '.($columns?implode(',',$columns):'*').' FROM '.$table.' LIMIT 200')->fetchAll(PDO::FETCH_ASSOC);foreach($rows as$row){$keys=array_keys($row);$fixture->prepare('INSERT INTO '.$table.'('.implode(',',$keys).') VALUES('.implode(',',array_fill(0,count($keys),'?')).')')->execute(array_values($row));}return count($rows);}
+$counts=[];$counts['users']=copyRows('users',['id','username','password','role']);
+foreach(['familyhub_accounts','familyhub_scopes','familyhub_members','familyhub_devices','familyhub_records','familyhub_finance_policy','familyhub_finance_grants','familyhub_finance_records','familyhub_operations','familyhub_finance_operations']as$table){$counts[$table]=copyRows($table);}
+foreach(['familyhub_accounts','familyhub_devices','familyhub_records','familyhub_finance_records','familyhub_operations']as$table){if($counts[$table]<1){throw new RuntimeException('Unseeded migration fixture '.$table);}}
+$tables=$mysql?$fixture->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN):$fixture->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);sort($tables);
+function snapshot($tables){global$fixture,$mysql;$rows=[];foreach($tables as$table){$r=$fixture->query('SELECT * FROM '.$table)->fetchAll(PDO::FETCH_ASSOC);$encoded=array_map(fn($v)=>json_encode($v,JSON_THROW_ON_ERROR),$r);sort($encoded);$definition=$mysql?$fixture->query('SHOW CREATE TABLE '.$table)->fetch(PDO::FETCH_NUM)[1]:$fixture->query("SELECT sql FROM sqlite_master WHERE type='table' AND name=".$fixture->quote($table))->fetchColumn();$rows[$table]=['definition'=>$definition,'rowCount'=>count($r),'rowsSha256'=>hash('sha256',json_encode($encoded,JSON_THROW_ON_ERROR))];}return$rows;}
+$before=snapshot($tables);$serverId=$fixture->query('SELECT server_id FROM familyhub_instance')->fetchColumn();
+\Kanboard\Plugin\FamilyHub\Schema\ModerationSchema::create($fixture,$mysql);\Kanboard\Plugin\FamilyHub\Schema\ModerationSchema::create($fixture,$mysql);
+if(snapshot($tables)!==$before||$serverId!==$fixture->query('SELECT server_id FROM familyhub_instance')->fetchColumn()){throw new RuntimeException('Schema16 changed schema15 rows or definitions');}
+$new=$mysql?$fixture->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN):$fixture->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(PDO::FETCH_COLUMN);$added=array_values(array_diff($new,$tables));sort($added);$expected=['familyhub_moderation_audit','familyhub_moderation_blocks','familyhub_moderation_reports','familyhub_policy_acceptances'];if($added!==$expected){throw new RuntimeException('Wrong additive migration tables');}
+echo json_encode(['result'=>'PASS','driver'=>$fixture->getAttribute(PDO::ATTR_DRIVER_NAME),'baselineSchema'=>15,'migrationSchema'=>16,'tablesPreserved'=>count($tables),'populatedSyntheticTables'=>$counts,'definitionsAndRowHashesUnchanged'=>true,'serverIdUnchanged'=>true,'newTables'=>$added],JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR).PHP_EOL;
