@@ -1,5 +1,12 @@
 # Jivie
 
+**12. oktober,15:36 — spletna zasebnost objavljena:** shranjeno geslo za **jivie**
+je omogočilo prijavo. SL/EN fotografije in pravila prijav so zdaj na javnih straneh;
+vseh8HTML HTTPS/hash/cache PASS, zasebna kopija in ostale datoteke ohranjene.
+[Dokazi](docs/release/ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).
+Data safety vseh11 vrst ostaja shranjen osnutek za oddajo v pregled; ni javne
+mobilne izdaje, nove gradnje ali Apple spremembe. Ovira prijave spodaj je odpravljena.
+
 **12. oktober — Android fotografije:** vseh 11 vrst Data safety, vključno s Photos,
 je izpolnjenih in dejansko shranjenih kot osnutek. Ni oddaje v pregled/javne objave.
 SL/EN spletna zasebnost je pripravljena, objava čaka poteklo prijavo **jivie** in

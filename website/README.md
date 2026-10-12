@@ -1,5 +1,20 @@
 # Jivie: statična javna stran za cPanel
 
+**12. oktober,15:36 — objava izvedena po prijavi s shranjenim geslom.** Račun
+**jivie**, domena/document root preverjena z DomainInfo: `/home/jivie/public_html`.
+Paket8HTML spodaj je objavljen; vseh8 javnih URL vrača HTTPS200 in točen izvorni
+hash. SL/EN privacy ob If-Modified-Since za11.oktober vrneta novo besedilo200;
+HTTPprivacy se preusmeri naHTTPS. Zasebna kopija pred spremembo:
+`/home/jivie/private/website-photos-20261012/before-public_html.tar.gz`, SHA256
+`dd46b8737d5bee01f43805459a547523192174ce24ce7061bb1def45556253de`.
+Pred zamenjavo je kopija vseh8 starihHTML dejansko primerjana z živimi datotekami.
+20 drugih vnosov ima enake bajte/symlink cilje/pravice/lastništvo; PHP/.htaccess/
+.well-known/assets so ohranjeni. Paket in skripta ostaneta zunaj javne mape.
+Dokazi: `build/qa/android-photos-privacy-20261012/website-live-after.json`,
+`website-deployment.json` ter javni/terminalski posnetek.
+[Izvedba](../docs/release/ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).
+Prejšnja ovira prijave je odpravljena; Data safety osnutek še ni oddan v pregled.
+
 **12. oktober — Android zasebnost, spletna objava čaka prijavo.** Play Data safety
 ima shranjen osnutek vseh 11 vrst s fotografijami; [dokazi in naslednji korak](../docs/release/ANDROID_PHOTOS_DATA_SAFETY.md).
 Prijava v ločen cPanel račun **jivie** je potekla, uporabnik ni pri računalniku;

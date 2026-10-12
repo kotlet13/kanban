@@ -1,5 +1,17 @@
 # Navodila za delo na projektu
 
+12. oktober,15:36 — po uporabnikovem dovoljenju za shranjeno geslo je prijava
+**jivie** dejansko uspela prek običajnega samodejnega izpolnjevanja; geslo ni bilo
+prebrano/izpisano. **SL/EN zasebnost z Idejnikom/fotografijami je objavljena** na
+jivie.app, vseh8HTML HTTPS200/bajtni hash ter oba pogojna cache preverjanja PASS.
+Pred objavo zasebna tar kopija celotnega public_html,20 drugih datotek/imenikov
+z enakimi bajti/pravicami; PHP/.htaccess/.well-known/assets ohranjeni. Paket8HTML
+je isti e175fdd8..., sprememba samo spletne vsebine. Prejšnja ovira prijave je
+odpravljena; Data safety vseh11 vrst ostaja shranjen osnutek, ni oddan v pregled.
+[Dokazi](docs/release/ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).
+Android1.6.1(24), FamilyHub in Apple nespremenjeni. Naslednji korak je oddaja
+in preostali konkretni javni obrazci, ne ponovna prijava ali nov testni krog.
+
 12. oktober — Android fotografije: **Data safety vseh11 vrst dejansko shranjen kot
 osnutek** za trenutno interno1.6.1(24). Photos dodan, vsi odgovori uporabe/namena
 izpolnjeni; CollectedYes/SharedNo/OptionalYes/EphemeralNo, HTTPS in obstoječi

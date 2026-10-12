@@ -1,5 +1,11 @@
 # Jivie — priprava javne Google Play izdaje
 
+**12. oktober,15:36 — javni privacy URL usklajen s fotografijami.** Prijava s
+shranjenim geslom v račun jivie je uspela; SL/EN zasebnost je objavljena in
+HTTPS/bajtno/cache preverjena. [Dokazi](ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).
+Ovire spletne prijave spodaj ni več. Data safety vseh11 vrst je še shranjen
+osnutek za končno oddajo; IARC/pogoji in javna kandidatka niso spremenjeni.
+
 **12. oktober — aktualna interna 1.6.1 (24), Data safety osnutek shranjen.**
 Vseh 11 vrst, vključno s Photos, ima dokončana vprašanja uporabe/namena;
 končni predogled in »Shrani kot osnutek« sta dejansko potrjena.

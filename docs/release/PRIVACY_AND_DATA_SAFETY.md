@@ -1,5 +1,12 @@
 # Osnutek zasebnosti in deklaracij Jivie
 
+**12. oktober,15:36 — SL/EN spletna zasebnost dejansko objavljena.** Po prijavi
+s shranjenim geslom v pravi račun jivie so vseh8HTML, HTTPS in oba pogojna cache
+preverjanja PASS; zasebna kopija in ostale gostovane datoteke ohranjene.
+[Dokazi objave](ANDROID_PHOTOS_DATA_SAFETY.md#objava-po-prijavi-s-shranjenim-geslom).
+Prejšnja ovira prijave je odpravljena. Data safety vseh11 vrst ostaja shranjen
+osnutek; ni oddaje v pregled ali javne mobilne izdaje.
+
 **12. oktober — Android fotografije: shranjen Console osnutek.** Aktualna interna
 1.6.1 (24) ima izpolnjenih vseh 11 vrst, tudi Photos; vseh enajst je izbirnih,
 Collected Yes / Shared No / Ephemeral No z nameni iz

@@ -1,5 +1,12 @@
 # Android: fotografije in Data safety
 
+**Nadaljevanje ob15:36: spletna objava je uspela.** Uporabnik je dovolil običajno
+prijavo s shranjenim geslom; samodejno izpolnjevanje je prijavilo pravi račun
+jivie. SL/EN politika s fotografijami in vseh osem HTML sta objavljena in preverjena.
+[Dejanski dokazi nadaljevanja](#objava-po-prijavi-s-shranjenim-geslom) imajo prednost
+pred spodnjim opisom prejšnje ovire prijave. Data safety je še shranjen osnutek,
+ni oddan v pregled ali javno objavljen.
+
 **12. oktober 2026 — dejanski Android osnutek je shranjen.** Za trenutno interno
 **1.6.1 (24)** z Idejnikom in FamilyHub **0.13/schema17** je v Play Console
 izpolnjenih vseh **11 vrst**, vključno s fotografijami. Po pregledu je bil uporabljen
@@ -167,3 +174,33 @@ Koda, Android različica **1.6.1 (24)**, istih osem dovoljenj, SDK/locks in
 strežniki so nespremenjeni. Fotografije uporabljajo sistemski izbirnik brez
 kamere ali širokih media/storage dovoljenj; nova gradnja za to nalogo ni potrebna.
 Uporabnik je fizično potrdil popravek pan/zoom. Ni novega testnega kroga ali Apple dela.
+
+## Objava po prijavi s shranjenim geslom
+
+12. oktober2026,15:36 CEST: shranjeno geslo je bilo uporabljeno prek običajnega
+brskalniškega izpolnjevanja za uporabnika jivie. Ni bilo prebrano, izpisano ali
+kopirano v dokumentacijo. DomainInfo potrdi domeno jivie.app in
+`/home/jivie/public_html`; terminal potrdi račun jivie.
+
+Pred spremembo je ustvarjena zasebna kopija celotne javne mape:
+`/home/jivie/private/website-photos-20261012/before-public_html.tar.gz`, SHA256
+`dd46b8737d5bee01f43805459a547523192174ce24ce7061bb1def45556253de`.
+Kopija vseh osmih ciljnih starih HTML se pred zamenjavo bajtno ujema z živimi
+izvirniki. Preverjevalnik preveri SHA/CRC/allowlist naloženega paketa in objavi
+samo teh osem datotek z zamenjavo prek začasne datoteke v istem imeniku.
+Vseh20 ostalih vnosov ostane enakih po vsebini, symlink ciljih, lastništvu in
+pravicah; to vključuje nastavitve PHP/.htaccess/.well-known/assets. Paket,
+preverjevalnik in kopija so zasebno zunaj spletnega korena.
+
+Vseh8 javnih URL vrneHTTPS200 in SHA256 lokalnega izvornega HTML. Oba privacy URL
+vrneta novo besedilo200 tudi s pogojnim If-Modified-Since za11.oktober;
+HTTPprivacy se preusmeri naHTTPS. Lokalni dokazi:
+`website-live-after.json`, `website-deployment.json`, `website-deployed-terminal.jpg`
+in `website-published-photos.jpg` v isti QA mapi. Javni razširjeni odsek
+»Idejnik in fotografije« je vizualno preverjen. Ovira prijave je odpravljena.
+
+[Objavljena SL politika](https://jivie.app/privacy/) in
+[EN politika](https://jivie.app/en/privacy/) sta sedaj usklajeni z distribuiranim
+Idejnikom. Data safety vseh11 vrst ostaja shranjen osnutek; ta korak ni oddal
+trgovinske deklaracije v pregled ali javne mobilne izdaje. Koda, dovoljenja,
+Android1.6.1(24), strežniki in Apple niso spremenjeni.
