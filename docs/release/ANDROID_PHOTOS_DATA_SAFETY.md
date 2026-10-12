@@ -1,5 +1,11 @@
 # Android: fotografije in Data safety
 
+**12. oktober,22:08 — končna deklaracija za Android1.7.0(25) shranjena v
+Pregled objavljanja.** To nadomesti prejšnji status samo osnutka. Vseh11 vrst
+in njihovi nameni/izbirnost so isti; javna spletna politika je že objavljena.
+[Dokazi končne shranitve](#koncna-shranitev-za-android17025).
+IARC je žeKončano; celotna oddaja Googlu in javna mobilna objava še nista izvedeni.
+
 **Nadaljevanje ob15:36: spletna objava je uspela.** Uporabnik je dovolil običajno
 prijavo s shranjenim geslom; samodejno izpolnjevanje je prijavilo pravi račun
 jivie. SL/EN politika s fotografijami in vseh osem HTML sta objavljena in preverjena.
@@ -204,3 +210,36 @@ in `website-published-photos.jpg` v isti QA mapi. Javni razširjeni odsek
 Idejnikom. Data safety vseh11 vrst ostaja shranjen osnutek; ta korak ni oddal
 trgovinske deklaracije v pregled ali javne mobilne izdaje. Koda, dovoljenja,
 Android1.6.1(24), strežniki in Apple niso spremenjeni.
+
+## Koncna shranitev za Android17025
+
+12. oktober2026,22:08 CEST. Po uporabnikovem naročilu nadaljevanja je dejansko
+odprt prej shranjeni osnutek. Pred začetkom nadzorna plošča potrdi10/11 končanih
+začetnih opravil, z IARC končanim in Varnostjo podatkov kot preostalim opravilom.
+
+V koraku2 so ohranjeni zbiranjeDa, šifriranje pri prenosuDa, uporabniško
+ime/geslo in uporabniško ime/geslo/drugo preverjanje pristnosti, brezOAuth;
+izbrisni URL je `https://jivie.app/delete-account/`. Izbirno vprašanje o
+samostojnem izbrisu podatkov brez računa je neodgovorjeno. Ni nove značke
+neodvisnega pregleda aliUPI. Preverjanje URL zaključi prehod na naslednji korak.
+
+Korak3 potrdi4 osebne/2 finančni/1Photos/1Calendar/1Contacts/1OtherUGC/
+1DeviceIDs, brezMessages/FilesDocs/Videos/Audio/Location/Analytics/Crashlogs.
+Korak4 potrdiKončano za vse vrste. Razširjeni predogled potrdi vseh11 izbirnih
+vrst in natančne namene iz matrike zgoraj, SharedNo, izbrisni URL/HTTPS ter
+`https://jivie.app/privacy/`. Noben odgovor iz prvotne matrike ni spremenjen.
+
+Uporabljen je **končni Shrani**, ne »Shrani kot osnutek«. Potrdilo in dialog
+izrecno povesta »Sprememba je shranjena« ter zahtevata ločeno oddajo v Pregledu
+objavljanja. Po »Ne zdaj« in vrnitvi na nadzorno ploščo začetni seznam opravil
+izgine; prej zaklenjeni izdajni koraki so odklenjeni. To je zaključek začetne
+nastavitve, ne odobritev aplikacije. Splošna razpoložljivost ostajaNeaktivno.
+
+Dokazi v ignorirani `build/qa/data-safety-1.7.0-20261012/`:
+`completed-types.txt`, `preview.txt`, `saved.txt`, `dashboard.txt`,
+`data-safety-saved.jpg` in `evidence.json`. Gesla/zasebna vsebina niso prenesena.
+Ni kode, nove gradnje, testnega kroga, spremembe strežnikov/dovoljenj/SDK,
+namestitve ali Apple spremembe. Aktivna internaAAB25 je ista; tekoči desktop
+izvor ni ponovno zgrajen za Android. Naslednje delo je preveriti aktualni
+pregledni dostop za Google ter pripraviti javno izdajo isteAAB25 z državami,
+opombami in končnim povzetkom, nato ločena oddaja v pregled.

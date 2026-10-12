@@ -1,5 +1,13 @@
 # Navodila za delo na projektu
 
+12. oktober,22:08 — **Data safety za Android1.7.0(25) dokončno shranjen v
+Pregled objavljanja**, vseh11 vrst/podatkovni nameni/izbirnost potrjeni v
+razširjenem predogledu. IARC je žeKončano; po končnem Shrani začetni seznam
+10/11 izgine in izdajni koraki niso več zaklenjeni. To ni oddaja v pregled
+ali javna objava. [Dokazi](docs/release/ANDROID_PHOTOS_DATA_SAFETY.md#koncna-shranitev-za-android17025).
+Naslednje: preverjen Googlov dostop ter javna izdaja iste AAB25/države/povzetek.
+Android/strežniki/desktop koda/SDK/dovoljenja niso spremenjeni v tem koraku.
+
 12. oktober — uporabnik je naročil **namizno postavitev macOS/Windows/Linux**,
 macOS UX najprej. [Izvedba](docs/DESKTOP_UX.md): neposredna prilagodljiva stranska
 navigacija, iskanje dovoljenih izvornih zapisov, podrobnosti ob vsebini z lastnim

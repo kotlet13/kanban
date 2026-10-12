@@ -1,5 +1,13 @@
 # Jivie — priprava javne Google Play izdaje
 
+**12. oktober,22:08 — Varnost podatkov dokončno shranjena.** Trenutna kandidatka
+Android1.7.0(25), vseh11 vrst in nameni/izbirnost potrjeni; končni »Shrani« je
+prenesel deklaracijo v Pregled objavljanja. IARC je Končano. Nadzorna plošča
+ne kaže več začetnega seznama10/11, izdajni koraki so odklenjeni.
+[Dokazi](ANDROID_PHOTOS_DATA_SAFETY.md#koncna-shranitev-za-android17025).
+Ni celotne oddaje Googlu ali javne objave; pregledni dostop in javna izdaja iste
+AAB25 z nastavitvijo držav/povzetkom še sledita. Ni nove Android gradnje.
+
 **12. oktober,21:38 — IARC za trenutno Android1.7.0(25) Končano.** Vprašalnik
 je usklajen z dejansko prijavo uporabnikov/vsebine, povzetek dokončno shranjen
 v Pregled objavljanja; PEGI3 in Interakcija uporabnikov. Korak1 je bil že končan,
