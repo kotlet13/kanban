@@ -766,10 +766,10 @@
   "guideOpen": "Kratek vodič po Jivie",
   "guideLocalTitle": "Začnite na svoji napravi",
   "guideLocalBody": "Začni z opravilom ali dogodkom v osebnem prostoru. Gospodinjstvo in organizacijo lahko ustvariš brez računa; za nakupovalne sezname, vrtove in osebe izberi gospodinjstvo. Podatki ostanejo na napravi, povezavo in sinhronizacijo pa omogočiš izrecno.",
-  "guideTodayBody": "Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.",
-  "guidePlansBody": "V Opravilih uredi opravila in njihove termine. Projekte in Koledar odpri neposredno iz menija. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.",
+  "guideTodayBody": "Utrip pokaže današnje dogodke, naslednjih sedem dni in projekte v teku. Z dotikom odpreš zapis, povezave pa te pripeljejo do celotnega koledarja, opravil ali projektov.",
+  "guidePlansBody": "V Planerju preklapljaš med Opravili, Koledarjem in Idejnikom. Zapiši zamisel, jo skiciraj ali dodaj fotografijo, nato pa načrtuj naslednje korake. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.",
   "guideShoppingBody": "Gospodinjstvo ima svoje nakupovalne sezname, vrtove in osebe. Dodaj artikle in označi kupljeno. Stari osebni seznami in vrtovi ostanejo dostopni; pred dodelitvijo gospodinjstvu izbereš cilj.",
-  "guideMoreBody": "Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora. Povabilo v cel prostor vključuje vse njegove vsebine, finance in obstoječe ter prihodnje projekte. Povabilo samo v projekt se prikaže kot Deljen projekt in ne dodeli članstva v celotnem prostoru. Obseg dostopa je ločen od vloge.",
+  "guideMoreBody": "V Več najdeš račun, nastavitve, varnostne kopije in pomoč. Člane in povabila urejaš v Nastavitvah prostora. Lokalno delo ne potrebuje računa; povezavo in prenos vsebine vedno izbereš sam.",
   "guideSkip": "Preskoči",
   "guideBack": "Nazaj",
   "guideNext": "Naprej",
@@ -1465,5 +1465,39 @@
   "ideasConflictPhotos": "Pred izbiro različice naložite manjkajoče fotografije. Ogled primerjave ne spremeni table.",
   "ideasCountLabel": "Ideje",
   "ideaDraftsCountLabel": "Osnutki idej",
-  "ideasLocalSeparate": "Ta tabla ostane lokalna na tej napravi. Osebna sinhronizacija uporablja drug prostor. Tabla je tukaj na voljo za ogled in varnostno kopijo; ne objavi se samodejno."
+  "ideasLocalSeparate": "Ta tabla ostane lokalna na tej napravi. Osebna sinhronizacija uporablja drug prostor. Tabla je tukaj na voljo za ogled in varnostno kopijo; ne objavi se samodejno.",
+  "organizerPulse": "Utrip",
+  "organizerPlanner": "Planer",
+  "organizerSpace": "Prostor",
+  "organizerMoreAccount": "Račun in prostori",
+  "organizerMoreTools": "Nastavitve in podatki",
+  "organizerMoreHelp": "Pomoč",
+  "organizerBackups": "Varnostne kopije",
+  "organizerSpaceIntro": "Projekti, sredstva in vse, za kar skrbiš.",
+  "organizerPlannerIntro": "Od prve ideje do opravljenega.",
+  "organizerMoreIntro": "Vse za tvojo uporabo Jivie.",
+  "organizerUtripIntro": "Danes, naslednji koraki in projekti v teku.",
+  "organizerUpcomingWeek": "V naslednjih 7 dneh",
+  "organizerTodayEvents": "Današnji dogodki",
+  "organizerOngoingProjects": "Projekti v teku",
+  "organizerNoTodayEvents": "Danes ni načrtovanih dogodkov.",
+  "organizerNoUpcomingEvents": "Naslednjih 7 dni je še odprtih.",
+  "organizerNoOngoingProjects": "Tu bodo tvoji odprti projekti.",
+  "organizerUtripTasks": "Na vrsti",
+  "organizerUtripNoTasks": "Ni odprtih opravil za danes.",
+  "organizerBack": "Nazaj",
+  "organizerProjectsHint": "Načrti, ki jih uresničuješ.",
+  "organizerFinancesHint": "Računi, stroški in prihodki.",
+  "organizerShoppingHint": "Seznami za naslednji nakup.",
+  "organizerGardenHint": "Grede, zasaditve in letni časi.",
+  "organizerPeopleHint": "Osebe v tvojem prostoru.",
+  "guideSpaceBody": "Prostor združuje projekte in finance. V gospodinjstvu so tu tudi nakupovalni seznami, vrt in osebe. Vrt ima svoje grede in sezone; finance lahko vodiš tudi brez projekta.",
+  "organizerCalendarScheduledCount": "{count} načrtovanih vsebin",
+  "@organizerCalendarScheduledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

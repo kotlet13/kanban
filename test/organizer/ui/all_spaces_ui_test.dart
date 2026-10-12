@@ -330,6 +330,9 @@ void main() {
         ),
       )..visibleRefresh = (_) => gate.future;
       await pumpAll(tester, shared: shared, personal: personal);
+      await tester.ensureVisible(
+        find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
+      );
       await tester.tap(
         find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
       );
@@ -385,6 +388,7 @@ void main() {
                 )
               : gate.future;
         await pumpAll(tester, shared: shared);
+        await tester.ensureVisible(find.text('QA skupno opravilo'));
         await tester.tap(find.text('QA skupno opravilo'));
         await tester.pump(const Duration(milliseconds: 16));
         expect(find.byType(AlertDialog), findsOneWidget);
@@ -415,11 +419,13 @@ void main() {
     final gate = Completer<NotificationOpenResult>();
     final shared = AllSpacesController()..visibleRefresh = (_) => gate.future;
     await pumpAll(tester, shared: shared);
-    final tile = tester.widget<ListTile>(
-      find.ancestor(
-        of: find.text('QA skupno opravilo'),
-        matching: find.byType(ListTile),
-      ),
+    final tile = tester.widget<InkWell>(
+      find
+          .ancestor(
+            of: find.text('QA skupno opravilo'),
+            matching: find.byType(InkWell),
+          )
+          .first,
     );
     tile.onTap!();
     tile.onTap!();
@@ -449,6 +455,7 @@ void main() {
         final shared = AllSpacesController()
           ..visibleRefresh = (_) => gate.future;
         await pumpAll(tester, shared: shared);
+        await tester.ensureVisible(find.text('QA skupno opravilo'));
         await tester.tap(find.text('QA skupno opravilo'));
         await tester.pumpAndSettle();
         if (denial == 'account') {
@@ -520,6 +527,7 @@ void main() {
     (tester) async {
       final shared = AllSpacesController();
       await pumpAll(tester, shared: shared);
+      await tester.ensureVisible(find.text('QA skupno opravilo'));
       await tester.tap(find.text('QA skupno opravilo'));
       await tester.pumpAndSettle();
       expect(shared.opened.single.scopeId, sharingScopeId);
@@ -555,7 +563,8 @@ void main() {
         selected = source;
       },
     );
-    await tester.tap(find.text('Dodaj v prostor'));
+    await tester.ensureVisible(find.byTooltip('Dodaj opravilo'));
+    await tester.tap(find.byTooltip('Dodaj opravilo'));
     await tester.pumpAndSettle();
     expect(selected, isNull);
     expect(find.text('Izberi prostor za dodajanje'), findsOneWidget);
@@ -586,6 +595,9 @@ void main() {
         ),
       );
       await pumpAll(tester, shared: shared, personal: personal);
+      await tester.ensureVisible(
+        find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
+      );
       await tester.tap(
         find.text('QA osebno opravilo z daljšim slovenskim naslovom'),
       );
@@ -814,12 +826,7 @@ void main() {
           file.parent.createSync(recursive: true);
           file.writeAsBytesSync(bytes!.buffer.asUint8List());
         });
-        if (width < 900) {
-          await mobileTab(tester, 'Finance');
-        } else {
-          await tester.tap(find.widgetWithText(ListTile, 'Finance'));
-          await tester.pumpAndSettle();
-        }
+        await mobileTab(tester, 'Finance');
         await tester.runAsync(() async {
           final boundary =
               key.currentContext!.findRenderObject()! as RenderRepaintBoundary;

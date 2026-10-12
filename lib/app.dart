@@ -1,11 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_router.dart';
+import 'theme/jivie_theme.dart';
 import 'l10n/l10n.dart';
 import 'organizer/state/app_preferences_provider.dart';
 import 'organizer/platform/notification_coordinator.dart';
@@ -84,8 +83,8 @@ class _JivieAppState extends ConsumerState<JivieApp> {
       locale: appLocale,
       scrollBehavior: const _AppScrollBehavior(),
       themeMode: themeMode,
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
+      theme: buildJivieTheme(Brightness.light),
+      darkTheme: buildJivieTheme(Brightness.dark),
       routerConfig: appRouter,
       builder: (context, child) => InvitationLinkCoordinator(
         child: RemotePushCoordinator(
@@ -93,192 +92,6 @@ class _JivieAppState extends ConsumerState<JivieApp> {
             child: child ?? const SizedBox.shrink(),
           ),
         ),
-      ),
-    );
-  }
-
-  ThemeData _buildTheme(Brightness brightness) {
-    final isDark = brightness == Brightness.dark;
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: const Color(0xFF365BD9),
-          brightness: brightness,
-        ).copyWith(
-          surface: isDark ? const Color(0xFF22242A) : const Color(0xFFFFFFFF),
-          primary: isDark ? const Color(0xFFA8B9FF) : const Color(0xFF365BD9),
-          onPrimary: isDark ? const Color(0xFF18234B) : Colors.white,
-          onSurface: isDark ? const Color(0xFFF1F2F5) : const Color(0xFF202329),
-          onSurfaceVariant: isDark
-              ? const Color(0xFFAEB3BF)
-              : const Color(0xFF696E79),
-          surfaceContainerLow: isDark
-              ? const Color(0xFF24262D)
-              : const Color(0xFFF4F5F8),
-          surfaceContainerHigh: isDark ? const Color(0xFF22242A) : Colors.white,
-          surfaceContainerHighest: isDark
-              ? const Color(0xFF343740)
-              : const Color(0xFFE9EBEF),
-          primaryContainer: isDark
-              ? const Color(0xFF2A334F)
-              : const Color(0xFFEDF1FF),
-          outlineVariant: isDark
-              ? const Color(0xFF343740)
-              : const Color(0xFFE9EBEF),
-          tertiary: const Color(0xFF64D2FF),
-        );
-
-    final scaffoldBackground = isDark
-        ? const Color(0xFF17181C)
-        : const Color(0xFFFFFFFF);
-    final baseText = ThemeData(
-      brightness: brightness,
-      typography: Typography.material2021(platform: TargetPlatform.iOS),
-    ).textTheme;
-    const controlCornerRadius = 12.0;
-
-    OutlineInputBorder fieldBorder(Color color) {
-      return OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: color, width: 1.1),
-      );
-    }
-
-    return ThemeData(
-      useMaterial3: true,
-      platform: defaultTargetPlatform,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: scaffoldBackground,
-      splashFactory: NoSplash.splashFactory,
-      highlightColor: Colors.transparent,
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.fuchsia: CupertinoPageTransitionsBuilder(),
-        },
-      ),
-      cupertinoOverrideTheme: CupertinoThemeData(
-        brightness: brightness,
-        primaryColor: colorScheme.primary,
-        scaffoldBackgroundColor: scaffoldBackground,
-        barBackgroundColor: isDark
-            ? const Color(0xFF22242A)
-            : const Color(0xFFFFFFFF),
-      ),
-      appBarTheme: AppBarTheme(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        backgroundColor: isDark
-            ? const Color(0xFF22242A)
-            : const Color(0xFFFFFFFF),
-        surfaceTintColor: Colors.transparent,
-        titleSpacing: 16,
-        toolbarHeight: 52,
-        titleTextStyle: baseText.titleLarge?.copyWith(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        surfaceTintColor: Colors.transparent,
-        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.55),
-          ),
-        ),
-      ),
-      textTheme: baseText.copyWith(
-        titleLarge: baseText.titleLarge?.copyWith(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.35,
-        ),
-        titleMedium: baseText.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        bodyMedium: baseText.bodyMedium?.copyWith(height: 1.3),
-        labelLarge: baseText.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: isDark ? const Color(0xFF22242A) : Colors.white,
-        border: fieldBorder(colorScheme.outlineVariant),
-        enabledBorder: fieldBorder(colorScheme.outlineVariant),
-        focusedBorder: fieldBorder(colorScheme.primary),
-        errorBorder: fieldBorder(colorScheme.error),
-        focusedErrorBorder: fieldBorder(colorScheme.error),
-        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          elevation: 0,
-          minimumSize: const Size(0, 44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(controlCornerRadius),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: colorScheme.outlineVariant),
-          minimumSize: const Size(0, 44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(controlCornerRadius),
-          ),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(0, 44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(controlCornerRadius),
-          ),
-        ),
-      ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        elevation: 0,
-        foregroundColor: colorScheme.onPrimary,
-        backgroundColor: colorScheme.primary,
-        extendedTextStyle: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      chipTheme: ChipThemeData(
-        side: BorderSide(color: colorScheme.outlineVariant),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-      ),
-      listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      switchTheme: SwitchThemeData(
-        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-      ),
-      dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant.withValues(alpha: 0.55),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        showCloseIcon: true,
-        backgroundColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-        closeIconColor: colorScheme.onSurface,
-        contentTextStyle: TextStyle(color: colorScheme.onSurface),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }

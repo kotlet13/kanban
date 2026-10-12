@@ -2253,11 +2253,11 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideTodayBody =>
-      'Danes pokaže vaša naslednja opravila in dogodke. Tu dodate opravilo ali dogodek in pregledate, kaj vas čaka. Skupni dnevni pregled je na voljo za prostor, do katerega imate dostop.';
+      'Utrip pokaže današnje dogodke, naslednjih sedem dni in projekte v teku. Z dotikom odpreš zapis, povezave pa te pripeljejo do celotnega koledarja, opravil ali projektov.';
 
   @override
   String get guidePlansBody =>
-      'V Opravilih uredi opravila in njihove termine. Projekte in Koledar odpri neposredno iz menija. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.';
+      'V Planerju preklapljaš med Opravili, Koledarjem in Idejnikom. Zapiši zamisel, jo skiciraj ali dodaj fotografijo, nato pa načrtuj naslednje korake. Izbrani prostor zgoraj določa, čigavo vsebino urejaš.';
 
   @override
   String get guideShoppingBody =>
@@ -2265,7 +2265,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'Na telefonu odpri levi meni z gumbom ☰, na tablici Več, na računalniku stranski meni. Področja sledijo izbranemu prostoru: Osebno, Gospodinjstvo ali Organizacija. Vsi pokaže dovoljeno vsebino skupaj, zapis pa dodaj v dejanski prostor. Lokalno lahko delaš brez računa. Račun povežeš posebej; Poveži in sinhroniziraj pred prenosom pokaže prostor, račun in strežnik. Člane, povabila in vloge urejaš v Nastavitvah prostora. Povabilo v cel prostor vključuje vse njegove vsebine, finance in obstoječe ter prihodnje projekte. Povabilo samo v projekt se prikaže kot Deljen projekt in ne dodeli članstva v celotnem prostoru. Obseg dostopa je ločen od vloge.';
+      'V Več najdeš račun, nastavitve, varnostne kopije in pomoč. Člane in povabila urejaš v Nastavitvah prostora. Lokalno delo ne potrebuje računa; povezavo in prenos vsebine vedno izbereš sam.';
 
   @override
   String get guideSkip => 'Preskoči';
@@ -3945,4 +3945,89 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get ideasLocalSeparate =>
       'Ta tabla ostane lokalna na tej napravi. Osebna sinhronizacija uporablja drug prostor. Tabla je tukaj na voljo za ogled in varnostno kopijo; ne objavi se samodejno.';
+
+  @override
+  String get organizerPulse => 'Utrip';
+
+  @override
+  String get organizerPlanner => 'Planer';
+
+  @override
+  String get organizerSpace => 'Prostor';
+
+  @override
+  String get organizerMoreAccount => 'Račun in prostori';
+
+  @override
+  String get organizerMoreTools => 'Nastavitve in podatki';
+
+  @override
+  String get organizerMoreHelp => 'Pomoč';
+
+  @override
+  String get organizerBackups => 'Varnostne kopije';
+
+  @override
+  String get organizerSpaceIntro => 'Projekti, sredstva in vse, za kar skrbiš.';
+
+  @override
+  String get organizerPlannerIntro => 'Od prve ideje do opravljenega.';
+
+  @override
+  String get organizerMoreIntro => 'Vse za tvojo uporabo Jivie.';
+
+  @override
+  String get organizerUtripIntro =>
+      'Danes, naslednji koraki in projekti v teku.';
+
+  @override
+  String get organizerUpcomingWeek => 'V naslednjih 7 dneh';
+
+  @override
+  String get organizerTodayEvents => 'Današnji dogodki';
+
+  @override
+  String get organizerOngoingProjects => 'Projekti v teku';
+
+  @override
+  String get organizerNoTodayEvents => 'Danes ni načrtovanih dogodkov.';
+
+  @override
+  String get organizerNoUpcomingEvents => 'Naslednjih 7 dni je še odprtih.';
+
+  @override
+  String get organizerNoOngoingProjects => 'Tu bodo tvoji odprti projekti.';
+
+  @override
+  String get organizerUtripTasks => 'Na vrsti';
+
+  @override
+  String get organizerUtripNoTasks => 'Ni odprtih opravil za danes.';
+
+  @override
+  String get organizerBack => 'Nazaj';
+
+  @override
+  String get organizerProjectsHint => 'Načrti, ki jih uresničuješ.';
+
+  @override
+  String get organizerFinancesHint => 'Računi, stroški in prihodki.';
+
+  @override
+  String get organizerShoppingHint => 'Seznami za naslednji nakup.';
+
+  @override
+  String get organizerGardenHint => 'Grede, zasaditve in letni časi.';
+
+  @override
+  String get organizerPeopleHint => 'Osebe v tvojem prostoru.';
+
+  @override
+  String get guideSpaceBody =>
+      'Prostor združuje projekte in finance. V gospodinjstvu so tu tudi nakupovalni seznami, vrt in osebe. Vrt ima svoje grede in sezone; finance lahko vodiš tudi brez projekta.';
+
+  @override
+  String organizerCalendarScheduledCount(int count) {
+    return '$count načrtovanih vsebin';
+  }
 }

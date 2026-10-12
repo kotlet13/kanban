@@ -4085,13 +4085,13 @@ abstract class AppLocalizations {
   /// No description provided for @guideTodayBody.
   ///
   /// In en, this message translates to:
-  /// **'Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.'**
+  /// **'Pulse brings together today’s events, the next seven days and projects in progress. Tap an item to open it, or follow a link to your full calendar, tasks or projects.'**
   String get guideTodayBody;
 
   /// No description provided for @guidePlansBody.
   ///
   /// In en, this message translates to:
-  /// **'Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.'**
+  /// **'Switch between Tasks, Calendar and Ideas in Planner. Write down an idea, sketch it or add a photo, then plan the next steps. The space selected at the top determines whose content you’re working with.'**
   String get guidePlansBody;
 
   /// No description provided for @guideShoppingBody.
@@ -4103,7 +4103,7 @@ abstract class AppLocalizations {
   /// No description provided for @guideMoreBody.
   ///
   /// In en, this message translates to:
-  /// **'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.'**
+  /// **'More is home to your account, settings, backups and help. Manage members and invitations in Space settings. Local work doesn’t need an account; connecting and sharing content are always your choice.'**
   String get guideMoreBody;
 
   /// No description provided for @guideSkip.
@@ -6965,6 +6965,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically.'**
   String get ideasLocalSeparate;
+
+  /// No description provided for @organizerPulse.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulse'**
+  String get organizerPulse;
+
+  /// No description provided for @organizerPlanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Planner'**
+  String get organizerPlanner;
+
+  /// No description provided for @organizerSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Space'**
+  String get organizerSpace;
+
+  /// No description provided for @organizerMoreAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and spaces'**
+  String get organizerMoreAccount;
+
+  /// No description provided for @organizerMoreTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings and data'**
+  String get organizerMoreTools;
+
+  /// No description provided for @organizerMoreHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get organizerMoreHelp;
+
+  /// No description provided for @organizerBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups'**
+  String get organizerBackups;
+
+  /// No description provided for @organizerSpaceIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects, resources and everything you look after.'**
+  String get organizerSpaceIntro;
+
+  /// No description provided for @organizerPlannerIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'From a first idea to getting it done.'**
+  String get organizerPlannerIntro;
+
+  /// No description provided for @organizerMoreIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Make Jivie work for you.'**
+  String get organizerMoreIntro;
+
+  /// No description provided for @organizerUtripIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Today, what’s next and projects in progress.'**
+  String get organizerUtripIntro;
+
+  /// No description provided for @organizerUpcomingWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 7 days'**
+  String get organizerUpcomingWeek;
+
+  /// No description provided for @organizerTodayEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s events'**
+  String get organizerTodayEvents;
+
+  /// No description provided for @organizerOngoingProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects in progress'**
+  String get organizerOngoingProjects;
+
+  /// No description provided for @organizerNoTodayEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No events planned for today.'**
+  String get organizerNoTodayEvents;
+
+  /// No description provided for @organizerNoUpcomingEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'The next 7 days are clear.'**
+  String get organizerNoUpcomingEvents;
+
+  /// No description provided for @organizerNoOngoingProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Your open projects will appear here.'**
+  String get organizerNoOngoingProjects;
+
+  /// No description provided for @organizerUtripTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get organizerUtripTasks;
+
+  /// No description provided for @organizerUtripNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No open tasks for today.'**
+  String get organizerUtripNoTasks;
+
+  /// No description provided for @organizerBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get organizerBack;
+
+  /// No description provided for @organizerProjectsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans you’re bringing to life.'**
+  String get organizerProjectsHint;
+
+  /// No description provided for @organizerFinancesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts, spending and income.'**
+  String get organizerFinancesHint;
+
+  /// No description provided for @organizerShoppingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists for your next shop.'**
+  String get organizerShoppingHint;
+
+  /// No description provided for @organizerGardenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Beds, plantings and seasons.'**
+  String get organizerGardenHint;
+
+  /// No description provided for @organizerPeopleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'People in your space.'**
+  String get organizerPeopleHint;
+
+  /// No description provided for @guideSpaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Space brings together projects and finances. In a household, you’ll also find shopping lists, your garden and people. Your garden keeps its beds and seasons, and finances can stand on their own without a project.'**
+  String get guideSpaceBody;
+
+  /// No description provided for @organizerCalendarScheduledCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scheduled items'**
+  String organizerCalendarScheduledCount(int count);
 }
 
 class _AppLocalizationsDelegate

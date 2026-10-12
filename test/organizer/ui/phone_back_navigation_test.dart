@@ -137,19 +137,14 @@ void main() {
     },
   );
 
-  testWidgets('router Back closes drawer first and clears earlier exit press', (
+  testWidgets('primary navigation clears an earlier root exit press', (
     tester,
   ) async {
     await pumpOrganizer(tester, MemoryOrganizerStorage());
     await back(tester);
-    await tester.tap(find.byKey(const ValueKey('organizer-menu-open')));
-    await tester.pumpAndSettle();
+    await mobileTab(tester, 'Več');
     await back(tester);
     expectArea('today');
-    expect(
-      find.byKey(const ValueKey('organizer-menu-close')).hitTestable(),
-      findsNothing,
-    );
     expect(exits(), 0);
     expect(find.text(exitPrompt), findsNothing);
     await back(tester);
@@ -169,7 +164,7 @@ void main() {
     await back(tester);
     expectArea('settings');
     await back(tester);
-    expectArea('projects');
+    expectArea('more');
     await back(tester);
     expectArea('today');
     expect(exits(), 0);
@@ -235,20 +230,7 @@ void main() {
         isNull,
       );
       await back(tester);
-      expectArea('projects');
-      expect(
-        tester
-            .widget<OrganizerProjectsPage>(find.byType(OrganizerProjectsPage))
-            .selectedId,
-        'p',
-      );
-      await back(tester);
-      expect(
-        tester
-            .widget<OrganizerProjectsPage>(find.byType(OrganizerProjectsPage))
-            .selectedId,
-        isNull,
-      );
+      expectArea('space');
       await back(tester);
       expectArea('today');
       expect(exits(), 0);
@@ -280,6 +262,8 @@ void main() {
     await back(tester);
     expect(find.byType(GardenEditor), findsNothing);
     expectArea('settings');
+    await back(tester);
+    expectArea('more');
     await back(tester);
     expectArea('today');
     expect(exits(), 0);
@@ -351,7 +335,7 @@ void main() {
     await back(tester);
     expectArea('sharing');
     await back(tester);
-    expectArea('projects');
+    expectArea('more');
     await back(tester);
     expectArea('today');
     expect(exits(), 0);
@@ -373,6 +357,8 @@ void main() {
       expect(shared.state.valueOrNull!.selectedSpaceId, isNull);
       expectArea('projects');
       expect(find.text('QA skupna ureditev vrta'), findsOneWidget);
+      await back(tester);
+      expectArea('space');
       await back(tester);
       expectArea('today');
       expect(exits(), 0);
@@ -427,13 +413,7 @@ void main() {
         sharingSession(second: true).accountId,
       );
       await back(tester);
-      expectArea('projects');
-      expect(
-        tester
-            .widget<OrganizerProjectsPage>(find.byType(OrganizerProjectsPage))
-            .selectedId,
-        isNull,
-      );
+      expectArea('more');
       await back(tester);
       expectArea('today');
       expect(exits(), 0);
@@ -496,9 +476,10 @@ void main() {
       if (platform == TargetPlatform.iOS) {
         await mobileTab(tester, 'Projekti');
       } else {
-        await tester.tap(find.widgetWithText(ListTile, 'Projekti'));
-        await tester.pumpAndSettle();
+        await mobileTab(tester, 'Projekti');
       }
+      await back(tester);
+      expectArea('space');
       await back(tester);
       expectArea('today');
       expect(find.text(exitPrompt), findsNothing);

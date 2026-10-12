@@ -6,6 +6,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/all_spaces_provider.dart';
 import '../../state/organizer_provider.dart';
 import '../organizer_widgets.dart';
+import '../planning/utrip_overview.dart';
 import 'all_spaces_rows.dart';
 import 'all_spaces_area.dart';
 import 'all_spaces_payments.dart';
@@ -25,6 +26,7 @@ class AllSpacesPage extends ConsumerStatefulWidget {
     this.titleAccessory,
     this.onCreateSource,
     this.canCreateInSource,
+    this.onOverviewArea,
   });
   final AllSpacesSnapshot? snapshot;
   final String? subtitle;
@@ -33,6 +35,7 @@ class AllSpacesPage extends ConsumerStatefulWidget {
   final Future<void> Function(AllSpacesSource source)? onCreateSource;
   final bool Function(AllSpacesSource source)? canCreateInSource;
   final AllSpacesArea area;
+  final ValueChanged<AllSpacesArea>? onOverviewArea;
   final Future<void> Function(
     AllSpacesSource source,
     AllSpacesArea area,
@@ -156,6 +159,35 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => Text(l.organizerLoadError),
       data: (snapshot) {
+        if (widget.area == AllSpacesArea.today) {
+          return OrganizerUtripOverview(
+            snapshot: snapshot,
+            now: now,
+            titleAccessory: widget.titleAccessory,
+            onTasks: widget.onOverviewArea == null
+                ? null
+                : () => widget.onOverviewArea!(AllSpacesArea.tasks),
+            onCalendar: widget.onOverviewArea == null
+                ? null
+                : () => widget.onOverviewArea!(AllSpacesArea.calendar),
+            onProjects: widget.onOverviewArea == null
+                ? null
+                : () => widget.onOverviewArea!(AllSpacesArea.projects),
+            onCreateTask: widget.allowCreation
+                ? () => _chooseTarget(snapshot)
+                : null,
+            onOpen: (item) => _open(
+              AllSpacesRow(
+                source: item.source,
+                id: item.id,
+                type: item.type,
+                title: item.title,
+                date: item.dueAt ?? item.startAt,
+                endDate: item.endAt,
+              ),
+            ),
+          );
+        }
         final rows = allSpacesRows(
           snapshot,
           widget.area,

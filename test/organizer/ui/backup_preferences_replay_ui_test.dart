@@ -16,7 +16,7 @@ void main() {
         MemoryOrganizerStorage(),
         replayPreferences: () => ready.future,
       );
-      expect(find.text('Začni z enim opravilom.'), findsOneWidget);
+      expect(find.text('Ni odprtih opravil za danes.'), findsOneWidget);
       ready.complete({'app_locale_code': 'en', 'app_theme_mode': 'dark'});
       await tester.pumpAndSettle();
       final container = ProviderScope.containerOf(
@@ -35,7 +35,7 @@ void main() {
       replayPreferences: () =>
           Future.error(StateError('local preferences unavailable')),
     );
-    expect(find.text('Začni z enim opravilom.'), findsOneWidget);
+    expect(find.text('Ni odprtih opravil za danes.'), findsOneWidget);
     expect(tester.takeException(), null);
   });
 }

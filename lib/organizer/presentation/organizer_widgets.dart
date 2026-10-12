@@ -40,12 +40,14 @@ class OrganizerHeading extends StatelessWidget {
         Row(
           children: [
             Flexible(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 25 : 30,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -1,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
             ),
@@ -97,7 +99,13 @@ class OrganizerEmpty extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 26, color: Theme.of(context).colorScheme.primary),
+        ExcludeSemantics(
+          child: Icon(
+            icon,
+            size: 26,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
         SizedBox(height: MediaQuery.sizeOf(context).width < 600 ? 10 : 14),
         Text(title, style: Theme.of(context).textTheme.titleMedium),
         if (description != null)
@@ -139,7 +147,16 @@ class OrganizerSection extends StatelessWidget {
       Row(
         children: [
           Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+            child: Semantics(
+              header: true,
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
           if (action != null) action!,
         ],
@@ -192,49 +209,55 @@ class OrganizerTaskRow extends StatelessWidget {
         children: [
           Checkbox(
             value: task.isCompleted,
+            semanticLabel: task.title,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+            visualDensity: VisualDensity.standard,
             onChanged: onCompleted == null ? null : (v) => onCompleted!(v!),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
           ),
           Expanded(
-            child: InkWell(
-              onTap: onEdit,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: MediaQuery.sizeOf(context).width < 600 ? 12 : 17,
-                  horizontal: 4,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: task.isCompleted
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : null,
+            child: Semantics(
+              button: onEdit != null,
+              child: InkWell(
+                onTap: onEdit,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: MediaQuery.sizeOf(context).width < 600 ? 12 : 17,
+                    horizontal: 4,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: task.isCompleted
+                              ? Theme.of(context).colorScheme.onSurfaceVariant
+                              : null,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      details,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 5),
+                      Text(
+                        details,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    if (task.timer.running || task.timer.elapsedSeconds > 0)
-                      TaskTimerPanel(
-                        timer: task.timer,
-                        estimateMinutes: task.estimateMinutes,
-                        showControls: false,
-                      ),
-                  ],
+                      if (task.timer.running || task.timer.elapsedSeconds > 0)
+                        TaskTimerPanel(
+                          timer: task.timer,
+                          estimateMinutes: task.estimateMinutes,
+                          showControls: false,
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -257,25 +280,25 @@ class OrganizerEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     color: Theme.of(context).colorScheme.surfaceContainerLow,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.all(
-          MediaQuery.sizeOf(context).width < 600 ? 12 : 18,
-        ),
-        child: Row(
-          children: [
-            Text(
-              MaterialLocalizations.of(context).formatTimeOfDay(
-                TimeOfDay.fromDateTime(event.startsAt.toLocal()),
-              ),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: MediaQuery.sizeOf(context).width < 600 ? 20 : 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
+    child: Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < 600 ? 12 : 18,
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final time = Text(
+                MaterialLocalizations.of(context).formatTimeOfDay(
+                  TimeOfDay.fromDateTime(event.startsAt.toLocal()),
+                ),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 20 : 24,
+                ),
+              );
+              final details = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -298,15 +321,44 @@ class OrganizerEventCard extends StatelessWidget {
                       ),
                     ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ],
+              );
+              // Let larger system text use the available width instead of
+              // squeezing the event title beside the time.
+              final stackTime =
+                  constraints.maxWidth < 300 ||
+                  MediaQuery.textScalerOf(context).scale(20) > 26;
+              return Row(
+                children: [
+                  Expanded(
+                    child: stackTime
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              time,
+                              const SizedBox(height: 8),
+                              details,
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              time,
+                              const SizedBox(width: 16),
+                              Expanded(child: details),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  ExcludeSemantics(
+                    child: Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     ),

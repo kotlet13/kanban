@@ -109,10 +109,11 @@ void main() {
         width: width,
         localSpacesController: HouseholdFixtureController(),
       );
-      if (width < 600) {
-        await mobileTab(tester, 'Več');
-      }
-      expect(find.text('Osebe'), findsOneWidget);
+      await mobileTab(tester, 'Prostor');
+      expect(
+        find.byKey(const ValueKey('organizer-hub-people')),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }

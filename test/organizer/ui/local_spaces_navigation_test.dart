@@ -9,7 +9,6 @@ import 'package:kanban/organizer/state/local_spaces_provider.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/presentation/shared/space_picker.dart';
-import 'package:kanban/organizer/presentation/navigation/organizer_navigation.dart';
 import 'package:kanban/organizer/presentation/shared/sharing_workspace.dart';
 import 'organizer_ui_test.dart'
     show pumpOrganizer, mobileTab, MemoryOrganizerStorage;
@@ -191,40 +190,26 @@ void main() {
           repaintBoundaryKey: key,
         );
         await capture(tester, key, 'local-${kind.name}-${width.toInt()}');
-        if (width < 600) {
-          await tester.tap(find.byKey(const ValueKey('organizer-menu-open')));
-          await tester.pumpAndSettle();
+        await mobileTab(tester, 'Prostor');
+        expect(find.byKey(const ValueKey('organizer-hub-home')), findsNothing);
+        for (final area in ['shopping', 'people', 'garden']) {
           expect(
-            find.byKey(const ValueKey('organizer-menu-home')),
-            findsNothing,
-          );
-          expect(
-            find.byKey(const ValueKey('organizer-menu-shopping')),
+            find.byKey(ValueKey('organizer-hub-$area')),
             kind == LocalSpaceKind.household ? findsOneWidget : findsNothing,
           );
-          expect(
-            find.byKey(const ValueKey('organizer-menu-people')),
-            kind == LocalSpaceKind.household ? findsOneWidget : findsNothing,
-          );
-          expect(
-            find.byKey(const ValueKey('organizer-menu-garden')),
-            kind == LocalSpaceKind.household ? findsOneWidget : findsNothing,
-          );
-          await tester.tap(find.byKey(const ValueKey('organizer-menu-plans')));
-          await tester.pumpAndSettle();
-        } else if (width < 900) {
-          await mobileTab(tester, 'Opravila');
-        } else {
-          expect(find.widgetWithText(ListTile, 'Dom'), findsNothing);
-          await tester.tap(find.widgetWithText(ListTile, 'Opravila'));
-          await tester.pumpAndSettle();
         }
-        expect(find.byType(SegmentedButton<OrganizerArea>), findsNothing);
+        await mobileTab(tester, 'Opravila');
         expect(
-          find.text('Projekti').hitTestable(),
-          width >= 900 || (width == 700 && kind != LocalSpaceKind.household)
-              ? findsOneWidget
-              : findsNothing,
+          find.byKey(const ValueKey('planner-view-plans')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('planner-view-calendar')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('planner-view-ideas')),
+          findsOneWidget,
         );
         expect(
           find.byKey(const ValueKey('content-_Area.plans')),
@@ -323,6 +308,7 @@ void main() {
           ),
           repaintBoundaryKey: key,
         );
+        await mobileTab(tester, 'Opravila');
         expect(find.text('Pripravi zemljo'), findsOneWidget);
         expect(find.textContaining('QA dovoljen projekt'), findsWidgets);
         expect(find.textContaining('QA druga organizacija'), findsNothing);
@@ -334,8 +320,7 @@ void main() {
             // Calendar is available through More on tablets.
           }
         } else {
-          await tester.tap(find.widgetWithText(ListTile, 'Koledar'));
-          await tester.pumpAndSettle();
+          await mobileTab(tester, 'Koledar');
         }
         expect(find.text('Projekti organizacije'), findsNothing);
         expect(find.byType(SharingWorkspace), findsOneWidget);

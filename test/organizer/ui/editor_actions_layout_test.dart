@@ -63,7 +63,7 @@ void sameRow(WidgetTester tester, Iterable<Finder> finders) {
 void main() {
   for (final scene in [
     (360.0, 1.0, 'sl', false),
-    (320.0, 1.8, 'sl', true),
+    (320.0, 2.0, 'sl', true),
     (800.0, 1.0, 'en', false),
     (1280.0, 1.0, 'sl', false),
   ]) {

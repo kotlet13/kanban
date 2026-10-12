@@ -1,3 +1,4 @@
+import 'organizer_ui_test.dart' show mobileTab;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -233,10 +234,7 @@ void main() {
               .read(collaborationProvider.notifier)
               .selectSpace(sharingScopeId);
           await tester.pumpAndSettle();
-          await tester.tap(
-            find.widgetWithText(ListTile, 'Nastavitve prostora'),
-          );
-          await tester.pumpAndSettle();
+          await mobileTab(tester, 'Nastavitve prostora');
         }
         await tester.ensureVisible(find.text('Povabi osebo'));
         await tester.tap(find.text('Povabi osebo'));

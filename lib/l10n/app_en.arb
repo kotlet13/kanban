@@ -766,10 +766,10 @@
   "guideOpen": "A quick guide to Jivie",
   "guideLocalTitle": "Start on your device",
   "guideLocalBody": "Start with a task or event in your personal space. Create households and organizations without an account; select a household for shopping lists, gardens and people. Data stays on your device; explicitly enable connection and synchronization.",
-  "guideTodayBody": "Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.",
-  "guidePlansBody": "Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.",
+  "guideTodayBody": "Pulse brings together today’s events, the next seven days and projects in progress. Tap an item to open it, or follow a link to your full calendar, tasks or projects.",
+  "guidePlansBody": "Switch between Tasks, Calendar and Ideas in Planner. Write down an idea, sketch it or add a photo, then plan the next steps. The space selected at the top determines whose content you’re working with.",
   "guideShoppingBody": "A household has its own shopping lists, gardens and people. Add items and mark purchases. Existing personal lists and gardens remain available; choose a household before assigning them.",
-  "guideMoreBody": "On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.",
+  "guideMoreBody": "More is home to your account, settings, backups and help. Manage members and invitations in Space settings. Local work doesn’t need an account; connecting and sharing content are always your choice.",
   "guideSkip": "Skip",
   "guideBack": "Back",
   "guideNext": "Next",
@@ -1465,5 +1465,39 @@
   "ideasConflictPhotos": "Load missing photos before choosing a version. Viewing the comparison does not change the board.",
   "ideasCountLabel": "Ideas",
   "ideaDraftsCountLabel": "Idea drafts",
-  "ideasLocalSeparate": "This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically."
+  "ideasLocalSeparate": "This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically.",
+  "organizerPulse": "Pulse",
+  "organizerPlanner": "Planner",
+  "organizerSpace": "Space",
+  "organizerMoreAccount": "Account and spaces",
+  "organizerMoreTools": "Settings and data",
+  "organizerMoreHelp": "Help",
+  "organizerBackups": "Backups",
+  "organizerSpaceIntro": "Projects, resources and everything you look after.",
+  "organizerPlannerIntro": "From a first idea to getting it done.",
+  "organizerMoreIntro": "Make Jivie work for you.",
+  "organizerUtripIntro": "Today, what’s next and projects in progress.",
+  "organizerUpcomingWeek": "Next 7 days",
+  "organizerTodayEvents": "Today’s events",
+  "organizerOngoingProjects": "Projects in progress",
+  "organizerNoTodayEvents": "No events planned for today.",
+  "organizerNoUpcomingEvents": "The next 7 days are clear.",
+  "organizerNoOngoingProjects": "Your open projects will appear here.",
+  "organizerUtripTasks": "Coming up",
+  "organizerUtripNoTasks": "No open tasks for today.",
+  "organizerBack": "Back",
+  "organizerProjectsHint": "Plans you’re bringing to life.",
+  "organizerFinancesHint": "Accounts, spending and income.",
+  "organizerShoppingHint": "Lists for your next shop.",
+  "organizerGardenHint": "Beds, plantings and seasons.",
+  "organizerPeopleHint": "People in your space.",
+  "guideSpaceBody": "Space brings together projects and finances. In a household, you’ll also find shopping lists, your garden and people. Your garden keeps its beds and seasons, and finances can stand on their own without a project.",
+  "organizerCalendarScheduledCount": "{count} scheduled items",
+  "@organizerCalendarScheduledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -42,15 +42,7 @@ CollaborationState selection({String? id, bool all = false}) =>
     );
 
 Future<void> openSettings(WidgetTester tester, double width) async {
-  if (width < 600) {
-    await mobileTab(tester, 'Nastavitve prostora');
-  } else {
-    if (width < 900) await mobileTab(tester, 'Več');
-    final entry = find.widgetWithText(ListTile, 'Nastavitve prostora').first;
-    await tester.ensureVisible(entry);
-    await tester.tap(entry);
-    await tester.pumpAndSettle();
-  }
+  await mobileTab(tester, 'Nastavitve prostora');
 }
 
 Future<void> back(WidgetTester tester) async {
@@ -170,6 +162,11 @@ void main() {
         expect(find.byType(SharingMembersPage), findsNothing);
         expect(controller.state.requireValue.selectedSpaceId, isNull);
         expect(controller.state.requireValue.allSpacesSelected, all);
+        await back(tester);
+        expect(
+          find.byKey(const ValueKey('content-_Area.more')),
+          findsOneWidget,
+        );
         await back(tester);
         expect(
           find.byKey(const ValueKey('content-_Area.today')),
@@ -399,7 +396,7 @@ void main() {
       collaborationController: controller,
     );
     // Use bounded pumps while the deliberately unfinished member request loads.
-    await tester.tap(find.byKey(const ValueKey('organizer-menu-open')));
+    await tester.tap(find.byKey(const ValueKey('organizer-destination-more')));
     await tester.pumpAndSettle();
     final entry = find.widgetWithText(ListTile, 'Nastavitve prostora');
     await tester.ensureVisible(entry);
@@ -502,11 +499,11 @@ void main() {
       image.dispose();
     });
     await snapshot('phone-settings');
-    await tester.tap(find.byKey(const ValueKey('organizer-menu-open')));
+    await tester.tap(find.byKey(const ValueKey('organizer-destination-more')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(
       find.widgetWithText(ListTile, 'Nastavitve prostora'),
     );
-    await snapshot('phone-menu');
+    await snapshot('phone-more');
   });
 }

@@ -10,6 +10,7 @@ import '../finance/shared_finance_actions.dart';
 import '../projects_page.dart';
 import '../shopping_page.dart';
 import '../planning/shared_agenda_page.dart';
+import '../planning/utrip_overview.dart';
 import '../inbox/notification_target_view.dart';
 import 'collaboration_actions.dart';
 import 'organization_workspace.dart';
@@ -48,8 +49,10 @@ class SharingWorkspace extends ConsumerWidget {
     this.onMembers,
     this.showScopePicker = true,
     this.onSource,
+    this.onOverviewArea,
   });
   final SharingView view;
+  final ValueChanged<AllSpacesArea>? onOverviewArea;
   final String? selectedScopeId;
   final ValueChanged<String> onScopeSelected;
   final VoidCallback onConnect;
@@ -239,6 +242,7 @@ class SharingWorkspace extends ConsumerWidget {
                 shared: state,
               );
               return AllSpacesPage(
+                onOverviewArea: onOverviewArea,
                 key: ValueKey('organization-${scope.id}-$view'),
                 area: switch (view) {
                   SharingView.agenda => AllSpacesArea.today,
@@ -323,6 +327,7 @@ class SharingWorkspace extends ConsumerWidget {
                 shared: state,
               );
               return AllSpacesPage(
+                onOverviewArea: onOverviewArea,
                 key: ValueKey('household-${scope.id}-$view'),
                 titleAccessory: status,
                 allowCreation: !readOnly,
@@ -486,7 +491,75 @@ class SharingWorkspace extends ConsumerWidget {
                       readOnly: readOnly,
                       scopeLabel: '${scope.name} · ${l.sharingShared}',
                     ),
-                    SharingView.agenda ||
+                    SharingView.agenda => OrganizerUtripOverview(
+                      titleAccessory: status,
+                      snapshot: AllSpacesSnapshot([
+                        if (!scope.archived)
+                          AllSpacesSource(
+                            key: '${state.session!.partition}:${scope.id}',
+                            scope: scope,
+                            session: state.session,
+                            data: data,
+                            canReadFinance: false,
+                            financeComplete: true,
+                          ),
+                      ]),
+                      onOpen: (item) {
+                        bool readable() {
+                          final current = ref.read(collaborationProvider);
+                          final value = current.asData?.value;
+                          return context.mounted &&
+                              !current.isLoading &&
+                              !current.hasError &&
+                              value?.localAccessAllowed == true &&
+                              value?.session?.partition ==
+                                  state.session!.partition &&
+                              value?.session?.deviceId ==
+                                  state.session!.deviceId &&
+                              value!.scopes.any(
+                                (s) =>
+                                    s.id == scope.id &&
+                                    !s.revoked &&
+                                    !s.archived,
+                              );
+                        }
+
+                        if (!readable()) return;
+                        if (item.type == 'project' &&
+                            !scope.blocked &&
+                            onSource != null) {
+                          onSource!(
+                            item.source,
+                            AllSpacesArea.projects,
+                            item.id,
+                          );
+                          return;
+                        }
+                        showNotificationTarget(
+                          context,
+                          ref,
+                          item.source.target(item.type, item.id),
+                          isCurrent: readable,
+                        );
+                      },
+                      onTasks: onOverviewArea == null
+                          ? null
+                          : () => onOverviewArea!(AllSpacesArea.tasks),
+                      onCalendar: onOverviewArea == null
+                          ? null
+                          : () => onOverviewArea!(AllSpacesArea.calendar),
+                      onProjects: onOverviewArea == null
+                          ? null
+                          : () => onOverviewArea!(AllSpacesArea.projects),
+                      onCreateTask: readOnly ? null : () => actions.task(),
+                      onCreateEvent: readOnly ? null : () => actions.event(),
+                      onCreateProject:
+                          readOnly ||
+                              scope.projectRootId != null ||
+                              scope.parentSpaceId != null
+                          ? null
+                          : () => actions.project(),
+                    ),
                     SharingView.timeline => SharedAgendaPage(
                       titleAccessory: status,
                       key: ValueKey(

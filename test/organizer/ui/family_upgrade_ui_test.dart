@@ -228,16 +228,7 @@ Future<void> openFinances(
       .read(collaborationProvider.notifier)
       .selectSpace(sharingScopeId);
   await tester.pumpAndSettle();
-  if (width < 900) {
-    await personal.mobileTab(tester, locale == 'sl' ? 'Več' : 'More');
-  }
-  final target = find.widgetWithText(
-    ListTile,
-    locale == 'sl' ? 'Finance' : 'Finances',
-  );
-  await tester.ensureVisible(target);
-  await tester.tap(target);
-  await tester.pumpAndSettle();
+  await personal.mobileTab(tester, locale == 'sl' ? 'Finance' : 'Finances');
 }
 
 class DelayedUpgrade extends UpgradeController {

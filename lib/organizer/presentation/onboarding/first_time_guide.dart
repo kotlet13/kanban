@@ -60,10 +60,10 @@ class _FirstTimeGuideState extends State<FirstTimeGuide> {
     final l = context.l10n;
     final pages = [
       (Icons.phone_iphone, l.guideLocalTitle, l.guideLocalBody),
-      (Icons.today_outlined, l.organizerToday, l.guideTodayBody),
-      (Icons.event_note_outlined, l.organizerPlans, l.guidePlansBody),
-      (Icons.shopping_bag_outlined, l.organizerShopping, l.guideShoppingBody),
-      (Icons.menu, l.guideMenuTitle, l.guideMoreBody),
+      (Icons.space_dashboard_outlined, l.organizerPulse, l.guideTodayBody),
+      (Icons.event_note_outlined, l.organizerPlanner, l.guidePlansBody),
+      (Icons.folder_open_outlined, l.organizerSpace, l.guideSpaceBody),
+      (Icons.more_horiz, l.organizerMore, l.guideMoreBody),
     ];
     final page = pages[_step];
     return AlertDialog(

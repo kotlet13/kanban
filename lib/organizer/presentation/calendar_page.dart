@@ -27,6 +27,39 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
     return x.year == y.year && x.month == y.month && x.day == y.day;
   }
 
+  int _scheduledCount(DateTime date) =>
+      widget.snapshot.events.where((e) => _sameDay(e.startsAt, date)).length +
+      widget.snapshot.tasks
+          .where(
+            (t) =>
+                !t.isCompleted && t.dueAt != null && _sameDay(t.dueAt!, date),
+          )
+          .length;
+
+  Widget _dateOption(DateTime date) {
+    final count = _scheduledCount(date);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(organizerDate(context, date, full: true)),
+            if (count > 0)
+              Text(
+                context.l10n.organizerCalendarScheduledCount(count),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -146,123 +179,192 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
     final count = DateTime(_month.year, _month.month + 1, 0).day;
     final cells = ((firstOffset + count + 6) ~/ 7) * 7;
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                IconButton(
-                  tooltip: MaterialLocalizations.of(
-                    context,
-                  ).previousMonthTooltip,
-                  onPressed: () => setState(
-                    () => _month = DateTime(_month.year, _month.month - 1),
-                  ),
-                  icon: const Icon(Icons.chevron_left),
-                ),
-                Expanded(
-                  child: Text(
-                    DateFormat.yMMMM(locale).format(_month),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
-                  onPressed: () => setState(
-                    () => _month = DateTime(_month.year, _month.month + 1),
-                  ),
-                  icon: const Icon(Icons.chevron_right),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final enlargedText = MediaQuery.textScalerOf(context).scale(14) > 20;
+        final horizontalPadding = constraints.maxWidth < 336 || enlargedText
+            ? 14.0
+            : constraints.maxWidth < 360
+            ? 0.0
+            : 12.0;
+        return Card(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: 14,
             ),
-            const SizedBox(height: 8),
-            Row(
+            child: Column(
               children: [
-                for (var i = 0; i < 7; i++)
-                  Expanded(
-                    child: Center(
+                Row(
+                  children: [
+                    IconButton(
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).previousMonthTooltip,
+                      onPressed: () => setState(
+                        () => _month = DateTime(_month.year, _month.month - 1),
+                      ),
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    Expanded(
                       child: Text(
-                        DateFormat.E(locale).format(DateTime(2024, 1, 1 + i)),
-                        style: Theme.of(context).textTheme.bodySmall,
+                        DateFormat.yMMMM(locale).format(_month),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                  ),
+                    IconButton(
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).nextMonthTooltip,
+                      onPressed: () => setState(
+                        () => _month = DateTime(_month.year, _month.month + 1),
+                      ),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final useGrid =
+                        constraints.maxWidth / 7 >= 48 &&
+                        MediaQuery.textScalerOf(context).scale(14) <= 20;
+                    if (!useGrid) {
+                      return DropdownButton<DateTime>(
+                        key: const ValueKey('calendar-date-selection'),
+                        value:
+                            _selected != null &&
+                                _selected!.year == _month.year &&
+                                _selected!.month == _month.month
+                            ? _selected
+                            : null,
+                        isExpanded: true,
+                        itemHeight: null,
+                        hint: Text(
+                          MaterialLocalizations.of(context).datePickerHelpText,
+                        ),
+                        items: [
+                          for (var day = 1; day <= count; day++)
+                            DropdownMenuItem(
+                              value: DateTime(_month.year, _month.month, day),
+                              child: _dateOption(
+                                DateTime(_month.year, _month.month, day),
+                              ),
+                            ),
+                        ],
+                        onChanged: (date) => setState(() => _selected = date),
+                      );
+                    }
+                    return Column(
+                      children: [
+                        ExcludeSemantics(
+                          child: Row(
+                            children: [
+                              for (var i = 0; i < 7; i++)
+                                Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      DateFormat.E(
+                                        locale,
+                                      ).format(DateTime(2024, 1, 1 + i)),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cells,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 7,
+                              ),
+                          itemBuilder: (context, index) {
+                            final day = index - firstOffset + 1;
+                            if (day < 1 || day > count) {
+                              return const SizedBox.shrink();
+                            }
+                            final date = DateTime(
+                              _month.year,
+                              _month.month,
+                              day,
+                            );
+                            final scheduledCount = _scheduledCount(date);
+                            final marked = scheduledCount > 0;
+                            final selected =
+                                _selected != null && _sameDay(_selected!, date);
+                            final today = _sameDay(DateTime.now(), date);
+                            return Semantics(
+                              label: [
+                                organizerDate(context, date, full: true),
+                                if (marked)
+                                  context.l10n.organizerCalendarScheduledCount(
+                                    scheduledCount,
+                                  ),
+                              ].join('\n'),
+                              selected: selected,
+                              button: true,
+                              excludeSemantics: true,
+                              onTap: () => setState(() => _selected = date),
+                              child: InkWell(
+                                onTap: () => setState(() => _selected = date),
+                                borderRadius: BorderRadius.circular(9),
+                                child: Container(
+                                  margin: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? scheme.primaryContainer
+                                        : null,
+                                    borderRadius: BorderRadius.circular(9),
+                                    border: today
+                                        ? Border.all(color: scheme.primary)
+                                        : null,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '$day',
+                                        style: TextStyle(
+                                          color: selected || today
+                                              ? scheme.primary
+                                              : null,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Container(
+                                        width: 4,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: marked
+                                              ? scheme.primary
+                                              : Colors.transparent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: cells,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-              ),
-              itemBuilder: (context, index) {
-                final day = index - firstOffset + 1;
-                if (day < 1 || day > count) return const SizedBox.shrink();
-                final date = DateTime(_month.year, _month.month, day);
-                final marked =
-                    widget.snapshot.events.any(
-                      (e) => _sameDay(e.startsAt, date),
-                    ) ||
-                    widget.snapshot.tasks.any(
-                      (t) =>
-                          !t.isCompleted &&
-                          t.dueAt != null &&
-                          _sameDay(t.dueAt!, date),
-                    );
-                final selected =
-                    _selected != null && _sameDay(_selected!, date);
-                final today = _sameDay(DateTime.now(), date);
-                return Semantics(
-                  label: organizerDate(context, date, full: true),
-                  selected: selected,
-                  button: true,
-                  child: InkWell(
-                    onTap: () => setState(() => _selected = date),
-                    borderRadius: BorderRadius.circular(9),
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: selected ? scheme.primaryContainer : null,
-                        borderRadius: BorderRadius.circular(9),
-                        border: today
-                            ? Border.all(color: scheme.primary)
-                            : null,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$day',
-                            style: TextStyle(
-                              color: selected || today ? scheme.primary : null,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: marked
-                                  ? scheme.primary
-                                  : Colors.transparent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

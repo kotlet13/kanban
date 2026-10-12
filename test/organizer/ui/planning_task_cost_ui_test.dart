@@ -29,6 +29,7 @@ void main() {
         ],
       );
       await pumpOrganizer(tester, store, width: 390, height: 900);
+      await mobileTab(tester, 'Opravila');
       await tester.ensureVisible(
         find.widgetWithText(TextButton, 'Dodaj opravilo').first,
       );

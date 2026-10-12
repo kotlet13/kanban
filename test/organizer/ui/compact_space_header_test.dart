@@ -143,7 +143,10 @@ void main() {
             expect(find.text('Jivie'), findsNothing);
             expect(find.byType(JivieBrandMark), findsOneWidget);
             expect(
-              find.text(language == 'sl' ? 'Prostor' : 'Space'),
+              find.descendant(
+                of: find.byType(AppBar),
+                matching: find.text(language == 'sl' ? 'Prostor' : 'Space'),
+              ),
               findsNothing,
             );
             expect(
@@ -192,10 +195,15 @@ void main() {
             expect(tester.takeException(), isNull);
             await tester.tap(spaceButton());
             await tester.pumpAndSettle();
-            expect(
-              find.text(language == 'sl' ? 'Nov prostor' : 'New space'),
-              findsOneWidget,
+            final createSpace = find.text(
+              language == 'sl' ? 'Nov prostor' : 'New space',
             );
+            await tester.scrollUntilVisible(
+              createSpace,
+              120,
+              scrollable: find.byType(Scrollable).last,
+            );
+            expect(createSpace.hitTestable(), findsOneWidget);
             expect(find.text('Hidden personal server scope'), findsNothing);
             expect(tester.takeException(), isNull);
           },

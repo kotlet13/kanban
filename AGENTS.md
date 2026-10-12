@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+12. oktober — uporabnik je naročil skupen Android/iOS UX in podagente Sol6.1/high.
+**Utrip · Planer · Prostor · Več** so izvedeni kot štirje stalni cilji; ta usmeritev
+ima prednost pred starejšim telefonskim predalom. Planer: Opravila/Koledar/Idejnik.
+Prostor: projekti/finance ter področja vrste prostora; vrt ostane lastna domena.
+Utrip uporablja dejanske dovoljene podatke danes/naslednjih7dni/projekti/opravila.
+Nevtralna svetla/temna tema z modrim poudarkom, platformna tipografija/prehodi,
+48-točkovni dotiki in prilagoditev 2× besedilu. Ne vračaj stalnih zastavic,
+navpičnih editor dejanj ali raztezajočega statusa sinhronizacije.
+**651 UI/projekcija/tema PASS /1 opt-in preskok**, analiza brez ugotovitev,
+Android debug/iOS simulator gradnji PASS;28 widget posnetkov z izoliranimi
+testnimi zapisi. [Dokazi in meje](docs/UNIFIED_MOBILE_UX.md). Mac je zaklenjen:
+dejanski simulator UI, fizični iPhone in VoiceOver/TalkBack niso potrjeni.
+Različica ostane1.6.1(24), ni nove trgovinske izdaje. Sheme, podatki, pravice,
+strežniki, SDK, zaklenjene odvisnosti in dovoljenja ostanejo isti.
+
 12. oktober,15:36 — po uporabnikovem dovoljenju za shranjeno geslo je prijava
 **jivie** dejansko uspela prek običajnega samodejnega izpolnjevanja; geslo ni bilo
 prebrano/izpisano. **SL/EN zasebnost z Idejnikom/fotografijami je objavljena** na

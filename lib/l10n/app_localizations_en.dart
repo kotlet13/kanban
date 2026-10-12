@@ -2250,11 +2250,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideTodayBody =>
-      'Today shows your next tasks and events. Add a task or event here and see what is coming up. A shared daily overview is available for spaces you can access.';
+      'Pulse brings together today’s events, the next seven days and projects in progress. Tap an item to open it, or follow a link to your full calendar, tasks or projects.';
 
   @override
   String get guidePlansBody =>
-      'Organize tasks and dates in Tasks. Open Projects and Calendar directly from the menu. The space selected above determines whose content you edit.';
+      'Switch between Tasks, Calendar and Ideas in Planner. Write down an idea, sketch it or add a photo, then plan the next steps. The space selected at the top determines whose content you’re working with.';
 
   @override
   String get guideShoppingBody =>
@@ -2262,7 +2262,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guideMoreBody =>
-      'On a phone, use the ☰ menu; on a tablet, More; on a computer, the sidebar. Areas follow the selected space: Personal, Household or Organization. All shows permitted contents together; create records in a concrete space. Work locally without an account. Connect an account separately; Connect and synchronize reviews the space, account and server before uploading. Manage members, invitations and roles in Space settings. A whole-space invitation includes all its content, finances and existing and future projects. A project-only invitation appears as a Shared project and does not grant membership in the whole space. Access scope is separate from role.';
+      'More is home to your account, settings, backups and help. Manage members and invitations in Space settings. Local work doesn’t need an account; connecting and sharing content are always your choice.';
 
   @override
   String get guideSkip => 'Skip';
@@ -3938,4 +3938,91 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ideasLocalSeparate =>
       'This board remains local to this device. Personal sync uses another workspace. You can view and back up this board here; it is not published automatically.';
+
+  @override
+  String get organizerPulse => 'Pulse';
+
+  @override
+  String get organizerPlanner => 'Planner';
+
+  @override
+  String get organizerSpace => 'Space';
+
+  @override
+  String get organizerMoreAccount => 'Account and spaces';
+
+  @override
+  String get organizerMoreTools => 'Settings and data';
+
+  @override
+  String get organizerMoreHelp => 'Help';
+
+  @override
+  String get organizerBackups => 'Backups';
+
+  @override
+  String get organizerSpaceIntro =>
+      'Projects, resources and everything you look after.';
+
+  @override
+  String get organizerPlannerIntro => 'From a first idea to getting it done.';
+
+  @override
+  String get organizerMoreIntro => 'Make Jivie work for you.';
+
+  @override
+  String get organizerUtripIntro =>
+      'Today, what’s next and projects in progress.';
+
+  @override
+  String get organizerUpcomingWeek => 'Next 7 days';
+
+  @override
+  String get organizerTodayEvents => 'Today’s events';
+
+  @override
+  String get organizerOngoingProjects => 'Projects in progress';
+
+  @override
+  String get organizerNoTodayEvents => 'No events planned for today.';
+
+  @override
+  String get organizerNoUpcomingEvents => 'The next 7 days are clear.';
+
+  @override
+  String get organizerNoOngoingProjects =>
+      'Your open projects will appear here.';
+
+  @override
+  String get organizerUtripTasks => 'Coming up';
+
+  @override
+  String get organizerUtripNoTasks => 'No open tasks for today.';
+
+  @override
+  String get organizerBack => 'Back';
+
+  @override
+  String get organizerProjectsHint => 'Plans you’re bringing to life.';
+
+  @override
+  String get organizerFinancesHint => 'Accounts, spending and income.';
+
+  @override
+  String get organizerShoppingHint => 'Lists for your next shop.';
+
+  @override
+  String get organizerGardenHint => 'Beds, plantings and seasons.';
+
+  @override
+  String get organizerPeopleHint => 'People in your space.';
+
+  @override
+  String get guideSpaceBody =>
+      'Space brings together projects and finances. In a household, you’ll also find shopping lists, your garden and people. Your garden keeps its beds and seasons, and finances can stand on their own without a project.';
+
+  @override
+  String organizerCalendarScheduledCount(int count) {
+    return '$count scheduled items';
+  }
 }

@@ -12,7 +12,11 @@ import 'package:kanban/organizer/presentation/garden/garden_editor.dart';
 import 'package:kanban/organizer/presentation/garden/garden_page.dart';
 import 'package:kanban/organizer/state/garden_provider.dart';
 import 'organizer_ui_test.dart'
-    show pumpOrganizer, MemoryOrganizerStorage, HouseholdFixtureController;
+    show
+        pumpOrganizer,
+        mobileTab,
+        MemoryOrganizerStorage,
+        HouseholdFixtureController;
 
 void main() {
   Future<GardenRepository> repository(WidgetTester tester) async {
@@ -314,17 +318,7 @@ void main() {
           gardenRepository: repo,
           localSpacesController: HouseholdFixtureController(),
         );
-        final gardenTile = find.widgetWithText(ListTile, 'Vrt');
-        await tester.scrollUntilVisible(
-          gardenTile,
-          100,
-          scrollable: find.descendant(
-            of: find.byType(ListView).first,
-            matching: find.byType(Scrollable),
-          ),
-        );
-        await tester.tap(gardenTile);
-        await tester.pumpAndSettle();
+        await mobileTab(tester, 'Vrt');
         expect(find.byType(GardenPage), findsOneWidget);
         expect(find.text('Tvoj prvi vrt'), findsOneWidget);
         expect(tester.takeException(), isNull);

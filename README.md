@@ -1,5 +1,13 @@
 # Jivie
 
+**12. oktober — enoten mobilni vmesnik:** Utrip · Planer · Prostor · Več so stalni
+cilji za Android/iOS in namizje. Planer združuje opravila, koledar in Idejnik;
+Utrip prikazuje dejanske dogodke, naslednjih sedem dni in projekte. Skupna svetla/
+temna podoba, dostopni dotiki in prilagoditev povečanemu besedilu. **651 testov PASS /
+1 opt-in preskok**, analiza brez ugotovitev, Android debug in iOS simulator build PASS.
+[Izvedba in meje](docs/UNIFIED_MOBILE_UX.md). Ni nove trgovinske izdaje;
+aktivni Android ostaja1.6.1(24). Fizični iPhone in VoiceOver/TalkBack še sledijo.
+
 **12. oktober,15:36 — spletna zasebnost objavljena:** shranjeno geslo za **jivie**
 je omogočilo prijavo. SL/EN fotografije in pravila prijav so zdaj na javnih straneh;
 vseh8HTML HTTPS/hash/cache PASS, zasebna kopija in ostale datoteke ohranjene.

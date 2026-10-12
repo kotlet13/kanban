@@ -62,16 +62,10 @@ Future<void> openAccount(
   double width = 390,
   String locale = 'sl',
 }) async {
-  if (width < 900) {
-    await personal.mobileTab(tester, locale == 'sl' ? 'Več' : 'More');
-  }
-  await tester.tap(
-    find.widgetWithText(
-      ListTile,
-      locale == 'sl' ? 'Račun in deljenje' : 'Account and sharing',
-    ),
+  await personal.mobileTab(
+    tester,
+    locale == 'sl' ? 'Račun in deljenje' : 'Account and sharing',
   );
-  await tester.pumpAndSettle();
 }
 
 Future<void> openSharedShopping(
@@ -85,14 +79,7 @@ Future<void> openSharedShopping(
       .read(collaborationProvider.notifier)
       .selectSpace(sharingScopeId);
   await tester.pumpAndSettle();
-  if (width < 900) {
-    await personal.mobileTab(tester, locale == 'sl' ? 'Nakupi' : 'Shopping');
-  } else {
-    await tester.tap(
-      find.widgetWithText(ListTile, locale == 'sl' ? 'Nakupi' : 'Shopping'),
-    );
-    await tester.pumpAndSettle();
-  }
+  await personal.mobileTab(tester, locale == 'sl' ? 'Nakupi' : 'Shopping');
 }
 
 Future<void> enterSharing(WidgetTester tester, String id, String value) async {

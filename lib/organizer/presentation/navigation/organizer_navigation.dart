@@ -10,13 +10,38 @@ enum OrganizerArea {
   home,
   garden,
   ideas,
+  space,
   more,
+  backups,
   settings,
   spaceSettings,
   sharing,
   inbox,
   people,
 }
+
+/// The same four destinations are used at every viewport width.
+enum OrganizerDestination { pulse, planner, space, more }
+
+OrganizerDestination organizerDestinationFor(OrganizerArea area) =>
+    switch (area) {
+      OrganizerArea.today || OrganizerArea.inbox => OrganizerDestination.pulse,
+      OrganizerArea.plans ||
+      OrganizerArea.calendar ||
+      OrganizerArea.ideas => OrganizerDestination.planner,
+      OrganizerArea.space ||
+      OrganizerArea.projects ||
+      OrganizerArea.shopping ||
+      OrganizerArea.finances ||
+      OrganizerArea.home ||
+      OrganizerArea.garden ||
+      OrganizerArea.people => OrganizerDestination.space,
+      OrganizerArea.more ||
+      OrganizerArea.settings ||
+      OrganizerArea.spaceSettings ||
+      OrganizerArea.sharing ||
+      OrganizerArea.backups => OrganizerDestination.more,
+    };
 
 /// A UI destination, including its selected collection and workspace context.
 /// It contains no data or credentials and is kept only for this shell's lifetime.

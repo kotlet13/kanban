@@ -44,7 +44,11 @@ import 'inbox/notification_target_view.dart';
 import 'onboarding/getting_started.dart';
 import '../platform/invitation_links/invitation_link.dart';
 import '../platform/invitation_links/invitation_link_providers.dart';
-import 'navigation/organizer_mobile_menu.dart';
+import 'navigation/organizer_destination_widgets.dart';
+import 'backup/backup_wizard.dart';
+import 'backup/backup_recovery.dart';
+import 'onboarding/first_time_guide.dart';
+import 'jivie_public_links.dart';
 import 'navigation/organizer_navigation.dart';
 import 'navigation/organizer_back_boundary.dart';
 
@@ -626,7 +630,10 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         AllSpacesArea.home => _Area.home,
         AllSpacesArea.people => _Area.people,
       };
-      _navigationState.planArea = _Area.plans;
+      if (organizerDestinationFor(_navigationState.area) ==
+          OrganizerDestination.planner) {
+        _navigationState.planArea = _navigationState.area;
+      }
       _navigationState.sharedShopping = false;
       _navigationState.sharedFinance = false;
       if (area == AllSpacesArea.shopping) {
@@ -649,8 +656,54 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     });
   }
 
-  void _navigate(_Area area) =>
-      _changeNavigation(() => _navigationState.area = area);
+  void _navigate(_Area area) => _changeNavigation(() {
+    _navigationState.area = area;
+    if (organizerDestinationFor(area) == OrganizerDestination.planner) {
+      _navigationState.planArea = area;
+    }
+  });
+
+  void _selectDestination(OrganizerDestination destination) {
+    setState(() {
+      _history.clear();
+      _navigationState.clearSelections(accountChanged: false);
+      _navigationOperation++;
+      _navigationRevision++;
+      _navigationState.area = switch (destination) {
+        OrganizerDestination.pulse => _Area.today,
+        OrganizerDestination.planner => _navigationState.planArea,
+        OrganizerDestination.space => _Area.space,
+        OrganizerDestination.more => _Area.more,
+      };
+    });
+  }
+
+  void _selectPlannerView(_Area area) {
+    setState(() {
+      _navigationState.area = area;
+      _navigationState.planArea = area;
+      _navigationOperation++;
+      _navigationRevision++;
+    });
+  }
+
+  String _destinationLabel(
+    BuildContext context,
+    OrganizerDestination destination,
+  ) => switch (destination) {
+    OrganizerDestination.pulse => context.l10n.organizerPulse,
+    OrganizerDestination.planner => context.l10n.organizerPlanner,
+    OrganizerDestination.space => context.l10n.organizerSpace,
+    OrganizerDestination.more => context.l10n.organizerMore,
+  };
+
+  IconData _destinationIcon(OrganizerDestination destination) =>
+      switch (destination) {
+        OrganizerDestination.pulse => Icons.space_dashboard_outlined,
+        OrganizerDestination.planner => Icons.event_note_outlined,
+        OrganizerDestination.space => Icons.folder_open_outlined,
+        OrganizerDestination.more => Icons.more_horiz,
+      };
 
   Future<void> _openSpaceSettings(String? scopeId) async {
     if (_restoringSpace) return;
@@ -762,7 +815,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   String _label(BuildContext context, _Area area) {
     final l = context.l10n;
     return switch (area) {
-      _Area.today => l.organizerToday,
+      _Area.today => l.organizerPulse,
       _Area.plans => l.organizerTasks,
       _Area.calendar => l.organizerCalendar,
       _Area.projects => l.organizerProjects,
@@ -771,7 +824,9 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.home => l.organizerHome,
       _Area.garden => l.gardenTitle,
       _Area.ideas => l.ideasTitle,
+      _Area.space => l.organizerSpace,
       _Area.more => l.organizerMore,
+      _Area.backups => l.organizerBackups,
       _Area.settings => l.organizerSettings,
       _Area.spaceSettings => l.spaceSettingsTitle,
       _Area.sharing => l.sharingAccount,
@@ -790,7 +845,9 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.home => Icons.home_outlined,
     _Area.garden => Icons.yard_outlined,
     _Area.ideas => Icons.lightbulb_outline,
-    _Area.more => Icons.grid_view_outlined,
+    _Area.space => Icons.folder_open_outlined,
+    _Area.more => Icons.more_horiz,
+    _Area.backups => Icons.backup_outlined,
     _Area.settings => Icons.tune_outlined,
     _Area.spaceSettings => Icons.settings_outlined,
     _Area.sharing => Icons.people_outline,
@@ -874,9 +931,17 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             return SingleChildScrollView(
               key: ValueKey('content-_Area.${_navigationState.area.name}'),
               padding: EdgeInsets.fromLTRB(
-                desktop ? 36 : 20,
+                desktop
+                    ? 36
+                    : phone && _navigationState.area == _Area.calendar
+                    ? 12
+                    : 20,
                 desktop ? 32 : 20,
-                desktop ? 36 : 20,
+                desktop
+                    ? 36
+                    : phone && _navigationState.area == _Area.calendar
+                    ? 12
+                    : 20,
                 32,
               ),
               child: Align(
@@ -895,7 +960,44 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      _content(context, snapshot, actions, desktop),
+                      if (organizerDestinationFor(_navigationState.area) ==
+                          OrganizerDestination.planner) ...[
+                        OrganizerHeading(
+                          title: l.organizerPlanner,
+                          subtitle: l.organizerPlannerIntro,
+                        ),
+                        OrganizerPlannerViews(
+                          selected: _navigationState.area,
+                          onSelected: _selectPlannerView,
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      if (desktop && _showBackControl) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            key: const ValueKey('organizer-shell-back'),
+                            onPressed: _goBack,
+                            icon: const Icon(Icons.arrow_back),
+                            label: Text(l.organizerBack),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (organizerDestinationFor(_navigationState.area) ==
+                          OrganizerDestination.planner)
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            textTheme: Theme.of(context).textTheme.copyWith(
+                              headlineSmall: Theme.of(
+                                context,
+                              ).textTheme.headlineSmall?.copyWith(fontSize: 22),
+                            ),
+                          ),
+                          child: _content(context, snapshot, actions, desktop),
+                        )
+                      else
+                        _content(context, snapshot, actions, desktop),
                     ],
                   ),
                 ),
@@ -930,51 +1032,21 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           onBack: _goBack,
           child: Scaffold(
             key: _scaffoldKey,
-            onDrawerChanged: (_) => setState(() => _navigationRevision++),
-            drawer: phone
-                ? OrganizerMobileMenu(
-                    items: [
-                      for (final area in [
-                        ..._contentAreas(),
-                        _Area.sharing,
-                        _Area.spaceSettings,
-                        _Area.settings,
-                      ])
-                        OrganizerMenuItem(
-                          id: area.name,
-                          label: _label(context, area),
-                          icon: _icon(area),
-                          selected: _navigationState.area == area,
-                          unread: area == _Area.inbox && hasUnread,
-                          onSelected: () => _navigate(area),
-                        ),
-                      OrganizerMenuItem(
-                        id: 'setup',
-                        label: l.setupOpen,
-                        icon: Icons.waving_hand_outlined,
-                        selected: false,
-                        onSelected: _startSetup,
-                      ),
-                    ],
-                  )
-                : null,
             appBar: desktop
                 ? null
                 : AppBar(
-                    titleSpacing: phone ? 0 : null,
+                    titleSpacing: phone ? (_showBackControl ? 0 : 16) : null,
                     toolbarHeight: phone
                         ? (MediaQuery.textScalerOf(context).scale(16) + 24)
                               .clamp(kToolbarHeight, double.infinity)
                         : null,
-                    leading: phone
-                        ? Builder(
-                            builder: (context) => IconButton(
-                              key: const ValueKey('organizer-menu-open'),
-                              tooltip: l.organizerMenuOpen,
-                              icon: const Icon(Icons.menu),
-                              onPressed: () =>
-                                  Scaffold.of(context).openDrawer(),
-                            ),
+                    automaticallyImplyLeading: false,
+                    leading: _showBackControl
+                        ? IconButton(
+                            key: const ValueKey('organizer-shell-back'),
+                            tooltip: l.organizerBack,
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: _goBack,
                           )
                         : null,
                     title: Row(
@@ -1076,40 +1148,34 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                     )
                   : body,
             ),
-            bottomNavigationBar: desktop || phone
+            bottomNavigationBar: desktop
                 ? null
                 : NavigationBar(
-                    height: 76,
+                    key: const ValueKey('organizer-primary-navigation'),
+                    height: MediaQuery.textScalerOf(context).scale(12) > 18
+                        ? 88
+                        : 80,
                     backgroundColor: scheme.surface,
                     indicatorColor: scheme.primaryContainer,
-                    selectedIndex: switch (_navigationState.area) {
-                      _Area.today => 0,
-                      _Area.plans => 1,
-                      _Area.shopping || _Area.projects => 2,
-                      _ => 3,
-                    },
-                    onDestinationSelected: (i) => _navigate(
-                      [
-                        _Area.today,
-                        _Area.plans,
-                        _contentAreas().contains(_Area.shopping)
-                            ? _Area.shopping
-                            : _Area.projects,
-                        _Area.more,
-                      ][i],
-                    ),
+                    selectedIndex: organizerDestinationFor(
+                      _navigationState.area,
+                    ).index,
+                    onDestinationSelected: (index) =>
+                        _selectDestination(OrganizerDestination.values[index]),
                     destinations: [
-                      for (final area in [
-                        _Area.today,
-                        _Area.plans,
-                        _contentAreas().contains(_Area.shopping)
-                            ? _Area.shopping
-                            : _Area.projects,
-                        _Area.more,
-                      ])
+                      for (final destination in OrganizerDestination.values)
                         NavigationDestination(
-                          icon: Icon(_icon(area), size: 23),
-                          label: _label(context, area),
+                          key: ValueKey(
+                            'organizer-destination-${destination.name}',
+                          ),
+                          icon: Icon(_destinationIcon(destination), size: 23),
+                          selectedIcon: Icon(switch (destination) {
+                            OrganizerDestination.pulse => Icons.space_dashboard,
+                            OrganizerDestination.planner => Icons.event_note,
+                            OrganizerDestination.space => Icons.folder_open,
+                            OrganizerDestination.more => Icons.more_horiz,
+                          }, size: 23),
+                          label: _destinationLabel(context, destination),
                         ),
                     ],
                   ),
@@ -1157,46 +1223,39 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  for (final area in _contentAreas())
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: ListTile(
-                        dense: true,
-                        minTileHeight: 47,
-                        selected:
-                            _navigationState.area == area ||
-                            (_navigationState.area == _Area.plans &&
-                                area == _navigationState.planArea),
-                        selectedTileColor: scheme.surface,
-                        selectedColor: scheme.primary,
-                        leading: Icon(_icon(area), size: 21),
-                        title: Text(_label(context, area)),
-                        onTap: () => _navigate(area),
+                  for (final destination in OrganizerDestination.values) ...[
+                    ListTile(
+                      key: ValueKey(
+                        'organizer-destination-${destination.name}',
                       ),
+                      minTileHeight: 56,
+                      selected:
+                          organizerDestinationFor(_navigationState.area) ==
+                          destination,
+                      selectedTileColor: scheme.surface,
+                      selectedColor: scheme.primary,
+                      leading: Icon(_destinationIcon(destination), size: 21),
+                      title: Text(_destinationLabel(context, destination)),
+                      onTap: () => _selectDestination(destination),
                     ),
+                    if (organizerDestinationFor(_navigationState.area) ==
+                        destination)
+                      for (final area in _destinationAreas(destination))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: ListTile(
+                            key: ValueKey('organizer-leaf-${area.name}'),
+                            minTileHeight: 48,
+                            selected: _navigationState.area == area,
+                            leading: Icon(_icon(area), size: 18),
+                            title: Text(_label(context, area)),
+                            onTap: () => _navigate(area),
+                          ),
+                        ),
+                    const SizedBox(height: 8),
+                  ],
                 ],
               ),
-            ),
-            ListTile(
-              dense: true,
-              selected: _navigationState.area == _Area.sharing,
-              leading: const Icon(Icons.people_outline, size: 21),
-              title: Text(l.sharingAccount),
-              onTap: () => _navigate(_Area.sharing),
-            ),
-            ListTile(
-              dense: true,
-              selected: _navigationState.area == _Area.spaceSettings,
-              leading: const Icon(Icons.settings_outlined, size: 21),
-              title: Text(l.spaceSettingsTitle),
-              onTap: () => _navigate(_Area.spaceSettings),
-            ),
-            ListTile(
-              dense: true,
-              selected: _navigationState.area == _Area.settings,
-              leading: const Icon(Icons.tune_outlined, size: 21),
-              title: Text(l.organizerSettings),
-              onTap: () => _navigate(_Area.settings),
             ),
             const SizedBox(height: 18),
             const Divider(),
@@ -1292,6 +1351,114 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     await openIdeaEditor(context, ref, board: board);
   }
 
+  void _openOverviewArea(AllSpacesArea area) => _navigate(switch (area) {
+    AllSpacesArea.calendar => _Area.calendar,
+    AllSpacesArea.projects => _Area.projects,
+    _ => _Area.plans,
+  });
+
+  bool get _showBackControl =>
+      _history.canGoBack ||
+      !const {
+        _Area.today,
+        _Area.space,
+        _Area.more,
+        _Area.plans,
+        _Area.calendar,
+        _Area.ideas,
+      }.contains(_navigationState.area);
+
+  List<_Area> _destinationAreas(OrganizerDestination destination) =>
+      switch (destination) {
+        OrganizerDestination.pulse => [_Area.inbox],
+        OrganizerDestination.planner => [
+          _Area.plans,
+          _Area.calendar,
+          _Area.ideas,
+        ],
+        OrganizerDestination.space =>
+          _contentAreas()
+              .where(
+                (area) =>
+                    organizerDestinationFor(area) == OrganizerDestination.space,
+              )
+              .toList(),
+        OrganizerDestination.more => [
+          _Area.sharing,
+          _Area.spaceSettings,
+          _Area.settings,
+          _Area.backups,
+        ],
+      };
+
+  Widget _spaceHub(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      OrganizerHeading(
+        title: context.l10n.organizerSpace,
+        subtitle: context.l10n.organizerSpaceIntro,
+      ),
+      for (final area in _destinationAreas(OrganizerDestination.space))
+        OrganizerHubLink(
+          key: ValueKey('organizer-hub-${area.name}'),
+          title: _label(context, area),
+          subtitle: switch (area) {
+            _Area.projects => context.l10n.organizerProjectsHint,
+            _Area.finances => context.l10n.organizerFinancesHint,
+            _Area.shopping => context.l10n.organizerShoppingHint,
+            _Area.garden => context.l10n.organizerGardenHint,
+            _Area.people => context.l10n.organizerPeopleHint,
+            _ => null,
+          },
+          icon: _icon(area),
+          onTap: () => _navigate(area),
+        ),
+    ],
+  );
+
+  Widget _moreHub(BuildContext context) {
+    final l = context.l10n;
+    Widget heading(String title) => Padding(
+      padding: const EdgeInsets.fromLTRB(0, 12, 0, 12),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OrganizerHeading(
+          title: l.organizerMore,
+          subtitle: l.organizerMoreIntro,
+        ),
+        heading(l.organizerMoreAccount),
+        for (final area in [_Area.sharing, _Area.spaceSettings])
+          OrganizerHubLink(
+            title: _label(context, area),
+            icon: _icon(area),
+            onTap: () => _navigate(area),
+          ),
+        heading(l.organizerMoreTools),
+        for (final area in [_Area.settings, _Area.backups])
+          OrganizerHubLink(
+            title: _label(context, area),
+            icon: _icon(area),
+            onTap: () => _navigate(area),
+          ),
+        heading(l.organizerMoreHelp),
+        OrganizerHubLink(
+          title: l.guideOpen,
+          icon: Icons.explore_outlined,
+          onTap: () => showFirstTimeGuide(context, ref),
+        ),
+        OrganizerHubLink(
+          title: l.setupOpen,
+          icon: Icons.waving_hand_outlined,
+          onTap: _startSetup,
+        ),
+        const JiviePublicLinks(),
+      ],
+    );
+  }
+
   Widget _content(
     BuildContext context,
     OrganizerSnapshot snapshot,
@@ -1331,6 +1498,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         key: ValueKey('all-spaces-${area.name}'),
         area: area,
         onSource: _openAllSpacesSource,
+        onOverviewArea: _openOverviewArea,
       );
     }
     if (active != null &&
@@ -1360,6 +1528,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             view: view,
             selectedScopeId: active,
             onSource: _openAllSpacesSource,
+            onOverviewArea: _openOverviewArea,
             showScopePicker: false,
             onScopeSelected: _selectSpace,
             onConnect: () => _navigate(_Area.sharing),
@@ -1395,6 +1564,12 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         actions: actions,
         onShopping: () => _navigate(_Area.shopping),
         showShopping: _contentAreas().contains(_Area.shopping),
+        onCalendar: () => _navigate(_Area.calendar),
+        onProjects: () => _navigate(_Area.projects),
+        onProjectSelected: (id) => _changeNavigation(() {
+          _navigationState.area = _Area.projects;
+          _navigationState.projectId = id;
+        }),
         onPlans: () => _changeNavigation(() {
           _navigationState.planArea = _Area.plans;
           _navigationState.area = _Area.plans;
@@ -1518,43 +1693,35 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onProjectSelected: (id) =>
             _changeNavigation(() => _navigationState.sharedProjectId = id),
       ),
-      _Area.more => Column(
+      _Area.space => _spaceHub(context),
+      _Area.backups => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OrganizerHeading(title: l.organizerMore),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-            leading: const Icon(Icons.waving_hand_outlined),
-            title: Text(l.setupOpen),
-            onTap: _startSetup,
+          OrganizerHeading(
+            title: l.organizerBackups,
+            subtitle: l.backupDescription,
           ),
-          for (final area in [
-            ..._contentAreas().where(
-              (area) => area != _Area.today && area != _Area.plans,
-            ),
-            _Area.sharing,
-            _Area.spaceSettings,
-            _Area.settings,
-          ])
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              leading: Icon(
-                _icon(area),
-                color: Theme.of(context).colorScheme.primary,
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton.icon(
+                onPressed: () => showBackupWizard(context, restore: false),
+                icon: const Icon(Icons.lock_outline),
+                label: Text(l.backupCreate),
               ),
-              title: Text(_label(context, area)),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _navigate(area),
-            ),
-          const SizedBox(height: 24),
-          Text(
-            l.organizerLocalDescription,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+              OutlinedButton.icon(
+                onPressed: () => showBackupWizard(context, restore: true),
+                icon: const Icon(Icons.restore),
+                label: Text(l.backupRestore),
+              ),
+            ],
           ),
+          const SizedBox(height: 24),
+          const BackupRecoveryPanel(),
         ],
       ),
+      _Area.more => _moreHub(context),
     };
   }
 }
