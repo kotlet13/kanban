@@ -1,5 +1,10 @@
 # Jivie
 
+**12. oktober, 08:22 — interna1.5.1(21):** prijave so v meniju »…« ali podrobnostih,
+pregledi brez stalnih zastavic. Aktivno za isti domači (15), podpis in Firebase
+ohranjena. [Dokazi](docs/release/CONTEXTUAL_REPORTS_RELEASE.md). Fizična nadgradnja
+telefona še ni potrjena; strežnik ostaja isti.
+
 **12. oktober, 07:32 — izdaja pravil/prijav:** Android **1.5.0 (20)** je aktiven na
 internem kanalu domači (15), test2 uporablja **FamilyHub 0.12.0/schema16** po preverjeni
 kopiji/obnovi in ohranitvi podatkov. [Dokazi](docs/release/MODERATION_RELEASE.md).

@@ -1,5 +1,10 @@
 # Jivie — kaj še urediš ti
 
+**12. oktober, 08:22:** interna **1.5.1 (21)** je aktivna za isti **domači (15)**.
+[Dokazi](CONTEXTUAL_REPORTS_RELEASE.md). Posodobi prek internega kanala; prijava
+vsebine je pod »…« ali v podrobnostih, uporabnika pa v meniju ob članu. Fizično
+nadgradnjo in tok prijave še preverimo; nova strežniška namestitev ni potrebna.
+
 **12. oktober, 07:32:** Android **1.5.0 (20)** je aktiven za isti domači (15);
 test2 je FamilyHub 0.12.0/schema16. [Dokazi](MODERATION_RELEASE.md). Posodobi prek
 internega kanala ter fizično preveri izrecni sprejem/preklic pravil, predogled in

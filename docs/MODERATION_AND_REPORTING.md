@@ -8,8 +8,10 @@ je v meniju ob članu v Nastavitvah prostora. Pregledi projektov, seznamov,
 vrtov, agende in Vsi ohranijo običajno odpiranje vsebine. Finance združijo
 urejanje, zgodovino, opomnik in prijavo v eno mesto za dejanja.
 
-To je lokalna sprememba prikaza po izdaji20. Objavljeni AAB **1.5.0 (20)** še
-vsebuje prejšnje zastavice; novega paketa ali namestitve s to korekcijo še ni.
+To je sprememba prikaza po izdaji20. Objavljeni AAB **1.5.0 (20)** vsebuje prejšnje
+zastavice; pozneje po naročilu izdana interna **1.5.1 (21)** je aktivna od 08:22
+in vsebuje to korekcijo. [Izdajni dokazi](release/CONTEXTUAL_REPORTS_RELEASE.md).
+Fizična nadgradnja telefona še ni potrjena.
 Pogodba prijave, izrecna oddaja, pravila, FamilyHub0.12.0/schema16 in shranjeni
 podatki ostanejo isti. Prijava mora ostati dosegljiva tudi z bralnim dostopom.
 Odpiranje ali preklic menija ne pridobi predogleda in ne odda prijave; predogled

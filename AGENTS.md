@@ -1,10 +1,18 @@
 # Navodila za delo na projektu
 
+12. oktober — po izrecnem naročilu je interna **Android1.5.1(21) Aktivno od08:22**
+za isti **domači(15)**. Funkcionalni aa1db2b/metadata1ba60b6; stalne zastavice
+so prestavljene v meni/podrobnosti. [Dokazi](docs/release/CONTEXTUAL_REPORTS_RELEASE.md).
+304 zamrznjeni vhodi, isti podpis/Firebase/8 dovoljenj kot20, bundle/CRC/16KiB/
+23+7 kontrol PASS. Predhodnih201 ciljnih UI PASS in čiste analize ne ponavljamo.
+Naložen preverjeni AAB21,20 izključen,0 izgubljenih/novih naprav. Telefon fizično
+še ni nadgrajen; FamilyHub/test1/test2/iOS/Mac/javna izdaja niso spremenjeni.
+
 12. oktober — uporabnik je zavrnil stalne zastavice prijave ob vrsticah.
 Prijava sodi v običajni meni »…« ali podrobnosti; uporabniška prijava v meni
 ob članu. Ohraniti je treba bralni dostop do prijave in izrecno oddajo obrazca.
 [Korekcija prikaza](docs/MODERATION_AND_REPORTING.md#uporabnikova-korekcija-prikaza--12-oktober)
-je sprememba izvora po AAB1.5.0(20), ne nova izdaja ali nadgradnja strežnika.
+je sprememba izvora po AAB1.5.0(20), pozneje objavljena v21; strežnik ni nadgrajen.
 Ne trdi, da je ta prikaz že nameščen na telefonu. Google ne predpisuje stalne
 zastavice; ne vračaj je v sezname. Pogodbe, sheme in podatki ostanejo isti.
 

@@ -2,7 +2,8 @@
 
 **Poznejša korekcija prikaza:** uporabnik je zavrnil stalne zastavice ob vrsticah.
 [Prijava v meniju ali podrobnostih](../MODERATION_AND_REPORTING.md#uporabnikova-korekcija-prikaza--12-oktober)
-je sprememba izvora po tej izdaji. Spodaj navedeni zamrznjeni AAB20 je ne vsebuje;
+je sprememba izvora po tej izdaji, objavljena v
+[interni 1.5.1 (21)](CONTEXTUAL_REPORTS_RELEASE.md) od 08:22. Spodaj navedeni AAB20 je ne vsebuje;
 njegovi hashi in dokaz aktivne objave ostanejo veljavni za prvotni paket.
 
 12. oktober 2026. Po uporabnikovem nadaljnjem naročilu je dejansko nameščen
