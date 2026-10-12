@@ -11,6 +11,8 @@ import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
 import 'organizer_actions.dart';
 import 'organizer_widgets.dart';
+import 'desktop/desktop_layout.dart';
+import 'desktop/desktop_finance_table.dart';
 import 'finance/finance_money.dart';
 import 'finance/finance_planning_panel.dart';
 import 'finance/finance_entry_editing.dart';
@@ -52,6 +54,7 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final desktop = organizerUsesDesktopLayout(context);
     final shared = ref.watch(collaborationProvider).valueOrNull;
     if (snapshot.workspaceKey.startsWith('private:') &&
         (shared?.session == null ||
@@ -243,84 +246,205 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               Text(l.financePlanPendingDescription),
-              for (final entry in planned)
-                ListTile(
-                  key: ValueKey('planned-finance-${entry.id}'),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  onTap:
-                      canConfirmPersonalFinanceEntry(
-                        context,
-                        ref,
-                        snapshot,
-                        entry,
-                      )
+              if (desktop)
+                _desktopTable(planned, paymentSpace, payments, planned: true)
+              else
+                for (final entry in planned)
+                  ListTile(
+                    key: ValueKey('planned-finance-${entry.id}'),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    onTap:
+                        canConfirmPersonalFinanceEntry(
+                          context,
+                          ref,
+                          snapshot,
+                          entry,
+                        )
+                        ? () => confirmPersonalFinanceEntry(
+                            context,
+                            ref,
+                            snapshot,
+                            entry,
+                          )
+                        : null,
+                    leading: const Icon(Icons.schedule_outlined, size: 20),
+                    title: Text(entry.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${entry.plannedAt == null ? l.financePlanUndatedEntry : organizerDate(context, entry.plannedAt!)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense} · ${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
+                        ),
+                        FinanceSourceLink(
+                          entryId: entry.id,
+                          workspaceKey: snapshot.workspaceKey,
+                        ),
+                        if (entry.status == FinanceEntryStatus.posted &&
+                            entry.kind == FinanceEntryKind.expense &&
+                            canWritePaymentSource(ref, paymentSpace) &&
+                            payments?.fresh == true &&
+                            payments?.events.any(
+                                  (e) => e.sourceEntryId == entry.id,
+                                ) !=
+                                true &&
+                            (payments?.pendingCount ?? 0) == 0)
+                          TextButton.icon(
+                            key: ValueKey('personal-payment-${entry.id}'),
+                            onPressed: () => showPersonalPaymentForm(
+                              context,
+                              ref,
+                              source: PaymentSourceRef(
+                                space: paymentSpace,
+                                entryId: entry.id,
+                                expectedRevision: entry.revision,
+                              ),
+                              title: entry.title,
+                              amountMinor: entry.amountMinor,
+                              currency: entry.currency,
+                              paidAt: entry.paidAt,
+                            ),
+                            icon: const Icon(Icons.credit_card_outlined),
+                            label: Text(l.paymentPaidPersonally),
+                          ),
+                      ],
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      semanticLabel: l.financePlanConfirm,
+                    ),
+                  ),
+              const SizedBox(height: 24),
+            ],
+            if (desktop && entries.isNotEmpty)
+              _desktopTable(entries, paymentSpace, payments)
+            else
+              for (final entry in entries)
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    onTap: () => entry.recurrenceRuleId == null
+                        ? actions.finance(entry)
+                        : editRecordedPersonalOccurrence(
+                            context,
+                            ref,
+                            snapshot,
+                            entry,
+                          ),
+                    leading: Icon(
+                      entry.kind == FinanceEntryKind.income
+                          ? Icons.south_west
+                          : Icons.north_east,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    title: Text(entry.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${organizerDate(context, entry.occurredAt)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense}',
+                        ),
+                        FinanceSourceLink(
+                          entryId: entry.id,
+                          workspaceKey: snapshot.workspaceKey,
+                        ),
+                        if (entry.status == FinanceEntryStatus.posted &&
+                            entry.kind == FinanceEntryKind.expense &&
+                            canWritePaymentSource(ref, paymentSpace) &&
+                            payments?.fresh == true &&
+                            payments?.events.any(
+                                  (e) => e.sourceEntryId == entry.id,
+                                ) !=
+                                true &&
+                            (payments?.pendingCount ?? 0) == 0)
+                          TextButton.icon(
+                            key: ValueKey('personal-payment-${entry.id}'),
+                            onPressed: () => showPersonalPaymentForm(
+                              context,
+                              ref,
+                              source: PaymentSourceRef(
+                                space: paymentSpace,
+                                entryId: entry.id,
+                                expectedRevision: entry.revision,
+                              ),
+                              title: entry.title,
+                              amountMinor: entry.amountMinor,
+                              currency: entry.currency,
+                              paidAt: entry.paidAt,
+                            ),
+                            icon: const Icon(Icons.credit_card_outlined),
+                            label: Text(l.paymentPaidPersonally),
+                          ),
+                      ],
+                    ),
+                    trailing: Text(
+                      '${entry.kind == FinanceEntryKind.income ? '+' : '−'}${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+          ],
+        );
+        return constraints.hasBoundedHeight
+            ? SingleChildScrollView(child: content)
+            : content;
+      },
+    );
+  }
+
+  Widget _desktopTable(
+    List<FinanceEntry> entries,
+    PaymentSpaceRef paymentSpace,
+    PaymentSnapshot? payments, {
+    bool planned = false,
+  }) {
+    final l = context.l10n;
+    return DesktopFinanceTable(
+      initialSortAscending: planned,
+      key: ValueKey(
+        'personal-desktop-ledger-${snapshot.workspaceKey}-$planned',
+      ),
+      rows: [
+        for (final entry in entries)
+          DesktopFinanceRow(
+            id: entry.id,
+            title: entry.title,
+            date: planned ? entry.plannedAt : entry.occurredAt,
+            typeStatus:
+                '${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense} · ${planned ? l.financePlanned : l.financePosted}',
+            amount:
+                '${entry.kind == FinanceEntryKind.income ? '+' : '−'}${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
+            amountMinor:
+                entry.amountMinor *
+                (entry.kind == FinanceEntryKind.income ? 1 : -1),
+            currency: entry.currency,
+            account: entry.ledgerAccountId == null
+                ? l.taskCostUnassignedAccount
+                : snapshot.financeAccounts
+                          .where(
+                            (account) => account.id == entry.ledgerAccountId,
+                          )
+                          .firstOrNull
+                          ?.name ??
+                      l.financeUnavailableAccount,
+            openLabel: planned ? l.financePlanConfirm : l.edit,
+            onOpen: planned
+                ? (canConfirmPersonalFinanceEntry(context, ref, snapshot, entry)
                       ? () => confirmPersonalFinanceEntry(
                           context,
                           ref,
                           snapshot,
                           entry,
                         )
-                      : null,
-                  leading: const Icon(Icons.schedule_outlined, size: 20),
-                  title: Text(entry.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${entry.plannedAt == null ? l.financePlanUndatedEntry : organizerDate(context, entry.plannedAt!)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense} · ${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
-                      ),
-                      FinanceSourceLink(
-                        entryId: entry.id,
-                        workspaceKey: snapshot.workspaceKey,
-                      ),
-                      if (entry.status == FinanceEntryStatus.posted &&
-                          entry.kind == FinanceEntryKind.expense &&
-                          canWritePaymentSource(ref, paymentSpace) &&
-                          payments?.fresh == true &&
-                          payments?.events.any(
-                                (e) => e.sourceEntryId == entry.id,
-                              ) !=
-                              true &&
-                          (payments?.pendingCount ?? 0) == 0)
-                        TextButton.icon(
-                          key: ValueKey('personal-payment-${entry.id}'),
-                          onPressed: () => showPersonalPaymentForm(
-                            context,
-                            ref,
-                            source: PaymentSourceRef(
-                              space: paymentSpace,
-                              entryId: entry.id,
-                              expectedRevision: entry.revision,
-                            ),
-                            title: entry.title,
-                            amountMinor: entry.amountMinor,
-                            currency: entry.currency,
-                            paidAt: entry.paidAt,
-                          ),
-                          icon: const Icon(Icons.credit_card_outlined),
-                          label: Text(l.paymentPaidPersonally),
-                        ),
-                    ],
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    semanticLabel: l.financePlanConfirm,
-                  ),
-                ),
-              const SizedBox(height: 24),
-            ],
-            for (final entry in entries)
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  onTap: () => entry.recurrenceRuleId == null
+                      : null)
+                : () => entry.recurrenceRuleId == null
                       ? actions.finance(entry)
                       : editRecordedPersonalOccurrence(
                           context,
@@ -328,65 +452,41 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
                           snapshot,
                           entry,
                         ),
-                  leading: Icon(
-                    entry.kind == FinanceEntryKind.income
-                        ? Icons.south_west
-                        : Icons.north_east,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                  title: Text(entry.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${organizerDate(context, entry.occurredAt)} · ${entry.kind == FinanceEntryKind.income ? l.organizerIncome : l.organizerExpense}',
-                      ),
-                      FinanceSourceLink(
+            source: FinanceSourceLink(
+              entryId: entry.id,
+              workspaceKey: snapshot.workspaceKey,
+            ),
+            actions:
+                !planned &&
+                    entry.kind == FinanceEntryKind.expense &&
+                    canWritePaymentSource(ref, paymentSpace) &&
+                    payments?.fresh == true &&
+                    payments?.events.any(
+                          (event) => event.sourceEntryId == entry.id,
+                        ) !=
+                        true &&
+                    (payments?.pendingCount ?? 0) == 0
+                ? TextButton.icon(
+                    key: ValueKey('personal-payment-${entry.id}'),
+                    onPressed: () => showPersonalPaymentForm(
+                      context,
+                      ref,
+                      source: PaymentSourceRef(
+                        space: paymentSpace,
                         entryId: entry.id,
-                        workspaceKey: snapshot.workspaceKey,
+                        expectedRevision: entry.revision,
                       ),
-                      if (entry.status == FinanceEntryStatus.posted &&
-                          entry.kind == FinanceEntryKind.expense &&
-                          canWritePaymentSource(ref, paymentSpace) &&
-                          payments?.fresh == true &&
-                          payments?.events.any(
-                                (e) => e.sourceEntryId == entry.id,
-                              ) !=
-                              true &&
-                          (payments?.pendingCount ?? 0) == 0)
-                        TextButton.icon(
-                          key: ValueKey('personal-payment-${entry.id}'),
-                          onPressed: () => showPersonalPaymentForm(
-                            context,
-                            ref,
-                            source: PaymentSourceRef(
-                              space: paymentSpace,
-                              entryId: entry.id,
-                              expectedRevision: entry.revision,
-                            ),
-                            title: entry.title,
-                            amountMinor: entry.amountMinor,
-                            currency: entry.currency,
-                            paidAt: entry.paidAt,
-                          ),
-                          icon: const Icon(Icons.credit_card_outlined),
-                          label: Text(l.paymentPaidPersonally),
-                        ),
-                    ],
-                  ),
-                  trailing: Text(
-                    '${entry.kind == FinanceEntryKind.income ? '+' : '−'}${formatMoneyMinor(entry.amountMinor)} ${entry.currency}',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-              ),
-          ],
-        );
-        return constraints.hasBoundedHeight
-            ? SingleChildScrollView(child: content)
-            : content;
-      },
+                      title: entry.title,
+                      amountMinor: entry.amountMinor,
+                      currency: entry.currency,
+                      paidAt: entry.paidAt,
+                    ),
+                    icon: const Icon(Icons.credit_card_outlined),
+                    label: Text(l.paymentPaidPersonally),
+                  )
+                : null,
+          ),
+      ],
     );
   }
 }

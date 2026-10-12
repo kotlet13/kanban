@@ -48,7 +48,7 @@ class _DesktopWindowPersistence extends WindowListener {
     final options = WindowOptions(
       size: await _readSavedSize(),
       center: true,
-      minimumSize: const Size(920, 680),
+      minimumSize: const Size(640, 480),
     );
 
     await windowManager.waitUntilReadyToShow(options, () async {
@@ -66,9 +66,12 @@ class _DesktopWindowPersistence extends WindowListener {
     final height = prefs.getDouble(_heightKey);
 
     if (width == null || height == null) {
-      return const Size(1280, 860);
+      return const Size(1280, 800);
     }
-    return Size(width, height);
+    return Size(
+      width.isFinite ? width.clamp(640, double.infinity) : 1280,
+      height.isFinite ? height.clamp(480, double.infinity) : 800,
+    );
   }
 
   Future<void> _saveCurrentWindowSize() async {

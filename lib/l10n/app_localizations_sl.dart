@@ -4030,4 +4030,68 @@ class AppLocalizationsSl extends AppLocalizations {
   String organizerCalendarScheduledCount(int count) {
     return '$count načrtovanih vsebin';
   }
+
+  @override
+  String get desktopMenuFile => 'Datoteka';
+
+  @override
+  String get desktopMenuEdit => 'Urejanje';
+
+  @override
+  String get desktopMenuView => 'Pogled';
+
+  @override
+  String get desktopMenuWindow => 'Okno';
+
+  @override
+  String get desktopNew => 'Novo…';
+
+  @override
+  String get desktopSearch => 'Iskanje…';
+
+  @override
+  String get desktopBack => 'Nazaj';
+
+  @override
+  String get desktopUndo => 'Razveljavi';
+
+  @override
+  String get desktopRedo => 'Uveljavi';
+
+  @override
+  String get desktopCut => 'Izreži';
+
+  @override
+  String get desktopCopy => 'Kopiraj';
+
+  @override
+  String get desktopPaste => 'Prilepi';
+
+  @override
+  String get desktopSelectAll => 'Izberi vse';
+
+  @override
+  String get desktopSearchHint =>
+      'Poišči opravila, dogodke, projekte, finance in ideje';
+
+  @override
+  String get desktopSearchEmpty =>
+      'Ni ustreznih zapisov. Poskusi z drugo besedo.';
+
+  @override
+  String get desktopSearchPrompt =>
+      'Poišči zapis v prostorih, do katerih imaš dostop.';
+
+  @override
+  String get desktopToggleSidebar => 'Prikaži ali skrij stransko vrstico';
+
+  @override
+  String get desktopResizeSidebar => 'Spremeni širino stranske vrstice';
+
+  @override
+  String get desktopResizeInspector => 'Spremeni širino podrobnosti';
+
+  @override
+  String get desktopFinishEditing =>
+      'Shrani ali prekliči odprti obrazec pred menjavo prostora.';
 }

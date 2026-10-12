@@ -1,4 +1,6 @@
 import '../shared/content_actions_menu.dart';
+import '../desktop/desktop_layout.dart';
+import '../desktop/desktop_finance_table.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -294,7 +296,10 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           const SizedBox(height: 24),
           if (rows.isEmpty) Text(l.financeNoMatchingEntries),
           LayoutBuilder(
-            builder: (context, constraints) => constraints.maxWidth >= 850
+            builder: (context, constraints) =>
+                organizerUsesDesktopLayout(context)
+                ? _desktopTable(rows)
+                : constraints.maxWidth >= 850
                 ? _table(rows)
                 : Column(children: [for (final row in rows) _card(row)]),
           ),
@@ -355,6 +360,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     _ => '',
   };
   void _edit(Object row) {
+    if (!widget.canWrite) return;
     switch (row) {
       case SharedFinanceEntry e:
         widget.onEntry(e);
@@ -449,6 +455,69 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
         ],
       ),
     ),
+  );
+
+  Widget _desktopTable(List<Object> rows) => DesktopFinanceTable(
+    key: ValueKey(
+      'shared-desktop-ledger-${widget.partition}-${widget.scopeId}',
+    ),
+    showPeople: true,
+    rows: [
+      for (final row in rows)
+        DesktopFinanceRow(
+          id: _id(row),
+          title: _title(row),
+          date:
+              row is SharedFinanceEntry &&
+                  row.status == SharedFinanceStatus.planned
+              ? row.plannedAt
+              : _date(row),
+          typeStatus: _typeStatus(row),
+          amount: _amount(row),
+          amountMinor: switch (row) {
+            SharedFinanceEntry e => e.amountMinor,
+            SharedFinanceTransfer t => t.amountMinor,
+            _ => 0,
+          },
+          currency: switch (row) {
+            SharedFinanceEntry e => e.currency,
+            SharedFinanceTransfer t => t.currency,
+            _ => '',
+          },
+          account: _accountText(row),
+          people: _personText(row),
+          author: _author(row),
+          onOpen: widget.canWrite ? () => _edit(row) : null,
+          source: row is SharedFinanceEntry && widget.scopeId != null
+              ? FinanceSourceLink(
+                  entryId: row.id,
+                  scopeId: widget.scopeId,
+                  partition: widget.partition,
+                )
+              : null,
+          actions: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _rowActions(row),
+              if (row is SharedFinanceEntry &&
+                  row.kind == FinanceEntryKind.expense &&
+                  row.status == SharedFinanceStatus.posted &&
+                  widget.onPersonalPayment != null &&
+                  widget.payments?.fresh == true &&
+                  widget.payments?.events.any(
+                        (e) => e.sourceEntryId == row.id,
+                      ) !=
+                      true &&
+                  (widget.payments?.pendingCount ?? 0) == 0)
+                TextButton(
+                  key: ValueKey('personal-payment-${row.id}'),
+                  onPressed: () => widget.onPersonalPayment?.call(row),
+                  child: Text(context.l10n.paymentPaidPersonally),
+                ),
+            ],
+          ),
+        ),
+    ],
   );
 
   Widget _table(List<Object> rows) => SingleChildScrollView(

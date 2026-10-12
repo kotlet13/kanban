@@ -5,6 +5,7 @@ import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
 import 'collection_actions.dart';
 import 'organizer_widgets.dart';
+import 'desktop/desktop_layout.dart';
 import 'inbox/remote_reminder_editor.dart';
 import 'planning/project_planning_summary.dart';
 
@@ -136,11 +137,20 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
     );
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 760 && selected != null) {
+        final desktop = organizerUsesDesktopLayout(context);
+        final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final splitWidth = desktop ? 820 * scale.clamp(1, 1.5) : 760;
+        if (constraints.maxWidth >= splitWidth && selected != null) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 4, child: projects),
+              if (desktop)
+                SizedBox(
+                  width: (constraints.maxWidth * .34).clamp(280, 420),
+                  child: projects,
+                )
+              else
+                Expanded(flex: 4, child: projects),
               const SizedBox(width: 28),
               Expanded(flex: 5, child: _detail(selected, false)),
             ],
@@ -152,6 +162,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
   }
 
   Widget _projectCard(LocalProject project) {
+    if (organizerUsesDesktopLayout(context)) return _desktopProjectRow(project);
     final tasks = widget.snapshot.tasks
         .where((t) => t.projectId == project.id)
         .toList();
@@ -209,6 +220,51 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _desktopProjectRow(LocalProject project) {
+    final tasks = widget.snapshot.tasks
+        .where((task) => task.projectId == project.id)
+        .toList();
+    final done = tasks.where((task) => task.isCompleted).length;
+    final selected = widget.selectedId == project.id;
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: selected ? colors.secondaryContainer : colors.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        key: ValueKey('desktop-project-${project.id}'),
+        selected: selected,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        onTap: () => widget.onSelection(project.id),
+        leading: Icon(Icons.folder_outlined, color: colors.primary),
+        title: Text(
+          project.title,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (project.description.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                project.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(context.l10n.organizerProjectProgress(done, tasks.length)),
+            if (tasks.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              LinearProgressIndicator(value: done / tasks.length, minHeight: 3),
+            ],
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 20),
       ),
     );
   }

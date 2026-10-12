@@ -7127,6 +7127,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} scheduled items'**
   String organizerCalendarScheduledCount(int count);
+
+  /// No description provided for @desktopMenuFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get desktopMenuFile;
+
+  /// No description provided for @desktopMenuEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get desktopMenuEdit;
+
+  /// No description provided for @desktopMenuView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get desktopMenuView;
+
+  /// No description provided for @desktopMenuWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get desktopMenuWindow;
+
+  /// No description provided for @desktopNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New…'**
+  String get desktopNew;
+
+  /// No description provided for @desktopSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search…'**
+  String get desktopSearch;
+
+  /// No description provided for @desktopBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get desktopBack;
+
+  /// No description provided for @desktopUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get desktopUndo;
+
+  /// No description provided for @desktopRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get desktopRedo;
+
+  /// No description provided for @desktopCut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get desktopCut;
+
+  /// No description provided for @desktopCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get desktopCopy;
+
+  /// No description provided for @desktopPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get desktopPaste;
+
+  /// No description provided for @desktopSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get desktopSelectAll;
+
+  /// No description provided for @desktopSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search tasks, events, projects, finances and ideas'**
+  String get desktopSearchHint;
+
+  /// No description provided for @desktopSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching records. Try another word.'**
+  String get desktopSearchEmpty;
+
+  /// No description provided for @desktopSearchPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a record in your available spaces.'**
+  String get desktopSearchPrompt;
+
+  /// No description provided for @desktopToggleSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Show or hide sidebar'**
+  String get desktopToggleSidebar;
+
+  /// No description provided for @desktopResizeSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize sidebar'**
+  String get desktopResizeSidebar;
+
+  /// No description provided for @desktopResizeInspector.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize details'**
+  String get desktopResizeInspector;
+
+  /// No description provided for @desktopFinishEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or cancel the open form before changing spaces.'**
+  String get desktopFinishEditing;
 }
 
 class _AppLocalizationsDelegate

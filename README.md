@@ -1,5 +1,13 @@
 # Jivie
 
+**12. oktober — namizna prenova izvedena:** macOS/Windows/Linux imajo neposredno
+stransko navigacijo, iskanje, urejanje ob seznamu, platformne menije in bližnjice.
+Namizne finance/projekti/Utrip/Idejnik izkoristijo širino; osnutek preživi spremembo
+velikosti. **695 testov PASS /1 preskok**, dodatno majhno okno pri2× PASS,
+analiza čista in izolirana macOS Debug gradnja PASS.
+[Dokazi in meje](docs/DESKTOP_UX.md). Windows/Linux izvorni gradnji ter fizična
+uporaba še niso potrjeni. Ni nove mobilne/trgovinske izdaje ali spletne spremembe.
+
 **12. oktober,21:04 — interna1.7.0(25) Aktivno:** nova podoba Utrip/Planer/Prostor/
 Več je objavljena za isti domači(15). Podpis/Firebase/8 dovoljenj ohranjeni,
 320 zamrznjenih vhodov in vse izdajne kontrole PASS.

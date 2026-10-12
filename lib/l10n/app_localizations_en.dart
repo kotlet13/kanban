@@ -4025,4 +4025,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String organizerCalendarScheduledCount(int count) {
     return '$count scheduled items';
   }
+
+  @override
+  String get desktopMenuFile => 'File';
+
+  @override
+  String get desktopMenuEdit => 'Edit';
+
+  @override
+  String get desktopMenuView => 'View';
+
+  @override
+  String get desktopMenuWindow => 'Window';
+
+  @override
+  String get desktopNew => 'New…';
+
+  @override
+  String get desktopSearch => 'Search…';
+
+  @override
+  String get desktopBack => 'Back';
+
+  @override
+  String get desktopUndo => 'Undo';
+
+  @override
+  String get desktopRedo => 'Redo';
+
+  @override
+  String get desktopCut => 'Cut';
+
+  @override
+  String get desktopCopy => 'Copy';
+
+  @override
+  String get desktopPaste => 'Paste';
+
+  @override
+  String get desktopSelectAll => 'Select all';
+
+  @override
+  String get desktopSearchHint =>
+      'Search tasks, events, projects, finances and ideas';
+
+  @override
+  String get desktopSearchEmpty => 'No matching records. Try another word.';
+
+  @override
+  String get desktopSearchPrompt => 'Find a record in your available spaces.';
+
+  @override
+  String get desktopToggleSidebar => 'Show or hide sidebar';
+
+  @override
+  String get desktopResizeSidebar => 'Resize sidebar';
+
+  @override
+  String get desktopResizeInspector => 'Resize details';
+
+  @override
+  String get desktopFinishEditing =>
+      'Save or cancel the open form before changing spaces.';
 }

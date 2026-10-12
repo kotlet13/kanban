@@ -1,4 +1,6 @@
 import 'editor_actions.dart';
+import 'desktop/desktop_inspector.dart';
+import 'desktop/desktop_layout.dart';
 import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -105,9 +107,11 @@ Future<void> showOrganizerEditor(
   String Function(Object)? errorMessage,
   Widget Function(Widget)? wrap,
   String? sharedPolicyScopeId,
-}) => showDialog<void>(
-  context: context,
-  builder: (context) {
+}) {
+  final inspector = organizerUsesDesktopLayout(context)
+      ? OrganizerDesktopInspectorScope.maybeOf(context)
+      : null;
+  Widget builder(BuildContext context) {
     final editor = _RecordEditor(
       heading: heading,
       kind: kind,
@@ -131,10 +135,14 @@ Future<void> showOrganizerEditor(
       errorMessage: errorMessage,
       wrap: wrap,
       sharedPolicyScopeId: sharedPolicyScopeId,
+      embedded: inspector != null,
     );
     return wrap?.call(editor) ?? editor;
-  },
-);
+  }
+
+  return inspector?.show(builder) ??
+      showDialog<void>(context: context, builder: builder);
+}
 
 class _RecordEditor extends StatefulWidget {
   const _RecordEditor({
@@ -160,6 +168,7 @@ class _RecordEditor extends StatefulWidget {
     this.errorMessage,
     this.wrap,
     this.sharedPolicyScopeId,
+    this.embedded = false,
   });
   final String heading;
   final OrganizerEditorKind kind;
@@ -181,6 +190,7 @@ class _RecordEditor extends StatefulWidget {
   final String Function(Object)? errorMessage;
   final Widget Function(Widget)? wrap;
   final String? sharedPolicyScopeId;
+  final bool embedded;
   @override
   State<_RecordEditor> createState() => _RecordEditorState();
 }
@@ -392,7 +402,7 @@ class _RecordEditorState extends State<_RecordEditor> {
         .toList();
     final finance = widget.kind == OrganizerEditorKind.finance;
     final dateRequired = widget.kind == OrganizerEditorKind.event || finance;
-    return AlertDialog(
+    final dialog = AlertDialog(
       insetPadding: compact
           ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
           : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
@@ -408,7 +418,7 @@ class _RecordEditorState extends State<_RecordEditor> {
             : null,
       ),
       content: SizedBox(
-        width: 440,
+        width: widget.embedded ? double.infinity : 440,
         child: SingleChildScrollView(
           key: const ValueKey('organizer-editor-scroll'),
           // Outlined fields paint their floating label above the field's box.
@@ -744,5 +754,7 @@ class _RecordEditorState extends State<_RecordEditor> {
         ),
       ],
     );
+    if (!widget.embedded) return dialog;
+    return OrganizerDesktopEditorSurface(dialog: dialog);
   }
 }

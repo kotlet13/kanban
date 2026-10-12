@@ -1,4 +1,6 @@
 import '../editor_actions.dart';
+import '../desktop/desktop_inspector.dart';
+import '../desktop/desktop_layout.dart';
 import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -52,10 +54,11 @@ Future<void> showSharingForm(
   String? deleteDescription,
   String? sharedPolicyScopeId,
   bool compactSaveActions = false,
-}) => showDialog<void>(
-  context: context,
-  barrierDismissible: false,
-  builder: (context) {
+}) {
+  final inspector = compactSaveActions && organizerUsesDesktopLayout(context)
+      ? OrganizerDesktopInspectorScope.maybeOf(context)
+      : null;
+  Widget builder(BuildContext context) {
     final form = _SharingFormDialog(
       title: title,
       description: description,
@@ -70,10 +73,18 @@ Future<void> showSharingForm(
       deleteDescription: deleteDescription,
       sharedPolicyScopeId: sharedPolicyScopeId,
       compactSaveActions: compactSaveActions,
+      embedded: inspector != null,
     );
     return wrap?.call(form) ?? form;
-  },
-);
+  }
+
+  return inspector?.show(builder) ??
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: builder,
+      );
+}
 
 class _SharingFormDialog extends StatefulWidget {
   const _SharingFormDialog({
@@ -90,6 +101,7 @@ class _SharingFormDialog extends StatefulWidget {
     this.deleteDescription,
     this.sharedPolicyScopeId,
     this.compactSaveActions = false,
+    this.embedded = false,
   });
   final String title;
   final String? description;
@@ -103,7 +115,7 @@ class _SharingFormDialog extends StatefulWidget {
   final Future<void> Function()? onDelete;
   final String? deleteDescription;
   final String? sharedPolicyScopeId;
-  final bool compactSaveActions;
+  final bool compactSaveActions, embedded;
   @override
   State<_SharingFormDialog> createState() => _SharingFormDialogState();
 }
@@ -217,213 +229,209 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
-    return PopScope(
-      canPop: !_busy,
-      child: AlertDialog(
-        insetPadding: compact
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
-            : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        titlePadding: compact ? const EdgeInsets.fromLTRB(16, 16, 16, 8) : null,
-        contentPadding: compact
-            ? const EdgeInsets.fromLTRB(16, 8, 16, 12)
+    final dialog = AlertDialog(
+      insetPadding: compact
+          ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      titlePadding: compact ? const EdgeInsets.fromLTRB(16, 16, 16, 8) : null,
+      contentPadding: compact ? const EdgeInsets.fromLTRB(16, 8, 16, 12) : null,
+      actionsPadding: compact ? const EdgeInsets.fromLTRB(12, 0, 12, 12) : null,
+      title: Text(
+        widget.title,
+        style: compact
+            ? Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)
             : null,
-        actionsPadding: compact
-            ? const EdgeInsets.fromLTRB(12, 0, 12, 12)
-            : null,
-        title: Text(
-          widget.title,
-          style: compact
-              ? Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)
-              : null,
-        ),
-        content: SizedBox(
-          width: 440,
-          child: SingleChildScrollView(
-            key: const ValueKey('sharing-form-scroll'),
-            padding: EdgeInsets.only(
-              top: MediaQuery.textScalerOf(context).scale(12),
-              bottom: 4,
-            ),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Form(
-              key: _form,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (widget.description != null) ...[
-                    Text(widget.description!),
-                    SizedBox(height: compact ? 12 : 20),
-                  ],
-                  if (widget.leading != null) ...[
-                    widget.leading!,
-                    const SizedBox(height: 16),
-                  ],
-                  for (final field in widget.fields)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: compact ? 12 : 16),
-                      child: field.dateTime
-                          ? FormField<String>(
-                              key: ValueKey('sharing-${field.id}'),
-                              initialValue: field.initialValue,
-                              validator: (value) =>
-                                  field.required &&
-                                      (value == null || value.isEmpty)
-                                  ? context.l10n.sharingRequired
-                                  : field.validator?.call(value ?? '', _values),
-                              builder: (state) => Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  OrganizerDateTimeField(
-                                    label: field.label,
-                                    value: DateTime.tryParse(
-                                      _controllers[field.id]!.text,
-                                    ),
-                                    enabled: !_busy && !field.readOnly,
-                                    wrap: widget.wrap,
-                                    onChanged: (date) {
-                                      final value =
-                                          date?.toUtc().toIso8601String() ?? '';
-                                      _controllers[field.id]!.text = value;
-                                      state.didChange(value);
-                                      setState(() {});
-                                    },
+      ),
+      content: SizedBox(
+        width: widget.embedded ? double.infinity : 440,
+        child: SingleChildScrollView(
+          key: const ValueKey('sharing-form-scroll'),
+          padding: EdgeInsets.only(
+            top: MediaQuery.textScalerOf(context).scale(12),
+            bottom: 4,
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Form(
+            key: _form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.description != null) ...[
+                  Text(widget.description!),
+                  SizedBox(height: compact ? 12 : 20),
+                ],
+                if (widget.leading != null) ...[
+                  widget.leading!,
+                  const SizedBox(height: 16),
+                ],
+                for (final field in widget.fields)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: compact ? 12 : 16),
+                    child: field.dateTime
+                        ? FormField<String>(
+                            key: ValueKey('sharing-${field.id}'),
+                            initialValue: field.initialValue,
+                            validator: (value) =>
+                                field.required &&
+                                    (value == null || value.isEmpty)
+                                ? context.l10n.sharingRequired
+                                : field.validator?.call(value ?? '', _values),
+                            builder: (state) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                OrganizerDateTimeField(
+                                  label: field.label,
+                                  value: DateTime.tryParse(
+                                    _controllers[field.id]!.text,
                                   ),
-                                  if (state.hasError)
-                                    Text(
-                                      state.errorText!,
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.error,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            )
-                          : field.options != null
-                          ? DropdownButtonFormField<String>(
-                              key: ValueKey('sharing-${field.id}'),
-                              initialValue:
-                                  field.options!.containsKey(field.initialValue)
-                                  ? field.initialValue
-                                  : null,
-                              validator: (value) =>
-                                  field.required && value == null
-                                  ? context.l10n.sharingRequired
-                                  : field.validator?.call(value ?? '', _values),
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: field.label,
-                              ),
-                              items: [
-                                for (final option in field.options!.entries)
-                                  DropdownMenuItem(
-                                    value: option.key,
-                                    child: Text(
-                                      option.value,
-                                      overflow: TextOverflow.ellipsis,
+                                  enabled: !_busy && !field.readOnly,
+                                  wrap: widget.wrap,
+                                  onChanged: (date) {
+                                    final value =
+                                        date?.toUtc().toIso8601String() ?? '';
+                                    _controllers[field.id]!.text = value;
+                                    state.didChange(value);
+                                    setState(() {});
+                                  },
+                                ),
+                                if (state.hasError)
+                                  Text(
+                                    state.errorText!,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                     ),
                                   ),
                               ],
-                              onChanged: _busy || field.readOnly
-                                  ? null
-                                  : (value) => setState(() {
-                                      _controllers[field.id]!.text = value!;
-                                    }),
-                            )
-                          : TextFormField(
-                              key: ValueKey('sharing-${field.id}'),
-                              controller: _controllers[field.id],
-                              obscureText: field.obscure,
-                              minLines: field.obscure || field.maxLines == 1
-                                  ? 1
-                                  : compact
-                                  ? 2
-                                  : field.maxLines,
-                              maxLines: field.obscure ? 1 : field.maxLines,
-                              style: compact
-                                  ? Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontSize: 15)
-                                  : null,
-                              textInputAction: field.maxLines > 1
-                                  ? TextInputAction.newline
-                                  : field == widget.fields.last
-                                  ? TextInputAction.done
-                                  : TextInputAction.next,
-                              enableSuggestions:
-                                  !field.obscure && !field.sensitive,
-                              enableIMEPersonalizedLearning:
-                                  !field.obscure && !field.sensitive,
-                              autocorrect: false,
-                              readOnly: field.readOnly,
-                              enabled: !_busy,
-                              keyboardType: field.keyboardType,
-                              decoration: InputDecoration(
-                                labelText: field.label,
-                              ),
-                              validator: (value) {
-                                if (field.required &&
-                                    (value == null || value.trim().isEmpty)) {
-                                  return context.l10n.sharingRequired;
-                                }
-                                return field.validator?.call(
-                                  value ?? '',
-                                  _values,
-                                );
-                              },
                             ),
-                    ),
-                  if (widget.detailsBuilder != null) ...[
-                    widget.detailsBuilder!(_values),
-                    const SizedBox(height: 16),
-                  ],
-                  if (_error != null)
-                    Text(
-                      _error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
+                          )
+                        : field.options != null
+                        ? DropdownButtonFormField<String>(
+                            key: ValueKey('sharing-${field.id}'),
+                            initialValue:
+                                field.options!.containsKey(field.initialValue)
+                                ? field.initialValue
+                                : null,
+                            validator: (value) =>
+                                field.required && value == null
+                                ? context.l10n.sharingRequired
+                                : field.validator?.call(value ?? '', _values),
+                            isExpanded: true,
+                            decoration: InputDecoration(labelText: field.label),
+                            items: [
+                              for (final option in field.options!.entries)
+                                DropdownMenuItem(
+                                  value: option.key,
+                                  child: Text(
+                                    option.value,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: _busy || field.readOnly
+                                ? null
+                                : (value) => setState(() {
+                                    _controllers[field.id]!.text = value!;
+                                  }),
+                          )
+                        : TextFormField(
+                            key: ValueKey('sharing-${field.id}'),
+                            controller: _controllers[field.id],
+                            obscureText: field.obscure,
+                            minLines: field.obscure || field.maxLines == 1
+                                ? 1
+                                : compact
+                                ? 2
+                                : field.maxLines,
+                            maxLines: field.obscure ? 1 : field.maxLines,
+                            style: compact
+                                ? Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(fontSize: 15)
+                                : null,
+                            textInputAction: field.maxLines > 1
+                                ? TextInputAction.newline
+                                : field == widget.fields.last
+                                ? TextInputAction.done
+                                : TextInputAction.next,
+                            enableSuggestions:
+                                !field.obscure && !field.sensitive,
+                            enableIMEPersonalizedLearning:
+                                !field.obscure && !field.sensitive,
+                            autocorrect: false,
+                            readOnly: field.readOnly,
+                            enabled: !_busy,
+                            keyboardType: field.keyboardType,
+                            decoration: InputDecoration(labelText: field.label),
+                            validator: (value) {
+                              if (field.required &&
+                                  (value == null || value.trim().isEmpty)) {
+                                return context.l10n.sharingRequired;
+                              }
+                              return field.validator?.call(
+                                value ?? '',
+                                _values,
+                              );
+                            },
+                          ),
+                  ),
+                if (widget.detailsBuilder != null) ...[
+                  widget.detailsBuilder!(_values),
+                  const SizedBox(height: 16),
                 ],
-              ),
+                if (_error != null)
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
-        actions: [
-          if (widget.compactSaveActions)
-            EditorActionsRow(
-              saveKey: const ValueKey('sharing-submit'),
-              busy: _busy,
-              onCancel: () => Navigator.pop(context),
-              onSave: _submit,
-              onDelete: widget.onDelete == null ? null : _delete,
-            )
-          else ...[
-            if (widget.onDelete != null)
-              IconButton(
-                tooltip: context.l10n.delete,
-                onPressed: _busy ? null : _delete,
-                icon: const Icon(Icons.delete_outline),
-              ),
-            TextButton(
-              onPressed: _busy ? null : () => Navigator.pop(context),
-              child: Text(context.l10n.cancel),
-            ),
-            FilledButton(
-              key: const ValueKey('sharing-submit'),
-              onPressed: _busy ? null : _submit,
-              child: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(widget.submitLabel),
-            ),
-          ],
-        ],
       ),
+      actions: [
+        if (widget.compactSaveActions)
+          EditorActionsRow(
+            saveKey: const ValueKey('sharing-submit'),
+            busy: _busy,
+            onCancel: () => Navigator.pop(context),
+            onSave: _submit,
+            onDelete: widget.onDelete == null ? null : _delete,
+          )
+        else ...[
+          if (widget.onDelete != null)
+            IconButton(
+              tooltip: context.l10n.delete,
+              onPressed: _busy ? null : _delete,
+              icon: const Icon(Icons.delete_outline),
+            ),
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            key: const ValueKey('sharing-submit'),
+            onPressed: _busy ? null : _submit,
+            child: _busy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(widget.submitLabel),
+          ),
+        ],
+      ],
+    );
+    return PopScope(
+      canPop: !_busy,
+      child: widget.embedded
+          ? OrganizerDesktopEditorSurface(dialog: dialog)
+          : dialog,
     );
   }
 }

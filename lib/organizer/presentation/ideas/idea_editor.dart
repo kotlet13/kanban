@@ -18,6 +18,7 @@ import '../../state/organizer_provider.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../backup/backup_file_io.dart' show readBoundedBackup;
 import '../editor_actions.dart';
+import '../desktop/desktop_layout.dart';
 import '../shared/content_moderation.dart';
 import 'idea_canvas.dart';
 
@@ -212,6 +213,7 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
   late final TextEditingController _title = TextEditingController(
     text: _board.title,
   );
+  final _canvasKey = GlobalKey();
   final List<IdeaBoard> _undo = [], _redo = [];
   final Map<String, ui.Image> _images = {};
   final Set<String> _loadingImages = {};
@@ -733,6 +735,9 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
         body: Center(child: Text(context.l10n.sharingSessionExpired)),
       );
     }
+    final desktop =
+        organizerUsesDesktopLayout(context) &&
+        MediaQuery.sizeOf(context).width >= 1000;
     final l = context.l10n, selected = _selectedElement, editable = _editable;
     final sharedState = ref.watch(collaborationProvider).valueOrNull;
     final scope = sharedState?.scopes
@@ -845,7 +850,8 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
               ],
             ),
             body: SafeArea(
-              child: Column(
+              child: _IdeaWorkspace(
+                desktop: desktop,
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -912,176 +918,163 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
                       ),
                     ),
                   if (editable)
-                    SizedBox(
+                    _IdeaToolbar(
+                      desktop: desktop,
                       height: 52,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final t in tools)
-                              _button(
-                                t.$2,
-                                t.$3,
-                                _busy
-                                    ? null
-                                    : () => setState(() => _tool = t.$1),
-                                selected: _tool == t.$1,
-                                key: ValueKey('idea-tool-${t.$1.name}'),
-                              ),
-                            _button(
-                              l.ideasText,
-                              Icons.text_fields,
-                              _busy ? null : () => _text(),
-                            ),
-                            _button(
-                              l.ideasSticky,
-                              Icons.note_outlined,
-                              _busy ? null : () => _text(sticky: true),
-                            ),
-                            _button(
-                              l.ideasPhoto,
-                              Icons.add_photo_alternate_outlined,
-                              _busy ? null : _photo,
-                            ),
-                            _button(
-                              l.ideasUndo,
-                              Icons.undo,
-                              _undo.isEmpty || _busy
-                                  ? null
-                                  : () => _undoChange(false),
-                            ),
-                            _button(
-                              l.ideasRedo,
-                              Icons.redo,
-                              _redo.isEmpty || _busy
-                                  ? null
-                                  : () => _undoChange(true),
-                            ),
-                          ],
+                      children: [
+                        for (final t in tools)
+                          _button(
+                            t.$2,
+                            t.$3,
+                            _busy ? null : () => setState(() => _tool = t.$1),
+                            selected: _tool == t.$1,
+                            key: ValueKey('idea-tool-${t.$1.name}'),
+                          ),
+                        _button(
+                          l.ideasText,
+                          Icons.text_fields,
+                          _busy ? null : () => _text(),
                         ),
-                      ),
+                        _button(
+                          l.ideasSticky,
+                          Icons.note_outlined,
+                          _busy ? null : () => _text(sticky: true),
+                        ),
+                        _button(
+                          l.ideasPhoto,
+                          Icons.add_photo_alternate_outlined,
+                          _busy ? null : _photo,
+                        ),
+                        _button(
+                          l.ideasUndo,
+                          Icons.undo,
+                          _undo.isEmpty || _busy
+                              ? null
+                              : () => _undoChange(false),
+                        ),
+                        _button(
+                          l.ideasRedo,
+                          Icons.redo,
+                          _redo.isEmpty || _busy
+                              ? null
+                              : () => _undoChange(true),
+                        ),
+                      ],
                     ),
                   if (editable)
-                    SizedBox(
+                    _IdeaToolbar(
+                      desktop: desktop,
                       height: 48,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final color in [
-                              0xff263238,
-                              0xff2367c8,
-                              0xffdc3545,
-                              0xff2c854e,
-                              0xffffc107,
-                              0xffffffff,
-                            ])
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 2,
+                      children: [
+                        for (final color in [
+                          0xff263238,
+                          0xff2367c8,
+                          0xffdc3545,
+                          0xff2c854e,
+                          0xffffc107,
+                          0xffffffff,
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Semantics(
+                              label:
+                                  '${l.ideasColor} ${color.toRadixString(16)}',
+                              selected: _color == color,
+                              child: IconButton(
+                                tooltip: l.ideasColor,
+                                onPressed: () => setState(() => _color = color),
+                                icon: Icon(
+                                  _color == color
+                                      ? Icons.check_circle
+                                      : Icons.circle,
+                                  color: Color(color),
                                 ),
-                                child: Semantics(
-                                  label:
-                                      '${l.ideasColor} ${color.toRadixString(16)}',
-                                  selected: _color == color,
-                                  child: IconButton(
-                                    tooltip: l.ideasColor,
-                                    onPressed: () =>
-                                        setState(() => _color = color),
-                                    icon: Icon(
-                                      _color == color
-                                          ? Icons.check_circle
-                                          : Icons.circle,
-                                      color: Color(color),
-                                    ),
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                                    ),
-                                  ),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
                                 ),
-                              ),
-                            SizedBox(
-                              width: 120,
-                              child: Slider(
-                                semanticFormatterCallback: (v) =>
-                                    '${l.ideasWidth} ${v.round()}',
-                                value: _width,
-                                min: 1,
-                                max: 12,
-                                divisions: 11,
-                                onChanged: _busy
-                                    ? null
-                                    : (v) => setState(() => _width = v),
                               ),
                             ),
-                            if (selected != null) ...[
-                              _button(
-                                l.ideasRotate,
-                                Icons.rotate_right,
-                                () => _replace(
-                                  selected.copyWith(
-                                    rotation:
-                                        (selected.rotation + math.pi / 12) %
-                                        (2 * math.pi),
-                                  ),
-                                ),
-                              ),
-                              _button(
-                                l.ideasSize,
-                                Icons.zoom_in,
-                                () => _replace(
-                                  selected.copyWith(
-                                    width: selected.width * 1.1,
-                                    height: selected.height * 1.1,
-                                  ),
-                                ),
-                              ),
-                              _button(
-                                l.ideasSize,
-                                Icons.zoom_out,
-                                () => _replace(
-                                  selected.copyWith(
-                                    width: selected.width / 1.1,
-                                    height: selected.height / 1.1,
-                                  ),
-                                ),
-                              ),
-                              if ([
-                                IdeaElementKind.text,
-                                IdeaElementKind.sticky,
-                              ].contains(selected.kind))
-                                _button(
-                                  l.ideasEditText,
-                                  Icons.edit_note,
-                                  () => _text(element: selected),
-                                ),
-                              if (selected.kind == IdeaElementKind.image)
-                                _button(
-                                  l.ideasAttachNote,
-                                  Icons.note_add_outlined,
-                                  () => _text(sticky: true, attached: true),
-                                ),
-                              _button(
-                                l.ideasDeleteElement,
-                                Icons.delete_outline,
-                                () => _change(
-                                  _board.copyWith(
-                                    elements: _board.elements
-                                        .where(
-                                          (e) =>
-                                              e.id != selected.id &&
-                                              e.parentImageId != selected.id,
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
+                        SizedBox(
+                          width: 120,
+                          child: Slider(
+                            semanticFormatterCallback: (v) =>
+                                '${l.ideasWidth} ${v.round()}',
+                            value: _width,
+                            min: 1,
+                            max: 12,
+                            divisions: 11,
+                            onChanged: _busy
+                                ? null
+                                : (v) => setState(() => _width = v),
+                          ),
                         ),
-                      ),
+                        if (selected != null) ...[
+                          _button(
+                            l.ideasRotate,
+                            Icons.rotate_right,
+                            () => _replace(
+                              selected.copyWith(
+                                rotation:
+                                    (selected.rotation + math.pi / 12) %
+                                    (2 * math.pi),
+                              ),
+                            ),
+                          ),
+                          _button(
+                            l.ideasSize,
+                            Icons.zoom_in,
+                            () => _replace(
+                              selected.copyWith(
+                                width: selected.width * 1.1,
+                                height: selected.height * 1.1,
+                              ),
+                            ),
+                          ),
+                          _button(
+                            l.ideasSize,
+                            Icons.zoom_out,
+                            () => _replace(
+                              selected.copyWith(
+                                width: selected.width / 1.1,
+                                height: selected.height / 1.1,
+                              ),
+                            ),
+                          ),
+                          if ([
+                            IdeaElementKind.text,
+                            IdeaElementKind.sticky,
+                          ].contains(selected.kind))
+                            _button(
+                              l.ideasEditText,
+                              Icons.edit_note,
+                              () => _text(element: selected),
+                            ),
+                          if (selected.kind == IdeaElementKind.image)
+                            _button(
+                              l.ideasAttachNote,
+                              Icons.note_add_outlined,
+                              () => _text(sticky: true, attached: true),
+                            ),
+                          _button(
+                            l.ideasDeleteElement,
+                            Icons.delete_outline,
+                            () => _change(
+                              _board.copyWith(
+                                elements: _board.elements
+                                    .where(
+                                      (e) =>
+                                          e.id != selected.id &&
+                                          e.parentImageId != selected.id,
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   if (missing)
                     Row(
@@ -1101,6 +1094,7 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
                     ),
                   Expanded(
                     child: IdeaCanvas(
+                      key: _canvasKey,
                       board: _board,
                       images: _images,
                       editable: editable && !_busy,
@@ -1153,7 +1147,9 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
                                 if (widget.onReadOnlyAction != null)
                                   Expanded(
                                     child: TextButton(
-                                      key: const ValueKey('idea-review-private'),
+                                      key: const ValueKey(
+                                        'idea-review-private',
+                                      ),
                                       onPressed: () async {
                                         if (!_sameContext) return;
                                         await _leave();
@@ -1186,4 +1182,72 @@ class _UndoIntent extends Intent {
 
 class _RedoIntent extends Intent {
   const _RedoIntent();
+}
+
+/// Wide desktop windows reserve the canvas height and keep metadata/tools in a
+/// scrollable side panel. The same form and canvas move intact when resizing.
+class _IdeaWorkspace extends StatelessWidget {
+  const _IdeaWorkspace({required this.desktop, required this.children});
+  final bool desktop;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!desktop) return Column(children: children);
+    final canvasIndex = children.indexWhere((child) => child is Expanded);
+    return Row(
+      key: const ValueKey('idea-desktop-workspace'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 320,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: children.take(canvasIndex).toList(),
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ...children.skip(canvasIndex + 1),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        children[canvasIndex],
+      ],
+    );
+  }
+}
+
+class _IdeaToolbar extends StatelessWidget {
+  const _IdeaToolbar({
+    required this.desktop,
+    required this.height,
+    required this.children,
+  });
+  final bool desktop;
+  final double height;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => desktop
+      ? Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: children,
+          ),
+        )
+      : SizedBox(
+          height: height,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: children),
+          ),
+        );
 }

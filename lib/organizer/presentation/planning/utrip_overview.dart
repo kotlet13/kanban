@@ -8,6 +8,7 @@ import '../../domain/utrip_projection.dart';
 import '../../state/organizer_provider.dart';
 import '../all_spaces/all_spaces_rows.dart';
 import '../organizer_widgets.dart';
+import '../desktop/desktop_layout.dart';
 
 /// The same readable overview serves local, shared and aggregate workspaces.
 /// It never creates a synthetic aggregate destination for opening or writing.
@@ -80,6 +81,7 @@ class OrganizerUtripOverview extends ConsumerWidget {
       onOpen: open,
       now: date,
       showSources: snapshot.sources.length > 1,
+      itemLimit: organizerUsesDesktopLayout(context) ? 5 : 3,
     );
 
     final today = section(
@@ -173,7 +175,13 @@ class OrganizerUtripOverview extends ConsumerWidget {
         if (headerHint != null) headerHint!,
         const SizedBox(height: 28),
         LayoutBuilder(
-          builder: (context, constraints) => constraints.maxWidth >= 840
+          builder: (context, constraints) =>
+              constraints.maxWidth >=
+                  (organizerUsesDesktopLayout(context)
+                      ? 840 *
+                            (MediaQuery.textScalerOf(context).scale(14) / 14)
+                                .clamp(1, 1.5)
+                      : 840)
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -217,6 +225,7 @@ class _OverviewSection extends StatelessWidget {
     required this.onOpen,
     required this.now,
     required this.showSources,
+    this.itemLimit = 3,
     this.onAction,
     this.createLabel,
     this.onCreate,
@@ -229,6 +238,7 @@ class _OverviewSection extends StatelessWidget {
   final ValueChanged<UtripItem> onOpen;
   final DateTime now;
   final bool showSources;
+  final int itemLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +293,7 @@ class _OverviewSection extends StatelessWidget {
                   ),
                 ),
               ),
-            for (final item in items.take(3))
+            for (final item in items.take(itemLimit))
               _OverviewRow(
                 item: item,
                 now: now,

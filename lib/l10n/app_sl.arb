@@ -1499,5 +1499,25 @@
         "type": "int"
       }
     }
-  }
+  },
+  "desktopMenuFile": "Datoteka",
+  "desktopMenuEdit": "Urejanje",
+  "desktopMenuView": "Pogled",
+  "desktopMenuWindow": "Okno",
+  "desktopNew": "Novo…",
+  "desktopSearch": "Iskanje…",
+  "desktopBack": "Nazaj",
+  "desktopUndo": "Razveljavi",
+  "desktopRedo": "Uveljavi",
+  "desktopCut": "Izreži",
+  "desktopCopy": "Kopiraj",
+  "desktopPaste": "Prilepi",
+  "desktopSelectAll": "Izberi vse",
+  "desktopSearchHint": "Poišči opravila, dogodke, projekte, finance in ideje",
+  "desktopSearchEmpty": "Ni ustreznih zapisov. Poskusi z drugo besedo.",
+  "desktopSearchPrompt": "Poišči zapis v prostorih, do katerih imaš dostop.",
+  "desktopToggleSidebar": "Prikaži ali skrij stransko vrstico",
+  "desktopResizeSidebar": "Spremeni širino stranske vrstice",
+  "desktopResizeInspector": "Spremeni širino podrobnosti",
+  "desktopFinishEditing": "Shrani ali prekliči odprti obrazec pred menjavo prostora."
 }

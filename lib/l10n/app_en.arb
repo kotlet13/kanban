@@ -1499,5 +1499,25 @@
         "type": "int"
       }
     }
-  }
+  },
+  "desktopMenuFile": "File",
+  "desktopMenuEdit": "Edit",
+  "desktopMenuView": "View",
+  "desktopMenuWindow": "Window",
+  "desktopNew": "New…",
+  "desktopSearch": "Search…",
+  "desktopBack": "Back",
+  "desktopUndo": "Undo",
+  "desktopRedo": "Redo",
+  "desktopCut": "Cut",
+  "desktopCopy": "Copy",
+  "desktopPaste": "Paste",
+  "desktopSelectAll": "Select all",
+  "desktopSearchHint": "Search tasks, events, projects, finances and ideas",
+  "desktopSearchEmpty": "No matching records. Try another word.",
+  "desktopSearchPrompt": "Find a record in your available spaces.",
+  "desktopToggleSidebar": "Show or hide sidebar",
+  "desktopResizeSidebar": "Resize sidebar",
+  "desktopResizeInspector": "Resize details",
+  "desktopFinishEditing": "Save or cancel the open form before changing spaces."
 }

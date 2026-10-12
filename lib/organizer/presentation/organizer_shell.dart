@@ -14,9 +14,16 @@ import '../state/organizer_provider.dart';
 import '../state/local_spaces_provider.dart';
 import '../state/garden_provider.dart';
 import '../state/inbox_projection_provider.dart';
-import '../domain/all_spaces_projection.dart';
 import 'all_spaces/all_spaces_page.dart';
-import 'all_spaces/all_spaces_rows.dart' show allSpacesSourceIsCurrent;
+import 'all_spaces/all_spaces_rows.dart';
+import '../state/all_spaces_provider.dart';
+import 'desktop/desktop_layout.dart';
+import 'desktop/desktop_frame.dart';
+import 'desktop/desktop_inspector.dart';
+import 'desktop/desktop_commands.dart';
+import 'desktop/desktop_search.dart';
+import 'shared/collaboration_actions.dart';
+import 'finance/shared_finance_actions.dart';
 import 'calendar_page.dart';
 import 'finance_page.dart';
 import 'garden/garden_page.dart';
@@ -64,6 +71,9 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   final _navigationState = OrganizerNavigationState();
   final _history = OrganizerNavigationHistory();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _desktopInspector = OrganizerDesktopInspectorController();
+  final _desktopInspectorKey = GlobalKey();
+  bool _desktopPlannerExpanded = true, _desktopSpaceExpanded = true;
   int _navigationRevision = 0;
   int _spaceRestorations = 0;
   int _navigationOperation = 0;
@@ -920,269 +930,837 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _processInvitation());
     // Initialization may publish a cold-launch target before this widget mounts.
     _queueNotificationTarget();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final desktop = constraints.maxWidth >= 900;
-        final phone = constraints.maxWidth < 600;
-        final scheme = Theme.of(context).colorScheme;
-        final body = data.when(
-          data: (snapshot) {
-            final actions = OrganizerActions(context, ref, snapshot);
-            return SingleChildScrollView(
-              key: ValueKey('content-_Area.${_navigationState.area.name}'),
-              padding: EdgeInsets.fromLTRB(
-                desktop
-                    ? 36
-                    : phone && _navigationState.area == _Area.calendar
-                    ? 12
-                    : 20,
-                desktop ? 32 : 20,
-                desktop
-                    ? 36
-                    : phone && _navigationState.area == _Area.calendar
-                    ? 12
-                    : 20,
-                32,
-              ),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1160),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!phone) ...[
-                        OrganizerSpacePicker(
-                          onSelected: _selectSpace,
-                          onLocalSelected: _selectLocalSpace,
-                          onAllSelected: _selectAllSpaces,
-                          onConnect: () => _navigate(_Area.sharing),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (organizerDestinationFor(_navigationState.area) ==
-                          OrganizerDestination.planner) ...[
-                        OrganizerHeading(
-                          title: l.organizerPlanner,
-                          subtitle: l.organizerPlannerIntro,
-                        ),
-                        OrganizerPlannerViews(
-                          selected: _navigationState.area,
-                          onSelected: _selectPlannerView,
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                      if (desktop && _showBackControl) ...[
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            key: const ValueKey('organizer-shell-back'),
-                            onPressed: _goBack,
-                            icon: const Icon(Icons.arrow_back),
-                            label: Text(l.organizerBack),
+    return OrganizerDesktopInspectorScope(
+      controller: _desktopInspector,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final desktopExperience = organizerUsesDesktopLayout(context);
+          final desktop = desktopExperience || constraints.maxWidth >= 900;
+          final phone = !desktopExperience && constraints.maxWidth < 600;
+          final scheme = Theme.of(context).colorScheme;
+          final body = data.when(
+            data: (snapshot) {
+              final actions = OrganizerActions(context, ref, snapshot);
+              return SingleChildScrollView(
+                key: ValueKey('content-_Area.${_navigationState.area.name}'),
+                padding: EdgeInsets.fromLTRB(
+                  desktop
+                      ? 36
+                      : phone && _navigationState.area == _Area.calendar
+                      ? 12
+                      : 20,
+                  desktop ? 32 : 20,
+                  desktop
+                      ? 36
+                      : phone && _navigationState.area == _Area.calendar
+                      ? 12
+                      : 20,
+                  32,
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1160),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!phone && !desktopExperience) ...[
+                          OrganizerSpacePicker(
+                            onSelected: _selectSpace,
+                            onLocalSelected: _selectLocalSpace,
+                            onAllSelected: _selectAllSpaces,
+                            onConnect: () => _navigate(_Area.sharing),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (organizerDestinationFor(_navigationState.area) ==
-                          OrganizerDestination.planner)
-                        Theme(
-                          data: Theme.of(context).copyWith(
-                            textTheme: Theme.of(context).textTheme.copyWith(
-                              headlineSmall: Theme.of(
-                                context,
-                              ).textTheme.headlineSmall?.copyWith(fontSize: 22),
+                          const SizedBox(height: 16),
+                        ],
+                        if (!desktopExperience &&
+                            organizerDestinationFor(_navigationState.area) ==
+                                OrganizerDestination.planner) ...[
+                          OrganizerHeading(
+                            title: l.organizerPlanner,
+                            subtitle: l.organizerPlannerIntro,
+                          ),
+                          OrganizerPlannerViews(
+                            selected: _navigationState.area,
+                            onSelected: _selectPlannerView,
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        if (desktop &&
+                            !desktopExperience &&
+                            _showBackControl) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              key: const ValueKey('organizer-shell-back'),
+                              onPressed: _goBack,
+                              icon: const Icon(Icons.arrow_back),
+                              label: Text(l.organizerBack),
                             ),
                           ),
-                          child: _content(context, snapshot, actions, desktop),
-                        )
-                      else
-                        _content(context, snapshot, actions, desktop),
-                    ],
+                          const SizedBox(height: 12),
+                        ],
+                        if (organizerDestinationFor(_navigationState.area) ==
+                            OrganizerDestination.planner)
+                          Theme(
+                            data: Theme.of(context).copyWith(
+                              textTheme: Theme.of(context).textTheme.copyWith(
+                                headlineSmall: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontSize: 22),
+                              ),
+                            ),
+                            child: _content(
+                              context,
+                              snapshot,
+                              actions,
+                              desktop,
+                            ),
+                          )
+                        else
+                          _content(context, snapshot, actions, desktop),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l.organizerLoadError),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () =>
+                          ref.invalidate(organizerRepositoryProvider),
+                      child: Text(l.organizerRetry),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+          if (desktopExperience) {
+            final areas = [
+              ..._contentAreas(),
+              _Area.sharing,
+              _Area.spaceSettings,
+              _Area.settings,
+              _Area.backups,
+            ];
+            return AnimatedBuilder(
+              animation: _desktopInspector,
+              builder: (context, _) => OrganizerDesktopCommands(
+                platform: Theme.of(context).platform,
+                visibleAreas: areas,
+                areaLabel: (area) => _label(context, area),
+                onNavigate: (area) {
+                  if (ModalRoute.of(context)?.isCurrent == true) {
+                    _navigate(area);
+                  }
+                },
+                onSearch: () => _desktopSearch(context),
+                onSettings: () {
+                  if (ModalRoute.of(context)?.isCurrent == true) {
+                    _navigate(_Area.settings);
+                  }
+                },
+                onNew: _desktopInspector.isOpen || !_canDesktopCreate
+                    ? null
+                    : () => _desktopNew(context),
+                canGoBack:
+                    _history.canGoBack || _navigationState.area != _Area.today,
+                onBack: _goBack,
+                child: OrganizerBackBoundary(
+                  scaffoldKey: _scaffoldKey,
+                  phone: false,
+                  hasPrevious:
+                      _history.canGoBack ||
+                      _navigationState.area != _Area.today,
+                  navigationRevision: _navigationRevision,
+                  onBack: _goBack,
+                  child: Scaffold(
+                    key: _scaffoldKey,
+                    body: SafeArea(
+                      child: OrganizerDesktopFrame(
+                        key: const ValueKey('organizer-desktop-frame'),
+                        controller: _desktopInspector,
+                        sidebar: (compact) => _desktopSidebar(context, compact),
+                        toolbar: (toggle) => _desktopToolbar(
+                          context,
+                          toggleSidebar: toggle,
+                          hasUnread: hasUnread,
+                        ),
+                        content: body,
+                        inspector: OrganizerDesktopInspectorPanel(
+                          key: _desktopInspectorKey,
+                          controller: _desktopInspector,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          }
+          return OrganizerBackBoundary(
+            scaffoldKey: _scaffoldKey,
+            phone: phone,
+            hasPrevious:
+                _history.canGoBack || _navigationState.area != _Area.today,
+            navigationRevision: _navigationRevision,
+            onBack: _goBack,
+            child: Scaffold(
+              key: _scaffoldKey,
+              appBar: desktop
+                  ? null
+                  : AppBar(
+                      titleSpacing: phone ? (_showBackControl ? 0 : 16) : null,
+                      toolbarHeight: phone
+                          ? (MediaQuery.textScalerOf(context).scale(16) + 24)
+                                .clamp(kToolbarHeight, double.infinity)
+                          : null,
+                      automaticallyImplyLeading: false,
+                      leading: _showBackControl
+                          ? IconButton(
+                              key: const ValueKey('organizer-shell-back'),
+                              tooltip: l.organizerBack,
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: _goBack,
+                            )
+                          : null,
+                      title: Row(
+                        mainAxisSize: phone
+                            ? MainAxisSize.max
+                            : MainAxisSize.min,
+                        children: [
+                          const JivieBrandMark(size: 28),
+                          const SizedBox(width: 9),
+                          if (phone)
+                            Expanded(
+                              child: OrganizerSpacePicker(
+                                compact: true,
+                                onSelected: _selectSpace,
+                                onLocalSelected: _selectLocalSpace,
+                                onAllSelected: _selectAllSpaces,
+                                onConnect: () => _navigate(_Area.sharing),
+                              ),
+                            )
+                          else
+                            Text(l.organizerAppName),
+                        ],
+                      ),
+                      actions: [
+                        IconButton(
+                          tooltip: l.inboxTitle,
+                          onPressed: () => _navigate(_Area.inbox),
+                          icon: Badge(
+                            isLabelVisible: hasUnread,
+                            smallSize: 6,
+                            child: const Icon(
+                              Icons.notifications_none_outlined,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+              body: SafeArea(
+                child: desktop
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _sidebar(context),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Container(
+                                  height: 72,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 36,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: scheme.outlineVariant,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _spaceKindIcon,
+                                        size: 18,
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        allSpaces
+                                            ? l.allSpacesTitle
+                                            : _spaceKindLabel(context),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        allSpaces
+                                            ? l.allSpacesSources
+                                            : _spaceConnected
+                                            ? l.spaceConnectedShort
+                                            : l.organizerLocalOnly,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      IconButton(
+                                        tooltip: l.inboxTitle,
+                                        onPressed: () => _navigate(_Area.inbox),
+                                        icon: Badge(
+                                          isLabelVisible: hasUnread,
+                                          smallSize: 6,
+                                          child: const Icon(
+                                            Icons.notifications_none_outlined,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(child: body),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : body,
+              ),
+              bottomNavigationBar: desktop
+                  ? null
+                  : NavigationBar(
+                      key: const ValueKey('organizer-primary-navigation'),
+                      height: MediaQuery.textScalerOf(context).scale(12) > 18
+                          ? 88
+                          : 80,
+                      backgroundColor: scheme.surface,
+                      indicatorColor: scheme.primaryContainer,
+                      selectedIndex: organizerDestinationFor(
+                        _navigationState.area,
+                      ).index,
+                      onDestinationSelected: (index) => _selectDestination(
+                        OrganizerDestination.values[index],
+                      ),
+                      destinations: [
+                        for (final destination in OrganizerDestination.values)
+                          NavigationDestination(
+                            key: ValueKey(
+                              'organizer-destination-${destination.name}',
+                            ),
+                            icon: Icon(_destinationIcon(destination), size: 23),
+                            selectedIcon: Icon(switch (destination) {
+                              OrganizerDestination.pulse =>
+                                Icons.space_dashboard,
+                              OrganizerDestination.planner => Icons.event_note,
+                              OrganizerDestination.space => Icons.folder_open,
+                              OrganizerDestination.more => Icons.more_horiz,
+                            }, size: 23),
+                            label: _destinationLabel(context, destination),
+                          ),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _desktopInspector.dispose();
+    super.dispose();
+  }
+
+  bool get _canDesktopCreate {
+    final shared = ref.read(collaborationProvider).asData?.value;
+    if (shared?.allSpacesSelected == true) {
+      return ref
+              .read(allSpacesProvider)
+              .asData
+              ?.value
+              .sources
+              .any(
+                (s) =>
+                    s.isPersonal ||
+                    (s.scope?.canEdit == true &&
+                        !s.scope!.blocked &&
+                        !s.scope!.revoked &&
+                        !s.scope!.archived),
+              ) ==
+          true;
+    }
+    final scope = shared?.scopes
+        .where((s) => s.id == shared.selectedSpaceId)
+        .firstOrNull;
+    return scope == null
+        ? ref.read(organizerProvider).asData != null
+        : shared?.localAccessAllowed == true &&
+              scope.canEdit &&
+              !scope.revoked &&
+              !scope.blocked &&
+              !scope.archived;
+  }
+
+  Widget _desktopToolbar(
+    BuildContext context, {
+    required VoidCallback toggleSidebar,
+    required bool hasUnread,
+  }) {
+    final l = context.l10n;
+    return Row(
+      children: [
+        IconButton(
+          key: const ValueKey('desktop-toggle-sidebar'),
+          tooltip: l.desktopToggleSidebar,
+          onPressed: toggleSidebar,
+          icon: const Icon(Icons.view_sidebar_outlined),
+        ),
+        if (_showBackControl)
+          IconButton(
+            key: const ValueKey('organizer-shell-back'),
+            tooltip: l.organizerBack,
+            onPressed: _goBack,
+            icon: const Icon(Icons.arrow_back),
+          ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            _label(context, _navigationState.area),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ),
+        IconButton(
+          key: const ValueKey('desktop-search'),
+          tooltip: l.desktopSearch,
+          onPressed: () => _desktopSearch(context),
+          icon: const Icon(Icons.search),
+        ),
+        IconButton(
+          tooltip: l.inboxTitle,
+          onPressed: () => _navigate(_Area.inbox),
+          icon: Badge(
+            isLabelVisible: hasUnread,
+            smallSize: 6,
+            child: const Icon(Icons.notifications_none_outlined),
+          ),
+        ),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          key: const ValueKey('desktop-new'),
+          onPressed: _desktopInspector.isOpen || !_canDesktopCreate
+              ? null
+              : () => _desktopNew(context),
+          icon: const Icon(Icons.add),
+          label: Text(l.desktopNew),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _desktopSelectSpace(String? id, {bool local = false}) async {
+    if (_desktopInspector.isOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.desktopFinishEditing)),
+      );
+      return;
+    }
+    if (local && id != null) {
+      await _selectLocalSpace(id);
+    } else {
+      await _selectSpace(id);
+    }
+  }
+
+  Widget _desktopSidebar(BuildContext context, bool compact) {
+    final l = context.l10n;
+    final colors = Theme.of(context).colorScheme;
+    Widget picker() => OrganizerSpacePicker(
+      compact: true,
+      onSelected: (id) => _desktopSelectSpace(id),
+      onLocalSelected: (id) => _desktopSelectSpace(id, local: true),
+      onAllSelected: () {
+        if (_desktopInspector.isOpen) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.desktopFinishEditing)));
+        } else {
+          _selectAllSpaces();
+        }
+      },
+      onConnect: () => _navigate(_Area.sharing),
+    );
+    Widget link(_Area area, {Key? key}) => Tooltip(
+      message: _label(context, area),
+      child: ListTile(
+        key: key ?? ValueKey('organizer-leaf-${area.name}'),
+        selected: _navigationState.area == area,
+        selectedTileColor: colors.primaryContainer,
+        selectedColor: colors.primary,
+        contentPadding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
+        minTileHeight: 48,
+        leading: Icon(_icon(area), size: 21),
+        title: compact ? null : Text(_label(context, area)),
+        onTap: () => _navigate(area),
+      ),
+    );
+    Widget group(
+      OrganizerDestination destination,
+      bool expanded,
+      VoidCallback toggle,
+      List<_Area> areas,
+    ) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Tooltip(
+          message: _destinationLabel(context, destination),
+          child: ListTile(
+            key: ValueKey('organizer-destination-${destination.name}'),
+            contentPadding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
+            minTileHeight: 48,
+            leading: Icon(_destinationIcon(destination), size: 21),
+            title: compact
+                ? null
+                : Text(
+                    _destinationLabel(context, destination),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+            trailing: compact
+                ? null
+                : IconButton(
+                    tooltip: _destinationLabel(context, destination),
+                    onPressed: toggle,
+                    icon: Icon(
+                      expanded ? Icons.expand_less : Icons.expand_more,
+                    ),
+                  ),
+            onTap: () => _selectDestination(destination),
+          ),
+        ),
+        if (compact || expanded)
+          for (final area in areas) link(area),
+      ],
+    );
+    return Material(
+      color: colors.surfaceContainerLow,
+      child: ListView(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 4 : 10,
+          vertical: 16,
+        ),
+        children: [
+          if (!compact) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+              child: Row(
                 children: [
-                  Text(l.organizerLoadError),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () =>
-                        ref.invalidate(organizerRepositoryProvider),
-                    child: Text(l.organizerRetry),
+                  const JivieBrandMark(size: 28),
+                  const SizedBox(width: 10),
+                  Text(
+                    l.organizerAppName,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ],
               ),
             ),
-          ),
-        );
-        return OrganizerBackBoundary(
-          scaffoldKey: _scaffoldKey,
-          phone: phone,
-          hasPrevious:
-              _history.canGoBack || _navigationState.area != _Area.today,
-          navigationRevision: _navigationRevision,
-          onBack: _goBack,
-          child: Scaffold(
-            key: _scaffoldKey,
-            appBar: desktop
-                ? null
-                : AppBar(
-                    titleSpacing: phone ? (_showBackControl ? 0 : 16) : null,
-                    toolbarHeight: phone
-                        ? (MediaQuery.textScalerOf(context).scale(16) + 24)
-                              .clamp(kToolbarHeight, double.infinity)
-                        : null,
-                    automaticallyImplyLeading: false,
-                    leading: _showBackControl
-                        ? IconButton(
-                            key: const ValueKey('organizer-shell-back'),
-                            tooltip: l.organizerBack,
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _goBack,
-                          )
-                        : null,
-                    title: Row(
-                      mainAxisSize: phone ? MainAxisSize.max : MainAxisSize.min,
-                      children: [
-                        const JivieBrandMark(size: 28),
-                        const SizedBox(width: 9),
-                        if (phone)
-                          Expanded(
-                            child: OrganizerSpacePicker(
-                              compact: true,
-                              onSelected: _selectSpace,
-                              onLocalSelected: _selectLocalSpace,
-                              onAllSelected: _selectAllSpaces,
-                              onConnect: () => _navigate(_Area.sharing),
-                            ),
-                          )
-                        else
-                          Text(l.organizerAppName),
-                      ],
-                    ),
-                    actions: [
-                      IconButton(
-                        tooltip: l.inboxTitle,
-                        onPressed: () => _navigate(_Area.inbox),
-                        icon: Badge(
-                          isLabelVisible: hasUnread,
-                          smallSize: 6,
-                          child: const Icon(Icons.notifications_none_outlined),
-                        ),
-                      ),
-                    ],
+            picker(),
+          ] else
+            IconButton(
+              tooltip: l.organizerPersonal,
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => Dialog(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(width: 380, child: picker()),
                   ),
-            body: SafeArea(
-              child: desktop
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _sidebar(context),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 72,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 36,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: scheme.outlineVariant,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _spaceKindIcon,
-                                      size: 18,
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      allSpaces
-                                          ? l.allSpacesTitle
-                                          : _spaceKindLabel(context),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      allSpaces
-                                          ? l.allSpacesSources
-                                          : _spaceConnected
-                                          ? l.spaceConnectedShort
-                                          : l.organizerLocalOnly,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                    const SizedBox(width: 14),
-                                    IconButton(
-                                      tooltip: l.inboxTitle,
-                                      onPressed: () => _navigate(_Area.inbox),
-                                      icon: Badge(
-                                        isLabelVisible: hasUnread,
-                                        smallSize: 6,
-                                        child: const Icon(
-                                          Icons.notifications_none_outlined,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(child: body),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  : body,
+                ),
+              ),
+              icon: Icon(_spaceKindIcon),
             ),
-            bottomNavigationBar: desktop
-                ? null
-                : NavigationBar(
-                    key: const ValueKey('organizer-primary-navigation'),
-                    height: MediaQuery.textScalerOf(context).scale(12) > 18
-                        ? 88
-                        : 80,
-                    backgroundColor: scheme.surface,
-                    indicatorColor: scheme.primaryContainer,
-                    selectedIndex: organizerDestinationFor(
-                      _navigationState.area,
-                    ).index,
-                    onDestinationSelected: (index) =>
-                        _selectDestination(OrganizerDestination.values[index]),
-                    destinations: [
-                      for (final destination in OrganizerDestination.values)
-                        NavigationDestination(
-                          key: ValueKey(
-                            'organizer-destination-${destination.name}',
-                          ),
-                          icon: Icon(_destinationIcon(destination), size: 23),
-                          selectedIcon: Icon(switch (destination) {
-                            OrganizerDestination.pulse => Icons.space_dashboard,
-                            OrganizerDestination.planner => Icons.event_note,
-                            OrganizerDestination.space => Icons.folder_open,
-                            OrganizerDestination.more => Icons.more_horiz,
-                          }, size: 23),
-                          label: _destinationLabel(context, destination),
-                        ),
-                    ],
-                  ),
+          const SizedBox(height: 16),
+          link(_Area.today, key: const ValueKey('organizer-destination-pulse')),
+          link(_Area.inbox),
+          const Divider(height: 24),
+          group(
+            OrganizerDestination.planner,
+            _desktopPlannerExpanded,
+            () => setState(
+              () => _desktopPlannerExpanded = !_desktopPlannerExpanded,
+            ),
+            [_Area.plans, _Area.calendar, _Area.ideas],
           ),
-        );
-      },
+          const Divider(height: 24),
+          group(
+            OrganizerDestination.space,
+            _desktopSpaceExpanded,
+            () =>
+                setState(() => _desktopSpaceExpanded = !_desktopSpaceExpanded),
+            _destinationAreas(OrganizerDestination.space),
+          ),
+          const Divider(height: 24),
+          if (!compact)
+            TextButton(
+              key: const ValueKey('organizer-destination-more'),
+              onPressed: () => _navigate(_Area.more),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(l.organizerMoreTools),
+              ),
+            ),
+          for (final area in [
+            _Area.sharing,
+            _Area.spaceSettings,
+            _Area.backups,
+            _Area.settings,
+          ])
+            link(area),
+        ],
+      ),
     );
+  }
+
+  Future<void> _desktopSearch(BuildContext context) async {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    final identity = _accountIdentity;
+    final result = await showDialog<OrganizerDesktopSearchResult>(
+      context: context,
+      builder: (_) => const OrganizerDesktopSearch(),
+    );
+    if (!mounted ||
+        !context.mounted ||
+        identity != _accountIdentity ||
+        result == null) {
+      return;
+    }
+    if (_desktopInspector.isOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.desktopFinishEditing)),
+      );
+      return;
+    }
+    final idea = result.idea;
+    if (idea != null) {
+      await _openIdeaSource(
+        shared: idea.sharedScopeId != null,
+        spaceId: idea.sharedScopeId ?? idea.localSpaceId ?? 'local',
+        boardId: idea.board.id,
+      );
+      return;
+    }
+    final row = result.row!;
+    if (!allSpacesSourceIsCurrent(
+      ref,
+      row.source,
+      financial: row.amountMinor != null,
+    )) {
+      return;
+    }
+    final area = switch (row.type) {
+      'task' => AllSpacesArea.tasks,
+      'event' => AllSpacesArea.calendar,
+      'project' => AllSpacesArea.projects,
+      'shoppingList' || 'shoppingItem' => AllSpacesArea.shopping,
+      'person' => AllSpacesArea.people,
+      _ => AllSpacesArea.finances,
+    };
+    final currentPersonal = ref.read(organizerProvider).asData?.value;
+    final currentSelection = ref.read(collaborationProvider).asData?.value;
+    final alreadyLocal =
+        row.source.isPersonal &&
+        currentPersonal?.workspaceKey == row.source.workspaceKey &&
+        currentSelection?.allSpacesSelected != true &&
+        currentSelection?.selectedSpaceId == null;
+    if (alreadyLocal &&
+        !const {'project', 'shoppingList', 'person'}.contains(row.type)) {
+      _navigate(switch (area) {
+        AllSpacesArea.tasks => _Area.plans,
+        AllSpacesArea.calendar => _Area.calendar,
+        AllSpacesArea.shopping => _Area.shopping,
+        _ => _Area.finances,
+      });
+    } else {
+      await _openAllSpacesSource(
+        row.source,
+        area,
+        const {'project', 'shoppingList', 'person'}.contains(row.type)
+            ? row.id
+            : null,
+      );
+    }
+    if (!context.mounted ||
+        identity != _accountIdentity ||
+        !allSpacesSourceIsCurrent(
+          ref,
+          row.source,
+          financial: row.amountMinor != null,
+        )) {
+      return;
+    }
+    if (const {'project', 'shoppingList', 'person'}.contains(row.type)) return;
+    if (row.source.isPersonal) {
+      final snapshot = await ref.read(organizerProvider.future);
+      if (!context.mounted ||
+          identity != _accountIdentity ||
+          snapshot.workspaceKey != row.source.workspaceKey) {
+        return;
+      }
+      final actions = OrganizerActions(context, ref, snapshot);
+      if (row.type == 'task') {
+        final item = snapshot.tasks.where((v) => v.id == row.id).firstOrNull;
+        if (item != null) await actions.task(task: item);
+        return;
+      }
+      if (row.type == 'event') {
+        final item = snapshot.events.where((v) => v.id == row.id).firstOrNull;
+        if (item != null) await actions.event(item);
+        return;
+      }
+      if (row.type == 'personalFinanceEntry') {
+        final item = snapshot.financeEntries
+            .where((v) => v.id == row.id)
+            .firstOrNull;
+        if (item != null) await actions.finance(item);
+        return;
+      }
+    }
+    await openAllSpacesRow(context, ref, row);
+  }
+
+  Future<void> _desktopNew(BuildContext context) async {
+    if (ModalRoute.of(context)?.isCurrent != true ||
+        _desktopInspector.isOpen ||
+        !_canDesktopCreate) {
+      return;
+    }
+    final identity = _accountIdentity;
+    final l = context.l10n;
+    final type = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l.desktopNew),
+        children: [
+          for (final (value, label, icon) in [
+            ('task', l.organizerAddTask, Icons.checklist),
+            ('event', l.organizerAddEvent, Icons.event_outlined),
+            ('project', l.organizerAddProject, Icons.folder_outlined),
+            ('idea', l.ideasAdd, Icons.lightbulb_outline),
+            (
+              'finance',
+              l.organizerAddFinance,
+              Icons.account_balance_wallet_outlined,
+            ),
+          ])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, value),
+              child: Row(
+                children: [
+                  Icon(icon),
+                  const SizedBox(width: 12),
+                  Flexible(child: Text(label)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (type == null || !context.mounted || identity != _accountIdentity) {
+      return;
+    }
+    if (ref.read(collaborationProvider).valueOrNull?.allSpacesSelected ==
+        true) {
+      final snapshot = ref.read(allSpacesProvider).asData?.value;
+      if (snapshot == null) return;
+      final source = await showDialog<AllSpacesSource>(
+        context: context,
+        builder: (context) => SimpleDialog(
+          title: Text(l.allSpacesChooseTarget),
+          children: [
+            for (final s in snapshot.sources.where(
+              (s) =>
+                  s.isPersonal ||
+                  (s.scope?.canEdit == true &&
+                      !s.scope!.blocked &&
+                      !s.scope!.revoked &&
+                      !s.scope!.archived),
+            ))
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, s),
+                child: Text(allSpacesSourceLabel(context, s)),
+              ),
+          ],
+        ),
+      );
+      if (source == null ||
+          !context.mounted ||
+          identity != _accountIdentity ||
+          !allSpacesSourceIsCurrent(ref, source)) {
+        return;
+      }
+      await _openAllSpacesSource(source, AllSpacesArea.tasks, null);
+    }
+    if (!context.mounted ||
+        identity != _accountIdentity ||
+        !_canDesktopCreate) {
+      return;
+    }
+    if (type == 'idea') {
+      _navigate(_Area.ideas);
+      await openIdeaEditor(context, ref);
+      return;
+    }
+    final shared = ref.read(collaborationProvider).asData?.value;
+    final scope = shared?.scopes
+        .where((s) => s.id == shared.selectedSpaceId)
+        .firstOrNull;
+    if (scope != null && shared != null) {
+      final actions = CollaborationActions(
+        context,
+        ref,
+        scope,
+        shared.dataForScope(scope.id),
+      );
+      switch (type) {
+        case 'task':
+          await actions.task();
+        case 'event':
+          await actions.event();
+        case 'project':
+          await actions.project();
+        case 'finance':
+          if (shared.financePolicyForScope(scope.id).canWrite &&
+              shared.financeSnapshotComplete[scope.id] == true) {
+            await SharedFinanceActions(context, ref, scope, shared).entry();
+          }
+      }
+    } else {
+      final snapshot = await ref.read(organizerProvider.future);
+      if (!context.mounted || identity != _accountIdentity) return;
+      final actions = OrganizerActions(context, ref, snapshot);
+      switch (type) {
+        case 'task':
+          await actions.task();
+        case 'event':
+          await actions.event();
+        case 'project':
+          await actions.project();
+        case 'finance':
+          await actions.finance();
+      }
+    }
   }
 
   Widget _sidebar(BuildContext context) {

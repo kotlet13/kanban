@@ -1,5 +1,22 @@
 # Navodila za delo na projektu
 
+12. oktober — uporabnik je naročil **namizno postavitev macOS/Windows/Linux**,
+macOS UX najprej. [Izvedba](docs/DESKTOP_UX.md): neposredna prilagodljiva stranska
+navigacija, iskanje dovoljenih izvornih zapisov, podrobnosti ob vsebini z lastnim
+Navigatorjem, platformni meniji/⌘ oziromaCtrl ter namizni Utrip/projekti/finance/
+Idejnik. Glavni Več ostane mobilni; namizni pripomočki so neposredno dosegljivi.
+Osnutek se ne zamenja z drugim zapisom ali izgubi med navigacijo/resize; menjava
+prostora potrebuje Shrani/Prekliči, varnostni preklic zapre le podrobnosti.
+Računi/povabila/potrditve ostanejo modalni. Native namizno okno ostane namizno
+tudi pri640×480; veliki mobilni prikazi ostanejo isti. **695 UI/projekcija/tema
+PASS /1 opt-in skip**, dodatni640×480/2× PASS, analiza brez ugotovitev, sveža
+izolirana macOS Debug gradnja PASS(brez podpisovanja). Običajna gradnja je imela
+starXcodemodulni cache; svežDerivedData reši brezSDK/dependency sprememb.
+Windows/Linux nativegradnji, fizična namizna uporaba/bralniki niso preverjeni.
+Verzija ostane1.7.0+25, ni nove trgovinske/mobile/spletne izdaje ali namestitve.
+Aktivni AAB25 ostaja prejšnji izvorfa809b8; gostovanje/FamilyHub/podatki/sheme/
+kopije/SDK/locks/poverilnice/dovoljenja so nespremenjeni.
+
 12. oktober,21:38 — **IARC za Android1.7.0(25) dejansko Končano**, PEGI3/
 Interakcija uporabnikov; prijava uporabnikov/vsebine popravljena naDa.
 Korak1 je že končan, novega sprejema pogojev ni bilo; končni povzetek shranjen
