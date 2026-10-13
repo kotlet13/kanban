@@ -33,6 +33,11 @@ preglednega gesla ta dokument ne vsebuje.
   UIDocumentPicker in nima pregledanih UIImagePicker/PHPhoto/AVCapture/DKImage
   referenc. Info.plist ne dodaja kamere, široke galerije ali ATT dovoljenja.
   To ni fizični dokaz iOS izbirnika ali oddaljenih obvestil.
+- iOS Firebase namenoma uporablja **izrecne Dart FirebaseOptions po opt-in**,
+  brez vgrajenega GoogleService plist. Bundle, projekt `jivie-e928a` in javni
+  iOS app ID so preverjeni v odjemalčevi konfiguraciji in dejanskem AOT binary;
+  `FirebaseMessagingAutoInitEnabled=false` je ohranjen. Dokaz
+  `firebase-evidence.json` ne vsebuje API ključev.
 
 ## Trgovinski osnutek
 
