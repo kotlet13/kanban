@@ -1,5 +1,11 @@
 # Jivie — priprava javne Google Play izdaje
 
+**13. oktober — prva javna izdaja za Slovenijo oddana.** Isti AAB25 iz knjižnice,
+produkcijska izdaja1,11sprememb potrjenih. Console kaže **Spremembe v pregledu**;
+hitra samodejna preverjanja še tečejo. Upravljano objavljanje je izklopljeno,
+odobritev in javna dostopnost še nista potrjeni. [Dokazi](PUBLIC_ANDROID_SLOVENIA.md).
+To nadomesti spodnje starejše navedbe, da celotna oddaja še ni izvedena.
+
 **13. oktober — sedmi telefonski posnetek dejansko shranjen.** Odprta tabla
 Idejnika s fotografijo, risbo in opombami je7/8,720×1280; vseh6 predhodnih slik
 ostane, en-US podeduje isto galerijo. Isti izris je objavljen na spletni SL/EN

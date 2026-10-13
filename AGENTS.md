@@ -1,5 +1,15 @@
 # Navodila za delo na projektu
 
+13. oktober — **prva javna Android1.7.0(25) izdaja za Slovenijo je dejansko
+oddana**. [Dokazi](docs/release/PUBLIC_ANDROID_SLOVENIA.md). Produkcija4698247597354229997/
+release1 uporablja isti knjižničniAAB25/hash; samoSlovenija, uvajanje za vse,
+SL/en-US začetne opombe. Sveža opisa3391/3475 ustrezata izvoru,7slik ostane.
+Končni potrditveni gumb za11sprememb pritisnjen; Console **Spremembe v pregledu**.
+Hitra samodejna preverjanja še tečejo pred dejanskim pregledom. Upravljano
+objavljanjeOFF: objava po odobritvi; **odobritev/javna dostopnost še ni potrjena**.
+Brez nove gradnje, izvornih/SDK/locks/dovoljenj/strežnikov/podatkov/Mac sprememb.
+Naslednje izid Googlovega pregleda, ne ponovna oddaja ali nov splošni testni krog.
+
 13. oktober — **FamilyHub povezava in razlaga lastnega strežnika sta objavljeni
 na jivie.app SL/EN; oba Play opisa sta shranjena kot osnutek**.
 [Dokazi](docs/release/FAMILYHUB_WEBSITE_AND_PLAY.md). Uporabnik je po premisleku
