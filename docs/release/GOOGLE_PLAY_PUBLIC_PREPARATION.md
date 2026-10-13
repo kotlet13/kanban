@@ -1,5 +1,13 @@
 # Jivie — priprava javne Google Play izdaje
 
+**13. oktober — pregledna prijava na Macu PASS, tudi po ponovnem zagonu.**
+`jivie_review` vidi projekt/opravilo, nakupovalni seznam in vzorčne finance.
+Napaka Keychain je odpravljena s pravilnim podpisom iste namizne gradnje.
+[Dokazi in meja dostopa](MAC_REVIEW_LOGIN.md). Shranjena Console navodila še
+uporabljajo starejši test1 brez deljenega Idejnika in prijav vsebine; pred oddajo
+je treba uskladiti pregledno gostovanje/navodila. Android AAB25 in deklaracije
+ostajajo isti; strežnika/Console v tem koraku nista spremenjena.
+
 **12. oktober,22:08 — Varnost podatkov dokončno shranjena.** Trenutna kandidatka
 Android1.7.0(25), vseh11 vrst in nameni/izbirnost potrjeni; končni »Shrani« je
 prenesel deklaracijo v Pregled objavljanja. IARC je Končano. Nadzorna plošča

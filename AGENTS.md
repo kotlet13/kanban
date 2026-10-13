@@ -1,5 +1,17 @@
 # Navodila za delo na projektu
 
+13. oktober — **Google Play pregledna prijava `jivie_review` na Macu PASS**, tudi
+po ponovnem zagonu; dejansko vidni projekt/opravilo, nakupi in vzorčni odhodek
+5 EUR. [Dokazi](docs/release/MAC_REVIEW_LOGIN.md). Nepodpisani desktop QA paket
+ni imel Keychain dovoljenj; isti prevedeni paket je zdaj podpisan z obstoječo
+identiteto/profilom/skupino, deep strict PASS in 315 izvornih vhodov nespremenjenih.
+Paket `build/qa/review-access-mac-20261013/SignedProducts/Debug/Jivie.app` je odprt
+s preglednim računom; geslo je vnesel uporabnik, ni prebrano/izvoženo. Console
+navodila še kažejo test1 (record1–4, brez Ideas/prijav); test2 podpira aktualne
+funkcije. **Pred oddajo uskladi pregledno gostovanje/navodila**, ne nov splošni
+testni krog. Strežniki/Console/Android1.7.0(25)/izvor/SDK/locks ostajajo isti;
+ni javne oddaje, nove Android gradnje ali vključitve zasebne sinhronizacije.
+
 12. oktober,22:08 — **Data safety za Android1.7.0(25) dokončno shranjen v
 Pregled objavljanja**, vseh11 vrst/podatkovni nameni/izbirnost potrjeni v
 razširjenem predogledu. IARC je žeKončano; po končnem Shrani začetni seznam

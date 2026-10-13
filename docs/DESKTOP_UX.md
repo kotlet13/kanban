@@ -1,5 +1,11 @@
 # Jivie za macOS, Windows in Linux
 
+13. oktober — za dejansko prijavo uporabi pravilno podpisani lokalni paket iz
+[preizkusa preglednega računa](release/MAC_REVIEW_LOGIN.md). Nepodpisana izolirana
+QA gradnja spodaj potrjuje gradnjo/postavitev, ne dostopa do Keychaina.
+Ista prevedena koda je pravilno podpisana z obstoječo identiteto; prijava in
+ohranitev seje po ponovnem zagonu sta dejansko potrjeni brez sprememb izvora.
+
 12. oktober 2026 — uporabnik je naročil namizni UX z macOS kot prvo oblikovno
 podlago in isto uporabno razporeditvijo za Windows/Linux. Izvedba je v skupnem
 Flutter odjemalcu, s platformnimi prilagoditvami prikaza. Podagenti Sol6.1/high
