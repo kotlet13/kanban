@@ -1,5 +1,22 @@
 # Navodila za delo na projektu
 
+13. oktober — **iOS1.7.0(25) dejansko naložen in AppleComplete** iz istega
+mobilnegafa809b8 kotAndroid25. [Dokazi](docs/release/IOS_PUBLIC_PREPARATION.md).
+283lib/assets hashi/oba locks isti; sveži arhiv, Organizerobstoječi cloudpodpis
+do26.9.2027, izvoženIPA7df6c483…/strictdeep/CRC/productionAPS PASS,18 SDKmanifestov.
+CLI NoAccounts je obit po običajni prijavljeni XcodeUI poti, brez novihključev.
+Applebuild4abbd687… jeReadytoSubmit/Test poStandardEncryption+FranceNo;
+ni lažnegaNoEncryption ali slepegaInfo.plistfalse. ASC1.7/SLenopisa3391/3475,
+14 sprejetih iPhone/iPad widget slik z odprto tablo,0EUR/samoSlovenija/
+AvailableonAppRelease/18+ in kontakt/navodila/build25so shranjeni.
+InternaPredjavnoobjavo ima1build/**0testerjev**, AppleIDše čaka. AppPrivacy12
+vrst je dokončanpredlog brezTracking; **končniPublish čaka izrecno potrditev**
+zaradiApplovega soglasja o točnosti/pravilih/posodabljanju. ReviewerUsername
+je pripravljen, **geslo mora lastnik vnesti neposredno vASC**, ne klepet/Git.
+**Ni javne iOS oddaje ali fizičnega iPhone/APNs dokaza**; naslednje pending
+potrditve/TestFlight/fizični ključni tokovi/končna oddaja. AndroidAAB25/hash,
+njegova oddaja, SDK/locks/dovoljenja/namestitve/gostovanja/podatki ostanejo.
+
 13. oktober — **produkcija jivie.triparna.si dejansko FamilyHub0.13.0/schema17**,
 po uporabnikovi novi Kanboard1.2.54 namestitvi. [Dokazi](docs/server/PRODUCTION_SETUP.md).
 Sveža dejanska kopija in izolirana MariaDB10.11.19 obnova PASS:48tabel/40vrstic/
