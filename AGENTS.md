@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+13. oktober — **FamilyHub0.13.0 dejansko javno objavljen** v uporabnikovem
+[kotlet13/kanban_family_hub](https://github.com/kotlet13/kanban_family_hub),
+main/root commit7571d1b brez staršev in tagv0.13.0. [Dokazi](docs/release/FAMILYHUB_PUBLIC_REPOSITORY.md).
+MIT s TriparNA copyrightom ohranjena byte-identical; Kanboard1.2.54 MIT preverjen,
+plačljivo gostovanje/podpora dovoljeno, brez izključnega gostovalnega monopola.
+105 dovoljenih javnih datotek,87 PHP byte-identical preverjeni izdaji; PHP88
+tokenizer PASS, vseh97 ZIP vnosov/CRC/bajtov in anonimni HTTPS200 PASS. Javni
+README/NOTICE/config.example brez gesel/docs/tools, brez appGit zgodovine,
+konfiguracij/ključev/SQL/podatkov/kopij/internih pomočnih namestitev. Lokalni
+repo `/Users/anzenovsak/Git/kanban_family_hub`; javni ZIP b90c73a7… pod dist/tagom.
+Git noreply samo v novem repozitoriju; drugih identitet ne spreminjaj. Ob prihodnji
+izdaji sinhroniziraj pregledani javni repo in nov tag, ne prepiši v0.13.0.
+AndroidAAB25/SDK/locks/dovoljenja/živa gostovanja/podatki/Mac/splet/Console isti;
+naslednje ista mobilna AAB25/države/Pregled objavljanja, ni nove funkcionalne matrike.
+
 13. oktober — **odprta tabla Idejnika dejansko dodana na jivie.app SL/EN in
 Google Play**: fotografija, vezana rdeča oznaka, risba police in lističa;7/8
 telefonskih slik v shranjenem osnutku in8 spletnih posnetkov. En-US podeduje isto

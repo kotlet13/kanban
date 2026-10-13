@@ -1,5 +1,12 @@
 # FamilyHub: priprava javnega izvornega repozitorija
 
+**13. oktober2026 — javna objava dejansko izvedena.** Po uporabnikovem naročilu
+je [FamilyHub0.13.0](https://github.com/kotlet13/kanban_family_hub) na public/main
+z novo zgodovino in tagomv0.13.0. Obstoječa TriparNA MIT ohranjena; plačljivo
+gostovanje je dovoljeno, enaka dovoljenja imajo tudi drugi ponudniki.
+[Dokazi, izvoz, paket in meje](release/FAMILYHUB_PUBLIC_REPOSITORY.md).
+Spodnje navedbe o nedoločenem URL/neobjavljenem repozitoriju so zgodovinske.
+
 Dogovor 7. oktobra 2026: pripraviti samostojen javni izvorni paket vtičnika, brez objave GitHub v tem koraku. Objava celotne zgodovine aplikacije ni del dovoljenja. Paket vsebuje samo pregledani `server/plugins/FamilyHub`; produkcijske konfiguracije, skrivnosti, izvozi, baze, priponke, varnostne kopije in testni računi niso javno gradivo.
 
 ## Licenca in odvisnosti
