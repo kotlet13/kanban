@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+13. oktober,19:48 — **pregledni test1 FamilyHub0.13/schema17 in Google navodila
+dejansko shranjena**. [Dokazi](docs/release/REVIEW_SERVER_UPGRADE.md). Sveža
+dejanska kopija/izolirana MariaDB10.11.19 obnova:86 tabel/295 vrstic/2 datoteki/
+2 imenika, vsi row/CREATE/config/HTTPS/cron/file hashi PASS. Po resničnem65s
+drain sta nameščeni migraciji16/17, natanko6 praznih tabel,92 skupaj/96 datotek;
+3 računi/7 naprav/isti95c1serverId/gesla/seje/config/DATA/core/SMTP/FCM/cron
+ohranjeni, stare kode/kopije zasebno. Native HTTPS200/record5/Ideas/assets/prijave,
+politika200 in anonimni slike/sync401. Macov jivie_review ohranjen, Idejnik in
+dejanski report preview PASS, Usklajeno/0 čakajočih/spornih/zadržanih. Brez oddaje
+prijave, admin ukrepa, sprejema pravil ali nove table/fotografije. Navodila476/500
+v Console shranjena in ponovno preverjena; isto ime/geslo/URL. Android1.7.0(25)
+AAB hash isti, app izvor/SDK/locks/dovoljenja/test2/produkcija/splet nespremenjeni.
+**Naslednje javna izdaja istega AAB25, države in Pregled objavljanja**, ne ponoven
+splošni testni krog. Javna oddaja/Googlova odobritev še nista izvedeni.
+
 13. oktober — **Google Play pregledna prijava `jivie_review` na Macu PASS**, tudi
 po ponovnem zagonu; dejansko vidni projekt/opravilo, nakupi in vzorčni odhodek
 5 EUR. [Dokazi](docs/release/MAC_REVIEW_LOGIN.md). Nepodpisani desktop QA paket

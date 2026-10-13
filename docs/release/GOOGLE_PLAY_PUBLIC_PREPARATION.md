@@ -1,5 +1,13 @@
 # Jivie — priprava javne Google Play izdaje
 
+**13. oktober,19:48 — pregledni strežnik in navodila usklajena.** Test1 je
+FamilyHub0.13/schema17 po sveži dejanski kopiji/izolirani obnovi:86 tabel,
+295 vrstic,2 datoteki; vseh šest novih tabel, stari podatki/gesla/seje/config/cron
+ohranjeni. Macov pregledni račun vidi Idejnik in dejanski predogled prijave ter
+kaže Usklajeno/0. Console navodila476/500 so dokončno shranjena; poverilnice
+ostanejo. [Dokazi in meje](REVIEW_SERVER_UPGRADE.md). Android AAB25 nespremenjen.
+Naslednje: javna izdaja iste AAB25/države/končni Pregled objavljanja; ni oddaje.
+
 **13. oktober — pregledna prijava na Macu PASS, tudi po ponovnem zagonu.**
 `jivie_review` vidi projekt/opravilo, nakupovalni seznam in vzorčne finance.
 Napaka Keychain je odpravljena s pravilnim podpisom iste namizne gradnje.

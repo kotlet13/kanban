@@ -1,5 +1,9 @@
 # Preizkus Google Play preglednega računa na Macu
 
+**Nadaljevanje13. oktobra:** pregledni test1 je zdaj dejansko nadgrajen na
+0.13/schema17 in Googlova navodila shranjena. [Nadgradnja in dokazi](REVIEW_SERVER_UPGRADE.md)
+odpravijo spodnjo zgodovinsko omejitev starega strežnika; Android25 ostane isti.
+
 13. oktober 2026 — **dejanska prijava `jivie_review` na
 `https://jivie-test.triparna.si/` PASS**, tudi po zaprtju in ponovnem zagonu
 podpisane Jivie. Uporabnik je geslo vnesel neposredno; ni bilo prebrano ali
