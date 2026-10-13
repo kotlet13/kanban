@@ -1,5 +1,11 @@
 # Jivie — priprava javne Google Play izdaje
 
+**13. oktober — sedmi telefonski posnetek dejansko shranjen.** Odprta tabla
+Idejnika s fotografijo, risbo in opombami je7/8,720×1280; vseh6 predhodnih slik
+ostane, en-US podeduje isto galerijo. Isti izris je objavljen na spletni SL/EN
+galeriji. [Dokazi](IDEAS_BOARD_SCREENSHOT.md). Izvor iz AAB25,283 zamrznjenih
+javnih vhodov PASS; Android/AAB nespremenjen. Ni javne oddaje.
+
 **13. oktober,19:48 — pregledni strežnik in navodila usklajena.** Test1 je
 FamilyHub0.13/schema17 po sveži dejanski kopiji/izolirani obnovi:86 tabel,
 295 vrstic,2 datoteki; vseh šest novih tabel, stari podatki/gesla/seje/config/cron

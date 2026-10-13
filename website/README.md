@@ -1,5 +1,13 @@
 # Jivie: statična javna stran za cPanel
 
+**13. oktober — dodana odprta tabla Idejnika.** SL/EN galeriji imata novo kartico
+s fotografijo, vezano oznako, skico in lističema;8 spletnih posnetkov skupaj.
+Objavljeni samo2 HTML in novi PNG, vsi3 HTTPS200/hash PASS,24 starih datotek
+dejansko preverjenih v sveži zasebni tar kopiji,22 drugih datotek ohranjenih.
+Play ima7 telefonskih slik v shranjenem osnutku; en-US podeduje isto galerijo.
+Android1.7.0(25)/AAB/izvor/SDK/dovoljenja nespremenjeni; ni javne oddaje.
+[Dokazi in izvor posnetka](../docs/release/IDEAS_BOARD_SCREENSHOT.md).
+
 **12. oktober — nova podoba in posnetki dejansko objavljeni.** SL/EN predstavitev
 in pomoč sledita Utrip/Planer/Prostor/Več. Dodanih7 posnetkov iz dejanskega izrisa
 vmesnika z izoliranimi vzorčnimi podatki in jasnim opisom predogleda. Android

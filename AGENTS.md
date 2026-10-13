@@ -1,5 +1,17 @@
 # Navodila za delo na projektu
 
+13. oktober — **odprta tabla Idejnika dejansko dodana na jivie.app SL/EN in
+Google Play**: fotografija, vezana rdeča oznaka, risba police in lističa;7/8
+telefonskih slik v shranjenem osnutku in8 spletnih posnetkov. En-US podeduje isto
+galerijo; shranitev preverjena po reloadu. [Dokazi](docs/release/IDEAS_BOARD_SCREENSHOT.md).
+720×1280 neobrezan widget izris iz izoliranega fa809b8/AAB25,283 javnih
+lib/assets hashov PASS; dejanska foto normalizacija/cache/uredljivi elementi.
+Vzorci samo v pomnilniški SQLite, ne v nameščeni aplikaciji ali strežniku.
+Sveža spletna kopija24 datotek dejansko preverjena, objavljeni2HTML+PNG,
+22 drugih datotek/pravice ohranjeni,3 HTTPS200/hash PASS. Android1.7.0(25)
+AAB/izvor/SDK/locks/dovoljenja/FamilyHub/podatki/Mac nespremenjeni; ni javne oddaje.
+Naslednje ista AAB25/države/Pregled objavljanja, ne nov splošni testni krog.
+
 13. oktober,19:48 — **pregledni test1 FamilyHub0.13/schema17 in Google navodila
 dejansko shranjena**. [Dokazi](docs/release/REVIEW_SERVER_UPGRADE.md). Sveža
 dejanska kopija/izolirana MariaDB10.11.19 obnova:86 tabel/295 vrstic/2 datoteki/

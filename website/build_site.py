@@ -114,6 +114,7 @@ def home(lang):
         ('planner', 'Planner', 'Tasks that turn plans into next steps.'),
         ('calendar', 'Calendar', 'Your events, with room to see the month ahead.'),
         ('ideas', 'Ideas', 'A place for notes, drawings and selected photos.'),
+        ('ideas-board', 'An idea taking shape', 'A photo, a sketch and notes together on an editable board.'),
         ('space', 'Space', 'Projects and finances in the space you choose.'),
         ('more', 'More', 'Your account, settings, backups and help.'),
         ('pulse-dark', 'A calmer dark theme', 'The same familiar places in a dark appearance.'),
@@ -121,6 +122,7 @@ def home(lang):
         ('planner', 'Planer', 'Opravila, ki načrte premaknejo v naslednje korake.'),
         ('calendar', 'Koledar', 'Tvoji dogodki in pregled meseca pred teboj.'),
         ('ideas', 'Idejnik', 'Prostor za zapiske, risbe in izbrane fotografije.'),
+        ('ideas-board', 'Od zamisli do table', 'Fotografija, skica in opombe skupaj na uredljivi tabli.'),
         ('space', 'Prostor', 'Projekti in finance v prostoru, ki ga izbereš.'),
         ('more', 'Več', 'Tvoj račun, nastavitve, kopije in pomoč.'),
         ('pulse-dark', 'Mirna temna tema', 'Isti znani kotički tudi v temni podobi.'),
@@ -135,7 +137,7 @@ def home(lang):
         ('Ohrani kopijo. Poveži, ko pomaga.', 'Ustvari šifrirano prenosno kopijo podprtih zapisov in prenesenih fotografij Idejnika. Za izbirno sinhronizacijo in deljenje izberi združljiv strežnik. Omejitve kopije opisuje vodič.'),
     ]
     cards = ''.join(f'<article class="feature"><span class="feature-index">0{i}</span><h3>{a}</h3><p>{b}</p><span class="feature-label">{c}</span></article>' for i, (a, b, c) in enumerate(features, 1))
-    gallery = ''.join(f'''<figure class="screen-card"><a class="screen-preview" href="/assets/screenshots/{name}.png" aria-label="{escape(x['open'] + ': ' + title, quote=True)}"><img src="/assets/screenshots/{name}.png" width="{780 if name == 'pulse-dark' else 720}" height="1688" loading="lazy" decoding="async" alt="{escape(title + ' — ' + desc, quote=True)}"></a><figcaption><h3>{title}</h3><p>{desc}</p></figcaption></figure>''' for name, title, desc in shots)
+    gallery = ''.join(f'''<figure class="screen-card"><a class="screen-preview" href="/assets/screenshots/{name}.png" aria-label="{escape(x['open'] + ': ' + title, quote=True)}"><img src="/assets/screenshots/{name}.png" width="{780 if name == 'pulse-dark' else 720}" height="{1280 if name == 'ideas-board' else 1688}" loading="lazy" decoding="async" alt="{escape(title + ' — ' + desc, quote=True)}"></a><figcaption><h3>{title}</h3><p>{desc}</p></figcaption></figure>''' for name, title, desc in shots)
     step_html = ''.join(f'<li><span class="number">0{i}</span><div><strong>{a}</strong><p>{b}</p></div></li>' for i, (a, b) in enumerate(steps, 1))
     content = f'''<section class="hero"><div><p class="eyebrow">{x['eyebrow']}</p><h1>{x['title']}</h1><p class="intro">{x['intro']}</p><div class="actions"><a class="button primary" href="#everyday">{x['discover']}<span class="arrow" aria-hidden="true">↗</span></a><a class="button" href="{url(lang, 'help')}">{x['start']}</a></div><div class="availability"><span><i class="dot" aria-hidden="true"></i>{x['free']}</span><span>{x['stores']}</span></div><p class="release-note">{x['preview']}</p></div>
 <figure class="phone-stage actual-preview"><div class="halo" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div><a class="hero-screen" href="/assets/screenshots/pulse.png" aria-label="{x['open']}: {'Pulse' if en else 'Utrip'}"><img src="/assets/screenshots/pulse.png" width="720" height="1688" fetchpriority="high" alt="{'Pulse overview with today’s events, the next seven days and four bottom navigation tabs. Sample data in Slovenian.' if en else 'Pregled Utrip z današnjimi dogodki, naslednjimi sedmimi dnevi in štirimi spodnjimi zavihki. Vzorčni podatki.'}"></a><div class="float-note" aria-hidden="true"><span class="note-icon">✓</span><div><strong>{x['offline']}</strong><small>{x['offlinesub']}</small></div></div><figcaption class="illustration">{x['sample']}</figcaption></figure></section>
