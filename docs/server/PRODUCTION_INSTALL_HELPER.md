@@ -6,11 +6,11 @@ Fiksne poti:
 
 - javni koren: `/home/tripar13/jivie.triparna.si`;
 - zasebni koren: `/home/tripar13/private/jivie-production`;
-- vhodni paket in manifest: podmapa `install`, datoteki `FamilyHub-0.7.0-source.zip` in `manifest.json`;
-- ZIP SHA256: `1f201bb6c44c269af081bf629236db815fae3bf5518e8a1913f4a2c6f0bd67ba`;
-- manifest SHA256: `0e05619fbcbd33921c3c2a7a29d7b79ddc1f15785791f2ae77c5e076acf23bb1`.
+- vhodni paket in manifest: podmapa `install`, datoteki `FamilyHub-0.13.0-source.zip` in `manifest-0.13.0.json`;
+- ZIP SHA256: `00df4cec3baebb66d4e67adad20c235149529b2ee9853b614b0a74ef85cfbe52`;
+- manifest SHA256: `2c71fe08dfe3592d79f9e1bec0a63ac746746ba59b6ff2ccc8134c6c19873a14`.
 
-Uporablja že preverjena lokalna vhoda `build/releases/FamilyHub-0.7.0-source.zip` in `build/qa/jivie-upgrade/cpanel-upload/manifest.json`. Paket ima 63 datotek, FamilyHub 0.7.0/schema11. Pomočnik preveri hash celotnega ZIP/manifest, dovoljene vnose, CRC, posamezne hashe in PHP sintakso. Ne prenaša ničesar z omrežja.
+Uporablja že preverjena lokalna vhoda `build/releases/FamilyHub-0.13.0-source.zip` in `server/scripts/production-0.13.0/manifest.json`. Paket ima 96 datotek, FamilyHub 0.13.0/schema17. Pomočnik preveri hash celotnega ZIP/manifest, dovoljene vnose, CRC, posamezne hashe in PHP sintakso. Ne prenaša ničesar z omrežja.
 
 ## Predpogoji in dokaz sveže baze
 
@@ -62,7 +62,7 @@ Pomočnika naloži v zasebno `install`, s PHP 8.4 CLI in razširitvijo ZIP. Ukaz
 /opt/alt/php84/usr/bin/php /home/tripar13/private/jivie-production/install/deploy-cpanel-production.php --activate
 ```
 
-`--check` samo bere. `--prepare` ohrani živo konfiguracijo/vtičnike, kopira svežo `data` v zasebno mapo, preveri celoten inventar in shrani izvirni `config.php` v zasebno varnostno kopijo. Kandidat ohrani poverilnice baze, nastavi zasebno `DATA_DIR`, `DEBUG=false`, `PLUGIN_INSTALLER=false` in ločeno konfiguracijo FamilyHub. Sprejme samo pregledne vrhnje literalne `define` stavke; dinamična konfiguracija, vključitve ali nepoznane nastavitve se zavrnejo.
+`--check` samo bere. `--prepare` ohrani živo konfiguracijo/vtičnike, kopira svežo `data` v zasebno mapo, preveri celoten inventar in shrani izvirni `config.php` v zasebno varnostno kopijo. Kandidat ohrani poverilnice baze, nastavi zasebno `DATA_DIR`, `DEBUG=false`, `PLUGIN_INSTALLER=false` in ločeno konfiguracijo FamilyHub. Sprejme pregledne vrhnje literalne `define` stavke ali točen preverjeni celotni `config.default.php` Kanboarda 1.2.54 (SHA256 `67d29bf9d92f8c1c57d0d0fa2ff8760f32611aedb08b678b646a07c57dbb20ae`) s samo štirimi spremenjenimi DB literali. Pri celotni konfiguraciji ohrani `PLUGINS_DIR` na javnem korenu, ne na novi lokaciji zasebne konfiguracije. Dinamična konfiguracija, vključitve ali druge spremembe predloge se zavrnejo.
 
 `--activate` preveri nespremenjene konfiguracije, inventarje, paket, izjavo in zaporo. Namesti vtičnik in zasebno konfiguracijo; javni `config.php` postane samo vključitev zasebne datoteke. Izvirni podatki in varnostna kopija ostanejo ohranjeni. Zasebni podatki/konfiguracije so 0700/0600, vtičnik 0700/0644. Native API je v načinu `self_hosted`, stara projektna povabila in FCM so izključeni, proxy/CORS seznama prazna; SMTP in ključi niso dodani.
 
@@ -85,4 +85,4 @@ Ti postopki zahtevajo pregled dejanskega stanja; niso ukazi za samodejno povrnit
 
 ## Lokalno preverjanje
 
-Izolirani test `server/tests/cpanel-production-deploy.php` uporablja naključne začasne mape in prirejene kopije pomočnika, ki ne vsebujejo poti `/home/tripar13`; nima cilja za živo gostovanje. Pri preverjanju 9. oktobra 2026 je **194 kontrol PASS** v vsebniku `familyhub-fcm-setup-test:latest` z `--network none` in repozitorijem samo za branje. Preverjeni so priprava/aktivacija/ponovljivost, zasebna dovoljenja, ohranitev poverilnic in podatkov, odsotnost poverilnic v izpisu/javni novi konfiguraciji, zavrnitve nepravilnih dokazov, paketa, vzdrževanja, svežosti, simbolnih povezav, poznih sprememb ter delnih stanj pred zapisom `state.json` in po vsakem od treh aktivacijskih preimenovanj. To preverja pomočnik s sintetičnimi datotekami; ne potrjuje produkcijske namestitve ali žive baze.
+Izolirani test `server/tests/cpanel-production-deploy.php` uporablja naključne začasne mape in prirejene kopije pomočnika, ki ne vsebujejo poti `/home/tripar13`; nima cilja za živo gostovanje. Pri preverjanju 13. oktobra 2026 je **208 kontrol PASS** v vsebniku `familyhub-fcm-setup-test:latest` z `--network none` in repozitorijem samo za branje. Preverjeni so priprava/aktivacija/ponovljivost, zasebna dovoljenja, ohranitev poverilnic in podatkov, odsotnost poverilnic v izpisu/javni novi konfiguraciji, zavrnitve nepravilnih dokazov, paketa, vzdrževanja, svežosti, simbolnih povezav, poznih sprememb ter delnih stanj pred zapisom `state.json` in po vsakem od treh aktivacijskih preimenovanj. To preverja pomočnik s sintetičnimi datotekami; ne potrjuje produkcijske namestitve ali žive baze.

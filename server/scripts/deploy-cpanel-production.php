@@ -1,5 +1,5 @@
 <?php
-// Fixed-target CLI helper: fresh Kanboard 1.2.54 / FamilyHub 0.7.0, schema 11.
+// Fixed-target CLI helper: fresh Kanboard 1.2.54 / FamilyHub 0.13.0, schema 17.
 // No networking, core bootstrap, database connection, migration, account or key generation.
 // --check reads only; --prepare stages privately; --activate preserves maintenance.
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
@@ -11,10 +11,10 @@ const HOME_ROOT = '/home/tripar13';
 const SITE = HOME_ROOT.'/jivie.triparna.si';
 const PRIVATE_SITE = HOME_ROOT.'/private/jivie-production';
 const INSTALL = PRIVATE_SITE.'/install';
-const ZIP_FILE = INSTALL.'/FamilyHub-0.7.0-source.zip';
-const ZIP_SHA256 = '1f201bb6c44c269af081bf629236db815fae3bf5518e8a1913f4a2c6f0bd67ba';
-const MANIFEST = INSTALL.'/manifest.json';
-const MANIFEST_SHA256 = '0e05619fbcbd33921c3c2a7a29d7b79ddc1f15785791f2ae77c5e076acf23bb1';
+const ZIP_FILE = INSTALL.'/FamilyHub-0.13.0-source.zip';
+const ZIP_SHA256 = '00df4cec3baebb66d4e67adad20c235149529b2ee9853b614b0a74ef85cfbe52';
+const MANIFEST = INSTALL.'/manifest-0.13.0.json';
+const MANIFEST_SHA256 = '2c71fe08dfe3592d79f9e1bec0a63ac746746ba59b6ff2ccc8134c6c19873a14';
 const DB_NAME_EXPECTED = 'tripar13_jivieprod';
 const PROOF = INSTALL.'/fresh-install-proof.json';
 const DATA_TARGET = PRIVATE_SITE.'/data';
@@ -114,8 +114,32 @@ function configDefines(string $text): array {
     return $result;
 }
 function literalEquals(string $expression, string $expected): bool { return $expression === var_export($expected, true) || $expression === '"'.$expected.'"'; }
+
+function reviewedSoftaculousConfig(string $text): bool {
+    // Softaculous 1.2.54 uses the complete vendor config. Accept only that exact
+    // reviewed template with its four database literals substituted, never eval.
+    $path = SITE.'/config.default.php';
+    if (!is_file($path)) return false;
+    $template = bytes($path);
+    if (hash('sha256', $template) !== '67d29bf9d92f8c1c57d0d0fa2ff8760f32611aedb08b678b646a07c57dbb20ae') return false;
+    $found = [];
+    $normalize = static function (string $source, array &$values): string {
+        foreach (['DB_DRIVER','DB_USERNAME','DB_PASSWORD','DB_NAME'] as $key) {
+            $pattern = '~^define\(\x27'.$key.'\x27, (\x27(?:[^\x27\\\\]|\\\\.)*\x27)\);$~m';
+            if (preg_match_all($pattern,$source,$matches)!==1) stop('template_database_literal_required');
+            $values[$key]=$matches[1][0];
+            $source=preg_replace($pattern,"define('$key', '[database literal]');",$source,1);
+        }
+        return $source;
+    };
+    $defaults=[];
+    if ($normalize($text,$found)!==$normalize($template,$defaults)) return false;
+    if ($found['DB_DRIVER']!=="'mysql'" || $found['DB_NAME']!=="'tripar13_jivieprod'") stop('fresh_database_identity_guard_failed');
+    parse($text);return true;
+}
+
 function originalConfig(): string {
-    $text = bytes(SITE.'/config.php'); $defs = configDefines($text);
+    $text = bytes(SITE.'/config.php'); if (reviewedSoftaculousConfig($text)) return $text; $defs = configDefines($text);
     $allowed = ['DB_DRIVER','DB_HOSTNAME','DB_PORT','DB_NAME','DB_USERNAME','DB_PASSWORD','DATA_DIR','FILES_DIR','CACHE_DIR','LOG_FILE','DEBUG','PLUGIN_INSTALLER','LDAP_AUTH','REVERSE_PROXY_AUTH','ENABLE_URL_REWRITE','LOG_DRIVER','LOG_SYSLOG_IDENT','LANGUAGE','TIMEZONE'];
     if (array_diff(array_keys($defs), $allowed)) stop('config_unreviewed_constant');
     if (!literalEquals($defs['DB_DRIVER'] ?? '', 'mysql') || !literalEquals($defs['DB_NAME'] ?? '', DB_NAME_EXPECTED) ||
@@ -141,7 +165,9 @@ function configCandidate(string $original): string {
         $offset += strlen($raw);
     }
     $replacements = [];
-    foreach (['DATA_DIR'=>var_export(DATA_TARGET,true), 'DEBUG'=>'false', 'PLUGIN_INSTALLER'=>'false'] as $name=>$value) {
+    $changes=['DATA_DIR'=>var_export(DATA_TARGET,true), 'DEBUG'=>'false', 'PLUGIN_INSTALLER'=>'false'];
+    if (isset($spans['PLUGINS_DIR'])) $changes['PLUGINS_DIR']=var_export(SITE.'/plugins',true);
+    foreach ($changes as $name=>$value) {
         if (isset($spans[$name])) $replacements[] = [$spans[$name][0],$spans[$name][1],"define('$name', $value);"];
         elseif ($name === 'DATA_DIR') stop('config_rewrite_count');
         else $original .= "\ndefine('$name', $value);\n";
@@ -168,10 +194,10 @@ function bundle(): array {
     $manifestText = bytes(MANIFEST,true);
     if (!hash_equals(MANIFEST_SHA256,hash('sha256',$manifestText)) || !hash_equals(ZIP_SHA256,hash('sha256',bytes(ZIP_FILE,true)))) stop('pinned_bundle_checksum_mismatch');
     $manifest = json_decode($manifestText,true,32,JSON_THROW_ON_ERROR);
-    if (($manifest['format']??null)!=='jivie-familyhub-upgrade-manifest-v1' || ($manifest['pluginVersion']??null)!=='0.7.0' || ($manifest['schemaVersion']??null)!==11 || ($manifest['archiveSha256']??null)!==ZIP_SHA256 || count($manifest['files']??[])!==63) stop('pinned_manifest_invalid');
+    if (($manifest['format']??null)!=='jivie-familyhub-upgrade-manifest-v1' || ($manifest['pluginVersion']??null)!=='0.13.0' || ($manifest['schemaVersion']??null)!==17 || ($manifest['archiveSha256']??null)!==ZIP_SHA256 || count($manifest['files']??[])!==96) stop('pinned_manifest_invalid');
     $zip = new ZipArchive(); if ($zip->open(ZIP_FILE,ZipArchive::RDONLY)!==true) stop('zip_open_failed'); $result = [];
     try {
-        if ($zip->numFiles !== 63) stop('zip_entry_count_mismatch');
+        if ($zip->numFiles !== 96) stop('zip_entry_count_mismatch');
         for ($i=0;$i<$zip->numFiles;$i++) {
             $stat=$zip->statIndex($i); $name=$stat['name']??'';
             if (!preg_match('~^FamilyHub/[A-Za-z0-9_./-]+$~D',$name) || str_contains($name,'..') || str_ends_with($name,'/') || isset($result[$name]) || !isset($manifest['files'][$name])) stop('zip_entry_rejected');
@@ -248,7 +274,7 @@ try {
         }
         $state['phase']='activated';writeNew(STATE.'.activated',jsonBytes($state));if (!rename(STATE.'.activated',STATE)) stop('activated_state_write_failed');
         verifyState($state,$entries);
-        echo "Activated verified FamilyHub 0.7.0 files and private configuration. Maintenance remains active; old data/config preserved. No DB migration executed.\n";exit(0);
+        echo "Activated verified FamilyHub 0.13.0 files and private configuration. Maintenance remains active; old data/config preserved. No DB migration executed.\n";exit(0);
     }
     if ($argv[1]==='--activate') stop('prepare_required');
     $config=originalConfig();$configHash=hash('sha256',$config);$proofHash=freshProof($configHash);$maintenanceHash=maintenanceHash();
@@ -261,7 +287,7 @@ try {
     }
     foreach ([WORK,DATA_TARGET,CONFIG_TARGET,FEATURE_CONFIG] as $path) if (file_exists($path) || is_link($path)) stop('partial_prepare_or_unowned_destination_requires_review');
     $candidate=configCandidate($config);parse(FEATURE_TEXT);parse(PUBLIC_TEXT);
-    if ($argv[1]==='--check') { echo "Checks passed: fixed site/database, operator attestation, maintenance, pinned 63-file bundle, private destinations. No live DB check or changes.\n";exit(0); }
+    if ($argv[1]==='--check') { echo "Checks passed: fixed site/database, operator attestation, maintenance, pinned 96-file bundle, private destinations. No live DB check or changes.\n";exit(0); }
     newDirectory(WORK);writeNew(WORK.'/lock','');$lock=fopen(WORK.'/lock','rb');if (!$lock || !flock($lock,LOCK_EX|LOCK_NB)) stop('deployment_busy');
     writeNew(BACKUP,$config);copyTree(SITE.'/data',DATA_TARGET);
     if (inventory(DATA_TARGET,true)!==$before || inventory(SITE.'/data')!==$before) stop('data_copy_verification_failed');

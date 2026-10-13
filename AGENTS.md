@@ -1,5 +1,22 @@
 # Navodila za delo na projektu
 
+13. oktober — **produkcija jivie.triparna.si dejansko FamilyHub0.13.0/schema17**,
+po uporabnikovi novi Kanboard1.2.54 namestitvi. [Dokazi](docs/server/PRODUCTION_SETUP.md).
+Sveža dejanska kopija in izolirana MariaDB10.11.19 obnova PASS:48tabel/40vrstic/
+2datoteki; vsi row/CREATE/config/cron hashi. Po65sdrain migracije do17,92tabel/
+44FH, **0Native računov/0naprav/nič uporabniške vsebine**; jivie_admin ohranjen,
+47starih tabel/2100core datotek isti,96plugin datotek točnih. Novi serverId
+ad56910f-ca2e-41ee-af0d-3f18081497cf. Zasebni config/data0600/0700 izven15docrootov,
+HTTPS200/capabilities Ideas/assets/reports/enrollment in anonimni401 PASS.
+2nova minutely workerja, stari crontab ohranjen, sveža dnevnika. Prvi račun še
+ni ustvarjen; odprt FamilyHub enrollment, kode/gesla določi lastnik. Native
+admin login pred prvim računom ne izvajaj. **SMTP/FCM OFF; email povabila/reset
+in oddaljeni push še ne delujejo**, redne kopije še niso nastavljene. Kopija je
+prednamestitvena, ne kopija prihodnjih uporabnikov. Pomočnik208kontrol PASS,
+celotna Softaculous predloga in javni PLUGINS_DIR popravljena pred migracijo.
+AndroidAAB25/test1/test2/app/splet/javni plugin repo ostajajo isti. Naslednje
+prvi račun, produkcijska pošta/push/redne kopije, ne nov splošni testni krog.
+
 13. oktober — **prva javna Android1.7.0(25) izdaja za Slovenijo je dejansko
 oddana**. [Dokazi](docs/release/PUBLIC_ANDROID_SLOVENIA.md). Produkcija4698247597354229997/
 release1 uporablja isti knjižničniAAB25/hash; samoSlovenija, uvajanje za vse,

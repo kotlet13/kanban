@@ -5,8 +5,8 @@ if (PHP_SAPI !== 'cli' || $argc !== 1) exit(1);
 umask(0077);
 $repository=dirname(__DIR__,2);
 $source=file_get_contents($repository.'/server/scripts/deploy-cpanel-production.php');
-$archive=$repository.'/build/releases/FamilyHub-0.7.0-source.zip';
-$manifest=$repository.'/build/qa/jivie-upgrade/cpanel-upload/manifest.json';
+$archive=$repository.'/build/releases/FamilyHub-0.13.0-source.zip';
+$manifest=$repository.'/server/scripts/production-0.13.0/manifest.json';
 $root=sys_get_temp_dir().'/jivie-production-deploy-test-'.bin2hex(random_bytes(8));mkdir($root,0700);
 $assertions=0;
 function check(bool $condition,string $message): void { global $assertions;$assertions++;if (!$condition) throw new RuntimeException($message); }
@@ -29,8 +29,8 @@ function fixture(string $name,?string $config=null): array {
     privateFile($site.'/config.php',$config);
     privateFile($site.'/.htaccess',"# JIVIE PRODUCTION MAINTENANCE\nRewriteEngine On\nRewriteRule ^ - [R=503,L]\n# unrelated original protection\n");
     privateFile($site.'/data/.htaccess',"Deny from all\n");privateFile($site.'/data/web.config',"<configuration/>\n");
-    privateFile($base.'/install/FamilyHub-0.7.0-source.zip',file_get_contents($archive));
-    privateFile($base.'/install/manifest.json',file_get_contents($manifest));
+    privateFile($base.'/install/FamilyHub-0.13.0-source.zip',file_get_contents($archive));
+    privateFile($base.'/install/manifest-0.13.0.json',file_get_contents($manifest));
     $proof=['format'=>'jivie-fresh-install-operator-attestation-v1','site'=>$site,'database'=>'tripar13_jivieprod','kanboardVersion'=>'1.2.54','configSha256'=>hash('sha256',$config)];
     foreach (['newSoftaculousInstallation','noImportedAccountsOrData','onlyInitialAdmin','initialAdminPasswordChanged','zeroProjects','zeroTasks','noFamilyHubTables','privateRootOutsideAllDocumentRoots','maintenanceHttps503Verified'] as $flag) $proof[$flag]=true;
     privateFile($base.'/install/fresh-install-proof.json',json_encode($proof,JSON_THROW_ON_ERROR));
@@ -46,8 +46,8 @@ function succeeds(array $f,string $mode): string { [$status,$output]=invoke($f,$
 function fails(array $f,string $mode,string $reason,array $extra=[]): void { [$status,$output]=invoke($f,$mode,$extra);check($status!==0 && str_contains($output,$reason),'Expected '.$reason.', got '.$output); }
 function proof(array $f,array $overrides): void { privateFile($f['base'].'/install/fresh-install-proof.json',json_encode(array_replace($f['proof'],$overrides),JSON_THROW_ON_ERROR)); }
 try {
-    check(hash_file('sha256',$archive)==='1f201bb6c44c269af081bf629236db815fae3bf5518e8a1913f4a2c6f0bd67ba','Reviewed ZIP missing or changed');
-    check(hash_file('sha256',$manifest)==='0e05619fbcbd33921c3c2a7a29d7b79ddc1f15785791f2ae77c5e076acf23bb1','Reviewed manifest missing or changed');
+    check(hash_file('sha256',$archive)==='00df4cec3baebb66d4e67adad20c235149529b2ee9853b614b0a74ef85cfbe52','Reviewed ZIP missing or changed');
+    check(hash_file('sha256',$manifest)==='2c71fe08dfe3592d79f9e1bec0a63ac746746ba59b6ff2ccc8134c6c19873a14','Reviewed manifest missing or changed');
     $valid=fixture('valid');$site=$valid['site'];$base=$valid['base'];$originalData=snapshot($site.'/data');$maintenance=file_get_contents($site.'/.htaccess');
     $before=snapshot($valid['home']);succeeds($valid,'--check');check(snapshot($valid['home'])===$before,'Check wrote files');
     fails($valid,'--activate','prepare_required');fails($valid,'--prepare','usage_check_prepare_activate_no_overrides',['--site=/home/tripar13/jivie-test.triparna.si']);
@@ -66,6 +66,17 @@ try {
     $before=snapshot($valid['home']);succeeds($valid,'--check');succeeds($valid,'--prepare');succeeds($valid,'--activate');check(snapshot($valid['home'])===$before,'Activated retry mutated files');
     privateFile($base.'/data/files/new-local-data','new data after activation');succeeds($valid,'--check');
 
+    $template=file_get_contents($repository.'/server/tests/fixtures/kanboard-1.2.54-config.default.php');
+    $full=preg_replace("~^define\\('DB_DRIVER', .*\\);$~m", "define('DB_DRIVER', 'mysql');",$template);
+    foreach(['DB_NAME'=>'tripar13_jivieprod','DB_USERNAME'=>'synthetic_admin','DB_PASSWORD'=>'offline_secret_only'] as $k=>$v) $full=preg_replace("~^define\\('$k', .*\\);$~m","define('$k', '$v');",$full);
+    $f=fixture('full-template',$full);privateFile($f['site'].'/config.default.php',$template);
+    succeeds($f,'--prepare');succeeds($f,'--activate');
+    $candidate=file_get_contents($f['base'].'/config.php');
+    check(str_contains($candidate,"define('DATA_DIR', '".$f['base']."/data');"),'Full template data dir did not move');
+    check(str_contains($candidate,"define('DB_PASSWORD', 'offline_secret_only');"),'Full template changed DB password');
+    check(str_contains($candidate,"define('PLUGINS_DIR', '".$f['site']."/plugins');"),'Full template plugin discovery moved to private config directory');
+    $f=fixture('template-modified',$full."\nrequire '/must/not/execute';\n");privateFile($f['site'].'/config.default.php',$template);fails($f,'--check','requires_review');
+    $f=fixture('template-untrusted',$full);privateFile($f['site'].'/config.default.php',$template."\n");fails($f,'--check','requires_review');
     $missing=fixture('missing-proof');unlink($missing['base'].'/install/fresh-install-proof.json');fails($missing,'--check','file_guard_failed');
     foreach (['zeroProjects'=>false,'onlyInitialAdmin'=>false,'initialAdminPasswordChanged'=>false,'noFamilyHubTables'=>false,'privateRootOutsideAllDocumentRoots'=>false,'maintenanceHttps503Verified'=>false,'configSha256'=>str_repeat('a',64)] as $flag=>$value) {
         $f=fixture('bad-proof-'.$flag);proof($f,[$flag=>$value]);$before=snapshot($f['home']);fails($f,'--prepare',str_ends_with($flag,'Sha256')?'fresh_operator_attestation_identity_required':'fresh_operator_attestation_incomplete');check(snapshot($f['home'])===$before,'Bad proof created files');
@@ -82,7 +93,7 @@ try {
     $broad=fixture('broad');chmod($broad['base'],0755);fails($broad,'--check','private_directory_permissions_required_0700');
     $broadProof=fixture('broad-proof');chmod($broadProof['base'].'/install/fresh-install-proof.json',0644);fails($broadProof,'--check','private_file_permissions_required_0600');
     $symlink=fixture('symlink');symlink($symlink['site'].'/config.php',$symlink['site'].'/data/linked');fails($symlink,'--check','tree_symlink_rejected');
-    $tamper=fixture('tamper');privateFile($tamper['base'].'/install/FamilyHub-0.7.0-source.zip','invalid');fails($tamper,'--prepare','pinned_bundle_checksum_mismatch');
+    $tamper=fixture('tamper');privateFile($tamper['base'].'/install/FamilyHub-0.13.0-source.zip','invalid');fails($tamper,'--prepare','pinned_bundle_checksum_mismatch');
     $changed=fixture('changed');succeeds($changed,'--prepare');privateFile($changed['site'].'/config.php',$changed['config']."// later edit\n");fails($changed,'--activate','prepared_config_changed');check(!is_dir($changed['site'].'/plugins/FamilyHub'),'Late config edit activated plugin');
     $dataChanged=fixture('data-changed');succeeds($dataChanged,'--prepare');privateFile($dataChanged['site'].'/data/files/late','new');fails($dataChanged,'--activate','data_changed_since_prepare');
     $stageChanged=fixture('stage-changed');succeeds($stageChanged,'--prepare');privateFile($stageChanged['base'].'/install/familyhub-deploy/FamilyHub/Plugin.php',"<?php\n");chmod($stageChanged['base'].'/install/familyhub-deploy/FamilyHub/Plugin.php',0644);fails($stageChanged,'--activate','staged_plugin_changed');
@@ -91,7 +102,7 @@ try {
     $pluginMode=fixture('plugin-mode');succeeds($pluginMode,'--prepare');chmod($pluginMode['base'].'/install/familyhub-deploy/FamilyHub/Plugin.php',0666);fails($pluginMode,'--activate','plugin_file_permissions_required_0644');
     $privateMode=fixture('private-mode');succeeds($privateMode,'--prepare');chmod($privateMode['base'].'/data/.htaccess',0644);fails($privateMode,'--activate','private_file_permissions_required_0600');
     $proofChanged=fixture('proof-changed');succeeds($proofChanged,'--prepare');proof($proofChanged,['zeroTasks'=>false]);fails($proofChanged,'--activate','fresh_operator_attestation_incomplete');
-    $manifestChanged=fixture('manifest-changed');privateFile($manifestChanged['base'].'/install/manifest.json',file_get_contents($manifestChanged['base'].'/install/manifest.json')."\n");fails($manifestChanged,'--check','pinned_bundle_checksum_mismatch');
+    $manifestChanged=fixture('manifest-changed');privateFile($manifestChanged['base'].'/install/manifest-0.13.0.json',file_get_contents($manifestChanged['base'].'/install/manifest-0.13.0.json')."\n");fails($manifestChanged,'--check','pinned_bundle_checksum_mismatch');
     $partialPrepare=fixture('partial-prepare');mkdir($partialPrepare['base'].'/install/familyhub-deploy',0700);$before=snapshot($partialPrepare['home']);fails($partialPrepare,'--prepare','partial_prepare_or_unowned_destination_requires_review');check(snapshot($partialPrepare['home'])===$before,'Partial prepare was altered');
     foreach ([1,2,3] as $step) {
         $partial=fixture('partial-activate-'.$step);succeeds($partial,'--prepare');$work=$partial['base'].'/install/familyhub-deploy';
