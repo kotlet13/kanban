@@ -1,5 +1,15 @@
 # Navodila za delo na projektu
 
+13. oktober — **FamilyHub povezava in razlaga lastnega strežnika sta objavljeni
+na jivie.app SL/EN; oba Play opisa sta shranjena kot osnutek**.
+[Dokazi](docs/release/FAMILYHUB_WEBSITE_AND_PLAY.md). Uporabnik je po premisleku
+potrdil brezplačen Jivie + brezplačen javni FamilyHub pod MIT, pozneje izbirno
+plačljivo upravljano gostovanje; repo je sam ponovno odprl, anonimno potrjen.
+4 HTML objavljeni po preverjeni kopiji25 datotek,21 drugih datotek/pravice
+ohranjene;4 HTTPS200/hash PASS. SL3391/en-US3475 znakov po reloadu enakih izvoru.
+Odprtokodnost je izrecno samo FamilyHub. Ista Android AAB25/hash, brez nove
+gradnje, gostovane nadgradnje ali javne oddaje. Naslednje države/Pregled objave.
+
 13. oktober — **FamilyHub0.13.0 dejansko javno objavljen** v uporabnikovem
 [kotlet13/kanban_family_hub](https://github.com/kotlet13/kanban_family_hub),
 main/root commit7571d1b brez staršev in tagv0.13.0. [Dokazi](docs/release/FAMILYHUB_PUBLIC_REPOSITORY.md).

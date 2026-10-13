@@ -1,5 +1,12 @@
 # Jivie: statična javna stran za cPanel
 
+13. oktober 2026: SL/EN domači strani imata javni razdelek `#familyhub` s
+povezavo do brezplačnega odprtokodnega vtičnika FamilyHub pod MIT, SL/EN pomoč
+pa povezavo do namestitve. Štirje HTML so dejansko objavljeni po preverjeni
+zasebni kopiji25 datotek;21 drugih datotek/pravice ostanejo. Vseh4 HTTPS/hash
+PASS. Tudi oba Play opisa sta shranjena kot osnutek.
+[Dokazi in meje](../docs/release/FAMILYHUB_WEBSITE_AND_PLAY.md).
+
 **13. oktober — dodana odprta tabla Idejnika.** SL/EN galeriji imata novo kartico
 s fotografijo, vezano oznako, skico in lističema;8 spletnih posnetkov skupaj.
 Objavljeni samo2 HTML in novi PNG, vsi3 HTTPS200/hash PASS,24 starih datotek
