@@ -103,9 +103,10 @@ Applovi skupni oznaki zajema samo dejansko podprte fotografije.
 SL privacy/delete URL sta shranjena; javna politika že opisuje tehnične SDK
 podatke, fotografije in izbirno deljenje na izbranem strežniku.
 
-**Objava App Privacy še čaka izrecno potrditev lastnika.** Applov končni Publish
-vključuje soglasje o točnosti, pravilih/zakonodaji in prihodnjem posodabljanju.
-Pregledan konkretni obrazec je pripravljen, agent zadnjega gumba ni pritisnil.
+**14. oktober: App Privacy je dejansko objavljen.** Lastnik je sam potrdil
+Applov končni Publish; vidno stanje je »Published … by Anže Novšak«.
+Agent je odprl potrditveno okno, zadnjega gumba ni pritisnil. Dokaz:
+`privacy-published-20261014.png` v spodnji zasebni QA mapi.
 
 Šifriranje je shranjeno na gradnji25: **Standard encryption algorithms outside
 or in addition to Apple OS**, France **No**. AES256-GCM/PBKDF2 z Dart fallbackom
@@ -124,12 +125,15 @@ Primarni viri pregledani13.10.2026:
 
 Ustvarjena interna skupina **Pred javno objavo**,
 `31680638-0725-4e30-96ff-d79a6aac94e7`; gradnja25je dodana inReady to Test.
-Samodejna distribucija vseh prihodnjih gradenj je izključena. **0testerjev**;
-povabilo čaka uporabnikov Apple ID. Ni vabljenja drugih oseb ali novih
-App Store Connect upravljavskih pravic.
+Samodejna distribucija vseh prihodnjih gradenj je izključena. **14. oktober:
+1tester/1build**, status **Invited**. Lastnik je za povabilo izbral isti račun
+kot v App Store Connect; dodan je samo njegov obstoječi Account Holder/Admin.
+Ni vabljenja drugih oseb ali novih App Store Connect upravljavskih pravic.
+Dokaza: `testflight-invited-20261014.png` in `.txt`. Dostava e-pošte, sprejem
+povabila in fizična namestitev še niso potrjeni.
 
-Javna iOS oddaja **še ni izvedena**. Ostajajo potrditev App Privacy, izbrani
-TestFlight preizkuševalec/dejanska iPhone namestitev ter pregledno geslo.
+Javna iOS oddaja **še ni izvedena**. Ostajata dejanska TestFlight namestitev
+in preizkus na iPhonu ter pregledno geslo.
 Fizično preveriti lokalni vnos/restart, foto izbirnik in pan/zoom Idejnika,
 lokalni opomnik ter šifriran izvoz/predogled obnove. iOS APNs povezava/dostava
 ostajata ločeno nepotrjeni; ne pripisuj Android dokaza iPhonu.

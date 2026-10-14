@@ -1,5 +1,15 @@
 # Navodila za delo na projektu
 
+14. oktober — **iOS App Privacy dejansko objavljen, TestFlight povabilo Invited**.
+[Dokazi](docs/release/IOS_PUBLIC_PREPARATION.md). Lastnik je sam potrdil Publish;
+agent je preveril vidno Published by Anže Novšak. Po izbiri »isti račun« dodan
+samo obstoječi lastnikov Account Holder/Admin v Pred javno objavo: **1tester/
+1build25**, brez novih upravljavskih pravic; prihodnje samodejne gradnje OFF.
+E-poštna dostava/sprejem/fizična namestitev še niso potrjeni. Naslednje kratki
+iPhone tokovi, pregledno geslo neposredno vASC ter končna oddaja. **Ni javne
+iOS oddaje ali fizičnega/APNs dokaza**. Android/paketi/koda/SDK/locks/dovoljenja/
+strežniki/podatki ostajajo isti; starejši pendingPrivacy/0tester zapis je zgodovina.
+
 13. oktober — **iOS1.7.0(25) dejansko naložen in AppleComplete** iz istega
 mobilnegafa809b8 kotAndroid25. [Dokazi](docs/release/IOS_PUBLIC_PREPARATION.md).
 283lib/assets hashi/oba locks isti; sveži arhiv, Organizerobstoječi cloudpodpis
