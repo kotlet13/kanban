@@ -39,14 +39,36 @@ extension CollaborationFinanceActions on CollaborationRepository {
     final partition = session.profile.partition;
     final generation = await _financeAccessGeneration(partition, scopeId);
     _checkEpoch(epoch);
-    final policy = SharedFinancePolicy.fromJson(
-      await _callSession(
-        session,
-        epoch,
-        _financeContractVersion >= 2 ? 'finance2.policy' : 'finance.policy',
-        {'scopeId': scopeId},
-      ),
-    );
+    late final SharedFinancePolicy policy;
+    try {
+      policy = SharedFinancePolicy.fromJson(
+        await _callSession(
+          session,
+          epoch,
+          _financeContractVersion >= 2 ? 'finance2.policy' : 'finance.policy',
+          {'scopeId': scopeId},
+        ),
+      );
+    } on CollaborationApiException catch (error) {
+      if (error.code == 'finance_forbidden' ||
+          error.code == 'permission_revoked') {
+        // Every policy fetch, including dependency preflight, must invalidate
+        // cached reads when the server gives a definitive financial denial.
+        await database.transaction(() async {
+          _checkEpoch(epoch);
+          if (syncLease) await _validLease(partition);
+          _checkEpoch(epoch);
+          await _storeFinancePolicy(
+            partition,
+            scopeId,
+            const SharedFinancePolicy(),
+          );
+        });
+        await refreshLocal();
+        _checkEpoch(epoch);
+      }
+      rethrow;
+    }
     return database.transaction(() async {
       _checkEpoch(epoch);
       if (syncLease) await _validLease(partition);

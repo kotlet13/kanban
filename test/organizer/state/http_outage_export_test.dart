@@ -27,13 +27,28 @@ class OutageFixture {
   String mode = 'online';
   String denial = 'finance_forbidden';
   final backend = PersonalTransport(FakeServer());
+  final requests = <({String operation, bool hasBearer})>[];
 
   Future<void> initialize() async {
     server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     server.listen((request) async {
       final body = jsonDecode(await utf8.decoder.bind(request).join()) as Map;
       final operation = body['op'] as String;
-      if (mode != 'online') {
+      requests.add((
+        operation: operation,
+        hasBearer:
+            request.headers.value(HttpHeaders.authorizationHeader) != null,
+      ));
+      if (mode == 'deniedOnline' && operation == 'finance.policy') {
+        request.response.statusCode = 403;
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(
+          jsonEncode({
+            'v': 1,
+            'error': {'code': denial},
+          }),
+        );
+      } else if (mode != 'online' && mode != 'deniedOnline') {
         request.response.statusCode = mode == 'plain403' ? 403 : 503;
         if (mode == 'typed' && operation == 'finance.policy') {
           request.response.headers.contentType = ContentType.json;
@@ -131,6 +146,16 @@ class OutageFixture {
       title: 'Offline expense seven EUR',
       occurredAt: DateTime.now().toUtc(),
     );
+    // Controller edits start a background sync. Finish that original outage
+    // attempt before the test changes the HTTP response or starts normal sync.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (repository.state.isSyncing) {
+      if (DateTime.now().isAfter(deadline)) {
+        throw StateError('Outage sync did not finish');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
   }
 
   Future<Map<String, dynamic>> export() async =>
@@ -147,7 +172,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   test(
-    'real HTTP503 controller exports queued tasks and cached-authorized finance unchanged',
+    'real HTTP503 controller exports only exact own candidates locally without fetching rights',
     () async {
       final f = OutageFixture();
       await f.initialize();
@@ -162,7 +187,10 @@ void main() {
       );
       expect(before, hasLength(2));
       expect(financeBefore, hasLength(1));
+      final requestsBefore = f.requests.length;
       final doc = await f.export();
+      expect(f.requests, hasLength(requestsBefore));
+      expectOwnFinanceRecovery(doc, financeBefore.single['request'] as String);
       expect(doc['format'], 'vsakdan-unsent-work');
       expect(doc['operations'], hasLength(2));
       expect(doc['financeOperations'], hasLength(1));
@@ -190,17 +218,33 @@ void main() {
 
   for (final denial in ['finance_forbidden', 'permission_revoked']) {
     test(
-      'typed $denial atHTTP503 suppresses finance and remains denied during later outage',
+      'normal sync applies typed $denial; explicit local recovery keeps own finance without restoring read rights',
       () async {
         final f = OutageFixture();
         await f.initialize();
         addTearDown(f.close);
         await f.queueOfflineWork();
-        f.mode = 'typed';
+        final original =
+            (await f.repository.database.rows(
+                  'SELECT request FROM finance_outbox',
+                )).single['request']
+                as String;
+        f.mode = 'deniedOnline';
         f.denial = denial;
+        var requestsBefore = f.requests.length;
         final doc = await f.export();
+        expect(f.requests, hasLength(requestsBefore));
         expect(doc['operations'], hasLength(2));
-        expect(doc['financeOperations'], isEmpty);
+        expectOwnFinanceRecovery(doc, original);
+        // File recovery does not claim to refresh or restore authorization.
+        expect(f.repository.state.financePolicyForScope(f.scope).canRead, true);
+        await f.controller.syncNow();
+        expect(
+          f.requests
+              .skip(requestsBefore)
+              .any((r) => r.operation == 'finance.policy'),
+          true,
+        );
         expect(
           f.repository.state.financePolicyForScope(f.scope).canRead,
           false,
@@ -209,34 +253,137 @@ void main() {
           f.repository.state.dataForScope(f.scope).financeEntries,
           isEmpty,
         );
-        f.mode = 'plain503';
-        expect((await f.export())['financeOperations'], isEmpty);
         expect(
-          await f.repository.database.rows('SELECT op_id FROM finance_outbox'),
-          hasLength(1),
+          f.repository.state.dataForScope(f.scope).financeAccounts,
+          isEmpty,
+        );
+        f.mode = 'plain503';
+        requestsBefore = f.requests.length;
+        expectOwnFinanceRecovery(await f.export(), original);
+        expect(f.requests, hasLength(requestsBefore));
+        expect(
+          f.repository.state.financePolicyForScope(f.scope).canRead,
+          false,
+        );
+        expect(
+          f.repository.state.dataForScope(f.scope).financeEntries,
+          isEmpty,
+        );
+        expect(
+          (await f.repository.database.rows(
+            'SELECT request FROM finance_outbox',
+          )).single['request'],
+          original,
         );
       },
     );
   }
 
-  for (final failure in ['plain403', 'server_identity_changed']) {
-    test('export does not fall back after $failure', () async {
+  test(
+    'plain HTTP403 does not contact the server during explicit local recovery',
+    () async {
       final f = OutageFixture();
       await f.initialize();
       addTearDown(f.close);
       await f.queueOfflineWork();
-      f.mode = failure == 'plain403' ? 'plain403' : 'typed';
-      f.denial = failure;
-      await expectLater(
-        f.export(),
-        throwsA(
-          isA<CollaborationException>().having(
-            (error) => error.code,
-            'code',
-            failure == 'plain403' ? 'invalid_response' : failure,
-          ),
+      final original =
+          (await f.repository.database.rows(
+                'SELECT request FROM finance_outbox',
+              )).single['request']
+              as String;
+      f.mode = 'plain403';
+      final requestsBefore = f.requests.length;
+      expectOwnFinanceRecovery(await f.export(), original);
+      expect(f.requests, hasLength(requestsBefore));
+      await f.controller.syncNow();
+      expect(f.repository.state.lastError?.code, 'invalid_response');
+      final afterSync = f.requests.length;
+      expectOwnFinanceRecovery(await f.export(), original);
+      expect(f.requests, hasLength(afterSync));
+      // Untyped proxy errors are not proof that cached read rights were revoked.
+      expect(f.repository.state.financePolicyForScope(f.scope).canRead, true);
+    },
+  );
+
+  test(
+    'changed server identity blocks normal sync before bearer use; local recovery remains exact and sends nothing',
+    () async {
+      final f = OutageFixture();
+      await f.initialize();
+      addTearDown(f.close);
+      await f.queueOfflineWork();
+      final original =
+          (await f.repository.database.rows(
+                'SELECT request FROM finance_outbox',
+              )).single['request']
+              as String;
+      f.mode = 'online';
+      f.backend.server.serverId = newSharedId();
+      final requestsBefore = f.requests.length;
+      await f.controller.syncNow();
+      expect(f.repository.state.lastError?.code, 'server_identity_changed');
+      expect(f.repository.state.sessionInvalid, true);
+      final identityRequests = f.requests.skip(requestsBefore).toList();
+      expect(identityRequests, isNotEmpty);
+      expect(
+        identityRequests.every(
+          (r) => r.operation == 'capabilities' && !r.hasBearer,
         ),
+        true,
       );
-    });
+      final afterSync = f.requests.length;
+      expectOwnFinanceRecovery(await f.export(), original);
+      expect(f.requests, hasLength(afterSync));
+      expect(f.repository.state.sessionInvalid, true);
+      expect(
+        (await f.repository.database.rows(
+          'SELECT request FROM finance_outbox',
+        )).single['request'],
+        original,
+      );
+    },
+  );
+}
+
+void expectOwnFinanceRecovery(
+  Map<String, dynamic> doc,
+  String immutableRequest,
+) {
+  final rows = doc['financeOperations'] as List;
+  expect(rows, hasLength(1));
+  expect(jsonEncode(rows.single['operation']), immutableRequest);
+  final serialized = jsonEncode(doc);
+  expect(serialized, isNot(contains('Synthetic cached EUR account')));
+  expect(serialized, isNot(contains('Original downloaded task')));
+  void noDownloadedDataOrCredentials(Object? value) {
+    if (value is Map) {
+      expect(
+        value.keys.where(
+          (key) => const {
+            'financeRecords',
+            'finance_records',
+            'finance_policy',
+            'financePolicy',
+            'remote',
+            'base',
+            'token',
+            'password',
+            'deviceToken',
+            'pushKey',
+            'mailKey',
+          }.contains(key),
+        ),
+        isEmpty,
+      );
+      for (final child in value.values) {
+        noDownloadedDataOrCredentials(child);
+      }
+    } else if (value is List) {
+      for (final child in value) {
+        noDownloadedDataOrCredentials(child);
+      }
+    }
   }
+
+  noDownloadedDataOrCredentials(doc);
 }
