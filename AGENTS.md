@@ -19,6 +19,17 @@ po FCMinclude/cron spremembi namerno zavrne nove hashe; ne obnavljaj starega
 stanja ali rahljaj varoval. Povabilo ima HTTPS/deeplink, še nima Playinstall
 povezave; besedilo ni spremenjeno.
 
+14. oktober — **produkcijski pravi Android opomnik samodejno sent, fizični
+prikaz/odpiranje potrjena**. [Dokazi](docs/server/PRODUCTION_PUSH.md). Lastnik
+obnovi geslo sam, prijava/registracija PASS; read-only1Android/1pending, nato
+1delivered/1sent/attempts1. Brez ročne dostave ali dodatnega obvestila. Lastnik
+»dubu sm obvestilo, lahko ga odprem«, zvoka ni. Dom/reminders nima shranjene
+preference, dejanski resolver sound=false; splošni »Opomniki na tej napravi«
+zvok je lokalen. Naročeno Dom→Nastavitve obvestil→Opomniki→Zvok opomnikov;
+shranitev in fizični zvok še sledita. Ne spreminjaj Androida ali ponavljaj
+matrike; naslednje samo1zvočni preizkus. Povezava do opomnika je za urejevalca
+ločeni zvonček splusom ob vrstici; prejšnja ⋯usmeritev popravljena.
+
 14. oktober — **iOS1.7.1(26) dejansko AppleComplete/TestFlightTesting**.
 [Dokazi](docs/release/IOS_CONNECTION_RELEASE.md). Lastnik potrdi namestitev25
 in naroči isti popravek povezovanja kot javniAndroid26. Izoliranifa809b8+

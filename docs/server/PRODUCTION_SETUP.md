@@ -8,9 +8,9 @@ Ločeni produkcijski FCM račun/ključ za `jivie-e928a` je po lastnikovi potrdit
 nameščen v zasebni mapi zunaj vseh15 spletnih korenov. Pravi Google OAuth in
 FCM validate_only HTTP200, HTTPS capabilities externalPush=true/smtp=true ter
 dejanski minutni push cron so potrjeni; SMTP in stari cron sta ohranjena.
-[Dokazi in povrnitev](PRODUCTION_PUSH.md). Telefonski prikaz še čaka lastnikovo
-termin oddaljenega opomnika; geslo je obnovil, prijava/izrecna Android
-registracija sta potrjeni (tudi read-only baza1naprava).
+[Dokazi in povrnitev](PRODUCTION_PUSH.md). Prava UI oddaljena dostava je zdaj samodejno sent/attempts1, lastnik potrdi
+prikaz in odpiranje. Dom/Opomniki zvok je še privzeto OFF; vključitev in
+ciljni zvočni preizkus še sledita. Geslo/prijavo je obnovil lastnik sam.
 Android ostaja javni1.7.1(26); ni migracije ali nove gradnje. Redne kopije
 ostajajo ločeno odprto delo.
 

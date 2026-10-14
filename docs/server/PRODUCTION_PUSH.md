@@ -1,11 +1,13 @@
 # Produkcijski push na jivie.triparna.si
 
 14. oktober 2026: **produkcijski FCM je vključen, Google OAuth in validacija
-HTTP v1 sta uspešna, minutni cron je dejansko tekel**. Telefonski prikaz pri
-zaprti aplikaciji še ni potrjen. Lastnik je po odstranitvi aplikacije obnovil
-geslo istega uporabnika, se uspešno prijavil in potrdil »Naprava je
-registrirana«; read-only baza potrdi eno aktivno Android registracijo za isti
-Firebase projekt. Sledi eno pravo oddaljeno časovno opozorilo iz aplikacije.
+HTTP v1 sta uspešna, minutni cron je dejansko tekel**. Prikaz na telefonu
+in odpiranje opravila sta zdaj fizično potrjena. Lastnik je po
+odstranitvi aplikacije obnovil geslo istega uporabnika, se uspešno prijavil in
+potrdil »Naprava je registrirana«; read-only baza potrdi eno aktivno Android
+registracijo. Pravi opomnik iz UI je samodejno dostavljen. Zvok pri prvem
+preizkusu ni bil vključen v strežniških nastavitvah; sledi vključitev zvoka
+za Dom/Opomniki in en ciljni ponovni preizkus.
 Android ostaja javni **1.7.1(26)**, brez nove gradnje ali internega kanala.
 
 ## Identiteta in varovanje
@@ -79,7 +81,30 @@ Neskrivni lokalni dokazi so v `build/qa/production-push-20261014/`:
 in `production-service-account-key.png`. Operativni provider probe je v isti
 ignorirani QA mapi in zasebno na strežniku; ni del javnega vtičnika.
 
-## Vzdrževanje in naslednji fizični korak
+## Fizični Android opomnik in ločena nastavitev zvoka
+
+Lastnik je v sinhroniziranem Dom ustvaril »Preizkus push« in shranil pravi
+oddaljeni opomnik prek aplikacije. Read-only pregled potrdi natanko eno
+registracijo in en pending opomnik; nato po terminu eno delivered stanje
+opomnika in en push job sent z **attempts=1**. Nobena ročna dostava ali
+dodatno testno obvestilo ni ustvarjeno. Lastnik odgovori: **»dubu sm
+obvestilo, lahko ga odprem«**; zvoka ni slišal. Navodilo je bilo zapreti
+aplikacijo in zakleniti telefon; njegov odgovor izrecno potrdi prikaz in
+odpiranje, ne ponovi posebej stanja zaklenjenega telefona.
+
+Za ta dostavljeni opomnik je read-only pregled našel kategorijo reminders
+in **nobene shranjene nastavitve prostora/kategorije**. Resolver zato uporabi
+inApp=true/push=true/sound=false/email=false. NativePushWorker bere to
+nastavitev, NativeFcmTransport pa za sound=false izbere tihi Android kanal.
+Ni dokaza napake FCM ali okvare Androidovega zvočnega kanala.
+
+Stikalo Zvok v »Opomniki na tej napravi« spreminja samo lokalne opomnike.
+Za oddaljene lastnik odpre opomnik → Nastavitve obvestil → Dom → Opomniki →
+**Zvok opomnikov**. Shranitev te spremembe in fizični zvok še čakata. Agent
+nastavitev računa ni spreminjal mimo odjemalca. Dokaz enkratne samodejne
+dostave: `one-android-reminder-sent.png` v isti ignorirani QA mapi.
+
+## Vzdrževanje
 
 Geslo Jivie preverja `NativeAuthService` proti isti `users.password` kot
 Kanboard. Skrbnik lahko spremeni geslo obstoječega **anze.novsak**, brez
@@ -98,8 +123,8 @@ Za urejevalca je to ločeni zvonček s plusom desno ob opravilu na seznamu;
 prejšnje navodilo za meni ⋯ je bilo popravljeno po pregledu istega mobilnega
 izvora. Lokalni prostor ali sam rok opravila tega oddaljenega opomnika ne
 ustvarita.
-Nato sledi obvestilo pri zaprti/zaklenjeni aplikaciji in preverjanje
-odpiranja pravega zapisa. Tega preizkusa še ni bilo; ne ponavljaj splošne
+Prva samodejna dostava in odpiranje sta potrjena zgoraj. Naslednje je samo
+zvočni preizkus po vključitvi Dom/Opomniki zvoka; ne ponavljaj splošne
 funkcionalne matrike ali gradnje. APNs/iPhone ostajata ločeno preverjanje.
 
 Povrnitev FCM uporablja zapečateni izvirnik pomočnika z istimi argumenti;
