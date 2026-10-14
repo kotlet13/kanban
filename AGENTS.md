@@ -1,5 +1,7 @@
 # Navodila za delo na projektu
 
+14. oktober - **javni Android1.7.1(26) dejansko Aktivno / Na voljo vGooglePlay od05:48**, sveze prebrano v produkciji4698247597354229997/release2. [Dokazi](docs/release/PUBLIC_CONNECTION_UPDATE.md#confirmed-public-availability---14-october). Google je prej oddano26 odobril/objavil; ni nove oddaje/gradnje.1drzava/regija, istaAAB26/hash; interni kanal ostaja po narocilu Neaktivno. Starejsi pendingReview26 je zgodovina. User po lastni izjavi brez podatkov odstrani app in izstopi iz preizkusa; njegovPlay se kaze beta naslov/stare slike. Razsiritev izstopa ni fizicno potrjena; svetovano samo PlayStorecache/javniURL. Prihodnje Android izdaje izkljucno javne, brez ponovnega splosnega testnega kroga. Koda/SDK/locks/dovoljenja/gostovanja/FamilyHub/podatki/iOS/splet isti; SMTP/FCM/kopije se loceno delo.
+
 14. oktober — **ista Android1.7.1(26) dejansko oddana za javno posodobitev;
 interni kanal Neaktivno**. [Dokazi](docs/release/PUBLIC_CONNECTION_UPDATE.md).
 Uporabnik fizično potrdi »Ok, zej povezovanje dela«. AAB26/hashisti brez nove

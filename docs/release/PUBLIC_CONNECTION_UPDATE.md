@@ -48,3 +48,16 @@ Dokazi v `build/qa/public-connection-release-20261014/`: `artifact-and-user-test
 `countries-slovenia.png`, `public-submitted.png/.txt`, `internal-paused.png/.txt`,
 `play-release-evidence.json`. Odprta stran Pregled objave ostane za naslednji
 pregled izida; ni nastavljena avtomatizacija ali obljuba samodejnega spremljanja.
+
+## Confirmed public availability - 14 October
+
+A fresh production Console read confirms **1.7.1(26) Active / Available on
+Google Play from05:48 Europe/Ljubljana**, one country/region. Google completed
+the previously submitted review and automatically published the same AAB26.
+No new submission, build or release change was performed. The earlier pending
+review entry is historical. Evidence: `build/qa/public-connection-release-20261014/public-1.7.1-26-active.png`.
+
+The user reports uninstalling the app while having no data and leaving the
+internal test, but still sees the beta label and old images. Propagation of
+that account opt-out is not physically verified. Advice: refresh only the
+Play Store cache and open the ordinary public URL; do not rebuild or resubmit.
