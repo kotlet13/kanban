@@ -1,5 +1,11 @@
 # Priprava prve javne iOS izdaje
 
+**Aktualno14. oktobra:** uporabnik potrdi namestitev25; nova **iOS1.7.1(26)**
+z istim popravkom povezovanja kot javni Android26 je AppleComplete, v
+TestFlightuTesting in pripeta v osnutek prve javne izdaje. Pregledno geslo je
+prisotno (samo bool preverjanje brez branja). [Aktualni dokazi in meje](IOS_CONNECTION_RELEASE.md).
+Spodaj ostaja zgodovinska priprava25. Javna iOS oddaja še ni izvedena.
+
 13. oktober 2026 — uporabnik je odprl App Store Connect in naročil nadaljevanje
 do javne izdaje na podlagi Android kandidatke. Potrdil je možnost fizičnega
 preizkusa na iPhonu in zasebni kontakt za App Review. Telefonske številke in

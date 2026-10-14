@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+14. oktober — **iOS1.7.1(26) dejansko AppleComplete/TestFlightTesting**.
+[Dokazi](docs/release/IOS_CONNECTION_RELEASE.md). Lastnik potrdi namestitev25
+in naroči isti popravek povezovanja kot javniAndroid26. Izoliranifa809b8+
+6ae5667/version,285skupnih vhodov isti kotAAB26,333frozen/48native/oba locks/
+SDK/18privacy/Firebase isti;7ciljnihPASS. Sveži arhiv/obstoječi cloudpodpis,
+IPA c98d7f0e…/CRC/strictdeep/productionAPS PASS; upload16:24/buildb4430…Complete.
+Lastnik sam sprejme novo13.10 razvojno pogodbo; StandardEncryption+FranceNo
+shranjen. Predjavnoobjavo1tester/2builds:26Testing,25ohranjen; kratka navodila
+shranjena. ASC1.7.1/build26Saved, pregledno geslo zdaj prisotno (samo bool,
+brez branja/izvoza, pravilnost ni preverjena). **Ni javne iOS oddaje ali
+fizičnega26/APNs dokaza**; naslednje ciljni iPhone tok in pregledni dostop/
+oddaja. Android26/javni status/interniNeaktivno/splet/gostovanja/FamilyHub/
+podatki ostajajo; sočasno produkcijskoSMTP delo ni del te iOS nadgradnje.
+
 14. oktober — **produkcijski SMTP dejansko vključen in prejem v Prejeto potrjen**.
 [Dokazi](docs/server/PRODUCTION_MAIL.md). Lastnik izbere obstoječi predal
 admin@jivie.triparna.si in sam vnese geslo v skrit terminalski poziv, brez
