@@ -1,5 +1,23 @@
 # Navodila za delo na projektu
 
+14. oktober — **Android1.7.1(26) dejansko Aktivno za domači(15) od05:24**,
+[Dokazi](docs/release/SPACE_CONNECTION_RELEASE.md). Popravek6ae5667 po potrditvi
+predogleda povezovanja lokalnega gospodinjstva/organizacije odpre obstoječa
+pravila strežnika; izrecni sprejem nadaljuje isto publikacijo enkrat, preklic
+in menjava računa ohranita lokalno vsebino brez prenosa. Pre-fix regresija FAIL,
+29ciljnihUI/podatkovnih PASS,7isti testi tudi v izoliranem izvoru PASS; ciljna/
+izolirana analiza Noissues (main10prej obstoječih info v screenshottools).
+Ena podpisana AAB26 iz izoliranegafa809b8/AAB25 plusnatanko1runtimepopravek+
+version;320zamrznjenih vhodov, oba locks/SDK/confighashi/isti podpis/Firebase/
+8dovoljenj, bundle/CRC/16KiB/23+7source PASS. Desktop spremembe niso vključene.
+26vključen/25izključen v novi interni izdaji,0novih/izgubljenih naprav. Fizični
+preizkus uporabnika še sledi; produkcijskiSMTP/FCM šeOFF, gostovanja/sheme/
+podatki/iOS25/splet/javniFamilyHub isti. **Svež read-only Console potrdi tudi
+javno1.7.0(25) Aktivno/Na voljo vGooglePlay od14.okt04:52**, ena država/regija;
+Google je sam zaključil prejšnjo oddajo, starejši »v pregledu« je zgodovina.
+Javna izdaja ni umaknjena/nadomeščena v tem koraku,26je samo interna. Uporabnik
+naroča najprej fizični preizkus26, nato javno posodobitev/umik aktivne25.
+
 14. oktober — **iOS App Privacy dejansko objavljen, TestFlight povabilo Invited**.
 [Dokazi](docs/release/IOS_PUBLIC_PREPARATION.md). Lastnik je sam potrdil Publish;
 agent je preveril vidno Published by Anže Novšak. Po izbiri »isti račun« dodan
