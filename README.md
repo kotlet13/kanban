@@ -345,6 +345,8 @@ Deljeni finančni zapisi uporabljajo revizijo: strežnik spremembo sprejme samo,
 
 ### Opomniki in obvestila
 
+**14. oktober — nova lokalna izvedba:** **Več → Nastavitve opomnikov** združi skupne preklope centra, zvoka, push in e-pošte ter nastavitve posameznih prostorov/projektov in vrst obvestil. Obstoječi izklopi ostanejo; projektni izklopi dejansko uskladijo lokalni razpored in center. **104 ciljnih testov in Android debug PASS**, brez novih ugotovitev analize. [Izvedba in meje](docs/REMINDER_SETTINGS.md). Javni Android1.7.1(26) tega zaslona še nima; nova javna posodobitev še ni pripravljena/oddana.
+
 Center obvestil loči **Zame** od **V skupnem prostoru**. Tudi nedodeljeni člani dobijo skupno dogajanje, skladno s pravicami in nastavitvami. Lastno dejanje ne opozarja avtorja. Povezani dogodki se združijo v petminutnem oknu; odpiranje ohrani točen nabor novih dodelitev oziroma nakupovalnih dodatkov. Prebrano obvestilo ne zaključi opravila ali označi računa kot plačanega.
 
 Gospodinjstvo ima skupni dnevni pregled, projekt pa časovnico z izvajalci, začetkom, koncem in rokom. Nastavitve po prostoru in kategoriji ločijo prikaz v aplikaciji, zvok, e-pošto ter izbirni push kanal. Nakupovalna e-pošta je privzeto izključena.

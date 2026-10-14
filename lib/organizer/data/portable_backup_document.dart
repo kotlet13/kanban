@@ -583,14 +583,7 @@ void validateBackupCommand(
       throw const FormatException();
     }
   } else if (operation == 'inbox.preferences.set') {
-    if (!const [
-      'tasks',
-      'events',
-      'shopping',
-      'finance',
-      'reminders',
-      'membership',
-    ].contains(p['category'])) {
+    if (!sharedNotificationCategories.contains(p['category'])) {
       throw const FormatException();
     }
     final settings = backupMap(p['settings']);

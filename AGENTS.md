@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+14. oktober — **Več → Nastavitve opomnikov lokalno izvedeno** po izrecni
+uporabnikovi izbiri enega zaslona. [Dokazi in semantika](docs/REMINDER_SETTINGS.md).
+Zgoraj množični preklopi trenutnih dovoljenih obsegov/kategorij, spodaj lokalni
+prostori/projekti in skupni kanonični obsegi, vrste tudi Ideas; naprava/status
+na istem zaslonu. Stara ločena razdelka odstranjena iz splošnih Nastavitev.
+Lokalne izjeme dejansko uskladijo alarm/zvok in center/neprebrano; skupni
+zvok brez druge lokalne zvočne zavore. SQLite batch/vrsta/ACK/rollback,
+identiteta pred zapisom in pozne napake; validator kopije sprejme Ideas.
+**104 ciljnih Flutter PASS**, ozki320/390 in1280/2×, pregledan390widgetizris,
+Android debug PASS; analiza samo10prejšnjih info vtools/release. Obstoječi
+opt-outi in legacy nastavitve ostanejo. Množično velja za trenutne skupne
+obsege, novi lokalni dedujejo napravo; ne trdi, da strežnik hrani nov globalni
+profil. **Ni nove trgovinske izdaje/fizičnega novega UI**; Androidjavni26/
+interniNeaktivno/FamilyHub/sheme/gostovanja/SDK/locks/dovoljenja/splet/Apple
+isti. Naslednji izdajni korak izključno javni, po naročilu, ne interni kanal.
+
 14. oktober — **produkcijski FCM vključen, Google OAuth/validate_only200 in
 dejanski push cron PASS**. [Dokazi](docs/server/PRODUCTION_PUSH.md). Lastnik
 izrecno potrdi novi jivie-production-fcm-sender/FCMAPIAdmin/enJSONključ,

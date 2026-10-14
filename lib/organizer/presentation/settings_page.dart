@@ -16,8 +16,7 @@ import 'backup/personal_json_export.dart';
 import 'backup/backup_recovery.dart';
 import '../platform/backup_preferences_replay.dart';
 import 'organizer_widgets.dart';
-import 'planning/device_reminder_settings.dart';
-import 'planning/remote_push_device_settings.dart';
+import 'inbox/inbox_preferences.dart';
 
 class OrganizerSettingsPage extends ConsumerWidget {
   const OrganizerSettingsPage({super.key, required this.actions});
@@ -74,9 +73,11 @@ class OrganizerSettingsPage extends ConsumerWidget {
           title: Text(l.guideOpen),
           onTap: () => showFirstTimeGuide(context, ref),
         ),
-        const DeviceReminderSettings(),
-        const SizedBox(height: 24),
-        const RemotePushDeviceSettings(),
+        ListTile(
+          leading: const Icon(Icons.notifications_active_outlined),
+          title: Text(l.reminderSettingsTitle),
+          onTap: () => showInboxPreferences(context, ref),
+        ),
         const SizedBox(height: 24),
         OrganizerHeading(
           title: l.organizerSettings,

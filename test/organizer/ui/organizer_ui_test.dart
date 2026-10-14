@@ -133,6 +133,8 @@ Future<void> mobileTab(WidgetTester tester, String text) async {
     'People': ('space', 'people'),
     'Več': ('more', 'more'),
     'More': ('more', 'more'),
+    'Nastavitve opomnikov': ('more', 'reminderSettings'),
+    'Reminder settings': ('more', 'reminderSettings'),
     'Nastavitve': ('more', 'settings'),
     'Settings': ('more', 'settings'),
     'Nastavitve prostora': ('more', 'spaceSettings'),

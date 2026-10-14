@@ -7247,6 +7247,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save or cancel the open form before changing spaces.'**
   String get desktopFinishEditing;
+
+  /// No description provided for @reminderSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder settings'**
+  String get reminderSettingsTitle;
+
+  /// No description provided for @notificationAllSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'All spaces'**
+  String get notificationAllSpaces;
+
+  /// No description provided for @notificationAllSpacesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Change one option for every currently available space, project and notification type.'**
+  String get notificationAllSpacesDescription;
+
+  /// No description provided for @notificationIndividualDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand a space or project to adjust its options. Other spaces keep their settings.'**
+  String get notificationIndividualDescription;
+
+  /// No description provided for @notificationSpacesAndProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Spaces and projects'**
+  String get notificationSpacesAndProjects;
+
+  /// No description provided for @notificationSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notificationSound;
+
+  /// No description provided for @notificationPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Device notifications (push)'**
+  String get notificationPush;
+
+  /// No description provided for @notificationDeviceDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications on this device'**
+  String get notificationDeviceDelivery;
+
+  /// No description provided for @notificationMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled in some places, disabled in others.'**
+  String get notificationMixed;
+
+  /// No description provided for @notificationLocalSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Local · settings for this device'**
+  String get notificationLocalSpace;
+
+  /// No description provided for @notificationSharedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced · settings for your account'**
+  String get notificationSharedSpace;
+
+  /// No description provided for @notificationTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual notification types'**
+  String get notificationTypes;
+
+  /// No description provided for @notificationServerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Email requires a connected server.'**
+  String get notificationServerRequired;
+
+  /// No description provided for @notificationNoSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No spaces are available.'**
+  String get notificationNoSpaces;
+
+  /// No description provided for @notificationThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery on this device'**
+  String get notificationThisDevice;
+
+  /// No description provided for @notificationDeviceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Display and sound also require system permission. Remote delivery requires a registered device.'**
+  String get notificationDeviceDescription;
 }
 
 class _AppLocalizationsDelegate

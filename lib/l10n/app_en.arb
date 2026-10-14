@@ -1519,5 +1519,21 @@
   "desktopToggleSidebar": "Show or hide sidebar",
   "desktopResizeSidebar": "Resize sidebar",
   "desktopResizeInspector": "Resize details",
-  "desktopFinishEditing": "Save or cancel the open form before changing spaces."
+  "desktopFinishEditing": "Save or cancel the open form before changing spaces.",
+  "reminderSettingsTitle": "Reminder settings",
+  "notificationAllSpaces": "All spaces",
+  "notificationAllSpacesDescription": "Change one option for every currently available space, project and notification type.",
+  "notificationIndividualDescription": "Expand a space or project to adjust its options. Other spaces keep their settings.",
+  "notificationSpacesAndProjects": "Spaces and projects",
+  "notificationSound": "Sound",
+  "notificationPush": "Device notifications (push)",
+  "notificationDeviceDelivery": "Notifications on this device",
+  "notificationMixed": "Enabled in some places, disabled in others.",
+  "notificationLocalSpace": "Local · settings for this device",
+  "notificationSharedSpace": "Synced · settings for your account",
+  "notificationTypes": "Individual notification types",
+  "notificationServerRequired": "Email requires a connected server.",
+  "notificationNoSpaces": "No spaces are available.",
+  "notificationThisDevice": "Delivery on this device",
+  "notificationDeviceDescription": "Display and sound also require system permission. Remote delivery requires a registered device."
 }

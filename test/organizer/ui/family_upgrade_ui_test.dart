@@ -165,6 +165,24 @@ class UpgradeController extends SharingUiController {
     savedSettings = settings;
   }
 
+  @override
+  Future<void> setNotificationChannel({
+    required Iterable<String> scopeIds,
+    required String channel,
+    required bool enabled,
+    required String expectedPartition,
+    String? category,
+  }) async {
+    savedScope = scopeIds.single;
+    savedCategory = category;
+    savedSettings =
+        (state.requireValue.notificationPreferences[savedScope]?.forCategory(
+                  category!,
+                ) ??
+                const SharedNotificationSettings())
+            .withChannel(channel, enabled);
+  }
+
   final opened = <NotificationTarget>[];
   final readIds = <int>[];
   final auditGate = Completer<List<SharedFinanceAuditEntry>>();
@@ -512,13 +530,24 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.tune_outlined).last);
       await tester.pumpAndSettle();
-      final tasks = find.widgetWithText(ExpansionTile, 'Opravila in načrti');
-      await tester.ensureVisible(tasks);
-      await tester.tap(tasks);
+      final scope = find.byKey(
+        const ValueKey('notification-shared-space-$sharingScopeId'),
+      );
+      await tester.ensureVisible(scope);
+      await tester.tap(find.text(sharingScope().name).last);
       await tester.pumpAndSettle();
-      final inApp = find.descendant(
-        of: tasks,
-        matching: find.widgetWithText(SwitchListTile, 'V centru obvestil'),
+      final types = find.text('Posamezne vrste obvestil');
+      await tester.ensureVisible(types);
+      await tester.tap(types);
+      await tester.pumpAndSettle();
+      final tasks = find.byKey(
+        const ValueKey('notification-category-$sharingScopeId-tasks'),
+      );
+      await tester.ensureVisible(tasks);
+      await tester.tap(find.text('Opravila in načrti').last);
+      await tester.pumpAndSettle();
+      final inApp = find.byKey(
+        const ValueKey('notification-setting-$sharingScopeId-tasks-inApp'),
       );
       await tester.ensureVisible(inApp);
       await tester.tap(inApp);
@@ -526,31 +555,20 @@ void main() {
       expect(controller.savedScope, sharingScopeId);
       expect(controller.savedCategory, 'tasks');
       expect(controller.savedSettings?.inApp, false);
-      expect(
-        tester
-            .widget<SwitchListTile>(
-              find.descendant(
-                of: tasks,
-                matching: find.widgetWithText(
-                  SwitchListTile,
-                  'Oddaljena sistemska obvestila',
+      for (final channel in ['push', 'email']) {
+        expect(
+          tester
+              .widget<CheckboxListTile>(
+                find.byKey(
+                  ValueKey(
+                    'notification-setting-$sharingScopeId-tasks-$channel',
+                  ),
                 ),
-              ),
-            )
-            .onChanged,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<SwitchListTile>(
-              find.descendant(
-                of: tasks,
-                matching: find.widgetWithText(SwitchListTile, 'E-pošta'),
-              ),
-            )
-            .onChanged,
-        isNull,
-      );
+              )
+              .onChanged,
+          isNull,
+        );
+      }
       expect(tester.takeException(), isNull);
     },
   );

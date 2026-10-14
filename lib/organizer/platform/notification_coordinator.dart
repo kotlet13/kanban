@@ -9,6 +9,7 @@ import '../state/organizer_provider.dart';
 import '../state/reminder_snooze_provider.dart';
 import '../state/notification_local_spaces_provider.dart';
 import '../state/local_spaces_provider.dart';
+import '../state/local_notification_preferences_provider.dart';
 import 'local_notification_scheduler.dart';
 import 'notification_providers.dart';
 
@@ -100,7 +101,7 @@ class _LocalNotificationCoordinatorState
     final shared = sharedState.valueOrNull;
     final identity =
         '${shared?.session?.partition}:${shared?.session?.deviceId}';
-    final settingsState = ref.read(localReminderSettingsProvider);
+    final settingsState = ref.read(localNotificationPreferencesProvider);
     final settings = settingsState.valueOrNull;
     if (settings == null || snapshots == null) {
       if (snapshotsState.hasError && !snapshotsState.isLoading) {
@@ -174,31 +175,58 @@ class _LocalNotificationCoordinatorState
       return;
     }
     if (!mounted || generation != _generation) return;
-    final requests = settings.enabled
-        ? [
-            for (final plan in plans)
-              LocalNotificationRequest(
-                plan: plan,
-                title: l.organizerAppName,
-                body: plan.reason == 'salary_check'
-                    ? l.financePlanReminderBody
-                    : plan.reason == 'income_check'
-                    ? l.financePlanIncomeReminderBody
-                    : plan.reason == 'finance_due'
-                    ? l.financePlanExpenseReminderBody
-                    : plan.reason == 'event_start'
-                    ? l.inboxDeviceEventReminder
-                    : l.inboxDeviceReminder,
-                sound:
-                    settings.sound &&
-                    (plan.target.isPersonal ||
-                        shared?.notificationPreferences[plan.target.scopeId]
-                                ?.forCategory('reminders')
-                                .sound ==
-                            true),
-              ),
-          ]
-        : <LocalNotificationRequest>[];
+    SharedNotificationSettings localSettings(ReminderPlan plan) {
+      final snapshot = snapshots
+          .where(
+            (s) =>
+                (s.workspaceKey.startsWith('private:')
+                    ? 'local'
+                    : s.workspaceKey) ==
+                plan.target.localWorkspaceId,
+          )
+          .firstOrNull;
+      return settings.resolve(
+        snapshot?.workspaceKey ?? plan.target.localWorkspaceId,
+        notificationProject(plan.target, snapshot),
+      );
+    }
+
+    final requests = [
+      for (final plan in plans)
+        if (plan.target.isPersonal
+            ? localSettings(plan).push
+            : settings
+                      .resolve(
+                        sharedDeviceNotificationWorkspace(
+                          shared!.session!.partition,
+                          plan.target.scopeId!,
+                        ),
+                      )
+                      .push &&
+                  (shared.notificationPreferences[plan.target.scopeId]
+                          ?.forCategory('reminders')
+                          .push ??
+                      true))
+          LocalNotificationRequest(
+            plan: plan,
+            title: l.organizerAppName,
+            body: plan.reason == 'salary_check'
+                ? l.financePlanReminderBody
+                : plan.reason == 'income_check'
+                ? l.financePlanIncomeReminderBody
+                : plan.reason == 'finance_due'
+                ? l.financePlanExpenseReminderBody
+                : plan.reason == 'event_start'
+                ? l.inboxDeviceEventReminder
+                : l.inboxDeviceReminder,
+            sound: plan.target.isPersonal
+                ? localSettings(plan).sound
+                : shared?.notificationPreferences[plan.target.scopeId]
+                          ?.forCategory('reminders')
+                          .sound ==
+                      true,
+          ),
+    ];
     try {
       final adapter = await ref.read(localNotificationAdapterProvider.future);
       if (!mounted || generation != _generation) return;
@@ -233,7 +261,7 @@ class _LocalNotificationCoordinatorState
       if (next.hasValue) _reconcile();
     });
     ref.listen(
-      localReminderSettingsProvider,
+      localNotificationPreferencesProvider,
       (_, _) => _ready ? _reconcile() : _start(),
     );
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -241,7 +269,7 @@ class _LocalNotificationCoordinatorState
       _locale = locale;
       WidgetsBinding.instance.addPostFrameCallback((_) => _reconcile());
     }
-    ref.watch(localReminderSettingsProvider);
+    ref.watch(localNotificationPreferencesProvider);
     return widget.child;
   }
 }

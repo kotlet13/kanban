@@ -4087,4 +4087,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get desktopFinishEditing =>
       'Save or cancel the open form before changing spaces.';
+
+  @override
+  String get reminderSettingsTitle => 'Reminder settings';
+
+  @override
+  String get notificationAllSpaces => 'All spaces';
+
+  @override
+  String get notificationAllSpacesDescription =>
+      'Change one option for every currently available space, project and notification type.';
+
+  @override
+  String get notificationIndividualDescription =>
+      'Expand a space or project to adjust its options. Other spaces keep their settings.';
+
+  @override
+  String get notificationSpacesAndProjects => 'Spaces and projects';
+
+  @override
+  String get notificationSound => 'Sound';
+
+  @override
+  String get notificationPush => 'Device notifications (push)';
+
+  @override
+  String get notificationDeviceDelivery => 'Notifications on this device';
+
+  @override
+  String get notificationMixed => 'Enabled in some places, disabled in others.';
+
+  @override
+  String get notificationLocalSpace => 'Local · settings for this device';
+
+  @override
+  String get notificationSharedSpace => 'Synced · settings for your account';
+
+  @override
+  String get notificationTypes => 'Individual notification types';
+
+  @override
+  String get notificationServerRequired => 'Email requires a connected server.';
+
+  @override
+  String get notificationNoSpaces => 'No spaces are available.';
+
+  @override
+  String get notificationThisDevice => 'Delivery on this device';
+
+  @override
+  String get notificationDeviceDescription =>
+      'Display and sound also require system permission. Remote delivery requires a registered device.';
 }

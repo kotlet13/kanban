@@ -1519,5 +1519,21 @@
   "desktopToggleSidebar": "Prikaži ali skrij stransko vrstico",
   "desktopResizeSidebar": "Spremeni širino stranske vrstice",
   "desktopResizeInspector": "Spremeni širino podrobnosti",
-  "desktopFinishEditing": "Shrani ali prekliči odprti obrazec pred menjavo prostora."
+  "desktopFinishEditing": "Shrani ali prekliči odprti obrazec pred menjavo prostora.",
+  "reminderSettingsTitle": "Nastavitve opomnikov",
+  "notificationAllSpaces": "Vsi prostori",
+  "notificationAllSpacesDescription": "Spremeni eno možnost za vse trenutno dostopne prostore, projekte in vrste obvestil.",
+  "notificationIndividualDescription": "Razpri prostor ali projekt in prilagodi njegove možnosti. Ostali prostori ohranijo svoje nastavitve.",
+  "notificationSpacesAndProjects": "Prostori in projekti",
+  "notificationSound": "Zvok",
+  "notificationPush": "Obvestila na napravi (push)",
+  "notificationDeviceDelivery": "Obvestila na tej napravi",
+  "notificationMixed": "Nekje vključeno, drugje izključeno.",
+  "notificationLocalSpace": "Lokalno · nastavitve te naprave",
+  "notificationSharedSpace": "Sinhronizirano · nastavitve tvojega računa",
+  "notificationTypes": "Posamezne vrste obvestil",
+  "notificationServerRequired": "E-pošta zahteva povezan strežnik.",
+  "notificationNoSpaces": "Ni razpoložljivih prostorov.",
+  "notificationThisDevice": "Dostava na tej napravi",
+  "notificationDeviceDescription": "Za prikaz in zvok potrebuješ tudi dovoljenje sistema. Oddaljena dostava potrebuje registrirano napravo."
 }

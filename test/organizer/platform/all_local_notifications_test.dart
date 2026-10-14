@@ -1,3 +1,6 @@
+import 'package:kanban/organizer/state/local_notification_preferences_provider.dart';
+import 'package:kanban/organizer/state/inbox_projection_provider.dart';
+import 'package:kanban/organizer/state/reminder_snooze_provider.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,6 +88,138 @@ class Selected extends OrganizerController {
 }
 
 void main() {
+  testWidgets(
+    'project sound and delivery exceptions reschedule only their own local alarm',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final due = DateTime.now().add(const Duration(hours: 1));
+      final a = localSnapshot('house-a', 'A', due);
+      final b = localSnapshot('house-b', 'B', due);
+      final snapshots = {
+        'house-a': a.copyWith(
+          tasks: [a.tasks.single.copyWith(projectId: 'p1')],
+        ),
+        'house-b': b,
+      };
+      final scheduler = fake.FakeScheduler();
+      final db = CollaborationDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localDatabaseProvider.overrideWith((ref) async => db),
+            localSpacesProvider.overrideWith(() => Catalog(snapshots)),
+            organizerProvider.overrideWith(
+              () => Selected(snapshots['house-a']!),
+            ),
+            collaborationProvider.overrideWith(
+              () => SharingUiController(initial: CollaborationState()),
+            ),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ],
+          child: MaterialApp(
+            locale: const Locale('sl'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const LocalNotificationCoordinator(
+              child: Scaffold(body: Text('ready')),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(2));
+      final c = ProviderScope.containerOf(tester.element(find.text('ready')));
+      await c
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('sound', true, workspace: 'house-a', project: 'p1');
+      await tester.pumpAndSettle();
+      expect(
+        scheduler.scheduled.values
+            .singleWhere((r) => r.plan.target.localWorkspaceId == 'house-a')
+            .sound,
+        isTrue,
+      );
+      expect(
+        scheduler.scheduled.values
+            .singleWhere((r) => r.plan.target.localWorkspaceId == 'house-b')
+            .sound,
+        isFalse,
+      );
+      await c
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('push', false, workspace: 'house-a', project: 'p1');
+      await tester.pumpAndSettle();
+      expect(
+        scheduler.scheduled.values.single.plan.target.localWorkspaceId,
+        'house-b',
+      );
+      expect(scheduler.canceled.toSet(), hasLength(1));
+      await c
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('push', true);
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(2));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'per-project in-app optout updates the inbox and unread badge together',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final due = DateTime.now().subtract(const Duration(hours: 1));
+      final original = localSnapshot('house-a', 'A', due);
+      final snap = original.copyWith(
+        tasks: [original.tasks.single.copyWith(projectId: 'p1')],
+      );
+      final db = CollaborationDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localDatabaseProvider.overrideWith((ref) async => db),
+            localSpacesProvider.overrideWith(() => Catalog({'house-a': snap})),
+            organizerProvider.overrideWith(() => Selected(snap)),
+            collaborationProvider.overrideWith(
+              () => SharingUiController(initial: CollaborationState()),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  ref.watch(effectiveReminderPlansProvider);
+                  return Text(
+                    '${ref.watch(organizerInboxProjectionProvider).local.length}:${ref.watch(organizerInboxHasUnreadProvider)}',
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1:true'), findsOneWidget);
+      final c = ProviderScope.containerOf(tester.element(find.text('1:true')));
+      await c
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('inApp', false, workspace: 'house-a', project: 'p1');
+      await tester.pumpAndSettle();
+      expect(find.text('0:false'), findsOneWidget);
+      expect(snap.reminders.single.isRead, isFalse);
+      expect(snap.tasks.single.isCompleted, isFalse);
+      await c
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('inApp', true);
+      await tester.pumpAndSettle();
+      expect(find.text('1:true'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'all local tasks keep unique alarms and inbox sources with legacy default keys',
     () {

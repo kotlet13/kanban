@@ -37,6 +37,7 @@ void main() {
       OrganizerArea.sharing,
       OrganizerArea.spaceSettings,
       OrganizerArea.settings,
+      OrganizerArea.reminderSettings,
       OrganizerArea.backups,
     ]) {
       expect(organizerDestinationFor(area), OrganizerDestination.more);
@@ -105,6 +106,18 @@ void main() {
         await mobileTab(tester, 'Finance');
         expect(
           find.byKey(const ValueKey('content-_Area.finances')),
+          findsOneWidget,
+        );
+        await mobileTab(tester, 'Nastavitve opomnikov');
+        expect(
+          find.byKey(const ValueKey('content-_Area.reminderSettings')),
+          findsOneWidget,
+        );
+        expect(find.text('Vsi prostori'), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey('organizer-shell-back')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('content-_Area.more')),
           findsOneWidget,
         );
         await mobileTab(tester, 'Varnostne kopije');

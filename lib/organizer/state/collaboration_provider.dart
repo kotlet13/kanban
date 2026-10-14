@@ -665,6 +665,21 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       settings: settings,
     ),
   );
+  Future<void> setNotificationChannel({
+    required Iterable<String> scopeIds,
+    required String channel,
+    required bool enabled,
+    required String expectedPartition,
+    String? category,
+  }) => _edit(
+    (repo) => repo.setNotificationChannel(
+      scopeIds: scopeIds,
+      channel: channel,
+      enabled: enabled,
+      expectedPartition: expectedPartition,
+      category: category,
+    ),
+  );
   Future<String> putReminder({
     String? id,
     required String scopeId,

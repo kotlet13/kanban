@@ -14,6 +14,7 @@ enum OrganizerArea {
   more,
   backups,
   settings,
+  reminderSettings,
   spaceSettings,
   sharing,
   inbox,
@@ -38,6 +39,7 @@ OrganizerDestination organizerDestinationFor(OrganizerArea area) =>
       OrganizerArea.people => OrganizerDestination.space,
       OrganizerArea.more ||
       OrganizerArea.settings ||
+      OrganizerArea.reminderSettings ||
       OrganizerArea.spaceSettings ||
       OrganizerArea.sharing ||
       OrganizerArea.backups => OrganizerDestination.more,

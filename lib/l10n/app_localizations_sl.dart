@@ -4094,4 +4094,56 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get desktopFinishEditing =>
       'Shrani ali prekliči odprti obrazec pred menjavo prostora.';
+
+  @override
+  String get reminderSettingsTitle => 'Nastavitve opomnikov';
+
+  @override
+  String get notificationAllSpaces => 'Vsi prostori';
+
+  @override
+  String get notificationAllSpacesDescription =>
+      'Spremeni eno možnost za vse trenutno dostopne prostore, projekte in vrste obvestil.';
+
+  @override
+  String get notificationIndividualDescription =>
+      'Razpri prostor ali projekt in prilagodi njegove možnosti. Ostali prostori ohranijo svoje nastavitve.';
+
+  @override
+  String get notificationSpacesAndProjects => 'Prostori in projekti';
+
+  @override
+  String get notificationSound => 'Zvok';
+
+  @override
+  String get notificationPush => 'Obvestila na napravi (push)';
+
+  @override
+  String get notificationDeviceDelivery => 'Obvestila na tej napravi';
+
+  @override
+  String get notificationMixed => 'Nekje vključeno, drugje izključeno.';
+
+  @override
+  String get notificationLocalSpace => 'Lokalno · nastavitve te naprave';
+
+  @override
+  String get notificationSharedSpace =>
+      'Sinhronizirano · nastavitve tvojega računa';
+
+  @override
+  String get notificationTypes => 'Posamezne vrste obvestil';
+
+  @override
+  String get notificationServerRequired => 'E-pošta zahteva povezan strežnik.';
+
+  @override
+  String get notificationNoSpaces => 'Ni razpoložljivih prostorov.';
+
+  @override
+  String get notificationThisDevice => 'Dostava na tej napravi';
+
+  @override
+  String get notificationDeviceDescription =>
+      'Za prikaz in zvok potrebuješ tudi dovoljenje sistema. Oddaljena dostava potrebuje registrirano napravo.';
 }

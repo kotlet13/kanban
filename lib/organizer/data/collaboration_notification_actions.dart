@@ -177,14 +177,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
     required String category,
     required SharedNotificationSettings settings,
   }) async {
-    if (!const [
-      'tasks',
-      'events',
-      'shopping',
-      'finance',
-      'reminders',
-      'membership',
-    ].contains(category)) {
+    if (!sharedNotificationCategories.contains(category)) {
       throw const CollaborationException('validation_error');
     }
     final session = _requireSession(), epoch = _epoch;
@@ -216,6 +209,69 @@ extension CollaborationNotificationActions on CollaborationRepository {
         },
         'preferences:$scopeId:$category',
       );
+    });
+    await refreshLocal();
+  }
+
+  /// One durable local transaction; native commands remain scoped and replayable.
+  /// Read current values inside the transaction so changing one channel never
+  /// overwrites another channel with a stale UI snapshot.
+  Future<void> setNotificationChannel({
+    required Iterable<String> scopeIds,
+    required String channel,
+    required bool enabled,
+    required String expectedPartition,
+    String? category,
+  }) async {
+    if (!const ['inApp', 'sound', 'push', 'email'].contains(channel) ||
+        category != null && !sharedNotificationCategories.contains(category)) {
+      throw const CollaborationException('validation_error');
+    }
+    final session = _requireSession(), epoch = _epoch;
+    if (session.profile.partition != expectedPartition) {
+      throw const CollaborationException('session_changed');
+    }
+    final ids = scopeIds.toSet();
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      for (final id in ids) {
+        await _readableReminderScope(session.profile.partition, id);
+        if (!state.scopes.any((s) => s.id == id && !s.revoked && !s.archived)) {
+          throw const CollaborationException('permission_revoked');
+        }
+      }
+      for (final id in ids) {
+        final rows = await database.rows(
+          'SELECT data FROM notification_preferences WHERE partition=? AND scope_id=?',
+          [expectedPartition, id],
+        );
+        final saved = rows.isEmpty
+            ? <String, dynamic>{}
+            : CollaborationRepository._map(rows.first['data']);
+        for (final kind
+            in category == null ? sharedNotificationCategories : [category]) {
+          if (kind == 'ideas' && state.recordContractVersion < 5) continue;
+          if (kind == 'finance' &&
+              !(await _cachedFinancePolicy(expectedPartition, id)).canRead) {
+            continue;
+          }
+          final settings = SharedNotificationSettings.fromJson(
+            Map<String, dynamic>.from(saved[kind] as Map? ?? const {}),
+          ).withChannel(channel, enabled);
+          saved[kind] = settings.toJson();
+          await _enqueueCommand(expectedPartition, 'inbox.preferences.set', {
+            'scopeId': id,
+            'category': kind,
+            'settings': settings.toJson(),
+            'requestId': newSharedId(),
+          }, 'preferences:$id:$kind');
+        }
+        await database.execute(
+          'INSERT INTO notification_preferences(partition,scope_id,data) VALUES(?,?,?) ON CONFLICT(partition,scope_id) DO UPDATE SET data=excluded.data',
+          [expectedPartition, id, jsonEncode(saved)],
+        );
+      }
+      _checkEpoch(epoch);
     });
     await refreshLocal();
   }

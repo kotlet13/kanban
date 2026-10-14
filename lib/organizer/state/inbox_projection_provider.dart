@@ -7,6 +7,7 @@ import 'finance_inbox_provider.dart';
 import 'organizer_provider.dart';
 import 'reminder_snooze_provider.dart';
 import 'notification_local_spaces_provider.dart';
+import 'local_notification_preferences_provider.dart';
 
 final rawOrganizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
   ref,
@@ -15,16 +16,42 @@ final rawOrganizerInboxProjectionProvider = Provider<OrganizerInboxProjection>((
   final now = ref.read(organizerClockProvider)();
   final personal = ref.watch(organizerProvider);
   final shared = ref.watch(collaborationProvider);
-  return projectOrganizerInbox(
+  final snapshots = ref.watch(notificationLocalSnapshotsProvider).valueOrNull;
+  final policy = ref.watch(localNotificationPreferencesProvider).valueOrNull;
+  final projection = projectOrganizerInbox(
     personal: personal.isLoading || personal.hasError
         ? null
         : personal.valueOrNull,
-    localSnapshots: ref.watch(notificationLocalSnapshotsProvider).valueOrNull,
+    localSnapshots: snapshots,
     shared: shared.isLoading || shared.hasError
         ? CollaborationState()
         : shared.valueOrNull ?? CollaborationState(),
     effectivePlans: ref.watch(effectiveReminderPlansProvider).valueOrNull,
     now: now,
+  );
+  bool visible(NotificationTarget target) {
+    if (!target.isPersonal || policy == null) return true;
+    final snapshot = snapshots
+        ?.where(
+          (s) =>
+              (s.workspaceKey.startsWith('private:')
+                  ? 'local'
+                  : s.workspaceKey) ==
+              target.localWorkspaceId,
+        )
+        .firstOrNull;
+    return policy
+        .resolve(
+          snapshot?.workspaceKey ?? target.localWorkspaceId,
+          notificationProject(target, snapshot),
+        )
+        .inApp;
+  }
+
+  return OrganizerInboxProjection(
+    local: projection.local.where((p) => visible(p.plan.target)).toList(),
+    shared: projection.shared,
+    finance: projection.finance.where((p) => visible(p.target)).toList(),
   );
 });
 

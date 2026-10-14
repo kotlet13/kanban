@@ -1,4 +1,5 @@
 import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
+import 'package:kanban/organizer/state/local_notification_preferences_provider.dart';
 import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
@@ -57,6 +58,78 @@ Widget host(List<Override> overrides, Widget child) {
 }
 
 void main() {
+  testWidgets(
+    'shared sound follows the scope preference without a second device sound switch',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+        'organizer_local_reminders_sound_v1': false,
+      });
+      final due = DateTime.now().add(const Duration(hours: 1));
+      final scheduler = fake.FakeScheduler();
+      final controller = SharingUiController(
+        initial: CollaborationState(
+          session: sharingSession(),
+          scopes: [sharingScope()],
+          data: {
+            sharingScopeId: SharedScopeData(
+              tasks: [sharingData().tasks.first.copyWith(dueAt: due)],
+            ),
+          },
+          notificationPreferences: {
+            sharingScopeId: SharedNotificationPreferences(
+              scopeId: sharingScopeId,
+              categories: const {
+                'reminders': SharedNotificationSettings(sound: true),
+              },
+            ),
+          },
+        ),
+      );
+      await tester.pumpWidget(
+        host([
+          organizerStorageProvider.overrideWithValue(
+            () async => personal.MemoryOrganizerStorage(),
+          ),
+          collaborationProvider.overrideWith(() => controller),
+          localNotificationSchedulerProvider.overrideWithValue(scheduler),
+        ], const Text('ready')),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.scheduled, isNotEmpty);
+      expect(scheduler.scheduled.values.every((r) => r.sound), isTrue);
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('ready')),
+      );
+      await container
+          .read(localNotificationPreferencesProvider.notifier)
+          .change('push', false);
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, isEmpty);
+      await container
+          .read(localNotificationPreferencesProvider.notifier)
+          .change(
+            'push',
+            true,
+            workspace: sharedDeviceNotificationWorkspace(
+              sharingSession().partition,
+              sharingScopeId,
+            ),
+          );
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, isNotEmpty);
+
+      final c = ProviderScope.containerOf(tester.element(find.text('ready')));
+      expect(
+        (await c.read(
+          localNotificationPreferencesProvider.future,
+        )).defaults.sound,
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'shared initialization loading retains existing scheduled alarms until identity resolves',
     (tester) async {

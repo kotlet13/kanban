@@ -239,6 +239,41 @@ class SharedNotificationSettings {
     this.email = false,
   });
   final bool inApp, sound, push, email;
+  SharedNotificationSettings withChannel(String channel, bool value) =>
+      switch (channel) {
+        'inApp' => SharedNotificationSettings(
+          inApp: value,
+          sound: sound,
+          push: push,
+          email: email,
+        ),
+        'sound' => SharedNotificationSettings(
+          inApp: inApp,
+          sound: value,
+          push: push,
+          email: email,
+        ),
+        'push' => SharedNotificationSettings(
+          inApp: inApp,
+          sound: sound,
+          push: value,
+          email: email,
+        ),
+        'email' => SharedNotificationSettings(
+          inApp: inApp,
+          sound: sound,
+          push: push,
+          email: value,
+        ),
+        _ => throw ArgumentError.value(channel, 'channel'),
+      };
+  bool channel(String channel) => switch (channel) {
+    'inApp' => inApp,
+    'sound' => sound,
+    'push' => push,
+    'email' => email,
+    _ => throw ArgumentError.value(channel, 'channel'),
+  };
   Map<String, Object?> toJson() => {
     'inApp': inApp,
     'sound': sound,
@@ -253,6 +288,16 @@ class SharedNotificationSettings {
         email: j.containsKey('email') ? readBool(j, 'email') : false,
       );
 }
+
+const sharedNotificationCategories = [
+  'reminders',
+  'tasks',
+  'events',
+  'shopping',
+  'ideas',
+  'membership',
+  'finance',
+];
 
 class SharedNotificationPreferences {
   SharedNotificationPreferences({

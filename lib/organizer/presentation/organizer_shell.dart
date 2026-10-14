@@ -838,6 +838,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.more => l.organizerMore,
       _Area.backups => l.organizerBackups,
       _Area.settings => l.organizerSettings,
+      _Area.reminderSettings => l.reminderSettingsTitle,
       _Area.spaceSettings => l.spaceSettingsTitle,
       _Area.sharing => l.sharingAccount,
       _Area.inbox => l.inboxTitle,
@@ -859,6 +860,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     _Area.more => Icons.more_horiz,
     _Area.backups => Icons.backup_outlined,
     _Area.settings => Icons.tune_outlined,
+    _Area.reminderSettings => Icons.notifications_active_outlined,
     _Area.spaceSettings => Icons.settings_outlined,
     _Area.sharing => Icons.people_outline,
     _Area.inbox => Icons.notifications_none_outlined,
@@ -1050,6 +1052,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               ..._contentAreas(),
               _Area.sharing,
               _Area.spaceSettings,
+              _Area.reminderSettings,
               _Area.settings,
               _Area.backups,
             ];
@@ -1525,6 +1528,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             _Area.sharing,
             _Area.spaceSettings,
             _Area.backups,
+            _Area.reminderSettings,
             _Area.settings,
           ])
             link(area),
@@ -1964,6 +1968,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         OrganizerDestination.more => [
           _Area.sharing,
           _Area.spaceSettings,
+          _Area.reminderSettings,
           _Area.settings,
           _Area.backups,
         ],
@@ -2015,7 +2020,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             onTap: () => _navigate(area),
           ),
         heading(l.organizerMoreTools),
-        for (final area in [_Area.settings, _Area.backups])
+        for (final area in [
+          _Area.reminderSettings,
+          _Area.settings,
+          _Area.backups,
+        ])
           OrganizerHubLink(
             title: _label(context, area),
             icon: _icon(area),
@@ -2212,6 +2221,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onConnect: () => _navigate(_Area.sharing),
       ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
+      _Area.reminderSettings => const InboxPreferences(),
       _Area.ideas => const IdeasPage(),
       _Area.garden =>
         selection?.allSpacesSelected == true
@@ -2233,7 +2243,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
               )
             : const GardenPage(),
       _Area.inbox => OrganizerInboxPage(
-        onSettings: () => showInboxPreferences(context, ref),
+        onSettings: () => _navigate(_Area.reminderSettings),
         onAccount: () => _navigate(_Area.sharing),
         onMembers: _openSpaceSettings,
       ),
