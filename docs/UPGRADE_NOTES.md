@@ -307,7 +307,7 @@ sprememb podatkovnega modela ali izvedbe popravkov.
 
 ## 16 Zaporedni vnos nakupov in količine na istem zaslonu
 
-Zabeleženo 14. oktobra 2026. Status: zahteva za prihodnjo nadgradnjo.
+Zabeleženo 14. oktobra 2026. Status: lokalno izvedeno; 4 ciljna preverjanja vnosa/fokusa in napake PASS, nova izdaja še sledi.
 
 Po vsakem uspešno potrjenem vnosu nakupa ponovno osredotočiti vnosno polje za
 naslednji artikel, da je mogoče hitro dodajati več artiklov zaporedoma brez

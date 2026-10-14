@@ -34,7 +34,12 @@ class OrganizerActions implements OrganizerCollectionActions {
   Future<void> createShoppingItem({
     required String listId,
     required String title,
-  }) => controller.createShoppingItem(listId: listId, title: title);
+    String quantity = '1',
+  }) => controller.createShoppingItem(
+    listId: listId,
+    title: title,
+    quantity: quantity,
+  );
 
   @override
   Future<void> setShoppingItemChecked(String id, bool value) =>

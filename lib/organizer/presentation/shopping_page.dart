@@ -38,20 +38,49 @@ class OrganizerShoppingPage extends StatefulWidget {
 class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
   bool _showAll = false;
   final _item = TextEditingController();
+  final _quantity = TextEditingController(text: '1');
+  final _itemFocus = FocusNode();
+  int _generation = 0;
   bool _busy = false;
+
+  @override
+  void didUpdateWidget(OrganizerShoppingPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.snapshot.workspaceKey != widget.snapshot.workspaceKey ||
+        oldWidget.reportScopeId != widget.reportScopeId ||
+        oldWidget.selectedId != widget.selectedId) {
+      _generation++;
+      _item.clear();
+      _quantity.text = '1';
+    }
+  }
+
   @override
   void dispose() {
     _item.dispose();
+    _quantity.dispose();
+    _itemFocus.dispose();
     super.dispose();
   }
 
   Future<void> _add(String listId) async {
     final title = _item.text.trim();
     if (title.isEmpty || _busy) return;
+    final generation = _generation;
+    final quantity = _quantity.text.trim();
+    var saved = false;
     setState(() => _busy = true);
     try {
-      await widget.actions.createShoppingItem(listId: listId, title: title);
-      if (mounted) _item.clear();
+      await widget.actions.createShoppingItem(
+        listId: listId,
+        title: title,
+        quantity: quantity,
+      );
+      if (mounted && generation == _generation) {
+        _item.clear();
+        _quantity.text = '1';
+        saved = true;
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +88,16 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        if (saved && generation == _generation) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && generation == _generation && !widget.readOnly) {
+              _itemFocus.requestFocus();
+            }
+          });
+        }
+      }
     }
   }
 
@@ -222,23 +260,41 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             ),
           ),
         if (!widget.readOnly)
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: TextField(
-                  key: const ValueKey('shopping-item-field'),
-                  controller: _item,
-                  textCapitalization: TextCapitalization.sentences,
-                  enabled: !_busy,
-                  decoration: InputDecoration(hintText: l.organizerItemHint),
-                  onSubmitted: (_) => _add(list.id),
-                ),
+              TextField(
+                key: const ValueKey('shopping-item-field'),
+                controller: _item,
+                focusNode: _itemFocus,
+                textInputAction: TextInputAction.done,
+                textCapitalization: TextCapitalization.sentences,
+                enabled: !_busy,
+                decoration: InputDecoration(hintText: l.organizerItemHint),
+                onSubmitted: (_) => _add(list.id),
               ),
-              const SizedBox(width: 8),
-              IconButton.filled(
-                tooltip: l.organizerAddItem,
-                onPressed: _busy ? null : () => _add(list.id),
-                icon: const Icon(Icons.add),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('shopping-quantity-field'),
+                      controller: _quantity,
+                      textInputAction: TextInputAction.done,
+                      enabled: !_busy,
+                      decoration: InputDecoration(
+                        labelText: l.organizerQuantity,
+                      ),
+                      onSubmitted: (_) => _add(list.id),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton.filled(
+                    tooltip: l.organizerAddItem,
+                    onPressed: _busy ? null : () => _add(list.id),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
               ),
             ],
           ),

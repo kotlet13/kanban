@@ -84,6 +84,7 @@ class CollaborationActions implements OrganizerCollectionActions {
   Future<void> createShoppingItem({
     required String listId,
     required String title,
+    String quantity = '1',
   }) async {
     if (!await showSharedContentPolicy(
       context,
@@ -97,7 +98,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       scopeId: scope.id,
       listId: listId,
       title: title,
-      quantity: '1',
+      quantity: quantity,
     );
   }
 

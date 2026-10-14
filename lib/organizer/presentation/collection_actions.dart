@@ -15,6 +15,7 @@ abstract interface class OrganizerCollectionActions {
   Future<void> createShoppingItem({
     required String listId,
     required String title,
+    String quantity = '1',
   });
   Future<void> setShoppingItemChecked(String id, bool value);
   Future<void> setTaskCompleted(String id, bool value);
