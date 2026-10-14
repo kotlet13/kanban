@@ -63,7 +63,7 @@ se vezani opomnik ustrezno prestavi.
 ## 3 Odvečno besedilo v podrobnostih projekta
 
 Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka projekta
-»Mansarda«. Status: opomba za prihodnji popravek.
+»Mansarda«. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
 
 Na zaslonu Prostor → Projekti → izbrani projekt je pod naslovom projekta in
 nad razdelkom »Koledarski termin« blok »Okvirno trajanje«. Obvestili o
@@ -89,7 +89,7 @@ Točno mesto v izvoru:
 ## 4 Zavajajoče sporočilo za prazen dan v koledarju projekta
 
 Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka projekta
-»Mansarda«. Status: opomba za prihodnji popravek.
+»Mansarda«. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
 
 Pod izbranim dnevom v koledarju projekta se izpiše »V tem projektu še ni
 opravil.«, čeprav ima projekt opravilo na drug datum. Sporočilo mora opisovati

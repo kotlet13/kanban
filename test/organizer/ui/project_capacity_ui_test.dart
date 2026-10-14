@@ -54,6 +54,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byType(ExpansionTile));
+    await tester.pumpAndSettle();
   }
 
   for (final language in ['sl', 'en']) {
@@ -129,6 +131,9 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(find.textContaining('1:30:00'), findsNothing);
+    await tester.tap(find.byType(ExpansionTile));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.textContaining('1:30:00'), findsOneWidget);
     clock = clock.add(const Duration(minutes: 30));
     await tester.pump(const Duration(seconds: 1));

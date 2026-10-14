@@ -70,13 +70,14 @@ class _ProjectCapacityPanelState extends State<ProjectCapacityPanel> {
     return Padding(
       key: ValueKey('capacity-${widget.phaseId ?? widget.project.id}'),
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 8),
+        title: Text(
+          l.planningCapacityTitle,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         children: [
-          Text(
-            l.planningCapacityTitle,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
           if (estimate.taskCount == 0)
             Text(l.planningCapacityNoTasks)
           else if (estimate.openTaskCount == 0)

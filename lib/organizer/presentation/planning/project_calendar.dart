@@ -255,7 +255,7 @@ class _ProjectCalendarState extends State<ProjectCalendar> {
         ),
         if (selectedEntries.isEmpty)
           Text(
-            l.organizerNoMatchingTasks,
+            l.projectCalendarEmptyDay,
             style: Theme.of(context).textTheme.bodySmall,
           ),
         for (final item in selectedEntries)
