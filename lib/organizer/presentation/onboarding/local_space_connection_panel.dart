@@ -4,6 +4,7 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/local_spaces_provider.dart';
 import '../shared/sharing_errors.dart';
+import '../shared/content_moderation.dart';
 import '../shared/sharing_session_boundary.dart';
 
 class LocalSpaceConnectionPanel extends ConsumerStatefulWidget {
@@ -116,8 +117,17 @@ class _LocalSpaceConnectionPanelState
           mounted &&
           guard.isCurrent &&
           _online(ref.read(collaborationProvider).requireValue)) {
+        // Linking a local household/organization is a shared upload. Request
+        // explicit consent only after the user confirms this account's preview.
+        if (!await showSharedContentPolicy(context)) return;
+        if (!mounted ||
+            !guard.isCurrent ||
+            !_online(ref.read(collaborationProvider).requireValue)) {
+          return;
+        }
+        setState(() => _previewOpen = false);
         await guard.controller.publishLocalSpaces(preview);
-        if (mounted) setState(_selected.clear);
+        if (mounted && guard.isCurrent) setState(_selected.clear);
       }
     } catch (error) {
       if (mounted) setState(() => _error = sharingErrorMessage(context, error));
