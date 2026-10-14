@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -131,44 +134,50 @@ class FlutterNotificationScheduler implements LocalNotificationScheduler {
     int id,
     LocalNotificationRequest request,
     String payload,
-  ) => _plugin.zonedSchedule(
-    id: id,
-    title: request.title,
-    body: request.body,
-    scheduledDate: tz.TZDateTime.from(
-      request.plan.scheduledAt.toUtc(),
-      tz.local,
-    ),
-    payload: payload,
-    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-    notificationDetails: NotificationDetails(
-      android: AndroidNotificationDetails(
-        request.sound ? 'reminders_sound_v1' : 'reminders_quiet_v1',
-        'Jivie',
-        groupKey: request.plan.target.isPersonal
-            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
-            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-        playSound: request.sound,
-        enableVibration: request.sound,
+  ) async {
+    final target = request.plan.target;
+    final localGroup = 'jivie.local.${target.localWorkspaceId}';
+    final accountGroup = 'jivie.${target.serverId}.${target.accountId}';
+    // Match the published FamilyHub APNs thread-id exactly. Android retains
+    // its existing readable group key, and device-only spaces stay separate.
+    final darwinThread = target.isPersonal
+        ? localGroup
+        : (await Sha256().hash(
+            utf8.encode('${target.serverId}:${target.accountId}'),
+          )).bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    await _plugin.zonedSchedule(
+      id: id,
+      title: request.title,
+      body: request.body,
+      scheduledDate: tz.TZDateTime.from(
+        request.plan.scheduledAt.toUtc(),
+        tz.local,
       ),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentSound: request.sound,
-        presentBadge: false,
-        threadIdentifier: request.plan.target.isPersonal
-            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
-            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
+      payload: payload,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          request.sound ? 'reminders_sound_v1' : 'reminders_quiet_v1',
+          'Jivie',
+          groupKey: target.isPersonal ? localGroup : accountGroup,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+          playSound: request.sound,
+          enableVibration: request.sound,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: request.sound,
+          presentBadge: false,
+          threadIdentifier: darwinThread,
+        ),
+        macOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: request.sound,
+          presentBadge: false,
+          threadIdentifier: darwinThread,
+        ),
       ),
-      macOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentSound: request.sound,
-        presentBadge: false,
-        threadIdentifier: request.plan.target.isPersonal
-            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
-            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
-      ),
-    ),
-  );
+    );
+  }
 }

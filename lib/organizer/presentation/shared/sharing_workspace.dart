@@ -224,6 +224,24 @@ class SharingWorkspace extends ConsumerWidget {
                 !scopes.any((scope) => scope.id == selectedScopeId)) {
               return Text(l.sharingAccessRevoked);
             }
+            final syncStatus = SharingStatus(
+              key: ValueKey('sharing-status-${scope.id}-$view'),
+              state: state,
+              scopeId: scope.id,
+              onSync: () => _sync(context, ref),
+              onConflicts: () => showSharingSyncConflicts(context, ref),
+              onExport: () => exportSharingDrafts(context, ref),
+              onConnect: onConnect,
+              detailsBuilder: (dialogContext, current, actionsEnabled) =>
+                  _syncDetails(
+                    dialogContext,
+                    ref,
+                    current,
+                    scope.id,
+                    actionsEnabled,
+                    context,
+                  ),
+            );
             if (scope.kind == SharedScopeKind.organization &&
                 view != SharingView.people &&
                 view != SharingView.shopping) {
@@ -246,7 +264,9 @@ class SharingWorkspace extends ConsumerWidget {
               return AllSpacesPage(
                 onOverviewArea: onOverviewArea,
                 key: ValueKey('organization-${scope.id}-$view'),
-                titleAccessory: ScopeLifecycleMenu(scope: scope),
+                titleAccessory: view == SharingView.agenda
+                    ? syncStatus
+                    : ScopeLifecycleMenu(scope: scope),
                 area: switch (view) {
                   SharingView.agenda => AllSpacesArea.today,
                   SharingView.timeline => AllSpacesArea.calendar,
@@ -273,25 +293,12 @@ class SharingWorkspace extends ConsumerWidget {
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
-            final syncStatus = SharingStatus(
-              key: ValueKey('sharing-status-${scope.id}-$view'),
-              state: state,
-              scopeId: scope.id,
-              onSync: () => _sync(context, ref),
-              onConflicts: () => showSharingSyncConflicts(context, ref),
-              onExport: () => exportSharingDrafts(context, ref),
-              onConnect: onConnect,
-              detailsBuilder: (dialogContext, current, actionsEnabled) =>
-                  _syncDetails(
-                    dialogContext,
-                    ref,
-                    current,
-                    scope.id,
-                    actionsEnabled,
-                    context,
-                  ),
-            );
-            final status = Row(mainAxisSize: MainAxisSize.min, children: [syncStatus, ScopeLifecycleMenu(scope: scope)]);
+            final status = view == SharingView.agenda
+                ? syncStatus
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [syncStatus, ScopeLifecycleMenu(scope: scope)],
+                  );
             final householdProjects =
                 scope.kind == SharedScopeKind.household &&
                 scope.accessPolicyVersion == 3 &&

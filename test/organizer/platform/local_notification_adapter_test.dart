@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kanban/organizer/domain/notification_models.dart';
@@ -348,6 +349,78 @@ void main() {
       scheduler.permission = LocalNotificationPermission.denied;
       await adapter.reconcile([request(1, now.add(const Duration(hours: 1)))]);
       expect(scheduler.pending, isEmpty);
+    },
+  );
+  test(
+    'Darwin shared thread migration replaces future pending once with same ID, keeps local/past/delivered untouched',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      LocalNotificationRequest shared(int index, DateTime time) =>
+          LocalNotificationRequest(
+            plan: ReminderPlan(
+              stableKey: 'shared-$index',
+              scheduledAt: time,
+              reason: 'task_due',
+              target: NotificationTarget(
+                serverUrl: 'https://synthetic.invalid',
+                serverId: 'server',
+                accountId: 'account',
+                scopeId: 'scope',
+                records: [
+                  NotificationRecordTarget(
+                    type: 'task',
+                    recordId: 'shared-task-$index',
+                  ),
+                ],
+              ),
+            ),
+            title: 'Shared task',
+            body: 'Due',
+          );
+      final sharedFuture = shared(1, now.add(const Duration(hours: 1)));
+      final pastPending = shared(2, now.subtract(const Duration(minutes: 1)));
+      final pastDelivered = shared(3, now.subtract(const Duration(minutes: 2)));
+      final localFuture = request(4, now.add(const Duration(hours: 2)));
+      final requests = [sharedFuture, pastPending, pastDelivered, localFuture];
+      final legacy = LocalNotificationAdapter(
+        scheduler: scheduler,
+        preferences: prefs,
+        now: () => now.subtract(const Duration(days: 1)),
+      );
+      await legacy.initialize((_) {});
+      await legacy.reconcile(requests);
+      final oldIds = {
+        for (final entry in scheduler.scheduled.entries)
+          entry.value.plan.stableKey: entry.key,
+      };
+      final oldPayloads = {...scheduler.payloads};
+      scheduler.pending.remove(oldIds[pastDelivered.plan.stableKey]);
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      await adapter.reconcile(requests);
+      expect(scheduler.canceled, [oldIds[sharedFuture.plan.stableKey]]);
+      expect(scheduler.scheduleCalls, 5);
+      expect(
+        scheduler.scheduled.entries
+            .singleWhere(
+              (e) => e.value.plan.stableKey == sharedFuture.plan.stableKey,
+            )
+            .key,
+        oldIds[sharedFuture.plan.stableKey],
+      );
+      expect(scheduler.payloads, oldPayloads);
+      await adapter.reconcile(requests);
+      expect(scheduler.scheduleCalls, 5);
+      expect(scheduler.canceled, [oldIds[sharedFuture.plan.stableKey]]);
+      final later = LocalNotificationAdapter(
+        scheduler: scheduler,
+        preferences: prefs,
+        now: () => now.add(const Duration(hours: 3)),
+      );
+      await later.initialize((_) {});
+      await later.reconcile(requests);
+      expect(scheduler.scheduleCalls, 5);
+      expect(scheduler.canceled, [oldIds[sharedFuture.plan.stableKey]]);
     },
   );
 }

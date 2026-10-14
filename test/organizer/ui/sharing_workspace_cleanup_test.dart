@@ -32,7 +32,7 @@ const _archivedProject = SharedScope(
 
 void main() {
   for (final width in [390.0, 1440.0]) {
-    for (final scope in [sharingScope(), _organization]) {
+    for (final scope in [sharingScope(), _organization, _activeProject]) {
       for (final view in SharingView.values) {
         testWidgets(
           '${scope.kind.name} $view has no member toolbar at $width',
@@ -45,6 +45,8 @@ void main() {
                 organizationsSupported: true,
                 householdPeopleSupported: true,
                 recordContractVersion: 3,
+                scopeArchivingSupported: true,
+                scopeDeletionSupported: true,
               ),
             );
             await pumpPanel(
@@ -68,6 +70,16 @@ void main() {
                   ? findsOneWidget
                   : findsNothing,
             );
+            expect(
+              find.byKey(ValueKey('scope-lifecycle-${scope.id}')),
+              view == SharingView.agenda ? findsNothing : findsOneWidget,
+            );
+            if (view == SharingView.agenda) {
+              expect(
+                find.byKey(ValueKey('sharing-status-${scope.id}-$view')),
+                findsOneWidget,
+              );
+            }
             expect(controller.memberLoads, 0);
             expect(controller.calls, isNot(contains('invitations')));
             expect(tester.takeException(), isNull);
@@ -165,6 +177,47 @@ void main() {
       );
     }
   }
+
+  testWidgets('household aggregate Utrip keeps sync without lifecycle menu', (
+    tester,
+  ) async {
+    final household = SharedScope(
+      id: _organizationId,
+      name: 'Family home',
+      kind: SharedScopeKind.household,
+      role: SharedRole.owner,
+      accessPolicyVersion: 3,
+    );
+    final controller = SharingUiController(
+      initial: CollaborationState(
+        session: sharingSession(),
+        scopes: [household, _activeProject],
+        data: {household.id: sharingData()},
+        spaceProjectMembershipSupported: true,
+        scopeArchivingSupported: true,
+        scopeDeletionSupported: true,
+        recordContractVersion: 3,
+      ),
+    );
+    await pumpPanel(
+      tester,
+      controller,
+      SharingWorkspace(
+        view: SharingView.agenda,
+        selectedScopeId: household.id,
+        onScopeSelected: (_) {},
+        onConnect: () {},
+        showScopePicker: false,
+      ),
+      width: 390,
+    );
+    expect(find.byKey(ValueKey('scope-lifecycle-${household.id}')), findsNothing);
+    expect(
+      find.byKey(ValueKey('sharing-status-${household.id}-${SharingView.agenda}')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('project form closes when organization editing is removed', (
     tester,

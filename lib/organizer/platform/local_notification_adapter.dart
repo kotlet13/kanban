@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/notification_models.dart';
@@ -110,10 +111,19 @@ class LocalNotificationAdapter {
       if (request.plan.scheduledAt.isAfter(now)) continue;
       final old = fingerprints[key];
       String? oldTimezone;
+      var comparableOld = old;
       try {
-        oldTimezone = (jsonDecode(old ?? '') as List)[1] as String;
+        final parts = jsonDecode(old ?? '') as List;
+        oldTimezone = parts[1] as String;
+        if (parts.length == 7 && parts.last == _darwinThreadContract) {
+          comparableOld = jsonEncode(parts.take(6).toList());
+        }
       } catch (_) {}
-      if (oldTimezone == null || old != _fingerprint(request, oldTimezone)) {
+      // Grouping upgrades apply only to future schedules. A due/delivered
+      // request keeps its old presentation and must not be re-alerted.
+      if (oldTimezone == null ||
+          comparableOld !=
+              _fingerprint(request, oldTimezone, includeGrouping: false)) {
         await scheduler.cancel(ids[key]!);
         ids.remove(key);
         fingerprints.remove(key);
@@ -229,15 +239,24 @@ class LocalNotificationAdapter {
     );
   }
 
-  String _fingerprint(LocalNotificationRequest request, String timezone) =>
-      jsonEncode([
-        request.plan.scheduledAt.toUtc().toIso8601String(),
-        timezone,
-        request.title,
-        request.body,
-        request.sound,
-        jsonEncode(request.plan.target.toJson()),
-      ]);
+  static const _darwinThreadContract = 'darwin-shared-thread-sha256-v1';
+  String _fingerprint(
+    LocalNotificationRequest request,
+    String timezone, {
+    bool includeGrouping = true,
+  }) => jsonEncode([
+    request.plan.scheduledAt.toUtc().toIso8601String(),
+    timezone,
+    request.title,
+    request.body,
+    request.sound,
+    jsonEncode(request.plan.target.toJson()),
+    if (includeGrouping &&
+        !request.plan.target.isPersonal &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS))
+      _darwinThreadContract,
+  ]);
 
   Future<LocalNotificationStatus> cancelAll() => reconcile(const []);
   void dispose() {
