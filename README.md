@@ -351,11 +351,16 @@ Gospodinjstvo ima skupni dnevni pregled, projekt pa časovnico z izvajalci, zač
 
 Lokalni sistemski opomniki delujejo brez Firebase in strežnika za podatke, ki so že na napravi. Sprememba ali zaključitev izvora uskladi razpored; iOS hrani najbližjih 60, Android uporablja nenatančne alarme. Na spletu ni razporejanja za zaprt brskalnik. Dostava in odpiranje sta preverjena na iOS simulatorju; fizične naprave zahtevajo ločen preizkus.
 
-FamilyHub ustvari trajno obvestilo in SMTP opravilo v transakciji s spremembo. Cron preveri trenutne pravice/nastavitve in dostavlja z omejenimi ponovitvami ter preverjenim TLS. Lokalni SMTP sprejem je preverjen, produkcijski pa še ni nastavljen. Uporabnik je izbral Firebase Cloud Messaging na paketu Spark. Pripravo Android/iOS adapterja, varne registracije naprav in neposrednega strežniškega HTTP v1 pošiljanja vodi [FCM mejnik](docs/FIREBASE_PREPARATION.md). Projekt `jivie-e928a`, zasebna konfiguracija testnega strežnika in fizični Android preizkus so preverjeni. APNs, konfiguracija drugih gostovanj in preostali večnapravni tokovi še niso potrjeni. Firebase ni pogoj za podatke, prijavo ali lokalne opomnike. [Nastavitve in meje dostave](docs/NOTIFICATION_SETUP.md).
+FamilyHub ustvari trajno obvestilo in SMTP opravilo v transakciji s spremembo. Cron preveri trenutne pravice/nastavitve in dostavlja z omejenimi ponovitvami ter preverjenim TLS. Produkcijski SMTP na `jivie.triparna.si` je od14.oktobra nastavljen; lastnik potrdi testno pošto v mapi Prejeto. Povabila, potrditev naslova in obnova gesla so omogočeni; [dokazi in meje](docs/server/PRODUCTION_MAIL.md). Uporabnik je izbral Firebase Cloud Messaging na paketu Spark. Pripravo Android/iOS adapterja, varne registracije naprav in neposrednega strežniškega HTTP v1 pošiljanja vodi [FCM mejnik](docs/FIREBASE_PREPARATION.md). Projekt `jivie-e928a`, zasebna konfiguracija testnega strežnika in fizični Android preizkus so preverjeni. Produkcijski FCM, APNs, konfiguracija drugih gostovanj in preostali večnapravni tokovi še niso potrjeni. Firebase ni pogoj za podatke, prijavo ali lokalne opomnike. [Nastavitve in meje dostave](docs/NOTIFICATION_SETUP.md).
 
 Kanboardovi vtičniki lahko dodajo vrste obvestil. Kanboardov cron pokriva tudi zapadle naloge, vendar to samo po sebi ne zagotovi mobilne dostave. Na omejenem gostovanju je kandidat kratko paketno opravilo z zaklepanjem, ponovnimi poskusi in preprečevanjem podvajanja, če gostovanje omogoča primeren cron. [Vtičniki za obvestila](https://docs.kanboard.org/v1/plugins/notifications/), [cron](https://docs.kanboard.org/v1/admin/cronjob/).
 
 ## Gostovanje in razvoj strežniškega dela
+
+Aktualna produkcija ima FamilyHub0.13/schema17 in od14.oktobra vključeno
+pošto z namenskim predalom ter preverjeno dostavo lastniku. [Namestitev](docs/server/PRODUCTION_SETUP.md)
+in [pošta](docs/server/PRODUCTION_MAIL.md) imata prednost pred spodnjim
+zgodovinskim pregledom gostovanja s4.oktobra. FCM in redne kopije še sledijo.
 
 Kanboard je na cPanel gostovanju. Po uporabnikovi prijavi smo 4. oktobra 2026 opravili pregled brez spreminjanja nastavitev, nalaganja datotek ali izvajanja strežniških ukazov.
 
@@ -393,7 +398,7 @@ Izhodišče so uporabnikova analiza in zgoraj preverjene ugotovitve. Gradnjo vod
 
 - prve ključne uporabniške tokove in prednostne platforme;
 - razmerje med osebnim prostorom, gospodinjstvom in zunanjimi sodelavci;
-- nastavitev produkcijskega SMTP za že izvedeno preverjanje e-pošte in obnovo gesla;
+- dejanski uporabniški tok povabila, potrditve naslova in obnove gesla po [vključitvi produkcijskega SMTP](docs/server/PRODUCTION_MAIL.md);
 - pravila vidnosti projektnih stroškov in zasebnih financ;
 - ponavljanje in finančne projekcije, lokalne priponke, dodatno zaščito aktivne baze ter celotne strežniške varnostne kopije;
 - hitrost osveževanja med napravami, kanale in pričakovano pravočasnost obvestil;

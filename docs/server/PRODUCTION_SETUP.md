@@ -1,6 +1,21 @@
 # Jivie produkcija na TriparNA
 
-Stanje: **13. oktober 2026 — FamilyHub 0.13.0/schema17 dejansko nameščen; pripravljen za prvi račun.**
+Stanje: **14. oktober 2026 — FamilyHub 0.13.0/schema17; produkcijski SMTP vključen.**
+
+## Produkcijska pošta 14. oktobra
+
+Lastnikov prvi račun in povezovanje prostora sta bila medtem fizično potrjena.
+Po njegovem naročilu je zdaj vključena pošta iz `admin@jivie.triparna.si`:
+dejanska preverjena TLS/SMTP prijava, šifrirana vrsta, dva minutna poštna
+workerja z ohranjenim starim crontabom ter veljavni SPF/DKIM/DMARC/PTR.
+Eno dogovorjeno testno sporočilo je lastnik potrdil v mapi Prejeto.
+Javni API zdaj potrdi emailInvitations/emailVerification/passwordReset/smtp=true,
+isti serverId in externalPush=false. [Dokazi in vzdrževanje](PRODUCTION_MAIL.md).
+Android ostaja javni1.7.1(26), FamilyHub0.13/schema17; ni nove gradnje ali
+migracije. FCM in redne produkcijske kopije še niso dokončani.
+
+Spodnji zapis prikazuje stanje ob namestitvi13.oktobra; njegovi prvi račun/
+SMTP=false/naslednji koraki so zgodovina, ne razlog za ponovno namestitev.
 
 ## Zaključena namestitev 13. oktobra
 

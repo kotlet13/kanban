@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+14. oktober — **produkcijski SMTP dejansko vključen in prejem v Prejeto potrjen**.
+[Dokazi](docs/server/PRODUCTION_MAIL.md). Lastnik izbere obstoječi predal
+admin@jivie.triparna.si in sam vnese geslo v skrit terminalski poziv, brez
+branja/izpisa/klepeta/Git. Pravi tripar13, zasebna primerjana kopija obeh
+konfiguracij/crontaba; TLS/prijava cp-21:465 PASS, ločeni32-byte mail ključ,
+datoteke0600/imeniki0700. Vključeni smtp/emailInvitations/emailVerification/
+passwordReset, isti ad569serverId; oba nova minutely mail workerja exit0,
+cron dnevnika48s/0600, stare vrstice ohranjene. SPF/DKIM/PTR že veljavni,
+dodan samo DMARC p=none za poddomeno (isti kot nadrejena politika). Natanko
+eno benigno testno sporočilo lastniku, fizično »Prispelo v Prejeto«; brez
+dejanskega povabila/registracije/reset sprememb.7 lokalnih varoval/PHP lint
+PASS. FamilyHub0.13/schema17/računi/vsebina/AndroidAAB26/Console/splet/iOS/
+test1/test2 isti. FCM in redne produkcijske kopije še ločeno odprto delo.
+Kopija konfiguracije ni kopija podatkov; poštni ključ ohrani za pending vrste.
+
 14. oktober — **Google Play povezava dejansko objavljena na jivie.app SL/EN**.
 Uvodni in zaključni gumb na obeh domačih straneh ter povezava v nogi vseh8
 strani odpirajo javni `si.triparna.jivie`. Besedilo odraža javni Android v
