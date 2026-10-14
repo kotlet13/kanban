@@ -231,7 +231,7 @@ void main() {
       'Severni rob 🌱',
     );
     for (final mutate in <void Function(Map<String, dynamic>)>[
-      (j) => j['version'] = 3,
+      (j) => j['version'] = 4,
       (j) => j['token'] = 'unknown',
       (j) => (j['gardens'] as List).first['revision'] = -1,
       (j) => (j['gardens'] as List).first['createdAt'] =
@@ -486,6 +486,7 @@ void main() {
       // Portable v2/schema 5 carried gardens but neither operation pairs nor
       // finance inbox receipts. Restore that real old shape, not current v3.
       final gardenV2 = await a.backup.crypto.decrypt(bytes, password);
+      gardenV2.remove('localTaskReminderPreferences');
       gardenV2.remove('operationPairs');
       gardenV2.remove('financeInboxReads');
       gardenV2.remove('localSpaces');
@@ -531,6 +532,7 @@ void main() {
         ),
       );
       final oldDoc = await a.backup.crypto.decrypt(bytes, password);
+      oldDoc.remove('localTaskReminderPreferences');
       oldDoc.remove('gardens');
       oldDoc.remove('operationPairs');
       oldDoc.remove('financeInboxReads');

@@ -65,6 +65,9 @@ class LocalSpacesController extends AsyncNotifier<LocalSpacesState> {
     String address = '',
   }) => _repo.createSpace(kind: kind, name: name, address: address);
   Future<void> selectSpace(String id) => _repo.selectSpace(id);
+  Future<Map<String, dynamic>> previewSpaceDeletion(String id) => _repo.previewSpaceDeletion(id);
+  Future<void> deleteSpace(Map<String, dynamic> preview) => _repo.deleteSpace(preview);
+  Future<void> archiveSpace(String id, {required bool archived}) => _repo.archiveSpace(id, archived: archived);
   Future<void> materializeFinanceOccurrences(
     String localSpaceId, {
     required String expectedWorkspaceKey,

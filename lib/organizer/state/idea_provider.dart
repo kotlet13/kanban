@@ -196,6 +196,7 @@ final ideaAllSpacesProvider = FutureProvider<List<IdeaSpaceEntry>>((ref) async {
     if (mappedLocal.contains(b.id)) continue;
     final spaceId = links[b.id] as String? ?? 'local';
     final space = local?.spaces.where((s) => s.id == spaceId).firstOrNull;
+    if (space?.archived == true) continue;
     if (space?.binding != null &&
         space!.binding!.partition == state?.session?.partition &&
         state!.scopes.any(
@@ -209,13 +210,15 @@ final ideaAllSpacesProvider = FutureProvider<List<IdeaSpaceEntry>>((ref) async {
         workspaceKey: spaceId,
         localSpaceId: spaceId,
         sourceName: space?.name ?? '',
-        canEdit: true,
+        canEdit: !((local?.snapshots[spaceId]?.projects ?? []).any(
+          (p) => p.id == b.projectId && p.archived,
+        )),
       ),
     );
   }
   if (state != null && state.localAccessAllowed && state.session != null) {
     final repo = await ref.watch(collaborationRepositoryProvider.future);
-    for (final scope in state.scopes.where((s) => !s.revoked)) {
+    for (final scope in state.scopes.where((s) => !s.revoked && !s.archived)) {
       final shared = SharedIdeaStorage(
         repo,
         state.session!.partition,
@@ -229,7 +232,12 @@ final ideaAllSpacesProvider = FutureProvider<List<IdeaSpaceEntry>>((ref) async {
             workspaceKey: s.workspaceKey,
             sharedScopeId: scope.id,
             sourceName: scope.name,
-            canEdit: scope.canEdit,
+            canEdit:
+                scope.canEdit &&
+                !state
+                    .dataForScope(scope.id)
+                    .projects
+                    .any((p) => p.id == b.projectId && p.archived),
           ),
         );
       }

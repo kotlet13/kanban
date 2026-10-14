@@ -38,6 +38,7 @@ part 'collaboration_local_space_publication.dart';
 part 'collaboration_garden_actions.dart';
 part 'collaboration_idea_actions.dart';
 part 'collaboration_account_actions.dart';
+part 'collaboration_scope_lifecycle.dart';
 part 'collaboration_email_invitations.dart';
 part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
@@ -102,6 +103,7 @@ class CollaborationRepository {
   bool _organizationsSupported = false,
       _householdPeopleSupported = false,
       _projectArchivingSupported = false;
+  bool _scopeDeletionSupported = false, _scopeArchivingSupported = false;
   bool _moderationSupported = false;
   bool? _moderationAccepted;
   int? _moderationVerifiedEpoch;
@@ -116,6 +118,7 @@ class CollaborationRepository {
   bool _financeSupported = false;
   bool _externalPushSupported = false, _smtpSupported = false;
   String? _pushProjectId;
+  int _pushDisplayVersion = 1;
   bool _closed = false;
   bool _syncing = false;
   int? _syncEpoch, _fullSyncEpoch;
@@ -450,6 +453,8 @@ class CollaborationRepository {
         organizationsSupported: _organizationsSupported,
         householdPeopleSupported: _householdPeopleSupported,
         projectArchivingSupported: _projectArchivingSupported,
+        scopeDeletionSupported: _scopeDeletionSupported,
+        scopeArchivingSupported: _scopeArchivingSupported,
         inboxSupported: _inboxSupported,
         financeSupported: _financeSupported,
         financeContractVersion: _financeContractVersion,

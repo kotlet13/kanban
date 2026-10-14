@@ -464,7 +464,7 @@ void main() {
   );
 
   test(
-    'recovery export rechecks scope A rights after delayed scope B policy request',
+    'explicit recovery retains own immutable finance candidates after read rights are denied',
     () async {
       final f = await fixture();
       try {
@@ -496,23 +496,16 @@ void main() {
           targetId: plannedEntry,
           remindAt: DateTime.utc(2099),
         );
-        final entered = Completer<void>(), release = Completer<void>();
-        f.transport.beforePolicy = (scope) async {
-          if (scope == secondScope) {
-            entered.complete();
-            await release.future;
-          }
-        };
-        final pending = f.repo.exportUnsentWork();
-        await entered.future;
         f.transport.grantsByScope[f.scope] = 'none';
         f.transport.revisionsByScope[f.scope] = 2;
         await f.repo.refreshFinancePolicy(f.scope);
-        release.complete();
-        final exported = await pending;
-        expect(exported, isNot(contains('Hidden A draft')));
+        f.transport.beforePolicy = (_) async => throw StateError('Recovery must be local');
+        final exported = await f.repo.exportUnsentWork();
+        expect(exported, contains('Hidden A draft'));
         expect(exported, contains('Visible B draft'));
-        expect((jsonDecode(exported) as Map)['commands'], isEmpty);
+        expect(exported, contains('Private planned draft'));
+        expect((jsonDecode(exported) as Map)['financeOperations'], hasLength(3));
+        expect((jsonDecode(exported) as Map).containsKey('financeRecords'), false);
         expect(
           (await f.repo.database.rows(
             'SELECT state FROM commands',

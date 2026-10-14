@@ -174,7 +174,7 @@ void main() {
         OrganizerBackupCodec.decode(jsonEncode(encoded)).tasks.single.startAt,
         now,
       );
-      encoded['schemaVersion'] = 5;
+      encoded['schemaVersion'] = 6;
       expect(
         () => OrganizerBackupCodec.decode(jsonEncode(encoded)),
         throwsFormatException,

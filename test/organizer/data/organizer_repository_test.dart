@@ -219,20 +219,21 @@ void main() {
   );
 
   test(
-    'project deletion preserves linked records; list deletion removes its items',
+    'project deletion removes closed content; list deletion removes its items',
     () async {
       final repo = repository(MemoryStorage());
       await repo.initialize();
       await populate(repo);
       await repo.deleteProject(repo.snapshot.projects.single.id);
       expect(repo.snapshot.projects, isEmpty);
-      expect(repo.snapshot.tasks.single.projectId, isNull);
-      expect(repo.snapshot.events.single.projectId, isNull);
+      expect(repo.snapshot.tasks, isEmpty);
+      expect(repo.snapshot.events, isEmpty);
       expect(
         repo.snapshot.financeEntries.every((v) => v.projectId == null),
         isTrue,
       );
-      expect(repo.snapshot.financeEntries.length, 3);
+      expect(repo.snapshot.financeEntries.length, 1);
+      expect(repo.snapshot.financeEntries.single.projectId, isNull);
       await repo.deleteShoppingList(repo.snapshot.shoppingLists.single.id);
       expect(repo.snapshot.shoppingItems, isEmpty);
       await repo.close();

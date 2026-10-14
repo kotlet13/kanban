@@ -144,7 +144,10 @@ class FlutterNotificationScheduler implements LocalNotificationScheduler {
     notificationDetails: NotificationDetails(
       android: AndroidNotificationDetails(
         request.sound ? 'reminders_sound_v1' : 'reminders_quiet_v1',
-        request.title,
+        'Jivie',
+        groupKey: request.plan.target.isPersonal
+            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
+            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
         playSound: request.sound,
@@ -154,11 +157,17 @@ class FlutterNotificationScheduler implements LocalNotificationScheduler {
         presentAlert: true,
         presentSound: request.sound,
         presentBadge: false,
+        threadIdentifier: request.plan.target.isPersonal
+            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
+            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
       ),
       macOS: DarwinNotificationDetails(
         presentAlert: true,
         presentSound: request.sound,
         presentBadge: false,
+        threadIdentifier: request.plan.target.isPersonal
+            ? 'jivie.local.${request.plan.target.localWorkspaceId}'
+            : 'jivie.${request.plan.target.serverId}.${request.plan.target.accountId}',
       ),
     ),
   );

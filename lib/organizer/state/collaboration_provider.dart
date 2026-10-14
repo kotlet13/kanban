@@ -686,6 +686,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String targetType,
     required String targetId,
     required DateTime remindAt,
+    int? offsetMinutes,
     int expectedRevision = 0,
     String? expectedPartition,
   }) => _edit(
@@ -695,6 +696,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       targetType: targetType,
       targetId: targetId,
       remindAt: remindAt,
+      offsetMinutes: offsetMinutes,
       expectedRevision: expectedRevision,
       expectedPartition: expectedPartition,
     ),
@@ -816,6 +818,11 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     _spaceSelectionGeneration++;
     return _repo.selectAllSpaces();
   }
+
+  Future<Map<String, dynamic>> previewScopeDeletion(String scopeId, {String? projectId}) =>
+      _repo.previewScopeDeletion(scopeId, projectId: projectId);
+  Future<void> deleteScopeContents(Map<String, dynamic> preview, {String? projectId}) =>
+      _edit((repo) => repo.deleteScopeContents(preview, projectId: projectId));
 
   Future<void> archiveProjectScope(
     String scopeId, {

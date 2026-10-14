@@ -12,17 +12,20 @@ class LocalSpace {
     this.address = '',
     this.binding,
     this.financeRecoveryIncomplete = false,
+    this.archived = false,
   });
   final String id, name, address;
   final LocalSpaceKind kind;
   final LocalSpaceBinding? binding;
   final bool financeRecoveryIncomplete;
+  final bool archived;
   Map<String, Object?> toJson() => {
     'id': id,
     'kind': kind.name,
     'name': name,
     'address': address,
     if (binding != null) 'binding': binding!.toJson(),
+    if (archived) 'archived': true,
     if (financeRecoveryIncomplete) 'financeRecoveryIncomplete': true,
   };
   factory LocalSpace.fromJson(Map<String, dynamic> json) {
@@ -34,6 +37,7 @@ class LocalSpace {
       binding: json['binding'] == null
           ? null
           : LocalSpaceBinding.fromJson(json['binding'] as Map<String, dynamic>),
+      archived: json['archived'] as bool? ?? false,
       financeRecoveryIncomplete:
           json['financeRecoveryIncomplete'] as bool? ?? false,
     );

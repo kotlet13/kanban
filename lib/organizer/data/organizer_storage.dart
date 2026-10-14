@@ -13,6 +13,15 @@ abstract interface class OrganizerStorage {
   Future<void> close();
 }
 
+abstract interface class OrganizerProjectDeletionStorage {
+  Future<Map<String, dynamic>> previewProjectDeletion(String projectId);
+  Future<void> writeProjectDeletion(
+    OrganizerSnapshot candidate,
+    String projectId,
+    String previewHash,
+  );
+}
+
 abstract interface class OrganizerOwnershipStorage {
   Future<Set<String>> deviceLocalRecordIds();
 }
@@ -36,6 +45,7 @@ class PersonalJsonBackup {
 
 class OrganizerBackupCodec {
   static const schemaVersion = 4;
+  static const extendedSchemaVersion = 5;
   static const maxBytes = 10 * 1024 * 1024;
 
   static String encode(OrganizerSnapshot snapshot, {GardenSnapshot? gardens}) {
@@ -43,7 +53,9 @@ class OrganizerBackupCodec {
     gardens?.validate();
     final result = jsonEncode({
       'format': 'vsakdan-personal-backup',
-      'schemaVersion': schemaVersion,
+      'schemaVersion': snapshot.projects.any((p) => p.archived)
+          ? extendedSchemaVersion
+          : schemaVersion,
       'workspace': 'personal',
       'data': snapshot.toJson(),
       if (gardens != null) 'gardens': gardens.toJson(),
@@ -65,7 +77,7 @@ class OrganizerBackupCodec {
     if (json is! Map<String, dynamic> ||
         json['format'] != 'vsakdan-personal-backup' ||
         json['schemaVersion'] is! int ||
-        !const [1, 2, 3, 4].contains(json['schemaVersion']) ||
+        !const [1, 2, 3, 4, 5].contains(json['schemaVersion']) ||
         json['workspace'] != 'personal' ||
         json['data'] is! Map<String, dynamic>) {
       throw const FormatException('Unsupported personal backup format');
@@ -80,15 +92,24 @@ class OrganizerBackupCodec {
       'workspace',
       'data',
       if (json['schemaVersion'] == 3 ||
-          (json['schemaVersion'] == 4 && json.containsKey('gardens')))
+          ((json['schemaVersion'] as int) >= 4 && json.containsKey('gardens')))
         'gardens',
     };
     if (json.length != keys.length ||
         json.keys.toSet().difference(keys).isNotEmpty) {
       throw const FormatException('Unsupported personal backup fields');
     }
+    final snapshot = OrganizerSnapshot.fromJson(
+      json['data'] as Map<String, dynamic>,
+    );
+    if ((json['schemaVersion'] as int) < 5 &&
+        snapshot.projects.any((p) => p.archived)) {
+      throw const FormatException(
+        'Archived projects require personal backup schema5',
+      );
+    }
     return PersonalJsonBackup(
-      OrganizerSnapshot.fromJson(json['data'] as Map<String, dynamic>),
+      snapshot,
       json.containsKey('gardens')
           ? GardenSnapshot.fromJson(json['gardens'] as Map<String, dynamic>)
           : null,

@@ -17,6 +17,7 @@ class RemotePushIntent {
     this.projectId,
     this.expectedRevision,
     this.confirmedRevision,
+    this.displayVersion = 1,
     required this.status,
     this.errorCode,
   });
@@ -25,6 +26,7 @@ class RemotePushIntent {
   final bool enabled;
   final String? token, platform, language, projectId, errorCode;
   final int? expectedRevision, confirmedRevision;
+  final int displayVersion;
   final RemotePushRegistrationStatus status;
   bool get pending =>
       status == RemotePushRegistrationStatus.pendingRegistration ||
@@ -43,6 +45,7 @@ class RemotePushIntent {
     platform: platform,
     language: language,
     projectId: projectId,
+    displayVersion: displayVersion,
     expectedRevision: expectedRevision ?? this.expectedRevision,
     confirmedRevision: confirmedRevision ?? this.confirmedRevision,
     status: status ?? this.status,
@@ -61,6 +64,7 @@ class RemotePushIntent {
     'platform': platform,
     'language': language,
     'projectId': projectId,
+    if (displayVersion != 1) 'displayVersion': displayVersion,
     'expectedRevision': expectedRevision,
     'confirmedRevision': confirmedRevision,
     'status': status.name,
@@ -71,7 +75,9 @@ class RemotePushIntent {
     final token = j['token'];
     final revision = j['expectedRevision'];
     final confirmed = j['confirmedRevision'];
+    final displayVersion = j['displayVersion'] ?? 1;
     if (enabled is! bool ||
+        !const [1, 2].contains(displayVersion) ||
         !isSharedUuid(j['generation']) ||
         (revision != null && (revision is! int || revision < 0)) ||
         (confirmed != null && (confirmed is! int || confirmed < 0)) ||
@@ -105,6 +111,7 @@ class RemotePushIntent {
       platform: j['platform'] as String?,
       language: j['language'] as String?,
       projectId: j['projectId'] as String?,
+      displayVersion: displayVersion as int,
       expectedRevision: revision as int?,
       confirmedRevision: j['confirmedRevision'] as int?,
       status: RemotePushRegistrationStatus.values.byName(j['status'] as String),

@@ -71,6 +71,25 @@ class GardenStorage {
                 database.personalIdentityGeneration)) {
       throw const OrganizerConflictException('Garden workspace changed');
     }
+    // A catalog deletion/archive/publication can happen while a draft is open.
+    // Validate it inside the same transaction before touching rows or revisions.
+    final selectedSpace = database.selectedLocalWorkspaceId;
+    if (!allSpaces && selectedSpace != 'local') {
+      final catalog = await database.rows(
+        'SELECT data FROM local_spaces WHERE id=?',
+        [selectedSpace],
+      );
+      if (catalog.isEmpty) {
+        throw const OrganizerConflictException('Garden space was deleted');
+      }
+      final target =
+          jsonDecode(catalog.single['data'] as String) as Map<String, dynamic>;
+      if (target['archived'] == true || target['binding'] != null) {
+        throw const OrganizerConflictException(
+          'Garden space is no longer editable locally',
+        );
+      }
+    }
     final previous = allSpaces ? await readAll() : await read();
     final identity = database.personalIdentityGeneration;
     final space = database.selectedLocalWorkspaceId;

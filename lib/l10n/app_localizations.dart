@@ -7637,6 +7637,146 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Task reminder on this device'**
   String get localTaskReminderTitle;
+
+  /// No description provided for @scopeLifecycleMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Space settings'**
+  String get scopeLifecycleMenu;
+
+  /// No description provided for @scopeDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get scopeDeleteTitle;
+
+  /// No description provided for @scopeDeleteDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This space or project and the contents listed below will be deleted. This cannot be undone. Accounts, sign-in and other spaces are kept.'**
+  String get scopeDeleteDescription;
+
+  /// No description provided for @scopeDeleteCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects: {projects} · Tasks: {tasks} · Events: {events}\nIdeas: {ideas} · Photos: {photos} · Finances: {finance} · Other: {other}'**
+  String scopeDeleteCounts(
+    int projects,
+    int tasks,
+    int events,
+    int ideas,
+    int photos,
+    int finance,
+    int other,
+  );
+
+  /// No description provided for @scopeDeleteBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletion is blocked by linked financial data outside this scope or a descendant project with a different owner. Resolve the link or ownership first.'**
+  String get scopeDeleteBlocked;
+
+  /// No description provided for @scopeDeletePreviewChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents changed. Open the deletion preview again.'**
+  String get scopeDeletePreviewChanged;
+
+  /// No description provided for @scopeOwnerTransferRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This member owns a descendant project. Transfer project ownership before removing them.'**
+  String get scopeOwnerTransferRequired;
+
+  /// No description provided for @scopeRemoveMemberDescendants.
+  ///
+  /// In en, this message translates to:
+  /// **'The member loses access to this space and every project inside it, including directly shared projects. Their account and other spaces are kept. Existing invitations in this scope will be revoked.'**
+  String get scopeRemoveMemberDescendants;
+
+  /// No description provided for @scopeDeletedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This space or project was deleted. You can export your own unsent drafts.'**
+  String get scopeDeletedDescription;
+
+  /// No description provided for @scopeArchivedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get scopeArchivedSection;
+
+  /// No description provided for @scopeDeleteLocalExtras.
+  ///
+  /// In en, this message translates to:
+  /// **'Gardens: {gardens} · Idea drafts: {drafts}'**
+  String scopeDeleteLocalExtras(int gardens, int drafts);
+
+  /// No description provided for @notificationChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Change from notification'**
+  String get notificationChanged;
+
+  /// No description provided for @notificationShoppingRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Change: an item was removed from this list.'**
+  String get notificationShoppingRemoved;
+
+  /// No description provided for @localSpacePublicationPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This space is still being connected. Finish connecting it, then manage it on the server.'**
+  String get localSpacePublicationPending;
+
+  /// No description provided for @spacePickerSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Spaces'**
+  String get spacePickerSpaces;
+
+  /// No description provided for @spacePickerSharedWithMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with me'**
+  String get spacePickerSharedWithMe;
+
+  /// No description provided for @spacePickerDirectProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Directly shared project'**
+  String get spacePickerDirectProject;
+
+  /// No description provided for @spacePickerSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a space or project'**
+  String get spacePickerSearch;
+
+  /// No description provided for @spacePickerNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching spaces or projects.'**
+  String get spacePickerNoResults;
+
+  /// No description provided for @sharingOpenDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Open unsent work'**
+  String get sharingOpenDrafts;
+
+  /// No description provided for @sharingRecoveryReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your own local drafts and photos. You can copy the records; this review does not restore access or send anything.'**
+  String get sharingRecoveryReviewDescription;
+
+  /// No description provided for @sharingRecoveryInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open the unsent work file.'**
+  String get sharingRecoveryInvalid;
 }
 
 class _AppLocalizationsDelegate

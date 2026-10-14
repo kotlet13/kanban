@@ -276,7 +276,7 @@ void main() {
     },
   );
   test(
-    'offline project + finance create then delete waits immutable financial unlink ACK',
+    'offline project + finance create then delete waits immutable financial tombstone ACK',
     () async {
       final transport = PersonalTransport(FakeServer());
       // This test uses its own transport and account to inspect wire dependencies.
@@ -314,7 +314,7 @@ void main() {
       expect(await c.db.rows('SELECT * FROM outbox'), isEmpty);
       expect(await c.db.rows('SELECT * FROM finance_outbox'), isEmpty);
       expect(c.personal.snapshot.projects, isEmpty);
-      expect(c.personal.snapshot.financeEntries.single.projectId, isNull);
+      expect(c.personal.snapshot.financeEntries, isEmpty);
     },
   );
   test(

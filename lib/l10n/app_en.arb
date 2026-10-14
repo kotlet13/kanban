@@ -1584,5 +1584,62 @@
   "reminderHourBefore": "1 hour before the deadline",
   "reminderDayBefore": "1 day before the deadline",
   "reminderRelativeExplanation": "Moves with the task deadline. Completing the task or removing its deadline cancels the reminder.",
-  "localTaskReminderTitle": "Task reminder on this device"
+  "localTaskReminderTitle": "Task reminder on this device",
+  "scopeLifecycleMenu": "Space settings",
+  "scopeDeleteTitle": "Delete permanently",
+  "scopeDeleteDescription": "This space or project and the contents listed below will be deleted. This cannot be undone. Accounts, sign-in and other spaces are kept.",
+  "scopeDeleteCounts": "Projects: {projects} · Tasks: {tasks} · Events: {events}\nIdeas: {ideas} · Photos: {photos} · Finances: {finance} · Other: {other}",
+  "scopeDeleteBlocked": "Deletion is blocked by linked financial data outside this scope or a descendant project with a different owner. Resolve the link or ownership first.",
+  "scopeDeletePreviewChanged": "Contents changed. Open the deletion preview again.",
+  "scopeOwnerTransferRequired": "This member owns a descendant project. Transfer project ownership before removing them.",
+  "scopeRemoveMemberDescendants": "The member loses access to this space and every project inside it, including directly shared projects. Their account and other spaces are kept. Existing invitations in this scope will be revoked.",
+  "scopeDeletedDescription": "This space or project was deleted. You can export your own unsent drafts.",
+  "scopeArchivedSection": "Archived",
+  "@scopeDeleteCounts": {
+    "placeholders": {
+      "projects": {
+        "type": "int"
+      },
+      "tasks": {
+        "type": "int"
+      },
+      "events": {
+        "type": "int"
+      },
+      "ideas": {
+        "type": "int"
+      },
+      "photos": {
+        "type": "int"
+      },
+      "finance": {
+        "type": "int"
+      },
+      "other": {
+        "type": "int"
+      }
+    }
+  },
+  "scopeDeleteLocalExtras": "Gardens: {gardens} · Idea drafts: {drafts}",
+  "@scopeDeleteLocalExtras": {
+    "placeholders": {
+      "gardens": {
+        "type": "int"
+      },
+      "drafts": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationChanged": "Change from notification",
+  "notificationShoppingRemoved": "Change: an item was removed from this list.",
+  "localSpacePublicationPending": "This space is still being connected. Finish connecting it, then manage it on the server.",
+  "spacePickerSpaces": "Spaces",
+  "spacePickerSharedWithMe": "Shared with me",
+  "spacePickerDirectProject": "Directly shared project",
+  "spacePickerSearch": "Find a space or project",
+  "spacePickerNoResults": "No matching spaces or projects.",
+  "sharingOpenDrafts": "Open unsent work",
+  "sharingRecoveryReviewDescription": "Review your own local drafts and photos. You can copy the records; this review does not restore access or send anything.",
+  "sharingRecoveryInvalid": "Unable to open the unsent work file."
 }

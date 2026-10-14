@@ -16,7 +16,10 @@ import 'collaboration_repository_test.dart'
 
 class ReminderTransport extends FakeTransport {
   ReminderTransport(super.server);
-  bool loseReply = false, wrongReply = false, financeEnabled = false;
+  bool loseReply = false,
+      wrongReply = false,
+      financeEnabled = false,
+      relativeEnabled = false;
   String financeGrant = 'write';
   int policyRevision = 1;
   Future<void> Function()? beforeCommands;
@@ -40,7 +43,7 @@ class ReminderTransport extends FakeTransport {
       final caps = await super.call(serverUrl: serverUrl, operation: operation);
       return {
         ...caps,
-        'recordContractVersions': [1, 2],
+        'recordContractVersions': relativeEnabled ? [1, 2, 3, 4, 5, 6] : [1, 2],
         'financeContractVersions': [1, 2],
         'features': {
           'recordSync': true,
@@ -105,6 +108,10 @@ class ReminderTransport extends FakeTransport {
               'remindAt': params['remindAt'],
               'revision': (params['expectedRevision'] as int) + 1,
               'state': 'pending',
+              if (params['scheduleMode'] == 'deadline') ...{
+                'scheduleMode': 'deadline',
+                'offsetMinutes': params['offsetMinutes'],
+              },
             }
           : {
               ...old!,
@@ -127,9 +134,9 @@ class ReminderTransport extends FakeTransport {
     }
     return super.call(
       serverUrl: serverUrl,
-      operation: operation == 'sync2.push'
+      operation: const ['sync2.push', 'sync6.push'].contains(operation)
           ? 'sync.push'
-          : operation == 'sync2.pull'
+          : const ['sync2.pull', 'sync6.pull'].contains(operation)
           ? 'sync.pull'
           : operation,
       params: params,
@@ -153,7 +160,11 @@ Future<
     String task,
   })
 >
-fixture({CollaborationDatabase? database, bool finance = false}) async {
+fixture({
+  CollaborationDatabase? database,
+  bool finance = false,
+  bool relative = false,
+}) async {
   final transport = ReminderTransport(FakeServer()),
       store = MemorySessionStore();
   final repo = CollaborationRepository(
@@ -163,6 +174,7 @@ fixture({CollaborationDatabase? database, bool finance = false}) async {
     clock: () => now,
   );
   transport.financeEnabled = finance;
+  transport.relativeEnabled = relative;
   await repo.initialize();
   await repo.login(
     serverUrl: 'https://example.test/',
@@ -204,6 +216,51 @@ Future<String> put(
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  test(
+    'relative reminder source edit moves preview while immutable queued request survives and cancelled never resurrects',
+    () async {
+      final f = await fixture(relative: true);
+      addTearDown(f.repo.close);
+      final id = await f.repo.putReminder(
+        scopeId: f.scope,
+        targetType: 'task',
+        targetId: f.task,
+        remindAt: later,
+        offsetMinutes: 60,
+      );
+      final original = (await f.repo.database.rows(
+        'SELECT params FROM commands',
+      )).single['params'];
+      final before = f.repo.state.dataForScope(f.scope).tasks.single;
+      await f.repo.updateTask(
+        f.scope,
+        before.copyWith(dueAt: later.add(const Duration(days: 1))),
+      );
+      final reminder = f.repo.state.scheduledReminders.single;
+      expect(reminder.remindAt, later.add(const Duration(days: 1, hours: -1)));
+      expect(reminder.offsetMinutes, 60);
+      expect(reminder.state, 'pending');
+      expect(
+        (await f.repo.database.rows(
+          'SELECT params FROM commands',
+        )).single['params'],
+        original,
+      );
+      final latest = f.repo.state.dataForScope(f.scope).tasks.single;
+      await f.repo.updateTask(f.scope, latest.copyWith(isCompleted: true));
+      expect(f.repo.state.scheduledReminders.single.state, 'cancelled');
+      expect(
+        (await f.repo.database.rows(
+          'SELECT state FROM commands',
+        )).single['state'],
+        'blocked',
+      );
+      final closed = f.repo.state.dataForScope(f.scope).tasks.single;
+      await f.repo.updateTask(f.scope, closed.copyWith(isCompleted: false));
+      expect(f.repo.state.scheduledReminders.single.state, 'cancelled');
+      expect(f.repo.state.scheduledReminders.single.id, id);
+    },
+  );
   test(
     'pending shared reminder alone exposes consent while existing remote cancellation remains usable',
     () async {

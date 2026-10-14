@@ -7,6 +7,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _organizationsSupported = false;
     _householdPeopleSupported = false;
     _projectArchivingSupported = false;
+    _scopeDeletionSupported = false;
+    _scopeArchivingSupported = false;
     _sessionRenewalSupported = false;
     _recordContractVersion = 1;
     _financeContractVersion = 1;
@@ -23,6 +25,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _passwordResetSupported = false;
     _externalPushSupported = false;
     _pushProjectId = null;
+    _pushDisplayVersion = 1;
     _smtpSupported = false;
     _emailInvitationsSupported = false;
     _scopedInvitationsSupported = false;
@@ -60,7 +63,9 @@ extension CollaborationAccountActions on CollaborationRepository {
         ? 2
         : 1;
     final features = caps['features'] as Map<String, dynamic>;
-    _recordContractVersion = versions is List && versions.contains(5)
+    _recordContractVersion = versions is List && versions.contains(6)
+        ? 6
+        : versions is List && versions.contains(5)
         ? 5
         : versions is List && versions.contains(4)
         ? 4
@@ -77,6 +82,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _householdPeopleSupported =
         features['householdPeople'] == true && _recordContractVersion >= 3;
     _projectArchivingSupported = features['projectArchiving'] == true;
+    _scopeDeletionSupported = features['scopeDeletion'] == true;
+    _scopeArchivingSupported = features['scopeArchiving'] == true;
     _moderationSupported =
         features['sharedContentPolicy'] == true &&
         features['contentReporting'] == true &&
@@ -90,6 +97,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
     _externalPushSupported = features['externalPush'] == true;
+    _pushDisplayVersion = caps['pushDisplayVersion'] == 2 ? 2 : 1;
     _pushProjectId = caps['pushProjectId'] is String
         ? caps['pushProjectId'] as String
         : null;
@@ -216,6 +224,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _organizationsSupported = false;
     _householdPeopleSupported = false;
     _projectArchivingSupported = false;
+    _scopeDeletionSupported = false;
+    _scopeArchivingSupported = false;
     _sessionRenewalSupported = false;
     _recordContractVersion = 1;
     _financeContractVersion = 1;
@@ -232,6 +242,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _passwordResetSupported = false;
     _externalPushSupported = false;
     _pushProjectId = null;
+    _pushDisplayVersion = 1;
     _smtpSupported = false;
     _emailInvitationsSupported = false;
     _scopedInvitationsSupported = false;
@@ -413,7 +424,9 @@ extension CollaborationAccountActions on CollaborationRepository {
     if (operation.startsWith('finance.') ||
         operation.startsWith('finance2.') ||
         operation == 'sync3.pushTaskWithCost' ||
-        operation == 'sync4.pushTaskWithCost' || operation=='sync5.pushTaskWithCost') {
+        operation == 'sync4.pushTaskWithCost' ||
+        operation == 'sync5.pushTaskWithCost' ||
+        operation == 'sync6.pushTaskWithCost') {
       final cached = await database.rows(
         'SELECT value FROM local_meta WHERE name=?',
         ['capabilities:${session.profile.partition}'],
@@ -615,10 +628,15 @@ extension CollaborationAccountActions on CollaborationRepository {
     required bool archived,
     String? requestId,
   }) async {
-    if (!_projectArchivingSupported) {
+    if (!_projectArchivingSupported && !_scopeArchivingSupported) {
       throw const CollaborationException('client_upgrade_required');
     }
     final session = _requireSession(), epoch = _epoch;
+    final currentScope = state.scopes.where((s) => s.id == scopeId).firstOrNull;
+    if (!_scopeArchivingSupported &&
+        currentScope?.kind != SharedScopeKind.project) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     final reply = await _callSession(session, epoch, 'scopes.archive', {
       'scopeId': scopeId,
       'archived': archived,
@@ -835,10 +853,15 @@ extension CollaborationAccountActions on CollaborationRepository {
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _invalidateMemberDirectory(session.profile.partition, scopeId);
-      await database.execute(
-        r"DELETE FROM members WHERE partition=? AND scope_id=? AND json_extract(data,'$.userId')=?",
-        [session.profile.partition, scopeId, userId],
-      );
+      for (final scope in state.scopes.where(
+        (s) => s.id == scopeId || s.parentSpaceId == scopeId,
+      )) {
+        await _invalidateMemberDirectory(session.profile.partition, scope.id);
+        await database.execute(
+          r"DELETE FROM members WHERE partition=? AND scope_id=? AND json_extract(data,'$.userId')=?",
+          [session.profile.partition, scope.id, userId],
+        );
+      }
     });
     await syncNow();
   }
@@ -878,16 +901,20 @@ extension CollaborationAccountActions on CollaborationRepository {
         'DELETE FROM members WHERE partition=? AND scope_id=?',
         [partition, scope.id],
       );
-      await database.execute(
-        r"DELETE FROM inbox WHERE partition=? AND json_extract(data,'$.scopeId')=?",
-        [partition, scope.id],
-      );
+      // Retain downloaded history for recovery; revoked scopes are excluded from
+      // every live projection and notifications are no longer opened from it.
       await database.execute(
         'DELETE FROM scheduled_reminders WHERE partition=? AND scope_id=?',
         [partition, scope.id],
       );
       await database.execute(
         r"UPDATE commands SET state='blocked' WHERE partition=? AND json_extract(params,'$.scopeId')=? AND state='pending'",
+        [partition, scope.id],
+      );
+    }
+    if (scope.revoked) {
+      await database.execute(
+        "UPDATE finance_outbox SET state='blocked' WHERE partition=? AND scope_id=? AND state='pending'",
         [partition, scope.id],
       );
     }

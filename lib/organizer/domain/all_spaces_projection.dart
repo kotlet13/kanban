@@ -47,7 +47,10 @@ class AllSpacesSource {
         shared.session?.deviceId == session?.deviceId;
     if (isLocalSpace && localSpaces != null) {
       final current = localSpaces.snapshots[workspaceKey];
-      return current != null &&
+      return localSpaces.spaces.any(
+            (s) => s.id == workspaceKey && !s.archived && s.binding == null,
+          ) &&
+          current != null &&
           current.recordIds.containsAll(this.personal!.recordIds);
     }
     if (isPersonal) {
@@ -142,10 +145,22 @@ class AllSpacesSnapshot {
         AllSpacesRecord(source: source, value: value),
   ]);
 
-  List<AllSpacesRecord<LocalProject>> get projects =>
-      _rows((s) => s.projects, (s) => s.projects);
-  List<AllSpacesRecord<LocalTask>> get tasks =>
-      _rows((s) => s.tasks, (s) => s.tasks);
+  List<AllSpacesRecord<LocalProject>> get projects => _rows(
+    (s) => s.projects.where((p) => !p.archived),
+    (s) => s.projects.where((p) => !p.archived),
+  );
+  List<AllSpacesRecord<LocalProject>> get archivedProjects => _rows(
+    (s) => s.projects.where((p) => p.archived),
+    (s) => s.projects.where((p) => p.archived),
+  );
+  List<AllSpacesRecord<LocalTask>> get tasks => _rows(
+    (s) => s.tasks.where(
+      (t) => !s.projects.any((p) => p.id == t.projectId && p.archived),
+    ),
+    (s) => s.tasks.where(
+      (t) => !s.projects.any((p) => p.id == t.projectId && p.archived),
+    ),
+  );
   List<AllSpacesRecord<LocalShoppingList>> get shoppingLists =>
       _rows((s) => s.shoppingLists, (s) => s.shoppingLists);
   List<AllSpacesRecord<LocalShoppingItem>> get shoppingItems =>
@@ -154,10 +169,18 @@ class AllSpacesSnapshot {
     (s) => s.people.where((p) => !p.archived),
     (s) => s.people.where((p) => !p.archived),
   );
-  List<AllSpacesRecord<LocalEvent>> get localEvents =>
-      _rows((s) => s.events, (_) => const []);
-  List<AllSpacesRecord<SharedEvent>> get sharedEvents =>
-      _rows((_) => const [], (s) => s.events);
+  List<AllSpacesRecord<LocalEvent>> get localEvents => _rows(
+    (s) => s.events.where(
+      (e) => !s.projects.any((p) => p.id == e.projectId && p.archived),
+    ),
+    (_) => const [],
+  );
+  List<AllSpacesRecord<SharedEvent>> get sharedEvents => _rows(
+    (_) => const [],
+    (s) => s.events.where(
+      (e) => !s.projects.any((p) => p.id == e.projectId && p.archived),
+    ),
+  );
   List<AllSpacesRecord<FinanceEntry>> get localFinanceEntries =>
       _rows((s) => s.financeEntries, (_) => const []);
   List<AllSpacesRecord<SharedFinanceEntry>> get sharedFinanceEntries =>
@@ -233,6 +256,7 @@ AllSpacesSnapshot projectAllSpaces({
       .firstOrNull;
   if (matchingPersonal &&
       selectedLocal?.binding == null &&
+      selectedLocal?.archived != true &&
       (!bound || privateScope != null)) {
     final canReadFinance =
         !bound || shared.financePolicyForScope(privateScope!.id).canRead;
@@ -268,7 +292,7 @@ AllSpacesSnapshot projectAllSpaces({
   if (localSpaces != null) {
     for (final space in localSpaces.spaces) {
       // The active personal projection may include its private server rows.
-      if (space.binding != null) continue;
+      if (space.binding != null || space.archived) continue;
       if (space.id == personal.workspaceKey || (bound && space.id == 'local')) {
         continue;
       }

@@ -325,7 +325,7 @@ extension CollaborationModeration on CollaborationRepository {
       },
       for (final prefix in ['invitations', 'invitations2', 'invitations3'])
         prefix: {'create'},
-      for (final prefix in ['sync', 'sync2', 'sync3', 'sync4'])
+      for (final prefix in ['sync', 'sync2', 'sync3', 'sync4', 'sync5', 'sync6'])
         prefix: {'push', 'pushTaskWithCost'},
       for (final prefix in ['finance', 'finance2'])
         prefix: {'push', 'enable', 'grant'},

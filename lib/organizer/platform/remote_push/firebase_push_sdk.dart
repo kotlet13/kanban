@@ -6,11 +6,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_mobile_config.dart';
 import 'remote_push_sdk.dart';
+import 'system_push_display.dart';
 
-/// The OS renders the server's generic notification. Background code neither
-/// opens the private database nor authenticates, logs, navigates or duplicates it.
+/// Legacy alerts remain OS-rendered. Display2 Android data messages are rendered
+/// once as native grouped alerts, without reading private databases or syncing.
 @pragma('vm:entry-point')
-Future<void> familyHubPushBackground(RemoteMessage message) async {}
+Future<void> familyHubPushBackground(RemoteMessage message) async {
+  if (message.notification == null &&
+      defaultTargetPlatform == TargetPlatform.android) {
+    await displaySystemPush(Map<String, Object?>.from(message.data));
+  }
+}
 
 class FirebasePushSdk implements RemotePushSdk {
   final _subscriptions = <StreamSubscription<dynamic>>[];
@@ -79,17 +85,25 @@ class FirebasePushSdk implements RemotePushSdk {
     }
     _subscriptions.addAll([
       FirebaseMessaging.onMessage.listen(
-        (m) => onForeground(Map<String, Object?>.from(m.data)),
+        (m) => onForeground(
+          SystemPushMessage.referenceData(Map<String, Object?>.from(m.data)),
+        ),
         onError: (_) => onError(),
       ),
       FirebaseMessaging.onMessageOpenedApp.listen(
-        (m) => onOpened(Map<String, Object?>.from(m.data)),
+        (m) => onOpened(
+          SystemPushMessage.referenceData(Map<String, Object?>.from(m.data)),
+        ),
         onError: (_) => onError(),
       ),
       messaging.onTokenRefresh.listen(onToken, onError: (_) => onError()),
     ]);
     final initial = await messaging.getInitialMessage();
-    return initial == null ? null : Map<String, Object?>.from(initial.data);
+    return initial == null
+        ? null
+        : SystemPushMessage.referenceData(
+            Map<String, Object?>.from(initial.data),
+          );
   }
 
   RemotePushPermission _permission(NotificationSettings settings) =>

@@ -83,6 +83,8 @@ class GardenRepository {
   Future<String> createGarden({
     required String name,
     String notes = '',
+    double? widthMeters,
+    double? heightMeters,
     String? expectedWorkspaceKey,
     Iterable<GardenArea> areas = const [],
     Iterable<GardenSeason> seasons = const [],
@@ -92,6 +94,8 @@ class GardenRepository {
       id: id,
       name: name.trim(),
       notes: notes,
+      widthMeters: widthMeters,
+      heightMeters: heightMeters,
       areas: areas,
       seasons: seasons,
       createdAt: now,

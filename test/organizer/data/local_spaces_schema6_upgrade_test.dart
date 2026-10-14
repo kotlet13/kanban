@@ -107,7 +107,7 @@ void main() {
         await shared.close();
         await db.close();
       });
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 9);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 10);
       expect(
         await db.rows('SELECT * FROM personal_records ORDER BY workspace,id'),
         beforePersonal,
@@ -146,8 +146,8 @@ void main() {
         await backup.exportEncryptedBackup(password),
         password,
       );
-      expect(document['version'], 5);
-      expect(document['databaseVersion'], 9);
+      expect(document['version'], 6);
+      expect(document['databaseVersion'], 10);
       expect((document['localSpaces'] as List).single['space']['id'], 'local');
       expect((document['tables'] as Map)['outbox'], beforeOutbox);
     },

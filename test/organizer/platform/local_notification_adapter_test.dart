@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kanban/organizer/domain/notification_models.dart';
 import 'package:kanban/organizer/platform/local_notification_adapter.dart';
+import 'package:kanban/organizer/platform/remote_push/system_push_display.dart';
 import 'package:kanban/organizer/platform/local_notification_scheduler.dart';
 
 class FakeScheduler implements LocalNotificationScheduler {
@@ -101,6 +102,60 @@ void main() {
     );
     await adapter.initialize((target) {});
   });
+
+  test(
+    'group summary cold launch routes to remote center once, never local target',
+    () async {
+      final message = SystemPushMessage.tryParse({
+        'type': 'familyhub.inbox.v1',
+        'serverId': '11111111-1111-4111-a111-111111111111',
+        'accountId': '22222222-2222-4222-a222-222222222222',
+        'notificationId': '12',
+        'displayVersion': '2',
+        'title': 'Nakupi',
+        'body': 'Dodano korenje',
+        'language': 'sl',
+        'sound': '0',
+      })!;
+      final cold = FakeScheduler()
+        ..launchPayload = message.payload(summary: true);
+      final fresh = LocalNotificationAdapter(
+        scheduler: cold,
+        preferences: prefs,
+      );
+      var localOpens = 0, remoteOpens = 0;
+      final result = await fresh.initialize(
+        (_) => localOpens++,
+        onRemoteOpen: (ref, summary) {
+          remoteOpens++;
+          expect(summary, true);
+          expect(ref.notificationId, 12);
+        },
+      );
+      expect(result, isNull);
+      expect(remoteOpens, 1);
+      expect(localOpens, 0);
+      await fresh.initialize(
+        (_) => localOpens++,
+        onRemoteOpen: (ref, summary) => remoteOpens++,
+      );
+      expect(remoteOpens, 1);
+      cold.onOpen!(message.payload());
+      expect(remoteOpens, 2);
+      expect(localOpens, 0);
+      cold.onOpen!(
+        jsonEncode({
+          'type': 'familyhub.system.v2',
+          'summary': true,
+          'reference': {'type': 'familyhub.inbox.v1'},
+        }),
+      );
+      expect(remoteOpens, 2);
+      fresh.dispose();
+      cold.onOpen!(message.payload());
+      expect(remoteOpens, 2);
+    },
+  );
 
   test(
     'moving future reminder into past cancels pending and delivered IDs',

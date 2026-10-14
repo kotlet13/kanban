@@ -86,6 +86,8 @@ class PortableBackupRepository {
           scope.id,
           scope.role.name,
           scope.revoked,
+          scope.deleted,
+          scope.canRead,
           row['blocked'],
           policy.canRead ? policy.toJson() : null,
           row['finance_blocked'],
@@ -131,7 +133,12 @@ class PortableBackupRepository {
           final scope = SharedScope.fromJson(
             backupMap(jsonDecode(row['data'] as String)),
           );
-          if (scope.revoked || row['blocked'] == 1) continue;
+          if (scope.revoked ||
+              scope.deleted ||
+              !scope.canRead ||
+              row['blocked'] == 1) {
+            continue;
+          }
           allowed.add(scope.id);
           final policy = row['finance_policy'] == null
               ? const SharedFinancePolicy()
@@ -303,8 +310,9 @@ class PortableBackupRepository {
           }).toList();
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 5,
-        'databaseVersion': 9,
+        'version': 6,
+        'databaseVersion': 10,
+        'localTaskReminderPreferences': await database.rows("SELECT name,value FROM local_meta WHERE name LIKE 'local_task_deadline_reminder:%' ORDER BY name"),
         ...await _exportIdeas(tables, completeness),
         'linkedPayments': {
           'cashMovements': await paymentRows('linked_payment_cash'),
@@ -683,7 +691,13 @@ class PortableBackupRepository {
           );
         }
       }
-      if (doc['version'] == 5) await _restoreIdeas(doc, mode);
+      if ((doc['version'] as int) >= 5) await _restoreIdeas(doc, mode);
+      if (doc['version'] == 6) {
+        for (final raw in doc['localTaskReminderPreferences'] as List) {
+          final row = backupMap(raw);
+          await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO NOTHING', [row['name'],row['value']]);
+        }
+      }
       if (!sourceDeleted) {
         await _validateLocalLinkedPayments();
         await database.execute(

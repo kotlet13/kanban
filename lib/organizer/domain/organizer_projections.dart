@@ -28,9 +28,13 @@ List<AgendaItem> projectTimeline(
   required String scopeId,
   String? projectId,
 }) {
+  final archived = data.projects
+      .where((p) => p.archived)
+      .map((p) => p.id)
+      .toSet();
   final items = <AgendaItem>[
     for (final p in data.projects.where(
-      (p) => projectId == null || p.id == projectId,
+      (p) => !p.archived && (projectId == null || p.id == projectId),
     ))
       AgendaItem(
         type: 'project',
@@ -42,7 +46,9 @@ List<AgendaItem> projectTimeline(
         endAt: p.endAt,
       ),
     for (final t in data.tasks.where(
-      (t) => projectId == null || t.projectId == projectId,
+      (t) =>
+          !archived.contains(t.projectId) &&
+          (projectId == null || t.projectId == projectId),
     ))
       AgendaItem(
         type: 'task',
@@ -57,7 +63,9 @@ List<AgendaItem> projectTimeline(
         isCompleted: t.isCompleted,
       ),
     for (final e in data.events.where(
-      (e) => projectId == null || e.projectId == projectId,
+      (e) =>
+          !archived.contains(e.projectId) &&
+          (projectId == null || e.projectId == projectId),
     ))
       AgendaItem(
         type: 'event',
@@ -132,10 +140,15 @@ List<ReminderPlan> desiredReminderPlans({
     final privateIds = personal.workspaceKey.startsWith('private:')
         ? shared.privateRecordIds.values.toSet()
         : <String>{};
+    final archivedProjects = personal.projects
+        .where((p) => p.archived)
+        .map((p) => p.id)
+        .toSet();
     for (final t in personal.tasks.where(
       (t) =>
           matchingWorkspace &&
           !privateIds.contains(t.id) &&
+          !archivedProjects.contains(t.projectId) &&
           !t.isCompleted &&
           t.dueAt != null,
     )) {
@@ -152,7 +165,10 @@ List<ReminderPlan> desiredReminderPlans({
       );
     }
     for (final e in personal.events.where(
-      (e) => matchingWorkspace && !privateIds.contains(e.id),
+      (e) =>
+          matchingWorkspace &&
+          !privateIds.contains(e.id) &&
+          !archivedProjects.contains(e.projectId),
     )) {
       plans.add(
         ReminderPlan(
@@ -175,6 +191,10 @@ List<ReminderPlan> desiredReminderPlans({
   )) {
     final prefs = shared.notificationPreferences[scope.id];
     final data = shared.dataForScope(scope.id);
+    final archivedProjects = data.projects
+        .where((p) => p.archived)
+        .map((p) => p.id)
+        .toSet();
     NotificationTarget target(String type, String id) => NotificationTarget(
       serverUrl: session.serverUrl,
       serverId: session.serverId,
@@ -186,6 +206,18 @@ List<ReminderPlan> desiredReminderPlans({
         .where(
           (r) =>
               r.scopeId == scope.id &&
+              !(r.targetType == 'task' &&
+                  data.tasks.any(
+                    (t) =>
+                        t.id == r.targetId &&
+                        archivedProjects.contains(t.projectId),
+                  )) &&
+              !(r.targetType == 'event' &&
+                  data.events.any(
+                    (e) =>
+                        e.id == r.targetId &&
+                        archivedProjects.contains(e.projectId),
+                  )) &&
               r.state != 'cancelled' &&
               r.syncState != 'blocked',
         )
@@ -194,6 +226,7 @@ List<ReminderPlan> desiredReminderPlans({
       for (final t in data.tasks.where(
         (t) =>
             !t.isCompleted &&
+            !archivedProjects.contains(t.projectId) &&
             t.dueAt != null &&
             !custom.any((r) => r.targetType == 'task' && r.targetId == t.id),
       )) {
@@ -210,6 +243,7 @@ List<ReminderPlan> desiredReminderPlans({
     if (prefs?.forCategory('reminders').inApp != false) {
       for (final e in data.events.where(
         (e) =>
+            !archivedProjects.contains(e.projectId) &&
             !custom.any((r) => r.targetType == 'event' && r.targetId == e.id),
       )) {
         plans.add(

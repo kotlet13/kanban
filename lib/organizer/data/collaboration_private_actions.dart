@@ -150,7 +150,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
         ? const <String, dynamic>{}
         : CollaborationRepository._map(caps.single['value'])['features'] as Map;
     if (candidates.isNotEmpty &&
-        (_recordContractVersion < 5 ||
+        (_recordContractVersion < (candidates.any((b) => b.version >= 2) ? 6 : 5) ||
             features['ideas'] != true ||
             candidates.any((b) => b.assets.isNotEmpty) &&
                 features['ideaAssets'] != true)) {
@@ -261,7 +261,9 @@ extension CollaborationPrivateActions on CollaborationRepository {
         final pulled = await _callSession(
           session,
           epoch,
-          _recordContractVersion >= 5
+          _recordContractVersion >= 6
+              ? 'sync6.pull'
+              : _recordContractVersion >= 5
               ? 'sync5.pull'
               : _recordContractVersion >= 4
               ? 'sync4.pull'

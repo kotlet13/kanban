@@ -5,7 +5,20 @@ enum GardenAreaKind { bed, zone }
 
 enum GardenPlantingStatus { planned, actual }
 
-/// A manually drawn rectangle on a unit canvas. It has no physical scale.
+/// Illustration only: selecting a picture never infers the botanical family.
+enum GardenCropIllustration {
+  generic,
+  carrot,
+  tomato,
+  lettuce,
+  cabbage,
+  onion,
+  pepper,
+  pumpkin,
+  bean,
+}
+
+/// A rectangle in normalized garden coordinates; physical scale belongs to Garden.
 class GardenArea {
   const GardenArea({
     required this.id,
@@ -109,7 +122,22 @@ class GardenPlanting {
     this.plantAt,
     this.harvestAt,
     this.notes = '',
+    this.harvested = false,
+    this.spacingCm,
+    this.illustration = GardenCropIllustration.generic,
+    this.visualGrowthDays = 60,
   });
+  final bool harvested;
+  final double? spacingCm;
+  final GardenCropIllustration illustration;
+
+  /// User-adjustable illustration timeline; not an agronomic maturity estimate.
+  final int visualGrowthDays;
+  bool get hasSceneData =>
+      harvested ||
+      spacingCm != null ||
+      illustration != GardenCropIllustration.generic ||
+      visualGrowthDays != 60;
   final String id, areaId, crop, variety, family, notes;
   final GardenPlantingStatus status;
   final DateTime? sowAt, plantAt, harvestAt;
@@ -122,6 +150,11 @@ class GardenPlanting {
     DateTime? sowAt,
     DateTime? plantAt,
     DateTime? harvestAt,
+    bool? harvested,
+    double? spacingCm,
+    bool clearSpacing = false,
+    GardenCropIllustration? illustration,
+    int? visualGrowthDays,
     bool clearSowAt = false,
     bool clearPlantAt = false,
     bool clearHarvestAt = false,
@@ -136,8 +169,12 @@ class GardenPlanting {
     sowAt: clearSowAt ? null : sowAt ?? this.sowAt,
     plantAt: clearPlantAt ? null : plantAt ?? this.plantAt,
     harvestAt: clearHarvestAt ? null : harvestAt ?? this.harvestAt,
+    harvested: harvested ?? this.harvested,
+    spacingCm: clearSpacing ? null : spacingCm ?? this.spacingCm,
+    illustration: illustration ?? this.illustration,
+    visualGrowthDays: visualGrowthDays ?? this.visualGrowthDays,
   );
-  Map<String, Object?> toJson() => {
+  Map<String, Object?> toJson({bool? scene}) => {
     'id': id,
     'areaId': areaId,
     'crop': crop,
@@ -148,8 +185,15 @@ class GardenPlanting {
     'sowAt': _calendarJson(sowAt),
     'plantAt': _calendarJson(plantAt),
     'harvestAt': _calendarJson(harvestAt),
+    if (scene ?? hasSceneData) ...{
+      'harvested': harvested,
+      'spacingCm': spacingCm,
+      'illustration': illustration.name,
+      'visualGrowthDays': visualGrowthDays,
+    },
   };
-  factory GardenPlanting.fromJson(Map<String, dynamic> json) {
+  factory GardenPlanting.fromJson(Map<String, dynamic> json, {bool? scene}) {
+    final enhanced = scene ?? json.containsKey('harvested');
     _keys(json, {
       'id',
       'areaId',
@@ -161,6 +205,12 @@ class GardenPlanting {
       'sowAt',
       'plantAt',
       'harvestAt',
+      if (enhanced) ...[
+        'harvested',
+        'spacingCm',
+        'illustration',
+        'visualGrowthDays',
+      ],
     });
     return GardenPlanting(
       id: json['id'] as String,
@@ -173,6 +223,12 @@ class GardenPlanting {
       sowAt: _calendarDate(json['sowAt']),
       plantAt: _calendarDate(json['plantAt']),
       harvestAt: _calendarDate(json['harvestAt']),
+      harvested: enhanced ? json['harvested'] as bool : false,
+      spacingCm: enhanced ? (json['spacingCm'] as num?)?.toDouble() : null,
+      illustration: enhanced
+          ? GardenCropIllustration.values.byName(json['illustration'] as String)
+          : GardenCropIllustration.generic,
+      visualGrowthDays: enhanced ? json['visualGrowthDays'] as int : 60,
     )..validate();
   }
   void validate() {
@@ -182,6 +238,14 @@ class GardenPlanting {
     _text(variety, 200);
     _text(family, 200);
     _text(notes, 20000);
+    if ((spacingCm != null &&
+            (!spacingCm!.isFinite || spacingCm! < 1 || spacingCm! > 1000)) ||
+        visualGrowthDays < 1 ||
+        visualGrowthDays > 730 ||
+        (harvested &&
+            (status != GardenPlantingStatus.actual || harvestAt == null))) {
+      throw const FormatException('Invalid garden scene planting');
+    }
     final dates = [sowAt, plantAt, harvestAt].whereType<DateTime>().toList();
     for (final date in dates) {
       if (date.year < 1900 ||
@@ -220,18 +284,18 @@ class GardenSeason {
       );
   List<GardenPlanting> plantingsForArea(String areaId) =>
       List.unmodifiable(plantings.where((p) => p.areaId == areaId));
-  Map<String, Object?> toJson() => {
+  Map<String, Object?> toJson({bool? scene}) => {
     'year': year,
     'notes': notes,
-    'plantings': plantings.map((p) => p.toJson()).toList(),
+    'plantings': plantings.map((p) => p.toJson(scene: scene)).toList(),
   };
-  factory GardenSeason.fromJson(Map<String, dynamic> json) {
+  factory GardenSeason.fromJson(Map<String, dynamic> json, {bool? scene}) {
     _keys(json, {'year', 'notes', 'plantings'});
     return GardenSeason(
       year: json['year'] as int,
       notes: json['notes'] as String,
       plantings: (json['plantings'] as List).map(
-        (v) => GardenPlanting.fromJson(v as Map<String, dynamic>),
+        (v) => GardenPlanting.fromJson(v as Map<String, dynamic>, scene: scene),
       ),
     )..validate();
   }
@@ -271,6 +335,9 @@ class Garden {
     required this.id,
     required this.name,
     this.notes = '',
+    this.widthMeters,
+    this.heightMeters,
+    this.formatVersion = 2,
     Iterable<GardenArea> areas = const [],
     Iterable<GardenSeason> seasons = const [],
     this.revision = 0,
@@ -279,6 +346,16 @@ class Garden {
   }) : areas = List.unmodifiable(areas),
        seasons = List.unmodifiable(seasons);
   final String id, name, notes;
+
+  /// Null for legacy sketches until the user supplies an actual measurement.
+  final double? widthMeters, heightMeters;
+  final int formatVersion;
+  bool get hasPhysicalSize => widthMeters != null && heightMeters != null;
+  bool get hasSceneData =>
+      formatVersion >= 3 ||
+      hasPhysicalSize ||
+      seasons.any((s) => s.plantings.any((p) => p.hasSceneData));
+  int get documentVersion => hasSceneData ? 3 : 2;
   final List<GardenArea> areas;
   final List<GardenSeason> seasons;
   GardenSeason? seasonForYear(int year) =>
@@ -288,6 +365,8 @@ class Garden {
   Garden copyWith({
     String? name,
     String? notes,
+    double? widthMeters,
+    double? heightMeters,
     Iterable<GardenArea>? areas,
     Iterable<GardenSeason>? seasons,
     int? revision,
@@ -296,6 +375,9 @@ class Garden {
     id: id,
     name: name ?? this.name,
     notes: notes ?? this.notes,
+    widthMeters: widthMeters ?? this.widthMeters,
+    heightMeters: heightMeters ?? this.heightMeters,
+    formatVersion: formatVersion,
     areas: areas ?? this.areas,
     seasons: seasons ?? this.seasons,
     revision: revision ?? this.revision,
@@ -303,23 +385,29 @@ class Garden {
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Map<String, Object?> toJson() => {
-    'version': 2,
+    'version': documentVersion,
+    if (hasSceneData) ...{
+      'widthMeters': widthMeters,
+      'heightMeters': heightMeters,
+    },
     'id': id,
     'name': name,
     'notes': notes,
     'areas': areas.map((v) => v.toJson()).toList(),
-    'seasons': seasons.map((v) => v.toJson()).toList(),
+    'seasons': seasons.map((v) => v.toJson(scene: hasSceneData)).toList(),
     'revision': revision,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
   factory Garden.fromJson(Map<String, dynamic> json) {
     final extended = json.containsKey('version');
-    if (extended && (json['version'] is! int || json['version'] != 2)) {
+    if (extended &&
+        (json['version'] is! int || !const [2, 3].contains(json['version']))) {
       throw const FormatException('Unsupported garden version');
     }
     _keys(json, {
       if (extended) ...['version', 'seasons'],
+      if (json['version'] == 3) ...['widthMeters', 'heightMeters'],
       'id',
       'name',
       'notes',
@@ -332,12 +420,18 @@ class Garden {
       id: json['id'] as String,
       name: json['name'] as String,
       notes: json['notes'] as String,
+      widthMeters: (json['widthMeters'] as num?)?.toDouble(),
+      heightMeters: (json['heightMeters'] as num?)?.toDouble(),
+      formatVersion: extended ? json['version'] as int : 2,
       revision: json['revision'] as int,
       createdAt: _date(json['createdAt']),
       updatedAt: _date(json['updatedAt']),
       seasons: extended
           ? (json['seasons'] as List).map(
-              (v) => GardenSeason.fromJson(v as Map<String, dynamic>),
+              (v) => GardenSeason.fromJson(
+                v as Map<String, dynamic>,
+                scene: json['version'] == 3,
+              ),
             )
           : const [],
       areas: (json['areas'] as List).map((v) {
@@ -360,6 +454,14 @@ class Garden {
     _id(id);
     _text(name, 200, required: true);
     _text(notes, 20000);
+    if (!const [2, 3].contains(formatVersion) ||
+        (widthMeters == null) != (heightMeters == null) ||
+        [
+          widthMeters,
+          heightMeters,
+        ].whereType<double>().any((v) => !v.isFinite || v < .1 || v > 10000)) {
+      throw const FormatException('Invalid physical garden size');
+    }
     if (revision < 0 ||
         updatedAt.isBefore(createdAt) ||
         areas.length > 1000 ||
@@ -415,14 +517,15 @@ class GardenSnapshot {
         for (final p in s.plantings) p.id,
   };
   Map<String, Object?> toJson() => {
-    'version': 2,
+    'version': gardens.any((g) => g.hasSceneData) ? 3 : 2,
     'revision': revision,
     'gardens': gardens.map((g) => g.toJson()).toList(),
   };
   factory GardenSnapshot.fromJson(Map<String, dynamic> json) {
     try {
       _keys(json, {'version', 'revision', 'gardens'});
-      if (json['version'] is! int || !const [1, 2].contains(json['version'])) {
+      if (json['version'] is! int ||
+          !const [1, 2, 3].contains(json['version'])) {
         throw const FormatException();
       }
       final snapshot = GardenSnapshot(
@@ -430,7 +533,9 @@ class GardenSnapshot {
         gardens: (json['gardens'] as List).map((v) {
           final payload = v as Map<String, dynamic>;
           if ((json['version'] == 1 && payload.containsKey('version')) ||
-              (json['version'] == 2 && payload['version'] != 2)) {
+              (json['version'] == 2 && payload['version'] != 2) ||
+              (json['version'] == 3 &&
+                  !const [2, 3].contains(payload['version']))) {
             throw const FormatException('Garden snapshot version mismatch');
           }
           return Garden.fromJson(payload);

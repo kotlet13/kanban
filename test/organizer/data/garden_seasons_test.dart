@@ -225,7 +225,7 @@ void main() {
     () {
       final valid = GardenSnapshot(gardens: [richGarden()]).toJson();
       for (final mutate in <void Function(Map<String, dynamic>)>[
-        (j) => j['version'] = 3,
+        (j) => j['version'] = 4,
         (j) => j['version'] = 2.0,
         (j) => j['version'] = 1,
         (j) => j['gardens'][0]['version'] = 3,
@@ -383,7 +383,7 @@ void main() {
         expect(gardenRotationWarnings(restored, 2027).single.previousYears, [
           2026,
         ]);
-        expect((await db.rows('PRAGMA user_version')).single.values.single, 9);
+        expect((await db.rows('PRAGMA user_version')).single.values.single, 10);
       } finally {
         await repo.close();
         await db.close();
@@ -601,7 +601,7 @@ void main() {
       const password = 'Seasonal garden backup password';
       final bytes = await source.backup.exportEncryptedBackup(password);
       final decrypted = await source.backup.crypto.decrypt(bytes, password);
-      expect(decrypted['version'], 5);
+      expect(decrypted['version'], 6);
       expect(decrypted['gardens']['version'], 2);
       validateBackupDocument(decrypted);
       await encryptedTarget.backup.restoreEncryptedBackup(

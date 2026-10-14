@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cryptography/cryptography.dart' show Sha256;
 import '../domain/garden_models.dart';
 import '../domain/idea_models.dart';
 import '../domain/local_space_models.dart';
@@ -11,7 +12,8 @@ import '../domain/collaboration_models.dart';
 import 'collaboration_database.dart';
 import 'collaboration_repository.dart' show newSharedId;
 import 'organizer_storage.dart';
-import 'organizer_repository.dart' show OrganizerConflictException;
+import 'organizer_repository.dart'
+    show OrganizerConflictException, guardArchivedProjectWrites;
 
 /// Per-record canonical storage. Opening and anonymous use need no credentials.
 /// Hive is read once and retained intact; the marker and every row commit together.
@@ -20,6 +22,7 @@ class SqliteOrganizerStorage
         OrganizerStorage,
         ObservableOrganizerStorage,
         OrganizerOwnershipStorage,
+        OrganizerProjectDeletionStorage,
         PersonalJsonBackupStorage {
   SqliteOrganizerStorage(
     this.database, {
@@ -325,105 +328,277 @@ class SqliteOrganizerStorage
     return snapshotFromRows(rows, revision: revision);
   }
 
-  Future<void> _detachDeletedProjectIdeas(
+  Future<Map<String, dynamic>> _projectIdeaGraph(
     Set<String> projects,
     Map<String, dynamic>? binding,
     Set<String> localIds,
   ) async {
-    final now = DateTime.now().toUtc();
-    IdeaBoard detach(IdeaBoard b) => b.copyWith(
-      clearProjectId: true,
-      revision: b.revision + 1,
-      updatedAt: now.isBefore(b.updatedAt) ? b.updatedAt : now,
-    );
-    var localChanged = false;
+    final local = <Map<String, dynamic>>[],
+        remote = <Map<String, dynamic>>[],
+        drafts = <Map<String, dynamic>>[];
+    final projectIds = <String>{...projects},
+        workspaces = <String>{_workspaceId};
     for (final row in await database.rows(
-      "SELECT i.id,i.payload FROM device_ideas i LEFT JOIN idea_space_links l ON l.idea_id=i.id WHERE COALESCE(l.space_id,'local')=?",
+      "SELECT i.id,i.payload FROM device_ideas i LEFT JOIN idea_space_links l ON l.idea_id=i.id WHERE COALESCE(l.space_id,'local')=? ORDER BY i.id",
       [_workspaceId],
     )) {
-      final board = IdeaBoard.fromJson(
-        jsonDecode(row['payload'] as String) as Map<String, dynamic>,
-      );
-      if (!projects.contains(board.projectId)) continue;
-      final next = detach(board)..validate();
-      await database.execute('UPDATE device_ideas SET payload=? WHERE id=?', [
-        jsonEncode(next.toJson()),
-        next.id,
-      ]);
-      await database.execute(
-        'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
-        ['idea_record_revision:${next.id}', next.revision.toString()],
-      );
-      localChanged = true;
+      if (projects.contains(
+        (jsonDecode(row['payload'] as String) as Map)['projectId'],
+      )) {
+        local.add(row);
+      }
     }
-    if (localChanged) {
-      await database.execute(
-        "INSERT INTO local_meta(name,value) VALUES('idea_generation','1') ON CONFLICT(name) DO UPDATE SET value=CAST(value AS INTEGER)+1",
-      );
-    }
-    final draftProjects = <String>{...projects},
-        workspaces = <String>{_workspaceId};
     if (binding != null) {
-      final partition = binding['partition'], scope = binding['scope_id'];
-      workspaces.add('shared:$partition:$scope');
       final remoteProjects = <String>{};
-      for (final project in projects.where((id) => !localIds.contains(id))) {
+      workspaces.add('shared:${binding['partition']}:${binding['scope_id']}');
+      for (final id in projects.where((id) => !localIds.contains(id))) {
         final maps = await database.rows(
           'SELECT remote_id FROM personal_record_map WHERE workspace=? AND id=?',
-          [binding['id'], project],
+          [binding['id'], id],
         );
         if (maps.isNotEmpty) {
           remoteProjects.add(maps.single['remote_id'] as String);
         }
       }
-      draftProjects.addAll(remoteProjects);
+      projectIds.addAll(remoteProjects);
       for (final row in await database.rows(
-        "SELECT id,payload,local_revision FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0",
-        [partition, scope],
+        "SELECT id,payload,local_revision FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0 ORDER BY id",
+        [binding['partition'], binding['scope_id']],
       )) {
-        final board = IdeaBoard.fromJson(
-          jsonDecode(row['payload'] as String) as Map<String, dynamic>,
-        );
-        if (!remoteProjects.contains(board.projectId)) continue;
-        final maps = await database.rows(
-          'SELECT id FROM personal_record_map WHERE workspace=? AND remote_id=?',
-          [binding['id'], row['id']],
-        );
-        final localId = maps.isEmpty
-            ? row['id'] as String
-            : maps.single['id'] as String;
-        await queuePrivateRecord(
-          database,
-          binding,
-          localId,
-          'idea',
-          detach(board).toJson(),
-        );
+        if (remoteProjects.contains(
+          (jsonDecode(row['payload'] as String) as Map)['projectId'],
+        )) {
+          remote.add(row);
+        }
       }
     }
     for (final workspace in workspaces) {
       for (final row in await database.rows(
-        'SELECT id,payload,base FROM idea_drafts WHERE workspace=?',
+        'SELECT * FROM idea_drafts WHERE workspace=? ORDER BY id',
         [workspace],
       )) {
+        if (projectIds.contains(
+          (jsonDecode(row['payload'] as String) as Map)['projectId'],
+        )) {
+          drafts.add(row);
+        }
+      }
+    }
+    return {
+      'local': local,
+      'remote': remote,
+      'drafts': drafts,
+      'workspaces': workspaces.toList(),
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> previewProjectDeletion(
+    String projectId,
+  ) => database.transaction(() async {
+    final current = await read(),
+        binding = await activeBinding(),
+        local = await localSnapshot(workspace: _workspaceId);
+    final project = current.projects
+        .where((v) => v.id == projectId)
+        .firstOrNull;
+    if (project == null) {
+      throw const OrganizerConflictException('Project no longer exists');
+    }
+    final ideas = await _projectIdeaGraph(
+      {projectId},
+      binding,
+      local.recordIds,
+    );
+    final tasks = current.tasks
+        .where((t) => t.projectId == projectId)
+        .map((t) => t.id)
+        .toSet();
+    final finance = current.financeEntries
+        .where((f) => f.projectId == projectId || tasks.contains(f.taskId))
+        .map((f) => f.id)
+        .toSet();
+    final payments = <Map<String, dynamic>>[];
+    for (final row in await database.rows(
+      'SELECT * FROM linked_payment_events WHERE space_key=? ORDER BY event_id',
+      ['local:$_workspaceId'],
+    )) {
+      if (finance.contains(
+        (jsonDecode(row['data'] as String) as Map)['sourceEntryId'],
+      )) {
+        payments.add(row);
+      }
+    }
+    final photos = <String>{};
+    for (final rows in [ideas['local'], ideas['remote'], ideas['drafts']]) {
+      for (final row in rows as List) {
         final board = IdeaBoard.fromJson(
           jsonDecode(row['payload'] as String) as Map<String, dynamic>,
         );
-        if (!draftProjects.contains(board.projectId)) continue;
-        final base = row['base'] == null
-            ? null
-            : IdeaBoard.fromJson(
-                jsonDecode(row['base'] as String) as Map<String, dynamic>,
-              );
+        for (final e in board.elements) {
+          if (e.asset != null) photos.add(e.asset!.sha256);
+        }
+      }
+    }
+    final assets = <Map<String, dynamic>>[];
+    for (final workspace in ideas['workspaces'] as List<String>) {
+      assets.addAll(
+        await database.rows(
+          'SELECT workspace,sha256,metadata,length(bytes) size FROM idea_assets WHERE workspace=? ORDER BY sha256',
+          [workspace],
+        ),
+      );
+    }
+    final digest = await Sha256().hash(
+      utf8.encode(jsonEncode([current.toJson(), ideas, assets, payments])),
+    );
+    return {
+      'scopeId': current.workspaceKey,
+      'projectId': projectId,
+      'name': project.title,
+      'scopeNames': [project.title],
+      'counts': {
+        'projects': 1,
+        'tasks': tasks.length,
+        'events': current.events.where((e) => e.projectId == projectId).length,
+        'finance': finance.length,
+        'ideas':
+            (ideas['local'] as List).length + (ideas['remote'] as List).length,
+        'photos': photos.length,
+        'other': 0,
+        'gardens': 0,
+        'drafts': (ideas['drafts'] as List).length,
+      },
+      'canDelete': payments.isEmpty,
+      'previewHash': digest.bytes
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join(),
+    };
+  });
+
+  @override
+  Future<void> writeProjectDeletion(
+    OrganizerSnapshot candidate,
+    String projectId,
+    String previewHash,
+  ) => database.transaction(() async {
+    final fresh = await previewProjectDeletion(projectId);
+    if (fresh['previewHash'] != previewHash) {
+      throw const CollaborationException('scope_deletion_preview_changed');
+    }
+    if (fresh['canDelete'] != true) {
+      throw const CollaborationException('scope_deletion_blocked');
+    }
+    await write(candidate);
+  });
+
+  Future<void> _deleteProjectIdeas(
+    Set<String> projects,
+    Map<String, dynamic>? binding,
+    Set<String> localIds,
+  ) async {
+    final graph = await _projectIdeaGraph(projects, binding, localIds);
+    for (final row in graph['local'] as List<Map<String, dynamic>>) {
+      final board = IdeaBoard.fromJson(
+        jsonDecode(row['payload'] as String) as Map<String, dynamic>,
+      );
+      for (final kind in ['idea_record_revision', 'idea_deleted_revision']) {
         await database.execute(
-          'UPDATE idea_drafts SET payload=?,base=? WHERE workspace=? AND id=?',
-          [
-            jsonEncode(detach(board).toJson()),
-            base == null ? null : jsonEncode(detach(base).toJson()),
-            workspace,
-            row['id'],
-          ],
+          'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=CAST(MAX(CAST(value AS INTEGER),CAST(excluded.value AS INTEGER)) AS TEXT)',
+          ['$kind:${board.id}', '${board.revision + 1}'],
         );
+      }
+      await database.execute('DELETE FROM idea_space_links WHERE idea_id=?', [
+        board.id,
+      ]);
+      await database.execute('DELETE FROM device_ideas WHERE id=?', [board.id]);
+    }
+    if ((graph['local'] as List).isNotEmpty) {
+      await database.execute(
+        "INSERT INTO local_meta(name,value) VALUES('idea_generation','1') ON CONFLICT(name) DO UPDATE SET value=CAST(value AS INTEGER)+1",
+      );
+    }
+    if (binding != null) {
+      for (final row in graph['remote'] as List<Map<String, dynamic>>) {
+        final maps = await database.rows(
+          'SELECT id FROM personal_record_map WHERE workspace=? AND remote_id=?',
+          [binding['id'], row['id']],
+        );
+        await queuePrivateRecord(
+          database,
+          binding,
+          maps.isEmpty ? row['id'] as String : maps.single['id'] as String,
+          'idea',
+          null,
+        );
+      }
+    }
+    for (final row in graph['drafts'] as List<Map<String, dynamic>>) {
+      await database.execute(
+        'DELETE FROM idea_drafts WHERE workspace=? AND id=?',
+        [row['workspace'], row['id']],
+      );
+    }
+    // Images are workspace-owned; retain a byte used by another board/draft or
+    // an immutable private outbox request that still needs upload/recovery.
+    for (final workspace in graph['workspaces'] as List<String>) {
+      final referenced = <String>{};
+      void retain(String? raw) {
+        if (raw == null) return;
+        final p = jsonDecode(raw);
+        if (p is! Map) return;
+        for (final e in p['elements'] as List? ?? const []) {
+          if (e is Map &&
+              e['asset'] is Map &&
+              (e['asset'] as Map)['sha256'] is String) {
+            referenced.add((e['asset'] as Map)['sha256'] as String);
+          }
+        }
+      }
+
+      if (workspace == _workspaceId) {
+        for (final row in await database.rows(
+          "SELECT i.payload FROM device_ideas i LEFT JOIN idea_space_links l ON l.idea_id=i.id WHERE COALESCE(l.space_id,'local')=?",
+          [workspace],
+        )) {
+          retain(row['payload'] as String);
+        }
+      }
+      for (final row in await database.rows(
+        'SELECT payload,base FROM idea_drafts WHERE workspace=?',
+        [workspace],
+      )) {
+        retain(row['payload'] as String);
+        retain(row['base'] as String?);
+      }
+      if (binding != null && workspace.startsWith('shared:')) {
+        for (final row in await database.rows(
+          "SELECT payload FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0",
+          [binding['partition'], binding['scope_id']],
+        )) {
+          retain(row['payload'] as String?);
+        }
+        for (final row in await database.rows(
+          r"SELECT request FROM outbox WHERE partition=? AND scope_id=? AND json_extract(request,'$.type')='idea'",
+          [binding['partition'], binding['scope_id']],
+        )) {
+          retain(
+            jsonEncode(
+              (jsonDecode(row['request'] as String) as Map)['payload'],
+            ),
+          );
+        }
+      }
+      for (final asset in await database.rows(
+        'SELECT sha256 FROM idea_assets WHERE workspace=?',
+        [workspace],
+      )) {
+        if (!referenced.contains(asset['sha256'])) {
+          await database.execute(
+            'DELETE FROM idea_assets WHERE workspace=? AND sha256=?',
+            [workspace, asset['sha256']],
+          );
+        }
       }
     }
   }
@@ -457,6 +632,16 @@ class SqliteOrganizerStorage
         'SELECT data FROM local_spaces WHERE id=?',
         [_workspaceId],
       );
+      if (binding == null && catalog.isEmpty && _workspaceId != 'local') {
+        throw const OrganizerConflictException('Local space no longer exists');
+      }
+      if (catalog.isNotEmpty &&
+          LocalSpace.fromJson(
+            jsonDecode(catalog.single['data'] as String)
+                as Map<String, dynamic>,
+          ).archived) {
+        throw const OrganizerConflictException('Local space is archived');
+      }
       if (catalog.isNotEmpty &&
           LocalSpace.fromJson(
                 jsonDecode(catalog.single['data'] as String)
@@ -466,6 +651,7 @@ class SqliteOrganizerStorage
         throw const OrganizerConflictException('Use the linked space to edit');
       }
       checkWrite();
+      guardArchivedProjectWrites(previous, snapshot);
       final old = {for (final r in snapshotRows(previous)) r.id: r},
           next = {for (final r in snapshotRows(snapshot)) r.id: r};
       final lockedAccounts = <String>{};
@@ -592,7 +778,7 @@ class SqliteOrganizerStorage
           .map((r) => r.id)
           .toSet();
       if (deletedProjects.isNotEmpty) {
-        await _detachDeletedProjectIdeas(deletedProjects, binding, localIds);
+        await _deleteProjectIdeas(deletedProjects, binding, localIds);
       }
       final changedIds = {...old.keys, ...next.keys}.toList()
         ..sort((a, b) {
@@ -908,7 +1094,7 @@ Future<void> queuePrivateRecord(
     'SELECT * FROM $table WHERE partition=? AND scope_id=? AND id=?',
     [p, scope, id],
   );
-  final wireVersion = privateRecordWireVersion(
+  var wireVersion = privateRecordWireVersion(
     localType,
     source ??
         (old.firstOrNull?['payload'] == null
@@ -916,6 +1102,15 @@ Future<void> queuePrivateRecord(
             : jsonDecode(old.first['payload'] as String)
                   as Map<String, Object?>),
   );
+  if (type == 'project' &&
+      old.firstOrNull?['payload'] != null &&
+      privateRecordWireVersion(
+            type,
+            jsonDecode(old.first['payload'] as String) as Map<String, Object?>,
+          ) >=
+          6) {
+    wireVersion = 6;
+  }
   Map<String, Object?>? payload;
   if (source != null) {
     payload = Map.of(source)
@@ -1170,7 +1365,8 @@ bool privateFinancialType(String localType) => const [
   'personalFinanceAccount',
 ].contains(localType);
 int privateRecordWireVersion(String type, Map<String, Object?> source) {
-  if (type == 'idea') return 5;
+  if (type == 'project' && source.containsKey('archived')) return 6;
+  if (type == 'idea') return source['version'] == 2 ? 6 : 5;
   if (type == 'householdPerson') return 3;
   if (const [
     'financeAccount',

@@ -35,6 +35,8 @@ class PushTransport extends FakeTransport {
   bool enabled = true, loseRegisterReply = false, loseUnregisterReply = false;
   bool denyGroup = false;
   String projectId = 'test-project';
+  int displayVersion = 1;
+  bool wrongDisplayAck = false;
   final registrations = <String, Map<String, dynamic>>{};
   final items = <SharedInboxEntry>[];
   final calls =
@@ -85,6 +87,7 @@ class PushTransport extends FakeTransport {
         'recordContractVersions': [1],
         if (server.moderationSupported) 'moderationContractVersions': [1],
         'pushProjectId': enabled ? projectId : null,
+        'pushDisplayVersion': displayVersion,
         'features': {
           'recordSync': true,
           'sharedContentPolicy': server.moderationSupported,
@@ -112,7 +115,8 @@ class PushTransport extends FakeTransport {
             current['registered'] == true &&
             current['token'] == params['token'] &&
             current['platform'] == params['platform'] &&
-            current['language'] == params['language'];
+            current['language'] == params['language'] &&
+            (current['displayVersion'] ?? 1) == (params['displayVersion'] ?? 1);
         if (!identical) {
           if (params['expectedRevision'] != current['revision']) {
             throw CollaborationApiException(
@@ -134,6 +138,9 @@ class PushTransport extends FakeTransport {
             'platform': params['platform'],
             'language': params['language'],
             'projectId': params['projectId'],
+            'displayVersion': wrongDisplayAck
+                ? 1
+                : (params['displayVersion'] ?? 1),
             'revision': (current['revision'] as int) + 1,
             'updatedAt': '2026-10-05T12:00:00Z',
           };

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:convert';
+import 'package:cryptography/cryptography.dart' show Sha256;
 
 import '../domain/organizer_models.dart';
 import 'organizer_storage.dart';
@@ -99,13 +101,17 @@ class OrganizerRepository {
           change(previous),
           _clock().toUtc(),
         ).copyWith(revision: previous.revision + 1);
+        guardArchivedProjectWrites(previous, candidate);
         await _persist(candidate);
       });
 
-  Future<void> _persist(OrganizerSnapshot candidate) async {
+  Future<void> _persist(
+    OrganizerSnapshot candidate, {
+    Future<void> Function(OrganizerSnapshot)? writer,
+  }) async {
     candidate.validate();
     try {
-      await storage.write(candidate);
+      await (writer ?? storage.write)(candidate);
       _snapshot = await storage.read();
     } catch (error, stack) {
       // A flush error can follow a successful frame write. Reconcile with
@@ -192,41 +198,89 @@ class OrganizerRepository {
     );
   });
 
-  Future<void> deleteProject(String id) => _change((s) {
-    _find(s.projects, id, (v) => v.id);
-    final now = _now();
-    return s.copyWith(
-      projects: s.projects.where((v) => v.id != id),
-      tasks: s.tasks.map(
-        (v) => v.projectId == id
-            ? v.copyWith(
-                projectId: null,
-                phaseId: null,
-                revision: v.revision + 1,
-                updatedAt: now.isBefore(v.updatedAt) ? v.updatedAt : now,
-              )
-            : v,
-      ),
-      events: s.events.map(
-        (v) => v.projectId == id
-            ? v.copyWith(
-                projectId: null,
-                revision: v.revision + 1,
-                updatedAt: now.isBefore(v.updatedAt) ? v.updatedAt : now,
-              )
-            : v,
-      ),
-      financeEntries: s.financeEntries.map(
-        (v) => v.projectId == id
-            ? v.copyWith(
-                projectId: null,
-                revision: v.revision + 1,
-                updatedAt: now.isBefore(v.updatedAt) ? v.updatedAt : now,
-              )
-            : v,
-      ),
-    );
-  });
+  Future<Map<String, dynamic>> previewProjectDeletion(String id) =>
+      _enqueue(() async {
+        if (storage is OrganizerProjectDeletionStorage) {
+          return (storage as OrganizerProjectDeletionStorage)
+              .previewProjectDeletion(id);
+        }
+        final current = await storage.read();
+        final project = _find(current.projects, id, (v) => v.id);
+        final tasks = current.tasks
+            .where((v) => v.projectId == id)
+            .map((v) => v.id)
+            .toSet();
+        final digest = await Sha256().hash(
+          utf8.encode(jsonEncode(current.toJson())),
+        );
+        return {
+          'scopeId': current.workspaceKey,
+          'projectId': id,
+          'name': project.title,
+          'scopeNames': [project.title],
+          'counts': {
+            'projects': 1,
+            'tasks': tasks.length,
+            'events': current.events.where((v) => v.projectId == id).length,
+            'ideas': 0,
+            'photos': 0,
+            'finance': current.financeEntries
+                .where((v) => v.projectId == id || tasks.contains(v.taskId))
+                .length,
+            'other': 0,
+            'gardens': 0,
+            'drafts': 0,
+          },
+          'canDelete': true,
+          'previewHash': digest.bytes
+              .map((b) => b.toRadixString(16).padLeft(2, '0'))
+              .join(),
+        };
+      });
+
+  Future<void> deleteProject(String id, {String? previewHash}) =>
+      _enqueue(() async {
+        _snapshot ??= await storage.read();
+        final previous = snapshot;
+        _find(previous.projects, id, (v) => v.id);
+        final tasks = previous.tasks
+            .where((v) => v.projectId == id)
+            .map((v) => v.id)
+            .toSet();
+        final candidate = _withReminders(
+          previous.copyWith(
+            projects: previous.projects.where((v) => v.id != id),
+            tasks: previous.tasks.where((v) => !tasks.contains(v.id)),
+            events: previous.events.where((v) => v.projectId != id),
+            financeEntries: previous.financeEntries.where(
+              (v) => v.projectId != id && !tasks.contains(v.taskId),
+            ),
+          ),
+          _clock().toUtc(),
+        ).copyWith(revision: previous.revision + 1);
+        if (previewHash != null && storage is OrganizerProjectDeletionStorage) {
+          await _persist(
+            candidate,
+            writer: (candidate) => (storage as OrganizerProjectDeletionStorage)
+                .writeProjectDeletion(candidate, id, previewHash),
+          );
+        } else {
+          if (previewHash != null) {
+            final digest = await Sha256().hash(
+              utf8.encode(jsonEncode((await storage.read()).toJson())),
+            );
+            if (digest.bytes
+                    .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                    .join() !=
+                previewHash) {
+              throw const OrganizerConflictException(
+                'scope_deletion_preview_changed',
+              );
+            }
+          }
+          await _persist(candidate);
+        }
+      });
 
   Future<void> createTask({
     required String title,
@@ -676,7 +730,9 @@ OrganizerSnapshot _withReminders(OrganizerSnapshot snapshot, DateTime now) {
   };
   final reminders = <LocalReminder>[];
   for (final task in snapshot.tasks) {
-    if (!task.isCompleted && task.dueAt != null && !task.dueAt!.isAfter(now)) {
+    if (!task.isCompleted &&
+        task.dueAt != null &&
+        (!task.dueAt!.isAfter(now) || previous.containsKey(reminderId(task)))) {
       final id = reminderId(task);
       reminders.add(
         (previous[id]?.isRead == true && previous[id]?.readAt == null
@@ -703,4 +759,74 @@ String newLocalId() {
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   final hex = bytes.map((v) => v.toRadixString(16).padLeft(2, '0')).join();
   return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+}
+
+/// Archive protects every descendant mutation, including an editor opened before
+/// archiving. Restoring or deleting the whole closed project remains possible.
+void guardArchivedProjectWrites(
+  OrganizerSnapshot before,
+  OrganizerSnapshot after,
+) {
+  final archived = before.projects
+      .where((p) => p.archived)
+      .map((p) => p.id)
+      .toSet();
+  final afterProjects = {for (final p in after.projects) p.id: p};
+  final locked = {
+    ...archived,
+    ...after.projects.where((p) => p.archived).map((p) => p.id),
+  };
+  for (final project in before.projects.where((p) => p.archived)) {
+    final next = afterProjects[project.id];
+    if (next == null) continue;
+    Map<String, Object?> fields(LocalProject p) =>
+        Map<String, Object?>.from(p.toJson())
+          ..remove('archived')
+          ..remove('revision')
+          ..remove('updatedAt');
+    if (jsonEncode(fields(project)) != jsonEncode(fields(next))) {
+      throw const OrganizerConflictException('Project is archived');
+    }
+  }
+  final lockedTasks = {
+    ...before.tasks.where((t) => locked.contains(t.projectId)).map((t) => t.id),
+    ...after.tasks.where((t) => locked.contains(t.projectId)).map((t) => t.id),
+  };
+  for (final pair in [
+    (before.tasks.map((r) => r.toJson()), after.tasks.map((r) => r.toJson())),
+    (before.events.map((r) => r.toJson()), after.events.map((r) => r.toJson())),
+    (
+      before.financeEntries.map((r) => r.toJson()),
+      after.financeEntries.map((r) => r.toJson()),
+    ),
+  ]) {
+    final old = {for (final row in pair.$1) row['id']: row},
+        next = {for (final row in pair.$2) row['id']: row};
+    for (final id in {...old.keys, ...next.keys}) {
+      final prior = old[id], candidate = next[id];
+      final wasLocked =
+              locked.contains(prior?['projectId']) ||
+              lockedTasks.contains(prior?['taskId']),
+          isLocked =
+              locked.contains(candidate?['projectId']) ||
+              lockedTasks.contains(candidate?['taskId']);
+      if (!wasLocked && !isLocked ||
+          jsonEncode(prior) == jsonEncode(candidate)) {
+        continue;
+      }
+      final deletedParent =
+          prior?['projectId'] ??
+          before.tasks
+              .where((t) => t.id == prior?['taskId'])
+              .firstOrNull
+              ?.projectId;
+      if (prior != null &&
+          candidate == null &&
+          deletedParent is String &&
+          !afterProjects.containsKey(deletedParent)) {
+        continue;
+      }
+      throw const OrganizerConflictException('Project is archived');
+    }
+  }
 }

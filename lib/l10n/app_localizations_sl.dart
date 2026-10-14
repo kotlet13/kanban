@@ -4301,4 +4301,93 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get localTaskReminderTitle => 'Opomnik opravila na tej napravi';
+
+  @override
+  String get scopeLifecycleMenu => 'Nastavitve prostora';
+
+  @override
+  String get scopeDeleteTitle => 'Trajno izbriši';
+
+  @override
+  String get scopeDeleteDescription =>
+      'Izbrisani bodo ta prostor oziroma projekt in spodaj navedena vsebina. Izbrisa ni mogoče razveljaviti. Računi, prijava in drugi prostori ostanejo.';
+
+  @override
+  String scopeDeleteCounts(
+    int projects,
+    int tasks,
+    int events,
+    int ideas,
+    int photos,
+    int finance,
+    int other,
+  ) {
+    return 'Projekti: $projects · Opravila: $tasks · Dogodki: $events\nIdeje: $ideas · Fotografije: $photos · Finance: $finance · Drugo: $other';
+  }
+
+  @override
+  String get scopeDeleteBlocked =>
+      'Izbris je zadržan zaradi povezave s finančnimi podatki zunaj tega obsega ali drugega lastnika podrejenega projekta. Najprej razrešite povezavo oziroma lastništvo.';
+
+  @override
+  String get scopeDeletePreviewChanged =>
+      'Vsebina se je spremenila. Ponovno odprite predogled izbrisa.';
+
+  @override
+  String get scopeOwnerTransferRequired =>
+      'Ta član je lastnik podrejenega projekta. Pred odstranitvijo prenesite lastništvo projekta.';
+
+  @override
+  String get scopeRemoveMemberDescendants =>
+      'Član izgubi dostop do tega prostora in vseh njegovih projektov, tudi do posebej deljenih projektov. Njegov račun in drugi prostori ostanejo. Stara povabila v tem obsegu bodo preklicana.';
+
+  @override
+  String get scopeDeletedDescription =>
+      'Ta prostor oziroma projekt je bil izbrisan. Lastne neposlane osnutke lahko izvozite.';
+
+  @override
+  String get scopeArchivedSection => 'Arhivirano';
+
+  @override
+  String scopeDeleteLocalExtras(int gardens, int drafts) {
+    return 'Vrtovi: $gardens · Osnutki idej: $drafts';
+  }
+
+  @override
+  String get notificationChanged => 'Sprememba iz obvestila';
+
+  @override
+  String get notificationShoppingRemoved =>
+      'Sprememba: artikel je bil izbrisan s seznama.';
+
+  @override
+  String get localSpacePublicationPending =>
+      'Povezovanje tega prostora še ni dokončano. Najprej dokončajte povezovanje, nato ga upravljajte na strežniku.';
+
+  @override
+  String get spacePickerSpaces => 'Prostori';
+
+  @override
+  String get spacePickerSharedWithMe => 'Deljeno z mano';
+
+  @override
+  String get spacePickerDirectProject => 'Neposredno deljen projekt';
+
+  @override
+  String get spacePickerSearch => 'Poišči prostor ali projekt';
+
+  @override
+  String get spacePickerNoResults =>
+      'Ni ujemajočih se prostorov ali projektov.';
+
+  @override
+  String get sharingOpenDrafts => 'Odpri neposlano delo';
+
+  @override
+  String get sharingRecoveryReviewDescription =>
+      'Pregled lastnih lokalnih osnutkov in fotografij. Zapise lahko kopirate; pregled ne obnovi dostopa in ničesar ne pošlje.';
+
+  @override
+  String get sharingRecoveryInvalid =>
+      'Datoteke neposlanega dela ni mogoče odpreti.';
 }

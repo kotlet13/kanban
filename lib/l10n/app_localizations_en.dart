@@ -4295,4 +4295,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localTaskReminderTitle => 'Task reminder on this device';
+
+  @override
+  String get scopeLifecycleMenu => 'Space settings';
+
+  @override
+  String get scopeDeleteTitle => 'Delete permanently';
+
+  @override
+  String get scopeDeleteDescription =>
+      'This space or project and the contents listed below will be deleted. This cannot be undone. Accounts, sign-in and other spaces are kept.';
+
+  @override
+  String scopeDeleteCounts(
+    int projects,
+    int tasks,
+    int events,
+    int ideas,
+    int photos,
+    int finance,
+    int other,
+  ) {
+    return 'Projects: $projects · Tasks: $tasks · Events: $events\nIdeas: $ideas · Photos: $photos · Finances: $finance · Other: $other';
+  }
+
+  @override
+  String get scopeDeleteBlocked =>
+      'Deletion is blocked by linked financial data outside this scope or a descendant project with a different owner. Resolve the link or ownership first.';
+
+  @override
+  String get scopeDeletePreviewChanged =>
+      'Contents changed. Open the deletion preview again.';
+
+  @override
+  String get scopeOwnerTransferRequired =>
+      'This member owns a descendant project. Transfer project ownership before removing them.';
+
+  @override
+  String get scopeRemoveMemberDescendants =>
+      'The member loses access to this space and every project inside it, including directly shared projects. Their account and other spaces are kept. Existing invitations in this scope will be revoked.';
+
+  @override
+  String get scopeDeletedDescription =>
+      'This space or project was deleted. You can export your own unsent drafts.';
+
+  @override
+  String get scopeArchivedSection => 'Archived';
+
+  @override
+  String scopeDeleteLocalExtras(int gardens, int drafts) {
+    return 'Gardens: $gardens · Idea drafts: $drafts';
+  }
+
+  @override
+  String get notificationChanged => 'Change from notification';
+
+  @override
+  String get notificationShoppingRemoved =>
+      'Change: an item was removed from this list.';
+
+  @override
+  String get localSpacePublicationPending =>
+      'This space is still being connected. Finish connecting it, then manage it on the server.';
+
+  @override
+  String get spacePickerSpaces => 'Spaces';
+
+  @override
+  String get spacePickerSharedWithMe => 'Shared with me';
+
+  @override
+  String get spacePickerDirectProject => 'Directly shared project';
+
+  @override
+  String get spacePickerSearch => 'Find a space or project';
+
+  @override
+  String get spacePickerNoResults => 'No matching spaces or projects.';
+
+  @override
+  String get sharingOpenDrafts => 'Open unsent work';
+
+  @override
+  String get sharingRecoveryReviewDescription =>
+      'Review your own local drafts and photos. You can copy the records; this review does not restore access or send anything.';
+
+  @override
+  String get sharingRecoveryInvalid => 'Unable to open the unsent work file.';
 }

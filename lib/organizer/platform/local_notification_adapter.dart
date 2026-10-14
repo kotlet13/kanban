@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/notification_models.dart';
+import '../domain/remote_push_models.dart';
 import 'local_notification_scheduler.dart';
 
 /// Reconciles the nearest 60 requests (below Apple's 64 pending limit), using
@@ -22,14 +23,17 @@ class LocalNotificationAdapter {
   int _generation = 0;
   bool _initialized = false;
   void Function(NotificationTarget)? _onOpen;
+  void Function(RemotePushReference, bool)? _onRemoteOpen;
   LocalNotificationStatus status = const LocalNotificationStatus(
     permission: LocalNotificationPermission.unknown,
   );
 
   Future<NotificationTarget?> initialize(
-    void Function(NotificationTarget) onOpen,
-  ) async {
+    void Function(NotificationTarget) onOpen, {
+    void Function(RemotePushReference, bool)? onRemoteOpen,
+  }) async {
     _onOpen = onOpen;
+    _onRemoteOpen = onRemoteOpen;
     if (_initialized) return null;
     final payload = await scheduler.initialize((payload) {
       final target = _decode(payload);
@@ -239,14 +243,28 @@ class LocalNotificationAdapter {
   void dispose() {
     _generation++;
     _onOpen = null;
+    _onRemoteOpen = null;
   }
 
   NotificationTarget? _decode(String payload) {
     if (payload.length > 16384) return null;
     try {
-      final target = NotificationTarget.fromJson(
-        jsonDecode(payload) as Map<String, dynamic>,
-      );
+      final json = jsonDecode(payload) as Map<String, dynamic>;
+      if (json['type'] == 'familyhub.system.v2') {
+        if (json.length != 3 ||
+            json['summary'] is! bool ||
+            json['reference'] is! Map) {
+          return null;
+        }
+        final reference = RemotePushReference.tryParse(
+          Map<String, Object?>.from(json['reference'] as Map),
+        );
+        if (reference != null) {
+          _onRemoteOpen?.call(reference, json['summary'] as bool);
+        }
+        return null;
+      }
+      final target = NotificationTarget.fromJson(json);
       if (target.records.isEmpty || target.records.length > 100) return null;
       if (!target.isPersonal &&
           [

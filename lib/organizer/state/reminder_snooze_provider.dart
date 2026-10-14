@@ -27,5 +27,5 @@ final effectiveReminderPlansProvider = FutureProvider<List<ReminderPlan>>((
     shared: shared.valueOrNull ?? CollaborationState(),
   );
   final store = await ref.watch(reminderSnoozeStoreProvider.future);
-  return store.resolve(plans);
+  return store.resolve(await store.resolveDeadlineOffsets(plans));
 });

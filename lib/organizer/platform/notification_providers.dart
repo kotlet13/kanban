@@ -5,6 +5,7 @@ import '../domain/notification_models.dart';
 import 'flutter_notification_scheduler.dart';
 import 'local_notification_adapter.dart';
 import 'local_notification_scheduler.dart';
+import 'remote_push/remote_push_providers.dart';
 
 final localNotificationSchedulerProvider = Provider<LocalNotificationScheduler>(
   (ref) => FlutterNotificationScheduler(),
@@ -21,11 +22,20 @@ final localNotificationAdapterProvider =
         alive = false;
         adapter.dispose();
       });
-      final launch = await adapter.initialize((target) {
-        if (alive) {
-          ref.read(notificationLaunchTargetProvider.notifier).state = target;
-        }
-      });
+      final launch = await adapter.initialize(
+        (target) {
+          if (alive) {
+            ref.read(notificationLaunchTargetProvider.notifier).state = target;
+          }
+        },
+        onRemoteOpen: (reference, summary) {
+          if (alive) {
+            ref.read(remotePushSummaryLaunchProvider.notifier).state = summary;
+            ref.read(remotePushLaunchReferenceProvider.notifier).state =
+                reference;
+          }
+        },
+      );
       if (alive && launch != null) {
         ref.read(notificationLaunchTargetProvider.notifier).state = launch;
       }

@@ -376,7 +376,11 @@ extension CollaborationPrivateRecoveryAttachment on CollaborationRepository {
         final page = await _callSession(
           session,
           epoch,
-          _recordContractVersion >= 4
+          _recordContractVersion >= 6
+              ? 'sync6.pull'
+              : _recordContractVersion >= 5
+              ? 'sync5.pull'
+              : _recordContractVersion >= 4
               ? 'sync4.pull'
               : _recordContractVersion >= 3
               ? 'sync3.pull'

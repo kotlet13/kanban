@@ -120,6 +120,7 @@ class SharedScope {
     this.sequence = 0,
     this.archived = false,
     this.revoked = false,
+    this.deleted = false,
     this.blocked = false,
   });
   final String id;
@@ -138,6 +139,7 @@ class SharedScope {
   final SharedRole role;
   final bool archived;
   final bool revoked;
+  final bool deleted;
   final bool blocked;
 
   /// Cached write/outbox blocking does not revoke an active reader's access.
@@ -168,6 +170,7 @@ class SharedScope {
     'archived': archived,
     'role': role.name,
     'revoked': revoked,
+    'deleted': deleted,
     'blocked': blocked,
   };
   factory SharedScope.fromJson(Map<String, dynamic> json) => SharedScope(
@@ -202,7 +205,8 @@ class SharedScope {
         : 0,
     archived: json['archived'] == true,
     role: SharedRole.values.byName(readString(json, 'role')),
-    revoked: json['revoked'] == true,
+    revoked: json['revoked'] == true || json['deleted'] == true,
+    deleted: json['deleted'] == true,
     blocked:
         json['blocked'] == true ||
         !const [1, 2, 3].contains(json['accessPolicyVersion'] as int? ?? 1),
@@ -438,6 +442,8 @@ class CollaborationState {
     this.organizationsSupported = false,
     this.householdPeopleSupported = false,
     this.projectArchivingSupported = false,
+    this.scopeDeletionSupported = false,
+    this.scopeArchivingSupported = false,
     this.deletionPending = false,
     this.privateSync = const PrivateSyncState(),
     Map<String, String> privateRecordIds = const {},
@@ -530,7 +536,9 @@ class CollaborationState {
   final bool sessionRenewalSupported;
   final bool organizationsSupported,
       householdPeopleSupported,
-      projectArchivingSupported;
+      projectArchivingSupported,
+      scopeDeletionSupported,
+      scopeArchivingSupported;
   final int financeContractVersion, recordContractVersion;
   final bool deletionPending;
   final PrivateSyncState privateSync;

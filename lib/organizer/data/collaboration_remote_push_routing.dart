@@ -86,6 +86,7 @@ extension CollaborationRemotePushRouting on CollaborationRepository {
           'shoppingList',
           'shoppingItem',
           'membership',
+          'idea',
           'financeAccount',
           'financeEntry',
           'financeTransfer',

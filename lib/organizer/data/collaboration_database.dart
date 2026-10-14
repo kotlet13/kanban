@@ -7,7 +7,7 @@ import '../domain/collaboration_models.dart' show AccountSession;
 class CollaborationDatabase extends GeneratedDatabase {
   CollaborationDatabase(super.executor);
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
   String selectedLocalWorkspaceId = 'local';
   bool localSelectionLoaded = false;
   void activateLocalWorkspace(String id) {
@@ -54,7 +54,7 @@ class CollaborationDatabase extends GeneratedDatabase {
       }
     },
     onUpgrade: (_, from, to) async {
-      if (from < 1 || from > 8 || to != 9) {
+      if (from < 1 || from > 9 || to != 10) {
         throw const FormatException('Unsupported shared database schema');
       }
       if (from < 2) {
@@ -92,9 +92,12 @@ class CollaborationDatabase extends GeneratedDatabase {
           await customStatement(statement);
         }
       }
-      for (final statement in _upgrade9) {
-        await customStatement(statement);
+      if (from < 9) {
+        for (final statement in _upgrade9) {
+          await customStatement(statement);
+        }
       }
+      // Schema10 fences extended JSON contracts; existing rows/operations are unchanged.
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');

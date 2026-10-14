@@ -191,6 +191,50 @@ class _LocalNotificationCoordinatorState
       );
     }
 
+    String titleFor(ReminderPlan plan) {
+      final record = plan.target.records.firstOrNull;
+      if (record == null) return l.organizerAppName;
+      String? topic;
+      if (plan.target.isPersonal) {
+        final snapshot = snapshots
+            .where(
+              (s) =>
+                  (s.workspaceKey.startsWith('private:')
+                      ? 'local'
+                      : s.workspaceKey) ==
+                  plan.target.localWorkspaceId,
+            )
+            .firstOrNull;
+        topic = record.type == 'task'
+            ? snapshot?.tasks
+                  .where((t) => t.id == record.recordId)
+                  .firstOrNull
+                  ?.title
+            : record.type == 'event'
+            ? snapshot?.events
+                  .where((e) => e.id == record.recordId)
+                  .firstOrNull
+                  ?.title
+            : null;
+      } else {
+        final data = shared?.dataForScope(plan.target.scopeId!);
+        topic = record.type == 'task'
+            ? data?.tasks
+                  .where((t) => t.id == record.recordId)
+                  .firstOrNull
+                  ?.title
+            : record.type == 'event'
+            ? data?.events
+                  .where((e) => e.id == record.recordId)
+                  .firstOrNull
+                  ?.title
+            : null;
+      }
+      if (topic == null || topic.trim().isEmpty) return l.organizerAppName;
+      final bounded = topic.replaceAll(RegExp(r'[\x00-\x1f\x7f]'), ' ').trim();
+      return bounded.length > 140 ? '${bounded.substring(0, 139)}…' : bounded;
+    }
+
     final requests = [
       for (final plan in plans)
         if (plan.target.isPersonal
@@ -209,7 +253,7 @@ class _LocalNotificationCoordinatorState
                       true))
           LocalNotificationRequest(
             plan: plan,
-            title: l.organizerAppName,
+            title: titleFor(plan),
             body: plan.reason == 'salary_check'
                 ? l.financePlanReminderBody
                 : plan.reason == 'income_check'

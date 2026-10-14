@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cryptography/cryptography.dart' show Sha256;
 import '../domain/collaboration_models.dart' show CollaborationException;
 import '../domain/local_space_models.dart';
 import '../domain/organizer_models.dart';
@@ -7,6 +8,8 @@ import 'collaboration_database.dart';
 import 'collaboration_repository.dart' show newSharedId;
 import 'organizer_repository.dart';
 import 'sqlite_organizer_storage.dart';
+
+part 'local_space_lifecycle.dart';
 
 class LocalSpacesRepository {
   LocalSpacesRepository(this.database, {DateTime Function()? clock})
@@ -184,6 +187,7 @@ class LocalSpacesRepository {
       address: address.trim(),
       binding: old.binding,
       financeRecoveryIncomplete: old.financeRecoveryIncomplete,
+      archived: old.archived,
     );
     space.validate();
     await database.execute('UPDATE local_spaces SET data=? WHERE id=?', [
@@ -205,7 +209,7 @@ class LocalSpacesRepository {
           );
     if (space == null ||
         space.kind != LocalSpaceKind.household ||
-        space.binding != null) {
+        space.binding != null || space.archived) {
       throw const OrganizerConflictException('Choose a household');
     }
   }

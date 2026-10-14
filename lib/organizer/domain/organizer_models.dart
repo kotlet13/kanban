@@ -25,6 +25,7 @@ class LocalProject {
     this.createdByAccountId,
     this.updatedByAccountId,
     this.area = ProjectArea.personal,
+    this.archived = false,
     required this.id,
     required this.title,
     required this.description,
@@ -39,6 +40,7 @@ class LocalProject {
   final String title;
   final String description;
   final ProjectArea area;
+  final bool archived;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -56,6 +58,7 @@ class LocalProject {
     Object? startAt = _unset,
     Object? endAt = _unset,
     ProjectArea? area,
+    bool? archived,
     String? title,
     String? description,
     DateTime? updatedAt,
@@ -68,6 +71,7 @@ class LocalProject {
         ? this.availabilityPeriod
         : availabilityPeriod as AvailabilityPeriod?,
     area: area ?? this.area,
+    archived: archived ?? this.archived,
     revision: revision ?? this.revision,
     startAt: identical(startAt, _unset) ? this.startAt : startAt as DateTime?,
     endAt: identical(endAt, _unset) ? this.endAt : endAt as DateTime?,
@@ -93,11 +97,13 @@ class LocalProject {
     'title': title,
     'description': description,
     'area': area.name,
+    if (archived) 'archived': true,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
   factory LocalProject.fromJson(Map<String, dynamic> json) => LocalProject(
+    archived: json.containsKey('archived') ? readBool(json, 'archived') : false,
     phases: (json['phases'] as List? ?? const []).map(
       (p) => ProjectPhase.fromJson(Map<String, dynamic>.from(p as Map)),
     ),

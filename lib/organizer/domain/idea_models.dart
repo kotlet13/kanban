@@ -77,13 +77,17 @@ class IdeaElement {
     this.color = 0xff263238,
     this.strokeWidth = 3,
     this.text = '',
+    double? fontSize,
     Iterable<IdeaPoint> points = const [],
     this.parentImageId,
     this.asset,
-  }) : points = List.unmodifiable(points);
+  }) : fontSize = fontSize ?? (parentImageId == null ? 22 : .065),
+       points = List.unmodifiable(points);
   final String id, text;
   final IdeaElementKind kind;
-  final double x, y, width, height, rotation, strokeWidth;
+  final double x, y, width, height, rotation, strokeWidth, fontSize;
+  double get defaultFontSize => parentImageId == null ? 22 : .065;
+  bool get hasCustomFontSize => fontSize != defaultFontSize;
   final int color;
   final List<IdeaPoint> points;
   final String? parentImageId;
@@ -98,6 +102,7 @@ class IdeaElement {
     int? color,
     double? strokeWidth,
     String? text,
+    double? fontSize,
     Iterable<IdeaPoint>? points,
     String? parentImageId,
     bool clearParentImageId = false,
@@ -113,15 +118,17 @@ class IdeaElement {
     color: color ?? this.color,
     strokeWidth: strokeWidth ?? this.strokeWidth,
     text: text ?? this.text,
+    fontSize: fontSize ?? this.fontSize,
     points: points ?? this.points,
     parentImageId: clearParentImageId
         ? null
         : parentImageId ?? this.parentImageId,
     asset: asset ?? this.asset,
   );
-  Map<String, Object?> toJson() => {
+  Map<String, Object?> toJson({bool extended = false}) => {
     'id': id,
     'kind': kind.name,
+    if (extended || hasCustomFontSize) 'fontSize': fontSize,
     'x': x,
     'y': y,
     'width': width,
@@ -138,6 +145,7 @@ class IdeaElement {
     ideaKeys(v, {
       'id',
       'kind',
+      if (v.containsKey('fontSize')) 'fontSize',
       'x',
       'y',
       'width',
@@ -161,6 +169,7 @@ class IdeaElement {
       color: v['color'] as int,
       strokeWidth: (v['strokeWidth'] as num).toDouble(),
       text: v['text'] as String,
+      fontSize: (v['fontSize'] as num?)?.toDouble(),
       points: (v['points'] as List).map(
         (p) => IdeaPoint.fromJson(p as Map<String, dynamic>),
       ),
@@ -192,6 +201,9 @@ class IdeaElement {
         height < 0 ||
         strokeWidth <= 0 ||
         strokeWidth > 1000 ||
+        !fontSize.isFinite ||
+        fontSize < (parentImageId == null ? 6 : .005) ||
+        fontSize > (parentImageId == null ? 300 : 2) ||
         color < 0 ||
         color > 0xffffffff ||
         text.length > 20000 ||
@@ -217,12 +229,19 @@ class IdeaBoard {
     this.height = 1200,
     Iterable<IdeaElement> elements = const [],
     this.revision = 0,
+    this.archived = false,
+    this.formatVersion = 1,
   }) : elements = List.unmodifiable(elements);
   final String id, title;
   final String? projectId;
   final double width, height;
   final List<IdeaElement> elements;
-  final int revision;
+  final int revision, formatVersion;
+  final bool archived;
+  int get version =>
+      formatVersion >= 2 || archived || elements.any((e) => e.hasCustomFontSize)
+      ? 2
+      : 1;
   final DateTime createdAt, updatedAt;
   Iterable<IdeaAsset> get assets =>
       elements.where((e) => e.asset != null).map((e) => e.asset!);
@@ -237,6 +256,7 @@ class IdeaBoard {
     int? revision,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? archived,
   }) => IdeaBoard(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -245,17 +265,20 @@ class IdeaBoard {
     height: height ?? this.height,
     elements: elements ?? this.elements,
     revision: revision ?? this.revision,
+    archived: archived ?? this.archived,
+    formatVersion: version,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Map<String, Object?> toJson() => {
-    'version': 1,
+    'version': version,
+    if (version >= 2) 'archived': archived,
     'id': id,
     'title': title,
     'projectId': projectId,
     'width': width,
     'height': height,
-    'elements': elements.map((e) => e.toJson()).toList(),
+    'elements': elements.map((e) => e.toJson(extended: version >= 2)).toList(),
     'revision': revision,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
@@ -263,6 +286,7 @@ class IdeaBoard {
   factory IdeaBoard.fromJson(Map<String, dynamic> v) {
     ideaKeys(v, {
       'version',
+      if (v['version'] == 2) 'archived',
       'id',
       'title',
       'projectId',
@@ -273,12 +297,18 @@ class IdeaBoard {
       'createdAt',
       'updatedAt',
     });
-    if (v['version'] != 1) {
+    if (!const [1, 2].contains(v['version']) ||
+        (v['version'] == 2 && v['archived'] is! bool) ||
+        (v['elements'] as List).any(
+          (e) => (e as Map).containsKey('fontSize') != (v['version'] == 2),
+        )) {
       throw const FormatException('Unsupported idea board');
     }
     return IdeaBoard(
       id: v['id'] as String,
       title: v['title'] as String,
+      archived: v['archived'] as bool? ?? false,
+      formatVersion: v['version'] as int,
       projectId: v['projectId'] as String?,
       width: (v['width'] as num).toDouble(),
       height: (v['height'] as num).toDouble(),
@@ -412,6 +442,7 @@ IdeaBoard mergeIdeaBoards(IdeaBoard base, IdeaBoard local, IdeaBoard remote) {
     clearProjectId:
         pick('projectId', base.projectId, local.projectId, remote.projectId) ==
         null,
+    archived: pick('archived', base.archived, local.archived, remote.archived),
     width: pick('width', base.width, local.width, remote.width),
     height: pick('height', base.height, local.height, remote.height),
     elements: elements,

@@ -358,7 +358,7 @@ void main() {
       final operation = (await db.rows('SELECT * FROM finance_outbox')).single;
       expect(operation['request'], body);
       expect(operation['wire_version'], 1);
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 9);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 10);
       await db.close();
     },
   );
@@ -517,8 +517,8 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 5);
-      expect(doc['databaseVersion'], 9);
+      expect(doc['version'], 6);
+      expect(doc['databaseVersion'], 10);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},
       ]);
@@ -589,6 +589,7 @@ void main() {
       legacy.remove('localSpaces');
       legacy.remove('gardenSpaceLinks');
       legacy.remove('linkedPayments');
+      legacy.remove('localTaskReminderPreferences');
       for (final field in [
         'ideas',
         'ideaSpaceLinks',

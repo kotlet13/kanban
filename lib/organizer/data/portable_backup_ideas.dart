@@ -184,7 +184,7 @@ extension PortableBackupIdeas on PortableBackupRepository {
   }
 
   Future<void> _verifyIdeaArchive(Map<String, dynamic> doc) async {
-    if (doc['version'] != 5) return;
+    if ((doc['version'] as int) < 5) return;
     for (final raw in doc['ideaAssets'] as List) {
       final row = backupMap(raw);
       await verifyIdeaAsset(

@@ -115,6 +115,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
       final space = LocalSpace.fromJson(
         CollaborationRepository._map(rows.single['data']),
       );
+      if (space.archived) { issues.add('scope_archived'); }
       final snapshot = await storage.localSnapshot(workspace: id);
       final ideas = await _localPublicationIdeas(id);
       final ideaDrafts = await _localPublicationIdeaDrafts(id);
@@ -210,7 +211,17 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           !_organizationsSupported) {
         issues.add('client_upgrade_required');
       }
-      if (gardens.isNotEmpty && _recordContractVersion < 4) {
+      if (gardens.isNotEmpty &&
+          _recordContractVersion <
+              (gardens.any(
+                    (row) =>
+                        CollaborationRepository._map(
+                          row['payload'],
+                        )['version'] ==
+                        3,
+                  )
+                  ? 6
+                  : 4)) {
         issues.add('garden_sync_unsupported');
       }
       final ideaCandidates = [
@@ -221,7 +232,8 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           IdeaBoard.fromJson(CollaborationRepository._map(draft['base'])),
       ];
       if (ideaCandidates.isNotEmpty &&
-          (_recordContractVersion < 5 ||
+          (_recordContractVersion <
+                  (ideaCandidates.any((b) => b.version >= 2) ? 6 : 5) ||
               features['ideas'] != true ||
               features['ideaAssets'] != true &&
                   ideaCandidates.any((idea) => idea.assets.isNotEmpty))) {

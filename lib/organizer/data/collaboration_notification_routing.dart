@@ -99,7 +99,9 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         [session.profile.partition, scopeId],
       );
       final pulled = await call(
-        _recordContractVersion >= 5
+        _recordContractVersion >= 6
+            ? 'sync6.pull'
+            : _recordContractVersion >= 5
             ? 'sync5.pull'
             : _recordContractVersion >= 4
             ? 'sync4.pull'
@@ -173,6 +175,7 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       );
     }
     var offline = false, missing = false;
+    final contextTargets = <NotificationRecordTarget>[];
     try {
       if (financial) {
         final policy = await _fetchFinancePolicy(session, epoch, scope.id);
@@ -188,7 +191,8 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         for (final id in target.inboxIds) {
           final reply = await _callSession(session, epoch, 'inbox.open', {
             'id': id,
-            if (_recordContractVersion >= 5) 'recordContractVersion': 5,
+            if (_recordContractVersion >= 5)
+              'recordContractVersion': _recordContractVersion,
           });
           final wire = reply['target'] as Map<String, dynamic>;
           if (wire['scopeId'] != target.scopeId ||
@@ -201,6 +205,26 @@ extension CollaborationNotificationRouting on CollaborationRepository {
               (reply['record'] == null ||
                   (reply['record'] as Map)['deleted'] == true)) {
             missing = true;
+          }
+          if (wire['type'] == 'shoppingItem' &&
+              reply['contextRecord'] != null) {
+            final parent = _canonical(
+              reply['contextRecord'],
+              personal: scope.kind == SharedScopeKind.personal,
+            );
+            if (parent['type'] != 'shoppingList' || parent['deleted'] == true) {
+              throw const CollaborationException('invalid_notification_target');
+            }
+            await database.transaction(() async {
+              _checkEpoch(epoch);
+              await _applyRemote(session.profile.partition, scope.id, parent);
+            });
+            final id = parent['id'] as String;
+            if (!contextTargets.any((record) => record.recordId == id)) {
+              contextTargets.add(
+                NotificationRecordTarget(type: 'shoppingList', recordId: id),
+              );
+            }
           }
           if (reply['record'] != null) {
             await database.transaction(() async {
@@ -297,12 +321,31 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       if (rows.first['deleted'] == 1) missing = true;
     }
     return NotificationOpenResult(
-      status: missing
+      status: missing && contextTargets.isEmpty
           ? NotificationOpenStatus.deleted
           : offline
           ? NotificationOpenStatus.offline
           : NotificationOpenStatus.available,
-      target: target,
+      target: contextTargets.isEmpty
+          ? target
+          : NotificationTarget(
+              serverUrl: target.serverUrl,
+              serverId: target.serverId,
+              accountId: target.accountId,
+              scopeId: target.scopeId,
+              localSpaceId: target.localSpaceId,
+              inboxIds: target.inboxIds,
+              records: [
+                ...target.records,
+                for (final record in contextTargets)
+                  if (!target.records.any(
+                    (existing) =>
+                        existing.type == record.type &&
+                        existing.recordId == record.recordId,
+                  ))
+                    record,
+              ],
+            ),
     );
   }
 }

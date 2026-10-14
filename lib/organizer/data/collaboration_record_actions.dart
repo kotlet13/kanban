@@ -89,6 +89,11 @@ extension CollaborationRecordActions on CollaborationRepository {
             _recordContractVersion < 4)) {
       throw const CollaborationException('client_upgrade_required');
     }
+    if (payload != null &&
+        sharedPayloadContractVersion(type.name, payload) >
+            _recordContractVersion) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     final root =
         scoped.projectRootId ??
         (scoped.parentSpaceId != null ? scoped.id : null);
@@ -280,11 +285,28 @@ extension CollaborationRecordActions on CollaborationRepository {
         scope,
         id,
         jsonEncode(request),
-        type == SharedRecordType.idea
-            ? 5
-            : type == SharedRecordType.garden
-            ? 4
-            : (_recordContractVersion > 3 ? 3 : _recordContractVersion),
+        type == SharedRecordType.idea || type == SharedRecordType.garden
+            ? (payload == null
+                  ? _recordContractVersion
+                  : sharedPayloadContractVersion(type.name, payload))
+            : (_recordContractVersion >= 6 &&
+                      (scoped.requiredRecordContractVersion >= 6 ||
+                          (payload != null &&
+                              sharedPayloadContractVersion(
+                                    type.name,
+                                    payload,
+                                  ) >=
+                                  6) ||
+                          (old?['payload'] != null &&
+                              sharedPayloadContractVersion(
+                                    type.name,
+                                    CollaborationRepository._map(
+                                      old!['payload'],
+                                    ),
+                                  ) >=
+                                  6))
+                  ? 6
+                  : (_recordContractVersion > 3 ? 3 : _recordContractVersion)),
       ],
     );
   }
@@ -759,80 +781,10 @@ extension CollaborationRecordActions on CollaborationRepository {
     return data.tasks.firstWhere((row) => row.id == task.id);
   }
 
-  Future<void> deleteProject(String scopeId, String id) => _edit(scopeId, (
-    p,
-  ) async {
-    final data = await _scopeData(p, scopeId);
-    for (final task in data.tasks.where((r) => r.projectId == id)) {
-      final row = task.copyWith(
-        projectId: null,
-        phaseId: null,
-        updatedAt: _now,
-      );
-      await _put(
-        p,
-        scopeId,
-        SharedRecordType.task,
-        row.id,
-        _payload(row.toJson()),
-        expectedLocalRevision: row.revision,
-      );
-    }
-    for (final event in data.events.where((e) => e.projectId == id)) {
-      final row = event.copyWith(projectId: null, updatedAt: _now);
-      await _put(
-        p,
-        scopeId,
-        SharedRecordType.event,
-        event.id,
-        _payload(row.toJson()),
-      );
-    }
-    for (final idea in data.ideas.where((b) => b.projectId == id)) {
-      final now = _now;
-      final row = idea.copyWith(
-        clearProjectId: true,
-        revision: idea.revision + 1,
-        updatedAt: now.isBefore(idea.updatedAt) ? idea.updatedAt : now,
-      );
-      await _put(
-        p,
-        scopeId,
-        SharedRecordType.idea,
-        idea.id,
-        row.toJson(),
-        expectedLocalRevision: idea.revision,
-      );
-    }
-    final workspace = 'shared:$p:$scopeId';
-    for (final row in await database.rows(
-      'SELECT id,payload,base FROM idea_drafts WHERE workspace=?',
-      [workspace],
-    )) {
-      final draft = IdeaBoard.fromJson(
-        CollaborationRepository._map(row['payload']),
-      );
-      if (draft.projectId != id) continue;
-      final base = row['base'] == null
-          ? null
-          : IdeaBoard.fromJson(CollaborationRepository._map(row['base']));
-      IdeaBoard detach(IdeaBoard b) => b.copyWith(
-        clearProjectId: true,
-        revision: b.revision + 1,
-        updatedAt: _now.isBefore(b.updatedAt) ? b.updatedAt : _now,
-      );
-      await database.execute(
-        'UPDATE idea_drafts SET payload=?,base=? WHERE workspace=? AND id=?',
-        [
-          jsonEncode(detach(draft).toJson()),
-          base == null ? null : jsonEncode(detach(base).toJson()),
-          workspace,
-          row['id'],
-        ],
-      );
-    }
-    await _put(p, scopeId, SharedRecordType.project, id, null, deleted: true);
-  });
+  Future<void> deleteProject(String scopeId, String id) async {
+    final preview = await previewScopeDeletion(scopeId, projectId: id);
+    await deleteScopeContents(preview, projectId: id);
+  }
 
   Future<String> publishShoppingList({
     required String scopeId,

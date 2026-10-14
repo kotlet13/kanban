@@ -321,7 +321,10 @@ class SharedScheduledReminder {
     required this.state,
     this.syncState = 'synced',
     this.syncError,
+    this.offsetMinutes,
   });
+  final int? offsetMinutes;
+  bool get relativeToDeadline => offsetMinutes != null;
   final String id, scopeId, targetType, targetId, state;
 
   /// Local command status, independent of the server delivery state.
@@ -340,6 +343,7 @@ class SharedScheduledReminder {
         state: readString(j, 'state'),
         syncState: j['syncState'] as String? ?? 'synced',
         syncError: j['syncError'] as String?,
+        offsetMinutes: _readReminderOffset(j),
       );
   Map<String, Object?> toJson() => {
     'id': id,
@@ -351,5 +355,22 @@ class SharedScheduledReminder {
     'state': state,
     'syncState': syncState,
     if (syncError != null) 'syncError': syncError,
+    if (offsetMinutes != null) ...{
+      'scheduleMode': 'deadline',
+      'offsetMinutes': offsetMinutes,
+    },
   };
+}
+
+int? _readReminderOffset(Map<String, dynamic> json) {
+  final mode = json['scheduleMode'] ?? 'absolute';
+  final offset = json['offsetMinutes'];
+  if (mode == 'absolute' && offset == null) return null;
+  if (mode != 'deadline' ||
+      json['targetType'] != 'task' ||
+      offset is! int ||
+      !const [0, 60, 1440].contains(offset)) {
+    throw const FormatException('Invalid deadline reminder');
+  }
+  return offset;
 }

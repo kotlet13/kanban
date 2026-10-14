@@ -65,6 +65,38 @@ void main() {
   });
 
   test(
+    'display format upgrade persists intent and requires server ACK',
+    () async {
+      final r = await open();
+      await login(r);
+      await configure(r);
+      expect(pushStore.value!.displayVersion, 1);
+      transport.displayVersion = 2;
+      await r.syncNow();
+      await configure(r);
+      expect(pushStore.value!.displayVersion, 2);
+      expect(pushStore.value!.status, RemotePushRegistrationStatus.registered);
+      expect(
+        transport.calls
+            .lastWhere((c) => c.operation == 'push.register')
+            .params['displayVersion'],
+        2,
+      );
+      final saved = RemotePushIntent.fromJson(pushStore.value!.toJson());
+      expect(saved.displayVersion, 2);
+    },
+  );
+  test('wrong display ACK cannot claim grouped registration', () async {
+    transport.displayVersion = 2;
+    transport.wrongDisplayAck = true;
+    final r = await open();
+    await login(r);
+    await configure(r);
+    expect(pushStore.value!.status, RemotePushRegistrationStatus.blocked);
+    expect(pushStore.value!.errorCode, 'invalid_response');
+  });
+
+  test(
     'disabled or mismatched server is truthful and resumes when capability returns',
     () async {
       transport.enabled = false;

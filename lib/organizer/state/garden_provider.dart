@@ -68,12 +68,16 @@ class GardenController extends AsyncNotifier<GardenSnapshot> {
   Future<String> createGarden({
     required String name,
     String notes = '',
+    double? widthMeters,
+    double? heightMeters,
     String? expectedWorkspaceKey,
     Iterable<GardenArea> areas = const [],
     Iterable<GardenSeason> seasons = const [],
   }) => _repo.createGarden(
     name: name,
     notes: notes,
+    widthMeters: widthMeters,
+    heightMeters: heightMeters,
     expectedWorkspaceKey: expectedWorkspaceKey,
     areas: areas,
     seasons: seasons,

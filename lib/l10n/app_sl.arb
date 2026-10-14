@@ -1584,5 +1584,62 @@
   "reminderHourBefore": "1 uro pred rokom",
   "reminderDayBefore": "1 dan pred rokom",
   "reminderRelativeExplanation": "Premakne se skupaj z rokom opravila. Dokončanje opravila ali odstranitev roka prekliče opomnik.",
-  "localTaskReminderTitle": "Opomnik opravila na tej napravi"
+  "localTaskReminderTitle": "Opomnik opravila na tej napravi",
+  "scopeLifecycleMenu": "Nastavitve prostora",
+  "scopeDeleteTitle": "Trajno izbriši",
+  "scopeDeleteDescription": "Izbrisani bodo ta prostor oziroma projekt in spodaj navedena vsebina. Izbrisa ni mogoče razveljaviti. Računi, prijava in drugi prostori ostanejo.",
+  "scopeDeleteCounts": "Projekti: {projects} · Opravila: {tasks} · Dogodki: {events}\nIdeje: {ideas} · Fotografije: {photos} · Finance: {finance} · Drugo: {other}",
+  "scopeDeleteBlocked": "Izbris je zadržan zaradi povezave s finančnimi podatki zunaj tega obsega ali drugega lastnika podrejenega projekta. Najprej razrešite povezavo oziroma lastništvo.",
+  "scopeDeletePreviewChanged": "Vsebina se je spremenila. Ponovno odprite predogled izbrisa.",
+  "scopeOwnerTransferRequired": "Ta član je lastnik podrejenega projekta. Pred odstranitvijo prenesite lastništvo projekta.",
+  "scopeRemoveMemberDescendants": "Član izgubi dostop do tega prostora in vseh njegovih projektov, tudi do posebej deljenih projektov. Njegov račun in drugi prostori ostanejo. Stara povabila v tem obsegu bodo preklicana.",
+  "scopeDeletedDescription": "Ta prostor oziroma projekt je bil izbrisan. Lastne neposlane osnutke lahko izvozite.",
+  "scopeArchivedSection": "Arhivirano",
+  "@scopeDeleteCounts": {
+    "placeholders": {
+      "projects": {
+        "type": "int"
+      },
+      "tasks": {
+        "type": "int"
+      },
+      "events": {
+        "type": "int"
+      },
+      "ideas": {
+        "type": "int"
+      },
+      "photos": {
+        "type": "int"
+      },
+      "finance": {
+        "type": "int"
+      },
+      "other": {
+        "type": "int"
+      }
+    }
+  },
+  "scopeDeleteLocalExtras": "Vrtovi: {gardens} · Osnutki idej: {drafts}",
+  "@scopeDeleteLocalExtras": {
+    "placeholders": {
+      "gardens": {
+        "type": "int"
+      },
+      "drafts": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationChanged": "Sprememba iz obvestila",
+  "notificationShoppingRemoved": "Sprememba: artikel je bil izbrisan s seznama.",
+  "localSpacePublicationPending": "Povezovanje tega prostora še ni dokončano. Najprej dokončajte povezovanje, nato ga upravljajte na strežniku.",
+  "spacePickerSpaces": "Prostori",
+  "spacePickerSharedWithMe": "Deljeno z mano",
+  "spacePickerDirectProject": "Neposredno deljen projekt",
+  "spacePickerSearch": "Poišči prostor ali projekt",
+  "spacePickerNoResults": "Ni ujemajočih se prostorov ali projektov.",
+  "sharingOpenDrafts": "Odpri neposlano delo",
+  "sharingRecoveryReviewDescription": "Pregled lastnih lokalnih osnutkov in fotografij. Zapise lahko kopirate; pregled ne obnovi dostopa in ničesar ne pošlje.",
+  "sharingRecoveryInvalid": "Datoteke neposlanega dela ni mogoče odpreti."
 }

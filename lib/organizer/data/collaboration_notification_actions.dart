@@ -56,6 +56,23 @@ extension CollaborationNotificationActions on CollaborationRepository {
           reminder.state != 'pending') {
         continue;
       }
+      if (reminder.relativeToDeadline &&
+          !deleted &&
+          after != null &&
+          after['isCompleted'] != true &&
+          after['dueAt'] != null) {
+        final at = DateTime.parse(
+          after['dueAt'] as String,
+        ).toUtc().subtract(Duration(minutes: reminder.offsetMinutes!));
+        final data = reminder.toJson()..['remindAt'] = at.toIso8601String();
+        // Source sync owns rescheduling on the server. Never issue another put,
+        // mutate a queued command or resurrect a delivered reminder here.
+        await database.execute(
+          'UPDATE scheduled_reminders SET data=? WHERE partition=? AND id=?',
+          [jsonEncode(data), p, reminder.id],
+        );
+        continue;
+      }
       final data = reminder.toJson()..['state'] = 'cancelled';
       if (reminder.syncState == 'queued') {
         data['syncState'] = 'blocked';
@@ -282,6 +299,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
     required String targetType,
     required String targetId,
     required DateTime remindAt,
+    int? offsetMinutes,
     int expectedRevision = 0,
     String? expectedPartition,
   }) async {
@@ -292,6 +310,12 @@ extension CollaborationNotificationActions on CollaborationRepository {
         expectedRevision < 0 ||
         !remindAt.toUtc().isAfter(clock().toUtc())) {
       throw const CollaborationException('validation_error');
+    }
+    if (offsetMinutes != null &&
+        (_recordContractVersion < 6 ||
+            targetType != 'task' ||
+            !const [0, 60, 1440].contains(offsetMinutes))) {
+      throw const CollaborationException('client_upgrade_required');
     }
     final session = _requireSession(),
         epoch = _epoch,
@@ -329,6 +353,20 @@ extension CollaborationNotificationActions on CollaborationRepository {
               null) {
         throw const CollaborationException('reminder_target_unavailable');
       }
+      if (offsetMinutes != null) {
+        final deadline = CollaborationRepository._map(
+          source.first['payload'],
+        )['dueAt'];
+        if (deadline == null) {
+          throw const CollaborationException('reminder_target_unavailable');
+        }
+        remindAt = DateTime.parse(
+          deadline as String,
+        ).toUtc().subtract(Duration(minutes: offsetMinutes));
+        if (!remindAt.isAfter(clock().toUtc())) {
+          throw const CollaborationException('validation_error');
+        }
+      }
       final rows = await database.rows(
         'SELECT data,remote FROM scheduled_reminders WHERE partition=? AND id=?',
         [session.profile.partition, reminderId],
@@ -361,6 +399,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         revision: expectedRevision + 1,
         state: 'pending',
         syncState: 'queued',
+        offsetMinutes: offsetMinutes,
       );
       await database.execute('DELETE FROM local_meta WHERE name=?', [
         'reminder_cancelled:${session.profile.partition}:$reminderId',
@@ -380,6 +419,10 @@ extension CollaborationNotificationActions on CollaborationRepository {
         'targetType': targetType,
         'targetId': targetId,
         'remindAt': remindAt.toUtc().toIso8601String(),
+        if (offsetMinutes != null) ...{
+          'scheduleMode': 'deadline',
+          'offsetMinutes': offsetMinutes,
+        },
         'expectedRevision': serverRevision,
         'requestId': newSharedId(),
       }, 'reminder:$reminderId');

@@ -27,7 +27,7 @@ void validateSharedPayload(
   final version =
       contractVersion ?? sharedPayloadContractVersion(type.name, payload);
   if (type == SharedRecordType.idea) {
-    if (version < 5) {
+    if (version < 5 || (payload['version'] == 2 && version < 6)) {
       throw const CollaborationException('client_upgrade_required');
     }
     try {
@@ -38,6 +38,9 @@ void validateSharedPayload(
     return;
   }
   if (type == SharedRecordType.garden) {
+    if (payload['version'] == 3 && version < 6) {
+      throw const CollaborationException('client_upgrade_required');
+    }
     if (version < 4 ||
         personal ||
         utf8.encode(jsonEncode(payload)).length > 524288) {
@@ -59,6 +62,7 @@ void validateSharedPayload(
       SharedRecordType.idea => <String>[],
       SharedRecordType.garden => <String>[],
       SharedRecordType.project => [
+        if (version >= 6 && payload.containsKey('archived')) 'archived',
         'description',
         'area',
         if (version >= 2) ...['startAt', 'endAt'],
@@ -276,6 +280,9 @@ void validateSharedPayload(
         throw const CollaborationException('validation_error');
       }
     case SharedRecordType.project:
+      if (payload.containsKey('archived') && payload['archived'] is! bool) {
+        throw const CollaborationException('validation_error');
+      }
       validateSharedText(
         payload['description'],
         personal ? 200000 : 4096,
@@ -320,10 +327,13 @@ void validateSharedPayload(
   }
 }
 
-int sharedPayloadContractVersion(String type, Map payload) => type == 'idea'
-    ? 5
+int sharedPayloadContractVersion(String type, Map payload) =>
+    type == 'project' && payload.containsKey('archived')
+    ? 6
+    : type == 'idea'
+    ? (payload['version'] == 2 ? 6 : 5)
     : type == 'garden'
-    ? 4
+    ? (payload['version'] == 3 ? 6 : 4)
     : type == 'householdPerson' ||
           payload.containsKey('phases') ||
           payload.containsKey('timer')

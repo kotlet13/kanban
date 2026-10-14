@@ -118,7 +118,7 @@ class LinkedPaymentsRepository {
       throw const CollaborationException('space_missing');
     }
     final descriptor = LocalSpace.fromJson(_map(rows.single['data']));
-    if (descriptor.binding != null ||
+    if (descriptor.archived || descriptor.binding != null ||
         descriptor.financeRecoveryIncomplete ||
         kind != null && descriptor.kind != kind) {
       throw const CollaborationException('finance_forbidden');

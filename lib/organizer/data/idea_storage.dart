@@ -29,7 +29,11 @@ class IdeaStorage {
     if (rows.isEmpty) {
       throw const OrganizerConflictException('Idea space no longer exists');
     }
-    if ((jsonDecode(rows.single['data'] as String) as Map)['binding'] != null) {
+    final space = jsonDecode(rows.single['data'] as String) as Map;
+    if (space['archived'] == true) {
+      throw const OrganizerConflictException('Idea space archived');
+    }
+    if (space['binding'] != null) {
       throw const OrganizerConflictException('Use the linked space to edit');
     }
   }
@@ -61,7 +65,15 @@ class IdeaStorage {
     final ownership = {
       for (final link in links) link['idea_id']: link['space_id'],
     };
+    final catalog = await database.rows(
+      'SELECT data FROM local_spaces WHERE id=?',
+      [space],
+    );
     return IdeaSnapshot(
+      canEdit:
+          catalog.isNotEmpty &&
+          (jsonDecode(catalog.single['data'] as String) as Map)['archived'] !=
+              true,
       revision: all.revision,
       workspaceKey: workspaceKey,
       boards: all.boards.where(
@@ -126,6 +138,7 @@ class IdeaStorage {
     final next = {for (final idea in snapshot.boards) idea.id: idea};
     for (final idea in previous.boards) {
       if (!next.containsKey(idea.id)) {
+        if (!allSpaces && idea.projectId!=null) { final parent=await database.rows("SELECT payload FROM personal_records WHERE workspace=? AND id=? AND type='project'",[space,idea.projectId]);if(parent.isNotEmpty && (jsonDecode(parent.single['payload'] as String) as Map)['archived']==true) { throw const OrganizerConflictException('Project is archived'); } }
         // Keep a non-content revision floor after deletion. Restoring the same
         // UUID must not make a previously open editor valid again (ABA).
         final floor = await _revisionFloor(idea.id);
@@ -162,6 +175,12 @@ class IdeaStorage {
       }
 
       final existing = old[idea.id];
+      if (!allSpaces && (existing == null || jsonEncode(existing.toJson()) != jsonEncode(idea.toJson()))) {
+        for (final projectId in {existing?.projectId, idea.projectId}.whereType<String>()) {
+          final parent = await database.rows("SELECT payload FROM personal_records WHERE workspace=? AND id=? AND type='project'", [space,projectId]);
+          if (parent.isNotEmpty && (jsonDecode(parent.single['payload'] as String) as Map)['archived']==true) { throw const OrganizerConflictException('Project is archived'); }
+        }
+      }
       if (existing == null &&
           !allSpaces &&
           (await database.rows('SELECT id FROM device_ideas WHERE id=?', [
@@ -227,4 +246,72 @@ class IdeaStorage {
     'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
     ['idea_record_revision:$id', revision.toString()],
   );
+}
+
+/// All-spaces lifecycle actions retain their explicit source without changing
+/// the selected workspace. They mutate one existing board in one SQL commit.
+Future<void> changeLocalIdeaLifecycle(
+  CollaborationDatabase database,
+  String workspace,
+  IdeaBoard board, {
+  required bool delete,
+}) async {
+  final generation = database.personalIdentityGeneration;
+  await database.transaction(() async {
+    final rows = await database.rows(
+      'SELECT data FROM local_spaces WHERE id=?',
+      [workspace],
+    );
+    if (rows.isEmpty ||
+        (jsonDecode(rows.single['data'] as String) as Map)['archived'] ==
+            true ||
+        (jsonDecode(rows.single['data'] as String) as Map)['binding'] != null) {
+      throw const OrganizerConflictException('Use the linked space to edit');
+    }
+    if (workspace == 'local' &&
+        database.personalProfile != null &&
+        (await database.rows(
+          'SELECT id FROM personal_workspaces WHERE id=? AND enabled=1',
+          ['private:${database.personalProfile!.partition}'],
+        )).isNotEmpty) {
+      throw const OrganizerConflictException(
+        'Use the private workspace to edit',
+      );
+    }
+    final storage = IdeaStorage(database);
+    final snapshot = await storage.readAll();
+    final current = snapshot.boards.where((b) => b.id == board.id).firstOrNull;
+    final links = await database.rows(
+      'SELECT space_id FROM idea_space_links WHERE idea_id=?',
+      [board.id],
+    );
+    if (generation != database.personalIdentityGeneration ||
+        current == null ||
+        current.revision != board.revision ||
+        current.createdAt != board.createdAt ||
+        (links.firstOrNull?['space_id'] ?? 'local') != workspace) {
+      throw const OrganizerConflictException('Idea source changed');
+    }
+    await storage.write(
+      IdeaSnapshot(
+        revision: snapshot.revision,
+        boards: snapshot.boards
+            .where((b) => !delete || b.id != board.id)
+            .map(
+              (b) => b.id == board.id
+                  ? b.copyWith(
+                      archived: !b.archived,
+                      updatedAt: DateTime.now().toUtc().isBefore(b.updatedAt)
+                          ? b.updatedAt
+                          : DateTime.now().toUtc(),
+                    )
+                  : b,
+            ),
+      ),
+      expectedRevision: snapshot.revision,
+      allSpaces: true,
+      expectedIdentityGeneration: generation,
+    );
+  });
+  database.personalChanged();
 }

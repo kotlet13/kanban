@@ -96,6 +96,12 @@ extension CollaborationSyncActions on CollaborationRepository {
       final revokedIds = _scopeAccessChangesSupported
           ? (reply['revokedScopeIds'] as List).cast<String>().toSet()
           : <String>{};
+      final deletedIds = _scopeDeletionSupported
+          ? (reply['deletedScopeIds'] as List? ?? const [])
+                .cast<String>()
+                .toSet()
+          : <String>{};
+      revokedIds.addAll(deletedIds);
       if (revokedIds.any((id) => !isSharedUuid(id))) {
         throw const CollaborationException('invalid_response');
       }
@@ -117,7 +123,11 @@ extension CollaborationSyncActions on CollaborationRepository {
               !scopes.any((r) => r.id == scope.id)) {
             await _upsertScope(
               partition,
-              SharedScope.fromJson({...scope.toJson(), 'revoked': true}),
+              SharedScope.fromJson({
+                ...scope.toJson(),
+                'revoked': true,
+                'deleted': deletedIds.contains(scope.id) || scope.deleted,
+              }),
             );
           } else if (!scopes.any((r) => r.id == scope.id) && !scope.revoked) {
             // A missing row is not proof of revoked membership: a restored or
@@ -222,12 +232,16 @@ extension CollaborationSyncActions on CollaborationRepository {
             session,
             epoch,
             financePair != null
-                ? (_recordContractVersion >= 5
+                ? (_recordContractVersion >= 6
+                      ? 'sync6.pushTaskWithCost'
+                      : _recordContractVersion >= 5
                       ? 'sync5.pushTaskWithCost'
                       : _recordContractVersion >= 4
                       ? 'sync4.pushTaskWithCost'
                       : 'sync3.pushTaskWithCost')
-                : (_recordContractVersion >= 5
+                : (_recordContractVersion >= 6
+                      ? 'sync6.push'
+                      : _recordContractVersion >= 5
                       ? 'sync5.push'
                       : _recordContractVersion >= 4
                       ? 'sync4.push'
@@ -328,6 +342,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                 'invalid_date_range',
                 'person_missing',
                 'person_archived',
+                'project_archived',
                 'task_cost_change_requires_finance',
               }.contains(error.code)) {
             final canonical = error.details['serverRecord'] == null
@@ -408,7 +423,8 @@ extension CollaborationSyncActions on CollaborationRepository {
                 [partition, op['op_id']],
               );
             });
-          } else if (error.code == 'permission_revoked') {
+          } else if ((error.code == 'permission_revoked' ||
+              error.code == 'scope_deleted')) {
             await _blockScope(partition, scopeId, epoch);
           } else {
             rethrow;
@@ -430,7 +446,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             final pulled = await _callSession(
               session,
               epoch,
-              _recordContractVersion >= 5
+              _recordContractVersion >= 6
+                  ? 'sync6.pull'
+                  : _recordContractVersion >= 5
                   ? 'sync5.pull'
                   : _recordContractVersion >= 4
                   ? 'sync4.pull'
@@ -465,7 +483,8 @@ extension CollaborationSyncActions on CollaborationRepository {
               );
             });
           } on CollaborationApiException catch (error) {
-            if (error.code == 'permission_revoked') {
+            if ((error.code == 'permission_revoked' ||
+                error.code == 'scope_deleted')) {
               await _blockScope(partition, scope.id, epoch);
               more = false;
             } else {
@@ -747,13 +766,7 @@ extension CollaborationSyncActions on CollaborationRepository {
           );
           await _upsertScope(
             partition,
-            SharedScope(
-              id: scope.id,
-              name: scope.name,
-              kind: scope.kind,
-              role: scope.role,
-              revoked: true,
-            ),
+            SharedScope.fromJson({...scope.toJson(), 'revoked': true}),
           );
         }
       });
@@ -935,98 +948,67 @@ extension CollaborationSyncActions on CollaborationRepository {
       'SELECT operation,params,state FROM commands WHERE partition=? ORDER BY sequence',
       [partition],
     );
-    final financial = <Map<String, dynamic>>[];
-    final authorizedFinancialEpochs = <String, int>{};
-    final queue = await database.rows(
+    // This explicit recovery contains only this device's immutable candidates.
+    // It intentionally survives loss of read rights; no canonical/base rows or
+    // authorization objects enter the document and nothing is resumed here.
+    final financial = await database.rows(
       'SELECT scope_id,record_id,state,request FROM finance_outbox WHERE partition=? ORDER BY sequence',
       [partition],
     );
-    final financeReminderRows = await database.rows(
-      r"SELECT id,scope_id FROM scheduled_reminders WHERE partition=? AND json_extract(data,'$.targetType')='financeEntry'",
-      [partition],
-    );
-    final financeReminderScopes = {
-      for (final row in financeReminderRows)
-        row['id'] as String: row['scope_id'] as String,
-    };
-    String? financialCommandScope(Map<String, dynamic> command) {
-      final params = CollaborationRepository._map(command['params']);
-      if (params['targetType'] == 'financeEntry') {
-        return params['scopeId'] as String?;
+    final ownIdeaDrafts = <Map<String, dynamic>>[];
+    final media = <String, Map<String, dynamic>>{};
+    Future<void> collectMedia(IdeaBoard board, String workspace) async {
+      for (final asset in board.assets) {
+        final key = '$workspace:${asset.sha256}';
+        if (media.containsKey(key)) continue;
+        final rows = await database.rows(
+          'SELECT bytes FROM idea_assets WHERE workspace=? AND sha256=?',
+          [workspace, asset.sha256],
+        );
+        if (rows.isEmpty) {
+          throw const CollaborationException('idea_asset_missing');
+        }
+        final bytes = Uint8List.fromList(rows.single['bytes'] as List<int>);
+        await verifyIdeaAsset(asset, bytes);
+        media[key] = {
+          'workspace': workspace,
+          'metadata': asset.toJson(),
+          'bytes': base64Encode(bytes),
+        };
       }
-      return params['id'] is String
-          ? financeReminderScopes[params['id']]
-          : null;
     }
 
-    final scopes = {
-      ...queue.map((r) => r['scope_id'] as String),
-      ...commands.map(financialCommandScope).whereType<String>(),
-    };
-    for (final scope in scopes) {
-      var policy = await _cachedFinancePolicy(partition, scope);
-      try {
-        policy = await refreshFinancePolicy(scope);
-      } on CollaborationException catch (e) {
-        if (e.code == 'permission_revoked' || e.code == 'finance_forbidden') {
-          policy = const SharedFinancePolicy();
-          await database.transaction(() async {
-            _checkEpoch(epoch);
-            await _storeFinancePolicy(partition, scope, policy);
-          });
-          await refreshLocal();
-        } else if (e.code != 'network' &&
-            e.code != 'auth_required' &&
-            e.code != 'device_revoked') {
-          rethrow;
-        }
-      }
-      _checkEpoch(epoch);
-      final live = state.scopes.any((s) => s.id == scope && !s.revoked);
-      if (live && policy.canRead) {
-        authorizedFinancialEpochs[scope] = policy.revision;
-        financial.addAll(
-          queue
-              .where((r) => r['scope_id'] == scope)
-              .map(
-                (r) => {
-                  'scopeId': r['scope_id'],
-                  'recordId': r['record_id'],
-                  'state': r['state'],
-                  'operation': CollaborationRepository._map(r['request']),
-                },
-              ),
+    for (final row in ops) {
+      final operation = CollaborationRepository._map(row['request']);
+      if (operation['type'] == 'idea' && operation['payload'] != null) {
+        await collectMedia(
+          IdeaBoard.fromJson(
+            CollaborationRepository._map(operation['payload']),
+          ),
+          'shared:$partition:${row['scope_id']}',
         );
       }
     }
-    // One final SQL snapshot prevents an earlier scope's drafts leaking after
-    // its rights changed while another scope's network check was suspended.
-    final policyRows = await database.rows(
-      'SELECT id,data,finance_policy FROM scopes WHERE partition=?',
-      [partition],
-    );
-    final exportableFinance = <String>{};
-    for (final row in policyRows) {
-      if (row['finance_policy'] == null) continue;
-      final policy = SharedFinancePolicy.fromJson(
-        CollaborationRepository._map(row['finance_policy']),
+    for (final row in await database.rows(
+      'SELECT workspace,id,payload,base FROM idea_drafts WHERE workspace LIKE ? ORDER BY workspace,id',
+      ['shared:$partition:%'],
+    )) {
+      // An unchanged preview of somebody else's downloaded board is not work.
+      if (row['payload'] == row['base']) continue;
+      final board = IdeaBoard.fromJson(
+        CollaborationRepository._map(row['payload']),
       );
-      final scope = SharedScope.fromJson(
-        CollaborationRepository._map(row['data']),
-      );
-      if (!scope.revoked &&
-          policy.canRead &&
-          authorizedFinancialEpochs[scope.id] == policy.revision) {
-        exportableFinance.add(scope.id);
-      }
+      await collectMedia(board, row['workspace'] as String);
+      ownIdeaDrafts.add({
+        'workspace': row['workspace'],
+        'id': row['id'],
+        'payload': board.toJson(),
+      });
     }
-    financial.removeWhere(
-      (entry) => !exportableFinance.contains(entry['scopeId']),
-    );
     _checkEpoch(epoch);
     return jsonEncode({
       'format': 'vsakdan-unsent-work',
-      'schemaVersion': 1,
+      'schemaVersion': ownIdeaDrafts.isNotEmpty || media.isNotEmpty ? 2 : 1,
       'account': CollaborationRepository._map(profiles.first['profile']),
       'operations': ops
           .map(
@@ -1040,10 +1022,6 @@ extension CollaborationSyncActions on CollaborationRepository {
           .toList(),
       'conflicts': conflicts,
       'commands': commands
-          .where((command) {
-            final scope = financialCommandScope(command);
-            return scope == null || exportableFinance.contains(scope);
-          })
           .map(
             (r) => {
               'operation': r['operation'],
@@ -1052,7 +1030,20 @@ extension CollaborationSyncActions on CollaborationRepository {
             },
           )
           .toList(),
-      'financeOperations': financial,
+      'financeOperations': financial
+          .map(
+            (r) => {
+              'scopeId': r['scope_id'],
+              'recordId': r['record_id'],
+              'state': r['state'],
+              'operation': CollaborationRepository._map(r['request']),
+            },
+          )
+          .toList(),
+      if (ownIdeaDrafts.isNotEmpty || media.isNotEmpty) ...{
+        'ideaDrafts': ownIdeaDrafts,
+        'ideaAssets': media.values.toList(),
+      },
     });
   }
 }

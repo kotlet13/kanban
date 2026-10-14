@@ -146,7 +146,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'gardenSpaceLinks',
             'linkedPayments',
           ],
-          if (doc['version'] == 5) ...[
+          if (doc['version'] == 6) 'localTaskReminderPreferences',
+          if ((doc['version'] as int) >= 5) ...[
             'ideas',
             'ideaSpaceLinks',
             'ideaAssets',
@@ -161,17 +162,22 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 13
                 : doc['version'] == 3
                 ? 15
-                : doc['version'] == 5
+                : doc['version'] == 6
+                ? 24
+                : (doc['version'] as int) >= 5
                 ? 23
                 : doc.containsKey('linkedPayments')
                 ? 18
                 : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3, 4, 5].contains(doc['version']) ||
+        !const [1, 2, 3, 4, 5, 6].contains(doc['version']) ||
         ((doc['version'] as int) >= 4
-            ? !(doc['version'] == 5 ? const [9] : const [7, 8]).contains(
-                doc['databaseVersion'],
-              )
+            ? !(doc['version'] == 6
+                      ? const [10]
+                      : doc['version'] == 5
+                      ? const [9]
+                      : const [7, 8])
+                  .contains(doc['databaseVersion'])
             : doc['databaseVersion'] !=
                   (doc['version'] == 1
                       ? 4
@@ -194,7 +200,41 @@ void validateBackupDocument(Map<String, dynamic> doc) {
       throw const FormatException();
     }
     backupGardens(doc)?.validate();
-    if (doc['version'] == 5) validateBackupIdeas(doc);
+    if ((doc['version'] as int) >= 5) validateBackupIdeas(doc);
+    if (doc['version'] == 6) {
+      final rows = doc['localTaskReminderPreferences'];
+      if (rows is! List || rows.length > 50000) {
+        throw const FormatException('Invalid reminder preferences');
+      }
+      final names = <String>{};
+      for (final raw in rows) {
+        final row = backupMap(raw);
+        ideaKeys(row, {'name', 'value'});
+        final name = row['name'];
+        if (name is! String ||
+            !RegExp(
+              r'^local_task_deadline_reminder:(personal|local:[^\u0000]{1,200}):task:[^\u0000]{1,200}:due$',
+            ).hasMatch(name) ||
+            !names.add(name)) {
+          throw const FormatException('Invalid reminder preference identity');
+        }
+        final value = backupMap(jsonDecode(row['value'] as String));
+        ideaKeys(value, {
+          'createdAt',
+          'offsetMinutes',
+          'enabled',
+          'lastRemindAt',
+        });
+        if (value['enabled'] is! bool ||
+            value['offsetMinutes'] is! int ||
+            !const [0, 60, 1440].contains(value['offsetMinutes'])) {
+          throw const FormatException('Invalid reminder preference');
+        }
+        readSharedDate(value, 'createdAt');
+        readSharedDate(value, 'lastRemindAt');
+      }
+    }
+
     if ((doc['version'] as int) >= 4) {
       validateBackupLocalSpaces(doc);
       if (doc['linkedPayments'] != null) {
@@ -344,8 +384,10 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 recordTypes['${row['scope_id']}:${row['record_id']}'] ||
             (request['deleted'] == true) != (request['payload'] == null) ||
             (table == 'outbox' &&
-                !(doc['version'] == 5
-                        ? const [1, 2, 3, 4, 5]
+                !((doc['version'] as int) >= 5
+                        ? (doc['version'] == 6
+                              ? const [1, 2, 3, 4, 5, 6]
+                              : const [1, 2, 3, 4, 5])
                         : const [1, 2, 3, 4])
                     .contains(row['wire_version']))) {
           throw const FormatException();
@@ -403,7 +445,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'personalFinanceAccount',
             'financeRecurrenceRule',
             'householdPerson',
-            if (doc['version'] == 5) 'idea',
+            if ((doc['version'] as int) >= 5) 'idea',
           ].contains(m['type']) ||
           m.keys.toSet().difference({
             'workspace',
@@ -782,10 +824,15 @@ void validateBackupLocalSpaces(Map<String, dynamic> doc) {
 }
 
 IdeaSnapshot? backupIdeas(Map<String, dynamic> doc) =>
-    doc['version'] == 5 ? IdeaSnapshot.fromJson(backupMap(doc['ideas'])) : null;
+    (doc['version'] as int) >= 5
+    ? IdeaSnapshot.fromJson(backupMap(doc['ideas']))
+    : null;
 void validateBackupIdeas(Map<String, dynamic> doc) {
   final ideas = backupIdeas(doc)!;
   ideas.validate();
+  if ((doc['version'] as int) < 6 && ideas.boards.any((b) => b.version >= 2)) {
+    throw const FormatException('Extended ideas require content6');
+  }
   final spaces = {
     for (final r in doc['localSpaces'] as List) (r as Map)['space']['id'],
   };
@@ -919,7 +966,7 @@ void validateBackupIdeas(Map<String, dynamic> doc) {
         if (old.containsKey('base')) 'base',
       });
       if (name != 'idea_rebased_op:$source:${old['op_id']}' ||
-          old['wire_version'] != 5 ||
+          !const [5, 6].contains(old['wire_version']) ||
           !allowedWorkspaces.contains('shared:$source:${old['scope_id']}')) {
         throw const FormatException('Invalid idea operation source');
       }

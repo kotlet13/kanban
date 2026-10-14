@@ -60,6 +60,7 @@ final remotePushDeviceReadyProvider = Provider<bool>((ref) {
 final remotePushLaunchReferenceProvider = StateProvider<RemotePushReference?>(
   (ref) => null,
 );
+final remotePushSummaryLaunchProvider = StateProvider<bool>((ref) => false);
 final remotePushPermissionRequestProvider = StateProvider<int>((ref) => 0);
 
 String pushDeviceKey(AccountSession session) =>

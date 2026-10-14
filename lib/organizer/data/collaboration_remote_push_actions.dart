@@ -92,7 +92,8 @@ extension CollaborationRemotePushActions on CollaborationRepository {
       if (wire['registered'] != true ||
           wire['revision'] != intent.confirmedRevision ||
           wire['platform'] != intent.platform ||
-          wire['language'] != intent.language) {
+          wire['language'] != intent.language ||
+          (wire['displayVersion'] ?? 1) != intent.displayVersion) {
         await _writeRemotePush(
           intent.copy(
             status: RemotePushRegistrationStatus.blocked,
@@ -131,6 +132,7 @@ extension CollaborationRemotePushActions on CollaborationRepository {
     }
     // Token rotation is a new explicit intent. Do not mutate an in-flight CAS.
     final old = _pushIntent;
+    final displayVersion = _pushDisplayVersion;
     if (old != null &&
         old.identity.same(identity) &&
         old.enabled &&
@@ -138,6 +140,7 @@ extension CollaborationRemotePushActions on CollaborationRepository {
         old.platform == platform &&
         old.language == language &&
         old.projectId == projectId &&
+        old.displayVersion == displayVersion &&
         old.status != RemotePushRegistrationStatus.blocked) {
       if (old.status == RemotePushRegistrationStatus.registered) {
         await _verifyRemotePushRegistration(
@@ -161,6 +164,7 @@ extension CollaborationRemotePushActions on CollaborationRepository {
         platform: platform,
         language: language,
         projectId: projectId,
+        displayVersion: displayVersion,
         status: RemotePushRegistrationStatus.pendingRegistration,
       ),
       epoch,
@@ -286,6 +290,7 @@ extension CollaborationRemotePushActions on CollaborationRepository {
                 'platform': intent.platform,
                 'language': intent.language,
                 'projectId': intent.projectId,
+                if (intent.displayVersion == 2) 'displayVersion': 2,
               },
               'expectedRevision': intent.expectedRevision,
             },
@@ -294,7 +299,9 @@ extension CollaborationRemotePushActions on CollaborationRepository {
           if (wire is! Map<String, dynamic> ||
               wire['registered'] != intent.enabled ||
               wire['revision'] is! int ||
-              (wire['revision'] as int) < intent.expectedRevision!) {
+              (wire['revision'] as int) < intent.expectedRevision! ||
+              (intent.enabled &&
+                  (wire['displayVersion'] ?? 1) != intent.displayVersion)) {
             throw const CollaborationException('invalid_response');
           }
           final accepted = intent.copy(

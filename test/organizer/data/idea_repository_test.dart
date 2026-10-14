@@ -178,7 +178,7 @@ void main() {
     await db.close();
   });
   test(
-    'portable encrypted content5 restores actual image and draft into fresh SQLite',
+    'portable encrypted content6 restores actual image and draft into fresh SQLite',
     () async {
       final db = CollaborationDatabase(NativeDatabase.memory());
       final local = SqliteOrganizerStorage(db);
@@ -214,7 +214,7 @@ void main() {
         encrypted,
         password,
       );
-      expect(document['version'], 5);
+      expect(document['version'], 6);
       expect((document['ideaAssets'] as List).single['data'], isNotEmpty);
       final fresh = CollaborationDatabase(NativeDatabase.memory());
       final target = SqliteOrganizerStorage(fresh);
@@ -308,7 +308,7 @@ void main() {
     },
   );
   test(
-    'local project deletion atomically detaches idea and draft while keeping image bytes',
+    'local project deletion atomically removes idea draft and unreferenced image bytes',
     () async {
       final db = CollaborationDatabase(NativeDatabase.memory());
       final local = SqliteOrganizerStorage(db),
@@ -338,24 +338,20 @@ void main() {
       );
       await ideas.saveBoard(original, isNew: true);
       await ideas.saveDraft(original, base: original);
-      final before = ideas.snapshot.boards.single;
       await organizer.reload();
       await organizer.deleteProject(project);
       await ideas.reload();
-      expect(ideas.snapshot.boards.single.projectId, isNull);
-      expect(
-        ideas.snapshot.boards.single.revision,
-        greaterThan(before.revision),
-      );
-      expect((await ideas.readDraft(id))!.projectId, isNull);
-      expect(await ideas.readAsset(asset), isNotNull);
+      expect(ideas.snapshot.boards, isEmpty);
+      expect(await ideas.readDraft(id), isNull);
+      expect(await ideas.readAsset(asset), isNull);
+      expect((await db.rows('SELECT value FROM local_meta WHERE name=?', ['idea_deleted_revision:$id'])).single['value'], isNotNull);
       await organizer.close();
       await ideas.close();
       await db.close();
     },
   );
   test(
-    'private project deletion queues contract5 idea detachment before parent delete and keeps old operation immutable',
+    'private project deletion queues idea tombstone before parent and keeps old operation immutable',
     () async {
       final transport = PersonalTransport(FakeServer());
       final db = CollaborationDatabase(NativeDatabase.memory());
@@ -403,9 +399,8 @@ void main() {
           .map((r) => jsonDecode(r['request'] as String) as Map)
           .where((r) => r['type'] == 'idea')
           .last;
-      expect(idea['payload']['id'], id);
-      expect(idea['payload']['revision'], isA<int>());
-      expect(idea['payload']['projectId'], isNull);
+      expect(idea['deleted'], true);
+      expect(idea['payload'], isNull);
       expect(
         (jsonDecode(queued.last['request'] as String) as Map)['deleted'],
         true,

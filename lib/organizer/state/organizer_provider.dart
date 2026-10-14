@@ -254,7 +254,8 @@ class OrganizerController extends AsyncNotifier<OrganizerSnapshot> {
   );
   Future<void> updateProject(LocalProject record) =>
       _repo.updateProject(record);
-  Future<void> deleteProject(String id) => _repo.deleteProject(id);
+  Future<Map<String, dynamic>> previewProjectDeletion(String id) => _repo.previewProjectDeletion(id);
+  Future<void> deleteProject(String id, {String? previewHash}) => _repo.deleteProject(id, previewHash: previewHash);
 
   Future<void> createTask({
     required String title,
