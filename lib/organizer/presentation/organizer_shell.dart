@@ -940,7 +940,9 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           final desktop = desktopExperience || constraints.maxWidth >= 900;
           final phone = !desktopExperience && constraints.maxWidth < 600;
           final scheme = Theme.of(context).colorScheme;
-          final body = data.when(
+          final body = _navigationState.area == _Area.reminderSettings
+              ? const InboxPreferencesScrollView()
+              : data.when(
             data: (snapshot) {
               final actions = OrganizerActions(context, ref, snapshot);
               return SingleChildScrollView(

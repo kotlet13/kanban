@@ -367,3 +367,12 @@ Zasnovo presoditi na vseh petih platformah in jo prilagoditi sistemskim
 možnostim posamezne platforme ter smernicam iOS. Ta opomba se nanaša na
 sistemska obvestila; ni zahteva za posnemanje Androidove postavitve na vseh
 platformah.
+
+## 19. Preskakovanje nastavitev opomnikov ob osvežitvi
+
+Posnetek 1000012000 / Screen_Recording_20261014_224426: položaj drsenja in
+odprti razdelki morajo ostati med osveževanjem, shranjevanjem in sinhronizacijo.
+Lokalno izvedeno: samostojen ScrollController zunaj ponovnega nalaganja
+organizatorja, stabilne identitete kartic in rezervirana višina indikatorja.
+Regresijski UI preizkus s tremi zaporednimi ponovnimi nalaganji PASS.
+Fizična namestitev nove izdaje še sledi.

@@ -22,23 +22,55 @@ Future<void> showInboxPreferences(
   MaterialPageRoute(
     builder: (context) => Scaffold(
       appBar: AppBar(title: Text(context.l10n.reminderSettingsTitle)),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 840),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: InboxPreferences(
-                initialScopeId: initialScopeId,
-                showHeading: false,
-              ),
-            ),
-          ),
-        ),
+      body: InboxPreferencesScrollView(
+        initialScopeId: initialScopeId,
+        showHeading: false,
       ),
     ),
   ),
 );
+
+/// Keeps scroll/expansion state independent from ordinary organizer refreshes.
+class InboxPreferencesScrollView extends StatefulWidget {
+  const InboxPreferencesScrollView({
+    super.key,
+    this.initialScopeId,
+    this.showHeading = true,
+  });
+  final String? initialScopeId;
+  final bool showHeading;
+  @override
+  State<InboxPreferencesScrollView> createState() =>
+      _InboxPreferencesScrollViewState();
+}
+
+class _InboxPreferencesScrollViewState
+    extends State<InboxPreferencesScrollView> {
+  final _scroll = ScrollController();
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    key: const ValueKey('reminder-settings-scroll'),
+    controller: _scroll,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 840),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: InboxPreferences(
+            initialScopeId: widget.initialScopeId,
+            showHeading: widget.showHeading,
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 class InboxPreferences extends ConsumerStatefulWidget {
   const InboxPreferences({
@@ -222,7 +254,8 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
               channel == 'push' && !shared.externalPushSupported
         ? l.inboxChannelUnavailable
         : null;
-    Widget card(List<Widget> children) => Card(
+    Widget card(List<Widget> children, {Key? key}) => Card(
+      key: key,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -283,14 +316,16 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
           ),
           const SizedBox(height: 8),
           Text(l.notificationAllSpacesDescription),
-          if (_busy) const LinearProgressIndicator(),
-          if (policyAsync.isLoading ||
-              localAsync.isLoading ||
-              sharedAsync.isLoading)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: LinearProgressIndicator(),
-            ),
+          SizedBox(
+            height: 4,
+            child:
+                _busy ||
+                    policyAsync.isLoading ||
+                    localAsync.isLoading ||
+                    sharedAsync.isLoading
+                ? const LinearProgressIndicator()
+                : null,
+          ),
           for (final channel in ['inApp', 'sound', 'push', 'email'])
             _toggle(
               'all',
@@ -361,7 +396,7 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
                     ),
                 ],
               ),
-            ]),
+            ], key: ValueKey('notification-local-card-${snapshot.workspaceKey}')),
         for (final scope in scopes)
           card([
             ExpansionTile(
@@ -440,7 +475,7 @@ class _InboxPreferencesState extends ConsumerState<InboxPreferences> {
                 ),
               ],
             ),
-          ]),
+          ], key: ValueKey('notification-shared-card-$identity-${scope.id}')),
         if (snapshots.isEmpty && scopes.isEmpty && ready)
           Text(l.notificationNoSpaces),
         const SizedBox(height: 16),
