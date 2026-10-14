@@ -72,368 +72,431 @@ class OrganizerSpacePicker extends ConsumerWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(collaborationProvider).valueOrNull,
-        l = context.l10n;
-    final scopes =
-        state?.scopes
-            .where((scope) => scope.kind != SharedScopeKind.personal)
-            .toList() ??
-        <SharedScope>[];
-    final local = ref.watch(localSpacesProvider).valueOrNull;
-    final chosen = state?.selectedSpaceId;
-    final chosenLocal = local?.selectedSpace;
-    final localSpaces = local?.spaces ?? <LocalSpace>[];
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final allSelected = state?.allSpacesSelected == true;
-    final selectedValue = allSelected
-        ? allAction
-        : chosen ?? 'local:${local?.selectedSpaceId ?? 'local'}';
-    DropdownMenuItem<String> menuItem({
-      required String value,
-      required String title,
-      required IconData icon,
-      String? subtitle,
-      bool enabled = true,
-      bool separated = false,
-    }) => DropdownMenuItem(
-      value: value,
-      enabled: enabled,
-      child: _SpacePickerMenuRow(
-        title: title,
-        subtitle: subtitle,
-        icon: icon,
-        selected: value == selectedValue,
-        enabled: enabled,
-        separated: separated,
-      ),
+  Future<void> _open(BuildContext context, WidgetRef ref) async {
+    final before = ref.read(collaborationProvider).valueOrNull;
+    final identity = (before?.session?.partition, before?.session?.deviceId);
+    final chosen = before?.scopes
+        .where((s) => s.id == before.selectedSpaceId)
+        .firstOrNull;
+    final panel = _SpaceSelectionPanel(
+      initialProjects: chosen?.kind == SharedScopeKind.project,
     );
-    String scopeType(SharedScope scope) => switch (scope.kind) {
-      SharedScopeKind.household => l.sharingHousehold,
-      SharedScopeKind.project => l.spacePickerSharedProject,
-      SharedScopeKind.organization => l.organizationTitle,
-      SharedScopeKind.personal => l.organizerPersonal,
-    };
-    IconData scopeIcon(SharedScope scope) => scope.archived
-        ? Icons.inventory_2_outlined
-        : switch (scope.kind) {
-            SharedScopeKind.household => Icons.home_outlined,
-            SharedScopeKind.project => Icons.folder_outlined,
-            SharedScopeKind.organization => Icons.business_outlined,
-            SharedScopeKind.personal => Icons.person_outline,
-          };
-    final items = <DropdownMenuItem<String>>[
-      menuItem(
-        value: allAction,
-        title: l.allSpacesTitle,
-        icon: Icons.dashboard_outlined,
-      ),
-      // A published selected space can arrive before its remote scope or before
-      // selection follows the binding. Keep its exact value until that handoff.
-      for (final space in localSpaces.where(
-        (space) =>
-            space.binding == null ||
-            !allSelected &&
-                chosen == null &&
-                space.id == local?.selectedSpaceId,
-      ))
-        menuItem(
-          value: 'local:${space.id}',
-          title: space.name.isEmpty ? l.organizerPersonal : space.name,
-          subtitle: space.binding == null ? l.localSpaceState : null,
-          enabled: space.binding == null,
-          icon: switch (space.kind) {
-            LocalSpaceKind.personal => Icons.person_outline,
-            LocalSpaceKind.household => Icons.home_outlined,
-            LocalSpaceKind.organization => Icons.business_outlined,
-          },
-        ),
-      if (localSpaces.isEmpty)
-        menuItem(
-          value: 'local:local',
-          title: l.organizerPersonal,
-          icon: Icons.person_outline,
-        ),
-      for (final scope in scopes.where((scope) => !scope.archived))
-        menuItem(
-          value: scope.id,
-          enabled: !scope.revoked,
-          title: scope.revoked
-              ? '${scope.name} · ${l.sharingAccessRevoked}'
-              : scope.name,
-          subtitle: scopeType(scope),
-          icon: scopeIcon(scope),
-        ),
-      if (scopes.any((scope) => scope.archived))
-        DropdownMenuItem(
-          value: 'archived-section',
-          enabled: false,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.only(start: 12, top: 12),
-            child: Text(
-              l.scopeArchivedProjects,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colors.onSurfaceVariant,
+    final result = Theme.of(context).platform == TargetPlatform.iOS
+        ? await Navigator.of(context).push<String>(
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (_) => Scaffold(body: SafeArea(child: panel)),
+            ),
+          )
+        : await showDialog<String>(
+            context: context,
+            builder: (context) => Dialog(
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: 560,
+                height: (MediaQuery.sizeOf(context).height - 64).clamp(
+                  240,
+                  680,
+                ),
+                child: panel,
               ),
             ),
-          ),
-        ),
-      for (final scope in scopes.where((scope) => scope.archived))
-        menuItem(
-          value: scope.id,
-          enabled: !scope.revoked,
-          title: scope.name,
-          subtitle: scopeType(scope),
-          icon: scopeIcon(scope),
-        ),
-      if (chosen != null && !scopes.any((scope) => scope.id == chosen))
-        menuItem(
-          value: chosen,
-          enabled: false,
-          title: l.sharingAccessRevoked,
-          icon: Icons.lock_outline,
-        ),
-      menuItem(
-        value: createAction,
-        title: l.spacePickerCreateAction,
-        icon: Icons.add,
-        separated: true,
-      ),
-    ];
-    final selectedScope = scopes
-        .where((scope) => scope.id == chosen)
-        .firstOrNull;
-    final chosenLabel = allSelected
+          );
+    if (result == null || !context.mounted) return;
+    if (result == allAction) {
+      if (onAllSelected != null) {
+        onAllSelected!();
+      } else {
+        ref.read(collaborationProvider.notifier).selectAllSpaces();
+      }
+    } else if (result == createAction) {
+      await _create(context, ref);
+    } else if (result.startsWith('local:')) {
+      final id = result.substring(6);
+      final local = ref.read(localSpacesProvider).valueOrNull;
+      if (local?.spaces.any((s) => s.id == id && s.binding == null) == true ||
+          id == 'local' && local == null) {
+        _selectLocal(ref, id);
+      }
+    } else {
+      final current = ref.read(collaborationProvider).valueOrNull;
+      if (current?.localAccessAllowed != true ||
+          current?.sessionInvalid == true ||
+          current?.deletionPending == true ||
+          (current?.session?.partition, current?.session?.deviceId) !=
+              identity ||
+          current?.scopes.any(
+                (s) => s.id == result && !s.revoked && !s.deleted && s.canRead,
+              ) !=
+              true) {
+        return;
+      }
+      onSelected(result);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(collaborationProvider).valueOrNull;
+    final local = ref.watch(localSpacesProvider).valueOrNull;
+    final l = context.l10n;
+    final chosen = state?.selectedSpaceId;
+    final scope = state?.scopes.where((s) => s.id == chosen).firstOrNull;
+    final all = state?.allSpacesSelected == true;
+    final space = local?.selectedSpace;
+    final label = all
         ? l.allSpacesTitle
         : chosen == null
-        ? chosenLocal == null || chosenLocal.name.isEmpty
+        ? space == null || space.name.isEmpty
               ? l.organizerPersonal
-              : chosenLocal.name
-        : selectedScope == null || selectedScope.revoked
+              : space.name
+        : scope == null || scope.revoked || scope.deleted
         ? l.sharingAccessRevoked
-        : selectedScope.name;
-    final chosenIcon = allSelected
+        : scope.name;
+    final icon = all
         ? Icons.dashboard_outlined
         : chosen == null
-        ? switch (chosenLocal?.kind) {
-            LocalSpaceKind.household => Icons.home_outlined,
-            LocalSpaceKind.organization => Icons.business_outlined,
-            _ => Icons.person_outline,
-          }
-        : selectedScope == null || selectedScope.revoked
+        ? _localIcon(space?.kind ?? LocalSpaceKind.personal)
+        : scope == null || scope.revoked || scope.deleted
         ? Icons.lock_outline
-        : scopeIcon(selectedScope);
-    final pickerHeight = (MediaQuery.textScalerOf(context).scale(16) + 24)
-        .clamp(48.0, double.infinity);
-    final picker = Tooltip(
-      message: '${l.spacePickerTitle}: $chosenLabel',
-      child: SizedBox(
-        height: pickerHeight,
-        child: Theme(
-          // DropdownButton captures this theme for its route. Keep native touch
-          // and keyboard focus visible without the default grey selection band.
-          data: theme.copyWith(
-            focusColor: colors.primary.withValues(alpha: .06),
-          ),
-          child: DropdownButton<String>(
-            key: ValueKey('active-space-${state?.session?.partition}-$chosen'),
-            value: selectedValue,
-            isExpanded: true,
-            menuWidth: (MediaQuery.sizeOf(context).width - 32).clamp(0, 380),
-            menuMaxHeight: (MediaQuery.sizeOf(context).height * .6).clamp(
-              0,
-              480,
-            ),
-            itemHeight: null,
-            borderRadius: BorderRadius.circular(20),
-            dropdownColor: colors.surface,
-            elevation: 8,
-            selectedItemBuilder: (context) => [
-              for (final _ in items)
-                // With itemHeight null, DropdownButton wraps selected children
-                // in a shrink-wrapped Column. Give the closed content its full
-                // height so both the label and suffix center in the tap target.
-                SizedBox(
-                  height: pickerHeight,
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: compact
-                        ? Row(
-                            children: [
-                              Icon(chosenIcon, size: 20, color: colors.primary),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  chosenLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            chosenLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                  ),
-                ),
-            ],
-            style: compact
-                ? theme.textTheme.bodyMedium?.copyWith(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                  )
-                : theme.textTheme.titleMedium,
-            padding: compact
-                ? const EdgeInsets.symmetric(horizontal: 10)
-                : null,
-            underline: const SizedBox.shrink(),
-            icon: Icon(
-              Icons.expand_more,
-              size: compact ? 20 : 24,
-              color: colors.onSurfaceVariant,
-            ),
-            items: items,
-            onChanged: (id) {
-              if (id == allAction) {
-                if (onAllSelected != null) {
-                  onAllSelected!();
-                } else {
-                  ref.read(collaborationProvider.notifier).selectAllSpaces();
-                }
-              } else if (id == createAction) {
-                _create(context, ref);
-              } else if (id?.startsWith('local:') == true) {
-                _selectLocal(ref, id!.substring(6));
-              } else {
-                onSelected(id);
-              }
-            },
-          ),
-        ),
-      ),
+        : _scopeIcon(scope);
+    final value = all
+        ? allAction
+        : chosen ?? 'local:${local?.selectedSpaceId ?? 'local'}';
+    final button = OrganizerSpacePickerButton(
+      key: ValueKey('active-space-${state?.session?.partition}-$chosen'),
+      value: value,
+      label: label,
+      icon: icon,
+      compact: compact,
+      onPressed: () => _open(context, ref),
     );
     return compact
         ? Material(
-            color: colors.surfaceContainerLow,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: colors.outlineVariant),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
-            child: picker,
+            child: button,
           )
         : InputDecorator(
             decoration: InputDecoration(labelText: l.spacePickerTitle),
-            child: picker,
+            child: button,
           );
   }
 }
 
-class _SpacePickerMenuRow extends StatelessWidget {
-  const _SpacePickerMenuRow({
-    required this.title,
+/// Closed selection remains visible even when its project is in the separate
+/// project list, or when its former access has been revoked.
+class OrganizerSpacePickerButton extends StatelessWidget {
+  const OrganizerSpacePickerButton({
+    super.key,
+    required this.value,
+    required this.label,
     required this.icon,
-    required this.selected,
-    required this.enabled,
-    required this.separated,
-    this.subtitle,
+    required this.onPressed,
+    required this.compact,
   });
-
-  final String title;
-  final String? subtitle;
+  final String value, label;
   final IconData icon;
-  final bool selected;
-  final bool enabled;
-  final bool separated;
-
+  final VoidCallback onPressed;
+  final bool compact;
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final foreground = !enabled
-        ? theme.disabledColor
-        : selected || separated
-        ? colors.primary
-        : colors.onSurface;
-    return Semantics(
-      selected: selected,
-      enabled: enabled,
-      child: Tooltip(
-        message: subtitle == null ? title : '$title\n$subtitle',
-        excludeFromSemantics: true,
-        child: Container(
-          margin: EdgeInsets.only(top: separated ? 8 : 2, bottom: 2),
-          padding: EdgeInsets.only(top: separated ? 8 : 0),
-          decoration: separated
-              ? BoxDecoration(
-                  border: Border(top: BorderSide(color: colors.outlineVariant)),
-                )
-              : null,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 52),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected ? colors.primaryContainer : null,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
+  Widget build(BuildContext context) => Tooltip(
+    message: '${context.l10n.spacePickerTitle}: $label',
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onPressed,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 0,
+            vertical: 10,
+          ),
+          child: Row(
+            children: [
+              if (compact) ...[
                 Icon(
                   icon,
-                  size: 22,
-                  color: !enabled
-                      ? theme.disabledColor
-                      : selected || separated
-                      ? colors.primary
-                      : colors.onSurfaceVariant,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: foreground,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: enabled
-                                ? colors.onSurfaceVariant
-                                : theme.disabledColor,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (selected) ...[
-                  const SizedBox(width: 10),
-                  Icon(Icons.check, size: 20, color: foreground),
-                ],
+                const SizedBox(width: 8),
               ],
-            ),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: compact
+                      ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        )
+                      : Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.expand_more,
+                size: compact ? 20 : 24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
         ),
       ),
+    ),
+  );
+}
+
+IconData _localIcon(LocalSpaceKind kind) => switch (kind) {
+  LocalSpaceKind.personal => Icons.person_outline,
+  LocalSpaceKind.household => Icons.home_outlined,
+  LocalSpaceKind.organization => Icons.business_outlined,
+};
+IconData _scopeIcon(SharedScope scope) => scope.archived
+    ? Icons.inventory_2_outlined
+    : switch (scope.kind) {
+        SharedScopeKind.personal => Icons.person_outline,
+        SharedScopeKind.household => Icons.home_outlined,
+        SharedScopeKind.organization => Icons.business_outlined,
+        SharedScopeKind.project => Icons.folder_outlined,
+      };
+
+class _SpaceSelectionPanel extends ConsumerStatefulWidget {
+  const _SpaceSelectionPanel({required this.initialProjects});
+  final bool initialProjects;
+  @override
+  ConsumerState<_SpaceSelectionPanel> createState() =>
+      _SpaceSelectionPanelState();
+}
+
+class _SpaceSelectionPanelState extends ConsumerState<_SpaceSelectionPanel> {
+  late bool _projects = widget.initialProjects;
+  String _query = '';
+  bool _match(String title) =>
+      title.toLowerCase().contains(_query.toLowerCase());
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final state = ref.watch(collaborationProvider).valueOrNull;
+    final local = ref.watch(localSpacesProvider).valueOrNull;
+    final scopes =
+        (state?.localAccessAllowed == true &&
+                    state?.sessionInvalid != true &&
+                    state?.deletionPending != true
+                ? state?.scopes
+                : null)
+            ?.where(
+              (s) =>
+                  s.kind != SharedScopeKind.personal &&
+                  !s.revoked &&
+                  !s.deleted &&
+                  s.canRead,
+            )
+            .toList() ??
+        <SharedScope>[];
+    final spaces =
+        local?.spaces.where((s) => s.binding == null).toList() ??
+        <LocalSpace>[];
+    final selected = state?.allSpacesSelected == true
+        ? OrganizerSpacePicker.allAction
+        : state?.selectedSpaceId ??
+              'local:${local?.selectedSpaceId ?? 'local'}';
+    String scopeSubtitle(SharedScope scope) {
+      if (scope.kind == SharedScopeKind.project) {
+        // A project-only grant confers no parent read/list permission.
+        final parent = scopes
+            .where(
+              (s) =>
+                  s.id == scope.parentSpaceId &&
+                  s.kind != SharedScopeKind.project,
+            )
+            .firstOrNull;
+        return parent?.name ?? l.spacePickerDirectProject;
+      }
+      return scope.kind == SharedScopeKind.organization
+          ? l.organizationTitle
+          : l.sharingHousehold;
+    }
+
+    Widget row(String value, String title, IconData icon, {String? subtitle}) =>
+        ListTile(
+          key: ValueKey('space-choice-$value'),
+          minVerticalPadding: 12,
+          leading: Icon(icon),
+          title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
+          subtitle: subtitle == null
+              ? null
+              : Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+          selected: value == selected,
+          trailing: value == selected ? const Icon(Icons.check) : null,
+          onTap: () => Navigator.pop(context, value),
+        );
+    final active = <Widget>[], archived = <Widget>[];
+    if (!_projects) {
+      if (_query.isEmpty || _match(l.allSpacesTitle)) {
+        active.add(
+          row(
+            OrganizerSpacePicker.allAction,
+            l.allSpacesTitle,
+            Icons.dashboard_outlined,
+          ),
+        );
+      }
+      if (spaces.isEmpty && _match(l.organizerPersonal)) {
+        active.add(
+          row('local:local', l.organizerPersonal, Icons.person_outline),
+        );
+      }
+      for (final space in spaces) {
+        final title = space.name.isEmpty ? l.organizerPersonal : space.name;
+        if (!_match(title)) continue;
+        (space.archived ? archived : active).add(
+          row(
+            'local:${space.id}',
+            title,
+            _localIcon(space.kind),
+            subtitle: l.localSpaceState,
+          ),
+        );
+      }
+    }
+    for (final scope in scopes.where(
+      (s) => _projects
+          ? s.kind == SharedScopeKind.project
+          : s.kind != SharedScopeKind.project,
+    )) {
+      final subtitle = scopeSubtitle(scope);
+      if (!_match('${scope.name} $subtitle')) continue;
+      (scope.archived ? archived : active).add(
+        row(scope.id, scope.name, _scopeIcon(scope), subtitle: subtitle),
+      );
+    }
+    Widget tab(bool projects, String label, IconData icon) => Semantics(
+      selected: _projects == projects,
+      child: TextButton(
+        key: ValueKey(
+          projects ? 'space-picker-projects' : 'space-picker-spaces',
+        ),
+        style: TextButton.styleFrom(
+          backgroundColor: _projects == projects
+              ? Theme.of(context).colorScheme.primaryContainer
+              : null,
+          minimumSize: const Size(48, 48),
+        ),
+        onPressed: () => setState(() => _projects = projects),
+        child: Row(
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: 20, top: 8, end: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.spacePickerTitle,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              IconButton(
+                tooltip: l.close,
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked =
+                  MediaQuery.textScalerOf(context).scale(14) > 20 &&
+                  constraints.maxWidth < 400;
+              final spaces = tab(
+                false,
+                l.spacePickerSpaces,
+                Icons.home_outlined,
+              );
+              final projects = tab(
+                true,
+                l.spacePickerSharedWithMe,
+                Icons.folder_shared_outlined,
+              );
+              return stacked
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [spaces, const SizedBox(height: 4), projects],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(child: spaces),
+                        const SizedBox(width: 8),
+                        Expanded(child: projects),
+                      ],
+                    );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            key: const ValueKey('space-picker-search'),
+            decoration: InputDecoration(
+              labelText: l.spacePickerSearch,
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: (value) => setState(() => _query = value),
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            key: ValueKey(
+              _projects
+                  ? 'space-picker-project-list'
+                  : 'space-picker-space-list',
+            ),
+            children: [
+              ...active,
+              if (archived.isNotEmpty)
+                ExpansionTile(
+                  key: ValueKey('space-picker-archived-$_projects'),
+                  title: Text(l.scopeArchivedSection),
+                  children: archived,
+                ),
+              if (active.isEmpty && archived.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(l.spacePickerNoResults),
+                ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        TextButton.icon(
+          onPressed: () =>
+              Navigator.pop(context, OrganizerSpacePicker.createAction),
+          icon: const Icon(Icons.add),
+          label: Text(l.spacePickerCreateAction),
+        ),
+      ],
     );
   }
 }

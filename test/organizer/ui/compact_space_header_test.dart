@@ -103,7 +103,7 @@ class SpaceCreationController extends SharingUiController {
 Finder spaceButton() => find
     .descendant(
       of: find.byType(OrganizerSpacePicker),
-      matching: find.byType(DropdownButton<String>),
+      matching: find.byType(OrganizerSpacePickerButton),
     )
     .first;
 
@@ -318,7 +318,7 @@ void main() {
     await tester.tap(find.text('Prekliči'));
     await tester.pumpAndSettle();
     expect(
-      tester.widget<DropdownButton<String>>(spaceButton()).value,
+      tester.widget<OrganizerSpacePickerButton>(spaceButton()).value,
       selectedId,
     );
     expect(find.text(longName), findsOneWidget);
@@ -344,7 +344,7 @@ void main() {
       expect(selected, isNull);
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
-        tester.widget<DropdownButton<String>>(spaceButton()).value,
+        tester.widget<OrganizerSpacePickerButton>(spaceButton()).value,
         'local:local',
       );
     },
@@ -381,12 +381,13 @@ void main() {
             onConnect: () {},
           ),
         );
-        final button = tester.widget<DropdownButton<String>>(spaceButton());
+        final button = tester.widget<OrganizerSpacePickerButton>(spaceButton());
         expect(button.value, chosen);
-        expect(
-          button.items!.singleWhere((item) => item.value == chosen).enabled,
-          isFalse,
-        );
+        await tester.tap(spaceButton());
+        await tester.pumpAndSettle();
+        expect(find.byKey(ValueKey('space-choice-$chosen')), findsNothing);
+        await tester.tap(find.byTooltip('Zapri'));
+        await tester.pumpAndSettle();
         expect(find.textContaining('Dostop'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
@@ -400,14 +401,16 @@ void main() {
       SharingUiController(initial: spaces(chosen: archivedId)),
       OrganizerSpacePicker(onSelected: (_) {}, onConnect: () {}),
     );
-    final button = tester.widget<DropdownButton<String>>(spaceButton());
+    final button = tester.widget<OrganizerSpacePickerButton>(spaceButton());
     expect(button.value, archivedId);
-    expect(
-      button.items!.singleWhere((item) => item.value == archivedId).enabled,
-      isTrue,
-    );
-    expect(button.items!.where((item) => item.value == personalId), isEmpty);
     expect(find.text('Arhiviran projekt'), findsOneWidget);
+    await tester.tap(spaceButton());
+    await tester.pumpAndSettle();
+    expect(find.byKey(ValueKey('space-choice-$archivedId')), findsNothing);
+    expect(find.byKey(ValueKey('space-choice-$personalId')), findsNothing);
+    await tester.tap(find.text('Arhivirano'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ValueKey('space-choice-$archivedId')), findsOneWidget);
   });
   for (final kind in [LocalSpaceKind.household, LocalSpaceKind.organization]) {
     testWidgets(
@@ -641,6 +644,8 @@ void main() {
         await tester.tap(spaceButton());
         await tester.pumpAndSettle();
         expect(find.text('Nov prostor'), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey('space-picker-projects')));
+        await tester.pumpAndSettle();
         expect(find.text('Deljeni projekt'), findsOneWidget);
         expect(find.byIcon(Icons.check), findsOneWidget);
         await saveArtifact('menu-${scenario.name}-$theme');

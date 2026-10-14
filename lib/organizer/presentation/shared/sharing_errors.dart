@@ -50,7 +50,12 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'organization_access_pending' => l.organizationAccessPending,
     'organization_preview_stale' ||
     'organization_access_preview_stale' => l.organizationAccessPreviewStale,
-    'scope_archived' => l.scopeArchivedDescription,
+    'local_space_publication_pending' => l.localSpacePublicationPending,
+    'scope_archived' || 'project_archived' => l.scopeArchivedDescription,
+    'scope_deleted' => l.scopeDeletedDescription,
+    'scope_deletion_preview_changed' => l.scopeDeletePreviewChanged,
+    'scope_deletion_blocked' => l.scopeDeleteBlocked,
+    'project_owner_transfer_required' => l.scopeOwnerTransferRequired,
     'single_project_guard' => l.sharingInviteProjectDescription,
     'recurring_entry_managed_by_rule' ||
     'rule_currency_immutable' => l.financePlanManageRule,

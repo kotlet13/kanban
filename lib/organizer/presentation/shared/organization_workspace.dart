@@ -6,6 +6,7 @@ import '../../state/collaboration_provider.dart';
 import 'sharing_forms.dart';
 import 'sharing_errors.dart';
 import 'sharing_session_boundary.dart';
+import 'scope_lifecycle_menu.dart';
 
 class OrganizationWorkspace extends ConsumerWidget {
   const OrganizationWorkspace({
@@ -149,20 +150,24 @@ class OrganizationWorkspace extends ConsumerWidget {
             key: ValueKey('organization-project-${project.id}'),
             leading: const Icon(Icons.folder_outlined),
             title: Text(project.name),
+            trailing: ScopeLifecycleMenu(scope: project),
             onTap: () => onProject(project.id),
           ),
-        if (projects.any((project) => project.archived)) ...[
-          Text(
-            l.scopeArchivedProjects,
-            style: Theme.of(context).textTheme.titleMedium,
+        if (projects.any((project) => project.archived))
+          ExpansionTile(
+            key: ValueKey('organization-archived-${organization.id}'),
+            title: Text(l.scopeArchivedSection),
+            initiallyExpanded: false,
+            children: [
+              for (final project in projects.where((project) => project.archived))
+                ListTile(
+                  leading: const Icon(Icons.archive_outlined),
+                  title: Text(project.name),
+                  trailing: ScopeLifecycleMenu(scope: project),
+                  onTap: () => onProject(project.id),
+                ),
+            ],
           ),
-          for (final project in projects.where((project) => project.archived))
-            ListTile(
-              leading: const Icon(Icons.archive_outlined),
-              title: Text(project.name),
-              onTap: () => onProject(project.id),
-            ),
-        ],
         if (legacyProjects != null) legacyProjects!,
         if (projects.isEmpty && legacyProjects == null)
           Padding(

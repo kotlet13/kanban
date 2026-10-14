@@ -177,11 +177,11 @@ class _Fixture {
     });
   }
 
-  DropdownButton<String> picker(WidgetTester tester) =>
-      tester.widget<DropdownButton<String>>(
+  OrganizerSpacePickerButton picker(WidgetTester tester) =>
+      tester.widget<OrganizerSpacePickerButton>(
         find.descendant(
           of: find.byType(OrganizerSpacePicker).first,
-          matching: find.byType(DropdownButton<String>),
+          matching: find.byType(OrganizerSpacePickerButton),
         ),
       );
 }
@@ -288,10 +288,14 @@ void main() {
       expect(binding.partition, f.repository.state.session!.partition);
       expect(f.repository.state.selectedSpaceId, binding.scopeId);
       expect(f.picker(tester).value, binding.scopeId);
+      await tester.tap(find.byType(OrganizerSpacePickerButton).first);
+      await tester.pumpAndSettle();
       expect(
-        f.picker(tester).items!.where((item) => item.value == binding.scopeId),
-        hasLength(1),
+        find.byKey(ValueKey('space-choice-${binding.scopeId}')),
+        findsOneWidget,
       );
+      await tester.tap(find.byTooltip('Zapri'));
+      await tester.pumpAndSettle();
       expect(
         f.repository.state.dataForScope(binding.scopeId).tasks.single.title,
         'Preserved published task',
@@ -330,14 +334,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(f.repository.state.selectedSpaceId, isNull);
     expect(f.picker(tester).value, 'local:${f.home.id}');
+    await tester.tap(find.byType(OrganizerSpacePickerButton).first);
+    await tester.pumpAndSettle();
     expect(
-      f
-          .picker(tester)
-          .items!
-          .singleWhere((item) => item.value == 'local:${f.home.id}')
-          .enabled,
-      false,
+      find.byKey(ValueKey('space-choice-local:${f.home.id}')),
+      findsNothing,
     );
+    await tester.tap(find.byTooltip('Zapri'));
+    await tester.pumpAndSettle();
     expect(find.byType(ErrorWidget), findsNothing);
     expect(tester.takeException(), isNull);
     await _run(tester, f.repository.syncNow);

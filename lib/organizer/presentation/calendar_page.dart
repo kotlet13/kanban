@@ -27,12 +27,21 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
     return x.year == y.year && x.month == y.month && x.day == y.day;
   }
 
+  bool _activeProject(String? id) =>
+      !widget.snapshot.projects.any((p) => p.id == id && p.archived);
   int _scheduledCount(DateTime date) =>
-      widget.snapshot.events.where((e) => _sameDay(e.startsAt, date)).length +
+      widget.snapshot.events
+          .where(
+            (e) => _activeProject(e.projectId) && _sameDay(e.startsAt, date),
+          )
+          .length +
       widget.snapshot.tasks
           .where(
             (t) =>
-                !t.isCompleted && t.dueAt != null && _sameDay(t.dueAt!, date),
+                !t.isCompleted &&
+                _activeProject(t.projectId) &&
+                t.dueAt != null &&
+                _sameDay(t.dueAt!, date),
           )
           .length;
 
@@ -67,11 +76,13 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
     final events =
         widget.snapshot.events
             .where(
-              (e) => _selected != null
-                  ? _sameDay(e.startsAt, _selected!)
-                  : (e.endsAt ?? e.startsAt).isAfter(
-                      DateTime(now.year, now.month, now.day),
-                    ),
+              (e) =>
+                  _activeProject(e.projectId) &&
+                  (_selected != null
+                      ? _sameDay(e.startsAt, _selected!)
+                      : (e.endsAt ?? e.startsAt).isAfter(
+                          DateTime(now.year, now.month, now.day),
+                        )),
             )
             .toList()
           ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
@@ -80,6 +91,7 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
             .where(
               (t) =>
                   !t.isCompleted &&
+                  _activeProject(t.projectId) &&
                   t.dueAt != null &&
                   (_selected == null || _sameDay(t.dueAt!, _selected!)),
             )

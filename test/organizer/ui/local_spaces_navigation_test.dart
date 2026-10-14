@@ -130,7 +130,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(OrganizerSpacePicker),
-          matching: find.byType(DropdownButton<String>),
+          matching: find.byType(OrganizerSpacePickerButton),
         ),
       );
       await tester.pumpAndSettle();
@@ -237,7 +237,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(OrganizerSpacePicker),
-          matching: find.byType(DropdownButton<String>),
+          matching: find.byType(OrganizerSpacePickerButton),
         ),
       );
       await tester.pumpAndSettle();

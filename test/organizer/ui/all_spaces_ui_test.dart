@@ -784,7 +784,7 @@ void main() {
       );
       final picker = find.descendant(
         of: find.byType(OrganizerSpacePicker),
-        matching: find.byType(DropdownButton<String>),
+        matching: find.byType(OrganizerSpacePickerButton),
       );
       await tester.tap(picker);
       await tester.pumpAndSettle();

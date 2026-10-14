@@ -1,3 +1,6 @@
+import 'scope_lifecycle_menu.dart';
+import 'sharing_members.dart';
+import 'project_sharing_settings.dart';
 import 'content_moderation.dart';
 import 'dart:convert';
 import '../../data/collaboration_repository.dart' show newSharedId;
@@ -193,6 +196,29 @@ class CollaborationActions implements OrganizerCollectionActions {
       );
 
   @override
+  Future<void> archiveProject(LocalProject project, {bool archived = true}) =>
+      run(() async {
+        if (project.id == scope.projectRootId) {
+          await controller.archiveProjectScope(scope.id, archived: archived);
+        } else {
+          await controller.updateProject(
+            scope.id,
+            project.copyWith(archived: archived),
+          );
+        }
+      });
+
+  @override
+  Future<void> deleteProject(LocalProject project) async {
+    await showScopeDeletionDialog(
+      context,
+      ref,
+      scope,
+      projectId: project.id == scope.projectRootId ? null : project.id,
+    );
+  }
+
+  @override
   Future<void> project([
     LocalProject? project,
     ProjectArea area = ProjectArea.personal,
@@ -212,6 +238,63 @@ class CollaborationActions implements OrganizerCollectionActions {
             targetId: project.id,
           ),
     kind: OrganizerEditorKind.project,
+    projectAreaEnabled: false,
+    projectContext: scope.name,
+    onShare: project == null
+        ? null
+        : () async {
+            final session = ref
+                .read(collaborationProvider)
+                .valueOrNull
+                ?.session;
+            if (session == null || !guard.isCurrent) return;
+            if (project.id != scope.projectRootId &&
+                (scope.kind != SharedScopeKind.household ||
+                    !scope.canManage ||
+                    scope.accessPolicyVersion != 3 ||
+                    ref
+                            .read(collaborationProvider)
+                            .valueOrNull
+                            ?.spaceProjectMembershipSupported !=
+                        true)) {
+              await showDialog<void>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: Text(context.l10n.sharingProjectSharingAction),
+                  content: Text(context.l10n.sharingProjectSharingBlocked),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(context.l10n.close),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
+            await Navigator.of(context, rootNavigator: true).push<void>(
+              MaterialPageRoute(
+                builder: (routeContext) => Scaffold(
+                  appBar: AppBar(title: Text(context.l10n.sharingMembers)),
+                  body: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: project.id == scope.projectRootId
+                        ? SharingMembersPage(scope: scope, session: session)
+                        : ProjectSharingSettings(
+                            scope: scope,
+                            projectId: project.id,
+                            onProjectSelected: (id) {
+                              ref
+                                  .read(collaborationProvider.notifier)
+                                  .selectSpace(id);
+                              Navigator.of(routeContext).pop();
+                            },
+                          ),
+                  ),
+                ),
+              ),
+            );
+          },
     draft: OrganizerDraft(
       title: project?.title ?? '',
       notes: project?.description ?? '',
@@ -254,13 +337,20 @@ class CollaborationActions implements OrganizerCollectionActions {
         );
       }
     },
-    onDelete:
+    onDeleteWithReview:
         project == null ||
-            project.id ==
-                (scope.projectRootId ??
-                    (scope.parentSpaceId != null ? scope.id : null))
+            ref
+                    .read(collaborationProvider)
+                    .valueOrNull
+                    ?.scopeDeletionSupported !=
+                true
         ? null
-        : () => controller.deleteProject(scope.id, project.id),
+        : () => showScopeDeletionDialog(
+            context,
+            ref,
+            scope,
+            projectId: project.id == scope.projectRootId ? null : project.id,
+          ),
   );
 
   @override

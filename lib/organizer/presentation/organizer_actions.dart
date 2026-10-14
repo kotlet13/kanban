@@ -1,3 +1,5 @@
+import '../state/local_spaces_provider.dart';
+import 'shared/local_space_lifecycle_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,12 +16,13 @@ import '../data/organizer_repository.dart'
     show OrganizerConflictException, newLocalId;
 
 class OrganizerActions implements OrganizerCollectionActions {
-  OrganizerActions(this.context, this.ref, this.snapshot)
+  OrganizerActions(this.context, this.ref, this.snapshot, {this.onProjectShare})
     : _guard = PersonalWorkspaceGuard(context, ref, snapshot.workspaceKey);
   final PersonalWorkspaceGuard _guard;
   final BuildContext context;
   final WidgetRef ref;
   final OrganizerSnapshot snapshot;
+  final Future<void> Function(LocalProject)? onProjectShare;
   OrganizerController get controller {
     if (!_guard.isCurrent) {
       throw const OrganizerConflictException('Personal workspace changed');
@@ -63,6 +66,15 @@ class OrganizerActions implements OrganizerCollectionActions {
   }
 
   @override
+  Future<void> archiveProject(LocalProject project, {bool archived = true}) =>
+      run(() => controller.updateProject(project.copyWith(archived: archived)));
+
+  @override
+  Future<void> deleteProject(LocalProject project) async {
+    await showLocalProjectDeletionDialog(context, ref, snapshot, project);
+  }
+
+  @override
   Future<void> project([
     LocalProject? project,
     ProjectArea area = ProjectArea.personal,
@@ -73,6 +85,17 @@ class OrganizerActions implements OrganizerCollectionActions {
         : context.l10n.organizerEditProject,
     wrap: _guard.wrap,
     kind: OrganizerEditorKind.project,
+    projectAreaEnabled:
+        ref.read(localSpacesProvider).valueOrNull?.selectedSpace?.kind ==
+        LocalSpaceKind.personal,
+    projectContext: ref
+        .read(localSpacesProvider)
+        .valueOrNull
+        ?.selectedSpace
+        ?.name,
+    onShare: project == null || onProjectShare == null
+        ? null
+        : () => onProjectShare!(project),
     draft: OrganizerDraft(
       phases: project?.phases ?? const [],
       availabilityMinutes: project?.availabilityMinutes,
@@ -106,9 +129,9 @@ class OrganizerActions implements OrganizerCollectionActions {
               endAt: d.endAt,
             ),
           ),
-    onDelete: project == null
+    onDeleteWithReview: project == null
         ? null
-        : () => controller.deleteProject(project.id),
+        : () => showLocalProjectDeletionDialog(context, ref, snapshot, project),
   );
 
   @override

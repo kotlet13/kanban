@@ -210,10 +210,31 @@ void main() {
         final writes = store.writes;
         await _leaf(tester, 'plans');
         await _leaf(tester, 'calendar');
+        // The searchable space selector can make the sidebar scroll. Return
+        // to Pulse through the actual scrollable instead of assuming all links
+        // remain mounted after selecting a lower row.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('organizer-destination-pulse')),
+          -150,
+          scrollable: find
+              .descendant(
+                of: find.byKey(const ValueKey('organizer-desktop-frame')),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('organizer-destination-pulse')),
+        );
+        await tester.pumpAndSettle();
         await tester.tap(
           find.byKey(const ValueKey('organizer-destination-pulse')),
         );
         await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('content-_Area.today')),
+          findsOneWidget,
+        );
         await _capture(tester, capture, '${platform.name}-pulse');
         await _leaf(tester, 'plans');
         await tester.tap(find.text('Izberi lončke za zelišča').last);

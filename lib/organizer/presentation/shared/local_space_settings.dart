@@ -6,6 +6,7 @@ import '../../state/local_spaces_provider.dart';
 import '../organizer_widgets.dart';
 import 'sharing_forms.dart';
 import 'sharing_errors.dart';
+import 'local_space_lifecycle_menu.dart';
 
 class LocalSpaceSettings extends ConsumerWidget {
   const LocalSpaceSettings({
@@ -54,7 +55,7 @@ class LocalSpaceSettings extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OrganizerHeading(title: l.spaceSettingsTitle),
+        OrganizerHeading(title: l.spaceSettingsTitle, titleAccessory: LocalSpaceLifecycleMenu(space: space)),
         ListTile(
           key: ValueKey('local-space-settings-${space.id}'),
           contentPadding: EdgeInsets.zero,
@@ -84,7 +85,7 @@ class LocalSpaceSettings extends ConsumerWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: OutlinedButton.icon(
-            onPressed: onConnect,
+            onPressed: space.archived ? null : onConnect,
             icon: const Icon(Icons.cloud_outlined),
             label: Text(l.localSpaceLinkAction),
           ),

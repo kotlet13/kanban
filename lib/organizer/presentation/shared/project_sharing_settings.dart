@@ -16,9 +16,11 @@ class ProjectSharingSettings extends ConsumerStatefulWidget {
     super.key,
     required this.scope,
     required this.onProjectSelected,
+    this.projectId,
   });
   final SharedScope scope;
   final ValueChanged<String> onProjectSelected;
+  final String? projectId;
 
   @override
   ConsumerState<ProjectSharingSettings> createState() =>
@@ -232,7 +234,11 @@ class _ProjectSharingSettingsState
   Widget build(BuildContext context) {
     final state = ref.watch(collaborationProvider).valueOrNull;
     if (state == null || !_allows(state)) return const SizedBox.shrink();
-    final projects = state.dataForScope(widget.scope.id).projects;
+    final projects = state
+        .dataForScope(widget.scope.id)
+        .projects
+        .where((p) => widget.projectId == null || p.id == widget.projectId)
+        .toList();
     final pending = state.projectSharingPendingScopeIds.contains(
       widget.scope.id,
     );

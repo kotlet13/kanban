@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/all_spaces_provider.dart';
+import '../../domain/organizer_models.dart' show ProjectArea;
 import '../../state/organizer_provider.dart';
 import '../organizer_widgets.dart';
 import '../planning/utrip_overview.dart';
@@ -269,6 +270,42 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
                 title: widget.area == AllSpacesArea.today
                     ? l.allSpacesTodayEmpty
                     : l.allSpacesEmpty,
+              ),
+            if ((widget.area == AllSpacesArea.projects ||
+                    widget.area == AllSpacesArea.home) &&
+                snapshot.archivedProjects.any(
+                  (p) =>
+                      widget.area != AllSpacesArea.home ||
+                      p.value.area == ProjectArea.home,
+                ))
+              ExpansionTile(
+                key: ValueKey('all-spaces-archived-projects-${widget.area}'),
+                title: Text(l.scopeArchivedSection),
+                children: [
+                  for (final project in snapshot.archivedProjects.where(
+                    (p) =>
+                        widget.area != AllSpacesArea.home ||
+                        p.value.area == ProjectArea.home,
+                  ))
+                    AllSpacesRowTile(
+                      row: AllSpacesRow(
+                        source: project.source,
+                        id: project.value.id,
+                        type: 'project',
+                        title: project.value.title,
+                      ),
+                      onOpen: () => widget.onSource(
+                        project.source,
+                        widget.area,
+                        project.value.id,
+                      ),
+                      onSource: () => widget.onSource(
+                        project.source,
+                        widget.area,
+                        project.value.id,
+                      ),
+                    ),
+                ],
               ),
             for (final row in rows)
               AllSpacesRowTile(

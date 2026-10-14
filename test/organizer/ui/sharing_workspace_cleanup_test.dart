@@ -102,6 +102,9 @@ void main() {
         expect(find.text('Člani'), findsNothing);
         await tester.tap(find.text('Active project'));
         expect(selected, _activeProject.id);
+        expect(find.text('Archived project'), findsNothing);
+        await tester.tap(find.text('Arhivirano'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Archived project'));
         expect(selected, _archivedProject.id);
         expect(tester.takeException(), isNull);

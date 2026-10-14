@@ -7,6 +7,7 @@ import 'collection_actions.dart';
 import 'organizer_widgets.dart';
 import 'desktop/desktop_layout.dart';
 import 'inbox/remote_reminder_editor.dart';
+import 'inbox/local_task_reminder_editor.dart';
 import 'planning/project_planning_summary.dart';
 
 class OrganizerProjectsPage extends StatefulWidget {
@@ -50,13 +51,18 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
     final visibleProjects = widget.snapshot.projects
         .where(
           (p) =>
+              !p.archived &&
               (!widget.home || p.area == ProjectArea.home) &&
               (_category == null || p.area == _category),
         )
         .toList();
-    final selected = visibleProjects
-        .where((p) => p.id == widget.selectedId)
-        .firstOrNull;
+    final archivedProjects = widget.snapshot.projects
+        .where((p) => p.archived && (!widget.home || p.area==ProjectArea.home) && (_category == null || p.area == _category))
+        .toList();
+    final selected = [
+      ...visibleProjects,
+      ...archivedProjects,
+    ].where((p) => p.id == widget.selectedId).firstOrNull;
     final projects = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -84,7 +90,9 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                   label: Text(l.organizerAddProject),
                 ),
         ),
-        if (!widget.home) ...[
+        if (!widget.home &&
+            widget.reportScopeId == null &&
+            widget.scopeLabel == null) ...[
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -132,6 +140,17 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _projectCard(p),
+          ),
+        if (archivedProjects.isNotEmpty)
+          ExpansionTile(
+            key: const ValueKey('projects-archived'),
+            tilePadding: EdgeInsets.zero,
+            title: Text(
+              '${l.scopeArchivedProjects} (${archivedProjects.length})',
+            ),
+            children: [
+              for (final project in archivedProjects) _projectCard(project),
+            ],
           ),
       ],
     );
@@ -189,7 +208,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
-                  const Icon(Icons.chevron_right, size: 20),
+                  _projectMenu(project),
                 ],
               ),
               if (project.description.isNotEmpty)
@@ -264,13 +283,56 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
             ],
           ],
         ),
-        trailing: const Icon(Icons.chevron_right, size: 20),
+        trailing: _projectMenu(project),
       ),
+    );
+  }
+
+  Widget _projectMenu(LocalProject project) {
+    final l = context.l10n;
+    if (widget.readOnly) return const Icon(Icons.chevron_right, size: 20);
+    return PopupMenuButton<String>(
+      key: ValueKey('project-menu-${project.id}'),
+      tooltip: '${l.scopeLifecycleMenu} · ${project.title}',
+      icon: const Icon(Icons.more_horiz),
+      onSelected: (action) async {
+        switch (action) {
+          case 'edit':
+            await widget.actions.project(project);
+          case 'archive':
+            await widget.actions.archiveProject(
+              project,
+              archived: !project.archived,
+            );
+          case 'delete':
+            await widget.actions.deleteProject(project);
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'edit',
+          enabled: !project.archived,
+          child: Text(l.organizerEditProject),
+        ),
+        PopupMenuItem(
+          value: 'archive',
+          child: Text(project.archived ? l.peopleRestore : l.peopleArchive),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'delete',
+          child: Text(
+            l.delete,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _detail(LocalProject project, bool back) {
     final l = context.l10n;
+    final readOnly = widget.readOnly || project.archived;
     final tasks = widget.snapshot.tasks
         .where((t) => t.projectId == project.id)
         .toList();
@@ -303,7 +365,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                 scopeId: widget.reportScopeId!,
                 targetId: project.id,
                 actions: [
-                  if (!widget.readOnly)
+                  if (!readOnly)
                     ContentMenuAction(
                       label: l.organizerEditProject,
                       icon: Icons.edit_outlined,
@@ -311,7 +373,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                     ),
                 ],
               )
-            else if (!widget.readOnly)
+            else if (!readOnly)
               IconButton(
                 tooltip: l.organizerEditProject,
                 onPressed: () => widget.actions.project(project),
@@ -334,13 +396,13 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
         ProjectPlanningSummary(
           project: project,
           tasks: tasks,
-          onTaskSelected: widget.readOnly
+          onTaskSelected: readOnly
               ? null
               : (task) => widget.actions.task(task: task),
         ),
         OrganizerSection(
           title: l.organizerTasks,
-          action: widget.readOnly
+          action: readOnly
               ? null
               : IconButton(
                   tooltip: l.organizerAddTask,
@@ -351,8 +413,8 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               ? OrganizerEmpty(
                   icon: Icons.check_circle_outline,
                   title: l.organizerNoMatchingTasks,
-                  action: widget.readOnly ? null : l.organizerAddTask,
-                  onAction: widget.readOnly
+                  action: readOnly ? null : l.organizerAddTask,
+                  onAction: readOnly
                       ? null
                       : () => widget.actions.task(projectId: project.id),
                 )
@@ -365,15 +427,19 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (widget.readOnly && widget.reportScopeId != null)
+                            if (readOnly && widget.reportScopeId != null)
                               SharedContentActionsMenu(
                                 scopeId: widget.reportScopeId!,
                                 targetId: task.id,
                                 reminderType: 'task',
                               ),
+                            if (widget.reminderScopeId == null && !readOnly)
+                              LocalTaskReminderButton(
+                                task: task,
+                                workspaceKey: widget.snapshot.workspaceKey,
+                              ),
                             if (widget.reminderScopeId != null &&
-                                (!widget.readOnly ||
-                                    widget.reportScopeId == null))
+                                (!readOnly || widget.reportScopeId == null))
                               RemoteReminderButton(
                                 scopeId: widget.reminderScopeId!,
                                 targetType: 'task',
@@ -381,10 +447,10 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                               ),
                           ],
                         ),
-                        onEdit: widget.readOnly
+                        onEdit: readOnly
                             ? null
                             : () => widget.actions.task(task: task),
-                        onCompleted: widget.readOnly
+                        onCompleted: readOnly
                             ? null
                             : (v) =>
                                   widget.actions.setTaskCompleted(task.id, v),
@@ -418,11 +484,12 @@ class OrganizerTasksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final pending = snapshot.tasks.where((t) => !t.isCompleted).toList();
+    final active=snapshot.tasks.where((t)=>!snapshot.projects.any((p)=>p.id==t.projectId && p.archived));
+    final pending = active.where((t) => !t.isCompleted).toList();
     final dated = pending.where((t) => t.dueAt != null).toList()
       ..sort((a, b) => a.dueAt!.compareTo(b.dueAt!));
     final undated = pending.where((t) => t.dueAt == null).toList();
-    final completed = snapshot.tasks.where((t) => t.isCompleted).toList();
+    final completed = active.where((t) => t.isCompleted).toList();
     Widget row(LocalTask task) => OrganizerTaskRow(
       task: task,
       snapshot: snapshot,
@@ -435,6 +502,8 @@ class OrganizerTasksPage extends StatelessWidget {
               targetId: task.id,
               reminderType: 'task',
             ),
+          if (reminderScopeId == null && !readOnly)
+            LocalTaskReminderButton(task:task,workspaceKey:snapshot.workspaceKey),
           if (reminderScopeId != null && (!readOnly || reportScopeId == null))
             RemoteReminderButton(
               scopeId: reminderScopeId!,

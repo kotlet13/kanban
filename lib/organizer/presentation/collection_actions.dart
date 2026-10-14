@@ -9,6 +9,8 @@ abstract interface class OrganizerCollectionActions {
     LocalProject? project,
     ProjectArea area = ProjectArea.personal,
   ]);
+  Future<void> archiveProject(LocalProject project, {bool archived = true});
+  Future<void> deleteProject(LocalProject project);
   Future<void> task({LocalTask? task, String? projectId});
   Future<void> shoppingList([LocalShoppingList? list]);
   Future<void> shoppingItem(String listId, [LocalShoppingItem? item]);

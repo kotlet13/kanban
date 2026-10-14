@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/app_router.dart';
+import 'package:kanban/organizer/presentation/planning/utrip_overview.dart';
 import 'package:kanban/l10n/app_localizations.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/presentation/shared/sharing_account_page.dart';
@@ -117,23 +118,16 @@ void main() {
           ),
         );
         await expectRetiredValuesPreserved();
-        expect(find.text('Začni z enim opravilom.'), findsOneWidget);
-        await tester.tap(
-          find.widgetWithText(TextButton, 'Dodaj opravilo').first,
-        );
+        expect(find.byType(OrganizerUtripOverview), findsOneWidget);
+        expect(storage.snapshot.tasks, isEmpty);
+        await tester.ensureVisible(find.byTooltip('Dodaj opravilo'));
+        await tester.tap(find.byTooltip('Dodaj opravilo'));
         await tester.pumpAndSettle();
         await saveTitle(tester, 'Novo lokalno opravilo');
         expect(storage.snapshot.tasks.single.title, 'Novo lokalno opravilo');
         expect(find.byIcon(Icons.smart_toy_outlined), findsNothing);
 
-        Future<void> area(String label) async {
-          if (width < 900) {
-            await mobileTab(tester, label);
-          } else {
-            await tester.tap(find.widgetWithText(ListTile, label));
-            await tester.pumpAndSettle();
-          }
-        }
+        Future<void> area(String label) => mobileTab(tester,label);
 
         await area('Finance');
         await tester.tap(find.text('Dodaj zapis').first);

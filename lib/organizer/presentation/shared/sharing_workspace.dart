@@ -24,6 +24,7 @@ import 'sharing_forms.dart';
 import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
 import 'sharing_status.dart';
+import 'scope_lifecycle_menu.dart';
 
 enum SharingView {
   shopping,
@@ -234,6 +235,7 @@ class SharingWorkspace extends ConsumerWidget {
                   organization: scope,
                   onProject: onScopeSelected,
                   onMembers: (id) => onMembers?.call(id),
+                  titleAccessory: ScopeLifecycleMenu(scope: scope),
                 );
               }
               final personal = OrganizerSnapshot();
@@ -244,6 +246,7 @@ class SharingWorkspace extends ConsumerWidget {
               return AllSpacesPage(
                 onOverviewArea: onOverviewArea,
                 key: ValueKey('organization-${scope.id}-$view'),
+                titleAccessory: ScopeLifecycleMenu(scope: scope),
                 area: switch (view) {
                   SharingView.agenda => AllSpacesArea.today,
                   SharingView.timeline => AllSpacesArea.calendar,
@@ -270,7 +273,7 @@ class SharingWorkspace extends ConsumerWidget {
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
-            final status = SharingStatus(
+            final syncStatus = SharingStatus(
               key: ValueKey('sharing-status-${scope.id}-$view'),
               state: state,
               scopeId: scope.id,
@@ -288,6 +291,7 @@ class SharingWorkspace extends ConsumerWidget {
                     context,
                   ),
             );
+            final status = Row(mainAxisSize: MainAxisSize.min, children: [syncStatus, ScopeLifecycleMenu(scope: scope)]);
             final householdProjects =
                 scope.kind == SharedScopeKind.household &&
                 scope.accessPolicyVersion == 3 &&
@@ -410,7 +414,7 @@ class SharingWorkspace extends ConsumerWidget {
                     title: _title(context),
                     titleAccessory: status,
                   ),
-                  Text(l.sharingAccessRevoked),
+                  Text(scope.deleted ? l.scopeDeletedDescription : l.sharingAccessRevoked),
                   Text(l.sharingSaveDraftsDescription),
                 ] else ...[
                   if (readOnly && !scope.blocked)
@@ -422,29 +426,6 @@ class SharingWorkspace extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(l.scopeArchivedDescription),
-                    ),
-                  if (state.projectArchivingSupported &&
-                      scope.canManage &&
-                      (scope.projectRootId != null ||
-                          scope.parentSpaceId != null))
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        icon: Icon(
-                          scope.archived
-                              ? Icons.unarchive_outlined
-                              : Icons.archive_outlined,
-                        ),
-                        label: Text(
-                          scope.archived ? l.peopleRestore : l.peopleArchive,
-                        ),
-                        onPressed: () => actions.run(
-                          () => actions.controller.archiveProjectScope(
-                            scope.id,
-                            archived: !scope.archived,
-                          ),
-                        ),
-                      ),
                     ),
                   switch (view) {
                     SharingView.people => OrganizerPeoplePage(

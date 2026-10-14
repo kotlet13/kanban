@@ -91,6 +91,7 @@ Future<void> showOrganizerEditor(
   required Future<void> Function(OrganizerDraft) onSave,
   List<LocalProject> projects = const [],
   bool projectSelectionEnabled = true,
+  bool projectAreaEnabled = true,
   Set<String>? localRecordIds,
   String? recordId,
   bool defaultLocalOwnership = true,
@@ -103,6 +104,9 @@ Future<void> showOrganizerEditor(
   Future<LocalTask> Function()? onTimerToggle,
   String? creatorLabel,
   Future<void> Function()? onDelete,
+  Future<bool> Function()? onDeleteWithReview,
+  Future<void> Function()? onShare,
+  String? projectContext,
   Future<void> Function()? onReport,
   String Function(Object)? errorMessage,
   Widget Function(Widget)? wrap,
@@ -118,6 +122,7 @@ Future<void> showOrganizerEditor(
       draft: draft,
       projects: projects,
       projectSelectionEnabled: projectSelectionEnabled,
+      projectAreaEnabled: projectAreaEnabled,
       localRecordIds: localRecordIds,
       recordId: recordId,
       defaultLocalOwnership: defaultLocalOwnership,
@@ -131,6 +136,9 @@ Future<void> showOrganizerEditor(
       creatorLabel: creatorLabel,
       onSave: onSave,
       onDelete: onDelete,
+      onDeleteWithReview: onDeleteWithReview,
+      onShare: onShare,
+      projectContext: projectContext,
       onReport: onReport,
       errorMessage: errorMessage,
       wrap: wrap,
@@ -151,6 +159,7 @@ class _RecordEditor extends StatefulWidget {
     required this.draft,
     required this.projects,
     required this.projectSelectionEnabled,
+    required this.projectAreaEnabled,
     this.localRecordIds,
     this.recordId,
     required this.defaultLocalOwnership,
@@ -164,6 +173,9 @@ class _RecordEditor extends StatefulWidget {
     this.creatorLabel,
     required this.onSave,
     this.onDelete,
+    this.onDeleteWithReview,
+    this.onShare,
+    this.projectContext,
     this.onReport,
     this.errorMessage,
     this.wrap,
@@ -175,6 +187,10 @@ class _RecordEditor extends StatefulWidget {
   final OrganizerDraft draft;
   final List<LocalProject> projects;
   final bool projectSelectionEnabled, defaultLocalOwnership;
+  final bool projectAreaEnabled;
+  final String? projectContext;
+  final Future<bool> Function()? onDeleteWithReview;
+  final Future<void> Function()? onShare;
   final Set<String>? localRecordIds;
   final String? recordId;
   final List<OrganizerPersonOption> people;
@@ -279,6 +295,17 @@ class _RecordEditorState extends State<_RecordEditor> {
   }
 
   Future<void> _delete() async {
+    if (_busy) return;
+    if (widget.onDeleteWithReview != null) {
+      setState(() => _busy = true);
+      try {
+        final deleted = await widget.onDeleteWithReview!();
+        if (mounted && deleted) Navigator.pop(context);
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -477,7 +504,26 @@ class _RecordEditorState extends State<_RecordEditor> {
                     onSaved: (v) => draft.quantity = v?.trim() ?? '',
                   ),
                 ],
-                if (widget.kind == OrganizerEditorKind.project) ...[
+                if (widget.kind == OrganizerEditorKind.project &&
+                    widget.projectContext != null) ...[
+                  SizedBox(height: fieldGap),
+                  Text(
+                    widget.projectContext!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+                if (widget.kind == OrganizerEditorKind.project &&
+                    widget.onShare != null) ...[
+                  SizedBox(height: fieldGap),
+                  OutlinedButton.icon(
+                    key: const ValueKey('project-editor-sharing'),
+                    onPressed: _busy ? null : widget.onShare,
+                    icon: const Icon(Icons.people_outline),
+                    label: Text(l.sharingMembers),
+                  ),
+                ],
+                if (widget.kind == OrganizerEditorKind.project &&
+                    widget.projectAreaEnabled) ...[
                   SizedBox(height: fieldGap),
                   DropdownButtonFormField<ProjectArea>(
                     isExpanded: true,
@@ -750,7 +796,9 @@ class _RecordEditorState extends State<_RecordEditor> {
           busy: _busy,
           onCancel: () => Navigator.pop(context),
           onSave: _save,
-          onDelete: widget.onDelete == null ? null : _delete,
+          onDelete: widget.onDelete == null && widget.onDeleteWithReview == null
+              ? null
+              : _delete,
         ),
       ],
     );

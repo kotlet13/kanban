@@ -14,6 +14,7 @@ import 'onboarding/account_deletion_panel.dart';
 import 'backup/backup_wizard.dart';
 import 'backup/personal_json_export.dart';
 import 'backup/backup_recovery.dart';
+import 'shared/unsent_work_recovery_view.dart';
 import '../platform/backup_preferences_replay.dart';
 import 'organizer_widgets.dart';
 import 'inbox/inbox_preferences.dart';
@@ -217,6 +218,7 @@ class OrganizerSettingsPage extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const BackupRecoveryPanel(),
+        const UnsentWorkRecoveryButton(),
         const SizedBox(height: 28),
         const AccountDeletionPanel(),
         const SizedBox(height: 28),

@@ -9,6 +9,7 @@ import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
+import 'scope_lifecycle_menu.dart';
 
 class SharingMembersPage extends ConsumerStatefulWidget {
   const SharingMembersPage({
@@ -328,7 +329,9 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
               widget.scope.parentSpaceId != null &&
               widget.scope.accessPolicyVersion == 3
           ? context.l10n.sharingProjectDirectRemoval
-          : context.l10n.sharingRemoveMemberConfirm,
+          : const {SharedScopeKind.organization, SharedScopeKind.household}.contains(widget.scope.kind)
+              ? context.l10n.scopeRemoveMemberDescendants
+              : context.l10n.sharingRemoveMemberConfirm,
       confirmLabel: directProject
           ? context.l10n.sharingRemoveProjectMembership
           : context.l10n.sharingRemoveMember,
@@ -380,6 +383,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
           children: [
             OrganizerHeading(
               title: l.sharingMembers,
+              titleAccessory: ScopeLifecycleMenu(scope: widget.scope),
               subtitle: widget.scope.name,
               action: widget.scope.canManage && !widget.scope.archived
                   ? FilledButton.icon(
