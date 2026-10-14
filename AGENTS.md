@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+14. oktober — **Android1.8.0(27) dejansko oddana za javno posodobitev** po
+izrecnem naročilu, interni kanal potrjenoNeaktivno. [Dokazi](docs/release/REMINDER_SETTINGS_RELEASE.md).
+Nastavitve opomnikov44bdd2b na izolirani mobilniAAB26osnovi/fa809b8+6ae5667,
+6majhnih mobileShell prenosov; namizna prenova ni vključena.104ciljnihPASS
+v dejanskem izoliranem izvoru/Noissues/23+7izdajnihPASS. Ena podpisanaAAB27,
+323frozeninputs/19spremenjenih, oba locks/3config hash isti, byte-identical
+Flutterengine/isti cert/Firebase/8dovoljenj/bundleCRC/16KiB PASS.78.476.231B,
+a8a328e0…; prejšnjiAAB26ohranjen. Produkcija4698247597354229997/release3,
+27vključena/26izključena,100%/Slovenija/SLen-USopombe/0novihizgubljenih
+naprav. Ena sprememba dokončno potrjena: **Spremembe v pregledu**, hitra
+Googlova preverjanja še tečejo; upravljanoOFF/objava po odobritvi.
+**Ni potrjene odobritve/javne27/fizičnega novegaUI**, prej javna26ostane.
+Interni4701286726300038561Neaktivno, brez nove interne izdaje ali nadaljevanja.
+SDK/native/dovoljenja/gostovanja/FamilyHub/sheme/podatki/SMTPFCM/splet/Apple
+isti; naslednje izid Googlovega pregleda, ne nova oddaja ali splošna matrika.
+
 14. oktober — **Več → Nastavitve opomnikov lokalno izvedeno** po izrecni
 uporabnikovi izbiri enega zaslona. [Dokazi in semantika](docs/REMINDER_SETTINGS.md).
 Zgoraj množični preklopi trenutnih dovoljenih obsegov/kategorij, spodaj lokalni

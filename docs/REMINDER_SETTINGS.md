@@ -1,8 +1,9 @@
 # Enoten zaslon nastavitev opomnikov — 14. oktober 2026
 
 Uporabnik je izrecno izbral **Več → Nastavitve opomnikov**. Izvedba je v
-izvoru; javni Android 1.7.1 (26) tega zaslona še nima. Ni nove trgovinske
-izdaje, spremembe gostovanja ali nove različice FamilyHub.
+izvoru; javni Android 1.7.1 (26) tega zaslona še nima. Funkcionalni korak ni
+spreminjal gostovanja ali FamilyHub. Poznejša podpisana Android1.8.0(27) je
+[oddana v javni pregled](release/REMINDER_SETTINGS_RELEASE.md); odobritev še sledi.
 
 ## Vedenje
 
@@ -71,6 +72,6 @@ podvojitev samodejnega lokalnega opomnika. Sistemska zvočna politika/DND lahko
   konfiguracija, dovoljenja in Firebase konfiguracija niso spremenjeni.
 
 Ni fizičnega preizkusa novega zaslona ali nove dostave v tem koraku. Strežnik,
-produkcijski uporabniki, spletna stran in Console so ostali isti. Naslednji
-izdajni korak je nova **javna** Android posodobitev po uporabnikovem naročilu;
-interni kanal ostane Neaktivno.
+produkcijski uporabniki, spletna stran in Console so ostali isti. Po uporabnikovem naslednjem naročilu je pripravljena in **oddana javna
+Android1.8.0(27)**; [izdajni dokazi](release/REMINDER_SETTINGS_RELEASE.md).
+Interni kanal ostane Neaktivno; odobritev in javna27 še nista potrjeni.
