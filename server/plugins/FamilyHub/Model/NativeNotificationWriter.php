@@ -69,7 +69,7 @@ class NativeNotificationWriter extends NativeDatabase
             $kind = $type.'.'.($assigned ? 'assigned' : $base);
             $key = $eventKey ?? hash('sha256', $scope.':'.$type.':'.$record['id'].':'.$record['revision']);
             $this->insert($scope, $recipient, $actorId, $type, $record['id'], $record['revision'], $kind, $category,
-                          $personal ? 'personal' : 'scope', $key, $payload['listId'] ?? ($payload['projectId'] ?? (in_array($type, ['task', 'event'], true) ? $scope : null)));
+                          $personal ? 'personal' : 'scope', $key, ($payload??$before)['listId'] ?? (($payload??$before)['projectId'] ?? (in_array($type, ['task', 'event'], true) ? $scope : null)));
         }
     }
 }

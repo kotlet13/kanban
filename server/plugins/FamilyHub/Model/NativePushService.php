@@ -6,7 +6,7 @@ class NativePushService extends NativeDatabase
     public function wire($row)
     {
         $active = $row && (int)$row['active'] === 1;
-        return ['registered'=>(bool)$active,'platform'=>$active ? $row['platform'] : null,'language'=>$active ? $row['language'] : null,'revision'=>$row ? (int)$row['revision'] : 0,'updatedAt'=>$row ? gmdate('Y-m-d\TH:i:s\Z',(int)$row['updated_at']) : null];
+        return ['registered'=>(bool)$active,'platform'=>$active ? $row['platform'] : null,'language'=>$active ? $row['language'] : null,'displayVersion'=>$active ? (int)($row['notification_format']??1) : null,'revision'=>$row ? (int)$row['revision'] : 0,'updatedAt'=>$row ? gmdate('Y-m-d\TH:i:s\Z',(int)$row['updated_at']) : null];
     }
 
     public function revokeDevice($deviceId)
@@ -32,11 +32,12 @@ class NativePushService extends NativeDatabase
             }
             if ($operation !== 'push.register') { throw new NativeError('unsupported_operation',404); }
             if (!NativeFcmConfig::configured()) { throw new NativeError('push_unavailable',503); }
-            $this->fields($params,['token','platform','language'],['expectedRevision','projectId']);
+            $this->fields($params,['token','platform','language'],['expectedRevision','projectId','displayVersion']);
             if (isset($params['projectId']) && $params['projectId'] !== FAMILYHUB_FCM_PROJECT_ID) { throw new NativeError('push_project_mismatch',409); }
             if (!is_string($params['token']) || !preg_match('/^[\x21-\x7e]{1,4096}$/D',$params['token']) || !in_array($params['platform'],['android','ios'],true) || !in_array($params['language'],['sl','en'],true) || isset($params['expectedRevision']) && (!is_int($params['expectedRevision']) || $params['expectedRevision'] < 0)) { throw new NativeError('validation_error'); }
+            $format=$params['displayVersion']??1; if (!is_int($format) || !in_array($format,[1,2],true)) { throw new NativeError('validation_error'); }
             $hash=hash('sha256',$params['token']);
-            if ($row && (int)$row['active'] === 1 && hash_equals($row['token_hash'],$hash) && $row['platform'] === $params['platform'] && $row['language'] === $params['language'] && $row['project_id'] === FAMILYHUB_FCM_PROJECT_ID) { return ['registration'=>$this->wire($row)]; }
+            if ($row && (int)$row['active'] === 1 && hash_equals($row['token_hash'],$hash) && $row['platform'] === $params['platform'] && $row['language'] === $params['language'] && $row['project_id'] === FAMILYHUB_FCM_PROJECT_ID && (int)($row['notification_format']??1)===$format) { return ['registration'=>$this->wire($row)]; }
             $this->expected($params,$row);
             if ($this->one('SELECT device_id FROM familyhub_push_registrations WHERE token_hash=? AND device_id<>?',[$hash,$device])) { throw new NativeError('push_token_bound',409); }
             $revision=($row ? (int)$row['revision'] : 0)+1;
@@ -44,9 +45,9 @@ class NativePushService extends NativeDatabase
             $cipher=NativePushCrypto::encrypt($params['token'],NativePushCrypto::aad($this->serverId(),$data));
             $this->change('UPDATE familyhub_push_jobs SET state=\'cancelled\',lease_token=NULL,lease_until=NULL WHERE device_id=? AND state IN (\'pending\',\'processing\')',[$device]);
             if ($row) {
-                $this->change('UPDATE familyhub_push_registrations SET account_id=?,token_hash=?,token_cipher=?,project_id=?,platform=?,language=?,revision=?,active=1,updated_at=? WHERE device_id=?',[$account,$hash,$cipher,FAMILYHUB_FCM_PROJECT_ID,$params['platform'],$params['language'],$revision,time(),$device]);
+                $this->change('UPDATE familyhub_push_registrations SET account_id=?,token_hash=?,token_cipher=?,project_id=?,platform=?,language=?,notification_format=?,revision=?,active=1,updated_at=? WHERE device_id=?',[$account,$hash,$cipher,FAMILYHUB_FCM_PROJECT_ID,$params['platform'],$params['language'],$format,$revision,time(),$device]);
             } else {
-                $this->change('INSERT INTO familyhub_push_registrations(device_id,account_id,token_hash,token_cipher,project_id,platform,language,revision,active,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?)',[$device,$account,$hash,$cipher,FAMILYHUB_FCM_PROJECT_ID,$params['platform'],$params['language'],$revision,time()]);
+                $this->change('INSERT INTO familyhub_push_registrations(device_id,account_id,token_hash,token_cipher,project_id,platform,language,notification_format,revision,active,updated_at) VALUES(?,?,?,?,?,?,?,?,?,1,?)',[$device,$account,$hash,$cipher,FAMILYHUB_FCM_PROJECT_ID,$params['platform'],$params['language'],$format,$revision,time()]);
             }
             return ['registration'=>$this->wire($this->one('SELECT * FROM familyhub_push_registrations WHERE device_id=?',[$device]))];
         },true);

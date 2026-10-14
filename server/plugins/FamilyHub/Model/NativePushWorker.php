@@ -11,7 +11,7 @@ class NativePushWorker extends NativeDatabase
             $user=$device ? $this->one('SELECT * FROM users WHERE id=?'.$this->lockSuffix(),[$device['user_id']]) : null;
             $device=$device ? $this->one('SELECT * FROM familyhub_devices WHERE id=?'.$this->lockSuffix(),[$device['id']]) : null;
             $inbox=$this->one('SELECT * FROM familyhub_inbox WHERE id=?',[$candidate['inbox_id']]);
-            if ($inbox) { $deliveryScope=$this->one('SELECT id,archived FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$inbox['scope_id']]); }
+            if ($inbox) { $deliveryScope=$this->lockScopeLifecycle($inbox['scope_id']); }
             $registration=$this->one('SELECT * FROM familyhub_push_registrations WHERE device_id=?'.$this->lockSuffix(),[$candidate['device_id']]);
             $job=$this->one('SELECT * FROM familyhub_push_jobs WHERE inbox_id=? AND device_id=? AND registration_revision=?'.$this->lockSuffix(),[$candidate['inbox_id'],$candidate['device_id'],$candidate['registration_revision']]);
             if (!$job || $job['state']!=='processing' || $job['lease_token']!==$lease) { return ['status'=>'cancelled','coalesced'=>0]; }
@@ -19,7 +19,7 @@ class NativePushWorker extends NativeDatabase
             $settings=$inbox ? (new NativeNotificationPreferences($this->container))->settings($inbox['scope_id'],$inbox['recipient_account_id'],$inbox['category']) : NativeNotificationPreferences::resolve();
             $sessionValid=$user && $device && $account && (int)$user['is_active']===1 && (int)$user['is_ldap_user']===0 && (int)$user['disable_login_form']===0 && $device['revoked_at']===null && (int)$device['expires_at']>time() && hash_equals($device['credentials_hash'],$this->fingerprint($user)) && $device['account_id']===$account['account_id'];
             $valid=$sessionValid && $registration && $inbox && $registration['account_id']===$account['account_id'] && $inbox['recipient_account_id']===$account['account_id'] && (int)$registration['active']===1 && $registration['project_id']===FAMILYHUB_FCM_PROJECT_ID && (int)$registration['revision']===(int)$job['registration_revision'] && $registration['token_hash']===$job['token_hash'];
-            $visible=$inbox && !(int)($deliveryScope['archived']??0) && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'],$inbox['recipient_account_id'],$this->financialRecordType($inbox['target_type']));
+            $visible=$inbox && $deliveryScope && !(int)$deliveryScope['archived'] && $deliveryScope['deleted_at']===null && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'],$inbox['recipient_account_id'],$this->financialRecordType($inbox['target_type']));
             $status='cancelled'; $retryAfter=0; $coalesced=0;
             if (microtime(true)+20>$deadline) {
                 $this->change('UPDATE familyhub_push_jobs SET state=\'pending\',next_attempt=?,lease_token=NULL,lease_until=NULL WHERE inbox_id=? AND device_id=? AND registration_revision=? AND lease_token=?',[time()+60,$job['inbox_id'],$job['device_id'],$job['registration_revision'],$lease]);
@@ -33,7 +33,7 @@ class NativePushWorker extends NativeDatabase
                 }
                 try {
                     $token=NativePushCrypto::decrypt($registration['token_cipher'],NativePushCrypto::aad($this->serverId(),$registration));
-                    $result=$transport->send(['token'=>$token,'accountId'=>$registration['account_id'],'inboxId'=>(int)$inbox['id'],'groupKey'=>$inbox['group_key'],'kind'=>$inbox['kind'],'language'=>$registration['language'],'platform'=>$registration['platform'],'sound'=>(bool)($settings['sound'] ?? false),'expiresAt'=>(int)$job['expires_at']],$this->serverId());
+                    $result=$transport->send(['token'=>$token,'accountId'=>$registration['account_id'],'inboxId'=>(int)$inbox['id'],'groupKey'=>$inbox['group_key'],'kind'=>$inbox['kind'],'language'=>$registration['language'],'platform'=>$registration['platform'],'displayVersion'=>(int)($registration['notification_format']??1),'presentation'=>(new NativePushPresentation($this->container))->topic($inbox,$registration['language']),'sound'=>(bool)($settings['sound'] ?? false),'expiresAt'=>(int)$job['expires_at']],$this->serverId());
                     $status=$result['status']==='accepted' ? 'accepted' : ($result['status']==='retry' && (int)$job['attempts']<5 ? 'retry' : 'cancelled');
                     $retryAfter=(int)($result['retryAfter'] ?? 0);
                     if ($result['status']==='unregistered') { (new NativePushService($this->container))->revokeDevice($device['id']); }

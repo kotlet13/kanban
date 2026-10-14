@@ -48,6 +48,8 @@ class NativeFinanceService extends NativeDatabase
         if (!in_array($op['type'], ($version===2 ? ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry','personalFinanceAccount','financeRecurrenceRule'] : ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry']), true) || !is_int($op['expectedRevision']) || $op['expectedRevision'] < 0 || !is_bool($op['deleted'])) { throw new NativeError('validation_error'); }
         $kind = $this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scope])['kind'];
         if ($op['type'] !== 'financeRecurrenceRule' && in_array($op['type'],['personalFinanceEntry','personalFinanceAccount'],true) !== ($kind === 'personal')) { throw new NativeError('validation_error'); }
+        $lifecycleCurrent=$this->one('SELECT * FROM familyhub_finance_records WHERE scope_id=? AND id=?',[$scope,$id]);
+        (new NativeRecordPolicy($this->container))->guardProjectMutation($scope,$op['type'],$op['payload'],$lifecycleCurrent,$op['deleted']);
         $originalParams=['scopeId'=>$scope,'operation'=>$op];
         $hash = $requestHash ?? $this->hashRequest($version===1 ? 'finance.push' : 'finance2.push',$originalParams);
         $store = new NativeFinanceSettings($this->container); $replay = $store->replayFinance($scope, $user['account_id'], $opId, $hash);

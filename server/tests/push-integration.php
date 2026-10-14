@@ -107,7 +107,7 @@ try {
     $result=(new NativePushQueue($container))->run(20,$transport);
     check($result['accepted']===2 && count($captured)===2 && $result['coalesced']===6,'cron coalesces latest known group once per device');
     check($oauth===1,'short-lived OAuth token reused only in worker memory');
-    $message=$captured[0];check($message['notification']['title']==='Jivie','generic FCM title identifies Jivie');check(array_keys($message['data'])===['type','serverId','accountId','notificationId'] && $message['data']['accountId']===$accounts['a'] && $message['data']['type']==='familyhub.inbox.v1','push data contains only strict identity/inbox references');
+    $message=$captured[0];check($message['notification']['title']==='Dodeljeno vam je opravilo' && $message['notification']['body']==='Synthetic FCM','legacy device receives authorized event topic');check(array_keys($message['data'])===['type','serverId','accountId','notificationId'] && $message['data']['accountId']===$accounts['a'] && $message['data']['type']==='familyhub.inbox.v1','push data contains only strict identity/inbox references');
     check($message['android']['notification']['channel_id']==='familyhub_push_silent_v1' && !isset($message['apns']['payload']['aps']['sound']) && strlen($message['apns']['headers']['apns-collapse-id'])===64,'silent platform channel/APNs respects preference and bounded collapse ID');
     check(strpos(json_encode($message),$scope)===false && strpos(json_encode($message),'amountMinor')===false && strpos(json_encode($message),'task.assigned')===false,'payload leaks no scope/kind/financial content');
     check((new NativePushQueue($container))->run(20,$transport)['accepted']===0,'repeated cron does not resend accepted jobs');
@@ -144,7 +144,7 @@ try {
     change('UPDATE familyhub_inbox_preferences SET settings=? WHERE scope_id=? AND account_id=? AND category=\'tasks\'',[json_encode(['push'=>false]),$defaultScope,$accounts['a']]);
     check($inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences']['tasks']===$off,'partial saved settings fill missing fields and preserve explicit false');
     change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=?',[$defaultScope]);
-    $service=new \Kanboard\Plugin\FamilyHub\Model\NativeService($container);$stamp=gmdate('Y-m-d\TH:i:s\Z');$list=uuid();
+    $service=new \Kanboard\Plugin\FamilyHub\Model\NativeService($container);foreach(['a','b']as$person){$service->dispatch('moderation.acceptPolicy',['policyVersion'=>1],'Bearer '.$sessions[$person]['token'],$prefix);}$stamp=gmdate('Y-m-d\TH:i:s\Z');$list=uuid();
     $changes=[
         ['task',uuid(),['title'=>'Shared task','notes'=>'','projectId'=>null,'dueAt'=>null,'isCompleted'=>false,'startAt'=>null,'endAt'=>null,'assigneeAccountIds'=>[],'createdAt'=>$stamp,'updatedAt'=>$stamp]],
         ['event',uuid(),['title'=>'Shared event','notes'=>'','projectId'=>null,'startAt'=>$stamp,'endAt'=>null,'assigneeAccountIds'=>[],'createdAt'=>$stamp,'updatedAt'=>$stamp]],
@@ -180,7 +180,7 @@ try {
     check(rejected(fn()=>$inbox->execute('inbox.group',['id'=>$ids[2]]),'permission_revoked'),'revoked membership hides historical group');
     change('UPDATE familyhub_members SET active=1 WHERE scope_id=? AND account_id=?',[$scope,$accounts['a']]);
     $settings['sound']=true;change('UPDATE familyhub_inbox_preferences SET settings=? WHERE scope_id=? AND category=\'tasks\'',[json_encode($settings),$scope]);
-    $mode='accepted';emit($scope,$accounts['a'],7);(new NativePushQueue($container))->run(20,$transport);$last=end($captured);check($last['android']['notification']['channel_id']==='familyhub_push_sound_v1' && $last['apns']['payload']['aps']['sound']==='default' && $last['notification']['body']==='You have a new notification.','language and current sound preference determine generic payload');
+    $mode='accepted';emit($scope,$accounts['a'],7);(new NativePushQueue($container))->run(20,$transport);$last=end($captured);check($last['android']['notification']['channel_id']==='familyhub_push_sound_v1' && $last['apns']['payload']['aps']['sound']==='default' && $last['notification']['body']==='Synthetic FCM' && $last['notification']['title']==='Task assigned to you','language and current sound preference determine authorized topic payload');
     $mode='invalid';emit($scope,$accounts['a'],8);(new NativePushQueue($container))->run(20,$transport);check($a->execute('push.state',[])['registration']['registered'],'INVALID_ARGUMENT does not incorrectly erase token');
     $mode='malformed';$malformed=emit($scope,$accounts['a'],9);$r=(new NativePushQueue($container))->run(20,$transport);check($r['retry']===1,'malformed success cannot claim provider acceptance');change('UPDATE familyhub_push_jobs SET state=\'cancelled\' WHERE inbox_id=?',[$malformed]);
     $mode='unregistered';emit($scope,$accounts['a'],10);(new NativePushQueue($container))->run(20,$transport);check(!$a->execute('push.state',[])['registration']['registered'],'UNREGISTERED invalidates only bound current registration');

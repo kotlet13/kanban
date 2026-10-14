@@ -23,7 +23,7 @@ class NativeOrganizationAccess extends NativeDatabase
 
     public function decorate($scope, $accountId, $directRole = null)
     {
-        if (!$scope || $this->one('SELECT scope_id FROM familyhub_moderation_blocks WHERE scope_id=? AND account_id=?',[$scope['id'],$accountId])) { return null; }
+        if (!$scope || ($scope['deleted_at']??null)!==null || $this->one('SELECT scope_id FROM familyhub_moderation_blocks WHERE scope_id=? AND account_id=?',[$scope['id'],$accountId])) { return null; }
         $parentId = $scope['parent_scope_id'] ?? $scope['organization_id'] ?? null;
         $parent = $parentId ? $this->one('SELECT * FROM familyhub_scopes WHERE id=?', [$parentId]) : null;
         $organization = $scope['kind'] === 'organization' ? $scope : ($parent && $parent['kind']==='organization' ? $parent : null);
@@ -33,6 +33,8 @@ class NativeOrganizationAccess extends NativeDatabase
         if ($directRole === null && !$inherited && !($scope['kind']==='project' && $leader)) { return null; }
         $role = $directRole ?? ($inherited ? ($inherited['role']==='owner' ? 'member' : $inherited['role']) : 'viewer');
         if ($inherited && $inherited['role']!=='viewer' && $role==='viewer') { $role='member'; }
+        if ($parent && ($parent['deleted_at']??null)!==null) { return null; }
+        $scope['archived']=(int)($scope['archived']??0) || (int)($parent['archived']??0);
         $scope['role'] = $role;
         $scope['effective_access_policy_version'] = $version;
         $scope['effective_access_revision'] = (int)($scope['access_revision']??0) + ($parent ? (int)$parent['access_revision'] : 0);

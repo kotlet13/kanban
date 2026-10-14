@@ -136,7 +136,7 @@ check($race[1]['status']===200&&in_array($race[0]['status'],[200,403],true),'con
 denied(call('sync3.pull',['scopeId'=>$future,'cursor'=>0],$m),'permission_revoked','post-race project read cannot restore revoked leadership');
 data(call('scopes.setLeader',array_replace($leader,['requestId'=>uuid()]),$o));
 data(call('scopes.removeMember',['scopeId'=>$org,'userId'=>$ids['member'],'requestId'=>uuid()],$o));
-check(data(call('finance.policy',['scopeId'=>$child],$m))['grant']==='read','removing org member clears leadership while retaining independent project membership');
+denied(call('finance.policy',['scopeId'=>$child],$m),'permission_revoked','removing org member also revokes independent descendant project membership');
 denied(call('sync3.pull',['scopeId'=>$future,'cursor'=>0],$m),'permission_revoked','removed org member has no stale future-project leadership');
 $statement=$pdo->prepare('SELECT COUNT(*) FROM familyhub_organization_leaders WHERE scope_id=? AND account_id=?');$statement->execute([$org,$leader['accountId']]);check((int)$statement->fetchColumn()===0,'org member removal purges stored leadership grant');$statement->closeCursor();
 $deleteName=$prefix.'_deletable';$deleteId=$container['userModel']->create(['username'=>$deleteName,'password'=>$password,'role'=>'app-user']);$deleteSession=data(call('auth.login',['username'=>$deleteName,'password'=>$password,'deviceName'=>'Disposable leader']));$d=$deleteSession['token'];

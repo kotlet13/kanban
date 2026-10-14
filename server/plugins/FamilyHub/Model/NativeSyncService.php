@@ -13,17 +13,17 @@ class NativeSyncService extends NativeDatabase
         $linkedAware = $params['linkedPaymentsAware'] ?? false;
         if (!is_bool($linkedAware)) { throw new NativeError('validation_error'); }
         unset($params['linkedPaymentsAware']);
-        $this->version = str_starts_with($operation, 'sync5.') ? 5 : (str_starts_with($operation, 'sync4.') ? 4 : (str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1)));
+        $this->version = str_starts_with($operation, 'sync6.') ? 6 : (str_starts_with($operation, 'sync5.') ? 5 : (str_starts_with($operation, 'sync4.') ? 4 : (str_starts_with($operation, 'sync3.') ? 3 : (str_starts_with($operation, 'sync2.') ? 2 : 1))));
         $this->rate([['sync-ip:'.$this->ip, 2400, 60]]);
         try { $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
             $actor = $this->actor(); $userId = $actor['user']['id'];
             (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
-            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull', 'sync5.pull'], true)) { return $this->pull($params, $userId); }
-            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync5.push', 'sync4.push', 'sync4.pushTaskWithCost', 'sync5.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
+            if (in_array($operation, ['sync.pull', 'sync2.pull', 'sync3.pull', 'sync4.pull', 'sync5.pull', 'sync6.pull'], true)) { return $this->pull($params, $userId); }
+            if (!in_array($operation, ['sync.push', 'sync2.push', 'sync3.push', 'sync3.pushTaskWithCost', 'sync5.push', 'sync6.push', 'sync4.push', 'sync4.pushTaskWithCost', 'sync5.pushTaskWithCost','sync6.pushTaskWithCost'], true)) { throw new NativeError('unsupported_operation', 404); }
             $this->fields($params, ['scopeId', 'operation'], $this->version >= 3 ? ['operationContractVersion', 'financeOperation', 'financeOperationContractVersion'] : []);
             $payloadVersion = $this->version >= 3 ? ($params['operationContractVersion'] ?? $this->version) : $this->version;
-            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3,4,5], true) || $payloadVersion>$this->version) { throw new NativeError('validation_error'); }
-            $compound = in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost'],true);
+            if (!is_int($payloadVersion) || !in_array($payloadVersion, [1,2,3,4,5,6], true) || $payloadVersion>$this->version) { throw new NativeError('validation_error'); }
+            $compound = in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost','sync6.pushTaskWithCost'],true);
             if ($compound !== isset($params['financeOperation'])) { throw new NativeError('validation_error'); }
             $scopeId = $this->uuid($params['scopeId']);
             $scope = $this->scope($scopeId, $userId, true);
@@ -47,6 +47,8 @@ class NativeSyncService extends NativeDatabase
                 if ($recordId!==$projectRoot || $op['deleted']) { throw new NativeError('project_scope_single_project',403); }
                 if (!$op['deleted']) { $this->text($op['payload']['title']??null,200); }
             }
+            $lifecycleCurrent=$this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$scopeId,$recordId]);
+            (new NativeRecordPolicy($this->container))->guardProjectMutation($scopeId,$op['type'],$op['payload'],$lifecycleCurrent,$op['deleted']);
             $hashOperation = $compound ? 'sync3.pushTaskWithCost' : ($payloadVersion === 1 ? 'sync.push' : 'sync'.$payloadVersion.'.push');
             $hashParams = $compound ? $params : ['scopeId'=>$params['scopeId'], 'operation'=>$op];
             $hash = $this->hashRequest($hashOperation, $hashParams);
@@ -85,7 +87,7 @@ class NativeSyncService extends NativeDatabase
             }
             if ($op['type']==='idea' && !$op['deleted']) { (new NativeIdeaAssetService($this->container))->publish($scopeId,$recordId,$op['payload'],$actor['user']['account_id']); }
             $sequence = $this->advance($scope);
-            if ($op['type']==='garden' || $op['type']==='idea') { $this->change('UPDATE familyhub_scopes SET required_record_contract=? WHERE id=?',[max((int)($scope['required_record_contract']??1),$op['type']==='idea'?5:4),$scopeId]); } $revision = $op['expectedRevision'] + 1;
+            if ($payloadVersion>=6 || $op['type']==='garden' || $op['type']==='idea') { $this->change('UPDATE familyhub_scopes SET required_record_contract=? WHERE id=?',[max((int)($scope['required_record_contract']??1),$payloadVersion),$scopeId]); } $revision = $op['expectedRevision'] + 1;
             $updated = gmdate('Y-m-d\TH:i:s\Z');
             $payload = $op['deleted'] ? null : json_encode($op['payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             if ($current) {
@@ -123,7 +125,7 @@ class NativeSyncService extends NativeDatabase
             return $response;
         });
         } catch (NativeError $error) {
-            if (in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost'],true) && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
+            if (in_array($operation,['sync3.pushTaskWithCost','sync4.pushTaskWithCost','sync5.pushTaskWithCost','sync6.pushTaskWithCost'],true) && in_array($error->errorCode,['conflict','parent_missing','live_children','person_missing','person_archived','validation_error','created_at_immutable','duplicate_finance_reference','task_cost_date_mismatch','currency_mismatch'],true) && isset($params['operation']['opId'],$params['scopeId'])) {
                 // The compound transaction rolled back BOTH records, audit and
                 // notifications. Persist its immutable failed outcome separately
                 // after checking current rights again; never cache denied data.

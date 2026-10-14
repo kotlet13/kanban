@@ -57,7 +57,7 @@ class NativeAccountDeletionService extends NativeDatabase
             $this->many('SELECT id FROM tasks WHERE creator_id=? OR project_id IN (SELECT id FROM projects WHERE owner_id=? AND is_private=1) ORDER BY id'.$this->lockSuffix(),[$user['id'],$user['id']]);
             // Lock scopes in stable order. Every native write locks its actor first,
             // then scope; after waiting the plan is recomputed from current state.
-            $scopes = $this->many('SELECT * FROM familyhub_scopes ORDER BY CASE WHEN kind=\'organization\' THEN 0 ELSE 1 END,id'.$this->lockSuffix());
+            $scopes = $this->many('SELECT * FROM familyhub_scopes WHERE deleted_at IS NULL ORDER BY CASE WHEN kind=\'organization\' THEN 0 ELSE 1 END,id'.$this->lockSuffix());
             $graph = (new NativeDeletionPlan($this->container))->build($user,$scopes);
             $plan = $graph['wire'];
             if ($operation === 'account.deletion.preview') {

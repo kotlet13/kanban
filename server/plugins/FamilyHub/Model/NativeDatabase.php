@@ -144,6 +144,19 @@ abstract class NativeDatabase extends Base
         return ['user' => $user, 'device' => $device];
     }
 
+    /** Live same-scope list context, including legacy deleted-item group history. */
+    protected function shoppingContextRecord(array $inbox,$record=null)
+    {
+        $payload=$record && !(int)$record['deleted']?json_decode($record['payload'],true,32,JSON_THROW_ON_ERROR):[];
+        $ids=[$payload['listId']??null,explode(':',$inbox['group_key'])[1]??null];
+        foreach ($this->many("SELECT group_key FROM familyhub_inbox WHERE scope_id=? AND target_type='shoppingItem' AND target_id=? AND recipient_account_id=? AND id<? ORDER BY id DESC LIMIT 20",[$inbox['scope_id'],$inbox['target_id'],$inbox['recipient_account_id'],$inbox['id']]) as $previous) { $ids[]=explode(':',$previous['group_key'])[1]??null; }
+        foreach (array_unique(array_filter($ids)) as $id) {
+            $list=$this->one("SELECT * FROM familyhub_records WHERE scope_id=? AND id=? AND type='shoppingList' AND deleted=0",[$inbox['scope_id'],$id]);
+            if ($list) { return $list; }
+        }
+        return null;
+    }
+
     protected function financialRecordType($type)
     {
         return in_array($type,['financeAccount','financeEntry','financeTransfer','personalFinanceEntry','personalFinanceAccount','financeRecurrenceRule'],true);
@@ -152,6 +165,19 @@ abstract class NativeDatabase extends Base
     protected function fingerprint(array $user)
     {
         return hash('sha256', json_encode([$user['password'], (int)$user['twofactor_activated'], $user['twofactor_secret']], JSON_THROW_ON_ERROR));
+    }
+
+    /** Worker lifecycle gate shares the same parent-before-child lock order as API writes. */
+    protected function lockScopeLifecycle($id)
+    {
+        $links=$this->one('SELECT organization_id,parent_scope_id FROM familyhub_scopes WHERE id=?',[$id]);
+        $parentId=$links['parent_scope_id']??$links['organization_id']??null;
+        $parent=$parentId?$this->one('SELECT * FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$parentId]):null;
+        $scope=$this->one('SELECT * FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$id]);
+        if (!$scope) { return null; }
+        $scope['archived']=(int)($scope['archived']??0) || (int)($parent['archived']??0);
+        if (($parent['deleted_at']??null)!==null) { $scope['deleted_at']=$parent['deleted_at']; }
+        return $scope;
     }
 
     protected function scope($id, $userId, $write = false, $owner = false)
@@ -164,6 +190,7 @@ abstract class NativeDatabase extends Base
         $member = $scope ? $this->one('SELECT * FROM familyhub_members WHERE scope_id = ? AND user_id = ?', [$id, $userId]) : null;
         $account = $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id = ?', [$userId]);
         if (!$scope) { throw new NativeError('scope_unavailable',409); }
+        if (($scope['deleted_at']??null)!==null) { throw new NativeError('scope_deleted',409); }
         if (!$account) { throw new NativeError('permission_revoked',403); }
         $directRole=$member && $member['account_id']===$account['account_id'] && (int)$member['active']===1 ? $member['role'] : null;
         $scope=(new NativeOrganizationAccess($this->container))->decorate($scope,$account['account_id'],$directRole);

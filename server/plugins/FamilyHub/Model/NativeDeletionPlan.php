@@ -51,7 +51,7 @@ class NativeDeletionPlan extends NativeDatabase
                 $foreign=count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
                 $owned[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'canDeleteScope'=>!$foreign,'eligibleSuccessors'=>array_map(fn($m)=>['accountId'=>$m['account_id'],'displayName'=>$m['name'] ?: $m['username']],$eligible)];
                 if (in_array($s['kind'],['organization','household'],true)) {
-                    foreach ($this->many('SELECT * FROM familyhub_scopes WHERE parent_scope_id=? OR organization_id=? ORDER BY id',[$sid,$sid]) as $child) {
+                    foreach ($this->many('SELECT * FROM familyhub_scopes WHERE deleted_at IS NULL AND (parent_scope_id=? OR organization_id=?) ORDER BY id',[$sid,$sid]) as $child) {
                         $canRead=(new NativeFinanceAccess($this->container))->visible($child['id'],$account);
                         $opaque=hash_hmac('sha256','organization-link:'.$sid.':'.$child['id'],$this->fingerprint($user));
                         $token=substr($opaque,0,8).'-'.substr($opaque,8,4).'-4'.substr($opaque,13,3).'-a'.substr($opaque,17,3).'-'.substr($opaque,20,12);

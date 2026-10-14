@@ -1,6 +1,6 @@
 <?php
 namespace Kanboard\Plugin\FamilyHub\Model;
-/** Exact format-2 garden document. Calendar dates are not delivery instants. */
+/** Exact format-2/3 garden document. Calendar dates are not delivery instants. */
 
 class NativeGardenPolicy extends NativeDatabase
 {
@@ -13,9 +13,21 @@ class NativeGardenPolicy extends NativeDatabase
             || ($this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scope])['kind'] ?? '') !== 'household') {
             throw new NativeError('validation_error');
         }
-        $this->fields($p, ['version', 'id', 'name', 'notes', 'areas', 'seasons', 'revision', 'createdAt', 'updatedAt']);
-        if ($p['version'] !== 2 || !is_int($p['revision']) || $p['revision']<0) {
+        $scene = ($p['version'] ?? null) === 3;
+        $this->fields($p, array_merge(['version', 'id', 'name', 'notes', 'areas', 'seasons', 'revision', 'createdAt', 'updatedAt'], $scene ? ['widthMeters', 'heightMeters'] : []));
+        if (!in_array($p['version'], [2, 3], true) || !is_int($p['revision']) || $p['revision']<0) {
             throw new NativeError('validation_error');
+        }
+        if ($scene) {
+            if (($p['widthMeters'] === null) !== ($p['heightMeters'] === null)) {
+                throw new NativeError('validation_error');
+            }
+            foreach (['widthMeters', 'heightMeters'] as $key) {
+                if ($p[$key] !== null) { $this->measurement($p[$key], 0.1, 10000); }
+            }
+        }
+        if ($current && (json_decode($current['payload'], true, 32, JSON_THROW_ON_ERROR)['version'] ?? 2) > $p['version']) {
+            throw new NativeError('client_upgrade_required', 409);
         }
         $this->uuid($p['id']);
         $this->string($p['name'], 200, false);
@@ -70,7 +82,15 @@ class NativeGardenPolicy extends NativeDatabase
                 if (!is_array($v)) {
                     throw new NativeError('validation_error');
                 }
-                $this->fields($v, ['id', 'areaId', 'crop', 'variety', 'family', 'status', 'notes', 'sowAt', 'plantAt', 'harvestAt']);
+                $this->fields($v, array_merge(['id', 'areaId', 'crop', 'variety', 'family', 'status', 'notes', 'sowAt', 'plantAt', 'harvestAt'], $scene ? ['harvested', 'spacingCm', 'illustration', 'visualGrowthDays'] : []));
+                if ($scene) {
+                    if (!is_bool($v['harvested']) || !is_int($v['visualGrowthDays']) || $v['visualGrowthDays']<1 || $v['visualGrowthDays']>730
+                        || !in_array($v['illustration'], ['generic', 'carrot', 'tomato', 'lettuce', 'cabbage', 'onion', 'pepper', 'pumpkin', 'bean'], true)
+                        || ($v['harvested'] && ($v['status'] !== 'actual' || $v['harvestAt'] === null))) {
+                        throw new NativeError('validation_error');
+                    }
+                    if ($v['spacingCm'] !== null) { $this->measurement($v['spacingCm'], 1, 1000); }
+                }
                 $this->id($v['id']);
                 $this->id($v['areaId']);
                 if (!isset($areaIds[$v['areaId']])
@@ -101,6 +121,13 @@ class NativeGardenPolicy extends NativeDatabase
                     $previous = $v[$key];
                 }
             }
+        }
+    }
+
+    private function measurement($value, $minimum, $maximum)
+    {
+        if ((!is_int($value) && !is_float($value)) || !is_finite((float)$value) || $value<$minimum || $value>$maximum) {
+            throw new NativeError('validation_error');
         }
     }
 

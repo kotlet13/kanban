@@ -7,8 +7,9 @@ class NativeIdeaPolicy extends NativeDatabase
     public function validate($p,$scopeId,$current)
     {
         if (!is_array($p) || array_is_list($p) || (strlen(json_encode($p,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR))>786432 || strlen(json_encode($p,JSON_THROW_ON_ERROR))>1048576)) { throw new NativeError('validation_error'); }
-        $this->fields($p,['version','id','title','projectId','width','height','elements','revision','createdAt','updatedAt']);
-        $this->uuid($p['id']);$this->text($p['title'],800);if (mb_strlen($p['title'])>200 || $p['version']!==1 || !is_int($p['revision']) || $p['revision']<0) { throw new NativeError('validation_error'); }
+        $this->fields($p,['version','id','title','projectId','width','height','elements','revision','createdAt','updatedAt'],($p['version']??1)===2?['archived']:[]);
+        if ($current && (json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR)['version']??1)>=2 && $p['version']<2) { throw new NativeError('client_upgrade_required',409); }
+        $this->uuid($p['id']);$this->text($p['title'],800);if (mb_strlen($p['title'])>200 || !in_array($p['version'],[1,2],true) || ($p['version']===2 && (!array_key_exists('archived',$p) || !is_bool($p['archived']))) || !is_int($p['revision']) || $p['revision']<0) { throw new NativeError('validation_error'); }
         $this->number($p['width'],1,16384);$this->number($p['height'],1,16384);
         $policy=new NativeRecordPolicy($this->container);$policy->date($p['createdAt']);$policy->date($p['updatedAt']);
         if ($current && json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR)['createdAt']!==$p['createdAt']) { throw new NativeError('created_at_immutable'); }
@@ -19,7 +20,8 @@ class NativeIdeaPolicy extends NativeDatabase
         $ids=[];$parents=[];$images=[];$points=0;
         foreach ($p['elements'] as $e) {
             if (!is_array($e)) { throw new NativeError('validation_error'); }
-            $this->fields($e,['id','kind','x','y','width','height','rotation','color','strokeWidth','text','points','parentImageId','asset']);
+            $this->fields($e,['id','kind','x','y','width','height','rotation','color','strokeWidth','text','points','parentImageId','asset'], $p['version']===2?['fontSize']:[]);
+            if ($p['version']===2) { if (!array_key_exists('fontSize',$e)) { throw new NativeError('validation_error'); }$this->number($e['fontSize'],$e['parentImageId']===null?6:.005,$e['parentImageId']===null?300:2); }
             $this->uuid($e['id']);if (isset($ids[$e['id']])) { throw new NativeError('validation_error'); }$ids[$e['id']]=true;
             if (!in_array($e['kind'],['text','sticky','image','stroke','rectangle','ellipse','arrow','line'],true)) { throw new NativeError('validation_error'); }
             foreach (['x','y'] as $key) { $this->number($e[$key],-16384,32768); }

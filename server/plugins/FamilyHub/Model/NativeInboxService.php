@@ -42,11 +42,16 @@ class NativeInboxService extends NativeDatabase
                 $target = ['scopeId' => $row['scope_id'], 'type' => $row['target_type'], 'id' => $row['target_id']];
                 $record = $row['target_type'] === 'membership' ? null : $this->one('SELECT * FROM '.($finance ? 'familyhub_finance_records' : 'familyhub_records').' WHERE scope_id=? AND id=?', [$row['scope_id'], $row['target_id']]);
                 $clientVersion=$params[$finance ? 'financeContractVersion' : 'recordContractVersion'] ?? ($finance ? 1 : 2);
-                if (!is_int($clientVersion) || $clientVersion<1 || $clientVersion>($finance ? 2 : 5)) { throw new NativeError('validation_error'); }
+                if (!is_int($clientVersion) || $clientVersion<1 || $clientVersion>($finance ? 2 : 6)) { throw new NativeError('validation_error'); }
                 if ($record && (int)($record['contract_version']??1)>$clientVersion) { throw new NativeError($finance ? 'unsupported_version' : 'client_upgrade_required',409); }
                 $recordWire=$record ? (new NativeRecordPolicy($this->container))->wire($record,$finance ? 2 : $clientVersion) : null;
                 if ($finance && $recordWire) { $recordWire['contractVersion']=(int)($record['contract_version']??1); }
-                return ['item' => $this->wire($row), 'target' => $target, 'record' => $recordWire];
+                $contextWire=null;
+                if ($row['target_type']==='shoppingItem') {
+                    $list=$this->shoppingContextRecord($row,$record);
+                    if ($list && (int)($list['contract_version']??1)<=$clientVersion) $contextWire=(new NativeRecordPolicy($this->container))->wire($list,$clientVersion);
+                }
+                return ['item' => $this->wire($row), 'target' => $target, 'record' => $recordWire, 'contextRecord'=>$contextWire];
             }
             if (!is_bool($params['read']) || !is_int($params['expectedRevision'])) { throw new NativeError('validation_error'); }
             $request = $this->uuid($params['requestId']); $hash = $this->hashRequest($operation, $params);

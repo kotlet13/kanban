@@ -1,0 +1,21 @@
+<?php
+// Dedicated secondary synthetic database: actual populated schema17 ->18.
+require '/var/www/app/app/common.php';if(session_status()===PHP_SESSION_ACTIVE){session_abort();}
+if (!defined('FAMILYHUB_DEVELOPMENT_MODE')||!FAMILYHUB_DEVELOPMENT_MODE) { throw new RuntimeException('Synthetic only'); }
+$source=$container['db']->getConnection();$mysql=$source->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql';
+$database=getenv('LIFECYCLE_MIGRATION_DB')?:'lifecycle_migration18';if(!preg_match('/^lifecycle_migration18_[a-z0-9]+$/D',$database)&&$mysql){throw new RuntimeException('Dedicated fixture database required');}
+$fixture=$mysql?new PDO('mysql:host=database;dbname='.$database.';charset=utf8mb4',DB_USERNAME,DB_PASSWORD,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]):new PDO('sqlite::memory:',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+require_once '/var/www/app/plugins/FamilyHub/Schema/'.($mysql?'Mysql.php':'Sqlite.php');
+$fixture->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,username VARCHAR(64),password VARCHAR(255),role VARCHAR(30))');$fixture->exec('CREATE TABLE projects(id INTEGER PRIMARY KEY)');
+for($v=1;$v<=17;$v++){call_user_func('Kanboard\\Plugin\\FamilyHub\\Schema\\version_'.$v,$fixture);}
+function copyRows($table,$columns=null){global$source,$fixture;$rows=$source->query('SELECT '.($columns?implode(',',$columns):'*').' FROM '.$table.' LIMIT 200')->fetchAll(PDO::FETCH_ASSOC);foreach($rows as$row){foreach(['deleted_at','schedule_mode','offset_minutes','notification_format'] as$column){unset($row[$column]);}$keys=array_keys($row);$fixture->prepare('INSERT INTO '.$table.'('.implode(',',$keys).') VALUES('.implode(',',array_fill(0,count($keys),'?')).')')->execute(array_values($row));}return count($rows);}
+$populated=['users'=>copyRows('users',['id','username','password','role'])];
+foreach(['familyhub_accounts','familyhub_scopes','familyhub_members','familyhub_devices','familyhub_records','familyhub_finance_policy','familyhub_finance_grants','familyhub_finance_records','familyhub_operations','familyhub_finance_operations','familyhub_reminders','familyhub_push_registrations']as$table){$populated[$table]=copyRows($table);}
+foreach(['familyhub_accounts','familyhub_devices','familyhub_records','familyhub_finance_records','familyhub_operations','familyhub_reminders']as$table){if($populated[$table]<1){throw new RuntimeException('Unseeded migration fixture '.$table);}}
+$tables=$mysql?$fixture->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN):$fixture->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);sort($tables);
+function snapshot(){global$fixture,$tables,$mysql;$snap=[];foreach($tables as$table){$rows=$fixture->query('SELECT * FROM '.$table)->fetchAll(PDO::FETCH_ASSOC);foreach($rows as&$row){foreach(['deleted_at','schedule_mode','offset_minutes','notification_format']as$column){unset($row[$column]);}}unset($row);$encoded=array_map(fn($row)=>json_encode($row,JSON_THROW_ON_ERROR),$rows);sort($encoded);$snap[$table]=hash('sha256',json_encode($encoded,JSON_THROW_ON_ERROR));}return$snap;}
+$before=snapshot();$serverId=$fixture->query('SELECT server_id FROM familyhub_instance')->fetchColumn();
+\Kanboard\Plugin\FamilyHub\Schema\LifecycleSchema::create($fixture,$mysql);\Kanboard\Plugin\FamilyHub\Schema\LifecycleSchema::create($fixture,$mysql);
+if(snapshot()!==$before||$serverId!==$fixture->query('SELECT server_id FROM familyhub_instance')->fetchColumn()){throw new RuntimeException('Migration18 changed original rows/identities');}
+if((int)$fixture->query('SELECT COUNT(*) FROM familyhub_scopes WHERE deleted_at IS NOT NULL')->fetchColumn()!==0||(int)$fixture->query("SELECT COUNT(*) FROM familyhub_reminders WHERE schedule_mode<>'absolute' OR offset_minutes IS NOT NULL")->fetchColumn()!==0||(int)$fixture->query('SELECT COUNT(*) FROM familyhub_push_registrations WHERE notification_format<>1')->fetchColumn()!==0){throw new RuntimeException('Unsafe migration defaults');}
+echo json_encode(['result'=>'PASS','driver'=>$fixture->getAttribute(PDO::ATTR_DRIVER_NAME),'baselineSchema'=>17,'migrationSchema'=>18,'tablesWithAllOriginalRowHashesPreserved'=>count($tables),'populatedSyntheticTables'=>$populated,'serverIdAccountsDevicesCredentialsUnchanged'=>true,'newDefaultsSafe'=>true,'idempotent'=>true],JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR).PHP_EOL;

@@ -118,6 +118,7 @@ class NativeIdeaAssetService extends NativeDatabase
     /** Bounded cleanup only after 7 days, preserving any board or report reference. */
     public function cleanup()
     {
+        (new NativeScopeLifecycleService($this->container))->finishFiles();
         $removed=$this->transaction(function(){ $removed=0;foreach ($this->many('SELECT * FROM familyhub_idea_assets WHERE updated_at<? ORDER BY updated_at LIMIT 100',[time()-7*86400]) as $r) {
             $board=$this->one("SELECT payload FROM familyhub_records WHERE scope_id=? AND id=? AND type='idea' AND deleted=0",[$r['scope_id'],$r['board_id']]);
             if (($board && $this->references(json_decode($board['payload'],true,32,JSON_THROW_ON_ERROR),$r['sha256'])) || $this->one('SELECT report_id FROM familyhub_idea_report_assets WHERE scope_id=? AND board_id=? AND sha256=? LIMIT 1',[$r['scope_id'],$r['board_id'],$r['sha256']])) { $this->change('UPDATE familyhub_idea_assets SET updated_at=? WHERE scope_id=? AND board_id=? AND sha256=?',[time(),$r['scope_id'],$r['board_id'],$r['sha256']]);continue; }

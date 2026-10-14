@@ -36,12 +36,26 @@ class NativeFcmTransport
 
     public static function message(array $job, $serverId)
     {
-        $sound = $job['sound']; $en = $job['language'] === 'en';
-        $group = hash('sha256', $job['accountId'].':'.$job['groupKey'].':'.$job['kind']);
-        return ['token'=>$job['token'], 'notification'=>['title'=>'Jivie','body'=>$en ? 'You have a new notification.' : 'Imate novo obvestilo.'],
-            'data'=>['type'=>'familyhub.inbox.v1','serverId'=>$serverId,'accountId'=>$job['accountId'],'notificationId'=>(string)$job['inboxId']],
-            'android'=>['ttl'=>max(1,min(86400,$job['expiresAt']-time())).'s','notification'=>array_merge(['channel_id'=>$sound ? 'familyhub_push_sound_v1' : 'familyhub_push_silent_v1','tag'=>$group,'default_sound'=>$sound],$sound ? ['sound'=>'default'] : [])],
-            'apns'=>['headers'=>['apns-push-type'=>'alert','apns-priority'=>'10','apns-expiration'=>(string)$job['expiresAt'],'apns-collapse-id'=>$group], 'payload'=>['aps'=>array_merge(['thread-id'=>$group], $sound ? ['sound'=>'default'] : [])]]];
+        $sound=$job['sound']; $en=$job['language']==='en';
+        $group=hash('sha256',$serverId.':'.$job['accountId']);
+        $legacyGroup=hash('sha256',$job['accountId'].':'.$job['groupKey'].':'.$job['kind']);
+        $presentation=$job['presentation']??['title'=>'Jivie','body'=>$en?'You have a new notification.':'Imate novo obvestilo.'];
+        $data=['type'=>'familyhub.inbox.v1','serverId'=>$serverId,'accountId'=>$job['accountId'],'notificationId'=>(string)$job['inboxId']];
+        $customAndroid=($job['displayVersion']??1)===2 && $job['platform']==='android';
+        $message=['token'=>$job['token'],'data'=>$data,
+            'android'=>['ttl'=>max(1,min(86400,$job['expiresAt']-time())).'s'],
+            'apns'=>['headers'=>['apns-push-type'=>'alert','apns-priority'=>'10','apns-expiration'=>(string)$job['expiresAt'],'apns-collapse-id'=>$legacyGroup],
+                'payload'=>['aps'=>array_merge(['thread-id'=>$group],$sound?['sound'=>'default']:[])]]];
+        if ($customAndroid) {
+            // Only devices that negotiated display2 can render this data message.
+            $message['data']+=['displayVersion'=>'2','title'=>$presentation['title'],'body'=>$presentation['body'],'language'=>$job['language'],'sound'=>$sound?'1':'0'];
+            $message['android']['priority']='HIGH';
+            unset($message['apns']);
+        } else {
+            $message['notification']=$presentation;
+            $message['android']['notification']=array_merge(['channel_id'=>$sound?'familyhub_push_sound_v1':'familyhub_push_silent_v1','tag'=>$legacyGroup,'default_sound'=>$sound],$sound?['sound'=>'default']:[]);
+        }
+        return $message;
     }
 
     public function send(array $job, $serverId)

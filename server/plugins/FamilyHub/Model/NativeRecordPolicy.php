@@ -6,8 +6,9 @@ class NativeRecordPolicy extends NativeDatabase
 {
     public function validate($type, $payload, $scopeId, $current, $version)
     {
-        if ($type==='idea') { if ($version!==5) { throw new NativeError('client_upgrade_required',409); }return (new NativeIdeaPolicy($this->container))->validate($payload,$scopeId,$current); }
-        if ($type==='garden') { if ($version<4) { throw new NativeError('client_upgrade_required',409); }return (new NativeGardenPolicy($this->container))->validate($payload,$scopeId,$current); }
+        $this->guardProjectMutation($scopeId,$type,$payload,$current);
+        if ($type==='idea') { if ($version<5 || (($payload['version']??1)===2 && $version<6)) { throw new NativeError('client_upgrade_required',409); }return (new NativeIdeaPolicy($this->container))->validate($payload,$scopeId,$current); }
+        if ($type==='garden') { if ($version<4 || (($payload['version']??2)===3 && $version<6)) { throw new NativeError('client_upgrade_required',409); }return (new NativeGardenPolicy($this->container))->validate($payload,$scopeId,$current); }
         $personal = ($this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scopeId])['kind'] ?? '') === 'personal';
         if (!is_array($payload) || array_is_list($payload) || strlen(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) > ($personal ? 524288 : 8192)) { throw new NativeError('validation_error'); }
         $specific = match ($type) {
@@ -25,7 +26,8 @@ class NativeRecordPolicy extends NativeDatabase
         if ($version >= 3 && $type === 'project') { $specific = array_merge($specific, ['phases','availabilityMinutes','availabilityPeriod']); }
         if ($version >= 3 && $type === 'task') { $specific = array_merge($specific, ['phaseId','estimateMinutes','availabilityMinutes','availabilityPeriod','timer','assigneePersonId','subjectPersonIds']); }
         if ($type === 'householdPerson' && $version < 3) { throw new NativeError('client_upgrade_required',409); }
-        $this->fields($payload, array_merge($specific, ['createdAt', 'updatedAt']));
+        $this->fields($payload, array_merge($specific, ['createdAt', 'updatedAt']),$type==='project' && $version>=6?['archived']:[]);
+        if (array_key_exists('archived',$payload) && ($type!=='project' || !is_bool($payload['archived']))) { throw new NativeError('validation_error'); }
         $this->domainText($payload[$type === 'householdPerson' ? 'name' : 'title'], 300, 500, $personal); $this->date($payload['createdAt']); $this->date($payload['updatedAt']);
         if ($current && new \DateTimeImmutable(json_decode($current['payload'], true, 32, JSON_THROW_ON_ERROR)['createdAt']) != new \DateTimeImmutable($payload['createdAt'])) { throw new NativeError('created_at_immutable'); }
         if ($type === 'householdPerson') {
@@ -136,6 +138,34 @@ class NativeRecordPolicy extends NativeDatabase
             $this->uuid($id);
             $effective=(new NativeOrganizationAccess($this->container))->visibleScope($scopeId,$id);
             if (!$effective || ((int)$effective['effective_access_policy_version']!==3 && !(new NativeOrganizationAccess($this->container))->directMember($scopeId,$id)) || !(new NativeFinanceAccess($this->container))->visible($scopeId, $id)) { throw new NativeError('assignee_not_member'); }
+        }
+    }
+
+    /** Inline project archive is a write boundary even for a stale detached candidate. */
+    public function guardProjectMutation($scope,$type,$payload,$current=null,$deleted=false)
+    {
+        $before=$current && $current['payload']!==null?json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR):[];
+        $next=is_array($payload)?$payload:[];
+        if ($type==='project') {
+            if (!($before['archived']??false) || $deleted) { return; }
+            foreach (array_unique(array_merge(array_keys($before),array_keys($next))) as $key) {
+                if (in_array($key,['archived','updatedAt','revision'],true)) { continue; }
+                if (($before[$key]??null)!==($next[$key]??null)) { throw new NativeError('project_archived',403); }
+            }
+            return;
+        }
+        $parents=[];
+        foreach ([$before,$next] as $p) {
+            if (($p['projectId']??null)!==null) { $parents[]=$this->uuid($p['projectId']); }
+            if (($p['taskId']??null)!==null) {
+                $task=$this->one("SELECT payload FROM familyhub_records WHERE scope_id=? AND id=? AND type='task' AND deleted=0",[$scope,$this->uuid($p['taskId'])]);
+                $parent=$task?json_decode($task['payload'],true,32,JSON_THROW_ON_ERROR)['projectId']??null:null;
+                if ($parent!==null) { $parents[]=$parent; }
+            }
+        }
+        foreach (array_unique($parents) as $id) {
+            $project=$this->one("SELECT payload FROM familyhub_records WHERE scope_id=? AND id=? AND type='project' AND deleted=0",[$scope,$id]);
+            if ($project && (json_decode($project['payload'],true,32,JSON_THROW_ON_ERROR)['archived']??false)) { throw new NativeError('project_archived',403); }
         }
     }
 

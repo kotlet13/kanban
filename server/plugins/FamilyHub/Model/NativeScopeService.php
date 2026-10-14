@@ -14,11 +14,12 @@ class NativeScopeService extends NativeDatabase
         } else {
             $this->rate([['scopes-ip:'.$this->ip, 120, 60]]);
         }
-        return $this->transaction(function () use ($operation, $params) {
+        $result=$this->transaction(function () use ($operation, $params) {
             $actor = $this->actor(); $user = $actor['user'];
             (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if (in_array($operation,['scopes.setLeader','scopes.accessMigrationPreview','scopes.accessMigrationApply'],true)) { return (new NativeSpacesAccessService($this->container))->inTransaction($operation,$params,$user); }
             if (in_array($operation,['scopes.projectSharingPreview','scopes.projectSharingApply'],true)) { return (new NativeProjectSharingService($this->container))->inTransaction($operation,$params,$user); }
+            if (in_array($operation,['scopes.deletionPreview','scopes.delete'],true)) { return (new NativeScopeLifecycleService($this->container))->inTransaction($operation,$params,$user); }
             if ($operation === 'scopes.list') {
                 $this->fields($params, [], ['includePersonal', 'includeOrganizations','includeArchived','includeAccessChanges']);
                 $includePersonal = $params['includePersonal'] ?? false;
@@ -35,6 +36,7 @@ class NativeScopeService extends NativeDatabase
                 $result=['scopes' => array_map(fn ($row) => $this->scopeWire($row), array_values(array_filter($rows, fn ($row) => ($includePersonal || $row['kind'] !== 'personal') && ($includeOrganizations || $row['kind'] !== 'organization') && ($includeArchived || !(int)($row['archived']??0)))))];
                 if ($params['includeAccessChanges']??false) {
                     $revoked=$this->many('SELECT r.scope_id FROM familyhub_scope_revocations r JOIN familyhub_scopes s ON s.id=r.scope_id WHERE r.account_id=? ORDER BY r.scope_id',[$user['account_id']]);
+                    $result['deletedScopeIds']=array_column($this->many('SELECT DISTINCT s.id FROM familyhub_scopes s JOIN familyhub_scope_revocations r ON r.scope_id=s.id WHERE s.deleted_at IS NOT NULL AND r.account_id=? ORDER BY s.id',[$user['account_id']]),'id');
                     $result['revokedScopeIds']=array_values(array_filter(array_column($revoked,'scope_id'),fn($sid)=>!$access->visibleScope($sid,$user['account_id'])));
                 }
                 return $result;
@@ -115,13 +117,13 @@ class NativeScopeService extends NativeDatabase
                 $id=$this->uuid($params['scopeId']);$request=$this->uuid($params['requestId']);
                 if (!is_bool($params['archived'])) { throw new NativeError('validation_error'); }
                 $scope=$this->scope($id,$user['id'],false,true);
-                if ($scope['kind']!=='project' || empty($scope['project_root_id'])) { throw new NativeError('validation_error'); }
+                if (!in_array($scope['kind'],['household','organization','project'],true)) { throw new NativeError('validation_error'); }
                 $hash=$this->hashRequest($operation,$params);$replay=$this->replay($id,$user['id'],$request,$hash);
                 if ($replay) { return $replay['body']; }
-                if ((int)($scope['archived']??0)!==(int)$params['archived']) {
+                if ((int)($this->one('SELECT archived FROM familyhub_scopes WHERE id=?',[$id])['archived']??0)!==(int)$params['archived']) {
                     $this->change('UPDATE familyhub_scopes SET archived=?,sequence=sequence+1 WHERE id=?',[(int)$params['archived'],$id]);
                     $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$id]);
-                    if (!$params['archived']) { $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending' AND remind_epoch<=?",[$id,time()]); }
+                    if (!$params['archived']) { foreach ((new NativeOrganizationAccess($this->container))->relatedScopeIds($id) as $restored) { $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending' AND remind_epoch<=?",[$restored,time()]); } }
                 }
                 $result=['scope'=>$this->scopeWire($this->scope($id,$user['id'],false,true))];$this->remember($id,$user['id'],$request,$hash,$result);return $result;
             }
@@ -150,6 +152,8 @@ class NativeScopeService extends NativeDatabase
                 return $result;
             }
             throw new NativeError('unsupported_operation', 404);
-        }, $operation === 'scopes.create');
+        }, in_array($operation,['scopes.create','scopes.delete'],true));
+        if ($operation==='scopes.delete') { (new NativeScopeLifecycleService($this->container))->finishFiles(); }
+        return $result;
     }
 }
