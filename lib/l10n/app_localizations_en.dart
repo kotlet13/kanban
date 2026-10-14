@@ -4138,4 +4138,161 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationDeviceDescription =>
       'Display and sound also require system permission. Remote delivery requires a registered device.';
+
+  @override
+  String get passwordShow => 'Show password';
+
+  @override
+  String get passwordHide => 'Hide password';
+
+  @override
+  String get projectCalendarEmptyDay =>
+      'No tasks in this project for this day.';
+
+  @override
+  String get gardenSceneTitle => 'My garden';
+
+  @override
+  String get gardenSceneEditLayout => 'Edit layout';
+
+  @override
+  String get gardenSceneView => 'Garden view';
+
+  @override
+  String get gardenSceneBeds => 'Beds and history';
+
+  @override
+  String get gardenSceneHelp =>
+      'Select a bed for plantings and history. Pinch or use the buttons to zoom.';
+
+  @override
+  String get gardenPhysicalWidth => 'Garden width';
+
+  @override
+  String get gardenPhysicalHeight => 'Garden length';
+
+  @override
+  String get gardenPhysicalHelp =>
+      'Enter the approximate size in meters. Bed measurements and gaps are calculated from the layout.';
+
+  @override
+  String get gardenPhysicalRequired => 'Enter a number from 0.1 to 10,000 m.';
+
+  @override
+  String get gardenPhysicalUnknown => 'Scale not set yet';
+
+  @override
+  String get gardenMetricGeometryHelp =>
+      'Position and size in meters from the top left of the garden.';
+
+  @override
+  String get gardenMetricGeometryError =>
+      'Enter a valid measurement within the garden.';
+
+  @override
+  String get gardenApproximateSize => 'Approximate size';
+
+  @override
+  String get gardenBedSpacing => 'Gap to other beds';
+
+  @override
+  String get gardenPlantSpacing => 'Plant spacing';
+
+  @override
+  String get gardenPlantSpacingError =>
+      'Enter spacing from 1 to 1,000 cm or leave blank.';
+
+  @override
+  String get gardenIllustration => 'Plant illustration';
+
+  @override
+  String get gardenCropGeneric => 'Other plant';
+
+  @override
+  String get gardenCropCarrot => 'Carrot';
+
+  @override
+  String get gardenCropTomato => 'Tomato';
+
+  @override
+  String get gardenCropLettuce => 'Lettuce';
+
+  @override
+  String get gardenCropCabbage => 'Cabbage';
+
+  @override
+  String get gardenCropOnion => 'Onion';
+
+  @override
+  String get gardenCropPepper => 'Pepper';
+
+  @override
+  String get gardenCropPumpkin => 'Pumpkin';
+
+  @override
+  String get gardenCropBean => 'Bean';
+
+  @override
+  String get gardenVisualGrowthDays => 'Days to show a full-grown plant';
+
+  @override
+  String get gardenVisualGrowthError => 'Enter from 1 to 730 days.';
+
+  @override
+  String get gardenVisualGrowthHelp =>
+      'Growth is an illustration based on the entered planting or sowing date and chosen days. It does not predict maturity or yield.';
+
+  @override
+  String get gardenHarvestAction => 'Mark harvested';
+
+  @override
+  String get gardenHarvested => 'Harvested';
+
+  @override
+  String get gardenHarvestUndo => 'Return to growing';
+
+  @override
+  String get gardenHarvestError =>
+      'The harvest date cannot precede sowing or planting. Check the planting dates first.';
+
+  @override
+  String get gardenEmptyBed => 'Empty bed';
+
+  @override
+  String get gardenSceneEditHint =>
+      'Move beds or drag their corners to resize. Use Edit for precise measurements.';
+
+  @override
+  String get gardenSceneDraft => 'Unsaved changes';
+
+  @override
+  String get ideasFontSizeIncrease => 'Increase text size';
+
+  @override
+  String get ideasFontSizeDecrease => 'Decrease text size';
+
+  @override
+  String get ideasArchived => 'Archived';
+
+  @override
+  String get reminderScheduleMode => 'Remind me';
+
+  @override
+  String get reminderAbsolute => 'At a chosen date and time';
+
+  @override
+  String get reminderAtDeadline => 'At the deadline';
+
+  @override
+  String get reminderHourBefore => '1 hour before the deadline';
+
+  @override
+  String get reminderDayBefore => '1 day before the deadline';
+
+  @override
+  String get reminderRelativeExplanation =>
+      'Moves with the task deadline. Completing the task or removing its deadline cancels the reminder.';
+
+  @override
+  String get localTaskReminderTitle => 'Task reminder on this device';
 }

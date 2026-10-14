@@ -1,3 +1,4 @@
+import '../password_visibility.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'backup_file_io.dart';
@@ -203,34 +204,50 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
       key: _form,
       child: Column(
         children: [
-          TextFormField(
-            key: const ValueKey('backup-password'),
-            controller: _password,
-            obscureText: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            enableIMEPersonalizedLearning: false,
+          PasswordVisibility(
+            key: const ValueKey('backup-password-visibility'),
+            secret: true,
             enabled: !_busy,
-            decoration: InputDecoration(labelText: l.backupPassword),
-            validator: (value) =>
-                (value ?? '').runes.length < 12 ||
-                    utf8.encode(value ?? '').length > 1024
-                ? l.backupPasswordRule
-                : null,
-          ),
-          if (!widget.restore) ...[
-            const SizedBox(height: 16),
-            TextFormField(
-              key: const ValueKey('backup-confirm'),
-              controller: _confirm,
-              obscureText: true,
+            builder: (obscure, toggle) => TextFormField(
+              key: const ValueKey('backup-password'),
+              controller: _password,
+              obscureText: obscure,
               autocorrect: false,
               enableSuggestions: false,
               enableIMEPersonalizedLearning: false,
               enabled: !_busy,
-              decoration: InputDecoration(labelText: l.sharingConfirmPassword),
+              decoration: InputDecoration(
+                labelText: l.backupPassword,
+                suffixIcon: toggle,
+              ),
               validator: (value) =>
-                  value == _password.text ? null : l.sharingPasswordMismatch,
+                  (value ?? '').runes.length < 12 ||
+                      utf8.encode(value ?? '').length > 1024
+                  ? l.backupPasswordRule
+                  : null,
+            ),
+          ),
+          if (!widget.restore) ...[
+            const SizedBox(height: 16),
+            PasswordVisibility(
+              key: const ValueKey('backup-confirm-visibility'),
+              secret: true,
+              enabled: !_busy,
+              builder: (obscure, toggle) => TextFormField(
+                key: const ValueKey('backup-confirm'),
+                controller: _confirm,
+                obscureText: obscure,
+                autocorrect: false,
+                enableSuggestions: false,
+                enableIMEPersonalizedLearning: false,
+                enabled: !_busy,
+                decoration: InputDecoration(
+                  labelText: l.sharingConfirmPassword,
+                  suffixIcon: toggle,
+                ),
+                validator: (value) =>
+                    value == _password.text ? null : l.sharingPasswordMismatch,
+              ),
             ),
           ],
         ],

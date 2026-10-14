@@ -7343,6 +7343,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display and sound also require system permission. Remote delivery requires a registered device.'**
   String get notificationDeviceDescription;
+
+  /// No description provided for @passwordShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get passwordShow;
+
+  /// No description provided for @passwordHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get passwordHide;
+
+  /// No description provided for @projectCalendarEmptyDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks in this project for this day.'**
+  String get projectCalendarEmptyDay;
+
+  /// No description provided for @gardenSceneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My garden'**
+  String get gardenSceneTitle;
+
+  /// No description provided for @gardenSceneEditLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit layout'**
+  String get gardenSceneEditLayout;
+
+  /// No description provided for @gardenSceneView.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden view'**
+  String get gardenSceneView;
+
+  /// No description provided for @gardenSceneBeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Beds and history'**
+  String get gardenSceneBeds;
+
+  /// No description provided for @gardenSceneHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a bed for plantings and history. Pinch or use the buttons to zoom.'**
+  String get gardenSceneHelp;
+
+  /// No description provided for @gardenPhysicalWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden width'**
+  String get gardenPhysicalWidth;
+
+  /// No description provided for @gardenPhysicalHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden length'**
+  String get gardenPhysicalHeight;
+
+  /// No description provided for @gardenPhysicalHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the approximate size in meters. Bed measurements and gaps are calculated from the layout.'**
+  String get gardenPhysicalHelp;
+
+  /// No description provided for @gardenPhysicalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number from 0.1 to 10,000 m.'**
+  String get gardenPhysicalRequired;
+
+  /// No description provided for @gardenPhysicalUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale not set yet'**
+  String get gardenPhysicalUnknown;
+
+  /// No description provided for @gardenMetricGeometryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Position and size in meters from the top left of the garden.'**
+  String get gardenMetricGeometryHelp;
+
+  /// No description provided for @gardenMetricGeometryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid measurement within the garden.'**
+  String get gardenMetricGeometryError;
+
+  /// No description provided for @gardenApproximateSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate size'**
+  String get gardenApproximateSize;
+
+  /// No description provided for @gardenBedSpacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Gap to other beds'**
+  String get gardenBedSpacing;
+
+  /// No description provided for @gardenPlantSpacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant spacing'**
+  String get gardenPlantSpacing;
+
+  /// No description provided for @gardenPlantSpacingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter spacing from 1 to 1,000 cm or leave blank.'**
+  String get gardenPlantSpacingError;
+
+  /// No description provided for @gardenIllustration.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant illustration'**
+  String get gardenIllustration;
+
+  /// No description provided for @gardenCropGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Other plant'**
+  String get gardenCropGeneric;
+
+  /// No description provided for @gardenCropCarrot.
+  ///
+  /// In en, this message translates to:
+  /// **'Carrot'**
+  String get gardenCropCarrot;
+
+  /// No description provided for @gardenCropTomato.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomato'**
+  String get gardenCropTomato;
+
+  /// No description provided for @gardenCropLettuce.
+  ///
+  /// In en, this message translates to:
+  /// **'Lettuce'**
+  String get gardenCropLettuce;
+
+  /// No description provided for @gardenCropCabbage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cabbage'**
+  String get gardenCropCabbage;
+
+  /// No description provided for @gardenCropOnion.
+  ///
+  /// In en, this message translates to:
+  /// **'Onion'**
+  String get gardenCropOnion;
+
+  /// No description provided for @gardenCropPepper.
+  ///
+  /// In en, this message translates to:
+  /// **'Pepper'**
+  String get gardenCropPepper;
+
+  /// No description provided for @gardenCropPumpkin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pumpkin'**
+  String get gardenCropPumpkin;
+
+  /// No description provided for @gardenCropBean.
+  ///
+  /// In en, this message translates to:
+  /// **'Bean'**
+  String get gardenCropBean;
+
+  /// No description provided for @gardenVisualGrowthDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days to show a full-grown plant'**
+  String get gardenVisualGrowthDays;
+
+  /// No description provided for @gardenVisualGrowthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter from 1 to 730 days.'**
+  String get gardenVisualGrowthError;
+
+  /// No description provided for @gardenVisualGrowthHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth is an illustration based on the entered planting or sowing date and chosen days. It does not predict maturity or yield.'**
+  String get gardenVisualGrowthHelp;
+
+  /// No description provided for @gardenHarvestAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark harvested'**
+  String get gardenHarvestAction;
+
+  /// No description provided for @gardenHarvested.
+  ///
+  /// In en, this message translates to:
+  /// **'Harvested'**
+  String get gardenHarvested;
+
+  /// No description provided for @gardenHarvestUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to growing'**
+  String get gardenHarvestUndo;
+
+  /// No description provided for @gardenHarvestError.
+  ///
+  /// In en, this message translates to:
+  /// **'The harvest date cannot precede sowing or planting. Check the planting dates first.'**
+  String get gardenHarvestError;
+
+  /// No description provided for @gardenEmptyBed.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty bed'**
+  String get gardenEmptyBed;
+
+  /// No description provided for @gardenSceneEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move beds or drag their corners to resize. Use Edit for precise measurements.'**
+  String get gardenSceneEditHint;
+
+  /// No description provided for @gardenSceneDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get gardenSceneDraft;
+
+  /// No description provided for @ideasFontSizeIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase text size'**
+  String get ideasFontSizeIncrease;
+
+  /// No description provided for @ideasFontSizeDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease text size'**
+  String get ideasFontSizeDecrease;
+
+  /// No description provided for @ideasArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get ideasArchived;
+
+  /// No description provided for @reminderScheduleMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me'**
+  String get reminderScheduleMode;
+
+  /// No description provided for @reminderAbsolute.
+  ///
+  /// In en, this message translates to:
+  /// **'At a chosen date and time'**
+  String get reminderAbsolute;
+
+  /// No description provided for @reminderAtDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'At the deadline'**
+  String get reminderAtDeadline;
+
+  /// No description provided for @reminderHourBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before the deadline'**
+  String get reminderHourBefore;
+
+  /// No description provided for @reminderDayBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before the deadline'**
+  String get reminderDayBefore;
+
+  /// No description provided for @reminderRelativeExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Moves with the task deadline. Completing the task or removing its deadline cancels the reminder.'**
+  String get reminderRelativeExplanation;
+
+  /// No description provided for @localTaskReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminder on this device'**
+  String get localTaskReminderTitle;
 }
 
 class _AppLocalizationsDelegate

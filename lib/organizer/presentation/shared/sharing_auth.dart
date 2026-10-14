@@ -1,3 +1,4 @@
+import '../password_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -287,26 +288,32 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
     String? Function(String?)? validator,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
-    child: TextFormField(
-      key: ValueKey('sharing-$id'),
-      controller: controller,
+    child: PasswordVisibility(
+      key: ValueKey('sharing-visibility-$id'),
+      secret: secret,
       enabled: !_busy,
-      readOnly: readOnly,
-      obscureText: secret,
-      autocorrect: false,
-      enableSuggestions: !secret && id != 'invitation-token' && id != 'otp',
-      enableIMEPersonalizedLearning:
-          !secret && id != 'invitation-token' && id != 'otp',
-      keyboardType: keyboardType,
-      decoration: InputDecoration(labelText: label),
-      onChanged: id == 'server'
-          ? (_) => setState(() {
-              if (!_isLocalHttp) _allowLocalHttp = false;
-            })
-          : null,
-      validator: (value) => required && (value == null || value.trim().isEmpty)
-          ? context.l10n.sharingRequired
-          : validator?.call(value),
+      builder: (obscure, toggle) => TextFormField(
+        key: ValueKey('sharing-$id'),
+        controller: controller,
+        enabled: !_busy,
+        readOnly: readOnly,
+        obscureText: obscure,
+        autocorrect: false,
+        enableSuggestions: !secret && id != 'invitation-token' && id != 'otp',
+        enableIMEPersonalizedLearning:
+            !secret && id != 'invitation-token' && id != 'otp',
+        keyboardType: keyboardType,
+        decoration: InputDecoration(labelText: label, suffixIcon: toggle),
+        onChanged: id == 'server'
+            ? (_) => setState(() {
+                if (!_isLocalHttp) _allowLocalHttp = false;
+              })
+            : null,
+        validator: (value) =>
+            required && (value == null || value.trim().isEmpty)
+            ? context.l10n.sharingRequired
+            : validator?.call(value),
+      ),
     ),
   );
 

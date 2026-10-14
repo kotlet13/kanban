@@ -1,3 +1,4 @@
+import '../password_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
@@ -598,16 +599,24 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                                 }),
                           title: Text(l.deletionAcknowledge),
                         ),
-                        TextField(
-                          key: const ValueKey('deletion-password'),
-                          controller: _password,
-                          obscureText: true,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                          enableIMEPersonalizedLearning: false,
+                        PasswordVisibility(
+                          key: const ValueKey('deletion-password-visibility'),
+                          secret: true,
                           enabled: !_busy,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(labelText: l.password),
+                          builder: (obscure, toggle) => TextField(
+                            key: const ValueKey('deletion-password'),
+                            controller: _password,
+                            obscureText: obscure,
+                            enableSuggestions: false,
+                            autocorrect: false,
+                            enableIMEPersonalizedLearning: false,
+                            enabled: !_busy,
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
+                              labelText: l.password,
+                              suffixIcon: toggle,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(

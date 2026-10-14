@@ -4146,4 +4146,159 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get notificationDeviceDescription =>
       'Za prikaz in zvok potrebuješ tudi dovoljenje sistema. Oddaljena dostava potrebuje registrirano napravo.';
+
+  @override
+  String get passwordShow => 'Pokaži geslo';
+
+  @override
+  String get passwordHide => 'Skrij geslo';
+
+  @override
+  String get projectCalendarEmptyDay => 'Za ta dan ni opravil na tem projektu.';
+
+  @override
+  String get gardenSceneTitle => 'Moj vrt';
+
+  @override
+  String get gardenSceneEditLayout => 'Uredi razpored';
+
+  @override
+  String get gardenSceneView => 'Pogled vrta';
+
+  @override
+  String get gardenSceneBeds => 'Grede in zgodovina';
+
+  @override
+  String get gardenSceneHelp =>
+      'Dotaknite se grede za zasaditve in zgodovino. Pogled približajte z dvema prstoma ali gumboma.';
+
+  @override
+  String get gardenPhysicalWidth => 'Širina vrta';
+
+  @override
+  String get gardenPhysicalHeight => 'Dolžina vrta';
+
+  @override
+  String get gardenPhysicalHelp =>
+      'Vnesite približno velikost v metrih. Mere gred in razmiki se izračunajo iz razporeda.';
+
+  @override
+  String get gardenPhysicalRequired => 'Vnesite število od 0,1 do 10.000 m.';
+
+  @override
+  String get gardenPhysicalUnknown => 'Merilo še ni določeno';
+
+  @override
+  String get gardenMetricGeometryHelp =>
+      'Položaj in velikost v metrih glede na zgornji levi rob vrta.';
+
+  @override
+  String get gardenMetricGeometryError => 'Vnesite veljavno mero znotraj vrta.';
+
+  @override
+  String get gardenApproximateSize => 'Približna velikost';
+
+  @override
+  String get gardenBedSpacing => 'Razmik do drugih gred';
+
+  @override
+  String get gardenPlantSpacing => 'Razmik med rastlinami';
+
+  @override
+  String get gardenPlantSpacingError =>
+      'Vnesite razmik od 1 do 1.000 cm ali pustite prazno.';
+
+  @override
+  String get gardenIllustration => 'Ilustracija rastline';
+
+  @override
+  String get gardenCropGeneric => 'Druga rastlina';
+
+  @override
+  String get gardenCropCarrot => 'Korenje';
+
+  @override
+  String get gardenCropTomato => 'Paradižnik';
+
+  @override
+  String get gardenCropLettuce => 'Solata';
+
+  @override
+  String get gardenCropCabbage => 'Zelje';
+
+  @override
+  String get gardenCropOnion => 'Čebula';
+
+  @override
+  String get gardenCropPepper => 'Paprika';
+
+  @override
+  String get gardenCropPumpkin => 'Buča';
+
+  @override
+  String get gardenCropBean => 'Fižol';
+
+  @override
+  String get gardenVisualGrowthDays => 'Dnevi za prikaz odrasle rastline';
+
+  @override
+  String get gardenVisualGrowthError => 'Vnesite od 1 do 730 dni.';
+
+  @override
+  String get gardenVisualGrowthHelp =>
+      'Rast je le ilustracija glede na vneseni datum sajenja ali setve in izbrano število dni. Ne napoveduje zrelosti ali pridelka.';
+
+  @override
+  String get gardenHarvestAction => 'Označi kot pobrano';
+
+  @override
+  String get gardenHarvested => 'Pobrano';
+
+  @override
+  String get gardenHarvestUndo => 'Vrni med rastoče';
+
+  @override
+  String get gardenHarvestError =>
+      'Datum pobiranja ne more biti pred setvijo ali sajenjem. Najprej preverite datume zasaditve.';
+
+  @override
+  String get gardenEmptyBed => 'Prazna greda';
+
+  @override
+  String get gardenSceneEditHint =>
+      'Premikajte grede ali povlecite vogale za velikost. Za natančen vnos uporabite Uredi.';
+
+  @override
+  String get gardenSceneDraft => 'Neshranjene spremembe';
+
+  @override
+  String get ideasFontSizeIncrease => 'Povečaj besedilo';
+
+  @override
+  String get ideasFontSizeDecrease => 'Zmanjšaj besedilo';
+
+  @override
+  String get ideasArchived => 'Arhivirano';
+
+  @override
+  String get reminderScheduleMode => 'Opomni me';
+
+  @override
+  String get reminderAbsolute => 'Ob izbranem datumu in uri';
+
+  @override
+  String get reminderAtDeadline => 'Ob roku';
+
+  @override
+  String get reminderHourBefore => '1 uro pred rokom';
+
+  @override
+  String get reminderDayBefore => '1 dan pred rokom';
+
+  @override
+  String get reminderRelativeExplanation =>
+      'Premakne se skupaj z rokom opravila. Dokončanje opravila ali odstranitev roka prekliče opomnik.';
+
+  @override
+  String get localTaskReminderTitle => 'Opomnik opravila na tej napravi';
 }

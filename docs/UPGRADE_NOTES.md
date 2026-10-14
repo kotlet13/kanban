@@ -45,7 +45,7 @@ pred izvedbo presoditi tudi z vidika iOS.
 
 ## 1 Ogled vnosa gesla
 
-Zabeleženo 14. oktobra 2026. Status: opomba za prihodnjo nadgradnjo.
+Zabeleženo 14. oktobra 2026. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
 
 Pri vnosu gesel omogočiti ogled vnesenega gesla, da uporabnik lažje preveri
 pravilnost vnosa. Predlog prikaza: ikona očesa za preklop med skritim in vidnim

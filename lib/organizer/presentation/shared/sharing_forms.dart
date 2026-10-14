@@ -1,3 +1,4 @@
+import '../password_visibility.dart';
 import '../editor_actions.dart';
 import '../desktop/desktop_inspector.dart';
 import '../desktop/desktop_layout.dart';
@@ -336,45 +337,52 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                                     _controllers[field.id]!.text = value!;
                                   }),
                           )
-                        : TextFormField(
-                            key: ValueKey('sharing-${field.id}'),
-                            controller: _controllers[field.id],
-                            obscureText: field.obscure,
-                            minLines: field.obscure || field.maxLines == 1
-                                ? 1
-                                : compact
-                                ? 2
-                                : field.maxLines,
-                            maxLines: field.obscure ? 1 : field.maxLines,
-                            style: compact
-                                ? Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.copyWith(fontSize: 15)
-                                : null,
-                            textInputAction: field.maxLines > 1
-                                ? TextInputAction.newline
-                                : field == widget.fields.last
-                                ? TextInputAction.done
-                                : TextInputAction.next,
-                            enableSuggestions:
-                                !field.obscure && !field.sensitive,
-                            enableIMEPersonalizedLearning:
-                                !field.obscure && !field.sensitive,
-                            autocorrect: false,
-                            readOnly: field.readOnly,
+                        : PasswordVisibility(
+                            key: ValueKey('sharing-visibility-${field.id}'),
+                            secret: field.obscure,
                             enabled: !_busy,
-                            keyboardType: field.keyboardType,
-                            decoration: InputDecoration(labelText: field.label),
-                            validator: (value) {
-                              if (field.required &&
-                                  (value == null || value.trim().isEmpty)) {
-                                return context.l10n.sharingRequired;
-                              }
-                              return field.validator?.call(
-                                value ?? '',
-                                _values,
-                              );
-                            },
+                            builder: (obscure, toggle) => TextFormField(
+                              key: ValueKey('sharing-${field.id}'),
+                              controller: _controllers[field.id],
+                              obscureText: obscure,
+                              minLines: field.obscure || field.maxLines == 1
+                                  ? 1
+                                  : compact
+                                  ? 2
+                                  : field.maxLines,
+                              maxLines: field.obscure ? 1 : field.maxLines,
+                              style: compact
+                                  ? Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(fontSize: 15)
+                                  : null,
+                              textInputAction: field.maxLines > 1
+                                  ? TextInputAction.newline
+                                  : field == widget.fields.last
+                                  ? TextInputAction.done
+                                  : TextInputAction.next,
+                              enableSuggestions:
+                                  !field.obscure && !field.sensitive,
+                              enableIMEPersonalizedLearning:
+                                  !field.obscure && !field.sensitive,
+                              autocorrect: false,
+                              readOnly: field.readOnly,
+                              enabled: !_busy,
+                              keyboardType: field.keyboardType,
+                              decoration: InputDecoration(
+                                labelText: field.label,
+                                suffixIcon: toggle,
+                              ),
+                              validator: (value) {
+                                if (field.required &&
+                                    (value == null || value.trim().isEmpty)) {
+                                  return context.l10n.sharingRequired;
+                                }
+                                return field.validator?.call(
+                                  value ?? '',
+                                  _values,
+                                );
+                              },
+                            ),
                           ),
                   ),
                 if (widget.detailsBuilder != null) ...[
