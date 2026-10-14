@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -104,6 +103,88 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
   bool _resize = false;
   final List<IdeaPoint> _points = [];
   bool _fitted = false;
+  final Map<int, Offset> _pointers = {};
+  final Set<String> _erased = {};
+  Offset? _pointerStart;
+  bool _multiTouch = false;
+  Matrix4? _viewStart;
+  Offset? _viewFocal;
+  double _viewDistance = 1;
+
+  bool get _editingGesture => widget.editable && widget.tool != IdeaTool.pan;
+  Offset _boardPoint(Offset viewportPoint) => _transform.toScene(viewportPoint);
+  void _pointerDown(PointerDownEvent event) {
+    if (!_editingGesture) return;
+    _pointers[event.pointer] = event.localPosition;
+    if (_pointers.length == 1) _pointerStart = event.localPosition;
+    if (_pointers.length == 2) {
+      setState(_clearGesture);
+      _multiTouch = true;
+      _viewStart = Matrix4.copy(_transform.value);
+      final points = _pointers.values.take(2).toList();
+      _viewFocal = (points[0] + points[1]) / 2;
+      _viewDistance = math.max(1, (points[0] - points[1]).distance);
+    }
+  }
+
+  void _pointerMove(PointerMoveEvent event) {
+    if (!_pointers.containsKey(event.pointer) || !_editingGesture) return;
+    _pointers[event.pointer] = event.localPosition;
+    if (_multiTouch) {
+      if (_pointers.length >= 2 && _viewStart != null) {
+        final points = _pointers.values.take(2).toList();
+        final focal = (points[0] + points[1]) / 2;
+        final oldScale = _viewStart!.getMaxScaleOnAxis();
+        final scale = ((points[0] - points[1]).distance / _viewDistance).clamp(
+          .005 / oldScale,
+          5 / oldScale,
+        );
+        _transform.value = Matrix4.identity()
+          ..translateByDouble(focal.dx, focal.dy, 0, 1)
+          ..scaleByDouble(scale, scale, 1, 1)
+          ..translateByDouble(-_viewFocal!.dx, -_viewFocal!.dy, 0, 1)
+          ..multiply(_viewStart!);
+      }
+      return;
+    }
+    if (_start == null &&
+        _pointerStart != null &&
+        (event.localPosition - _pointerStart!).distance >= 8) {
+      _begin(DragStartDetails(localPosition: _boardPoint(_pointerStart!)));
+    }
+    if (_start != null) {
+      _update(
+        DragUpdateDetails(
+          globalPosition: event.position,
+          localPosition: _boardPoint(event.localPosition),
+          delta: Offset.zero,
+        ),
+      );
+    }
+  }
+
+  void _pointerUp(PointerUpEvent event) {
+    if (!_pointers.containsKey(event.pointer)) return;
+    _pointers.remove(event.pointer);
+    if (_pointers.isEmpty) {
+      if (!_multiTouch && _editingGesture && _start != null) {
+        _end(DragEndDetails());
+      }
+      _multiTouch = false;
+      _pointerStart = null;
+      _viewStart = null;
+    }
+  }
+
+  void _pointerCancel(PointerCancelEvent event) {
+    _pointers.remove(event.pointer);
+    setState(_clearGesture);
+    if (_pointers.isEmpty) {
+      _multiTouch = false;
+      _pointerStart = null;
+    }
+  }
+
   @override
   void didUpdateWidget(covariant IdeaCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -120,6 +201,7 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
     _original = null;
     _resize = false;
     _points.clear();
+    _erased.clear();
   }
 
   @override
@@ -160,7 +242,9 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
           ? selected
           : ideaHitTest(widget.board.elements, point);
       if (widget.tool == IdeaTool.eraser) {
-        if (hit != null && hit.kind != IdeaElementKind.image) _remove(hit.id);
+        if (hit != null && hit.kind != IdeaElementKind.image) {
+          _erased.add(hit.id);
+        }
         return;
       }
       widget.onSelected(hit?.id);
@@ -215,7 +299,7 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
     final point = _inside(details.localPosition);
     if (widget.tool == IdeaTool.eraser) {
       final hit = ideaHitTest(widget.board.elements, point);
-      if (hit != null && hit.kind != IdeaElementKind.image) _remove(hit.id);
+      if (hit != null && hit.kind != IdeaElementKind.image) _erased.add(hit.id);
       return;
     }
     final original = _original;
@@ -289,9 +373,18 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
   }
 
   void _end(DragEndDetails details) {
+    if (_erased.isNotEmpty) {
+      widget.onChanged(
+        widget.board.copyWith(
+          elements: widget.board.elements.where((e) => !_erased.contains(e.id)),
+        ),
+      );
+    }
     final working = _working;
     if (working != null) {
-      final elements = [...widget.board.elements];
+      final elements = widget.board.elements
+          .where((e) => !_erased.contains(e.id))
+          .toList();
       final index = elements.indexWhere((e) => e.id == working.id);
       if (index < 0) {
         elements.add(working);
@@ -301,25 +394,14 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
       widget.onChanged(widget.board.copyWith(elements: elements));
       widget.onSelected(working.id);
     }
-    setState(() {
-      _start = null;
-      _working = null;
-      _original = null;
-    });
+    setState(_clearGesture);
   }
-
-  void _remove(String id) => widget.onChanged(
-    widget.board.copyWith(
-      elements: widget.board.elements
-          .where((e) => e.id != id && e.parentImageId != id)
-          .toList(),
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
-    final editingGesture = widget.editable && widget.tool != IdeaTool.pan;
-    final elements = [...widget.board.elements];
+    final elements = widget.board.elements
+        .where((e) => !_erased.contains(e.id))
+        .toList();
     if (_working != null) {
       elements.removeWhere((e) => e.id == _working!.id);
       elements.add(_working!);
@@ -345,59 +427,56 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
           child: Stack(
             children: [
               Positioned.fill(
-                child: InteractiveViewer(
-                  key: const ValueKey('idea-viewport'),
-                  transformationController: _transform,
-                  constrained: false,
-                  boundaryMargin: const EdgeInsets.all(160),
-                  minScale: .005,
-                  maxScale: 5,
-                  panEnabled: !widget.editable || widget.tool == IdeaTool.pan,
-                  scaleEnabled: !widget.editable || widget.tool == IdeaTool.pan,
-                  child: Semantics(
-                    label: context.l10n.ideasCanvasLabel,
-                    child: GestureDetector(
-                      key: const ValueKey('idea-canvas'),
-                      dragStartBehavior: DragStartBehavior.down,
-                      behavior: HitTestBehavior.opaque,
-                      onPanStart: editingGesture ? _begin : null,
-                      onPanUpdate: editingGesture ? _update : null,
-                      // Even a lone onPanCancel creates a child pan recognizer.
-                      // Remove every edit pan callback in viewport mode so the
-                      // InteractiveViewer owns both one- and two-finger gestures.
-                      onPanCancel: editingGesture
-                          ? () => setState(_clearGesture)
-                          : null,
-                      onPanEnd: editingGesture ? _end : null,
-                      onTapUp: widget.tool == IdeaTool.select
-                          ? (d) => widget.onSelected(
-                              ideaHitTest(elements, d.localPosition)?.id,
-                            )
-                          : null,
-                      onDoubleTapDown:
-                          widget.tool == IdeaTool.select && widget.editable
-                          ? (d) {
-                              final hit = ideaHitTest(
-                                elements,
-                                d.localPosition,
-                              );
-                              if (hit != null &&
-                                  [
-                                    IdeaElementKind.text,
-                                    IdeaElementKind.sticky,
-                                  ].contains(hit.kind)) {
-                                widget.onEditText?.call(hit);
+                child: Listener(
+                  onPointerDown: _pointerDown,
+                  onPointerMove: _pointerMove,
+                  onPointerUp: _pointerUp,
+                  onPointerCancel: _pointerCancel,
+                  child: InteractiveViewer(
+                    key: const ValueKey('idea-viewport'),
+                    transformationController: _transform,
+                    constrained: false,
+                    boundaryMargin: const EdgeInsets.all(160),
+                    minScale: .005,
+                    maxScale: 5,
+                    panEnabled: !widget.editable || widget.tool == IdeaTool.pan,
+                    scaleEnabled:
+                        !widget.editable || widget.tool == IdeaTool.pan,
+                    child: Semantics(
+                      label: context.l10n.ideasCanvasLabel,
+                      child: GestureDetector(
+                        key: const ValueKey('idea-canvas'),
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: widget.tool == IdeaTool.select
+                            ? (d) => widget.onSelected(
+                                ideaHitTest(elements, d.localPosition)?.id,
+                              )
+                            : null,
+                        onDoubleTapDown:
+                            widget.tool == IdeaTool.select && widget.editable
+                            ? (d) {
+                                final hit = ideaHitTest(
+                                  elements,
+                                  d.localPosition,
+                                );
+                                if (hit != null &&
+                                    [
+                                      IdeaElementKind.text,
+                                      IdeaElementKind.sticky,
+                                    ].contains(hit.kind)) {
+                                  widget.onEditText?.call(hit);
+                                }
                               }
-                            }
-                          : null,
-                      child: CustomPaint(
-                        size: Size(widget.board.width, widget.board.height),
-                        painter: IdeaBoardPainter(
-                          elements: elements,
-                          images: widget.images,
-                          selectedId: widget.selectedId,
-                          surface: Theme.of(context).colorScheme.surface,
-                          missingLabel: context.l10n.ideasMissingPhoto,
+                            : null,
+                        child: CustomPaint(
+                          size: Size(widget.board.width, widget.board.height),
+                          painter: IdeaBoardPainter(
+                            elements: elements,
+                            images: widget.images,
+                            selectedId: widget.selectedId,
+                            surface: Theme.of(context).colorScheme.surface,
+                            missingLabel: context.l10n.ideasMissingPhoto,
+                          ),
                         ),
                       ),
                     ),
@@ -529,7 +608,7 @@ class IdeaBoardPainter extends CustomPainter {
           e.kind == IdeaElementKind.sticky
               ? const Color(0xff17212e)
               : Color(e.color),
-          child ? .065 : 22,
+          e.fontSize,
           Offset(padding, padding),
         );
         canvas.restore();

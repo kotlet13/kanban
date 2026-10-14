@@ -5,6 +5,9 @@ import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/idea_provider.dart';
 import '../../state/local_spaces_provider.dart';
+import '../../state/local_database_provider.dart';
+import '../../data/idea_storage.dart';
+import '../../data/collaboration_repository.dart';
 import '../organizer_widgets.dart';
 import 'ideas_page.dart';
 
@@ -39,6 +42,74 @@ class _IdeasAllSpacesPageState extends ConsumerState<IdeasAllSpacesPage> {
         spaceId: entry.sharedScopeId ?? entry.localSpaceId ?? 'local',
         boardId: entry.board.id,
       );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _lifecycle(IdeaSpaceEntry entry, bool delete) async {
+    if (_busy || !entry.canEdit) return;
+    final state = ref.read(collaborationProvider).valueOrNull;
+    final identity = (state?.session?.partition, state?.session?.deviceId);
+    if (delete) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.l10n.ideasDeleteConfirm),
+          content: Text('${entry.board.title} · ${entry.sourceName}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                context.l10n.delete,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    final latest = ref.read(collaborationProvider).valueOrNull;
+    if ((latest?.session?.partition, latest?.session?.deviceId) != identity) {
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      if (entry.sharedScopeId != null) {
+        if (entry.workspaceKey !=
+            'shared:${latest?.session?.partition}:${entry.sharedScopeId}') {
+          return;
+        }
+        final repo = await ref.read(collaborationRepositoryProvider.future);
+        if (delete) {
+          await repo.deleteIdea(entry.sharedScopeId!, entry.board);
+        } else {
+          await repo.saveIdea(
+            entry.sharedScopeId!,
+            entry.board.copyWith(archived: !entry.board.archived),
+          );
+        }
+      } else {
+        final db = await ref.read(localDatabaseProvider.future);
+        await changeLocalIdeaLifecycle(
+          db,
+          entry.workspaceKey,
+          entry.board,
+          delete: delete,
+        );
+      }
+      ref.invalidate(ideaAllSpacesProvider);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.ideasSaveError)));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -147,18 +218,45 @@ class _IdeasAllSpacesPageState extends ConsumerState<IdeasAllSpacesPage> {
                       );
                 return Column(
                   children: [
-                    if (visible.isEmpty)
+                    if (!visible.any((e) => !e.board.archived))
                       OrganizerEmpty(
                         icon: Icons.lightbulb_outline,
                         title: l.ideasTitle,
                         description: l.ideasEmpty,
                       ),
-                    for (final entry in visible)
+                    for (final entry in visible.where((e) => !e.board.archived))
                       IdeaCard(
                         board: entry.board,
                         workspaceKey: entry.workspaceKey,
                         subtitle: entry.sourceName,
+                        onArchive: entry.canEdit
+                            ? () => _lifecycle(entry, false)
+                            : null,
+                        onDelete: entry.canEdit
+                            ? () => _lifecycle(entry, true)
+                            : null,
                         onOpen: () => _open(entry),
+                      ),
+                    if (visible.any((e) => e.board.archived))
+                      ExpansionTile(
+                        title: Text(l.ideasArchived),
+                        children: [
+                          for (final entry in visible.where(
+                            (e) => e.board.archived,
+                          ))
+                            IdeaCard(
+                              board: entry.board,
+                              workspaceKey: entry.workspaceKey,
+                              subtitle: entry.sourceName,
+                              onArchive: entry.canEdit
+                                  ? () => _lifecycle(entry, false)
+                                  : null,
+                              onDelete: entry.canEdit
+                                  ? () => _lifecycle(entry, true)
+                                  : null,
+                              onOpen: () => _open(entry),
+                            ),
+                        ],
                       ),
                   ],
                 );

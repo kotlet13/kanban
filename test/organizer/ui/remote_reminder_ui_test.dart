@@ -30,8 +30,10 @@ CollaborationState state({
   bool completed = false,
   bool revoked = false,
   SharedRole role = SharedRole.owner,
+  int recordContractVersion = 1,
 }) => CollaborationState(
   session: sharingSession(),
+  recordContractVersion: recordContractVersion,
   inboxSupported: true,
   selectedSpaceId: sharingScopeId,
   scopes: [sharingScope(revoked: revoked, role: role)],
@@ -58,7 +60,7 @@ class ReminderController extends SharingUiController {
   ReminderController(CollaborationState initial) : super(initial: initial);
   String? savedId, partition;
   DateTime? savedAt;
-  int? savedRevision;
+  int? savedRevision, savedOffset;
   SharedScheduledReminder? cancelled;
   Object? failure;
   @override
@@ -68,6 +70,7 @@ class ReminderController extends SharingUiController {
     required String targetType,
     required String targetId,
     required DateTime remindAt,
+    int? offsetMinutes,
     int expectedRevision = 0,
     String? expectedPartition,
   }) async {
@@ -82,6 +85,7 @@ class ReminderController extends SharingUiController {
     }
     savedId = id;
     savedAt = remindAt;
+    savedOffset = offsetMinutes;
     savedRevision = expectedRevision;
     partition = expectedPartition;
     calls.add('put');
@@ -139,6 +143,32 @@ Future<void> pump(
 }
 
 void main() {
+  testWidgets(
+    'task deadline choices replace separate date/time and persist relative spec',
+    (tester) async {
+      final controller = ReminderController(state(recordContractVersion: 6));
+      await pump(tester, controller);
+      await tester.tap(find.byType(RemoteReminderButton));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('reminder-schedule-mode-null')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1 uro pred rokom').last);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('remote-reminder-date')), findsNothing);
+      expect(find.byKey(const ValueKey('remote-reminder-time')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('remote-reminder-save')));
+      await tester.pumpAndSettle();
+      expect(controller.savedOffset, 60);
+      expect(
+        controller.savedAt,
+        now.add(const Duration(days: 1, hours: -1)).toUtc(),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'viewer cannot create or edit but can cancel their existing reminder',
     (tester) async {

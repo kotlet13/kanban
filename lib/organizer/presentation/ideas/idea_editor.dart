@@ -251,7 +251,19 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
 
   Timer? _draftTimer;
   Future<void> _draftWrites = Future.value();
+  bool get _parentArchived {
+    final projects = widget.sharedScopeId == null
+        ? ref.read(organizerProvider).valueOrNull?.projects
+        : ref
+              .read(collaborationProvider)
+              .valueOrNull
+              ?.dataForScope(widget.sharedScopeId!)
+              .projects;
+    return projects?.any((p) => p.id == _board.projectId && p.archived) == true;
+  }
+
   bool get _editable =>
+      !_parentArchived &&
       _sameContext &&
       widget.canEdit &&
       ref.read(ideaProvider).valueOrNull?.workspaceKey == widget.workspaceKey &&
@@ -751,7 +763,10 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
         : null;
     final projectOptions = scope?.kind == SharedScopeKind.organization
         ? <String, String>{}
-        : {for (final project in projects) project.id: project.title};
+        : {
+            for (final project in projects.where((p) => !p.archived))
+              project.id: project.title,
+          };
     final missing = _board.assets.any((a) => !_images.containsKey(a.sha256));
     final tools = <(IdeaTool, String, IconData)>[
       (IdeaTool.select, l.ideasSelect, Icons.touch_app_outlined),
@@ -1046,12 +1061,37 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
                           if ([
                             IdeaElementKind.text,
                             IdeaElementKind.sticky,
-                          ].contains(selected.kind))
+                          ].contains(selected.kind)) ...[
+                            _button(
+                              l.ideasFontSizeIncrease,
+                              Icons.text_increase,
+                              () => _replace(
+                                selected.copyWith(
+                                  fontSize: (selected.fontSize * 1.2).clamp(
+                                    selected.parentImageId == null ? 6 : .005,
+                                    selected.parentImageId == null ? 300 : 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _button(
+                              l.ideasFontSizeDecrease,
+                              Icons.text_decrease,
+                              () => _replace(
+                                selected.copyWith(
+                                  fontSize: (selected.fontSize / 1.2).clamp(
+                                    selected.parentImageId == null ? 6 : .005,
+                                    selected.parentImageId == null ? 300 : 2,
+                                  ),
+                                ),
+                              ),
+                            ),
                             _button(
                               l.ideasEditText,
                               Icons.edit_note,
                               () => _text(element: selected),
                             ),
+                          ],
                           if (selected.kind == IdeaElementKind.image)
                             _button(
                               l.ideasAttachNote,

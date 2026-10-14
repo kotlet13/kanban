@@ -139,8 +139,7 @@ bool remoteReminderTargetAvailable(
       !state.inboxSupported ||
       !state.session!.expiresAt.isAfter(DateTime.now()) ||
       scope == null ||
-      scope.revoked ||
-      scope.kind == SharedScopeKind.personal) {
+      scope.revoked) {
     return false;
   }
   final data = state.dataForScope(scopeId);
@@ -192,6 +191,15 @@ class _RemoteReminderDialog extends ConsumerStatefulWidget {
 class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
   SharedScheduledReminder? _editing;
   late DateTime _at;
+  int? _offsetMinutes;
+  DateTime? _deadline(CollaborationState? state) => widget.targetType == 'task'
+      ? state
+            ?.dataForScope(widget.scopeId)
+            .tasks
+            .where((t) => t.id == widget.targetId)
+            .firstOrNull
+            ?.dueAt
+      : null;
   bool _busy = false;
   String? _error;
   @override
@@ -207,6 +215,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
     _editing =
         reminders.where((r) => r.state == 'pending').firstOrNull ??
         reminders.firstOrNull;
+    _offsetMinutes = _editing?.offsetMinutes;
     _at =
         (_editing?.remindAt ??
                 ref
@@ -305,6 +314,14 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
             true) {
       return;
     }
+    if (!cancel && _offsetMinutes != null) {
+      final deadline = _deadline(ref.read(collaborationProvider).valueOrNull);
+      if (deadline == null) return;
+      _at = deadline
+          .toUtc()
+          .subtract(Duration(minutes: _offsetMinutes!))
+          .toLocal();
+    }
     if (!cancel && !_at.isAfter(ref.read(collaborationClockProvider)())) {
       setState(() => _error = context.l10n.remoteReminderFuture);
       return;
@@ -328,6 +345,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
           targetType: widget.targetType,
           targetId: widget.targetId,
           remindAt: _at.toUtc(),
+          offsetMinutes: _offsetMinutes,
           expectedRevision: _editing?.revision ?? 0,
           expectedPartition: partition,
         );
@@ -460,6 +478,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
                         _editing = reminders
                             .where((r) => r.id == id)
                             .firstOrNull;
+                        _offsetMinutes = _editing?.offsetMinutes;
                         _at =
                             (_editing?.remindAt ??
                                     ref
@@ -475,22 +494,55 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
                   child: Text(_status(currentReminder)),
                 ),
             ],
-            OutlinedButton.icon(
-              key: const ValueKey('remote-reminder-date'),
-              onPressed: _busy || !canSchedule ? null : _chooseDate,
-              icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: Text(
-                '${l.remoteReminderDate}: ${MaterialLocalizations.of(context).formatMediumDate(_at)}',
+            if (widget.targetType == 'task' &&
+                state?.recordContractVersion != null &&
+                state!.recordContractVersion >= 6 &&
+                _deadline(state) != null) ...[
+              DropdownButtonFormField<int>(
+                key: ValueKey('reminder-schedule-mode-${_editing?.id}'),
+                initialValue: _offsetMinutes ?? -1,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l.reminderScheduleMode),
+                items: [
+                  for (final item in [
+                    (-1, l.reminderAbsolute),
+                    (0, l.reminderAtDeadline),
+                    (60, l.reminderHourBefore),
+                    (1440, l.reminderDayBefore),
+                  ])
+                    DropdownMenuItem(value: item.$1, child: Text(item.$2)),
+                ],
+                onChanged: _busy || !canSchedule
+                    ? null
+                    : (value) => setState(() {
+                        _offsetMinutes = value == -1 ? null : value;
+                        _error = null;
+                      }),
               ),
-            ),
-            OutlinedButton.icon(
-              key: const ValueKey('remote-reminder-time'),
-              onPressed: _busy || !canSchedule ? null : _chooseTime,
-              icon: const Icon(Icons.schedule_outlined, size: 18),
-              label: Text(
-                '${l.remoteReminderTime}: ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(_at))}',
+              if (_offsetMinutes != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(l.reminderRelativeExplanation),
+                ),
+            ],
+            if (_offsetMinutes == null)
+              OutlinedButton.icon(
+                key: const ValueKey('remote-reminder-date'),
+                onPressed: _busy || !canSchedule ? null : _chooseDate,
+                icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                label: Text(
+                  '${l.remoteReminderDate}: ${MaterialLocalizations.of(context).formatMediumDate(_at)}',
+                ),
               ),
-            ),
+            if (_offsetMinutes == null)
+              OutlinedButton.icon(
+                key: const ValueKey('remote-reminder-time'),
+                onPressed: _busy || !canSchedule ? null : _chooseTime,
+                icon: const Icon(Icons.schedule_outlined, size: 18),
+                label: Text(
+                  '${l.remoteReminderTime}: ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(_at))}',
+                ),
+              ),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),

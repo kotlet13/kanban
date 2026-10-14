@@ -24,6 +24,11 @@ class GestureBoardState extends State<GestureBoard> {
     createdAt: DateTime.utc(2026, 10, 12),
     updatedAt: DateTime.utc(2026, 10, 12),
   );
+  void seed(IdeaElement element, IdeaTool value) => setState(() {
+    board = board.copyWith(elements: [element]);
+    selected = element.id;
+    tool = value;
+  });
   void use(IdeaTool value) => setState(() => tool = value);
   void changeAccess(bool value) => setState(() => editable = value);
   void show(bool value) => setState(() => visible = value);
@@ -182,10 +187,7 @@ void main() {
         expect(transform(tester).storage, isNot(beforePan.storage));
         final beforePinch = transform(tester).entry(0, 0);
         await pinch(tester);
-        expect(
-          transform(tester).entry(0, 0),
-          greaterThan(beforePinch * 1.3),
-        );
+        expect(transform(tester).entry(0, 0), greaterThan(beforePinch * 1.3));
         final afterPinch = transform(tester);
         await pan(
           tester,
@@ -218,6 +220,66 @@ void main() {
       },
     );
   }
+  for (final tool in [IdeaTool.select, IdeaTool.pen, IdeaTool.eraser]) {
+    testWidgets('two fingers zoom with $tool selected without content edits', (
+      tester,
+    ) async {
+      final state = await open(tester);
+      final text = IdeaElement(
+        id: '22222222-2222-4222-8222-222222222222',
+        kind: IdeaElementKind.text,
+        x: 650,
+        y: 450,
+        width: 300,
+        height: 200,
+        text: 'Selected text',
+        fontSize: 44,
+      );
+      state.seed(text, tool);
+      await tester.pumpAndSettle();
+      final before = jsonEncode(state.board.toJson());
+      final scale = transform(tester).entry(0, 0);
+      await pinch(tester);
+      expect(transform(tester).entry(0, 0), greaterThan(scale * 1.3));
+      expect(jsonEncode(state.board.toJson()), before);
+      expect(state.writes, 0);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets(
+    'second finger cancels unfinished stroke then single finger draws again',
+    (tester) async {
+      final state = await open(tester);
+      state.use(IdeaTool.pen);
+      await tester.pumpAndSettle();
+      final center = boardPoint(tester, const Offset(800, 600));
+      final first = await tester.startGesture(
+        center - const Offset(45, 0),
+        pointer: 7,
+      );
+      await first.moveBy(const Offset(20, 10));
+      await tester.pump();
+      final second = await tester.startGesture(
+        center + const Offset(45, 0),
+        pointer: 8,
+      );
+      await first.moveBy(const Offset(-35, -10));
+      await second.moveBy(const Offset(35, 10));
+      await tester.pump();
+      await second.up();
+      await first.up();
+      await tester.pumpAndSettle();
+      expect(state.board.elements, isEmpty);
+      expect(state.writes, 0);
+      await pan(
+        tester,
+        tester.getRect(find.byKey(const ValueKey('idea-viewport'))).center,
+        const Offset(60, 30),
+      );
+      expect(state.board.elements.single.kind, IdeaElementKind.stroke);
+      expect(state.writes, 1);
+    },
+  );
   testWidgets(
     'read-only canvas pans and pinches without board or selection writes',
     (tester) async {

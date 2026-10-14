@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/idea_provider.dart';
 import '../../state/organizer_provider.dart';
+import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import 'idea_canvas.dart';
 import 'idea_editor.dart';
@@ -19,6 +20,58 @@ class IdeasPage extends ConsumerStatefulWidget {
 
 class _IdeasPageState extends ConsumerState<IdeasPage> {
   String _search = '';
+  Future<void> _action(
+    IdeaBoard board,
+    IdeaSnapshot snapshot,
+    bool delete,
+  ) async {
+    if (!snapshot.canEdit) return;
+    if (delete) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.l10n.ideasDeleteConfirm),
+          content: Text(board.title),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                context.l10n.delete,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    try {
+      final controller = ref.read(ideaProvider.notifier);
+      if (delete) {
+        await controller.deleteBoard(
+          board,
+          expectedWorkspaceKey: snapshot.workspaceKey,
+        );
+      } else {
+        await controller.updateBoard(
+          board.copyWith(archived: !board.archived),
+          base: board,
+          expectedWorkspaceKey: snapshot.workspaceKey,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.ideasSaveError)));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -43,14 +96,26 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                     )
                     .toList()
                   ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-            final projects =
-                ref.watch(organizerProvider).valueOrNull?.projects ?? [];
+            final projects = snapshot.sharedScopeId == null
+                ? ref.watch(organizerProvider).valueOrNull?.projects ?? []
+                : ref
+                          .watch(collaborationProvider)
+                          .valueOrNull
+                          ?.dataForScope(snapshot.sharedScopeId!)
+                          .projects ??
+                      [];
+            bool writable(IdeaBoard board) =>
+                snapshot.canEdit &&
+                !projects.any((p) => p.id == board.projectId && p.archived);
+            final pageWritable =
+                snapshot.canEdit &&
+                !projects.any((p) => p.id == widget.projectId && p.archived);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 OrganizerHeading(
                   title: l.ideasTitle,
-                  action: snapshot.canEdit
+                  action: pageWritable
                       ? FilledButton.icon(
                           key: const ValueKey('idea-add'),
                           onPressed: () => openIdeaEditor(
@@ -73,7 +138,7 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (snapshot.canEdit &&
+                if (pageWritable &&
                     drafts.any(
                       (d) => !snapshot.boards.any((b) => b.id == d.id),
                     ))
@@ -104,7 +169,7 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(l.ideasReadOnly),
                   ),
-                if (boards.isEmpty)
+                if (!boards.any((b) => !b.archived))
                   OrganizerEmpty(
                     icon: Icons.lightbulb_outline,
                     title: l.ideasTitle,
@@ -123,7 +188,7 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                       spacing: 12,
                       runSpacing: 12,
                       children: [
-                        for (final board in boards)
+                        for (final board in boards.where((b) => !b.archived))
                           SizedBox(
                             width: width,
                             child: IdeaCard(
@@ -132,6 +197,12 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                                   .where((p) => p.id == board.projectId)
                                   .firstOrNull
                                   ?.title,
+                              onArchive: writable(board)
+                                  ? () => _action(board, snapshot, false)
+                                  : null,
+                              onDelete: writable(board)
+                                  ? () => _action(board, snapshot, true)
+                                  : null,
                               onOpen: () =>
                                   openIdeaEditor(context, ref, board: board),
                             ),
@@ -140,6 +211,25 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                     );
                   },
                 ),
+                if (boards.any((b) => b.archived))
+                  ExpansionTile(
+                    key: ValueKey('ideas-archived-${snapshot.workspaceKey}'),
+                    title: Text(l.ideasArchived),
+                    children: [
+                      for (final board in boards.where((b) => b.archived))
+                        IdeaCard(
+                          board: board,
+                          onOpen: () =>
+                              openIdeaEditor(context, ref, board: board),
+                          onArchive: writable(board)
+                              ? () => _action(board, snapshot, false)
+                              : null,
+                          onDelete: writable(board)
+                              ? () => _action(board, snapshot, true)
+                              : null,
+                        ),
+                    ],
+                  ),
               ],
             );
           },
@@ -154,9 +244,12 @@ class IdeaCard extends ConsumerStatefulWidget {
     required this.onOpen,
     this.subtitle,
     this.workspaceKey,
+    this.onArchive,
+    this.onDelete,
   });
   final IdeaBoard board;
   final VoidCallback onOpen;
+  final VoidCallback? onArchive, onDelete;
   final String? subtitle, workspaceKey;
   @override
   ConsumerState<IdeaCard> createState() => _IdeaCardState();
@@ -283,11 +376,45 @@ class _IdeaCardState extends ConsumerState<IdeaCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.board.title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.board.title,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (widget.onArchive != null || widget.onDelete != null)
+                        PopupMenuButton<String>(
+                          key: ValueKey('idea-menu-${widget.board.id}'),
+                          onSelected: (action) => action == 'archive'
+                              ? widget.onArchive?.call()
+                              : widget.onDelete?.call(),
+                          itemBuilder: (context) => [
+                            if (widget.onArchive != null)
+                              PopupMenuItem(
+                                value: 'archive',
+                                child: Text(
+                                  widget.board.archived
+                                      ? context.l10n.peopleRestore
+                                      : context.l10n.peopleArchive,
+                                ),
+                              ),
+                            if (widget.onDelete != null)
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text(
+                                  context.l10n.delete,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                    ],
                   ),
                   if (widget.subtitle != null)
                     Text(widget.subtitle!, maxLines: 2),
