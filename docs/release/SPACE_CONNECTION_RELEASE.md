@@ -80,5 +80,7 @@ v produkcijskem Console, ne z novo fizično namestitvijo v trgovini.
 Posodobi na1.7.1 prek istega internega Play opt-in naslova. V Račun in deljenje
 izberi lokalni Dom → Poveži in sinhroniziraj → potrdi predogled → preberi in
 izrecno sprejmi pravila. Povezovanje mora nadaljevati in Dom mora postati skupen
-prostor. To uporabniško potrjevanje po tej objavi še sledi; brez njega ni
-fizičnega dokaza uspeha popravka.
+prostor. 14. oktobra uporabnik po posodobitvi potrdi »Ok, zej povezovanje dela«.
+Fizični uporabniški preizkus povezovanja je s tem potrjen. Nato je ista26
+oddana za javno posodobitev in interni kanal ustavljen; glej
+[javni izdajni korak](PUBLIC_CONNECTION_UPDATE.md).

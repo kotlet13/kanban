@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+14. oktober — **ista Android1.7.1(26) dejansko oddana za javno posodobitev;
+interni kanal Neaktivno**. [Dokazi](docs/release/PUBLIC_CONNECTION_UPDATE.md).
+Uporabnik fizično potrdi »Ok, zej povezovanje dela«. AAB26/hashisti brez nove
+gradnje/promoviran iz knjižnice v produkcijo4698247597354229997/release2,
+100%/samoSlovenija, SL/en-USopombe; samo1sprememba končno potrjena in **Spremembe
+v pregledu**, hitra Googlova preverjanja še tečejo. UpravljanoobjavljanjeOFF,
+objava po odobritvi; **javna26/odobritev še nista potrjeni**, javna25 ostane
+aktivna. Interni4701286726300038561 potrjeno začasno zaustavljen/Neaktivno,
+brez izbrisa paketov/zgodovine/testerjev. **Nova uporabnikova usmeritev: vse
+prihodnje Android objave izključno javne; ne ustvarjaj internih izdaj in ne
+nadaljuj internega kanala brez novega izrecnega naročila.** Lokalni ciljni testi
+in preverjanje artefakta ostanejo. Izvor/SDK/locks/dovoljenja/gostovanja/
+FamilyHub/podatki/iOS/splet isti, brez nove matrike; SMTP/FCM/redne produkcijske
+kopije še ločeno odprto delo. Naslednje izid javne posodobitve26, ne nova oddaja.
+
 14. oktober — **Android1.7.1(26) dejansko Aktivno za domači(15) od05:24**,
 [Dokazi](docs/release/SPACE_CONNECTION_RELEASE.md). Popravek6ae5667 po potrditvi
 predogleda povezovanja lokalnega gospodinjstva/organizacije odpre obstoječa
