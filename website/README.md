@@ -1,5 +1,15 @@
 # Jivie: statična javna stran za cPanel
 
+**14. oktober 2026 — javni prenos za Android.** SL/EN domači strani imata
+Google Play gumb v uvodu in zaključku; vseh8 strani ima povezavo v nogi.
+Besedilo in metapodatki zdaj odražajo javno dostopnost Androida v Sloveniji,
+iOS ostane v pripravi. Objavljenih8 HTML po dejansko preverjeni zasebni kopiji
+25 datotek;17 drugih datotek, pravice in lastništvo ohranjeni. Vseh8 HTTPS200/
+izvornih hashov PASS, mobilna390/320 prikaza brez prelivanja. Dejanski klik
+»Prenesi za Android« odpre pravo Jivie v Google Play. Brez nove aplikacijske
+gradnje ali spremembe trgovinske objave.
+[Dokazi](../docs/release/WEBSITE_GOOGLE_PLAY_LINK.md).
+
 13. oktober 2026: SL/EN domači strani imata javni razdelek `#familyhub` s
 povezavo do brezplačnega odprtokodnega vtičnika FamilyHub pod MIT, SL/EN pomoč
 pa povezavo do namestitve. Štirje HTML so dejansko objavljeni po preverjeni

@@ -1,5 +1,15 @@
 # Navodila za delo na projektu
 
+14. oktober — **Google Play povezava dejansko objavljena na jivie.app SL/EN**.
+Uvodni in zaključni gumb na obeh domačih straneh ter povezava v nogi vseh8
+strani odpirajo javni `si.triparna.jivie`. Besedilo odraža javni Android v
+Sloveniji, iOS ostane v pripravi. Sveža zasebna kopija25 datotek dejansko
+preverjena; objavljenih8 HTML,17 drugih datotek/pravice/lastništvo ohranjenih.
+Vseh8 HTTPS200/hash PASS, ozka390/320 prikaza brez prelivanja; dejanski klik
+odpre Jivie/TaknDevs/Namesti in opombe popravljene26. [Dokazi](docs/release/WEBSITE_GOOGLE_PLAY_LINK.md).
+Android/AAB26, Console, FamilyHub, gostovane aplikacije in podatki ostanejo isti.
+Prihodnje Android izdaje še vedno izključno javne, interni kanal Neaktivno.
+
 14. oktober - **javni Android1.7.1(26) dejansko Aktivno / Na voljo vGooglePlay od05:48**, sveze prebrano v produkciji4698247597354229997/release2. [Dokazi](docs/release/PUBLIC_CONNECTION_UPDATE.md#confirmed-public-availability---14-october). Google je prej oddano26 odobril/objavil; ni nove oddaje/gradnje.1drzava/regija, istaAAB26/hash; interni kanal ostaja po narocilu Neaktivno. Starejsi pendingReview26 je zgodovina. User po lastni izjavi brez podatkov odstrani app in izstopi iz preizkusa; njegovPlay se kaze beta naslov/stare slike. Razsiritev izstopa ni fizicno potrjena; svetovano samo PlayStorecache/javniURL. Prihodnje Android izdaje izkljucno javne, brez ponovnega splosnega testnega kroga. Koda/SDK/locks/dovoljenja/gostovanja/FamilyHub/podatki/iOS/splet isti; SMTP/FCM/kopije se loceno delo.
 
 14. oktober — **ista Android1.7.1(26) dejansko oddana za javno posodobitev;

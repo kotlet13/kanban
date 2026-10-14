@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parent / 'public'
 PUBLISHER = 'TriparNA – kooperativa za sonaravno življenje in razvoj tehnologij samooskrbe, z.o.o.'
 EMAIL = 'support@jivie.app'
 FAMILYHUB_REPO = 'https://github.com/kotlet13/kanban_family_hub'
+GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=si.triparna.jivie'
 
 
 def url(lang, page=''):
@@ -20,7 +21,7 @@ def brand(lang):
 def page(lang, slug, title, description, content, home=False):
     en = lang == 'en'
     other = 'sl' if en else 'en'
-    text = dict(skip='Skip to content', everyday='Everyday', privacy='Privacy', help='Help', delete='Delete account', contact='Contact', by='An app by', status='Free app · iOS and Android release in preparation', rights='Jivie is not yet available in the app stores.') if en else dict(skip='Preskoči na vsebino', everyday='Za vsakdan', privacy='Zasebnost', help='Pomoč', delete='Izbris računa', contact='Kontakt', by='Aplikacijo razvija', status='Brezplačna aplikacija · izdaja za iOS in Android v pripravi', rights='Jivie še ni na voljo v trgovinah z aplikacijami.')
+    text = dict(skip='Skip to content', everyday='Everyday', privacy='Privacy', help='Help', delete='Delete account', contact='Contact', by='An app by', status='Free app · Android on Google Play · iOS coming later', rights='Android available in Slovenia. The iOS release is in preparation.') if en else dict(skip='Preskoči na vsebino', everyday='Za vsakdan', privacy='Zasebnost', help='Pomoč', delete='Izbris računa', contact='Kontakt', by='Aplikacijo razvija', status='Brezplačna aplikacija · Android v Googlu Play · iOS v pripravi', rights='Android na voljo v Sloveniji. Različica za iOS je v pripravi.')
     target = ROOT / ('en' if en else '') / slug
     target.mkdir(parents=True, exist_ok=True)
     script = '<script src="/assets/deletion.js" defer></script>' if slug == 'delete-account' else ''
@@ -38,7 +39,7 @@ def page(lang, slug, title, description, content, home=False):
 <body><a class="skip" href="#main">{text['skip']}</a><div class="wrap">
 <header class="topbar">{brand(lang)}<nav class="nav" aria-label="{'Main navigation' if en else 'Glavna navigacija'}"><a class="home-extra" href="{url(lang)}#everyday">{text['everyday']}</a><a href="{url(lang, 'help')}">{text['help']}</a><a class="lang" href="{url(other, slug)}" lang="{other}" aria-label="{'Slovenščina' if en else 'English'}">{other.upper()}</a></nav></header>
 <main id="main" {'class="article"' if not home else ''}>{content}</main>
-<footer class="footer"><div>{brand(lang)}<p>{text['by']} <a href="https://triparna.si/" rel="noopener noreferrer">TriparNA</a>.</p><p>{text['status']}</p></div><nav class="footer-links" aria-label="{'Information' if en else 'Informacije'}"><a href="{url(lang, 'privacy')}">{text['privacy']}</a><a href="{url(lang, 'help')}">{text['help']}</a><a href="{url(lang, 'delete-account')}">{text['delete']}</a><a href="mailto:{EMAIL}">{text['contact']}</a></nav></footer>
+<footer class="footer"><div>{brand(lang)}<p>{text['by']} <a href="https://triparna.si/" rel="noopener noreferrer">TriparNA</a>.</p><p>{text['status']}</p></div><nav class="footer-links" aria-label="{'Information' if en else 'Informacije'}"><a href="{url(lang, 'privacy')}">{text['privacy']}</a><a href="{url(lang, 'help')}">{text['help']}</a><a href="{url(lang, 'delete-account')}">{text['delete']}</a><a href="mailto:{EMAIL}">{text['contact']}</a><a href="{GOOGLE_PLAY_URL}" rel="noopener noreferrer">Google Play</a></nav></footer>
 <div class="legal-line">© 2026 TriparNA · {text['rights']}</div>
 </div></body></html>''', encoding='utf-8')
 
@@ -49,10 +50,10 @@ def home(lang):
         'eyebrow': 'Your day. Your plans. Your people.',
         'title': 'Less on your mind.<br><span>More life.</span>',
         'intro': 'See what’s coming up. Give an idea room to grow. Keep the things you look after together — on your own or with your people.',
-        'discover': 'Meet Jivie', 'start': 'How to start',
-        'free': 'Free to use', 'stores': 'Public iOS & Android release in preparation',
+        'download': 'Download for Android', 'start': 'How to start',
+        'free': 'Free to use', 'stores': 'Android available in Slovenia',
         'sample': 'Actual app preview · sample data',
-        'preview': 'Android is currently in internal testing. These previews show the new interface; public store availability is still in preparation.',
+        'preview': 'Get Jivie on Google Play. The iOS release is still in preparation.',
         'offline': 'Start on your device', 'offlinesub': 'Your personal space works offline, too.',
         'p1': 'Start without an account', 'p2': 'Keep personal data on your device', 'p3': 'Choose what you share',
         'section': 'Four familiar places.<br>A little more clarity.',
@@ -74,16 +75,16 @@ def home(lang):
         'selfhostnote': 'Source code, installation package and instructions · MIT license. You manage your server and hosting costs.',
         'local': 'Start here.<br>Stay in control.', 'stamp': 'Local first. At your pace.',
         'closer': 'Good plans don’t need a subscription.',
-        'closerbody': 'Jivie is being prepared as a free app for iOS and Android. Use it on its own or connect your own compatible server. Managed hosting is planned for a later stage.',
-        'closercta': 'Get in touch',
+        'closerbody': 'Jivie is a free app for Android. Use it on its own or connect your own compatible server. The iOS release and managed hosting are planned for a later stage.',
+        'closercta': 'Get it on Google Play',
     } if en else {
         'eyebrow': 'Tvoj dan. Tvoji načrti. Tvoji ljudje.',
         'title': 'Manj v glavi.<br><span>Več življenja.</span>',
         'intro': 'Poglej, kaj te čaka. Daj zamisli prostor, da zraste. Ohrani skupaj vse, za kar skrbiš — sam ali s svojimi ljudmi.',
-        'discover': 'Spoznaj Jivie', 'start': 'Kako začnem',
-        'free': 'Brezplačna uporaba', 'stores': 'Javna izdaja za iOS in Android v pripravi',
+        'download': 'Prenesi za Android', 'start': 'Kako začnem',
+        'free': 'Brezplačna uporaba', 'stores': 'Android na voljo v Sloveniji',
         'sample': 'Dejanski prikaz aplikacije · vzorčni podatki',
-        'preview': 'Android je trenutno v internem preizkušanju. Predogledi kažejo novi vmesnik; javna dostopnost v trgovinah je še v pripravi.',
+        'preview': 'Jivie preneseš iz Googla Play. Različica za iOS je še v pripravi.',
         'offline': 'Začni na svoji napravi', 'offlinesub': 'Tvoj osebni prostor deluje tudi brez povezave.',
         'p1': 'Začni brez računa', 'p2': 'Osebne podatke hrani na napravi', 'p3': 'Sam izberi, kaj deliš',
         'section': 'Štirje stalni kotički.<br>Nekaj več jasnosti.',
@@ -105,8 +106,8 @@ def home(lang):
         'selfhostnote': 'Izvorna koda, namestitveni paket in navodila · licenca MIT. Za strežnik in stroške gostovanja poskrbiš sam.',
         'local': 'Začni preprosto.<br>Nadaljuj po svoje.', 'stamp': 'Najprej lokalno. V tvojem ritmu.',
         'closer': 'Za dober načrt ne potrebuješ naročnine.',
-        'closerbody': 'Jivie pripravljamo kot brezplačno aplikacijo za iOS in Android. Uporabljaš jo lahko samostojno ali povežeš lasten združljiv strežnik. Upravljano gostovanje načrtujemo za poznejšo fazo.',
-        'closercta': 'Piši nam',
+        'closerbody': 'Jivie je brezplačna aplikacija za Android. Uporabljaš jo lahko samostojno ali povežeš lasten združljiv strežnik. Različico za iOS in upravljano gostovanje pripravljamo za poznejšo fazo.',
+        'closercta': 'Prenesi iz Googla Play',
     }
     features = [
         ('Pulse', 'Today, what’s next and projects in progress. Open a record from the overview and carry on where it belongs.', 'Today · Next 7 days'),
@@ -148,7 +149,7 @@ def home(lang):
     cards = ''.join(f'<article class="feature"><span class="feature-index">0{i}</span><h3>{a}</h3><p>{b}</p><span class="feature-label">{c}</span></article>' for i, (a, b, c) in enumerate(features, 1))
     gallery = ''.join(f'''<figure class="screen-card"><a class="screen-preview" href="/assets/screenshots/{name}.png" aria-label="{escape(x['open'] + ': ' + title, quote=True)}"><img src="/assets/screenshots/{name}.png" width="{780 if name == 'pulse-dark' else 720}" height="{1280 if name == 'ideas-board' else 1688}" loading="lazy" decoding="async" alt="{escape(title + ' — ' + desc, quote=True)}"></a><figcaption><h3>{title}</h3><p>{desc}</p></figcaption></figure>''' for name, title, desc in shots)
     step_html = ''.join(f'<li><span class="number">0{i}</span><div><strong>{a}</strong><p>{b}</p></div></li>' for i, (a, b) in enumerate(steps, 1))
-    content = f'''<section class="hero"><div><p class="eyebrow">{x['eyebrow']}</p><h1>{x['title']}</h1><p class="intro">{x['intro']}</p><div class="actions"><a class="button primary" href="#everyday">{x['discover']}<span class="arrow" aria-hidden="true">↗</span></a><a class="button" href="{url(lang, 'help')}">{x['start']}</a></div><div class="availability"><span><i class="dot" aria-hidden="true"></i>{x['free']}</span><span>{x['stores']}</span></div><p class="release-note">{x['preview']}</p></div>
+    content = f'''<section class="hero"><div><p class="eyebrow">{x['eyebrow']}</p><h1>{x['title']}</h1><p class="intro">{x['intro']}</p><div class="actions"><a class="button primary" href="{GOOGLE_PLAY_URL}" rel="noopener noreferrer">{x['download']}<span class="arrow" aria-hidden="true">↗</span></a><a class="button" href="{url(lang, 'help')}">{x['start']}</a></div><div class="availability"><span><i class="dot" aria-hidden="true"></i>{x['free']}</span><span>{x['stores']}</span></div><p class="release-note">{x['preview']}</p></div>
 <figure class="phone-stage actual-preview"><div class="halo" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div><a class="hero-screen" href="/assets/screenshots/pulse.png" aria-label="{x['open']}: {'Pulse' if en else 'Utrip'}"><img src="/assets/screenshots/pulse.png" width="720" height="1688" fetchpriority="high" alt="{'Pulse overview with today’s events, the next seven days and four bottom navigation tabs. Sample data in Slovenian.' if en else 'Pregled Utrip z današnjimi dogodki, naslednjimi sedmimi dnevi in štirimi spodnjimi zavihki. Vzorčni podatki.'}"></a><div class="float-note" aria-hidden="true"><span class="note-icon">✓</span><div><strong>{x['offline']}</strong><small>{x['offlinesub']}</small></div></div><figcaption class="illustration">{x['sample']}</figcaption></figure></section>
 <div class="principles"><div><span class="num">01</span>{x['p1']}</div><div><span class="num">02</span>{x['p2']}</div><div><span class="num">03</span>{x['p3']}</div></div>
 <section id="everyday" class="section"><div class="section-header"><h2>{x['section']}</h2><p>{x['sectionbody']}</p></div><div class="feature-grid destinations">{cards}</div></section>
@@ -156,8 +157,8 @@ def home(lang):
 <section class="together"><div><p class="eyebrow">{'A place for your people' if en else 'Prostor za tvoje ljudi'}</p><h2>{x['together']}</h2><p>{x['togetherbody']}</p><p class="site-note">{x['togethernote']}</p><a class="text-link" href="{url(lang, 'help')}#server">{x['server']} ↗</a></div><div class="scope-list"><div class="scope"><span class="scope-icon" aria-hidden="true">○</span><div><b>{x['personal']}</b><small>{x['personalsub']}</small></div></div><div class="scope"><span class="scope-icon" aria-hidden="true">⌂</span><div><b>{x['household']}</b><small>{x['householdsub']}</small></div></div><div class="scope"><span class="scope-icon" aria-hidden="true">◇</span><div><b>{x['project']}</b><small>{x['projectsub']}</small></div></div></div></section>
 <section class="section local-section"><div class="local-visual"><img src="/assets/jivie-mark.png" alt="{'Jivie: earth, water and air intertwined' if en else 'Jivie: prepleteni zemlja, voda in zrak'}" width="350" height="350" loading="lazy"><span class="local-stamp">{x['stamp']}</span></div><div><p class="eyebrow">{'Local first' if en else 'Najprej na tvoji napravi'}</p><h2>{x['local']}</h2><ol class="steps">{step_html}</ol></div></section>
 <section class="section" id="familyhub"><div class="section-header"><h2>{x['selfhost']}</h2><p>{x['selfhostbody']}</p></div><div class="actions"><a class="button primary" href="{FAMILYHUB_REPO}" rel="noopener noreferrer">{x['selfhostcta']} <span aria-hidden="true">↗</span></a><a class="button" href="{url(lang, 'help')}#server">{x['server']}</a></div><p class="site-note">{x['selfhostnote']}</p></section>
-<section class="closing"><div><h2>{x['closer']}</h2><p>{x['closerbody']}</p></div><a class="button" href="mailto:{EMAIL}">{x['closercta']} <span aria-hidden="true">↗</span></a></section>'''
-    page(lang, '', 'Less on your mind. More life.' if en else 'Manj v glavi. Več življenja.', 'Tasks, calendar, idea boards, projects and finances. A free local-first organizer, with public iOS and Android release in preparation.' if en else 'Opravila, koledar, Idejnik, projekti in finance. Brezplačen lokalni organizator; javna izdaja za iOS in Android je v pripravi.', content, True)
+<section class="closing"><div><h2>{x['closer']}</h2><p>{x['closerbody']}</p></div><a class="button" href="{GOOGLE_PLAY_URL}" rel="noopener noreferrer">{x['closercta']} <span aria-hidden="true">↗</span></a></section>'''
+    page(lang, '', 'Less on your mind. More life.' if en else 'Manj v glavi. Več življenja.', 'Tasks, calendar, idea boards, projects and finances. A free local-first organizer for Android, available on Google Play in Slovenia. The iOS release is in preparation.' if en else 'Opravila, koledar, Idejnik, projekti in finance. Brezplačen lokalni organizator za Android, na voljo v Googlu Play v Sloveniji. Različica za iOS je v pripravi.', content, True)
 
 
 def privacy(lang):
