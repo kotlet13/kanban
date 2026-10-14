@@ -1,6 +1,7 @@
 import '../editor_actions.dart';
 import '../shared/content_actions_menu.dart';
 import '../shared/content_moderation.dart';
+import '../shared/sharing_errors.dart';
 import '../../state/collaboration_provider.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../../../l10n/l10n.dart';
 import '../../data/organizer_repository.dart' show newLocalId;
 import '../../domain/garden_models.dart';
 import '../../state/garden_provider.dart';
+import '../../state/local_spaces_provider.dart';
 import 'garden_area_form.dart';
 import 'garden_canvas.dart';
 import 'garden_bed_detail.dart';
@@ -17,10 +19,18 @@ import 'garden_planting_form.dart';
 import 'garden_season_panel.dart';
 import 'garden_plan_panel.dart';
 import 'garden_area_list.dart';
+import 'garden_scene_view.dart';
+import '../../domain/garden_scene.dart';
 
 /// The editor owns an uncommitted draft. Opening or cancelling never writes.
 class GardenEditor extends ConsumerStatefulWidget {
-  const GardenEditor({super.key, this.garden, this.reportScopeId});
+  const GardenEditor({
+    super.key,
+    this.garden,
+    this.reportScopeId,
+    this.startInScene = false,
+  });
+  final bool startInScene;
   final Garden? garden;
   final String? reportScopeId;
   @override
@@ -31,6 +41,42 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.garden?.name ?? '');
   late final _notes = TextEditingController(text: widget.garden?.notes ?? '');
+  late final _width = TextEditingController(
+    text: widget.garden?.widthMeters?.toString() ?? '',
+  );
+  late final _height = TextEditingController(
+    text: widget.garden?.heightMeters?.toString() ?? '',
+  );
+  late bool _sceneMode = widget.startInScene;
+  double? get _widthValue => double.tryParse(_width.text.replaceAll(',', '.'));
+  double? get _heightValue =>
+      double.tryParse(_height.text.replaceAll(',', '.'));
+  bool get _hasValidSize => [_widthValue, _heightValue].every(
+    (value) => value != null && value.isFinite && value >= .1 && value <= 10000,
+  );
+  double? get _previewWidth =>
+      _hasValidSize ? _widthValue : widget.garden?.widthMeters;
+  double? get _previewHeight =>
+      _hasValidSize ? _heightValue : widget.garden?.heightMeters;
+  bool get _canEdit {
+    final active = ref.read(gardenProvider).valueOrNull;
+    if (active != null && active.workspaceKey != _workspaceKey) return false;
+    if (!_workspaceKey.startsWith('shared:')) {
+      final local = ref.read(localSpacesProvider).valueOrNull;
+      if (_workspaceKey == 'local') return true;
+      if (local == null) return false;
+      final space = local.spaces
+          .where((s) => s.id == _workspaceKey)
+          .firstOrNull;
+      return space != null && !space.archived && space.binding == null;
+    }
+    final state = ref.read(collaborationProvider).valueOrNull;
+    final scope = state?.scopes
+        .where((s) => _workspaceKey.endsWith(':${s.id}'))
+        .firstOrNull;
+    return state?.localAccessAllowed == true && scope?.canEdit == true;
+  }
+
   late List<GardenArea> _areas = [...?widget.garden?.areas];
   late List<GardenSeason> _seasons = [...?widget.garden?.seasons];
   late int? _year = (_seasons.map((s) => s.year).toList()..sort()).lastOrNull;
@@ -49,6 +95,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   bool get _dirty =>
       _name.text != (widget.garden?.name ?? '') ||
       _notes.text != (widget.garden?.notes ?? '') ||
+      _widthValue != widget.garden?.widthMeters ||
+      _heightValue != widget.garden?.heightMeters ||
       !_sameAreas(_areas, widget.garden?.areas ?? const []) ||
       jsonEncode(_seasons.map((s) => s.toJson()).toList()) !=
           jsonEncode(
@@ -83,6 +131,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
         ?.id;
     _name.addListener(_textChanged);
     _notes.addListener(_textChanged);
+    _width.addListener(_textChanged);
+    _height.addListener(_textChanged);
   }
 
   void _textChanged() {
@@ -93,6 +143,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   void dispose() {
     _name.dispose();
     _notes.dispose();
+    _width.dispose();
+    _height.dispose();
     super.dispose();
   }
 
@@ -140,7 +192,14 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
   }
 
   Future<void> _save() async {
-    if (_busy || !_form.currentState!.validate()) return;
+    if (_busy || !_canEdit) return;
+    if (_form.currentState != null && !_form.currentState!.validate()) return;
+    if (_name.text.trim().isEmpty ||
+        _sizeError(_width.text) != null ||
+        _sizeError(_height.text) != null) {
+      setState(() => _sceneMode = false);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -171,6 +230,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           expectedWorkspaceKey: _workspaceKey,
           name: _name.text.trim(),
           notes: _notes.text,
+          widthMeters: _widthValue,
+          heightMeters: _heightValue,
           areas: _areas,
           seasons: _seasons,
         );
@@ -179,6 +240,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           widget.garden!.copyWith(
             name: _name.text.trim(),
             notes: _notes.text,
+            widthMeters: _widthValue,
+            heightMeters: _heightValue,
             areas: _areas,
             seasons: _seasons,
           ),
@@ -190,11 +253,13 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context);
       });
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = context.l10n.gardenSaveError;
+          _error = error is CollaborationException
+              ? sharingErrorMessage(context, error)
+              : context.l10n.gardenSaveError;
         });
       }
     }
@@ -204,6 +269,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     final edited = await showGardenAreaForm(
       context,
       area,
+      garden: _draft,
       allowKindChange: !_seasons.any(
         (s) => s.plantings.any((p) => p.areaId == area.id),
       ),
@@ -227,6 +293,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
         width: .25,
         height: .25,
       ),
+      garden: _draft,
     );
     if (edited != null && mounted) {
       _changeAreas([..._areas, edited], selectedId: edited.id);
@@ -258,6 +325,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           .copyWith(
             name: _name.text,
             notes: _notes.text,
+            widthMeters: _previewWidth,
+            heightMeters: _previewHeight,
             areas: _areas,
             seasons: _seasons,
           );
@@ -365,19 +434,54 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     ], selectedId: used ? area.id : null);
   }
 
-  Widget _bedDetails() {
+  void _harvest(GardenPlanting planting) {
+    if (!_canEdit) return;
+    try {
+      final value = planting.harvested
+          ? planting.copyWith(harvested: false)
+          : harvestGardenPlanting(planting, DateTime.now());
+      setState(
+        () => _seasons = [
+          for (final s in _seasons)
+            s.year == _year
+                ? s.copyWith(
+                    plantings: [
+                      for (final p in s.plantings) p.id == value.id ? value : p,
+                    ],
+                  )
+                : s,
+        ],
+      );
+    } on FormatException {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.gardenHarvestError)));
+    }
+  }
+
+  Widget _bedDetails({VoidCallback? refresh}) {
     final area = _areas.where((a) => a.id == _selectedId).firstOrNull;
     return GardenBedDetail(
       garden: _draft,
       area: area,
       year: _year,
-      onAdd: () {
-        if (area != null) _planting(area);
+      readOnly: !_canEdit,
+      onAdd: () async {
+        if (area != null) await _planting(area);
+        refresh?.call();
       },
-      onEdit: (p) {
-        if (area != null) _planting(area, p);
+      onEdit: (p) async {
+        if (area != null) await _planting(area, p);
+        refresh?.call();
       },
-      onDelete: _deletePlanting,
+      onDelete: (p) async {
+        await _deletePlanting(p);
+        refresh?.call();
+      },
+      onHarvest: (p) {
+        _harvest(p);
+        refresh?.call();
+      },
       onNotes: (notes) => setState(() {
         _seasons = [
           for (final s in _seasons)
@@ -431,6 +535,19 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           }),
   );
 
+  String? _sizeError(String? value) {
+    if (widget.garden != null &&
+        !widget.garden!.hasPhysicalSize &&
+        _width.text.trim().isEmpty &&
+        _height.text.trim().isEmpty) {
+      return null;
+    }
+    final n = double.tryParse((value ?? '').replaceAll(',', '.'));
+    return n == null || !n.isFinite || n < .1 || n > 10000
+        ? context.l10n.gardenPhysicalRequired
+        : null;
+  }
+
   Widget _details() {
     final l = context.l10n;
     return Column(
@@ -443,6 +560,46 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
           decoration: InputDecoration(labelText: l.gardenName),
           validator: (value) =>
               value!.trim().isEmpty ? l.gardenNameRequired : null,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l.gardenPhysicalHelp,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                key: const ValueKey('garden-width-meters'),
+                controller: _width,
+                decoration: InputDecoration(
+                  labelText: l.gardenPhysicalWidth,
+                  suffixText: 'm',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: _sizeError,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                key: const ValueKey('garden-height-meters'),
+                controller: _height,
+                decoration: InputDecoration(
+                  labelText: l.gardenPhysicalHeight,
+                  suffixText: 'm',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: _sizeError,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         TextFormField(
@@ -469,9 +626,205 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     onEdit: _editArea,
   );
 
+  Future<void> _showBed(GardenArea area) async {
+    setState(() => _selectedId = area.id);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      constraints: const BoxConstraints(maxWidth: 650),
+      builder: (context) => StatefulBuilder(
+        builder: (context, sheetState) => SizedBox(
+          height: MediaQuery.sizeOf(context).height * .78,
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  child: _bedDetails(
+                    refresh: () {
+                      if (context.mounted) sheetState(() {});
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBeds() async {
+    final selected = await showModalBottomSheet<GardenArea>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: 650),
+      builder: (context) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * .65,
+        child: Column(
+          children: [
+            ListTile(
+              title: Text(context.l10n.gardenSceneBeds),
+              trailing: IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  for (final area in _areas.where((a) => !a.archived))
+                    ListTile(
+                      leading: const Icon(Icons.grass),
+                      title: Text(area.label),
+                      subtitle: Text(
+                        _draft.hasPhysicalSize
+                            ? gardenAreaSize(_draft, area)
+                            : context.l10n.gardenPhysicalUnknown,
+                      ),
+                      onTap: () => Navigator.pop(context, area),
+                    ),
+                  if (_areas.any((a) => a.archived))
+                    ExpansionTile(
+                      title: Text(context.l10n.gardenArchivedArea),
+                      children: [
+                        for (final area in _areas.where((a) => a.archived))
+                          ListTile(
+                            title: Text(area.label),
+                            onTap: () => Navigator.pop(context, area),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null && mounted) await _showBed(selected);
+  }
+
+  Widget _scene() {
+    final l = context.l10n;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: _seasons.isEmpty
+                    ? Text(l.gardenNoSeasons)
+                    : DropdownButton<int>(
+                        key: const ValueKey('garden-scene-season'),
+                        value: _year,
+                        isExpanded: true,
+                        items: [
+                          for (final year
+                              in (_seasons.map((s) => s.year).toList()
+                                ..sort((a, b) => b.compareTo(a))))
+                            DropdownMenuItem(
+                              value: year,
+                              child: Text(
+                                MediaQuery.textScalerOf(context).scale(14) > 20
+                                    ? '$year'
+                                    : '${l.gardenSeason} $year',
+                              ),
+                            ),
+                        ],
+                        onChanged: (year) => setState(() => _year = year),
+                      ),
+              ),
+              if (_canEdit)
+                IconButton(
+                  tooltip: l.gardenNewSeason,
+                  onPressed: _addSeason,
+                  icon: const Icon(Icons.add),
+                ),
+              IconButton(
+                key: const ValueKey('garden-scene-beds'),
+                tooltip: l.gardenSceneBeds,
+                onPressed: _showBeds,
+                icon: const Icon(Icons.list_alt),
+              ),
+              Tooltip(
+                message: '${l.gardenSceneHelp}\n\n${l.gardenVisualGrowthHelp}',
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(Icons.info_outline, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        Expanded(
+          child: GardenSceneView(garden: _draft, year: _year, onBed: _showBed),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _dirty
+                      ? l.gardenSceneDraft
+                      : _draft.hasPhysicalSize
+                      ? '≈ ${gardenMeters(_draft.widthMeters!)} × ${gardenMeters(_draft.heightMeters!)} m'
+                      : l.gardenPhysicalUnknown,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              if (_canEdit)
+                if (MediaQuery.sizeOf(context).width < 360 ||
+                    MediaQuery.textScalerOf(context).scale(14) > 20)
+                  IconButton(
+                    key: const ValueKey('garden-edit-layout'),
+                    tooltip: l.gardenSceneEditLayout,
+                    onPressed: () => setState(() => _sceneMode = false),
+                    icon: const Icon(Icons.tune),
+                  )
+                else
+                  TextButton.icon(
+                    key: const ValueKey('garden-edit-layout'),
+                    onPressed: () => setState(() => _sceneMode = false),
+                    icon: const Icon(Icons.tune),
+                    label: Text(l.gardenSceneEditLayout),
+                  ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    ref.watch(collaborationProvider);
+    ref.watch(gardenProvider);
+    ref.watch(localSpacesProvider);
     return PopScope(
       canPop: _allowPop || (!_dirty && !_busy),
       onPopInvokedWithResult: (didPop, result) {
@@ -481,6 +834,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
         appBar: AppBar(
           title: Text(
             widget.garden == null ? l.gardenNew : widget.garden!.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -488,6 +843,13 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
             onPressed: _busy ? null : _leave,
           ),
           actions: [
+            if (!_sceneMode)
+              IconButton(
+                key: const ValueKey('garden-open-scene'),
+                tooltip: l.gardenSceneView,
+                onPressed: () => setState(() => _sceneMode = true),
+                icon: const Icon(Icons.yard_outlined),
+              ),
             if (widget.reportScopeId != null && widget.garden != null)
               SharedContentActionsMenu(
                 scopeId: widget.reportScopeId!,
@@ -496,7 +858,7 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
               ),
             EditorSaveButton(
               key: const ValueKey('garden-save'),
-              onPressed: _save,
+              onPressed: _canEdit ? _save : null,
               busy: _busy,
             ),
             const SizedBox(width: 8),
@@ -505,87 +867,103 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
         body: AbsorbPointer(
           absorbing: _busy,
           child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1160),
-                  child: Form(
-                    key: _form,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          l.gardenLocalOnly,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        if (_error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Text(
-                              _error!,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
-                          ),
-                        if (widget.garden == null) ...[
-                          const SizedBox(height: 20),
-                          _details(),
-                        ],
-                        const SizedBox(height: 20),
-                        GardenSeasonPanel(
-                          seasons: _seasons,
-                          year: _year,
-                          onSelected: (year) => setState(() => _year = year),
-                          onAdd: _addSeason,
-                          onDelete: _deleteSeason,
-                        ),
-                        const SizedBox(height: 20),
-                        LayoutBuilder(
-                          builder: (context, constraints) =>
-                              constraints.maxWidth >= 850
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(flex: 3, child: _sketch()),
-                                    const SizedBox(width: 32),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Column(
-                                        children: [_bedDetails(), _areaList()],
+            child: _sceneMode
+                ? _scene()
+                : AbsorbPointer(
+                    absorbing: !_canEdit,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1160),
+                          child: Form(
+                            key: _form,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  _workspaceKey.startsWith('shared:')
+                                      ? l.sharingShared
+                                      : l.localSpaceState,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (_error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Text(
+                                      _error!,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
                                       ),
                                     ),
-                                  ],
-                                )
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _sketch(),
-                                    const SizedBox(height: 20),
-                                    _bedDetails(),
-                                    _areaList(),
-                                  ],
+                                  ),
+                                if (widget.garden == null) ...[
+                                  const SizedBox(height: 20),
+                                  _details(),
+                                ],
+                                const SizedBox(height: 20),
+                                GardenSeasonPanel(
+                                  seasons: _seasons,
+                                  year: _year,
+                                  onSelected: (year) =>
+                                      setState(() => _year = year),
+                                  onAdd: _addSeason,
+                                  onDelete: _deleteSeason,
                                 ),
-                        ),
-                        if (widget.garden != null) ...[
-                          const SizedBox(height: 24),
-                          Text(
-                            l.gardenDetails,
-                            style: Theme.of(context).textTheme.titleSmall,
+                                const SizedBox(height: 20),
+                                LayoutBuilder(
+                                  builder: (context, constraints) =>
+                                      constraints.maxWidth >= 850
+                                      ? Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(flex: 3, child: _sketch()),
+                                            const SizedBox(width: 32),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Column(
+                                                children: [
+                                                  _bedDetails(),
+                                                  _areaList(),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            _sketch(),
+                                            const SizedBox(height: 20),
+                                            _bedDetails(),
+                                            _areaList(),
+                                          ],
+                                        ),
+                                ),
+                                if (widget.garden != null) ...[
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    l.gardenDetails,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _details(),
+                                ],
+                                const SizedBox(height: 32),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          _details(),
-                        ],
-                        const SizedBox(height: 32),
-                      ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
           ),
         ),
       ),

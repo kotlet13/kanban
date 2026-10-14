@@ -123,6 +123,8 @@ Future<void> pumpGarden(
   await tester.pumpAndSettle();
   await tester.tap(find.text(controller.garden.name));
   await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const ValueKey('garden-edit-layout')));
+  await tester.pumpAndSettle();
 }
 
 Future<void> visibleTap(WidgetTester tester, Finder finder) async {

@@ -4,6 +4,8 @@ import '../../domain/garden_models.dart';
 import '../../domain/garden_rotation.dart';
 import 'garden_family_labels.dart';
 import 'garden_calendar_date.dart';
+import 'garden_scene_view.dart';
+import '../../domain/garden_scene.dart';
 
 class GardenBedDetail extends StatelessWidget {
   const GardenBedDetail({
@@ -15,8 +17,12 @@ class GardenBedDetail extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onNotes,
+    this.onHarvest,
+    this.readOnly = false,
   });
   final Garden garden;
+  final bool readOnly;
+  final ValueChanged<GardenPlanting>? onHarvest;
   final GardenArea? area;
   final int? year;
   final VoidCallback onAdd;
@@ -69,13 +75,13 @@ class GardenBedDetail extends StatelessWidget {
                   ],
                 ),
               ),
-              if (!history && area?.archived != true)
+              if (!history && !readOnly && area?.archived != true)
                 IconButton(
                   tooltip: l.gardenEditPlanting,
                   onPressed: () => onEdit(p),
                   icon: const Icon(Icons.edit_outlined, size: 18),
                 ),
-              if (!history)
+              if (!history && !readOnly)
                 IconButton(
                   tooltip: l.delete,
                   onPressed: () => onDelete(p),
@@ -83,6 +89,30 @@ class GardenBedDetail extends StatelessWidget {
                 ),
             ],
           ),
+          if (p.spacingCm != null)
+            Text('${l.gardenPlantSpacing}: ${gardenMeters(p.spacingCm!)} cm'),
+          if (p.harvested)
+            Text(
+              l.gardenHarvested,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          if (!history &&
+              !readOnly &&
+              onHarvest != null &&
+              area?.archived != true)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: ValueKey('garden-harvest-${p.id}'),
+                onPressed: () => onHarvest!(p),
+                icon: Icon(
+                  p.harvested ? Icons.undo : Icons.check_circle_outline,
+                ),
+                label: Text(
+                  p.harvested ? l.gardenHarvestUndo : l.gardenHarvestAction,
+                ),
+              ),
+            ),
           if (p.sowAt != null)
             Text('${l.gardenSowDate}: ${_date(context, p.sowAt!)}'),
           if (p.plantAt != null)
@@ -126,6 +156,40 @@ class GardenBedDetail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(selected.label, style: Theme.of(context).textTheme.titleLarge),
+            if (garden.hasPhysicalSize) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${l.gardenApproximateSize}: ${gardenAreaSize(garden, selected)}',
+              ),
+              if (garden.areas
+                  .where(
+                    (a) =>
+                        !a.archived &&
+                        a.id != selected.id &&
+                        a.kind == GardenAreaKind.bed,
+                  )
+                  .isNotEmpty)
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(l.gardenBedSpacing),
+                  children: [
+                    for (final other in garden.areas.where(
+                      (a) =>
+                          !a.archived &&
+                          a.id != selected.id &&
+                          a.kind == GardenAreaKind.bed,
+                    ))
+                      ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(other.label),
+                        trailing: Text(
+                          '≈ ${gardenMeters(gardenBedGapMeters(garden, selected, other)!)} m',
+                        ),
+                      ),
+                  ],
+                ),
+            ],
             if (selected.archived)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -148,7 +212,9 @@ class GardenBedDetail extends StatelessWidget {
                   child: Text(l.gardenNoPlantings),
                 ),
               for (final p in plantings) _planting(context, p),
-              if (!selected.archived && selected.kind == GardenAreaKind.bed)
+              if (!readOnly &&
+                  !selected.archived &&
+                  selected.kind == GardenAreaKind.bed)
                 OutlinedButton.icon(
                   key: ValueKey('garden-add-planting-${selected.id}'),
                   onPressed: onAdd,
@@ -209,7 +275,7 @@ class GardenBedDetail extends StatelessWidget {
                   ],
                 ),
             ],
-            if (season != null) ...[
+            if (season != null && !readOnly) ...[
               const SizedBox(height: 20),
               TextFormField(
                 key: ValueKey('garden-season-notes-$year'),

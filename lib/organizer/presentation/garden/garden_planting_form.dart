@@ -6,6 +6,7 @@ import '../../domain/garden_models.dart';
 import '../../domain/garden_rotation.dart';
 import 'garden_family_labels.dart';
 import 'garden_calendar_date.dart';
+import 'garden_crop_labels.dart';
 
 Future<GardenPlanting?> showGardenPlantingForm(
   BuildContext context,
@@ -31,6 +32,14 @@ class _PlantingFormState extends State<_PlantingForm> {
   late final _family = TextEditingController(text: widget.planting.family);
   late final _notes = TextEditingController(text: widget.planting.notes);
   late var _status = widget.planting.status;
+  late var _illustration = widget.planting.illustration;
+  late final _spacing = TextEditingController(
+    text: widget.planting.spacingCm?.toString() ?? '',
+  );
+  late final _growthDays = TextEditingController(
+    text: '${widget.planting.visualGrowthDays}',
+  );
+  late var _harvested = widget.planting.harvested;
   late final List<DateTime?> _dates = [
     widget.planting.sowAt,
     widget.planting.plantAt,
@@ -39,7 +48,7 @@ class _PlantingFormState extends State<_PlantingForm> {
   String? _error;
   @override
   void dispose() {
-    for (final c in [_crop, _variety, _family, _notes]) {
+    for (final c in [_crop, _variety, _family, _notes, _spacing, _growthDays]) {
       c.dispose();
     }
     super.dispose();
@@ -68,6 +77,11 @@ class _PlantingFormState extends State<_PlantingForm> {
       family: _family.text.trim(),
       notes: _notes.text,
       status: _status,
+      harvested: _harvested,
+      spacingCm: double.tryParse(_spacing.text.replaceAll(',', '.')),
+      clearSpacing: _spacing.text.trim().isEmpty,
+      illustration: _illustration,
+      visualGrowthDays: int.parse(_growthDays.text),
       sowAt: _dates[0],
       clearSowAt: _dates[0] == null,
       plantAt: _dates[1],
@@ -105,6 +119,66 @@ class _PlantingFormState extends State<_PlantingForm> {
                 validator: (v) =>
                     v!.trim().isEmpty ? l.gardenCropRequired : null,
               ),
+              DropdownButtonFormField<GardenCropIllustration>(
+                key: const ValueKey('garden-illustration'),
+                initialValue: _illustration,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l.gardenIllustration),
+                items: [
+                  for (final kind in GardenCropIllustration.values)
+                    DropdownMenuItem(
+                      value: kind,
+                      child: Text(gardenCropLabel(context, kind)),
+                    ),
+                ],
+                onChanged: (v) => setState(() {
+                  _illustration = v!;
+                  if (_crop.text.trim().isEmpty &&
+                      v != GardenCropIllustration.generic) {
+                    _crop.text = gardenCropLabel(context, v);
+                  }
+                }),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('garden-spacing'),
+                controller: _spacing,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: l.gardenPlantSpacing,
+                  suffixText: 'cm',
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null;
+                  final n = double.tryParse(v.replaceAll(',', '.'));
+                  return n == null || !n.isFinite || n < 1 || n > 1000
+                      ? l.gardenPlantSpacingError
+                      : null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const ValueKey('garden-growth-days'),
+                controller: _growthDays,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l.gardenVisualGrowthDays,
+                ),
+                validator: (v) {
+                  final n = int.tryParse(v ?? '');
+                  return n == null || n < 1 || n > 730
+                      ? l.gardenVisualGrowthError
+                      : null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l.gardenVisualGrowthHelp,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
               TextFormField(
                 key: const ValueKey('garden-variety'),
                 controller: _variety,
@@ -126,7 +200,12 @@ class _PlantingFormState extends State<_PlantingForm> {
                     child: Text(l.gardenPlantingActual),
                   ),
                 ],
-                onChanged: (v) => setState(() => _status = v!),
+                onChanged: (v) => setState(() {
+                  _status = v!;
+                  if (_status == GardenPlantingStatus.planned) {
+                    _harvested = false;
+                  }
+                }),
               ),
               const SizedBox(height: 16),
               TextFormField(

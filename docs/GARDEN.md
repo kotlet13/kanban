@@ -1,5 +1,100 @@
 # Vrt — grede, sezone in zasaditve
 
+## Nadgradnja prizora — 14. oktober 2026
+
+Obstoječi vrt se odpre v celozaslonskem, interaktivnem prizoru. Grede imajo
+lesene robove in zemljo, rastline pa vektorske ilustracije (korenje, paradižnik,
+solata, zelje, čebula, paprika, buča, fižol in nevtralna rastlina). Vzorčnih vrtov
+ali zasaditev v uporabniško bazo ne dodajamo. Zasnova uporablja kodo Canvas,
+brez novega SDK, knjižnice, omrežnega prenosa ali bitmap sredstev.
+
+Dotik oziroma klik grede odpre njene zasaditve in zgodovino istega trajnega ID,
+vključno s prejšnjim letom. Gumb **Grede in zgodovina** zagotavlja seznam tudi
+za zelo majhne ali prekrivajoče se grede ter privzeto zložene arhivirane grede.
+Prizor podpira približevanje z dvema prstoma, premik, gumbe za povečavo/ponastavitev
+in tipkovnico (Tab/Enter ter Ctrl oziroma Command z +/−). **Uredi razpored** je
+ločeni pogled za risanje, premikanje in raztezanje gred ter natančne obrazce.
+Oba pogleda uporabljata isti osnutek. Preklop pogleda, odpiranje zgodovine ali
+približevanje ne zapišejo podatkov; **Shrani vrt** je izrecen trajni zapis.
+
+Nov vrt zahteva širino in dolžino v metrih (0,1–10.000). Stari vrtovi obdržijo
+izvirne koordinate brez izmišljenega merila; mere lahko lastnik doda pozneje.
+Geometrija ostaja normalizirana in skupna vsem sezonam. Z določenim merilom
+obrazec gred uporablja metre, prizor pokaže približno velikost, izbrana greda
+v urejevalniku najbližji razmik, podrobnosti pa razmike do drugih aktivnih gred.
+Razmik je razdalja med najbližjima robovoma, tudi diagonalno; prekrivanje pomeni
+nič. Preimenovanje ne zaokroži prvotne geometrije.
+
+Zasaditev ima izbirno ilustracijo, razmik med rastlinami (1–1.000 cm) in
+nastavljiv čas do polne velikosti ilustracije (1–730 dni, privzeto 60).
+Prikaz rasti uporablja **dejansko** zasaditev, vneseni datum sajenja oziroma
+setve in koledarske dneve; brez datuma ali pri načrtu ostane majhna rastlina.
+To je uporabniku pojasnjena vizualna ocena, brez obljube agronomske natančnosti,
+zrelosti ali pridelka. Izbira ilustracije ne ugiba botanične družine.
+Gostota prizora sledi razmiku, z omejenim številom ikon zaradi preglednosti in
+odzivnosti; risba ni popis posameznih rastlin.
+
+**Označi kot pobrano** shrani izrecno zastavico in današnji koledarski datum ter
+odstrani samo to zasaditev iz prizora. Trajni ID, kultura, sorta, družina,
+prejšnji datumi, razmik, ilustracija, zapiski in zgodovina ostanejo. Greda je
+vizualno prazna, ko so pobrane vse njene zasaditve izbrane sezone. Napačno oznako
+je mogoče vrniti med rastoče; zabeleženi datum ostane dosegljiv v obrazcu. Sam
+stari datum pobiranja nikoli samodejno ne označi zasaditve kot pobrane.
+Kopiranje sezone ohrani nastavitve ilustracije in razmika, ustvari nove ID-je in
+načrtovane zasaditve brez datumov in brez oznake pobiranja.
+
+### Pogodbe in združljivost
+
+Notranji dokument vrta **3** doda par `widthMeters`/`heightMeters` ter v vsaki
+zasaditvi `harvested`, `spacingCm`, `illustration`, `visualGrowthDays`. Različica
+3 strogo zahteva vse svoje ključe; nepoznana polja, napačne mere in neskladna
+oznaka pobiranja se zavrnejo. Prebrani dokument 3 ohrani različico tudi po
+ponastavitvi nastavitev. Obstoječi vrt brez novih podatkov še vedno izpiše
+nespremenjeni format 2. Bralnik sprejme prvotni format 1 in sezonski format 2.
+Vrtna zbirka 3 sprejme mešanico dokumentov 2/3, zbirki 1/2 ostajata berljivi.
+
+Za skupni vrt novi dokument zahteva **record6/sync6**. Odjemalec zavrne zapis na
+starejši strežnik pred nastankom operacije; novega dokumenta ne skrajša na v2.
+Strežnik ob prvem takem zapisu zviša zahtevano pogodbo obsega na 6 in starejšemu
+bralniku zavrne prenos. Izvirne čakajoče operacije formata 2 se prek novega mostu
+prenesejo nespremenjene. Poskus v3 → v2 nad obstoječim skupnim vrtom je zavrnjen.
+Globalni formati kopij in lokalna schema so del skupne nadgradnje; vrtnarska
+vsebina ne zahteva lastne SQL migracije. Obnova ostaja atomarna, brez starega
+strežnika in z revizijsko zaščito proti zastarelemu odprtemu urejevalniku.
+
+Pravice se preverjajo ob zapisu kot prej; bralec nima gumbov za spreminjanje,
+pobiranje, novo zasaditev ali brisanje. Menjava prostora/računa zavrne stari
+osnutek. Arhiviranje lokalnega prostora ohrani branje, vendar takoj izključi
+urejanje odprtega vrta; transakcijska kontrola zavrne zapis v arhiviran, povezan
+ali izbrisan prostor tudi z novo revizijo zbirke. Izbris prostora ne omogoči
+ponovnega nastanka podatkov iz starega osnutka. Odprtje, zgodovina, povečava in prazna scena ne sprejmejo pravil
+skupnega prostora ali povzročijo sinhronizacijskega zapisa.
+
+### Dokazi in meje
+
+- Obstoječi in novi vrtni podatkovni/UI nabor: **78 PASS**, vključno z dejansko
+  SQLite ponovno otvoritvijo, JSON/šifrirano obnovo, record6 zaščito, tipkovnico,
+  pinch, meritvami, pobiranjem ter zastarelim osnutkom po lokalnem arhiviranju,
+  povezovanju in izbrisu prostora; `build/qa/garden-upgrade-final.log`.
+- Dejanski HTTP na izoliranem lokalnem FamilyHub: **20 PASS**, nova sintetična
+  računa/obseg, druga naprava/član, ohranitev vseh bajtov polj, pobiranje,
+  ponovitev, zastarela revizija, zavrnitve pravic/stare pogodbe/napačnih polj in
+  prepoved tihega znižanja formata. `server/tests/garden-scene-integration.php`,
+  `build/qa/garden-scene-php.log`; ni posega v gostovane podatke.
+- Renderirani in pregledani dejanski widget prizori 320 pri 2×, 390 in 1280:
+  `build/qa/garden-scene/garden-scene-{320,390,1280}.png`. Uporabljeni so samo
+  pomnilniški vzorčni podatki. Ozka postavitev ohrani leto in dostopne gumbe;
+  normalni prizor nima prepoznavalnika premika grede, ki bi prestrezal pinch.
+- Ciljna analiza novih vrtnih datotek brez ugotovitev. Fizični Android/iPhone,
+  VoiceOver/TalkBack in native macOS preizkus te izvedbe niso s tem potrjeni;
+  Windows/Linux sta po aktualnem naročilu odložena. To ni dokaz objave v trgovini.
+
+Pri zasnovi sta bili prebrani aktualni Applovi smernici
+[Gestures](https://developer.apple.com/design/human-interface-guidelines/gestures)
+in [Modality](https://developer.apple.com/design/human-interface-guidelines/modality):
+običajni dotik/pinch, vidna vrnitev, alternativa gestam in kratke podrobnosti v
+zapirljivem listu, z ohranjenim neshranjenim osnutkom.
+
 ## Prenova 8. oktobra 2026
 
 Uporabnik je izrecno potrdil prenovo s poudarkom na zelenjavnih gredah in kolobarju ter vključitev v novo interno Android izdajo. Izvedba in končno preverjanje sta zaključena: celotni nabor **636 Flutter PASS**, 9 opt-in HTTP preskočenih, analiza brez napak/opozoril s 37 obstoječimi info. [Skupna dokazila](REMOTE_REMINDERS.md#končno-preverjanje-8-oktobra-2026) vključujejo resnično SQLite hrambo ter datume v različnih časovnih pasovih. Spodnja zgodovina prve izvedbe ni dokaz nove funkcionalnosti.

@@ -73,6 +73,15 @@ void main() {
   }
 
   Future<void> save(WidgetTester tester, GardenRepository repo) async {
+    final width = find.byKey(const ValueKey('garden-width-meters'));
+    if (width.evaluate().isNotEmpty &&
+        tester.widget<TextFormField>(width).controller!.text.isEmpty) {
+      await tester.enterText(width, '10');
+      await tester.enterText(
+        find.byKey(const ValueKey('garden-height-meters')),
+        '8',
+      );
+    }
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const ValueKey('garden-save')));
       // Reload is queued after the button's mutation (including a rejected
@@ -129,6 +138,8 @@ void main() {
       await save(tester, repo);
       final stored = await tester.runAsync(repo.storage.read);
       expect(stored!.gardens.single.name, 'Zelenjavni vrt');
+      expect(stored.gardens.single.widthMeters, 10);
+      expect(stored.gardens.single.heightMeters, 8);
       expect(stored.gardens.single.notes, 'Zalij zvečer.');
       expect(stored.gardens.single.areas.single.label, 'Paradižniki');
       expect(
@@ -137,6 +148,8 @@ void main() {
         1,
       );
       await tester.tap(find.text('Zelenjavni vrt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('garden-edit-layout')));
       await tester.pumpAndSettle();
       expect(find.byType(GardenEditor), findsOneWidget);
       expect(find.text('Zalij zvečer.'), findsOneWidget);
@@ -196,6 +209,8 @@ void main() {
       );
       await pump(tester, repo);
       await tester.tap(find.text('Vrt').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('garden-edit-layout')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('garden-notes')),

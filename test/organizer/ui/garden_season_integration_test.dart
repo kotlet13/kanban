@@ -98,9 +98,22 @@ Future<void> tap(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
+  if (find.byKey(const ValueKey('garden-edit-layout')).evaluate().isNotEmpty) {
+    await tester.tap(find.byKey(const ValueKey('garden-edit-layout')));
+    await tester.pumpAndSettle();
+  }
 }
 
 Future<void> save(WidgetTester tester, GardenRepository repo) async {
+  final width = find.byKey(const ValueKey('garden-width-meters'));
+  if (width.evaluate().isNotEmpty &&
+      tester.widget<TextFormField>(width).controller!.text.isEmpty) {
+    await tester.enterText(width, '10');
+    await tester.enterText(
+      find.byKey(const ValueKey('garden-height-meters')),
+      '8',
+    );
+  }
   await tester.runAsync(() async {
     await tester.tap(find.byKey(const ValueKey('garden-save')));
     await repo.reload();

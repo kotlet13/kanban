@@ -9,8 +9,11 @@ class _GardenPainter extends CustomPainter {
     required this.scheme,
     required this.textDirection,
     required this.labelStyle,
+    this.widthMeters,
+    this.heightMeters,
   });
   final List<GardenArea> areas;
+  final double? widthMeters, heightMeters;
   final String? selectedId;
   final Rect? drawing;
   final Map<String, String> areaCaptions;
@@ -117,6 +120,7 @@ class _GardenPainter extends CustomPainter {
         }
       }
     }
+    _paintNearestGap(canvas, size);
     if (drawing != null) {
       final rect = _pixels(drawing!, size);
       canvas.drawRect(
@@ -131,6 +135,72 @@ class _GardenPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
     }
+  }
+
+  void _paintNearestGap(Canvas canvas, Size size) {
+    if (widthMeters == null || heightMeters == null) return;
+    final selected = areas.where((a) => a.id == selectedId).firstOrNull;
+    if (selected == null) return;
+    Offset? start, end;
+    double? closest;
+    for (final other in areas.where(
+      (a) => a.id != selected.id && a.kind == GardenAreaKind.bed,
+    )) {
+      double point(double a, double aSize, double b, double bSize) =>
+          a + aSize <= b
+          ? a + aSize
+          : a >= b + bSize
+          ? a
+          : (math.max(a, b) + math.min(a + aSize, b + bSize)) / 2;
+      final a = Offset(
+        point(selected.x, selected.width, other.x, other.width),
+        point(selected.y, selected.height, other.y, other.height),
+      );
+      final b = Offset(
+        point(other.x, other.width, selected.x, selected.width),
+        point(other.y, other.height, selected.y, selected.height),
+      );
+      final distance = Offset(
+        (a.dx - b.dx) * widthMeters!,
+        (a.dy - b.dy) * heightMeters!,
+      ).distance;
+      if (distance > .0001 && (closest == null || distance < closest)) {
+        closest = distance;
+        start = a;
+        end = b;
+      }
+    }
+    if (start == null || end == null || closest == null) return;
+    final a = Offset(start.dx * size.width, start.dy * size.height),
+        b = Offset(end.dx * size.width, end.dy * size.height);
+    canvas.drawLine(
+      a,
+      b,
+      Paint()
+        ..color = scheme.primary
+        ..strokeWidth = 2,
+    );
+    for (final endpoint in [a, b]) {
+      canvas.drawCircle(endpoint, 3, Paint()..color = scheme.primary);
+    }
+    final text = TextPainter(
+      text: TextSpan(
+        text: '≈ ${closest.toStringAsFixed(2)} m',
+        style: labelStyle.copyWith(fontSize: 11, color: scheme.onSurface),
+      ),
+      textDirection: textDirection,
+    )..layout(maxWidth: size.width - 12);
+    final middle = (a + b) / 2;
+    final rect = Rect.fromCenter(
+      center: middle,
+      width: text.width + 8,
+      height: text.height + 4,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+      Paint()..color = scheme.surface,
+    );
+    text.paint(canvas, rect.topLeft + const Offset(4, 2));
   }
 
   @override

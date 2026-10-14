@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../domain/garden_models.dart';
 import 'garden_canvas.dart';
+import 'garden_scene_view.dart';
+import '../../domain/garden_scene.dart';
 
 class GardenPlanPanel extends StatelessWidget {
   const GardenPlanPanel({
@@ -83,14 +85,22 @@ class GardenPlanPanel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         GardenCanvas(
+          widthMeters: garden.widthMeters,
+          heightMeters: garden.heightMeters,
+          aspectRatio: garden.hasPhysicalSize
+              ? garden.widthMeters! / garden.heightMeters!
+              : 4 / 3,
           areas: garden.areas.where((a) => !a.archived).toList(),
           areaCaptions: {
             for (final a in garden.areas)
-              a.id:
-                  (garden.seasonForYear(year ?? 0)?.plantingsForArea(a.id) ??
-                          <GardenPlanting>[])
-                      .map((p) => p.crop)
-                      .join(', '),
+              a.id: [
+                if (garden.hasPhysicalSize) gardenAreaSize(garden, a),
+                ...gardenVisiblePlantings(
+                  garden,
+                  year,
+                  a.id,
+                ).map((p) => p.crop),
+              ].join(', '),
           },
           zoomInLabel: l.gardenZoomIn,
           zoomOutLabel: l.gardenZoomOut,
@@ -144,7 +154,9 @@ class GardenPlanPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          l.gardenSketchDisclaimer,
+          garden.hasPhysicalSize
+              ? l.gardenSceneEditHint
+              : l.gardenSketchDisclaimer,
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],

@@ -17,10 +17,13 @@ class GardenPage extends ConsumerWidget {
     BuildContext context, {
     Garden? garden,
     String? reportScopeId,
-  }) => Navigator.of(context).push<void>(
+  }) => Navigator.of(context, rootNavigator: true).push<void>(
     MaterialPageRoute(
-      builder: (_) =>
-          GardenEditor(garden: garden, reportScopeId: reportScopeId),
+      builder: (_) => GardenEditor(
+        garden: garden,
+        reportScopeId: reportScopeId,
+        startInScene: garden != null,
+      ),
     ),
   );
 
@@ -75,6 +78,12 @@ class GardenPage extends ConsumerWidget {
         ) ==
         true;
     final local = ref.watch(localSpacesProvider).valueOrNull?.selectedSpace;
+    final canEdit = remoteHousehold
+        ? shared!.scopes
+              .where((scope) => scope.id == shared.selectedSpaceId)
+              .first
+              .canEdit
+        : local?.archived != true && local?.binding == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -103,8 +112,8 @@ class GardenPage extends ConsumerWidget {
                       icon: Icons.yard_outlined,
                       title: l.gardenEmptyTitle,
                       description: l.gardenEmptyBody,
-                      action: l.gardenNew,
-                      onAction: () => _open(context),
+                      action: canEdit ? l.gardenNew : null,
+                      onAction: canEdit ? () => _open(context) : null,
                     )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -113,7 +122,8 @@ class GardenPage extends ConsumerWidget {
                           alignment: Alignment.centerLeft,
                           child: FilledButton.icon(
                             key: const ValueKey('garden-new'),
-                            onPressed: snapshot.gardens.length >= 500
+                            onPressed:
+                                !canEdit || snapshot.gardens.length >= 500
                                 ? null
                                 : () => _open(context),
                             icon: const Icon(Icons.add),
@@ -174,12 +184,13 @@ class GardenPage extends ConsumerWidget {
                                             ),
                                       ),
                                     ),
-                                  IconButton(
-                                    tooltip: l.delete,
-                                    onPressed: () =>
-                                        _delete(context, ref, garden),
-                                    icon: const Icon(Icons.delete_outline),
-                                  ),
+                                  if (canEdit)
+                                    IconButton(
+                                      tooltip: l.delete,
+                                      onPressed: () =>
+                                          _delete(context, ref, garden),
+                                      icon: const Icon(Icons.delete_outline),
+                                    ),
                                 ],
                               ),
                             ),

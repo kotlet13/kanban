@@ -8,13 +8,20 @@ Future<GardenArea?> showGardenAreaForm(
   BuildContext context,
   GardenArea area, {
   bool allowKindChange = true,
+  Garden? garden,
 }) => showDialog<GardenArea>(
   context: context,
-  builder: (_) => _AreaForm(area: area, allowKindChange: allowKindChange),
+  builder: (_) =>
+      _AreaForm(area: area, allowKindChange: allowKindChange, garden: garden),
 );
 
 class _AreaForm extends StatefulWidget {
-  const _AreaForm({required this.area, required this.allowKindChange});
+  const _AreaForm({
+    required this.area,
+    required this.allowKindChange,
+    this.garden,
+  });
+  final Garden? garden;
   final GardenArea area;
   final bool allowKindChange;
   @override
@@ -24,16 +31,28 @@ class _AreaForm extends StatefulWidget {
 class _AreaFormState extends State<_AreaForm> {
   final _form = GlobalKey<FormState>();
   late final _label = TextEditingController(text: widget.area.label);
-  late final _numbers =
+  bool get _metric => widget.garden?.hasPhysicalSize == true;
+  List<double> get _factors => _metric
+      ? [
+          widget.garden!.widthMeters!,
+          widget.garden!.heightMeters!,
+          widget.garden!.widthMeters!,
+          widget.garden!.heightMeters!,
+        ]
+      : [100, 100, 100, 100];
+  late final _initialNumbers =
       [widget.area.x, widget.area.y, widget.area.width, widget.area.height]
-          .map((n) => TextEditingController(text: (n * 100).toStringAsFixed(1)))
+          .asMap()
+          .entries
+          .map(
+            (entry) => (entry.value * _factors[entry.key]).toStringAsFixed(
+              _metric ? 2 : 1,
+            ),
+          )
           .toList();
-  late final _initialNumbers = [
-    widget.area.x,
-    widget.area.y,
-    widget.area.width,
-    widget.area.height,
-  ].map((number) => (number * 100).toStringAsFixed(1)).toList();
+  late final _numbers = _initialNumbers
+      .map((value) => TextEditingController(text: value))
+      .toList();
   late var _kind = widget.area.kind;
   String? _geometryError;
 
@@ -58,7 +77,7 @@ class _AreaFormState extends State<_AreaForm> {
       for (var i = 0; i < _numbers.length; i++)
         _numbers[i].text == _initialNumbers[i]
             ? original[i]
-            : double.parse(_numbers[i].text.replaceAll(',', '.')) / 100,
+            : double.parse(_numbers[i].text.replaceAll(',', '.')) / _factors[i],
     ];
     if (values[0] + values[2] > 1 || values[1] + values[3] > 1) {
       setState(() => _geometryError = context.l10n.gardenGeometryError);
@@ -127,7 +146,7 @@ class _AreaFormState extends State<_AreaForm> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  l.gardenGeometryHelp,
+                  _metric ? l.gardenMetricGeometryHelp : l.gardenGeometryHelp,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -147,7 +166,7 @@ class _AreaFormState extends State<_AreaForm> {
                               controller: _numbers[row * 2 + column],
                               decoration: InputDecoration(
                                 labelText: labels[row * 2 + column],
-                                suffixText: '%',
+                                suffixText: _metric ? 'm' : '%',
                               ),
                               keyboardType:
                                   const TextInputType.numberWithOptions(
@@ -162,7 +181,7 @@ class _AreaFormState extends State<_AreaForm> {
                                             widget.area.width,
                                             widget.area.height,
                                           ][index] *
-                                          100
+                                          _factors[index]
                                     : double.tryParse(
                                         value!.replaceAll(',', '.'),
                                       );
@@ -170,8 +189,10 @@ class _AreaFormState extends State<_AreaForm> {
                                 return n == null ||
                                         !n.isFinite ||
                                         (position ? n < 0 : n <= 0) ||
-                                        n > 100
-                                    ? l.gardenNumberError
+                                        n > _factors[index]
+                                    ? (_metric
+                                          ? l.gardenMetricGeometryError
+                                          : l.gardenNumberError)
                                     : null;
                               },
                             ),

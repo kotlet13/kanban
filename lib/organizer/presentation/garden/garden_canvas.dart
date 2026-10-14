@@ -21,11 +21,16 @@ class GardenCanvas extends StatefulWidget {
     required this.onMove,
     required this.semanticLabel,
     this.areaCaptions = const {},
+    this.aspectRatio = 4 / 3,
+    this.widthMeters,
+    this.heightMeters,
     this.zoomInLabel,
     this.zoomOutLabel,
     this.resetViewLabel,
   });
   final List<GardenArea> areas;
+  final double aspectRatio;
+  final double? widthMeters, heightMeters;
   final GardenTool tool;
   final String? selectedId;
   final ValueChanged<String?> onSelect;
@@ -135,7 +140,7 @@ class _GardenCanvasState extends State<GardenCanvas> {
 
   @override
   Widget build(BuildContext context) => AspectRatio(
-    aspectRatio: 4 / 3,
+    aspectRatio: widget.aspectRatio.clamp(.3, 3.0),
     child: LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
@@ -261,6 +266,8 @@ class _GardenCanvasState extends State<GardenCanvas> {
                           selectedId: widget.selectedId,
                           areaCaptions: widget.areaCaptions,
                           drawing: _drawing,
+                          widthMeters: widget.widthMeters,
+                          heightMeters: widget.heightMeters,
                           scheme: scheme,
                           textDirection: Directionality.of(context),
                           labelStyle:
