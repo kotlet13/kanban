@@ -1,5 +1,29 @@
 # Navodila za delo na projektu
 
+15. oktober — **vseh19 naročenih nadgradenj lokalno izvedenih in poslanih na main**.
+[Izvedba](docs/UPGRADE_IMPLEMENTATION.md), [izdajni status](docs/release/UPGRADE_1_9.md).
+Končni runtime6ce59cf/1.9.0+28: vrt/celozaslonska rast/grede/metri/zgodovina,
+Idejnik/pinch/velikost/arhiv, rokiopomnikov, hierarhija/projektni editor,
+članstva/brisanje/ownrecovery/earlyfinanceACL, nakupi/fokus/obvestila, gesla
+in stabilne nastavitve opomnikov. Celotni7af1298PASS/15skip, zaključni62UI+27Darwin
+PASS; analiza10prejšnjihinfo/brezwarningerror. Tretji zamrznjeni6ce kandidat
+421/308runtime, AAB28SHA347d6d8b…/podpis/Firebase/8perms/16KiB/23+7PASS; iOSarhiv
+in svežiMacDebugPASS,3gradnje/platformo, prvi2zavrnjeni/ohranjeni. **NiAAB28
+uploada, IPAizvoza/TestFlight28 ali javne28oddaje.** Maczaklenjen; lastnik
+potrebujeodklenitev zaobičajniOrganizer/portala. Windows/Linuxodložena.
+FamilyHubjavni dd81e061/v0.14.0/schema18/paketSHAe6fda75…dejanskoobjavljen,
+v0.13tagohranjen; živa produkcija/test1ostajata0.13/schema17. Produkcijski
+svežicapture/prepare/pause503/65svarovalo/real92tabel319vrstic2DATAkopija
+PASS, vendarBraveblokiraZIPprenos, pravaizoliranaobnovaNIcončana. **NobeneDDL
+aliCodeSwap.** Pregledaniabort.php/shdejanskoobnoviAPI200/old96/schema17/
+isteključe/config inbajtnioriginalcron22:21:27UTC14okt; zasebnabackup/state
+ohranjena. Navadniindex302normalen;API200preverjenstrogoTLS/istiSID.
+Prednadaljevanjempotrebninovcapture/pause/freshkopija/pravaobnova; stare
+abortmapeNEuporabi zamigracijo. Test1/test2nespremenjena; produkcija
+SMTP/FCMspetoriginaldelavci. **SvežPlayread-onlypotrdi1.8.0(27) javno
+Na voljo vGooglePlay,100%/1država od14okt21:42**, release3;27ni večpending.
+InterniAndroidostajaizključen/Neaktivno; vseprihodnjeoddajeizključnojavne.
+
 14. oktober — **Android1.8.0(27) dejansko oddana za javno posodobitev** po
 izrecnem naročilu, interni kanal potrjenoNeaktivno. [Dokazi](docs/release/REMINDER_SETTINGS_RELEASE.md).
 Nastavitve opomnikov44bdd2b na izolirani mobilniAAB26osnovi/fa809b8+6ae5667,

@@ -1,4 +1,178 @@
-# Nadgradnje Jivie — izvedba 8. oktobra 2026
+# Nadgradnje Jivie — izvedba in dokazila
+
+## Aktualna nadgradnja — 14. in 15. oktober 2026
+
+**Vseh 19 opomb je lokalno izvedenih.** Uporabnik je naročil commit in push
+po zaključenih sklopih ter nato javni Android in iOS TestFlight. Aplikacijska
+kandidatka je **1.9.0+28**; spremembe so bile poslane v povezanih sklopih.
+Končni manjši popravki postavitve in združevanja iOS/macOS opomnikov so v
+commitu **6ce59cf**, ki je poslan na main, in v svežih native gradnjah. Ta zapis ne potrjuje
+nove Android oddaje, TestFlight nalaganja ali uspešnega preklopa gostovanja.
+
+[Opombe in potrjene odločitve](UPGRADE_NOTES.md) opisujejo vseh 19 uporabniških
+zahtev. Prejšnji izdajni zapisi spodaj so zgodovina; njihov interni Android
+kanal ni smer za novo izdajo. Aktualno navodilo je **izključno javni Android**,
+brez ustvarjanja ali ponovnega vključevanja interne izdaje.
+
+### Izvedene funkcije
+
+Gesla imajo preklop vidnosti. Podrobnosti projekta privzeto zložijo razlago
+okvirnega trajanja, koledar loči prazen dan od praznega projekta, organizacijski
+urejevalnik pa kaže pravi prostor, termin, faze/mejnike in dovoljeno deljenje.
+Nakupovalni vnos vsebuje prosto besedilno količino ter po uspešnem zapisu vrne
+fokus. Osvežitev nastavitev opomnikov ohrani položaj in odprte razdelke.
+
+Glavni izbor vsebuje prostore; neposredno deljeni projekti so v ločenem
+seznamu »Deljeno z mano« z iskanjem. Arhivi projektov, idej in prostorov so
+privzeto zloženi. Aktivni Utrip, opravila, koledar in opomniki izključijo
+arhivirano vsebino. Na iOS se izbor odpre celozaslonsko; Android in macOS
+uporabljata dialog. Upravljanje arhiva in brisanja ima jasen cilj v nastavitvah
+prostora oziroma meniju ob naslovu projektnih opravil, brez splošnega gumba
+nad delovno vsebino.
+
+Odstranitev člana prekliče tudi njegove neposredne dostope in povabila v
+podrejenih projektih. Lastništvo je treba prej rešiti; zavrnitev ohrani
+članstva. Arhiv zavrne nova povabila, njihov sprejem ter podrejene zapise.
+Brisanje potrebuje imenovan predogled s števci in ovirami, nato izrecno
+potrditev istega predogleda. Projektni izbris ohrani nadrejeni prostor,
+sorodno vsebino, račune in dostop do strežnika. Izbrisane identitete ter
+revizijske oznake preprečijo obuditev iz starih ukazov. Zasebne fotografije
+se odstranijo po SQL potrditvi s trajno vrsto za ponovitev čiščenja.
+
+Po potrjenem odvzemu dostopa ali izbrisu odjemalec skrije skupno projekcijo
+in prekliče aktivne alarme. Lastno neposlano delo ohrani ločeno. Izrecna
+**Izvozi neposlano delo** in **Odpri neposlano delo** omogočata datotečni izvoz,
+bralni pregled, prikaz preverjenih lastnih slik in kopiranje brez oddaljenega
+pošiljanja, uvoza ali obnovitve pravic. Običajna šifrirana kopija izključi
+nedovoljeno oddaljeno vsebino. Zgodnja dokončna finančna zavrnitev sedaj takoj
+skrije tudi predpomnjene finance; neoznačeni HTTP 403/503 ostanejo napake
+prenosa in se ne razglasijo za preklic pravic.
+
+Opomnik lahko sledi roku opravila ob roku, eno uro ali en dan pred njim.
+Velja za lokalne in dovoljene oddaljene vire. Čakajoči opomnik sledi spremembi
+roka; dokončanje, izbris ali odstranitev roka ga prekliče brez samodejne
+obuditve. Že dostavljeno obvestilo se zaradi premika roka ne ponovi. Stari
+absolutni opomniki in identitete čakajočih ukazov ostanejo ohranjeni.
+
+Idejnik omogoča dvoprstni premik in povečavo med urejanjem, preklic
+nedokončane poteze ob drugem prstu, ločeno shranjeno velikost pisave ter
+menije za arhiviranje, obnovo in potrjeno brisanje table. Besedilo in
+fotografske oznake sodelujejo pri undo/redo in združitvi različnih elementov.
+[Semantika, združljivost in dokazi](IDEAS_REMINDERS_UPGRADE.md).
+
+Vrt ima celozaslonski vektorski prizor, osnovne ilustracije vrtnin, mere v
+metrih, proste grede, razmike in dnevno vizualno rast. Pobiranje izprazni
+prikaz zasaditve in ohrani zgodovino iste grede skozi leta. Prizor, urejevalnik
+in zgodovina uporabljajo isti osnutek; trajni zapis ostane izrecen.
+[Podatki, interakcije in meje vizualne rasti](GARDEN.md).
+
+Obvestilo o nakupu odpre celotni dovoljeni seznam in označi spremenjene
+artikle. Povzetek več obvestil vodi v pravi center, posamezni dogodki pa v
+svoje cilje. Nova sistemska oblika vsebuje dovoljeno temo, Android skupino in
+povzetek; iOS/macOS uporabljata niti. Lokalni skupni opomniki uporabljajo isti
+SHA256 identitete strežnika/računa kot objavljena APNs nit. Prihodnji opomniki
+se enkrat prenastavijo z istimi ID-ji; pretekli ne opozorijo znova. Fizični prikaz
+novega združevanja ni dokazan z lokalnimi testi.
+
+### Podatkovne pogodbe in ohranitev
+
+Lokalna SQLite schema je **10**, šifrirana prenosna vsebina/kopija **6**,
+strežniški izvor pa **FamilyHub 0.14.0 / schema18**. Razširjene table Idejnika
+uporabljajo dokument 2, vrt dokument 3, prenos razširjenih zapisov pa
+**record6/sync6**. Stari podprti dokumenti in kopije ostanejo berljivi. Stare
+čakajoče operacije ohranijo svoj izvirni ukaz, ID, hash in pogodbo; prevoz prek
+sync6 jih ne prepiše. Starejši odjemalec ne more tiho prebrati ali prepisati
+razširjene vsebine z izgubo novih polj.
+
+SQLite schema 10 je meja združljivosti, brez novih stolpcev ali prepisovanja
+starih zapisov. Kopija 6 doda napravi lastne nastavitve vezanih opomnikov in
+obdrži table, osnutke, zasebne slikovne bajte ter zgodovino operacij. Zastarel
+odprt urejevalnik po izbrisu, arhiviranju ali obnovi ne dobi nove pravice do
+zapisa samo zaradi obnovljenega istega ID-ja.
+
+MariaDB migracija 17 → 18 doda štiri stolpce v treh obstoječih tabelah in eno
+prazno tabelo za čiščenje izbrisanih slik. Privzete vrednosti ohranijo stare
+obsege, obliko obvestil in absolutne opomnike. Samo FamilyHub metadata se
+spremeni 17 → 18; konfiguracije, identitete, zgodovinske vrstice, SMTP/FCM ključi,
+podatkovno drevo, jedro in drugi vtičniki morajo ostati isti. Vrstni red
+kopija → resnična izolirana obnova → migration/code swap → preverjanje →
+HTTPS → originalni cron je varovan v [postopku nadgradnje](server/UPGRADE_0_14.md).
+
+### Dokazi lokalnega preverjanja
+
+Končni celotni Flutter nabor na commitu **7af8747** je dosegel **1.298 uspešnih
+preverjanj in 15 izbirnih preskokov**. Dnevnik je
+`build/qa/upgrade-20261014/flutter-all-tests-final-7af8747.log`.
+Analiza v `build/qa/upgrade-20261014/analyze-final.log` ima samo **10 prej
+obstoječih informacijskih ugotovitev** v izdajnih orodjih, brez napak ali
+opozoril. Po poznejšem pregledu mesta menija in preklica obrazcev ima ciljni
+UI nabor še **62 uspešnih preverjanj** v
+`build/qa/upgrade-lifecycle/header-placement.log`. Zaključni iOS/macOS popravek
+ima še **27 uspešnih ciljnih preverjanj**, vključno z dejanskimi native
+method-channel parametri in migracijo prihodnjih/preteklih opomnikov. Končna
+analiza na 6ce59cf je uspešna z istimi 10 starimi info in brez warning/error.
+Celotni nabor na 7af8747 in ciljni testi zadnjih treh runtime sprememb so
+ločena dokaza; števil ne seštevamo kot nov celotni testni tek.
+
+Vrtni podatkovni/UI nabor ima 78 uspešnih preverjanj, njegov resnični izolirani
+HTTP tok20. Relativni opomniki in razširjene table imajo 27 izoliranih HTTP
+preverjanj. Izvoz lastnega dela, HTTP izpadi in finančne zavrnitve imajo 40
+ciljnih preverjanj. To so ločeni sklopi iste nadgradnje; ne prištevamo jih
+znova celotnemu Flutter številu. Podrobnosti so v povezanih modulskih dnevnikih.
+
+Napolnjeni sintetični schema 17 izvoz in dejanska obnova v izolirani
+MariaDB 10.11.19 sta preverila vseh 93 starih tabel (92 osnovnih tabel in eno sintetično
+tabelo), 45 vrstic ter datoteke, prazne imenike, konfiguracije, ključe in cron.
+Nadgradnja je ohranila vsak stari stolpec/vrstico in dodala samo dovoljena
+polja ter prazno tabelo. Sedem negativnih varoval in še dve varovali za
+zapečatenje napačnega profila/izvornega drifta so uspešni. Ta dokaz je zunaj
+Git in ne predstavlja kopije ali nadgradnje produkcijske baze.
+
+### Javni izvor vtičnika in odprti izdajni koraki
+
+Javni [FamilyHub repozitorij](https://github.com/kotlet13/kanban_family_hub)
+je posodobljen na commit **dd81e06111d51c11951aef6ac09d25fe9d4d142f** z novim
+tagom **v0.14.0**; v0.13.0 ostane ohranjen. To potrjuje objavo izvora
+vtičnika, ne namestitve na gostovanju. MIT in obstoječe meje javnega paketa
+ostanejo. Zapečateni paket
+`build/release/FamilyHub-0.14.0-upgrade-20261014.zip` ima 101 datoteko in SHA256:
+
+`e6fda75ac4b63c74f70cd2ac00fb6143006cbe111a96a8462e30db9a945a3743`.
+
+Produkcijski sveži zajem vhodov, prenos zapečatenih pomagačev in prepare so
+opravljeni. Po ustavitvi petih ciljnih delavcev je narejena dosledna zasebna
+kopija 92 tabel, 319 vrstic in dveh podatkovnih datotek, brez spremembe SQL
+podatkov. Prenos za izolirano obnovo je blokiral Brave; Mac se je nato zaklenil.
+Pred migracijo je potrjena varovana vrnitev prvotnega HTTPS/crona ob
+22:21:27 UTC: schema17/old96/konfiguracije/ključi ostanejo, javni Native API
+vrne200 z isto identiteto, izvirni cron je bajtno obnovljen. **Izolirana
+obnova te dejanske kopije, apply in release še niso izvedeni.** Pregledni
+test1 zahteva svoj ločen enak postopek. Test2 ni samodejno vključen. Ne
+sklepamo o živi schema18 iz objavljenega izvora 0.14.0.
+
+Končni native kandidat je **6ce59cf / 1.9.0+28**. Vseh 421 zamrznjenih vhodov
+se ujema z rootom, skupni hash je
+`3f403c42f2c1cf3ea4ed4d38a99119fb250c05c0a49e3879b0d94cbf7695296c`.
+Android AAB ima 80.226.012 bajtov in SHA256
+`347d6d8b1a25c61c846a84c73d1112c8a6e41c6cd71dcb2bf36b64650fd3c61c`.
+Podpis, isti upload certifikat/Firebase, CRC/bundletool, osem dovoljenj in
+16KiB so preverjeni. Sveži iOS razvojni arhiv ima 216.181.591 bajtov;
+strict deep podpis, identiteta in 18 privacy manifestov so preverjeni. CLI
+izvoz nima Accounts, zato Store IPA/izvoz še zahteva običajni Xcode Organizer.
+macOS Debug je zgrajen v svežem DerivedData, nepodpisan in nezagnan. Source
+checker, 23 izdajnih in 7 Firebase kontrol so uspešni. Dejanske gradnje so
+**tri na platformo**; prvi dve vmesni kandidatki sta ohranjeni kot zavrnjeni
+in nista bili naloženi. Nato sledita javna Android oddaja in
+TestFlight; **nobena od teh novih trgovinskih oddaj še ni potrjena**.
+SDK, zaklenjene odvisnosti in platformna dovoljenja se s funkcionalnimi
+sklopi ne nadgrajujejo. iOS smernice so bile upoštevane pri zasnovi; fizična
+Android/iPhone/macOS uporaba, VoiceOver/TalkBack in novi sistemski prikaz
+niso potrjeni. Windows/Linux native gradnji sta po naročilu odloženi.
+
+## Zgodovinski zapisi prejšnjih nadgradenj — do 9. oktobra 2026
+
+Spodnji dnevniki ohranijo tedanje različice, kanale in rezultate. Njihove
+odprte oziroma zaključene vrstice niso aktualni status nadgradnje 1.9.0+28.
 
 ## Nastavitve prostora — aktivna interna 1.1.10+13
 

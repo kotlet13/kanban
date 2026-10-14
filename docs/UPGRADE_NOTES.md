@@ -1,378 +1,217 @@
 # Opombe za nadgradnje in popravke
 
-V tem klepetu zbiramo in dopolnjujemo opombe za prihodnje nadgradnje in
-popravke Jivie. Začetno zbiranje je potekalo brez popravkov. Uporabnik je
-14. oktobra 2026 nato izrecno naročil implementacijo, commit in push po
-zaključenih sklopih ter končno javno Android izdajo in iOS TestFlight.
+Uporabnik je 14. oktobra 2026 po začetnem zbiranju opomb naročil izvedbo,
+commit in push po zaključenih sklopih ter nato javno Android izdajo in iOS
+TestFlight. **Vseh 19 spodnjih opomb je lokalno izvedenih.** Ta status pomeni
+izvorno kodo in lokalna preverjanja; nove gostovane namestitve, trgovinske
+objave in fizičnega preizkusa še ne potrjuje. Dokaze, različice pogodb in
+odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
-## Potrjene odločitve za izvedbo
+## Potrjene odločitve
 
-- Brisanje odstrani celotno pripadajočo vsebino prostora/projekta; nadrejeni
-  prostor, drugi prostori, uporabniški računi in dostop do strežnika ostanejo.
-- Po zaznanem odvzemu dostopa skupna vsebina ni več dosegljiva; lastne še
-  neposlane osnutke ohraniti ločeno za izvoz, brez samodejnega trajnega izbrisa
-  vse lokalne shrambe.
-- Odstranitev člana prekliče dostop do prostora in njegovih projektov, tudi
-  prek ločenih povabil. Lastništvo pred odstranitvijo ustrezno prenesti ali
-  jasno preprečiti odstranitev do rešitve lastništva.
-- Vrt je slikovit in barvit celozaslonski prikaz, z vizualno rastjo po dnevih,
-  zgodovino grede skozi leta in pobiranjem, ki ohrani zgodovino ter izprazni
-  prikaz zasaditve. Ob ustvarjanju fizične mere vrta v metrih; prosto
-  postavljanje in raztegovanje gred s približnimi merami; nastavljiv razmak
-  rastlin in viden razmak med gredami. Začetni nabor osnovnih vrtnin.
-- Za Vrt GPT-6 Astra/zelo visoko razmišljanje, za druge podagente GPT-6.1
-  Sol/high. Windows in Linux sta za to fazo odložena; Android/iOS/macOS
-  in smernice iOS ostanejo del izvedbe.
+Brisanje zajame vsebino izbranega prostora oziroma projekta in dovoljene
+podrejene vsebine. Nadrejeni prostor, sorodni prostori, računi ter prijava na
+strežnik ostanejo. Pred brisanjem uporabnik vidi imenovan predogled s števci,
+ovirami in izrecno potrditvijo; spremenjen predogled zahteva novo odločitev.
 
-## Obravnava na vseh platformah
+Po zaznanem izbrisu ali odvzemu dostopa aplikacija skrije skupno vsebino in
+prekliče aktivne lokalne opomnike. Lastno še neposlano delo ohrani ločeno za
+izrecen izvoz in bralni pregled, brez samodejnega pošiljanja ali ponovne
+podelitve dostopa. Običajne kopije ne vključujejo nedovoljene skupne vsebine.
+Odstranitev člana prekliče tudi njegove neposredne dostope in povabila v
+podrejenih projektih; pred odstranitvijo mora biti rešeno lastništvo.
 
-Dogovorjeno 14. oktobra 2026. Vse obstoječe in prihodnje opombe obravnavati z
-vidika Androida, iOS-a, macOS-a, Linuxa in Windowsa. Telefonski posnetki so
-izhodišče za opažanja, obseg rešitve pa vključuje vseh pet platform.
+Vrt ima celozaslonski prizor, vizualno rast po dnevih, zgodovino iste grede
+skozi leta in izrecno pobiranje. Mere vrta so v metrih; grede se prosto
+postavljajo in raztegujejo, z vidnimi merami in razmiki. Uporabnik nastavi
+razmik rastlin ter izbere ilustracijo iz osnovnega nabora vrtnin.
 
-Pri vsaki težavi preveriti prikaz, navigacijo in vedenje ter primernost za
-dotik, miško in tipkovnico. Upoštevati razlike med mobilnimi in namiznimi
-postavitvami ter platformne posebnosti. Uspeh na eni platformi ne potrjuje
-ostalih; ob prihodnji izvedbi ločeno zapisati, kaj je bilo preverjeno in kaj
-ostaja nepreverjeno na posamezni platformi.
-
-Pri vseh spremembah UX posebej upoštevati Applove Human Interface Guidelines
-za iOS. Ob načrtovanju preveriti aktualne smernice za prizadete vzorce,
-predvsem navigacijo, menije, obrazce, geste, dostopnost in potrjevanje
-destruktivnih dejanj. Skupno vedenje aplikacije prilagoditi pričakovanjem
-uporabnikov posamezne platforme; predlagane postavitve iz teh opomb je treba
-pred izvedbo presoditi tudi z vidika iOS.
+Pri izvedbi so bile upoštevane mobilne in namizne postavitve ter smernice iOS.
+Za Vrt je uporabnik izbral GPT-6 Astra z zelo visokim razmišljanjem, za druge
+podagente GPT-6.1 Sol/high. Android, iOS in macOS so v obsegu aktualne izdaje;
+native gradnji Windows in Linux sta po njegovi poznejši odločitvi odloženi.
+Uspeh widget testa ali gradnje ne potrjuje fizične uporabe druge platforme.
 
 ## 1 Ogled vnosa gesla
 
-Zabeleženo 14. oktobra 2026. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
-
-Pri vnosu gesel omogočiti ogled vnesenega gesla, da uporabnik lažje preveri
-pravilnost vnosa. Predlog prikaza: ikona očesa za preklop med skritim in vidnim
-geslom; geslo je ob odprtju obrazca skrito.
+Status: lokalno izvedeno. Geslo je ob odprtju skrito; ikona očesa preklopi
+med skritim in vidnim vnosom. Izbira pomaga preveriti vnos brez spreminjanja
+prijavne semantike ali shranjevanja gesla v besedilno nastavitev.
 
 ## 2 Opomniki glede na rok opravila
 
-Zabeleženo 14. oktobra 2026. Status: opomba za prihodnjo nadgradnjo.
+Status: lokalno izvedeno. Uporabnik lahko izbere opomnik ob roku, eno uro ali
+en dan pred rokom. Čakajoči opomnik sledi spremembi roka; dokončanje opravila,
+izbris ali odstranitev roka ga prekliče. Ponovna otvoritev opravila ga sama
+ne obudi, že dostavljen opomnik pa se zaradi premika roka ne dostavi znova.
 
-Opomnike omogočiti nastaviti neposredno glede na rok na opravilu, brez
-ločenega vnašanja datuma in ure opomnika. Predlog: izbira »ob roku« ali odmika
-pred rokom, na primer 1 uro oziroma 1 dan prej. Ob spremembi roka opravila naj
-se vezani opomnik ustrezno prestavi.
+Izbira deluje za lokalna opravila brez računa in za dovoljeni oddaljeni vir.
+Strežnik čas izračuna iz svojega veljavnega opravila. Ohranijo se stari
+absolutni opomniki in izvirne identitete čakajočih ukazov.
 
 ## 3 Odvečno besedilo v podrobnostih projekta
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka projekta
-»Mansarda«. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
+Status: lokalno izvedeno. »Okvirno trajanje« je privzeto zloženo pojasnilo.
+Ocena dela, manjkajoči podatki in razlaga izračuna ostanejo dosegljivi po
+razširitvi; ne zavzemajo več stalnega prostora pred koledarjem projekta.
+Odločitev je skrivanje v razširljivem razdelku, ne odstranjevanje podatkov.
 
-Na zaslonu Prostor → Projekti → izbrani projekt je pod naslovom projekta in
-nad razdelkom »Koledarski termin« blok »Okvirno trajanje«. Obvestili o
-manjkajoči oceni dela in razpoložljivosti ter dolg odstavek »Upoštevamo preostalo
-ocenjeno delo …« zavzamejo preveč prostora. To besedilo odstraniti iz glavnega
-prikaza ali ga privzeto skriti za razširljivim pojasnilom oziroma ikono za
-informacije. Končna izbira med odstranitvijo in skrivanjem še ni določena.
+## 4 Sporočilo za prazen dan v koledarju projekta
 
-Točno mesto v izvoru:
-
-- `lib/organizer/presentation/projects_page.dart`: metoda `_detail`, vključitev
-  `ProjectPlanningSummary` pod naslovom projekta.
-- `lib/organizer/presentation/planning/project_planning_summary.dart`:
-  `ProjectCapacityPanel` pred koledarjem.
-- `lib/organizer/presentation/planning/project_capacity_panel.dart`: izris
-  naslova in obvestil v vrsticah 77–100 ter stalnega pojasnila
-  `planningCapacityRule` v vrsticah 101–107. Dolgo pojasnilo se izriše za projekt
-  (`phaseId == null`); prikaz posamezne faze ga nima.
-- `lib/l10n/app_sl.arb`: besedila `planningCapacityTitle`,
-  `planningCapacityRule`, `planningCapacityMissingEstimates` in
-  `planningCapacityMissingAvailability`.
-
-## 4 Zavajajoče sporočilo za prazen dan v koledarju projekta
-
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka projekta
-»Mansarda«. Status: lokalno izvedeno; fizični prikaz in nova izdaja še sledita.
-
-Pod izbranim dnevom v koledarju projekta se izpiše »V tem projektu še ni
-opravil.«, čeprav ima projekt opravilo na drug datum. Sporočilo mora opisovati
-izbrani dan, ne celotnega projekta. Želeno besedilo: »Za ta dan ni opravil na
-tem projektu.«
-
-Točno mesto: `lib/organizer/presentation/planning/project_calendar.dart`,
-vrstice 256–260, veja `selectedEntries.isEmpty`. Uporablja prevod
-`organizerNoMatchingTasks` iz `lib/l10n/app_sl.arb` (vrstica 133), ki ga uporablja
-tudi splošni seznam opravil projekta v `projects_page.dart`. Za koledar je
-potrebno ločeno besedilo, da sporočilo za prazen celoten projekt ohrani pravilen
-pomen; ob izvedbi uskladiti tudi angleški prevod.
+Status: lokalno izvedeno. Prazen izbrani dan pove, da za ta dan v projektu ni
+opravil. Ločeno slovensko in angleško besedilo ohrani razliko med praznim
+dnevom in projektom, ki sploh še nima opravil.
 
 ## 5 Arhiviranje v nastavitvah prostora
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka Utripa za
-»Zavod Živi«. Status: opomba za prihodnji popravek.
-
-Gumb »Arhiviraj« pod izbirnikom prostora ne spada na glavni vsebinski zaslon.
-Prestaviti ga v nastavitve izbranega prostora. Sprememba velja tudi za druge
-vsebinske zaslone, na katerih se isti skupni gumb prikazuje, med drugim za
-podrobnosti projekta iz opombe 3.
-
-Za zaslon Planer → Opravila velja poznejša, konkretnejša usmeritev iz opombe
-10: arhiviranje in brisanje v meniju treh pik ob naslovu »Opravila« in oblaku
-za sinhronizacijo.
-
-Točno mesto: `lib/organizer/presentation/shared/sharing_workspace.dart`,
-vrstice 425–449. Gumb je v skupnem ovoju pred izbiro vsebinskega prikaza
-`switch (view)`, zato se pojavlja tudi nad Utripom. Uporablja `peopleArchive`
-oziroma `peopleRestore` in kliče `archiveProjectScope` za izbrani obseg.
-Pri prestavitvi ohraniti trenutni ciljni obseg, pravice in pomen arhiviranja.
+Status: lokalno izvedeno. Samostojni gumb »Arhiviraj« je odstranjen iz skupnega
+ovoja delovnih zaslonov. Upravljanje prostora je v njegovih nastavitvah;
+projektni seznam opravil ima kontekstni meni iz opombe 10. Skupni Utrip ne
+ponuja dejanja, ki bi brez jasnega cilja arhiviralo celoten izbrani prostor.
 
 ## 6 Urejevalnik projekta glede na njegov prostor
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka urejevalnika
-projekta »Zavod Živi« v organizaciji in njegove dopolnitve.
-Status: opomba za prihodnji popravek.
-
-Urejevalnik, odprt prek treh pik v projektu organizacije, ponuja »Osebno« in
-»Dom«. Ti izbiri v tem kontekstu nimata smisla in zavajata glede pripadnosti
-projekta. Projekt mora ostati vezan na svojo organizacijo; urejevalnik naj
-jasno kaže ta kontekst.
-
-Uporabnik želi urejevalnik projekta z možnostjo deljenja, urejanja mejnikov in
-obdobja trajanja. Preurediti vsebino in vrstni red okoli teh projektnih
-nastavitev ter odstraniti neustrezno izbiro »Osebno / Dom« za projekt
-organizacije. Na posnetku že obstajata zložena razdelka »Načrtovani termin« in
-»Faze in mejniki«; zahteva vključuje pregledno ureditev teh možnosti in
-dostop do deljenja v istem urejevalniku. Natančna postavitev še ni določena.
-
-Točno mesto in ugotovitev:
-
-- `lib/organizer/presentation/organizer_editors.dart`, vrstice 480–500:
-  `DropdownButtonFormField<ProjectArea>` se prikaže za vsak projekt, brez
-  prilagoditve vrsti prostora.
-- `lib/organizer/domain/organizer_models.dart`, vrstica 15: stara klasifikacija
-  `ProjectArea` vsebuje samo `personal` in `home`.
-- `lib/organizer/presentation/shared/collaboration_actions.dart`, metoda
-  `project`: skupni projekt uporablja isti urejevalnik in vanj poda `area`.
-  Shranjevanje ostane vezano na `scope.id`; izbira »Osebno / Dom« je polje
-  projekta, ne dejanska izbira ali premik v drug prostor.
-
-Pri prihodnji izvedbi prilagoditi urejevalnik dejanskemu prostoru in pravicam
-deljenja; obstoječih projektov ali članstev ne seliti zaradi spremembe prikaza.
+Status: lokalno izvedeno. Organizacijski projekt kaže svojo organizacijo in
+ne ponuja zavajajoče izbire »Osebno / Dom«. Urejevalnik ohrani načrtovani
+termin, faze in mejnike ter dovoljen dostop do deljenja. Sprememba prikaza ne
+seli projekta ali članstev v drug prostor; zapis preveri trenutni kontekst
+in pravice, tudi če se med odprtim obrazcem spremenijo.
 
 ## 7 Odstranitev člana iz deljenja prostora
 
-Zabeleženo 14. oktobra 2026. Status: zahteva za prihodnjo nadgradnjo in
-preverjanje obstoječega vedenja.
+Status: lokalno izvedeno. Odstranitev člana gospodinjstva ali organizacije
+prekliče tudi njegove neposredne projektne dostope in čakajoča povabila v
+podrejenih prostorih. Lastništvo podrejenega projekta je treba prej prenesti;
+zavrnjena odstranitev ne spremeni članstev delno.
 
-Omogočiti odstranitev člana iz deljenja prostora. Od odstranitve naprej mora
-izgubiti strežniški dostop do tega skupnega obsega in novih podatkov. Že
-preneseni skupni podatki lahko ostanejo na njegovi napravi do naslednje
-sinhronizacije, ko mora aplikacija zaznati odvzem dostopa. To ni izbris
-uporabnikovega računa ali odvzem dostopa do strežnika in drugih dovoljenih
-prostorov.
-
-Pri prihodnjem preverjanju zajeti tudi podrejene projekte, napravo brez
-povezave in njeno ponovno sinhronizacijo. Čakajoče spremembe odstranjenega
-člana ne smejo obnoviti članstva ali dostopa; natančno ravnanje z lokalnimi
-podatki po zaznanem odvzemu še določiti.
+Račun in dostop do drugih dovoljenih prostorov ostaneta. Odjemalec po
+zaznanem odvzemu skrije prenesene skupne podatke in ohrani le ločeno lastno
+neposlano delo za izrecen izvoz. Naprava brez povezave spremembe ne more
+zaznati pred ponovnim stikom s strežnikom; prejšnjih prenesenih ali izvoznih
+kopij s tem ne prikličemo nazaj.
 
 ## 8 Povabila v arhiviran prostor
 
-Zabeleženo 14. oktobra 2026. Status: vprašanje za prihodnje preverjanje.
-
-Preveriti, kaj se zgodi pri pošiljanju povabila v neaktiven oziroma arhiviran
-prostor: ali ga je mogoče poslati, ali ga prejemnik lahko sprejme in kakšen
-dostop s tem dobi. Zajeti tudi povabilo, poslano pred arhiviranjem in sprejeto
-po njem. Želeno končno vedenje določiti na podlagi ugotovitev; povabilo ne sme
-tiho ponovno aktivirati prostora. Trenutno vedenje v tem klepetu ni preverjeno.
+Status: lokalno izvedeno. Arhiviran prostor in njegovi podrejeni projekti
+zavrnejo novo povabilo ter sprejem starega čakajočega povabila. Povabilo
+prostora ne aktivira. Izrecna obnova arhiva ohrani članstva; opomnikov, ki so
+med arhiviranjem zapadli oziroma bili preklicani, ne dostavi za nazaj.
 
 ## 9 Brisanje prostorov in posameznih projektov
 
-Zabeleženo 14. oktobra 2026. Status: zahteva za prihodnjo nadgradnjo in
-preverjanje obstoječega vedenja.
+Status: lokalno izvedeno. Lokalni in dovoljeni skupni prostori ter projekti
+imajo izrecen predogled brisanja in potrditev. Celoten skupni obseg zahteva
+lastnika; tuje lastništvo ali zunanje finančne povezave lahko brisanje jasno
+preprečijo. Projektni izbris ohrani nadrejeno organizacijo oziroma
+gospodinjstvo in nepovezane finančne zapise.
 
-Omogočiti brisanje prostorov in tudi posameznih projektov. Drugim članom lahko
-že preneseni podatki ostanejo na napravi do naslednje sinhronizacije, ko mora
-aplikacija zaznati izbris. Preveriti obseg izbrisa, povezano vsebino in ravnanje
-s podrejenimi projekti; stare čakajoče spremembe ne smejo obuditi izbrisanega
-prostora ali projekta.
-
-Ob brisanju uporabniki ne smejo izgubiti dostopa do strežnika. Ohraniti njihove
-račune, prijavo in dostop do drugih dovoljenih prostorov. Izbris posameznega
-projekta ne sme izbrisati njegove organizacije ali gospodinjstva. Natančno
-ravnanje z lokalnimi podatki po zaznanem izbrisu še določiti.
+Strežnik trajno označi izbrisane identitete, zato star čakajoči zapis ne more
+obuditi vsebine. Zasebne fotografije se odstranijo po potrjeni SQL
+transakciji prek ponovljive vrste za čiščenje. Drugi računi, prijava in
+registracije naprav ostanejo. Odjemalci izbris upoštevajo ob sinhronizaciji;
+lastno neposlano delo ostane v ločenem obnovitvenem območju.
 
 ## 10 Arhiviranje in brisanje v meniju na zaslonu opravil
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka Planer →
-Opravila za izbrani projekt »Spletna stran«.
-Status: opomba za prihodnji popravek.
-
-Odstraniti samostojni gumb »Arhiviraj« nad naslovom »Opravila«. Ob naslovu
-»Opravila« in oblaku za sinhronizacijo dodati meni treh pik z možnostma
-»Arhiviraj« in »Izbriši«.
-
-Posnetek prikazuje seznam opravil projekta, ne urejevalnika posameznega
-opravila. Arhiviranje in brisanje v tem meniju se nanašata na izbrani projekt
-oziroma obseg, ki ga trenutno arhivira samostojni gumb. Obseg dejanja mora biti
-jasen tudi uporabniku. Veljajo zahteve iz opombe 9: ohraniti račun, dostop do
-strežnika in drugih prostorov ter nadrejeno organizacijo oziroma gospodinjstvo.
-
-To je konkretnejša dopolnitev opombe 5 za zaslon opravil. Obstoječi samostojni
-gumb izvira iz `lib/organizer/presentation/shared/sharing_workspace.dart` in
-kliče `archiveProjectScope`.
+Status: lokalno izvedeno. Ob naslovu »Opravila« in sinhronizaciji je za
+izbrani projekt meni treh pik z dovoljenima možnostma arhiviranja in
+brisanja. Dejanji se nanašata na ta projekt, ne na posamezno opravilo ali
+celoten nadrejeni prostor. Potrditev pokaže ime in dejanski obseg brisanja.
 
 ## 11 Približevanje table in povečanje besedila v Idejniku
 
-Zabeleženo 14. oktobra 2026. Status: uporabniška opažanja in zahteva za
-prihodnjo nadgradnjo oziroma preverjanje.
+Status: lokalno izvedeno. Dva prsta premikata in približujeta pogled tudi
+med izbiro, risanjem in brisanjem. Drugi prst prekliče nedokončano urejevalno
+potezo, ne zapiše neželene risbe ali premika elementa. Po dvigu prstov
+ostane izbrano orodje uporabno.
 
-Uporabnik pogreša približevanje table z dvema prstoma na telefonu
-(`pinch to zoom`), saj je vstavljeno besedilo majhno. Preveriti delovanje in
-dosegljivost te geste v dejanskem toku uporabe, tudi ob izbranem besedilnem
-elementu. Opomba opisuje uporabniško težavo; ne predpostavlja, da približevanje
-v izvoru še ni izvedeno.
-
-Omogočiti tudi povečanje samega besedila, da na tabli ostane večje neodvisno od
-trenutne povečave pogleda. Predlog: nastavitev velikosti pisave ali jasno
-upravljanje velikosti izbranega besedilnega elementa. Povečanje se mora shraniti
-kot sprememba elementa. Natančen način upravljanja še ni določen.
+Besedilo in lističi imajo ločena gumba za povečanje in zmanjšanje pisave.
+Velikost se shrani v element, ne v povečavo pogleda; vključena je v
+razveljavitev in ponovno uveljavitev. To velja tudi za oznake na fotografiji.
 
 ## 12 Meni za arhiviranje in brisanje ideje
 
-Zabeleženo 14. oktobra 2026. Status: uporabniško opažanje in zahteva za
-prihodnji popravek.
-
-Uporabnik v Idejniku ne najde možnosti brisanja ideje; ni jasno, ali manjka ali
-je skrita. Ob posamezni ideji dodati jasno dosegljiv meni treh pik z možnostma
-»Arhiviraj« in »Izbriši«. Dejanji veljata za izbrano idejo, ne za njen prostor
-ali posamezni besedilni oziroma risarski element na tabli.
-
-Ob prihodnji izvedbi preveriti obstoječo možnost brisanja in podporo
-arhiviranju ter meni uskladiti s pravicami urejanja v izbranem prostoru.
+Status: lokalno izvedeno. Vsaka uredljiva ideja ima dosegljiv meni treh pik
+za arhiviranje oziroma obnovo in potrjeno brisanje imenovane table. Dejanje
+velja za idejo, ne za njen prostor ali posamezni element. Bralec nima
+urejevalnih dejanj; pogled Vsi obdrži natančen izvor in preveri pravice.
 
 ## 13 Arhivirane stvari v privzeto zloženem razdelku
 
-Zabeleženo 14. oktobra 2026. Status: splošna zahteva za prihodnjo nadgradnjo.
-
-Arhiviranih stvari ne prikazovati med aktivnimi elementi na glavnih seznamih.
-Na ustreznem zaslonu jih združiti v razdelek »Arhivirano«, ki je privzeto
-zložen in pokaže vsebino šele ob razširitvi. Tako arhivirani elementi ne
-zavzemajo prostora med običajno uporabo; uporabnik izrecno navede projekte
-kot primer. Usmeritev velja tudi za druge arhivirane stvari iz teh opomb.
-
-Arhiviranje mora ohraniti dosegljivost elementov prek tega razdelka in ostati
-ločeno od brisanja. Pri prikazu upoštevati izbrani prostor in pravice dostopa.
+Status: lokalno izvedeno. Arhivirani projekti, ideje in prostori so ločeni
+od aktivnih elementov v privzeto zloženih razdelkih. Aktivni Utrip, opravila,
+koledar in opomniki izključijo arhiviran prostor oziroma projekt. Arhiv
+ostane dosegljiv za dovoljeno branje in izrecno obnovo; shranjene finančne
+postavke ter zgodovina ostanejo ohranjene.
 
 ## 14 Preglednejša izbira prostora in dostop do projektov
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka spustnega
-seznama prostorov. Status: raziskati druge rešitve; končna zasnova ni izbrana.
+Status: lokalno izvedeno; zasnova je izbrana. Glavni izbirnik vsebuje osebni
+prostor, lokalne prostore, gospodinjstva in organizacije. Posamezni skupni
+projekti so v ločenem seznamu »Deljeno z mano« z iskanjem. Projekti
+nadrejenega prostora ostanejo dosegljivi v njegovem projektnem seznamu.
 
-Spustni seznam meša osebni prostor, gospodinjstva, organizacije in posamezne
-deljene projekte. Z večjim številom projektov bo hitro postal predolg in
-nepregleden. Uporabnik zavrača prikazovanje posameznih projektov v tem skupnem
-spustnem seznamu in želi raziskati drugačno rešitev.
-
-Možnosti za primerjavo:
-
-- Izbirnik vsebuje prostore; projekte se izbira v preglednem seznamu znotraj
-  gospodinjstva oziroma organizacije, z iskanjem pri večjem številu projektov.
-- Samostojen zaslon za izbiro prostora in projektov, z jasno hierarhijo in
-  iskanjem, namesto dolgega spustnega seznama.
-- Za neposredno deljene projekte brez članstva v nadrejenem prostoru ločen
-  dostop prek seznama deljenih projektov. Takemu uporabniku ne prikazati ali
-  odpreti nedovoljene vsebine nadrejene organizacije oziroma gospodinjstva.
-
-Primerjati tudi število korakov za pogosto menjavo projekta in jasnost
-trenutno izbranega prostora/projekta. Arhivirane stvari morajo slediti opombi
-13 in ostati v privzeto zloženem razdelku.
-
-Točno mesto sedanjega prikaza:
-`lib/organizer/presentation/shared/space_picker.dart`, `OrganizerSpacePicker`.
-V isti seznam doda vse neosebne skupne obsege, vključno s projekti; arhivirane
-projekte trenutno doda pod navaden naslov brez zlaganja.
+Neposredno deljeni projekt ne odpre vsebine nedovoljenega nadrejenega
+prostora. Zaprti izbirnik pokaže dejansko trenutno izbiro tudi za tak
+projekt. Arhivi so zloženi; izbira preveri trenutno identiteto in dostop.
+Na iOS je pregled prostora celozaslonski z varnim območjem in običajnim
+platformnim prehodom, na Androidu in macOS ostane dialog.
 
 ## 15 Vizualna in uporabniška prenova Vrta
 
-Zabeleženo 14. oktobra 2026. Status: izhodišče za največjo načrtovano vizualno
-nadgradnjo; konkretne težave in želeno zasnovo še dopolniti.
+Status: lokalno izvedeno. Celozaslonski vrt ima lesene robove gred, zemljo in
+vektorske ilustracije osnovnih vrtnin. Dotik grede ali seznam »Grede in
+zgodovina« odpre zasaditve in zgodovino iste grede skozi leta. Ločeni
+urejevalnik razporeda uporablja isti neshranjeni osnutek.
 
-Uporabnik ocenjuje, da je modul Vrt tehnično dobro izveden, njegova sedanja
-uporabniška izkušnja pa je daleč od lepe in prijetne uporabe. Načrtovati
-temeljito vizualno in UX prenovo modula. Tehnična kakovost sama ne pomeni
-ustreznega prikaza ali enostavne uporabe.
+Nov vrt dobi mere v metrih; staremu jih je mogoče dodati brez spremembe
+geometrije. Grede se prosto rišejo, premikajo in raztegujejo; mere in razmiki
+so vidni. Gostota ilustracij sledi nastavljivemu razmiku rastlin. Rast po
+koledarskih dnevih je vizualna ocena glede na vneseno dejansko setev oziroma
+sajenje, ne agronomska napoved.
 
-Konkretne pripombe, primere zaslonov in pričakovane tokove zbirati v
-nadaljevanju. Končna postavitev še ni določena. Pri načrtovanju velja skupno
-pravilo vseh petih platform in upoštevanje smernic iOS. Ta opomba ne naroča
-sprememb podatkovnega modela ali izvedbe popravkov.
+Izrecna označitev pobiranja odstrani zasaditev iz prizora in ohrani celotno
+zgodovino. Greda je prazna, ko so pobrane vse njene zasaditve izbrane sezone.
+Shranjevanje je izrecno; približevanje, ogled zgodovine in menjava pogleda
+ne zapišejo osnutka. [Podrobnosti in dokazi](GARDEN.md).
 
 ## 16 Zaporedni vnos nakupov in količine na istem zaslonu
 
-Zabeleženo 14. oktobra 2026. Status: lokalno izvedeno; 4 ciljna preverjanja vnosa/fokusa in napake PASS, nova izdaja še sledi.
+Status: lokalno izvedeno. Uspešno dodajanje artikla vrne fokus v vnos za
+naslednji artikel. Napaka ohrani vneseno vsebino. Količina je na istem
+zaslonu in sprejme prosto besedilo, na primer »2 kosa«, »1 kg« ali »1 paket«,
+z ohranjenim tokom telefonske in namizne tipkovnice.
 
-Po vsakem uspešno potrjenem vnosu nakupa ponovno osredotočiti vnosno polje za
-naslednji artikel, da je mogoče hitro dodajati več artiklov zaporedoma brez
-ponovnega izbiranja polja. Ob neuspešnem shranjevanju ohraniti vneseno vsebino.
+## 17 Odpiranje nakupovalnega seznama iz obvestila
 
-Na istem zaslonu omogočiti tudi vnos količine oziroma števila kosov. Ohraniti
-sedanjo možnost prostega besedila, ne omejiti polja na številke: na primer
-»2 kosa«, »1 kg« ali »1 paket«. Uskladiti tok potrjevanja in fokusa za telefonsko
-tipkovnico ter tipkovnico na namizju, z upoštevanjem smernic iOS.
+Status: lokalno izvedeno. Odprtje obvestila pridobi celoten dovoljeni seznam
+v pravilnem računu in prostoru brez nepotrebnega čakanja na splošno
+sinhronizacijo. Spremenjeni artikli so označeni, prvi dosegljivi se po potrebi
+pomakne v vidno območje; združen dogodek ohrani vse svoje cilje.
 
-## 17 Odpiranje nakupovalnega seznama in označitev spremembe iz obvestila
-
-Zabeleženo 14. oktobra 2026. Status: uporabniško opažanje in zahteva za
-prihodnji popravek.
-
-Uporabnik je bil v prostoru Dom; po odprtju obvestila o nakupovalnem seznamu
-je trajalo predolgo, da se je odprl dejanski seznam oziroma dodani artikel.
-Vzrok zakasnitve še ni preverjen.
-
-Ob dotiku obvestila o spremembi nakupovalnega seznama neposredno odpreti pravi
-seznam v pripadajočem računu in prostoru. Na seznamu jasno označiti konkretno
-spremembo oziroma spremenjeni artikel in ga po potrebi pomakniti v vidno
-območje. Ob združenem obvestilu označiti vse zajete spremembe. Končen način
-vizualnega označevanja še določiti.
-
-Preveriti pot od obvestila do seznama in odpraviti nepotrebno čakanje ali
-vmesno navigacijo. Ob odprtju ohraniti preverjanje pravic; branje obvestila ne
-sme samodejno označiti artikla kot kupljenega. Upoštevati tudi spremembe, pri
-katerih je artikel že izbrisan ali dostop do seznama odvzet.
+Odprtje obvestila ne označi artikla kot kupljenega. Izbrisan artikel ali
+odvzet dostop se obravnava z dejanskim razpoložljivim ciljem oziroma
+sporočilom. Povzetek več dogodkov odpre ustrezni center obvestil; uporabnik
+nato izbere posamezni dovoljeni cilj. Fizična hitrost nove izdaje še ni
+izmerjena na uporabnikovi napravi.
 
 ## 18 Tema in združevanje sistemskih obvestil
 
-Zabeleženo 14. oktobra 2026 na podlagi uporabnikovega posnetka Androidovega
-prikaza obvestil. Status: zahteva za prihodnjo nadgradnjo.
+Status: lokalno izvedeno. Nova oblika poda dovoljeno temo dogodka in
+povezani projekt, opravilo ali seznam. Android uporablja skupino in
+povzetek s številom dogodkov; razširitev ohrani posamezne dogodke in njihove
+cilje. Skupine so ločene po strežniku in računu.
 
-Jivie trenutno na posnetku kaže samo »Imate novo obvestilo.«. Uporabnik želi
-videti vsaj osnovno temo dogodka in uporabne podrobnosti. Pri enem obvestilu
-jasno navesti vrsto dogodka in povezani projekt, opravilo ali nakupovalni
-seznam, na primer:
+iOS in macOS uporabljata sistemsko združevanje po niti. Končna uskladitev
+lokalnih opomnikov z isto strežniško APNs nitjo je še del tekočega
+izdajnega popravka; obstoječega že zapadlega obvestila zaradi spremembe
+združevanja ne smemo ponovno sprožiti. Dejanski prikaz, dostava in odpiranje
+na fizičnih napravah potrebujejo ločeno potrditev.
 
-- »Sprememba na projektu X«.
-- »Dodeljeno vam je opravilo …«.
-- »Sprememba na opravilu Y«.
-- »Dodan je izdelek v nakupovalnem seznamu Z«.
+## 19 Položaj nastavitev opomnikov ob osvežitvi
 
-Več obvestil združiti v skupen, privzeto zložen sistemski prikaz s številom
-obvestil in smiselnim povzetkom, namesto ločene vidne vrstice za vsako
-obvestilo. Ob razširitvi omogočiti pregled tem in podrobnosti. Uporabnikov
-vizualni zgled je združeni prikaz Codex/ChatGPT na posnetku.
-
-Združevanje prikaza mora ohraniti posamezne dogodke in dostop do njihovih
-pravih ciljev. Povezati z opombo 17 za nakupovalne sezname. Pravila združevanja
-in odpiranja skupnega povzetka še določiti, vključno z dogodki iz različnih
-prostorov oziroma računov.
-
-Zasnovo presoditi na vseh petih platformah in jo prilagoditi sistemskim
-možnostim posamezne platforme ter smernicam iOS. Ta opomba se nanaša na
-sistemska obvestila; ni zahteva za posnemanje Androidove postavitve na vseh
-platformah.
-
-## 19. Preskakovanje nastavitev opomnikov ob osvežitvi
-
-Posnetek Screen_Recording_20261014_224426: položaj drsenja in
-odprti razdelki morajo ostati med osveževanjem, shranjevanjem in sinhronizacijo.
-Lokalno izvedeno: samostojen ScrollController zunaj ponovnega nalaganja
-organizatorja, stabilne identitete kartic in rezervirana višina indikatorja.
-Regresijski UI preizkus s tremi zaporednimi ponovnimi nalaganji PASS.
-Fizična namestitev nove izdaje še sledi.
+Status: lokalno izvedeno. Položaj drsenja in odprti razdelki ostanejo med
+osveževanjem, shranjevanjem ter sinhronizacijo. Zaslon ima svoj
+ScrollController, stabilne identitete kartic in rezervirano višino
+indikatorja. Regresijski test s tremi zaporednimi ponovnimi nalaganji je
+uspešen; nova fizična namestitev še sledi.

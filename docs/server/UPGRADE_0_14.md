@@ -159,3 +159,43 @@ seal sprejme natanko101izvornih datotek in njihove bajte. Zapečaten izhod tega
 lokalnega preizkusa uporablja **sintetični zajem** in ni za živo namestitev.
 Živo gostovanje potrebuje svoj novi dejanski capture/backup/restoreproof;
 živi strežniki v tem koraku niso bili kontaktirani ali spremenjeni.
+
+
+## Dejanski predhodni produkcijski korak — 15. oktober
+
+Sveži produkcijski capture je potrdil isto identiteto
+`ad56910f-ca2e-41ee-af0d-3f18081497cf`, schema17,96starih izvornih datotek
+in9pinned zasebnih/config/ključnih datotek. Preverjeni zapečateni komplet
+je pripravljen, pet ciljnih delavcev je bilo začasno ustavljenih, HTTPS503
+preverjen. Dva prezgodnja izvoza je65-sekundno varovalo pravilno zavrnilo;
+po dejanskem zamiku je dosledni izvoz zajel92tabel/319vrstic/2DATA datoteki
+in17arhivskih vnosov. Arhiv58097bajtov ima SHA256
+`8918015598615b82c3642c6bd9125633379f159daa42648eba69401a974911dc`.
+Shramba kopije ostane zunaj document rootov in Git, z zasebnimi pravicami.
+
+Brave je zavrnil prenos tega ZIP-a, nato se je Mac zaklenil. Dejanska
+izolirana obnova zato **ni izvedena**. Noben stage/DDL/code swap ni izveden.
+Da produkcija ne ostane v vzdrževanju med čakanjem, je pregledani
+`abort.php`/`abort.sh` potrdil odsotnost state/stage/migracij in schema18polj,
+pravo identiteto/schema17, natančni old96/config/ključe in originale;
+atomarno je vrnil HTTPS in po potrditviAPI izvirni cron.
+
+Navadni Kanboard`/index.php` po obnovi pravilno vrne302, zato200preverjanje
+v abort pomagaču uporablja javni Native capabilitiesPOST. Odgovor zahteva
+strogoTLS/noFollow, v1/data.api=familyhub_native/version1, isti serverId in
+enabled=true. NepreverjenHTML,302 ali napačna identiteta niso sprejeti.
+Prvi abort je po obnoviHTTPS obstal pred cronom na tem strožjem preverjanju;
+pregledana korekcija in nadaljevanje`--verify-http` sta nato omogočila
+preverjeno vrnitev izvirnegacrona. `abort-checkpoint.json` dejansko potrdi
+`aborted-before-ddl`,API200/workerCronRestoredtrue ob22:21:27UTC14.oktobra
+(00:21:27CEST15.oktobra). Vse kopije/izvorni pomagači so ohranjeni.
+
+Abort ima izolirani schema17preizkus s tremi negativnimi varovali; HTTPje
+simuliran samo v fixtureju. Popravljeni APIprobe ima2pozitivni/7negativnih
+kontrol in PHP8.4lintPASS. Dejanska gostovana pot je uporabila praviTLS.
+
+Nadaljevanje potrebuje odklenjen Mac ter novo svežo capture/pause/kopijo
+po ponovni aktivnosti produkcije, nato resnično obnovo in prvotni postopek
+stage/apply/verify/release. Te že zaključene abort mape ne uporabljaj za
+novo migracijo; njen capture/kopija sta zgodovinska predhodna dokaza.
+Pregledni test1 in test2 v tem koraku nista bila spremenjena.

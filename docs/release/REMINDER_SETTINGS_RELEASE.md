@@ -63,3 +63,11 @@ Dokazi: `build/qa/reminder-settings-release-20261014/android/`:
 source-input-manifest.json, mobile-shell-port.diff, isolated-reminder-tests.txt,
 isolated-analysis.txt, build.txt, verification.txt, android-release-artifact-
 evidence.json ter internal-inactive.png. public-submitted.png/.txt in play-release-evidence.json potrjujejo oddajo.
+
+
+## Potrjena javna dostopnost —15. oktober
+
+Svež read-onlyPlayConsole/release3 potrdi1.8.0(27) **Na voljo vGoogluPlay**,
+100%/1država, datum14okt21:42. Google je zaključil prejšnji pregled;
+ni novegradnje ali oddaje27. Aktualna nadgradnja28je ločeno pripravljena
+v [izdajnem zapisu](UPGRADE_1_9.md) in še ni naložena/oddana.
