@@ -20,6 +20,8 @@ class OrganizerShoppingPage extends StatefulWidget {
     this.onShare,
     this.onMoveToHousehold,
     this.emptyDescription,
+    this.highlightedItemIds = const {},
+    this.highlightList = false,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
@@ -29,6 +31,8 @@ class OrganizerShoppingPage extends StatefulWidget {
   final Widget? titleAccessory;
   final ValueChanged<LocalShoppingList>? onShare, onMoveToHousehold;
   final String? emptyDescription;
+  final Set<String> highlightedItemIds;
+  final bool highlightList;
   final String? selectedId;
   final ValueChanged<String?> onSelection;
   @override
@@ -42,6 +46,8 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
   final _itemFocus = FocusNode();
   int _generation = 0;
   bool _busy = false;
+  final _highlightKeys = <String, GlobalKey>{};
+  String? _revealedList;
 
   @override
   void didUpdateWidget(OrganizerShoppingPage oldWidget) {
@@ -191,6 +197,23 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
         .toList();
     final pending = items.where((item) => !item.isChecked).toList();
     final bought = items.where((item) => item.isChecked).toList();
+    if (_revealedList != list.id && widget.highlightedItemIds.isNotEmpty) {
+      _revealedList = list.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        for (final id in widget.highlightedItemIds) {
+          final target = _highlightKeys[id]?.currentContext;
+          if (target != null) {
+            Scrollable.ensureVisible(
+              target,
+              alignment: .3,
+              duration: const Duration(milliseconds: 200),
+            );
+            break;
+          }
+        }
+      });
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -237,6 +260,17 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
               ),
           ],
         ),
+        if (widget.highlightList)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              l.notificationChanged,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         if (widget.onMoveToHousehold != null)
           Align(
             alignment: Alignment.centerLeft,
@@ -313,6 +347,9 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
         if (bought.isNotEmpty) ...[
           const SizedBox(height: 20),
           ExpansionTile(
+            initiallyExpanded: bought.any(
+              (item) => widget.highlightedItemIds.contains(item.id),
+            ),
             tilePadding: EdgeInsets.zero,
             title: Text('${l.organizerBought} (${bought.length})'),
             children: [for (final item in bought) _row(item)],
@@ -323,7 +360,13 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
   }
 
   Widget _row(LocalShoppingItem item) => Container(
+    key: widget.highlightedItemIds.contains(item.id)
+        ? _highlightKeys.putIfAbsent(item.id, GlobalKey.new)
+        : ValueKey('shopping-row-${item.id}'),
     decoration: BoxDecoration(
+      color: widget.highlightedItemIds.contains(item.id)
+          ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: .6)
+          : null,
       border: Border(
         bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
@@ -366,6 +409,17 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
+                  if (widget.highlightedItemIds.contains(item.id)) ...[
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: context.l10n.notificationChanged,
+                      child: Icon(
+                        Icons.new_releases_outlined,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

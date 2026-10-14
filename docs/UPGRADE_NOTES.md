@@ -370,7 +370,7 @@ platformah.
 
 ## 19. Preskakovanje nastavitev opomnikov ob osvežitvi
 
-Posnetek 1000012000 / Screen_Recording_20261014_224426: položaj drsenja in
+Posnetek Screen_Recording_20261014_224426: položaj drsenja in
 odprti razdelki morajo ostati med osveževanjem, shranjevanjem in sinhronizacijo.
 Lokalno izvedeno: samostojen ScrollController zunaj ponovnega nalaganja
 organizatorja, stabilne identitete kartic in rezervirana višina indikatorja.

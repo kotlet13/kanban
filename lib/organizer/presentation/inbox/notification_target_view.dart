@@ -1,3 +1,4 @@
+import '../shopping_page.dart';
 import '../ideas/ideas_page.dart';
 import '../ideas/idea_editor.dart';
 import '../../state/idea_provider.dart';
@@ -22,6 +23,7 @@ import '../shared/collaboration_actions.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'reminder_snooze.dart';
+import 'local_task_reminder_editor.dart';
 import 'local_notification_target.dart';
 import 'remote_reminder_editor.dart';
 
@@ -33,6 +35,7 @@ Future<bool> showNotificationTarget(
   ValueChanged<String>? onMembers,
   Widget Function(Widget)? wrap,
   bool Function()? isCurrent,
+  NotificationOpenResult? validatedResult,
 }) async {
   if (isCurrent?.call() == false) return false;
   if (!await activateLocalNotificationTarget(context, ref, target) ||
@@ -42,9 +45,11 @@ Future<bool> showNotificationTarget(
   }
   final capturedSession = ref.read(collaborationProvider).valueOrNull?.session;
   try {
-    final result = await ref
-        .read(collaborationProvider.notifier)
-        .openNotificationTarget(target);
+    final result =
+        validatedResult ??
+        await ref
+            .read(collaborationProvider.notifier)
+            .openNotificationTarget(target);
     if (!context.mounted || isCurrent?.call() == false) return false;
     final current = ref.read(collaborationProvider).valueOrNull;
     if (!target.isPersonal &&
@@ -88,6 +93,21 @@ Future<bool> showNotificationTarget(
     if (!target.isPersonal &&
         (current?.session == null || !target.matches(current!.session!))) {
       return false;
+    }
+    if (target.records.isNotEmpty &&
+        target.records.every(
+          (record) =>
+              record.type == 'shoppingList' || record.type == 'shoppingItem',
+        )) {
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute(
+          builder: (_) => ShoppingNotificationPage(
+            target: result.target,
+            offline: result.status == NotificationOpenStatus.offline,
+          ),
+        ),
+      );
+      return true;
     }
     if (target.records.length == 1 && target.records.single.type == 'idea') {
       return await openIdeaNotificationBoard(
@@ -157,6 +177,144 @@ Future<bool> showNotificationTarget(
       );
     }
     return false;
+  }
+}
+
+class ShoppingNotificationPage extends ConsumerStatefulWidget {
+  const ShoppingNotificationPage({
+    super.key,
+    required this.target,
+    this.offline = false,
+  });
+  final NotificationTarget target;
+  final bool offline;
+  @override
+  ConsumerState<ShoppingNotificationPage> createState() =>
+      _ShoppingNotificationPageState();
+}
+
+class _ShoppingNotificationPageState
+    extends ConsumerState<ShoppingNotificationPage> {
+  String? _selected;
+  @override
+  Widget build(BuildContext context) {
+    final target = widget.target, l = context.l10n;
+    final personal = ref.watch(organizerProvider).valueOrNull;
+    final state = ref.watch(collaborationProvider).valueOrNull;
+    final scope = state?.scopes
+        .where((scope) => scope.id == target.scopeId)
+        .firstOrNull;
+    final permitted = target.isPersonal
+        ? personal != null &&
+              (personal.workspaceKey == target.localWorkspaceId ||
+                  target.localWorkspaceId == 'local' &&
+                      personal.workspaceKey ==
+                          'private:${state?.session?.partition}' &&
+                      state?.localAccessAllowed == true)
+        : state?.session != null &&
+              target.matches(state!.session!) &&
+              scope != null &&
+              !scope.revoked &&
+              !scope.blocked &&
+              state.localAccessAllowed;
+    if (!permitted) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l.organizerShopping)),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text(l.sharingAccessRevoked),
+        ),
+      );
+    }
+    final personalPresentation =
+        target.isPersonal || scope?.kind == SharedScopeKind.personal;
+    if (personalPresentation && personal == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l.organizerShopping)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    final snapshot = personalPresentation
+        ? personal!
+        : sharedPresentationSnapshot(state!.dataForScope(scope!.id));
+    String recordId(NotificationRecordTarget record) =>
+        scope?.kind == SharedScopeKind.personal
+        ? state!.personalRecordId(record.recordId)
+        : record.recordId;
+    final changedItems = {
+      for (final record in target.records)
+        if (record.type == 'shoppingItem') recordId(record),
+    };
+    final lists = {
+      for (final record in target.records)
+        if (record.type == 'shoppingList') recordId(record),
+      for (final item in snapshot.shoppingItems)
+        if (changedItems.contains(item.id)) item.listId,
+    };
+    final visibleLists = snapshot.shoppingLists
+        .where((list) => lists.contains(list.id))
+        .toList();
+    final active =
+        _selected ?? (visibleLists.length == 1 ? visibleLists.single.id : null);
+    final actions = personalPresentation
+        ? OrganizerActions(context, ref, personal!)
+        : CollaborationActions(
+            context,
+            ref,
+            scope!,
+            state!.dataForScope(scope.id),
+          );
+    final removed = changedItems.any(
+      (id) => !snapshot.shoppingItems.any((item) => item.id == id),
+    );
+    return Scaffold(
+      appBar: AppBar(title: Text(l.organizerShopping)),
+      body: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.offline)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(l.inboxOfflineView),
+                    ),
+                  if (removed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(l.notificationShoppingRemoved),
+                    ),
+                  if (visibleLists.isEmpty)
+                    Text(l.inboxDeleted)
+                  else
+                    OrganizerShoppingPage(
+                      snapshot: snapshot.copyWith(shoppingLists: visibleLists),
+                      actions: actions,
+                      selectedId: active,
+                      onSelection: (id) => setState(() => _selected = id),
+                      readOnly:
+                          !personalPresentation &&
+                          (!scope!.canEdit ||
+                              scope.archived ||
+                              state!.deletionPending),
+                      reportScopeId: personalPresentation ? null : scope!.id,
+                      scopeLabel: scope?.name,
+                      highlightedItemIds: changedItems,
+                      highlightList: target.records.any(
+                        (record) => record.type == 'shoppingList',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -312,6 +470,11 @@ class NotificationTargetContent extends ConsumerWidget {
                             ? l.organizerCompleted
                             : l.organizerTasks,
                       ),
+                      if (personalPresentation && !task.isCompleted)
+                        LocalTaskReminderButton(
+                          task: task,
+                          workspaceKey: personal.workspaceKey,
+                        ),
                       if (!personalPresentation && !task.isCompleted)
                         RemoteReminderButton(
                           scopeId: scope!.id,
