@@ -5,6 +5,12 @@ izbral obstoječi namenski predal `admin@jivie.triparna.si` in sam vnesel njegov
 geslo neposredno v skrit poziv strežniškega terminala. Geslo ni bilo prebrano,
 izpisano, poslano v pogovor ali preneseno v Git.
 
+Poznejši [vklop produkcijskega FCM](PRODUCTION_PUSH.md) ohrani SMTP in poštne
+workerje; externalPush=false spodaj je stanje ob vključitvi pošte. Zaradi
+dovoljenega FCM dodatka sta feature/cron odtisa pozneje drugačna, zato stari
+SMTP setup/check pomočnik namerno zavrne novo stanje. Ne obnovi starega
+feature configa ali crontaba samo zaradi te zavrnitve.
+
 ## Dejansko preverjeno
 
 - cPanel račun `tripar13`; namenski predal obstaja in ni omejen za prijavo ali

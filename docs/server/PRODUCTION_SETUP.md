@@ -1,6 +1,18 @@
 # Jivie produkcija na TriparNA
 
-Stanje: **14. oktober 2026 — FamilyHub 0.13.0/schema17; produkcijski SMTP vključen.**
+Stanje: **14. oktober 2026 — FamilyHub 0.13.0/schema17; produkcijska SMTP in FCM vključena.**
+
+## Produkcijski push 14. oktobra
+
+Ločeni produkcijski FCM račun/ključ za `jivie-e928a` je po lastnikovi potrditvi
+nameščen v zasebni mapi zunaj vseh15 spletnih korenov. Pravi Google OAuth in
+FCM validate_only HTTP200, HTTPS capabilities externalPush=true/smtp=true ter
+dejanski minutni push cron so potrjeni; SMTP in stari cron sta ohranjena.
+[Dokazi in povrnitev](PRODUCTION_PUSH.md). Telefonski prikaz še čaka lastnikovo
+termin oddaljenega opomnika; geslo je obnovil, prijava/izrecna Android
+registracija sta potrjeni (tudi read-only baza1naprava).
+Android ostaja javni1.7.1(26); ni migracije ali nove gradnje. Redne kopije
+ostajajo ločeno odprto delo.
 
 ## Produkcijska pošta 14. oktobra
 
@@ -10,9 +22,9 @@ dejanska preverjena TLS/SMTP prijava, šifrirana vrsta, dva minutna poštna
 workerja z ohranjenim starim crontabom ter veljavni SPF/DKIM/DMARC/PTR.
 Eno dogovorjeno testno sporočilo je lastnik potrdil v mapi Prejeto.
 Javni API zdaj potrdi emailInvitations/emailVerification/passwordReset/smtp=true,
-isti serverId in externalPush=false. [Dokazi in vzdrževanje](PRODUCTION_MAIL.md).
+isti serverId in takrat externalPush=false. [Dokazi in vzdrževanje](PRODUCTION_MAIL.md).
 Android ostaja javni1.7.1(26), FamilyHub0.13/schema17; ni nove gradnje ali
-migracije. FCM in redne produkcijske kopije še niso dokončani.
+migracije. Poznejši vklop FCM opisuje zgornji zapis; redne kopije še sledijo.
 
 Spodnji zapis prikazuje stanje ob namestitvi13.oktobra; njegovi prvi račun/
 SMTP=false/naslednji koraki so zgodovina, ne razlog za ponovno namestitev.

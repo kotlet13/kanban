@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+14. oktober — **produkcijski FCM vključen, Google OAuth/validate_only200 in
+dejanski push cron PASS**. [Dokazi](docs/server/PRODUCTION_PUSH.md). Lastnik
+izrecno potrdi novi jivie-production-fcm-sender/FCMAPIAdmin/enJSONključ,
+obstoječi testni sender isti. Ključ0600/zasebne0700 zunaj vseh15 rootov,
+isti pregledani helper check/prepare/lint/activate in offline preflight PASS;
+ločen32-byte pushkey, SMTPinclude ohranjen. Istiad569ID, HTTPS200/externalPush/
+smtp/email=true; en nov minutely flock worker, stari cron bajtno ohranjen,
+dejanski dnevnik46s/vsi števci0. Google validacija ne dostavi obvestila.
+**Fizični prikaz še ni potrjen**: lastnik odstranil Android/pozabil geslo;
+pojasnjena admin menjava istega anze.novsak (users.password), agent gesla ni
+spreminjal. Lastnik nato potrdi uspešno prijavo in »Naprava je registrirana«,
+read-only baza1aktivniAndroid za isti projekt. Pripravlja pravi oddaljeni
+opomnik izUI; fizična dostava še sledi, ne nova
+matrika/gradnja. Androidjavni1.7.1(26)/interniNeaktivno/FamilyHub0.13/schema17/
+podatki/splet/test1/test2/Apple isti; APNs/redne kopije še ločeno. SMTPhelper
+po FCMinclude/cron spremembi namerno zavrne nove hashe; ne obnavljaj starega
+stanja ali rahljaj varoval. Povabilo ima HTTPS/deeplink, še nima Playinstall
+povezave; besedilo ni spremenjeno.
+
 14. oktober — **iOS1.7.1(26) dejansko AppleComplete/TestFlightTesting**.
 [Dokazi](docs/release/IOS_CONNECTION_RELEASE.md). Lastnik potrdi namestitev25
 in naroči isti popravek povezovanja kot javniAndroid26. Izoliranifa809b8+
