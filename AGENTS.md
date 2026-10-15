@@ -1,5 +1,25 @@
 # Navodila za delo na projektu
 
+15. oktober — **privzeti zvok vključen za nove/manjkajoče nastavitve, obstoječe ohranjene**.
+[Dokazi](docs/release/DEFAULT_SOUND_1_9_1.md). Izrecni uporabnikov popravek:
+vsak že shranjen true/false ostane, tudi stari materializirani false; brez
+migracije/backfilla/čiščenja ali prepisovanja. Funkcionalnia51f98e/main,
+51ciljnih PASS tudi v izoliranem izvoru,180PHP/MariaDB10.11.19 kontrol PASS;
+analiza isti10info/brezwarningerror. Ena podpisana Android1.9.1(29),421vhodov,
+SHA42cb5408…/istiSDK/locks/native/config/podpis/engine/8perms/16KiB/23+7PASS.
+**Dejansko oddana javno: »Spremembe v pregledu«**,100%/Slovenija/29vključena/
+28izključena/SLenUSopombe/0izgubljenihnovihnaprav/natanko1sprememba;
+galerije/opisi isti, interni kanal ni uporabljen. Javna29/odobritev še NISTA
+potrjeni. Svež Console potrdi prejšnjo28 javno od15okt07:58/100%/1država.
+Javni FamilyHub59119dc/v0.14.1/ZIP8d756b75…102vnosov/90PHPisti/javni200hashCRC.
+Produkcija/test1 dejansko0.14.1/schema18: natanko3PHP zamenjani, zasebni stari101
+viri ohranjeni;93tabel376/337vrstic,3računi4/9naprav,21/1surove preference
+bajtnoiste, config/gesla/ključi/data/core/cron/modeisti. Checkpointcomplete,
+HTTPS200/istiSID/enabled/push2, brezSQLUPDATE/DDL/workerbootstrap ali nove
+uporabniške dostave. Pomočnikova realna sintetična vaja+4negativnavarovalaPASS.
+Test2 ostane isti; Apple/TestFlight izrecnoodložen, Windows/Linuxkasneje.
+Fizični zvok29 ni preverjen; stare uporabnikove izklope ohrani.
+
 15. oktober — **Android1.9.0(28) dejansko oddan za javno posodobitev z novima SL/ENgalerijama; Appleodložen**.
 [Dokazi](docs/release/UPGRADE_1_9.md#portala). Na uporabnikovo zahtevo uporabljen
 Codexvgrajenibrskalnik/prijavljeniTaknDevs; istiAAB28/SHA347d6d8b… uspešno

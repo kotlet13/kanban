@@ -1,4 +1,9 @@
-# FamilyHub 0.13.0
+# FamilyHub 0.14.1
+
+## Current notification defaults
+
+All categories, including reminders and Ideas, default to in-app, push and sound enabled; email remains opt-in. An absent sound field inherits true. Every explicitly stored false or true remains unchanged: this code-only correction performs no migration, backfill or rewriting of existing preferences. Preference reads, event creation and delivery do not materialize default settings; workers reread the current preference before sending. System permissions and user channel/quiet-mode settings still apply.
+
 
 ## Idejnik boards and private images (0.13.0/schema 17, local source)
 
@@ -28,7 +33,7 @@ Read notifications expire seven days after their server `readAt` timestamp. Repe
 
 ## Notification defaults (0.11.1/schema 15)
 
-Absent category preferences now mean inApp and push enabled, email and sound disabled. Explicit saved settings retain priority. Device registration and operating-system permission remain separate; this patch neither registers devices nor replays old notifications. Read-all behavior belongs to the client and never completes tasks or payments. This is a code-only update from 0.11.0: schema 15 and all stored preferences remain unchanged.
+Historical 0.11.1 behavior: absent category preferences meant inApp and push enabled, email and sound disabled. Explicit saved settings retain priority. Device registration and operating-system permission remain separate; this patch neither registers devices nor replays old notifications. Read-all behavior belongs to the client and never completes tasks or payments. This is a code-only update from 0.11.0: schema 15 and all stored preferences remain unchanged.
 
 ## Email invitations (0.10.0/schema 14)
 

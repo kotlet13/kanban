@@ -1,5 +1,7 @@
 # FamilyHub 0.14.0 / schema18 — postopek in dejanska nadgradnja
 
+15.oktober: produkcija/test1 sta pozneje prejela code-only0.14.1 popravek privzetega zvoka; schema18 ostane. Vse shranjene nastavitve so ohranjene. [Dokazi](../release/DEFAULT_SOUND_1_9_1.md#familyhub-in-živi-namestitvi).
+
 **Produkcija `jivie.triparna.si` in pregledni test1 `jivie-test.triparna.si`
 sta 15. oktobra 2026 dejansko nadgrajena na FamilyHub 0.14.0 / schema 18 in
 ponovno odprta.** Na obeh sta izvirna crona obnovljena; podatki, ločeni
