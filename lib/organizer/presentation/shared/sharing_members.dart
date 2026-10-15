@@ -11,6 +11,42 @@ import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
 import 'scope_lifecycle_menu.dart';
 
+// invitations.list returns creation order (created_at, id). Keep historical
+// attempts on the server, but present the current invitation for each email.
+// Multiple still-valid links remain individually actionable, even if created
+// without first revoking the previous link.
+List<(SharedInvitation, bool)> _visibleInvitations(
+  List<SharedInvitation> invitations,
+  DateTime now,
+) {
+  final groups = <(String, String, bool), List<SharedInvitation>>{};
+  for (final invitation in invitations) {
+    final email = invitation.recipientEmail?.trim().toLowerCase();
+    final hasEmail = email != null && email.isNotEmpty;
+    final key = (
+      invitation.scopeId,
+      hasEmail ? email : invitation.id,
+      hasEmail,
+    );
+    groups.putIfAbsent(key, () => []).add(invitation);
+  }
+  final result = <(SharedInvitation, bool)>[];
+  for (final group in groups.values) {
+    final pending = group
+        .where(
+          (invitation) =>
+              invitation.acceptedAt == null &&
+              invitation.revokedAt == null &&
+              invitation.expiresAt.isAfter(now),
+        )
+        .toList();
+    for (final invitation in pending.isEmpty ? [group.last] : pending) {
+      result.add((invitation, pending.isNotEmpty && group.length > 1));
+    }
+  }
+  return result;
+}
+
 class SharingMembersPage extends ConsumerStatefulWidget {
   const SharingMembersPage({
     super.key,
@@ -329,9 +365,12 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
               widget.scope.parentSpaceId != null &&
               widget.scope.accessPolicyVersion == 3
           ? context.l10n.sharingProjectDirectRemoval
-          : const {SharedScopeKind.organization, SharedScopeKind.household}.contains(widget.scope.kind)
-              ? context.l10n.scopeRemoveMemberDescendants
-              : context.l10n.sharingRemoveMemberConfirm,
+          : const {
+              SharedScopeKind.organization,
+              SharedScopeKind.household,
+            }.contains(widget.scope.kind)
+          ? context.l10n.scopeRemoveMemberDescendants
+          : context.l10n.sharingRemoveMemberConfirm,
       confirmLabel: directProject
           ? context.l10n.sharingRemoveProjectMembership
           : context.l10n.sharingRemoveMember,
@@ -378,6 +417,8 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
           );
         }
         final (members, invitations) = result.data!;
+        final now = DateTime.now();
+        final visibleInvitations = _visibleInvitations(invitations, now);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -475,8 +516,9 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
               ),
               const SizedBox(height: 12),
               if (invitations.isEmpty) Text(l.sharingNoInvitations),
-              for (final invitation in invitations)
+              for (final (invitation, resent) in visibleInvitations)
                 Card(
+                  key: ValueKey('sharing-invitation-${invitation.id}'),
                   child: ListTile(
                     title: Text(
                       invitation.recipientEmail ?? invitation.recipientUsername,
@@ -486,15 +528,18 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                           ? l.sharingAccepted
                           : invitation.revokedAt != null
                           ? l.sharingRevoked
-                          : invitation.expiresAt.isBefore(DateTime.now())
+                          : !invitation.expiresAt.isAfter(now)
                           ? l.sharingExpired
-                          : '${l.sharingExpires} ${organizerDate(context, invitation.expiresAt)}'}',
+                          : '${resent ? '${l.sharingInvitationResent} · ' : ''}${l.sharingExpires} ${organizerDate(context, invitation.expiresAt)}'}',
                     ),
                     trailing:
                         invitation.acceptedAt == null &&
                             invitation.revokedAt == null &&
-                            invitation.expiresAt.isAfter(DateTime.now())
+                            invitation.expiresAt.isAfter(now)
                         ? IconButton(
+                            key: ValueKey(
+                              'sharing-revoke-invitation-${invitation.id}',
+                            ),
                             tooltip: l.sharingRevokeInvite,
                             onPressed: _busy
                                 ? null

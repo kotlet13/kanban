@@ -1,5 +1,7 @@
 # Jivie
 
+**15. oktober — ponovna povabila:** po preklicu in novem povabilu istemu e-naslovu v istem prostoru seznam kaže »Ponovno poslano povabilo« in skrije stare preklicane poskuse.35 ciljnih UI preverjanj PASS; [dokazi](docs/INVITATION_RESEND.md). Samo izvor, brez nove trgovinske oddaje.
+
 **15. oktober — kontrast ikon:** popravljeno shranjevanje v vrtu in vseh skupnih urejevalnikih ter sorodna gumba v nakupih/Idejniku. Svetla in temna tema, 63 ciljnih preverjanj PASS; [dokazi](docs/EDITOR_ICON_CONTRAST.md). Samo izvor, brez nove trgovinske oddaje.
 
 **15.oktober — projektni meni:** odprti deljeni projekt ima en meni za urejanje, arhiviranje, brisanje in prijavo vsebine.36 ciljnih preverjanj PASS; [dokazi](docs/PROJECT_MENU_FIX.md). Lokalni popravek čaka naslednjo izrecno odobreno izdajo.

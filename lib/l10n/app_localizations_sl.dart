@@ -543,6 +543,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get sharingInvitePerson => 'Povabi osebo';
 
   @override
+  String get sharingInvitationResent => 'Ponovno poslano povabilo';
+
+  @override
   String get sharingInvitations => 'Povabila';
 
   @override

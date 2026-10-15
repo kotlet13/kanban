@@ -1,5 +1,15 @@
 # Navodila za delo na projektu
 
+15. oktober — **ponovna povabila istemu e-naslovu združena v prikazu**.
+[Dokazi](docs/INVITATION_RESEND.md). Po preklicu in novi izdaji v istem scopeId
+nova vrstica »Ponovno poslano povabilo«, stare preklicane skrite; normalizacija
+trim/lower, prava vloga/rok/status in točni ID preklica. Več še veljavnih
+povezav ostane posamezno preklicljivih, legacy username/prostori/prejemniki ločeni.
+35ciljnihUI PASS/10novih,320/390/1280SL/EN; analiza isti10prejšnjihinfo.
+Samo UI/l10n, zgodovina in strežnik nespremenjena, brez dejanskega povabila ali
+native gradnje. **Ni Google Play oddaje; potrebna je nova izrecna potrditev.**
+AAB29 zamrznjen/isti, popravka ne vsebuje.
+
 15. oktober — **kontrast zapolnjenih ikon popravljen v izvoru**: skupni Shrani
 uporablja onPrimary tudi v AppBar, nakupi onPrimary, Idejnik onSecondaryContainer.
 [Dokazi](docs/EDITOR_ICON_CONTRAST.md). Pred-fix dejanski kontrast1,03:1;

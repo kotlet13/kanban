@@ -545,6 +545,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sharingInvitePerson => 'Invite someone';
 
   @override
+  String get sharingInvitationResent => 'Invitation sent again';
+
+  @override
   String get sharingInvitations => 'Invitations';
 
   @override

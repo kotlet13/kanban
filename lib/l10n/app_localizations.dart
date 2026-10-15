@@ -1112,6 +1112,12 @@ abstract class AppLocalizations {
   /// **'Invite someone'**
   String get sharingInvitePerson;
 
+  /// No description provided for @sharingInvitationResent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation sent again'**
+  String get sharingInvitationResent;
+
   /// No description provided for @sharingInvitations.
   ///
   /// In en, this message translates to:

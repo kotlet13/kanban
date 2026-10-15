@@ -191,6 +191,7 @@
   "sharingViewer": "Can view",
   "sharingRole": "Role",
   "sharingInvitePerson": "Invite someone",
+  "sharingInvitationResent": "Invitation sent again",
   "sharingInvitations": "Invitations",
   "sharingRevokeInvite": "Revoke invitation",
   "sharingRemoveMember": "Remove member",
