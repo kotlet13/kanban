@@ -1,0 +1,9 @@
+{
+  "version": "1.9.0+28",
+  "androidTitle": "1.9.0 (28) — vrt in izboljšave vsakdanje uporabe",
+  "play": {
+    "sl": "Nov celozaslonski Vrt z barvitimi vrtninami, rastjo, merami gred in zgodovino. Opomniki lahko sledijo roku opravila. Idejnik izboljšuje povečavo, velikost besedila in upravljanje tabel. Preglednejši projekti, prostori in arhivi ter upravljanje članov. Hitrejši vnos nakupov s količino; obvestila odprejo pravi seznam in označijo spremembo. Dodani so ogled gesla, uporabnejše teme obvestil in stabilnejše nastavitve opomnikov.",
+    "en-US": "A new full-screen Garden with colourful vegetables, growth, bed dimensions and history. Reminders can follow task deadlines. Ideas improves zoom, text size and board management. Clearer projects, spaces and archives, with member management. Faster shopping entry with quantities; notifications open the right list and highlight changes. Password visibility, useful notification topics and more stable reminder settings are also included."
+  },
+  "testflightSl": "Preizkusi novi celozaslonski Vrt: mere, premik in razteg gred, rast, zgodovino ter pobiranje. Preveri povečavo in velikost besedila v Idejniku, opomnike glede na rok, projektne nastavitve, arhive ter nakupovalni vnos s količino. Preveri ohranitev pomika v nastavitvah opomnikov in odpiranje nakupovalnega seznama iz obvestila. Pred brisanjem preveri prikazani cilj in predogled vsebine."
+}

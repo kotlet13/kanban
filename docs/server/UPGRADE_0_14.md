@@ -1,10 +1,130 @@
-# FamilyHub 0.14.0 / schema18: pripravljena varovana nadgradnja
+# FamilyHub 0.14.0 / schema18 — postopek in dejanska nadgradnja
 
-To je lokalno pripravljen izdajni postopek. **Ta dokument ne potrjuje nadgradnje
-nobenega živega gostovanja.** Produkcija `jivie.triparna.si` in pregledni
-`jivie-test.triparna.si` imata ločena identitetna profila; vsak zahteva svojo
-svežo kopijo, resnično izolirano obnovo in zapečatene vhodne hashe. Test2 ni
-vključen: njegov polni profil mora biti posebej pregledan pred uporabo.
+**Produkcija `jivie.triparna.si` in pregledni test1 `jivie-test.triparna.si`
+sta 15. oktobra 2026 dejansko nadgrajena na FamilyHub 0.14.0 / schema 18 in
+ponovno odprta.** Na obeh sta izvirna crona obnovljena; podatki, ločeni
+identiteti, konfiguracije, SMTP in FCM so ohranjeni. Vsako gostovanje je
+uporabilo svoj sveži zajem, kopijo, resnično izolirano obnovo in zapečatene
+vhodne hashe. **Test2 ostaja nespremenjen in zunaj tega obsega.**
+
+## Potrjena produkcijska nadgradnja — 15. oktober 2026
+
+Nadgradnja je uporabila novi zasebni delovni imenik:
+
+`/home/tripar13/private/jivie-production/upgrade-0.14.0-20261015-032315`.
+
+Sveži zajem ob **03:22:28 UTC** (05:22:28 CEST) je preveril dejansko
+produkcijsko identiteto `ad56910f-ca2e-41ee-af0d-3f18081497cf`, staro schema 17,
+konfiguracije, ključe, cron in stari izvor. Po varovanem ustavljanju petih
+ciljnih delavcev, preverjenem HTTPS 503 ter dejanskem praznjenju procesov je
+nastala **nova kopija ob 03:25:40 UTC** (05:25:40 CEST). To je ločen zajem po
+predhodni prekinitvi; starega arhiva ali starega obnovitvenega dokaza nismo
+uporabili kot podlago za migracijo.
+
+Sveži ZIP ima **58.329 bajtov in 17 vnosov**, zajema vseh **92 tabel s 322
+zgodovinskimi vrsticami**, dve datoteki DATA ter dva podatkovna imenika.
+Vključuje tri Native račune in štiri registrirane naprave. Njegov SHA256 je:
+
+`44eb4355a6f52303d14e345e9823f807a307b4bca4ec6a9d313add567e4e72ef`.
+
+Ta točni arhiv je bil dejansko obnovljen v sveži **MariaDB 10.11.19**, z
+`network=none`, brez objavljenih vrat in host bindov ter samo z anonimnim
+MySQL volumnom. Preverjena je vsaka vrstica, CREATE definicija, tip stolpca,
+podatkovna datoteka in prazen imenik ter konfiguracijski, HTTPS, cron in
+SMTP/FCM ključni hash. Ista identiteta in schema 17 sta potrjeni tudi v
+obnovljeni bazi. SQL SHA256 je
+`931a8815edbef9ec1a7d4866393c41c5b34c046b4035e707e5d727f9a8fdaae1`.
+
+Dejanski dokaz je zunaj Git:
+`/Users/anzenovsak/.local/share/jivie/backups/lifecycle18-production-20261015-fresh1/restore-proof.json`.
+Dokaz je bil shranjen in ponovno prebran pred odstranitvijo obnovitvenega
+vsebnika. Izvirni arhiv ostane ohranjen z istim hashem; pri obnovi aplikacija
+in delavci niso bili zagnani, živa baza pa ni bila uporabljena.
+
+Po vrnitvi tega dokaza v novi zasebni WORK so **stage, apply, verify in release
+uspešno zaključeni**. Nameščenih je 101 preverjenih izvornih datotek iz
+zapečatenega paketa 0.14.0 s SHA256
+`e6fda75ac4b63c74f70cd2ac00fb6143006cbe111a96a8462e30db9a945a3743`.
+Migracija doda samo štiri pregledane stolpce in novo prazno
+`familyhub_scope_deletion_files`. Vsi stari stolpci, vrstice, definicije po
+odstranitvi dovoljenih novih polj, gesla, računi, naprave in datoteke so
+preverjeno ohranjeni. Samo FamilyHub schema metadata se spremeni 17 → 18.
+Jedro, izvirni HTTPS, SMTP/FCM konfiguracije in ključi ter celotni cron ostanejo
+nespremenjeni; stari izvor in zasebne kopije so ohranjeni.
+
+Končni [produkcijski checkpoint](../../build/qa/upgrade-release-20261014/production-release-checkpoint.json)
+izrecno potrdi `phase=released`, `apiPaused=false`, `workerCronRestored=true`
+in vsa preverjanja ohranitve. Prisoten je tudi
+[posnetek dejanske potrditve](../../build/qa/upgrade-release-20261014/production-release-confirmed.jpg).
+
+Dejanski javni Native capabilities POST je po release vrnil **HTTP 200**, isto
+identiteto in `enabled=true`. [Shranjeni odgovor](../../build/qa/upgrade-release-20261014/production-capabilities-014.json)
+potrjuje lifecycle pogodbo 1, vrtni dokument 3, tablo Idejnika 2, relativne
+opomnike 2, record6/sync6 ter push prikaz 2. Funkciji `smtp` in `externalPush`
+ostaneta vključeni. To potrjuje dostopnost in zmožnosti novega strežnika;
+ni nov dokaz fizične dostave obvestila, odjemalčeve namestitve ali trgovinske
+objave. Pregledni test1 je bil nato nadgrajen v svojem ločenem postopku,
+opisanem spodaj; test2 ni vključen.
+
+## Potrjena nadgradnja preglednega test1 — 15. oktober 2026
+
+Test1 je uporabil svoj novi zasebni WORK:
+
+`/home/tripar13/private/jivie-test/upgrade-0.14.0-20261015-033029`.
+
+Sveži zajem ob **03:29:58 UTC** (05:29:58 CEST) je potrdil identiteto
+`95c11fe0-916c-48be-a3f6-999732846266`, staro schema 17 in njegove lastne
+konfiguracije, ključe, izvor in cron. Po ustavitvi ciljnih delavcev,
+preverjenem HTTPS 503 in dejanskem praznjenju procesov je nastala kopija ob
+**03:32:37 UTC** (05:32:37 CEST).
+
+Arhiv ima **74.766 bajtov in 24 vnosov**, vseh **92 tabel s 313 zgodovinskimi
+vrsticami**, dve datoteki DATA ter dva podatkovna imenika. Ohranil je tri
+Native račune in osem naprav. Njegov SHA256 je:
+
+`823a868178cef34769654f2b00c3109b3d3640adb2ac49fd211e60be1eaa4744`.
+
+Ta točni test1 arhiv je bil dejansko obnovljen v drugi sveži **MariaDB
+10.11.19**, z `network=none`, brez objavljenih vrat in host bindov, samo z
+anonimnim MySQL volumnom. Potrjeni so vsaka vrstica, CREATE definicija in tip
+stolpca, datoteke, prazni imeniki, konfiguracije, HTTPS, cron ter dostavni
+ključi. Obnovljena baza je ohranila isti serverId in schema 17; aplikacija in
+delavci niso bili zagnani, živo gostovanje pri obnovi ni bilo uporabljeno.
+SQL SHA256 je
+`22eda445d062b2fe89cbc87bdf723b12595f0459710bc80336f5bb7da48c97b0`.
+
+Dostopni dokaz je zunaj Git:
+`/Users/anzenovsak/.local/share/jivie/backups/lifecycle18-test1-20261015-fresh1/restore-proof.json`.
+Shranjevanje in ponovno branje dokaza sta bila potrjena pred odstranitvijo
+obnovitvenega vsebnika. Pri obnovi test1 nismo uporabili produkcijskega
+arhiva ali produkcijskega dokaza; test1 kopija ostaja ohranjena z istim hashem.
+
+Po vrnitvi test1 dokaza v njegov WORK so **stage, apply, verify in release
+uspešno zaključeni**. Natanko štirje novi stolpci in ena nova prazna tabela
+`familyhub_scope_deletion_files` razširijo schema 17 na 18. Nameščenih je
+istih 101 preverjenih izvornih datotek paketa 0.14.0. Vsa zgodovinska vsebina,
+definicije po odstranitvi dovoljenih dodatkov, računi, gesla, naprave in
+podatkovne datoteke so ohranjeni. Jedro, HTTPS, SMTP/FCM nastavitve in ključi
+ter celotni originalni cron ostanejo nespremenjeni.
+
+[Test1 release checkpoint](../../build/qa/upgrade-release-20261014/test1-release-checkpoint.json)
+potrdi `phase=released`, `apiPaused=false`, `workerCronRestored=true` in vsa
+varovala ohranitve. [Posnetek dejanske potrditve](../../build/qa/upgrade-release-20261014/test1-release-confirmed.jpg)
+je ločen od produkcijskega dokaza.
+
+Javni Native capabilities POST je po release vrnil **HTTP 200**, isto test1
+identiteto in `enabled=true`. [Shranjeni test1 odgovor](../../build/qa/upgrade-release-20261014/test1-capabilities-014.json)
+potrdi lifecycle pogodbo 1, vrtni dokument 3, tablo Idejnika 2, relativne
+opomnike 2, record6/sync6 in push prikaz 2. SMTP in externalPush sta še vedno
+vključena. To je dokaz novega preglednega gostovanja, ne fizične namestitve,
+nove dostave obvestila, vpisa preglednega gesla ali javne trgovinske oddaje.
+Test2 je še naprej zunaj tega posega.
+
+## Pregledani pomagači in postopek 17 → 18
+
+Spodaj je postopek že izvedenih nadgradenj. Po uspešnem prehodu na schema 18
+starih enkratnih pomagačev za schema 17 ne ponavljaj; prihodnje vzdrževalno
+delo potrebuje kopijo in preverjanje dejanskega novega stanja.
 
 Pomagači so v [server/scripts/upgrade-0.14.0](../../server/scripts/upgrade-0.14.0).
 Ne uporabljajo starih konfiguracijskih hashov iz SMTP/FCM namestitve in ne
@@ -174,7 +294,7 @@ in17arhivskih vnosov. Arhiv58097bajtov ima SHA256
 Shramba kopije ostane zunaj document rootov in Git, z zasebnimi pravicami.
 
 Brave je zavrnil prenos tega ZIP-a, nato se je Mac zaklenil. Dejanska
-izolirana obnova zato **ni izvedena**. Noben stage/DDL/code swap ni izveden.
+izolirana obnova v tistem poskusu zato **še ni bila izvedena**. Noben stage/DDL/code swap ni izveden.
 Da produkcija ne ostane v vzdrževanju med čakanjem, je pregledani
 `abort.php`/`abort.sh` potrdil odsotnost state/stage/migracij in schema18polj,
 pravo identiteto/schema17, natančni old96/config/ključe in originale;
@@ -194,8 +314,15 @@ Abort ima izolirani schema17preizkus s tremi negativnimi varovali; HTTPje
 simuliran samo v fixtureju. Popravljeni APIprobe ima2pozitivni/7negativnih
 kontrol in PHP8.4lintPASS. Dejanska gostovana pot je uporabila praviTLS.
 
-Nadaljevanje potrebuje odklenjen Mac ter novo svežo capture/pause/kopijo
-po ponovni aktivnosti produkcije, nato resnično obnovo in prvotni postopek
-stage/apply/verify/release. Te že zaključene abort mape ne uporabljaj za
-novo migracijo; njen capture/kopija sta zgodovinska predhodna dokaza.
-Pregledni test1 in test2 v tem koraku nista bila spremenjena.
+Po odklepu Maca je bil tudi ta predhodni arhiv dejansko obnovljen v ločeni
+izolirani MariaDB 10.11.19: vseh 92 tabel, 319 vrstic, dve datoteki in dva
+imenika se ujemajo. Zgodovinski dokaz je
+`/Users/anzenovsak/.local/share/jivie/backups/lifecycle18-production-20261015/restore-proof.json`;
+sosednji `historical-restore-context.json` izrecno določa, da to ni aktualna
+migracijska osnova.
+
+Nadaljevanje je zato uporabilo novi zajem in kopijo po ponovni aktivnosti
+produkcije, z novo obnovo in uspešnim stage/apply/verify/release, opisanim na
+vrhu dokumenta. Zaključena abort mapa in njen arhiv ostaneta zgodovinska
+dokaza; nobeden ni bil ponovno uporabljen za migracijo. Pregledni test1 in
+test2 v tem predhodnem koraku nista bila spremenjena.

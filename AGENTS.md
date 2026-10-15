@@ -1,5 +1,26 @@
 # Navodila za delo na projektu
 
+15. oktober — **produkcija in pregledni test1 dejansko nadgrajena na0.14/schema18; iOS28naložen**.
+[Strežniški dokazi](docs/server/UPGRADE_0_14.md), [izdaja](docs/release/UPGRADE_1_9.md).
+Po odklenitvi novi ločeni capture/kopiji/resnični MariaDB10.11.19obnovi
+networknone/noports/nobinds: prod92tabel322vrstic2DATA/SHA44eb4355…;
+test1 92tabel313vrstic2DATA/SHA823a8681…. Stage/apply/verify/release PASS;
+4stolpci+1prazna tabela/101source; vsi zgodovinski zapisi/gesla/naprave/
+config/ključi/core/HTTPS/originalcron ohranjeni. Oba checkpointa released/
+APIpausedfalse/workerCronRestoredtrue, javniAPIHTTPS200/istiSID/enabled/
+novi kontrakti/push2. Produkcija3računi4naprave, test1 3računi8naprav; test2
+nespremenjen. Stara abort mapa ni uporabljena za migracijo; stara319kopija
+zdaj tudi resnično obnovljena izključno kot zgodovinski dokaz.
+Xcodeobstoječicloudpodpis/profil26.9.2027/StoreIPA28.211.421B/SHA1f4564d1…
+CRC/strictdeep/productionAPS/18privacy/DartFirebase PASS; isti6cearhiv
+Organizer **uploadcomplete**, brez nove gradnje. AppleComplete in
+TestFlightTesting28 še nista potrjena; uporabnik potrebuje spletno prijavo
+vSafari. Androidrelease4 javni osnutek z SL/en-USopombami shranjen; **AAB28
+ni naložen/oddán**, slike niso naložene. Razširitev zahteva dovoljenje
+»Allow access to file URLs«, običajniOSpickerOpen ostaja onemogočen;
+zahtevano uporabnikovo dejanje z razlago dostopa. Agent ni spreminjal
+varnostnih dovoljenj. JavniAndroid27ostane, interniNeaktivno; iOSsamoTestFlight.
+
 15. oktober — **novih 48 trgovinskih zajemov pripravljenih**, po izrecnem
 naročilu med čakanjem na odklenitev Maca. [Zapis](docs/release/UPGRADE_1_9.md#novi-trgovinski-posnetki),
 [manifest](docs/release/UPGRADE_SCREENSHOTS_1_9.json). Osem dejanskih prizorov
