@@ -25,6 +25,7 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.reminderScopeId,
     this.reportScopeId,
     this.onShare,
+    this.detailMenuBuilder,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
@@ -35,6 +36,7 @@ class OrganizerProjectsPage extends StatefulWidget {
   final String? reminderScopeId;
   final String? reportScopeId;
   final ValueChanged<LocalProject>? onShare;
+  final Widget Function(LocalProject)? detailMenuBuilder;
   final bool home;
   final String? selectedId;
   final ValueChanged<String?> onSelection;
@@ -57,7 +59,12 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
         )
         .toList();
     final archivedProjects = widget.snapshot.projects
-        .where((p) => p.archived && (!widget.home || p.area==ProjectArea.home) && (_category == null || p.area == _category))
+        .where(
+          (p) =>
+              p.archived &&
+              (!widget.home || p.area == ProjectArea.home) &&
+              (_category == null || p.area == _category),
+        )
         .toList();
     final selected = [
       ...visibleProjects,
@@ -360,7 +367,9 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                     : project.description,
               ),
             ),
-            if (widget.reportScopeId != null)
+            if (widget.detailMenuBuilder != null)
+              widget.detailMenuBuilder!(project)
+            else if (widget.reportScopeId != null)
               SharedContentActionsMenu(
                 scopeId: widget.reportScopeId!,
                 targetId: project.id,
@@ -484,7 +493,9 @@ class OrganizerTasksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final active=snapshot.tasks.where((t)=>!snapshot.projects.any((p)=>p.id==t.projectId && p.archived));
+    final active = snapshot.tasks.where(
+      (t) => !snapshot.projects.any((p) => p.id == t.projectId && p.archived),
+    );
     final pending = active.where((t) => !t.isCompleted).toList();
     final dated = pending.where((t) => t.dueAt != null).toList()
       ..sort((a, b) => a.dueAt!.compareTo(b.dueAt!));
@@ -503,7 +514,10 @@ class OrganizerTasksPage extends StatelessWidget {
               reminderType: 'task',
             ),
           if (reminderScopeId == null && !readOnly)
-            LocalTaskReminderButton(task:task,workspaceKey:snapshot.workspaceKey),
+            LocalTaskReminderButton(
+              task: task,
+              workspaceKey: snapshot.workspaceKey,
+            ),
           if (reminderScopeId != null && (!readOnly || reportScopeId == null))
             RemoteReminderButton(
               scopeId: reminderScopeId!,

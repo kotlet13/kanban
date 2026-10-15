@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import 'sharing_errors.dart';
+import 'content_actions_menu.dart';
 import 'sharing_session_boundary.dart';
 
 /// Named, counted destructive preview. Fetching it never deletes or archives.
@@ -115,53 +116,103 @@ Future<bool> showScopeDeletionDialog(
   }
 }
 
+({SharedScope scope, bool archive, bool delete})? _lifecycleOptions(
+  WidgetRef ref,
+  SharedScope scope,
+) {
+  final state = ref.read(collaborationProvider).valueOrNull;
+  final current = state?.scopes.where((s) => s.id == scope.id).firstOrNull;
+  if (current == null ||
+      current.revoked ||
+      current.blocked ||
+      !current.canManage ||
+      state?.localAccessAllowed != true ||
+      state?.sessionInvalid == true) {
+    return null;
+  }
+  return (
+    scope: current,
+    archive:
+        state!.scopeArchivingSupported ||
+        state.projectArchivingSupported &&
+            current.kind == SharedScopeKind.project &&
+            current.projectRootId != null,
+    delete: state.scopeDeletionSupported && current.isOwner,
+  );
+}
+
+Future<void> _selectLifecycle(
+  BuildContext context,
+  WidgetRef ref,
+  SharedScope scope,
+  String action,
+) async {
+  final guard = SharingSessionGuard(context, ref);
+  if (action == 'delete') {
+    await showScopeDeletionDialog(context, ref, scope);
+  } else {
+    try {
+      await guard.controller.archiveProjectScope(
+        scope.id,
+        archived: !scope.archived,
+      );
+    } catch (error) {
+      if (context.mounted && guard.isCurrent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(sharingErrorMessage(context, error))),
+        );
+      }
+    }
+  }
+}
+
+/// Reuses the scope's existing rights and handlers inside a project record menu.
+List<ContentMenuAction> scopeLifecycleContentActions(
+  BuildContext context,
+  WidgetRef ref,
+  SharedScope scope,
+) {
+  final options = _lifecycleOptions(ref, scope);
+  if (options == null) return const [];
+  final current = options.scope, l = context.l10n;
+  return [
+    if (options.archive)
+      ContentMenuAction(
+        label: current.archived ? l.peopleRestore : l.peopleArchive,
+        icon: current.archived
+            ? Icons.unarchive_outlined
+            : Icons.archive_outlined,
+        onSelected: () => _selectLifecycle(context, ref, current, 'archive'),
+      ),
+    if (options.delete)
+      ContentMenuAction(
+        label: l.delete,
+        icon: Icons.delete_outline,
+        destructive: true,
+        onSelected: () => _selectLifecycle(context, ref, current, 'delete'),
+      ),
+  ];
+}
+
 class ScopeLifecycleMenu extends ConsumerWidget {
   const ScopeLifecycleMenu({super.key, required this.scope});
   final SharedScope scope;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(collaborationProvider).valueOrNull;
-    final current = state?.scopes.where((s) => s.id == scope.id).firstOrNull;
-    if (current == null ||
-        current.revoked ||
-        current.blocked ||
-        !current.canManage ||
-        state?.localAccessAllowed != true ||
-        state?.sessionInvalid == true) {
-      return const SizedBox.shrink();
-    }
-    final archive =
-        state!.scopeArchivingSupported ||
-        state.projectArchivingSupported &&
-            current.kind == SharedScopeKind.project &&
-            current.projectRootId != null;
-    final delete = state.scopeDeletionSupported && current.isOwner;
+    ref.watch(collaborationProvider);
+    final options = _lifecycleOptions(ref, scope);
+    if (options == null) return const SizedBox.shrink();
+    final current = options.scope,
+        archive = options.archive,
+        delete = options.delete;
     if (!archive && !delete) return const SizedBox.shrink();
     final l = context.l10n;
     return PopupMenuButton<String>(
       key: ValueKey('scope-lifecycle-${scope.id}'),
       tooltip: '${l.scopeLifecycleMenu} · ${current.name}',
       icon: const Icon(Icons.more_horiz),
-      onSelected: (action) async {
-        final guard = SharingSessionGuard(context, ref);
-        if (action == 'delete') {
-          await showScopeDeletionDialog(context, ref, current);
-        } else {
-          try {
-            await guard.controller.archiveProjectScope(
-              current.id,
-              archived: !current.archived,
-            );
-          } catch (error) {
-            if (context.mounted && guard.isCurrent) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(sharingErrorMessage(context, error))),
-              );
-            }
-          }
-        }
-      },
+      onSelected: (action) => _selectLifecycle(context, ref, current, action),
       itemBuilder: (_) => [
         PopupMenuItem<String>(enabled: false, child: Text(current.name)),
         if (archive)

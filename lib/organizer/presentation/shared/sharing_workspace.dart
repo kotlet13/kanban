@@ -1,4 +1,5 @@
 import 'content_moderation.dart';
+import 'content_actions_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -293,11 +294,20 @@ class SharingWorkspace extends ConsumerWidget {
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
-            final status = view == SharingView.agenda
+            final projectDetail =
+                view == SharingView.projects &&
+                !(scope.kind == SharedScopeKind.household &&
+                    scope.accessPolicyVersion == 3 &&
+                    state.spaceProjectMembershipSupported) &&
+                data.projects.any((p) => p.id == selectedProjectId);
+            final status = view == SharingView.agenda || projectDetail
                 ? syncStatus
                 : Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [syncStatus, ScopeLifecycleMenu(scope: scope)],
+                    children: [
+                      syncStatus,
+                      ScopeLifecycleMenu(scope: scope),
+                    ],
                   );
             final householdProjects =
                 scope.kind == SharedScopeKind.household &&
@@ -421,7 +431,11 @@ class SharingWorkspace extends ConsumerWidget {
                     title: _title(context),
                     titleAccessory: status,
                   ),
-                  Text(scope.deleted ? l.scopeDeletedDescription : l.sharingAccessRevoked),
+                  Text(
+                    scope.deleted
+                        ? l.scopeDeletedDescription
+                        : l.sharingAccessRevoked,
+                  ),
                   Text(l.sharingSaveDraftsDescription),
                 ] else ...[
                   if (readOnly && !scope.blocked)
@@ -464,6 +478,43 @@ class SharingWorkspace extends ConsumerWidget {
                     ),
                     SharingView.projects => OrganizerProjectsPage(
                       titleAccessory: status,
+                      detailMenuBuilder: (project) => SharedContentActionsMenu(
+                        scopeId: scope.id,
+                        targetId: project.id,
+                        actions: [
+                          if (!readOnly && !project.archived)
+                            ContentMenuAction(
+                              label: l.organizerEditProject,
+                              icon: Icons.edit_outlined,
+                              onSelected: () => actions.project(project),
+                            ),
+                          if (project.id == scope.projectRootId)
+                            ...scopeLifecycleContentActions(context, ref, scope)
+                          else ...[
+                            if (!readOnly && state.projectArchivingSupported)
+                              ContentMenuAction(
+                                label: project.archived
+                                    ? l.peopleRestore
+                                    : l.peopleArchive,
+                                icon: project.archived
+                                    ? Icons.unarchive_outlined
+                                    : Icons.archive_outlined,
+                                onSelected: () => actions.archiveProject(
+                                  project,
+                                  archived: !project.archived,
+                                ),
+                              ),
+                            if (!readOnly && state.scopeDeletionSupported)
+                              ContentMenuAction(
+                                label: l.delete,
+                                icon: Icons.delete_outline,
+                                destructive: true,
+                                onSelected: () =>
+                                    actions.deleteProject(project),
+                              ),
+                          ],
+                        ],
+                      ),
                       reminderScopeId: scope.id,
                       reportScopeId: scope.id,
                       allowProjectCreation:

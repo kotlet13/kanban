@@ -12,9 +12,11 @@ class ContentMenuAction {
     required this.label,
     required this.icon,
     required this.onSelected,
+    this.destructive = false,
   });
   final String label;
   final IconData icon;
+  final bool destructive;
   final VoidCallback? onSelected;
 }
 
@@ -141,7 +143,11 @@ class _SharedContentActionsMenuState
             PopupMenuItem(
               value: '$i',
               enabled: _openedActions[i].onSelected != null,
-              child: _label(_openedActions[i].icon, _openedActions[i].label),
+              child: _label(
+                _openedActions[i].icon,
+                _openedActions[i].label,
+                destructive: _openedActions[i].destructive,
+              ),
             ),
           if (reminder != null)
             PopupMenuItem(
@@ -166,11 +172,22 @@ class _SharedContentActionsMenuState
     );
   }
 
-  Widget _label(IconData icon, String text) => Row(
+  Widget _label(IconData icon, String text, {bool destructive = false}) => Row(
     children: [
-      Icon(icon, size: 20),
+      Icon(
+        icon,
+        size: 20,
+        color: destructive ? Theme.of(context).colorScheme.error : null,
+      ),
       const SizedBox(width: 12),
-      Flexible(child: Text(text)),
+      Flexible(
+        child: Text(
+          text,
+          style: destructive
+              ? TextStyle(color: Theme.of(context).colorScheme.error)
+              : null,
+        ),
+      ),
     ],
   );
 }

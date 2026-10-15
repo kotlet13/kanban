@@ -1,5 +1,7 @@
 # Jivie
 
+**15.oktober — projektni meni:** odprti deljeni projekt ima en meni za urejanje, arhiviranje, brisanje in prijavo vsebine.36 ciljnih preverjanj PASS; [dokazi](docs/PROJECT_MENU_FIX.md). Lokalni popravek čaka naslednjo izrecno odobreno izdajo.
+
 **15.oktober — zaključevanje opravil:** lokalno popravljen krogec v skupnem pregledu ter status v podrobnostih/urejevalniku,65 ciljnih preverjanj PASS. [Izvedba in preverjanje](docs/TASK_COMPLETION_FIX.md). Naslednja Google Play oddaja zahteva novo izrecno uporabnikovo potrditev.
 
 **15. oktober — popravek privzetega zvoka:** nova oziroma manjkajoča nastavitev zvoka je vključena. Vse že shranjene nastavitve ostanejo nespremenjene; brez selitve ali množičnega prepisovanja. Android1.9.1(29) je oddan v javni pregled, FamilyHub0.14.1 je nameščen na produkciji/test1; stanje vodi [izdajni zapis](docs/release/DEFAULT_SOUND_1_9_1.md).

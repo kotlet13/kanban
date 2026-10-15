@@ -1,5 +1,14 @@
 # Navodila za delo na projektu
 
+15. oktober — **odprti deljeni projekt ima en združen meni** ob naslovu:
+urejanje/arhiviranje/brisanje/prijava glede na obstoječe pravice; oblaček ostane.
+[Dokazi](docs/PROJECT_MENU_FIX.md). Isti lifecycle handlerji in predogled izbrisa,
+inline projekt cilja svojID namesto nadrejenega prostora, bralec samo prijavo;
+36ciljnihUI PASS pri320/390/1280, analiza isti10info/brezwarningerror.
+Popravek je samo izvor, brez native gradnje/strežnika/version/SDK/locks sprememb.
+**Ni nove Google Play oddaje; ta še vedno zahteva novo izrecno potrditev.**
+AAB29 ostane zamrznjen in teh zadnjih popravkov ne vsebuje.
+
 15. oktober — **nova izrecna omejitev uporabnika za prihodnje izdaje**:
 nadaljujemo lokalne popravke in spremljanje aplikacije, vendar **nove izdaje
 v Google Play ne oddaj brez nove uporabnikove izrecne potrditve**. Prejšnje
