@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+15. oktober — **novih 48 trgovinskih zajemov pripravljenih**, po izrecnem
+naročilu med čakanjem na odklenitev Maca. [Zapis](docs/release/UPGRADE_1_9.md#novi-trgovinski-posnetki),
+[manifest](docs/release/UPGRADE_SCREENSHOTS_1_9.json). Osem dejanskih prizorov
+(Utrip/opravila/koledar/Idejnik/projekt/nakupi/Vrt/finance) × SL/EN × Android
+telefon/iPhone/iPad; 720×1280/1320×2868/2064×2752. Ločeni sintetični pomnilniški
+podatki, brez nameščene aplikacije ali strežniških zapisov. Vrt ima dejansko
+potisnjeno pot in vrnitev, običajne sence/pisave; iPad pravo širšo postavitev.
+18 capture PASS, tri ciljne analize čiste, vseh 48 vizualno pregledanih;
+validator vseh 421 izdajnih vhodov isti kot 6ce59cf, dimenzije/neprosojnost/
+različnost/49 ZIP CRC vnosov PASS. ZIP v build/releases s SHA a8a342e4…;
+PNG-i v build/qa/upgrade-store-20261015. **Ni nove aplikacijske gradnje ali
+spremembe AAB28/IPA, ni nalaganja novih slik ali trgovinske oddaje.**
+Mac/strežniška obnova in oddaji ostajajo odprti koraki prejšnjega zapisa.
+
 15. oktober — **vseh19 naročenih nadgradenj lokalno izvedenih in poslanih na main**.
 [Izvedba](docs/UPGRADE_IMPLEMENTATION.md), [izdajni status](docs/release/UPGRADE_1_9.md).
 Končni runtime6ce59cf/1.9.0+28: vrt/celozaslonska rast/grede/metri/zgodovina,

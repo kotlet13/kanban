@@ -54,3 +54,33 @@ Ob odklenitviMac nadaljevati: preverjeno gostovanje -> javniAndroid28,
 XcodeStoreexport/strictIPAverifier/ASCComplete/encryptionstandard+FranceNo
 -> obstoječiTestFlightPredjavnoobjavo z ohranjenimi starejšimi gradnjami.
 JavneAppStoreoddaje ne izvajati.
+
+
+## Novi trgovinski posnetki
+
+15. oktobra je uporabnik izrecno naročil nove zajeme med čakanjem na
+odklenitev Maca. Pripravljenih je **48 slik**: osem prizorov v slovenščini
+in angleščini za Android telefon, iPhone in iPad. Prizori so Utrip, opravila,
+koledar, odprta tabla Idejnika, projekt z mejniki, nakupovalni seznam z vnosom
+artikla in količine, novi celozaslonski Vrt ter finance. iPad ohrani dejansko
+širšo postavitev s stransko navigacijo.
+
+Gre za izrise dejanskih gradnikov končnega runtime izvora 6ce59cf z ločenimi
+vzorčnimi podatki v pomnilniku. To niso fizični zajemi naprav ali dokaz
+sistemske tipkovnice/statusne vrstice. Fotografija v Idejniku je obstoječi
+preverjeni slikovni vzorec. Slike niso naknadno grafično spreminjane.
+Vrt uporablja pravi potisnjeni MaterialPageRoute z možnostjo vrnitve;
+zajemi uporabljajo običajne sence in platformne pisave.
+
+Vsak od treh sklopov ima šest uspešnih capture preizkusov in čisto ciljno
+analizo. Vseh 48 slik je vizualno pregledanih. Validator potrdi dimenzije
+720×1280, 1320×2868 in 2064×2752, popolno neprosojnost, različne slike za
+vsako napravo/jezik/prizor ter vseh 421 nespremenjenih izdajnih vhodov.
+Aplikacije, odvisnosti, različice in obstoječi izdajni paketi niso spremenjeni.
+
+PNG-i so v `build/qa/upgrade-store-20261015`;
+[manifest s hashi in vrstnim redom](UPGRADE_SCREENSHOTS_1_9.json) je shranjen
+v repozitoriju. Paket `build/releases/Jivie-1.9.0+28-store-screenshots.zip`
+ima 48 PNG-jev in manifest, CRC je preverjen. SHA256:
+`a8a342e4a67c2c655f74c0b46ba147d9158e8c9b024c7fe94ee6b9aec355e4ca`.
+Posnetki še niso naloženi v Google Play ali App Store Connect.

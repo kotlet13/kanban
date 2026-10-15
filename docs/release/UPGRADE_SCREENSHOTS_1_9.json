@@ -1,0 +1,390 @@
+{
+  "version": "1.9.0+28",
+  "runtimeCommit": "6ce59cf3958dbf5c7f5bc7b0e788049c0508b412",
+  "runtimeInputSha256": "3f403c42f2c1cf3ea4ed4d38a99119fb250c05c0a49e3879b0d94cbf7695296c",
+  "captureKind": "actual Flutter widget rendering with isolated synthetic records",
+  "physicalDeviceCapture": false,
+  "pixelsEdited": false,
+  "platforms": [
+    "android-phone",
+    "ios-iphone",
+    "ios-ipad"
+  ],
+  "locales": [
+    "sl",
+    "en"
+  ],
+  "files": [
+    {
+      "path": "android-phone/sl/01-pulse.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 81817,
+      "sha256": "7a707178acb75852cc2248dfc454a579e79af26d4d1d8bd6fb4ed0abc7506199"
+    },
+    {
+      "path": "android-phone/sl/02-planner.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 115149,
+      "sha256": "373e9c694f1d57a97c8361316d450aa833de1587663dbed9c4b197e63ff0554c"
+    },
+    {
+      "path": "android-phone/sl/03-calendar.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 73832,
+      "sha256": "3619340c5e7aa82bcb15c2b4d8ee57adcc053fe21fab8af78f2a40a121c51eee"
+    },
+    {
+      "path": "android-phone/sl/04-ideas.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 204422,
+      "sha256": "b3ba92b7ec722b35f1bd4dbe163d24c9193ec9b8861dc7224183868cbaa2a48d"
+    },
+    {
+      "path": "android-phone/sl/05-projects.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 97890,
+      "sha256": "9dfc41bc0854a9cd4997f66ac09ca6c8bbd5657b89ce9254c0b801f5e10cd797"
+    },
+    {
+      "path": "android-phone/sl/06-shopping.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 61491,
+      "sha256": "689f2bd8dd8cc2a3c319bd31a7561433027ac907e409b49a613649524bcb803a"
+    },
+    {
+      "path": "android-phone/sl/07-garden.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 163750,
+      "sha256": "e75984b84afa575e663176b48e8e977c5085b10f37c926275a4fb8501b563a55"
+    },
+    {
+      "path": "android-phone/sl/08-finances.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 93660,
+      "sha256": "f9cce93ee7c9a4d123dec49946ad6ce0ad98c8d0089a2326fb7925c91e23cf02"
+    },
+    {
+      "path": "android-phone/en/01-pulse.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 81755,
+      "sha256": "2b51f48369ded448d03bcc6399ff14d07d602092d05e3f26630f0367941f9373"
+    },
+    {
+      "path": "android-phone/en/02-planner.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 113875,
+      "sha256": "c5adb583a14cc192d59149a51307d06b4902a28e9a9558765e882f0a213c313a"
+    },
+    {
+      "path": "android-phone/en/03-calendar.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 74091,
+      "sha256": "1648866e4ca3d49a22cc6803ac582c4d07090fc8f19d94f420613820d41a9f33"
+    },
+    {
+      "path": "android-phone/en/04-ideas.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 201953,
+      "sha256": "50c62d72c48d28d2d345e8b166acae45107297e06d1e3c09561bac91a38b4ff8"
+    },
+    {
+      "path": "android-phone/en/05-projects.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 104379,
+      "sha256": "22705acc6f0fa1bdb276634dfd6f495914145a3d9e8ca41cba7a67d32a53e2fe"
+    },
+    {
+      "path": "android-phone/en/06-shopping.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 64649,
+      "sha256": "3f8ca9c2f8d052f06906ac24a74500637cc496f3f3c2ab9a9adcc4f493b5b413"
+    },
+    {
+      "path": "android-phone/en/07-garden.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 166441,
+      "sha256": "f8343c8336c8df0757a4b95c0cd3ef4f6fb439618d3658f89b042904f42e539d"
+    },
+    {
+      "path": "android-phone/en/08-finances.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 91356,
+      "sha256": "cf994bac847be7d5e949406b7db469d8a067d883057f00444c1f8536b9049906"
+    },
+    {
+      "path": "ios-iphone/sl/01-pulse.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 171318,
+      "sha256": "69681ad9b9ba1385a996fea1b244a1c904bb08f461cddfe440bc4a8d6d1ccd56"
+    },
+    {
+      "path": "ios-iphone/sl/02-planner.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 238088,
+      "sha256": "3a6480682f670e80dca8b6faa1b8ee8d08b63f513d5d65e7b1eb7fdfb7ac1e34"
+    },
+    {
+      "path": "ios-iphone/sl/03-calendar.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 170188,
+      "sha256": "2e4eedda0128fe888b565b381eeff385e4a6886a0c5920bb9a78beb17e4f8c2d"
+    },
+    {
+      "path": "ios-iphone/sl/04-ideas.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 631090,
+      "sha256": "a658329e00feaffaf67d022c186e465ab33ab86bb039e15e493df40f274430a8"
+    },
+    {
+      "path": "ios-iphone/sl/05-projects.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 192178,
+      "sha256": "f74c7df1d7b0598f097b2901f5da86e01189ce5af41260a49389219f5dfe9e28"
+    },
+    {
+      "path": "ios-iphone/sl/06-shopping.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 125235,
+      "sha256": "344f3733de2d541674aca1bc87a994ed58aaf3db83550292f90001e812eade5e"
+    },
+    {
+      "path": "ios-iphone/sl/07-garden.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 261110,
+      "sha256": "f900d0d95d6ee90343b2bfe8bef81c70777c83d7ae082db7615972cccd6d99eb"
+    },
+    {
+      "path": "ios-iphone/sl/08-finances.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 204442,
+      "sha256": "371f10985f3f214b2338c2346b362e386708f19ecda298d8ee1420510bc05226"
+    },
+    {
+      "path": "ios-iphone/en/01-pulse.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 182376,
+      "sha256": "fcbcb7ffe54834377bf8bc969cf649e3b082f2d884e8aef60a24bc16b4c725d7"
+    },
+    {
+      "path": "ios-iphone/en/02-planner.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 234677,
+      "sha256": "f8a31d601801f1828dfd0be49c43f839668a45b8537815eadb804b89c2415855"
+    },
+    {
+      "path": "ios-iphone/en/03-calendar.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 179914,
+      "sha256": "49907356efa999428b7ce3577efe9a13273d3fefbf642f7b9f02a4fa55e8a16c"
+    },
+    {
+      "path": "ios-iphone/en/04-ideas.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 628510,
+      "sha256": "fdf3ac802d435e5c5e521673ee92e861d3fcd157eecbaf345cd873010389e18c"
+    },
+    {
+      "path": "ios-iphone/en/05-projects.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 208296,
+      "sha256": "d30a137db168da1ab574f4d5192f86e6d2e7911c9b5842363f6904604296d315"
+    },
+    {
+      "path": "ios-iphone/en/06-shopping.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 128957,
+      "sha256": "50e14c4be75813af458a24a28d29e731dff144d17eb3b43b898b1d179520b668"
+    },
+    {
+      "path": "ios-iphone/en/07-garden.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 264544,
+      "sha256": "642e68ca66dc8d1bf0b1a921dc7c72932d5a5399bce1bb326c6e937cfefc698b"
+    },
+    {
+      "path": "ios-iphone/en/08-finances.png",
+      "width": 1320,
+      "height": 2868,
+      "bytes": 201173,
+      "sha256": "3ec60265a9f4af467a2080b95581e9c3594fd35e38d3500b75bce536df9c3a82"
+    },
+    {
+      "path": "ios-ipad/sl/01-pulse.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 211888,
+      "sha256": "9c2e81432b9af152d66ad502c38d58abfb6f177087e170f7704a27a4c0651fdd"
+    },
+    {
+      "path": "ios-ipad/sl/02-planner.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 215867,
+      "sha256": "67c8fd17d096dbf50a5ce015342d7a92334f0f9cd56651634fe555a368b4f858"
+    },
+    {
+      "path": "ios-ipad/sl/03-calendar.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 213273,
+      "sha256": "ddfaa721e0c2bbcfd7105378bb69b1470cf3f600109ef3d3c3dc2a45f3176c69"
+    },
+    {
+      "path": "ios-ipad/sl/04-ideas.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 1179313,
+      "sha256": "cb4d37466fa2c4dbe7078129355e5e07c727520877b05716f83b778b928b60f5"
+    },
+    {
+      "path": "ios-ipad/sl/05-projects.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 244535,
+      "sha256": "66984f3d7379531988b058ddee08a912c40821d75ce4353a16f74cf68436a77a"
+    },
+    {
+      "path": "ios-ipad/sl/06-shopping.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 143189,
+      "sha256": "36bf3d89d506287e73fb6c889a1d638668cab7c4aa73e4ab6161da14cfd8ecc7"
+    },
+    {
+      "path": "ios-ipad/sl/07-garden.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 283531,
+      "sha256": "ec257153b14b1480295cf5c3f1ff802af529104f5206a0ae8d882fba337308e3"
+    },
+    {
+      "path": "ios-ipad/sl/08-finances.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 267155,
+      "sha256": "90a57ef4589265a7528ced81fe0e1b141064105d832f188263898d1bb9b3e635"
+    },
+    {
+      "path": "ios-ipad/en/01-pulse.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 220686,
+      "sha256": "ca28ef6698f84b20e3c812e0a85101004c3a1beac613c4936c790a582fccb773"
+    },
+    {
+      "path": "ios-ipad/en/02-planner.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 217543,
+      "sha256": "6f9f59dec7753e51a034452c1bffe0644d972c31a0aff0f47e8880f271857486"
+    },
+    {
+      "path": "ios-ipad/en/03-calendar.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 215302,
+      "sha256": "c377d983db5647fe30be150450c6f0b7f958d76d6c8be84d2f63ad0f2c379af9"
+    },
+    {
+      "path": "ios-ipad/en/04-ideas.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 1175484,
+      "sha256": "8211281862647a2643a15fae23312924187eb66e43bfbde63b2a1932168ccece"
+    },
+    {
+      "path": "ios-ipad/en/05-projects.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 259256,
+      "sha256": "e7ce510d68fbd831a95f667eec0b4cc31bab2803bdc1cb686aec8eb27c059352"
+    },
+    {
+      "path": "ios-ipad/en/06-shopping.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 147371,
+      "sha256": "cdd38d5ad13f6cb3937a56500f8022faabf99d23e3c732a75391d4ff2776c819"
+    },
+    {
+      "path": "ios-ipad/en/07-garden.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 287160,
+      "sha256": "6c4e976b9d59aca286bce3f7409ac39dce5a2602eb084a78693059d5576b0c0f"
+    },
+    {
+      "path": "ios-ipad/en/08-finances.png",
+      "width": 2064,
+      "height": 2752,
+      "bytes": 263139,
+      "sha256": "c7f11f7f96fbcf577ee7f5e85d5f5e9cfbdcfb5328ceb199d365ec8a31d51ce2"
+    }
+  ],
+  "harnesses": [
+    {
+      "path": "tools/release/upgrade_core_capture_test.dart",
+      "sha256": "5bfc77e43528d9a91ae44fbd878370a7e10c1104d5e7ff2425b9087363a1bb4b"
+    },
+    {
+      "path": "tools/release/upgrade_garden_ideas_capture_test.dart",
+      "sha256": "fd6df493226a772503561a54a17c1f1c51374bf294d830dc128ae5b54270ed0d"
+    },
+    {
+      "path": "tools/release/upgrade_project_shopping_capture_test.dart",
+      "sha256": "7fb67127c69bb98d9db062fa686fd2b02a7260b18b57a5c6ba3a52f35518eea5"
+    }
+  ],
+  "outputRoot": "build/qa/upgrade-store-20261015",
+  "archive": "build/releases/Jivie-1.9.0+28-store-screenshots.zip",
+  "archiveSha256": "a8a342e4a67c2c655f74c0b46ba147d9158e8c9b024c7fe94ee6b9aec355e4ca",
+  "galleryOrder": [
+    "01-pulse",
+    "02-planner",
+    "04-ideas",
+    "07-garden",
+    "05-projects",
+    "06-shopping",
+    "03-calendar",
+    "08-finances"
+  ],
+  "captureTests": {
+    "core": 6,
+    "gardenIdeas": 6,
+    "projectsShopping": 6,
+    "targetedAnalysis": "No issues found for all three harnesses",
+    "inspected": "all 48 by capture agents, representative scenes and platform layouts by primary agent"
+  },
+  "uploadedToStores": false
+}
