@@ -1,7 +1,8 @@
-# Jivie1.9.0(28) — strežnika nadgrajena, iOS naložen, trgovinska koraka odprta
+# Jivie1.9.0(28) — javni Android oddan, TestFlight odložen
 
-15. oktober2026. Uporabnik naroča javniAndroid in iOSTestFlight, brez javne
-iOSoddaje. Windows/Linuxnative delo je odloženo. [Izvedba](../UPGRADE_IMPLEMENTATION.md).
+15. oktober2026. Uporabnik naroča javniAndroid; prvotno naročeni iOSTestFlight
+je po novi usmeritvi za zdaj odložen. Javne iOSoddaje ne izvajamo.
+Windows/Linuxnative delo je odloženo. [Izvedba](../UPGRADE_IMPLEMENTATION.md).
 
 ## Končni izvor in paketi
 
@@ -61,20 +62,49 @@ za migracijo je uporabljena izključno nova produkcijska322vrstic kopija.
 
 ## Portala
 
-GooglePlay javno ostaja **1.8.0(27), Na voljo vGoogluPlay**,release3/100%/
-1država od14okt21:42. Novi javni osnutek je release4 z imenom in SL/en-US
-opombami iz [izdajnih besedil](UPGRADE_RELEASE_NOTES_1_9.json). **AAB28 še ni
-naložen ali oddan**. Interni kanal ostane neaktiven. Sistemski izbirnik ima
-pri pravem AAB onemogočenOpen; tudi bajtno enaka zasebna nalagalna kopija
-ne odpravi težave. Razširitev zahteva »Allow access to file URLs«; uporabniku
-je pojasnjen širši lokalni dostop in zahtevano njegovo dejanje. Agent tega
-dovoljenja ni vključil ali obšel. Nove slike še niso naložene.
+**15. oktobra je Android1.9.0(28) dejansko oddan za javno posodobitev.**
+Uporabnik je po težavah Brave izrecno zahteval Codexov vgrajeni brskalnik;
+obstoječa Google seja je bila prijavljena v pravi TaknDevs račun. Običajni
+filechooser je brez novega razširitvenega dovoljenja uspešno naložil isti
+preverjeni AAB28. Ni nove gradnje, drugega paketa ali spremembe varnostnih
+dovoljenj. Prejšnja zahteva za Brave »Allow access to file URLs« je odveč.
 
-iOS28 je podpisan/preverjen in **dejansko naložen prek Organizerja**. Spletna
-AppStoreConnect seja je potekla; uporabnik naj se prijavi v odprtem Safariju,
-geslo/kode ne sodijo v klepet. Sledijo AppleComplete/encryptionstandard+
-FranceNo in vključitev28 v obstoječiTestFlightPredjavnoobjavo z ohranjenima
-25/26. TestFlightTesting28 še ni potrjen. **Javne iOS oddaje ne izvajati.**
+Produkcijski kanal4698247597354229997/release4 vsebuje28,27ni vključena v novo
+izdajo. Uvajanje je100% v obstoječem ciljnem obsegu ene države/regije
+(Slovenija). Predogled potrjuje **0izgubljenih in0novo podprtih naprav**,
+API24+/target36/4postavitve/3ABI/1zahtevanofunkcijo. Ime in SL/en-USopombe
+so iz [izdajnih besedil](UPGRADE_RELEASE_NOTES_1_9.json). Interni kanal ni
+ustvarjen, nadaljevan ali spremenjen; ostaja neaktiven.
+
+Za oba jezika je izbranih **8novih telefonskih slik** v zaporedju Utrip,
+opravila, Idejnik, Vrt, projekt, nakupi, koledar, finance. Angleška galerija
+ima svoje angleške prizore; prejšnje podedovane slovenske slike so zamenjane.
+Angleške nalagalne kopije imajo enoličen prefiks `jivie-1.9-android-en-`,
+vsi bajti in hashi pa so enaki prvotnim zajemom. Stari elementi ostanejo v
+knjižnici, ikona/predstavitveni sliki ostaneta. Pregled obeh jezikov potrdi
+osmerico; ohranjena sta posnetka `play-gallery-sl-review.png` in
+`play-gallery-en-review.png` v izdajni QA mapi. V isti oddaji sta tudi že
+pripravljena kratka in celotna opisa SL/en-US, brez sprememb njunega besedila
+med tem korakom. Skupno je dokončno potrjenih **7sprememb**:1izdaja,2galeriji
+in4besedila.
+
+Po končnem »Pošljite spremembe v pregled« je dejansko viden status
+**»Spremembe v pregledu«**, potrjeno ob04:44UTC/06:44CEST. Hitra Googlova
+preverjanja še potekajo (prikaz do14minut); pregled/odobritev/javna dostopnost28
+še niso potrjeni. Upravljano objavljanje je izklopljeno, zato objava sledi
+Googlovi odobritvi. Doslej javna27ostane aktivna. Dokaza sta
+[shranjeni prikaz](../../build/qa/upgrade-release-20261014/android-public-28-submitted.txt)
+in [posnetek dejanske oddaje](../../build/qa/upgrade-release-20261014/android-public-28-submitted.png).
+Naslednji korak je izid Googlovega pregleda, ne nova oddaja ali testna matrika.
+
+**Uporabnik je v tem koraku izrecno odložil Apple/TestFlight in zahteval osredotočenje
+na Android.** iOS28 je že podpisan/preverjen in naložen prek Organizerja,
+vendar AppleComplete in TestFlightTesting28 še nista potrjena. V tem
+Android koraku ni nadaljnjega Apple posega. Prihodnje nadaljevanje potrebuje
+običajno spletno prijavo, potrditev obdelave/encryptionstandard+FranceNo in
+vključitev28 v obstoječo Predjavnoobjavo z ohranjenima25/26. **Javne iOS oddaje
+ne izvajati.** Prejšnja zahteva za takojšnjo Apple prijavo je zaradi odloga
+neaktualna; geslo/kode ne sodijo v klepet.
 
 ## Novi trgovinski posnetki
 
@@ -103,4 +133,6 @@ PNG-i so v `build/qa/upgrade-store-20261015`;
 v repozitoriju. Paket `build/releases/Jivie-1.9.0+28-store-screenshots.zip`
 ima 48 PNG-jev in manifest, CRC je preverjen. SHA256:
 `a8a342e4a67c2c655f74c0b46ba147d9158e8c9b024c7fe94ee6b9aec355e4ca`.
-Posnetki še niso naloženi v Google Play ali App Store Connect.
+16Android telefonskih slik je naloženih in vključenih v javno oddajo28.
+Preostalih32iPhone/iPad slik ostane pripravljenih; AppStoreConnect slik
+v tej nadgradnji nismo nalagali.

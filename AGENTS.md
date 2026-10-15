@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+15. oktober — **Android1.9.0(28) dejansko oddan za javno posodobitev z novima SL/ENgalerijama; Appleodložen**.
+[Dokazi](docs/release/UPGRADE_1_9.md#portala). Na uporabnikovo zahtevo uporabljen
+Codexvgrajenibrskalnik/prijavljeniTaknDevs; istiAAB28/SHA347d6d8b… uspešno
+naložen prek običajnegafilechooser, brez spremembe dovoljenj ali novegradnje.
+BravefileURLzahteva je odveč. Javni4698247597354229997/release4,28vključena/
+27izključena/100%/obstoječa1državaSlovenija/SLen-USopombe;0izgubljenih/0novih
+naprav. Obe galeriji8novih720×1280 slik:Utrip/opravila/Idejnik/Vrt/projekt/
+nakupi/koledar/finance; ENlastniangleškiprizori/bajtnoenakeprefiksanekopije.
+Stari elementi ohranjeni v knjižnici, ikona/featureisti. Ohranjenaprejšnja
+kratka/celotnaopisaSLenUS tudi vključena, skupno7sprememb dokončno potrjenih.
+**»Spremembe v pregledu« potrjeno04:44UTC15okt**, hitrapreverjanjašetečejo/
+upravljanoOFF/objavapoodobritvi. **Odobritev/javna28šeNIPOTRJENA**, doslej
+javna27ostane. Internikanalostajaneaktiven/nobeneinterneizdaje. Posnetek
+android-public-28-submitted.png in besedilni dokazvbuild/qa/upgrade-release-20261014.
+Uporabnik **izrecnoodložiAppleTestFlightinželisamoAndroid**: iOS28žeuploadcomplete,
+vtemkorakuniAppleposega/CompleteTesting28dokaza/alijavneoddaje. Nobenega
+ponovnegaciklusa gradnje/testov/strežniškemigracije. Koda/SDK/locks/dovoljenja/
+končniAAB/IPA/prod+test1schema18/test2/splet soisti; naslednjeizidGooglovegapregleda.
+
 15. oktober — **produkcija in pregledni test1 dejansko nadgrajena na0.14/schema18; iOS28naložen**.
 [Strežniški dokazi](docs/server/UPGRADE_0_14.md), [izdaja](docs/release/UPGRADE_1_9.md).
 Po odklenitvi novi ločeni capture/kopiji/resnični MariaDB10.11.19obnovi
