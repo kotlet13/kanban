@@ -93,6 +93,7 @@ void main() {
     (tester) async {
       SharedPreferences.setMockInitialValues({
         'organizer_local_reminders_enabled_v1': true,
+        'organizer_local_reminders_sound_v1': false,
       });
       final due = DateTime.now().add(const Duration(hours: 1));
       final a = localSnapshot('house-a', 'A', due);

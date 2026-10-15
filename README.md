@@ -1,5 +1,7 @@
 # Jivie
 
+**15. oktober — popravek privzetega zvoka:** nova oziroma manjkajoča nastavitev zvoka je vključena. Vse že shranjene nastavitve ostanejo nespremenjene; brez selitve ali množičnega prepisovanja. Cilj Android1.9.1(29)/FamilyHub0.14.1, stanje oddaje vodi [izdajni zapis](docs/release/DEFAULT_SOUND_1_9_1.md).
+
 **12. oktober — namizna prenova izvedena:** macOS/Windows/Linux imajo neposredno
 stransko navigacijo, iskanje, urejanje ob seznamu, platformne menije in bližnjice.
 Namizne finance/projekti/Utrip/Idejnik izkoristijo širino; osnutek preživi spremembo

@@ -12,7 +12,7 @@ void main() {
     'workspace and project exceptions inherit only unspecified channels',
     () {
       var prefs = LocalNotificationPreferences(
-        defaults: const SharedNotificationSettings(push: false),
+        defaults: const SharedNotificationSettings(push: false, sound: false),
       );
       prefs = prefs.change('push', true, workspace: 'home');
       prefs = prefs.change('sound', true, workspace: 'home', project: 'p1');
@@ -130,6 +130,92 @@ void main() {
         ),
         isNull,
       );
+    },
+  );
+  test(
+    'new and missing sound resolve true for every category/workspace/project without persisting defaults',
+    () async {
+      expect(const SharedNotificationSettings().sound, isTrue);
+      expect(SharedNotificationSettings.fromJson({}).sound, isTrue);
+      expect(
+        SharedNotificationSettings.fromJson({'push': false}).sound,
+        isTrue,
+      );
+      final shared = SharedNotificationPreferences(scopeId: 'new-scope');
+      for (final category in sharedNotificationCategories) {
+        expect(shared.forCategory(category).sound, isTrue);
+      }
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final prefs = await c.read(localNotificationPreferencesProvider.future);
+      for (final workspace in [
+        'local',
+        'home',
+        'organization',
+        'private:account',
+      ]) {
+        expect(prefs.resolve(workspace).sound, isTrue);
+        expect(prefs.resolve(workspace, 'new-project').sound, isTrue);
+      }
+      expect(prefs.defaults.push, isFalse);
+      expect((await SharedPreferences.getInstance()).getKeys(), isEmpty);
+    },
+  );
+  test(
+    'stored legacy false and true remain exact and reading does not migrate',
+    () async {
+      for (final sound in [false, true]) {
+        SharedPreferences.setMockInitialValues({
+          'organizer_local_reminders_enabled_v1': true,
+          'organizer_local_reminders_sound_v1': sound,
+        });
+        final c = ProviderContainer();
+        final prefs = await c.read(localNotificationPreferencesProvider.future);
+        expect(prefs.defaults.sound, sound);
+        expect(prefs.resolve('new-workspace', 'new-project').sound, sound);
+        c.dispose();
+        final storage = await SharedPreferences.getInstance();
+        expect(storage.getBool('organizer_local_reminders_sound_v1'), sound);
+        expect(storage.getKeys(), {
+          'organizer_local_reminders_enabled_v1',
+          'organizer_local_reminders_sound_v1',
+        });
+      }
+    },
+  );
+  test(
+    'materialized saved false defaults and explicit project optouts remain unchanged; only absent sound defaults on',
+    () async {
+      for (final defaults in [
+        {'inApp': true, 'push': true, 'email': false, 'sound': false},
+        {'inApp': true, 'push': true, 'email': false},
+      ]) {
+        final raw = jsonEncode({
+          'defaults': defaults,
+          'overrides': {
+            LocalNotificationPreferences.key('home', 'p'): {'sound': false},
+          },
+        });
+        SharedPreferences.setMockInitialValues({
+          LocalNotificationPreferencesController.storageKey: raw,
+        });
+        final c = ProviderContainer();
+        final settings = await c.read(
+          localNotificationPreferencesProvider.future,
+        );
+        expect(settings.resolve('home', 'p').sound, isFalse);
+        expect(
+          settings.resolve('home', 'new-project').sound,
+          defaults.containsKey('sound') ? false : true,
+        );
+        expect(
+          (await SharedPreferences.getInstance()).getString(
+            LocalNotificationPreferencesController.storageKey,
+          ),
+          raw,
+        );
+        c.dispose();
+      }
     },
   );
 }

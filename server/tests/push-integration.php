@@ -9,6 +9,7 @@ use Kanboard\Plugin\FamilyHub\Model\NativePushCrypto;
 use Kanboard\Plugin\FamilyHub\Model\NativePushService;
 use Kanboard\Plugin\FamilyHub\Model\NativePushQueue;
 use Kanboard\Plugin\FamilyHub\Model\NativeNotificationWriter;
+use Kanboard\Plugin\FamilyHub\Model\NativeNotificationPreferences;
 use Kanboard\Plugin\FamilyHub\Model\NativeInboxService;
 use Kanboard\Plugin\FamilyHub\Model\NativeAuthService;
 use Kanboard\Plugin\FamilyHub\Model\NativeError;
@@ -118,16 +119,26 @@ try {
     change('INSERT INTO familyhub_finance_policy(scope_id,enabled,revision,sequence) VALUES(?,1,1,0)',[$defaultScope]);change('INSERT INTO familyhub_finance_grants VALUES(?,?,\'read\')',[$defaultScope,$accounts['a']]);
     $defaults=$inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences'];
     foreach ($defaults as $category=>$preference) {
-        check($preference===['inApp'=>true,'sound'=>false,'push'=>true,'email'=>false],'unsaved '.$category.' enables push while email remains opt-in');
+        check($preference===['inApp'=>true,'sound'=>true,'push'=>true,'email'=>false],'unsaved '.$category.' enables sound and push while email remains opt-in');
     }
+    check(array_keys($defaults)===NativeNotificationPreferences::CATEGORIES && count($defaults)===7,'default API includes every category including reminders and Ideas');
+    check(query('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=?',[$defaultScope])===[],'preference GET never materializes default settings into saved rows');
+    foreach ([false,true] as $savedSound) {
+        check(NativeNotificationPreferences::resolve(json_encode(['sound'=>$savedSound]))['sound']===$savedSound,'resolver preserves explicit '.($savedSound?'true':'false').' without coercion');
+    }
+    check(NativeNotificationPreferences::resolve('{"push":false}')===['inApp'=>true,'sound'=>true,'push'=>false,'email'=>false],'partial legacy preference inherits sound-on and preserves unrelated push opt-out');
     $defaultIds=[];$revision=1000;
-    foreach (['tasks'=>'task','events'=>'event','shopping'=>'shoppingItem','finance'=>'financeEntry','reminders'=>'task','membership'=>'membership'] as $category=>$type) {
+    foreach (['tasks'=>'task','events'=>'event','shopping'=>'shoppingItem','finance'=>'financeEntry','reminders'=>'task','membership'=>'membership','ideas'=>'idea'] as $category=>$type) {
         $defaultIds[]=emit($defaultScope,$accounts['a'],++$revision,$type,$category,'default.'.$category);
     }
-    check(count(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id IN ('.implode(',',array_fill(0,count($defaultIds),'?')).')',$defaultIds))===12,'unsaved categories enqueue for both registered devices');
+    check(count(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id IN ('.implode(',',array_fill(0,count($defaultIds),'?')).')',$defaultIds))===14,'unsaved categories enqueue for both registered devices');
     check(query('SELECT d.* FROM familyhub_deliveries d JOIN familyhub_inbox i ON i.id=d.inbox_id WHERE i.scope_id=?',[$defaultScope])===[],'configured SMTP still queues no email without opt-in');
     $before=count($captured);$result=(new NativePushQueue($container))->run(20,$transport);
-    check($result['accepted']===12 && count($captured)===$before+12,'worker delivers all categories with no saved preference rows');
+    check($result['accepted']===14 && count($captured)===$before+14,'worker delivers all categories with no saved preference rows');
+    foreach (array_slice($captured,$before) as $defaultMessage) {
+        check($defaultMessage['android']['notification']['channel_id']==='familyhub_push_sound_v1' && $defaultMessage['android']['notification']['default_sound']===true && $defaultMessage['apns']['payload']['aps']['sound']==='default','unsaved category uses Android sound channel and APNs default sound at actual worker transport');
+    }
+    check(query('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=?',[$defaultScope])===[],'event creation and delivery do not materialize preference rows');
     $off=['inApp'=>true,'sound'=>false,'push'=>false,'email'=>false];
     foreach (array_keys($defaults) as $category) {
         $saved=$inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>$category,'settings'=>$off,'requestId'=>uuid()])['preferences'];
@@ -136,13 +147,31 @@ try {
         check(query('SELECT * FROM familyhub_push_jobs WHERE inbox_id=?',[$id])===[],'explicit '.$category.' opt-out prevents enqueue');
     }
     $on=array_replace($off,['push'=>true]);
+    // The worker must resolve the current saved preference, not an enqueue-time sound snapshot.
+    foreach ([true,false] as $latestSound) {
+        $queuedSettings=array_replace($off,['push'=>true,'sound'=>!$latestSound]);
+        $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$queuedSettings,'requestId'=>uuid()]);
+        emit($defaultScope,$accounts['a'],++$revision);
+        $latestSettings=array_replace($queuedSettings,['sound'=>$latestSound]);
+        $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$latestSettings,'requestId'=>uuid()]);
+        $savedBefore=query('SELECT category,settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? ORDER BY category',[$defaultScope,$accounts['a']]);
+        check($inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences']['tasks']===$latestSettings,'GET preserves saved sound '.($latestSound?'on':'off').' and all other channel choices');
+        $before=count($captured);$result=(new NativePushQueue($container))->run(20,$transport);
+        check($result['accepted']===2 && count($captured)===$before+2,'pending sound change does not cancel push delivery');
+        foreach (array_slice($captured,$before) as $sent) {
+            check($sent['android']['notification']['channel_id']===($latestSound?'familyhub_push_sound_v1':'familyhub_push_silent_v1') && $sent['android']['notification']['default_sound']===$latestSound && isset($sent['apns']['payload']['aps']['sound'])===$latestSound,'delivery freshly resolves '.($latestSound?'enabled':'explicitly disabled').' sound after enqueue');
+        }
+        check(query('SELECT category,settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? ORDER BY category',[$defaultScope,$accounts['a']])===$savedBefore,'GET and transport leave saved preference bytes unchanged');
+    }
+
     $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$on,'requestId'=>uuid()]);
     $lateOff=emit($defaultScope,$accounts['a'],++$revision);
     $inbox->execute('inbox.preferences.set',['scopeId'=>$defaultScope,'category'=>'tasks','settings'=>$off,'requestId'=>uuid()]);
     $before=count($captured);$result=(new NativePushQueue($container))->run(20,$transport);
     check($result['cancelled']===2 && count($captured)===$before,'push opt-out after enqueue cancels both deliveries before transport');
     change('UPDATE familyhub_inbox_preferences SET settings=? WHERE scope_id=? AND account_id=? AND category=\'tasks\'',[json_encode(['push'=>false]),$defaultScope,$accounts['a']]);
-    check($inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences']['tasks']===$off,'partial saved settings fill missing fields and preserve explicit false');
+    check($inbox->execute('inbox.preferences.get',['scopeId'=>$defaultScope])['preferences']['tasks']===array_replace($off,['sound'=>true]),'partial saved settings inherit sound-on while preserving explicit push false');
+    check(query('SELECT settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=\'tasks\'',[$defaultScope,$accounts['a']])[0]['settings']===json_encode(['push'=>false]),'reading a partial legacy row leaves its original JSON unchanged');
     change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=?',[$defaultScope]);
     $service=new \Kanboard\Plugin\FamilyHub\Model\NativeService($container);foreach(['a','b']as$person){$service->dispatch('moderation.acceptPolicy',['policyVersion'=>1],'Bearer '.$sessions[$person]['token'],$prefix);}$stamp=gmdate('Y-m-d\TH:i:s\Z');$list=uuid();
     $changes=[
@@ -187,6 +216,11 @@ try {
     register($a,'revoked-device-'.$prefix,5);emit($scope,$accounts['a'],11);(new NativeAuthService($container,'Bearer '.$sessions['a']['token'],$prefix))->execute('auth.revoke',['deviceId'=>$devices[0]]);
     check((int)query('SELECT active FROM familyhub_push_registrations WHERE device_id=?',[$devices[0]])[0]['active']===0 && query('SELECT state FROM familyhub_push_jobs WHERE device_id=? AND state IN (\'pending\',\'processing\')',[$devices[0]])===[],'device revoke atomically disables registration and pending deliveries');
     check(rejected(fn()=>$a->execute('push.state',[]),'device_revoked'),'revoked bearer cannot reregister');
+    foreach ([true,false] as $displaySound) {
+        $displayJob=['token'=>'synthetic-display2','accountId'=>$accounts['a'],'inboxId'=>1,'groupKey'=>'synthetic','kind'=>'task.updated','language'=>'sl','platform'=>'android','displayVersion'=>2,'sound'=>$displaySound,'expiresAt'=>time()+60];
+        $displayMessage=NativeFcmTransport::message($displayJob,$server['serverId']);
+        check($displayMessage['data']['displayVersion']==='2' && $displayMessage['data']['sound']===($displaySound?'1':'0') && !isset($displayMessage['notification']),'Android display2 carries exact '.($displaySound?'enabled':'disabled').' sound choice for client rendering');
+    }
     $job=['token'=>'synthetic-direct','accountId'=>$accounts['b'],'inboxId'=>1,'groupKey'=>'generic','kind'=>'generic','language'=>'sl','platform'=>'ios','sound'=>false,'expiresAt'=>time()+60];$mode='mismatch';check($transport->send($job,$server['serverId'])['status']==='rejected','sender/project mismatch never reports success');
     check((int)query('SELECT version FROM plugin_schema_versions WHERE plugin=\'familyhub\'')[0]['version']>=8,'additive push schema8 or newer recorded');
     $beforeOAuth=$oauth;$mode='unauthorized';check($transport->send($job,$server['serverId'])['status']==='retry','OAuth401 is retryable without provider body exposure');$mode='accepted';$transport->send($job,$server['serverId']);check($oauth===$beforeOAuth+1,'OAuth401 invalidates cached access token for renewal');

@@ -54,7 +54,7 @@ final localNotificationDeviceStatusProvider =
     );
 
 class LocalReminderSettings {
-  const LocalReminderSettings({this.enabled = false, this.sound = false});
+  const LocalReminderSettings({this.enabled = false, this.sound = true});
   final bool enabled, sound;
 }
 
@@ -73,7 +73,7 @@ class LocalReminderSettingsController
     final prefs = await SharedPreferences.getInstance();
     return LocalReminderSettings(
       enabled: prefs.getBool(_enabled) ?? false,
-      sound: prefs.getBool(_sound) ?? false,
+      sound: prefs.getBool(_sound) ?? true,
     );
   }
 

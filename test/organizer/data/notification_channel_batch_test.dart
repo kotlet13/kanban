@@ -229,4 +229,75 @@ void main() {
       expect(await repo.database.rows('SELECT * FROM commands'), isEmpty);
     },
   );
+  test(
+    'shared cache keeps materialized saved sound flags byte-exact; missing sound alone defaults true',
+    () async {
+      final (repo, transport, scopes) = await fixture();
+      final original = {
+        for (final category in sharedNotificationCategories)
+          category: {
+            'inApp': true,
+            'push': true,
+            'sound': false,
+            'email': false,
+          },
+      };
+      original['ideas'] = {'inApp': false};
+      original['events'] = {'sound': true};
+      transport.saved[scopes.first] = original;
+      await repo.syncNow();
+      final cached = await repo.database.rows(
+        'SELECT data FROM notification_preferences WHERE scope_id=?',
+        [scopes.first],
+      );
+      expect(cached.single['data'], jsonEncode(original));
+      final prefs = repo.state.notificationPreferences[scopes.first]!;
+      for (final category in sharedNotificationCategories.where(
+        (v) => v != 'ideas' && v != 'events',
+      )) {
+        expect(prefs.forCategory(category).sound, isFalse);
+      }
+      expect(prefs.forCategory('ideas').sound, isTrue);
+      expect(prefs.forCategory('events').sound, isTrue);
+      expect(
+        repo.state.notificationPreferences[scopes.last]!
+            .forCategory('reminders')
+            .sound,
+        isTrue,
+      );
+      expect(await repo.database.rows('SELECT * FROM commands'), isEmpty);
+      await repo.refreshLocal();
+      expect(
+        (await repo.database.rows(
+          'SELECT data FROM notification_preferences WHERE scope_id=?',
+          [scopes.first],
+        )).single['data'],
+        jsonEncode(original),
+      );
+      transport.offline = true;
+      await repo.setNotificationChannel(
+        scopeIds: [scopes.first],
+        channel: 'push',
+        enabled: false,
+        expectedPartition: repo.state.session!.partition,
+        category: 'tasks',
+      );
+      expect(
+        repo.state.notificationPreferences[scopes.first]!
+            .forCategory('tasks')
+            .sound,
+        isFalse,
+      );
+      expect(
+        (jsonDecode(
+              (await repo.database.rows(
+                    'SELECT params FROM commands',
+                  )).single['params']
+                  as String,
+            )
+            as Map)['settings']['sound'],
+        false,
+      );
+    },
+  );
 }

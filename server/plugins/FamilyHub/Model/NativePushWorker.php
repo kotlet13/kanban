@@ -33,7 +33,7 @@ class NativePushWorker extends NativeDatabase
                 }
                 try {
                     $token=NativePushCrypto::decrypt($registration['token_cipher'],NativePushCrypto::aad($this->serverId(),$registration));
-                    $result=$transport->send(['token'=>$token,'accountId'=>$registration['account_id'],'inboxId'=>(int)$inbox['id'],'groupKey'=>$inbox['group_key'],'kind'=>$inbox['kind'],'language'=>$registration['language'],'platform'=>$registration['platform'],'displayVersion'=>(int)($registration['notification_format']??1),'presentation'=>(new NativePushPresentation($this->container))->topic($inbox,$registration['language']),'sound'=>(bool)($settings['sound'] ?? false),'expiresAt'=>(int)$job['expires_at']],$this->serverId());
+                    $result=$transport->send(['token'=>$token,'accountId'=>$registration['account_id'],'inboxId'=>(int)$inbox['id'],'groupKey'=>$inbox['group_key'],'kind'=>$inbox['kind'],'language'=>$registration['language'],'platform'=>$registration['platform'],'displayVersion'=>(int)($registration['notification_format']??1),'presentation'=>(new NativePushPresentation($this->container))->topic($inbox,$registration['language']),'sound'=>(bool)($settings['sound'] ?? true),'expiresAt'=>(int)$job['expires_at']],$this->serverId());
                     $status=$result['status']==='accepted' ? 'accepted' : ($result['status']==='retry' && (int)$job['attempts']<5 ? 'retry' : 'cancelled');
                     $retryAfter=(int)($result['retryAfter'] ?? 0);
                     if ($result['status']==='unregistered') { (new NativePushService($this->container))->revokeDevice($device['id']); }

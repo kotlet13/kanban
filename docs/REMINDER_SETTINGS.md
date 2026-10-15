@@ -1,5 +1,7 @@
 # Enoten zaslon nastavitev opomnikov — 14. oktober 2026
 
+Dopolnitev15.oktobra: nove/manjkajoče nastavitve imajo zvok vključen, vse shranjene vrednosti ostanejo. [Popravek in izdajni status](release/DEFAULT_SOUND_1_9_1.md).
+
 Uporabnik je izrecno izbral **Več → Nastavitve opomnikov**. Izvedba je v
 izvoru; javni Android 1.7.1 (26) tega zaslona še nima. Funkcionalni korak ni
 spreminjal gostovanja ali FamilyHub. Poznejša podpisana Android1.8.0(27) je

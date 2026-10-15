@@ -139,6 +139,16 @@ void main() {
         final specifics = captured
             .map((row) => row['platformSpecifics'] as Map)
             .toList();
+        expect(
+          specifics.every(
+            (row) =>
+                row[platform == TargetPlatform.android
+                    ? 'playSound'
+                    : 'presentSound'] ==
+                true,
+          ),
+          isTrue,
+        );
         if (platform == TargetPlatform.android) {
           expect(specifics[0]['groupKey'], 'jivie.$server.$account');
           expect(specifics[1]['groupKey'], 'jivie.$server.$account');

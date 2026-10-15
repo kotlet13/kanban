@@ -8,7 +8,7 @@ class NativeNotificationPreferences extends NativeDatabase
 
     public static function resolve($saved = null)
     {
-        $defaults = ['inApp' => true, 'sound' => false, 'push' => true, 'email' => false];
+        $defaults = ['inApp' => true, 'sound' => true, 'push' => true, 'email' => false];
         return $saved === null ? $defaults : array_replace($defaults, json_decode($saved, true, 32, JSON_THROW_ON_ERROR));
     }
 

@@ -7,7 +7,7 @@ class LocalNotificationRequest {
     required this.plan,
     required this.title,
     required this.body,
-    this.sound = false,
+    this.sound = true,
   });
   final ReminderPlan plan;
   final String title, body;

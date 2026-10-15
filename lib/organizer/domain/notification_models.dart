@@ -234,7 +234,7 @@ List<SharedInboxGroup> groupSharedInbox(
 class SharedNotificationSettings {
   const SharedNotificationSettings({
     this.inApp = true,
-    this.sound = false,
+    this.sound = true,
     this.push = true,
     this.email = false,
   });
@@ -283,7 +283,7 @@ class SharedNotificationSettings {
   factory SharedNotificationSettings.fromJson(Map<String, dynamic> j) =>
       SharedNotificationSettings(
         inApp: j.containsKey('inApp') ? readBool(j, 'inApp') : true,
-        sound: j.containsKey('sound') ? readBool(j, 'sound') : false,
+        sound: j.containsKey('sound') ? readBool(j, 'sound') : true,
         push: j.containsKey('push') ? readBool(j, 'push') : true,
         email: j.containsKey('email') ? readBool(j, 'email') : false,
       );

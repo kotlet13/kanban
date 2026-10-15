@@ -25,7 +25,7 @@ try {
     $preferenceClass='Kanboard\\Plugin\\FamilyHub\\Model\\NativeNotificationPreferences';
     if($preferenceClass::CATEGORIES!==['tasks','events','shopping','finance','reminders','membership'])fail('category_contract_mismatch');
     $defaults=$preferenceClass::resolve();
-    if($defaults!==['inApp'=>true,'sound'=>false,'push'=>true,'email'=>false])fail('notification_defaults_mismatch');
+    if($defaults!==['inApp'=>true,'sound'=>true,'push'=>true,'email'=>false])fail('notification_defaults_mismatch');
     $allOff=['inApp'=>false,'push'=>false,'email'=>false,'sound'=>false];
     if($preferenceClass::resolve(json_encode($allOff))!==array_replace($defaults,$allOff))fail('explicit_opt_out_mismatch');
     $pdo->exec('SET TRANSACTION READ ONLY');$pdo->exec('START TRANSACTION WITH CONSISTENT SNAPSHOT');

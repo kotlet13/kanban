@@ -25,7 +25,7 @@ try {
     $preferenceClass='Kanboard\\Plugin\\FamilyHub\\Model\\NativeNotificationPreferences';
     if($preferenceClass::CATEGORIES!==['tasks','events','shopping','finance','reminders','membership'])fail('category_contract_mismatch');
     $defaults=$preferenceClass::resolve();
-    if($defaults!==['inApp'=>true,'sound'=>false,'push'=>true,'email'=>false])fail('notification_defaults_mismatch');
+    if($defaults!==['inApp'=>true,'sound'=>true,'push'=>true,'email'=>false])fail('notification_defaults_mismatch');
     require SITE.'/plugins/FamilyHub/Model/NativeInboxRetention.php';
     $retentionClass='Kanboard\\Plugin\\FamilyHub\\Model\\NativeInboxRetention';
     if($retentionClass::READ_RETENTION_SECONDS!==604800 || $retentionClass::cutoff(604800)!=='1970-01-01T00:00:00Z' || !$retentionClass::expired(['read_at'=>'1970-01-01T00:00:00Z'],604800) || $retentionClass::expired(['read_at'=>null],604800))fail('inbox_retention_contract_mismatch');

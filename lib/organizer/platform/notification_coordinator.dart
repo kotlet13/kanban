@@ -267,7 +267,7 @@ class _LocalNotificationCoordinatorState
                 ? localSettings(plan).sound
                 : shared?.notificationPreferences[plan.target.scopeId]
                           ?.forCategory('reminders')
-                          .sound ==
+                          .sound ??
                       true,
           ),
     ];

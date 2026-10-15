@@ -1,11 +1,16 @@
 # Izbirna FCM dostava — pogodba 0.4.0
 
-> Dopolnitev izvora 11. oktobra 2026: vse kategorije brez shranjene izjeme
-> uporabljajo `push=true`, `inApp=true`, `email=false`, `sound=false`. Shranjene
-> nastavitve imajo prednost. API, writer in oba pošiljatelja uporabljajo
-> `NativeNotificationPreferences`; pravice in registracija naprav se ne
-> spremenijo. Nobenega ponovnega pošiljanja preteklih obvestil ni. Gostovana
-> namestitev te spremembe še ni potrjena. [Dokazi](../NOTIFICATION_DEFAULTS_AND_READ_ALL.md).
+> Dopolnitev izvora 15. oktobra 2026: vse kategorije brez shranjene izjeme
+> uporabljajo `push=true`, `inApp=true`, `sound=true`, `email=false`, tudi
+> `reminders` in `ideas`. Manjkajoče polje `sound` v delni stari nastavitvi
+> podeduje `true`; vsaka izrecno shranjena `false` ali `true` ostane nespremenjena.
+> To je sprememba privzete vrednosti, brez migracije ali spreminjanja obstoječih
+> nastavitev, vrstic oziroma zgodovine. Branje in dostava nastavitev ne zapišeta.
+> Pošiljatelj tik pred dostavo ponovno prebere trenutno nastavitev. Android
+> display2 pošlje `sound=1|0`; stare naprave izberejo zvočni/tihi kanal, APNs pa
+> doda `sound=default` samo ob vključenem zvoku. Sistemska dovoljenja, uporabniška
+> nastavitev kanala in tihi način še vedno veljajo. Gostovana namestitev tega
+> popravka s tem dokumentom še ni potrjena.
 
 
 Izvedeno 5. oktobra 2026 in preverjeno s sintetičnimi napravami ter nadomestnim transportom. Resnična konfiguracija Firebase in zunanja dostava še nista preverjeni. Native envelope v1/actor ACL ostaneta nespremenjena. FamilyHub inbox je kanoničen; FCM je samo izbirni dostavni kanal. Firebase auth/baza/Analytics niso del tega adapterja.

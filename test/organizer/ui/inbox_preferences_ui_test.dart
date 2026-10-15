@@ -55,7 +55,10 @@ CollaborationState preferencesState({
                 'finance',
                 'ideas',
               ])
-                category: const SharedNotificationSettings(push: false),
+                category: const SharedNotificationSettings(
+                  push: false,
+                  sound: false,
+                ),
             },
     ),
     secondScopeId: SharedNotificationPreferences(
@@ -71,6 +74,7 @@ CollaborationState preferencesState({
           'ideas',
         ])
           category: SharedNotificationSettings(
+            sound: false,
             push: secondPush && ['reminders', 'tasks'].contains(category),
           ),
       },
@@ -179,6 +183,9 @@ void main() {
   testWidgets(
     'bulk sound updates every category and scope without changing other channels',
     (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_sound_v1': false,
+      });
       final controller = PreferencesController(preferencesState());
       final sdk = lifecycle.FakeSdk();
       await tester.pumpWidget(settingsHost(controller, sdk));
@@ -359,6 +366,33 @@ void main() {
             .push,
         isTrue,
       );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'opening a new scope shows sound enabled without persisting a setting',
+    (tester) async {
+      final controller = PreferencesController(
+        preferencesState(defaults: true),
+      );
+      final sdk = lifecycle.FakeSdk();
+      await tester.pumpWidget(
+        settingsHost(controller, sdk, initialScopeId: sharingScopeId),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(toggle(sharingScopeId, 'sound'));
+      expect(
+        tester.widget<CheckboxListTile>(toggle(sharingScopeId, 'sound')).value,
+        isTrue,
+      );
+      expect(controller.writes, isEmpty);
+      expect(
+        (await SharedPreferences.getInstance()).getString(
+          LocalNotificationPreferencesController.storageKey,
+        ),
+        isNull,
+      );
+      expect(sdk.calls, isEmpty);
       expect(tester.takeException(), isNull);
     },
   );

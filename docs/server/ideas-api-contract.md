@@ -62,7 +62,8 @@ The board operation follows completed image uploads; chunks never notify.
 
 Category `ideas`, events idea.created/updated/deleted: existing recipient access,
 actor exclusion, grouping/deduplication and channel preferences apply. Missing
-preferences use push/inApp-on, email/sound-off defaults. `inbox.open` accepts
+preferences use push/inApp/sound-on and email-off defaults. An explicitly saved
+`sound:false` remains false; no existing preferences are migrated or rewritten. `inbox.open` accepts
 `recordContractVersion:5`. Configured push/SMTP and OS permission remain separate.
 
 Explicit Save commits a revision; local drafts do not publish. Client three-way

@@ -20,6 +20,7 @@ import 'package:kanban/organizer/presentation/planning/device_reminder_settings.
 import '../ui/organizer_ui_test.dart' as personal;
 import '../ui/sharing_ui_fixture.dart';
 import 'local_notification_adapter_test.dart' as fake;
+import 'all_local_notifications_test.dart' show localSnapshot;
 
 class BrokenOrganizer extends OrganizerController {
   @override
@@ -347,4 +348,115 @@ void main() {
       expect(scheduler.scheduleCalls, 1);
     },
   );
+  for (final value in ['absent', 'missingSound', 'savedFalse', 'savedTrue']) {
+    testWidgets(
+      'shared emitted sound defaults on for $value while stored choices remain exact',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({
+          'organizer_local_reminders_enabled_v1': true,
+          'organizer_local_reminders_sound_v1': false,
+        });
+        final scheduler = fake.FakeScheduler();
+        final categories = switch (value) {
+          'missingSound' => {
+            'reminders': SharedNotificationSettings.fromJson({'push': true}),
+          },
+          'savedFalse' => {
+            'reminders': const SharedNotificationSettings(sound: false),
+          },
+          'savedTrue' => {
+            'reminders': const SharedNotificationSettings(sound: true),
+          },
+          _ => <String, SharedNotificationSettings>{},
+        };
+        final controller = SharingUiController(
+          initial: CollaborationState(
+            session: sharingSession(),
+            scopes: [sharingScope()],
+            data: {
+              sharingScopeId: SharedScopeData(
+                tasks: [
+                  sharingData().tasks.first.copyWith(
+                    dueAt: DateTime.now().add(const Duration(hours: 1)),
+                  ),
+                ],
+              ),
+            },
+            notificationPreferences: value == 'absent'
+                ? {}
+                : {
+                    sharingScopeId: SharedNotificationPreferences(
+                      scopeId: sharingScopeId,
+                      categories: categories,
+                    ),
+                  },
+          ),
+        );
+        await tester.pumpWidget(
+          host([
+            organizerStorageProvider.overrideWithValue(
+              () async => personal.MemoryOrganizerStorage(),
+            ),
+            collaborationProvider.overrideWith(() => controller),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ], const Text('ready')),
+        );
+        await tester.pumpAndSettle();
+        expect(scheduler.scheduled, isNotEmpty);
+        expect(
+          scheduler.scheduled.values.every(
+            (r) => r.sound == (value != 'savedFalse'),
+          ),
+          isTrue,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final sound in [null, false, true]) {
+    testWidgets(
+      'device reminder emits absent/saved legacy sound $sound without rewriting settings',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({
+          'organizer_local_reminders_enabled_v1': true,
+          if (sound != null) 'organizer_local_reminders_sound_v1': sound,
+        });
+        final scheduler = fake.FakeScheduler();
+        final storage = personal.MemoryOrganizerStorage()
+          ..snapshot = localSnapshot(
+            'local',
+            'Task',
+            DateTime.now().add(const Duration(hours: 1)),
+          );
+        await tester.pumpWidget(
+          host([
+            organizerStorageProvider.overrideWithValue(() async => storage),
+            collaborationProvider.overrideWith(
+              () => SharingUiController(initial: CollaborationState()),
+            ),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ], const Text('ready')),
+        );
+        await tester.pumpAndSettle();
+        expect(scheduler.scheduled, isNotEmpty);
+        expect(
+          scheduler.scheduled.values.every((r) => r.sound == (sound ?? true)),
+          isTrue,
+        );
+        expect(
+          (await SharedPreferences.getInstance()).getBool(
+            'organizer_local_reminders_sound_v1',
+          ),
+          sound,
+        );
+        expect(
+          (await SharedPreferences.getInstance()).getString(
+            LocalNotificationPreferencesController.storageKey,
+          ),
+          isNull,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }
