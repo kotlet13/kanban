@@ -1,6 +1,6 @@
 # Jivie
 
-**Predvidena nadgradnja:** priloge za PDF-je, dokumente in podobne datoteke; za zdaj samo [zabeležena zahteva](docs/UPGRADE_NOTES.md#priloge-15-oktober-2026).
+**Predvidene nadgradnje:** preglednice v organizaciji z osnovnimi formulami in predlogom zaklepa med urejanjem ter priloge za PDF-je, dokumente in podobne datoteke. Za zdaj samo [zapisane ideje](docs/UPGRADE_NOTES.md#predvidene-nadgradnje--še-neizvedeno).
 
 **15. oktober — ponovna povabila:** po preklicu in novem povabilu istemu e-naslovu v istem prostoru seznam kaže »Ponovno poslano povabilo« in skrije stare preklicane poskuse.35 ciljnih UI preverjanj PASS; [dokazi](docs/INVITATION_RESEND.md). Samo izvor, brez nove trgovinske oddaje.
 

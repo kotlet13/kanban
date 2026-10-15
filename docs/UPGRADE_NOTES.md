@@ -9,6 +9,23 @@ odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
 ## Predvidene nadgradnje — še neizvedeno
 
+### Preglednice v organizaciji (15. oktober 2026)
+
+Uporabnik želi preprosto preglednico po vzoru Excela: prazno, na videz
+»neskončno« mrežo s stolpci A, B, C … in oštevilčenimi vrsticami, ki se
+sproti širi. V celice se vnašajo besedilo, številke in osnovne formule,
+na primer seštevanje, množenje in SUM. Stolpcev ni treba vnaprej opredeliti.
+Predvideti je treba pregleden vnos in premikanje po tabeli na telefonu ter
+uporabo širšega prikaza na računalniku.
+
+Obravnavan je predlog zaklepa posamezne preglednice med urejanjem: en
+uporabnik ureja, drugi imajo ogled in jasno obvestilo, kdo jo ureja. Predlog
+vključuje izrecen začetek/konec urejanja, samodejni potek in podaljševanje
+zaklepa ter zaščito neshranjenega dela in novejših sprememb po izgubi zaklepa.
+Za prvo različico je predlagano urejanje ob povezavi, brez povezave pa ogled
+prenesene različice. To so izhodišča za nadaljnji dogovor, ne dokončna
+specifikacija ali dovoljenje za implementacijo.
+
 ### Priloge (15. oktober 2026)
 
 Uporabnik želi možnost nalaganja in pripenjanja PDF-jev, dokumentov in

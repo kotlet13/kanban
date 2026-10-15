@@ -1,5 +1,12 @@
 # Navodila za delo na projektu
 
+15. oktober — **ideja organizacijskih preglednic posebej zapisana** v
+[opombah](docs/UPGRADE_NOTES.md#preglednice-v-organizaciji-15-oktober-2026):
+razširljiva prazna mreža/besedilo/številke/osnovne formule/SUM. Predlog zaklepa
+ene tabele med urejanjem z ogledom za druge, jasnim obvestilom, potekom in
+zaščito osnutka; online urejanje/offline ogled je predlog za nadaljnji dogovor.
+**Samo načrtovanje, brez naročila za implementacijo ali trgovinsko oddajo.**
+
 15. oktober — **priloge so zabeležena predvidena nadgradnja**, ne trenutna
 implementacija: nalaganje/pripenjanje PDF-jev, dokumentov in podobnih datotek.
 [Opomba](docs/UPGRADE_NOTES.md#priloge-15-oktober-2026). Natančna mesta/prenos/
