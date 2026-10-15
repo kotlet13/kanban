@@ -1,5 +1,14 @@
 # Navodila za delo na projektu
 
+15. oktober — **kontrast zapolnjenih ikon popravljen v izvoru**: skupni Shrani
+uporablja onPrimary tudi v AppBar, nakupi onPrimary, Idejnik onSecondaryContainer.
+[Dokazi](docs/EDITOR_ICON_CONTRAST.md). Pred-fix dejanski kontrast1,03:1;
+63ciljnihPASS/20novih primerov, svetla/temna in Android/iOS/macOS widgeti,
+aktivne ikone vsaj4,5:1, indikator vsaj3:1, disabled/busy brez zapisov.
+Analiza isti10prejšnjihinfo/brezwarningerror. Brez nove native gradnje,
+spremembe verzije/strežnika/SDK/locks ali trgovinske oddaje. AAB29isti;
+**Google Play še naprej samo po novi izrecni uporabnikovi potrditvi.**
+
 15. oktober — **odprti deljeni projekt ima en združen meni** ob naslovu:
 urejanje/arhiviranje/brisanje/prijava glede na obstoječe pravice; oblaček ostane.
 [Dokazi](docs/PROJECT_MENU_FIX.md). Isti lifecycle handlerji in predogled izbrisa,

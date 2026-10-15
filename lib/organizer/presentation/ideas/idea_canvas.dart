@@ -488,6 +488,11 @@ class _IdeaCanvasState extends State<IdeaCanvas> {
                 bottom: 8,
                 child: IconButton.filledTonal(
                   tooltip: context.l10n.ideasResetView,
+                  style: IconButton.styleFrom(
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onSecondaryContainer,
+                  ),
                   onPressed: () {
                     final size = context.size;
                     final scale = size == null

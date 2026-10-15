@@ -325,6 +325,9 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                   const SizedBox(width: 12),
                   IconButton.filled(
                     tooltip: l.organizerAddItem,
+                    style: IconButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
                     onPressed: _busy ? null : () => _add(list.id),
                     icon: const Icon(Icons.add),
                   ),

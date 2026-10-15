@@ -72,6 +72,11 @@ class EditorSaveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IconButton.filled(
     tooltip: context.l10n.save,
+    // AppBar supplies an icon theme for unfilled actions. This filled action
+    // needs the foreground paired with its own background in every editor.
+    style: IconButton.styleFrom(
+      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+    ),
     onPressed: busy || !enabled ? null : onPressed,
     constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
     icon: busy
