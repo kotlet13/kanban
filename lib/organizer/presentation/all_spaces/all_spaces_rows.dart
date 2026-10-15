@@ -13,6 +13,9 @@ import '../../state/collaboration_provider.dart';
 import '../inbox/notification_target_view.dart';
 import '../inbox/visible_task_target_view.dart';
 import '../personal_workspace_boundary.dart';
+import '../organizer_actions.dart';
+import '../organizer_errors.dart';
+import '../shared/collaboration_actions.dart';
 
 String allSpacesSourceLabel(BuildContext context, AllSpacesSource source) =>
     source.name ?? context.l10n.organizerPersonal;
@@ -337,7 +340,12 @@ class AllSpacesRowTile extends StatelessWidget {
       key: ValueKey('all-row-${row.source.key}-${row.type}-${row.id}'),
       child: row.children.isEmpty
           ? ListTile(
-              leading: Icon(row.icon),
+              leading: row.type == 'task'
+                  ? _TaskCompletionCheckbox(
+                      key: ValueKey('task-check-${row.source.key}-${row.id}'),
+                      row: row,
+                    )
+                  : Icon(row.icon),
               title: Text(row.title),
               subtitle: Text(metadata),
               trailing: IconButton(
@@ -348,7 +356,12 @@ class AllSpacesRowTile extends StatelessWidget {
               onTap: onOpen,
             )
           : ExpansionTile(
-              leading: Icon(row.icon),
+              leading: row.type == 'task'
+                  ? _TaskCompletionCheckbox(
+                      key: ValueKey('task-check-${row.source.key}-${row.id}'),
+                      row: row,
+                    )
+                  : Icon(row.icon),
               title: Text(row.title),
               subtitle: Text(metadata),
               children: [
@@ -357,7 +370,13 @@ class AllSpacesRowTile extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     child: Text(row.notes),
                   ),
-                for (final child in row.children) _ChildRow(row: child),
+                for (final child in row.children)
+                  _ChildRow(
+                    key: ValueKey(
+                      'all-child-${child.source.key}-${child.type}-${child.id}',
+                    ),
+                    row: child,
+                  ),
                 TextButton.icon(
                   onPressed: onOpen,
                   icon: const Icon(Icons.open_in_new),
@@ -370,11 +389,16 @@ class AllSpacesRowTile extends StatelessWidget {
 }
 
 class _ChildRow extends ConsumerWidget {
-  const _ChildRow({required this.row});
+  const _ChildRow({super.key, required this.row});
   final AllSpacesRow row;
   @override
   Widget build(BuildContext context, WidgetRef ref) => ListTile(
-    leading: Icon(row.icon),
+    leading: row.type == 'task'
+        ? _TaskCompletionCheckbox(
+            key: ValueKey('task-check-${row.source.key}-${row.id}'),
+            row: row,
+          )
+        : Icon(row.icon),
     title: Text(row.title),
     subtitle: Text(
       [
@@ -384,6 +408,141 @@ class _ChildRow extends ConsumerWidget {
     ),
     onTap: () => openAllSpacesRow(context, ref, row),
   );
+}
+
+/// A completion action always targets the row's concrete source, never the
+/// selected aggregate space. The repository rechecks identity and edit rights.
+class _TaskCompletionCheckbox extends ConsumerStatefulWidget {
+  const _TaskCompletionCheckbox({super.key, required this.row});
+  final AllSpacesRow row;
+  @override
+  ConsumerState<_TaskCompletionCheckbox> createState() =>
+      _TaskCompletionCheckboxState();
+}
+
+class _TaskCompletionCheckboxState
+    extends ConsumerState<_TaskCompletionCheckbox> {
+  bool _saving = false;
+
+  bool get _editable {
+    final row = widget.row;
+    if (!allSpacesSourceIsCurrent(ref, row.source)) return false;
+    final shared = ref.read(collaborationProvider).valueOrNull;
+    final personal = ref.read(organizerProvider).valueOrNull;
+    if (row.source.isPersonal) {
+      if (!row.source.isLocalSpace) {
+        final scope = shared?.scopes
+            .where((s) => s.id == row.source.privateScopeId)
+            .firstOrNull;
+        if (scope?.canEdit != true ||
+            scope!.deleted ||
+            !scope.canRead ||
+            shared?.deletionPending == true) {
+          return false;
+        }
+      }
+      final snapshot = row.source.isLocalSpace
+          ? ref
+                    .read(localSpacesProvider)
+                    .valueOrNull
+                    ?.snapshots[row.source.workspaceKey] ??
+                (personal?.workspaceKey == row.source.workspaceKey
+                    ? personal
+                    : null)
+          : ref.read(localSpacesProvider).valueOrNull?.snapshots['local'] ??
+                personal;
+      final task = snapshot?.tasks.where((t) => t.id == row.id).firstOrNull;
+      return snapshot?.workspaceKey == row.source.workspaceKey &&
+          task != null &&
+          !snapshot!.projects.any((p) => p.id == task.projectId && p.archived);
+    }
+    final scope = shared?.scopes
+        .where((s) => s.id == row.source.scopeId)
+        .firstOrNull;
+    final data = scope == null ? null : shared!.dataForScope(scope.id);
+    final task = data?.tasks.where((t) => t.id == row.id).firstOrNull;
+    return scope?.canEdit == true &&
+        scope!.canRead &&
+        !scope.deleted &&
+        shared?.deletionPending != true &&
+        task != null &&
+        !data!.projects.any((p) => p.id == task.projectId && p.archived);
+  }
+
+  Future<void> _setCompleted(bool value) async {
+    if (_saving || !_editable) return;
+    setState(() => _saving = true);
+    final row = widget.row;
+    try {
+      if (row.source.isPersonal) {
+        final personal = ref.read(organizerProvider).valueOrNull!;
+        if (personal.workspaceKey == row.source.workspaceKey) {
+          await OrganizerActions(
+            context,
+            ref,
+            personal,
+          ).setTaskCompleted(row.id, value);
+        } else {
+          await ref
+              .read(localSpacesProvider.notifier)
+              .setTaskCompleted(
+                row.source.isLocalSpace ? row.source.workspaceKey! : 'local',
+                row.id,
+                value,
+                expectedWorkspaceKey: row.source.workspaceKey!,
+                stillVisible: () => mounted && _editable,
+              );
+        }
+      } else {
+        final shared = ref.read(collaborationProvider).valueOrNull!;
+        final scope = shared.scopes.firstWhere(
+          (s) => s.id == row.source.scopeId,
+        );
+        await CollaborationActions(
+          context,
+          ref,
+          scope,
+          shared.dataForScope(scope.id),
+        ).setTaskCompleted(row.id, value);
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(organizerErrorMessage(context, error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(organizerProvider);
+    ref.watch(collaborationProvider);
+    ref.watch(localSpacesProvider);
+    final l = context.l10n;
+    return Semantics(
+      label: widget.row.title,
+      child: GestureDetector(
+        // Keep taps on a disabled or saving checkbox out of the row's detail
+        // navigation gesture as well.
+        behavior: HitTestBehavior.opaque,
+        onTap: () {},
+        child: Checkbox(
+          key: ValueKey(
+            'all-task-complete-${widget.row.source.key}-${widget.row.id}',
+          ),
+          value: widget.row.completed,
+          shape: const CircleBorder(),
+          onChanged: _saving || !_editable
+              ? null
+              : (value) => _setCompleted(value!),
+          semanticLabel: l.organizerCompleted,
+        ),
+      ),
+    );
+  }
 }
 
 bool allSpacesSourceIsCurrent(

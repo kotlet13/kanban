@@ -309,6 +309,9 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
               ),
             for (final row in rows)
               AllSpacesRowTile(
+                key: ValueKey(
+                  'all-tile-${row.source.key}-${row.type}-${row.id}',
+                ),
                 row: row,
                 onOpen: () => _open(row),
                 onSource: () =>

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import '../../state/organizer_provider.dart';
+import '../../state/local_spaces_provider.dart';
 import '../../domain/organizer_models.dart';
 import '../organizer_actions.dart';
 import '../finance/shared_finance_actions.dart';
@@ -341,6 +342,7 @@ class NotificationTargetContent extends ConsumerWidget {
             !target.matches(state!.session!) ||
             scope == null ||
             scope.revoked ||
+            scope.deleted ||
             !state.localAccessAllowed)) {
       return Text(l.sharingAccessRevoked);
     }
@@ -368,9 +370,27 @@ class NotificationTargetContent extends ConsumerWidget {
         : CollaborationActions(context, ref, scope!, data!);
     final personalActions = OrganizerActions(context, ref, personal);
     final OrganizerCollectionActions actions = sharedActions ?? personalActions;
-    final canEdit =
-        personalPresentation ||
-        (scope!.canEdit && state?.deletionPending != true);
+    final localArchived =
+        target.isPersonal &&
+        ref
+                .watch(localSpacesProvider)
+                .valueOrNull
+                ?.spaces
+                .any(
+                  (space) =>
+                      space.id == personal.workspaceKey && space.archived,
+                ) ==
+            true;
+    final canEdit = personalPresentation
+        ? !localArchived &&
+              (target.isPersonal ||
+                  (scope!.canEdit &&
+                      !scope.deleted &&
+                      state?.deletionPending != true))
+        : scope!.canEdit && !scope.deleted && state?.deletionPending != true;
+    bool taskEditable(LocalTask task) =>
+        canEdit &&
+        !snapshot.projects.any((p) => p.id == task.projectId && p.archived);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -465,10 +485,11 @@ class NotificationTargetContent extends ConsumerWidget {
                         Text(
                           '${l.planningDue}: ${organizerDateTime(context, task.dueAt!)}',
                         ),
-                      Text(
-                        task.isCompleted
-                            ? l.organizerCompleted
-                            : l.organizerTasks,
+                      _TaskCompletionControl(
+                        task: task,
+                        enabled: taskEditable(task),
+                        onChanged: (value) =>
+                            actions.setTaskCompleted(task.id, value),
                       ),
                       if (personalPresentation && !task.isCompleted)
                         LocalTaskReminderButton(
@@ -496,7 +517,7 @@ class NotificationTargetContent extends ConsumerWidget {
                         Text(
                           '${l.planningCreatedBy}: ${state?.membersForScope(scope!.id).where((m) => m.accountId == task.createdByAccountId).firstOrNull?.displayName ?? l.planningFormerMember}',
                         ),
-                      if (canEdit)
+                      if (taskEditable(task))
                         TextButton(
                           onPressed: () => (sharedActions ?? personalActions)
                               .task(task: task),
@@ -886,4 +907,40 @@ Future<bool> _openFinanceConfirmation(
         ),
   );
   return true;
+}
+
+class _TaskCompletionControl extends StatefulWidget {
+  const _TaskCompletionControl({
+    required this.task,
+    required this.enabled,
+    required this.onChanged,
+  });
+  final LocalTask task;
+  final bool enabled;
+  final Future<void> Function(bool) onChanged;
+  @override
+  State<_TaskCompletionControl> createState() => _TaskCompletionControlState();
+}
+
+class _TaskCompletionControlState extends State<_TaskCompletionControl> {
+  bool _busy = false;
+  Future<void> _change(bool? value) async {
+    if (_busy || !widget.enabled || value == null) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onChanged(value);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => CheckboxListTile(
+    key: ValueKey('task-detail-completed-${widget.task.id}'),
+    contentPadding: EdgeInsets.zero,
+    title: Text(context.l10n.organizerCompleted),
+    value: widget.task.isCompleted,
+    onChanged: widget.enabled && !_busy ? _change : null,
+    controlAffinity: ListTileControlAffinity.leading,
+  );
 }

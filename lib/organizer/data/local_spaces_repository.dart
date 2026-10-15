@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cryptography/cryptography.dart' show Sha256;
-import '../domain/collaboration_models.dart' show CollaborationException;
+import '../domain/collaboration_models.dart'
+    show CollaborationException, SharedScope, SharedScopeKind;
 import '../domain/local_space_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
@@ -118,6 +119,94 @@ class LocalSpacesRepository {
         through: through,
         ruleIds: ruleIds,
       );
+    } finally {
+      await repo.close();
+    }
+  }
+
+  /// Writes an aggregate row to its captured local or active private Personal
+  /// source without changing the selected workspace.
+  Future<void> setTaskCompleted(
+    String localSpaceId,
+    String id,
+    bool value, {
+    required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
+  }) async {
+    final identity = database.personalIdentityGeneration;
+    bool current() =>
+        identity == database.personalIdentityGeneration &&
+        (stillVisible?.call() ?? true);
+    if (!current()) throw const CollaborationException('session_changed');
+    final privatePersonal =
+        localSpaceId == 'local' &&
+        database.personalProfile != null &&
+        expectedWorkspaceKey ==
+            'private:${database.personalProfile!.partition}';
+    if (localSpaceId != expectedWorkspaceKey && !privatePersonal) {
+      throw const OrganizerConflictException('Task workspace changed');
+    }
+    final rows = await database.rows(
+      'SELECT data FROM local_spaces WHERE id=?',
+      [localSpaceId],
+    );
+    if (!current()) throw const CollaborationException('session_changed');
+    if (rows.isEmpty && localSpaceId != 'local') {
+      throw const OrganizerConflictException('Local space no longer exists');
+    }
+    if (rows.isNotEmpty) {
+      final space = LocalSpace.fromJson(
+        jsonDecode(rows.single['data'] as String) as Map<String, dynamic>,
+      );
+      if (space.archived || space.binding != null) {
+        throw const OrganizerConflictException(
+          'Local task source is read-only',
+        );
+      }
+    }
+    final storage = SqliteOrganizerStorage(
+      database,
+      workspaceId: localSpaceId,
+      writeAllowed: current,
+    );
+    await storage.initialize();
+    Future<void> checkPrivateAccess() async {
+      if (!privatePersonal) return;
+      final binding = await storage.activeBinding();
+      if (!current() || binding?['id'] != expectedWorkspaceKey) {
+        throw const OrganizerConflictException('Task workspace changed');
+      }
+      final access = await database.rows(
+        'SELECT data,blocked FROM scopes WHERE partition=? AND id=?',
+        [binding!['partition'], binding['scope_id']],
+      );
+      if (!current() || access.isEmpty || access.single['blocked'] == 1) {
+        throw const CollaborationException('permission_revoked');
+      }
+      final scope = SharedScope.fromJson(
+        jsonDecode(access.single['data'] as String) as Map<String, dynamic>,
+      );
+      if (scope.kind != SharedScopeKind.personal || !scope.canEdit) {
+        throw const CollaborationException('permission_revoked');
+      }
+    }
+
+    await checkPrivateAccess();
+    // Check before initialize can stamp any legacy reminder read receipts.
+    final source = await storage.read();
+    if (!current() || source.workspaceKey != expectedWorkspaceKey) {
+      throw const OrganizerConflictException('Task workspace changed');
+    }
+    final repo = OrganizerRepository(storage, clock: clock);
+    try {
+      await repo.initialize();
+      if (!current() || repo.snapshot.workspaceKey != expectedWorkspaceKey) {
+        throw const OrganizerConflictException('Task workspace changed');
+      }
+      await checkPrivateAccess();
+      // Storage rechecks current(), binding and archive inside the write
+      // transaction, including after asynchronous row writes and before commit.
+      await repo.setTaskCompleted(id, value);
     } finally {
       await repo.close();
     }

@@ -79,6 +79,19 @@ class LocalSpacesController extends AsyncNotifier<LocalSpacesState> {
     through: through,
     ruleIds: ruleIds,
   );
+  Future<void> setTaskCompleted(
+    String localSpaceId,
+    String id,
+    bool value, {
+    required String expectedWorkspaceKey,
+    bool Function()? stillVisible,
+  }) => _repo.setTaskCompleted(
+    localSpaceId,
+    id,
+    value,
+    expectedWorkspaceKey: expectedWorkspaceKey,
+    stillVisible: stillVisible,
+  );
   Future<void> markReminderRead(
     String localSpaceId,
     String reminderId, {

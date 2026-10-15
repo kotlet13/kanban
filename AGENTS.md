@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+15. oktober — **nova izrecna omejitev uporabnika za prihodnje izdaje**:
+nadaljujemo lokalne popravke in spremljanje aplikacije, vendar **nove izdaje
+v Google Play ne oddaj brez nove uporabnikove izrecne potrditve**. Prejšnje
+splošno dovoljenje za javno objavo ne velja za naslednje popravke. Že oddana
+Android1.9.1(29) ostane; uporabnik ni naročil njenega umika. Ne ustvarjaj
+interne izdaje. Novo prijavljena težava: opravilo »Preizkus push« v Dom,
+Planer/Opravila, nima delujočega preklopa zaključka v skupnem pregledu,
+podrobnostih ali urejevalniku. Popravek je lokalno izveden: dejanski krogec/skupni pregled, detail checkbox in
+status obstoječega task editorja.65ciljnihPASS/analiza10starihinfo brezwarningerror.
+Točen lokalni/skupni/zasebni izvor brez menjave izbora, zaščita identitete/ACL,
+READONLY/arhiv, busy/preurejanje, SQLite/outbox/rollback, Cancel in linkedcost.
+[Dokazi](docs/TASK_COMPLETION_FIX.md). Verzija/SDK/locks/strežnik isti,
+ni nove gradnje ali trgovinske oddaje; popravek NI v zamrznjenem AAB29.
+
 15. oktober — **privzeti zvok vključen za nove/manjkajoče nastavitve, obstoječe ohranjene**.
 [Dokazi](docs/release/DEFAULT_SOUND_1_9_1.md). Izrecni uporabnikov popravek:
 vsak že shranjen true/false ostane, tudi stari materializirani false; brez

@@ -390,6 +390,7 @@ class CollaborationActions implements OrganizerCollectionActions {
               targetId: task.id,
             ),
       kind: OrganizerEditorKind.task,
+      recordId: task?.id,
       projects: data.projects,
       householdPeople: data.people,
       projectSelectionEnabled:
@@ -436,6 +437,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       assignmentEnabled: true,
       creatorLabel: _creator(task?.createdByAccountId),
       draft: OrganizerDraft(
+        isCompleted: task?.isCompleted ?? false,
         costEnabled: linkedCost != null,
         costAmount: linkedCost == null
             ? ''
@@ -499,6 +501,7 @@ class CollaborationActions implements OrganizerCollectionActions {
           final now = DateTime.now().toUtc();
           final saved =
               current?.copyWith(
+                isCompleted: draft.isCompleted,
                 title: draft.title,
                 notes: draft.notes,
                 projectId: draft.projectId,
@@ -574,6 +577,7 @@ class CollaborationActions implements OrganizerCollectionActions {
           await controller.updateTask(
             scope.id,
             timerTask!.copyWith(
+              isCompleted: draft.isCompleted,
               title: draft.title,
               notes: draft.notes,
               projectId: draft.projectId,

@@ -160,6 +160,7 @@ class OrganizerActions implements OrganizerCollectionActions {
         (privateScopeId != null &&
             collaboration!.financePolicyForScope(privateScopeId).canWrite);
     final draft = OrganizerDraft(
+      isCompleted: task?.isCompleted ?? false,
       title: task?.title ?? '',
       notes: task?.notes ?? '',
       projectId: task?.projectId ?? projectId,
@@ -245,6 +246,7 @@ class OrganizerActions implements OrganizerCollectionActions {
             );
         return controller.saveTaskWithCost(
           task: record.copyWith(
+            isCompleted: d.isCompleted,
             title: d.title,
             notes: d.notes,
             projectId: d.projectId,

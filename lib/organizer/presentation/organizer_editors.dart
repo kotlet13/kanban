@@ -25,6 +25,7 @@ class OrganizerDraft {
     this.timer = const TaskTimerState(),
     this.assigneePersonId,
     this.subjectPersonIds = const [],
+    this.isCompleted = false,
     this.costEnabled = false,
     this.costAmount = '',
     this.costCurrency = 'EUR',
@@ -55,6 +56,7 @@ class OrganizerDraft {
   int? estimateMinutes, availabilityMinutes;
   AvailabilityPeriod? availabilityPeriod;
   TaskTimerState timer;
+  bool isCompleted;
   bool costEnabled, costPaid, costWasPaid;
   DateTime? costPaidAt;
   String costAmount, costCurrency;
@@ -478,6 +480,18 @@ class _RecordEditorState extends State<_RecordEditor> {
                       : null,
                   onSaved: (v) => draft.title = v!.trim(),
                 ),
+                if (widget.kind == OrganizerEditorKind.task &&
+                    widget.recordId != null)
+                  CheckboxListTile(
+                    key: const ValueKey('organizer-task-completed'),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.organizerCompleted),
+                    value: draft.isCompleted,
+                    onChanged: _busy
+                        ? null
+                        : (value) => setState(() => draft.isCompleted = value!),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
                 if (_hasNotes) ...[
                   SizedBox(height: fieldGap),
                   TextFormField(
