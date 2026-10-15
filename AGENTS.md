@@ -1,5 +1,11 @@
 # Navodila za delo na projektu
 
+15. oktober — **priloge so zabeležena predvidena nadgradnja**, ne trenutna
+implementacija: nalaganje/pripenjanje PDF-jev, dokumentov in podobnih datotek.
+[Opomba](docs/UPGRADE_NOTES.md#priloge-15-oktober-2026). Natančna mesta/prenos/
+omejitve/pravice še določimo; preglednice in njihov zaklep so za zdaj samo
+pogovor. Ni aplikacijske, strežniške ali trgovinske spremembe.
+
 15. oktober — **ponovna povabila istemu e-naslovu združena v prikazu**.
 [Dokazi](docs/INVITATION_RESEND.md). Po preklicu in novi izdaji v istem scopeId
 nova vrstica »Ponovno poslano povabilo«, stare preklicane skrite; normalizacija

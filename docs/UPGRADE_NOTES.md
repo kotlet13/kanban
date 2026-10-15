@@ -2,10 +2,23 @@
 
 Uporabnik je 14. oktobra 2026 po začetnem zbiranju opomb naročil izvedbo,
 commit in push po zaključenih sklopih ter nato javno Android izdajo in iOS
-TestFlight. **Vseh 19 spodnjih opomb je lokalno izvedenih.** Ta status pomeni
+TestFlight. **Prvotnih 19 oštevilčenih opomb je lokalno izvedenih.** Ta status pomeni
 izvorno kodo in lokalna preverjanja; nove gostovane namestitve, trgovinske
 objave in fizičnega preizkusa še ne potrjuje. Dokaze, različice pogodb in
 odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
+
+## Predvidene nadgradnje — še neizvedeno
+
+### Priloge (15. oktober 2026)
+
+Uporabnik želi možnost nalaganja in pripenjanja PDF-jev, dokumentov in
+podobnih datotek v aplikaciji, tudi pri delu v organizaciji. To je predvidena
+nadgradnja, ne naročilo za takojšnjo implementacijo.
+
+Pred izvedbo določimo mesta pripenjanja (prostor, projekt, opravilo oziroma
+predlagane preglednice), podprte vrste in velikosti datotek ter način ogleda,
+prenosa in deljenja glede na pravice do pripadajoče vsebine. Preglednice in
+zaklep med skupnim urejanjem so za zdaj predmet pogovora, ne potrjena izvedba.
 
 ## Potrjene odločitve
 
