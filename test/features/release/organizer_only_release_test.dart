@@ -127,7 +127,7 @@ void main() {
         expect(storage.snapshot.tasks.single.title, 'Novo lokalno opravilo');
         expect(find.byIcon(Icons.smart_toy_outlined), findsNothing);
 
-        Future<void> area(String label) => mobileTab(tester,label);
+        Future<void> area(String label) => mobileTab(tester, label);
 
         await area('Finance');
         await tester.tap(find.text('Dodaj zapis').first);
@@ -163,7 +163,7 @@ void main() {
         );
         await expectRetiredValuesPreserved();
 
-        await area('Račun in deljenje');
+        await area('Račun');
         expect(find.byType(SharingAccountPage), findsOneWidget);
         expect(find.byIcon(Icons.smart_toy_outlined), findsNothing);
         expect(storage.snapshot.tasks, hasLength(1));

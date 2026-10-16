@@ -128,6 +128,32 @@ void main() {
       }
     },
   );
+  test('original HTTPS email links preserve server path and fragment token', () {
+    final token = 'fhi3_${'c' * 64}';
+    final input =
+        'https://example.test/kanboard/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=en#token=$token';
+    final parsed = InvitationLink.tryParseInput('  $input  ')!;
+    expect(parsed.serverUrl, 'https://example.test/kanboard');
+    expect(parsed.token, token);
+    expect(
+      InvitationLink.tryParseInput(token, serverUrl: parsed.serverUrl)?.token,
+      token,
+    );
+    expect(InvitationLink.tryParseInput(token), isNull);
+    for (final invalid in [
+      input.replaceFirst('https:', 'http:'),
+      input.replaceFirst('InvitationController', 'OtherController'),
+      input.replaceFirst('&plugin=FamilyHub', '&plugin=Other'),
+      '$input&token=$token',
+      input.replaceFirst('#token=', '&token='),
+      input.replaceFirst('/kanboard/', '/%2Fkanboard/'),
+      input.replaceFirst('language=en', 'language=de'),
+      input.replaceFirst('https://', 'https://user:pass@'),
+      input.replaceFirst('&plugin=', '&extra=1&plugin='),
+    ]) {
+      expect(InvitationLink.tryParseInput(invalid), isNull, reason: invalid);
+    }
+  });
   test('rejects malformed and oversized tokens', () {
     for (final value in [
       'fhi1_abc',

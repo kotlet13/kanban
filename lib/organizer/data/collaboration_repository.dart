@@ -114,6 +114,8 @@ class CollaborationRepository {
   bool _inboxSupported = false;
   bool _emailInvitationsSupported = false;
   bool _scopedInvitationsSupported = false;
+  bool _usernameInvitationsSupported = false;
+  bool _invitationResendSupported = false;
   bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
@@ -468,6 +470,8 @@ class CollaborationRepository {
         smtpSupported: _smtpSupported,
         emailInvitationsSupported: _emailInvitationsSupported,
         scopedInvitationsSupported: _scopedInvitationsSupported,
+        usernameInvitationsSupported: _usernameInvitationsSupported,
+        invitationResendSupported: _invitationResendSupported,
         spaceProjectMembershipSupported: _spaceProjectMembershipSupported,
         members: members,
         scopes: parsedScopes,

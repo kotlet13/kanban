@@ -404,6 +404,21 @@ extension CollaborationAccountDeletion on CollaborationRepository {
           );
         }
       }
+      // The pending creation request is global device metadata, but belongs to
+      // one captured account. Confirmed deletion removes only that draft.
+      final creationDraft = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['space_flow_creation'],
+      );
+      if (creationDraft.isNotEmpty &&
+          CollaborationRepository._map(
+                creationDraft.single['value'],
+              )['partition'] ==
+              p) {
+        await database.execute('DELETE FROM local_meta WHERE name=?', [
+          'space_flow_creation',
+        ]);
+      }
       await database.execute('DELETE FROM accounts WHERE partition=?', [p]);
       // Exact comparison, without LIKE wildcard interpretation of server URLs.
       for (final row in await database.rows('SELECT name FROM local_meta')) {

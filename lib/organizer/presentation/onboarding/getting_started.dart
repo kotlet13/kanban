@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../l10n/l10n.dart';
 import 'first_time_guide.dart';
 
-enum SetupIntent { deviceOnly, privateDevices, household }
+enum SetupIntent { deviceOnly, privateDevices, household, invitation }
 
 final gettingStartedSeenProvider =
     AsyncNotifierProvider<GettingStartedSeenController, bool>(
@@ -57,6 +57,14 @@ class GettingStartedChoices extends StatelessWidget {
       children: [
         Text(l.setupIntro),
         const SizedBox(height: 16),
+        ListTile(
+          key: const ValueKey('setup-invitation'),
+          leading: const Icon(Icons.mark_email_unread_outlined),
+          title: Text(l.invitationFlowOpen),
+          subtitle: Text(l.invitationFlowFirstLaunch),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.pop(context, SetupIntent.invitation),
+        ),
         for (final option in [
           (
             SetupIntent.deviceOnly,
@@ -118,8 +126,13 @@ class GettingStartedChoices extends StatelessWidget {
 }
 
 class GettingStartedHint extends ConsumerWidget {
-  const GettingStartedHint({super.key, required this.onStart});
+  const GettingStartedHint({
+    super.key,
+    required this.onStart,
+    this.onInvitation,
+  });
   final VoidCallback onStart;
+  final VoidCallback? onInvitation;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seen = ref.watch(gettingStartedSeenProvider);
@@ -142,6 +155,12 @@ class GettingStartedHint extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(l.setupHint),
+              TextButton.icon(
+                key: const ValueKey('first-launch-invitation'),
+                onPressed: onInvitation ?? onStart,
+                icon: const Icon(Icons.mark_email_unread_outlined),
+                label: Text(l.invitationFlowOpen),
+              ),
               if (guideSeen.valueOrNull == false)
                 TextButton.icon(
                   onPressed: () => showFirstTimeGuide(context, ref),

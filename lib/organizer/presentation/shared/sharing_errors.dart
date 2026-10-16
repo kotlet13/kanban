@@ -26,6 +26,11 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'report_target_unavailable' => l.moderationPreviewStale,
     'report_offline' => l.moderationOffline,
     'password_too_short' => l.accountPasswordTooShort,
+    'space_creation_wrong_account' => l.spaceFlowCreateOtherAccount,
+    'recipient_unavailable' => l.spaceFlowRecipientUnavailable,
+    'username_invitations_unavailable' => l.spaceFlowUsernameUnsupported,
+    'invitation_resend_unavailable' => l.sharingScopedUnsupported,
+    'invitation_already_accepted' => l.sharingAccepted,
     'username_unavailable' => l.emailInviteUsernameUnavailable,
     'email_invitations_unavailable' ||
     'email_invitations_unsupported' ||

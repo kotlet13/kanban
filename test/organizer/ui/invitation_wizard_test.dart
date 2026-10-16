@@ -1,0 +1,502 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:kanban/theme/jivie_theme.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban/l10n/app_localizations.dart';
+import 'package:kanban/organizer/data/pending_invitation_store.dart';
+import 'package:kanban/organizer/platform/invitation_links/invitation_link.dart';
+import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
+import 'package:kanban/organizer/presentation/shared/invitation_wizard.dart';
+import 'package:kanban/organizer/state/collaboration_provider.dart';
+
+import 'sharing_ui_fixture.dart';
+import 'local_spaces_navigation_test.dart' show loadCaptureFonts;
+
+final _link = InvitationLink(
+  serverUrl: 'https://sharing.example.test',
+  token: 'fhi3_${'b' * 64}',
+);
+
+class _Controller extends SharingUiController {
+  _Controller({super.initial, this.viewer = false}) {
+    emailPreview = true;
+  }
+  final bool viewer;
+  int previews = 0;
+  Completer<void>? previewGate, acceptGate;
+  int selectFailures = 0;
+  @override
+  Future<void> acceptInvitation(String token) async {
+    await acceptGate?.future;
+    await super.acceptInvitation(token);
+  }
+
+  @override
+  Future<void> selectSpace(String? id) async {
+    if (selectFailures > 0) {
+      selectFailures--;
+      throw const CollaborationException('network');
+    }
+    await super.selectSpace(id);
+  }
+
+  @override
+  Future<SharedInvitationPreview> previewInvitation({
+    required String serverUrl,
+    required String token,
+    bool allowLocalHttp = false,
+  }) async {
+    previews++;
+    await previewGate?.future;
+    final p = await super.previewInvitation(serverUrl: serverUrl, token: token);
+    return SharedInvitationPreview(
+      scopeName: p.scopeName,
+      scopeId: p.scopeId,
+      kind: p.kind,
+      recipientUsername: p.recipientUsername,
+      recipientEmail: p.recipientEmail,
+      inviterName: p.inviterName,
+      invitationId: p.invitationId,
+      role: viewer ? SharedRole.viewer : SharedRole.member,
+      expiresAt: p.expiresAt,
+      registrationAllowed: p.registrationAllowed,
+      contractVersion: 3,
+      accessScope: 'space',
+      requiresExplicitAcceptance: true,
+    );
+  }
+
+  @override
+  Future<void> loginForInvitation({
+    required String serverUrl,
+    required String invitationToken,
+    required String username,
+    required String password,
+    String? otp,
+    String deviceName = 'Jivie',
+  }) => login(
+    serverUrl: serverUrl,
+    username: username,
+    password: password,
+    otp: otp,
+  );
+}
+
+GlobalKey? _captureKey;
+Future<void> _capture(WidgetTester tester, String name) async {
+  if (Platform.environment['JIVIE_UI_CAPTURE'] != '1') return;
+  final render =
+      _captureKey!.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  await tester.runAsync(() async {
+    final image = await render.toImage(pixelRatio: 1);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    final dir = Directory('build/qa/invitation-simplification');
+    await dir.create(recursive: true);
+    await File(
+      '${dir.path}/$name.png',
+    ).writeAsBytes(bytes!.buffer.asUint8List());
+    image.dispose();
+  });
+}
+
+Future<void> _pump(
+  WidgetTester tester,
+  _Controller controller, {
+  InvitationLink? link,
+  double width = 390,
+  String locale = 'sl',
+  MemoryPendingInvitationStore? store,
+}) async {
+  await loadCaptureFonts(tester);
+  if (Platform.environment['JIVIE_UI_CAPTURE'] == '1') {
+    await tester.runAsync(() async {
+      final sdk = Platform.resolvedExecutable.split('/bin/cache/').first;
+      final bytes = await File(
+        '$sdk/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf',
+      ).readAsBytes();
+      await (FontLoader(
+        'Roboto',
+      )..addFont(Future.value(ByteData.sublistView(bytes)))).load();
+    });
+  }
+  _captureKey = GlobalKey();
+  tester.view.physicalSize = Size(width, 1000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        collaborationProvider.overrideWith(() => controller),
+        pendingInvitationStoreProvider.overrideWithValue(
+          store ?? MemoryPendingInvitationStore(),
+        ),
+        securePendingInvitationProvider.overrideWith(
+          (ref) async => controller.savedInvitation,
+        ),
+      ],
+      child: RepaintBoundary(
+        key: _captureKey,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildJivieTheme(Brightness.light),
+          locale: Locale(locale),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Consumer(
+            builder: (context, ref, _) => Scaffold(
+              body: TextButton(
+                onPressed: () =>
+                    showInvitationWizard(context, ref, initialLink: link),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tap(WidgetTester tester, String key) async {
+  final target = find.byKey(ValueKey(key));
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _enter(WidgetTester tester, String key, String value) async {
+  final target = find.byKey(ValueKey('invitation-flow-$key'));
+  await tester.ensureVisible(target);
+  await tester.enterText(target, value);
+}
+
+void main() {
+  for (final width in [320.0, 390.0, 1280.0]) {
+    for (final locale in ['sl', 'en']) {
+      testWidgets(
+        'same-server recipient previews automatically and explicitly joins $width $locale',
+        (tester) async {
+          final controller = _Controller(viewer: true);
+          await _pump(
+            tester,
+            controller,
+            link: _link,
+            width: width,
+            locale: locale,
+          );
+          expect(controller.previews, 1);
+          expect(
+            find.byKey(const ValueKey('invitation-flow-username')),
+            findsNothing,
+          );
+          expect(controller.calls, isNot(contains('accept')));
+          if (width == 390 && locale == 'sl') {
+            await _capture(tester, 'invitation-prejoin-390');
+          }
+          await _tap(tester, 'invitation-flow-join');
+          expect(controller.calls, contains('accept'));
+          expect(controller.state.requireValue.selectedSpaceId, sharingScopeId);
+          expect(find.byType(InvitationWizard), findsNothing);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+  testWidgets('fresh link confirms destination before preview or credentials', (
+    tester,
+  ) async {
+    final controller = _Controller(initial: CollaborationState());
+    await _pump(tester, controller, link: _link);
+    expect(controller.previews, 0);
+    expect(
+      find.byKey(const ValueKey('invitation-flow-origin')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('invitation-flow-password')),
+      findsNothing,
+    );
+    await _tap(tester, 'invitation-flow-confirm-origin');
+    expect(controller.previews, 1);
+    await _tap(tester, 'invitation-flow-login-choice');
+    expect(find.byKey(const ValueKey('invitation-flow-name')), findsNothing);
+    await _enter(tester, 'username', 'first');
+    await _enter(tester, 'password', 'synthetic-password');
+    await _tap(tester, 'invitation-flow-authenticate');
+    expect(controller.loginAttempts, [null]);
+    expect(controller.calls, isNot(contains('accept')));
+    expect(find.byKey(const ValueKey('invitation-flow-join')), findsOneWidget);
+    expect(controller.savedInvitation?.token, _link.token);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('registration is separate and retains invitation before Join', (
+    tester,
+  ) async {
+    final controller = _Controller(initial: CollaborationState());
+    await _pump(tester, controller, link: _link);
+    await _tap(tester, 'invitation-flow-confirm-origin');
+    await _tap(tester, 'invitation-flow-register-choice');
+    await _enter(tester, 'username', 'second');
+    await _enter(tester, 'name', 'Second');
+    await _enter(tester, 'password', 'synthetic-password');
+    await _enter(tester, 'confirm', 'synthetic-password');
+    await _tap(tester, 'invitation-flow-authenticate');
+    expect(controller.registeredUsername, 'second');
+    expect(controller.calls, isNot(contains('accept')));
+    expect(controller.savedInvitation?.token, _link.token);
+    expect(find.byKey(const ValueKey('invitation-flow-join')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'restored pinned invitation previews without requiring paste or confirmation again',
+    (tester) async {
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: 'pinned',
+        );
+      final controller = _Controller(initial: CollaborationState());
+      await _pump(tester, controller, store: store);
+      expect(controller.previews, 1);
+      expect(
+        find.byKey(const ValueKey('invitation-flow-confirm-origin')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('invitation-flow-login-choice')),
+        findsOneWidget,
+      );
+      expect(controller.calls, isNot(contains('accept')));
+    },
+  );
+  testWidgets('reset request keeps invitation and returns to same login', (
+    tester,
+  ) async {
+    final controller = _Controller(initial: CollaborationState());
+    await _pump(tester, controller, link: _link);
+    await _tap(tester, 'invitation-flow-confirm-origin');
+    await _tap(tester, 'invitation-flow-login-choice');
+    await _enter(tester, 'username', 'first');
+    final forgot = find.widgetWithText(TextButton, 'Pozabljeno geslo');
+    await tester.ensureVisible(forgot);
+    await tester.tap(forgot);
+    await tester.pumpAndSettle();
+    expect(controller.savedInvitation?.token, _link.token);
+    await tester.tap(find.widgetWithText(TextButton, 'Prekliči').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('invitation-flow-username')),
+      findsOneWidget,
+    );
+    expect(controller.savedInvitation?.token, _link.token);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('manual original HTTPS invitation uses same confirmation path', (
+    tester,
+  ) async {
+    final controller = _Controller(initial: CollaborationState());
+    await _pump(tester, controller);
+    await _enter(
+      tester,
+      'input',
+      '${_link.serverUrl}/index.php?controller=InvitationController&action=show&plugin=FamilyHub#token=${_link.token}',
+    );
+    await _tap(tester, 'invitation-flow-open');
+    expect(controller.previews, 0);
+    await _tap(tester, 'invitation-flow-confirm-origin');
+    expect(controller.previewToken, _link.token);
+    expect(controller.previewServer, _link.serverUrl);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'invalid session cannot Join and authentication failure keeps context',
+    (tester) async {
+      final controller = _Controller(
+        initial: CollaborationState(
+          session: sharingSession(),
+          sessionInvalid: true,
+        ),
+      )..requireOtp = true;
+      await _pump(tester, controller, link: _link);
+      expect(find.byKey(const ValueKey('invitation-flow-join')), findsNothing);
+      await _tap(tester, 'invitation-flow-confirm-origin');
+      await _tap(tester, 'invitation-flow-login-choice');
+      await _capture(tester, 'invitation-login-390');
+      await _enter(tester, 'username', 'first');
+      await _enter(tester, 'password', 'synthetic-password');
+      await _tap(tester, 'invitation-flow-authenticate');
+      expect(find.byKey(const ValueKey('invitation-flow-otp')), findsOneWidget);
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(controller.calls, isNot(contains('accept')));
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'new link while wizard is open preserves new routing capability',
+    (tester) async {
+      final controller = _Controller();
+      await _pump(tester, controller, link: _link);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(InvitationWizard)),
+      );
+      final second = InvitationLink(
+        serverUrl: _link.serverUrl,
+        token: 'fhi3_${'c' * 64}',
+      );
+      container.read(pendingInvitationLinkProvider.notifier).state = second;
+      await tester.pumpAndSettle();
+      expect(find.byType(InvitationWizard), findsNothing);
+      expect(
+        container.read(pendingInvitationLinkProvider)?.token,
+        second.token,
+      );
+      expect(controller.calls, isNot(contains('accept')));
+    },
+  );
+  testWidgets('a trailing slash in copied links matches the signed-in server', (
+    tester,
+  ) async {
+    final controller = _Controller(viewer: true);
+    await _pump(
+      tester,
+      controller,
+      link: InvitationLink(
+        serverUrl: '${_link.serverUrl}/',
+        token: _link.token,
+      ),
+    );
+    expect(
+      find.byKey(const ValueKey('invitation-flow-confirm-origin')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('invitation-flow-join')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('accepted invitation with opening failure retries only opening', (
+    tester,
+  ) async {
+    final controller = _Controller(viewer: true)..selectFailures = 1;
+    await _pump(tester, controller, link: _link);
+    await _tap(tester, 'invitation-flow-join');
+    expect(controller.calls.where((c) => c == 'accept'), hasLength(1));
+    expect(find.text('Odpri prostor'), findsOneWidget);
+    await _tap(tester, 'invitation-flow-join');
+    expect(controller.calls.where((c) => c == 'accept'), hasLength(1));
+    expect(find.byType(InvitationWizard), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'known accepted refresh error offers open without resubmitting Join',
+    (tester) async {
+      final controller = _Controller(viewer: true)
+        ..invitationAcceptError = const CollaborationException(
+          'invitation_accepted_refresh_failed',
+        );
+      await _pump(tester, controller, link: _link);
+      await _tap(tester, 'invitation-flow-join');
+      expect(find.text('Odpri prostor'), findsOneWidget);
+      await _tap(tester, 'invitation-flow-join');
+      expect(controller.calls, isNot(contains('accept')));
+      expect(find.byType(InvitationWizard), findsNothing);
+    },
+  );
+  testWidgets(
+    'Join is disabled in flight and late old account response cannot select target',
+    (tester) async {
+      final controller = _Controller(viewer: true)
+        ..acceptGate = Completer<void>();
+      await _pump(tester, controller, link: _link);
+      final button = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('invitation-flow-join')),
+      );
+      final accepting = (button.onPressed as dynamic)() as Future<void>;
+      await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('invitation-flow-join')),
+            )
+            .onPressed,
+        isNull,
+      );
+      controller.switchAccount();
+      controller.acceptGate!.complete();
+      await accepting;
+      await tester.pumpAndSettle();
+      expect(controller.state.requireValue.session?.username, 'second');
+      expect(controller.state.requireValue.selectedSpaceId, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'registration validates username before sending account request',
+    (tester) async {
+      final controller = _Controller(initial: CollaborationState());
+      await _pump(tester, controller, link: _link);
+      await _tap(tester, 'invitation-flow-confirm-origin');
+      await _tap(tester, 'invitation-flow-register-choice');
+      await _capture(tester, 'invitation-register-390');
+      await _enter(tester, 'username', 'bad user');
+      await _enter(tester, 'name', 'Second');
+      await _enter(tester, 'password', 'synthetic-password');
+      await _enter(tester, 'confirm', 'synthetic-password');
+      await _tap(tester, 'invitation-flow-authenticate');
+      expect(controller.registeredUsername, isNull);
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'canceling unconfirmed origin retains capability without network preview',
+    (tester) async {
+      final controller = _Controller(initial: CollaborationState());
+      await _pump(tester, controller, link: _link);
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(controller.previews, 0);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(controller.previews, 0);
+    },
+  );
+  testWidgets('joined open retry is unavailable after switching accounts', (
+    tester,
+  ) async {
+    final controller = _Controller(viewer: true)..selectFailures = 1;
+    await _pump(tester, controller, link: _link);
+    await _tap(tester, 'invitation-flow-join');
+    controller.switchAccount();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('invitation-flow-join')), findsNothing);
+    expect(controller.state.requireValue.selectedSpaceId, isNull);
+    expect(controller.calls.where((c) => c == 'accept'), hasLength(1));
+  });
+  testWidgets('writer preview shows complete access before Join at390', (
+    tester,
+  ) async {
+    final controller = _Controller();
+    await _pump(tester, controller, link: _link);
+    expect(find.text('Polni dostop'), findsOneWidget);
+    expect(find.textContaining('vabi in odstranjuje člane'), findsOneWidget);
+    expect(controller.calls, isNot(contains('accept')));
+    await _capture(tester, 'invitation-writer-prejoin-390');
+    expect(tester.takeException(), isNull);
+  });
+}

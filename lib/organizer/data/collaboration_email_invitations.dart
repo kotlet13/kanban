@@ -283,19 +283,110 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     });
   }
 
+  /// New username invitations use the scoped explicit-acceptance contract only.
+  Future<SharedInvitation> createRecipientInvitation({
+    required String scopeId,
+    required String recipient,
+    SharedRole role = SharedRole.member,
+    String language = 'sl',
+    String? accessScope,
+    String? requestId,
+  }) async {
+    final value = recipient.trim().toLowerCase();
+    if (value.contains('@')) {
+      return createEmailInvitation(
+        scopeId: scopeId,
+        recipientEmail: value,
+        role: role,
+        language: language,
+        accessScope: accessScope,
+        requestId: requestId,
+      );
+    }
+    final session = _requireSession(), epoch = _epoch;
+    await _negotiate(session, epoch);
+    if (!_usernameInvitationsSupported) {
+      throw const CollaborationException('username_invitations_unavailable');
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_.-]{3,64}$').hasMatch(value)) {
+      throw const CollaborationException('recipient_unavailable');
+    }
+    final scope = state.scopes.where((s) => s.id == scopeId).firstOrNull;
+    if (scope == null || !scope.canManage || scope.blocked || scope.archived) {
+      throw const CollaborationException('permission_revoked');
+    }
+    if (scope.accessPolicyVersion != 3) {
+      throw const CollaborationException('space_access_upgrade_required');
+    }
+    final target = scope.kind == SharedScopeKind.project ? 'project' : 'space';
+    if (accessScope != null && accessScope != target) {
+      throw const CollaborationException('validation_error');
+    }
+    final reply = await _callSession(session, epoch, 'invitations3.create', {
+      'scopeId': scopeId,
+      'recipient': value,
+      'accessScope': target,
+      'role': role.name,
+      'language': language,
+      'requestId': requestId ?? newSharedId(),
+    });
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      await _invalidateMemberDirectory(session.profile.partition, scopeId);
+    });
+    return SharedInvitation.fromJson({
+      ...reply['invitation'] as Map<String, dynamic>,
+      'deliveryQueued': reply['deliveryQueued'] == true,
+    });
+  }
+
+  Future<SharedInvitation> resendInvitation({
+    required String scopeId,
+    required String invitationId,
+    required String requestId,
+    String language = 'sl',
+  }) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _negotiate(session, epoch);
+    if (!_invitationResendSupported) {
+      throw const CollaborationException('invitation_resend_unavailable');
+    }
+    final reply = await _callSession(session, epoch, 'invitations3.resend', {
+      'scopeId': scopeId,
+      'invitationId': invitationId,
+      'requestId': requestId,
+      'language': language,
+    });
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      await _invalidateMemberDirectory(session.profile.partition, scopeId);
+    });
+    return SharedInvitation.fromJson({
+      ...reply['invitation'] as Map<String, dynamic>,
+      'deliveryQueued': reply['deliveryQueued'] == true,
+    });
+  }
+
   Future<List<SharedInvitationPreview>> pendingInvitations() async {
     final session = _requireSession(), epoch = _epoch;
     await _negotiate(session, epoch);
-    if (!_emailInvitationsSupported) return const [];
-    final reply = await _callSession(
-      session,
-      epoch,
-      'invitations2.pending',
-      const {},
-    );
-    final result = (reply['invitations'] as List)
-        .map((item) => _emailInvitationPreview(item as Map<String, dynamic>))
-        .toList();
+    if (!_emailInvitationsSupported && !_usernameInvitationsSupported) {
+      return const [];
+    }
+    final result = <SharedInvitationPreview>[];
+    if (_emailInvitationsSupported) {
+      final reply = await _callSession(
+        session,
+        epoch,
+        'invitations2.pending',
+        const {},
+      );
+      result.addAll(
+        (reply['invitations'] as List).map(
+          (item) => _emailInvitationPreview(item as Map<String, dynamic>),
+        ),
+      );
+    }
     if (_scopedInvitationsSupported) {
       final scoped = await _callSession(
         session,
@@ -324,10 +415,13 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     }
     final session = _requireSession(), epoch = _epoch;
     await _negotiate(session, epoch);
-    if (!_emailInvitationsSupported) {
+    if (!_emailInvitationsSupported && !_usernameInvitationsSupported) {
       throw const CollaborationException('email_invitations_unavailable');
     }
     final version = token?.startsWith('fhi3_') == true ? 3 : contractVersion;
+    if (version == 2 && !_emailInvitationsSupported) {
+      throw const CollaborationException('email_invitations_unavailable');
+    }
     if (version != 2 && version != 3) {
       throw const CollaborationException('invalid_invitation');
     }
@@ -418,37 +512,56 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       }
       rethrow;
     }
-    final scopeId = SharedScope.fromJson(
-      reply['scope'] as Map<String, dynamic>,
-    ).id;
-    await database.transaction(() async {
+    // A valid grant is authoritative even when the following cache refresh fails.
+    // Persist it before consuming the capability so restart can open the scope.
+    try {
+      final grantedScope = SharedScope.fromJson(
+        reply['scope'] as Map<String, dynamic>,
+      );
+      final scopeId = grantedScope.id;
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        await _upsertScope(session.profile.partition, grantedScope);
+        await _invalidateMemberDirectory(session.profile.partition, scopeId);
+      });
+      await refreshLocal();
+      if (token != null) {
+        await _withInvitationStore(() async {
+          _checkEpoch(epoch);
+          final pending = await invitationStore.read();
+          if (pending?.token == token &&
+              pending?.accountPartition == session.profile.partition) {
+            await invitationStore.write(null);
+          }
+        });
+      }
+      if (invitationId != null) {
+        await _withInvitationStore(() async {
+          _checkEpoch(epoch);
+          final pending = await invitationStore.read();
+          if (pending?.invitationId == invitationId &&
+              pending?.serverUrl == session.profile.serverUrl &&
+              pending?.serverId == session.profile.serverId &&
+              (pending?.accountPartition == null ||
+                  pending?.accountPartition == session.profile.partition)) {
+            await invitationStore.write(null);
+          }
+        });
+      }
+      await syncNow();
       _checkEpoch(epoch);
-      await _invalidateMemberDirectory(session.profile.partition, scopeId);
-    });
-    if (token != null) {
-      await _withInvitationStore(() async {
-        _checkEpoch(epoch);
-        final pending = await invitationStore.read();
-        if (pending?.token == token &&
-            pending?.accountPartition == session.profile.partition) {
-          await invitationStore.write(null);
-        }
-      });
+    } catch (error) {
+      _checkEpoch(epoch);
+      _lastError = error is CollaborationException
+          ? error
+          : const CollaborationException('invalid_response');
+      try {
+        await refreshLocal();
+      } catch (_) {
+        /* Preserve the definitive grant outcome. */
+      }
+      _checkEpoch(epoch);
+      throw const CollaborationException('invitation_accepted_refresh_failed');
     }
-    if (invitationId != null) {
-      await _withInvitationStore(() async {
-        _checkEpoch(epoch);
-        final pending = await invitationStore.read();
-        if (pending?.invitationId == invitationId &&
-            pending?.serverUrl == session.profile.serverUrl &&
-            pending?.serverId == session.profile.serverId &&
-            (pending?.accountPartition == null ||
-                pending?.accountPartition == session.profile.partition)) {
-          await invitationStore.write(null);
-        }
-      });
-    }
-    await syncNow();
-    _checkEpoch(epoch);
   }
 }

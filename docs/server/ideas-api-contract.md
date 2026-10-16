@@ -1,5 +1,7 @@
 # FamilyHub editable idea boards — record5/assets1
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Source target: FamilyHub0.13.0/schema17; this is a protocol specification, not proof
 of hosted deployment or a mobile-store release. `features.ideas`/`ideaAssets`
 identify runtime availability; GD PNG/JPEG support is required for the visual

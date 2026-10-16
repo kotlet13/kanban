@@ -1,3 +1,6 @@
+import 'package:drift/native.dart';
+import 'package:kanban/organizer/data/collaboration_database.dart';
+import 'package:kanban/organizer/state/local_database_provider.dart';
 import 'package:kanban/organizer/data/pending_invitation_store.dart';
 import 'package:kanban/organizer/state/idea_provider.dart';
 import 'package:kanban/organizer/state/linked_payments_provider.dart';
@@ -80,8 +83,14 @@ Future<void> pumpOrganizer(
             MemoryPendingInvitationStore(),
           ),
         ],
-        if (localSpacesController != null)
+        if (localSpacesController != null) ...[
           localSpacesProvider.overrideWith(() => localSpacesController),
+          localDatabaseProvider.overrideWith((ref) async {
+            final db = CollaborationDatabase(NativeDatabase.memory());
+            ref.onDispose(() => db.close());
+            return db;
+          }),
+        ],
         if (collaborationController != null)
           collaborationProvider.overrideWith(() => collaborationController),
         if (gardenRepository != null)
@@ -139,8 +148,8 @@ Future<void> mobileTab(WidgetTester tester, String text) async {
     'Settings': ('more', 'settings'),
     'Nastavitve prostora': ('more', 'spaceSettings'),
     'Space settings': ('more', 'spaceSettings'),
-    'Račun in deljenje': ('more', 'sharing'),
-    'Account and sharing': ('more', 'sharing'),
+    'Račun': ('more', 'sharing'),
+    'Account': ('more', 'sharing'),
     'Varnostne kopije': ('more', 'backups'),
     'Backups': ('more', 'backups'),
   };

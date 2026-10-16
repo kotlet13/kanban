@@ -1,5 +1,12 @@
 # Jivie: statična javna stran za cPanel
 
+**16. oktober 2026 — zasebnost in pomoč dejansko posodobljeni.** Štirje SL/EN
+HTML opisujejo preglednice, dokumentne priloge, deljenje in ohranitev nastavitev
+zvoka skladno z izvorom. Sveža zasebna kopija vseh25 datotek je dejansko
+preverjena; nameščeni4 HTML, drugih21 datotek ter vse pravice in lastništvo
+ohranjeni. Ločen javni zajem vseh4 strani vrne HTTPS200 in točne pregledane
+SHA256. [Dokazi](../docs/release/WEBSITE_DOCUMENTS_20261016.md).
+
 **14. oktober 2026 — javni prenos za Android.** SL/EN domači strani imata
 Google Play gumb v uvodu in zaključku; vseh8 strani ima povezavo v nogi.
 Besedilo in metapodatki zdaj odražajo javno dostopnost Androida v Sloveniji,

@@ -69,6 +69,23 @@ class ScopedEmailServer extends EmailServer {
   }
 }
 
+// SQLite callbacks and widget frames use different schedulers in this test.
+Future<void> submitNativeForm(WidgetTester tester, String key) async {
+  final button = tester.widget<FilledButton>(find.byKey(ValueKey(key)));
+  var done = false;
+  ((button.onPressed as dynamic)() as Future<void>).whenComplete(
+    () => done = true,
+  );
+  for (var attempt = 0; attempt < 200 && !done; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+  expect(done, true, reason: '$key completed');
+  await tester.pumpAndSettle();
+}
+
 void main() {
   for (final version in [2, 3]) {
     for (final width in [390.0, 1280.0]) {
@@ -166,52 +183,78 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.text('Nadaljuj do povabila'));
           await tester.pumpAndSettle();
+          // Origin confirmation immediately previews; auth is a later,
+          // separate decision and no account page is involved.
+          expect(server.previewCalls, 1);
+          expect(find.text('Povabilo v Synthetic household'), findsOneWidget);
           expect(
-            find.byKey(const ValueKey('sharing-preview-invite')),
+            find.byKey(const ValueKey('invitation-flow-username')),
+            findsNothing,
+          );
+          await tapSharing(tester, 'invitation-flow-register-choice');
+          for (final entry in {
+            'username': 'bob',
+            'name': 'Synthetic recipient',
+            'password': 'synthetic-password',
+            'confirm': 'synthetic-password',
+          }.entries) {
+            final field = find.byKey(ValueKey('invitation-flow-${entry.key}'));
+            await tester.ensureVisible(field);
+            await tester.enterText(field, entry.value);
+          }
+          await submitNativeForm(tester, 'invitation-flow-authenticate');
+          expect(
+            container
+                .read(collaborationProvider)
+                .requireValue
+                .session
+                ?.username,
+            'bob',
+          );
+          expect(server.acceptCalls, 0);
+          expect(
+            find.byKey(const ValueKey('invitation-flow-join')),
             findsOneWidget,
           );
-          await tapSharing(tester, 'sharing-preview-invite');
-          expect(server.previewCalls, 1);
-          expect(find.text('Synthetic household'), findsOneWidget);
           if (version == 3) {
             expect(find.text('Cel prostor'), findsOneWidget);
             expect(
-              find.textContaining('obstoječih in prihodnjih projektov'),
+              find.textContaining('sedanji in prihodnji projekti'),
               findsOneWidget,
             );
             expect(
-              find.textContaining('nastavitve, povabila in člane'),
+              find.textContaining('vabi in odstranjuje člane'),
               findsOneWidget,
             );
           }
-          expect(
-            find.byKey(const ValueKey('sharing-username')),
-            findsOneWidget,
-          );
-          expect(
-            find.text('Spremembe ni bilo mogoče shraniti. Poskusi znova.'),
-            findsNothing,
-          );
-          expect(
-            find.widgetWithText(FilledButton, 'Ustvari račun'),
-            findsOneWidget,
-          );
-          expect(find.text('Ustvari račun in sprejmi'), findsNothing);
-          expect(find.text('Že imam račun'), findsOneWidget);
           expect(pending.value?.invitationId, server.invitationId);
           expect(
             container.read(securePendingInvitationProvider).hasError,
             false,
           );
+          await submitNativeForm(tester, 'invitation-flow-join');
+          expect(server.acceptCalls, 1);
+          expect(
+            container.read(collaborationProvider).requireValue.selectedSpaceId,
+            server.scopeId,
+          );
+          expect(pending.value, isNull);
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox());
           listener.close();
           container.dispose();
           await source.stream.close();
-          await tester.runAsync(() async {
-            await repository.close();
-            await repository.database.close();
-          });
+          final closing = repository.close();
+          var closed = false;
+          closing.whenComplete(() => closed = true);
+          for (var attempt = 0; attempt < 100 && !closed; attempt++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+            await tester.pump();
+          }
+          expect(closed, true);
+          await tester.runAsync(repository.database.close);
         },
       );
     }

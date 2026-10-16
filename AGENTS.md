@@ -1,5 +1,40 @@
 # Navodila za delo na projektu
 
+16. oktober — **nova izrecna uporabnikova odobritev usklajene izdaje**:
+nadgradi `jivie.triparna.si`, naredi commite/pushe in oddaj novo javno različico
+v Google Play; po potrebi posodobi trgovinske posnetke glede na aktualni UI.
+Delo vodijo trije podagenti GPT-6.1 Sol/high pod nadzorom glavnega agenta.
+Pripravljamo FamilyHub0.15.0/schema19 in Android1.10.0(30), vključno s
+preglednicami/prilogami, poenostavljenimi povabili in prej izvedenimi popravki.
+To dovoljenje velja za to konkretno izdajo; interni kanal in Apple ostaneta
+odložena. Pred DDL ostanejo obvezni sveži zajem, celotna kopija in dejanska
+izolirana obnova; pregledni test1 se uskladi z izdajo. Zajema produkcije/test1
+sta potrdila0.14.1/schema18/101datoteko/iste identitete/ZipArchive/zasebni DATA.
+Svež Play potrdi29 javno od15okt10:14, brez neobjavljenih sprememb in brez30.
+Priprava ni dokaz nameščene0.15 ali oddane30. Zaključne dokaze bosta vodila
+docs/server/UPGRADE_0_15.md in docs/release/INVITATIONS_DOCUMENTS_1_10.md.
+
+16. oktober — **povabila, prvi vstop in deljenje poenostavljeni v izvoru** po
+izrecnem naročilu; trije podagenti gpt-6.1-sol/high, glavni agent integrira in preveri.
+[Izvedba in meje](docs/INVITATION_AND_SHARING_IMPLEMENTATION.md).
+Namenski čarovnik ohrani povabilo skozi prijavo/registracijo/obnovo, izrecni Join
+in ločena pravila; Utrip pokaže prejeta povabila. Neposredna ikona Deli, točen
+lokalni cilj brez ponovnega checkboxa, gospodinjstvo/organizacija že pri nastanku
+ponudita »Sinhroniziraj z oblakom«. Trajen osnutek prepreči podvojitev ustvarjanja.
+FamilyHub pogodba3 doda obstoječega username prejemnika in atomsko resend;
+SMTP-off username deluje, nove uporabnike še vedno povabi po e-pošti.
+Celotni Flutter1582 PASS/16obstoječih preskokov;534ciljnih strežniških kontrol
+SQLite/MariaDB10.11/MySQL8.4 in96PHP lint PASS. Analiza10starihinfo brez novih
+warning/error; Android debug PASS. Zaključne ozke regresije so v zapisu izvedbe.
+Širša space-sharing PHP zbirka ima nepovezan obstoječ householdPerson.archived
+validation zastoj po66kontrolah; ni trditve, da je celotni strežniški nabor zelen.
+Ni spremembe verzije/SDK/locks/native dovoljenj, namestitve, živih povabil,
+gostovanj, javnega plugin repozitorija ali trgovinske oddaje. Ta prenova ne
+dodaja sheme; predhodna izvorna shema19 še čaka usklajeno izdajo in pravo kopijo/obnovo.
+**Google Play samo po novi izrecni potrditvi; brez internih izdaj, Apple odložen.**
+AAB29 teh sprememb ne vsebuje. Prvotna analiza zdaj povezuje zapis izvedbe;
+nepovezan docs/SECURITY_REVIEW_2026_10_15.md ostane nedotaknjen.
+
 16. oktober — **organizacijske preglednice in dokumentne priloge izvedene v izvoru**
 po izrecnem naročilu. [Izvedba in meje](docs/TABLES_AND_ATTACHMENTS.md).
 Razširljiva mreža, formule/SUM, izključni 90s zaklep z obnovo, lokalni osnutki,

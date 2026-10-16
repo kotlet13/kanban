@@ -947,7 +947,7 @@ abstract class AppLocalizations {
   /// No description provided for @sharingAccount.
   ///
   /// In en, this message translates to:
-  /// **'Account and sharing'**
+  /// **'Account'**
   String get sharingAccount;
 
   /// No description provided for @sharingIntro.
@@ -6237,25 +6237,25 @@ abstract class AppLocalizations {
   /// No description provided for @sharingInviteSpaceDescription.
   ///
   /// In en, this message translates to:
-  /// **'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.'**
+  /// **'Whole space: shared content and finances, plus all current and future projects.'**
   String get sharingInviteSpaceDescription;
 
   /// No description provided for @sharingInviteProjectDescription.
   ///
   /// In en, this message translates to:
-  /// **'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.'**
+  /// **'Only this project: tasks, events, notifications and finances. No membership in the parent space.'**
   String get sharingInviteProjectDescription;
 
   /// No description provided for @sharingMemberFullDescription.
   ///
   /// In en, this message translates to:
-  /// **'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.'**
+  /// **'Full access: create, edit and delete content and finances, manage settings and invitations, and invite or remove members. Ownership stays protected.'**
   String get sharingMemberFullDescription;
 
   /// No description provided for @sharingViewerDescription.
   ///
   /// In en, this message translates to:
-  /// **'The person can read content and finances within the selected scope. Editing and administration are excluded.'**
+  /// **'View content and finances. No editing, deleting or management.'**
   String get sharingViewerDescription;
 
   /// No description provided for @sharingLegacySpaceDescription.
@@ -6585,19 +6585,19 @@ abstract class AppLocalizations {
   /// No description provided for @moderationPolicyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Rules for shared content'**
+  /// **'Rules for working together'**
   String get moderationPolicyTitle;
 
   /// No description provided for @moderationPolicyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Before publishing or sending changes to a shared space, review and accept this server’s rules. Personal and local use does not require acceptance.'**
+  /// **'Before adding or changing shared content, accept this server’s rules. Your personal space stays private.'**
   String get moderationPolicyDescription;
 
   /// No description provided for @moderationPolicyCheckbox.
   ///
   /// In en, this message translates to:
-  /// **'I have read and accept these shared-content rules.'**
+  /// **'I accept the collaboration rules for this server.'**
   String get moderationPolicyCheckbox;
 
   /// No description provided for @moderationPolicyAccept.
@@ -6609,7 +6609,7 @@ abstract class AppLocalizations {
   /// No description provided for @moderationPolicyAccepted.
   ///
   /// In en, this message translates to:
-  /// **'You have accepted these rules.'**
+  /// **'You have already accepted these rules.'**
   String get moderationPolicyAccepted;
 
   /// No description provided for @moderationPolicySaveAgain.
@@ -7801,6 +7801,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to open the unsent work file.'**
   String get sharingRecoveryInvalid;
+
+  /// No description provided for @moderationRulesPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Only share content you have permission to share.'**
+  String get moderationRulesPermission;
+
+  /// No description provided for @moderationRulesRespect.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not post harassment, threats, hateful, sexually explicit, violent or illegal content, spam, or other people’s personal information without authorization.'**
+  String get moderationRulesRespect;
+
+  /// No description provided for @moderationRulesReport.
+  ///
+  /// In en, this message translates to:
+  /// **'You can report inappropriate content to this server’s administrator.'**
+  String get moderationRulesReport;
+
+  /// No description provided for @moderationRulesFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full rules'**
+  String get moderationRulesFull;
+
+  /// No description provided for @moderationRulesViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Just look around for now'**
+  String get moderationRulesViewOnly;
+
+  /// No description provided for @moderationRulesAcceptContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept rules and continue'**
+  String get moderationRulesAcceptContinue;
+
+  /// No description provided for @spaceFlowCloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with cloud'**
+  String get spaceFlowCloud;
+
+  /// No description provided for @spaceFlowCloudDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'This space will be available on your other devices using the same account. Invite others to give them access.'**
+  String get spaceFlowCloudDescription;
+
+  /// No description provided for @spaceFlowSignInCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to sync'**
+  String get spaceFlowSignInCreate;
+
+  /// No description provided for @spaceFlowCreateUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Creation has not been confirmed. Try again. Details stay the same to prevent duplicates.'**
+  String get spaceFlowCreateUnknown;
+
+  /// No description provided for @spaceFlowRecipient.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or existing username'**
+  String get spaceFlowRecipient;
+
+  /// No description provided for @spaceFlowRecipientInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email or existing username.'**
+  String get spaceFlowRecipientInvalid;
+
+  /// No description provided for @spaceFlowInAppSent.
+  ///
+  /// In en, this message translates to:
+  /// **'The invitation is waiting in the recipient’s account.'**
+  String get spaceFlowInAppSent;
+
+  /// No description provided for @spaceFlowFullAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Full access'**
+  String get spaceFlowFullAccess;
+
+  /// No description provided for @spaceFlowViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get spaceFlowViewOnly;
+
+  /// No description provided for @spaceFlowMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Access options'**
+  String get spaceFlowMoreOptions;
+
+  /// No description provided for @spaceFlowResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send again'**
+  String get spaceFlowResend;
+
+  /// No description provided for @spaceFlowResendConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous link will stop working. A new invitation with a new expiry will be created.'**
+  String get spaceFlowResendConfirm;
+
+  /// No description provided for @spaceFlowRecipientUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This recipient cannot be invited. Check the username.'**
+  String get spaceFlowRecipientUnavailable;
+
+  /// No description provided for @spaceFlowUsernameUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This server does not yet support invitations by existing username. Use an email.'**
+  String get spaceFlowUsernameUnsupported;
+
+  /// No description provided for @spaceFlowSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get spaceFlowSend;
+
+  /// No description provided for @invitationFlowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation'**
+  String get invitationFlowTitle;
+
+  /// No description provided for @invitationFlowOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invitation'**
+  String get invitationFlowOpen;
+
+  /// No description provided for @invitationFlowLinkOrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation link or code'**
+  String get invitationFlowLinkOrCode;
+
+  /// No description provided for @invitationFlowPasteHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the link from your invitation. If you have just installed the app, you can also return to your email and open the invitation again.'**
+  String get invitationFlowPasteHelp;
+
+  /// No description provided for @invitationFlowCodeServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server when entering only a code'**
+  String get invitationFlowCodeServer;
+
+  /// No description provided for @invitationFlowJoinProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Join project'**
+  String get invitationFlowJoinProject;
+
+  /// No description provided for @invitationFlowJoinSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Join space'**
+  String get invitationFlowJoinSpace;
+
+  /// No description provided for @invitationFlowOtherAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use another account'**
+  String get invitationFlowOtherAccount;
+
+  /// No description provided for @invitationFlowDifferentServer.
+  ///
+  /// In en, this message translates to:
+  /// **'You are signed in to another server. Continue by signing in to the server for this invitation.'**
+  String get invitationFlowDifferentServer;
+
+  /// No description provided for @invitationFlowSignInToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in or create an account. Then decide whether to join.'**
+  String get invitationFlowSignInToJoin;
+
+  /// No description provided for @invitationFlowBackToPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to invitation'**
+  String get invitationFlowBackToPreview;
+
+  /// No description provided for @invitationFlowFirstLaunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Have an email link or a code? Continue here to the space you were invited to.'**
+  String get invitationFlowFirstLaunch;
+
+  /// No description provided for @invitationFlowInvitationTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation to {name}'**
+  String invitationFlowInvitationTo(String name);
+
+  /// No description provided for @invitationFlowViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get invitationFlowViewOnly;
+
+  /// No description provided for @invitationFlowFullAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Full access'**
+  String get invitationFlowFullAccess;
+
+  /// No description provided for @invitationFlowPersonalStaysPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'You join only this invited space. Your local personal data is not shared by joining.'**
+  String get invitationFlowPersonalStaysPrivate;
+
+  /// No description provided for @spaceFlowShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share space'**
+  String get spaceFlowShare;
+
+  /// No description provided for @spaceFlowPendingCreation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud creation is still pending'**
+  String get spaceFlowPendingCreation;
+
+  /// No description provided for @spaceFlowPendingCreationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous creation has not been confirmed. Resume it or create another local space. Your pending cloud creation stays saved.'**
+  String get spaceFlowPendingCreationDescription;
+
+  /// No description provided for @spaceFlowCreateOtherLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Create another local space'**
+  String get spaceFlowCreateOtherLocal;
+
+  /// No description provided for @spaceFlowResumeCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume creation'**
+  String get spaceFlowResumeCreate;
+
+  /// No description provided for @spaceFlowLocalOnlyPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This new space will be local. You can resume creating the previous cloud space later.'**
+  String get spaceFlowLocalOnlyPending;
+
+  /// No description provided for @invitationFlowStepsWriter.
+  ///
+  /// In en, this message translates to:
+  /// **'Account · Join · Rules'**
+  String get invitationFlowStepsWriter;
+
+  /// No description provided for @invitationFlowStepsViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Account · Join'**
+  String get invitationFlowStepsViewer;
+
+  /// No description provided for @invitationFlowJoinedOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'You have joined. If the space has not opened yet, try opening it again.'**
+  String get invitationFlowJoinedOpen;
+
+  /// No description provided for @invitationFlowOpenSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Open space'**
+  String get invitationFlowOpenSpace;
+
+  /// No description provided for @invitationFlowUsernameRule.
+  ///
+  /// In en, this message translates to:
+  /// **'3–64 characters: letters A–Z, numbers, dot, hyphen or underscore.'**
+  String get invitationFlowUsernameRule;
+
+  /// No description provided for @invitationFlowNameRule.
+  ///
+  /// In en, this message translates to:
+  /// **'The name is too long. Use a shorter name.'**
+  String get invitationFlowNameRule;
+
+  /// No description provided for @spaceFlowCreateOtherAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the original account to continue. You can also create another local space.'**
+  String get spaceFlowCreateOtherAccount;
 }
 
 class _AppLocalizationsDelegate

@@ -27,8 +27,8 @@ void main() {
     expect(find.byType(OrganizerUtripOverview), findsOneWidget);
     expect(storage.snapshot.tasks, isEmpty);
     expect(storage.writes, 0);
-    await mobileTab(tester,'Več');
-    expect(find.text('Račun in deljenje'), findsOneWidget);
+    await mobileTab(tester, 'Več');
+    expect(find.text('Račun'), findsOneWidget);
     expect(storage.writes, 0);
     expect(tester.takeException(), isNull);
   });

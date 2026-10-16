@@ -18,7 +18,7 @@ class SharingInvitationDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          invitation.scopeName,
+          l.invitationFlowInvitationTo(invitation.scopeName),
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -32,16 +32,22 @@ class SharingInvitationDetails extends StatelessWidget {
                 ? l.sharingInviteProjectOnly
                 : l.sharingInviteWholeSpace,
           ),
-        Text(sharingRoleLabel(context, invitation.role)),
+        Text(
+          invitation.contractVersion == 3
+              ? invitation.role == SharedRole.viewer
+                    ? l.invitationFlowViewOnly
+                    : l.invitationFlowFullAccess
+              : sharingRoleLabel(context, invitation.role),
+        ),
         if (invitation.recipientEmail != null)
           Text(l.emailInviteFor(invitation.recipientEmail!))
         else
           Text(invitation.recipientUsername),
         Text(
-          '${l.sharingExpires} ${organizerDate(context, invitation.expiresAt)}',
+          '${l.sharingExpires} ${organizerDate(context, invitation.expiresAt.toLocal())} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(invitation.expiresAt.toLocal()), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}',
         ),
         const SizedBox(height: 12),
-        Text(l.emailInviteExplicit),
+        Text(l.invitationFlowPersonalStaysPrivate),
         if (invitation.contractVersion == 3) ...[
           const SizedBox(height: 12),
           Text(

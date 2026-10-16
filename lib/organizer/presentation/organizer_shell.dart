@@ -36,6 +36,11 @@ import 'settings_page.dart';
 import 'shopping_page.dart';
 import 'today_page.dart';
 import 'shared/sharing_account_page.dart';
+import 'shared/sharing_auth.dart';
+import 'shared/invitation_wizard.dart';
+import 'shared/received_invitation_notice.dart';
+import 'shared/connect_space_flow.dart';
+import 'shared/scope_invitation_form.dart';
 import 'shared/sharing_errors.dart';
 import 'shared/space_settings_page.dart';
 import 'shared/sharing_workspace.dart';
@@ -239,6 +244,10 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       }
     }
     if (!mounted) return;
+    if (intent == SetupIntent.invitation) {
+      await showInvitationWizard(context, ref, onAccepted: _invitationAccepted);
+      return;
+    }
     _changeNavigation(() {
       _setupIntent = intent;
       _navigationState.area = intent == SetupIntent.deviceOnly
@@ -247,56 +256,42 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     });
   }
 
+  void _invitationAccepted(String id) {
+    if (!mounted) return;
+    final state = ref.read(collaborationProvider).valueOrNull;
+    if (state?.selectedSpaceId != id || state?.sessionInvalid != false) return;
+    _changeNavigation(() {
+      _incomingInvitation = null;
+      _navigationState.sharedScopeId = id;
+      _navigationState.area = _Area.today;
+      _navigationState.sharedListId = null;
+      _navigationState.sharedProjectId = null;
+    });
+  }
+
   Future<void> _processInvitation() async {
-    if (!mounted || _openingInvite || _openingNotification) return;
+    if (!mounted ||
+        _openingInvite ||
+        _openingNotification ||
+        _spaceFlowBusy ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
     final link = ref.read(pendingInvitationLinkProvider);
     if (link == null) return;
     _openingInvite = true;
-    final captured = ref.read(collaborationProvider).valueOrNull?.session;
-    final identity = '${captured?.partition}:${captured?.deviceId}';
     try {
-      final proceed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(context.l10n.inviteOpenTitle),
-          content: Text(
-            '${context.l10n.inviteOpenWarning}\n\n${link.serverUrl}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(context.l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(context.l10n.inviteOpenContinue),
-            ),
-          ],
-        ),
-      );
-      if (!mounted) return;
+      // Only consume the routing signal. The wizard owns the securely saved
+      // invitation, including origin confirmation and resuming after login.
       if (identical(ref.read(pendingInvitationLinkProvider), link)) {
         ref.read(pendingInvitationLinkProvider.notifier).state = null;
       }
-      if (proceed != true) return;
-      final now = ref.read(collaborationProvider).valueOrNull?.session;
-      if ('${now?.partition}:${now?.deviceId}' != identity) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.sharingSessionExpired)),
-        );
-        return;
-      }
-      await ref
-          .read(collaborationProvider.notifier)
-          .rememberInvitation(serverUrl: link.serverUrl, token: link.token);
-      if (!mounted) return;
-      final current = ref.read(collaborationProvider).valueOrNull?.session;
-      if ('${current?.partition}:${current?.deviceId}' != identity) return;
-      _changeNavigation(() {
-        _incomingInvitation = link;
-        _navigationState.area = _Area.sharing;
-        _navigationState.sharingAuth = false;
-      });
+      await showInvitationWizard(
+        context,
+        ref,
+        initialLink: link,
+        onAccepted: _invitationAccepted,
+      );
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -305,8 +300,135 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       }
     } finally {
       _openingInvite = false;
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _processInvitation(),
+        );
+      }
     }
   }
+
+  bool _spaceFlowBusy = false;
+
+  bool get _canShareCurrentSpace {
+    final state = ref.read(collaborationProvider).valueOrNull;
+    if (state?.allSpacesSelected == true || state?.deletionPending == true) {
+      return false;
+    }
+    final scope = state?.scopes
+        .where((s) => s.id == state.selectedSpaceId)
+        .firstOrNull;
+    if (state?.selectedSpaceId != null) {
+      return scope != null &&
+          scope.kind != SharedScopeKind.personal &&
+          scope.canManage &&
+          !scope.blocked &&
+          !scope.archived;
+    }
+    final local = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+    return local != null &&
+        local.kind != LocalSpaceKind.personal &&
+        !local.archived;
+  }
+
+  Future<bool> _authenticateForSpace() => showSharingSignIn(
+    context,
+    initialServer:
+        ref.read(collaborationProvider).valueOrNull?.session?.serverUrl ?? '',
+  );
+
+  Future<void> _connectCurrentSpace({bool invite = false}) async {
+    if (_spaceFlowBusy || _desktopInspector.isOpen) return;
+    final initial = ref.read(collaborationProvider).valueOrNull;
+    if (initial?.allSpacesSelected == true) return;
+    final originalScope = initial?.selectedSpaceId;
+    final originalPartition = initial?.session?.partition;
+    final local = ref.read(localSpacesProvider).valueOrNull?.selectedSpace;
+    if (originalScope == null &&
+        (local == null || local.kind == LocalSpaceKind.personal)) {
+      _navigate(_Area.sharing);
+      return;
+    }
+    setState(() => _spaceFlowBusy = true);
+    try {
+      var state = initial;
+      var authenticated = false;
+      if (state?.session == null ||
+          state!.sessionInvalid ||
+          !state.session!.expiresAt.isAfter(DateTime.now())) {
+        if (!await _authenticateForSpace() || !mounted) return;
+        state = ref.read(collaborationProvider).valueOrNull;
+        authenticated = true;
+      }
+      if (state?.session == null ||
+          state!.sessionInvalid ||
+          state.deletionPending) {
+        return;
+      }
+      // A shared-space action cannot be continued under another account.
+      if (originalScope != null &&
+          state.session!.partition != originalPartition) {
+        return;
+      }
+      final identity = _accountIdentity;
+      var target = originalScope;
+      if (target == null) {
+        target = await showLocalSpaceConnection(
+          context,
+          ref,
+          localSpaceId: local!.id,
+        );
+        if (!mounted || target == null || identity != _accountIdentity) return;
+        await _selectSpace(target);
+      } else if (authenticated && state.selectedSpaceId != target) {
+        await _selectSpace(target);
+      }
+      if (!mounted || identity != _accountIdentity) return;
+      state = ref.read(collaborationProvider).valueOrNull;
+      if (state?.selectedSpaceId != target || state?.sessionInvalid != false) {
+        return;
+      }
+      final scope = state!.scopes.where((s) => s.id == target).firstOrNull;
+      if (scope == null) return;
+      if (invite) {
+        final sent = await showScopeInvitation(
+          context,
+          ref,
+          scope: scope,
+          session: state.session!,
+        );
+        if (sent &&
+            mounted &&
+            identity == _accountIdentity &&
+            ref.read(collaborationProvider).valueOrNull?.selectedSpaceId ==
+                target) {
+          _openSpaceSettings(target);
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(sharingErrorMessage(context, error))),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _spaceFlowBusy = false);
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _processInvitation(),
+        );
+      }
+    }
+  }
+
+  Widget _shareSpaceButton() => IconButton(
+    key: const ValueKey('organizer-share-space'),
+    tooltip: context.l10n.spaceFlowShare,
+    onPressed: _spaceFlowBusy || _desktopInspector.isOpen
+        ? null
+        : () => _connectCurrentSpace(invite: true),
+    icon: const Icon(Icons.person_add_alt_outlined),
+  );
 
   bool _openingNotification = false;
   String? _notificationAttempt;
@@ -1008,6 +1130,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                   onSelected: _selectSpace,
                                   onLocalSelected: _selectLocalSpace,
                                   onAllSelected: _selectAllSpaces,
+                                  onAuthenticate: _authenticateForSpace,
                                   onConnect: () => _navigate(_Area.sharing),
                                 ),
                                 const SizedBox(height: 16),
@@ -1041,6 +1164,10 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                 ),
                                 const SizedBox(height: 12),
                               ],
+                              if (_navigationState.area == _Area.today)
+                                ReceivedInvitationNotice(
+                                  onAccepted: _invitationAccepted,
+                                ),
                               if (organizerDestinationFor(
                                     _navigationState.area,
                                   ) ==
@@ -1194,6 +1321,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                 onSelected: _selectSpace,
                                 onLocalSelected: _selectLocalSpace,
                                 onAllSelected: _selectAllSpaces,
+                                onAuthenticate: _authenticateForSpace,
                                 onConnect: () => _navigate(_Area.sharing),
                               ),
                             )
@@ -1202,6 +1330,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                         ],
                       ),
                       actions: [
+                        if (_canShareCurrentSpace) _shareSpaceButton(),
                         IconButton(
                           tooltip: l.inboxTitle,
                           onPressed: () => _navigate(_Area.inbox),
@@ -1250,6 +1379,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                                             : _spaceKindLabel(context),
                                       ),
                                       const Spacer(),
+                                      if (_canShareCurrentSpace)
+                                        _shareSpaceButton(),
                                       Text(
                                         allSpaces
                                             ? l.allSpacesSources
@@ -1389,6 +1520,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
         ),
+        if (_canShareCurrentSpace) _shareSpaceButton(),
         IconButton(
           key: const ValueKey('desktop-search'),
           tooltip: l.desktopSearch,
@@ -1447,6 +1579,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
           _selectAllSpaces();
         }
       },
+      onAuthenticate: _authenticateForSpace,
       onConnect: () => _navigate(_Area.sharing),
     );
     Widget link(_Area area, {Key? key}) => Tooltip(
@@ -2180,6 +2313,8 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         onTask: (task) => actions.task(task: task),
       ),
       _Area.today => OrganizerTodayPage(
+        onInvitation: () =>
+            showInvitationWizard(context, ref, onAccepted: _invitationAccepted),
         onGettingStarted:
             ref.watch(localSpacesProvider).valueOrNull?.selectedSpace?.kind ==
                 LocalSpaceKind.personal
@@ -2271,7 +2406,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.spaceSettings => SpaceSettingsPage(
         selectedScopeId: selection?.allSpacesSelected == true ? null : active,
         onScopeSelected: _openSpaceSettings,
-        onConnect: () => _navigate(_Area.sharing),
+        onConnect: () => _connectCurrentSpace(),
       ),
       _Area.settings => OrganizerSettingsPage(actions: actions),
       _Area.reminderSettings => const InboxPreferences(),
@@ -2304,19 +2439,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
         setupIntent: _setupIntent,
         initialInvitation: _incomingInvitation,
         onInvitationHandled: () => setState(() => _incomingInvitation = null),
-        onInvitationAccepted: (id) {
-          final state = ref.read(collaborationProvider).valueOrNull;
-          if (state?.selectedSpaceId != id || state?.sessionInvalid != false) {
-            return;
-          }
-          _changeNavigation(() {
-            _incomingInvitation = null;
-            _navigationState.sharedScopeId = id;
-            _navigationState.area = _Area.today;
-            _navigationState.sharedListId = null;
-            _navigationState.sharedProjectId = null;
-          });
-        },
+        onInvitationAccepted: _invitationAccepted,
         selectedScopeId: _navigationState.sharedScopeId,
         onScopeSelected: _selectScope,
         initialView: _navigationState.sharingView,

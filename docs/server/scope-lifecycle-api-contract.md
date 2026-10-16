@@ -1,5 +1,7 @@
 # Scope lifecycle contract1 (FamilyHub0.14 / schema18)
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Capabilities advertise `scopeLifecycleContractVersions:[1]` and features `scopeDeletion` / `scopeArchiving`. Authenticated requests use the existing Native API bearer. These operations never delete an account or device registration.
 
 `scopes.deletionPreview` accepts `{scopeId,projectId?}`. Its named preview includes selected child spaces, counts of spaces/projects/tasks/events/ideas/photos/finance/other, `canDelete`, explicit `blockers`, and `previewHash`. A whole household, organization or project scope requires its owner. An inline project accepts existing nonviewer editors; selected finance additionally requires existing financial write access. Deleting the permanent root project means deleting its project scope and requires ownership. Whole personal-space deletion is excluded.

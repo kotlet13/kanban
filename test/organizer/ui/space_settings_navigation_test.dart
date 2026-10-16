@@ -186,7 +186,7 @@ void main() {
         MemoryOrganizerStorage(),
         collaborationController: controller,
       );
-      await mobileTab(tester, 'Račun in deljenje');
+      await mobileTab(tester, 'Račun');
       tester
           .widget<SharingAccountPage>(find.byType(SharingAccountPage))
           .onScopeSelected(organizationId);

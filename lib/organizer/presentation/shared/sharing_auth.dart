@@ -10,6 +10,29 @@ import 'sharing_invitation_details.dart';
 import '../onboarding/account_recovery_actions.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 
+/// Contextual authentication returns directly to the action that opened it.
+Future<bool> showSharingSignIn(
+  BuildContext context, {
+  String initialServer = '',
+}) async =>
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text(context.l10n.sharingLogin)),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: SharingAuthPanel(
+              initialServer: initialServer,
+              loginOnly: true,
+              onStart: () {},
+              onConnected: () => Navigator.of(context).pop(true),
+            ),
+          ),
+        ),
+      ),
+    ) ??
+    false;
+
 class SharingAuthPanel extends ConsumerStatefulWidget {
   const SharingAuthPanel({
     super.key,
@@ -18,11 +41,12 @@ class SharingAuthPanel extends ConsumerStatefulWidget {
     this.initialServer = '',
     this.invitationMode = false,
     this.initialToken = '',
+    this.loginOnly = false,
   });
   final VoidCallback onStart;
   final VoidCallback onConnected;
   final String initialServer, initialToken;
-  final bool invitationMode;
+  final bool invitationMode, loginOnly;
   @override
   ConsumerState<SharingAuthPanel> createState() => _SharingAuthPanelState();
 }
@@ -75,9 +99,9 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
       setState(() => _error = context.l10n.sharingRequired);
       return;
     }
-    final invitationUri = Uri.tryParse(_token.text.trim());
-    if (InvitationLink.supportedSchemes.contains(invitationUri?.scheme)) {
-      final link = InvitationLink.tryParse(invitationUri!);
+    final input = _token.text.trim();
+    if (input.contains('://')) {
+      final link = InvitationLink.tryParseInput(input);
       if (link == null) {
         setState(() => _error = context.l10n.inviteLinkInvalid);
         return;
@@ -323,7 +347,8 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OrganizerHeading(title: l.sharingAccount, subtitle: l.sharingIntro),
+        if (!widget.loginOnly)
+          OrganizerHeading(title: l.sharingAccount, subtitle: l.sharingIntro),
         Align(
           alignment: Alignment.centerLeft,
           child: ConstrainedBox(
@@ -336,36 +361,37 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ChoiceChip(
-                            selected: !_invitationMode,
-                            label: Text(l.sharingLogin),
-                            onSelected: _busy
-                                ? null
-                                : (_) => setState(() {
-                                    _invitationMode = false;
-                                    _register = false;
-                                    _preview = null;
-                                    _error = null;
-                                  }),
-                          ),
-                          ChoiceChip(
-                            selected: _invitationMode,
-                            label: Text(l.sharingHaveInvite),
-                            onSelected: _busy
-                                ? null
-                                : (_) => setState(() {
-                                    _invitationMode = true;
-                                    _register = false;
-                                    _preview = null;
-                                    _error = null;
-                                  }),
-                          ),
-                        ],
-                      ),
+                      if (!widget.loginOnly)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ChoiceChip(
+                              selected: !_invitationMode,
+                              label: Text(l.sharingLogin),
+                              onSelected: _busy
+                                  ? null
+                                  : (_) => setState(() {
+                                      _invitationMode = false;
+                                      _register = false;
+                                      _preview = null;
+                                      _error = null;
+                                    }),
+                            ),
+                            ChoiceChip(
+                              selected: _invitationMode,
+                              label: Text(l.sharingHaveInvite),
+                              onSelected: _busy
+                                  ? null
+                                  : (_) => setState(() {
+                                      _invitationMode = true;
+                                      _register = false;
+                                      _preview = null;
+                                      _error = null;
+                                    }),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: 24),
                       _field(
                         'server',
@@ -393,7 +419,7 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                         _field(
                           'invitation-token',
                           _token,
-                          l.sharingInvitationCode,
+                          l.invitationFlowLinkOrCode,
                           readOnly: _preview != null,
                         ),
                         if (_preview == null)
@@ -522,11 +548,14 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                           ),
                         ),
                       ],
-                      if (!_invitationMode) ...[
+                      if (!_invitationMode && !widget.loginOnly) ...[
                         TextButton(
                           onPressed: _busy ? null : _enroll,
                           child: Text(l.accountFirstTitle),
                         ),
+                      ],
+                      if (!_register &&
+                          (!_invitationMode || _preview != null)) ...[
                         TextButton(
                           onPressed: _busy
                               ? null

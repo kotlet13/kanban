@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = Path(__file__).with_name('source_manifest.json')
 PUBLIC_README = Path(__file__).with_name('PUBLIC_README.md')
+PUBLIC_NOTICE = Path(__file__).with_name('PUBLIC_NOTICE.md')
 PUBLIC_DOCUMENTS = {
     'docs/account-deletion-contract.md': ROOT / 'docs/server/account-deletion-contract.md',
     'docs/spaces-api-contract.md': ROOT / 'docs/server/spaces-api-contract.md',
@@ -70,7 +71,14 @@ def package(source, destination, manifest=MANIFEST, public_documents=PUBLIC_DOCU
     entries = collect(source, manifest)
     # The standalone public README is reviewed separately. It replaces references
     # to development files in the private application repository; PHP is unchanged.
-    entries['README.md'] = PUBLIC_README.read_bytes()
+    for name, path in {'README.md': PUBLIC_README, 'NOTICE.md': PUBLIC_NOTICE}.items():
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > LIMIT:
+            raise ValueError('Public metadata must be a bounded regular file')
+        data = path.read_bytes()
+        text = data.decode('utf-8')
+        if '\x00' in text or re.search(r'-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----|"type"\s*:\s*"service_account"|\b(?:sk-proj-|ghp_)[A-Za-z0-9]{20,}', text):
+            raise ValueError('Credential-like public metadata refused')
+        entries[name] = data
     # Explicitly reviewed public contract only; no recursive application docs copy.
     for name, path in public_documents.items():
         relative = PurePosixPath(name)
@@ -88,7 +96,7 @@ def package(source, destination, manifest=MANIFEST, public_documents=PUBLIC_DOCU
     destination.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(destination, 'x', zipfile.ZIP_DEFLATED) as archive:
         for name, data in sorted(entries.items()):
-            entry = zipfile.ZipInfo('FamilyHub/' + name, (2026, 10, 7, 0, 0, 0))
+            entry = zipfile.ZipInfo('FamilyHub/' + name, (2026, 10, 16, 0, 0, 0))
             entry.compress_type = zipfile.ZIP_DEFLATED
             entry.external_attr = 0o100644 << 16
             archive.writestr(entry, data)

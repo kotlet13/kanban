@@ -82,6 +82,7 @@ class SpaceCreationController extends SharingUiController {
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
+    String address = '',
     String? organizationId,
     String? parentScopeId,
     String? id,
@@ -311,10 +312,17 @@ void main() {
       ),
     );
     await openNewSpace(tester);
+    expect(find.text('Sinhroniziraj z oblakom'), findsOneWidget);
     expect(
-      find.textContaining('Prostor in njegove zapise hrani ta naprava.'),
-      findsOneWidget,
+      tester
+          .widget<CheckboxListTile>(
+            find.byKey(const ValueKey('space-flow-cloud')),
+          )
+          .value,
+      false,
     );
+    expect(find.byKey(const ValueKey('sharing-name')), findsOneWidget);
+    expect(find.byKey(const ValueKey('sharing-kind')), findsOneWidget);
     await tester.tap(find.text('Prekliči'));
     await tester.pumpAndSettle();
     expect(

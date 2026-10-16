@@ -16,6 +16,8 @@ class EmailServer extends FakeServer {
       loseRegister = false,
       changeRegisterIdentity = false;
   String? lastPreviewBearer;
+  bool changeIdentityAfterPreview = false;
+  int credentialRequests = 0;
   String? recipient, scopeId;
   final token = 'fhi2_${'a' * 64}';
   final invitationId = newSharedId();
@@ -42,6 +44,7 @@ class EmailServer extends FakeServer {
     Map<String, Object?> params,
     String? bearer,
   ) async {
+    if (operation == 'auth.login') credentialRequests++;
     if (operation == 'capabilities') {
       final caps = await super.call(operation, params, bearer);
       return {
@@ -64,7 +67,9 @@ class EmailServer extends FakeServer {
           tokens[bearer] != recipient) {
         throw const CollaborationApiException('invitation_invalid');
       }
-      return preview;
+      final result = preview;
+      if (changeIdentityAfterPreview) serverId = newSharedId();
+      return result;
     }
     if (operation == 'auth.registerInvitation2') {
       registerCalls++;
@@ -109,6 +114,18 @@ class EmailServer extends FakeServer {
       };
     }
     return super.call(operation, params, bearer);
+  }
+}
+
+class FailOnceInvitationClearStore extends MemoryPendingInvitationStore {
+  bool failClear = false;
+  @override
+  Future<void> write(PendingInvitation? invitation) async {
+    if (invitation == null && failClear) {
+      failClear = false;
+      throw const CollaborationException('secure_storage');
+    }
+    await super.write(invitation);
   }
 }
 
@@ -386,6 +403,107 @@ void main() {
       expect(server.previewCalls, 1);
     },
   );
+  test(
+    'definitive grant remains openable across failed sync and restart',
+    () async {
+      final sessions = MemorySessionStore();
+      final repo = await open('grant-restart', sessions);
+      await repo.registerWithInvitation(
+        serverUrl: 'https://synthetic.invalid/kanboard',
+        invitationToken: server.token,
+        username: 'bob',
+        name: 'Synthetic recipient',
+        password: 'synthetic-password',
+      );
+      server.beforeCall = (operation, token, params) async {
+        if (server.acceptCalls > 0 && operation == 'scopes.list') {
+          throw const CollaborationException('network');
+        }
+      };
+      await repo.acceptInvitation(server.token);
+      expect(server.acceptCalls, 1);
+      expect(
+        repo.state.scopes.any((s) => s.id == server.scopeId && s.canRead),
+        true,
+      );
+      expect(repo.state.lastError?.code, 'network');
+      expect(pending.value, isNull);
+      await repo.selectSpace(server.scopeId!);
+      await repo.close();
+      repositories.remove(repo);
+      final reopened = await open('grant-restart', sessions);
+      expect(reopened.state.session?.username, 'bob');
+      expect(
+        reopened.state.scopes.any((s) => s.id == server.scopeId && s.canRead),
+        true,
+      );
+      expect(server.acceptCalls, 1);
+    },
+  );
+  test(
+    'local storage failure after grant reports joined and preserves recovery token',
+    () async {
+      final failing = FailOnceInvitationClearStore();
+      pending = failing;
+      final repo = await open('grant-storage', MemorySessionStore());
+      await repo.registerWithInvitation(
+        serverUrl: 'https://synthetic.invalid/kanboard',
+        invitationToken: server.token,
+        username: 'bob',
+        name: 'Synthetic recipient',
+        password: 'synthetic-password',
+      );
+      failing.failClear = true;
+      await expectLater(
+        repo.acceptInvitation(server.token),
+        failure('invitation_accepted_refresh_failed'),
+      );
+      expect(
+        repo.state.scopes.any((s) => s.id == server.scopeId && s.canRead),
+        true,
+      );
+      expect(pending.value?.accountPartition, repo.state.session?.partition);
+      expect(repo.state.lastError?.code, 'secure_storage');
+      await repo.selectSpace(server.scopeId!);
+      await repo.clearPendingInvitation(expectedToken: server.token);
+      expect(pending.value, isNull);
+      expect(server.acceptCalls, 1);
+    },
+  );
+  test(
+    'invitation login rechecks pinned identity before credentials',
+    () async {
+      final repo = await open('pinned-login', MemorySessionStore());
+      server.changeIdentityAfterPreview = true;
+      final requests = server.credentialRequests;
+      await expectLater(
+        repo.loginForInvitation(
+          serverUrl: 'https://synthetic.invalid/kanboard',
+          invitationToken: server.token,
+          username: 'bob',
+          password: 'synthetic-password',
+        ),
+        failure('server_identity_changed'),
+      );
+      expect(server.credentialRequests, requests);
+      expect(pending.value?.token, server.token);
+      expect(repo.state.session, isNull);
+      expect(server.acceptCalls, 0);
+    },
+  );
+  test('invitation login authenticates without implicitly accepting', () async {
+    final repo = await open('login-only', MemorySessionStore());
+    await repo.loginForInvitation(
+      serverUrl: 'https://synthetic.invalid/kanboard',
+      invitationToken: server.token,
+      username: 'bob',
+      password: 'synthetic-password',
+    );
+    expect(repo.state.session?.username, 'bob');
+    expect(server.members[server.scopeId]?.containsKey('bob'), false);
+    expect(pending.value?.token, server.token);
+    expect(server.acceptCalls, 0);
+  });
   test(
     'pending capability is stored before connectivity and requires HTTPS',
     () async {

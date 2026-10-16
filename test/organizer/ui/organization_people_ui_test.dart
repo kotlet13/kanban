@@ -45,6 +45,7 @@ class CreationController extends SharingUiController {
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
+    String address = '',
     String? organizationId,
     String? parentScopeId,
     String? id,

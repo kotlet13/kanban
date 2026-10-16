@@ -778,6 +778,21 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     allowLocalHttp: allowLocalHttp,
     deviceName: deviceName,
   );
+  Future<void> loginForInvitation({
+    required String serverUrl,
+    required String invitationToken,
+    required String username,
+    required String password,
+    String? otp,
+    String deviceName = 'Jivie',
+  }) => _repo.loginForInvitation(
+    serverUrl: serverUrl,
+    invitationToken: invitationToken,
+    username: username,
+    password: password,
+    otp: otp,
+    deviceName: deviceName,
+  );
   Future<void> registerWithInvitation({
     required String serverUrl,
     required String invitationToken,
@@ -819,9 +834,14 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     return _repo.selectAllSpaces();
   }
 
-  Future<Map<String, dynamic>> previewScopeDeletion(String scopeId, {String? projectId}) =>
-      _repo.previewScopeDeletion(scopeId, projectId: projectId);
-  Future<void> deleteScopeContents(Map<String, dynamic> preview, {String? projectId}) =>
+  Future<Map<String, dynamic>> previewScopeDeletion(
+    String scopeId, {
+    String? projectId,
+  }) => _repo.previewScopeDeletion(scopeId, projectId: projectId);
+  Future<void> deleteScopeContents(
+    Map<String, dynamic> preview, {
+    String? projectId,
+  }) =>
       _edit((repo) => repo.deleteScopeContents(preview, projectId: projectId));
 
   Future<void> archiveProjectScope(
@@ -851,6 +871,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
+    String address = '',
     String? organizationId,
     String? parentScopeId,
     String? id,
@@ -858,6 +879,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   }) => _repo.createScope(
     name,
     kind: kind,
+    address: address,
     organizationId: organizationId,
     parentScopeId: parentScopeId,
     id: id,
@@ -904,6 +926,41 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     language: language,
     accessScope: accessScope,
     requestId: requestId,
+  );
+  Future<SharedInvitation> createRecipientInvitation({
+    required String scopeId,
+    required String recipient,
+    SharedRole role = SharedRole.member,
+    String language = 'sl',
+    String? accessScope,
+    String? requestId,
+  }) => recipient.contains('@')
+      ? createEmailInvitation(
+          scopeId: scopeId,
+          recipientEmail: recipient,
+          role: role,
+          language: language,
+          accessScope: accessScope,
+          requestId: requestId,
+        )
+      : _repo.createRecipientInvitation(
+          scopeId: scopeId,
+          recipient: recipient,
+          role: role,
+          language: language,
+          accessScope: accessScope,
+          requestId: requestId,
+        );
+  Future<SharedInvitation> resendInvitation({
+    required String scopeId,
+    required String invitationId,
+    required String requestId,
+    String language = 'sl',
+  }) => _repo.resendInvitation(
+    scopeId: scopeId,
+    invitationId: invitationId,
+    requestId: requestId,
+    language: language,
   );
   Future<List<SharedInvitationPreview>> pendingInvitations() =>
       _repo.pendingInvitations();

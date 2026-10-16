@@ -17,10 +17,22 @@ class NativeAccountMailTransport
         $body = ($english ? 'Enter this one-time code in the Jivie app:' : 'To enkratno kodo vnesite v aplikacijo Jivie:')."\n\n".$code."\n\n".($english ? 'If you did not request this, ignore the message.' : 'Če tega niste zahtevali, sporočilo prezrite.');
         if ($purpose === 'invitation') {
             $title=$english?'Invitation to Jivie':'Povabilo v Jivie';
-            $body=($details['inviterName']??'Jivie').($english?' invited you to ':' vas vabi v ').($details['scopeName']??'Jivie')."\n".
-                ($english?'Role: ':'Vloga: ').(($details['role']??'member')==='viewer'?($english?'Viewer':'Ogledovalec'):($english?'Member':'Član'))."\n\n".
-                ($english?'Open this invitation:':'Odprite povabilo:')."\n".$code."\n\n".
-                ($english?'Sign in or create an account, then explicitly accept the invitation. Opening this link does not grant access.':'Prijavite se ali ustvarite račun in nato izrecno sprejmite povabilo. Odprtje povezave ne dodeli dostopa.');
+            $project=($details['scopeKind']??'')==='project';
+            $viewer=($details['role']??'member')==='viewer';
+            $modern=($details['contractVersion']??2)===3;
+            $scopeLabel=$project?($english?'project ':'projekt '):($english?'space ':'prostor ');
+            $access=$viewer?($english?'You can view this '.$scopeLabel.'in Jivie.':'V Jivie si lahko ogledaš ta '.trim($scopeLabel).'.'):
+                ($english?'You can collaborate in this '.$scopeLabel.'in Jivie.':'V Jivie lahko sodelujete v tem '.($project?'projektu.':'prostoru.'));
+            if ($modern) {
+                $access.="\n".($english?'Access: ':'Dostop: ').($viewer?($english?'View only':'Samo ogled'):($english?'Full access (including deleting content and managing members)':'Polni dostop (tudi brisanje vsebine in upravljanje članov)'));
+            }
+            $expiry=(int)($details['expiresAt']??0);
+            $formatted=$expiry>0?gmdate($english?'Y-m-d H:i':'d. m. Y H:i',$expiry).' UTC':'';
+            $body=($details['inviterName']??'Jivie').($english?' invites you to ':' te vabi v ').$scopeLabel.($details['scopeName']??'Jivie')."\n\n".
+                $access."\n\n".
+                ($english?'Open invitation:':'Odpri povabilo:')."\n".$code."\n\n".
+                ($english?'Review the access and choose whether to join. If you need an account, create one there.':'Preveri dostop in se odloči, ali se pridružiš. Če še nimaš računa, ga ustvariš tam.').
+                ($formatted!==''?"\n\n".($english?'Valid until ':'Velja do ').$formatted.'.':'');
         }
         $message = new \Swift_Message($title);
         $message->setId('familyhub.account.'.$id.'@'.substr(strrchr($config['from'], '@'), 1));

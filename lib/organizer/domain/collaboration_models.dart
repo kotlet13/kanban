@@ -462,6 +462,8 @@ class CollaborationState {
     this.smtpSupported = false,
     this.emailInvitationsSupported = false,
     this.scopedInvitationsSupported = false,
+    this.usernameInvitationsSupported = false,
+    this.invitationResendSupported = false,
     this.spaceProjectMembershipSupported = false,
     Map<String, List<SharedMember>> members = const {},
     Map<String, SharedFinancePolicy> financePolicies = const {},
@@ -511,6 +513,8 @@ class CollaborationState {
       resetSupported,
       emailInvitationsSupported,
       scopedInvitationsSupported,
+      usernameInvitationsSupported,
+      invitationResendSupported,
       spaceProjectMembershipSupported;
   final bool inboxSupported,
       financeSupported,

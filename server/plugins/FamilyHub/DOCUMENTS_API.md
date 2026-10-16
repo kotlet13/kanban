@@ -1,6 +1,6 @@
-# Organization tables and private attachments (local schema 19)
+# Organization tables and private attachments (FamilyHub 0.15.0 / schema 19)
 
-This source adds capabilities `features.spreadsheets` and `features.attachments` only when every schema 19 table is present. API enablement, authenticated devices, account binding, current inherited membership, moderation blocks, read-only roles, archived parent scopes and archived inline projects still apply. No deployment or public release is implied. Plugin version remains unchanged.
+This source adds capabilities `features.spreadsheets` and `features.attachments` only when every schema 19 table is present. API enablement, authenticated devices, account binding, current inherited membership, moderation blocks, read-only roles, archived parent scopes and archived inline projects still apply. No deployment or public release is implied. The reviewed source distribution is FamilyHub 0.15.0.
 
 All methods use the existing native v1 JSON POST envelope. UUID fields use canonical lower-case UUIDs. Request IDs belong to one scope/account/device across all document methods: keep the same ID/body for retries and use a fresh ID for each different operation, including begin versus complete. Successful mutations have durable receipts; authorization is checked before replay. Responses and rate limits contain no private filesystem paths.
 
@@ -46,7 +46,7 @@ The existing cli/reminders.php worker retries bounded deletion, removes staging 
 
 ## Backup and local verification
 
-Back up **all database tables, every file below private DATA_DIR (including familyhub/attachments and familyhub/ideas), configuration, encryption keys, matching plugin source and worker setup**. Include document requests, chunk staging and deletion queues so retries and cleanup survive restoration. A metadata-only export cannot restore attachment bytes. Verify the complete database/files restore on an isolated instance. Existing schema 18 deployment/backup helpers are intentionally not relaxed to approve schema 19. MySQL DDL is not a transactional downgrade; preserve the verified pre-upgrade restore point. No hosting migration, upload, release artifact, public repository or store submission is performed by this source work.
+Back up **all database tables, every file below private DATA_DIR (including familyhub/attachments and familyhub/ideas), configuration, encryption keys, matching plugin source and worker setup**. Include document requests, chunk staging and deletion queues so retries and cleanup survive restoration. A metadata-only export cannot restore attachment bytes. Verify the complete database/files restore on an isolated instance. Existing schema 18 deployment/backup helpers are intentionally not relaxed to approve schema 19. MySQL DDL is not a transactional downgrade; preserve the verified pre-upgrade restore point. This API document and source package do not establish any hosted migration, public repository publication or app-store submission.
 
 Dedicated synthetic SQLite/MariaDB fixtures:
 

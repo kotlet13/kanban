@@ -292,6 +292,10 @@ void main() {
   final onlyDevice = Platform.environment['JIVIE_UPGRADE_CAPTURE_DEVICE'];
   final onlyLanguage = Platform.environment['JIVIE_UPGRADE_CAPTURE_LOCALE'];
   for (final device in ['android-phone', 'ios-iphone', 'ios-ipad']) {
+    if (Platform.environment['JIVIE_ANDROID_CAPTURE_ONLY'] == '1' &&
+        device != 'android-phone') {
+      continue;
+    }
     for (final language in ['sl', 'en']) {
       testWidgets(
         'upgrade garden and ideas capture $device $language',
@@ -375,6 +379,7 @@ void main() {
           );
           final output =
               Platform.environment['JIVIE_UPGRADE_CAPTURE_OUT'] ??
+              Platform.environment['JIVIE_STORE_CAPTURE_OUT'] ??
               'build/qa/upgrade-store-20261015';
           Future<void> capture(String name) async {
             await tester.pumpAndSettle();

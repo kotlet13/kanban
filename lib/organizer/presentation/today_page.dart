@@ -23,6 +23,7 @@ class OrganizerTodayPage extends ConsumerWidget {
     this.onProjects,
     this.onProjectSelected,
     this.onGettingStarted,
+    this.onInvitation,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerActions actions;
@@ -30,7 +31,7 @@ class OrganizerTodayPage extends ConsumerWidget {
   final bool showShopping;
   final VoidCallback onPlans;
   final ValueChanged<String> onSharedAgenda;
-  final VoidCallback? onCalendar, onProjects, onGettingStarted;
+  final VoidCallback? onCalendar, onProjects, onGettingStarted, onInvitation;
   final ValueChanged<String>? onProjectSelected;
 
   @override
@@ -83,7 +84,10 @@ class OrganizerTodayPage extends ConsumerWidget {
       onCreateProject: () => actions.project(),
       headerHint: onGettingStarted == null
           ? null
-          : GettingStartedHint(onStart: onGettingStarted!),
+          : GettingStartedHint(
+              onStart: onGettingStarted!,
+              onInvitation: onInvitation,
+            ),
     );
   }
 }

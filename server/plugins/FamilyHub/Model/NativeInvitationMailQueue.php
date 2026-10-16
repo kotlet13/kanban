@@ -42,7 +42,7 @@ class NativeInvitationMailQueue extends NativeEmailInvitationService
                     if (!hash_equals($invitation['token_hash'],hash('sha256',$token))) { throw new NativeError('email_unavailable',503); }
                     $url=self::publicUrl($this->configModel->get('application_url')).'/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language='.$job['language'].'#token='.rawurlencode($token);
                     $creator=$this->one('SELECT name,username FROM users WHERE id=?',[$invitation['creator_id']]);
-                    $details=['inviterName'=>$creator['name']?:$creator['username'],'scopeName'=>$scope['name'],'role'=>$invitation['role']];
+                    $details=['inviterName'=>$creator['name']?:$creator['username'],'scopeName'=>$scope['name'],'role'=>$invitation['role'],'contractVersion'=>(int)$invitation['invitation_contract'],'scopeKind'=>$scope['kind'],'expiresAt'=>(int)$invitation['expires_at']];
                     if (($transport->send($invitation['recipient_email'],'invitation',$url,$id,$job['language'],$details)['accepted']??false)!==true) { throw new NativeError('email_unavailable',503); }
                     $this->finish($id,$lease,'accepted'); return 'accepted';
                 } catch (\Throwable $ignored) {

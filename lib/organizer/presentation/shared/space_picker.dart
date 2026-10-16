@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
-import 'sharing_forms.dart';
-import 'sharing_errors.dart';
+import 'create_space_dialog.dart';
 import '../../state/local_spaces_provider.dart';
 
 class OrganizerSpacePicker extends ConsumerWidget {
@@ -14,52 +13,27 @@ class OrganizerSpacePicker extends ConsumerWidget {
     this.compact = false,
     this.onAllSelected,
     this.onLocalSelected,
+    this.onAuthenticate,
   });
   final ValueChanged<String?> onSelected;
   final VoidCallback onConnect;
+  final Future<bool> Function()? onAuthenticate;
   final bool compact;
   final VoidCallback? onAllSelected;
   final ValueChanged<String>? onLocalSelected;
   static const allAction = 'all-spaces';
   static const createAction = 'create-space';
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final l = context.l10n;
-    String? id;
-    await showSharingForm(
+    final result = await showCreateOrganizerSpace(
       context,
-      title: l.spacePickerNewSpace,
-      description: l.localSpaceDescription,
-      fields: [
-        SharingField(id: 'name', label: l.sharingSpaceName),
-        SharingField(
-          id: 'kind',
-          label: l.sharingScopeType,
-          initialValue: 'household',
-          options: {
-            'household': l.sharingHousehold,
-            'organization': l.organizationTitle,
-          },
-        ),
-        SharingField(
-          id: 'address',
-          label: l.localSpaceAddress,
-          required: false,
-        ),
-      ],
-      submitLabel: l.localSpaceCreate,
-      errorMessage: (error) => sharingErrorMessage(context, error),
-      onSubmit: (values) async {
-        final created = await ref
-            .read(localSpacesProvider.notifier)
-            .createSpace(
-              kind: LocalSpaceKind.values.byName(values['kind']!),
-              name: values['name']!.trim(),
-              address: values['address'] ?? '',
-            );
-        id = created.id;
-      },
+      onAuthenticate: onAuthenticate,
     );
-    if (context.mounted && id != null) _selectLocal(ref, id!);
+    if (!context.mounted || result == null) return;
+    if (result.connected) {
+      onSelected(result.id);
+    } else {
+      _selectLocal(ref, result.id);
+    }
   }
 
   void _selectLocal(WidgetRef ref, String id) {

@@ -1,5 +1,7 @@
 # Povezano osebno plačilo — FamilyHub 0.9.0 / schema13
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Izvorna pogodba 9. oktobra 2026. Gostovana namestitev in mobilna izdaja imata ločene dokaze. Ta sprememba ne izvaja namestitve, objave ali spremembe različice aplikacije.
 
 ## Finančna dejstva in pravice

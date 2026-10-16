@@ -9,7 +9,7 @@ function q($sql,$a=[]){global $p;$r=$p->prepare($sql);$r->execute($a);$v=$r->fet
 function uid(){ $h=bin2hex(random_bytes(16));return substr($h,0,8).'-'.substr($h,8,4).'-4'.substr($h,13,3).'-a'.substr($h,17,3).'-'.substr($h,20); }
 function deny($o,$a,$t,$code,$m){try{api($o,$a,$t);$ok=false;}catch(NativeError $e){$ok=$e->errorCode===$code;}ck($ok,$m);}
 $prefix='del_'.bin2hex(random_bytes(5));$pw='password-'.bin2hex(random_bytes(12));$sessions=[];
-foreach(['a','b','c','d','e'] as $n){$ids[$n]=$container['userModel']->create(['username'=>$prefix.'_'.$n,'password'=>$pw,'role'=>'app-user']);$sessions[$n]=api('auth.login',['username'=>$prefix.'_'.$n,'password'=>$pw,'deviceName'=>'Deletion test']);}
+foreach(['a','b','c','d','e'] as $n){$ids[$n]=$container['userModel']->create(['username'=>$prefix.'_'.$n,'password'=>$pw,'role'=>'app-user']);$sessions[$n]=api('auth.login',['username'=>$prefix.'_'.$n,'password'=>$pw,'deviceName'=>'Deletion test']);api('moderation.acceptPolicy',['policyVersion'=>1],$sessions[$n]['token']);}
 $a=$sessions['a'];$b=$sessions['b'];$c=$sessions['c'];$d=$sessions['d'];$aid=$a['user']['accountId'];$bid=$b['user']['accountId'];
 ck(api('capabilities')['features']['accountDeletion'],'self-hosted advertises deletion');
 deny('account.deletion.preview',[], '', 'auth_required','preview needs bearer');

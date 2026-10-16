@@ -23,6 +23,7 @@ Future<bool> showSharedContentPolicy(
   String? scopeId,
   bool allowOfflineDraft = false,
   bool review = false,
+  bool allowReadOnly = false,
 }) async {
   final container = ProviderScope.containerOf(context, listen: false);
   final session = container.read(collaborationProvider).valueOrNull?.session;
@@ -49,25 +50,31 @@ Future<bool> showSharedContentPolicy(
       return false;
     }
     if (policy.accepted && !review) return true;
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Consumer(
-            builder: (context, ref, _) {
-              final guard = SharingSessionGuard(context, ref, session: session);
-              return SharingSessionBoundary(
-                guard: guard,
-                visibleWhen: (state) =>
-                    _onlineSession(state) &&
-                    (scopeId == null || _reportScope(state, scopeId)),
-                child: SharedContentPolicyDialog(
-                  policy: policy,
-                  serverUrl: session.serverUrl,
-                  onAccept: () =>
-                      guard.controller.acceptSharedContentPolicy(policy),
-                ),
-              );
-            },
+    return await Navigator.of(context, rootNavigator: true).push<bool>(
+          MaterialPageRoute<bool>(
+            fullscreenDialog: true,
+            builder: (context) => Consumer(
+              builder: (context, ref, _) {
+                final guard = SharingSessionGuard(
+                  context,
+                  ref,
+                  session: session,
+                );
+                return SharingSessionBoundary(
+                  guard: guard,
+                  visibleWhen: (state) =>
+                      _onlineSession(state) &&
+                      (scopeId == null || _reportScope(state, scopeId)),
+                  child: SharedContentPolicyDialog(
+                    policy: policy,
+                    serverUrl: session.serverUrl,
+                    allowReadOnly: allowReadOnly,
+                    onAccept: () =>
+                        guard.controller.acceptSharedContentPolicy(policy),
+                  ),
+                );
+              },
+            ),
           ),
         ) ??
         false;
@@ -125,10 +132,12 @@ class SharedContentPolicyDialog extends StatefulWidget {
     required this.policy,
     required this.serverUrl,
     required this.onAccept,
+    this.allowReadOnly = false,
   });
   final SharedContentPolicy policy;
   final String serverUrl;
   final Future<void> Function() onAccept;
+  final bool allowReadOnly;
   @override
   State<SharedContentPolicyDialog> createState() =>
       _SharedContentPolicyDialogState();
@@ -162,69 +171,122 @@ class _SharedContentPolicyDialogState extends State<SharedContentPolicyDialog> {
     final l = context.l10n;
     return PopScope(
       canPop: !_busy,
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        title: Text(l.moderationPolicyTitle),
-        content: SizedBox(
-          width: 580,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l.moderationPolicyDescription),
-                const SizedBox(height: 16),
-                Text(
-                  l.moderationRecipient(
-                    widget.policy.recipientName,
-                    Uri.parse(widget.serverUrl).host,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SelectableText(
-                  Localizations.localeOf(context).languageCode == 'sl'
-                      ? widget.policy.textSl
-                      : widget.policy.textEn,
-                ),
-                const SizedBox(height: 16),
-                Text(l.moderationRetention),
-                if (widget.policy.accepted) Text(l.moderationPolicyAccepted),
-                if (!widget.policy.accepted)
-                  CheckboxListTile(
-                    key: const ValueKey('shared-policy-checkbox'),
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: _checked,
-                    onChanged: _busy
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          toolbarHeight: (MediaQuery.textScalerOf(context).scale(22) * 2 + 16)
+              .clamp(kToolbarHeight, 112),
+          title: Text(l.moderationPolicyTitle, maxLines: 2),
+        ),
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.all(16),
+          child: Align(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  TextButton(
+                    onPressed: _busy
                         ? null
-                        : (v) => setState(() => _checked = v == true),
-                    title: Text(l.moderationPolicyCheckbox),
-                  ),
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                        : () => Navigator.pop(context, widget.policy.accepted),
+                    child: Text(
+                      widget.policy.accepted
+                          ? l.close
+                          : widget.allowReadOnly
+                          ? l.moderationRulesViewOnly
+                          : l.cancel,
                     ),
                   ),
-              ],
+                  if (!widget.policy.accepted)
+                    FilledButton(
+                      key: const ValueKey('shared-policy-accept'),
+                      onPressed: _checked && !_busy ? _accept : null,
+                      child: Text(
+                        widget.allowReadOnly
+                            ? l.moderationRulesAcceptContinue
+                            : l.moderationPolicyAccept,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: _busy
-                ? null
-                : () => Navigator.pop(context, widget.policy.accepted),
-            child: Text(widget.policy.accepted ? l.close : l.cancel),
-          ),
-          if (!widget.policy.accepted)
-            FilledButton(
-              key: const ValueKey('shared-policy-accept'),
-              onPressed: _checked && !_busy ? _accept : null,
-              child: Text(l.moderationPolicyAccept),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(l.moderationPolicyDescription),
+                    const SizedBox(height: 16),
+                    Text(l.moderationRulesPermission),
+                    const SizedBox(height: 12),
+                    Text(l.moderationRulesRespect),
+                    const SizedBox(height: 12),
+                    Text(l.moderationRulesReport),
+                    const SizedBox(height: 16),
+                    Text(
+                      l.moderationRecipient(
+                        widget.policy.recipientName,
+                        Uri.parse(widget.serverUrl).host,
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 16),
+                    ExpansionTile(
+                      key: const ValueKey('shared-policy-full-rules'),
+                      tilePadding: EdgeInsets.zero,
+                      title: Text(l.moderationRulesFull),
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SelectableText(
+                            Localizations.localeOf(context).languageCode == 'sl'
+                                ? widget.policy.textSl
+                                : widget.policy.textEn,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(l.moderationRetention),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (widget.policy.accepted)
+                      Text(l.moderationPolicyAccepted),
+                    if (!widget.policy.accepted)
+                      CheckboxListTile(
+                        key: const ValueKey('shared-policy-checkbox'),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _checked,
+                        onChanged: _busy
+                            ? null
+                            : (v) => setState(() => _checked = v == true),
+                        title: Text(l.moderationPolicyCheckbox),
+                      ),
+                    if (_error != null)
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }

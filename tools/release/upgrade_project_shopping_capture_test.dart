@@ -20,7 +20,9 @@ import '../../test/organizer/ui/sharing_ui_fixture.dart';
 import '../../test/organizer/ui/unified_navigation_test.dart'
     show NavigationIdeaController;
 
-const _out = 'build/qa/upgrade-store-20261015';
+final _out =
+    Platform.environment['JIVIE_STORE_CAPTURE_OUT'] ??
+    'build/qa/upgrade-store-20261015';
 String _t(String locale, String sl, String en) => locale == 'sl' ? sl : en;
 const _scope = '10000000-0000-4000-8000-000000000001';
 const _project = '70000000-0000-4000-8000-000000000001';
@@ -246,6 +248,10 @@ void main() {
       ios: true,
     ),
   ]) {
+    if (Platform.environment['JIVIE_ANDROID_CAPTURE_ONLY'] == '1' &&
+        device.ios) {
+      continue;
+    }
     for (final locale in ['sl', 'en']) {
       testWidgets('upgrade projects and shopping ${device.name} $locale', (
         tester,

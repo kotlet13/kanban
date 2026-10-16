@@ -38,12 +38,22 @@ class SourcePackageTest(unittest.TestCase):
     def test_deterministic_source_and_no_history(self):
         first = self.build()
         with zipfile.ZipFile(self.output) as archive:
-            self.assertEqual(set(archive.namelist()), {'FamilyHub/LICENSE', 'FamilyHub/Plugin.php', 'FamilyHub/README.md', 'FamilyHub/docs/account-deletion-contract.md'})
+            self.assertEqual(set(archive.namelist()), {'FamilyHub/LICENSE', 'FamilyHub/Plugin.php', 'FamilyHub/README.md', 'FamilyHub/NOTICE.md', 'FamilyHub/docs/account-deletion-contract.md'})
             readme = archive.read('FamilyHub/README.md').decode()
             self.assertIn('AccountDeletionController', readme)
             self.assertNotIn('docs/server/', readme)
         other = self.root / 'second.zip'
         self.assertEqual(first, module.package(self.source, other, self.manifest, self.documents))
+
+    def test_current_schema19_distribution_is_explicitly_reviewed(self):
+        entries = module.collect(module.ROOT / 'server/plugins/FamilyHub', module.MANIFEST)
+        for name in ('DOCUMENTS_API.md', 'Model/NativeAttachmentService.php',
+                     'Model/NativeDocumentService.php', 'Model/NativeTableService.php',
+                     'Schema/DocumentsSchema.php'):
+            self.assertIn(name, entries)
+        self.assertIn(b"return '0.15.0'", entries['Plugin.php'])
+        self.assertIn(b'const VERSION = 19;', entries['Schema/Mysql.php'])
+        self.assertIn(b'const VERSION = 19;', entries['Schema/Sqlite.php'])
 
     def test_unreviewed_public_document_symlink_and_traversal_refused(self):
         self.document.unlink()

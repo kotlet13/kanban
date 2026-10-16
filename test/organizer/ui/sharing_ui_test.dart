@@ -62,10 +62,7 @@ Future<void> openAccount(
   double width = 390,
   String locale = 'sl',
 }) async {
-  await personal.mobileTab(
-    tester,
-    locale == 'sl' ? 'Račun in deljenje' : 'Account and sharing',
-  );
+  await personal.mobileTab(tester, locale == 'sl' ? 'Račun' : 'Account');
 }
 
 Future<void> openSharedShopping(

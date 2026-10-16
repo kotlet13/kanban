@@ -327,7 +327,7 @@ void main() {
       collaborationController: shared,
     );
     await mobileTab(tester, 'Projekti');
-    await mobileTab(tester, 'Račun in deljenje');
+    await mobileTab(tester, 'Račun');
     expect(find.byType(SharingWorkspace), findsNothing);
     await tester.tap(find.widgetWithText(ListTile, 'Nastavitve prostora'));
     await tester.pumpAndSettle();

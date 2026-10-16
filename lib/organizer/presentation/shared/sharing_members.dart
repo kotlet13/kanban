@@ -1,4 +1,5 @@
 import 'content_actions_menu.dart';
+import 'scope_invitation_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,10 +24,17 @@ List<(SharedInvitation, bool)> _visibleInvitations(
   for (final invitation in invitations) {
     final email = invitation.recipientEmail?.trim().toLowerCase();
     final hasEmail = email != null && email.isNotEmpty;
+    final hasUsername =
+        invitation.contractVersion == 3 &&
+        invitation.recipientUsername.trim().isNotEmpty;
     final key = (
       invitation.scopeId,
-      hasEmail ? email : invitation.id,
-      hasEmail,
+      hasEmail
+          ? email
+          : hasUsername
+          ? 'username:${invitation.recipientUsername.trim().toLowerCase()}'
+          : invitation.id,
+      hasEmail || hasUsername,
     );
     groups.putIfAbsent(key, () => []).add(invitation);
   }
@@ -89,6 +97,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   );
   late Future<(List<SharedMember>, List<SharedInvitation>)> _future = _load();
   bool _busy = false;
+  final _resendRequests = <String, ({String requestId, String language})>{};
 
   bool _scopeIsCurrent(CollaborationState state) =>
       !state.sessionInvalid &&
@@ -153,174 +162,49 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   Future<void> _invite() async {
-    final l = context.l10n;
-    final state = ref.read(collaborationProvider).valueOrNull;
-    final unsupportedScope =
-        widget.scope.accessPolicyVersion == 3 &&
-        state?.scopedInvitationsSupported != true;
-    if (state?.emailInvitationsSupported != true || unsupportedScope) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => SharingSessionBoundary(
-          guard: _guard,
-          visibleWhen: _scopeIsCurrent,
-          child: AlertDialog(
-            title: Text(l.emailInviteTitle),
-            content: Text(
-              unsupportedScope
-                  ? l.sharingScopedUnsupported
-                  : l.emailInviteUnsupported,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(l.close),
-              ),
-            ],
-          ),
-        ),
-      );
-      return;
+    if (await showScopeInvitation(
+          context,
+          ref,
+          scope: widget.scope,
+          session: widget.session,
+        ) &&
+        mounted &&
+        _isCurrent) {
+      _refresh();
     }
-    final scoped = state!.scopedInvitationsSupported;
-    final targets = <SharedScope>[
-      widget.scope,
-      if (scoped && widget.scope.kind != SharedScopeKind.project)
-        ...state.scopes.where(
-          (scope) =>
-              scope.parentSpaceId == widget.scope.id &&
-              scope.kind == SharedScopeKind.project &&
-              scope.canManage &&
-              !scope.blocked &&
-              !scope.archived,
-        ),
-    ];
-    final initialTarget = widget.scope.id;
-    String? recipient, requestId, submittedKey;
-    await showSharingForm(
+  }
+
+  Future<void> _resend(SharedInvitation invitation) async {
+    final l = context.l10n;
+    final confirmed = await confirmSharingAction(
       context,
-      title: l.emailInviteTitle,
-      description: l.emailInviteDescription,
-      fields: [
-        if (scoped)
-          SharingField(
-            id: 'scope',
-            label: l.sharingInviteScope,
-            initialValue: initialTarget,
-            readOnly: targets.length == 1,
-            options: {
-              for (final target in targets)
-                target.id:
-                    '${target.kind == SharedScopeKind.project ? l.sharingInviteProjectOnly : l.sharingInviteWholeSpace} · ${target.name}',
-            },
-          ),
-        SharingField(
-          id: 'recipient',
-          label: l.accountEmail,
-          keyboardType: TextInputType.emailAddress,
-          validator: (value, _) =>
-              RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value.trim())
-              ? null
-              : l.emailInviteInvalidEmail,
-        ),
-        SharingField(
-          id: 'role',
-          label: l.sharingRole,
-          initialValue: 'member',
-          options: {'member': l.sharingMember, 'viewer': l.sharingViewer},
-        ),
-      ],
-      detailsBuilder: (values) {
-        final target = targets.firstWhere(
-          (s) => s.id == (values['scope'] ?? initialTarget),
-        );
-        final fullAccess = scoped && target.accessPolicyVersion == 3;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              fullAccess
-                  ? target.kind == SharedScopeKind.project
-                        ? l.sharingInviteProjectDescription
-                        : l.sharingInviteSpaceDescription
-                  : target.kind == SharedScopeKind.project
-                  ? l.sharingLegacyProjectDescription
-                  : l.sharingLegacySpaceDescription,
-            ),
-            if (fullAccess) ...[
-              const SizedBox(height: 12),
-              Text(
-                values['role'] == 'viewer'
-                    ? l.sharingViewerDescription
-                    : l.sharingMemberFullDescription,
-              ),
-            ],
-            if (scoped && !fullAccess) ...[
-              const SizedBox(height: 12),
-              Text(l.sharingScopeUpgradeRequired),
-            ],
-            if (!scoped) ...[
-              const SizedBox(height: 12),
-              Text(l.sharingScopedUnsupported),
-            ],
-          ],
-        );
-      },
-      submitLabel: l.emailInviteSend,
-      errorMessage: (error) => sharingErrorMessage(context, error),
-      wrap: (form) => SharingSessionBoundary(
+      title: l.spaceFlowResend,
+      description: l.spaceFlowResendConfirm,
+      confirmLabel: l.spaceFlowResend,
+      wrap: (dialog) => SharingSessionBoundary(
         guard: _guard,
         visibleWhen: _scopeIsCurrent,
-        child: form,
+        child: dialog,
       ),
-      onSubmit: (values) async {
-        if (!_isCurrent) throw const CollaborationException('access_revoked');
-        final target = targets.firstWhere(
-          (s) => s.id == (values['scope'] ?? initialTarget),
-        );
-        final currentTarget = ref
-            .read(collaborationProvider)
-            .requireValue
-            .scopes
-            .where((s) => s.id == target.id)
-            .firstOrNull;
-        if (currentTarget == null ||
-            !currentTarget.canManage ||
-            currentTarget.blocked ||
-            currentTarget.archived ||
-            currentTarget.accessPolicyVersion != target.accessPolicyVersion ||
-            currentTarget.accessRevision != target.accessRevision) {
-          throw const CollaborationException('access_revoked');
-        }
-        if (scoped && target.accessPolicyVersion != 3) {
-          throw const CollaborationException('space_access_upgrade_required');
-        }
-        final email = values['recipient']!.trim().toLowerCase();
-        final key = '${target.id}:$email:${values['role']}:$scoped';
-        if (key != submittedKey) {
-          submittedKey = key;
-          requestId = newSharedId();
-        }
-        await _guard.controller.createEmailInvitation(
-          scopeId: target.id,
-          accessScope: scoped
-              ? target.kind == SharedScopeKind.project
-                    ? 'project'
-                    : 'space'
-              : null,
-          recipientEmail: email,
-          requestId: requestId,
-          role: SharedRole.values.byName(values['role']!),
-          language: Localizations.localeOf(context).languageCode,
-        );
-        recipient = values['recipient']!.trim();
-      },
     );
-    if (!mounted || !_isCurrent || recipient == null) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l.emailInviteQueued(recipient!))));
-    _refresh();
+    if (confirmed && mounted && _isCurrent) {
+      await _run(() async {
+        await _guard.controller.resendInvitation(
+          scopeId: widget.scope.id,
+          invitationId: invitation.id,
+          requestId: _resendRequests
+              .putIfAbsent(
+                invitation.id,
+                () => (
+                  requestId: newSharedId(),
+                  language: Localizations.localeOf(context).languageCode,
+                ),
+              )
+              .requestId,
+          language: _resendRequests[invitation.id]!.language,
+        );
+      });
+    }
   }
 
   Future<void> _leader(SharedMember member) async {
@@ -530,28 +414,49 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                           ? l.sharingRevoked
                           : !invitation.expiresAt.isAfter(now)
                           ? l.sharingExpired
-                          : '${resent ? '${l.sharingInvitationResent} · ' : ''}${l.sharingExpires} ${organizerDate(context, invitation.expiresAt)}'}',
+                          : '${resent ? '${l.sharingInvitationResent} · ' : ''}${l.sharingExpires} ${organizerDate(context, invitation.expiresAt.toLocal())} ${TimeOfDay.fromDateTime(invitation.expiresAt.toLocal()).format(context)}'}',
                     ),
                     trailing:
                         invitation.acceptedAt == null &&
-                            invitation.revokedAt == null &&
-                            invitation.expiresAt.isAfter(now)
-                        ? IconButton(
-                            key: ValueKey(
-                              'sharing-revoke-invitation-${invitation.id}',
-                            ),
-                            tooltip: l.sharingRevokeInvite,
-                            onPressed: _busy
-                                ? null
-                                : () {
-                                    _run(
-                                      () => _guard.controller.revokeInvitation(
-                                        widget.scope.id,
-                                        invitation.id,
-                                      ),
-                                    );
-                                  },
-                            icon: const Icon(Icons.cancel_outlined),
+                            invitation.revokedAt == null
+                        ? Wrap(
+                            children: [
+                              if (invitation.contractVersion == 3 &&
+                                  ref
+                                          .read(collaborationProvider)
+                                          .valueOrNull
+                                          ?.invitationResendSupported ==
+                                      true)
+                                IconButton(
+                                  key: ValueKey(
+                                    'sharing-resend-invitation-${invitation.id}',
+                                  ),
+                                  tooltip: l.spaceFlowResend,
+                                  onPressed: _busy || widget.scope.archived
+                                      ? null
+                                      : () => _resend(invitation),
+                                  icon: const Icon(
+                                    Icons.forward_to_inbox_outlined,
+                                  ),
+                                ),
+                              if (invitation.expiresAt.isAfter(now))
+                                IconButton(
+                                  key: ValueKey(
+                                    'sharing-revoke-invitation-${invitation.id}',
+                                  ),
+                                  tooltip: l.sharingRevokeInvite,
+                                  onPressed: _busy
+                                      ? null
+                                      : () => _run(
+                                          () => _guard.controller
+                                              .revokeInvitation(
+                                                widget.scope.id,
+                                                invitation.id,
+                                              ),
+                                        ),
+                                  icon: const Icon(Icons.cancel_outlined),
+                                ),
+                            ],
                           )
                         : null,
                   ),

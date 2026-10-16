@@ -79,15 +79,15 @@ SpaceSettingsPage settings(String id) => SpaceSettingsPage(
 
 void main() {
   for (final width in [320.0, 1280.0]) {
-    testWidgets('member selects whole space or project separately at $width', (
+    testWidgets('member invites directly into captured project at $width', (
       tester,
     ) async {
-      final controller = ScopedController();
+      final controller = ScopedController(selected: childId);
       final semantics = tester.ensureSemantics();
       await pumpPanel(
         tester,
         controller,
-        settings(parentId),
+        settings(childId),
         width: width,
         textScale: width == 320 ? 1.4 : 1,
       );
@@ -101,17 +101,12 @@ void main() {
       tester.view.viewInsets = FakeViewPadding(bottom: width == 320 ? 280 : 0);
       addTearDown(tester.view.resetViewInsets);
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel(RegExp('Obseg povabila')), findsWidgets);
+      expect(find.byKey(const ValueKey('sharing-scope')), findsNothing);
+      expect(find.text('Samo prenova'), findsWidgets);
       expect(
-        find.textContaining('obstoječih in prihodnjih projektov'),
+        find.textContaining('Brez članstva v nadrejenem prostoru'),
         findsOneWidget,
       );
-      await tester.ensureVisible(find.byKey(const ValueKey('sharing-scope')));
-      await tester.tap(find.byKey(const ValueKey('sharing-scope')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Samo projekt · Samo prenova').last);
-      await tester.pumpAndSettle();
-      expect(find.textContaining('ne dodeli članstva'), findsOneWidget);
       expect(find.textContaining('ustvarja, ureja in briše'), findsOneWidget);
       await enterSharing(tester, 'recipient', 'recipient@example.test');
       await tapSharing(tester, 'sharing-submit');
@@ -206,11 +201,11 @@ void main() {
         ),
       );
       expect(find.text('Samo projekt'), findsOneWidget);
-      expect(find.textContaining('ne dodeli članstva'), findsOneWidget);
       expect(
-        find.textContaining('nastavitve, povabila in člane'),
+        find.textContaining('Brez članstva v nadrejenem prostoru'),
         findsOneWidget,
       );
+      expect(find.textContaining('vabi in odstranjuje člane'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

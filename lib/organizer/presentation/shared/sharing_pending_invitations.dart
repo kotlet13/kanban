@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
 import 'sharing_errors.dart';
+import 'content_moderation.dart';
 import 'sharing_invitation_details.dart';
 import 'sharing_session_boundary.dart';
 
@@ -71,6 +72,9 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
   String? _error;
   bool _busy = false;
   bool _reloadAfterBusy = false;
+  final _acceptedInvitations = <String>{};
+  String _invitationKey(SharedInvitationPreview invitation) =>
+      invitation.invitationId ?? invitation.scopeId;
 
   @override
   void didUpdateWidget(covariant _PendingInvitations oldWidget) {
@@ -80,7 +84,7 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
         oldWidget.supported != widget.supported) {
       if (_busy) {
         _reloadAfterBusy = true;
-      } else {
+      } else if (_acceptedInvitations.isEmpty) {
         _future = _load();
       }
     }
@@ -194,22 +198,44 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       _error = null;
     });
     try {
-      if (token != null) {
-        await _guard.controller.acceptInvitation(token);
-      } else {
-        await _guard.controller.acceptPendingInvitation(
-          invitation.invitationId!,
-          contractVersion: invitation.contractVersion,
-        );
+      if (!_acceptedInvitations.contains(_invitationKey(invitation))) {
+        try {
+          if (token != null) {
+            await _guard.controller.acceptInvitation(token);
+          } else {
+            await _guard.controller.acceptPendingInvitation(
+              invitation.invitationId!,
+              contractVersion: invitation.contractVersion,
+            );
+          }
+        } on CollaborationException catch (error) {
+          if (error.code == 'invitation_accepted_refresh_failed' &&
+              mounted &&
+              _guard.isCurrent) {
+            _acceptedInvitations.add(_invitationKey(invitation));
+          }
+          rethrow;
+        }
+        if (!mounted || !_guard.isCurrent) return;
+        _acceptedInvitations.add(_invitationKey(invitation));
       }
       if (!mounted || !_guard.isCurrent) return;
       await _guard.controller.selectSpace(invitation.scopeId);
       if (!mounted || !_guard.isCurrent) return;
+      if (invitation.role != SharedRole.viewer) {
+        await showSharedContentPolicy(
+          context,
+          scopeId: invitation.scopeId,
+          allowReadOnly: true,
+        );
+        if (!mounted || !_guard.isCurrent) return;
+      }
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(content: Text(context.l10n.emailInviteAccepted)),
       );
+      _acceptedInvitations.remove(_invitationKey(invitation));
       widget.onAccepted(invitation.scopeId);
       if (mounted) {
         setState(() {
@@ -219,7 +245,14 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       }
     } catch (error) {
       if (mounted && _guard.isCurrent) {
-        setState(() => _error = sharingErrorMessage(context, error));
+        setState(() {
+          if (_acceptedInvitations.contains(_invitationKey(invitation))) {
+            _reloadAfterBusy = false;
+            _error = context.l10n.invitationFlowJoinedOpen;
+          } else {
+            _error = sharingErrorMessage(context, error);
+          }
+        });
       }
     } finally {
       _finishBusy();
@@ -266,7 +299,9 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        context.l10n.emailInvitePendingTitle,
+                        context.l10n.invitationFlowInvitationTo(
+                          invitation.scopeName,
+                        ),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 12),
@@ -280,7 +315,15 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
                             ? null
                             : () => _accept(invitation, token),
                         icon: const Icon(Icons.check),
-                        label: Text(context.l10n.sharingAcceptInvite),
+                        label: Text(
+                          _acceptedInvitations.contains(
+                                _invitationKey(invitation),
+                              )
+                              ? context.l10n.invitationFlowOpenSpace
+                              : invitation.kind == SharedScopeKind.project
+                              ? context.l10n.invitationFlowJoinProject
+                              : context.l10n.invitationFlowJoinSpace,
+                        ),
                       ),
                     ],
                   ),

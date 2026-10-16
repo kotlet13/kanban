@@ -459,7 +459,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Local development connection (HTTP on this computer)';
 
   @override
-  String get sharingAccount => 'Account and sharing';
+  String get sharingAccount => 'Account';
 
   @override
   String get sharingIntro =>
@@ -3520,19 +3520,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingInviteSpaceDescription =>
-      'The invited person gains access to all shared content and finances in this space, including all its existing and future projects.';
+      'Whole space: shared content and finances, plus all current and future projects.';
 
   @override
   String get sharingInviteProjectDescription =>
-      'The invited person gains access only to the selected project, its tasks, events, notifications and finances. It appears as a Shared project; the invitation does not grant household or organization membership.';
+      'Only this project: tasks, events, notifications and finances. No membership in the parent space.';
 
   @override
   String get sharingMemberFullDescription =>
-      'A member can create, edit and delete content and finances within the selected scope, and manage settings, invitations and members. Ownership remains separately protected.';
+      'Full access: create, edit and delete content and finances, manage settings and invitations, and invite or remove members. Ownership stays protected.';
 
   @override
   String get sharingViewerDescription =>
-      'The person can read content and finances within the selected scope. Editing and administration are excluded.';
+      'View content and finances. No editing, deleting or management.';
 
   @override
   String get sharingLegacySpaceDescription =>
@@ -3732,21 +3732,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'The reported content or your access has changed. Close this form and open a new report to review the current data.';
 
   @override
-  String get moderationPolicyTitle => 'Rules for shared content';
+  String get moderationPolicyTitle => 'Rules for working together';
 
   @override
   String get moderationPolicyDescription =>
-      'Before publishing or sending changes to a shared space, review and accept this server’s rules. Personal and local use does not require acceptance.';
+      'Before adding or changing shared content, accept this server’s rules. Your personal space stays private.';
 
   @override
   String get moderationPolicyCheckbox =>
-      'I have read and accept these shared-content rules.';
+      'I accept the collaboration rules for this server.';
 
   @override
   String get moderationPolicyAccept => 'Accept rules';
 
   @override
-  String get moderationPolicyAccepted => 'You have accepted these rules.';
+  String get moderationPolicyAccepted =>
+      'You have already accepted these rules.';
 
   @override
   String get moderationPolicySaveAgain =>
@@ -4395,4 +4396,177 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingRecoveryInvalid => 'Unable to open the unsent work file.';
+
+  @override
+  String get moderationRulesPermission =>
+      'Only share content you have permission to share.';
+
+  @override
+  String get moderationRulesRespect =>
+      'Do not post harassment, threats, hateful, sexually explicit, violent or illegal content, spam, or other people’s personal information without authorization.';
+
+  @override
+  String get moderationRulesReport =>
+      'You can report inappropriate content to this server’s administrator.';
+
+  @override
+  String get moderationRulesFull => 'Full rules';
+
+  @override
+  String get moderationRulesViewOnly => 'Just look around for now';
+
+  @override
+  String get moderationRulesAcceptContinue => 'Accept rules and continue';
+
+  @override
+  String get spaceFlowCloud => 'Sync with cloud';
+
+  @override
+  String get spaceFlowCloudDescription =>
+      'This space will be available on your other devices using the same account. Invite others to give them access.';
+
+  @override
+  String get spaceFlowSignInCreate => 'Sign in to sync';
+
+  @override
+  String get spaceFlowCreateUnknown =>
+      'Creation has not been confirmed. Try again. Details stay the same to prevent duplicates.';
+
+  @override
+  String get spaceFlowRecipient => 'Email or existing username';
+
+  @override
+  String get spaceFlowRecipientInvalid =>
+      'Enter a valid email or existing username.';
+
+  @override
+  String get spaceFlowInAppSent =>
+      'The invitation is waiting in the recipient’s account.';
+
+  @override
+  String get spaceFlowFullAccess => 'Full access';
+
+  @override
+  String get spaceFlowViewOnly => 'View only';
+
+  @override
+  String get spaceFlowMoreOptions => 'Access options';
+
+  @override
+  String get spaceFlowResend => 'Send again';
+
+  @override
+  String get spaceFlowResendConfirm =>
+      'The previous link will stop working. A new invitation with a new expiry will be created.';
+
+  @override
+  String get spaceFlowRecipientUnavailable =>
+      'This recipient cannot be invited. Check the username.';
+
+  @override
+  String get spaceFlowUsernameUnsupported =>
+      'This server does not yet support invitations by existing username. Use an email.';
+
+  @override
+  String get spaceFlowSend => 'Send';
+
+  @override
+  String get invitationFlowTitle => 'Invitation';
+
+  @override
+  String get invitationFlowOpen => 'Open invitation';
+
+  @override
+  String get invitationFlowLinkOrCode => 'Invitation link or code';
+
+  @override
+  String get invitationFlowPasteHelp =>
+      'Paste the link from your invitation. If you have just installed the app, you can also return to your email and open the invitation again.';
+
+  @override
+  String get invitationFlowCodeServer => 'Server when entering only a code';
+
+  @override
+  String get invitationFlowJoinProject => 'Join project';
+
+  @override
+  String get invitationFlowJoinSpace => 'Join space';
+
+  @override
+  String get invitationFlowOtherAccount => 'Use another account';
+
+  @override
+  String get invitationFlowDifferentServer =>
+      'You are signed in to another server. Continue by signing in to the server for this invitation.';
+
+  @override
+  String get invitationFlowSignInToJoin =>
+      'Sign in or create an account. Then decide whether to join.';
+
+  @override
+  String get invitationFlowBackToPreview => 'Back to invitation';
+
+  @override
+  String get invitationFlowFirstLaunch =>
+      'Have an email link or a code? Continue here to the space you were invited to.';
+
+  @override
+  String invitationFlowInvitationTo(String name) {
+    return 'Invitation to $name';
+  }
+
+  @override
+  String get invitationFlowViewOnly => 'View only';
+
+  @override
+  String get invitationFlowFullAccess => 'Full access';
+
+  @override
+  String get invitationFlowPersonalStaysPrivate =>
+      'You join only this invited space. Your local personal data is not shared by joining.';
+
+  @override
+  String get spaceFlowShare => 'Share space';
+
+  @override
+  String get spaceFlowPendingCreation => 'Cloud creation is still pending';
+
+  @override
+  String get spaceFlowPendingCreationDescription =>
+      'The previous creation has not been confirmed. Resume it or create another local space. Your pending cloud creation stays saved.';
+
+  @override
+  String get spaceFlowCreateOtherLocal => 'Create another local space';
+
+  @override
+  String get spaceFlowResumeCreate => 'Resume creation';
+
+  @override
+  String get spaceFlowLocalOnlyPending =>
+      'This new space will be local. You can resume creating the previous cloud space later.';
+
+  @override
+  String get invitationFlowStepsWriter => 'Account · Join · Rules';
+
+  @override
+  String get invitationFlowStepsViewer => 'Account · Join';
+
+  @override
+  String get invitationFlowJoinedOpen =>
+      'You have joined. If the space has not opened yet, try opening it again.';
+
+  @override
+  String get invitationFlowOpenSpace => 'Open space';
+
+  @override
+  String get invitationFlowUsernameRule =>
+      '3–64 characters: letters A–Z, numbers, dot, hyphen or underscore.';
+
+  @override
+  String get invitationFlowNameRule =>
+      'The name is too long. Use a shorter name.';
+
+  @override
+  String get spaceFlowCreateOtherAccount =>
+      'Use the original account to continue. You can also create another local space.';
 }

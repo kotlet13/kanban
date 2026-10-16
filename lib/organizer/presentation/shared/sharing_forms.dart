@@ -25,6 +25,7 @@ class SharingField {
     this.validator,
     this.dateTime = false,
     this.maxLines = 1,
+    this.advanced = false,
   });
   final String id;
   final String label;
@@ -38,6 +39,7 @@ class SharingField {
   final String? Function(String, Map<String, String>)? validator;
   final bool dateTime;
   final int maxLines;
+  final bool advanced;
 }
 
 Future<void> showSharingForm(
@@ -227,6 +229,14 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
     }
   }
 
+  Widget _fieldContainer(SharingField field, Widget child) => field.advanced
+      ? ExpansionTile(
+          title: Text(context.l10n.spaceFlowMoreOptions),
+          tilePadding: EdgeInsets.zero,
+          children: [child],
+        )
+      : child;
+
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
@@ -267,123 +277,128 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                   const SizedBox(height: 16),
                 ],
                 for (final field in widget.fields)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: compact ? 12 : 16),
-                    child: field.dateTime
-                        ? FormField<String>(
-                            key: ValueKey('sharing-${field.id}'),
-                            initialValue: field.initialValue,
-                            validator: (value) =>
-                                field.required &&
-                                    (value == null || value.isEmpty)
-                                ? context.l10n.sharingRequired
-                                : field.validator?.call(value ?? '', _values),
-                            builder: (state) => Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                OrganizerDateTimeField(
-                                  label: field.label,
-                                  value: DateTime.tryParse(
-                                    _controllers[field.id]!.text,
+                  _fieldContainer(
+                    field,
+                    Padding(
+                      padding: EdgeInsets.only(bottom: compact ? 12 : 16),
+                      child: field.dateTime
+                          ? FormField<String>(
+                              key: ValueKey('sharing-${field.id}'),
+                              initialValue: field.initialValue,
+                              validator: (value) =>
+                                  field.required &&
+                                      (value == null || value.isEmpty)
+                                  ? context.l10n.sharingRequired
+                                  : field.validator?.call(value ?? '', _values),
+                              builder: (state) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  OrganizerDateTimeField(
+                                    label: field.label,
+                                    value: DateTime.tryParse(
+                                      _controllers[field.id]!.text,
+                                    ),
+                                    enabled: !_busy && !field.readOnly,
+                                    wrap: widget.wrap,
+                                    onChanged: (date) {
+                                      final value =
+                                          date?.toUtc().toIso8601String() ?? '';
+                                      _controllers[field.id]!.text = value;
+                                      state.didChange(value);
+                                      setState(() {});
+                                    },
                                   ),
-                                  enabled: !_busy && !field.readOnly,
-                                  wrap: widget.wrap,
-                                  onChanged: (date) {
-                                    final value =
-                                        date?.toUtc().toIso8601String() ?? '';
-                                    _controllers[field.id]!.text = value;
-                                    state.didChange(value);
-                                    setState(() {});
-                                  },
-                                ),
-                                if (state.hasError)
-                                  Text(
-                                    state.errorText!,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
+                                  if (state.hasError)
+                                    Text(
+                                      state.errorText!,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            )
+                          : field.options != null
+                          ? DropdownButtonFormField<String>(
+                              key: ValueKey('sharing-${field.id}'),
+                              initialValue:
+                                  field.options!.containsKey(field.initialValue)
+                                  ? field.initialValue
+                                  : null,
+                              validator: (value) =>
+                                  field.required && value == null
+                                  ? context.l10n.sharingRequired
+                                  : field.validator?.call(value ?? '', _values),
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: field.label,
+                              ),
+                              items: [
+                                for (final option in field.options!.entries)
+                                  DropdownMenuItem(
+                                    value: option.key,
+                                    child: Text(
+                                      option.value,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                               ],
-                            ),
-                          )
-                        : field.options != null
-                        ? DropdownButtonFormField<String>(
-                            key: ValueKey('sharing-${field.id}'),
-                            initialValue:
-                                field.options!.containsKey(field.initialValue)
-                                ? field.initialValue
-                                : null,
-                            validator: (value) =>
-                                field.required && value == null
-                                ? context.l10n.sharingRequired
-                                : field.validator?.call(value ?? '', _values),
-                            isExpanded: true,
-                            decoration: InputDecoration(labelText: field.label),
-                            items: [
-                              for (final option in field.options!.entries)
-                                DropdownMenuItem(
-                                  value: option.key,
-                                  child: Text(
-                                    option.value,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                            ],
-                            onChanged: _busy || field.readOnly
-                                ? null
-                                : (value) => setState(() {
-                                    _controllers[field.id]!.text = value!;
-                                  }),
-                          )
-                        : PasswordVisibility(
-                            key: ValueKey('sharing-visibility-${field.id}'),
-                            secret: field.obscure,
-                            enabled: !_busy,
-                            builder: (obscure, toggle) => TextFormField(
-                              key: ValueKey('sharing-${field.id}'),
-                              controller: _controllers[field.id],
-                              obscureText: obscure,
-                              minLines: field.obscure || field.maxLines == 1
-                                  ? 1
-                                  : compact
-                                  ? 2
-                                  : field.maxLines,
-                              maxLines: field.obscure ? 1 : field.maxLines,
-                              style: compact
-                                  ? Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontSize: 15)
-                                  : null,
-                              textInputAction: field.maxLines > 1
-                                  ? TextInputAction.newline
-                                  : field == widget.fields.last
-                                  ? TextInputAction.done
-                                  : TextInputAction.next,
-                              enableSuggestions:
-                                  !field.obscure && !field.sensitive,
-                              enableIMEPersonalizedLearning:
-                                  !field.obscure && !field.sensitive,
-                              autocorrect: false,
-                              readOnly: field.readOnly,
+                              onChanged: _busy || field.readOnly
+                                  ? null
+                                  : (value) => setState(() {
+                                      _controllers[field.id]!.text = value!;
+                                    }),
+                            )
+                          : PasswordVisibility(
+                              key: ValueKey('sharing-visibility-${field.id}'),
+                              secret: field.obscure,
                               enabled: !_busy,
-                              keyboardType: field.keyboardType,
-                              decoration: InputDecoration(
-                                labelText: field.label,
-                                suffixIcon: toggle,
+                              builder: (obscure, toggle) => TextFormField(
+                                key: ValueKey('sharing-${field.id}'),
+                                controller: _controllers[field.id],
+                                obscureText: obscure,
+                                minLines: field.obscure || field.maxLines == 1
+                                    ? 1
+                                    : compact
+                                    ? 2
+                                    : field.maxLines,
+                                maxLines: field.obscure ? 1 : field.maxLines,
+                                style: compact
+                                    ? Theme.of(context).textTheme.bodyLarge
+                                          ?.copyWith(fontSize: 15)
+                                    : null,
+                                textInputAction: field.maxLines > 1
+                                    ? TextInputAction.newline
+                                    : field == widget.fields.last
+                                    ? TextInputAction.done
+                                    : TextInputAction.next,
+                                enableSuggestions:
+                                    !field.obscure && !field.sensitive,
+                                enableIMEPersonalizedLearning:
+                                    !field.obscure && !field.sensitive,
+                                autocorrect: false,
+                                readOnly: field.readOnly,
+                                enabled: !_busy,
+                                keyboardType: field.keyboardType,
+                                decoration: InputDecoration(
+                                  labelText: field.label,
+                                  suffixIcon: toggle,
+                                ),
+                                validator: (value) {
+                                  if (field.required &&
+                                      (value == null || value.trim().isEmpty)) {
+                                    return context.l10n.sharingRequired;
+                                  }
+                                  return field.validator?.call(
+                                    value ?? '',
+                                    _values,
+                                  );
+                                },
                               ),
-                              validator: (value) {
-                                if (field.required &&
-                                    (value == null || value.trim().isEmpty)) {
-                                  return context.l10n.sharingRequired;
-                                }
-                                return field.validator?.call(
-                                  value ?? '',
-                                  _values,
-                                );
-                              },
                             ),
-                          ),
+                    ),
                   ),
                 if (widget.detailsBuilder != null) ...[
                   widget.detailsBuilder!(_values),

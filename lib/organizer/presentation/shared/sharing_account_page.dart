@@ -318,7 +318,9 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     'pending-${session.partition}-${session.deviceId}',
                   ),
                   session: session,
-                  supported: state.emailInvitationsSupported,
+                  supported:
+                      state.emailInvitationsSupported ||
+                      state.usernameInvitationsSupported,
                   onAccepted: (id) =>
                       (widget.onInvitationAccepted ?? widget.onScopeSelected)(
                         id,

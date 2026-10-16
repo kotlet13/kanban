@@ -229,6 +229,39 @@ void main() {
     },
   );
 
+  for (final sameAccount in [true, false]) {
+    test(
+      'confirmed deletion clears only matching pending space creation sameAccount=$sameAccount',
+      () async {
+        final p = repo.state.session!.partition;
+        final draft = {
+          'partition': sameAccount ? p : '${p}other',
+          'requestId': 'uncertain-create',
+          'name': 'Private draft',
+          'address': 'Address',
+        };
+        await repo.database.execute(
+          'INSERT INTO local_meta(name,value) VALUES(?,?)',
+          ['space_flow_creation', jsonEncode(draft)],
+        );
+        final preview = await repo.previewAccountDeletion();
+        await repo.confirmAccountDeletion(
+          previewHash: preview['previewHash'] as String,
+          password: 'login',
+          review: preview,
+        );
+        final rows = await repo.database.rows(
+          'SELECT value FROM local_meta WHERE name=?',
+          ['space_flow_creation'],
+        );
+        if (sameAccount) {
+          expect(rows, isEmpty);
+        } else {
+          expect(jsonDecode(rows.single['value'] as String), draft);
+        }
+      },
+    );
+  }
   test('unsupported and offline previews do not submit deletion', () async {
     server.supported = false;
     await expectLater(

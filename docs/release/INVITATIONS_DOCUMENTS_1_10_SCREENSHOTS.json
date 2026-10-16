@@ -1,0 +1,353 @@
+{
+  "version": "1.10.0+30",
+  "runtimeInputSha256": "3167fd2abe1f297330c35cb5c9401edd26021cfe58b04ca2f497d862f3e4cdde",
+  "runtimeInputCount": 442,
+  "captureKind": "current real Flutter widgets with isolated synthetic memory fixtures",
+  "physicalDeviceCapture": false,
+  "pixelsEdited": false,
+  "androidOnly": true,
+  "galleryOrder": [
+    "01-pulse",
+    "02-planner",
+    "04-ideas",
+    "09-spreadsheet",
+    "05-projects",
+    "06-shopping",
+    "07-garden",
+    "08-finances"
+  ],
+  "gallery": [
+    {
+      "locale": "sl",
+      "position": 1,
+      "scene": "01-pulse",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-01-pulse.png",
+      "sha256": "a1fdb743fb5e2815d6e22c50d878f633d94517b683b7da85e9fe26b5da7e22a8"
+    },
+    {
+      "locale": "sl",
+      "position": 2,
+      "scene": "02-planner",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-02-planner.png",
+      "sha256": "be49cfe0ca86b5b8478eb965b9caf8744b2de378851f5adbea4c34fb68b8402b"
+    },
+    {
+      "locale": "sl",
+      "position": 3,
+      "scene": "04-ideas",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-03-ideas.png",
+      "sha256": "b3ba92b7ec722b35f1bd4dbe163d24c9193ec9b8861dc7224183868cbaa2a48d"
+    },
+    {
+      "locale": "sl",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-04-spreadsheet.png",
+      "sha256": "0cc6411b3dc24233e17d65eda163d5b373e56a735d397b87ce0c806642cde40c"
+    },
+    {
+      "locale": "sl",
+      "position": 5,
+      "scene": "05-projects",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-05-projects.png",
+      "sha256": "b9bae38402ed56aaa366907d6c48f241096dff83c35401708db385ef8a151a7a"
+    },
+    {
+      "locale": "sl",
+      "position": 6,
+      "scene": "06-shopping",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-06-shopping.png",
+      "sha256": "d3991d4d29d5d20d93d223ccf83e7fc39901aa4a9e8f20e8dbcf5eed547b02f9"
+    },
+    {
+      "locale": "sl",
+      "position": 7,
+      "scene": "07-garden",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-07-garden.png",
+      "sha256": "366d379368a7f03ae19cdd1e460ee1399d5cbcd3c758c63126ea232139a5becd"
+    },
+    {
+      "locale": "sl",
+      "position": 8,
+      "scene": "08-finances",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/sl/jivie-1.10-android-sl-08-finances.png",
+      "sha256": "a31f675c69df3b3c8c6f36b41b95ebc918ddec678d23a113abb2e33f726312a5"
+    },
+    {
+      "locale": "en",
+      "position": 1,
+      "scene": "01-pulse",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-01-pulse.png",
+      "sha256": "35956f2ac18ab2df51265f79419476298c5d3a85b48175345ee841250fac41cb"
+    },
+    {
+      "locale": "en",
+      "position": 2,
+      "scene": "02-planner",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-02-planner.png",
+      "sha256": "4d239be9eb50040d8748a0dd583b039ba11a11d65b322ed9706662c2a3865e97"
+    },
+    {
+      "locale": "en",
+      "position": 3,
+      "scene": "04-ideas",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-03-ideas.png",
+      "sha256": "50c62d72c48d28d2d345e8b166acae45107297e06d1e3c09561bac91a38b4ff8"
+    },
+    {
+      "locale": "en",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-04-spreadsheet.png",
+      "sha256": "b2e3a26cf3615f32542cc3e195d93afa94ab459deff6676c5e81adcd23c5f114"
+    },
+    {
+      "locale": "en",
+      "position": 5,
+      "scene": "05-projects",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-05-projects.png",
+      "sha256": "ecc53a982e10dc2e7764e2edde450d8af97c296b1d1fb647e6e767bdb8cf6170"
+    },
+    {
+      "locale": "en",
+      "position": 6,
+      "scene": "06-shopping",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-06-shopping.png",
+      "sha256": "ae15ed496b3195971f238a33170f6ec4f96c20d453eaf38e4e2bd63e2dc5e439"
+    },
+    {
+      "locale": "en",
+      "position": 7,
+      "scene": "07-garden",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-07-garden.png",
+      "sha256": "3758951e2303777043249e32522bdc953e86b88d3e2fdffd9b32608503bebc6b"
+    },
+    {
+      "locale": "en",
+      "position": 8,
+      "scene": "08-finances",
+      "path": "build/qa/invitations-documents-store-20261016/play-gallery/en/jivie-1.10-android-en-08-finances.png",
+      "sha256": "c890ce665f80e2575f763cbf703f3f85f654e66f2527b129d36e708e90326965"
+    }
+  ],
+  "files": [
+    {
+      "locale": "sl",
+      "scene": "01-pulse",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/01-pulse.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 81198,
+      "sha256": "a1fdb743fb5e2815d6e22c50d878f633d94517b683b7da85e9fe26b5da7e22a8",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "02-planner",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/02-planner.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 115452,
+      "sha256": "be49cfe0ca86b5b8478eb965b9caf8744b2de378851f5adbea4c34fb68b8402b",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "03-calendar",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/03-calendar.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 73990,
+      "sha256": "c34e84b9219ba7ea8123a0eddfee2105cd791360ef932ab0bf3ca5d5f91729dc",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "04-ideas",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/04-ideas.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 204422,
+      "sha256": "b3ba92b7ec722b35f1bd4dbe163d24c9193ec9b8861dc7224183868cbaa2a48d",
+      "samePixelsFileAsPrevious": true
+    },
+    {
+      "locale": "sl",
+      "scene": "05-projects",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/05-projects.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 99038,
+      "sha256": "b9bae38402ed56aaa366907d6c48f241096dff83c35401708db385ef8a151a7a",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "06-shopping",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/06-shopping.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 62681,
+      "sha256": "d3991d4d29d5d20d93d223ccf83e7fc39901aa4a9e8f20e8dbcf5eed547b02f9",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "07-garden",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/07-garden.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 163721,
+      "sha256": "366d379368a7f03ae19cdd1e460ee1399d5cbcd3c758c63126ea232139a5becd",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "08-finances",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/08-finances.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 93741,
+      "sha256": "a31f675c69df3b3c8c6f36b41b95ebc918ddec678d23a113abb2e33f726312a5",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "09-spreadsheet",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/09-spreadsheet.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 69521,
+      "sha256": "0cc6411b3dc24233e17d65eda163d5b373e56a735d397b87ce0c806642cde40c",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "sl",
+      "scene": "10-invitation",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/sl/10-invitation.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 130869,
+      "sha256": "44ac727d002f9b88880bdb800a7327bc0055db8c743664d422b5cbf43aac930f",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "01-pulse",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/01-pulse.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 81237,
+      "sha256": "35956f2ac18ab2df51265f79419476298c5d3a85b48175345ee841250fac41cb",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "02-planner",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/02-planner.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 113987,
+      "sha256": "4d239be9eb50040d8748a0dd583b039ba11a11d65b322ed9706662c2a3865e97",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "03-calendar",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/03-calendar.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 74251,
+      "sha256": "4840e6b47176e759fdb965d7143ab7c231e3b9e21ddb41b37e1a5437775fef3c",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "04-ideas",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/04-ideas.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 201953,
+      "sha256": "50c62d72c48d28d2d345e8b166acae45107297e06d1e3c09561bac91a38b4ff8",
+      "samePixelsFileAsPrevious": true
+    },
+    {
+      "locale": "en",
+      "scene": "05-projects",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/05-projects.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 105430,
+      "sha256": "ecc53a982e10dc2e7764e2edde450d8af97c296b1d1fb647e6e767bdb8cf6170",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "06-shopping",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/06-shopping.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 65839,
+      "sha256": "ae15ed496b3195971f238a33170f6ec4f96c20d453eaf38e4e2bd63e2dc5e439",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "07-garden",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/07-garden.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 166356,
+      "sha256": "3758951e2303777043249e32522bdc953e86b88d3e2fdffd9b32608503bebc6b",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "08-finances",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/08-finances.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 91382,
+      "sha256": "c890ce665f80e2575f763cbf703f3f85f654e66f2527b129d36e708e90326965",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "09-spreadsheet",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/09-spreadsheet.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 62506,
+      "sha256": "b2e3a26cf3615f32542cc3e195d93afa94ab459deff6676c5e81adcd23c5f114",
+      "samePixelsFileAsPrevious": false
+    },
+    {
+      "locale": "en",
+      "scene": "10-invitation",
+      "path": "build/qa/invitations-documents-store-20261016/android-phone/en/10-invitation.png",
+      "width": 720,
+      "height": 1280,
+      "bytes": 128188,
+      "sha256": "3caff982882900fa5774126dc46c7ca642a7f269dff7cb9848ff4416ce590b08",
+      "samePixelsFileAsPrevious": false
+    }
+  ],
+  "harnesses": [
+    {
+      "path": "tools/release/invitations_documents_capture_test.dart",
+      "sha256": "f680f65917d1ff18a897737017cdf1fba223f95880506812cead97340caa9e77"
+    },
+    {
+      "path": "tools/release/upgrade_core_capture_test.dart",
+      "sha256": "61c2e989006d6b4b806916959a67f02e930658031b560248b5ab68a748db7f06"
+    },
+    {
+      "path": "tools/release/upgrade_garden_ideas_capture_test.dart",
+      "sha256": "6a6bbfdb0be17d5cf6022b39d3142c193675284aac8b318e1cbf23a434197cd1"
+    },
+    {
+      "path": "tools/release/upgrade_project_shopping_capture_test.dart",
+      "sha256": "58e9b366eeb5b6bb9f243d7bff10d5165fff99140b1ec43ab866dbb85c65ee58"
+    }
+  ]
+}

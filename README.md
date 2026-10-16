@@ -1,5 +1,13 @@
 # Jivie
 
+**16. oktober — poenostavljena povabila in prostori izvedeni v izvoru:** namenski
+čarovnik za prvi vstop, ločena pravila sodelovanja, neposredno deljenje iz prostora
+in »Sinhroniziraj z oblakom« že pri ustvarjanju gospodinjstva ali organizacije.
+Spletno povabilo jasno vodi do namestitve in nazaj; FamilyHub doda varno vabljenje
+po uporabniškem imenu in atomsko ponovno pošiljanje. [Izvedba in preverjanje](docs/INVITATION_AND_SHARING_IMPLEMENTATION.md).
+Gostovanja in nameščene aplikacije še niso nadgrajeni; Google Play zahteva novo
+izrecno potrditev, Apple ostaja odložen.
+
 **16. oktober — preglednice in priloge izvedene v izvoru:** organizacijska
 mreža z osnovnimi formulami, strežniškim zaklepom in obnovljivimi osnutki;
 PDF/dokumentne priloge s preverjenim prenosom, deljenimi pravicami in izbrisom.

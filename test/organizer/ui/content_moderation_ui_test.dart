@@ -88,7 +88,51 @@ Future<void> selectReason(WidgetTester tester) async {
 }
 
 void main() {
-  for (final width in [360.0, 800.0, 1280.0]) {
+  for (final language in ['sl', 'en']) {
+    testWidgets(
+      'separate rules allow reading without accepting at 320 and 2x $language',
+      (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        var accepts = 0;
+        await pumpDialog(
+          tester,
+          SharedContentPolicyDialog(
+            policy: policy,
+            serverUrl: 'https://selected.example/',
+            allowReadOnly: true,
+            onAccept: () async {
+              accepts++;
+            },
+          ),
+          width: 320,
+          language: language,
+        );
+        expect(tester.takeException(), isNull);
+        final full = find.byKey(const ValueKey('shared-policy-full-rules'));
+        await tester.ensureVisible(full);
+        await tester.tap(full);
+        await tester.pumpAndSettle();
+        expect(
+          find.text(language == 'sl' ? policy.textSl : policy.textEn),
+          findsOneWidget,
+        );
+        expect(accepts, 0);
+        await tester.tap(
+          find.text(
+            language == 'sl'
+                ? 'Za zdaj samo poglej'
+                : 'Just look around for now',
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(SharedContentPolicyDialog), findsNothing);
+        expect(accepts, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final width in [320.0, 390.0, 800.0, 1280.0]) {
     for (final language in ['en', 'sl']) {
       testWidgets('policy is unchecked and fits $width $language', (
         tester,

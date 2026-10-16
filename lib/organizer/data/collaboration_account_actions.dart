@@ -29,6 +29,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _smtpSupported = false;
     _emailInvitationsSupported = false;
     _scopedInvitationsSupported = false;
+    _usernameInvitationsSupported = false;
+    _invitationResendSupported = false;
     _spaceProjectMembershipSupported = false;
     final rows = await database.rows(
       'SELECT value FROM local_meta WHERE name=?',
@@ -110,6 +112,10 @@ extension CollaborationAccountActions on CollaborationRepository {
     _scopedInvitationsSupported =
         features['scopedInvitations'] == true &&
         (caps['invitationContractVersions'] as List? ?? const []).contains(3);
+    _usernameInvitationsSupported =
+        _scopedInvitationsSupported && features['usernameInvitations'] == true;
+    _invitationResendSupported =
+        _scopedInvitationsSupported && features['invitationResend'] == true;
     _emailInvitationsSupported =
         features['emailInvitations'] == true &&
         (caps['invitationContractVersions'] as List? ?? const []).contains(2);
@@ -175,6 +181,36 @@ extension CollaborationAccountActions on CollaborationRepository {
     'deviceName': deviceName,
     if (otp != null) 'otp': otp,
   }, allowLocalHttp);
+
+  /// Re-check the pinned invitation origin before sending account credentials.
+  Future<void> loginForInvitation({
+    required String serverUrl,
+    required String invitationToken,
+    required String username,
+    required String password,
+    String? otp,
+    String deviceName = 'Jivie',
+  }) async {
+    await previewInvitation(serverUrl: serverUrl, token: invitationToken);
+    final pending = await invitationStore.read();
+    if (pending?.serverUrl != normalizeCollaborationServer(serverUrl) ||
+        pending?.token != invitationToken) {
+      throw const CollaborationException('invitation_identity_mismatch');
+    }
+    await _authenticate(
+      serverUrl,
+      'auth.login',
+      {
+        'username': username,
+        'password': password,
+        'deviceName': deviceName,
+        if (otp != null) 'otp': otp,
+      },
+      false,
+      expectedServerId: pending?.serverId,
+    );
+  }
+
   Future<void> registerWithInvitation({
     required String serverUrl,
     required String invitationToken,
@@ -246,6 +282,8 @@ extension CollaborationAccountActions on CollaborationRepository {
     _smtpSupported = false;
     _emailInvitationsSupported = false;
     _scopedInvitationsSupported = false;
+    _usernameInvitationsSupported = false;
+    _invitationResendSupported = false;
     _spaceProjectMembershipSupported = false;
     _lastError = null;
     await refreshLocal();
@@ -255,6 +293,19 @@ extension CollaborationAccountActions on CollaborationRepository {
       allowLocalHttp: localHttp,
     );
     _checkEpoch(epoch);
+    if (expectedServerId != null) {
+      final capabilities = await transport.call(
+        serverUrl: base,
+        operation: 'capabilities',
+        allowLocalHttp: localHttp,
+      );
+      _checkEpoch(epoch);
+      if (capabilities['api'] != 'familyhub_native' ||
+          capabilities['enabled'] != true ||
+          capabilities['serverId'] != expectedServerId) {
+        throw const CollaborationException('server_identity_changed');
+      }
+    }
     final reply = await transport.call(
       serverUrl: base,
       operation: operation,
@@ -558,6 +609,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   Future<String> createScope(
     String name, {
     SharedScopeKind kind = SharedScopeKind.household,
+    String address = '',
     String? organizationId,
     String? parentScopeId,
     String? id,
@@ -573,6 +625,7 @@ extension CollaborationAccountActions on CollaborationRepository {
       throw const CollaborationException('client_upgrade_required');
     }
     validateSharedText(name, 200);
+    validateSharedText(address, 1000, empty: true);
     final profile = _requireSession().profile, epoch = _epoch;
     final parentId = parentScopeId ?? organizationId;
     var usePolicy3 = _spaceProjectMembershipSupported;
@@ -594,6 +647,7 @@ extension CollaborationAccountActions on CollaborationRepository {
       'id': id ?? newSharedId(),
       'kind': kind.name,
       'name': name,
+      'address': address.trim(),
       if (organizationId != null) 'organizationId': organizationId,
       if (parentScopeId != null && _spaceProjectMembershipSupported)
         'parentScopeId': parentScopeId,
@@ -608,6 +662,9 @@ extension CollaborationAccountActions on CollaborationRepository {
       'requestId': requestId ?? newSharedId(),
     });
     final scope = SharedScope.fromJson(reply['scope'] as Map<String, dynamic>);
+    if (id != null && scope.id != id) {
+      throw const CollaborationException('invalid_response');
+    }
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _upsertScope(profile.partition, scope);

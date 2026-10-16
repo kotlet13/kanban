@@ -1,8 +1,14 @@
-# FamilyHub 0.14.1
+# FamilyHub 0.15.0 / schema19
 
-## Organization tables and private documents (local schema19)
+## Organization tables and private documents (schema19)
 
 Additive source APIs, exclusive device leases, authenticated uploads/downloads, moderation and durable private-file cleanup are documented in [DOCUMENTS_API.md](DOCUMENTS_API.md). Capability flags stay off until every schema19 table is ready. Backups must include all database tables and every file beneath private `DATA_DIR`, including `familyhub/attachments/`. This source change is separate from deployment and public releases.
+
+## Modern invitations and archive validation
+
+Invitation3 accepts a compatible recipientEmail or an explicitly capability-gated recipient (email/existing active Native username). Username targets use durable account binding, authenticated pending/explicit acceptance and no hidden email delivery or legacy automatic signup. Atomic resend replaces the previous ID/token/expiry and clears its unfinished encrypted mail in one transaction. The landing offers Android installation and return-to-original-email guidance in SL/EN; mail includes exact expiry/timezone and policy-specific rights. No new invitation schema is required. Household-person record3 archive state is accepted as boolean again; project archive fields still require record6, and other payloads do not gain an archive field. Account removal/deletion cannot act on another account's modern invitation through a recycled username.
+
+The current source release combines these changes with schema19 documents. A package/version string is not proof of a hosted upgrade. The standalone reviewed distribution README is generated from tools/plugin_release/PUBLIC_README.md; preserve a complete database/private-files/configuration/key/cron restore point for deployment.
 
 ## Current notification defaults
 

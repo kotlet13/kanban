@@ -1,5 +1,7 @@
 # FamilyHub shared-content policy and reporting — contract 1
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Local implementation for FamilyHub 0.12.0 / additive schema16. This document
 describes the new source contract; it does not confirm installation on a live
 server or approval by an app store. Native API envelope remains version1;

@@ -211,7 +211,9 @@ Future<void> _capture(
     expect(image.width, (size.width * ratio).round());
     expect(image.height, (size.height * ratio).round());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    final file = File('build/qa/upgrade-store-20261015/$path.png');
+    final file = File(
+      '${Platform.environment['JIVIE_STORE_CAPTURE_OUT'] ?? 'build/qa/upgrade-store-20261015'}/$path.png',
+    );
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes!.buffer.asUint8List());
     image.dispose();
@@ -245,6 +247,10 @@ void main() {
       bottom: 20.0,
     ),
   ]) {
+    if (Platform.environment['JIVIE_ANDROID_CAPTURE_ONLY'] == '1' &&
+        scene.platform != TargetPlatform.android) {
+      continue;
+    }
     for (final locale in ['sl', 'en']) {
       testWidgets('upgrade core captures ${scene.name} $locale', (
         tester,

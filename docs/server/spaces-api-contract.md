@@ -1,5 +1,7 @@
 # Prostori, vodstvo in vrt — FamilyHub 0.8.0 / schema12
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Izvorna pogodba 9. oktobra 2026; HTTP ovojnica Native API ostane v1. Lokalni izvor in testi niso dokaz gostovane namestitve. Ta sprememba ne zviša različice mobilne aplikacije in ne izvaja produkcijskega preklopa. Namestitvene dokaze še vedno vodi `CPANEL_SETUP.md`.
 
 ## Različice in odkrivanje

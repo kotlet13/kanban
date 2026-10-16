@@ -27,7 +27,7 @@ class NativeRecordPolicy extends NativeDatabase
         if ($version >= 3 && $type === 'task') { $specific = array_merge($specific, ['phaseId','estimateMinutes','availabilityMinutes','availabilityPeriod','timer','assigneePersonId','subjectPersonIds']); }
         if ($type === 'householdPerson' && $version < 3) { throw new NativeError('client_upgrade_required',409); }
         $this->fields($payload, array_merge($specific, ['createdAt', 'updatedAt']),$type==='project' && $version>=6?['archived']:[]);
-        if (array_key_exists('archived',$payload) && ($type!=='project' || !is_bool($payload['archived']))) { throw new NativeError('validation_error'); }
+        if (array_key_exists('archived',$payload) && (!in_array($type,['project','householdPerson'],true) || !is_bool($payload['archived']))) { throw new NativeError('validation_error'); }
         $this->domainText($payload[$type === 'householdPerson' ? 'name' : 'title'], 300, 500, $personal); $this->date($payload['createdAt']); $this->date($payload['updatedAt']);
         if ($current && new \DateTimeImmutable(json_decode($current['payload'], true, 32, JSON_THROW_ON_ERROR)['createdAt']) != new \DateTimeImmutable($payload['createdAt'])) { throw new NativeError('created_at_immutable'); }
         if ($type === 'householdPerson') {

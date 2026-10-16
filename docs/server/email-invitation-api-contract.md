@@ -1,5 +1,7 @@
 # Email invitation contract 2
 
+Current source distribution: **FamilyHub 0.15.0 / schema19**. Existing wire/contract identifiers below keep their original versions. Organization tables and private attachments are specified in the bundled `DOCUMENTS_API.md`; current distribution source is distinct from hosted deployment evidence.
+
 Source FamilyHub **0.10.0 / additive schema14**. Deployment and real delivery have separate evidence. Native envelope/HTTPS/bearer rules remain unchanged. `invitationContractVersions: [1,2]` and `features.emailInvitations` advertise the new email flow when the existing dedicated account-mail encryption key and SMTP configuration are available. No account-existence lookup is exposed.
 
 Transport: HTTPS `POST <base>/index.php?controller=NativeApiController&action=handle&plugin=FamilyHub`, `Content-Type: application/json`, body `{"v":1,"op":"operation","params":{}}`. Device authentication uses `Authorization: Bearer <device token>`, never cookies or a global API key. Success is `{"v":1,"data":{}}`; failure is `{"v":1,"error":{"code":"...","message":"...","details":{}}}` with the appropriate HTTP status. Secrets belong in request bodies/headers, never query parameters; redirects must not forward credentials to another origin. The full Native API specification remains in the application source repository.
@@ -35,7 +37,7 @@ The base URL is administrator `application_url`, optionally overridden by `FAMIL
 
 `https://host/base/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=sl#token=fhi2_...`
 
-The token fragment does not reach PHP or access logs. The public landing is static (no preview request, automatic login or acceptance), no-store, no-referrer, deny framing, and uses a nonce CSP with no third-party content. The user may open `jivie://invite?server=<encoded-base-url>&token=<token>&v=2`, copy that app link, or copy the code and enter it alongside the displayed server. No store ID/public release is invented. Browsers may retain the capability in local URL/history/clipboard, so possession must remain private. Server/error logs never include tokens or request bodies.
+The token fragment does not reach PHP or access logs. The public landing is static (no preview request, automatic login or acceptance), no-store, no-referrer, deny framing, and uses a nonce CSP with no third-party content. The user may open `jivie://invite?server=<encoded-base-url>&token=<token>&v=2`, copy that app link, or copy the code and enter it alongside the displayed server. The Android install link points directly to the existing public `si.triparna.jivie` Google Play listing, without the invitation token or install-referrer payload. The page tells the recipient to return to the original email after installation; it does not promise automatic transfer through the store. iPhone/iPad public availability is honestly marked as pending. A visible SL/EN language switch retains the exact invitation fragment; manual link/code/server controls are under an accessible fallback disclosure. Browsers may retain the capability in local URL/history/clipboard, so possession must remain private. Server/error logs never include tokens or request bodies.
 
 Durable quotas: IP120/minute across contract2 operations; sender30create attempts/day; normalized recipient5attempts/day; registration10/IP per10minutes (existing login quotas unchanged). Sender/recipient buckets survive denied transaction rollback. A repeated create request uses its original UUID/body and returns the stored response; it cannot send a second email, and changed bodies produce `idempotency_mismatch`409. Repeated requests still consume request quotas.
 
@@ -50,3 +52,10 @@ The migration is supported on SQLite, MySQL8.4 and MariaDB10.11. Back up databas
 ## Local verification
 
 `server/tests/email-invitation-integration.php` performs77checks on each isolated SQLite/MySQL/MariaDB environment, including real loopback SMTP only, concurrent accepts/registrations, confirm-versus-register uniqueness, SMTP-versus-revoke, duplicate historic identities, account deletion/recreation, replay recovery and both quota dimensions. Existing account48checks and deletion36checks also pass on all three. These are synthetic tests, not evidence of hosted delivery or phone behavior.
+
+
+## Source simplification supplement - 16 October 2026
+
+The source now uses shorter SL/EN plain invitation mail: inviter, concrete space/project, access, open-invitation URL and exact expiry date/time with explicit UTC timezone. Policy3 full access explicitly includes deleting content and managing members; view-only copy says viewing, and policy1/2 never receive a widened policy3 label. Mail remains plain text, with no remote content or tracking. The invitation-only supplement initially made no version bump or new migration. The combined current source distribution is0.15.0/schema19; packaging is not evidence of a hosting change or real invitation.
+
+For new optional `invitations3.create.recipient` (existing username or email), independent `usernameInvitations`/`invitationResend` feature gates and atomic `invitations3.resend`, see the [policy3 supplement](space-sharing-api-contract.md#source-supplement---16-october-2026). Existing `recipientEmail` and explicit verified-email acceptance remain compatible. The username channel is an authenticated pending invitation, never an automatic signup or hidden email lookup.

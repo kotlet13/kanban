@@ -457,7 +457,7 @@ class AppLocalizationsSl extends AppLocalizations {
       'Lokalna razvojna povezava (HTTP na tem računalniku)';
 
   @override
-  String get sharingAccount => 'Račun in deljenje';
+  String get sharingAccount => 'Račun';
 
   @override
   String get sharingIntro =>
@@ -3526,19 +3526,19 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingInviteSpaceDescription =>
-      'Povabljena oseba dobi dostop do vseh skupnih vsebin in financ tega prostora ter vseh njegovih obstoječih in prihodnjih projektov.';
+      'Cel prostor: skupne vsebine in finance ter vsi sedanji in prihodnji projekti.';
 
   @override
   String get sharingInviteProjectDescription =>
-      'Povabljena oseba dobi dostop samo do izbranega projekta, njegovih opravil, dogodkov, obvestil in financ. Projekt se prikaže kot Deljen projekt; povabilo ne dodeli članstva v gospodinjstvu ali organizaciji.';
+      'Samo ta projekt: opravila, dogodki, obvestila in finance. Brez članstva v nadrejenem prostoru.';
 
   @override
   String get sharingMemberFullDescription =>
-      'Član lahko v izbranem obsegu ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve, povabila in člane. Lastništvo ostane posebej zaščiteno.';
+      'Polni dostop: ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve in povabila ter vabi in odstranjuje člane. Lastništvo ostane zaščiteno.';
 
   @override
   String get sharingViewerDescription =>
-      'Oseba lahko bere vsebino in finance v izbranem obsegu. Urejanje in upravljanje sta izključena.';
+      'Samo ogled vsebine in financ. Brez urejanja, brisanja ali upravljanja.';
 
   @override
   String get sharingLegacySpaceDescription =>
@@ -3738,21 +3738,21 @@ class AppLocalizationsSl extends AppLocalizations {
       'Prijavljena vsebina ali vaš dostop se je spremenil. Zaprite obrazec in odprite novo prijavo za pregled trenutnih podatkov.';
 
   @override
-  String get moderationPolicyTitle => 'Pravila skupne vsebine';
+  String get moderationPolicyTitle => 'Pravila sodelovanja';
 
   @override
   String get moderationPolicyDescription =>
-      'Pred objavo ali pošiljanjem sprememb v skupni prostor preglejte in sprejmite pravila tega strežnika. Osebna in lokalna uporaba ne zahtevata sprejema.';
+      'Pred dodajanjem ali spreminjanjem skupne vsebine sprejmi pravila tega strežnika. Tvoj osebni prostor ostane zaseben.';
 
   @override
   String get moderationPolicyCheckbox =>
-      'Prebral/-a sem in sprejemam ta pravila skupne vsebine.';
+      'Sprejemam pravila sodelovanja za ta strežnik.';
 
   @override
   String get moderationPolicyAccept => 'Sprejmi pravila';
 
   @override
-  String get moderationPolicyAccepted => 'Ta pravila ste sprejeli.';
+  String get moderationPolicyAccepted => 'Ta pravila si že sprejel/a.';
 
   @override
   String get moderationPolicySaveAgain =>
@@ -4403,4 +4403,175 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingRecoveryInvalid =>
       'Datoteke neposlanega dela ni mogoče odpreti.';
+
+  @override
+  String get moderationRulesPermission =>
+      'Deli samo vsebino, za katero imaš dovoljenje.';
+
+  @override
+  String get moderationRulesRespect =>
+      'Ne objavljaj nadlegovanja, groženj, sovražne, spolno eksplicitne, nasilne ali nezakonite vsebine, neželene pošte ali tujih osebnih podatkov brez upravičenja.';
+
+  @override
+  String get moderationRulesReport =>
+      'Neprimerno vsebino lahko prijaviš skrbniku tega strežnika.';
+
+  @override
+  String get moderationRulesFull => 'Celotna pravila';
+
+  @override
+  String get moderationRulesViewOnly => 'Za zdaj samo poglej';
+
+  @override
+  String get moderationRulesAcceptContinue => 'Sprejmi pravila in nadaljuj';
+
+  @override
+  String get spaceFlowCloud => 'Sinhroniziraj z oblakom';
+
+  @override
+  String get spaceFlowCloudDescription =>
+      'Na drugih napravah bo prostor na voljo z istim računom. Drugim omogočiš dostop s povabilom.';
+
+  @override
+  String get spaceFlowSignInCreate => 'Prijavi se za sinhronizacijo';
+
+  @override
+  String get spaceFlowCreateUnknown =>
+      'Ustvarjanje še ni potrjeno. Poskusi znova. Podatki ostanejo enaki, da ne nastane dvojnik.';
+
+  @override
+  String get spaceFlowRecipient => 'E-naslov ali obstoječe uporabniško ime';
+
+  @override
+  String get spaceFlowRecipientInvalid =>
+      'Vnesi veljaven e-naslov ali obstoječe uporabniško ime.';
+
+  @override
+  String get spaceFlowInAppSent => 'Povabilo čaka v prejemnikovem računu.';
+
+  @override
+  String get spaceFlowFullAccess => 'Polni dostop';
+
+  @override
+  String get spaceFlowViewOnly => 'Samo ogled';
+
+  @override
+  String get spaceFlowMoreOptions => 'Možnosti dostopa';
+
+  @override
+  String get spaceFlowResend => 'Pošlji znova';
+
+  @override
+  String get spaceFlowResendConfirm =>
+      'Prejšnja povezava bo prenehala veljati. Nastane novo povabilo z novim rokom.';
+
+  @override
+  String get spaceFlowRecipientUnavailable =>
+      'Povabila temu prejemniku ni mogoče poslati. Preveri uporabniško ime.';
+
+  @override
+  String get spaceFlowUsernameUnsupported =>
+      'Ta strežnik še ne podpira povabil obstoječemu uporabniškemu imenu. Uporabi e-naslov.';
+
+  @override
+  String get spaceFlowSend => 'Pošlji';
+
+  @override
+  String get invitationFlowTitle => 'Povabilo';
+
+  @override
+  String get invitationFlowOpen => 'Odpri povabilo';
+
+  @override
+  String get invitationFlowLinkOrCode => 'Povezava ali koda povabila';
+
+  @override
+  String get invitationFlowPasteHelp =>
+      'Prilepi povezavo iz povabila. Če si aplikacijo pravkar namestil/a, se lahko vrneš tudi v e-pošto in ponovno odpreš povabilo.';
+
+  @override
+  String get invitationFlowCodeServer => 'Strežnik za vnos samo kode';
+
+  @override
+  String get invitationFlowJoinProject => 'Pridruži se projektu';
+
+  @override
+  String get invitationFlowJoinSpace => 'Pridruži se prostoru';
+
+  @override
+  String get invitationFlowOtherAccount => 'Uporabi drug račun';
+
+  @override
+  String get invitationFlowDifferentServer =>
+      'Trenutno si prijavljen/a z drugim strežnikom. Nadaljuj s prijavo v strežnik tega povabila.';
+
+  @override
+  String get invitationFlowSignInToJoin =>
+      'Prijavi se ali ustvari račun. Nato se odločiš, ali se pridružiš.';
+
+  @override
+  String get invitationFlowBackToPreview => 'Nazaj na povabilo';
+
+  @override
+  String get invitationFlowFirstLaunch =>
+      'Imaš povezavo v e-pošti ali kodo? Tukaj nadaljuješ v povabljeni prostor.';
+
+  @override
+  String invitationFlowInvitationTo(String name) {
+    return 'Povabilo v $name';
+  }
+
+  @override
+  String get invitationFlowViewOnly => 'Samo ogled';
+
+  @override
+  String get invitationFlowFullAccess => 'Polni dostop';
+
+  @override
+  String get invitationFlowPersonalStaysPrivate =>
+      'Pridružiš se samo temu povabljenemu prostoru. Tvoji lokalni osebni podatki se s tem ne delijo.';
+
+  @override
+  String get spaceFlowShare => 'Deli prostor';
+
+  @override
+  String get spaceFlowPendingCreation => 'Ustvarjanje v oblaku še čaka';
+
+  @override
+  String get spaceFlowPendingCreationDescription =>
+      'Prejšnje ustvarjanje še ni potrjeno. Nadaljuj ali ustvari drug lokalni prostor. Začeto ustvarjanje v oblaku ostane shranjeno.';
+
+  @override
+  String get spaceFlowCreateOtherLocal => 'Ustvari drug lokalni prostor';
+
+  @override
+  String get spaceFlowResumeCreate => 'Nadaljuj ustvarjanje';
+
+  @override
+  String get spaceFlowLocalOnlyPending =>
+      'Ta novi prostor bo lokalen. Ustvarjanje prejšnjega prostora v oblaku lahko nadaljuješ pozneje.';
+
+  @override
+  String get invitationFlowStepsWriter => 'Račun · Pridružitev · Pravila';
+
+  @override
+  String get invitationFlowStepsViewer => 'Račun · Pridružitev';
+
+  @override
+  String get invitationFlowJoinedOpen =>
+      'Pridružitev je uspela. Če se prostor še ni odprl, poskusi znova odpreti prostor.';
+
+  @override
+  String get invitationFlowOpenSpace => 'Odpri prostor';
+
+  @override
+  String get invitationFlowUsernameRule =>
+      '3–64 znakov: črke A–Z, številke, pika, vezaj ali podčrtaj.';
+
+  @override
+  String get invitationFlowNameRule => 'Ime je predolgo. Uporabi krajše ime.';
+
+  @override
+  String get spaceFlowCreateOtherAccount =>
+      'Za nadaljevanje uporabi prvotni račun. Lahko ustvariš tudi drug lokalni prostor.';
 }
