@@ -64,6 +64,8 @@ BackupContentSummary _backupContentSummary(Map<String, dynamic> doc) {
       downloaded.update(type, (n) => n + 1, ifAbsent: () => 1);
     }
   }
+  final tableDraftCount = backupTableDrafts(doc).length;
+  if (tableDraftCount > 0) downloaded['tableDrafts'] = tableDraftCount;
   final privateReminders =
       (backupMap(doc['privateData'])['reminders'] as List).length;
   if (privateReminders > 0) downloaded['reminders'] = privateReminders;

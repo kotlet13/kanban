@@ -7,6 +7,7 @@ import '../../state/collaboration_provider.dart';
 import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_members.dart';
+import 'shared_documents.dart';
 import '../../state/local_spaces_provider.dart';
 import 'local_space_settings.dart';
 import 'organization_access_settings.dart';
@@ -180,6 +181,7 @@ class SpaceSettingsPage extends ConsumerWidget {
                     ),
                   ),
                 ] else if (selected != null) ...[
+                  SharedDocumentsEntries(scope: selected),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(selected.name),

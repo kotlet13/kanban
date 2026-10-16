@@ -6,20 +6,26 @@ import '../shared/sharing_errors.dart';
 import '../shared/sharing_forms.dart';
 import '../shared/sharing_session_boundary.dart';
 
-String offlineRecoveryLimitation(BuildContext context, String code) =>
-    switch (code) {
-      'original_server_operations_audit_and_access_remain_archived' =>
-        context.l10n.offlineRecoveryArchive,
-      'new_local_copy_does_not_grant_server_access' =>
-        context.l10n.offlineRecoveryNoServerAccess,
-      'finance_transfers_remain_archived' ||
-      'linked_payments_require_reconciliation' =>
-        context.l10n.localFinanceRecoveryIncomplete,
-      'finance_access_unavailable' =>
-        context.l10n.offlineRecoveryFinanceUnavailable,
-      'source_copy_may_be_incomplete' => context.l10n.backupIncomplete,
-      _ => context.l10n.offlineRecoveryArchive,
-    };
+String offlineRecoveryLimitation(
+  BuildContext context,
+  String code,
+) => switch (code) {
+  'original_server_operations_audit_and_access_remain_archived' =>
+    context.l10n.offlineRecoveryArchive,
+  'new_local_copy_does_not_grant_server_access' =>
+    context.l10n.offlineRecoveryNoServerAccess,
+  'finance_transfers_remain_archived' ||
+  'linked_payments_require_reconciliation' =>
+    context.l10n.localFinanceRecoveryIncomplete,
+  'finance_access_unavailable' =>
+    context.l10n.offlineRecoveryFinanceUnavailable,
+  'source_copy_may_be_incomplete' => context.l10n.backupIncomplete,
+  'spreadsheet_drafts_require_server_recovery' =>
+    Localizations.localeOf(context).languageCode == 'sl'
+        ? 'Osnutki preglednic ostanejo v šifrirani obnovi. Za nadaljevanje potrebujete izvorni račun in sveže pravice.'
+        : 'Spreadsheet drafts remain in encrypted recovery. Continuing requires the source account and fresh access.',
+  _ => context.l10n.offlineRecoveryArchive,
+};
 
 Future<void> showOfflineSpacesRecovery(
   BuildContext context,

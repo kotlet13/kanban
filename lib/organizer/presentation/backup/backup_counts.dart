@@ -26,6 +26,10 @@ class BackupCounts extends StatelessWidget {
       'gardens' || 'garden' => l.gardenTitle,
       'ideas' || 'idea' => l.ideasCountLabel,
       'ideaDrafts' => l.ideaDraftsCountLabel,
+      'tableDrafts' =>
+        Localizations.localeOf(context).languageCode == 'sl'
+            ? 'Osnutki preglednic'
+            : 'Spreadsheet drafts',
       'inbox' => l.inboxTitle,
       'scheduled_reminders' => l.backupScheduledReminders,
       'paymentEvents' => l.backupPaymentEvents,

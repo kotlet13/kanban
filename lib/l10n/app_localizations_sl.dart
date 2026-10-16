@@ -9,6 +9,16 @@ class AppLocalizationsSl extends AppLocalizations {
   AppLocalizationsSl([String locale = 'sl']) : super(locale);
 
   @override
+  String get documentsTables => 'Preglednice';
+
+  @override
+  String get documentsAttachments => 'Priloge';
+
+  @override
+  String get documentsUnavailable =>
+      'Ta prostor te možnosti še nima omogočene.';
+
+  @override
   String get routeError => 'Napaka poti';
 
   @override

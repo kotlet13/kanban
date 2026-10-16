@@ -487,6 +487,7 @@ void main() {
       // finance inbox receipts. Restore that real old shape, not current v3.
       final gardenV2 = await a.backup.crypto.decrypt(bytes, password);
       gardenV2.remove('localTaskReminderPreferences');
+      gardenV2.remove('tableDrafts');
       gardenV2.remove('operationPairs');
       gardenV2.remove('financeInboxReads');
       gardenV2.remove('localSpaces');
@@ -533,6 +534,7 @@ void main() {
       );
       final oldDoc = await a.backup.crypto.decrypt(bytes, password);
       oldDoc.remove('localTaskReminderPreferences');
+      oldDoc.remove('tableDrafts');
       oldDoc.remove('gardens');
       oldDoc.remove('operationPairs');
       oldDoc.remove('financeInboxReads');

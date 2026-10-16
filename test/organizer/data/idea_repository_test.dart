@@ -214,7 +214,7 @@ void main() {
         encrypted,
         password,
       );
-      expect(document['version'], 6);
+      expect(document['version'], 7);
       expect((document['ideaAssets'] as List).single['data'], isNotEmpty);
       final fresh = CollaborationDatabase(NativeDatabase.memory());
       final target = SqliteOrganizerStorage(fresh);
@@ -344,7 +344,12 @@ void main() {
       expect(ideas.snapshot.boards, isEmpty);
       expect(await ideas.readDraft(id), isNull);
       expect(await ideas.readAsset(asset), isNull);
-      expect((await db.rows('SELECT value FROM local_meta WHERE name=?', ['idea_deleted_revision:$id'])).single['value'], isNotNull);
+      expect(
+        (await db.rows('SELECT value FROM local_meta WHERE name=?', [
+          'idea_deleted_revision:$id',
+        ])).single['value'],
+        isNotNull,
+      );
       await organizer.close();
       await ideas.close();
       await db.close();

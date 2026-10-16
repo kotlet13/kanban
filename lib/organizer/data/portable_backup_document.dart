@@ -3,6 +3,7 @@ import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
 import '../domain/idea_models.dart';
+import '../domain/spreadsheet_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/linked_payment_models.dart';
 import '../domain/shared_payload_validation.dart';
@@ -146,7 +147,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             'gardenSpaceLinks',
             'linkedPayments',
           ],
-          if (doc['version'] == 6) 'localTaskReminderPreferences',
+          if ((doc['version'] as int) >= 6) 'localTaskReminderPreferences',
+          if ((doc['version'] as int) >= 7) 'tableDrafts',
           if ((doc['version'] as int) >= 5) ...[
             'ideas',
             'ideaSpaceLinks',
@@ -162,6 +164,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 13
                 : doc['version'] == 3
                 ? 15
+                : doc['version'] == 7
+                ? 25
                 : doc['version'] == 6
                 ? 24
                 : (doc['version'] as int) >= 5
@@ -170,9 +174,9 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 18
                 : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3, 4, 5, 6].contains(doc['version']) ||
+        !const [1, 2, 3, 4, 5, 6, 7].contains(doc['version']) ||
         ((doc['version'] as int) >= 4
-            ? !(doc['version'] == 6
+            ? !((doc['version'] as int) >= 6
                       ? const [10]
                       : doc['version'] == 5
                       ? const [9]
@@ -201,7 +205,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
     }
     backupGardens(doc)?.validate();
     if ((doc['version'] as int) >= 5) validateBackupIdeas(doc);
-    if (doc['version'] == 6) {
+    if ((doc['version'] as int) >= 6) {
       final rows = doc['localTaskReminderPreferences'];
       if (rows is! List || rows.length > 50000) {
         throw const FormatException('Invalid reminder preferences');
@@ -385,7 +389,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             (request['deleted'] == true) != (request['payload'] == null) ||
             (table == 'outbox' &&
                 !((doc['version'] as int) >= 5
-                        ? (doc['version'] == 6
+                        ? ((doc['version'] as int) >= 6
                               ? const [1, 2, 3, 4, 5, 6]
                               : const [1, 2, 3, 4, 5])
                         : const [1, 2, 3, 4])
@@ -544,6 +548,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
         }
       }
     }
+    if ((doc['version'] as int) >= 7) validateBackupTableDrafts(doc);
     validateBackupLinks(doc);
     validateBackupOperationPairs(doc);
     validateBackupFinanceInboxReads(doc);
@@ -1014,4 +1019,71 @@ void validateBackupIdeas(Map<String, dynamic> doc) {
       IdeaBoard.fromJson(backupMap(jsonDecode(v['base'] as String)));
     }
   }
+}
+
+/// New table drafts never enter ordinary record sync or confer server access.
+/// Older backups contain no spreadsheet section and remain valid unchanged.
+List<Map<String, dynamic>> backupTableDrafts(Map<String, dynamic> doc) =>
+    (doc['version'] as int) >= 7
+    ? (doc['tableDrafts'] as List).cast<Map<String, dynamic>>()
+    : const [];
+
+void validateBackupTableDrafts(Map<String, dynamic> doc) {
+  final raw = doc['tableDrafts'];
+  if (raw is! List || raw.length > 10000) {
+    throw const FormatException('Invalid spreadsheet drafts');
+  }
+  final source = doc['source'] as Map?;
+  final scopes = {for (final row in backupRows(doc, 'scopes')) row['id']};
+  final ids = <String>{};
+  for (final row in backupTableDrafts(doc)) {
+    ideaKeys(row, {'partition', 'scopeId', 'tableId', 'draft'});
+    if (source == null ||
+        row['partition'] != source['partition'] ||
+        !scopes.contains(row['scopeId']) ||
+        !isSharedUuid(row['scopeId'] as String) ||
+        !isSharedUuid(row['tableId'] as String) ||
+        !ids.add('${row['scopeId']}:${row['tableId']}')) {
+      throw const FormatException('Invalid spreadsheet draft identity');
+    }
+    final draft = backupMap(row['draft']);
+    validateBackupTableDraft(draft);
+    if (draft['tableId'] != row['tableId']) {
+      throw const FormatException('Spreadsheet draft target mismatch');
+    }
+  }
+}
+
+void validateBackupTableDraft(Map<String, dynamic> draft) {
+  ideaKeys(draft, {'tableId', 'baseRevision', 'title', 'cells', 'updatedAt'});
+  final parsed = SpreadsheetDraft.fromJson(draft);
+  // Preserve a not-yet-saved title even if its UTF-8 form exceeds the server's
+  // current title limit. Recovery does not publish it or bypass save validation.
+  if (!isSharedUuid(parsed.tableId) ||
+      parsed.baseRevision < 0 ||
+      parsed.updatedAt < 0 ||
+      utf8.encode(parsed.title).length > 800 ||
+      parsed.cells.length > 10000 ||
+      utf8.encode(jsonEncode(parsed.cells)).length > 524288) {
+    throw const FormatException('Invalid spreadsheet draft');
+  }
+  for (final cell in parsed.cells.entries) {
+    final address = SpreadsheetAddress.parse(cell.key);
+    if (address == null ||
+        address.label != cell.key ||
+        utf8.encode(cell.value).length > 4096) {
+      throw const FormatException('Invalid spreadsheet draft cell');
+    }
+  }
+}
+
+/// Order-independent comparison preserves an existing different local draft.
+String backupTableDraftCanonical(Map<String, dynamic> draft) {
+  validateBackupTableDraft(draft);
+  final parsed = SpreadsheetDraft.fromJson(draft);
+  final keys = parsed.cells.keys.toList()..sort();
+  return jsonEncode({
+    ...parsed.toJson(),
+    'cells': {for (final key in keys) key: parsed.cells[key]},
+  });
 }

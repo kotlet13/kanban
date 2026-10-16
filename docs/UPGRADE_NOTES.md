@@ -7,35 +7,24 @@ izvorno kodo in lokalna preverjanja; nove gostovane namestitve, trgovinske
 objave in fizičnega preizkusa še ne potrjuje. Dokaze, različice pogodb in
 odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
-## Predvidene nadgradnje — še neizvedeno
+## Preglednice in priloge — izvedeno v izvoru
 
 ### Preglednice v organizaciji (15. oktober 2026)
 
-Uporabnik želi preprosto preglednico po vzoru Excela: prazno, na videz
-»neskončno« mrežo s stolpci A, B, C … in oštevilčenimi vrsticami, ki se
-sproti širi. V celice se vnašajo besedilo, številke in osnovne formule,
-na primer seštevanje, množenje in SUM. Stolpcev ni treba vnaprej opredeliti.
-Predvideti je treba pregleden vnos in premikanje po tabeli na telefonu ter
-uporabo širšega prikaza na računalniku.
-
-Obravnavan je predlog zaklepa posamezne preglednice med urejanjem: en
-uporabnik ureja, drugi imajo ogled in jasno obvestilo, kdo jo ureja. Predlog
-vključuje izrecen začetek/konec urejanja, samodejni potek in podaljševanje
-zaklepa ter zaščito neshranjenega dela in novejših sprememb po izgubi zaklepa.
-Za prvo različico je predlagano urejanje ob povezavi, brez povezave pa ogled
-prenesene različice. To so izhodišča za nadaljnji dogovor, ne dokončna
-specifikacija ali dovoljenje za implementacijo.
+16. oktobra je uporabnik naročil izvedbo. Prazna razširljiva mreža omogoča
+besedilo, številke in osnovne formule/SUM. Strežniški zaklep izključi drugega
+urednika in jasno pokaže, kdo ureja; lokalni osnutki ostanejo obnovljivi ob
+izgubi povezave. Podrobnosti, meje, dokaze in še odprte izdajne korake vodi
+[izvedbeni zapis](TABLES_AND_ATTACHMENTS.md).
 
 ### Priloge (15. oktober 2026)
 
-Uporabnik želi možnost nalaganja in pripenjanja PDF-jev, dokumentov in
-podobnih datotek v aplikaciji, tudi pri delu v organizaciji. To je predvidena
-nadgradnja, ne naročilo za takojšnjo implementacijo.
-
-Pred izvedbo določimo mesta pripenjanja (prostor, projekt, opravilo oziroma
-predlagane preglednice), podprte vrste in velikosti datotek ter način ogleda,
-prenosa in deljenja glede na pravice do pripadajoče vsebine. Preglednice in
-zaklep med skupnim urejanjem so za zdaj predmet pogovora, ne potrjena izvedba.
+16. oktobra naročeno in izvorno izvedeno: PDF-ji, dokumenti, preglednice,
+besedilo in JPEG/PNG pri dovoljenih skupnih prostorih, opravilih ter
+preglednicah. Nalaganje, preverjen prenos, izrecno shranjevanje kopije,
+brisanje in prijava vsebine. [Izvedba in preverjanje](TABLES_AND_ATTACHMENTS.md).
+Gostovanje in nameščena aplikacija s tem še nista nadgrajena; Google Play
+oddaja še vedno potrebuje novo izrecno uporabnikovo potrditev.
 
 ## Potrjene odločitve
 

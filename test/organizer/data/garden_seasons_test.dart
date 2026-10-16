@@ -601,7 +601,7 @@ void main() {
       const password = 'Seasonal garden backup password';
       final bytes = await source.backup.exportEncryptedBackup(password);
       final decrypted = await source.backup.crypto.decrypt(bytes, password);
-      expect(decrypted['version'], 6);
+      expect(decrypted['version'], 7);
       expect(decrypted['gardens']['version'], 2);
       validateBackupDocument(decrypted);
       await encryptedTarget.backup.restoreEncryptedBackup(

@@ -228,10 +228,10 @@ void main() {
       expect(s.linkedPendingCount, 1);
       expect(p.pendingCount, 1);
       expect(s.standaloneFinanceLimited, true);
-      // UI counters come from the expanded authenticated content6 document.
+      // UI counters come from the expanded authenticated content7 document.
       // They describe this
       // exact authenticated document, not from the currently selected workspace.
-      expect(f.document['version'], 6);
+      expect(f.document['version'], 7);
       expect(f.document['databaseVersion'], 10);
       expect(f.document.keys.toSet(), {
         'format',
@@ -256,6 +256,7 @@ void main() {
         'tables',
         'uiPreferences',
         'localTaskReminderPreferences',
+        'tableDrafts',
         'completeness',
         'exclusions',
       });

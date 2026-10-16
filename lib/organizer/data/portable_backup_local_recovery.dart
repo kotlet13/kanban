@@ -227,6 +227,8 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
       limitations: [
         'original_server_operations_audit_and_access_remain_archived',
         'new_local_copy_does_not_grant_server_access',
+        if (backupTableDrafts(doc).isNotEmpty)
+          'spreadsheet_drafts_require_server_recovery',
         if (backupRows(
           doc,
           'finance_records',

@@ -309,7 +309,7 @@ void main() {
       );
       final bytes = await backup.exportEncryptedBackup('synthetic-password');
       final doc = await crypto.decrypt(bytes, 'synthetic-password');
-      expect(doc['version'], 6);
+      expect(doc['version'], 7);
       expect(doc['databaseVersion'], 10);
       expect(doc['localTaskReminderPreferences'], hasLength(1));
       final restored = CollaborationDatabase(NativeDatabase.memory());

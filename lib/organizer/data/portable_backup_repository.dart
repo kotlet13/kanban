@@ -22,6 +22,7 @@ import 'local_spaces_repository.dart';
 part 'portable_backup_local_recovery.dart';
 part 'portable_backup_preview.dart';
 part 'portable_backup_ideas.dart';
+part 'portable_backup_tables.dart';
 
 abstract interface class BackupUiPreferencesStore {
   Future<Map<String, Object?>> read();
@@ -310,10 +311,13 @@ class PortableBackupRepository {
           }).toList();
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 6,
+        'version': 7,
         'databaseVersion': 10,
-        'localTaskReminderPreferences': await database.rows("SELECT name,value FROM local_meta WHERE name LIKE 'local_task_deadline_reminder:%' ORDER BY name"),
+        'localTaskReminderPreferences': await database.rows(
+          "SELECT name,value FROM local_meta WHERE name LIKE 'local_task_deadline_reminder:%' ORDER BY name",
+        ),
         ...await _exportIdeas(tables, completeness),
+        'tableDrafts': await _exportTableDrafts(tables),
         'linkedPayments': {
           'cashMovements': await paymentRows('linked_payment_cash'),
           'events': await paymentRows('linked_payment_events'),
@@ -401,7 +405,8 @@ class PortableBackupRepository {
           backupRows(doc, 'outbox').length +
           backupRows(doc, 'finance_outbox').length +
           backupRows(doc, 'commands').length +
-          summary.linkedPendingCount,
+          summary.linkedPendingCount +
+          backupTableDrafts(doc).length,
       contentSummary: summary,
       hasRemoteRecovery: scopes.isNotEmpty,
       sourceAccount: source?['displayName'] as String?,
@@ -692,10 +697,13 @@ class PortableBackupRepository {
         }
       }
       if ((doc['version'] as int) >= 5) await _restoreIdeas(doc, mode);
-      if (doc['version'] == 6) {
+      if ((doc['version'] as int) >= 6) {
         for (final raw in doc['localTaskReminderPreferences'] as List) {
           final row = backupMap(raw);
-          await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO NOTHING', [row['name'],row['value']]);
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO NOTHING',
+            [row['name'], row['value']],
+          );
         }
       }
       if (!sourceDeleted) {
@@ -870,6 +878,20 @@ class PortableBackupRepository {
           ),
         );
       }
+    }
+    for (final row in backupTableDrafts(doc)) {
+      final draft = backupMap(row['draft']);
+      items.add(
+        BackupRecoveryItem(
+          scopeId: row['scopeId'] as String,
+          scopeName: scopes[row['scopeId']]!.name,
+          recordId: row['tableId'] as String,
+          recordType: 'tableDraft',
+          title: draft['title'] as String,
+          state: 'pending',
+          isFinancial: false,
+        ),
+      );
     }
     if (stamp != await _rightsStamp()) {
       throw const CollaborationException('backup_stale');

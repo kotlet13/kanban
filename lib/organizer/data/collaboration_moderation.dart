@@ -214,7 +214,13 @@ extension CollaborationModeration on CollaborationRepository {
     required String targetType,
     required String targetId,
   }) async {
-    if (!const {'record', 'finance', 'user'}.contains(targetType) ||
+    if (!const {
+          'record',
+          'finance',
+          'user',
+          'table',
+          'attachment',
+        }.contains(targetType) ||
         !isSharedUuid(scopeId) ||
         !isSharedUuid(targetId)) {
       throw const CollaborationException('validation_error');
@@ -325,12 +331,21 @@ extension CollaborationModeration on CollaborationRepository {
       },
       for (final prefix in ['invitations', 'invitations2', 'invitations3'])
         prefix: {'create'},
-      for (final prefix in ['sync', 'sync2', 'sync3', 'sync4', 'sync5', 'sync6'])
+      for (final prefix in [
+        'sync',
+        'sync2',
+        'sync3',
+        'sync4',
+        'sync5',
+        'sync6',
+      ])
         prefix: {'push', 'pushTaskWithCost'},
       for (final prefix in ['finance', 'finance2'])
         prefix: {'push', 'enable', 'grant'},
       'finance3': {'paymentCommit', 'paymentReimburse'},
       'reminders': {'put'},
+      'tables': {'create', 'save'},
+      'attachments': {'begin', 'chunk', 'complete'},
     };
     if (actions[parts.first]?.contains(parts.last) != true) {
       return false;

@@ -15,6 +15,7 @@ import '../planning/utrip_overview.dart';
 import '../inbox/notification_target_view.dart';
 import 'collaboration_actions.dart';
 import 'organization_workspace.dart';
+import 'shared_documents.dart';
 import '../all_spaces/all_spaces_page.dart';
 import '../../domain/all_spaces_projection.dart';
 import '../../domain/organizer_models.dart';
@@ -482,6 +483,14 @@ class SharingWorkspace extends ConsumerWidget {
                         scopeId: scope.id,
                         targetId: project.id,
                         actions: [
+                          if (project.id == scope.projectRootId ||
+                              project.id == scope.id)
+                            ContentMenuAction(
+                              label: l.documentsAttachments,
+                              icon: Icons.attach_file,
+                              onSelected: () =>
+                                  openSharedDocuments(context, scope),
+                            ),
                           if (!readOnly && !project.archived)
                             ContentMenuAction(
                               label: l.organizerEditProject,

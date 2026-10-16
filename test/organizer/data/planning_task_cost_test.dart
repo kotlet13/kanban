@@ -517,7 +517,7 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 6);
+      expect(doc['version'], 7);
       expect(doc['databaseVersion'], 10);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},
@@ -590,6 +590,7 @@ void main() {
       legacy.remove('gardenSpaceLinks');
       legacy.remove('linkedPayments');
       legacy.remove('localTaskReminderPreferences');
+      legacy.remove('tableDrafts');
       for (final field in [
         'ideas',
         'ideaSpaceLinks',

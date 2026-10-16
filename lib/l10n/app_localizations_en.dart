@@ -9,6 +9,16 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get documentsTables => 'Tables';
+
+  @override
+  String get documentsAttachments => 'Attachments';
+
+  @override
+  String get documentsUnavailable =>
+      'This space does not have this feature enabled yet.';
+
+  @override
   String get routeError => 'Route error';
 
   @override

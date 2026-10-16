@@ -1,4 +1,7 @@
 {
+  "documentsTables": "Preglednice",
+  "documentsAttachments": "Priloge",
+  "documentsUnavailable": "Ta prostor te možnosti še nima omogočene.",
   "@@locale": "sl",
   "routeError": "Napaka poti",
   "unknownError": "Neznana napaka",

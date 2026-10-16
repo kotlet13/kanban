@@ -27,7 +27,10 @@ extension CollaborationBackupActions on CollaborationRepository {
     final restoredPrivate = backupMap(doc['privateData']);
     final policies = <String, SharedFinancePolicy>{},
         generations = <String, int>{};
+    final tableDrafts = backupTableDrafts(doc);
+    final draftScopeIds = {for (final row in tableDrafts) row['scopeId']};
     final writableScopeIds = {
+      for (final row in tableDrafts) row['scopeId'],
       for (final row in [
         ...backupRows(doc, 'outbox'),
         ...backupRows(doc, 'finance_outbox'),
@@ -98,6 +101,14 @@ extension CollaborationBackupActions on CollaborationRepository {
                     CollaborationRepository._map(rows.single['data']),
                   ).canEdit)) {
             throw const CollaborationException('permission_revoked');
+          }
+          if (draftScopeIds.contains(scope)) {
+            final current = SharedScope.fromJson(
+              CollaborationRepository._map(rows.single['data']),
+            );
+            if (!current.canRead || current.deleted || current.blocked) {
+              throw const CollaborationException('permission_revoked');
+            }
           }
           if (generations.containsKey(scope) &&
               (generations[scope] != await _financeAccessGeneration(p, scope) ||
@@ -305,6 +316,25 @@ extension CollaborationBackupActions on CollaborationRepository {
               command['entity_key'],
               command['state'],
             ],
+          );
+        }
+        for (final row in tableDrafts) {
+          final key = 'table_draft:$p:${row['scopeId']}:${row['tableId']}';
+          final incoming = backupMap(row['draft']);
+          final current = await database.rows(
+            'SELECT value FROM local_meta WHERE name=?',
+            [key],
+          );
+          if (current.isNotEmpty &&
+              backupTableDraftCanonical(
+                    backupMap(jsonDecode(current.single['value'] as String)),
+                  ) !=
+                  backupTableDraftCanonical(incoming)) {
+            throw const CollaborationException('backup_conflict');
+          }
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO NOTHING',
+            [key, jsonEncode(incoming)],
           );
         }
         await database.touchPersonal();

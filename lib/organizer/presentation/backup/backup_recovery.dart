@@ -101,6 +101,14 @@ class _BackupRecoveryPanelState extends ConsumerState<BackupRecoveryPanel> {
                     ),
                     Text(l.backupArchiveReview),
                     Text(l.backupRemoteQuarantine),
+                    if (capturedReview.items.any(
+                      (item) => item.recordType == 'tableDraft',
+                    ))
+                      Text(
+                        Localizations.localeOf(context).languageCode == 'sl'
+                            ? 'Osnutki preglednic se obnovijo lokalno. Shranitev na strežnik zahteva nov zaklep in izrecno shranitev.'
+                            : 'Spreadsheet drafts are restored locally. Saving to the server requires a new edit lock and an explicit save.',
+                      ),
                     if (!capturedReview.canResume)
                       Text(l.backupRecoveryBlocked),
                     const SizedBox(height: 16),
@@ -196,6 +204,10 @@ class _BackupRecoveryPanelState extends ConsumerState<BackupRecoveryPanel> {
     'shoppingList' => context.l10n.organizerShopping,
     'shoppingItem' => context.l10n.backupShoppingItems,
     'event' => context.l10n.organizerCalendar,
+    'tableDraft' =>
+      Localizations.localeOf(context).languageCode == 'sl'
+          ? 'Osnutek preglednice'
+          : 'Spreadsheet draft',
     'financeAccount' ||
     'financeEntry' ||
     'financeTransfer' ||

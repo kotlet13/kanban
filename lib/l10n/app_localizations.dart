@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('sl'),
   ];
 
+  /// No description provided for @documentsTables.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables'**
+  String get documentsTables;
+
+  /// No description provided for @documentsAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get documentsAttachments;
+
+  /// No description provided for @documentsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This space does not have this feature enabled yet.'**
+  String get documentsUnavailable;
+
   /// No description provided for @routeError.
   ///
   /// In en, this message translates to:

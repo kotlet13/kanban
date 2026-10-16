@@ -146,7 +146,7 @@ void main() {
         await backup.exportEncryptedBackup(password),
         password,
       );
-      expect(document['version'], 6);
+      expect(document['version'], 7);
       expect(document['databaseVersion'], 10);
       expect((document['localSpaces'] as List).single['space']['id'], 'local');
       expect((document['tables'] as Map)['outbox'], beforeOutbox);

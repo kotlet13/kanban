@@ -3,6 +3,8 @@ import '../ideas/ideas_page.dart';
 import '../ideas/idea_editor.dart';
 import '../../state/idea_provider.dart';
 import '../shared/content_actions_menu.dart';
+import '../shared/shared_documents.dart';
+import '../../domain/attachment_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -406,6 +408,22 @@ class NotificationTargetContent extends ConsumerWidget {
               child: SharedContentActionsMenu(
                 scopeId: scope!.id,
                 targetId: localId(record),
+                actions: [
+                  if (record.type == 'task')
+                    ContentMenuAction(
+                      label: l.documentsAttachments,
+                      icon: Icons.attach_file,
+                      onSelected: () => openSharedDocuments(
+                        context,
+                        scope,
+                        target: AttachmentTarget(
+                          scopeId: scope.id,
+                          targetType: 'task',
+                          targetId: localId(record),
+                        ),
+                      ),
+                    ),
+                ],
                 targetType: record.type.startsWith('finance')
                     ? 'finance'
                     : 'record',

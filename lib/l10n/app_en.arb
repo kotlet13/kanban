@@ -1,4 +1,7 @@
 {
+  "documentsTables": "Tables",
+  "documentsAttachments": "Attachments",
+  "documentsUnavailable": "This space does not have this feature enabled yet.",
   "@@locale": "en",
   "routeError": "Route error",
   "unknownError": "Unknown error",

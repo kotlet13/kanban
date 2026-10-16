@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+16. oktober — **organizacijske preglednice in dokumentne priloge izvedene v izvoru**
+po izrecnem naročilu. [Izvedba in meje](docs/TABLES_AND_ATTACHMENTS.md).
+Razširljiva mreža, formule/SUM, izključni 90s zaklep z obnovo, lokalni osnutki,
+offline ogled in šifrirana prenosna kopija7; priloge prostora/opravila/tabele,
+20MiB/datoteko, zasebni prenosi, ACL/odvzem/brisanje/prijave vsebine.
+Dodajalna FamilyHub shema19 je samo v izvoru; gostovanja niso nadgrajena.
+1505 Flutter PASS/16 preskokov, zaključnih155 in54 ciljnih PASS;
+723 novih strežniških kontrol na SQLite/MariaDB10.11/MySQL8.4,192 lifecycle
+in162 Ideas PASS. Android debug PASS,94 PHP lint PASS, analiza samo10starihinfo.
+Ni nove nameščene aplikacije ali izdajnega paketa; AAB29/SDK/locks/dovoljenja isti.
+Pred izdajo potrebuje gostovanje svežo kopijo/pravo obnovo in shemo19,
+FamilyHub novo različico ter Play Files/docs deklaracijo/pregled zasebnosti.
+**Google Play ostaja odložen do nove izrecne potrditve; Apple še odložen.**
+Nepovezana neversionirana docs/SECURITY_REVIEW_2026_10_15.md in
+docs/INVITATION_AND_SHARING_UX_ANALYSIS.md nista del te izvedbe.
+
 15. oktober — **ideja organizacijskih preglednic posebej zapisana** v
 [opombah](docs/UPGRADE_NOTES.md#preglednice-v-organizaciji-15-oktober-2026):
 razširljiva prazna mreža/besedilo/številke/osnovne formule/SUM. Predlog zaklepa

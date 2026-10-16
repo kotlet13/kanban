@@ -7,6 +7,7 @@ import 'sharing_forms.dart';
 import 'sharing_errors.dart';
 import 'sharing_session_boundary.dart';
 import 'scope_lifecycle_menu.dart';
+import 'shared_documents.dart';
 
 class OrganizationWorkspace extends ConsumerWidget {
   const OrganizationWorkspace({
@@ -121,6 +122,8 @@ class OrganizationWorkspace extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SharedDocumentsEntries(scope: organization),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 12,
           runSpacing: 8,
@@ -159,7 +162,9 @@ class OrganizationWorkspace extends ConsumerWidget {
             title: Text(l.scopeArchivedSection),
             initiallyExpanded: false,
             children: [
-              for (final project in projects.where((project) => project.archived))
+              for (final project in projects.where(
+                (project) => project.archived,
+              ))
                 ListTile(
                   leading: const Icon(Icons.archive_outlined),
                   title: Text(project.name),
