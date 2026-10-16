@@ -41,6 +41,7 @@ class NativeScopeLifecycleService extends NativeDatabase
                 $this->change("UPDATE familyhub_invitation_mail SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id IN (SELECT id FROM familyhub_invitations WHERE scope_id=?) AND state<>'accepted'",[$id]);
                 $this->change('DELETE FROM familyhub_organization_leaders WHERE scope_id=?',[$id]);
                 $deletedScopes[]=$id;
+                (new NativeAttachmentService($this->container))->removeScope($id);
             }
             foreach ([false=>$graph['records'][$id],true=>$graph['finance'][$id]] as $financial=>$rows) {
                 $table=$financial?'familyhub_finance_records':'familyhub_records';$policy=$financial?'familyhub_finance_policy':'familyhub_scopes';$key=$financial?'scope_id':'id';
@@ -59,6 +60,7 @@ class NativeScopeLifecycleService extends NativeDatabase
                         $this->change('DELETE FROM familyhub_payment_events WHERE scope_id=? AND entry_id=?',[$id,$r['id']]);
                         $financeTombstones[]=['scopeId'=>$id,'id'=>$r['id'],'type'=>$r['type'],'revision'=>(int)$r['revision']+1,'deleted'=>true,'payload'=>null,'sequence'=>$sequence,'updatedAt'=>$stamp];
                     } else {
+                        if ($r['type']==='task') { (new NativeAttachmentService($this->container))->removeTarget($id,'task',$r['id']); }
                         $recordTombstones[]=['scopeId'=>$id,'id'=>$r['id'],'type'=>$r['type'],'revision'=>(int)$r['revision']+1,'deleted'=>true,'payload'=>null,'sequence'=>$sequence,'updatedAt'=>$stamp];
                     }
                 }
@@ -85,13 +87,13 @@ class NativeScopeLifecycleService extends NativeDatabase
             }
         }
         (new NativeNotificationWriter($this->container))->visibilityChanged(array_values(array_unique($accounts)));
-        $result=['deleted'=>true,'scopeId'=>$sid,'projectId'=>$pid,'deletedScopeIds'=>$deletedScopes,'records'=>$recordTombstones,'financeRecords'=>$financeTombstones,'cleanupPending'=>!empty(array_filter($graph['assets']))];
+        $result=['deleted'=>true,'scopeId'=>$sid,'projectId'=>$pid,'deletedScopeIds'=>$deletedScopes,'records'=>$recordTombstones,'financeRecords'=>$financeTombstones,'cleanupPending'=>!empty(array_filter($graph['assets'])) || ((new NativeAttachmentService($this->container))->available() && (bool)$this->one('SELECT storage_key FROM familyhub_document_cleanup LIMIT 1'))];
         $this->remember($sid,$user['id'],$request,$hash,$result);return $result;
     }
 
     private function graph($scope,$pid)
     {
-        $sid=$scope['id'];$members=[];$scopes=[$scope];$blockers=[];$records=[];$money=[];$assets=[];$counts=['spaces'=>0,'projects'=>0,'tasks'=>0,'events'=>0,'ideas'=>0,'photos'=>0,'finance'=>0,'other'=>0];
+        $sid=$scope['id'];$members=[];$scopes=[$scope];$blockers=[];$records=[];$money=[];$assets=[];$counts=['tables'=>0,'attachments'=>0,'spaces'=>0,'projects'=>0,'tasks'=>0,'events'=>0,'ideas'=>0,'photos'=>0,'finance'=>0,'other'=>0];
         if ($pid===null) {
             foreach ((new NativeOrganizationAccess($this->container))->relatedScopeIds($sid) as $id) {
                 if ($id===$sid) { continue; }
@@ -130,6 +132,11 @@ class NativeScopeLifecycleService extends NativeDatabase
                 $event=$this->one('SELECT entry_id FROM familyhub_payment_events WHERE scope_id=? AND event_id=?',[$id,$projection['event_id']]);
                 if (!in_array($projection['scope_id'],$closed,true) && ($pid===null || ($event && in_array($event['entry_id'],$financeIds,true)))) { $blockers[]=['code'=>'cross_scope_payment_dependency']; }
             }
+            if ((new NativeAttachmentService($this->container))->available()) {
+                $tables=$pid===null?$this->many('SELECT * FROM familyhub_tables WHERE scope_id=? AND deleted=0 ORDER BY id',[$id]):[];
+                $documents=array_values(array_filter($this->many('SELECT * FROM familyhub_attachments WHERE scope_id=? AND deleted=0 ORDER BY id',[$id]),fn($a)=>$pid===null || ($a['target_type']==='task' && in_array($a['target_id'],$ids,true))));
+                $counts['tables']+=count($tables);$counts['attachments']+=count($documents);$snapshot[]=[$tables,$documents];
+            }
             $snapshot[]=[$s,$all,$this->many('SELECT * FROM familyhub_finance_records WHERE scope_id=? ORDER BY id',[$id]),$assets[$id],$external];
         }
         $preview=['scopeId'=>$sid,'projectId'=>$pid,'name'=>$name,'scopeNames'=>array_column($scopes,'name'),'counts'=>$counts,'canDelete'=>!$blockers,'blockers'=>$blockers];
@@ -139,6 +146,7 @@ class NativeScopeLifecycleService extends NativeDatabase
     /** Retryable private cleanup after SQL commit. No payload/path is returned to callers. */
     public function finishFiles()
     {
+        (new NativeAttachmentService($this->container))->finishFiles();
         foreach ($this->many('SELECT * FROM familyhub_scope_deletion_files ORDER BY scope_id,path_hash LIMIT 500') as $file) {
             if (!preg_match('/^familyhub\/ideas\/[a-f0-9]{64}\/[a-f0-9]{64}$/D',$file['path'])) { continue; }
             $path=DATA_DIR.'/'.$file['path'];

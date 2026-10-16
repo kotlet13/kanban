@@ -24,7 +24,7 @@
 <input type="hidden" name="targetRevision" value="<?= (int)$report['target_revision'] ?>">
 <label>Razlog / Decision reason <textarea name="note" required maxlength="2000"></textarea></label>
 <select name="decision"><option value="reviewed">Pregledano / Reviewed</option><option value="resolved">Rešeno / Resolved</option><option value="dismissed">Zavrnjeno / Dismissed</option>
-<?php if ($report['target_type']==='record' && $report['redacted_at']===null): ?><option value="remove_content">Odstrani prikazani zapis / Remove shown record (revision checked)</option><?php endif ?>
+<?php if (in_array($report['target_type'],['record','table','attachment'],true) && $report['redacted_at']===null): ?><option value="remove_content">Odstrani prikazano vsebino / Remove shown content (revision checked)</option><?php endif ?>
 <?php if ($report['target_type']==='user' && $report['redacted_at']===null): ?><option value="restrict_member">Omeji člana tega prostora / Restrict member in this space</option><?php endif ?>
 <?php if ($report['target_type']==='user'): ?><option value="unrestrict_member">Odstrani omejitev / Undo space restriction (existing membership required)</option><?php endif ?>
 </select><label><input type="checkbox" name="confirmation" value="APPLY"> Izrecno potrjujem odstranitev besedila ali spremembo omejitve prikazane tarče / I explicitly confirm removal or access restriction changes for the shown target</label><button type="submit" class="btn btn-blue">Shrani odločitev / Save decision</button></form></section>

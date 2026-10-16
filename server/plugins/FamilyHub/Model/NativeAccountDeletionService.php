@@ -85,8 +85,9 @@ class NativeAccountDeletionService extends NativeDatabase
             }
             $this->change('INSERT INTO familyhub_deletion_receipts(operation_id,token_hash,deleted_at) VALUES(?,?,?)',[$id,$hash,time()]);
             $this->purgeModeration($user,$deleteScopes);
-            $this->applyShared($graph,$user,$deleteScopes);
+            $this->applyShared($graph,$user,$deleteScopes,$id);
             $this->queueIdeaFiles($id,$user,$deleteScopes);
+            (new NativeAttachmentService($this->container))->removeAccount($user,$deleteScopes,$id);
             $this->purge($user,$scopes,$deleteScopes);
             $this->purgeLegacy($user,$graph['privateProjects'],$id);
             return ['operationId'=>$id];
@@ -123,6 +124,10 @@ class NativeAccountDeletionService extends NativeDatabase
         }
         $rows=$this->many("SELECT id FROM familyhub_moderation_reports r WHERE reporter_account_id=? OR (target_type='user' AND target_id=?) OR EXISTS(SELECT 1 FROM familyhub_records g WHERE r.target_type='record' AND g.scope_id=r.scope_id AND g.id=r.target_id AND g.created_by=?) OR EXISTS(SELECT 1 FROM familyhub_finance_records f WHERE r.target_type='finance' AND f.scope_id=r.scope_id AND f.id=r.target_id AND f.created_by=?)",[$account,$account,$account,$account]);
         foreach ($rows as $row) { $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$row['id']]); }
+        if ((new NativeAttachmentService($this->container))->available()) {
+            $documentReports=$this->many("SELECT r.id FROM familyhub_moderation_reports r WHERE (r.target_type='table' AND EXISTS(SELECT 1 FROM familyhub_tables t WHERE t.scope_id=r.scope_id AND t.id=r.target_id AND t.created_by=?)) OR (r.target_type='attachment' AND EXISTS(SELECT 1 FROM familyhub_attachments a WHERE a.scope_id=r.scope_id AND a.id=r.target_id AND a.owner_account_id=?))",[$account,$account]);
+            foreach ($documentReports as $row) { $this->change('DELETE FROM familyhub_moderation_audit WHERE report_id=?',[$row['id']]);$this->change('DELETE FROM familyhub_moderation_reports WHERE id=?',[$row['id']]); }
+        }
         $this->change('DELETE FROM familyhub_policy_acceptances WHERE account_id=?',[$account]);
         $this->change('DELETE FROM familyhub_moderation_blocks WHERE account_id=?',[$account]);
         $this->change('DELETE FROM familyhub_moderation_audit WHERE admin_id=?',[$user['id']]);
@@ -176,7 +181,7 @@ class NativeAccountDeletionService extends NativeDatabase
         return $value;
     }
 
-    private function applyShared(array $graph,array $user,array $deleteScopes)
+    private function applyShared(array $graph,array $user,array $deleteScopes,$operation)
     {
         $account=$user['account_id'];$changedScopes=[];$affectedRecipients=[];
         foreach ($graph['organizationLinks']??[] as $link) {
@@ -218,6 +223,7 @@ class NativeAccountDeletionService extends NativeDatabase
             // belonging to another actor. Remove all copies for changed records.
             foreach (['familyhub_operations','familyhub_finance_operations'] as $table) { $this->change('UPDATE '.$table.' SET response=?,status=409 WHERE scope_id=? AND response LIKE ?',[json_encode(['errorCode'=>'operation_redacted','details'=>(object)[]]),$m['scopeId'],'%'.$m['id'].'%']); }
             if ($m['deleted']) {
+                if (!$finance) { (new NativeAttachmentService($this->container))->removeTarget($m['scopeId'],'task',$m['id'],$operation); }
                 $affectedRecipients=array_merge($affectedRecipients,array_column($this->many('SELECT DISTINCT recipient_account_id FROM familyhub_inbox WHERE scope_id=? AND target_id=?',[$m['scopeId'],$m['id']]),'recipient_account_id'));
                 $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=?)',[$m['scopeId'],$m['id']]);
                 $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=?)',[$m['scopeId'],$m['id']]);
@@ -293,8 +299,12 @@ class NativeAccountDeletionService extends NativeDatabase
 
     public function finishFiles($id)
     {
+        (new NativeAttachmentService($this->container))->finishFiles();
         foreach ($this->many('SELECT path FROM familyhub_deletion_files WHERE operation_id=?',[$id]) as $row) {
             try {
+                if (preg_match('/^familyhub\/attachments\/([a-f0-9]{64})$/D',$row['path'],$document)) {
+                    if ((new NativeAttachmentService($this->container))->finishStorageKey($document[1])) { $this->change('DELETE FROM familyhub_deletion_files WHERE operation_id=? AND path=?',[$id,$row['path']]); }continue;
+                }
                 if (preg_match('/^familyhub\/ideas\/[a-f0-9]{64}\/[a-f0-9]{64}$/D',$row['path'])) {
                     $ideaPath=DATA_DIR.'/'.$row['path'];if ((is_file($ideaPath) || is_link($ideaPath)) && !@unlink($ideaPath)) { continue; }
                     if (file_exists($ideaPath) || is_link($ideaPath)) { continue; }

@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 18;
+const VERSION = 19;
 
 function version_1(PDO $pdo)
 {
@@ -107,4 +107,9 @@ function version_17(PDO $pdo)
 function version_18(PDO $pdo)
 {
     LifecycleSchema::create($pdo, false);
+}
+
+function version_19(PDO $pdo)
+{
+    DocumentsSchema::create($pdo, false);
 }

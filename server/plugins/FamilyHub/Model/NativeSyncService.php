@@ -98,6 +98,7 @@ class NativeSyncService extends NativeDatabase
             if ($projectRoot!==null && $op['type']==='project' && !$op['deleted']) {
                 $this->change('UPDATE familyhub_scopes SET name=? WHERE id=?',[$op['payload']['title'],$scopeId]);
             }
+            if ($op['type']==='task' && $op['deleted']) { (new NativeAttachmentService($this->container))->removeTarget($scopeId,'task',$recordId); }
             $record = $this->wire($this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?', [$scopeId, $recordId]));
             (new NativeNotificationWriter($this->container))->recordChanged($scopeId, $record, $current, $actor['user']['account_id']);
             (new NativeReminderService($this->container))->reconcile($scopeId, $record, $current);

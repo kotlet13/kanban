@@ -9,5 +9,6 @@ try {
     $result = (new \Kanboard\Plugin\FamilyHub\Model\NativeReminderService($container))->runDue((int)$limit);
     $result['moderationReportsRedacted']=(new \Kanboard\Plugin\FamilyHub\Model\NativeModerationService($container))->purgeExpired();
     $result['ideaAssetsRemoved']=(new \Kanboard\Plugin\FamilyHub\Model\NativeIdeaAssetService($container))->cleanup();
+    $result['attachmentsRemoved']=(new \Kanboard\Plugin\FamilyHub\Model\NativeAttachmentService($container))->cleanup();
     echo json_encode($result, JSON_THROW_ON_ERROR)."\n";
 } catch (\Throwable $error) { fwrite(STDERR, "Reminder run failed; no sensitive details logged\n"); exit(1); }

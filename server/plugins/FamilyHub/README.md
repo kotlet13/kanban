@@ -1,5 +1,9 @@
 # FamilyHub 0.14.1
 
+## Organization tables and private documents (local schema19)
+
+Additive source APIs, exclusive device leases, authenticated uploads/downloads, moderation and durable private-file cleanup are documented in [DOCUMENTS_API.md](DOCUMENTS_API.md). Capability flags stay off until every schema19 table is ready. Backups must include all database tables and every file beneath private `DATA_DIR`, including `familyhub/attachments/`. This source change is separate from deployment and public releases.
+
 ## Current notification defaults
 
 All categories, including reminders and Ideas, default to in-app, push and sound enabled; email remains opt-in. An absent sound field inherits true. Every explicitly stored false or true remains unchanged: this code-only correction performs no migration, backfill or rewriting of existing preferences. Preference reads, event creation and delivery do not materialize default settings; workers reread the current preference before sending. System permissions and user channel/quiet-mode settings still apply.

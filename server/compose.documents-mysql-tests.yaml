@@ -1,0 +1,14 @@
+# Add to compose.documents-tests.yaml with -p familyhub-documents-mysql.
+services:
+  database:
+    image: mysql:8.4@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
+    command: ["--skip-log-bin"]
+    environment:
+      MYSQL_DATABASE: kanboard
+      MYSQL_USER: familyhub_dev
+      MYSQL_PASSWORD: familyhub-development-only
+      MYSQL_ROOT_PASSWORD: familyhub-root-development-only
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+  mariadb:
+    ports: !override ["127.0.0.1:18502:80"]

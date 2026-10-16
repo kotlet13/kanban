@@ -48,24 +48,33 @@ class NativeModerationAdminService extends NativeDatabase
                 if ($params['targetRevision']!==(int)$report['target_revision']) { throw new NativeError('report_preview_changed',409); }
             }
             if ($params['action']==='remove_content') {
-                if ($report['target_type']!=='record') { throw new NativeError('financial_history_preserved',403); }
-                $record=$this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$scope['id'],$report['target_id']]);
-                if (!$record || (int)$record['revision']!==$params['targetRevision'] || (int)$record['deleted']===1) { throw new NativeError('report_preview_changed',409); }
-                // Preserve project structure and any dependencies; remove the reported text only when needed.
-                $structural=($scope['project_root_id']??null)===$record['id'];
-                try { (new NativeRecordPolicy($this->container))->noChildren($scope['id'],$record['id'],$record['type']); }
-                catch (NativeError $error) { if ($error->errorCode!=='live_children') { throw $error; }$structural=true; }
-                $sequence=$this->advance($scope);$stamp=gmdate('Y-m-d\TH:i:s\Z');
-                if ($structural) {
-                    $payload=json_decode($record['payload'],true,32,JSON_THROW_ON_ERROR);
-                    foreach (['title','name'] as $field) { if (isset($payload[$field])) { $payload[$field]='[Content removed by administrator]'; } }
-                    foreach (['notes','description'] as $field) { if (isset($payload[$field])) { $payload[$field]=''; } }
-                    $this->change('UPDATE familyhub_records SET payload=?,revision=revision+1,sequence=?,updated_at=?,updated_by=NULL WHERE scope_id=? AND id=?',[$this->canonical($payload),$sequence,$stamp,$scope['id'],$record['id']]);
-                    if (($scope['project_root_id']??null)===$record['id']) { $this->change('UPDATE familyhub_scopes SET name=?,metadata_revision=metadata_revision+1 WHERE id=?',['[Content removed by administrator]',$scope['id']]); }
-                } else { $this->change('UPDATE familyhub_records SET deleted=1,payload=NULL,revision=revision+1,sequence=?,updated_at=?,updated_by=NULL WHERE scope_id=? AND id=?',[$sequence,$stamp,$scope['id'],$record['id']]); }
-                $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND target_id=? AND target_type=? AND state='pending'",[$scope['id'],$record['id'],$record['type']]);
-                $accounts=array_column((new NativeOrganizationAccess($this->container))->members($scope['id']),'accountId');
-                (new NativeNotificationWriter($this->container))->visibilityChanged($accounts);
+                if (in_array($report['target_type'],['table','attachment'],true)) {
+                    $service=$report['target_type']==='table'?new NativeTableService($this->container):new NativeAttachmentService($this->container);
+                    try { $current=$service->moderationEvidence($scope,$report['target_id']); } catch (NativeError $e) { throw new NativeError('report_preview_changed',409); }
+                    $snapshot=json_decode($report['snapshot'],true,32,JSON_THROW_ON_ERROR);
+                    if ($current['revision']!==$params['targetRevision'] || !hash_equals($snapshot['evidence']['documentHash']??'',$current['documentHash'])) { throw new NativeError('report_preview_changed',409); }
+                    $service->removeInTransaction($scope['id'],$report['target_id']);
+                } else {
+                    if ($report['target_type']!=='record') { throw new NativeError('financial_history_preserved',403); }
+                    $record=$this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$scope['id'],$report['target_id']]);
+                    if (!$record || (int)$record['revision']!==$params['targetRevision'] || (int)$record['deleted']===1) { throw new NativeError('report_preview_changed',409); }
+                    // Preserve project structure and any dependencies; remove the reported text only when needed.
+                    $structural=($scope['project_root_id']??null)===$record['id'];
+                    try { (new NativeRecordPolicy($this->container))->noChildren($scope['id'],$record['id'],$record['type']); }
+                    catch (NativeError $error) { if ($error->errorCode!=='live_children') { throw $error; }$structural=true; }
+                    $sequence=$this->advance($scope);$stamp=gmdate('Y-m-d\TH:i:s\Z');
+                    if ($structural) {
+                        $payload=json_decode($record['payload'],true,32,JSON_THROW_ON_ERROR);
+                        foreach (['title','name'] as $field) { if (isset($payload[$field])) { $payload[$field]='[Content removed by administrator]'; } }
+                        foreach (['notes','description'] as $field) { if (isset($payload[$field])) { $payload[$field]=''; } }
+                        $this->change('UPDATE familyhub_records SET payload=?,revision=revision+1,sequence=?,updated_at=?,updated_by=NULL WHERE scope_id=? AND id=?',[$this->canonical($payload),$sequence,$stamp,$scope['id'],$record['id']]);
+                        if (($scope['project_root_id']??null)===$record['id']) { $this->change('UPDATE familyhub_scopes SET name=?,metadata_revision=metadata_revision+1 WHERE id=?',['[Content removed by administrator]',$scope['id']]); }
+                    } else { $this->change('UPDATE familyhub_records SET deleted=1,payload=NULL,revision=revision+1,sequence=?,updated_at=?,updated_by=NULL WHERE scope_id=? AND id=?',[$sequence,$stamp,$scope['id'],$record['id']]); }
+                    if (!$structural && $record['type']==='task') { (new NativeAttachmentService($this->container))->removeTarget($scope['id'],'task',$record['id']); }
+                    $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND target_id=? AND target_type=? AND state='pending'",[$scope['id'],$record['id'],$record['type']]);
+                    $accounts=array_column((new NativeOrganizationAccess($this->container))->members($scope['id']),'accountId');
+                    (new NativeNotificationWriter($this->container))->visibilityChanged($accounts);
+                }
             }
             if ($params['action']==='restrict_member') {
                 if ($report['target_type']!=='user') { throw new NativeError('validation_error'); }

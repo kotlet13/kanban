@@ -31,6 +31,7 @@ class NativeProjectSharingService extends NativeDatabase
             foreach ($records as $id=>$row) {
                 $sequence++;$copy=$row;$copy['scope_id']=$pid;$copy['sequence']=$sequence;
                 $columns=array_keys($copy);$this->change('INSERT INTO '.$table.'('.implode(',',$columns).') VALUES('.implode(',',array_fill(0,count($columns),'?')).')',array_values($copy));
+                if (!$finance && $row['type']==='task' && !(int)$row['deleted']) { (new NativeAttachmentService($this->container))->relocateTarget($sid,$pid,'task',$id); }
                 if (!$finance && $row['type']==='idea' && !(int)$row['deleted']) { (new NativeIdeaAssetService($this->container))->relocate($sid,$pid,$id,json_decode($row['payload'],true,32,JSON_THROW_ON_ERROR)); }
                 $this->change('UPDATE '.$policy.' SET sequence=sequence+1 WHERE '.$key.'=?',[$sid]);
                 $sourceSequence=$this->one('SELECT sequence FROM '.$policy.' WHERE '.$key.'=?',[$sid])['sequence'];
@@ -98,6 +99,7 @@ class NativeProjectSharingService extends NativeDatabase
         $wire=['scopeId'=>$sid,'projectId'=>$pid,'projectName'=>json_decode($project[0]['payload'],true)['title'],'canApply'=>!$blockers,'blockers'=>$blockers,'movedRecordIds'=>array_keys($selected),'movedFinanceRecordIds'=>array_keys($fin),'movedReminderIds'=>array_column($movedReminders,'id')];
         $wire['financeAccounts']=array_values(array_map(function($r) { $p=json_decode($r['payload']??'null',true,32,JSON_THROW_ON_ERROR);return ['id'=>$r['id'],'name'=>$p['name'],'currency'=>$p['currency'],'openingBalanceMinor'=>$p['openingBalanceMinor'],'openingBalanceAt'=>$p['openingBalanceAt']??null]; },array_filter($fin,fn($r)=>$r['type']==='financeAccount' && !(int)$r['deleted'])));
         $wire['householdPeople']=array_values(array_map(function($r) { $p=json_decode($r['payload']??'null',true,32,JSON_THROW_ON_ERROR);return ['id'=>$r['id'],'name'=>$p['name'],'notes'=>$p['notes']]; },array_filter($selected,fn($r)=>$r['type']==='householdPerson' && !(int)$r['deleted'])));
+        if ((new NativeAttachmentService($this->container))->available()) { $documents=array_values(array_filter($this->many('SELECT * FROM familyhub_attachments WHERE scope_id=? AND deleted=0 ORDER BY id',[$sid]),fn($a)=>$a['target_type']==='task' && isset($selected[$a['target_id']])));$wire['movedAttachmentIds']=array_column($documents,'id');$wire['documentGraphHash']=hash('sha256',$this->canonical($documents)); }
         $wire['previewHash']=hash('sha256',$this->canonical([$scope,$all,$money,$reminders,$wire]));
         return ['preview'=>$wire,'records'=>$selected,'finance'=>$fin,'financeVersion'=>$version];
     }
