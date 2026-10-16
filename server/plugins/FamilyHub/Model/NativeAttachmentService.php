@@ -158,7 +158,11 @@ class NativeAttachmentService extends NativeDocumentService
                 $s=$zip->statIndex($i);$name=$s['name'];$total+=$s['size'];
                 if ($total>104857600 || $s['size']>20971520 || ($s['comp_size']>0 && $s['size']/$s['comp_size']>1000) || preg_match('~(^/|(^|/)\.\.(/|$)|\\\\|\x00|vbaProject|\.exe$|\.dll$|\.bin$)~i',$name) || !empty($s['encryption_method'])) { return false; }
             }
-            if (in_array($ext,['odt','ods'],true)) { return @$zip->getFromName('mimetype')===$mime && $zip->locateName('content.xml')!==false; }
+            if (in_array($ext,['odt','ods'],true)) {
+                $entry=@$zip->statName('mimetype');$length=strlen($mime);
+                // Bound decompression independently of ZIP-advertised sizes.
+                return $entry!==false && $entry['size']===$length && @$zip->getFromName('mimetype',$length+1)===$mime && $zip->locateName('content.xml')!==false;
+            }
             return $zip->locateName('[Content_Types].xml')!==false && $zip->locateName($ext==='docx'?'word/document.xml':'xl/workbook.xml')!==false;
         } finally { if ($opened) { $zip->close(); }@unlink($temp); }
     }
