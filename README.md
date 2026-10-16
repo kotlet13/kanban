@@ -1,5 +1,10 @@
 # Jivie
 
+**16. oktober — Android 1.10.1 (31) oddan javno:** povečava preglednic z dvema
+prstoma, gumbi za povečavo in pomoč s primeri vseh podprtih formul.
+Google Play potrjuje »Spremembe v pregledu«; nova različica še ni potrjeno
+objavljena. Strežnik ostane isti. [Izdajni dokazi](docs/release/SPREADSHEET_ZOOM_1_10_1.md).
+
 **16. oktober — poenostavljena povabila in prostori izvedeni v izvoru:** namenski
 čarovnik za prvi vstop, ločena pravila sodelovanja, neposredno deljenje iz prostora
 in »Sinhroniziraj z oblakom« že pri ustvarjanju gospodinjstva ali organizacije.

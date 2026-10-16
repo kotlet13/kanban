@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+16. oktober — **Android1.10.1(31) dejansko oddan javno** po novem izrecnem
+naročilu. [Dokazi](docs/release/SPREADSHEET_ZOOM_1_10_1.md). Povečava preglednic
+in pomoč iz5fe4fdf, izoliranih443vhodov/330runtime,3spremenjeni+1nov proti30.
+Ena podpisana AAB31SHA1ecce6df…/81.312.731B; istiSDK/locks/config/native/
+podpis/8dovoljenj,9ne-app.so bajtnoisti30,8×64bitLOAD16KiB/bundleCRC PASS.
+70izoliranihFlutter+23release+7FirebasePASS/sourcecheckerPASS/analizačista.
+Production4698247597354229997/release7,31vključena/30izključena,100%/iste
+države/SLen-USopombe/0izgubljenihnaprav. Končno »1sprememba poslana v pregled«,
+**Spremembe v pregledu**, hitre kontrole še tečejo/upravljanoOFF.
+**Javna31/odobritev še nista potrjeni.** Svež Play pred oddajo potrdi javno30
+Aktivno/1država/brezneobjavljenih; starejši pending30 je zgodovina.
+Galerije/DataSafety/opisi/splet/strežniki/sheme/Apple isti, interni ni uporabljen.
+Obstoječe DataStoreRELRO opozorilo30/isti knjižnici, fizični16KiB ni potrjen.
+Ta odobritev velja za31; naslednja oddaja potrebuje novo izrecno naročilo.
+
 16. oktober — **povečava preglednic in pomoč pri formulah izvedeni v izvoru**
 po uporabnikovem S25 preizkusu. [Dokazi](docs/SPREADSHEET_ZOOM_HELP.md).
 Pinch50–200% samo mreža/besedilo/oznake, ohranjen položaj pod prstoma,

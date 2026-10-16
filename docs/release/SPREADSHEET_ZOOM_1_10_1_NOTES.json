@@ -1,0 +1,8 @@
+{
+  "version": "1.10.1+31",
+  "releaseName": "1.10.1 (31) — povečava preglednic in pomoč",
+  "locales": {
+    "sl": "Preglednice lahko zdaj z dvema prstoma povečate ali pomanjšate od 50 % do 200 %. Dodani so gumbi za povečavo in ponastavitev prikaza. V pomoči najdete podprte funkcije SUM, AVERAGE, COUNT, MIN in MAX ter primere formul.",
+    "en-US": "Pinch to zoom spreadsheets from 50% to 200%, or use the zoom and reset controls. Formula help now lists the supported SUM, AVERAGE, COUNT, MIN and MAX functions with practical examples."
+  }
+}

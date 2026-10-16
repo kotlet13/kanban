@@ -60,15 +60,15 @@ assert fingerprint == re.search(r'SHA256:\s*(\S+)', previous_cert).group(1)
 tree = ET.fromstring(manifest)
 android = '{http://schemas.android.com/apk/res/android}'
 assert tree.attrib['package'] == 'si.triparna.jivie'
-assert tree.attrib[android + 'versionCode'] == '30'
-assert tree.attrib[android + 'versionName'] == '1.10.0'
+assert tree.attrib[android + 'versionCode'] == '31'
+assert tree.attrib[android + 'versionName'] == '1.10.1'
 assert tree.find('application').attrib.get(android + 'debuggable', 'false') == 'false'
 assert tree.find('application').attrib[android + 'enableOnBackInvokedCallback'] == 'true'
 uses_sdk = tree.find('uses-sdk')
 assert uses_sdk.attrib[android + 'minSdkVersion'] == '24'
 assert uses_sdk.attrib[android + 'targetSdkVersion'] == '36'
 
-# Verify the native public client identity against the already submitted AAB29.
+# Verify the native public client identity against the already submitted AAB30.
 # No client-config, signing-properties, keystore or credential file is opened.
 def previous_bundle(*args):
     return run(JAVA / 'java', '-jar', BUNDLETOOL, *args, f'--bundle={PREVIOUS}')
@@ -79,7 +79,7 @@ previous_permissions = sorted(node.attrib[android + 'name'] for node in previous
 removed_permissions = sorted(set(previous_permissions) - set(permissions))
 added_permissions = sorted(set(permissions) - set(previous_permissions))
 expected_removed = []
-assert removed_permissions == expected_removed and not added_permissions, 'Unexpected permission difference from AAB29'
+assert removed_permissions == expected_removed and not added_permissions, 'Unexpected permission difference from AAB30'
 assert len(permissions) == 8, 'Other eight permissions must remain'
 assert 'com.crazecoder.openfile' not in manifest, 'Old openfile FileProvider remains'
 share = [node for node in tree.find('application').findall('provider') if node.attrib.get(android + 'name') == 'dev.fluttercommunity.plus.share.ShareFileProvider']
@@ -87,7 +87,7 @@ assert len(share) == 1
 assert share[0].attrib[android + 'authorities'] == 'si.triparna.jivie.flutter.share_provider'
 assert share[0].attrib[android + 'exported'] == 'false' and share[0].attrib[android + 'grantUriPermissions'] == 'true'
 run('python3', ROOT / 'tools/release/check_android_permissions.py', QA / 'android-release-manifest.xml')
-(QA / 'android-release-permission-diff.json').write_text(json.dumps({'previousVersionCode': 29, 'removed': removed_permissions, 'added': added_permissions, 'preserved': permissions, 'oldOpenfileProviderAbsent': True, 'sharePlusFileProviderPreserved': True}, indent=2) + '\n')
+(QA / 'android-release-permission-diff.json').write_text(json.dumps({'previousVersionCode': 30, 'removed': removed_permissions, 'added': added_permissions, 'preserved': permissions, 'oldOpenfileProviderAbsent': True, 'sharePlusFileProviderPreserved': True}, indent=2) + '\n')
 (QA / 'android-release-permissions.json').write_text(json.dumps(permissions, indent=2) + '\n')
 
 project_resource = bundle('dump', 'resources', '--resource=string/project_id', '--values')
@@ -104,7 +104,7 @@ with zipfile.ZipFile(ARTIFACT) as archive:
     with zipfile.ZipFile(PREVIOUS) as previous_archive:
         for name in archive.namelist():
             if name.endswith('/libflutter.so'):
-                assert hashlib.sha256(archive.read(name)).digest() == hashlib.sha256(previous_archive.read(name)).digest(), 'Flutter engine differs from submitted AAB29'
+                assert hashlib.sha256(archive.read(name)).digest() == hashlib.sha256(previous_archive.read(name)).digest(), 'Flutter engine differs from submitted AAB30'
     assert not any('.firebase' in n or n.endswith('/client.json') for n in archive.namelist())
     # Inspect archive names and bytes without exposing file content or credentials.
     forbidden_names = re.compile(r'(?:service[-_]?account|jivie-key\.properties|\.(?:p8|jks|keystore)$)', re.I)
@@ -155,14 +155,14 @@ evidence = {
     'sourceInputAggregateSha256': source_manifest['aggregateSha256'],
     'sourceFreezeVerified': True,
     'sha256': sha, 'bytes': ARTIFACT.stat().st_size,
-    'package': 'si.triparna.jivie', 'versionName': '1.10.0', 'versionCode': 30,
+    'package': 'si.triparna.jivie', 'versionName': '1.10.1', 'versionCode': 31,
     'minSdk': 24, 'targetSdk': 36, 'signed': True,
-    'permissions': permissions, 'permissionDiffComparedToPreviousAab29': True, 'removedPermissions': removed_permissions, 'addedPermissions': added_permissions, 'oldOpenfileProviderAbsent': True, 'sharePlusFileProviderPreserved': True,
-    'flutterEngineByteIdenticalToPreviousAab29': True, 'existingDedicatedUploadCertificateMatched': True, 'certificateSha256': fingerprint,
+    'permissions': permissions, 'permissionDiffComparedToPreviousAab30': True, 'removedPermissions': removed_permissions, 'addedPermissions': added_permissions, 'oldOpenfileProviderAbsent': True, 'sharePlusFileProviderPreserved': True,
+    'flutterEngineByteIdenticalToPreviousAab30': True, 'existingDedicatedUploadCertificateMatched': True, 'certificateSha256': fingerprint,
     'bundleValidation': True, 'zipCrcValid': True, 'native64BitLibraries16kbVerified': verified64,
     'nativeAbis': sorted(abi_set), 'bundleNativeAlignment': 'PAGE_ALIGNMENT_16K',
     'nativeFirebaseResourcesPresent': True, 'nativeFirebaseClientIdentityMatched': True,
-    'firebaseResourceIdentityComparedToPreviousAab29': True,
+    'firebaseResourceIdentityComparedToPreviousAab30': True,
     'androidBackInvokedCallbackEnabled': True,
     'dartAotFirebaseProjectLiteralPresentInAllAbis': True,
     'privateSigningOrServiceAccountArtifactsAbsent': True, 'privateKeyMaterialAbsent': True,

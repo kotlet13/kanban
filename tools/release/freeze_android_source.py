@@ -70,7 +70,7 @@ def main():
         'nativeInputsIdentical':True,'dependencyLocksIdentical':True,'privateConfigurationHashesIdentical':True,
         'headDiffSha256':hashlib.sha256(diff).hexdigest(), 'baseCommit':head,
         'allSnapshotFiles':[{'path':p,'sha256':digest(destination/p)} for p in paths]}
-    (qa/'source-diff-from-29.json').write_text(json.dumps(comparison,indent=2)+'\n')
+    (qa / ('source-diff-from-' + previous['version'].split('+')[1] + '.json')).write_text(json.dumps(comparison,indent=2)+'\n')
     print(json.dumps({'source':str(destination),'files':len(rows),'runtimeFiles':len(runtime),'aggregateSha256':aggregate,'changed':len(comparison['changed']),'added':len(comparison['added']),'removed':len(comparison['removed']),'nativeLocksConfigurationIdentical':True}))
 
 

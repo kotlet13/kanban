@@ -1,5 +1,9 @@
 # Povečava preglednic in pomoč pri formulah — 16. oktober 2026
 
+Poznejše izrecno naročilo za javno oddajo je izvedeno v
+[Android 1.10.1 (31)](release/SPREADSHEET_ZOOM_1_10_1.md); spodaj so dokazi
+izvornega popravka pred to oddajo.
+
 Po uporabnikovem preizkusu na Samsungu S25 sta v izvoru dodana:
 
 - Povečava oziroma pomanjšava območja celic z dvema prstoma med 50 % in

@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ID = 'si.triparna.jivie'
-VERSION = '1.10.0+30'
+VERSION = '1.10.1+31'
 ANDROID_NS = '{http://schemas.android.com/apk/res/android}'
 
 
