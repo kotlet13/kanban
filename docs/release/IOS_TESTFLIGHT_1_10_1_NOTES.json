@@ -1,0 +1,5 @@
+{
+  "version": "1.10.1+31",
+  "sl": "Preizkusi nove organizacijske preglednice in dokumentne priloge do 20 MiB. Preglednico povečaj z dvema prstoma (50–200 %) in odpri pomoč za formule SUM, AVERAGE, COUNT, MIN ter MAX. Preveri poenostavljen sprejem povabila, prijavo/registracijo in deljenje prostora, zaključevanje opravil, projektni meni, Vrt, Idejnik, opomnike ter ohranitev podatkov po ponovnem zagonu.",
+  "en": "Test organization spreadsheets and document attachments up to 20 MiB. Pinch to zoom a sheet (50–200%) and open help for SUM, AVERAGE, COUNT, MIN and MAX. Check the simplified invitation, sign-in/registration and space-sharing flows, task completion, project menu, Garden, Ideas, reminders and data persistence after restarting."
+}

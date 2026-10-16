@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+16. oktober — **iOS1.10.1(31) dejansko naložen v Apple po novem naročilu**.
+[Dokazi](docs/release/IOS_TESTFLIGHT_1_10_1.md). Isti aktualni Android31 izvor
+3ce7105/main,443izdajnih/330runtime vhodov;48iOS/3locks/SDK/config isti28.
+En nov arhiv, obstoječi Cloud Managed Distribution/Store profil do26.9.2027,
+manageVersion/internalOnlyOFF/symbolsON; Organizer **App upload complete**
+16:11EuropeLjubljana. IPA28.449.881B/SHA33d7b387…/CRC/strictdeep/productionAPS/
+18privacy/Firebase PASS;23ciljnihFlutterPASS. 40novih iPhone/iPadSLENwidget
+slik/16capturePASS,32RGBnalagalnih slik ohrani vsakvidnipiksel; **še niso naložene**.
+Portal priJivie/TestFlight vrača napako; po lastnikovi ponovni prijavi/Safari
+**AppleComplete31 potrjen**, IDcae5d3b5…;25/26Testing/1tester nameščena26.
+Razdelek31napaka/AddBuild»Nobuildsavailable«/detailWhatToTestdisabled;
+FreeAppsActive, brezpogodb. **Testing31 še NI potrjen**;
+encryption/WhatToTest/skupina/Appleosnutek/slike še odprti. Ne ponovi gradnje ali
+uploada31 zaradi portala. Nobene javneAppleoddaje/novihpravic/pogodb/strežniške
+aliGooglePlayspremembe. Nepovezan varnostni dokument ostane nedotaknjen.
+
 16. oktober — **Android1.10.1(31) dejansko oddan javno** po novem izrecnem
 naročilu. [Dokazi](docs/release/SPREADSHEET_ZOOM_1_10_1.md). Povečava preglednic
 in pomoč iz5fe4fdf, izoliranih443vhodov/330runtime,3spremenjeni+1nov proti30.

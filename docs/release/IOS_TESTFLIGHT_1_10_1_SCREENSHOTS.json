@@ -1,0 +1,664 @@
+{
+  "version": "1.10.1+31",
+  "sourceCommit": "3ce710551f2aaf0d0583afe6bab1ce55606bbbd3",
+  "inputSha256": "15cfd77ecc601019cb1f27fb776f39414a7f5c3875c573bf7c161ad685bfec38",
+  "captureKind": "actual Flutter iOS widgets with isolated synthetic memory fixtures",
+  "physicalDeviceCapture": false,
+  "pixelsEdited": false,
+  "captures": [
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/01-pulse.png",
+      "sha256": "b0599585b39ab57ed627f138aee2ab962ef958804a504b423e78e7aa8bf5f921",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/02-planner.png",
+      "sha256": "983d4d6603718f0387bae599e043806e3b13128a7908dddd47a927cd98770467",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/03-calendar.png",
+      "sha256": "74e300fbc0367fba3f02ef03690a26cfd13d1e03b5c0a8c929891dc6a46e353a",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/04-ideas.png",
+      "sha256": "6a65cfc94477271feba26035c734d9306e55a71f1e245dc9e392c7d97eb4d326",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/05-projects.png",
+      "sha256": "24423089f7e57c9246b2ce90e26f14a78e4537e7b15acbddf2e2502597c8dc2f",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/06-shopping.png",
+      "sha256": "ecc6951bef44020c75ea9c03ee4f61a8a7bb012d200a768aa9a3b5a07627b21e",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/07-garden.png",
+      "sha256": "517834311c3be86774a306f8db1de15e978d701540a0039b8dcd9721a0e1476a",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/08-finances.png",
+      "sha256": "5f6ae7cfc44c27718dcf68c8c7e76b0cd4d65136a46376786eeca03555fec73e",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/09-spreadsheet.png",
+      "sha256": "15f6e85b14c73c4b5bb8e34c5b93e5afe9b41de11324c9a5465b8909006701cd",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/10-invitation.png",
+      "sha256": "5f4e5495068fec43dd73a1c909b523d86b154eec7917e8de62cac22dd7c5d876",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/01-pulse.png",
+      "sha256": "da0788d88137ce5ce14d05774716d5b4ca501bc344ded5dfd7165418c1e8308c",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/02-planner.png",
+      "sha256": "527af785a4c8d0975dffdb6926809daff92a100c626362129e1519136de8a1aa",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/03-calendar.png",
+      "sha256": "6416ddd83c2680230003c944c0b59cd2f5ca94a7491d82ec64fc926b8aa75b7d",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/04-ideas.png",
+      "sha256": "fdf3ac802d435e5c5e521673ee92e861d3fcd157eecbaf345cd873010389e18c",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/05-projects.png",
+      "sha256": "d060a7f5768ba7aa0b03196fdcbaa341273b35c381936098137f43091be7459e",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/06-shopping.png",
+      "sha256": "3426fed7623c5edfccb34669e74b97229445c7af5eea43d2510bf5c1405b1190",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/07-garden.png",
+      "sha256": "a0216be17c76ea8bd7b51fae8d6529d7a23bd9348621a5a290d1634c431e7eb3",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/08-finances.png",
+      "sha256": "a3662b080a55a3c78453adc13cf898e6ce0adfd1b77075e5f50dc6a388c26a7c",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/09-spreadsheet.png",
+      "sha256": "d43a9dd3448395a3adae6fab897d329ed90a2ab6fc2ebc701a4d13b2ff8a0f1d",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/10-invitation.png",
+      "sha256": "41480f33d2271bf71258c8091a4899349da0115341d6b26fca918c23b65af4cf",
+      "size": [
+        1320,
+        2868
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/01-pulse.png",
+      "sha256": "8c5f49083535a1de4b4fb82ed3ff9c259e88562938d68e184f3926b9420ff26d",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/02-planner.png",
+      "sha256": "9e403a5f66dfe621ea98691e3bf2b3a866af429e1e2f579fbb2ad67e65dfc602",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/03-calendar.png",
+      "sha256": "d227f3b07ec8c0830de8c35f30bf4ef03cdbe90b4cf6837bba82488edbb50522",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/04-ideas.png",
+      "sha256": "e12a73cf7057f031bcde7b1637d652bbce294a8a0bfe505bea23bfe44f8663d8",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/05-projects.png",
+      "sha256": "4cde553d52c08153b8d5204d369e8f13b0ef713d88740cb1774f8249064ff5b2",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/06-shopping.png",
+      "sha256": "3384de88313eebea565374b96548c014136dcb6e7f56e215187bdf69d82007c5",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/07-garden.png",
+      "sha256": "e47bc839823defe88f829a77a4cb275595ed4fb98508457e845bec99aa6955a1",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/08-finances.png",
+      "sha256": "3e78978937c232eca70cab9d10e0fa6687ab16b57baac8caa608a5b1097e5f3d",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/09-spreadsheet.png",
+      "sha256": "bfae064f45cae86460fe67b0a72c273fe12f47fa0c794cde450b5a666e4e0965",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/10-invitation.png",
+      "sha256": "0ffb3b004788f3a807d32655e3e851d975267fbc9c54dccc25f644978a9cf3c7",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/01-pulse.png",
+      "sha256": "4ee71d7151caff963c944733ff4bc70e923574b9d88796e6f82c6aff50459977",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/02-planner.png",
+      "sha256": "2c82551a9020d2ddaad6effe7ece00020b39c9bae496ea8324da20aa15d60013",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/03-calendar.png",
+      "sha256": "f8cd28e64bdbfddb49b129d7b206cddc3f160621debbcc75efcd557f4b133497",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/04-ideas.png",
+      "sha256": "94e55050cc070afee36beb26dfe154c59ef93a3e870d7d565930e3e54e28a593",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/05-projects.png",
+      "sha256": "b80531c8a3238c3017e6637dbdd36cd9505ad8672099a953d244524d6b0285fd",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/06-shopping.png",
+      "sha256": "c389b09980571a40e7ef03340b69451d7dcac9275884405b29e206d6d5dce275",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/07-garden.png",
+      "sha256": "cbc7c566bd89cae046f63e8f87b2622155d0b39bd7ecffe64c7b7758bf9c9729",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/08-finances.png",
+      "sha256": "e756ca17230361bf5e289d5730f765e4c436d0107a362602254232e7ea24e5ea",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/09-spreadsheet.png",
+      "sha256": "9a9676b154ab983876c48af7cfc85551dde2fbc485f5a147778e0997917c79b4",
+      "size": [
+        2064,
+        2752
+      ]
+    },
+    {
+      "path": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/10-invitation.png",
+      "sha256": "750af255a682a5f542c042185c04b494d5c6d5f4942d757298f7f29093893f6c",
+      "size": [
+        2064,
+        2752
+      ]
+    }
+  ],
+  "galleryOrder": [
+    "01-pulse",
+    "02-planner",
+    "04-ideas",
+    "09-spreadsheet",
+    "05-projects",
+    "06-shopping",
+    "07-garden",
+    "08-finances"
+  ],
+  "gallery": [
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 1,
+      "scene": "01-pulse",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/01-pulse.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-01-pulse.png",
+      "sha256": "faafefa832061b989014831e54e34401e9f238edb145eee2f284a7013036971e",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 2,
+      "scene": "02-planner",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/02-planner.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-02-planner.png",
+      "sha256": "a3f5cb78eb0b4974aa729bcf0ab6f033dcfb15521ec272e3f31eb4d42a2cd9fe",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 3,
+      "scene": "04-ideas",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/04-ideas.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-03-ideas.png",
+      "sha256": "02880f5e417e809ee09ff072358cae964bf72ba189f8285d42c0547a8e02f956",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/09-spreadsheet.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-04-spreadsheet.png",
+      "sha256": "3c75d92740e4d97a098f4fcaa8069f370d4d448770db338ba621d2c5c9dd65d4",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 5,
+      "scene": "05-projects",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/05-projects.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-05-projects.png",
+      "sha256": "010ebf6a704382c511c562419602cd888a5c79370435803d420763ee6d5a2ec4",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 6,
+      "scene": "06-shopping",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/06-shopping.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-06-shopping.png",
+      "sha256": "4bb1e5c0cbf060399206798ac36f7de2c63fe38b89ec7b0aa26ae0cbcea44526",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 7,
+      "scene": "07-garden",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/07-garden.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-07-garden.png",
+      "sha256": "0f2e9f0f82cc42bfe16769cafdbb8ae049c27277cdab93e911c866388d289128",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "sl",
+      "position": 8,
+      "scene": "08-finances",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/sl/08-finances.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/sl/jivie-1.10.1-ios-iphone-sl-08-finances.png",
+      "sha256": "00e35e534a76994202e00447c9ad6c6aca5eec080de4edbb78ab09979a1fd4a2",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 1,
+      "scene": "01-pulse",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/01-pulse.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-01-pulse.png",
+      "sha256": "3a27ce89b1892241492e705088327f93af768c4a4e58d7659579e48229b023d6",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 2,
+      "scene": "02-planner",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/02-planner.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-02-planner.png",
+      "sha256": "dd2a1368f850d8a053f054c1810094b389007796b1aaa38a8264bb7c15d0024e",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 3,
+      "scene": "04-ideas",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/04-ideas.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-03-ideas.png",
+      "sha256": "7d871744e3eb53fad0abeecf7206acaa97cc8c33a6ed3255565d75034f130863",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/09-spreadsheet.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-04-spreadsheet.png",
+      "sha256": "ad8cc04a6a0e71b6e94958dcb9423cdecb3bf4b8b73b02be60c3c60b73d4f513",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 5,
+      "scene": "05-projects",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/05-projects.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-05-projects.png",
+      "sha256": "7827956c2a4d4bb6e82300c7d86e691fab3f462738045ef55da66b55c02a3d38",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 6,
+      "scene": "06-shopping",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/06-shopping.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-06-shopping.png",
+      "sha256": "dad483292ed7704a195cb081149a97e839a3db8359376db25dbbd2aadc7a4bbc",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 7,
+      "scene": "07-garden",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/07-garden.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-07-garden.png",
+      "sha256": "45a6c25f07e22a93334cf975b90f28e3b6e294a9cfc743cd99c5c67ecfe54abc",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-iphone",
+      "locale": "en",
+      "position": 8,
+      "scene": "08-finances",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-iphone/en/08-finances.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-iphone/en/jivie-1.10.1-ios-iphone-en-08-finances.png",
+      "sha256": "41c800d1040a017ecef43dbee2738ea252675c2f2f6a8ea97f1ad9e87a736326",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 1,
+      "scene": "01-pulse",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/01-pulse.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-01-pulse.png",
+      "sha256": "101952644acef6026cc3764153affe9542779b90068d4e2b01070ca324dc1dac",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 2,
+      "scene": "02-planner",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/02-planner.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-02-planner.png",
+      "sha256": "8cfb46d065cb9274584166f9453869de32fd2a625f8ae17d88d0d46c80450288",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 3,
+      "scene": "04-ideas",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/04-ideas.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-03-ideas.png",
+      "sha256": "8f34f5988de13c7d9b24834ddc57a7a3858460afea191b510e56d37de8358904",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/09-spreadsheet.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-04-spreadsheet.png",
+      "sha256": "4b3e7e78377b6c2f317a3eb3a0115ea3f496a2629085d680d93e8e9a68e53fd1",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 5,
+      "scene": "05-projects",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/05-projects.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-05-projects.png",
+      "sha256": "98b73e47178871d622e4dbe6b93714c17783a67216b510ad02882782983ae549",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 6,
+      "scene": "06-shopping",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/06-shopping.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-06-shopping.png",
+      "sha256": "32ec2c7b08916323278418d7d281d5e24e570ceb1305b1c8d0323ad1c1f6ea04",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 7,
+      "scene": "07-garden",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/07-garden.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-07-garden.png",
+      "sha256": "c553a63c0cef23d1837be22730cb8627ce0aaccc435ec0619f281daa6fe895df",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "sl",
+      "position": 8,
+      "scene": "08-finances",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/sl/08-finances.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/sl/jivie-1.10.1-ios-ipad-sl-08-finances.png",
+      "sha256": "0715e748be8effc85298bbacd30322db2c72d961598e69471b6944b34c644a09",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 1,
+      "scene": "01-pulse",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/01-pulse.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-01-pulse.png",
+      "sha256": "ea6f8462040fdde7217226f1a1751a55ec9809998755174e3197646da8f09688",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 2,
+      "scene": "02-planner",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/02-planner.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-02-planner.png",
+      "sha256": "e15b6b3a9cddd43c96ffc7012d021b5b91108892f7506fe1a49b8dab98d2690a",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 3,
+      "scene": "04-ideas",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/04-ideas.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-03-ideas.png",
+      "sha256": "0ce5857dc4b4f5af292ac82bbe82302fe28f0de1bc048b5d6330790d8a69105f",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 4,
+      "scene": "09-spreadsheet",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/09-spreadsheet.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-04-spreadsheet.png",
+      "sha256": "1eaadbd7074e77d403e75a2fc2d1f27584cb8a2865661d249c447dbcbc879a5f",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 5,
+      "scene": "05-projects",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/05-projects.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-05-projects.png",
+      "sha256": "cdbe616c40e7756c078bd76d09ada4bb99e76d9dbc5a641483df06edd2af8db3",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 6,
+      "scene": "06-shopping",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/06-shopping.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-06-shopping.png",
+      "sha256": "3c270b5b15fba5666fc76a240c31e764e5d466f22ccdeac304a67b51627f97fe",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 7,
+      "scene": "07-garden",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/07-garden.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-07-garden.png",
+      "sha256": "608af1e7c27e64060e24d86bcc2b4f166624d55da2305208cd315698783fbe61",
+      "rgbPixelsPreserved": true
+    },
+    {
+      "device": "ios-ipad",
+      "locale": "en",
+      "position": 8,
+      "scene": "08-finances",
+      "source": "build/qa/ios-testflight-1.10.1-20261016/screenshots/ios-ipad/en/08-finances.png",
+      "upload": "build/qa/ios-testflight-1.10.1-20261016/upload/ios-ipad/en/jivie-1.10.1-ios-ipad-en-08-finances.png",
+      "sha256": "d47d3b513fa899db44adc16d9026271175e4fa4e5cf0d380e00cdb86aacbb1bf",
+      "rgbPixelsPreserved": true
+    }
+  ],
+  "captureTestsPassed": 16,
+  "uploaded": false
+}

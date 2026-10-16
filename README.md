@@ -1,5 +1,11 @@
 # Jivie
 
+**16. oktober — iOS 1.10.1 (31) uspešno naložen v Apple:** aktualni izvor se
+ujema z Android31, novi arhiv/Store IPA in 23 ciljnih preizkusov so preverjeni.
+Xcode potrjuje »App upload complete«, Safari pa Apple obdelavo »Complete«.
+Vključitev v TestFlight še ni potrjena zaradi napake Applovih nastavitev; nove iPhone/iPad SL/EN slike
+so pripravljene, še niso naložene. [Izdajni dokazi](docs/release/IOS_TESTFLIGHT_1_10_1.md).
+
 **16. oktober — Android 1.10.1 (31) oddan javno:** povečava preglednic z dvema
 prstoma, gumbi za povečavo in pomoč s primeri vseh podprtih formul.
 Google Play potrjuje »Spremembe v pregledu«; nova različica še ni potrjeno
