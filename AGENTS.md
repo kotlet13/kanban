@@ -1,5 +1,33 @@
 # Navodila za delo na projektu
 
+16. oktober — **produkcija in pregledni test1 nadgrajena; Android1.10.0(30) oddan javno**.
+[Strežnika](docs/server/UPGRADE_0_15.md), [izdaja](docs/release/INVITATIONS_DOCUMENTS_1_10.md),
+[splet](docs/release/WEBSITE_DOCUMENTS_20261016.md). Nova izrecna odobritev uporabnika
+izvedena s tremi GPT-6.1-sol/high podagenti in pregledom glavnega agenta.
+Izvor6c8a2fc/main poslan; javni FamilyHubdd5ae02/v0.15.0, ZIP5c14ca9…107datotek/94PHP.
+Sveži ločeni zasebni kopiji in dejanski izolirani MariaDB10.11.19 obnovi PASS:
+produkcija93tabel423vrstic/SHA76002f71…, test1 93tabel343vrstic/SHAed0feed3…;
+vsaka2DATA/2imenika/101starihizvorov, vsi row/CREATE/config/ključ/cron hashi isti.
+Oba končna checkpointa **released**, APIpausedfalse/workersrestoredtrue;
+shema19 doda5praznih tabel,107izvorov,3računi4/10naprav ohranjenih. JavniHTTPS200/
+istiSID/enabled/invitation3/preglednice/priloge/SMTP/push potrjeni. Test2 isti.
+Zaključnih2331strežniških kontrol (777SQLite/MariaDB/MySQL),102PHP lint in11paketnih PASS;
+1582Flutter/16skip,59prizadetih/1skip,120izoliranih izdajnih +23/7kontrol PASS.
+Ena podpisana AAB30SHA9f0aab74…/442vhodov/istiSDK/locks/konfiguracije/native/
+podpis/8dovoljenj/engine/16KiBporavnava. Opozorilo stare DataStoreRELRO knjižnice
+je pregledano in dokumentirano; fizični16KiBpreizkus ni izveden.
+Javna izdaja4698247597354229997/release6,30vključena/29izključena/100%/Slovenija,
+SLen-USopombe,0izgubljenih ali novih podprtih naprav. Obe galeriji8aktualnih
+720×1280slik, nova opisa inFiles/docs12.vrsta DataSafety shranjeni. Natanko6sprememb
+končno potrjenih: **Spremembe v pregledu**; Googlove hitre kontrole še tečejo,
+upravljano objavljanje OFF. **Odobritev ali javna30 še NISTA potrjeni**; javna29
+ostaja do odobritve. Interni kanal ni uporabljen, Apple ostaja odložen.
+Spletna SL/ENzasebnost in pomoč dejansko objavljeni: preverjena25datotečna kopija,
+4HTMLzamenjani,21drugih datotek/pravice/lastništvo isti,4HTTPS200/hash PASS.
+Ni dejanskih novih povabil ali fizične namestitve30. Nepovezan varnostni dokument
+ostane neversioniran. Naslednje je izid Googlovega pregleda; nova izdaja potrebuje
+novo izrecno naročilo, brez ponavljanja splošne testne/gradilne matrike.
+
 16. oktober — **nova izrecna uporabnikova odobritev usklajene izdaje**:
 nadgradi `jivie.triparna.si`, naredi commite/pushe in oddaj novo javno različico
 v Google Play; po potrebi posodobi trgovinske posnetke glede na aktualni UI.

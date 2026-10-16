@@ -6,10 +6,149 @@ Ta dokument opisuje ločeni novi postopek **0.14.1/shema18 → 0.15.0/shema19**.
 Stari pomagači za prehod17→18 in popravek0.14.1 ostanejo nespremenjeni.
 Test2 ni del tega postopka; Apple ostaja odložen.
 
-**Trenutno potrjeno:** oba nova bralna zajema sta pridobljena, paket0.15.0 je
-zamrznjen, lokalna prava obnova in varovana nadgradnja sintetične baze sta
-uspešni. Živa gostovanja s tem zapisom še niso označena kot nadgrajena.
-Dejanske faze, kopije in končni checkpointi se zapišejo po izvedbi.
+**Produkcija in pregledni test1 sta dejansko nadgrajena na0.15.0/shemo19 in
+ponovno odprta.** Za vsako gostovanje so ločeno potrjeni sveži zajem, polna
+kopija, prava izolirana obnova, stage/apply/verify/release in vrnitev njegovega
+originalnega crona. Test2 ostaja nespremenjen in zunaj obsega.
+
+## Dejanska nadgradnja produkcije — 16. oktober 2026
+
+Produkcijski postopek je uporabil svojo zapečateno mapo
+`/home/tripar13/private/jivie-production/upgrade-0.15.0-20261016-104825`.
+Priprava je potrdila staro0.14.1/shemo18, pravi
+`ad56910f-ca2e-41ee-af0d-3f18081497cf`, vse101stare izvorne datoteke,
+konfiguracije/ključe, GD, ZipArchive in izvirni cron. VzdrževanjeHTTP503 in
+ustavitev petih ciljnih delavcev sta bila potrjena približno ob11:06UTC.
+
+Po dejanskem65-sekundnem praznjenju je nova kopija nastala ob**11:07:44UTC**:
+`/home/tripar13/private/jivie-production/backups/documents19-preupgrade-20261016-110744-5d0f381c/Documents19-private-backup.zip`.
+Arhiv ima **287.147bajtov,118vnosov,93tabel in423zgodovinskih vrstic**,
+dveDATA datoteki in dva imenika. Vključuje vsakCREATE/vrstico, konfiguracije,
+ključe, izvirniHTTPS in celotni originalni cron ter vseh101starih izvorov.
+Produkcijski SHA256:
+
+`76002f71ae061de3b145a4d63efb522b8ebb4ce96cc0e1973668dd224f6f3a8d`.
+
+Točni produkcijski arhiv je bil dejansko obnovljen v **ločeni sveži
+MariaDB10.11.19**, z `network=none`, brez vrat in hostbindov, samo z anonimnim
+MySQLvolumnom. Vsaka vrstica, vsakCREATE/stolpec/tip,DATA in prazni imeniki,
+config/ključni/HTTPS/cron hashi in vseh101starih izvorov so preverjeni.
+Obnovljena baza potrdi isto produkcijsko identiteto/shemo18, **triračune in
+štirinaprave**. SQLSHA256:
+
+`ff5883a8e6f57ed67682ec330f7a96ce2119500474024e053c8d5dbf266af129`.
+
+Dejanski zasebni dokaz je
+`~/.local/share/jivie/backups/documents19-production-20261016-r1/restore-proof.json`.
+Obnova ni zagnala aplikacije/PHP ali dostavnih delavcev ter ni uporabila žive
+baze ali test1kopije. Običajni brskalnikovSave arhiva je dokončno uspel brez
+spremembe varnostnih nastavitev. Pri prejšnjem pomožnem poskusu nastali
+zasebni `backup-transfer.json` ni bil uporabljen za prenos ali kot dokaz
+obnove; skrivnosti niso bile izpisane.
+
+Po vrnitvi produkcijskega dokaza v njegovWORK so **stage,apply,verify inrelease
+PASS**. Nameščen je isti končni107-file paket5c14… iz spodnjega razdelka.
+Nastalo je samo pet preverjenih praznih dokumentnih tabel: **93→98tabel**,
+brez dodajanja stolpcev starim tabelam. Samo FamilyHub metadata preide18→19.
+Vsak zgodovinskiCREATE in vse druge zgodovinske vrednosti ostanejo ohranjeni,
+vključno z423izhodiščnimi vrsticami, računi, gesli, napravami, surovimi
+nastavitvami, čakalnimi vrstami,DATA/pravicami,config/ključi, jedrom in drugimi
+vtičniki.
+
+Približno ob**11:13UTC** je končni zasebni `release-checkpoint.json` potrdil
+`phase=released`, `apiPaused=false`, `workerCronRestored=true` in vsa varovala
+ohranitve. OriginalniHTTPS in natanko originalni cron sta vrnjena; SMTP/FCM
+konfiguracije in ključi ostanejo isti. Stari izvor in vse zasebne kopije so
+ohranjeni. V dnevniku pause je ostalo trdo zapisano besedilo »Five test1«;
+**dejanski cilj ni bil test1**: zapečateniSITE/DB/serverId, izvoz in končni
+checkpoint potrjujejo produkcijo. Zaradi te oznake nismo spreminjali helperjev
+ali njihovih pinov med postopkom.
+
+Sveži javni Native capabilities vrne **HTTP200/istiSID/enabled**, preglednice,
+priloge, usernamepovabila/atomicresend/pogodbo3 ter vključenaSMTP inexternalPush.
+Odgovor je shranjen v
+[production-public-capabilities.json](../../build/qa/familyhub-0.15.0/production-public-capabilities.json).
+Ob11:14:53UTC je dodatnih **10anonimnih bralnih kontrol PASS** v
+[production-anonymous-negative-policy-checks.json](../../build/qa/familyhub-0.15.0/production-anonymous-negative-policy-checks.json):
+pravila sodelovanja200 z isto identiteto/policy1/SLEN; scopes.list,
+tables.list/get, attachments.list/get, invitations3.pending, sync6.pull in
+moderation.policyStatus brez bearerja vrnejo401 `auth_required`; GETNativeAPI
+vrne405. Noben račun, povabilo, dokument, soglasje ali vsebinska sprememba
+ni bil zahtevan; običajni anonimni rate-limit števci se lahko povečajo.
+
+Po ponovnem branju obeh dokazov ter ponovni primerjavi SHAobeh arhivov in
+obnovljenihSQL sta bila odstranjena samo končana izolirana vsebnika
+`jivie-documents19-restore-test1-20261016` in
+`jivie-documents19-restore-production-20261016` z njunima anonimnima volumnoma.
+**Oba arhiva, obnovljeni izvlečeniSQL/DATA/izvor in oba restoreproofa ostanejo
+zasebno ohranjeni**. DrugiDocker vsebniki niso bili spreminjani.
+
+Strežniška nadgradnja ne dokazuje nove namestitve ali fizičnega novegaUI na
+telefonu niti nove dostave e-pošte/push. Javna izdaja aplikacije se potrjuje
+v svojem izdajnem zapisu; Apple ostaja odložen.
+
+## Dejanska nadgradnja test1 — 16. oktober 2026
+
+Uporabljen je novi zasebniWORK
+`/home/tripar13/private/jivie-test/upgrade-0.15.0-20261016-104824`,
+zajet in zapečaten samo za test1. Po strogi potrditvi vzdrževanjaHTTP503 in
+ustavitvi njegovih petih obstoječih delavcev sta **prva dva prezgodnja izvoza
+pravilno obstala na `drain_65_seconds_required`**. Ti varovani ustavitvi nista
+izvedliDDL ali zapisaliSQL vrstic. Tretji izvoz je uspel po dejanskem čakanju;
+časovnega varovala nismo spreminjali ali zaobšli.
+
+Sveži dejanski arhiv je nastal ob11:03:28UTC pod
+`/home/tripar13/private/jivie-test/backups/documents19-preupgrade-20261016-110328-928eeadd/`.
+Ima **295.451bajtov,125vnosov,93tabel in343zgodovinskih vrstic**. Zajema celotni
+SQL, dveDATA datoteki in dva imenika, konfiguracije/ključe, izvirniHTTPS,
+celotni originalni cron ter vseh101starih izvornih datotek. SHA256:
+
+`ed0feed36ab51aebb6d6adfe2d959c9d86ce51c8d970f5a9b574ba3875eb36c1`.
+
+Točni arhiv je bil resnično obnovljen v sveži **MariaDB10.11.19**, z
+`network=none`, brez vrat in hostbindov, samo z anonimnim MySQLvolumnom.
+Primerjani so vsaka vrstica, vsakCREATE, stolpec/tip,DATA datoteke/prazni
+imeniki, configuration/HTTPS/cron/key hashi in vseh101starih izvorov.
+Obnovljena baza ima isto test1identiteto in shemo18, triNative račune in
+desetnaprav. SQLSHA256:
+
+`01076c7cc4ab6dae6062cea3d7a1d7836d6e2ec9bd9f0817df50363bbf63ca17`.
+
+Zasebni dejanski dokaz je
+`~/.local/share/jivie/backups/documents19-test1-20261016-r1/restore-proof.json`;
+obnova ni zagnalaPHP/aplikacije/delavcev in ni uporabila žive baze. Arhiv in
+dokaz ostaneta ohranjena zunajGit; produkcijska kopija ni bila uporabljena.
+
+Po vrnitvi istega dokaza v istiWORK so **stage,apply,verify inrelease PASS**.
+Nameščen je točni107-file končni paket5c14… iz spodnjega razdelka. Nastalo je
+natanko pet praznih dokumentnih tabel, brez dodajanja stolpcev starim tabelam:
+93→98tabel, metadata samo18→19. Vseh343zgodovinskih vrstic/vrednosti in stari
+CREATE ostanejo ohranjeni, prav tako triračuni, desetnaprav, gesla, obstoječe
+nastavitve,DATA/pravice,config/ključi, jedro in drugi vtičniki. Istočasno niso
+bila ustvarjena resnična povabila, računi ali dokumenti za preizkus.
+
+Končni checkpoint v zasebnem `apply-result.txt` izrecno potrdi `phase=released`,
+`apiPaused=false`, `workerCronRestored=true` in vsa varovala ohranitve.
+Test1serverId ostane `95c11fe0-916c-48be-a3f6-999732846266`. IzvirniHTTPS in
+natanko originalni cron sta obnovljena; SMTP in FCM konfiguracija ostaneta isti.
+
+Javni Native capabilities vrne **HTTP200/istiSID/enabled** in potrdi
+`spreadsheets`, `attachments`, `usernameInvitations`, `invitationResend` ter
+pogodbo povabil3. Odgovor je shranjen v
+[test1-public-capabilities.json](../../build/qa/familyhub-0.15.0/test1-public-capabilities.json).
+Dodatnih **10 anonimnih bralnih kontrol PASS** je v
+[test1-anonymous-negative-policy-checks.json](../../build/qa/familyhub-0.15.0/test1-anonymous-negative-policy-checks.json):
+javna pravila sodelovanja200 z isto identiteto/policy1 in obema jezikoma;
+seznami prostorov, preglednic, prilog ter njihov prenos, prejeta povabila,
+sinhronizacija in osebno stanje sprejema pravil brez bearerja vrnejo401
+`auth_required`; neposredniGET doNativeAPI vrne405. Dostop do vsebine ali
+osebnih podatkov ni bil pridobljen. Te zahteve ne pošljejo prijave, žetona,
+soglasja, povabila ali vsebinske spremembe; običajni strežniški števci
+omejitev anonimnih klicev se lahko povečajo.
+
+To potrjuje nameščene pogodbe in anonimne zavrnitve, ne fizične namestitve
+aplikacije, dejanske dostave obvestila/e-pošte ali uporabnikovega novegaUI.
+Produkcijski postopek je potrjen v ločenem razdelku zgoraj; javna izdaja aplikacije ima svoj izdajni zapis.
 
 ## Paket, izhodišče in nespremenljive identitete
 
@@ -22,7 +161,8 @@ preverjena. SHA256:
 Paket vsebuje izrecni pregledani manifest98 izvorov, osem javnih pogodb ter
 `NOTICE.md`, bajtno enak nespremenljivemu javnemu0.14.1 commitu
 `59119dc594f941cada5ede73435c1d9a2fda990c`. Preglednice, priloge in nova povabila
-so v istem paketu. Pravila dostopa in okvir funkcij opišeta
+so v istem paketu. Javni FamilyHub je objavljen kot `dd5ae02`/`v0.15.0`;
+usklajeni aplikacijski/strežniški izvor je `6c8a2fc` na `main`. Pravila dostopa in okvir funkcij opišeta
 [preglednice in priloge](../TABLES_AND_ATTACHMENTS.md) ter
 [prenova povabil](../INVITATION_AND_SHARING_IMPLEMENTATION.md).
 
@@ -40,6 +180,10 @@ približni različici: vseh101 hashov mora biti enakih svežemu zajemu.
 | --- | --- | --- | --- | --- |
 | production | jivie.triparna.si | /home/tripar13/private/jivie-production | tripar13_jivieprod | ad56910f-ca2e-41ee-af0d-3f18081497cf |
 | test1 | jivie-test.triparna.si | /home/tripar13/private/jivie-test | tripar13_jivietest | 95c11fe0-916c-48be-a3f6-999732846266 |
+
+**Postopek spodaj je opis že izvedenega prehoda18→19. Na sedanjih gostovanjih
+s shemo19 ga ne ponavljaj; naslednja nadgradnja potrebuje nov postopek in nove
+trenutne kopije/pine.**
 
 ## Novi bralni zajem
 

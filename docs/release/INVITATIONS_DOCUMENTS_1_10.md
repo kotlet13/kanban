@@ -3,8 +3,12 @@
 16. oktober2026. Uporabnik je izrecno naročil skupno strežniško nadgradnjo,
 commite/push in **novo javno Android izdajo**. Prejšnja omejitev oddaje je s tem
 naročilom za to izdajo presežena. Interni kanal ostane neaktiven, Apple je odložen.
-Ta dokument v tem trenutku potrjuje **lokalno podpisano kandidatko**, ne oddaje
-ali Googlove odobritve. Živo namestitev in portal potrdi glavni agent ločeno.
+**Android1.10.0(30) je dejansko oddan za javno posodobitev.** Console potrjuje
+»Spremembe v pregledu«; hitra samodejna preverjanja ob zajemu še tečejo.
+Upravljano objavljanje je izklopljeno: objava sledi Googlovi odobritvi.
+**Odobritev in javna dostopnost30 še nista potrjeni**; doslej javna29 ostane.
+Produkcija in pregledni test1 sta dejansko FamilyHub0.15.0/shema19, spletna
+zasebnost in pomoč sta objavljeni. Interna izdaja ali Apple oddaja nista izvedeni.
 
 ## Obseg in izvor
 
@@ -17,9 +21,11 @@ samo za nov naslov ali spremembo besedil. Dejanski obseg in omejitve opisujeta
 
 Zamrznjeni izvor je ločena zasebna kopija trenutnega delovnega drevesa v
 `build/qa/invitations-documents-release-20261016/source`. Ker spremembe ob pripravi
-še niso vse v commitu, so evidentirani gitHEAD, javni runtime diff, **vsi novi
+še niso bile vse v commitu, so evidentirani gitHEAD, javni runtime diff, **vsi novi
 neversionirani izvorni vhodi** in njihove SHA256 vrednosti. Sam HEAD ni dokaz
-vsebine kandidatke. Nepovezani varnostni dokument ni vključen v runtime ali paket.
+vsebine paketa. Končni funkcionalni izvor je nato commitan in poslan na main kot
+`6c8a2fc`; zamrznjeni manifest ostane nespremenjen. Nepovezani varnostni dokument
+ni vključen v runtime ali paket.
 
 - Različica: **1.10.0+30**, `si.triparna.jivie`.
 - **442** runtime/native vhodov, od tega **329** skupnih `lib/assets/pubspec/l10n`.
@@ -79,7 +85,7 @@ ker se vidni prizor ni spremenil; stari posnetki15.oktobra ostanejo ohranjeni.
 
 [Manifest slik in vrstni red](INVITATIONS_DOCUMENTS_1_10_SCREENSHOTS.json) navaja
 izvor, mere, hashe, primerjavo s prejšnjimi datotekami in pot do enolično imenovanih
-nalagalnih kopij. Priporočena galerija je v
+nalagalnih kopij. Oddana galerija izvira iz
 `build/qa/invitations-documents-store-20261016/play-gallery/{sl,en}`.
 ZIP: `build/releases/Jivie-1.10.0+30-android-store-screenshots.zip`, SHA256
 `38a5694e13f036094fc6bb260cafd264aa2d1a7309b8668a3d986a48a1d7bbf6`.
@@ -91,14 +97,19 @@ izbrane SL/EN slike. Preglednica kaže resnične izračunane vsote; prazna izbra
 celica ne spreminja podatkov ali pridobi zaklepa.
 
 [Opombe za izdajo](INVITATIONS_DOCUMENTS_1_10_RELEASE_NOTES.json) so pod500znaki
-na jezik. `STORE_LISTINGS.json` je lokalni predlog daljših SL/ENopisov
-(3757/3821znakov), ki doda preglednice in dokumentne priloge ter ohrani obstoječe
-pomembne omejitve. Imena, kratka opisa, ikona in feature graphic ostanejo isti.
-To še ni dokaz shranitve/objave v Console.
+na jezik. Daljša SL/ENopisa iz `STORE_LISTINGS.json` (3757/3821znakov) sta
+shranjena v Console in vključena v oddajo; dodata preglednice in dokumentne
+priloge ter ohranita obstoječe pomembne omejitve. Imena, kratka opisa, ikona in
+feature graphic ostanejo isti. Obe galeriji imata potrjenih8/8slik v navedenem
+vrstnem redu. Console je za bajtno enak Idejnik namerno ponovno uporabil obstoječa
+elementa `04-ideas.png` za SL in `jivie-1.9-android-en-04-ideas.png` za EN; drugih7slik na
+jezik je novih. Ime starega elementa ne pomeni starejših ali drugačnih pikslov.
 
-## Predlagana Google Data safety dopolnitev
+## Shranjena in oddana Google Data safety dopolnitev
 
-Nova kategorija: **Files and docs → Files and docs**. Predlog za pregledane poti:
+Nova kategorija: **Files and docs → Files and docs**. Console je shranil12vrst
+podatkov in jih vključil v isto oddajo; prejšnjih11vrst ostane nespremenjenih.
+Za pregledane poti datotek je potrjeno
 **Collected Yes / Shared No / Optional Yes / Ephemeral No**; namena
 **App functionality** in **Fraud prevention, security and compliance**.
 
@@ -115,7 +126,7 @@ fotografij Idejnika zdaj zajema tudi izvirneJPEG/PNGpriloge. Normalizacije Idejn
 ne smemo pripisati dokumentnim prilogam. Datotečni izvirniki in njihovi vgrajeni
 metapodatki se ohranijo. Če jih izvorna datoteka vsebuje, lahko to vključuje
 lokacijske podatke; odsotnostGPSdovoljenja sama ne pomeni, da teh metapodatkov
-ni v izbranih bajtih. To naj glavni agent posebej upošteva ob pregledu aktualnih
+ni v izbranih bajtih. To je bilo upoštevano pri pregledu aktualnih
 Console vprašanj o lokaciji in objavljenih trditev. Priloge niso end-to-end
 šifrirane; prenos uporabljaHTTPS, upravičenci in strežniški upravljavec lahko
 berejo izvirnike.
@@ -149,7 +160,7 @@ Dokazi kode:
   Idejnika. Iz tega ni dovoljeno sklepati, da se izvirnik priponke nikoli ne shrani;
   običajna uporabniška priloga seveda ostane v zasebni datotečni shrambi.
 
-## Predlagana objavljena zasebnost — odsek SL
+## Podlaga objavljene zasebnosti — odsek SL
 
 **Preglednice in dokumentne priloge.** V povezani organizaciji lahko urejaš
 preglednice. Na izbrani strežnik se shranijo naslov, celice, formule, revizije in
@@ -172,7 +183,7 @@ lokalne osnutke preglednic. Ne vsebuje sej, žetonov zaklepa ali celotnih strež
 izvirnikov dokumentnih prilog. Celotna strežniška kopija potrebuje bazo in
 zasebni imenik podatkov; kopije izvozov na drugih mestih upravljaš sam.
 
-## Proposed published privacy section — EN
+## Basis of published privacy section — EN
 
 **Spreadsheets and document attachments.** In a connected organization, you can
 edit spreadsheets. The selected server stores their titles, cells, formulas,
@@ -196,19 +207,39 @@ sessions, editing-lock tokens and complete server originals of document
 attachments. A complete server backup requires the database and private data
 directory; you control copies exported to other locations.
 
-Objavljeno zasebnost je treba hkrati uskladiti glede trenutnega privzetega zvoka:
+Objavljena zasebnost je usklajena tudi glede trenutnega privzetega zvoka:
 manjkajoča nastavitev je vključena, vsaka že shranjena izbira pa ostane ohranjena.
-To je že izveden popravek29, ne nova migracija30. Spletni generator/objavo in
-končno Console shranitev izvaja glavni agent; ta dokument ju sam ne potrjuje.
+To je že izveden popravek29, ne nova migracija30. Glavni agent je po preverjeni
+kopiji objavil4HTMLstrani zasebnosti/pomočiSL/EN in preveril javne odzive ter
+hashe; [dokazi spletne objave](WEBSITE_DOCUMENTS_20261016.md).
 
-## Pred portalom
+## Dejanska strežniška nadgradnja in javna oddaja
 
-Glavni agent potrdi dejansko nadgradnjo produkcije in preglednega test1 na nov
-FamilyHub/shemo19 po sveži kopiji in pravi izolirani obnovi; starega pomočnika
-sheme18 ne prilagaja z rahljanjem varoval. Potrdi nov pregledni dostop, objavljeno
-zasebnost in Console deklaracije za isto AAB. Šele nato naloži ta hash v javni
-kanal z obstoječoSlovenijo in100%uvajanjem. Interni kanal inApple ostaneta odložena.
-Fizični novi Android tokovi/sistemski izbirniki niso dokazani z widget testi.
+Produkcija in pregledni test1 sta po svežih kopijah in pravih izoliranih obnovah
+dejansko nadgrajena naFamilyHub0.15.0/shemo19 ter ponovno odprta s končnim
+`released` checkpointom. [Strežniški dokazi](../server/UPGRADE_0_15.md) ločeno
+opisujejo varovanje podatkov, identitete in izvirnih delavcev. Končni strežniški
+nabor ima **2331uspešnih kontrol**, po777naSQLite/MariaDB/MySQL, **102PHP lint**
+in **11paketnih testov PASS**. Javni vtičnik je commit`dd5ae02`, tag`v0.15.0`,
+ZIP SHA256`5c14ca9a79d92cf1c5f71b681d8417f44f4bfb9b474443cdad4dbb3f589f51e7`.
+
+Glavni agent je isti podpisani AAB30 naložil v javni kanal
+`4698247597354229997/release6`: **30vključena,29izključena,100%uvajanje**,
+obstoječa1državaSlovenija. Predogled potrdi0sprememb podprtih naprav. Natanko
+**6sprememb** je dokončno poslanih: izdaja, SLcelotni opis in galerija, ENcelotni
+opis in galerija ter Data safety. SL in en-US imata potrjene opombe za izdajo iz zgornje datoteke.
+
+Končni pogled kaže **»Spremembe v pregledu«**, upravljano objavljanjeOFF in
+še tekoča hitra preverjanja (ob shranjenem zajemu »Še do12minut«). Console
+pojasnjuje, da bodo spremembe poslane v pregled po uspešnih hitrih preverjanjih;
+ta zapis ne potrjuje zaključenih preverjanj, odobritve ali javne30.
+Dokazi v `build/qa/invitations-documents-release-20261016/`:
+`play-public-30-submitted.txt`/`.png` in `release-30-preview.txt`.
+
+Interni kanal ostane neaktiven, Apple je odložen. Fizični novi Android tokovi,
+sistemski izbirniki in delovanje na dejanski16KiBnapravi niso potrjeni z widget
+testi ali lokalno analizo ELF. Naslednji korak je izid Googlovih preverjanj in
+pregleda, ne nova gradnja ali ponovna oddaja.
 
 ## Dodatna presoja opozorila Play o RELRO/16KiB
 
