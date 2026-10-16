@@ -17,6 +17,11 @@ urednika in jasno pokaže, kdo ureja; lokalni osnutki ostanejo obnovljivi ob
 izgubi povezave. Podrobnosti, meje, dokaze in še odprte izdajne korake vodi
 [izvedbeni zapis](TABLES_AND_ATTACHMENTS.md).
 
+Po preizkusu na S25 dodatno izvedeni povečava mreže z dvema prstoma
+(50–200 %), gumbi −/odstotek/+ in pomoč z vsemi podprtimi formulami ter
+primeri. 63 ciljnih preizkusov PASS; samo aplikacijski izvor, brez nove
+strežniške nadgradnje ali oddaje. [Dokazi](SPREADSHEET_ZOOM_HELP.md).
+
 ### Priloge (15. oktober 2026)
 
 16. oktobra naročeno in izvorno izvedeno: PDF-ji, dokumenti, preglednice,

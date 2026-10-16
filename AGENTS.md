@@ -1,5 +1,13 @@
 # Navodila za delo na projektu
 
+16. oktober — **povečava preglednic in pomoč pri formulah izvedeni v izvoru**
+po uporabnikovem S25 preizkusu. [Dokazi](docs/SPREADSHEET_ZOOM_HELP.md).
+Pinch50–200% samo mreža/besedilo/oznake, ohranjen položaj pod prstoma,
+−/odstotek/+ s ponastavitvijo100%; pomoč SL/EN z vsemi5funkcijami/primeri.
+63ciljnihPASS (9novih dejanskih potez/poravnava/vnos/preklic/pomoč), analizačista.
+Ni strežniške nadgradnje/sheme/SDK/locks/dovoljenj/nove gradnje ali Playoddaje;
+obstoječi AAB30 tega popravka ne vsebuje. Fizični zoom še ni potrjen.
+
 16. oktober — **produkcija in pregledni test1 nadgrajena; Android1.10.0(30) oddan javno**.
 [Strežnika](docs/server/UPGRADE_0_15.md), [izdaja](docs/release/INVITATIONS_DOCUMENTS_1_10.md),
 [splet](docs/release/WEBSITE_DOCUMENTS_20261016.md). Nova izrecna odobritev uporabnika

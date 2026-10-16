@@ -98,4 +98,27 @@ class TablesStrings {
   String get wider => pick('Wider columns', 'Širši stolpci');
   String get narrower => pick('Narrower columns', 'Ožji stolpci');
   String get go => pick('Go to cell', 'Pojdi v celico');
+  String get zoomOut => pick('Zoom out', 'Pomanjšaj tabelo');
+  String get zoomIn => pick('Zoom in', 'Povečaj tabelo');
+  String get help => pick('Formulas and help', 'Formule in pomoč');
+  String get close => pick('Close', 'Zapri');
+  String get helpInput => pick(
+    'Select a cell, then enter text, a number or a formula in the field above the table. Start formulas with =. Cell references use addresses such as A1 or B2.',
+    'Izberite celico in v polje nad tabelo vnesite besedilo, številko ali formulo. Formule začnite z =. Na druge celice se sklicujete z naslovi, kot sta A1 ali B2.',
+  );
+  String get helpFunctions => pick('Supported functions', 'Podprte funkcije');
+  String get sum => pick('Sum of numbers', 'Seštevek števil');
+  String get average => pick('Average of numbers', 'Povprečje števil');
+  String get count =>
+      pick('Count of numeric cells', 'Število celic s številkami');
+  String get minimum => pick('Smallest number', 'Najmanjše število');
+  String get maximum => pick('Largest number', 'Največje število');
+  String get helpArithmetic => pick(
+    'Use +, -, *, / and parentheses, for example =(A1+B1)*2. A1:A10 means cells A1 through A10. With decimal commas, separate arguments with a semicolon: =SUM(1,5;2,5). Function names stay in English.',
+    'Uporabite +, -, *, / in oklepaje, na primer =(A1+B1)*2. A1:A10 pomeni celice od A1 do A10. Pri decimalni vejici argumente ločite s podpičjem: =SUM(1,5;2,5). Imena funkcij ostanejo angleška.',
+  );
+  String get helpZoom => pick(
+    'Pinch with two fingers over the cells to zoom between 50% and 200%. You can also use the − and + buttons in the toolbar (swipe it sideways to see more). Tap the percentage to reset to 100%. Only the table changes size.',
+    'Z dvema prstoma na celicah povečajte ali pomanjšajte tabelo med 50 % in 200 %. Uporabite lahko tudi gumba − in + v orodni vrstici (za več možnosti jo podrsajte vstran). Dotik odstotka povrne 100 %. Velikost se spremeni samo tabeli.',
+  );
 }
