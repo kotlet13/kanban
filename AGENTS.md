@@ -1,5 +1,30 @@
 # Navodila za delo na projektu
 
+17. oktober — **hierarhični izbirnik prostorov izveden v izvoru** po naknadnem
+izrecnem naročilu, s tremi podagenti GPT-6.1 Sol/high in pregledom glavnega.
+[Izvedba](docs/SPACE_PICKER_HIERARCHY_IMPLEMENTATION.md): krovni prostori se razširijo v
+projekte, iskanje zajame tudi zložene veje; »Deljeno z mano« samo dostopni
+projekti drugih trenutnih lastnikov. Tuj projekt pod dostopnim prostorom je
+viden v drevesu in kot bližnjica, projekt brez dostopa do starša samo v deljenem
+razdelku. Lastništvo že obstaja, prvotni ustvarjalec krovnega prostora ni
+ločen trajni podatek. Lokalni/skupni/inline projekti odprejo točen pregled;
+isti osebni resolver in identiteta/generacija preprečita zastarele izbire.
+56 ciljnih in123 navigacijskih regresij PASS, analiza samo10starihinfo brez novih.
+[Novi strežniški predpogoji](docs/server/SPACE_PICKER_RELEASE_PREREQUISITES.md):
+ni potrebna nova shema/API/namestitev, pred javno izdajo ozke žive kontrole.
+Naročen samo commit/push, brez strežnika/gradnje/trgovinske oddaje.
+Finančna nadgradnja ostaja samo načrt; nepovezana varnostna in desktop dokumenta nedotaknjena.
+
+17. oktober — **računi organizacije in projektni pregledi samo načrtovani**.
+[Dogovor](docs/ORGANIZATION_FINANCE_PLAN.md): finančni račun pripada organizaciji
+oziroma prostoru, projektni »podračun« je za začetek ločen pregled njegovih
+prilivov/stroškov brez rezervacije denarja ali podvojenih knjižb. Projektni
+proračun ni račun. Zabeležena zanka »Dodaj v prostor« → ista organizacija;
+Finance2 še ne povezuje splošnih projektnih transakcij z računom nadrejenega
+prostora, potrebna bo razširitev aplikacije in FamilyHuba na istem gostovanju.
+Uporabnik naroči samo nov planski dokument, nato pogovor o naslednji nadgradnji.
+Ni naročila za implementacijo, strežniško nadgradnjo ali trgovinsko oddajo.
+
 16. oktober — **iOS1.10.1(31) dejansko naložen v Apple po novem naročilu**.
 [Dokazi](docs/release/IOS_TESTFLIGHT_1_10_1.md). Isti aktualni Android31 izvor
 3ce7105/main,443izdajnih/330runtime vhodov;48iOS/3locks/SDK/config isti28.

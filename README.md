@@ -1,5 +1,16 @@
 # Jivie
 
+**17. oktober — hierarhični izbirnik prostorov izveden v izvoru:** razširljivi prostori
+s projekti, iskanje po zloženih vejah in razdelek »Deljeno z mano« glede na
+trenutno lastništvo. [Izvedba in preverjanje](docs/SPACE_PICKER_HIERARCHY_IMPLEMENTATION.md).
+[Strežniški predpogoji](docs/server/SPACE_PICKER_RELEASE_PREREQUISITES.md);
+ni nadgradnje strežnika ali trgovinske oddaje.
+
+**17. oktober — načrt računov organizacije in projektnih pregledov:** račun
+pripada prostoru, projekt pokaže svoje prilive in stroške brez podvajanja
+ali rezervacije denarja. Zabeležena tudi napaka dodajanja v organizacijo.
+[Dogovor in obseg](docs/ORGANIZATION_FINANCE_PLAN.md). Samo načrtovanje.
+
 **16. oktober — iOS 1.10.1 (31) uspešno naložen v Apple:** aktualni izvor se
 ujema z Android31, novi arhiv/Store IPA in 23 ciljnih preizkusov so preverjeni.
 Xcode potrjuje »App upload complete«, Safari pa Apple obdelavo »Complete«.

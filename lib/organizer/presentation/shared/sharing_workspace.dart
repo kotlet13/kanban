@@ -245,6 +245,11 @@ class SharingWorkspace extends ConsumerWidget {
                   ),
             );
             if (scope.kind == SharedScopeKind.organization &&
+                !(view == SharingView.projects &&
+                    state
+                        .dataForScope(scope.id)
+                        .projects
+                        .any((project) => project.id == selectedProjectId)) &&
                 view != SharingView.people &&
                 view != SharingView.shopping) {
               if (scope.revoked || scope.blocked || !state.localAccessAllowed) {
@@ -297,9 +302,6 @@ class SharingWorkspace extends ConsumerWidget {
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
             final projectDetail =
                 view == SharingView.projects &&
-                !(scope.kind == SharedScopeKind.household &&
-                    scope.accessPolicyVersion == 3 &&
-                    state.spaceProjectMembershipSupported) &&
                 data.projects.any((p) => p.id == selectedProjectId);
             final status = view == SharingView.agenda || projectDetail
                 ? syncStatus
@@ -314,7 +316,9 @@ class SharingWorkspace extends ConsumerWidget {
                 scope.kind == SharedScopeKind.household &&
                 scope.accessPolicyVersion == 3 &&
                 state.spaceProjectMembershipSupported;
-            if (householdProjects && view == SharingView.projects) {
+            if (householdProjects &&
+                view == SharingView.projects &&
+                !projectDetail) {
               return OrganizationWorkspace(
                 organization: scope,
                 onProject: onScopeSelected,

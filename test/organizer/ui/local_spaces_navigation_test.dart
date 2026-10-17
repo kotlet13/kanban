@@ -1,4 +1,19 @@
 import 'dart:io';
+import 'package:drift/native.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kanban/app.dart';
+import 'package:kanban/app_router.dart';
+import 'package:kanban/organizer/data/collaboration_database.dart';
+import 'package:kanban/organizer/data/sqlite_organizer_storage.dart';
+import 'package:kanban/organizer/data/local_spaces_repository.dart';
+import 'package:kanban/organizer/data/pending_invitation_store.dart';
+import 'package:kanban/organizer/state/local_database_provider.dart';
+import 'package:kanban/organizer/state/organizer_provider.dart';
+import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
+import 'package:kanban/organizer/state/portable_backup_provider.dart';
+import 'package:kanban/organizer/platform/backup_preferences_replay.dart';
+import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
+import 'backup_ui_fixture.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -329,4 +344,239 @@ void main() {
       },
     );
   }
+  for (final width in [390.0, 1280.0]) {
+    testWidgets(
+      'picker opens exact project from another SQLite local workspace at $width',
+      (tester) async {
+        const projectId = '10000000-0000-4000-8000-000000000011';
+        final db = CollaborationDatabase(NativeDatabase.memory());
+        addTearDown(() async => await db.close());
+        late LocalSpace organization;
+        late LocalSpace other;
+        final now = sharingTestNow;
+        LocalProject project(String title, String description) => LocalProject(
+          id: projectId,
+          title: title,
+          description: description,
+          createdAt: now,
+          updatedAt: now,
+        );
+        await tester.runAsync(() async {
+          final personal = SqliteOrganizerStorage(db);
+          await personal.initialize();
+          final spaces = LocalSpacesRepository(db);
+          organization = await spaces.createSpace(
+            kind: LocalSpaceKind.organization,
+            name: 'Ciljna lokalna organizacija',
+          );
+          other = await spaces.createSpace(
+            kind: LocalSpaceKind.household,
+            name: 'Drugi lokalni prostor',
+          );
+          final organizationStorage = SqliteOrganizerStorage(
+            db,
+            workspaceId: organization.id,
+          );
+          final organizationSnapshot = await organizationStorage.read();
+          await organizationStorage.write(
+            organizationSnapshot.copyWith(
+              revision: organizationSnapshot.revision + 1,
+              projects: [
+                project('Ciljni projekt', 'Podrobnosti ciljnega projekta'),
+              ],
+            ),
+          );
+          final otherStorage = SqliteOrganizerStorage(
+            db,
+            workspaceId: other.id,
+          );
+          final otherSnapshot = await otherStorage.read();
+          await otherStorage.write(
+            otherSnapshot.copyWith(
+              revision: otherSnapshot.revision + 1,
+              projects: [
+                project('Drugi projekt z istim ID', 'Ne odpri teh podrobnosti'),
+              ],
+            ),
+          );
+          await spaces.selectSpace(other.id);
+        });
+        tester.view.physicalSize = Size(width, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        SharedPreferences.setMockInitialValues({'app_locale_code': 'sl'});
+        appRouter.go('/');
+        final shared = SharingUiController(initial: CollaborationState());
+        final container = ProviderContainer(
+          overrides: [
+            localDatabaseProvider.overrideWith((ref) async => db),
+            organizerStorageProvider.overrideWithValue(
+              () async => SqliteOrganizerStorage(db),
+            ),
+            collaborationProvider.overrideWith(() => shared),
+            invitationLinkSourceProvider.overrideWithValue(null),
+            pendingInvitationStoreProvider.overrideWithValue(
+              MemoryPendingInvitationStore(),
+            ),
+            portableBackupProvider.overrideWith(EmptyBackupUiController.new),
+            backupPreferencesReplayProvider.overrideWith((ref) async => {}),
+            notificationLocalSnapshotsProvider.overrideWith(
+              (ref) async => [await ref.watch(organizerProvider.future)],
+            ),
+          ],
+        );
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const JivieApp(),
+          ),
+        );
+        await tester.runAsync(() async {
+          await container.read(organizerProvider.future);
+          await container.read(localSpacesProvider.future);
+        });
+        await tester.pumpAndSettle();
+        await mobileTab(tester, 'Koledar');
+        await tester.tap(find.byType(OrganizerSpacePickerButton));
+        await tester.pumpAndSettle();
+        final arrow = find.byKey(
+          ValueKey('space-picker-expand-local:${organization.id}'),
+        );
+        await tester.ensureVisible(arrow);
+        await tester.tap(arrow);
+        await tester.pumpAndSettle();
+        final target = find.byKey(
+          ValueKey('space-choice-local-project:${organization.id}:$projectId'),
+        );
+        await tester.ensureVisible(target);
+        await tester.tap(target);
+        // Workspace selection reads SQLite and updates the organizer asynchronously.
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pumpAndSettle();
+        expect(
+          container.read(localSpacesProvider).requireValue.selectedSpaceId,
+          organization.id,
+        );
+        expect(
+          container.read(organizerProvider).requireValue.workspaceKey,
+          organization.id,
+        );
+        expect(find.text('Podrobnosti ciljnega projekta'), findsWidgets);
+        expect(find.text('Ne odpri teh podrobnosti'), findsNothing);
+        expect(
+          find.byKey(const ValueKey('content-_Area.projects')),
+          findsOneWidget,
+        );
+        expect(shared.loginAttempts, isEmpty);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        container.dispose();
+      },
+    );
+
+    testWidgets('picker opens shared project detail from calendar at $width', (
+      tester,
+    ) async {
+      const root = SharedScope(
+        id: 'shared-organization',
+        name: 'Skupna organizacija',
+        kind: SharedScopeKind.organization,
+        role: SharedRole.member,
+      );
+      final data = sharingData();
+      final shared = SharingUiController(
+        initial: CollaborationState(
+          session: sharingSession(),
+          scopes: [root],
+          data: {root.id: data},
+        ),
+      );
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        width: width,
+        collaborationController: shared,
+        localSpacesController: LocalSpaceUiController(LocalSpaceKind.personal),
+      );
+      await mobileTab(tester, 'Koledar');
+      await tester.tap(find.byType(OrganizerSpacePickerButton));
+      await tester.pumpAndSettle();
+      final arrow = find.byKey(ValueKey('space-picker-expand-${root.id}'));
+      await tester.ensureVisible(arrow);
+      await tester.tap(arrow);
+      await tester.pumpAndSettle();
+      final target = find.byKey(
+        ValueKey('space-choice-shared-project:${root.id}:project'),
+      );
+      await tester.ensureVisible(target);
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+      expect(shared.state.requireValue.selectedSpaceId, root.id);
+      expect(
+        find.byKey(const ValueKey('content-_Area.projects')),
+        findsOneWidget,
+      );
+      expect(find.text('Pripravi zemljo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets(
+    'modern child project scope opens exact root detail from another area',
+    (tester) async {
+      const organization = SharedScope(
+        id: 'parent-org',
+        name: 'Organizacija s projekti',
+        kind: SharedScopeKind.organization,
+        role: SharedRole.owner,
+      );
+      const child = SharedScope(
+        id: 'child-scope',
+        name: 'Dovoljen projekt drugega lastnika',
+        kind: SharedScopeKind.project,
+        role: SharedRole.member,
+        parentScopeId: 'parent-org',
+        projectRootId: 'project',
+      );
+      final data = sharingData();
+      final shared = SharingUiController(
+        initial: CollaborationState(
+          session: sharingSession(),
+          scopes: [organization, child],
+          data: {child.id: data},
+        ),
+      );
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        collaborationController: shared,
+        localSpacesController: LocalSpaceUiController(LocalSpaceKind.personal),
+      );
+      await mobileTab(tester, 'Koledar');
+      await tester.tap(find.byType(OrganizerSpacePickerButton));
+      await tester.pumpAndSettle();
+      final arrow = find.byKey(
+        ValueKey('space-picker-expand-${organization.id}'),
+      );
+      await tester.ensureVisible(arrow);
+      await tester.pumpAndSettle();
+      await tester.tap(arrow);
+      await tester.pumpAndSettle();
+      final target = find.byKey(ValueKey('space-choice-${child.id}'));
+      await tester.ensureVisible(target);
+      await tester.pumpAndSettle();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+      expect(shared.state.requireValue.selectedSpaceId, child.id);
+      expect(
+        find.byKey(const ValueKey('content-_Area.projects')),
+        findsOneWidget,
+      );
+      expect(find.text('Pripravi zemljo'), findsOneWidget);
+      expect(find.text('Skupni vrt'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

@@ -4378,6 +4378,12 @@ class AppLocalizationsSl extends AppLocalizations {
       'Povezovanje tega prostora še ni dokončano. Najprej dokončajte povezovanje, nato ga upravljajte na strežniku.';
 
   @override
+  String get spacePickerExpandProjects => 'Razširi projekte';
+
+  @override
+  String get spacePickerCollapseProjects => 'Zloži projekte';
+
+  @override
   String get spacePickerSpaces => 'Prostori';
 
   @override

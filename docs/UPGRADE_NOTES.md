@@ -7,6 +7,26 @@ izvorno kodo in lokalna preverjanja; nove gostovane namestitve, trgovinske
 objave in fizičnega preizkusa še ne potrjuje. Dokaze, različice pogodb in
 odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
+## Hierarhični izbirnik prostorov — izvedeno v izvoru
+
+17. oktobra 2026 dogovorjeni razširljivi krovni prostori s projekti,
+iskanje tudi po zloženih projektih ter »Deljeno z mano« samo za dostopne
+projekte drugih lastnikov. [Planski dokument](SPACE_PICKER_HIERARCHY_PLAN.md)
+vodi pravila prikaza, razliko med lastnikom in ustvarjalcem ter odprte
+podrobnosti. Uporabnik je istega dne nato naročil izvedbo, commit in push.
+[Izvedba in preverjanje](SPACE_PICKER_HIERARCHY_IMPLEMENTATION.md) ter
+[nov zapis strežniških predpogojev](server/SPACE_PICKER_RELEASE_PREREQUISITES.md).
+Strežnik in trgovini ostajajo nespremenjeni.
+
+## Računi organizacije in projektni pregledi — načrtovano
+
+17. oktobra 2026 dogovorjena začetna smer: računi na organizaciji oziroma
+prostoru, projekt kot ločen pregled pripadajočih prilivov in stroškov,
+brez rezerviranja denarja in podvojenih knjižb. Zabeležena tudi zanka gumba
+»Dodaj v prostor«. [Novi planski dokument](ORGANIZATION_FINANCE_PLAN.md)
+vodi obseg, trenutno podporo FamilyHuba in odprte izvedbene podrobnosti.
+Samo načrtovanje; izvedba in izdaja nista naročeni.
+
 ## Preglednice in priloge — izvedeno v izvoru
 
 ### Preglednice v organizaciji (15. oktober 2026)

@@ -4373,6 +4373,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'This space is still being connected. Finish connecting it, then manage it on the server.';
 
   @override
+  String get spacePickerExpandProjects => 'Expand projects';
+
+  @override
+  String get spacePickerCollapseProjects => 'Collapse projects';
+
+  @override
   String get spacePickerSpaces => 'Spaces';
 
   @override

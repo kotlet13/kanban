@@ -709,6 +709,141 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     }
   }
 
+  Future<void> _selectPickerSpace(String? id) async {
+    final scope = ref
+        .read(collaborationProvider)
+        .valueOrNull
+        ?.scopes
+        .where((scope) => scope.id == id)
+        .firstOrNull;
+    if (scope?.kind == SharedScopeKind.project) {
+      await _openPickerProject(
+        scope!.id,
+        scope.projectRootId ?? scope.id,
+        local: false,
+      );
+    } else {
+      await _selectSpace(id);
+    }
+  }
+
+  Future<void> _openPickerProject(
+    String spaceId,
+    String projectId, {
+    required bool local,
+  }) async {
+    if (_restoringSpace) return;
+    if (_desktopInspector.isOpen) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.desktopFinishEditing)),
+      );
+      return;
+    }
+    final identity = _accountIdentity;
+    final previous = _location;
+    final operation = ++_navigationOperation;
+    final revision = _navigationRevision;
+    bool current() =>
+        mounted &&
+        identity == _accountIdentity &&
+        operation == _navigationOperation &&
+        revision == _navigationRevision;
+    final catalog = ref.read(localSpacesProvider).valueOrNull;
+    final visible = ref.read(organizerProvider).asData?.value;
+    final expectedWorkspace = spacePickerLocalSnapshot(
+      spaceId,
+      catalog,
+      visible,
+      ref.read(collaborationProvider).valueOrNull,
+    )?.workspaceKey;
+    bool readable() {
+      final shared = ref.read(collaborationProvider).valueOrNull;
+      if (!local) {
+        final scope = shared?.scopes.where((s) => s.id == spaceId).firstOrNull;
+        return shared?.localAccessAllowed == true &&
+            shared?.sessionInvalid != true &&
+            shared?.deletionPending != true &&
+            scope != null &&
+            scope.canRead &&
+            !scope.deleted &&
+            (scope.kind == SharedScopeKind.project &&
+                    (scope.projectRootId ?? scope.id) == projectId ||
+                shared!
+                    .dataForScope(spaceId)
+                    .projects
+                    .any((p) => p.id == projectId));
+      }
+      final space = ref
+          .read(localSpacesProvider)
+          .valueOrNull
+          ?.spaces
+          .where((s) => s.id == spaceId)
+          .firstOrNull;
+      if (space == null || space.binding != null || expectedWorkspace == null) {
+        return false;
+      }
+      if (expectedWorkspace.startsWith('private:')) {
+        return shared?.localAccessAllowed == true &&
+            shared?.sessionInvalid != true &&
+            shared?.deletionPending != true &&
+            expectedWorkspace == 'private:${shared?.session?.partition}';
+      }
+      return expectedWorkspace == spaceId;
+    }
+
+    if (!readable()) return;
+    _spaceRestorations++;
+    try {
+      await ref
+          .read(collaborationProvider.notifier)
+          .selectSpace(local ? null : spaceId);
+      if (!current() || !readable()) return;
+      if (local) {
+        await ref.read(localSpacesProvider.notifier).selectSpace(spaceId);
+        if (!current() || !readable()) return;
+        final repository = await ref.read(organizerRepositoryProvider.future);
+        if (!current() || !readable()) return;
+        await repository.reload();
+        if (!current() ||
+            !readable() ||
+            repository.snapshot.workspaceKey != expectedWorkspace ||
+            !repository.snapshot.projects.any((p) => p.id == projectId)) {
+          return;
+        }
+      }
+      final shared = ref.read(collaborationProvider).valueOrNull;
+      if (!current() ||
+          !readable() ||
+          shared?.allSpacesSelected == true ||
+          shared?.selectedSpaceId != (local ? null : spaceId) ||
+          local &&
+              ref.read(localSpacesProvider).valueOrNull?.selectedSpaceId !=
+                  spaceId) {
+        return;
+      }
+      setState(() {
+        _navigationState.clearSelections(accountChanged: false);
+        _navigationState.area = _Area.projects;
+        if (local) {
+          _navigationState.projectId = projectId;
+        } else {
+          _navigationState.sharedScopeId = spaceId;
+          _navigationState.sharedProjectId = projectId;
+        }
+        _history.record(previous, _location);
+        _navigationRevision++;
+      });
+    } catch (_) {
+      if (mounted && current()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.organizerLoadError)),
+        );
+      }
+    } finally {
+      _spaceRestorations--;
+    }
+  }
+
   Future<void> _selectAllSpaces() async {
     final identity = _accountIdentity;
     setState(() => _clearNavigationHistory());
@@ -1127,8 +1262,20 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                             children: [
                               if (!phone && !desktopExperience) ...[
                                 OrganizerSpacePicker(
-                                  onSelected: _selectSpace,
+                                  onSelected: _selectPickerSpace,
                                   onLocalSelected: _selectLocalSpace,
+                                  onLocalProjectSelected: (space, project) =>
+                                      _openPickerProject(
+                                        space,
+                                        project,
+                                        local: true,
+                                      ),
+                                  onSharedProjectSelected: (space, project) =>
+                                      _openPickerProject(
+                                        space,
+                                        project,
+                                        local: false,
+                                      ),
                                   onAllSelected: _selectAllSpaces,
                                   onAuthenticate: _authenticateForSpace,
                                   onConnect: () => _navigate(_Area.sharing),
@@ -1318,8 +1465,20 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                             Expanded(
                               child: OrganizerSpacePicker(
                                 compact: true,
-                                onSelected: _selectSpace,
+                                onSelected: _selectPickerSpace,
                                 onLocalSelected: _selectLocalSpace,
+                                onLocalProjectSelected: (space, project) =>
+                                    _openPickerProject(
+                                      space,
+                                      project,
+                                      local: true,
+                                    ),
+                                onSharedProjectSelected: (space, project) =>
+                                    _openPickerProject(
+                                      space,
+                                      project,
+                                      local: false,
+                                    ),
                                 onAllSelected: _selectAllSpaces,
                                 onAuthenticate: _authenticateForSpace,
                                 onConnect: () => _navigate(_Area.sharing),
@@ -1559,7 +1718,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
     if (local && id != null) {
       await _selectLocalSpace(id);
     } else {
-      await _selectSpace(id);
+      await _selectPickerSpace(id);
     }
   }
 
@@ -1570,6 +1729,10 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       compact: true,
       onSelected: (id) => _desktopSelectSpace(id),
       onLocalSelected: (id) => _desktopSelectSpace(id, local: true),
+      onLocalProjectSelected: (space, project) =>
+          _openPickerProject(space, project, local: true),
+      onSharedProjectSelected: (space, project) =>
+          _openPickerProject(space, project, local: false),
       onAllSelected: () {
         if (_desktopInspector.isOpen) {
           ScaffoldMessenger.of(

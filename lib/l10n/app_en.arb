@@ -1638,6 +1638,8 @@
   "notificationChanged": "Change from notification",
   "notificationShoppingRemoved": "Change: an item was removed from this list.",
   "localSpacePublicationPending": "This space is still being connected. Finish connecting it, then manage it on the server.",
+  "spacePickerExpandProjects": "Expand projects",
+  "spacePickerCollapseProjects": "Collapse projects",
   "spacePickerSpaces": "Spaces",
   "spacePickerSharedWithMe": "Shared with me",
   "spacePickerDirectProject": "Directly shared project",

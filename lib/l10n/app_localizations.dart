@@ -7754,6 +7754,18 @@ abstract class AppLocalizations {
   /// **'This space is still being connected. Finish connecting it, then manage it on the server.'**
   String get localSpacePublicationPending;
 
+  /// No description provided for @spacePickerExpandProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand projects'**
+  String get spacePickerExpandProjects;
+
+  /// No description provided for @spacePickerCollapseProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse projects'**
+  String get spacePickerCollapseProjects;
+
   /// No description provided for @spacePickerSpaces.
   ///
   /// In en, this message translates to:
