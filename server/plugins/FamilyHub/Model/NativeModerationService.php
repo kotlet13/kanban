@@ -19,7 +19,7 @@ class NativeModerationService extends NativeDatabase
         $mutating=($group==='scopes' && in_array($action,['create','updateMetadata','setLeader','accessMigrationApply','projectSharingApply'],true)) ||
             (in_array($group,['invitations','invitations2','invitations3'],true) && in_array($action,['create','resend'],true)) ||
             (in_array($group,['sync','sync2','sync3','sync4','sync5','sync6'],true) && in_array($action,['push','pushTaskWithCost'],true)) ||
-            (in_array($group,['finance','finance2'],true) && in_array($action,['push','enable','grant'],true)) ||
+            (in_array($group,['finance','finance2','finance4'],true) && in_array($action,['push','enable','grant'],true)) ||
             ($group==='finance3' && in_array($action,['paymentCommit','paymentReimburse'],true)) ||
             ($group==='reminders' && in_array($action,['put'],true));
         if ($group==='ideas' && $action==='asset' && in_array($parts[2]??'', ['begin','chunk','complete'],true)) { $mutating=true; }

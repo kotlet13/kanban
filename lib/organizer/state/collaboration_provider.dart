@@ -558,6 +558,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       paidAt: paidAt,
     ),
   );
+  Future<void> refreshFinanceAccountChoices(String scopeId) =>
+      _edit((repo) => repo.refreshFinanceAccountChoices(scopeId));
   Future<String> createFinanceAccount({
     required String scopeId,
     required String name,
@@ -582,6 +584,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   Future<String> createFinanceEntry({
     required String scopeId,
     required String accountId,
+    String? accountScopeId,
+    String? projectId,
     required FinanceEntryKind kind,
     SharedFinanceStatus status = SharedFinanceStatus.posted,
     required int amountMinor,
@@ -596,6 +600,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     (repo) => repo.createFinanceEntry(
       scopeId: scopeId,
       accountId: accountId,
+      accountScopeId: accountScopeId,
+      projectId: projectId,
       kind: kind,
       status: status,
       amountMinor: amountMinor,

@@ -1682,7 +1682,13 @@
   "invitationFlowBackToPreview": "Nazaj na povabilo",
   "invitationFlowFirstLaunch": "Imaš povezavo v e-pošti ali kodo? Tukaj nadaljuješ v povabljeni prostor.",
   "invitationFlowInvitationTo": "Povabilo v {name}",
-  "@invitationFlowInvitationTo": {"placeholders": {"name": {"type": "String"}}},
+  "@invitationFlowInvitationTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "invitationFlowViewOnly": "Samo ogled",
   "invitationFlowFullAccess": "Polni dostop",
   "invitationFlowPersonalStaysPrivate": "Pridružiš se samo temu povabljenemu prostoru. Tvoji lokalni osebni podatki se s tem ne delijo.",
@@ -1698,5 +1704,21 @@
   "invitationFlowOpenSpace": "Odpri prostor",
   "invitationFlowUsernameRule": "3–64 znakov: črke A–Z, številke, pika, vezaj ali podčrtaj.",
   "invitationFlowNameRule": "Ime je predolgo. Uporabi krajše ime.",
-  "spaceFlowCreateOtherAccount": "Za nadaljevanje uporabi prvotni račun. Lahko ustvariš tudi drug lokalni prostor."
+  "spaceFlowCreateOtherAccount": "Za nadaljevanje uporabi prvotni račun. Lahko ustvariš tudi drug lokalni prostor.",
+  "financeProjectOverview": "Pregled projekta",
+  "financeProjectMovementDescription": "Prikazani so samo prilivi in stroški tega projekta. Račun pripada prostoru; njegovo celotno stanje tu ni prikazano.",
+  "financeParentAccount": "Račun nadrejenega prostora",
+  "financeLegacyProjectAccount": "Obstoječi projektni račun",
+  "financeManageParentAccounts": "Računi prostora",
+  "financeParentAccountRequired": "Nov račun ustvarite v nadrejenem prostoru. Za upravljanje njegovih računov potrebujete dovoljenje za finance prostora.",
+  "financeParentUpgradeRequired": "Za uporabo računa nadrejenega prostora je potrebna nadgradnja strežnika. Obstoječe projektne finance ostanejo na voljo.",
+  "financeProjectFilter": "Projekt",
+  "financeAllProjects": "Vsi projekti in prostor",
+  "financeSpaceOnly": "Brez projekta",
+  "financeChooseEntryScope": "Kam spada transakcija?",
+  "financeParentSnapshotsIncomplete": "Pregled projektnih financ še ni popoln. Celotno stanje računov bo prikazano po uskladitvi vseh dovoljenih projektov.",
+  "financeAccountChoicesUnavailable": "Računi prostora še niso na voljo. Povežite se in osvežite projekt.",
+  "financeProjectMovement": "Gibanje projekta",
+  "financeViewTotalsDescription": "Seštevki upoštevajo izbrane filtre in knjižene vnose. Prenosi med računi niso nov prihodek ali strošek.",
+  "financeFilteredMovement": "Pregled prilivov in stroškov"
 }

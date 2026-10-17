@@ -25,10 +25,18 @@ class SharedFinancePolicy {
     this.managedByOrganizationPolicy = false,
     this.readAccessFromMembership = false,
     this.linkedPaymentsRequired = false,
+    this.requiredContractVersion = 1,
+    this.organizationFinanceComplete = false,
+    this.organizationFinanceScopeIds = const [],
+    this.organizationFinanceSequences = const {},
   });
   final bool enabled;
   final SharedFinanceGrant grant;
   final int revision;
+  final int requiredContractVersion;
+  final bool organizationFinanceComplete;
+  final List<String> organizationFinanceScopeIds;
+  final Map<String, int> organizationFinanceSequences;
   final bool managedByOrganizationPolicy, readAccessFromMembership;
   final bool linkedPaymentsRequired;
   bool get canRead => enabled && grant != SharedFinanceGrant.none;
@@ -40,16 +48,46 @@ class SharedFinancePolicy {
     'managedByOrganizationPolicy': managedByOrganizationPolicy,
     'readAccessFromMembership': readAccessFromMembership,
     'linkedPaymentsRequired': linkedPaymentsRequired,
+    'requiredContractVersion': requiredContractVersion,
+    'organizationFinanceComplete': organizationFinanceComplete,
+    'organizationFinanceScopeIds': organizationFinanceScopeIds,
+    'organizationFinanceSequences': organizationFinanceSequences,
   };
-  factory SharedFinancePolicy.fromJson(Map<String, dynamic> j) =>
-      SharedFinancePolicy(
-        enabled: readBool(j, 'enabled'),
-        grant: SharedFinanceGrant.values.byName(readString(j, 'grant')),
-        revision: readInt(j, 'revision'),
-        managedByOrganizationPolicy: j['managedByOrganizationPolicy'] == true,
-        readAccessFromMembership: j['readAccessFromMembership'] == true,
-        linkedPaymentsRequired: j['linkedPaymentsRequired'] == true,
-      );
+  factory SharedFinancePolicy.fromJson(Map<String, dynamic> j) {
+    final policy = SharedFinancePolicy(
+      enabled: readBool(j, 'enabled'),
+      grant: SharedFinanceGrant.values.byName(readString(j, 'grant')),
+      revision: readInt(j, 'revision'),
+      managedByOrganizationPolicy: j['managedByOrganizationPolicy'] == true,
+      readAccessFromMembership: j['readAccessFromMembership'] == true,
+      linkedPaymentsRequired: j['linkedPaymentsRequired'] == true,
+      requiredContractVersion: j['requiredContractVersion'] as int? ?? 1,
+      organizationFinanceComplete: j['organizationFinanceComplete'] == true,
+      organizationFinanceScopeIds: List.unmodifiable(
+        (j['organizationFinanceScopeIds'] as List? ?? const []).cast<String>(),
+      ),
+      organizationFinanceSequences: Map.unmodifiable(
+        Map<String, int>.from(
+          j['organizationFinanceSequences'] as Map? ?? const {},
+        ),
+      ),
+    );
+    final ids = policy.organizationFinanceScopeIds.toSet();
+    if (ids.length != policy.organizationFinanceScopeIds.length ||
+        policy.organizationFinanceSequences.values.any(
+          (sequence) => sequence < 0,
+        ) ||
+        policy.organizationFinanceSequences.keys.any(
+          (id) => !ids.contains(id),
+        ) ||
+        policy.organizationFinanceComplete &&
+            ids.any(
+              (id) => !policy.organizationFinanceSequences.containsKey(id),
+            )) {
+      throw const FormatException('Invalid organization finance composition');
+    }
+    return policy;
+  }
 }
 
 class SharedFinanceAccount {
@@ -158,6 +196,48 @@ class SharedFinanceAccount {
       );
 }
 
+/// Safe account selector for a project member. It intentionally carries no
+/// opening amount, owner, transfers, or account balance.
+class SharedFinanceAccountChoice {
+  const SharedFinanceAccountChoice({
+    required this.scopeId,
+    required this.id,
+    required this.name,
+    required this.currency,
+    this.archived = false,
+  });
+  final String scopeId, id, name, currency;
+  final bool archived;
+  Map<String, Object?> toJson() => {
+    'scopeId': scopeId,
+    'id': id,
+    'name': name,
+    'currency': currency,
+    'archived': archived,
+  };
+  factory SharedFinanceAccountChoice.fromJson(Map<String, dynamic> j) {
+    const fields = {'scopeId', 'id', 'name', 'currency', 'archived'};
+    if (j.length != fields.length || !j.keys.every(fields.contains)) {
+      throw const FormatException('Invalid account choice');
+    }
+    final choice = SharedFinanceAccountChoice(
+      scopeId: readString(j, 'scopeId'),
+      id: readString(j, 'id'),
+      name: readString(j, 'name'),
+      currency: readString(j, 'currency'),
+      archived: readBool(j, 'archived'),
+    );
+    if (choice.scopeId.isEmpty ||
+        choice.id.isEmpty ||
+        choice.name.trim().isEmpty ||
+        choice.name.length > 300 ||
+        !supportedCurrencies.contains(choice.currency)) {
+      throw const FormatException('Invalid account choice');
+    }
+    return choice;
+  }
+}
+
 class SharedFinanceEntry {
   const SharedFinanceEntry({
     required this.id,
@@ -167,6 +247,8 @@ class SharedFinanceEntry {
     this.createdByAccountId,
     this.updatedByAccountId,
     required this.accountId,
+    this.accountScopeId,
+    this.projectId,
     required this.kind,
     this.status = SharedFinanceStatus.posted,
     this.plannedAt,
@@ -194,6 +276,13 @@ class SharedFinanceEntry {
   final String? createdByAccountId;
   final String? updatedByAccountId;
   final String accountId;
+
+  /// Null addresses an account in this entry's canonical scope. A parent
+  /// reference changes the ledger account, never the canonical entry owner.
+  final String? accountScopeId;
+
+  /// Optional inline project in the same scope; native project scopes use null.
+  final String? projectId;
   final FinanceEntryKind kind;
   final SharedFinanceStatus status;
   final DateTime? plannedAt, paidAt;
@@ -216,6 +305,8 @@ class SharedFinanceEntry {
     int? revision,
     DateTime? updatedAt,
     String? accountId,
+    Object? accountScopeId = _unsetFinance,
+    Object? projectId = _unsetFinance,
     FinanceEntryKind? kind,
     SharedFinanceStatus? status,
     Object? plannedAt = _unsetFinance,
@@ -243,6 +334,12 @@ class SharedFinanceEntry {
     createdByAccountId: createdByAccountId,
     updatedByAccountId: updatedByAccountId,
     accountId: accountId ?? this.accountId,
+    accountScopeId: identical(accountScopeId, _unsetFinance)
+        ? this.accountScopeId
+        : accountScopeId as String?,
+    projectId: identical(projectId, _unsetFinance)
+        ? this.projectId
+        : projectId as String?,
     kind: kind ?? this.kind,
     status: status ?? this.status,
     plannedAt: identical(plannedAt, _unsetFinance)
@@ -292,6 +389,8 @@ class SharedFinanceEntry {
     'createdByAccountId': createdByAccountId,
     'updatedByAccountId': updatedByAccountId,
     'accountId': accountId,
+    'accountScopeId': accountScopeId,
+    'projectId': projectId,
     'kind': kind.name,
     'status': status.name,
     'plannedAt': plannedAt?.toUtc().toIso8601String(),
@@ -331,6 +430,14 @@ class SharedFinanceEntry {
       ..remove('revision')
       ..remove('createdByAccountId')
       ..remove('updatedByAccountId');
+    if (contractVersion < 3) {
+      if (accountScopeId != null || projectId != null) {
+        throw const FormatException('Organization finance requires contract 3');
+      }
+      payload
+        ..remove('accountScopeId')
+        ..remove('projectId');
+    }
     if (contractVersion == 1) {
       if (hasPlanningMetadata) {
         throw const FormatException('Finance planning requires contract 2');
@@ -361,6 +468,8 @@ class SharedFinanceEntry {
         createdByAccountId: readNullableString(j, 'createdByAccountId'),
         updatedByAccountId: readNullableString(j, 'updatedByAccountId'),
         accountId: readString(j, 'accountId'),
+        accountScopeId: readNullableString(j, 'accountScopeId'),
+        projectId: readNullableString(j, 'projectId'),
         kind: FinanceEntryKind.values.byName(readString(j, 'kind')),
         status: SharedFinanceStatus.values.byName(readString(j, 'status')),
         plannedAt: readNullableSharedDate(j, 'plannedAt'),

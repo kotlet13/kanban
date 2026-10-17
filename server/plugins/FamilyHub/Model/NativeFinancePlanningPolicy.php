@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** Finance v2 keeps planned/posted money and person references outside sync3. */
 class NativeFinancePlanningPolicy extends NativeDatabase
 {
-    public function validate($type, $p, $scope, $current)
+    public function validate($type, $p, $scope, $current, $accountScope = null)
     {
         if (!is_array($p) || array_is_list($p) || strlen(json_encode($p, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) > 524288) { throw new NativeError('validation_error'); }
         $extra = ['status','plannedAt','paidAt','taskId','ledgerAccountId','payerPersonId','recipientPersonId','createdByPersonId','recurrenceRuleId','occurrenceKey'];
@@ -21,6 +21,7 @@ class NativeFinancePlanningPolicy extends NativeDatabase
         $dates = new NativeRecordPolicy($this->container);
         $dates->date($p['createdAt']); $dates->date($p['updatedAt']);
         if (new \DateTimeImmutable($p['updatedAt']) < new \DateTimeImmutable($p['createdAt'])) { throw new NativeError('validation_error'); }
+        $ledgerScope=$type==='financeEntry' ? ($accountScope ?? $scope) : $scope;
         $previous = $current && $current['payload'] !== null ? json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR) : null;
         if ($previous && new \DateTimeImmutable($previous['createdAt']) != new \DateTimeImmutable($p['createdAt'])) { throw new NativeError('created_at_immutable'); }
         if (!in_array($p['currency'],['EUR','USD','GBP','CHF'],true)) { throw new NativeError('unsupported_currency'); }
@@ -48,7 +49,7 @@ class NativeFinancePlanningPolicy extends NativeDatabase
                 $this->integer($p['endYear'],1900,2200); $this->integer($p['endMonth'],1,12);
                 if ($p['endYear']*12+$p['endMonth'] < $p['startYear']*12+$p['startMonth']) { throw new NativeError('validation_error'); }
             }
-            $this->account($scope,$p['ledgerAccountId'],$p['currency'],$previous['ledgerAccountId'] ?? null);
+            $this->account($ledgerScope,$p['ledgerAccountId'],$p['currency'],($previous['accountScopeId']??$scope)===$ledgerScope?($previous['ledgerAccountId']??null):null);
             return;
         }
         $this->money($p['amountMinor'],true); $dates->date($p['occurredAt']); $dates->domainText($p['notes'],4096,50000,true,true);
@@ -61,12 +62,12 @@ class NativeFinancePlanningPolicy extends NativeDatabase
         foreach (['plannedAt','paidAt'] as $field) { if ($p[$field] !== null) { $dates->date($p[$field]); } }
         if ($p['status'] === 'planned' && $p['paidAt'] !== null) { throw new NativeError('validation_error'); }
         if ($p['paidAt'] !== null && new \DateTimeImmutable($p['paidAt']) != new \DateTimeImmutable($p['occurredAt'])) { throw new NativeError('validation_error'); }
-        $this->account($scope,$p['ledgerAccountId'],$p['currency'],$previous['ledgerAccountId'] ?? null);
+        $this->account($ledgerScope,$p['ledgerAccountId'],$p['currency'],($previous['accountScopeId']??$scope)===$ledgerScope?($previous['ledgerAccountId']??null):null);
         if($p['createdByPersonId']!==null) {throw new NativeError('validation_error');}
         foreach (['payerPersonId','recipientPersonId','createdByPersonId'] as $field) { $this->person($scope,$p[$field],$previous[$field] ?? null); }
         if ($type === 'financeEntry') {
             if($p['ledgerAccountId']!==null && $p['ledgerAccountId']!==$p['accountId']) {throw new NativeError('validation_error');}
-            $this->account($scope,$p['accountId'],$p['currency'],$previous['accountId'] ?? null); $this->text($p['category'],100,true);
+            $this->account($ledgerScope,$p['accountId'],$p['currency'],($previous['accountScopeId']??$scope)===$ledgerScope?($previous['accountId']??null):null); $this->text($p['category'],100,true);
             foreach (['payerAccountId','recipientAccountId'] as $field) {
                 if ($p[$field] !== null && $p[$field] !== ($previous[$field] ?? null)) { $dates->assignees($scope,[$this->uuid($p[$field])]); }
             }
@@ -151,6 +152,13 @@ class NativeFinancePlanningPolicy extends NativeDatabase
             }
         }
         $fields=match($type) { 'financeAccount','personalFinanceAccount'=>['accountId','fromAccountId','toAccountId','ledgerAccountId'], 'financeRecurrenceRule'=>['recurrenceRuleId'], default=>[] };
-        foreach ($fields as $field) { if ($this->one("SELECT id FROM familyhub_finance_records WHERE scope_id=? AND deleted=0 AND json_extract(payload,'$.".$field."')=? LIMIT 1",[$scope,$id])) { throw new NativeError('live_children'); } }
+        foreach ($fields as $field) {
+            foreach ($this->many("SELECT type,payload FROM familyhub_finance_records WHERE scope_id=? AND deleted=0 AND json_extract(payload,'$.".$field."')=?",[$scope,$id]) as $row) {
+                $p=json_decode($row['payload'],true,32,JSON_THROW_ON_ERROR);
+                // Account IDs are scoped identities; a parent's equal UUID is not this account.
+                if ($row['type']==='financeEntry' && in_array($type,['financeAccount','personalFinanceAccount'],true) && ($p['accountScopeId']??$scope)!==$scope) { continue; }
+                throw new NativeError('live_children');
+            }
+        }
     }
 }

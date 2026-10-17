@@ -4580,4 +4580,58 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get spaceFlowCreateOtherAccount =>
       'Za nadaljevanje uporabi prvotni račun. Lahko ustvariš tudi drug lokalni prostor.';
+
+  @override
+  String get financeProjectOverview => 'Pregled projekta';
+
+  @override
+  String get financeProjectMovementDescription =>
+      'Prikazani so samo prilivi in stroški tega projekta. Račun pripada prostoru; njegovo celotno stanje tu ni prikazano.';
+
+  @override
+  String get financeParentAccount => 'Račun nadrejenega prostora';
+
+  @override
+  String get financeLegacyProjectAccount => 'Obstoječi projektni račun';
+
+  @override
+  String get financeManageParentAccounts => 'Računi prostora';
+
+  @override
+  String get financeParentAccountRequired =>
+      'Nov račun ustvarite v nadrejenem prostoru. Za upravljanje njegovih računov potrebujete dovoljenje za finance prostora.';
+
+  @override
+  String get financeParentUpgradeRequired =>
+      'Za uporabo računa nadrejenega prostora je potrebna nadgradnja strežnika. Obstoječe projektne finance ostanejo na voljo.';
+
+  @override
+  String get financeProjectFilter => 'Projekt';
+
+  @override
+  String get financeAllProjects => 'Vsi projekti in prostor';
+
+  @override
+  String get financeSpaceOnly => 'Brez projekta';
+
+  @override
+  String get financeChooseEntryScope => 'Kam spada transakcija?';
+
+  @override
+  String get financeParentSnapshotsIncomplete =>
+      'Pregled projektnih financ še ni popoln. Celotno stanje računov bo prikazano po uskladitvi vseh dovoljenih projektov.';
+
+  @override
+  String get financeAccountChoicesUnavailable =>
+      'Računi prostora še niso na voljo. Povežite se in osvežite projekt.';
+
+  @override
+  String get financeProjectMovement => 'Gibanje projekta';
+
+  @override
+  String get financeViewTotalsDescription =>
+      'Seštevki upoštevajo izbrane filtre in knjižene vnose. Prenosi med računi niso nov prihodek ali strošek.';
+
+  @override
+  String get financeFilteredMovement => 'Pregled prilivov in stroškov';
 }

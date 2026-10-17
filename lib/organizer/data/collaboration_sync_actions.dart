@@ -199,7 +199,10 @@ extension CollaborationSyncActions on CollaborationRepository {
             throw const CollaborationException('client_upgrade_required');
           }
           if (financePair != null &&
-              (_recordContractVersion < 3 || _financeContractVersion < 2)) {
+              (_recordContractVersion < 3 ||
+                  _financeContractVersion < 2 ||
+                  (financePair['wire_version'] as int? ?? 1) >
+                      _financeContractVersion)) {
             throw const CollaborationException('unsupported_version');
           }
           if (financePair != null) {

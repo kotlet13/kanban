@@ -362,11 +362,15 @@ class OrganizerActions implements OrganizerCollectionActions {
             : () => controller.deleteShoppingItem(item.id),
       );
 
-  Future<void> finance([FinanceEntry? entry]) async {
+  Future<void> finance([
+    FinanceEntry? entry,
+    String? projectId,
+    String? ledgerAccountId,
+  ]) async {
     final localIds = await controller.deviceLocalRecordIds();
     if (!context.mounted || !_guard.isCurrent) return;
     final isLocal = entry == null
-        ? snapshot.workspaceKey == 'local'
+        ? !snapshot.workspaceKey.startsWith('private:')
         : localIds.contains(entry.id);
     final shared = ref.read(collaborationProvider).valueOrNull;
     final financial =
@@ -398,8 +402,8 @@ class OrganizerActions implements OrganizerCollectionActions {
       draft: OrganizerDraft(
         title: entry?.title ?? '',
         notes: entry?.notes ?? '',
-        projectId: entry?.projectId,
-        ledgerAccountId: entry?.ledgerAccountId,
+        projectId: entry?.projectId ?? projectId,
+        ledgerAccountId: entry?.ledgerAccountId ?? ledgerAccountId,
         date: entry?.occurredAt ?? DateTime.now(),
         amount: entry == null ? '' : formatMoneyMinor(entry.amountMinor),
         kind: entry?.kind ?? FinanceEntryKind.expense,
@@ -412,7 +416,7 @@ class OrganizerActions implements OrganizerCollectionActions {
         }
         final privateDestination =
             entry == null &&
-            snapshot.workspaceKey != 'local' &&
+            snapshot.workspaceKey.startsWith('private:') &&
             ![
               d.ledgerAccountId,
               d.projectId,

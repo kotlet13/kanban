@@ -13,6 +13,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
     required this.projects,
     required this.people,
     required this.financeAccounts,
+    this.financeAccountChoices = const {},
     required this.costEditingEnabled,
     required this.costAccountRequired,
     required this.enabled,
@@ -24,6 +25,8 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
   final List<LocalProject> projects;
   final List<HouseholdPerson> people;
   final List<LocalFinanceAccount> financeAccounts;
+  final Map<String, ({String name, String currency, bool archived})>
+  financeAccountChoices;
   final VoidCallback onChanged;
   final Widget Function(Widget)? wrap;
 
@@ -370,6 +373,19 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                    for (final a in financeAccountChoices.entries.where(
+                      (a) =>
+                          a.value.currency == draft.costCurrency &&
+                          (!a.value.archived || a.key == draft.ledgerAccountId),
+                    ))
+                      DropdownMenuItem(
+                        value: a.key,
+                        child: Text(
+                          '${a.value.name} · ${l.financeParentAccount}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                   ],
                   validator: (value) =>
                       costAccountRequired && (value == null || value.isEmpty)
@@ -381,6 +397,12 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                 ),
                 if (costAccountRequired &&
                     financeAccounts
+                        .where(
+                          (a) =>
+                              a.currency == draft.costCurrency && !a.archived,
+                        )
+                        .isEmpty &&
+                    financeAccountChoices.values
                         .where(
                           (a) =>
                               a.currency == draft.costCurrency && !a.archived,

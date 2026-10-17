@@ -59,6 +59,39 @@ class SharedFinanceActions {
   }
 
   Future<void> account([SharedFinanceAccount? account]) {
+    if (account == null &&
+        scope.kind == SharedScopeKind.project &&
+        scope.parentSpaceId != null) {
+      final current = ref.read(collaborationProvider).valueOrNull;
+      final parent = current?.scopes
+          .where(
+            (s) =>
+                s.id == scope.parentSpaceId &&
+                !s.revoked &&
+                !s.deleted &&
+                !s.archived &&
+                !s.blocked,
+          )
+          .firstOrNull;
+      if (parent != null &&
+          current!.financePolicyForScope(parent.id).canWrite &&
+          current.financeSnapshotComplete[parent.id] == true) {
+        return SharedFinanceActions(context, ref, parent, current).account();
+      }
+      return showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.l10n.financeManageParentAccounts),
+          content: Text(context.l10n.financeParentAccountRequired),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+    }
     final l = context.l10n;
     final guard = FinanceAccessGuard(context, ref, scope.id, write: true);
     return showSharingForm(
@@ -158,7 +191,104 @@ class SharedFinanceActions {
     );
   }
 
-  Future<void> entry([SharedFinanceEntry? entry]) {
+  Future<void> entry([SharedFinanceEntry? entry]) async {
+    if (entry == null && scope.kind != SharedScopeKind.project) {
+      final current = ref.read(collaborationProvider).valueOrNull ?? state;
+      final children = current.scopes
+          .where(
+            (s) =>
+                s.parentSpaceId == scope.id &&
+                s.kind == SharedScopeKind.project &&
+                !s.revoked &&
+                !s.deleted &&
+                !s.archived &&
+                !s.blocked &&
+                current.financePolicyForScope(s.id).canWrite &&
+                current.financeSnapshotComplete[s.id] == true,
+          )
+          .toList();
+      if (children.isNotEmpty && current.organizationFinanceSupported) {
+        final target = await showDialog<SharedScope>(
+          context: context,
+          builder: (context) => SimpleDialog(
+            title: Text(context.l10n.financeChooseEntryScope),
+            children: [
+              for (final candidate in [
+                if (current.financePolicyForScope(scope.id).canWrite) scope,
+                ...children,
+              ])
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, candidate),
+                  child: Text(
+                    candidate.id == scope.id
+                        ? '${candidate.name} · ${context.l10n.financeSpaceOnly}'
+                        : candidate.name,
+                  ),
+                ),
+            ],
+          ),
+        );
+        if (target == null || !context.mounted) return;
+        if (target.id != scope.id) {
+          final fresh = ref.read(collaborationProvider).valueOrNull;
+          if (fresh == null ||
+              fresh.session?.partition != state.session?.partition ||
+              !fresh.financePolicyForScope(target.id).canWrite) {
+            return;
+          }
+          return SharedFinanceActions(context, ref, target, fresh).entry();
+        }
+      }
+    }
+    if (scope.kind == SharedScopeKind.project &&
+        scope.parentSpaceId != null &&
+        state.organizationFinanceSupported) {
+      try {
+        await ref
+            .read(collaborationProvider.notifier)
+            .refreshFinanceAccountChoices(scope.id);
+      } catch (_) {
+        // Previously synced safe choices and legacy accounts remain available
+        // offline. A failed refresh cannot reveal parent finance data.
+      }
+      if (!context.mounted) return;
+    }
+    final current = ref.read(collaborationProvider).valueOrNull ?? state;
+    if (current.session?.partition != state.session?.partition) return;
+    final accountOptions =
+        <String, ({String id, String? scopeId, String name, String currency})>{
+          for (final a in data.financeAccounts.where(
+            (a) =>
+                !a.archived ||
+                a.id == entry?.accountId && entry?.accountScopeId == null,
+          ))
+            a.id: (id: a.id, scopeId: null, name: a.name, currency: a.currency),
+          for (final a
+              in current.financeAccountChoices[scope.id] ??
+                  <SharedFinanceAccountChoice>[])
+            if (!a.archived ||
+                a.id == entry?.accountId && a.scopeId == entry?.accountScopeId)
+              '${a.scopeId}:${a.id}': (
+                id: a.id,
+                scopeId: a.scopeId,
+                name: a.name,
+                currency: a.currency,
+              ),
+        };
+    final selectedAccount = entry?.accountScopeId == null
+        ? entry?.accountId
+        : '${entry!.accountScopeId}:${entry.accountId}';
+    if (entry != null &&
+        selectedAccount != null &&
+        !accountOptions.containsKey(selectedAccount)) {
+      accountOptions[selectedAccount] = (
+        id: entry.accountId,
+        scopeId: entry.accountScopeId,
+        name: context.l10n.financeUnavailableAccount,
+        currency: entry.currency,
+      );
+    }
+
     if (entry != null && !supportedCurrencies.contains(entry.currency)) {
       return run(() async {
         throw const CollaborationException('unsupported_currency');
@@ -168,7 +298,7 @@ class SharedFinanceActions {
     final guard = FinanceAccessGuard(context, ref, scope.id, write: true);
     if (entry?.taskId != null ||
         entry?.recurrenceRuleId != null ||
-        state.financeContractVersion == 2 &&
+        state.financeContractVersion >= 2 &&
             entry?.status == SharedFinanceStatus.planned) {
       final source = entry!;
       final local = FinanceEntry(
@@ -218,6 +348,16 @@ class SharedFinanceActions {
         ),
       );
     }
+    if (accountOptions.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.financeAccountChoicesUnavailable),
+          ),
+        );
+      }
+      return;
+    }
     return showSharingForm(
       context,
       title: entry == null ? l.organizerAddFinance : l.financeEditEntry,
@@ -231,9 +371,35 @@ class SharedFinanceActions {
         SharingField(
           id: 'account',
           label: l.financeAccount,
-          initialValue: entry?.accountId ?? data.financeAccounts.first.id,
-          options: _accounts,
+          initialValue:
+              selectedAccount ??
+              accountOptions.entries
+                  .where((a) => a.value.scopeId != null)
+                  .firstOrNull
+                  ?.key ??
+              accountOptions.keys.first,
+          options: {
+            for (final a in accountOptions.entries)
+              a.key:
+                  '${a.value.name} · ${a.value.currency}${a.value.scopeId == null ? '' : ' · ${l.financeParentAccount}'}',
+          },
         ),
+        if (current.organizationFinanceSupported &&
+            scope.kind != SharedScopeKind.project &&
+            data.projects.isNotEmpty)
+          SharingField(
+            id: 'project',
+            label: l.financeProjectFilter,
+            initialValue: entry?.projectId ?? '',
+            required: false,
+            options: {
+              '': l.financeSpaceOnly,
+              for (final p in data.projects.where(
+                (p) => !p.archived || p.id == entry?.projectId,
+              ))
+                p.id: p.title,
+            },
+          ),
         SharingField(
           id: 'kind',
           label: l.type,
@@ -306,9 +472,7 @@ class SharedFinanceActions {
       errorMessage: (error) => sharingErrorMessage(context, error),
       wrap: guard.wrap,
       onSubmit: (values) async {
-        final selected = data.financeAccounts.firstWhere(
-          (a) => a.id == values['account'],
-        );
+        final selected = accountOptions[values['account']]!;
         if (!supportedCurrencies.contains(selected.currency)) {
           throw const CollaborationException('unsupported_currency');
         }
@@ -323,6 +487,8 @@ class SharedFinanceActions {
           await controller.createFinanceEntry(
             scopeId: scope.id,
             accountId: selected.id,
+            accountScopeId: selected.scopeId,
+            projectId: _nullable(values['project'] ?? ''),
             kind: kind,
             status: status,
             amountMinor: amount,
@@ -339,6 +505,10 @@ class SharedFinanceActions {
             scope.id,
             entry.copyWith(
               accountId: selected.id,
+              accountScopeId: selected.scopeId,
+              projectId: values.containsKey('project')
+                  ? _nullable(values['project']!)
+                  : entry.projectId,
               ledgerAccountId: entry.ledgerAccountId == null
                   ? null
                   : selected.id,

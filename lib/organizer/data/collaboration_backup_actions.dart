@@ -21,6 +21,11 @@ extension CollaborationBackupActions on CollaborationRepository {
       throw const CollaborationException('backup_wrong_account');
     }
     await _negotiate(session, epoch);
+    for (final op in backupRows(doc, 'finance_outbox')) {
+      if ((op['wire_version'] as int? ?? 1) > _financeContractVersion) {
+        throw const CollaborationException('unsupported_version');
+      }
+    }
     await syncNow();
     _checkEpoch(epoch);
     if (_lastError != null) throw _lastError!;
@@ -64,6 +69,19 @@ extension CollaborationBackupActions on CollaborationRepository {
         policies[scope] = await _fetchFinancePolicy(session, epoch, scope);
         if (!policies[scope]!.canWrite) {
           throw const CollaborationException('finance_forbidden');
+        }
+        if (policies[scope]!.requiredContractVersion >
+            _financeContractVersion) {
+          throw const CollaborationException('unsupported_version');
+        }
+        if (_organizationFinanceSupported &&
+            SharedScope.fromJson(
+                  CollaborationRepository._map(rows.single['data']),
+                ).kind ==
+                SharedScopeKind.project) {
+          // Selector metadata is refetched under the live identity. The backup
+          // cannot restore grants or cached parent account projections.
+          await _fetchFinanceAccountChoices(session, epoch, scope);
         }
         generations[scope] = await _financeAccessGeneration(p, scope);
       }

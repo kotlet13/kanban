@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+17. oktober — **organizacijske finance in projektni pregledi izvedeni v izvoru**
+po naknadnem izrecnem naročilu »dej kr nared nadgradnjo še financ«; trije
+GPT-6.1 Sol/high podagenti, glavni pregled/integracija.
+[Izvedba](docs/ORGANIZATION_FINANCE_IMPLEMENTATION.md): neposreden račun prostora,
+projektni strošek/priliv ostane en kanoničen zapis z računom starša; skupni
+račun/projektni filter, brez projektnega podvojenega denarja. Finance4/pogodba3,
+varne projektne izbire brez salda, contributor IDs+sequence in zadnja odstranjena
+povezava varujejo popolnost. Stari projektni računi/osebna plačila ohranjeni;
+lokalna objava, task-cost in kopija8/baza10 ohranijo točne povezave/ACK.
+104 zaključnih UI/projekcijskih PASS,72 podatkovnih ter24 zaključnih task-cost
+PASS (prekrivanje); kopije/predogled26+1, repository4, združljivost1–7 PASS.
+1506 strežniških kontrol na SQLite/MariaDB/MySQL,20PHP lint PASS; analiza
+samo10starihinfo brez novih. [Novi strežniški predpogoji](docs/server/ORGANIZATION_FINANCE_RELEASE_PREREQUISITES.md):
+potrebna nova usklajena koda FamilyHuba, brez DDL; sveža kopija/prava obnova
+pred poznejšo namestitvijo. Ni novega gostovanja/crona/SDK/locks/verzije appa,
+gradnje ali trgovinske oddaje; AAB31 te kode ne vsebuje. Samo commit/push.
+Čezobsežna mesečna pravila ostajajo izven te faze; stara pravila dostopna.
+Nepovezana varnostni in desktop dokument ostaneta nedotaknjena.
+
 17. oktober — **hierarhični izbirnik prostorov izveden v izvoru** po naknadnem
 izrecnem naročilu, s tremi podagenti GPT-6.1 Sol/high in pregledom glavnega.
 [Izvedba](docs/SPACE_PICKER_HIERARCHY_IMPLEMENTATION.md): krovni prostori se razširijo v

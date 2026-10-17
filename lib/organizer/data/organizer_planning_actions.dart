@@ -9,6 +9,11 @@ extension OrganizerPlanningActions on OrganizerRepository {
     int? expectedFinanceRevision,
     required String expectedWorkspaceKey,
   }) => _change((s) {
+    if (cost?.accountScopeId != null) {
+      throw const FormatException(
+        'A local task requires a local ledger account',
+      );
+    }
     if (s.workspaceKey != expectedWorkspaceKey) {
       throw const OrganizerConflictException('Personal workspace changed');
     }

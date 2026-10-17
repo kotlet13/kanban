@@ -69,6 +69,13 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
           id: previous?.id ?? newSharedId(),
           revision: previous?.revision ?? 0,
           accountId: ledger,
+          accountScopeId: cost.accountScopeSpecified
+              ? cost.accountScopeId
+              : cost.accountScopeId ??
+                    (ledger == previous?.accountId
+                        ? previous?.accountScopeId
+                        : null),
+          projectId: previous?.projectId,
           ledgerAccountId: ledger,
           kind: FinanceEntryKind.expense,
           status: paidAt == null
@@ -98,7 +105,7 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
           scopeId,
           SharedFinanceRecordType.financeEntry,
           entry.id,
-          entry.toPayload(contractVersion: 2),
+          entry.toPayload(contractVersion: _financeContractVersion),
           expectedLocalRevision: previous?.revision,
         );
         final generic = (await database.rows(
@@ -186,7 +193,13 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
               CollaborationRepository._map(financial['remote']),
             );
       if (keepLocal) {
+        if ((financeOp['wire_version'] as int? ?? 1) < 3 &&
+            (remoteFinance?['payload']?['accountScopeId'] != null ||
+                remoteFinance?['payload']?['projectId'] != null)) {
+          throw const CollaborationException('requires_remote_resolution');
+        }
         await _writable(p, scope);
+        await _financeWritable(p, scope);
         if (!(await _cachedFinancePolicy(p, scope)).canWrite) {
           throw const CollaborationException('finance_forbidden');
         }
@@ -231,6 +244,13 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
         if (financePayload != null) {
           financePayload['taskId'] = task['deleted'] == 1 ? null : taskId;
           financePayload['plannedAt'] = taskPayload?['dueAt'];
+          financePayload.addAll(
+            financePayloadForContract(
+              SharedFinanceRecordType.financeEntry,
+              financePayload,
+              _financeContractVersion,
+            ),
+          );
         }
         final taskRequest = {
           'opId': newSharedId(),
@@ -253,13 +273,14 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
           [taskRequest['opId'], p, scope, taskId, jsonEncode(taskRequest)],
         );
         await database.execute(
-          'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,2)',
+          'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,?)',
           [
             financeRequest['opId'],
             p,
             scope,
             financeId,
             jsonEncode(financeRequest),
+            _financeContractVersion,
           ],
         );
         await database.execute(

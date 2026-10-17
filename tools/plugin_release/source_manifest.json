@@ -47,6 +47,7 @@
   "Model/NativeNotificationPreferences.php",
   "Model/NativeNotificationWriter.php",
   "Model/NativeOrganizationAccess.php",
+  "Model/NativeOrganizationFinancePolicy.php",
   "Model/NativePasswordResetService.php",
   "Model/NativePersonalService.php",
   "Model/NativeProjectSharingService.php",

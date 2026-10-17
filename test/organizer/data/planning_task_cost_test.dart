@@ -517,7 +517,7 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 7);
+      expect(doc['version'], 8);
       expect(doc['databaseVersion'], 10);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},

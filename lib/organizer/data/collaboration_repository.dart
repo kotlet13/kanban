@@ -53,6 +53,7 @@ part 'collaboration_notification_actions.dart';
 part 'collaboration_notification_sync.dart';
 part 'collaboration_notification_routing.dart';
 part 'collaboration_finance_actions.dart';
+part 'collaboration_finance_account_choices.dart';
 part 'collaboration_finance_sync.dart';
 part 'collaboration_remote_push_actions.dart';
 part 'collaboration_remote_push_routing.dart';
@@ -121,6 +122,12 @@ class CollaborationRepository {
   bool _privateSyncSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
   bool _financeSupported = false;
+  bool _organizationFinanceSupported = false;
+  String get _financeNamespace => _financeContractVersion >= 3
+      ? 'finance4'
+      : _financeContractVersion >= 2
+      ? 'finance2'
+      : 'finance';
   bool _externalPushSupported = false, _smtpSupported = false;
   String? _pushProjectId;
   int _pushDisplayVersion = 1;
@@ -258,6 +265,9 @@ class CollaborationRepository {
       final members = <String, List<SharedMember>>{};
       final financePolicies = <String, SharedFinancePolicy>{};
       final financeComplete = <String, bool>{};
+      final financeSequences = <String, int>{};
+      final financeAccountChoices =
+          <String, List<SharedFinanceAccountChoice>>{};
       for (final scope in parsedScopes) {
         if (!scope.revoked) {
           data[scope.id] = await _scopeData(profile.partition, scope.id);
@@ -265,12 +275,16 @@ class CollaborationRepository {
             profile.partition,
             scope.id,
           );
-          financeComplete[scope.id] =
-              (await database.rows(
-                'SELECT finance_complete FROM scopes WHERE partition=? AND id=?',
-                [profile.partition, scope.id],
-              )).first['finance_complete'] ==
-              1;
+          final projection = (await database.rows(
+            'SELECT finance_complete,finance_cursor FROM scopes WHERE partition=? AND id=?',
+            [profile.partition, scope.id],
+          )).single;
+          financeComplete[scope.id] = projection['finance_complete'] == 1;
+          financeSequences[scope.id] = projection['finance_cursor'] as int;
+          financeAccountChoices[scope.id] = await _cachedFinanceAccountChoices(
+            profile.partition,
+            scope.id,
+          );
           members[scope.id] = (await database.rows(
             'SELECT data FROM members WHERE partition=? AND scope_id=?',
             [profile.partition, scope.id],
@@ -449,6 +463,7 @@ class CollaborationRepository {
         pushProjectId: _pushProjectId,
         financePolicies: financePolicies,
         financeSnapshotComplete: financeComplete,
+        financeSnapshotSequences: financeSequences,
         financeConflicts: financeConflicts,
         financePendingCount: financeQueue.length,
         financeBlockedCount: financeQueue
@@ -462,6 +477,8 @@ class CollaborationRepository {
         scopeArchivingSupported: _scopeArchivingSupported,
         inboxSupported: _inboxSupported,
         financeSupported: _financeSupported,
+        organizationFinanceSupported: _organizationFinanceSupported,
+        financeAccountChoices: financeAccountChoices,
         financeContractVersion: _financeContractVersion,
         recordContractVersion: _recordContractVersion,
         emailVerificationSupported: _emailVerificationSupported,
@@ -617,7 +634,13 @@ class CollaborationRepository {
       }
     }
     final liveAccounts = {for (final a in financeAccounts) a.id: a.currency};
-    financeEntries.removeWhere((e) => liveAccounts[e.accountId] != e.currency);
+    final scope = await _financeStoredScope(partition, scopeId);
+    financeEntries.removeWhere(
+      (e) => e.accountScopeId == null
+          ? liveAccounts[e.accountId] != e.currency
+          : scope?.kind != SharedScopeKind.project ||
+                e.accountScopeId != scope?.parentSpaceId,
+    );
     financeTransfers.removeWhere(
       (e) =>
           liveAccounts[e.fromAccountId] != e.currency ||

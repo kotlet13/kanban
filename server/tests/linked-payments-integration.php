@@ -100,7 +100,7 @@ $safeTaskEvent=array_values(array_filter(data(call('finance3.payments',['scopeId
 check($safeTaskEvent['sourceRevision']===3&&$safeTaskEvent['revision']===2&&new DateTimeImmutable($safeTaskEvent['paidAt'])==new DateTimeImmutable($stamp),'safe paid expense metadata edit updates source proof without changing monetary dates');
 // Retained/transferred shared facts survive payer account deletion, private links do not.
 $payerName=$prefix.'_payment_delete';$payerId=$container['userModel']->create(['username'=>$payerName,'password'=>$password,'role'=>'app-user']);
-$payerSession=data(call('auth.login',['username'=>$payerName,'password'=>$password,'deviceName'=>'Disposable linked payer']));$pt=$payerSession['token'];
+$payerSession=data(call('auth.login',['username'=>$payerName,'password'=>$password,'deviceName'=>'Disposable linked payer']));$pt=$payerSession['token'];data(call('moderation.acceptPolicy',['policyVersion'=>1],$pt));
 $retainedOrg=uuid();data(call('scopes.create',['id'=>$retainedOrg,'kind'=>'organization','name'=>'Retained linked source','accessPolicyVersion'=>2,'requestId'=>uuid()],$pt));
 invite($retainedOrg,$names['external'],$pt,$e);
 $retainedAccount=uuid();data(call('finance2.push',['scopeId'=>$retainedOrg,'operation'=>operation($retainedAccount,'financeAccount',$richAccount)],$pt));
@@ -121,7 +121,7 @@ $retainedReceipt=data(call('finance3.payments',['scopeId'=>$receiptHouse],$e))['
 check(!isset($retainedReceipt['privateAccountId'])&&$retainedReceipt['state']==='complete','already shared household cash receipt survives without private card link');
 $statement=$pdo->prepare('SELECT COUNT(*) FROM familyhub_payment_projections WHERE scope_id=?');$statement->execute([$payerPrivate]);check((int)$statement->fetchColumn()===0,'deleted account leaves no private linked projection');$statement->closeCursor();
 // An explicitly deleted source must mark downstream historical receipt as source removed.
-$removeName=$prefix.'_source_delete';$removeId=$container['userModel']->create(['username'=>$removeName,'password'=>$password,'role'=>'app-user']);$removeSession=data(call('auth.login',['username'=>$removeName,'password'=>$password,'deviceName'=>'Disposable source']));$rt=$removeSession['token'];
+$removeName=$prefix.'_source_delete';$removeId=$container['userModel']->create(['username'=>$removeName,'password'=>$password,'role'=>'app-user']);$removeSession=data(call('auth.login',['username'=>$removeName,'password'=>$password,'deviceName'=>'Disposable source']));$rt=$removeSession['token'];data(call('moderation.acceptPolicy',['policyVersion'=>1],$rt));
 $removedOrg=uuid();data(call('scopes.create',['id'=>$removedOrg,'kind'=>'organization','name'=>'Explicitly removed source','accessPolicyVersion'=>2,'requestId'=>uuid()],$rt));
 $removedAccount=uuid();data(call('finance2.push',['scopeId'=>$removedOrg,'operation'=>operation($removedAccount,'financeAccount',$richAccount)],$rt));
 $removedExpense=uuid();data(call('finance2.push',['scopeId'=>$removedOrg,'operation'=>operation($removedExpense,'financeEntry',array_replace($payload,['accountId'=>$removedAccount,'ledgerAccountId'=>$removedAccount]))],$rt));

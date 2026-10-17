@@ -50,7 +50,9 @@ class NativeDeletionPlan extends NativeDatabase
                 if ((int)($s['access_policy_version']??1)===3 || !empty($s['parent_scope_id'])) { $eligible=array_map(fn($m)=>['user_id'=>$m['userId'],'account_id'=>$m['accountId'],'name'=>$m['displayName'],'username'=>$m['username']],array_values(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id))); }
                 $foreignDocuments=false;
                 if ((new NativeAttachmentService($this->container))->available()) { $foreignDocuments=(bool)$this->one('SELECT id FROM familyhub_tables WHERE scope_id=? AND deleted=0 AND created_by<>? LIMIT 1',[$sid,$account]) || (bool)$this->one('SELECT id FROM familyhub_attachments WHERE scope_id=? AND deleted=0 AND owner_account_id<>? LIMIT 1',[$sid,$account]); }
-                $foreign=$foreignDocuments || count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
+                $externalAccountReferences=$this->many("SELECT scope_id,id,revision FROM familyhub_finance_records WHERE scope_id<>? AND type='financeEntry' AND deleted=0 AND json_extract(payload,'$.accountScopeId')=? ORDER BY scope_id,id",[$sid,$sid]);
+                $versions[]=$externalAccountReferences;
+                $foreign=(bool)$externalAccountReferences || $foreignDocuments || count(array_filter($members,fn($m)=>(int)$m['user_id']!==$id)) || count(array_filter($effectiveMembers,fn($m)=>$m['userId']!==$id)) || count(array_filter(array_merge($generic,$finance),fn($r)=>!(int)$r['deleted'] && $r['payload']!==null && !in_array($r['created_by'],[$account,self::SYSTEM_ACTOR],true)));
                 $owned[]=['id'=>$sid,'kind'=>$s['kind'],'name'=>$s['name'],'canDeleteScope'=>!$foreign,'eligibleSuccessors'=>array_map(fn($m)=>['accountId'=>$m['account_id'],'displayName'=>$m['name'] ?: $m['username']],$eligible)];
                 if (in_array($s['kind'],['organization','household'],true)) {
                     foreach ($this->many('SELECT * FROM familyhub_scopes WHERE deleted_at IS NULL AND (parent_scope_id=? OR organization_id=?) ORDER BY id',[$sid,$sid]) as $child) {
@@ -87,11 +89,12 @@ class NativeDeletionPlan extends NativeDatabase
                             });
                             if ($structural) { $payload['name']='Shared person';$payload['notes']='';$payload['archived']=true; }
                         }
-                        if ($r['type']==='financeEntry' && array_filter($paymentEvents,fn($e)=>$e['entry_id']===$r['id'])) {
+                        if ($r['type']==='financeEntry' && (($payload['accountScopeId']??null)!==null || array_filter($paymentEvents,fn($e)=>$e['entry_id']===$r['id']))) {
                             $structural=true;$payload['title']='Shared financial expense';$payload['notes']='';$payload['category']='';
                         }
                         if ($r['type']==='financeAccount') {
-                            $structural=(bool)array_filter($finance,function($c) use ($account,$r) { $p=json_decode($c['payload']??'null',true); return !(int)$c['deleted'] && $c['created_by']!==$account && in_array($r['id'],[$p['accountId']??null,$p['fromAccountId']??null,$p['toAccountId']??null,$p['ledgerAccountId']??null],true); });
+                            $external=(bool)$this->one("SELECT id FROM familyhub_finance_records WHERE scope_id<>? AND type='financeEntry' AND deleted=0 AND json_extract(payload,'$.accountScopeId')=? AND json_extract(payload,'$.accountId')=? LIMIT 1",[$sid,$sid,$r['id']]);
+                            $structural=$external ||(bool)array_filter($finance,function($c) use ($account,$r) { $p=json_decode($c['payload']??'null',true); return !(int)$c['deleted'] && $c['created_by']!==$account && in_array($r['id'],[$p['accountId']??null,$p['fromAccountId']??null,$p['toAccountId']??null,$p['ledgerAccountId']??null],true); });
                             $structural=$structural || (bool)$this->one("SELECT movement_id FROM familyhub_payment_cash WHERE scope_id=? AND json_extract(data,'$.accountId')=? LIMIT 1",[$sid,$r['id']]) || (bool)array_filter($finance,fn($f)=>array_filter($paymentEvents,fn($e)=>$e['entry_id']===$f['id']) && (json_decode($f['payload']??'null',true)['accountId']??null)===$r['id']);
                             if ($structural) { $payload['name']='Shared financial account';$payload['ownerAccountId']=null; }
                         }

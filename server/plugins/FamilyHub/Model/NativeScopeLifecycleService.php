@@ -101,6 +101,12 @@ class NativeScopeLifecycleService extends NativeDatabase
                 if ($child && ($child['deleted_at']??null)===null) { $scopes[]=$child;if ((int)$child['owner_id']!==(int)$scope['owner_id']) { $blockers[]=['code'=>'child_owner_transfer_required','scopeId'=>$id]; } }
             }
         }
+        $closedScopes=array_column($scopes,'id');
+        foreach ($this->many("SELECT scope_id,payload FROM familyhub_finance_records WHERE type='financeEntry' AND deleted=0 AND json_extract(payload,'$.accountScopeId') IS NOT NULL") as $reference) {
+            $target=json_decode($reference['payload'],true,32,JSON_THROW_ON_ERROR)['accountScopeId'];
+            if ($target===null) { continue; } // MySQL JSON null is not SQL NULL.
+            if ($pid===null && in_array($reference['scope_id'],$closedScopes,true)!==in_array($target,$closedScopes,true)) { $blockers[]=['code'=>'cross_scope_finance_dependency']; }
+        }
         $name=$scope['name'];$snapshot=[];
         foreach ($scopes as $s) {
             $id=$s['id'];$members[$id]=array_column((new NativeOrganizationAccess($this->container))->members($id),'accountId');$all=$this->many('SELECT * FROM familyhub_records WHERE scope_id=? ORDER BY id',[$id]);$finance=$this->many('SELECT * FROM familyhub_finance_records WHERE scope_id=? ORDER BY id',[$id]);$selected=[];$tasks=[];

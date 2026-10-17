@@ -238,4 +238,69 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets(
+    'local project filter uses the space account and defaults new entries to that project',
+    (tester) async {
+      final project = LocalProject(
+        id: 'event',
+        title: 'Lokalni dogodek',
+        description: '',
+        createdAt: now,
+        updatedAt: now,
+      );
+      final store = MemoryOrganizerStorage()
+        ..snapshot = OrganizerSnapshot(
+          projects: [project],
+          financeAccounts: [account('TRR')],
+          financeEntries: [
+            entry('Splošen strošek', accountId: 'TRR'),
+            entry(
+              'Projektni strošek',
+              accountId: 'TRR',
+            ).copyWith(projectId: project.id),
+          ],
+        );
+      await pumpLedger(tester, storage: () async => store, clock: now);
+      final filter = find.byKey(
+        const ValueKey('personal-finance-project-filter-*'),
+      );
+      await tester.ensureVisible(filter);
+      await tester.pumpAndSettle();
+      await tester.tap(filter);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(project.title).last);
+      await tester.pumpAndSettle();
+      expect(find.text('Splošen strošek'), findsNothing);
+      expect(find.text('Projektni strošek'), findsOneWidget);
+      final accountFilter = find.byKey(
+        const ValueKey('personal-finance-account-filter'),
+      );
+      await tester.ensureVisible(accountFilter);
+      await tester.pumpAndSettle();
+      await tester.tap(accountFilter);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('TRR · EUR').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Dodaj zapis').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dodaj zapis').first);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('organizer-title-field')),
+        'Nov projektni strošek',
+      );
+      final amount = find.byKey(const ValueKey('personal-finance-amount'));
+      await tester.ensureVisible(amount);
+      await tester.enterText(amount, '10,00');
+      await tester.tap(find.byKey(const ValueKey('organizer-save')));
+      await tester.pumpAndSettle();
+      final created = store.snapshot.financeEntries.singleWhere(
+        (e) => e.title == 'Nov projektni strošek',
+      );
+      expect(created.projectId, project.id);
+      expect(created.ledgerAccountId, 'TRR');
+      expect(store.snapshot.financeAccounts, hasLength(1));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

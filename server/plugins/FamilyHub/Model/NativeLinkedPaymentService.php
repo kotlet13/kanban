@@ -70,6 +70,8 @@ class NativeLinkedPaymentService extends NativeDatabase
             throw new NativeError('payment_source_changed', 409);
         }
         $payload = json_decode($row['payload'], true, 32, JSON_THROW_ON_ERROR);
+        // Parent-account expenses are already direct cash facts, never personal advances.
+        if (($payload['accountScopeId']??null)!==null) { throw new NativeError('linked_payment_source_locked',409); }
         if ((int)$row['contract_version'] < 2 || $payload['kind'] !== 'expense' || $payload['status'] !== 'posted' ||
             ($payload['payerAccountId'] !== null && $payload['payerAccountId'] !== $user['account_id']) ||
             (($payload['paidAt'] ?? null) !== null && new \DateTimeImmutable($payload['paidAt']) != new \DateTimeImmutable($p['paidAt']))) {

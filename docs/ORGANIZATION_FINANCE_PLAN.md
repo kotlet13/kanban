@@ -1,7 +1,11 @@
 # Načrt računov organizacije in projektnih pregledov
 
-Dogovor z uporabnikom, 17. oktober 2026. **Status: načrtovano, brez naročila
-za izvedbo.** Računi pripadajo organizaciji oziroma nadrejenemu prostoru,
+Dogovor z uporabnikom, 17. oktober 2026. **Po naknadnem izrecnem naročilu
+»dej kr nared nadgradnjo še financ« je izveden v izvoru.** Končno obliko,
+preverjanje in meje vodi [zapis izvedbe](ORGANIZATION_FINANCE_IMPLEMENTATION.md),
+preostale gostovane korake pa [strežniški predpogoji](server/ORGANIZATION_FINANCE_RELEASE_PREREQUISITES.md).
+Spodaj ostaja prvotni dogovor in analiza takratnega izhodišča.
+Računi pripadajo organizaciji oziroma nadrejenemu prostoru,
 projekti pa omogočajo ločen pregled pripadajočih stroškov in prilivov.
 Prva faza ne dodeljuje ali rezervira denarja projektom.
 
@@ -83,14 +87,14 @@ z omejenimi projektnimi pogledi, ne na podvojenih knjižbah.
    kopija in obnova ohranijo povezave brez podvajanja. Različne valute ostanejo
    ločene. Starejši odjemalci imajo opredeljeno združljivost.
 
-## Odprte podrobnosti in meja naročila
+## Prvotne odprte podrobnosti in meja naročila
 
 Pred izvedbo določimo končna imena gumbov in filtrov, izbiro računa ob vnosu
 v projekt, ravnanje pri arhiviranju ali izbrisu projekta ter preslikavo
 obstoječih podatkov. Možnost, da projekt uporablja več računov prostora,
 je predlog za izvedbeno razjasnitev, ne dodatna obvezna funkcija tega dogovora.
 
-Uporabnik je naročil zapis načrta in nato pogovor o naslednji nadgradnji.
-Ta dokument ne pomeni izvedene spremembe, dovoljenja za namestitev vtičnika
-ali nove trgovinske oddaje. Morebitna poznejša strežniška migracija sledi
+Uporabnik je prvotno naročil zapis načrta in nato pogovor o naslednji nadgradnji;
+poznejše naročilo za izvedbo je navedeno na vrhu. Naročilo za izvor in commit/push
+ne vključuje namestitve vtičnika ali nove trgovinske oddaje. Poznejši strežniški poseg sledi
 obstoječemu postopku sveže kopije in preverjene izolirane obnove.

@@ -11,6 +11,7 @@ import 'package:kanban/organizer/data/portable_backup_document.dart';
 import 'package:kanban/organizer/data/portable_backup_repository.dart';
 import 'package:kanban/organizer/data/sqlite_organizer_storage.dart';
 import 'package:kanban/organizer/domain/collaboration_models.dart';
+import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/domain/spreadsheet_models.dart';
 
 import 'collaboration_repository_test.dart' show FakeServer, MemorySessionStore;
@@ -103,8 +104,216 @@ void main() {
     'backup_unsupported',
   );
 
+  Future<_Client> financeClient({bool includeParent = false}) async {
+    final a = await _Client.create(
+      PersonalTransport(FakeServer()),
+      user: 'alice',
+    );
+    final id = await a.shared.createScope('Project only');
+    final parent = newSharedId(), bank = newSharedId(), record = newSharedId();
+    final partition = a.shared.state.session!.partition;
+    final payload = SharedFinanceEntry(
+      id: record,
+      createdAt: DateTime.utc(2026, 10, 17),
+      updatedAt: DateTime.utc(2026, 10, 17),
+      accountId: bank,
+      accountScopeId: parent,
+      kind: FinanceEntryKind.expense,
+      amountMinor: 1200,
+      currency: 'EUR',
+      title: 'Private project cost',
+      occurredAt: DateTime.utc(2026, 10, 17),
+    ).toPayload(contractVersion: 3);
+    await a.db.execute(
+      'UPDATE scopes SET data=?, finance_policy=?, finance_complete=1 WHERE id=?',
+      [
+        jsonEncode(
+          SharedScope(
+            id: id,
+            name: 'Project only',
+            kind: SharedScopeKind.project,
+            parentScopeId: parent,
+            role: SharedRole.member,
+            accessPolicyVersion: 3,
+          ).toJson(),
+        ),
+        jsonEncode(
+          const SharedFinancePolicy(
+            enabled: true,
+            grant: SharedFinanceGrant.write,
+            requiredContractVersion: 3,
+          ).toJson(),
+        ),
+        id,
+      ],
+    );
+    await a.db.execute(
+      'INSERT INTO finance_records(partition,scope_id,id,type,local_revision,server_revision,payload,deleted) VALUES(?,?,?,?,?,?,?,?)',
+      [partition, id, record, 'financeEntry', 1, 0, jsonEncode(payload), 0],
+    );
+    final op = newSharedId();
+    final request = jsonEncode({
+      'opId': op,
+      'recordId': record,
+      'type': 'financeEntry',
+      'expectedRevision': 0,
+      'deleted': false,
+      'payload': payload,
+    });
+    await a.db.execute(
+      'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,state,wire_version) VALUES(?,?,?,?,?,?,?)',
+      [op, partition, id, record, request, 'pending', 3],
+    );
+    await a.db.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
+      'finance_account_choices:$partition:$id',
+      'cached authorization must not travel',
+    ]);
+    if (includeParent) {
+      final row = (await a.db.rows('SELECT * FROM scopes WHERE id=?', [
+        id,
+      ])).single;
+      row['id'] = parent;
+      row['data'] = jsonEncode(
+        SharedScope(
+          id: parent,
+          name: 'Organization',
+          kind: SharedScopeKind.organization,
+          role: SharedRole.owner,
+          accessPolicyVersion: 3,
+        ).toJson(),
+      );
+      final columns = backupTables['scopes']!;
+      await a.db.execute(
+        'INSERT INTO scopes(${columns.join(',')}) VALUES(${columns.map((_) => '?').join(',')})',
+        [for (final column in columns) row[column]],
+      );
+      final accountPayload = SharedFinanceAccount(
+        id: bank,
+        createdAt: DateTime.utc(2026, 10, 17),
+        updatedAt: DateTime.utc(2026, 10, 17),
+        name: 'Parent account',
+        currency: 'EUR',
+        openingBalanceMinor: 10000,
+      ).toPayload(contractVersion: 2);
+      await a.db.execute(
+        'INSERT INTO finance_records(partition,scope_id,id,type,local_revision,server_revision,payload,deleted) VALUES(?,?,?,?,?,?,?,?)',
+        [
+          partition,
+          parent,
+          bank,
+          'financeAccount',
+          1,
+          1,
+          jsonEncode(accountPayload),
+          0,
+        ],
+      );
+    }
+    return a;
+  }
+
   test(
-    'encrypted v7 exports only source account and currently readable scopes, omitting downloaded bytes/leases',
+    'local recovery remaps a child entry to the one recovered parent account',
+    () async {
+      final a = await financeClient(includeParent: true);
+      final bytes = await a.export(), doc = await a.decode(bytes);
+      final b = await _Client.create(PersonalTransport(FakeServer()));
+      await b.restore(bytes);
+      final preview = await b.backup.reviewRestoredSpacesAsLocal(
+        doc['id'] as String,
+        _password,
+      );
+      final recovered = await b.backup.recoverRestoredSpacesAsLocal(
+        preview,
+        password: _password,
+      );
+      expect(recovered.length, 1);
+      expect(recovered.single.financeRecoveryIncomplete, false);
+      final local = await b.storage.localSnapshot(
+        workspace: recovered.single.id,
+      );
+      expect(local.financeAccounts.length, 1);
+      expect(local.financeAccounts.single.openingBalanceMinor, 10000);
+      expect(
+        local.financeEntries.single.ledgerAccountId,
+        local.financeAccounts.single.id,
+      );
+      expect(local.financeEntries.single.amountMinor, 1200);
+    },
+  );
+
+  test(
+    'encrypted v8 preserves project-only parent reference and immutable v3 work in quarantine',
+    () async {
+      final a = await financeClient();
+      final bytes = await a.export(), doc = await a.decode(bytes);
+      validateBackupDocument(doc);
+      expect(doc['version'], 8);
+      expect(backupRows(doc, 'finance_records').length, 1);
+      final request = backupRows(doc, 'finance_outbox').single['request'];
+      expect(backupRows(doc, 'finance_outbox').single['wire_version'], 3);
+      expect(
+        jsonEncode(doc),
+        isNot(contains('cached authorization must not travel')),
+      );
+      expect(utf8.decode(bytes), isNot(contains('Private project cost')));
+      final b = await _Client.create(PersonalTransport(FakeServer()));
+      await b.restore(bytes);
+      expect(await b.db.rows('SELECT * FROM finance_records'), isEmpty);
+      expect(await b.db.rows('SELECT * FROM finance_outbox'), isEmpty);
+      final review = await b.backup.reviewRestoredWork(
+        doc['id'] as String,
+        _password,
+      );
+      expect(review.canResume, false);
+      expect(review.items.where((item) => item.isFinancial), isEmpty);
+      final decoded = await a.decode(bytes);
+      expect(backupRows(decoded, 'finance_outbox').single['request'], request);
+      final preview = await b.backup.reviewRestoredSpacesAsLocal(
+        doc['id'] as String,
+        _password,
+      );
+      final recovered = await b.backup.recoverRestoredSpacesAsLocal(
+        preview,
+        password: _password,
+      );
+      expect(recovered.single.financeRecoveryIncomplete, true);
+      final local = await b.storage.localSnapshot(
+        workspace: recovered.single.id,
+      );
+      expect(local.financeEntries.single.amountMinor, 1200);
+      expect(local.financeEntries.single.ledgerAccountId, null);
+      expect(local.financeAccounts, isEmpty);
+    },
+  );
+  test(
+    'backup rejects linked finance pretending to use old format or unknown wire contract',
+    () async {
+      final a = await financeClient();
+      final bytes = await a.export();
+      final old = await a.decode(bytes)
+        ..['version'] = 7;
+      expect(() => validateBackupDocument(old), throwsA(unsupported));
+      final unknown = await a.decode(bytes);
+      backupRows(unknown, 'finance_outbox').single['wire_version'] = 4;
+      expect(() => validateBackupDocument(unknown), throwsA(unsupported));
+    },
+  );
+  test(
+    'backup rejects unrelated parent reference without requiring private parent ledger',
+    () async {
+      final a = await financeClient();
+      final doc = await a.decode(await a.export());
+      final row = backupRows(doc, 'finance_records').single;
+      final payload = backupMap(jsonDecode(row['payload'] as String));
+      payload['accountScopeId'] = newSharedId();
+      row['payload'] = jsonEncode(payload);
+      expect(() => validateBackupDocument(doc), throwsA(unsupported));
+    },
+  );
+
+  test(
+    'encrypted v8 exports only source account and currently readable scopes, omitting downloaded bytes/leases',
     () async {
       final transport = PersonalTransport(FakeServer());
       final a = await _Client.create(transport, user: 'alice');
@@ -128,7 +337,7 @@ void main() {
       await a.shared.syncNow();
       final bytes = await a.export(), doc = await a.decode(bytes);
       validateBackupDocument(doc);
-      expect(doc['version'], 7);
+      expect(doc['version'], 8);
       expect(doc['databaseVersion'], 10);
       expect(backupTableDrafts(doc).single['draft'], draft.toJson());
       expect(backupTableDrafts(doc).single['scopeId'], scope);
@@ -282,7 +491,7 @@ void main() {
   );
 
   test(
-    'strict v7 draft validation rejects foreign identities, secret fields, unsafe cells and duplicates before restore',
+    'strict v8 draft validation rejects foreign identities, secret fields, unsafe cells and duplicates before restore',
     () async {
       final transport = PersonalTransport(FakeServer());
       final a = await _Client.create(transport, user: 'alice');
@@ -320,16 +529,16 @@ void main() {
   );
 
   test(
-    'versions 1 through 6 remain readable without drafts; v6 reminder preferences survive v7 restore',
+    'versions 1 through 7 remain readable; reminder preferences survive v8 restore',
     () async {
       final transport = PersonalTransport(FakeServer());
       final a = await _Client.create(transport);
       final current = await a.decode(await a.export());
-      for (var version = 1; version <= 6; version++) {
+      for (var version = 1; version <= 7; version++) {
         final legacy = backupMap(jsonDecode(jsonEncode(current)));
         legacy['version'] = version;
-        legacy['databaseVersion'] = [0, 4, 5, 6, 7, 9, 10][version];
-        legacy.remove('tableDrafts');
+        legacy['databaseVersion'] = [0, 4, 5, 6, 7, 9, 10, 10][version];
+        if (version < 7) legacy.remove('tableDrafts');
         if (version < 6) legacy.remove('localTaskReminderPreferences');
         if (version < 5) {
           for (final field in [

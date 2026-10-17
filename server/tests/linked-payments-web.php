@@ -4,6 +4,7 @@ $webName = $prefix.'_web_payment_delete';
 $webUserId = $container['userModel']->create(['username'=>$webName, 'password'=>$password, 'role'=>'app-user']);
 $webSession = data(call('auth.login', ['username'=>$webName, 'password'=>$password, 'deviceName'=>'Synthetic web payer']));
 $webToken = $webSession['token'];
+data(call('moderation.acceptPolicy', ['policyVersion'=>1], $webToken));
 $webOrg = uuid();
 data(call('scopes.create', ['id'=>$webOrg, 'kind'=>'organization', 'name'=>'Web retained source', 'accessPolicyVersion'=>2, 'requestId'=>uuid()], $webToken));
 invite($webOrg, $names['external'], $webToken, $e);

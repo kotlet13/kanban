@@ -10,6 +10,21 @@ void validateSharedFinancePayload(
   Map<String, dynamic> p, {
   int contractVersion = 1,
 }) {
+  if (contractVersion == 3) {
+    final base = Map<String, dynamic>.of(p);
+    if (type == SharedFinanceRecordType.financeEntry) {
+      for (final key in ['accountScopeId', 'projectId']) {
+        final value = base.remove(key);
+        if (value != null && !isSharedUuid(value)) {
+          throw const CollaborationException('validation_error');
+        }
+      }
+    }
+    return validateFinancePlanningPayload(type, base);
+  }
+  if (contractVersion != 1 && contractVersion != 2) {
+    throw const CollaborationException('unsupported_version');
+  }
   if (contractVersion == 2) {
     return validateFinancePlanningPayload(type, p);
   }
@@ -325,7 +340,7 @@ Map<String, dynamic> financePayloadForContract(
   int version,
 ) {
   final payload = Map<String, dynamic>.of(source);
-  if (version == 2) {
+  if (version >= 2) {
     if (type == SharedFinanceRecordType.personalFinanceEntry ||
         type == SharedFinanceRecordType.financeEntry) {
       payload.putIfAbsent('status', () => 'posted');
@@ -354,6 +369,10 @@ Map<String, dynamic> financePayloadForContract(
       payload.putIfAbsent('openingBalanceAt', () => null);
       payload.putIfAbsent('archived', () => false);
     }
+  }
+  if (version >= 3 && type == SharedFinanceRecordType.financeEntry) {
+    payload.putIfAbsent('accountScopeId', () => null);
+    payload.putIfAbsent('projectId', () => null);
   }
   return payload;
 }

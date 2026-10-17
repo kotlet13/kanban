@@ -51,6 +51,10 @@ class NativeProjectSharingService extends NativeDatabase
     private function graph($scope, $pid)
     {
         $sid=$scope['id'];$all=$this->many('SELECT * FROM familyhub_records WHERE scope_id=? ORDER BY id',[$sid]);$money=$this->many('SELECT * FROM familyhub_finance_records WHERE scope_id=? ORDER BY id',[$sid]);$selected=[];$fin=[];$blockers=[];$personIds=[];$taskIds=[];
+        foreach ($money as $row) {
+            $p=json_decode($row['payload']??'null',true,32,JSON_THROW_ON_ERROR);
+            if (!(int)$row['deleted'] && ($p['projectId']??null)===$pid) { $blockers[]=['code'=>'project_finance_scope_reference','recordId'=>$row['id']]; }
+        }
         $project=array_values(array_filter($all,fn($r)=>$r['id']===$pid && $r['type']==='project' && !(int)$r['deleted']));
         if (!$project) { throw new NativeError('parent_missing'); }
         if ($this->one('SELECT id FROM familyhub_scopes WHERE id=?',[$pid])) { $blockers[]=['code'=>'project_scope_id_collision']; }

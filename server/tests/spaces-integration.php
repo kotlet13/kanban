@@ -22,6 +22,7 @@ function parallelCalls($calls) {
 }
 $names=[];$ids=[];$sessions=[];
 foreach(['owner','member','external','outsider']as$name){$names[$name]=$prefix.'_'.$name;$ids[$name]=$container['userModel']->create(['username'=>$names[$name],'password'=>$password,'role'=>'app-user']);$sessions[$name]=data(call('auth.login',['username'=>$names[$name],'password'=>$password,'deviceName'=>'Synthetic organization']));}
+foreach($sessions as $session){data(call('moderation.acceptPolicy',['policyVersion'=>1],$session['token']));}
 $o=$sessions['owner']['token'];$m=$sessions['member']['token'];$e=$sessions['external']['token'];$x=$sessions['outsider']['token'];
 $caps=data(call('capabilities'));check($caps['features']['organizationLeadership']&&$caps['features']['scopeAccessChanges']&&$caps['features']['householdGardenSync']&&in_array(4,$caps['recordContractVersions'],true),'spaces/garden versioned capabilities');
 $org=uuid();$create=['id'=>$org,'kind'=>'organization','name'=>'Modern synthetic org','accessPolicyVersion'=>2,'requestId'=>uuid()];

@@ -41,7 +41,9 @@ OrganizerSnapshot sharedFinancePlanningSnapshot(
     ],
     financeRecurrenceRules: data.financeRecurrenceRules,
     financeEntries: [
-      for (final e in data.financeEntries)
+      for (final e in data.financeEntries.where(
+        (e) => e.accountScopeId == null,
+      ))
         FinanceEntry(
           id: e.id,
           title: e.title,
@@ -82,10 +84,12 @@ class FinancePlanningPanel extends ConsumerStatefulWidget {
     this.forecastAvailable = true,
     this.accountFilter,
     this.payments,
+    this.allowAccountCreation = true,
   });
   final OrganizerSnapshot snapshot;
   final String? sharedScopeId;
   final bool forecastAvailable;
+  final bool allowAccountCreation;
   final PaymentSnapshot? payments;
 
   /// External ledger selection: * all, _none unassigned, otherwise account ID.
@@ -194,6 +198,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
   }
 
   Future<void> _account([LocalFinanceAccount? account]) async {
+    if (account == null && !widget.allowAccountCreation) return;
     final guard = _guard(existingId: account?.id), snapshot = widget.snapshot;
     final draft = await showFinanceAccountForm(
       context,
@@ -390,7 +395,9 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
           runSpacing: 8,
           children: [
             OutlinedButton.icon(
-              onPressed: canWrite && !_busy ? () => _run(_wizard) : null,
+              onPressed: canWrite && !_busy && widget.allowAccountCreation
+                  ? () => _run(_wizard)
+                  : null,
               icon: const Icon(Icons.auto_fix_high_outlined),
               label: Text(l.financePlanWizard),
             ),
@@ -399,13 +406,14 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
               icon: const Icon(Icons.repeat),
               label: Text(l.financePlanAddRule),
             ),
-            TextButton.icon(
-              onPressed: canWrite && !_busy
-                  ? () => _run(() => _account())
-                  : null,
-              icon: const Icon(Icons.account_balance_wallet_outlined),
-              label: Text(l.financeAddAccount),
-            ),
+            if (widget.allowAccountCreation)
+              TextButton.icon(
+                onPressed: canWrite && !_busy
+                    ? () => _run(() => _account())
+                    : null,
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: Text(l.financeAddAccount),
+              ),
           ],
         ),
         if (_busy && ModalRoute.of(context)?.isCurrent != false)

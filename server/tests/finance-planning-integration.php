@@ -10,7 +10,7 @@ function check($ok,$description){global$checks;if(!$ok)throw new RuntimeExceptio
 function denied($operation,$params,$token,$code,$description){try{api($operation,$params,$token);$ok=false;}catch(NativeError$e){$ok=$e->errorCode===$code;}check($ok,$description);}
 function operation($scope,$id,$type,$payload,$revision=0,$opId=null){return ['scopeId'=>$scope,'operation'=>['opId'=>$opId??uid(),'recordId'=>$id,'type'=>$type,'expectedRevision'=>$revision,'deleted'=>false,'payload'=>$payload]];}
 function user($name){global$container,$prefix,$password;$container['userModel']->create(['username'=>$prefix.$name,'password'=>$password,'role'=>'app-user']);return api('auth.login',['username'=>$prefix.$name,'password'=>$password,'deviceName'=>'Finance planning test']);}
-$owner=user('owner');$foreign=user('foreign');$token=$owner['token'];
+$owner=user('owner');$foreign=user('foreign');$token=$owner['token'];api('moderation.acceptPolicy',['policyVersion'=>1],$token);
 $scope=api('personal.ensure',[],$token)['scope']['id'];$now=gmdate('Y-m-d\TH:i:s\Z');
 $accountId=uid();$account=['name'=>'Personal ledger','currency'=>'EUR','openingBalanceMinor'=>null,'openingBalanceAt'=>null,'archived'=>false,'createdAt'=>$now,'updatedAt'=>$now];
 $a=api('finance2.push',operation($scope,$accountId,'personalFinanceAccount',$account),$token);

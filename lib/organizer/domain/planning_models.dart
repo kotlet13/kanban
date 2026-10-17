@@ -105,6 +105,8 @@ class TaskCostDraft {
     required this.amountMinor,
     this.currency = 'EUR',
     this.ledgerAccountId,
+    this.accountScopeId,
+    this.accountScopeSpecified = false,
     this.payerPersonId,
     this.recipientPersonId,
     this.createdByPersonId,
@@ -114,9 +116,14 @@ class TaskCostDraft {
   final int amountMinor;
   final String currency;
   final String? ledgerAccountId,
+      accountScopeId,
       payerPersonId,
       recipientPersonId,
       createdByPersonId;
+
+  /// Explicit null selects a same-scope account, including when its ID equals
+  /// a parent account ID. Older callers can leave this false to retain a link.
+  final bool accountScopeSpecified;
   final bool paid;
   final DateTime? paidAt;
 }

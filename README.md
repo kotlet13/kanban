@@ -6,10 +6,12 @@ trenutno lastništvo. [Izvedba in preverjanje](docs/SPACE_PICKER_HIERARCHY_IMPLE
 [Strežniški predpogoji](docs/server/SPACE_PICKER_RELEASE_PREREQUISITES.md);
 ni nadgradnje strežnika ali trgovinske oddaje.
 
-**17. oktober — načrt računov organizacije in projektnih pregledov:** račun
+**17. oktober — računi organizacije in projektni pregledi izvedeni v izvoru:** račun
 pripada prostoru, projekt pokaže svoje prilive in stroške brez podvajanja
 ali rezervacije denarja. Zabeležena tudi napaka dodajanja v organizacijo.
-[Dogovor in obseg](docs/ORGANIZATION_FINANCE_PLAN.md). Samo načrtovanje.
+[Izvedba in preverjanje](docs/ORGANIZATION_FINANCE_IMPLEMENTATION.md).
+[Strežniški predpogoji pred izdajo](docs/server/ORGANIZATION_FINANCE_RELEASE_PREREQUISITES.md):
+potrebna je nova usklajena koda FamilyHuba, brez DDL. Gostovanja niso nadgrajena.
 
 **16. oktober — iOS 1.10.1 (31) uspešno naložen v Apple:** aktualni izvor se
 ujema z Android31, novi arhiv/Store IPA in 23 ciljnih preizkusov so preverjeni.

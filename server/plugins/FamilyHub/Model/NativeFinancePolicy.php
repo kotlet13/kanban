@@ -6,6 +6,7 @@ class NativeFinancePolicy extends NativeDatabase
 {
     public function validate($type, $p, $scope, $current, $contractVersion = 1)
     {
+        if ($contractVersion === 3) { return (new NativeOrganizationFinancePolicy($this->container))->validate($type,$p,$scope,$current); }
         if ($contractVersion === 2) { return (new NativeFinancePlanningPolicy($this->container))->validate($type,$p,$scope,$current); }
         if (!is_array($p) || array_is_list($p) || strlen(json_encode($p, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) > ($type === 'personalFinanceEntry' ? 524288 : 8192)) { throw new NativeError('validation_error'); }
         $fields = match ($type) {
@@ -74,7 +75,8 @@ class NativeFinancePolicy extends NativeDatabase
             $this->one("SELECT movement_id FROM familyhub_payment_cash WHERE scope_id=? AND json_extract(data,'$.accountId')=? LIMIT 1", [$scope,$id])) {
             throw new NativeError('linked_payment_source_locked',409);
         }
-        if ($contractVersion === 2) { return (new NativeFinancePlanningPolicy($this->container))->noChildren($scope,$id,$type); }
+        if (in_array($type,['financeAccount','personalFinanceAccount'],true)) { (new NativeOrganizationFinancePolicy($this->container))->noExternalChildren($scope,$id); }
+        if ($contractVersion >= 2) { return (new NativeFinancePlanningPolicy($this->container))->noChildren($scope,$id,$type); }
         if ($type !== 'financeAccount') { return; }
         foreach ($this->iterate('SELECT payload FROM familyhub_finance_records WHERE scope_id=? AND type IN (\'financeEntry\',\'financeTransfer\') AND deleted=0', [$scope]) as $row) {
             $p = json_decode($row['payload'], true, 32, JSON_THROW_ON_ERROR);

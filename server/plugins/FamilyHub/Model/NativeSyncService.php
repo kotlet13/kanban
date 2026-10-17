@@ -105,7 +105,7 @@ class NativeSyncService extends NativeDatabase
             if (!$compound && $op['type']==='task') { (new NativeFinanceService($this->container))->reconcileTaskInTransaction($scopeId,$actor['user'],$current,$record); }
             $financeResponse = null;
             if ($compound) {
-                if ($op['type'] !== 'task' || ($params['financeOperationContractVersion'] ?? 2) !== 2) { throw new NativeError('validation_error'); }
+                if ($op['type'] !== 'task' || !in_array($params['financeOperationContractVersion'] ?? 2,[2,3],true)) { throw new NativeError('validation_error'); }
                 $financeOp = $params['financeOperation'];
                 if (!is_array($financeOp) || !in_array($financeOp['type'] ?? '', ['personalFinanceEntry','financeEntry'], true) || (!$financeOp['deleted'] && !in_array($financeOp['payload']['taskId']??null,[$recordId,null],true))) { throw new NativeError('validation_error'); }
                 if (!$financeOp['deleted'] && ($financeOp['payload']['taskId']??null)===null && !$op['deleted']) {

@@ -452,8 +452,10 @@ class CollaborationState {
     this.financePendingCount = 0,
     this.financeBlockedCount = 0,
     Map<String, bool> financeSnapshotComplete = const {},
+    Map<String, int> financeSnapshotSequences = const {},
     this.inboxSupported = false,
     this.financeSupported = false,
+    this.organizationFinanceSupported = false,
     this.financeContractVersion = 1,
     this.recordContractVersion = 1,
     this.emailVerificationSupported = false,
@@ -467,6 +469,8 @@ class CollaborationState {
     this.spaceProjectMembershipSupported = false,
     Map<String, List<SharedMember>> members = const {},
     Map<String, SharedFinancePolicy> financePolicies = const {},
+    Map<String, List<SharedFinanceAccountChoice>> financeAccountChoices =
+        const {},
     Iterable<SharedInboxEntry> inbox = const [],
     Map<String, SharedNotificationPreferences> notificationPreferences =
         const {},
@@ -484,11 +488,16 @@ class CollaborationState {
   }) : privateRecordIds = Map.unmodifiable(privateRecordIds),
        financeConflicts = List.unmodifiable(financeConflicts),
        financeSnapshotComplete = Map.unmodifiable(financeSnapshotComplete),
+       financeSnapshotSequences = Map.unmodifiable(financeSnapshotSequences),
        members = Map.unmodifiable({
          for (final e in members.entries)
            e.key: List<SharedMember>.unmodifiable(e.value),
        }),
        financePolicies = Map.unmodifiable(financePolicies),
+       financeAccountChoices = Map.unmodifiable({
+         for (final item in financeAccountChoices.entries)
+           item.key: List<SharedFinanceAccountChoice>.unmodifiable(item.value),
+       }),
        inbox = List.unmodifiable(inbox),
        notificationPreferences = Map.unmodifiable(notificationPreferences),
        scheduledReminders = List.unmodifiable(scheduledReminders),
@@ -500,6 +509,7 @@ class CollaborationState {
        conflicts = List.unmodifiable(conflicts);
   final Map<String, List<SharedMember>> members;
   final Map<String, SharedFinancePolicy> financePolicies;
+  final Map<String, List<SharedFinanceAccountChoice>> financeAccountChoices;
   final List<SharedInboxEntry> inbox;
   final Map<String, SharedNotificationPreferences> notificationPreferences;
   final List<SharedScheduledReminder> scheduledReminders;
@@ -509,6 +519,7 @@ class CollaborationState {
   final List<SharedFinanceConflict> financeConflicts;
   final int financePendingCount, financeBlockedCount;
   final Map<String, bool> financeSnapshotComplete;
+  final Map<String, int> financeSnapshotSequences;
   final bool emailVerificationSupported,
       resetSupported,
       emailInvitationsSupported,
@@ -518,6 +529,7 @@ class CollaborationState {
       spaceProjectMembershipSupported;
   final bool inboxSupported,
       financeSupported,
+      organizationFinanceSupported,
       externalPushSupported,
       smtpSupported;
   final bool moderationSupported;

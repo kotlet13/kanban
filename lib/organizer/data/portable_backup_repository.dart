@@ -311,7 +311,7 @@ class PortableBackupRepository {
           }).toList();
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 7,
+        'version': 8,
         'databaseVersion': 10,
         'localTaskReminderPreferences': await database.rows(
           "SELECT name,value FROM local_meta WHERE name LIKE 'local_task_deadline_reminder:%' ORDER BY name",

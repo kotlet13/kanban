@@ -101,6 +101,9 @@ Future<void> showOrganizerEditor(
   bool assignmentEnabled = false,
   List<HouseholdPerson> householdPeople = const [],
   List<LocalFinanceAccount> financeAccounts = const [],
+  Map<String, ({String name, String currency, bool archived})>
+      financeAccountChoices =
+      const {},
   bool costEditingEnabled = false,
   bool costAccountRequired = false,
   Future<LocalTask> Function()? onTimerToggle,
@@ -132,6 +135,7 @@ Future<void> showOrganizerEditor(
       assignmentEnabled: assignmentEnabled,
       householdPeople: householdPeople,
       financeAccounts: financeAccounts,
+      financeAccountChoices: financeAccountChoices,
       costEditingEnabled: costEditingEnabled,
       costAccountRequired: costAccountRequired,
       onTimerToggle: onTimerToggle,
@@ -169,6 +173,7 @@ class _RecordEditor extends StatefulWidget {
     required this.assignmentEnabled,
     required this.householdPeople,
     required this.financeAccounts,
+    required this.financeAccountChoices,
     required this.costEditingEnabled,
     required this.costAccountRequired,
     this.onTimerToggle,
@@ -199,6 +204,8 @@ class _RecordEditor extends StatefulWidget {
   final bool assignmentEnabled;
   final List<HouseholdPerson> householdPeople;
   final List<LocalFinanceAccount> financeAccounts;
+  final Map<String, ({String name, String currency, bool archived})>
+  financeAccountChoices;
   final bool costEditingEnabled, costAccountRequired;
   final Future<LocalTask> Function()? onTimerToggle;
   final String? creatorLabel;
@@ -622,6 +629,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                     key: ValueKey(localOwnership),
                     people: allowedPeople,
                     financeAccounts: allowedAccounts,
+                    financeAccountChoices: widget.financeAccountChoices,
                     costEditingEnabled: widget.costEditingEnabled,
                     costAccountRequired: widget.costAccountRequired,
                     enabled: !_busy,

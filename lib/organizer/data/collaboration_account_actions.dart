@@ -20,6 +20,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
+    _organizationFinanceSupported = false;
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
@@ -65,6 +66,12 @@ extension CollaborationAccountActions on CollaborationRepository {
         ? 2
         : 1;
     final features = caps['features'] as Map<String, dynamic>;
+    _organizationFinanceSupported =
+        features['organizationFinance'] == true &&
+        (caps['organizationFinanceContractVersions'] as List? ?? const [])
+            .contains(1) &&
+        (caps['financeContractVersions'] as List? ?? const []).contains(3);
+    if (_organizationFinanceSupported) _financeContractVersion = 3;
     _recordContractVersion = versions is List && versions.contains(6)
         ? 6
         : versions is List && versions.contains(5)
@@ -273,6 +280,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _inboxSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
+    _organizationFinanceSupported = false;
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
@@ -474,6 +482,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     Map<String, dynamic> reply;
     if (operation.startsWith('finance.') ||
         operation.startsWith('finance2.') ||
+        operation.startsWith('finance4.') ||
         operation == 'sync3.pushTaskWithCost' ||
         operation == 'sync4.pushTaskWithCost' ||
         operation == 'sync5.pushTaskWithCost' ||

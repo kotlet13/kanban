@@ -4575,4 +4575,58 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get spaceFlowCreateOtherAccount =>
       'Use the original account to continue. You can also create another local space.';
+
+  @override
+  String get financeProjectOverview => 'Project overview';
+
+  @override
+  String get financeProjectMovementDescription =>
+      'Only this project’s income and expenses are shown. The account belongs to its space; its full balance is not shown here.';
+
+  @override
+  String get financeParentAccount => 'Parent space account';
+
+  @override
+  String get financeLegacyProjectAccount => 'Legacy project account';
+
+  @override
+  String get financeManageParentAccounts => 'Space accounts';
+
+  @override
+  String get financeParentAccountRequired =>
+      'Create new accounts in the parent space. Managing its accounts requires access to the space’s finances.';
+
+  @override
+  String get financeParentUpgradeRequired =>
+      'Upgrade the server to use a parent space account. Existing project finances remain available.';
+
+  @override
+  String get financeProjectFilter => 'Project';
+
+  @override
+  String get financeAllProjects => 'All projects and space';
+
+  @override
+  String get financeSpaceOnly => 'No project';
+
+  @override
+  String get financeChooseEntryScope => 'Where does this transaction belong?';
+
+  @override
+  String get financeParentSnapshotsIncomplete =>
+      'The project finance overview is incomplete. Full account balances will appear after all permitted projects have synced.';
+
+  @override
+  String get financeAccountChoicesUnavailable =>
+      'Space accounts are not available yet. Connect and refresh the project.';
+
+  @override
+  String get financeProjectMovement => 'Project movement';
+
+  @override
+  String get financeViewTotalsDescription =>
+      'Totals reflect the selected filters and posted entries. Transfers between accounts are not new income or expenses.';
+
+  @override
+  String get financeFilteredMovement => 'Income and expense overview';
 }

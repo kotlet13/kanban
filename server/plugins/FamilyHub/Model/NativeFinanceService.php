@@ -10,8 +10,8 @@ class NativeFinanceService extends NativeDatabase
         unset($params['linkedPaymentsAware']);
         $this->rate([['finance-ip:'.$this->ip, 1200, 60]]);
         $result = $this->transaction(function () use ($operation, $params, $linkedAware) {
-            $version = str_starts_with($operation,'finance2.') ? 2 : 1;
-            $action = $version === 2 ? 'finance.'.substr($operation,9) : $operation;
+            $version = str_starts_with($operation,'finance4.') ? 3 : (str_starts_with($operation,'finance2.') ? 2 : 1);
+            $action = $version >= 2 ? 'finance.'.substr($operation,9) : $operation;
             $user = $this->actor()['user']; $scope = $this->uuid($params['scopeId'] ?? null);
             (new NativeModerationService($this->container,$this->bearer,$this->ip))->guardWrite($operation,$params);
             if (in_array($operation, ['finance.enable', 'finance.grant'], true)) { return (new NativeFinanceSettings($this->container))->changePolicy($operation, $params, $user); }
@@ -25,6 +25,8 @@ class NativeFinanceService extends NativeDatabase
             }
             $acl = (new NativeFinanceAccess($this->container))->policy($scope, $user, $action === 'finance.push', $action !== 'finance.policy');
             if ($acl['linkedPaymentsRequired'] && !$linkedAware) { throw new NativeError('client_upgrade_required',409); }
+            if ($version===3 && in_array($action,['finance.policy','finance.pull'],true)) { $acl+=(new NativeOrganizationFinancePolicy($this->container))->contributionVisibility($scope,$user); }
+            if ($action === 'finance.accountChoices' && $version===3) { return (new NativeOrganizationFinancePolicy($this->container))->accountChoices($params,$scope,$user,$acl); }
             if ($action === 'finance.policy') { $this->fields($params, ['scopeId']); return array_diff_key($acl, ['sequence' => true]); }
             if ($version < $acl['requiredContractVersion'] && $action !== 'finance.push') { throw new NativeError('unsupported_version',409); }
             if ($action === 'finance.pull') { return $this->pull($params, $scope, $acl); }
@@ -38,20 +40,20 @@ class NativeFinanceService extends NativeDatabase
     private function push($operation, $params, $scope, $user, $acl, $version = 1, $requestHash = null)
     {
         $transportVersion = $version;
-        $this->fields($params, ['scopeId', 'operation'], $transportVersion===2 ? ['operationContractVersion'] : []);
+        $this->fields($params, ['scopeId', 'operation'], $transportVersion>=2 ? ['operationContractVersion'] : []);
         $version = $params['operationContractVersion'] ?? $transportVersion;
-        if (!is_int($version) || !in_array($version,[1,2],true) || $version>$transportVersion) { throw new NativeError('unsupported_version',409); }
+        if (!is_int($version) || !in_array($version,[1,2,3],true) || $version>$transportVersion) { throw new NativeError('unsupported_version',409); }
         $op = $params['operation'];
         if (!is_array($op)) { throw new NativeError('validation_error'); }
         $this->fields($op, ['opId', 'recordId', 'type', 'expectedRevision', 'deleted', 'payload']);
         $id = $this->uuid($op['recordId']); $opId = $this->uuid($op['opId']);
-        if (!in_array($op['type'], ($version===2 ? ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry','personalFinanceAccount','financeRecurrenceRule'] : ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry']), true) || !is_int($op['expectedRevision']) || $op['expectedRevision'] < 0 || !is_bool($op['deleted'])) { throw new NativeError('validation_error'); }
+        if (!in_array($op['type'], ($version>=2 ? ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry','personalFinanceAccount','financeRecurrenceRule'] : ['financeAccount','financeEntry','financeTransfer','personalFinanceEntry']), true) || !is_int($op['expectedRevision']) || $op['expectedRevision'] < 0 || !is_bool($op['deleted'])) { throw new NativeError('validation_error'); }
         $kind = $this->one('SELECT kind FROM familyhub_scopes WHERE id=?', [$scope])['kind'];
         if ($op['type'] !== 'financeRecurrenceRule' && in_array($op['type'],['personalFinanceEntry','personalFinanceAccount'],true) !== ($kind === 'personal')) { throw new NativeError('validation_error'); }
         $lifecycleCurrent=$this->one('SELECT * FROM familyhub_finance_records WHERE scope_id=? AND id=?',[$scope,$id]);
         (new NativeRecordPolicy($this->container))->guardProjectMutation($scope,$op['type'],$op['payload'],$lifecycleCurrent,$op['deleted']);
         $originalParams=['scopeId'=>$scope,'operation'=>$op];
-        $hash = $requestHash ?? $this->hashRequest($version===1 ? 'finance.push' : 'finance2.push',$originalParams);
+        $hash = $requestHash ?? $this->hashRequest($version===1 ? 'finance.push' : ($version===2 ? 'finance2.push' : 'finance4.push'),$originalParams);
         $store = new NativeFinanceSettings($this->container); $replay = $store->replayFinance($scope, $user['account_id'], $opId, $hash);
         if ($replay) {
             if ($replay['status'] !== 200) { return new NativeError($replay['body']['errorCode'], $replay['status'], $replay['body']['details']); }
@@ -79,13 +81,14 @@ class NativeFinanceService extends NativeDatabase
         try {
             if ($op['deleted']) { if ($op['payload'] !== null) { throw new NativeError('validation_error'); } $policy->noChildren($scope, $id, $op['type'], max($version,$transportVersion)); }
             else { $policy->validate($op['type'], $op['payload'], $scope, $current, $version);
-                if($transportVersion===2 && $version===1) {(new NativeFinancePlanningPolicy($this->container))->validateLegacyReferences($op['type'],$op['payload'],$scope,$current);} }
+                if($transportVersion>=2 && $version===1) {(new NativeFinancePlanningPolicy($this->container))->validateLegacyReferences($op['type'],$op['payload'],$scope,$current);} }
         } catch (NativeError $error) {
             if (!in_array($error->errorCode, ['parent_missing', 'live_children', 'assignee_not_member','duplicate_finance_reference','task_cost_date_mismatch'], true)) { throw $error; }
             $details = ['serverRecord' => $current ? $this->wire($current) : null] + $error->details;
             $status = $error->errorCode === 'duplicate_finance_reference' ? 409 : 422;
             $store->rememberFinance($scope, $user['account_id'], $opId, $hash, ['errorCode' => $error->errorCode, 'details' => $details], $status); return new NativeError($error->errorCode, $status, $details);
         }
+        (new NativeOrganizationFinancePolicy($this->container))->touchParents($scope,$op['deleted']?null:$op['payload'],$current);
         $revision = $op['expectedRevision'] + 1; $sequence = $acl['sequence'] + 1; $now = gmdate('Y-m-d\TH:i:s\Z');
         $payload = $op['deleted'] ? null : json_encode($op['payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $upgrade=(int)($version>$acl['requiredContractVersion']);
@@ -113,7 +116,7 @@ class NativeFinanceService extends NativeDatabase
         $records = []; $bytes = 0;
         foreach ($rows as $row) { $record = $this->wire($row); $size = strlen(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)); if (count($records) >= $limit || ($records && $bytes + $size > 524288)) { break; } $records[] = $record; $bytes += $size; }
         $more = count($rows) > count($records);
-        return ['records' => $records, 'cursor' => $more ? end($records)['sequence'] : $acl['sequence'], 'hasMore' => $more, 'scopeSequence' => $acl['sequence'], 'accessRevision' => $acl['revision']];
+        return ['records' => $records, 'cursor' => $more ? end($records)['sequence'] : $acl['sequence'], 'hasMore' => $more, 'scopeSequence' => $acl['sequence'], 'accessRevision' => $acl['revision']] + array_intersect_key($acl,array_flip(['organizationFinanceComplete','organizationFinanceScopeIds','organizationFinanceSequences']));
     }
 
     private function audit($params, $scope)
@@ -147,9 +150,10 @@ class NativeFinanceService extends NativeDatabase
             $now=gmdate('Y-m-d\TH:i:s\Z'); $payload['updatedAt']=new \DateTimeImmutable($payload['updatedAt'])>new \DateTimeImmutable($now) ? $payload['updatedAt'] : $now;
             $policy=$this->one('SELECT sequence FROM familyhub_finance_policy WHERE scope_id=?',[$scope]);
             if (!$policy) { throw new NativeError('validation_error'); }
+            (new NativeOrganizationFinancePolicy($this->container))->touchParents($scope,$payload,$current);
             $sequence=(int)$policy['sequence']+1; $revision=(int)$current['revision']+1;
             $this->change('UPDATE familyhub_finance_policy SET sequence=? WHERE scope_id=?',[$sequence,$scope]);
-            $this->change('UPDATE familyhub_finance_records SET revision=?,payload=?,sequence=?,updated_at=?,updated_by=?,contract_version=2 WHERE scope_id=? AND id=?',[$revision,json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),$sequence,$now,$user['account_id'],$scope,$current['id']]);
+            $this->change('UPDATE familyhub_finance_records SET revision=?,payload=?,sequence=?,updated_at=?,updated_by=?,contract_version=CASE WHEN contract_version<2 THEN 2 ELSE contract_version END WHERE scope_id=? AND id=?',[$revision,json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR),$sequence,$now,$user['account_id'],$scope,$current['id']]);
             $record=$this->wire($this->one('SELECT * FROM familyhub_finance_records WHERE scope_id=? AND id=?',[$scope,$current['id']]));
             $this->change('INSERT INTO familyhub_finance_audit VALUES(?,?,?,?,?,?,?,?)',[$scope,$current['id'],$revision,$user['account_id'],$now,json_encode($this->wire($current),JSON_THROW_ON_ERROR),json_encode($record,JSON_THROW_ON_ERROR),$this->newUuid()]);
             (new NativeNotificationWriter($this->container))->recordChanged($scope,$record,$current,$user['account_id'],true);
@@ -162,7 +166,8 @@ class NativeFinanceService extends NativeDatabase
     {
         $acl=(new NativeFinanceAccess($this->container))->policy($scope,$user,true,true);
         $params=['scopeId'=>$scope,'operation'=>$financeOperation];
-        $result=$this->push('finance2.push',$params,$scope,$user,$acl,2,$this->hashRequest($requestOperation,$requestParams));
+        $version=$requestParams['financeOperationContractVersion']??2;
+        $result=$this->push($version===3?'finance4.push':'finance2.push',$params,$scope,$user,$acl,$version,$this->hashRequest($requestOperation,$requestParams));
         if ($result instanceof NativeError) { throw $result; }
         return $result;
     }

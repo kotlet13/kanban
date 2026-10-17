@@ -354,9 +354,30 @@ class CollaborationActions implements OrganizerCollectionActions {
   );
 
   @override
-  Future<void> task({LocalTask? task, String? projectId}) {
+  Future<void> task({LocalTask? task, String? projectId}) async {
     var timerTask = task;
-    final state = ref.read(collaborationProvider).valueOrNull;
+    var state = ref.read(collaborationProvider).valueOrNull;
+    final identity = (state?.session?.partition, state?.session?.deviceId);
+    if (scope.kind == SharedScopeKind.project &&
+        scope.parentSpaceId != null &&
+        state?.organizationFinanceSupported == true) {
+      try {
+        await ref
+            .read(collaborationProvider.notifier)
+            .refreshFinanceAccountChoices(scope.id);
+      } catch (_) {}
+      if (!context.mounted) return;
+      state = ref.read(collaborationProvider).valueOrNull;
+      if ((state?.session?.partition, state?.session?.deviceId) != identity) {
+        return;
+      }
+    }
+    final choices = {
+      for (final a
+          in state?.financeAccountChoices[scope.id] ??
+              <SharedFinanceAccountChoice>[])
+        '${a.scopeId}:${a.id}': a,
+    };
     final linkedCost = task == null
         ? null
         : data.financeEntries
@@ -397,6 +418,23 @@ class CollaborationActions implements OrganizerCollectionActions {
           scope.projectRootId == null && scope.parentSpaceId == null,
       costEditingEnabled: canEditCost,
       costAccountRequired: true,
+      financeAccountChoices: {
+        for (final choice in choices.entries)
+          choice.key: (
+            name: choice.value.name,
+            currency: choice.value.currency,
+            archived: choice.value.archived,
+          ),
+        if (linkedCost?.accountScopeId != null &&
+            !choices.containsKey(
+              '${linkedCost!.accountScopeId}:${linkedCost.accountId}',
+            ))
+          '${linkedCost.accountScopeId}:${linkedCost.accountId}': (
+            name: context.l10n.financeUnavailableAccount,
+            currency: linkedCost.currency,
+            archived: true,
+          ),
+      },
       financeAccounts: [
         for (final account in data.financeAccounts)
           LocalFinanceAccount(
@@ -446,7 +484,9 @@ class CollaborationActions implements OrganizerCollectionActions {
         costPaid: linkedCost?.status == SharedFinanceStatus.posted,
         costWasPaid: linkedCost?.status == SharedFinanceStatus.posted,
         costPaidAt: linkedCost?.paidAt,
-        ledgerAccountId: linkedCost?.ledgerAccountId ?? linkedCost?.accountId,
+        ledgerAccountId: linkedCost?.accountScopeId == null
+            ? linkedCost?.ledgerAccountId ?? linkedCost?.accountId
+            : '${linkedCost!.accountScopeId}:${linkedCost.accountId}',
         payerPersonId: linkedCost?.payerPersonId,
         recipientPersonId: linkedCost?.recipientPersonId,
         createdByPersonId: linkedCost?.createdByPersonId,
@@ -541,9 +581,22 @@ class CollaborationActions implements OrganizerCollectionActions {
             isNew: current == null,
             cost: draft.costEnabled
                 ? TaskCostDraft(
+                    accountScopeSpecified: true,
                     amountMinor: parseMoneyMinor(draft.costAmount),
                     currency: draft.costCurrency,
-                    ledgerAccountId: draft.ledgerAccountId,
+                    ledgerAccountId:
+                        choices[draft.ledgerAccountId]?.id ??
+                        (draft.ledgerAccountId ==
+                                    '${linkedCost?.accountScopeId}:${linkedCost?.accountId}' &&
+                                linkedCost?.accountScopeId != null
+                            ? linkedCost!.accountId
+                            : draft.ledgerAccountId),
+                    accountScopeId:
+                        choices[draft.ledgerAccountId]?.scopeId ??
+                        (draft.ledgerAccountId ==
+                                '${linkedCost?.accountScopeId}:${linkedCost?.accountId}'
+                            ? linkedCost?.accountScopeId
+                            : null),
                     payerPersonId: draft.payerPersonId,
                     recipientPersonId: draft.recipientPersonId,
                     createdByPersonId: draft.createdByPersonId,

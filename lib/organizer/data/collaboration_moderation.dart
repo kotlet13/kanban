@@ -340,7 +340,7 @@ extension CollaborationModeration on CollaborationRepository {
         'sync6',
       ])
         prefix: {'push', 'pushTaskWithCost'},
-      for (final prefix in ['finance', 'finance2'])
+      for (final prefix in ['finance', 'finance2', 'finance4'])
         prefix: {'push', 'enable', 'grant'},
       'finance3': {'paymentCommit', 'paymentReimburse'},
       'reminders': {'put'},

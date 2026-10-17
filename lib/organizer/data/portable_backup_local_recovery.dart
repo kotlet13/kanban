@@ -304,6 +304,29 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
             deniedFinance.add(row['id'] as String);
           }
         }
+        final availableAccounts = {
+          for (final row in backupRows(doc, 'finance_records'))
+            if (row['type'] == 'financeAccount' &&
+                row['deleted'] != 1 &&
+                row['payload'] != null &&
+                !deniedFinance.contains(row['scope_id']) &&
+                scopeRows.any((scope) => scope['id'] == row['scope_id']))
+              '${row['scope_id']}:${row['id']}',
+        };
+        final unresolvedParentAccount = backupRows(doc, 'finance_records').any((
+          row,
+        ) {
+          if (row['type'] != 'financeEntry' ||
+              row['payload'] == null ||
+              !scopeRows.any((scope) => scope['id'] == row['scope_id'])) {
+            return false;
+          }
+          final payload = backupMap(jsonDecode(row['payload'] as String));
+          return payload['accountScopeId'] != null &&
+              !availableAccounts.contains(
+                '${payload['accountScopeId']}:${payload['accountId']}',
+              );
+        });
         final space = LocalSpace(
           id: newSharedId(),
           kind: item.kind,
@@ -311,6 +334,7 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
           address: scopes[item.scopeId]?.address ?? '',
           financeRecoveryIncomplete:
               deniedFinance.isNotEmpty ||
+              unresolvedParentAccount ||
               _hasOfflineLinkedPayments(doc, {
                 for (final row in scopeRows) row['id'] as String,
               }) ||
@@ -449,17 +473,27 @@ extension PortableBackupLocalRecovery on PortableBackupRepository {
           }
           if (type == 'financeEntry') {
             raw['ledgerAccountId'] ??= raw['accountId'];
-            raw['projectId'] =
-                scopes[scope]?.parentSpaceId != null ||
-                    scopes[scope]?.kind == SharedScopeKind.project
-                ? scopes[scope]?.projectRootId
-                : null;
+            if (scopes[scope]?.kind == SharedScopeKind.project) {
+              raw['projectId'] = scopes[scope]?.projectRootId;
+            }
           }
           if (type == 'financeAccount' || type == 'personalFinanceAccount') {
             raw['archived'] ??= false;
             raw.putIfAbsent('openingBalanceAt', () => null);
           }
           final payload = backupMap(remap(scope, raw));
+          if (type == 'financeEntry' && raw['accountScopeId'] != null) {
+            final accountKey = key(
+              raw['accountScopeId'] as String,
+              raw['accountId'] as String,
+            );
+            // No account is invented when a project-only backup omits the
+            // parent's ledger. Preserve the movement as unassigned and flag
+            // the local copy incomplete; exact server work stays encrypted.
+            payload['ledgerAccountId'] = availableAccounts.contains(accountKey)
+                ? ids[accountKey]
+                : null;
+          }
           if (type == 'idea') {
             ideas.add(IdeaBoard.fromJson(payload));
             continue;

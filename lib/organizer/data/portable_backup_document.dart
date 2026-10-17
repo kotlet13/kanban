@@ -164,7 +164,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 13
                 : doc['version'] == 3
                 ? 15
-                : doc['version'] == 7
+                : (doc['version'] as int) >= 7
                 ? 25
                 : doc['version'] == 6
                 ? 24
@@ -174,7 +174,7 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 18
                 : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3, 4, 5, 6, 7].contains(doc['version']) ||
+        !const [1, 2, 3, 4, 5, 6, 7, 8].contains(doc['version']) ||
         ((doc['version'] as int) >= 4
             ? !((doc['version'] as int) >= 6
                       ? const [10]
@@ -342,6 +342,10 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 type != SharedFinanceRecordType.financeRecurrenceRule) {
               throw const FormatException();
             }
+            if ((doc['version'] as int) < 8 &&
+                backupFinanceContractVersion(type.name, payload) >= 3) {
+              throw const FormatException('Finance links require backup 8');
+            }
             validateSharedFinancePayload(
               type,
               payload,
@@ -387,6 +391,9 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             request['type'] !=
                 recordTypes['${row['scope_id']}:${row['record_id']}'] ||
             (request['deleted'] == true) != (request['payload'] == null) ||
+            (table == 'finance_outbox' &&
+                !((doc['version'] as int) >= 8 ? const [1, 2, 3] : const [1, 2])
+                    .contains(row['wire_version'] ?? 1)) ||
             (table == 'outbox' &&
                 !((doc['version'] as int) >= 5
                         ? ((doc['version'] as int) >= 6
@@ -513,7 +520,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
               if (table.startsWith('finance')) 'contractVersion',
             }).isNotEmpty ||
             (remote.containsKey('contractVersion') &&
-                !const [1, 2].contains(remote['contractVersion'])) ||
+                !((doc['version'] as int) >= 8 ? const [1, 2, 3] : const [1, 2])
+                    .contains(remote['contractVersion'])) ||
             remote['id'] != id ||
             remote['type'] != row['type'] ||
             (remote['revision'] as int) < 1 ||
@@ -657,6 +665,12 @@ void validateBackupCommand(
 }
 
 void validateBackupLinks(Map<String, dynamic> doc) {
+  final scopes = {
+    for (final row in backupRows(doc, 'scopes'))
+      row['id']: SharedScope.fromJson(
+        backupMap(jsonDecode(row['data'] as String)),
+      ),
+  };
   final generic = {
     for (final r in backupRows(doc, 'records'))
       '${r['scope_id']}:${r['id']}': r,
@@ -677,7 +691,22 @@ void validateBackupLinks(Map<String, dynamic> doc) {
     }
     for (final field in ['accountId', 'fromAccountId', 'toAccountId']) {
       if (p[field] != null) {
-        final account = finance['${r['scope_id']}:${p[field]}'];
+        final external =
+            r['type'] == 'financeEntry' &&
+            field == 'accountId' &&
+            p['accountScopeId'] != null;
+        final accountScope = external ? p['accountScopeId'] : r['scope_id'];
+        if (external &&
+            ((doc['version'] as int) < 8 ||
+                scopes[r['scope_id']]?.kind != SharedScopeKind.project ||
+                scopes[r['scope_id']]?.parentSpaceId != accountScope)) {
+          throw const FormatException('Invalid parent account scope');
+        }
+        final account = finance['$accountScope:${p[field]}'];
+        // A project-only backup must not contain the parent's private ledger.
+        // Keep its validated reference quarantined; recovery fetches fresh rights
+        // and sanitized choices instead of restoring a grant or inventing money.
+        if (external && account == null) continue;
         if (account?['type'] != 'financeAccount' ||
             account?['payload'] == null ||
             backupMap(jsonDecode(account!['payload'] as String))['currency'] !=
@@ -699,9 +728,15 @@ void validateBackupLinks(Map<String, dynamic> doc) {
 }
 
 int backupFinanceContractVersion(String type, Map<String, dynamic> p) =>
-    const ['personalFinanceAccount', 'financeRecurrenceRule'].contains(type) ||
-        p.containsKey('plannedAt') ||
-        p.containsKey('openingBalanceAt')
+    type == 'financeEntry' &&
+        (p.containsKey('accountScopeId') || p.containsKey('projectId'))
+    ? 3
+    : const [
+            'personalFinanceAccount',
+            'financeRecurrenceRule',
+          ].contains(type) ||
+          p.containsKey('plannedAt') ||
+          p.containsKey('openingBalanceAt')
     ? 2
     : 1;
 

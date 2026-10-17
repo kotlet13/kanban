@@ -30,7 +30,20 @@ class SharedFinanceLedger extends StatefulWidget {
     this.payments,
     this.cashAvailable = true,
     this.onPersonalPayment,
+    this.canPersonalPayment,
     this.showHeading = true,
+    this.showBalances = true,
+    this.allowTransfers = true,
+    this.allowNewAccounts = true,
+    this.additionalAccountNames = const {},
+    this.accountLabels = const {},
+    this.projectOptions = const {},
+    this.entryProjectKeys = const {},
+    this.entryScopeIds = const {},
+    this.recordIds = const {},
+    this.canEditEntry,
+    this.canEditAccount,
+    this.description,
   });
   final String scopeName;
   final String? scopeId, partition;
@@ -40,9 +53,16 @@ class SharedFinanceLedger extends StatefulWidget {
   final List<OrganizerPersonOption> people;
   final bool canWrite;
   final bool cashAvailable;
-  final bool showHeading;
+  final bool showHeading, showBalances, allowTransfers, allowNewAccounts;
+  final Map<String, String> additionalAccountNames, accountLabels;
+  final Map<String, String> projectOptions, entryProjectKeys, entryScopeIds;
+  final Map<String, String> recordIds;
+  final bool Function(SharedFinanceEntry)? canEditEntry;
+  final bool Function(SharedFinanceAccount)? canEditAccount;
+  final String? description;
   final PaymentSnapshot? payments;
   final ValueChanged<SharedFinanceEntry>? onPersonalPayment;
+  final bool Function(SharedFinanceEntry)? canPersonalPayment;
   final ValueChanged<SharedFinanceAccount?> onAccount;
   final ValueChanged<SharedFinanceEntry?> onEntry;
   final ValueChanged<SharedFinanceTransfer?> onTransfer;
@@ -53,6 +73,7 @@ class SharedFinanceLedger extends StatefulWidget {
 
 class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
   String _accountId = '';
+  String _projectKey = '';
   String _personId = '';
   String _authorId = '';
   String _status = '';
@@ -60,8 +81,14 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
   void didUpdateWidget(covariant SharedFinanceLedger oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_accountId.isNotEmpty &&
-        !widget.accounts.any((a) => a.id == _accountId)) {
+        !widget.accounts.any((a) => a.id == _accountId) &&
+        !widget.additionalAccountNames.containsKey(_accountId)) {
       _accountId = '';
+    }
+    if (_projectKey.isNotEmpty &&
+        _projectKey != '_none' &&
+        !widget.projectOptions.containsKey(_projectKey)) {
+      _projectKey = '';
     }
   }
 
@@ -84,6 +111,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
   };
   String _account(String id) =>
       widget.accounts.where((a) => a.id == id).firstOrNull?.name ??
+      widget.additionalAccountNames[id] ??
       context.l10n.financeUnavailableAccount;
   String _kind(SharedFinanceEntry entry) =>
       entry.kind == FinanceEntryKind.income
@@ -123,15 +151,13 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final totals = summarizeSharedFinance(
-      accounts: widget.accounts,
-      entries: widget.entries,
-      transfers: widget.transfers,
-      payments: widget.payments,
-    );
     final entries = widget.entries.where(
       (entry) =>
           (_accountId.isEmpty || entry.accountId == _accountId) &&
+          (_projectKey.isEmpty ||
+              (_projectKey == '_none'
+                  ? !widget.entryProjectKeys.containsKey(entry.id)
+                  : widget.entryProjectKeys[entry.id] == _projectKey)) &&
           (_personId.isEmpty ||
               entry.payerAccountId == _personId ||
               entry.recipientAccountId == _personId) &&
@@ -140,6 +166,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     );
     final transfers = widget.transfers.where(
       (transfer) =>
+          _projectKey.isEmpty &&
           (_accountId.isEmpty ||
               transfer.fromAccountId == _accountId ||
               transfer.toAccountId == _accountId) &&
@@ -153,6 +180,56 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           (_authorId.isEmpty || transfer.createdByAccountId == _authorId) &&
           (_status.isEmpty || transfer.status.name == _status),
     );
+    final ownIds = widget.accounts.map((a) => a.id).toSet();
+    final totals = {
+      ...summarizeSharedFinance(
+        accounts: widget.accounts,
+        entries: entries.where((e) => ownIds.contains(e.accountId)),
+        transfers: transfers,
+        payments: _projectKey.isEmpty ? widget.payments : null,
+      ),
+    };
+    // Safe parent-account choices deliberately have no opening balance. Include
+    // their project movement in totals without manufacturing an account balance.
+    for (final e in entries.where(
+      (e) =>
+          !ownIds.contains(e.accountId) &&
+          e.status == SharedFinanceStatus.posted,
+    )) {
+      final previous = totals[e.currency];
+      final income =
+          (previous?.incomeMinor ?? BigInt.zero) +
+          (e.kind == FinanceEntryKind.income
+              ? BigInt.from(e.amountMinor)
+              : BigInt.zero);
+      final expense =
+          (previous?.expenseMinor ?? BigInt.zero) +
+          (e.kind == FinanceEntryKind.expense
+              ? BigInt.from(e.amountMinor)
+              : BigInt.zero);
+      totals[e.currency] = SharedFinanceTotals(
+        currency: e.currency,
+        incomeMinor: income,
+        expenseMinor: expense,
+        accountBalances: previous?.accountBalances ?? {},
+      );
+    }
+    if (_accountId.isNotEmpty) {
+      totals.removeWhere(
+        (currency, total) =>
+            !widget.accounts.any(
+              (a) => a.id == _accountId && a.currency == currency,
+            ) &&
+            !entries.any((e) => e.currency == currency),
+      );
+    }
+    final showBalances =
+        widget.showBalances &&
+        widget.cashAvailable &&
+        _projectKey.isEmpty &&
+        _personId.isEmpty &&
+        _authorId.isEmpty &&
+        _status.isEmpty;
     final rows = <Object>[...entries, ...transfers]
       ..sort((a, b) => _date(b).compareTo(_date(a)));
     return Column(
@@ -163,7 +240,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
             title: l.organizerFinances,
             subtitle: widget.scopeName,
           ),
-        Text(l.financeSharedAccountsDescription),
+        Text(widget.description ?? l.financeSharedAccountsDescription),
         const SizedBox(height: 16),
         if (widget.canWrite)
           Wrap(
@@ -171,43 +248,55 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: widget.accounts.isEmpty
+                onPressed:
+                    widget.accounts.isEmpty &&
+                        widget.additionalAccountNames.isEmpty
                     ? null
                     : () => widget.onEntry(null),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(l.organizerAddFinance),
               ),
-              OutlinedButton.icon(
-                onPressed: widget.accounts.length < 2
-                    ? null
-                    : () => widget.onTransfer(null),
-                icon: const Icon(Icons.swap_horiz, size: 18),
-                label: Text(l.financeAddTransfer),
-              ),
-              TextButton.icon(
-                onPressed: () => widget.onAccount(null),
-                icon: const Icon(Icons.account_balance_outlined, size: 18),
-                label: Text(l.financeAddAccount),
-              ),
+              if (widget.allowTransfers)
+                OutlinedButton.icon(
+                  onPressed: widget.accounts.length < 2
+                      ? null
+                      : () => widget.onTransfer(null),
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: Text(l.financeAddTransfer),
+                ),
+              if (widget.allowNewAccounts)
+                TextButton.icon(
+                  onPressed: () => widget.onAccount(null),
+                  icon: const Icon(Icons.account_balance_outlined, size: 18),
+                  label: Text(l.financeAddAccount),
+                ),
             ],
           )
         else
           Text(l.sharingReadOnly),
-        if (widget.accounts.isEmpty)
+        if (widget.accounts.isEmpty && widget.additionalAccountNames.isEmpty)
           OrganizerEmpty(
             icon: Icons.account_balance_outlined,
             title: l.financeNoAccounts,
-            action: widget.canWrite ? l.financeAddAccount : null,
-            onAction: widget.canWrite ? () => widget.onAccount(null) : null,
+            action: widget.canWrite && widget.allowNewAccounts
+                ? l.financeAddAccount
+                : null,
+            onAction: widget.canWrite && widget.allowNewAccounts
+                ? () => widget.onAccount(null)
+                : null,
           ),
         if (totals.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
-            l.financeScopeTotals,
+            showBalances
+                ? (_accountId.isEmpty ? l.financeScopeTotals : l.financeAccount)
+                : (!widget.showBalances || _projectKey.isNotEmpty
+                      ? l.financeProjectMovement
+                      : l.financeFilteredMovement),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           Text(
-            l.financeTransfersExcluded,
+            l.financeViewTotalsDescription,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
@@ -228,9 +317,9 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                             total.currency,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          if (widget.cashAvailable)
+                          if (widget.cashAvailable && showBalances)
                             Text(
-                              '${widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? l.financeTotalBalance : l.financePlanRecordedChange}: ${sharedMoneyLabel(context, widget.accounts.where((a) => a.currency == total.currency).every((a) => a.openingBalanceMinor != null) ? total.balanceMinor : total.incomeMinor - total.expenseMinor, total.currency)}',
+                              '${widget.accounts.where((a) => a.currency == total.currency && (_accountId.isEmpty || a.id == _accountId)).every((a) => a.openingBalanceMinor != null) ? l.financeTotalBalance : l.financePlanRecordedChange}: ${sharedMoneyLabel(context, widget.accounts.where((a) => a.currency == total.currency && (_accountId.isEmpty || a.id == _accountId)).every((a) => a.openingBalanceMinor != null) ? (_accountId.isEmpty ? total.balanceMinor : total.accountBalances[_accountId] ?? BigInt.zero) : total.incomeMinor - total.expenseMinor, total.currency)}',
                             ),
                           Text(
                             '${l.organizerIncome}: ${sharedMoneyLabel(context, total.incomeMinor, total.currency)}',
@@ -246,19 +335,34 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
             ],
           ),
         ],
-        if (widget.accounts.isNotEmpty) ...[
+        if (widget.accounts.isNotEmpty ||
+            widget.additionalAccountNames.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
             l.financeAccounts,
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          for (final account in widget.accounts)
+          for (final account in widget.accounts.where(
+            (a) => _accountId.isEmpty || a.id == _accountId,
+          ))
             Card(
               child: ListTile(
-                onTap: widget.canWrite ? () => widget.onAccount(account) : null,
-                title: Text(account.name),
+                onTap:
+                    widget.canWrite &&
+                        (widget.canEditAccount?.call(account) ?? true)
+                    ? () => widget.onAccount(account)
+                    : null,
+                title: Text(
+                  [
+                    account.name,
+                    if (widget.accountLabels[account.id] case final label?)
+                      label,
+                  ].join(' · '),
+                ),
                 subtitle: Text(
-                  widget.cashAvailable
+                  !showBalances
+                      ? (widget.accountLabels[account.id] ?? account.currency)
+                      : widget.cashAvailable
                       ? '${account.ownerAccountId == null ? l.financeJointAccount : _person(account.ownerAccountId)} · ${account.openingBalanceMinor == null ? l.financePlanRecordedChange : ''} ${sharedMoneyLabel(context, totals[account.currency]?.accountBalances[account.id] ?? BigInt.from(account.openingBalanceMinor ?? 0), account.currency)}'
                       : l.paymentIncompleteBalance,
                 ),
@@ -269,14 +373,30 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                 ),
               ),
             ),
+          for (final account in widget.additionalAccountNames.entries.where(
+            (a) => _accountId.isEmpty || a.key == _accountId,
+          ))
+            Card(
+              child: ListTile(
+                title: Text(account.value),
+                subtitle: Text(l.financeParentAccount),
+              ),
+            ),
           const SizedBox(height: 24),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
+              if (widget.projectOptions.isNotEmpty)
+                _filter('project', l.financeProjectFilter, _projectKey, {
+                  '': l.financeAllProjects,
+                  '_none': l.financeSpaceOnly,
+                  ...widget.projectOptions,
+                }, (key) => _projectKey = key),
               _filter('account', l.financeAccount, _accountId, {
                 '': l.financeAllAccounts,
                 for (final a in widget.accounts) a.id: a.name,
+                ...widget.additionalAccountNames,
               }, (id) => _accountId = id),
               _filter('person', l.financePayerRecipient, _personId, {
                 '': l.planningAllPeople,
@@ -332,7 +452,11 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     _ => '',
   };
   String _accountText(Object row) => switch (row) {
-    SharedFinanceEntry e => _account(e.accountId),
+    SharedFinanceEntry e => [
+      if (widget.entryProjectKeys[e.id] case final key?)
+        widget.projectOptions[key],
+      _account(e.accountId),
+    ].whereType<String>().join(' · '),
     SharedFinanceTransfer t =>
       '${_account(t.fromAccountId)} → ${_account(t.toAccountId)}',
     _ => '',
@@ -360,7 +484,11 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
     _ => '',
   };
   void _edit(Object row) {
-    if (!widget.canWrite) return;
+    if (!widget.canWrite ||
+        row is SharedFinanceEntry &&
+            !(widget.canEditEntry?.call(row) ?? true)) {
+      return;
+    }
     switch (row) {
       case SharedFinanceEntry e:
         widget.onEntry(e);
@@ -376,8 +504,8 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           icon: const Icon(Icons.history, size: 20),
         )
       : SharedContentActionsMenu(
-          scopeId: widget.scopeId!,
-          targetId: _id(row),
+          scopeId: widget.entryScopeIds[_id(row)] ?? widget.scopeId!,
+          targetId: widget.recordIds[_id(row)] ?? _id(row),
           targetType: 'finance',
           reminderType:
               row is SharedFinanceEntry &&
@@ -385,7 +513,9 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               ? 'financeEntry'
               : null,
           actions: [
-            if (widget.canWrite)
+            if (widget.canWrite &&
+                (row is! SharedFinanceEntry ||
+                    (widget.canEditEntry?.call(row) ?? true)))
               ContentMenuAction(
                 label: context.l10n.edit,
                 icon: Icons.edit_outlined,
@@ -420,8 +550,8 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           if (row case SharedFinanceEntry e)
             if (widget.scopeId != null)
               FinanceSourceLink(
-                entryId: e.id,
-                scopeId: widget.scopeId,
+                entryId: widget.recordIds[e.id] ?? e.id,
+                scopeId: widget.entryScopeIds[e.id] ?? widget.scopeId,
                 partition: widget.partition,
               ),
           Text(_amount(row), style: Theme.of(context).textTheme.titleMedium),
@@ -437,6 +567,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               row.kind == FinanceEntryKind.expense &&
               row.status == SharedFinanceStatus.posted &&
               widget.onPersonalPayment != null &&
+              (widget.canPersonalPayment?.call(row) ?? true) &&
               widget.payments?.fresh == true &&
               widget.payments?.events.any((e) => e.sourceEntryId == row.id) !=
                   true &&
@@ -490,8 +621,8 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           onOpen: widget.canWrite ? () => _edit(row) : null,
           source: row is SharedFinanceEntry && widget.scopeId != null
               ? FinanceSourceLink(
-                  entryId: row.id,
-                  scopeId: widget.scopeId,
+                  entryId: widget.recordIds[row.id] ?? row.id,
+                  scopeId: widget.entryScopeIds[row.id] ?? widget.scopeId,
                   partition: widget.partition,
                 )
               : null,
@@ -503,6 +634,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                   row.kind == FinanceEntryKind.expense &&
                   row.status == SharedFinanceStatus.posted &&
                   widget.onPersonalPayment != null &&
+                  (widget.canPersonalPayment?.call(row) ?? true) &&
                   widget.payments?.fresh == true &&
                   widget.payments?.events.any(
                         (e) => e.sourceEntryId == row.id,
@@ -563,6 +695,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                           row.kind == FinanceEntryKind.expense &&
                           row.status == SharedFinanceStatus.posted &&
                           widget.onPersonalPayment != null &&
+                          (widget.canPersonalPayment?.call(row) ?? true) &&
                           widget.payments?.fresh == true &&
                           widget.payments?.events.any(
                                 (e) => e.sourceEntryId == row.id,
@@ -592,8 +725,8 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               DataCell(
                 row is SharedFinanceEntry && widget.scopeId != null
                     ? FinanceSourceLink(
-                        entryId: row.id,
-                        scopeId: widget.scopeId,
+                        entryId: widget.recordIds[row.id] ?? row.id,
+                        scopeId: widget.entryScopeIds[row.id] ?? widget.scopeId,
                         partition: widget.partition,
                       )
                     : const SizedBox.shrink(),

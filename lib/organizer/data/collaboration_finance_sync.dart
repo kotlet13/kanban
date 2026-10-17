@@ -105,6 +105,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
   }
 
   Future<void> _resetFinanceProjection(String p, String scope) async {
+    await _clearFinanceAccountChoices(p, scope);
     await database.execute(
       'DELETE FROM finance_records WHERE partition=? AND scope_id=? AND id NOT IN(SELECT record_id FROM finance_outbox WHERE partition=? AND scope_id=?)',
       [p, scope, p, scope],
@@ -144,6 +145,15 @@ extension CollaborationFinanceSync on CollaborationRepository {
         if (!policy.canRead) continue;
         if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
         await _pullFinanceScope(session, epoch, scope.id);
+        if (_organizationFinanceSupported &&
+            scope.kind == SharedScopeKind.project) {
+          await _fetchFinanceAccountChoices(
+            session,
+            epoch,
+            scope.id,
+            syncLease: true,
+          );
+        }
         // A first personal payment needs a verified empty sidecar snapshot too.
         // `required` only becomes true once a linked financial fact exists.
         if (policy.linkedPaymentsRequired ||
@@ -259,17 +269,13 @@ extension CollaborationFinanceSync on CollaborationRepository {
         if (wireVersion > _financeContractVersion) {
           throw const CollaborationException('unsupported_version');
         }
-        final reply = await _callSession(
-          session,
-          epoch,
-          _financeContractVersion >= 2 ? 'finance2.push' : 'finance.push',
-          {
-            'scopeId': scope,
-            'operation': CollaborationRepository._map(op['request']),
-            if (_financeContractVersion >= 2)
-              'operationContractVersion': wireVersion,
-          },
-        );
+        final reply =
+            await _callSession(session, epoch, '$_financeNamespace.push', {
+              'scopeId': scope,
+              'operation': CollaborationRepository._map(op['request']),
+              if (_financeContractVersion >= 2)
+                'operationContractVersion': wireVersion,
+            });
         final canonical = _financeCanonical(reply['record']);
         if (reply['status'] != 'applied' ||
             canonical['id'] != op['record_id']) {
@@ -302,6 +308,8 @@ extension CollaborationFinanceSync on CollaborationRepository {
           'live_children',
           'currency_mismatch',
           'person_not_member',
+          'finance_account_missing',
+          'finance_account_parent_required',
           'assignee_not_member',
           'validation_error',
           'unsupported_currency',
@@ -398,17 +406,13 @@ extension CollaborationFinanceSync on CollaborationRepository {
         var more = true;
         while (more) {
           await _renewLease(p);
-          final reply = await _callSession(
-            session,
-            epoch,
-            _financeContractVersion >= 2 ? 'finance2.pull' : 'finance.pull',
-            {
-              'scopeId': scope,
-              'cursor': cursor,
-              if (cursor > 0 || access > 0) 'accessRevision': access,
-              'limit': 100,
-            },
-          );
+          final reply =
+              await _callSession(session, epoch, '$_financeNamespace.pull', {
+                'scopeId': scope,
+                'cursor': cursor,
+                if (cursor > 0 || access > 0) 'accessRevision': access,
+                'limit': 100,
+              });
           final next = readInt(reply, 'cursor'),
               revision = readInt(reply, 'accessRevision');
           more = readBool(reply, 'hasMore');
@@ -428,6 +432,22 @@ extension CollaborationFinanceSync on CollaborationRepository {
             _checkEpoch(epoch);
             for (final record in canonical) {
               await _applyFinanceRemote(p, scope, record);
+            }
+            if (_organizationFinanceSupported) {
+              final policy = await _cachedFinancePolicy(p, scope);
+              await _storeFinancePolicy(
+                p,
+                scope,
+                SharedFinancePolicy.fromJson({
+                  ...policy.toJson(),
+                  'organizationFinanceComplete':
+                      reply['organizationFinanceComplete'] == true,
+                  'organizationFinanceScopeIds':
+                      reply['organizationFinanceScopeIds'] ?? <String>[],
+                  'organizationFinanceSequences':
+                      reply['organizationFinanceSequences'] ?? <String, int>{},
+                }),
+              );
             }
             await database.execute(
               'UPDATE scopes SET finance_cursor=?,finance_access_revision=?,finance_complete=? WHERE partition=? AND id=?',
@@ -577,6 +597,12 @@ extension CollaborationFinanceSync on CollaborationRepository {
           ? null
           : CollaborationRepository._map(candidate['payload']);
       if (keepLocal && resolvedPayload != null) {
+        if (candidateVersion < 3 &&
+            remote?['payload'] is Map &&
+            ((remote!['payload'] as Map)['accountScopeId'] != null ||
+                (remote['payload'] as Map)['projectId'] != null)) {
+          throw const CollaborationException('requires_remote_resolution');
+        }
         if (candidateVersion == 1 &&
             (remote?['contractVersion'] as int? ?? 1) >= 2 &&
             remote?['payload'] is Map) {

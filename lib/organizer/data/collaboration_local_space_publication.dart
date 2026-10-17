@@ -115,7 +115,9 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
       final space = LocalSpace.fromJson(
         CollaborationRepository._map(rows.single['data']),
       );
-      if (space.archived) { issues.add('scope_archived'); }
+      if (space.archived) {
+        issues.add('scope_archived');
+      }
       final snapshot = await storage.localSnapshot(workspace: id);
       final ideas = await _localPublicationIdeas(id);
       final ideaDrafts = await _localPublicationIdeaDrafts(id);
@@ -736,11 +738,13 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
               destination,
         )
         .toList();
+    final parentAccounts =
+        _organizationFinanceSupported && destination != parent;
     final accounts = {
       for (final account in snapshot.financeAccounts.where(
         (a) =>
             destination == parent ||
-            entries.any((e) => e.ledgerAccountId == a.id),
+            !parentAccounts && entries.any((e) => e.ledgerAccountId == a.id),
       ))
         account.id: SharedFinanceAccount(
           id: account.id,
@@ -757,7 +761,13 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
           updatedAt: account.updatedAt,
         ),
     };
-    for (final entry in entries.where((e) => e.ledgerAccountId == null)) {
+    for (final entry
+        in (destination == parent && _organizationFinanceSupported
+                ? snapshot.financeEntries
+                : parentAccounts
+                ? <FinanceEntry>[]
+                : entries)
+            .where((e) => e.ledgerAccountId == null)) {
       final id = await _publicationRequestId(
         partition,
         space.id,
@@ -781,7 +791,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         destination,
         SharedFinanceRecordType.financeAccount,
         account.id,
-        account.toPayload(contractVersion: 2),
+        account.toPayload(contractVersion: _financeContractVersion),
       );
     }
     for (final rule in snapshot.financeRecurrenceRules.where(
@@ -806,6 +816,10 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
       final shared = SharedFinanceEntry(
         id: entry.id,
         accountId: account,
+        accountScopeId: parentAccounts ? parent : null,
+        projectId: _organizationFinanceSupported && destination == parent
+            ? entry.projectId
+            : null,
         ledgerAccountId: account,
         kind: entry.kind,
         status: entry.status == FinanceEntryStatus.planned
@@ -832,7 +846,7 @@ extension CollaborationLocalSpacePublication on CollaborationRepository {
         destination,
         SharedFinanceRecordType.financeEntry,
         entry.id,
-        shared.toPayload(contractVersion: 2),
+        shared.toPayload(contractVersion: _financeContractVersion),
       );
     }
   }

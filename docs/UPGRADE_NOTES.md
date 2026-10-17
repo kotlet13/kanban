@@ -18,14 +18,17 @@ podrobnosti. Uporabnik je istega dne nato naročil izvedbo, commit in push.
 [nov zapis strežniških predpogojev](server/SPACE_PICKER_RELEASE_PREREQUISITES.md).
 Strežnik in trgovini ostajajo nespremenjeni.
 
-## Računi organizacije in projektni pregledi — načrtovano
+## Računi organizacije in projektni pregledi — izvedeno v izvoru
 
 17. oktobra 2026 dogovorjena začetna smer: računi na organizaciji oziroma
 prostoru, projekt kot ločen pregled pripadajočih prilivov in stroškov,
 brez rezerviranja denarja in podvojenih knjižb. Zabeležena tudi zanka gumba
 »Dodaj v prostor«. [Novi planski dokument](ORGANIZATION_FINANCE_PLAN.md)
 vodi obseg, trenutno podporo FamilyHuba in odprte izvedbene podrobnosti.
-Samo načrtovanje; izvedba in izdaja nista naročeni.
+Po poznejšem izrecnem naročilu je izvedena aplikacijska in strežniška koda:
+[izvedba](ORGANIZATION_FINANCE_IMPLEMENTATION.md) ter
+[predpogoji za strežniško namestitev](server/ORGANIZATION_FINANCE_RELEASE_PREREQUISITES.md).
+Gostovanja in trgovine v tem koraku ostajajo nespremenjeni.
 
 ## Preglednice in priloge — izvedeno v izvoru
 

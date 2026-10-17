@@ -42,12 +42,9 @@ extension CollaborationFinanceActions on CollaborationRepository {
     late final SharedFinancePolicy policy;
     try {
       policy = SharedFinancePolicy.fromJson(
-        await _callSession(
-          session,
-          epoch,
-          _financeContractVersion >= 2 ? 'finance2.policy' : 'finance.policy',
-          {'scopeId': scopeId},
-        ),
+        await _callSession(session, epoch, '$_financeNamespace.policy', {
+          'scopeId': scopeId,
+        }),
       );
     } on CollaborationApiException catch (error) {
       if (error.code == 'finance_forbidden' ||
@@ -97,9 +94,19 @@ extension CollaborationFinanceActions on CollaborationRepository {
         managedByOrganizationPolicy: policy.managedByOrganizationPolicy,
         readAccessFromMembership: policy.readAccessFromMembership,
         linkedPaymentsRequired: policy.linkedPaymentsRequired,
+        requiredContractVersion: old.requiredContractVersion,
+        organizationFinanceComplete: false,
+        organizationFinanceScopeIds: const [],
+        organizationFinanceSequences: const {},
       );
     }
     if (deniedWithoutRevision ||
+        old.requiredContractVersion != policy.requiredContractVersion ||
+        jsonEncode(old.organizationFinanceSequences) !=
+            jsonEncode(policy.organizationFinanceSequences) ||
+        old.organizationFinanceComplete != policy.organizationFinanceComplete ||
+        jsonEncode(old.organizationFinanceScopeIds) !=
+            jsonEncode(policy.organizationFinanceScopeIds) ||
         old.enabled != policy.enabled ||
         old.grant != policy.grant ||
         old.linkedPaymentsRequired != policy.linkedPaymentsRequired ||
@@ -141,6 +148,7 @@ extension CollaborationFinanceActions on CollaborationRepository {
   }
 
   Future<void> _hideFinance(String partition, String scopeId) async {
+    await _clearFinanceAccountChoices(partition, scopeId);
     // Retain only explicitly unsent candidates, never expose them without a grant.
     await database.execute(
       "UPDATE finance_outbox SET state='blocked' WHERE partition=? AND scope_id=? AND state='pending'",
@@ -206,7 +214,11 @@ extension CollaborationFinanceActions on CollaborationRepository {
     ).archived) {
       throw const CollaborationException('scope_archived');
     }
-    if (!(await _cachedFinancePolicy(partition, scopeId)).canWrite) {
+    final policy = await _cachedFinancePolicy(partition, scopeId);
+    if (policy.requiredContractVersion > _financeContractVersion) {
+      throw const CollaborationException('unsupported_version');
+    }
+    if (!policy.canWrite) {
       throw const CollaborationException('finance_forbidden');
     }
     final pending = await database.rows(
@@ -273,6 +285,11 @@ extension CollaborationFinanceActions on CollaborationRepository {
         throw const CollaborationException('linked_payment_source_locked');
       }
     }
+    if (_financeContractVersion < 3 &&
+        (previous?['accountScopeId'] != null ||
+            previous?['projectId'] != null)) {
+      throw const CollaborationException('unsupported_version');
+    }
     if (payload != null) {
       validateSharedFinancePayload(
         type,
@@ -307,7 +324,66 @@ extension CollaborationFinanceActions on CollaborationRepository {
           payload['toAccountId'] as String,
         ],
       };
-      for (final accountId in accountIds) {
+      final accountScopeId = payload['accountScopeId'];
+      if (accountScopeId != null) {
+        final sourceScope = await _financeStoredScope(partition, scopeId);
+        if (!_organizationFinanceSupported ||
+            sourceScope?.kind != SharedScopeKind.project ||
+            sourceScope?.parentSpaceId != accountScopeId) {
+          throw const CollaborationException('finance_account_missing');
+        }
+        final choices = await _cachedFinanceAccountChoices(partition, scopeId);
+        final choiceMatches = choices.any(
+          (a) =>
+              a.scopeId == accountScopeId &&
+              a.id == payload['accountId'] &&
+              a.currency == payload['currency'] &&
+              (!a.archived ||
+                  previous?['accountScopeId'] == accountScopeId &&
+                      previous?['accountId'] == a.id),
+        );
+        if (!choiceMatches) {
+          final parent = await _financeStoredScope(
+            partition,
+            accountScopeId as String,
+          );
+          final policy = await _cachedFinancePolicy(partition, accountScopeId);
+          final accounts = await database.rows(
+            "SELECT payload FROM finance_records WHERE partition=? AND scope_id=? AND id=? AND type='financeAccount' AND deleted=0",
+            [partition, accountScopeId, payload['accountId']],
+          );
+          final account = accounts.isEmpty
+              ? null
+              : CollaborationRepository._map(accounts.single['payload']);
+          if (parent == null ||
+              parent.revoked ||
+              parent.deleted ||
+              !parent.canRead ||
+              !policy.canRead ||
+              account?['currency'] != payload['currency'] ||
+              account?['archived'] == true &&
+                  (previous?['accountScopeId'] != accountScopeId ||
+                      previous?['accountId'] != payload['accountId'])) {
+            throw const CollaborationException('finance_account_missing');
+          }
+        }
+      }
+      if (accountScopeId != null && payload['recurrenceRuleId'] != null) {
+        throw const CollaborationException('validation_error');
+      }
+      final projectId = payload['projectId'];
+      if (type == SharedFinanceRecordType.financeEntry && projectId != null) {
+        final sourceScope = await _financeStoredScope(partition, scopeId);
+        final project = await database.rows(
+          "SELECT id FROM records WHERE partition=? AND scope_id=? AND id=? AND type='project' AND deleted=0",
+          [partition, scopeId, projectId],
+        );
+        if (sourceScope?.kind == SharedScopeKind.project || project.isEmpty) {
+          throw const CollaborationException('parent_missing');
+        }
+      }
+      for (final accountId
+          in accountScopeId == null ? accountIds : <String>[]) {
         final account = await database.rows(
           "SELECT payload FROM finance_records WHERE partition=? AND scope_id=? AND id=? AND type='financeAccount' AND deleted=0",
           [partition, scopeId, accountId],
@@ -456,17 +532,13 @@ extension CollaborationFinanceActions on CollaborationRepository {
     if (!policy.canRead) {
       throw const CollaborationException('finance_forbidden');
     }
-    final reply = await _callSession(
-      session,
-      epoch,
-      _financeContractVersion >= 2 ? 'finance2.audit' : 'finance.audit',
-      {
-        'scopeId': scopeId,
-        'recordId': recordId,
-        if (beforeRevision != null) 'beforeRevision': beforeRevision,
-        'limit': limit,
-      },
-    );
+    final reply =
+        await _callSession(session, epoch, '$_financeNamespace.audit', {
+          'scopeId': scopeId,
+          'recordId': recordId,
+          if (beforeRevision != null) 'beforeRevision': beforeRevision,
+          'limit': limit,
+        });
     final current = await _cachedFinancePolicy(
       session.profile.partition,
       scopeId,
@@ -499,16 +571,21 @@ extension CollaborationFinanceActions on CollaborationRepository {
       openingBalanceMinor: openingBalanceMinor,
       ownerAccountId: ownerAccountId,
     );
-    await _editFinance(
-      scopeId,
-      (p) => _putFinance(
+    await _editFinance(scopeId, (p) async {
+      final scope = await _financeStoredScope(p, scopeId);
+      if (_organizationFinanceSupported &&
+          scope?.kind == SharedScopeKind.project &&
+          scope?.parentSpaceId != null) {
+        throw const CollaborationException('finance_account_parent_required');
+      }
+      await _putFinance(
         p,
         scopeId,
         SharedFinanceRecordType.financeAccount,
         id,
         record.toPayload(contractVersion: _financeContractVersion),
-      ),
-    );
+      );
+    });
     return id;
   }
 
@@ -543,6 +620,8 @@ extension CollaborationFinanceActions on CollaborationRepository {
   Future<String> createFinanceEntry({
     required String scopeId,
     required String accountId,
+    String? accountScopeId,
+    String? projectId,
     required FinanceEntryKind kind,
     SharedFinanceStatus status = SharedFinanceStatus.posted,
     required int amountMinor,
@@ -560,6 +639,8 @@ extension CollaborationFinanceActions on CollaborationRepository {
       createdAt: now,
       updatedAt: now,
       accountId: accountId,
+      accountScopeId: accountScopeId,
+      projectId: projectId,
       kind: kind,
       status: status,
       amountMinor: amountMinor,
@@ -707,7 +788,7 @@ extension CollaborationFinancePlanningActions on CollaborationRepository {
             archived: account.archived,
             createdAt: account.createdAt,
             updatedAt: account.updatedAt,
-          ).toPayload(contractVersion: 2),
+          ).toPayload(contractVersion: _financeContractVersion),
         );
       }
       for (final rule in rules) {
@@ -797,7 +878,7 @@ extension CollaborationFinancePlanningActions on CollaborationRepository {
             scopeId,
             SharedFinanceRecordType.financeEntry,
             e.id,
-            updated.toPayload(contractVersion: 2),
+            updated.toPayload(contractVersion: _financeContractVersion),
             expectedLocalRevision: e.revision,
           );
         }
@@ -854,7 +935,7 @@ extension CollaborationFinancePlanningActions on CollaborationRepository {
           scopeId,
           SharedFinanceRecordType.financeEntry,
           record.id,
-          record.toPayload(contractVersion: 2),
+          record.toPayload(contractVersion: _financeContractVersion),
         );
       }
     }

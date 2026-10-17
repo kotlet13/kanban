@@ -8113,6 +8113,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use the original account to continue. You can also create another local space.'**
   String get spaceFlowCreateOtherAccount;
+
+  /// No description provided for @financeProjectOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Project overview'**
+  String get financeProjectOverview;
+
+  /// No description provided for @financeProjectMovementDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this project’s income and expenses are shown. The account belongs to its space; its full balance is not shown here.'**
+  String get financeProjectMovementDescription;
+
+  /// No description provided for @financeParentAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent space account'**
+  String get financeParentAccount;
+
+  /// No description provided for @financeLegacyProjectAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy project account'**
+  String get financeLegacyProjectAccount;
+
+  /// No description provided for @financeManageParentAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Space accounts'**
+  String get financeManageParentAccounts;
+
+  /// No description provided for @financeParentAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new accounts in the parent space. Managing its accounts requires access to the space’s finances.'**
+  String get financeParentAccountRequired;
+
+  /// No description provided for @financeParentUpgradeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade the server to use a parent space account. Existing project finances remain available.'**
+  String get financeParentUpgradeRequired;
+
+  /// No description provided for @financeProjectFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get financeProjectFilter;
+
+  /// No description provided for @financeAllProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'All projects and space'**
+  String get financeAllProjects;
+
+  /// No description provided for @financeSpaceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'No project'**
+  String get financeSpaceOnly;
+
+  /// No description provided for @financeChooseEntryScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Where does this transaction belong?'**
+  String get financeChooseEntryScope;
+
+  /// No description provided for @financeParentSnapshotsIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The project finance overview is incomplete. Full account balances will appear after all permitted projects have synced.'**
+  String get financeParentSnapshotsIncomplete;
+
+  /// No description provided for @financeAccountChoicesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Space accounts are not available yet. Connect and refresh the project.'**
+  String get financeAccountChoicesUnavailable;
+
+  /// No description provided for @financeProjectMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Project movement'**
+  String get financeProjectMovement;
+
+  /// No description provided for @financeViewTotalsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Totals reflect the selected filters and posted entries. Transfers between accounts are not new income or expenses.'**
+  String get financeViewTotalsDescription;
+
+  /// No description provided for @financeFilteredMovement.
+  ///
+  /// In en, this message translates to:
+  /// **'Income and expense overview'**
+  String get financeFilteredMovement;
 }
 
 class _AppLocalizationsDelegate

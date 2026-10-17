@@ -33,6 +33,7 @@ class OrganizerFinancePage extends ConsumerStatefulWidget {
 
 class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
   String _accountFilter = '*';
+  String _projectFilter = '*';
   OrganizerSnapshot get snapshot => widget.snapshot;
   OrganizerActions get actions => widget.actions;
   @override
@@ -44,13 +45,28 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
             !snapshot.financeAccounts.any((a) => a.id == _accountFilter))) {
       _accountFilter = '*';
     }
+    if (oldWidget.snapshot.workspaceKey != snapshot.workspaceKey ||
+        _projectFilter != '*' &&
+            _projectFilter != '_none' &&
+            !snapshot.projects.any((p) => p.id == _projectFilter)) {
+      _projectFilter = '*';
+    }
   }
 
   bool _matches(FinanceEntry entry) =>
-      _accountFilter == '*' ||
-      (_accountFilter == '_none'
-          ? entry.ledgerAccountId == null
-          : entry.ledgerAccountId == _accountFilter);
+      (_accountFilter == '*' ||
+          (_accountFilter == '_none'
+              ? entry.ledgerAccountId == null
+              : entry.ledgerAccountId == _accountFilter)) &&
+      (_projectFilter == '*' ||
+          (_projectFilter == '_none'
+              ? entry.projectId == null
+              : entry.projectId == _projectFilter));
+  Future<void> _add() => actions.finance(
+    null,
+    _projectFilter == '*' || _projectFilter == '_none' ? null : _projectFilter,
+    _accountFilter == '*' || _accountFilter == '_none' ? null : _accountFilter,
+  );
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -126,7 +142,7 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
               title: l.organizerFinances,
               subtitle: l.spaceFinanceIntro,
               action: FilledButton.icon(
-                onPressed: () => actions.finance(),
+                onPressed: _add,
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(l.organizerAddFinance),
               ),
@@ -150,15 +166,47 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
               ],
               onChanged: (value) => setState(() => _accountFilter = value!),
             ),
+            if (snapshot.projects.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                key: ValueKey(
+                  'personal-finance-project-filter-$_projectFilter',
+                ),
+                initialValue: _projectFilter,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l.financeProjectFilter),
+                items: [
+                  DropdownMenuItem(
+                    value: '*',
+                    child: Text(l.financeAllProjects),
+                  ),
+                  DropdownMenuItem(
+                    value: '_none',
+                    child: Text(l.financeSpaceOnly),
+                  ),
+                  for (final project in snapshot.projects)
+                    DropdownMenuItem(
+                      value: project.id,
+                      child: Text(
+                        project.title,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: (value) => setState(() => _projectFilter = value!),
+              ),
+            ],
             const SizedBox(height: 16),
-            FinancePlanningPanel(
-              key: ValueKey('finance-planning-${snapshot.workspaceKey}'),
-              snapshot: snapshot,
-              forecastAvailable: complete,
-              accountFilter: _accountFilter,
-              payments: payments,
-            ),
-            if (payments != null &&
+            if (_projectFilter == '*')
+              FinancePlanningPanel(
+                key: ValueKey('finance-planning-${snapshot.workspaceKey}'),
+                snapshot: snapshot,
+                forecastAvailable: complete,
+                accountFilter: _accountFilter,
+                payments: payments,
+              ),
+            if (_projectFilter == '*' &&
+                payments != null &&
                 (paymentRequired ||
                     payments.events.isNotEmpty ||
                     payments.projections.isNotEmpty ||
@@ -184,7 +232,7 @@ class _OrganizerFinancePageState extends ConsumerState<OrganizerFinancePage> {
                 icon: Icons.account_balance_wallet_outlined,
                 title: l.organizerNoFinance,
                 action: l.organizerAddFinance,
-                onAction: () => actions.finance(),
+                onAction: _add,
               ),
             if (currencies.isNotEmpty && complete)
               Wrap(

@@ -244,6 +244,21 @@ class SharingWorkspace extends ConsumerWidget {
                     context,
                   ),
             );
+            if (view == SharingView.finances &&
+                !scope.revoked &&
+                !scope.deleted) {
+              return SharedFinanceWorkspace(
+                titleAccessory: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    syncStatus,
+                    ScopeLifecycleMenu(scope: scope),
+                  ],
+                ),
+                scope: scope,
+                state: state,
+              );
+            }
             if (scope.kind == SharedScopeKind.organization &&
                 !(view == SharingView.projects &&
                     state
