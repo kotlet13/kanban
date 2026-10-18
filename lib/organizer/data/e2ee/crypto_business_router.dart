@@ -51,6 +51,57 @@ import 'crypto_sync_store.dart';
 import 'scope_crypto_manager.dart';
 import 'session_crypto_access.dart';
 
+/// Catalog/cache IDs are discovery candidates only. A verified signed child
+/// descriptor admits exactly the parent whose purpose-separated token matches.
+/// Parent kind/organization alias require a separately verified descriptor;
+/// a child-only reader never needs the parent's content or keys.
+Future<Map<String, dynamic>> cryptoScopeParentProjection({
+  required String scopeId,
+  required Map<String, dynamic> descriptor,
+  required Map<String, dynamic> cached,
+  required List<Map<String, dynamic>> catalog,
+  required Map<String, Map<String, dynamic>> verifiedDescriptors,
+  required Future<String> Function(String child, String parent) parentToken,
+}) async {
+  final empty = <String, dynamic>{
+    'parentScopeId': null,
+    'parentScopeKind': null,
+    'organizationId': null,
+  };
+  if (descriptor['kind'] != 'project' ||
+      descriptor['parentScopeToken'] == null) {
+    return empty;
+  }
+  final token = descriptor['parentScopeToken'];
+  if (token is! String || !RegExp(r'^[a-f0-9]{64}$').hasMatch(token)) {
+    throw const FormatException('crypto_scope_parent_token');
+  }
+  final discovered = catalog.where((row) => row['id'] == scopeId).firstOrNull;
+  final candidates = <String>{
+    for (final value in [
+      cached['parentScopeId'],
+      cached['organizationId'],
+      discovered?['parentScopeId'],
+      discovered?['organizationId'],
+      for (final row in catalog) row['id'],
+    ])
+      if (isCryptoCanonicalUuid(value) && value != scopeId) value as String,
+  };
+  for (final parent in candidates) {
+    if (await parentToken(scopeId, parent) != token) continue;
+    final kind = verifiedDescriptors[parent]?['kind'];
+    return {
+      'parentScopeId': parent,
+      'parentScopeKind':
+          SharedScopeKind.values.any((value) => value.name == kind)
+          ? kind
+          : null,
+      'organizationId': kind == 'organization' ? parent : null,
+    };
+  }
+  return empty;
+}
+
 /// Existing UI actions enter this adapter through CollaborationRepository's
 /// authenticated request path. Unsupported operations retain their local queue;
 /// no original plaintext operation is forwarded to a legacy content endpoint.
@@ -551,7 +602,9 @@ class CryptoBusinessSession {
     await account.directory.requireFresh();
     final result = <Map<String, dynamic>>[];
     final pending = <String>[];
-    for (final scope in await catalog()) {
+    final discovered = await catalog();
+    final descriptors = <String, Map<String, dynamic>>{};
+    for (final scope in discovered) {
       final cached = await db.rows(
         'SELECT data FROM scopes WHERE partition=? AND id=?',
         [p, scope['id']],
@@ -594,6 +647,7 @@ class CryptoBusinessSession {
         access,
       ).current(scope['id'] as String);
       final descriptor = await _verifiedScopeDescriptor(scope['id'] as String);
+      descriptors[scope['id'] as String] = descriptor;
       final head = await access.currentHead(scope['id'] as String);
       final member = head.member(account.directory.accountId);
       // Catalog titles are never accepted; only already local or authenticated
@@ -614,6 +668,20 @@ class CryptoBusinessSession {
         'accessPolicyVersion': descriptor['accessPolicyVersion'],
         'metadataRevision': metadata == null ? 0 : _localRevision(metadata),
       });
+    }
+    for (final scope in result) {
+      final descriptor = descriptors[scope['id']];
+      if (descriptor == null) continue;
+      scope.addAll(
+        await cryptoScopeParentProjection(
+          scopeId: scope['id'] as String,
+          descriptor: descriptor,
+          cached: scope,
+          catalog: discovered,
+          verifiedDescriptors: descriptors,
+          parentToken: CryptoLifecycleEvidence(access).parentToken,
+        ),
+      );
     }
     return {
       'scopes': result,

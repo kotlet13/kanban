@@ -148,6 +148,9 @@ class LegacyPickerCacheArchive {
   }) async {
     await files.privateDirectory(vaultDirectory);
     await files.rejectLink(archiveFile.path);
+    final canonicalVaultPath = p.normalize(
+      await vaultDirectory.resolveSymbolicLinks(),
+    );
     final derived = await key.derive('legacy-picker-cache-archive');
     final bytes = Uint8List.fromList(await derived.extractBytes());
     var archived = 0, removed = 0, retained = 0;
@@ -175,9 +178,9 @@ class LegacyPickerCacheArchive {
         await for (final entity in Directory(root).list(followLinks: false)) {
           if (entity is Link)
             throw const LocalVaultException('vault_unsafe_path');
-          if (p.normalize(entity.path) ==
-              p.normalize(vaultDirectory.absolute.path))
+          if (p.normalize(entity.path) == canonicalVaultPath) {
             continue;
+          }
           // These exact files remain subject to the separate vault database /
           // Hive archive and cleanup checks. Never infer ownership by extension
           // or ignore a plugin directory merely because its name looks known.

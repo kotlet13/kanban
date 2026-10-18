@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/state/local_database_provider.dart';
+import 'package:kanban/organizer/state/local_spaces_provider.dart';
 import 'package:kanban/organizer/state/reminder_snooze_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +23,7 @@ import 'package:kanban/organizer/presentation/planning/device_reminder_settings.
 import '../ui/organizer_ui_test.dart' as personal;
 import '../ui/sharing_ui_fixture.dart';
 import 'local_notification_adapter_test.dart' as fake;
-import 'all_local_notifications_test.dart' show localSnapshot;
+import 'all_local_notifications_test.dart' show Catalog, localSnapshot;
 
 class BrokenOrganizer extends OrganizerController {
   @override
@@ -40,16 +41,32 @@ class DelayedShared extends SharingUiController {
   }
 }
 
-Widget host(List<Override> overrides, Widget child) {
+class FailedShared extends SharingUiController {
+  FailedShared() : super(initial: CollaborationState());
+  @override
+  Future<CollaborationState> build() async =>
+      throw StateError('synthetic collaboration unavailable');
+  void fail() => state = AsyncError(
+    StateError('synthetic collaboration unavailable'),
+    StackTrace.current,
+  );
+}
+
+Widget host(
+  List<Override> overrides,
+  Widget child, {
+  bool useDerivedNotificationCatalog = false,
+}) {
   final database = CollaborationDatabase(NativeDatabase.memory());
   addTearDown(database.close);
   return ProviderScope(
     overrides: [
       localVaultTestPreferencesOverride(),
       localDatabaseProvider.overrideWith((ref) async => database),
-      notificationLocalSnapshotsProvider.overrideWith(
-        (ref) async => [await ref.watch(organizerProvider.future)],
-      ),
+      if (!useDerivedNotificationCatalog)
+        notificationLocalSnapshotsProvider.overrideWith(
+          (ref) async => [await ref.watch(organizerProvider.future)],
+        ),
       ...overrides,
     ],
     child: MaterialApp(
@@ -62,6 +79,190 @@ Widget host(List<Override> overrides, Widget child) {
 }
 
 void main() {
+  testWidgets(
+    'nullable collaboration error preserves empty then personal reminders',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final due = DateTime.now().add(const Duration(hours: 1));
+      final scheduler = fake.FakeScheduler();
+      final controller = FailedShared();
+      final snapshots = <String, OrganizerSnapshot>{};
+      final catalog = Catalog(snapshots);
+      await tester.pumpWidget(
+        host(
+          [
+            localSpacesProvider.overrideWith(() => catalog),
+            collaborationProvider.overrideWith(() => controller),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ],
+          const Text('ready'),
+          useDerivedNotificationCatalog: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('ready')),
+      );
+      expect(container.read(collaborationProvider).hasError, isTrue);
+      expect(container.read(collaborationProvider).valueOrNull, isNull);
+      expect(
+        container.read(notificationLocalSnapshotsProvider).requireValue,
+        isEmpty,
+      );
+      expect(
+        container.read(localNotificationPreferencesProvider).hasValue,
+        isTrue,
+      );
+      expect(scheduler.pending, isEmpty);
+      snapshots['local'] = localSnapshot('local', 'Only local', due);
+      catalog.choose('local');
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(1));
+      expect(scheduler.scheduled.values.single.plan.target.isPersonal, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'nullable collaboration async recovery retains local and removes stale shared reminders',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final due = DateTime.now().add(const Duration(hours: 1));
+      final scheduler = fake.FakeScheduler();
+      final controller = FailedShared();
+      await tester.pumpWidget(
+        host(
+          [
+            localSpacesProvider.overrideWith(
+              () =>
+                  Catalog({'local': localSnapshot('local', 'Only local', due)}),
+            ),
+            collaborationProvider.overrideWith(() => controller),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ],
+          const Text('ready'),
+          useDerivedNotificationCatalog: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(1));
+      expect(scheduler.scheduled.values.single.plan.target.isPersonal, isTrue);
+      controller.replace(
+        CollaborationState(
+          session: sharingSession(),
+          scopes: [sharingScope()],
+          data: {
+            sharingScopeId: SharedScopeData(
+              tasks: [sharingData().tasks.first.copyWith(dueAt: due)],
+            ),
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(2));
+      expect(
+        scheduler.scheduled.values
+            .where((r) => !r.plan.target.isPersonal)
+            .single
+            .plan
+            .target
+            .matches(sharingSession()),
+        isTrue,
+      );
+      // AsyncError retains previous AsyncData in Riverpod. Explicit session
+      // removal represents logout; an ensuing error must keep only local data.
+      controller.replace(CollaborationState());
+      await tester.pumpAndSettle();
+      controller.fail();
+      await tester.pumpAndSettle();
+      expect(scheduler.pending, hasLength(1));
+      expect(scheduler.scheduled.values.single.plan.target.isPersonal, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'nullable collaboration rejects absent foreign and partial shared plan authority',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'organizer_local_reminders_enabled_v1': true,
+      });
+      final due = DateTime.now().add(const Duration(hours: 1));
+      final scheduler = fake.FakeScheduler();
+      final controller = FailedShared();
+      final session = sharingSession();
+      NotificationTarget target({
+        String? serverUrl,
+        String? serverId,
+        String? accountId,
+        bool missingScope = false,
+      }) => NotificationTarget(
+        serverUrl: serverUrl ?? session.serverUrl,
+        serverId: serverId ?? session.serverId,
+        accountId: accountId ?? session.accountId,
+        scopeId: missingScope ? null : sharingScopeId,
+        records: const [
+          NotificationRecordTarget(type: 'task', recordId: 'authority-task'),
+        ],
+      );
+      final targets = [
+        NotificationTarget(
+          records: const [
+            NotificationRecordTarget(
+              type: 'task',
+              recordId: 'local-authority-task',
+            ),
+          ],
+        ),
+        target(),
+        target(accountId: sharingSession(second: true).accountId),
+        target(serverUrl: 'https://other.example.test'),
+        target(serverId: 'other-server'),
+        target(missingScope: true),
+      ];
+      await tester.pumpWidget(
+        host(
+          [
+            localSpacesProvider.overrideWith(
+              () =>
+                  Catalog({'local': localSnapshot('local', 'Only local', due)}),
+            ),
+            collaborationProvider.overrideWith(() => controller),
+            effectiveReminderPlansProvider.overrideWith(
+              (ref) async => [
+                for (var i = 0; i < targets.length; i++)
+                  ReminderPlan(
+                    stableKey: 'authority-$i',
+                    scheduledAt: due,
+                    target: targets[i],
+                    reason: 'task',
+                  ),
+              ],
+            ),
+            localNotificationSchedulerProvider.overrideWithValue(scheduler),
+          ],
+          const Text('ready'),
+          useDerivedNotificationCatalog: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(scheduler.scheduled.values.map((r) => r.plan.stableKey), [
+        'authority-0',
+      ]);
+      controller.replace(
+        CollaborationState(session: session, scopes: [sharingScope()]),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        scheduler.scheduled.values.map((r) => r.plan.stableKey),
+        unorderedEquals(['authority-0', 'authority-1']),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'shared sound follows the scope preference without a second device sound switch',
     (tester) async {

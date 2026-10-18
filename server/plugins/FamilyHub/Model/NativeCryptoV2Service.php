@@ -687,15 +687,54 @@ class NativeCryptoV2Service extends NativeDatabase
         if ($command['operation'] !== 'crypto2.scope.activate' || (int)$receipt['status'] !== 200) {
             return false;
         }
-        $response = json_decode($receipt['response'], true, 34, JSON_THROW_ON_ERROR);
+        // A child activation stores the topology wrapper, not the signed inner payload.
+        // This recognizes only an already authenticated, minimal historical outcome;
+        // anything else must retain the caller's normal current-access check.
+        try {
+            $payload = $command['payload'];
+            if (!is_array($payload)) return false;
+            if (array_key_exists('activationProof', $payload)) {
+                $this->fields($payload, ['scopeId', 'headHash', 'activationProof', 'parentTopologyBatch']);
+                [$inner] = NativeCryptoCodec::decode($payload['activationProof']);
+                $this->fields($inner, ['version', 'operation', 'requestId', 'serverId', 'accountId', 'deviceId', 'signer', 'payload']);
+                $this->uuid($inner['requestId']);
+                if ($inner['version'] !== 2 || $command['version'] !== 2 ||
+                    $inner['operation'] !== $command['operation'] ||
+                    $inner['signer'] !== 'device' || $command['signer'] !== 'device') return false;
+                foreach (['serverId', 'accountId', 'deviceId'] as $field) {
+                    if ($inner[$field] !== $command[$field]) return false;
+                }
+                $bundle = $payload['parentTopologyBatch'];
+                $this->fields($bundle, ['parentScopeId', 'childScopeId', 'authorization']);
+                $this->uuid($bundle['parentScopeId']);
+                $this->uuid($bundle['childScopeId']);
+                NativeCryptoCodec::decode($bundle['authorization']);
+                if ($bundle['childScopeId'] !== $payload['scopeId'] ||
+                    $bundle['parentScopeId'] === $bundle['childScopeId'] ||
+                    !is_array($inner['payload']) ||
+                    ($inner['payload']['scopeId'] ?? null) !== $payload['scopeId'] ||
+                    ($inner['payload']['headHash'] ?? null) !== $payload['headHash'] ||
+                    ($inner['payload']['parentTopologyBatchHash'] ?? null) !== hash('sha256',
+                        "JivieFinanceTopologyCreationBatch/v3\n".NativeCryptoCodec::canonical((object)$bundle))) return false;
+                $payload = $inner['payload'];
+            }
+            $manifestHash = $payload['grantManifestHash'] ?? null;
+            if (!is_string($manifestHash) || preg_match('/^[a-f0-9]{64}$/D', $manifestHash) !== 1) return false;
+            $this->uuid($payload['scopeId'] ?? null);
+            if (!is_string($payload['headHash'] ?? null) || preg_match('/^[a-f0-9]{64}$/D', $payload['headHash']) !== 1) return false;
+            $response = json_decode($receipt['response'], true, 34, JSON_THROW_ON_ERROR);
+            if (!is_array($response)) return false;
+        } catch (\Throwable $error) {
+            return false;
+        }
         $keys = array_keys($response);
         sort($keys, SORT_STRING);
         $expected = ['scopeId', 'headHash', 'epoch', 'state', 'grantManifestHash'];
         sort($expected, SORT_STRING);
         return $keys === $expected
-            && $response['scopeId'] === $command['payload']['scopeId']
-            && $response['headHash'] === $command['payload']['headHash']
-            && $response['grantManifestHash'] === $command['payload']['grantManifestHash'];
+            && $response['scopeId'] === $payload['scopeId']
+            && $response['headHash'] === $payload['headHash']
+            && $response['grantManifestHash'] === $manifestHash;
     }
 
     private function savedResult($r)

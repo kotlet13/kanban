@@ -50,6 +50,48 @@ void main() {
   }
 
   test(
+    'iOS parent path alias excludes only its own vault across cleanup retries',
+    () async {
+      final actualParent = Directory('${root.path}/actual-parent');
+      await actualParent.create();
+      final alias = Link('${root.path}/parent-alias');
+      await alias.create(actualParent.path);
+      final documents = Directory('${alias.path}/Documents');
+      await documents.create();
+      vault = Directory('${documents.path}/jivie_vault_v1');
+      await vault.create();
+      final own = File('${vault.path}/data.sqlite');
+      const ownBytes = [11, 22, 33, 44];
+      await own.writeAsBytes(ownBytes, flush: true);
+      final unknown = File('${documents.path}/unknown-user-export.bin');
+      const unknownBytes = [9, 8, 7, 6];
+      await unknown.writeAsBytes(unknownBytes, flush: true);
+      final archive = LegacyPickerCacheArchive(vault, LocalVaultFiles());
+
+      Future<LegacyPickerCacheReport> preserve() => archive.preserve(
+        key,
+        roots: [LegacyPickerCacheRoot(documents, 'iosDocuments')],
+      );
+
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final report = await preserve();
+        expect(report.retainedFiles, 1);
+        expect(report.archivedFiles, 0);
+        expect(report.removedFiles, 0);
+        expect(await own.readAsBytes(), ownBytes);
+        expect(await unknown.readAsBytes(), unknownBytes);
+      }
+      await unknown.delete(); // Remove only this test's unrelated fixture.
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final report = await preserve();
+        expect(report.hasResidualCopies, false);
+        expect(report.archivedFiles, 0);
+        expect(report.removedFiles, 0);
+        expect(await own.readAsBytes(), ownBytes);
+      }
+    },
+  );
+  test(
     'normal iOS roots exclude only dedicated storage and empty directories',
     () async {
       final documents = Directory('${root.path}/Documents');

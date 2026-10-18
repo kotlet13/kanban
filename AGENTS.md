@@ -1,5 +1,27 @@
 # Navodila za delo na projektu
 
+18. oktober — **fizični mobile E2EE preizkus ima delne PASS in dve odprti meji**.
+[Runbook in vezani dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
+ločena QA Android/iOS appa sta nameščena poleg originalov, lasten LAN HTTPS/CA
+in Docker sta pregledana. Android A je opravil installation/account FILE,
+lokalno šifriranje/opravilo, račun/e-pošto in isti `MOBILE-PROJECT-1` po enem
+nadaljevanju ohranjenega obrazca. PHP receipt fix ima old FAIL/27 ciljnih PASS
+in je nameščen samo v QA po konsistentni zasebni SQLite kopiji; drugih 180 virov,
+config/SID/schema ni spremenjenih. Poznejši auto sync ob 15:27 ima
+`invalid_response`, 0 pending/conflicting/blocked; varen tek ga omeji na lokalni
+`finance4.accountChoices`. Pregledani parent/schema fix ima 8 novih ciljnih
+PASS/scoped No issues; navadni Android parent-fixed paket je nameščen in-place,
+isti QA dataDir/izvirni metapodatki, auto sync čaka odklep S25. iOS alias cleanup in odklep
+istega vaulta sta fizično PASS (`complete`, cleanup false/residual 0). Po vezanem
+notification SIGSEGV ima immutable-authority popravek 3 nove ciljne PASS in
+scoped No issues; en novi običajni zagon istega vaulta v osebni Utrip je ostal
+živ skozi 85,7 s brez čarovnika/napake, iste datoteke/identity/probe. Zadnji iOS parent-fixed paket ohrani iste štiri vault datoteke/identity/probe
+in z enim običajnim zagonom PID 2005 kaže Osebno/Utrip; 85 s se ne ponavlja.
+SDK ni spremenjen, lokalni opomniki ostanejo vključeni; to ni dolgoročni stability
+dokaz. Eno lokalno MOBILE-LOCAL-B je naslednji naročeni korak, še ne PASS. B račun/deljenje, physical recovery/upgrade
+in P8 ostajajo odprti; to ni neodvisni P0 pregled. FILE ostane zasebna,
+prvi stik uporablja javni kartici. Produkcija/trgovini in Mac PASS so isti.
+
 18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek
 ohrani ACL/completeness in staro E2EE obliko; dodatna active-grant admission

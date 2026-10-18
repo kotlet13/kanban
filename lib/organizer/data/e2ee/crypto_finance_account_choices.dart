@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'account_directory_v2.dart';
 import '../collaboration_transport.dart' show CollaborationApiException;
+import '../../domain/collaboration_models.dart' show SharedScope;
 import 'crypto_business_json.dart';
 import 'crypto_business_router.dart';
 import 'crypto_finance_choice_selection_codec.dart';
@@ -254,7 +255,7 @@ class CryptoFinanceAccountChoices {
       );
     }
     final scope = _map(jsonDecode(scopes.single['data'] as String));
-    final parent = scope['parentSpaceId'];
+    final parent = SharedScope.fromJson(scope).parentSpaceId;
     if (scope['kind'] != 'project' || !isCryptoCanonicalUuid(parent)) {
       throw const FormatException('crypto_account_choices_target');
     }
@@ -1250,7 +1251,8 @@ class CryptoFinanceAccountChoices {
       throw const FormatException('crypto_account_choices_parent_binding');
     }
     if (currentScope['kind'] != 'project' ||
-        currentScope['parentSpaceId'] != offer['sourceScopeId']) {
+        SharedScope.fromJson(currentScope).parentSpaceId !=
+            offer['sourceScopeId']) {
       throw const FormatException('crypto_account_choices_parent_binding');
     }
     CryptoFinanceChoiceSelectionCodec.closed(selection, {

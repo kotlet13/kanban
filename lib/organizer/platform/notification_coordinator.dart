@@ -13,6 +13,39 @@ import '../state/local_notification_preferences_provider.dart';
 import 'local_notification_scheduler.dart';
 import 'notification_providers.dart';
 
+/// Capture nullable collaboration authority before iterating local snapshots or
+/// awaiting plans. Local scheduling does not require a collaboration session.
+class _NotificationAuthority {
+  const _NotificationAuthority({
+    this.session,
+    this.canMaterializePrivate = false,
+    this.privateRecordIds = const {},
+    this.preferences = const {},
+  });
+
+  factory _NotificationAuthority.capture(CollaborationState? shared) {
+    if (shared == null) return const _NotificationAuthority();
+    final privateScope = shared.privateSync.scopeId;
+    return _NotificationAuthority(
+      session: shared.session,
+      canMaterializePrivate:
+          supportsFinancePlanningContract(shared.financeContractVersion) &&
+          shared.localAccessAllowed &&
+          privateScope != null &&
+          shared.financePolicyForScope(privateScope).canWrite &&
+          shared.financeSnapshotComplete[privateScope] == true,
+      privateRecordIds: Set.unmodifiable(shared.privateRecordIds.values),
+      preferences: Map.unmodifiable(shared.notificationPreferences),
+    );
+  }
+
+  final AccountSession? session;
+  final bool canMaterializePrivate;
+  final Set<String> privateRecordIds;
+  final Map<String, SharedNotificationPreferences> preferences;
+  String get identity => '${session?.partition}:${session?.deviceId}';
+}
+
 /// Watches committed data, not network requests. Platform errors stay visible
 /// in notification settings and never prevent the personal workspace loading.
 class LocalNotificationCoordinator extends ConsumerStatefulWidget {
@@ -98,9 +131,9 @@ class _LocalNotificationCoordinatorState
     final snapshotsState = ref.read(notificationLocalSnapshotsProvider);
     if (snapshotsState.isLoading) return;
     final snapshots = snapshotsState.asData?.value;
-    final shared = sharedState.valueOrNull;
-    final identity =
-        '${shared?.session?.partition}:${shared?.session?.deviceId}';
+    final authority = _NotificationAuthority.capture(sharedState.valueOrNull);
+    final session = authority.session;
+    final identity = authority.identity;
     final settingsState = ref.read(localNotificationPreferencesProvider);
     final settings = settingsState.valueOrNull;
     if (settings == null || snapshots == null) {
@@ -125,21 +158,12 @@ class _LocalNotificationCoordinatorState
       final localId = private ? 'local' : snapshot.workspaceKey;
       final financeKey =
           '${snapshot.workspaceKey}:${clock.year}-${clock.month}:${snapshot.financeRecurrenceRules.map((r) => '${r.id}:${r.revision}:${r.active}').join(',')}';
-      final privateScope = shared?.privateSync.scopeId;
-      final canMaterialize =
-          !private ||
-          (shared != null &&
-              supportsFinancePlanningContract(shared.financeContractVersion) &&
-              shared.localAccessAllowed &&
-              privateScope != null &&
-              shared.financePolicyForScope(privateScope).canWrite &&
-              shared.financeSnapshotComplete[privateScope] == true);
+      final canMaterialize = !private || authority.canMaterializePrivate;
       final localRules = snapshot.financeRecurrenceRules
           .where(
             (r) =>
                 r.active &&
-                (!private ||
-                    shared?.privateRecordIds.values.contains(r.id) != true),
+                (!private || !authority.privateRecordIds.contains(r.id)),
           )
           .map((r) => r.id)
           .toSet();
@@ -195,15 +219,18 @@ class _LocalNotificationCoordinatorState
       for (final plan in plans)
         if (plan.target.isPersonal
             ? localSettings(plan).push
-            : settings
+            : session != null &&
+                  plan.target.scopeId != null &&
+                  plan.target.matches(session) &&
+                  settings
                       .resolve(
                         sharedDeviceNotificationWorkspace(
-                          shared!.session!.partition,
+                          session.partition,
                           plan.target.scopeId!,
                         ),
                       )
                       .push &&
-                  (shared.notificationPreferences[plan.target.scopeId]
+                  (authority.preferences[plan.target.scopeId]
                           ?.forCategory('reminders')
                           .push ??
                       true))
@@ -214,7 +241,7 @@ class _LocalNotificationCoordinatorState
             languageCode: l.localeName,
             sound: plan.target.isPersonal
                 ? localSettings(plan).sound
-                : shared?.notificationPreferences[plan.target.scopeId]
+                : authority.preferences[plan.target.scopeId]
                           ?.forCategory('reminders')
                           .sound ??
                       true,
