@@ -1,7 +1,24 @@
 # Navodila za delo na projektu
 
-18. oktober — **mobilni E2EE QA: en skupni task Save in auto sync PASS**.
+18. oktober — **mobilni E2EE QA: task/sync/mail PASS, iOS inicializacija še blokirana**.
 [Aktualni checkpoint in dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
+fhi4 parser popravek ima old FAIL in 7 prizadetih PASS/čisto analizo;
+fizični update je obnovil shranjeno povabilo in odstranil secure_storage.
+Napaka Keychaina ni dokazana. Dvovrstični await pripravljenosti ima source
+old FAIL in delne origin assertion, toda widget fixture je NOT COMPLETED;
+kandidat/logi so ohranjeni v ignored QA, novi test je umaknjen. Native
+await paket je po 90 s še prikazal generično napako inicializacije, ne origin
+PASS. Trenutno je nameščen samo QA diagnostični iOS d3d58060…: prvi zagon
+PID 638 po popravku nezdružljivih syslog zastavic ni zajel oznak; en direkten
+kontrolirani relaunch je dal PID 640, svež USB zajem ob 17:29 UTC še pokaže
+isto napako in nič oznak. Vzrok ni ugotovljen; brez nadaljnjih zajemov ali
+gradenj. Uporabnik je enkrat fizično pritisnil Retry: gumb je bil videti
+pritisnjen, odziva pa ni opazil; uspešen predogled ni potrjen. B ostaja
+neregistriran z istim povabilom. Offline SDK/kernel/AOT cache dokaz potrdi,
+da je diagnostični define dosegel frontend (SHA 85144229…), ne pa dosega
+catch ali dostave konzole. Retry ne inicializira ponovno neuspelega
+providerja; konkretna native izjema ostaja neznana. Diagnostični pomočnik in dva catch klica so samo v QA kopiji,
+ne v main runtime. Uporabnikov nenamerni ponovni zagon in prvi odklep nista bila reset shrambe.
 debug QA 7198d8ec… je enkrat nameščen, PID 14389, ista seja/shramba.
 Običajni startup je pokazal Synced 18:22 lokalno, 0/0/0, brez napake in
 prazen task seznam. Stage zajem je odrezal proračun 512 tagov; neparni begin
@@ -25,7 +42,7 @@ ostajajo zgodovina v runbooku; ni novega broad/whole-file PASS.
 Pri prihodnjem QA dejanju najprej pripravimo točen obrazec/ohranjeni osnutek
 in znano konzolo/obstoječi debugger; ciljna koda ali begin/end faza pred
 retry, brez splošnega diagnostičnega širjenja, slepih ponovitev ali skrivnosti.
-iOS af730dd5… ohrani isti vault/identity/probe, complete/residual 0, PID 2005;
+Prejšnji iOS af730dd5… je ohranil isti vault/identity/probe, complete/residual 0, PID 2005;
 startup 85,7 s in en MOBILE-LOCAL-B sta potrjena. Eno povabilo je ustvarjeno
 za pripravljeni B e-naslov v Mobile E2EE 20261018, cel prostor s projekti:
 ena pending kartica Član/Polni dostop, A ostane owner. Prvi mail helper ni
@@ -36,8 +53,8 @@ app/worker bind bajti; brez restarta/manual send/resend/queue ali DDL zapisa.
 Manjkajoči javni URL je bil potrjeni QA poštni blokator. Običajni worker je
 isto povabilo dostavil ob 16:43:52 UTC; en zajem ob 16:44:27 potrdi natanko
 eno sporočilo/točen QA endpoint, SHA 44d22389…, brez resend/manual send.
-Zasebni 0600 handoff je pripravljen zunaj Gita, vsebina ni izpisana; root
-vodi fizični iPhone korak. B registracija/sprejem/grant, deljenje, odvzem, offline/recovery/physical
+Zasebni 0600 handoff je pripravljen zunaj Gita, vsebina ni izpisana. Fizični
+Retry je že izveden brez opaženega odziva; inicializacija ostaja blokirana. B registracija/sprejem/grant, deljenje, odvzem, offline/recovery/physical
 upgrade, celotni mobilni tok in P0/P8/produkcijska pripravljenost niso potrjeni.
 FILE ostane zasebna; produkcija/trgovini, originalni appi/podatki in Mac PASS
 so nedotaknjeni. QA diagnostika ni v glavnem runtime izvoru.

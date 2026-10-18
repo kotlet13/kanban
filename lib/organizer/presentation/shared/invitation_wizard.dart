@@ -134,6 +134,8 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       }
       _server.text = link.serverUrl;
       if (!_active) return;
+      await ref.read(collaborationProvider.future);
+      if (!mounted || generation != _generation || !_active) return;
       // Storage is local-only; destination confirmation still precedes every
       // capability preview or credential request.
       await ref

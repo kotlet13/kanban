@@ -1,7 +1,65 @@
 # E2EE: dva uporabnika na fizičnem Androidu in iOS — 18. oktober 2026
 
 **Aktualni checkpoint: skupno opravilo je shranjeno/usklajeno in eno B
-povabilo ustvarjeno; predaja/sprejem ter dvouporabniški tok so PENDING.**
+povabilo dostavljeno; iOS inicializacija ostaja blokirana, B še ni registriran.**
+Parser update je fizično obnovil isto shranjeno povabilo in odstranil
+`secure_storage`; nova generična napaka nima ugotovljenega vzroka.
+Trenutni [QA diagnostični paket](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/ios-artifact-evidence.json)
+`d3d58060…` vsebuje samo dva opazovalna catch klica in omejeni pomočnik;
+diagnostike ni v glavnem runtime izvoru. Po popravku nezdružljivih syslog
+zastavic `-p`/`-K` je [prvi običajni zagon PID 638](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/first-normal-launch-with-capture.json)
+v 90 s zajel **0 oznak**. [En direkten konzolni kontrolirani relaunch](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/direct-console-result.json)
+je prav tako zajel 0 oznak; poznejši read-only pregled potrdi **PID 640**,
+[svež USB zajem ob 17:29 UTC](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/post-console-usb-capture.json)
+pa še vedno »Spremembe ni bilo mogoče shraniti. Poskusi znova.«. Nič oznak
+ne dokazuje odsotnosti izjeme ali delujoče dostave loggerja. Nadaljnje
+gradnje/zajemi so ustavljeni. Uporabnik je nato **enkrat fizično pritisnil
+Retry** istega povabila in poročal, da je gumb videti pritisnjen, odziva pa
+ni; navigacija/predogled ali uspešna inicializacija niso potrjeni. B ostaja
+neregistriran, brez novega povabila/sprejema/granta.
+[Offline preverjanje Flutter frontend define](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/offline-frontend-define-verification.json),
+SHA256 `851442290ca510160206fa102ffd51eadb751fd4d4241583049503985387b187`,
+veže vključen define na dejansko zaključeni kernel cache in AOT vhod. To
+**ne dokazuje**, da je catch dosežen ali da konzolna dostava deluje.
+
+Ozki statični pregled Retry potrdi `_run(_loadPreview)`: nastavi busy,
+počisti prikazano napako in najprej čaka `rememberInvitation`; napako
+ponovno prikaže v lastnem catch, ki ni eden od dveh diagnostičnih mest.
+Ta pot **ne ponovi inicializacije neuspelega providerja**. Če bi repozitorij
+pozneje postal pripravljen, Retry po napaki pred origin korakom tudi ne
+ponovi `_restore` odločitve o potrditvi izvora; to je izvorna omejitev poti,
+ne dokaz dejanskega omrežnega zahtevka. V teh klicih ni dokazan reentrant
+queue cikel. Brez dejanske izjeme ni izbran nov popravek ali diagnostični krog.
+
+**Predhodna lokalizacija istega iOS povabila:**
+[Exact-app OS payload predaja](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-handoff/payload-launch-evidence.json)
+je odprla povabilo v obstoječem iOS PID 2005. DeviceHub live view je ostal
+zastarel; [svež USB zajem](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-handoff/fresh-usb-capture-evidence.json)
+je pokazal prazna polja in sporočilo »Varna shramba ni na voljo«.
+[Varna metapodatkovna potrditev](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-parent-choices-fixed/invitation-token-version-source-boundary.json)
+veže veljavni token različice **fhi4** na nameščeni parser `fhi[123]`:
+ponovno branje shranjenega povabila vrže `FormatException`, ki se prevede
+v `secure_storage`. Dejanska napaka Keychaina ni dokazana.
+[Enoznakovni popravek in ozki dokazi](../build/qa/jivie-mobile-two-user-20261018/pending-invitation-v4-regression/verification.json)
+razširijo samo dovoljeno različico na `[1234]`: ista regresija je prej
+vrnila `secure_storage`, nato je **7 prizadetih testov PASS**, analiza čista.
+Testi uporabljajo mock secure-storage kanal in dejanski startup coordinator.
+Fizični update je nato presegel parser napako: shranjeni QA strežnik se je
+obnovil brez `secure_storage`. Uporabnikov nenamerni ponovni zagon in prvi
+odklep nista bila reset shrambe. B prijave/registracije ni bilo.
+
+Dvovrstični popravek čarovnika počaka na `collaborationProvider.future` in
+ponovi mounted/generation/current-link varovala pred `rememberInvitation`.
+[Source old FAIL in nedokončani fixture](../build/qa/jivie-mobile-two-user-20261018/invitation-cold-start-regression/verification-not-completed.json)
+ločita dokazani lažni session-expired pri zadržani inicializaciji in dosežene
+delne origin assertion od teardown težave: **NOT COMPLETED, brez novega widget
+PASS**. Kandidat/logi ostanejo v ignored QA, novi test ni v testnem drevesu;
+scoped analiza ima 0 error/0 warning in 7 prejšnjih info.
+[Native await kandidat](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-restore-fixed/native-install-launch-evidence.json)
+je spremenil prikazano napako v generično, ki je ostala po
+[90 s](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-restore-fixed/final-init-usb-capture.json).
+Zato ni potrditve uspešnega origin koraka ali razrešene inicializacije.
+
 [Debug QA paket](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/artifact-evidence.json)
 `7198d8ec…` je [enkrat nameščen](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/installation-evidence.json),
 **PID 14389**, z isto sejo/shrambo. [Običajni startup](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/one-launch-native-evidence.json)
@@ -52,7 +110,8 @@ ujemajoče sporočilo in točen QA endpoint, brez manual send ali novega povabil
 SHA256 `44d22389783a6841a909d8cb7fc6decb513dccd64b93c762489dc17911c91da8`.
 Zasebni lokalni handoff je pripravljen v datoteki 0600 zunaj Gita; vsebuje
 obstoječe B prijavne podatke in originalno QA povezavo, vsebina ni izpisana.
-Root vodi fizični iPhone korak; B registracija/sprejem, primerjava kartic in
+Predaja je zdaj odprla UI in razkrila zgoraj navedeno parser napako;
+B registracija/sprejem, primerjava kartic in
 key grant še niso izvedeni. Celotni mobilni teki, P0/P8 in produkcijska
 pripravljenost niso potrjeni.
 
@@ -204,11 +263,11 @@ checkpointi so zgodovina; aktualno stanje je zgoraj.
 
 | Del | Trenutno znano | Še potrebno pred fizičnim tokom |
 | --- | --- | --- |
-| iOS | iPhone 11, iOS 27.0.1; isti vault, journal `complete`, cleanup false/residual 0; startup PASS in en vidni nedokončani MOBILE-LOCAL-B | B registracija/sprejem/deljenje še niso potrjeni |
+| iOS | iPhone 11; parser update je obnovil povabilo brez secure_storage; QA d3d58060…, PID 640, generična napaka in 0 oznak; en fizični Retry brez opaženega odziva | Inicializacija/predogled ostajata nepotrjena; nadaljnjih gradenj/zajemov ni. B registracija/sprejem/deljenje še niso potrjeni |
 | Android | Galaxy S25 (`SM_S931B`); debug 7198d8ec…, PID 14389, ista seja/shramba; en unchecked MOBILE-SHARED-1 in auto sync 18:33, 0/0/0, brez napake | Trenutni Save/sync PASS; prvotni post-root wait ni diagnosticiran. Eno organizacijsko povabilo samodejno dostavljeno; zasebni handoff pripravljen, B/deljenje PENDING |
 | Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A enrollmentu/prijavi | B povezan tok še ni potrjen |
 | Strežnik | Ločen projekt; ozka PHP popravka in native auto sync PASS; QA public URL popravljen, isto povabilo samodejno dostavljeno 16:43:52 UTC | B/grant/deljenje še ne; brez DDL/restarta/ročnega API |
-| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno dostavljeno pending organizacijsko povabilo Član/Polni dostop | Fizični B handoff/registracija/sprejem/grant in skupne spremembe še PENDING |
+| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno dostavljeno pending organizacijsko povabilo Član/Polni dostop, obnovljeno v iOS UI | B ostaja neregistriran; en Retry brez opaženega odziva, sprejem/grant in skupne spremembe še PENDING |
 
 Dejansko nameščena QA ID-ja sta `si.triparna.jivie.e2eetest.android20261018` in
 `si.triparna.jivie.e2eetest.ios20261018`, prikazno ime `Jivie Test`.
