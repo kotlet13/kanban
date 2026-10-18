@@ -1,10 +1,119 @@
 # E2EE: dva uporabnika na fizičnem Androidu in iOS — 18. oktober 2026
 
-**Aktualni checkpoint: skupno opravilo je shranjeno/usklajeno in eno B
-povabilo dostavljeno; iOS inicializacija ostaja blokirana, B še ni registriran.**
+**Aktualni checkpoint: skupno opravilo/sync/mail PASS. Isti iOS PID 662 je
+po PEM popravku in strežniškem capabilities v4 popravku dosegel dejanski
+predogled istega povabila. B registracija, potrjena e-pošta in native
+account FILE Save/re-pick so potrjeni; status-only Retry je ohranil pripravljene
+ključe brez napake. Končano praznega kataloga je uspel; en izrecni Join
+istega povabila je odprl primerjavo javnih kartic. Potrditev identitete/grant
+in celotni dvouporabniški tok še niso potrjeni.**
+Po novi izrecni uporabnikovi odobritvi je
+[trajni prvi zajem na PID 657](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-durable-diagnostic/native-durable-result.json),
+SHA `07bd691b…`, pokazal `repository_open`, stage `construct`, **TlsException**
+pri QA `collaboration_transport.dart:12/105`, nato propagacijo skozi controller
+in wizard. To ni potrjena potekla seja ali SQL/Keychain napaka.
+[Točen pinned Dart backend](../build/qa/jivie-mobile-two-user-20261018/ios-qa-tls-backend-proof/verification.json)
+bere PEM/PKCS12, ne DER. [En offline preizkus in QA-only popravek](../build/qa/jivie-mobile-two-user-20261018/ios-qa-tls-format-fix/verification.json)
+vežeta nespremenjeni CA fingerprint na DER → `TlsException`, isti certifikat
+PEM → construction PASS; brez HTTP ali ponavljanja starih zbirk. Popravek
+ohrani `withTrustedRoots:false`, isti CA/točen HTTPS cilj in vsa preverjanja,
+brez `badCertificateCallback`. Drugi QA delta je samo v2 diagnostična mapa/tag,
+stari dokazi se ne brišejo. [Kandidat `13149f9e…`](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/ios-artifact-evidence.json),
+artifact evidence SHA `e4365115…`, je zdaj nameščen na isti shrambi kot
+**PID 662**. [Native checkpoint](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-v2-readiness-result.json),
+SHA `bdad2b9c…`, pokaže installation retained-copy opozorilo, brez tapov.
+Naš znani neprazni `Documents/jivie_qa_invite_init_v1` scanner prišteje med
+neprepoznane ostanke: iOS podimenikov ne pregleduje in jih ne izključi samo
+po imenu (`local_vault_legacy_cache.dart:175–193,247–248`). To je posledica
+QA diagnostike. Ta `cleanupPending` pot nastane po preverjenem prvotnem
+ključu/probe in uspešnem pregledu šifrirane baze, ne potrjuje okvare vaulta.
+Obstoječi **»Nadaljuj v lokalne podatke«** nastavi le in-memory UI zastavico
+in banner (`local_vault_bootstrap.dart:281–289`); ne migrira, briše, uvaža FILE
+ali zapisuje journal. Uporabnik je **en fizični Continue** izvedel;
+[svež USB origin in en nadaljnji Continue](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-origin-one-click-result.json)
+(SHA `3be6280b…`) sta potrdila origin ter sprožila iOS LocalNetwork dovoljenje.
+Pred agentovim Allow je dovoljenje izginilo in UI je pokazal nepodprta
+povabila po e-pošti. Prvi v2 `wizard_action` zapis je omrežna napaka ob tej
+začetni dovolilnici, ne dokaz vzroka poznejšega capability sporočila.
+Prejšnji `copy_error` za šest v2 datotek ne dokazuje njihove odsotnosti.
+
+[En javni capabilities zajem](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/current-invitation-capabilities.json)
+je potrdil isti strežnik, `emailInvitations=true`, a različice samo `[1,2,3]`.
+Odjemalčev strogi fhi4 guard je pravilen. Minimalni main `NativeService.php`
+popravek oglašuje `[1,2,3,4]` samo ob `$cryptoReady`, sicer ohrani `[1,2,3]`.
+[Nova focused regresija](../build/qa/jivie-mobile-two-user-20261018/invitation-capabilities-regression/evidence.json)
+ima dejanski old FAIL, nato ready/disabled anonymous dispatch skupaj **6
+kontrol PASS**, obe PHP lint PASS; sveža disposable SQLite, brez starih zbirk.
+[Izolirani QA apply](../build/qa/jivie-mobile-two-user-20261018/invitation-contract-v4-caps-apply/apply-evidence.json),
+SHA `8027cb52d92a57720dcd435f66b0efe1080728ba213f8a243a66d59b202bd52f`,
+je zamenjal samo **1/181** datotek: app in worker imata runtime SHA
+`5a85e808…`; config/starttimes/SID ostanejo isti, brez restarta/DDL ali nove
+app gradnje. En strogi TLS capabilities zajem potrdi `[1,2,3,4]`.
+[En nadaljnji Retry na istem PID 662](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-one-post-capability-retry.json),
+SHA `552f7aa1…`, je ob 18:12:26 UTC pokazal »Preveč poskusov. Počakaj nekaj
+časa, nato poskusi znova.«. [En read-only pregled limiterja](../build/qa/jivie-mobile-two-user-20261018/invitation-rate-limit-readonly/bucket-evidence.json)
+ob 18:14:09 UTC je našel skupni gateway `crypto2-ip` bucket **564/600**,
+window 18:13:14–18:14:14 UTC; tedaj ni bil prekoračen. Nova vrstica ne dokazuje
+zgodovinskega 429 niti ne pripisuje prometa A; oba klienta imata isti
+strežniški gateway REMOTE_ADDR. Android QA je bil ob **18:15:08 UTC** ustavljen
+brez odjave ali čiščenja. Po več kot 85 s naravnega izteka je **en Retry na
+istem iOS PID 662** prikazal »Povabilo v Encrypted space«, točen QA strežnik
+ter login/create možnosti brez napake. To je **native TLS/HTTP preview PASS
+istega originalnega povabila**, vezan na
+[preview/draft dokaz](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-preview-and-registration-draft.json),
+SHA `eaf94400…`. Nato so bila pripravljena B polja vnesena zasebno in izveden
+[en Submit](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-one-b-registration-submit.json),
+SHA `88ce9edb…`. Svež USB ob **18:18:26 UTC** še kaže isti omogočeni obrazec,
+brez spinnerja ali vidne napake; uspeh registracije ni potrjen in drugega
+Submit tedaj ni bilo. Poznejši pregled obrazca je ugotovil različni polji
+geslo/potrditev; source zahteva njuno točno enakost. Obe polji sta bili
+popravljeni iz iste pripravljene zasebne vrednosti, brez izpisa vsebine.
+[En popravljeni Submit ob 18:23:32.742 UTC](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-registration-success.json),
+SHA `603af61b…`, je napredoval na **»Dodajanje obnovitvenega ključa / Samo ta
+račun«**, pripravljena B e-pošta še čaka preveritev. To je potrjeni UI napredek
+registracije, ne account FILE/Join/grant PASS. Začasni dvovrstični QA nginx
+zajem je beležil samo čas/metodo/status/trajanje: 23 POST vrstic, vse 200;
+ne pripisujemo vsake vrstice registraciji. Ob **18:24:11 UTC** je bila
+prvotna gateway konfiguracija obnovljena, validirana in reloadana, manj kot
+39 s po Submit. Prvi read-only DB selector je uporabil zastarelo handoff
+uporabniško ime; tudi primarni pripravljeni selector se ni ujemal z dejanskim
+uporabniškim imenom. Njune ničelne najdbe ne dokazujejo odsotnosti računa;
+razloga razlike ne pripisujemo. [Končni pregled po točnem pripravljenem B
+e-naslovu](../build/qa/jivie-mobile-two-user-20261018/registration-http-metadata-observation/accepted-b-email-context.json),
+SHA `9b020bd121e0968dd6db2f16f938d412215a4d56e69a8ebccc421ecd42b9c585`,
+potrdi **en račun**, verification token ob **18:23:33 UTC** in **SMTP accepted
+ob 18:23:36 UTC**, en poskus; token je bil ob zajemu še neuporabljen in
+nepreklican. Hash zasebno pridobljene kode se ujema z računom; vsebine ni v
+poročilu. [Email/FILE checkpoint](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-email-file-mixed-ready.json),
+SHA `9707ac1d…`, potrdi en vnos kode ob **18:27:33.636 UTC** in »Potrjen
+naslov«. En native Save in ena dejanska ponovna izbira **istega 509 B
+računskega FILE** sta ločena od prvotnega 150 B installation FILE; vsebina ni
+brana/izpisana. UI je pokazal pripravljene account/device ključe skupaj z
+rdečim nedokončanim korakom. [En status-only Retry](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-status-refresh-protection-catalog.json),
+SHA `41ef30b6…`, je odstranil napako in ohranil ready. Ta gumb kliče le
+status/localPhase/scope-recovery pregled, ne nove FILE ali inicializacije;
+natančen vzrok mešanega prikaza ni dokazan kot popravljen. Normalni Continue
+je odprl zaščitni katalog: **trenutno ni povezanih prostorov**, B še ni joined.
+Odobreni Končano preveri sveži prazni katalog/hash/deviceSnapshot in podpiše
+account `protectionReady`; ne objavi lokalnega `MOBILE-LOCAL-B`, ne ustvari
+prostora ali membership in ne ponovi identitete.
+[Dejanski nadaljevalni checkpoint](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-account-complete-identity-pending.json),
+SHA `6101db73cfc4a2334630704070340c2ecb31f0067c547671363711d37d12e111`,
+potrdi **en Končano brez napake ali unavailable-data soglasja**. Običajni
+Back iz računskega čarovnika je vrnil isto avtenticirano povabilo; **en
+izrecni Join** je odprl primerjavo javnih kartic. Ustavljeno je pred
+potrditvijo identitete/grantom, A ostaja ustavljen in `MOBILE-LOCAL-B` ostane
+lokalen. En read-only S25 keyguard pregled je pokazal `showing=true` /
+`occluded=false`, brez zagona appa; A QA ostaja ustavljen, uporabnikov odklep
+za javno kartico prek običajnega UI še čaka, B ostaja v istem primerjalnem
+dialogu. To ni dokaz dostopa B do šifriranih podatkov ali celotnega deljenja.
+Brez dodatnih DB pregledov, novega povabila ali rahljanja TLS/client guardov;
+Retry prenova ni vključena, diagnostika ostaja samo v QA.
+
+**Zgodovina pred novo odobritvijo trajnega zajema:**
 Parser update je fizično obnovil isto shranjeno povabilo in odstranil
-`secure_storage`; nova generična napaka nima ugotovljenega vzroka.
-Trenutni [QA diagnostični paket](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/ios-artifact-evidence.json)
+`secure_storage`; tedaj nova generična napaka še ni imela ugotovljenega vzroka.
+Predhodni [QA diagnostični paket](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/ios-artifact-evidence.json)
 `d3d58060…` vsebuje samo dva opazovalna catch klica in omejeni pomočnik;
 diagnostike ni v glavnem runtime izvoru. Po popravku nezdružljivih syslog
 zastavic `-p`/`-K` je [prvi običajni zagon PID 638](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/first-normal-launch-with-capture.json)
@@ -13,7 +122,7 @@ je prav tako zajel 0 oznak; poznejši read-only pregled potrdi **PID 640**,
 [svež USB zajem ob 17:29 UTC](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-diagnostic/post-console-usb-capture.json)
 pa še vedno »Spremembe ni bilo mogoče shraniti. Poskusi znova.«. Nič oznak
 ne dokazuje odsotnosti izjeme ali delujoče dostave loggerja. Nadaljnje
-gradnje/zajemi so ustavljeni. Uporabnik je nato **enkrat fizično pritisnil
+gradnje/zajemi so bili takrat ustavljeni. Uporabnik je nato **enkrat fizično pritisnil
 Retry** istega povabila in poročal, da je gumb videti pritisnjen, odziva pa
 ni; navigacija/predogled ali uspešna inicializacija niso potrjeni. B ostaja
 neregistriran, brez novega povabila/sprejema/granta.
@@ -29,7 +138,8 @@ Ta pot **ne ponovi inicializacije neuspelega providerja**. Če bi repozitorij
 pozneje postal pripravljen, Retry po napaki pred origin korakom tudi ne
 ponovi `_restore` odločitve o potrditvi izvora; to je izvorna omejitev poti,
 ne dokaz dejanskega omrežnega zahtevka. V teh klicih ni dokazan reentrant
-queue cikel. Brez dejanske izjeme ni izbran nov popravek ali diagnostični krog.
+queue cikel. Takrat brez dejanske izjeme ni bil izbran nov popravek; poznejši
+zgornji TLS popravek ne spreminja Retry poti.
 
 **Predhodna lokalizacija istega iOS povabila:**
 [Exact-app OS payload predaja](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-handoff/payload-launch-evidence.json)
@@ -263,11 +373,11 @@ checkpointi so zgodovina; aktualno stanje je zgoraj.
 
 | Del | Trenutno znano | Še potrebno pred fizičnim tokom |
 | --- | --- | --- |
-| iOS | iPhone 11; parser update je obnovil povabilo brez secure_storage; QA d3d58060…, PID 640, generična napaka in 0 oznak; en fizični Retry brez opaženega odziva | Inicializacija/predogled ostajata nepotrjena; nadaljnjih gradenj/zajemov ni. B registracija/sprejem/deljenje še niso potrjeni |
-| Android | Galaxy S25 (`SM_S931B`); debug 7198d8ec…, PID 14389, ista seja/shramba; en unchecked MOBILE-SHARED-1 in auto sync 18:33, 0/0/0, brez napake | Trenutni Save/sync PASS; prvotni post-root wait ni diagnosticiran. Eno organizacijsko povabilo samodejno dostavljeno; zasebni handoff pripravljen, B/deljenje PENDING |
-| Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A enrollmentu/prijavi | B povezan tok še ni potrjen |
-| Strežnik | Ločen projekt; ozka PHP popravka in native auto sync PASS; QA public URL popravljen, isto povabilo samodejno dostavljeno 16:43:52 UTC | B/grant/deljenje še ne; brez DDL/restarta/ročnega API |
-| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno dostavljeno pending organizacijsko povabilo Član/Polni dostop, obnovljeno v iOS UI | B ostaja neregistriran; en Retry brez opaženega odziva, sprejem/grant in skupne spremembe še PENDING |
+| iOS | iPhone 11; isti-CA PEM kandidat 13149f9e…, isti PID 662; fizični Continue/origin in HTTPS predogled istega povabila PASS | B registracija/email potrjena; account 509 B FILE Save/re-pick in ready brez napake. En prazen-catalog Done uspe; isti Join odpre primerjavo kartic. Potrditev identitete/grant/deljenje PENDING |
+| Android | Galaxy S25 (`SM_S931B`); debug 7198d8ec…, en unchecked MOBILE-SHARED-1 in auto sync 18:33, 0/0/0, brez napake; od 18:15:08 UTC začasno force-stopped brez odjave/čiščenja | Seja/podatki ohranjeni; keyguard showing=true/occluded=false, čaka uporabnikov odklep za javno kartico. Prvotni post-root wait ni diagnosticiran |
+| Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A in pri B predogledu; isti CA/trustfalse | Deljeni gateway rate bucket je opažen, brez dokazane individualne atribucije; celotni B tok še PENDING |
+| Strežnik | Ločen projekt; PHP sync popravki PASS, public URL omogočil dostavo istega povabila; conditional invitation v4 popravek nameščen/oglaševanje preverjeno | B račun/email potrjena; grant/deljenje še nepotrjena, brez DDL/restarta ali nove app gradnje za capabilities |
+| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno pending organizacijsko povabilo Član/Polni dostop, dejanski B preview PASS | B account/email/FILE pripravljeni; en Join odpre primerjavo kartic, brez potrditve identitete/granta ali skupnih sprememb B |
 
 Dejansko nameščena QA ID-ja sta `si.triparna.jivie.e2eetest.android20261018` in
 `si.triparna.jivie.e2eetest.ios20261018`, prikazno ime `Jivie Test`.

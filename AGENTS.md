@@ -1,63 +1,46 @@
 # Navodila za delo na projektu
 
-18. oktober — **mobilni E2EE QA: task/sync/mail PASS, iOS inicializacija še blokirana**.
-[Aktualni checkpoint in dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
-fhi4 parser popravek ima old FAIL in 7 prizadetih PASS/čisto analizo;
-fizični update je obnovil shranjeno povabilo in odstranil secure_storage.
-Napaka Keychaina ni dokazana. Dvovrstični await pripravljenosti ima source
-old FAIL in delne origin assertion, toda widget fixture je NOT COMPLETED;
-kandidat/logi so ohranjeni v ignored QA, novi test je umaknjen. Native
-await paket je po 90 s še prikazal generično napako inicializacije, ne origin
-PASS. Trenutno je nameščen samo QA diagnostični iOS d3d58060…: prvi zagon
-PID 638 po popravku nezdružljivih syslog zastavic ni zajel oznak; en direkten
-kontrolirani relaunch je dal PID 640, svež USB zajem ob 17:29 UTC še pokaže
-isto napako in nič oznak. Vzrok ni ugotovljen; brez nadaljnjih zajemov ali
-gradenj. Uporabnik je enkrat fizično pritisnil Retry: gumb je bil videti
-pritisnjen, odziva pa ni opazil; uspešen predogled ni potrjen. B ostaja
-neregistriran z istim povabilom. Offline SDK/kernel/AOT cache dokaz potrdi,
-da je diagnostični define dosegel frontend (SHA 85144229…), ne pa dosega
-catch ali dostave konzole. Retry ne inicializira ponovno neuspelega
-providerja; konkretna native izjema ostaja neznana. Diagnostični pomočnik in dva catch klica so samo v QA kopiji,
-ne v main runtime. Uporabnikov nenamerni ponovni zagon in prvi odklep nista bila reset shrambe.
-debug QA 7198d8ec… je enkrat nameščen, PID 14389, ista seja/shramba.
-Običajni startup je pokazal Synced 18:22 lokalno, 0/0/0, brez napake in
-prazen task seznam. Stage zajem je odrezal proračun 512 tagov; neparni begin
-zato ni dokazan await. En logger-rearm helper je dosegel evaluate, izid pa
-ni potrjen; brez drugega evaluate ali app-data branja/mutacije.
-Znani varen catch konzolni zajem je bil aktiven pred ENIM nadaljevalnim Save
-ob 16:32:03.905 UTC. Modal se je zaprl; v istem MOBILE-PROJECT-1 je natanko
-en unchecked MOBILE-SHARED-1. Avtomatični sync ob 18:33 lokalno je Usklajeno,
-0 pending/conflicting/blocked, brez napake; brez drugega Save/manual Sync,
-prijave/FILE ali novega projekta. Vezani one-continuation-save.json ima
-SHA 2836b33…; opomba preverjena pred Save, poznejši detail readback ni izveden.
-En read-only snapshot ob 16:35:21 UTC potrdi en live šifrirani task v točnem
-child scope, revizija 1/global sequence 4/content sequence 3, in en ujemajoči
-batch receipt 200 ob 16:32:05 UTC; SHA 2db0a001…, brez API/mutacije.
-Prvotno čakanje po sprejetem root receipt ostaja nediagnosticirano; trenutni
-uspeh ga ne razloži. Sintetični concurrent scenarij je NOT EXECUTED zaradi
-dveh setup napak pred scenarijem, ne runtime failure; kandidat/logi ostanejo
-v QA, nepreverjeni test je umaknjen, lastni disposable fixture odstranjeni.
-Prejšnji SQL/sync 17:00, canonical-root/source in UI visibility dokazi
-ostajajo zgodovina v runbooku; ni novega broad/whole-file PASS.
-Pri prihodnjem QA dejanju najprej pripravimo točen obrazec/ohranjeni osnutek
-in znano konzolo/obstoječi debugger; ciljna koda ali begin/end faza pred
-retry, brez splošnega diagnostičnega širjenja, slepih ponovitev ali skrivnosti.
-Prejšnji iOS af730dd5… je ohranil isti vault/identity/probe, complete/residual 0, PID 2005;
-startup 85,7 s in en MOBILE-LOCAL-B sta potrjena. Eno povabilo je ustvarjeno
-za pripravljeni B e-naslov v Mobile E2EE 20261018, cel prostor s projekti:
-ena pending kartica Član/Polni dostop, A ostane owner. Prvi mail helper ni
-našel sporočila; read-only pregled je potrdil prazni application_url in
-odsoten FAMILYHUB_PUBLIC_URL. Ob 16:42:47 UTC je bil samo v izolirani QA
-config dodan točen javni HTTPS naslov, z zasebno kopijo/lint PASS in enakimi
-app/worker bind bajti; brez restarta/manual send/resend/queue ali DDL zapisa.
-Manjkajoči javni URL je bil potrjeni QA poštni blokator. Običajni worker je
-isto povabilo dostavil ob 16:43:52 UTC; en zajem ob 16:44:27 potrdi natanko
-eno sporočilo/točen QA endpoint, SHA 44d22389…, brez resend/manual send.
-Zasebni 0600 handoff je pripravljen zunaj Gita, vsebina ni izpisana. Fizični
-Retry je že izveden brez opaženega odziva; inicializacija ostaja blokirana. B registracija/sprejem/grant, deljenje, odvzem, offline/recovery/physical
-upgrade, celotni mobilni tok in P0/P8/produkcijska pripravljenost niso potrjeni.
-FILE ostane zasebna; produkcija/trgovini, originalni appi/podatki in Mac PASS
-so nedotaknjeni. QA diagnostika ni v glavnem runtime izvoru.
+18. oktober — **mobilni E2EE QA: skupno opravilo/sync/mail in isti B predogled/registracija/e-pošta/FILE potrjeni; identiteta/grant še čakata**.
+[Aktualni checkpoint in vezani dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
+A je shranil eno MOBILE-SHARED-1 v istem projektu; UI/samodejni sync in en
+read-only server snapshot potrdita en task/receipt, brez podvojitve. Eno
+originalno organizacijsko povabilo je samodejno dostavljeno po izoliranem QA
+public URL popravku. Android QA je od 18:15:08 UTC začasno force-stopped,
+brez odjave/čiščenja; seja in podatki ostanejo ohranjeni.
+Na istem iOS PID 662 je kandidat 13149f9e… po QA PEM popravku dosegel origin
+in dejanski HTTPS predogled istega povabila. Prvotni zajem je dokazal
+TlsException pri QA konstrukciji, ne Keychain/SQL/session napake; isti CA,
+withTrustedRoots:false in točen HTTPS cilj ostanejo. NativeService zdaj
+oglašuje invitation v4 samo ob cryptoReady: old FAIL → dva dejanska dispatch
+primera/6 kontrol PASS, lint PASS; QA zamenjava samo 1/181 datotek, brez
+app gradnje/DDL/restarta. Deljeni gateway limiter je opažen, individualna A
+atribucija ali zgodovinski vzrok 429 nista dokazana. Po naravnem izteku je
+en Retry dosegel predogled (eaf94400…). Prvi B Submit ni napredoval;
+pozneje sta bili ugotovljeni različni password/confirmation polji. Obe sta
+popravljeni iz iste pripravljene zasebne vrednosti; en popravljeni Submit ob
+18:23:32.742 UTC je dosegel računov FILE čarovnik/pending email verification
+(603af61b…). To še ni FILE/Join/grant PASS. Začasni QA gateway zajem vsebuje
+le čas/metodo/status/trajanje, 23 POST/200; prvotna konfiguracija je ob
+18:24:11 UTC obnovljena. Končni email-bound pregled potrdi en B račun,
+verification token ob 18:23:33 in SMTP accepted ob 18:23:36, en poskus
+(9b020bd1…). Dejanski username se razlikuje od obeh pripravljenih selectorjev;
+njune ničelne najdbe niso dokaz odsotnosti računa. En vnos email kode ob
+18:27:33.636 UTC pokaže »Potrjen naslov«; en native Save/re-pick istega
+509 B account FILE pokaže pripravljene account/device ključe. Mešano rdeče
+opozorilo je odstranil en status-only Retry, brez nove FILE/inicializacije;
+natančen prejšnji vzrok ni dokazan. En Končano pri praznem katalogu je uspel brez napake/unavailable soglasja;
+običajni Back je vrnil isto avtenticirano povabilo. En izrecni Join je odprl
+primerjavo javnih kartic, ustavljeno pred potrditvijo/grantom (6101db73…).
+Lokalni MOBILE-LOCAL-B ni objavljen. S25 keyguard je enkrat prebran kot
+showing=true/occluded=false, A QA ostaja ustavljen; čaka uporabnikov odklep
+za javno kartico prek običajnega UI, B ostaja v istem primerjalnem dialogu.
+Dokazi 9707ac1d…/41ef30b6…/6101db73…; brez dodatnega DB preverjanja.
+Prejšnji parser fix: 7 PASS; readiness widget fixture NOT COMPLETED, ne
+PASS. Podrobna zgodovina/diagnostika in hashi so v runbooku; QA diagnostike
+ni v main. Potrditev identitete/grant, dvostransko deljenje, odvzem, offline/physical
+recovery/upgrade, P0/P8 in produkcijska pripravljenost ostajajo odprti.
+Produkcija/trgovini, izvirni aplikaciji/podatki in Mac PASS so nedotaknjeni;
+FILE/poverilnice ostanejo zasebne, nepovezana dokumenta ostaneta nedotaknjena.
 
 18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek
