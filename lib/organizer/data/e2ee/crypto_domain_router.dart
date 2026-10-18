@@ -29,6 +29,16 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Repairs only the absent canonical root of an authenticated native project.
+/// Called before an explicit local edit, outside the ordinary SQL transaction.
+abstract interface class CryptoNativeProjectRootRepair {
+  Future<Map<String, dynamic>?> ensureNativeProjectRoot({
+    required DeviceSession session,
+    required String scopeId,
+    required String? parentScopeId,
+  });
+}
+
 /// Distinguishes a verified native origin from a legacy transport transition.
 /// Null means there is no verified encrypted boundary yet; callers must not
 /// persist a checkpoint that would suppress a later migration rebase.

@@ -40,6 +40,50 @@ extension CollaborationRecordActions on CollaborationRepository {
     final profile = _requireSession().profile, epoch = _epoch;
     await requireVerifiedEmailForConnectedEntry();
     _checkEpoch(epoch);
+    final repair = cryptoRouter;
+    final scopeRows = await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [profile.partition, scopeId],
+    );
+    if (repair is CryptoNativeProjectRootRepair && scopeRows.isNotEmpty) {
+      final scope = SharedScope.fromJson(
+        CollaborationRepository._map(scopeRows.single['data']),
+      );
+      final root = scope.projectRootId ?? scope.id;
+      final existing = await database.rows(
+        'SELECT 1 FROM records WHERE partition=? AND scope_id=? AND id=?',
+        [profile.partition, scopeId, root],
+      );
+      if (scope.kind == SharedScopeKind.project && existing.isEmpty) {
+        if (root != scopeId) {
+          throw const CollaborationException('record_missing');
+        }
+        await _writable(profile.partition, scopeId);
+        final canonical = await (repair as CryptoNativeProjectRootRepair)
+            .ensureNativeProjectRoot(
+              session: _requireSession(),
+              scopeId: scopeId,
+              parentScopeId: scope.parentSpaceId,
+            );
+        _checkEpoch(epoch);
+        if (canonical != null) {
+          if (canonical['id'] != root ||
+              canonical['type'] != 'project' ||
+              canonical['deleted'] != false) {
+            throw const CollaborationException('invalid_response');
+          }
+          await database.transaction(() async {
+            _checkEpoch(epoch);
+            await _writable(profile.partition, scopeId);
+            await _applyRemote(
+              profile.partition,
+              scopeId,
+              _canonical(canonical),
+            );
+          });
+        }
+      }
+    }
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _writable(profile.partition, scopeId);

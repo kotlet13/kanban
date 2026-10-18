@@ -1,31 +1,37 @@
 # Navodila za delo na projektu
 
-18. oktober — **mobilni E2EE QA: isti Android auto sync po SQL popravku PASS**.
+18. oktober — **mobilni E2EE QA: vzrok Save dokazan in popravljen v izvoru**.
 [Aktualni checkpoint in dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
-Android A lokalni/računski koraki in isti MOBILE-PROJECT-1 so PASS. Trenutni
-QA queue-diagnostic APK `c7b18907…`, PID 2050, ohrani ID/sejo/dataDir in original;
-trije varni tagi so potrdili exports.propose pending, brez blocked/rejected
-razloga. En izoliran real-dispatch reproducer je dokazal neobstoječi
-`records.domain` pred receiptom, ne manjkajoč uporabnikov ključ. Pregledani
-LEFT JOIN query fix ohrani scope/id in celotni source-set fail-closed; novi
-ciljni real-schema test/lint sta PASS, brez stare matrike. Ob 14:59:52.664764 UTC
-je z novo konsistentno zasebno SQLite kopijo/integrity atomarno zamenjan samo
-NativeCryptoAccountChoiceExportV2.php v QA; drugih 180 virov/config/SID/schema
-isti, brez DDL/restarta/API. Sveži avtomatični cikel ISTEGA PID/seje je ob
-17:00 lokalno po apply zaključil »Usklajeno«, last success/attempt 17:00,
-0 pending/conflicting/blocked, brez napake. Dokaz je terminalni AX; poznejši
-PNG že kaže naslednji naravni Syncing, ne dokaz drugega končanega cikla.
-Do tega sync zajema brez nove client gradnje, replaya/Done/manual Sync/prijave/
-FILE ali vnosa po apply.
-iOS navadni `af730dd5…` ohrani iste štiri vault datoteke/identity/probe,
-complete/residual 0 in osebni Utrip, PID 2005; predhodni finite startup 85,7 s
-je PASS in se ne ponavlja. Eno shranjeno MOBILE-LOCAL-B je vidno unchecked.
-Po uspešnem syncu je bil en Save MOBILE-SHARED-1/FROM-A-20261018; obrazec
-ostaja odprt brez napake, nastanek še ni potrjen, brez drugega Save/povabila.
-To je ločen nov korak, ne prejšnji sync blocker.
-B račun/deljenje, odvzem, offline/recovery/physical upgrade in P8 ostajajo odprti;
-to ni neodvisni P0 pregled. FILE ostane zasebna. Produkcija/trgovini, originalni
-appi/podatki in Mac PASS so isti; QA diagnostika ni v main.
+ločeni SQL exports.propose popravek ostaja potrjen z auto sync PASS ob 17:00
+lokalno, isti PID 2050/seja, 0 pending/conflicting/blocked in brez napake.
+Poznejši native Save po dveh oddaljenih/fizičnem poskusu in enem restartu ni
+zaprl obrazca. EN debug QA paket, PID 8920, je potrdil prihod do dejanske
+repozitorijske transakcije in CollaborationException; bralni scroll je razkril
+prej skrito generično napako. Debugger in lastni USB forward sta odstranjena.
+En naravni real-repository/E2EE reproducer je dokazal record_missing: sveži
+native child je imel podpisani scopeMetadata, ne kanoničnega project zapisa.
+Trije pregledani runtime popravki ustvarijo dejanski šifrirani koren z istim
+ID ter popravijo obstoječi malformed child pred izrecnim urejanjem, zunaj SQL
+transakcije. Sveži podpisani origin/parent/lifecycle/owner in popoln inventory
+so obvezni; _put/phase/reference varovala ostanejo. Obstoječi ali izbrisani/
+migrirani koreni se ne prepisujejo ali obujajo, isti intent ostane trajen.
+Pozitivne faze fresh/task, repair/data/idempotence in podpisani tombstone so
+zaključile preverjanja; prvi večfazni tek je šele pri zadnjem negativnem
+primeru prekinila fixture kvota. Ločeni filtered incomplete-inventory primer
+je PASS brez korena/intent. Samo njegov disposable fixture je imel povečano
+kvoto; živi QA/produkcija isti. **Ni whole-file ali broad PASS trditve.**
+Scoped runtime/test analiza je čista. Ločeni četrti UI popravek pokaže isto
+napako trajno nad gumbi z live-region naznanilom; stari FAIL → en ciljni PASS,
+osnutek/fokus in en dispatch ohranjeni. En release QA kandidat je zgrajen,
+še ni nameščen; fizična shranitev/sync istega opravila še PENDING.
+Za prihodnje fizične QA teke pripravimo dovoljen debugger/varen konzolni
+zajem pred prvim poskusom; ob napaki najprej stabilna koda in statična throw
+lokacija, brez payloadov/ključev/tokenov/objektov ali slepih ponovitev.
+iOS af730dd5… ohrani štiri vault datoteke/identity/probe, complete/residual 0
+in osebni Utrip, PID 2005; startup 85,7 s in eno MOBILE-LOCAL-B sta potrjena.
+B račun/deljenje, odvzem, offline/recovery/physical upgrade in P8 so odprti;
+to ni neodvisni P0 pregled. FILE ostane zasebna. Produkcija/trgovini,
+originalni appi/podatki in Mac PASS so isti; QA diagnostika ni v main.
 
 18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek

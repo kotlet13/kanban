@@ -797,30 +797,40 @@ class _RecordEditorState extends State<_RecordEditor> {
                       child: Text(l.organizerRemoveDate),
                     ),
                 ],
-                if (_failure != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Text(
-                      _failure!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
         ),
       ),
       actions: [
-        EditorActionsRow(
-          saveKey: const ValueKey('organizer-save'),
-          busy: _busy,
-          onCancel: () => Navigator.pop(context),
-          onSave: _save,
-          onDelete: widget.onDelete == null && widget.onDeleteWithReview == null
-              ? null
-              : _delete,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_failure != null)
+              Semantics(
+                liveRegion: true,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
+                  child: Text(
+                    _failure!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
+            EditorActionsRow(
+              saveKey: const ValueKey('organizer-save'),
+              busy: _busy,
+              onCancel: () => Navigator.pop(context),
+              onSave: _save,
+              onDelete:
+                  widget.onDelete == null && widget.onDeleteWithReview == null
+                  ? null
+                  : _delete,
+            ),
+          ],
         ),
       ],
     );

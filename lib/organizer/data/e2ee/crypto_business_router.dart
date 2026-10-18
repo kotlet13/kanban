@@ -106,7 +106,10 @@ Future<Map<String, dynamic>> cryptoScopeParentProjection({
 /// authenticated request path. Unsupported operations retain their local queue;
 /// no original plaintext operation is forwarded to a legacy content endpoint.
 class CryptoBusinessRouter
-    implements CryptoDomainRouter, CryptoProjectionCursorTransition {
+    implements
+        CryptoDomainRouter,
+        CryptoProjectionCursorTransition,
+        CryptoNativeProjectRootRepair {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
@@ -136,6 +139,19 @@ class CryptoBusinessRouter
           ? CryptoProjectionCursorOrigin.nativeOrigin
           : CryptoProjectionCursorOrigin.legacyMigration;
     });
+  }
+
+  @override
+  Future<Map<String, dynamic>?> ensureNativeProjectRoot({
+    required DeviceSession session,
+    required String scopeId,
+    required String? parentScopeId,
+  }) async {
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    final runtime = CryptoBusinessSession(account, access, database);
+    configurePayloads(runtime);
+    return runtime.ensureNativeProjectRoot(scopeId, parentScopeId);
   }
 
   /// Shared production semantics for ordinary delivery and pre-fence exact
@@ -857,9 +873,193 @@ class CryptoBusinessSession {
       },
       localHash: await CryptoBusinessJson.hash(params),
     );
+    final root = kind == 'project'
+        ? await ensureNativeProjectRoot(id, parent)
+        : null;
     return {
       'scope': (await scopes())['scopes'].firstWhere((s) => s['id'] == id),
+      if (root != null) 'projectRoot': root,
     };
+  }
+
+  static final _projectRootQueues = <String, Future<void>>{};
+
+  /// Old native children contain scopeMetadata but no project business record.
+  /// Materialize the same canonical UUID through normal authenticated CAS;
+  /// never fabricate a local-only parent or recreate a deleted/migrated root.
+  Future<Map<String, dynamic>?> ensureNativeProjectRoot(
+    String scope,
+    String? parent,
+  ) async {
+    final key = '$p:$scope';
+    final work = (_projectRootQueues[key] ?? Future<void>.value()).then(
+      (_) => access.withVerifiedOperation(() async {
+        final head = await access.currentHead(scope, online: true);
+        final descriptor = await access.verifiedScopeDescriptor(scope);
+        if (descriptor['kind'] != 'project') return null;
+        final token = descriptor['parentScopeToken'];
+        if (token !=
+            (parent == null
+                ? null
+                : await CryptoLifecycleEvidence(
+                    access,
+                  ).parentToken(scope, parent))) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_parent_pending',
+          );
+        }
+        await pullVerified(scope, 'content');
+        final read = await access.readContext(scope, 'content');
+        if (read.headHash != head.headHash ||
+            !await hasReusableCheckpoint(scope, 'content', read)) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_inventory_pending',
+          );
+        }
+        final existing = await _row(scope, 'content', scope, type: 'project');
+        if (existing != null) {
+          if (existing['deleted'] == 1) {
+            throw const CollaborationException('record_deleted');
+          }
+          return Map<String, dynamic>.from(
+            jsonDecode(existing['projection'] as String) as Map,
+          );
+        }
+        final local = await db.rows(
+          'SELECT 1 FROM records WHERE partition=? AND scope_id=? AND id=? UNION ALL SELECT 1 FROM outbox WHERE partition=? AND scope_id=? AND record_id=?',
+          [p, scope, scope, p, scope, scope],
+        );
+        if (local.isNotEmpty) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_local_pending',
+          );
+        }
+        final wire = await account.directory.call('crypto2.scope.headGet', {
+          'scopeId': scope,
+        });
+        if (wire['headHash'] != head.headHash ||
+            await access.verifyInitialLifecycle(
+                  scope,
+                  wire,
+                  scopeHeadHash: head.headHash,
+                ) !=
+                head.body['initialLifecycleHash']) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_origin_pending',
+          );
+        }
+        final proof = wire['originAuthorization'];
+        if (proof is! Map) {
+          throw const CryptoProjectionPending();
+        }
+        final origin =
+            CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+        if (origin['operation'] != 'crypto2.scope.origin' ||
+            origin['scopeId'] != scope ||
+            origin['kind'] != 'project' ||
+            origin.containsKey('projectRelocation')) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_origin_pending',
+          );
+        }
+        final lifecycle = await CryptoLifecycleEvidence(access).current(scope);
+        if (lifecycle['ownArchived'] != false ||
+            lifecycle['inheritedArchived'] != false ||
+            head.member(account.directory.accountId)['role'] != 'owner') {
+          throw const CryptoAuthorityPending('scope_management_required');
+        }
+        final authorization = await access.writeContext(scope, 'content');
+        authorization.key.release();
+        final metadata = await _row(
+          scope,
+          'content',
+          await _reservedId(scope, 'scopeMetadata'),
+          type: 'scopeMetadata',
+        );
+        if (metadata == null || metadata['deleted'] == 1) {
+          throw const CryptoProjectionPending();
+        }
+        final rawMetadata =
+            jsonDecode(metadata['raw_payload'] as String) as Map;
+        final draftKey = 'crypto_native_project_root_v1:$p:$scope';
+        late Map<String, dynamic> draft;
+        await db.transaction(() async {
+          final saved = await db.rows(
+            'SELECT value FROM local_meta WHERE name=?',
+            [draftKey],
+          );
+          if (saved.isNotEmpty) {
+            draft = Map<String, dynamic>.from(
+              jsonDecode(saved.single['value'] as String) as Map,
+            );
+          } else {
+            final now = DateTime.now().toUtc().toIso8601String();
+            draft = {
+              'operationId': account.directory.reducer.crypto.randomId(),
+              'metadataHash': metadata['record_proof_hash'],
+              'raw': {
+                'title': rawMetadata['name'],
+                'description': '',
+                'area': 'personal',
+                'phases': <Object>[],
+                'availabilityMinutes': null,
+                'availabilityPeriod': null,
+                'startAt': null,
+                'endAt': null,
+                'createdAt': now,
+                'updatedAt': now,
+              },
+            };
+            await db.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
+              draftKey,
+              jsonEncode(draft),
+            ]);
+          }
+        });
+        if (draft['metadataHash'] != metadata['record_proof_hash']) {
+          throw const CryptoAuthorityPending(
+            'crypto_project_root_metadata_changed',
+          );
+        }
+        return access.withVerifiedOperation(() async {
+          final fresh = await access.currentHead(scope, online: true);
+          if (fresh.headHash != head.headHash) {
+            throw const CryptoAuthorityPending(
+              'crypto_project_root_authority_changed',
+            );
+          }
+          final currentLifecycle = await CryptoLifecycleEvidence(
+            access,
+          ).current(scope);
+          if (currentLifecycle['ownArchived'] != false ||
+              currentLifecycle['inheritedArchived'] != false ||
+              fresh.member(account.directory.accountId)['role'] != 'owner') {
+            throw const CryptoAuthorityPending('scope_management_required');
+          }
+          return publishRaw(
+            scopeId: scope,
+            id: scope,
+            type: 'project',
+            operationId: draft['operationId'] as String,
+            expectedRevision: 0,
+            rawPayload: Map<String, dynamic>.from(draft['raw'] as Map),
+            localHash: await CryptoBusinessJson.hash(draft),
+          );
+        }, freshBoundary: true);
+      }, freshBoundary: true),
+    );
+    final marker = work.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    _projectRootQueues[key] = marker;
+    try {
+      return await work;
+    } finally {
+      if (identical(_projectRootQueues[key], marker)) {
+        _projectRootQueues.remove(key);
+      }
+    }
   }
 
   Future<Map<String, dynamic>> ensurePersonal(
