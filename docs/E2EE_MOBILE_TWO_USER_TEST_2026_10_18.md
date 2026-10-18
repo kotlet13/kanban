@@ -4,9 +4,12 @@
 po PEM popravku in strežniškem capabilities v4 popravku dosegel dejanski
 predogled istega povabila. B registracija, potrjena e-pošta in native
 account FILE Save/re-pick so potrjeni; status-only Retry je ohranil pripravljene
-ključe brez napake. Končano praznega kataloga je uspel; en izrecni Join
-istega povabila je odprl primerjavo javnih kartic. Potrditev identitete/grant
-in celotni dvouporabniški tok še niso potrjeni.**
+ključe brez napake. Po Končano praznega kataloga in primerjavi A javne kartice
+je B sprejel isto originalno povabilo ter čaka owner ključe. A exact-card
+Compare je pokazal Flutter assertion; source lifecycle fix/8 ciljnih PASS
+sta pripravljena in en popravljeni Android APK je nameščen, PID 28910;
+fizični odklep/native preverjanje in grant še čakajo. B dostop do vsebine ter
+celotni dvouporabniški tok še nista potrjena.**
 Po novi izrecni uporabnikovi odobritvi je
 [trajni prvi zajem na PID 657](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-invitation-init-durable-diagnostic/native-durable-result.json),
 SHA `07bd691b…`, pokazal `repository_open`, stage `construct`, **TlsException**
@@ -101,14 +104,104 @@ prostora ali membership in ne ponovi identitete.
 SHA `6101db73cfc4a2334630704070340c2ecb31f0067c547671363711d37d12e111`,
 potrdi **en Končano brez napake ali unavailable-data soglasja**. Običajni
 Back iz računskega čarovnika je vrnil isto avtenticirano povabilo; **en
-izrecni Join** je odprl primerjavo javnih kartic. Ustavljeno je pred
-potrditvijo identitete/grantom, A ostaja ustavljen in `MOBILE-LOCAL-B` ostane
-lokalen. En read-only S25 keyguard pregled je pokazal `showing=true` /
-`occluded=false`, brez zagona appa; A QA ostaja ustavljen, uporabnikov odklep
-za javno kartico prek običajnega UI še čaka, B ostaja v istem primerjalnem
-dialogu. To ni dokaz dostopa B do šifriranih podatkov ali celotnega deljenja.
-Brez dodatnih DB pregledov, novega povabila ali rahljanja TLS/client guardov;
-Retry prenova ni vključena, diagnostika ostaja samo v QA.
+izrecni Join** je odprl primerjavo javnih kartic. Tedanji read-only S25
+keyguard pregled je pokazal `showing=true` / `occluded=false`; po uporabnikovem
+odklepu je bila A javna kartica pridobljena prek običajnega approved-device
+UI, brez branja ključev/baze. [Vezani javni handoff](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/android-owner-public-card-handoff.json)
+ima 328 B/SHA `56841246…`, generation 11/head `e005f167…`; A QA je po tem ob
+18:47:55 UTC ponovno ustavljen, z isto sejo/podatki.
+
+[Prvi typed Compare](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-one-identity-compare-error.json)
+ob 18:48:52.754 UTC je pokazal generično napako oblike. Intended string je
+vezan na hash, **dejanski bajti v polju niso neodvisno dokazani**.
+[En read-only pregled originalnega creator reference](../build/qa/jivie-mobile-two-user-20261018/invitation-creator-public-card-readonly.json),
+SHA `0b9acd37…`, potrdi isti head/generation kot kartica; to izključi ta
+konkretni mismatch, ne dokazuje korupcije vnosa ali mesta prve izjeme.
+GetClipboard host-sentinel roundtrip prav tako ne dokazuje nepodprtega
+clipboarda; možna propagacija Universal Clipboard ni potrjena ali izključena.
+
+[Spremenjeni prenos prek SendClipboard in native Paste](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-invitation-accepted-pending-keys.json),
+SHA `18d1f5e52755d653b0a228dcc1e6d3aa9c91841962214bc1e729eeca2aaf8270`,
+in **en Compare ob 18:57:55.360 UTC** sta uspešno sprejela **isto originalno
+povabilo**. B UI zdaj izrecno čaka lastnikove ključe; Ponovi preverjanje ni
+pritisnjen. [Omejeni QA dispatch zajem](../build/qa/jivie-mobile-two-user-20261018/invitation-dispatch-metadata-proposal/one-compare-result.json),
+SHA `d5f43db1e22dc05fab53e2f113e5a76d455c37daf342e54f2d6d6bdab1b9837e`,
+potrdi `crypto2.invitations.accept` SUCCESS/HTTP 200, brez izjeme; exact
+controller rollback je ob **18:58:35.720 UTC**, manj kot 41 s po Compare.
+Spremembe client varoval/protokola ali novega povabila ni bilo. Prvi typed
+neuspeh nima dokončno dokazane vzročne razlage.
+
+[B javna kartica je pridobljena ob prvem Copy → Get](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-qa-tls-pem-fixed/native-b-public-card-copy-result.json),
+SHA `1c5aa3d263af518f3664e6ef5237acf184d40b7337381e19201b6861c8dbfdab`:
+host sentinel je bil nastavljen **pred** Copy, po njem ni bilo host write.
+Zasebni javni handoff je 327 B/SHA
+`f2cbe65d8a91504678342fd34c75d639ea29e250e66ed5efdc1a9c07318b6232`;
+root je potrdil kanonično obliko, exact sedem polj v2, točen B račun/QA
+strežnik in generation 2. To ni recovery FILE ali zasebni ključ. Takrat je bil
+A po uporabnikovem odklepu **spet odprt v isti seji na parent nastavitvah**;
+primerjava/odobritev še nista bili izvedeni. B običajna vrnitev
+Settings → Utrip → shranjeno isto povabilo, brez nove povezave, trenutno
+pokaže »Preveč poskusov«, brez Retry; vzroka ne pripisujemo A brez dokaza.
+
+**Parent grant in child ključi sta ločeni meji.** Potrditev parent inventory
+pregleduje le njegov content/finance, ne vsote child zapisov. Po policy3
+parent membership razširi učinkovite pravice na projekte, toda parent
+rotacija ne objavi samodejno child DEK/head/grantov. Za `MOBILE-PROJECT-1`
+ostaja potrebna običajna kriptografska uskladitev in dejanski B prikaz
+opravila. **SOURCE CONCERN, ne potrjena native napaka:** obstoječi child
+»Pregled zaščite prostora« ob spremenjenem catalog accessRevision ne more
+samo potrditi starega head kot ready (`crypto_migration_coordinator.dart:239–253`).
+Generični `ScopeRecoveryPage._confirm` pa privzeto poda `members:null`, zato
+`confirmRotation` uporabi stari `source.members`; njegov UI ureja/odstrani
+obstoječe člane, nima dodajanja novega inherited B. To ne dokazuje delujoče
+child admission poti in ni navodilo za slepo rotacijo. Morebitno vrzel bomo
+presojali šele po dejanskem parent grantu/B branju; brez novega protokola,
+implementacije ali testov na podlagi te skrbi.
+
+A vnos B kartice je dokazano spremenil IME (`accountId` → `accounti`,
+`serverId` → `server ID`, dodani presledki); en popravek ni ustvaril točnega
+vnosa. To je UI prenosna težava, ne crypto mismatch. Poznejši browser Copy
+in native-menu Paste sta potrdila **exact 327 B/SHA f2cbe65d… vnos**;
+localhost helper je ustavljen, odstranjen je samo njegov reverse mapping.
+En Compare je nato pokazal dejanski rdeči Flutter
+`framework.dart:6281 _dependents.isEmpty`, brez grant preview. Prvi native
+stack ni bil zajet; 60 s safe filter/obstoječi exact-PID logcat ga nista
+vsebovala. [A QA je ustavljen ob 19:18:53.074 UTC](../build/qa/jivie-mobile-two-user-20261018/android-public-card-clipboard-transfer/android-qa-stopped-after-compare.json),
+SHA `b2cf13ea…`, z ohranjeno sejo/podatki; B brez novega Retry.
+
+[Ozek lifecycle reproducer in popravek](../build/qa/jivie-mobile-two-user-20261018/public-card-dialog-lifecycle-source/verification.json),
+SHA `314742928b1ba2727a3c9d83ac66c1558abe7bc4a078336d12717652c2bce971`,
+ločita **source dokaz od nezajetega prvega native stacka**. Nespremenjeni
+izločeni stari dialog odpove že pri prvem Confirm: `TextEditingController
+was used after being disposed`, nato med teardown sledi ista
+`_dependents.isEmpty`; ostali old primeri so kontaminirani, ne štirje
+neodvisni FAIL. Novi skupni Stateful dialog drži controller do dejanskega
+route unmounta. Oba callerja ohranita razlagi, mounted/current/result ter
+vsa compare/accept/admit varovala; ni timerja, normalizacije ali trust obvoda.
+Izključeni so autocorrect/suggestions/smart quotes/dashes/capitalization.
+En novi ciljni tek ima **8 PASS**: Android/iOS × Confirm/Cancel/barrier/Back,
+odprta tipkovnica in exit animacija, exact raw return, flags ter named
+explanation. Scoped analiza: 0 error/0 warning in 7 starih runtime info;
+dva nova testna info sta odpravljena samo z ekvivalentnima slogovnima
+popravkoma, test-only analiza čista, brez ponovnega widget teka. Manifest
+ločeno veže izvedeni test `820724d2…` in final style-only `3b74448d…`, helper
+`2b9164a1…`.
+[En novi Android debug kandidat](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-public-card-dialog-fixed/artifact-evidence.json),
+APK SHA `cc019674adccc9aa7802989e962256d58db35f396d27ba553553b3f860e41dc9`,
+veže pregledani helper/caller izvor na
+[source plan](../build/qa/jivie-mobile-two-user-20261018/android-public-card-dialog-plan/manifest.json).
+Vsi native/DEX/manifest bajti ostanejo enaki predhodnemu debug baseline;
+wizard ne vključuje poznejšega main readiness delte. En `install -r` je
+uspel ob istem dataDir/podpisu, običajni zagon ima **PID 28910**. S25 je
+fizično zaklenjen, uporabnik je pozvan za odklep; priprava debug attach še
+čaka readiness. **Console connected/native fix PASS/grant niso potrjeni**,
+ni broad/business PASS ali ponovitve uspešnih prejšnjih zbirk. Če ob
+nadaljevanju A že pokaže verified identiteto, se ne ponavlja uspešne
+primerjave, ampak nadaljuje obstoječi grant pregled. Produkcija in izvirna
+aplikacija/podatki ostanejo nedotaknjeni.
+**Owner grant/B dostop do podatkov še nista izvedena**. `MOBILE-LOCAL-B`
+ostane lokalen; Retry prenova ni vključena, opazovalna diagnostika ostaja
+samo v QA.
 
 **Zgodovina pred novo odobritvijo trajnega zajema:**
 Parser update je fizično obnovil isto shranjeno povabilo in odstranil
@@ -373,11 +466,11 @@ checkpointi so zgodovina; aktualno stanje je zgoraj.
 
 | Del | Trenutno znano | Še potrebno pred fizičnim tokom |
 | --- | --- | --- |
-| iOS | iPhone 11; isti-CA PEM kandidat 13149f9e…, isti PID 662; fizični Continue/origin in HTTPS predogled istega povabila PASS | B registracija/email potrjena; account 509 B FILE Save/re-pick in ready brez napake. En prazen-catalog Done uspe; isti Join odpre primerjavo kartic. Potrditev identitete/grant/deljenje PENDING |
-| Android | Galaxy S25 (`SM_S931B`); debug 7198d8ec…, en unchecked MOBILE-SHARED-1 in auto sync 18:33, 0/0/0, brez napake; od 18:15:08 UTC začasno force-stopped brez odjave/čiščenja | Seja/podatki ohranjeni; keyguard showing=true/occluded=false, čaka uporabnikov odklep za javno kartico. Prvotni post-root wait ni diagnosticiran |
+| iOS | iPhone 11; isti-CA PEM kandidat 13149f9e…, isti PID 662; fizični Continue/origin in HTTPS predogled istega povabila PASS | B registracija/email potrjena; account 509 B FILE Save/re-pick in ready brez napake. En prazen-catalog Done uspe; primerjava A kartice in isti accept SUCCESS/200, B čaka owner ključe. Grant/dostop/deljenje PENDING |
+| Android | Galaxy S25 (`SM_S931B`); en MOBILE-SHARED-1/sync PASS, poznejši Compare assertion in source fix/8 PASS; en APK cc019674… install -r, isti dataDir/podpis, PID 28910 | Fizično zaklenjen, čaka uporabnikov odklep/debug readiness. Console connected/native fix/grant niso PASS |
 | Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A in pri B predogledu; isti CA/trustfalse | Deljeni gateway rate bucket je opažen, brez dokazane individualne atribucije; celotni B tok še PENDING |
 | Strežnik | Ločen projekt; PHP sync popravki PASS, public URL omogočil dostavo istega povabila; conditional invitation v4 popravek nameščen/oglaševanje preverjeno | B račun/email potrjena; grant/deljenje še nepotrjena, brez DDL/restarta ali nove app gradnje za capabilities |
-| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno pending organizacijsko povabilo Član/Polni dostop, dejanski B preview PASS | B account/email/FILE pripravljeni; en Join odpre primerjavo kartic, brez potrditve identitete/granta ali skupnih sprememb B |
+| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno pending organizacijsko povabilo Član/Polni dostop, dejanski B preview PASS | B account/email/FILE pripravljeni; isto povabilo sprejeto/pending keys, B javna kartica potrjena; izid A primerjave/owner grant in skupne spremembe B še nepotrjeni |
 
 Dejansko nameščena QA ID-ja sta `si.triparna.jivie.e2eetest.android20261018` in
 `si.triparna.jivie.e2eetest.ios20261018`, prikazno ime `Jivie Test`.

@@ -1,11 +1,11 @@
 # Navodila za delo na projektu
 
-18. oktober — **mobilni E2EE QA: skupno opravilo/sync/mail in isti B predogled/registracija/e-pošta/FILE potrjeni; identiteta/grant še čakata**.
+18. oktober — **mobilni E2EE QA: skupno opravilo/sync/mail in isti B predogled/registracija/e-pošta/FILE potrjeni; B je sprejel isto povabilo, owner grant še čaka**.
 [Aktualni checkpoint in vezani dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
 A je shranil eno MOBILE-SHARED-1 v istem projektu; UI/samodejni sync in en
 read-only server snapshot potrdita en task/receipt, brez podvojitve. Eno
 originalno organizacijsko povabilo je samodejno dostavljeno po izoliranem QA
-public URL popravku. Android QA je od 18:15:08 UTC začasno force-stopped,
+public URL popravku. Android QA je bil ob 18:15:08 UTC začasno force-stopped,
 brez odjave/čiščenja; seja in podatki ostanejo ohranjeni.
 Na istem iOS PID 662 je kandidat 13149f9e… po QA PEM popravku dosegel origin
 in dejanski HTTPS predogled istega povabila. Prvotni zajem je dokazal
@@ -29,15 +29,44 @@ njune ničelne najdbe niso dokaz odsotnosti računa. En vnos email kode ob
 509 B account FILE pokaže pripravljene account/device ključe. Mešano rdeče
 opozorilo je odstranil en status-only Retry, brez nove FILE/inicializacije;
 natančen prejšnji vzrok ni dokazan. En Končano pri praznem katalogu je uspel brez napake/unavailable soglasja;
-običajni Back je vrnil isto avtenticirano povabilo. En izrecni Join je odprl
-primerjavo javnih kartic, ustavljeno pred potrditvijo/grantom (6101db73…).
-Lokalni MOBILE-LOCAL-B ni objavljen. S25 keyguard je enkrat prebran kot
-showing=true/occluded=false, A QA ostaja ustavljen; čaka uporabnikov odklep
-za javno kartico prek običajnega UI, B ostaja v istem primerjalnem dialogu.
-Dokazi 9707ac1d…/41ef30b6…/6101db73…; brez dodatnega DB preverjanja.
+običajni Back je vrnil isto avtenticirano povabilo in en Join odprl primerjavo
+kartic (6101db73…). A je po uporabnikovem odklepu pokazal javno kartico prek
+odobrenega UI in bil nato spet ustavljen brez odjave/čiščenja. Prvi typed
+Compare ni uspel; dejanski vneseni bajti niso dokazani. En read-only pregled
+potrdi, da invitation creator head/generation ustrezata kartici (0b9acd37…);
+ni spremembe varoval ali novega povabila. Prenos SendClipboard + native Paste
+in en Compare ob 18:57:55.360 UTC sta sprejela isto povabilo: B čaka owner
+ključe (18d1f5e5…). Omejeni strežniški zajem potrdi accept SUCCESS/200 in exact
+rollback ob 18:58:35.720 UTC (d5f43db1…). Prvotna input napaka in GetClipboard
+host-sentinel izid nista dokončno pojasnjena. B javna kartica je zdaj
+pridobljena ob prvem Copy/Get (sentinel pred Copy, brez host write po njem),
+327 B/f2cbe65d…; exact7/account/server/canonical pregled PASS (1c5aa3d2…).
+A je po uporabnikovem odklepu spet odprt v isti seji na parent settings;
+owner grant še ni izveden. B se je normalno vrnil Settings→Utrip→shranjeno
+isto povabilo in dobil »Preveč poskusov«, brez Retry in brez atribucije A.
+Parent grant bo razširil učinkovite pravice, ne samodejno pripravil child
+DEK; generični child review ohrani stari roster, zato je pot za novega
+inherited B označena kot SOURCE CONCERN, ne potrjena native napaka ali PASS.
+A IME je preoblikoval B kartico; poznejši browser Copy/native-menu Paste je
+potrdil exact 327 B/f2cbe65d… vnos. En Compare je nato povzročil native Flutter
+framework6281 assertion; prvi native stack ni zajet, grant ni izveden. A je
+19:18:53 UTC ustavljen z ohranjeno sejo/podatki. Ozki source reproducer je
+pokazal prvi used-after-disposed controller error in nato isto sekundarno
+assertion. Skupni Stateful dialog zdaj drži controller do unmounta, oba
+callerja ohranita trust/current/result varovala in prvotni razlagi; rawinput
+ostane nespremenjen, IME korekcije izključene. 8 novih ciljnih lifecycle PASS
+(Android/iOS × Confirm/Cancel/barrier/Back), scoped 0 error/0 warning in
+7 starih runtime info; poznejši test-only slogovni popravek brez ponovnega
+widget teka. Vezani dokaz 31474292… loči source dokaz od nezajetega prvega
+native stacka. En novi Android APK cc019674… je z install -r nameščen ob
+istem dataDir/podpisu; običajni zagon je PID 28910. S25 je fizično zaklenjen,
+čaka uporabnikov odklep; debug attach readiness še čaka. Console connected,
+native fix PASS in grant niso potrjeni. Artifact/source povezavi sta v
+runbooku; dostop do MOBILE-PROJECT-1 ostane ločen checkpoint, brez objave
+lokalnega MOBILE-LOCAL-B.
 Prejšnji parser fix: 7 PASS; readiness widget fixture NOT COMPLETED, ne
 PASS. Podrobna zgodovina/diagnostika in hashi so v runbooku; QA diagnostike
-ni v main. Potrditev identitete/grant, dvostransko deljenje, odvzem, offline/physical
+ni v main. Owner potrditev identitete/grant, dvostransko deljenje, odvzem, offline/physical
 recovery/upgrade, P0/P8 in produkcijska pripravljenost ostajajo odprti.
 Produkcija/trgovini, izvirni aplikaciji/podatki in Mac PASS so nedotaknjeni;
 FILE/poverilnice ostanejo zasebne, nepovezana dokumenta ostaneta nedotaknjena.

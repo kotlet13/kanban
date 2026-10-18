@@ -4,6 +4,7 @@ import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/invite_crypto_repository.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 import '../../data/e2ee/scope_crypto_manager.dart';
+import 'crypto_public_card_dialog.dart';
 
 /// Initial identity comparison is deliberate; routine membership and envelope
 /// contributions travel through the authenticated queue without copying JSON.
@@ -39,13 +40,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
   });
   Future<void> _compare()=>_run(()async {
     final invite=_invite;if(invite==null)return;
-    final input=TextEditingController();
-    String? card;
-    try {card=await showDialog<String>(context:context,builder:(dialog)=>AlertDialog(
-      title:Text(context.l10n.cryptoCompareContact),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
-        Text(context.l10n.cryptoVerifyContactExplanation),const SizedBox(height:16),TextField(controller:input,minLines:2,maxLines:6,decoration:InputDecoration(labelText:context.l10n.cryptoPastePublicCard)),
-      ])),actions:[TextButton(onPressed:()=>Navigator.pop(dialog),child:Text(context.l10n.cancel)),FilledButton(onPressed:()=>Navigator.pop(dialog,input.text),child:Text(context.l10n.cryptoCompareContact))]));}
-    finally {input.dispose();}
+    final card=await showCryptoPublicCardDialog(context);
     if(card==null || !mounted)return;
     await invites.compareCreator(invite,card);
     if(mounted)setState(()=>_verified=true);

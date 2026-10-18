@@ -19,6 +19,7 @@ import 'sharing_errors.dart';
 import 'sharing_invitation_details.dart';
 import 'sharing_session_boundary.dart';
 import '../recovery/account_crypto_wizard.dart';
+import '../recovery/crypto_public_card_dialog.dart';
 
 /// A separate route keeps the invitation alive while authentication and password
 /// recovery change screens. Closing this route never discards its secure record.
@@ -431,45 +432,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     }
     if (!mounted || !current()) return;
     if (!trusted) {
-      final input = TextEditingController();
-      String? card;
-      try {
-        card = await showDialog<String>(
-          context: context,
-          builder: (dialog) => AlertDialog(
-            title: Text(context.l10n.cryptoCompareContact),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(context.l10n.cryptoInvitationVerifyCreator),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: input,
-                    minLines: 2,
-                    maxLines: 6,
-                    decoration: InputDecoration(
-                      labelText: context.l10n.cryptoPastePublicCard,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialog),
-                child: Text(context.l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialog, input.text),
-                child: Text(context.l10n.cryptoCompareContact),
-              ),
-            ],
-          ),
-        );
-      } finally {
-        input.dispose();
-      }
+      final card = await showCryptoPublicCardDialog(
+        context,
+        explanation: context.l10n.cryptoInvitationVerifyCreator,
+      );
       if (card == null || !current()) return;
       await invites.compareCreator(invite, card);
     }
