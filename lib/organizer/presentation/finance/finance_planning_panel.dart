@@ -141,8 +141,9 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
       !_busy &&
       _guard(existingId: id).isCurrent &&
       (!_isShared && !_privateOwned(id) ||
-          ref.read(collaborationProvider).valueOrNull?.financeContractVersion ==
-              2);
+          supportsFinancePlanningContract(
+            ref.read(collaborationProvider).valueOrNull?.financeContractVersion,
+          ));
   OrganizerSnapshot _formSnapshot({String? existingId}) {
     final private =
         widget.snapshot.workspaceKey.startsWith('private:') &&
@@ -305,7 +306,9 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
     final l = context.l10n, snapshot = widget.snapshot;
     final state = ref.watch(collaborationProvider).valueOrNull;
     final synced = _isShared || snapshot.workspaceKey.startsWith('private:');
-    final available = !synced || state?.financeContractVersion == 2;
+    final available =
+        !synced ||
+        supportsFinancePlanningContract(state?.financeContractVersion);
     final guard = _guard();
     final canWrite = available && guard.isCurrent;
     final now = DateTime.now();

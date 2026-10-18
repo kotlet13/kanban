@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
+[Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek
+ohrani ACL/completeness in staro E2EE obliko; dodatna active-grant admission
+pot po dveh svežih authority mejah ohrani exact key/commitment preverjanje.
+16 novih ciljnih monthly in 4 dodatni admission PASS; brez ponovitve prejšnjih
+uspešnih zbirk. Začetni native save/readback je ohranil 2 pending; en varen
+QA tek je zajel `scope_keys_pending`, nato je končni navadni D ista requesta
+zaključil brez nove prijave, obnove, pravila ali ročnega Sync. Zaključeni
+samodejni cikel ob 13:58: Synced, 0 pending/conflicting/blocked, brez napake.
+Eno `E2EE D Mesecni Preizkus`, planned expense 1.23 EUR na Legacy D Racun,
+prvi datum 20. september 2027; ponovni prikaz brez podvojitve, današnji saldo
+67.89 EUR nespremenjen. Obe opozorili sta odsotni, D normalno zaprt. To je
+own-account mesečna pot, ne čezobsežna pravila ali fizični mobilni/P8/P0 audit.
+Produkcija, strežniška koda/sheme in izvirna namestitev so nespremenjeni;
+QA diagnostike ni v končnem paketu/main. Spodnja mesečna omejitev je zgodovina.
+
 18. oktober — **polni sintetični D saldo potrjen po poznejšem izrecnem naročilu**.
 [Novi dokazi](docs/E2EE_MAC_TEST_2026_10_18.md): ozek popravek dveh runtime
 datotek prepreči, da policy refresh prepiše preverjeno finančno coverage;

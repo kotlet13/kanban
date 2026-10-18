@@ -128,8 +128,8 @@ class _LocalNotificationCoordinatorState
       final privateScope = shared?.privateSync.scopeId;
       final canMaterialize =
           !private ||
-          (shared?.financeContractVersion != null &&
-              shared!.financeContractVersion == 2 &&
+          (shared != null &&
+              supportsFinancePlanningContract(shared.financeContractVersion) &&
               shared.localAccessAllowed &&
               privateScope != null &&
               shared.financePolicyForScope(privateScope).canWrite &&

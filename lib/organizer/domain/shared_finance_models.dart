@@ -4,6 +4,10 @@ import 'linked_payment_models.dart';
 
 const _unsetFinance = Object();
 
+/// Planning payloads are supported by the negotiated finance contracts 2 and 3.
+bool supportsFinancePlanningContract(int? version) =>
+    version == 2 || version == 3;
+
 enum SharedFinanceStatus { planned, posted }
 
 enum SharedFinanceGrant { none, read, write }

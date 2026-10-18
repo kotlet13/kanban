@@ -5676,20 +5676,30 @@ class SessionCryptoAccess {
     String domain, {
     bool online = false,
   }) async {
-    if (_readOnlyFrozen != null ||
-        Zone.current[_deletedScopeEvidenceZone] != null)
-      throw const CryptoAuthorityPending('crypto_frozen_source_read_only');
-    final head = await currentHead(scopeId, online: online);
-    final member = head.member(account.directory.accountId);
-    if (member['role'] == 'viewer' ||
-        domain == 'finance' && member['financeRole'] != 'write') {
-      throw const CryptoAuthorityPending('scope_write_forbidden');
+    Future<VerifiedScopeHead> writableHead({required bool online}) async {
+      if (_readOnlyFrozen != null ||
+          Zone.current[_deletedScopeEvidenceZone] != null) {
+        throw const CryptoAuthorityPending('crypto_frozen_source_read_only');
+      }
+      final head = await currentHead(scopeId, online: online);
+      final member = head.member(account.directory.accountId);
+      if (member['role'] == 'viewer' ||
+          domain == 'finance' && member['financeRole'] != 'write') {
+        throw const CryptoAuthorityPending('scope_write_forbidden');
+      }
+      final local = await account.directory.cachedVerifiedDirectory();
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      if (member['deviceSnapshotHash'] != local.deviceSnapshotHash) {
+        throw const CryptoAuthorityPending('scope_rotation_required');
+      }
+      return head;
     }
-    final local = await account.directory.cachedVerifiedDirectory();
-    if (member['deviceSnapshotHash'] != local.deviceSnapshotHash) {
-      throw const CryptoAuthorityPending('scope_rotation_required');
-    }
-    final rows = await account.store.database.rows(
+
+    Future<List<Map<String, Object?>>> readyKeys(
+      VerifiedScopeHead head,
+    ) => account.store.database.rows(
       'SELECT * FROM crypto_scope_keys WHERE partition=? AND scope_id=? AND domain=? AND epoch=? AND epoch_id=? AND key_id=? AND recovery_wrapping_durable=1 AND write_ready=1',
       [
         account.store.partition,
@@ -5700,17 +5710,53 @@ class SessionCryptoAccess {
         (head.body['keyIds'] as Map)[domain],
       ],
     );
-    if (rows.length != 1) {
-      throw const CryptoAuthorityPending('scope_keys_pending');
+
+    Future<CryptoWriteContext> admittedContext(
+      VerifiedScopeHead head,
+      List<Map<String, Object?>> rows,
+    ) async {
+      if (rows.length != 1) {
+        throw const CryptoAuthorityPending('scope_keys_pending');
+      }
+      return CryptoWriteContext(
+        headHash: head.headHash,
+        epoch: head.epoch,
+        accessRevision: head.accessRevision,
+        contentContract: domain == 'finance' ? 3 : 6,
+        keyId: rows.single['key_id'] as String,
+        key: await getScopeKey(scopeId, domain, head.epoch),
+      );
     }
-    return CryptoWriteContext(
-      headHash: head.headHash,
-      epoch: head.epoch,
-      accessRevision: head.accessRevision,
-      contentContract: domain == 'finance' ? 3 : 6,
-      keyId: rows.single['key_id'] as String,
-      key: await getScopeKey(scopeId, domain, head.epoch),
-    );
+
+    final head = await writableHead(online: online);
+    final rows = await readyKeys(head);
+    if (rows.isNotEmpty) return admittedContext(head, rows);
+
+    void requireSameHead(VerifiedScopeHead current) {
+      if (!current.active ||
+          current.headHash != head.headHash ||
+          current.epoch != head.epoch ||
+          (current.body['keyIds'] as Map)[domain] !=
+              (head.body['keyIds'] as Map)[domain]) {
+        throw const CryptoAuthorityPending('crypto_scope_head_changed');
+      }
+    }
+
+    // Migration/recovery candidates are intentionally read-only. The first
+    // write may admit the current device's genuine active grants through the
+    // normal signed manifest, recipient, wrapper and commitment checks once.
+    await withVerifiedOperation(() async {
+      final current = await writableHead(online: true);
+      requireSameHead(current);
+      await _hydrateHeadKeys(current, onlyDomain: domain);
+    }, freshBoundary: true);
+    // online:true can reuse an operation memo. A separate fresh boundary is
+    // required after hydration before the exact ready-key query authorizes use.
+    return withVerifiedOperation(() async {
+      final current = await writableHead(online: true);
+      requireSameHead(current);
+      return admittedContext(current, await readyKeys(current));
+    }, freshBoundary: true);
   }
 
   Future<VerifiedAccountDirectory> currentMemberDirectory(

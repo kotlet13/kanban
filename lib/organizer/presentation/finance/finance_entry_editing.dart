@@ -57,7 +57,7 @@ bool canConfirmPersonalFinanceEntry(
       snapshot.workspaceKey.startsWith('private:') &&
       state?.privateRecordIds.values.contains(entry.id) == true;
   return !private ||
-      state?.financeContractVersion == 2 &&
+      supportsFinancePlanningContract(state?.financeContractVersion) &&
           FinanceAccessGuard(
             context,
             ref,

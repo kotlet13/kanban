@@ -35,9 +35,21 @@ v celotnem prikazu/AX. Samodejni sync ob 13:10 je Synced, 0 pending/conflicting/
 blocked, brez napake; ista seja/podatki, brez prijave ali čarovnikov.
 [Končni native UI dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/native-finance-final-ui-evidence.json)
 potrdi en običajen zagon, brez urejanja ali ročnega Sync, nato en normalni
-CmdQ in prazen sveži running inventory. D je zaprt. Mesečno opozorilo
-»Planning in a synced space requires the newer server finance contract«
-ostaja ločeno odprto; ni potrditve celotnega mesečnega načrtovanja.
+CmdQ in prazen sveži running inventory. To je checkpoint polnega salda ob
+13:10; mesečno opozorilo je takrat še ostalo. Poznejši spodnji mesečni prehod
+na **isti D** je zdaj native PASS: eno pravilo `E2EE D Mesecni Preizkus`,
+expense 1.23 EUR na `Legacy D Racun`, dan 20, prvi datum 20. september 2027,
+in ena pripadajoča planned pojavitev. Ponovno branje je potrjeno brez novega
+Save ali podvojitve. Zaključeni samodejni sync ob 13:58 je Synced,
+0 pending/conflicting/blocked, brez napake; ista dva prej čakajoča requesta
+sta zaključena brez ročnega Sync, prijave, obnove ali novega vnosa. Današnji
+polni saldo ostaja 67.89 EUR, income/expense 0.00; obe opozorili sta odsotni.
+[Končni mesečni UI dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/native-monthly-final-ui-evidence.json)
+zabeleži en običajen nadaljevalni zagon in normalni CmdQ s praznim svežim
+running inventory. Pri zapiranju je naravni naslednji poll kazal Syncing,
+še vedno 0/0/0 brez napake; PASS se nanaša na zaključeni cikel ob 13:58.
+To potrjuje točno to mesečno pravilo na lastnem računu, ne čezobsežnih pravil
+ali mesečnega načrtovanja na drugih platformah.
 Predhodni D je bil ob 12:44 normalno zaprt;
 [runner dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-cursor-fixed-d/capture-window-evidence.json)
 potrdi en zagon, 0 diagnostičnih tagov, exit 0, brez ponovitve ali shranjenega
@@ -532,8 +544,63 @@ source tree `56b63739981af251ae18674cc20dd3155cbbb063765ca6a6b3a35d5153ae15f8`.
 Podpis, dejanski hashi in izvorna izolacija so neodvisno pregledani PASS.
 Sledila je zamenjava samo D paketa in zgornji običajni UI finite check istega
 stanja, brez nove prijave, vnosa ali server/schema/produkcijske spremembe.
-To potrdi ta polni sintetični saldo; mesečna pogodba, fizični mobilni/P8 in
-neodvisni P0 audit ostajajo izven tega dokaza.
+To je potrdilo polni sintetični saldo; mesečna podpora je tedaj še čakala
+naslednje izrecno naročilo. Fizični mobilni/P8 in neodvisni P0 audit ostajajo
+izven tega dokaza.
+
+### Mesečno pravilo in nadaljevanje istih čakajočih zahtev
+
+Na osnovi `b41b4e0927f94dce65ede13d5decb9f12a2c974c` štirje runtime popravki
+uporabijo exact finance contract 2/3 v panelu, private confirmation in
+notification materialization. ACL/completeness, repository, validator,
+E2EE mapper in stara podpisana metadata oblika ostanejo.
+[Mesečni manifest](../build/qa/jivie-legacy-upgrade-test-d-20261018/monthly-verification.json)
+veže source in dnevnike: 3 actual repository/materialization/encrypted
+roundtrip + 10 UI + 3 coordinator = **16 novih ciljnih PASS**. UI pred-fix je
+imel 8 PASS/2 contract-3 FAIL; scoped analiza je »No issues found«.
+Roundtrip res podpiše/šifrira/preveri/dešifrira ter projicira account/rule/entry
+v sveži DB, authenticated head in transport meja pa sta sintetična.
+
+Prvi navadni monthly D je odstranil opozorilo in shranil/ponovno prebral
+pravilo ter eno planned pojavitev, toda sync ob 13:35 je ohranil 2 pending:
+[prvi UI dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/native-monthly-plan-ui-evidence.json).
+[En varen QA tek](../build/qa/jivie-legacy-upgrade-test-d-20261018/native-monthly-diagnostic-ui-evidence.json)
+je zajel `finance_dependencies / CryptoAuthorityPending / scope_keys_pending`,
+pozicija `none/0/0`. Native tag sam ne loči treh source throw mest.
+Ista dva immutable requesta sta ostala, brez resetiranja/novega pravila/migracije.
+
+Peti runtime popravek, `session_crypto_access.dart` (SHA256
+`324d1ffe28f73b0e0babc8d247e7b19783a2b4d085094ecd59c032c857f2ef5d`),
+ob manjkajoči ready-key vrstici uporabi normalno preverjanje aktivnih grantov
+za zahtevani domain. Ločeni sveži authority meji pred in po hydration ohranita
+isti active head/epoch/keyId, identity/member/device ter exact durable/ready
+query in commitment; ni neposrednega preklopa flagov ali recovery bližnjice.
+[Admission manifest](../build/qa/jivie-legacy-upgrade-test-d-20261018/key-admission-verification.json)
+veže pre-fix reproducirano ready-key napako in **4 dodatne PASS** na disposable
+loopback s pravim podpisanim activation/grant protokolom. Missing/forged
+activation in stale device snapshot ostanejo zavrnjeni. Analiza: 0 errors,
+0 warnings, 65 info; vseh 65 je reviewer preslikal na nespremenjene vrstice.
+To ni nov full migration run. Skupaj 16 + 4 novih PASS, brez stare matrike ali
+novega skupnega 20-testnega teka.
+
+Vsak od treh paketov je zgrajen enkrat, pregledan pred namestitvijo in zamenja
+samo D paket ob isti shrambi/seji:
+
+| Korak | Vezani artifact in namestitev |
+| --- | --- |
+| Prvi navadni monthly | [artifact](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-monthly-fixed-d/artifact-evidence.json), [namestitev](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-monthly-fixed-d/installation-evidence.json) |
+| En varen diagnostični tek | [artifact](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-monthly-diagnostic-d/artifact-evidence.json), [namestitev](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-monthly-diagnostic-d/installation-evidence.json) |
+| Končno navadno nadaljevanje | [artifact](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-write-admission-fixed-d/artifact-evidence.json), [lineage](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-write-admission-fixed-d/source-lineage.json), [namestitev](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-write-admission-fixed-d/installation-evidence.json) |
+
+Končni paket ima pet pregledanih runtime sprememb in istih sedem izolacij,
+brez QA source/define. Dejanski AOT:
+`39b57c097ec910a3ba4629833bcb0fd71d0483c54466027511ea6ebb6472068f`;
+izvršna datoteka:
+`b3d17a964df78c4550c39711db4a40bdd8d58cbb7af91ca7f79e444749a4d392`.
+Zgornji zaključeni native sync ob 13:58 je odločilni same-pending business ACK
+in readback dokaz. Kasnejši naravni poll je ob CmdQ kazal Syncing 0/0/0 brez
+napake; ne trdimo zaključka drugega cikla. Čezobsežna pravila, nove end-month
+kontrole, druge platforme ter server/schema/produkcijske spremembe niso del tega.
 
 Pri nadaljevanju primerjaj iste sintetične vrednosti, brez novih vnosov:
 
@@ -580,7 +647,9 @@ mesečno načrtovanje in nepopolnem projektnem pregledu do sinhronizacije vseh
 dovoljenih projektov. To je za D zgodovina pred zadnjim coverage popravkom:
 v A/C je potrjen navedeni sintetični prikaz 123.45 EUR, v D po popravku tudi
 polni saldo 67.89 EUR z income/expense 0.00 in enim računom. Mesečno opozorilo
-ostaja; drugih saldov, obdobij in celotnih financ nismo validirali. Menjava/reset gesla,
+je po zgornjem dodatnem popravku odstranjeno, isti own-account rule/occurrence
+in business sync sta potrjena. Drugih saldov, čezobsežnih pravil, različnih
+obdobij ali celotnih financ nismo validirali. Menjava/reset gesla,
 nova E2EE offline podatkovna obnova, fizične naprave in deljenje še niso preizkušeni;
 zgornja omejena stara D prenosna obnova je ločen dokaz. Predhodni
 ENOSPC/build-cwd zapleti imajo ločene QA dnevnike; po popravku so bili A/B/C
