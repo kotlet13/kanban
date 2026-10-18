@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -38,6 +39,7 @@ class _Client {
       transport,
       MemorySessionStore(),
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await shared.initialize();
     final backup = PortableBackupRepository(
@@ -248,7 +250,7 @@ void main() {
       final a = await financeClient();
       final bytes = await a.export(), doc = await a.decode(bytes);
       validateBackupDocument(doc);
-      expect(doc['version'], 8);
+      expect(doc['version'], 9);
       expect(backupRows(doc, 'finance_records').length, 1);
       final request = backupRows(doc, 'finance_outbox').single['request'];
       expect(backupRows(doc, 'finance_outbox').single['wire_version'], 3);
@@ -293,6 +295,9 @@ void main() {
       final bytes = await a.export();
       final old = await a.decode(bytes)
         ..['version'] = 7;
+      old.remove('cryptoEvidence');
+      old.remove('cryptoPrivateDrafts');
+      old['databaseVersion'] = 10;
       expect(() => validateBackupDocument(old), throwsA(unsupported));
       final unknown = await a.decode(bytes);
       backupRows(unknown, 'finance_outbox').single['wire_version'] = 4;
@@ -337,8 +342,8 @@ void main() {
       await a.shared.syncNow();
       final bytes = await a.export(), doc = await a.decode(bytes);
       validateBackupDocument(doc);
-      expect(doc['version'], 8);
-      expect(doc['databaseVersion'], 10);
+      expect(doc['version'], 9);
+      expect(doc['databaseVersion'], 11);
       expect(backupTableDrafts(doc).single['draft'], draft.toJson());
       expect(backupTableDrafts(doc).single['scopeId'], scope);
       expect(jsonEncode(doc), isNot(contains('cached-file-secret')));
@@ -529,15 +534,17 @@ void main() {
   );
 
   test(
-    'versions 1 through 7 remain readable; reminder preferences survive v8 restore',
+    'versions 1 through 8 remain readable; reminder preferences survive v9 restore',
     () async {
       final transport = PersonalTransport(FakeServer());
       final a = await _Client.create(transport);
       final current = await a.decode(await a.export());
-      for (var version = 1; version <= 7; version++) {
+      for (var version = 1; version <= 8; version++) {
         final legacy = backupMap(jsonDecode(jsonEncode(current)));
+        legacy.remove('cryptoEvidence');
+        legacy.remove('cryptoPrivateDrafts');
         legacy['version'] = version;
-        legacy['databaseVersion'] = [0, 4, 5, 6, 7, 9, 10, 10][version];
+        legacy['databaseVersion'] = [0, 4, 5, 6, 7, 9, 10, 10, 10][version];
         if (version < 7) legacy.remove('tableDrafts');
         if (version < 6) legacy.remove('localTaskReminderPreferences');
         if (version < 5) {

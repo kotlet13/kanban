@@ -17,7 +17,7 @@ class InvitationLink {
   /// paired with an explicitly selected server. No input triggers network work.
   static InvitationLink? tryParseInput(String input, {String? serverUrl}) {
     final value = input.trim();
-    if (RegExp(r'^fhi[123]_[a-f0-9]{64}$').hasMatch(value)) {
+    if (RegExp(r'^fhi[1234]_[a-f0-9]{64}$').hasMatch(value)) {
       if (serverUrl == null) return null;
       return tryParse(
         InvitationLink(serverUrl: serverUrl, token: value).toUri(),
@@ -38,14 +38,14 @@ class InvitationLink {
         uri.fragment.isNotEmpty ||
         !{2, 3}.contains(uri.queryParametersAll.length) ||
         (uri.queryParametersAll.length == 3 &&
-            !{'2', '3'}.contains(uri.queryParameters['v'])) ||
+            !{'2', '3', '4'}.contains(uri.queryParameters['v'])) ||
         !uri.queryParametersAll.keys.toSet().containsAll({'server', 'token'}) ||
         uri.queryParametersAll.values.any((values) => values.length != 1)) {
       return null;
     }
     final token = uri.queryParameters['token']!,
         server = uri.queryParameters['server']!;
-    if (!RegExp(r'^fhi[123]_[a-f0-9]{64}$').hasMatch(token) ||
+    if (!RegExp(r'^fhi[1234]_[a-f0-9]{64}$').hasMatch(token) ||
         (token.startsWith('fhi1_')
             ? uri.queryParameters.containsKey('v')
             : uri.queryParameters['v'] != token.substring(3, 4)) ||
@@ -112,7 +112,7 @@ class InvitationLink {
     final fragment = Uri.splitQueryString(uri.fragment);
     if (fragment.length != 1 ||
         !fragment.containsKey('token') ||
-        !RegExp(r'^token=fhi[23]_[a-f0-9]{64}$').hasMatch(uri.fragment)) {
+        !RegExp(r'^token=fhi[234]_[a-f0-9]{64}$').hasMatch(uri.fragment)) {
       return null;
     }
     final server = Uri(

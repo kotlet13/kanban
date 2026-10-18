@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -38,6 +39,7 @@ void main() {
         transport,
         store,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repo.initialize();
       await repo.login(
@@ -97,7 +99,13 @@ void main() {
         store.value!.token,
       );
       transport.offline = true;
-      repo = CollaborationRepository(db, transport, store, ownsDatabase: false);
+      repo = CollaborationRepository(
+        db,
+        transport,
+        store,
+        ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
+      );
       await repo.initialize();
       addTearDown(repo.close);
       expect(repo.state.localAccessAllowed, true);
@@ -130,7 +138,13 @@ void main() {
       db = CollaborationDatabase(NativeDatabase(file));
       storage = SqliteOrganizerStorage(db);
       await storage.initialize();
-      repo = CollaborationRepository(db, transport, store, ownsDatabase: false);
+      repo = CollaborationRepository(
+        db,
+        transport,
+        store,
+        ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
+      );
       await repo.initialize();
       personal = OrganizerRepository(storage);
       await personal.initialize();
@@ -165,6 +179,7 @@ void main() {
         transport,
         store,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repo.initialize();
       await repo.login(
@@ -180,7 +195,13 @@ void main() {
       expect(repo.state.lastError?.code, 'server_identity_changed');
       expect(repo.state.localAccessAllowed, true);
       await repo.close();
-      repo = CollaborationRepository(db, transport, store, ownsDatabase: false);
+      repo = CollaborationRepository(
+        db,
+        transport,
+        store,
+        ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
+      );
       await repo.initialize();
       addTearDown(repo.close);
       addTearDown(db.close);
@@ -212,6 +233,7 @@ void main() {
         transport,
         MemorySessionStore(),
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repo.initialize();
       addTearDown(repo.close);

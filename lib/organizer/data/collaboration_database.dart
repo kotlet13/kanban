@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'e2ee/crypto_sync_schema.dart';
 import 'package:drift/drift.dart';
 import '../domain/collaboration_models.dart' show AccountSession;
 
@@ -7,7 +8,7 @@ import '../domain/collaboration_models.dart' show AccountSession;
 class CollaborationDatabase extends GeneratedDatabase {
   CollaborationDatabase(super.executor);
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
   String selectedLocalWorkspaceId = 'local';
   bool localSelectionLoaded = false;
   void activateLocalWorkspace(String id) {
@@ -49,12 +50,13 @@ class CollaborationDatabase extends GeneratedDatabase {
         ..._upgrade7,
         ..._upgrade8,
         ..._upgrade9,
+        ...cryptoSyncSchema,
       ]) {
         await customStatement(statement);
       }
     },
     onUpgrade: (_, from, to) async {
-      if (from < 1 || from > 9 || to != 10) {
+      if (from < 1 || from > 10 || to != 11) {
         throw const FormatException('Unsupported shared database schema');
       }
       if (from < 2) {
@@ -98,6 +100,11 @@ class CollaborationDatabase extends GeneratedDatabase {
         }
       }
       // Schema10 fences extended JSON contracts; existing rows/operations are unchanged.
+      if (from < 11) {
+        for (final statement in cryptoSyncSchema) {
+          await customStatement(statement);
+        }
+      }
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');

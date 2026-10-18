@@ -1,0 +1,22 @@
+name: familyhub-crypto-tests
+services:
+  sqlite:
+    build:
+      context: .
+      dockerfile: Dockerfile.crypto-tests
+    image: familyhub-crypto-tests:local
+    ports:
+      - "127.0.0.1:18785:80"
+    networks: [synthetic]
+    volumes:
+      - crypto-data:/var/www/app/data
+      - ./plugins/FamilyHub:/var/www/app/plugins/FamilyHub:ro
+      - ./dev-config.php:/familyhub-dev-config.php:ro
+      - ./crypto-test-config.php:/var/www/app/config.php:ro
+      - ./tests:/familyhub-tests:ro
+    restart: "no"
+volumes:
+  crypto-data:
+networks:
+  synthetic:
+    driver: bridge

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -172,6 +173,7 @@ fixture({
     transport,
     store,
     clock: () => now,
+    contentRouteGuard: const SyntheticContentRouteGuard(),
   );
   transport.financeEnabled = finance;
   transport.relativeEnabled = relative;
@@ -404,6 +406,7 @@ void main() {
         f.transport,
         f.store,
         clock: () => now,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(reopened.close);
       await reopened.initialize();

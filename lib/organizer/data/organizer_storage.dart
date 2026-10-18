@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
+import 'local_vault_legacy.dart';
 
 /// Storage is injectable; it never contacts a server or stores account secrets.
 abstract interface class OrganizerStorage {
@@ -127,6 +129,16 @@ class HiveOrganizerStorage implements OrganizerStorage {
   static const _snapshotKey = 'committed_snapshot';
 
   static Future<HiveOrganizerStorage> open({String? directory}) async {
+    if (directory == null && useProtectedLegacyHive) {
+      final bytes = await readVaultLegacyHiveBytes();
+      return HiveOrganizerStorage._(
+        await Hive.openBox<String>(
+          '${boxName}_vault_memory',
+          bytes: bytes ?? Uint8List(0),
+          crashRecovery: false,
+        ),
+      );
+    }
     if (directory == null) {
       await Hive.initFlutter();
     }

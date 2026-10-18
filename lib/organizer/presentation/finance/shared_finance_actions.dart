@@ -692,10 +692,10 @@ class SharedFinanceActions {
                       for (final change in result.data!)
                         ExpansionTile(
                           title: Text(
-                            '${organizerDateTime(context, change.changedAt)} · ${state.membersForScope(scope.id).where((m) => m.accountId == change.actorAccountId).firstOrNull?.displayName ?? context.l10n.planningFormerMember}',
+                            '${change.changedAt == null ? context.l10n.financeAuditUnknownTime : organizerDateTime(context, change.changedAt!)} · ${state.membersForScope(scope.id).where((m) => m.accountId == change.actorAccountId).firstOrNull?.displayName ?? context.l10n.planningFormerMember}',
                           ),
                           subtitle: Text(
-                            '${context.l10n.financeRevision}: ${change.revision}',
+                            '${context.l10n.financeRevision}: ${change.revision}${change.timeBasis == 'authorClaimed' ? ' · ${context.l10n.financeAuditAuthorTime}' : ''}',
                           ),
                           children: [
                             Text(context.l10n.financeBefore),

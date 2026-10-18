@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'local_vault_secure_storage.dart';
 import '../domain/collaboration_models.dart';
 import 'collaboration_transport.dart';
 
@@ -92,7 +92,7 @@ extension PendingInvitationStoreSerialization on PendingInvitationStore {
 
 class SecurePendingInvitationStore implements PendingInvitationStore {
   const SecurePendingInvitationStore();
-  static const _storage = FlutterSecureStorage();
+  static const _storage = localVaultSecureStorage;
   static const _key = 'jivie_pending_invitation_v1';
   @override
   Future<PendingInvitation?> read() async {

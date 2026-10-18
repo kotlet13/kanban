@@ -1,3 +1,4 @@
+import '../support/local_vault_test_overrides.dart';
 import 'package:kanban/organizer/state/portable_backup_provider.dart';
 import 'backup_ui_fixture.dart';
 import 'package:kanban/organizer/platform/backup_preferences_replay.dart';
@@ -418,6 +419,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             portableBackupProvider.overrideWith(EmptyBackupUiController.new),
             backupPreferencesReplayProvider.overrideWith((ref) async => {}),
             organizerStorageProvider.overrideWithValue(
@@ -608,6 +610,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             portableBackupProvider.overrideWith(EmptyBackupUiController.new),
             backupPreferencesReplayProvider.overrideWith((ref) async => {}),
             organizerStorageProvider.overrideWithValue(() async => storage),
@@ -651,6 +654,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             portableBackupProvider.overrideWith(EmptyBackupUiController.new),
             backupPreferencesReplayProvider.overrideWith((ref) async => {}),
             organizerStorageProvider.overrideWithValue(

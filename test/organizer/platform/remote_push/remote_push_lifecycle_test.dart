@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/data/local_vault_preferences.dart';
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -129,7 +130,9 @@ class Harness {
     late Harness result;
     final lifecycle = RemotePushLifecycle(
       sdk: sdk,
-      preferences: await SharedPreferences.getInstance(),
+      preferences: TestLocalVaultPreferences(
+        await SharedPreferences.getInstance(),
+      ),
       config: configuration,
       onState: (_) {},
       configure: (identity, token, platform, language, projectId) async {

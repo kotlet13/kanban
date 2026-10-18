@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -162,6 +163,7 @@ void main() {
       database,
       transport,
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repository.initialize();
     await repository.login(

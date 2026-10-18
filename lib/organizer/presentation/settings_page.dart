@@ -1,3 +1,7 @@
+import '../platform/private_file_io.dart';
+import '../data/organizer_storage.dart' show OrganizerBackupCodec;
+import 'dart:typed_data';
+import 'backup/backup_file_io.dart' show readBoundedBackup;
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
@@ -18,6 +22,9 @@ import 'shared/unsent_work_recovery_view.dart';
 import '../platform/backup_preferences_replay.dart';
 import 'organizer_widgets.dart';
 import 'inbox/inbox_preferences.dart';
+import 'recovery/account_crypto_wizard.dart';
+import 'recovery/crypto_approvals_page.dart';
+import 'recovery/preserved_installation_files_page.dart';
 
 class OrganizerSettingsPage extends ConsumerWidget {
   const OrganizerSettingsPage({super.key, required this.actions});
@@ -25,14 +32,28 @@ class OrganizerSettingsPage extends ConsumerWidget {
 
   Future<void> _import(BuildContext context) async {
     await actions.run(() async {
-      final picked = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        withData: true,
-      );
-      if (picked == null || !context.mounted) return;
-      final bytes = picked.files.single.bytes;
-      if (bytes == null) throw const FormatException();
+      Uint8List bytes;
+      if (usesPrivateMobileFileIo) {
+        final picked = await pickPrivateFile(
+          extensions: ['json'],
+          maxBytes: OrganizerBackupCodec.maxBytes,
+        );
+        if (picked == null || !context.mounted) return;
+        bytes = picked.bytes;
+      } else {
+        final picked = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['json'],
+          withData: false,
+          withReadStream: true,
+        );
+        if (picked == null || !context.mounted) return;
+        bytes = await readBoundedBackup(
+          picked.files.single,
+          maxBytes: OrganizerBackupCodec.maxBytes,
+        );
+      }
+      if (!context.mounted) return;
       final json = utf8.decode(bytes);
       final confirmed = await showDialog<bool>(
         context: context,
@@ -217,8 +238,31 @@ class OrganizerSettingsPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
+        ListTile(
+          leading: const Icon(Icons.inventory_2_outlined),
+          title: Text(l.preservedFilesTitle),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const PreservedInstallationFilesPage(),
+            ),
+          ),
+        ),
         const BackupRecoveryPanel(),
         const UnsentWorkRecoveryButton(),
+        const AccountCryptoPanel(),
+        ListTile(
+          leading: const Icon(Icons.approval_outlined),
+          title: Text(
+            Localizations.localeOf(context).languageCode == 'sl'
+                ? 'Čakajoče odobritve'
+                : 'Pending approvals',
+          ),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const CryptoApprovalsPage(),
+            ),
+          ),
+        ),
         const SizedBox(height: 28),
         const AccountDeletionPanel(),
         const SizedBox(height: 28),

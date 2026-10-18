@@ -162,83 +162,7 @@ void validateFinancePlanningPayload(
   SharedFinanceRecordType type,
   Map<String, dynamic> p,
 ) {
-  const entryFields = [
-    'status',
-    'plannedAt',
-    'paidAt',
-    'taskId',
-    'ledgerAccountId',
-    'payerPersonId',
-    'recipientPersonId',
-    'createdByPersonId',
-    'recurrenceRuleId',
-    'occurrenceKey',
-  ];
-  final fields = <String>{
-    'currency',
-    'createdAt',
-    'updatedAt',
-    ...switch (type) {
-      SharedFinanceRecordType.personalFinanceAccount => [
-        'name',
-        'openingBalanceMinor',
-        'openingBalanceAt',
-        'archived',
-      ],
-      SharedFinanceRecordType.financeRecurrenceRule => [
-        'title',
-        'kind',
-        'ledgerAccountId',
-        'estimatedAmountMinor',
-        'loanPrincipalMinor',
-        'startYear',
-        'startMonth',
-        'monthDay',
-        'endYear',
-        'endMonth',
-        'active',
-        'remindersEnabled',
-        'reminderMinuteOfDay',
-      ],
-      SharedFinanceRecordType.personalFinanceEntry => [
-        'title',
-        'amountMinor',
-        'kind',
-        'occurredAt',
-        'projectId',
-        'notes',
-        ...entryFields,
-      ],
-      SharedFinanceRecordType.financeAccount => [
-        'name',
-        'openingBalanceMinor',
-        'ownerAccountId',
-        'openingBalanceAt',
-        'archived',
-      ],
-      SharedFinanceRecordType.financeEntry => [
-        'accountId',
-        'kind',
-        'amountMinor',
-        'title',
-        'notes',
-        'category',
-        'payerAccountId',
-        'recipientAccountId',
-        'occurredAt',
-        ...entryFields,
-      ],
-      SharedFinanceRecordType.financeTransfer => [
-        'fromAccountId',
-        'toAccountId',
-        'amountMinor',
-        'status',
-        'title',
-        'notes',
-        'occurredAt',
-      ],
-    },
-  };
+  final fields = sharedFinancePlanningKnownKeys(type);
   if (p.length != fields.length ||
       !p.keys.every(fields.contains) ||
       utf8.encode(jsonEncode(p)).length > 524288) {
@@ -375,4 +299,85 @@ Map<String, dynamic> financePayloadForContract(
     payload.putIfAbsent('projectId', () => null);
   }
   return payload;
+}
+
+/// Known projection fields; authenticated unknown raw fields remain archived.
+Set<String> sharedFinancePlanningKnownKeys(SharedFinanceRecordType type) {
+  const entryFields = [
+    'status',
+    'plannedAt',
+    'paidAt',
+    'taskId',
+    'ledgerAccountId',
+    'payerPersonId',
+    'recipientPersonId',
+    'createdByPersonId',
+    'recurrenceRuleId',
+    'occurrenceKey',
+  ];
+  return <String>{
+    'currency',
+    'createdAt',
+    'updatedAt',
+    ...switch (type) {
+      SharedFinanceRecordType.personalFinanceAccount => [
+        'name',
+        'openingBalanceMinor',
+        'openingBalanceAt',
+        'archived',
+      ],
+      SharedFinanceRecordType.financeRecurrenceRule => [
+        'title',
+        'kind',
+        'ledgerAccountId',
+        'estimatedAmountMinor',
+        'loanPrincipalMinor',
+        'startYear',
+        'startMonth',
+        'monthDay',
+        'endYear',
+        'endMonth',
+        'active',
+        'remindersEnabled',
+        'reminderMinuteOfDay',
+      ],
+      SharedFinanceRecordType.personalFinanceEntry => [
+        'title',
+        'amountMinor',
+        'kind',
+        'occurredAt',
+        'projectId',
+        'notes',
+        ...entryFields,
+      ],
+      SharedFinanceRecordType.financeAccount => [
+        'name',
+        'openingBalanceMinor',
+        'ownerAccountId',
+        'openingBalanceAt',
+        'archived',
+      ],
+      SharedFinanceRecordType.financeEntry => [
+        'accountId',
+        'kind',
+        'amountMinor',
+        'title',
+        'notes',
+        'category',
+        'payerAccountId',
+        'recipientAccountId',
+        'occurredAt',
+        ...entryFields,
+      ],
+      SharedFinanceRecordType.financeTransfer => [
+        'fromAccountId',
+        'toAccountId',
+        'amountMinor',
+        'status',
+        'title',
+        'notes',
+        'occurredAt',
+      ],
+    },
+  };
 }

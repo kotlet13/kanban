@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../data/local_vault_preferences.dart';
 
 import '../domain/notification_models.dart';
 import '../domain/remote_push_models.dart';
@@ -16,7 +16,7 @@ class LocalNotificationAdapter {
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
   final LocalNotificationScheduler scheduler;
-  final SharedPreferences preferences;
+  final LocalVaultPreferences preferences;
   final DateTime Function() _now;
   static const _idsKey = 'organizer_notification_ids_v1';
   static const pendingLimit = 60;
@@ -40,6 +40,38 @@ class LocalNotificationAdapter {
       final target = _decode(payload);
       if (target != null) _onOpen?.call(target);
     });
+    // Called only with explicit protected preferences after safe vault boot.
+    // Old plugin schedules can retain source titles in Android SharedPrefs.
+    final raw = preferences.getString(_idsKey);
+    final saved = raw == null
+        ? <String, dynamic>{}
+        : jsonDecode(raw) as Map<String, dynamic>;
+    if (saved['presentationVersion'] != 3) {
+      final pending = scheduler.supported
+          ? await scheduler.pendingIds()
+          : <int>{};
+      // Plugin cancelAll removes only this application's pending and delivered
+      // notifications (including old remote titles). It cannot erase OS history
+      // or screenshots. Launch payload was captured above before removal.
+      await scheduler.clearPresentedAndPending();
+      final ids = (saved['ids'] as Map<String, dynamic>? ?? {});
+      final fingerprints = Map<String, dynamic>.from(
+        saved['fingerprints'] as Map? ?? {},
+      );
+      for (final entry in ids.entries) {
+        if (pending.contains(entry.value)) fingerprints.remove(entry.key);
+      }
+      if (!await preferences.setString(
+        _idsKey,
+        jsonEncode({
+          ...saved,
+          'presentationVersion': 3,
+          'fingerprints': fingerprints,
+        }),
+      )) {
+        throw StateError('Notification privacy migration could not be saved');
+      }
+    }
     _initialized = true;
     status = LocalNotificationStatus(
       permission: await scheduler.permissionStatus(),
@@ -115,8 +147,8 @@ class LocalNotificationAdapter {
       try {
         final parts = jsonDecode(old ?? '') as List;
         oldTimezone = parts[1] as String;
-        if (parts.length == 7 && parts.last == _darwinThreadContract) {
-          comparableOld = jsonEncode(parts.take(6).toList());
+        if (parts.length >= 7 && parts.last == _darwinThreadContract) {
+          comparableOld = jsonEncode(parts.take(parts.length - 1).toList());
         }
       } catch (_) {}
       // Grouping upgrades apply only to future schedules. A due/delivered
@@ -137,6 +169,7 @@ class LocalNotificationAdapter {
       if (!await preferences.setString(
         _idsKey,
         jsonEncode({
+          'presentationVersion': 3,
           'nextId': nextId,
           'ids': ids,
           'fingerprints': fingerprints,
@@ -250,6 +283,7 @@ class LocalNotificationAdapter {
     request.title,
     request.body,
     request.sound,
+    request.languageCode,
     jsonEncode(request.plan.target.toJson()),
     if (includeGrouping &&
         !request.plan.target.isPersonal &&

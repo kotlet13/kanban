@@ -24,8 +24,13 @@ class NativeIdeaRenderer extends NativeDatabase
             $parent=$images[$e['parentImageId']??'']??null;$c=$e['color'];$color=imagecolorallocatealpha($canvas,($c>>16)&255,($c>>8)&255,$c&255,127-(int)round((($c>>24)&255)*127/255));imagesetthickness($canvas,max(1,min(100,(int)round($e['strokeWidth']*($parent?$parent['width']:1)*$scale))));
             if ($e['kind']==='image') {
                 $r=$this->one('SELECT a.* FROM familyhub_idea_assets a JOIN familyhub_idea_report_assets r ON r.scope_id=a.scope_id AND r.board_id=a.board_id AND r.sha256=a.sha256 WHERE r.report_id=? AND a.sha256=?',[$report['id'],$e['asset']['sha256']]);
-                if ($r) {
-                    $img=@imagecreatefromstring((new NativeIdeaAssetService($this->container))->bytes($r));
+                $selected = null;
+                if (!$r && ($snapshot['evidenceTrust'] ?? null) === 'reporterDisclosed') {
+                    $selected = $this->one("SELECT s.* FROM familyhub_crypto_moderation_stages_v2 s JOIN familyhub_moderation_reports r ON r.id=s.report_id WHERE s.report_id=? AND s.sha256=? AND s.kind='asset' AND s.included=1 AND s.complete=1 AND r.redacted_at IS NULL", [$report['id'],$e['asset']['sha256']]);
+                }
+                if ($r || $selected) {
+                    $bytes = $r ? (new NativeIdeaAssetService($this->container))->bytes($r) : (new NativeCryptoModerationDisclosureV2($this->container))->bytes($selected);
+                    $img=@imagecreatefromstring($bytes);
                     if ($img) {
                         $ew=max(1,(int)round($e['width']*$scale));$eh=max(1,(int)round($e['height']*$scale));$resize=min(1,1800/max($ew,$eh));$tw=max(1,(int)round($ew*$resize));$th=max(1,(int)round($eh*$resize));$tile=imagecreatetruecolor($tw,$th);imagealphablending($tile,false);imagesavealpha($tile,true);$clear=imagecolorallocatealpha($tile,0,0,0,127);imagefill($tile,0,0,$clear);imagecopyresampled($tile,$img,0,0,0,0,$tw,$th,imagesx($img),imagesy($img));imagedestroy($img);
                         if ($e['rotation']!=0) { $rotated=imagerotate($tile,-rad2deg($e['rotation']),$clear);imagedestroy($tile);$tile=$rotated; }

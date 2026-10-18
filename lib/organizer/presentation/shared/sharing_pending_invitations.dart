@@ -1,3 +1,4 @@
+import '../recovery/crypto_invitation_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -198,6 +199,19 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       _error = null;
     });
     try {
+      if(invitation.contractVersion==4) {
+        final repository=await ref.read(collaborationRepositoryProvider.future);
+        final account=await repository.connectedCryptoAccount();
+        if(!mounted || !_guard.isCurrent)return;
+        final scope=await Navigator.of(context).push<String>(MaterialPageRoute(builder:(_)=>CryptoInvitationPage(account:account,invitationId:invitation.invitationId!)));
+        if(scope!=null && mounted && _guard.isCurrent) {
+          await _guard.controller.syncNow();
+          if(!mounted || !_guard.isCurrent)return;
+          await _guard.controller.selectSpace(scope);
+          if(mounted && _guard.isCurrent)widget.onAccepted(scope);
+        }
+        return;
+      }
       if (!_acceptedInvitations.contains(_invitationKey(invitation))) {
         try {
           if (token != null) {

@@ -1,0 +1,290 @@
+[
+    {
+        "type": "project",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "task",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "event",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "shoppingList",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "shoppingItem",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "householdPerson",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "garden",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "idea",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face"
+    },
+    {
+        "type": "financeAccount",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "financeEntry",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "financeTransfer",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "personalFinanceEntry",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "personalFinanceAccount",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "financeRecurrenceRule",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_records",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "43e59db9-07c2-8b95-8f05-f13cfa27f316"
+    },
+    {
+        "type": "table",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "tables",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "0a27485c-2e6b-8025-946b-8e80e959d8e4"
+    },
+    {
+        "type": "attachment",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "attachments",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "9f943ee2-834c-8128-9988-663194f4ec7b"
+    },
+    {
+        "type": "ideaAsset",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "idea_assets",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "2862c528-7e76-8292-bb53-e9b58eb8bd15"
+    },
+    {
+        "type": "paymentEvent",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "payment_events",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "2c910a16-f717-8c59-b8df-fe2623d9ea1c"
+    },
+    {
+        "type": "paymentProjection",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "payment_projections",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "271300be-f696-886b-a207-e42ed285b7c6"
+    },
+    {
+        "type": "cashMovement",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "payment_cash",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "826d08b0-76b9-8c9f-b2e7-bc598d0e7425"
+    },
+    {
+        "type": "scopeMetadata",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "scope_metadata",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "867f2b33-6a81-8bbd-9017-d3ae5c93dc05"
+    },
+    {
+        "type": "taskDerivationIntent",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "content",
+            "sourceKind": "task_derivation_intents",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "4b3d0acf-7a22-8b5d-be7a-7a0f5297c676"
+    },
+    {
+        "type": "taskDerivationResolution",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "task_derivation_resolutions",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "51eaf764-35f2-83a4-a19a-d86b48fde452"
+    },
+    {
+        "type": "financeAccountChoice",
+        "context": {
+            "version": 2,
+            "serverId": "11111111-1111-4111-8111-111111111111",
+            "scopeId": "22222222-2222-4222-8222-222222222222",
+            "domain": "finance",
+            "sourceKind": "finance_account_choices",
+            "canonicalId": "33333333-3333-4333-8333-333333333333"
+        },
+        "wireId": "5355873d-401e-8db3-bfc3-8ed5fdc0da91"
+    }
+]

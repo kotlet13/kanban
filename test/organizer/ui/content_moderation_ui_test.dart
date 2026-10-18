@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -302,6 +303,7 @@ void main() {
           CollaborationDatabase(NativeDatabase.memory()),
           transport,
           MemorySessionStore(),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await repo.initialize();
         container = ProviderContainer(

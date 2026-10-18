@@ -3,13 +3,58 @@ import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../domain/collaboration_models.dart';
 import '../organizer_errors.dart';
+import '../../data/e2ee/crypto_sync_repository.dart'
+    show CryptoAuthorityPending;
+import '../recovery/crypto_approvals_page.dart';
+
+bool isCryptoApprovalPending(Object error) =>
+    error is CryptoAuthorityPending &&
+    const {
+      'crypto_access_approval_required',
+      'crypto_lifecycle_delegation_required',
+      'crypto_lifecycle_approval_required',
+      'crypto_access_cleanup_required',
+      'crypto_leave_approval_required',
+    }.contains(error.reason);
+
+String cryptoApprovalsLabel(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'sl'
+    ? 'Čakajoče odobritve'
+    : 'Pending approvals';
+
+void openCryptoApprovals(BuildContext context) => Navigator.of(
+  context,
+).push<void>(MaterialPageRoute(builder: (_) => const CryptoApprovalsPage()));
+
+SnackBarAction? sharingApprovalAction(BuildContext context, Object error) =>
+    !isCryptoApprovalPending(error)
+    ? null
+    : SnackBarAction(
+        label: cryptoApprovalsLabel(context),
+        onPressed: () => openCryptoApprovals(context),
+      );
 
 String sharingErrorMessage(BuildContext context, Object error) {
+  if (error is CryptoAuthorityPending &&
+      error.reason == 'crypto_leave_renewal_required') {
+    return Localizations.localeOf(context).languageCode == 'sl'
+        ? 'Zahteva za izstop je potekla ali se je članstvo spremenilo. V Čakajočih odobritvah prekličite staro zahtevo in po novem pregledu oddajte novo.'
+        : 'The leave request expired or membership changed. Cancel the old request in Pending approvals and submit a new one after reviewing the current membership.';
+  }
+  if (isCryptoApprovalPending(error)) {
+    return Localizations.localeOf(context).languageCode == 'sl'
+        ? 'Sprememba čaka na pregled upraviteljev. Odprite Čakajoče odobritve, nato nadaljujte isto shranjeno spremembo.'
+        : 'This change awaits manager review. Open Pending approvals, then resume the same saved change.';
+  }
   if (error is! CollaborationException) {
     return organizerErrorMessage(context, error);
   }
   final l = context.l10n;
   return switch (error.code) {
+    'crypto_reconciliation_required' ||
+    'crypto_transport_required' ||
+    'crypto_server_upgrade_required' => l.cryptoConnectionPending,
+    'email_verification_required' => l.cryptoEmailVerificationRequired,
     'policy_acceptance_cancelled' => l.moderationPolicyRequired,
     'report_stale' ||
     'report_not_found' ||

@@ -44,7 +44,59 @@ Map<String, dynamic> preview() => {
     },
   ],
 };
+Map<String, dynamic> cryptoDeletionPreview() => {
+  ...preview(),
+  'policyVersion': 4,
+  'canDelete': true,
+  'blockers': [],
+  'ownedScopes': [],
+  'sharedScopes': [],
+  'resolutions': [],
+  'cryptoScopes': [
+    {
+      'scopeId': sharingScopeId,
+      'kind': 'household',
+      'role': 'member',
+      'headHash': 'b' * 64,
+      'accessRevision': 3,
+      'memberCount': 2,
+      'privateOwned': false,
+      'allowedActions': ['preserveReadOnly'],
+    },
+  ],
+  'cryptoRetention': {
+    'version': 1,
+    'retainsSharedSignedEvidence': true,
+    'mayRetainEncryptedWrappers': true,
+    'mayRetainEncryptedHistoricalBackups': true,
+    'mayRetainLegacyMigrationSources': true,
+    'erasesOtherKeyCopies': false,
+    'requiresFutureScopeRotation': true,
+  },
+};
 void main() {
+  test('policy4 requires exact retention and scoped removal choices', () {
+    final p = cryptoDeletionPreview();
+    expect(
+      decodeAccountDeletionPreview(p, sharingSession())['cryptoScopes'],
+      hasLength(1),
+    );
+    final bad = jsonDecode(jsonEncode(p)) as Map<String, dynamic>;
+    (bad['cryptoRetention'] as Map)['erasesOtherKeyCopies'] = true;
+    expect(
+      () => decodeAccountDeletionPreview(bad, sharingSession()),
+      throwsA(isA<CollaborationException>()),
+    );
+    final substitution = jsonDecode(jsonEncode(p)) as Map<String, dynamic>;
+    (substitution['cryptoScopes'] as List).single['allowedActions'] = [
+      'deletePrivate',
+    ];
+    expect(
+      () => decodeAccountDeletionPreview(substitution, sharingSession()),
+      throwsA(isA<CollaborationException>()),
+    );
+  });
+
   test('valid review decodes every consumed nested field', () {
     expect(
       decodeAccountDeletionPreview(preview(), sharingSession())['resolutions'],

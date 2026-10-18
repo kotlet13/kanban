@@ -1,3 +1,5 @@
+import '../support/legacy_schema_fixture.dart';
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -214,7 +216,7 @@ void main() {
         encrypted,
         password,
       );
-      expect(document['version'], 7);
+      expect(document['version'], 9);
       expect((document['ideaAssets'] as List).single['data'], isNotEmpty);
       final fresh = CollaborationDatabase(NativeDatabase.memory());
       final target = SqliteOrganizerStorage(fresh);
@@ -293,6 +295,7 @@ void main() {
       ]) {
         await db.execute('DROP TABLE $table');
       }
+      await removeSyntheticCryptoSchema(db);
       await db.execute('PRAGMA user_version=8');
       await db.close();
       db = CollaborationDatabase(NativeDatabase(file));
@@ -369,6 +372,7 @@ void main() {
         transport,
         MemorySessionStore(),
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       await shared.login(
@@ -622,6 +626,7 @@ void main() {
         sessions,
         ownsDatabase: false,
         deletionStore: MemoryAccountDeletionStore(),
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       await shared.login(

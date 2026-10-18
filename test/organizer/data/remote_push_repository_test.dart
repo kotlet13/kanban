@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -27,6 +28,7 @@ void main() {
       transport,
       sessionStore,
       pushStore: pushStore,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     repos.add(repo);

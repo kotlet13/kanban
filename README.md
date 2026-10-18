@@ -1,5 +1,21 @@
 # Jivie
 
+**18. oktober — E2EE nadgradnja v zaključnem preverjanju izvora:** lokalni
+vault, obnovitvena datoteka, podpisani imenik v2 in Capture3 so povezani pod
+izrecnim preview varovalom. Migracija, sveža FILE obnova in povezani
+poslovni zaključek ter seznam/umik migriranih opomnikov use3 so potrjeni;
+celotni Flutter66 je razkril regresije, ki sta jih prizadeti ponovitvi69/70 zaključili.
+Analiza ima0 error/0 warning ter510 info; ne trdimo novega svežega celotnega teka.
+Generacija B, sveža FILE obnova in običajno branje priponke so potrjeni. [Izvedba](docs/E2EE_IMPLEMENTATION.md#dokazi-in-končno-preverjanje)
+vodi dejanske rezultate, izvorne vezave in odprte meje, vključno z dragim prvim
+hladnim prenosom. [Protokol](docs/E2EE_PROTOCOL.md) in
+[načrt](docs/E2EE_UPGRADE_PLAN.md) ohranita pogoje P0/P8; neodvisni pregled,
+fizične kontrole in izdaja še niso potrjeni. Lokalna uporaba ostane brez računa.
+Računska FILE ni podatkovna kopija in je Jivie SMTP ne pošilja. Stari berljivi
+viri/kopije še obstajajo; dogovorjeni30-dnevni rok za gostovanji začne teči
+šele po dokumentirani dejanski uspešni obnovi nove šifrirane kopije.
+Ni spremembe gostovanj, app verzije, gradnje ali trgovinske oddaje.
+
 **17. oktober — hierarhični izbirnik prostorov izveden v izvoru:** razširljivi prostori
 s projekti, iskanje po zloženih vejah in razdelek »Deljeno z mano« glede na
 trenutno lastništvo. [Izvedba in preverjanje](docs/SPACE_PICKER_HIERARCHY_IMPLEMENTATION.md).
@@ -230,7 +246,7 @@ Podrobnejši [pregled kode in že narejenih sprememb](docs/CODEBASE_AUDIT.md) lo
 
 Prejšnja funkcionalna etapa je preverila **297 Flutter testov in tri dodatne dejanske HTTP teste**, FamilyHub 0.5.0 pa **436 strežniških preverjanj na vsaki** od SQLite, MySQL in MariaDB. Uspeli so spletna gradnja, Android debug APK, iOS simulator in macOS debug; podrobnosti so v [funkcionalnem mejniku](docs/PERSONAL_SYNC_AND_RECOVERY.md). Zgodovinske dokaze ohranjajo [prvo deljenje](docs/SHARING_MILESTONE.md), [družinska nadgradnja](docs/FAMILY_UPGRADE.md) in [priprava FCM](docs/FIREBASE_PREPARATION.md). Native API je v namestitvenem ZIP privzeto izključen in na produkcijo še ni nameščen. Novi podatki so v lastnih tabelah; povabila ne odprejo starih Kanboardovih projektov ali finančnih metapodatkov. Priponke še niso del nove sinhronizacije.
 
-Aktivna SQLite baza, ohranjeni Hive ter napredni JSON izvozi nimajo dodatnega šifriranja. Prenosni format `.vsakdan` uporablja AES-256-GCM in geslo kopije. Osebna projekcija ostaja omejena na 10 MiB/50.000 zapisov; transakcije preverjajo revizijo in identiteto. Preizkusi dveh naprav ne pomenijo potrjene uskladitve prikaza v več sočasnih procesih iste namestitve.
+V že izdani različici 1.10.1 (31) aktivna SQLite baza, ohranjeni Hive ter napredni JSON izvozi nimajo dodatnega šifriranja. Nova izvorna native shramba jih vključuje v lokalni vault, vendar ta koda še ni izdana; spletni odjemalec nima iste native meje zaščite. Prenosni format `.vsakdan` uporablja overjeno šifriranje in geslo kopije. Osebna projekcija ostaja omejena na 10 MiB/50.000 zapisov; transakcije preverjajo revizijo in identiteto. Preizkusi dveh naprav ne pomenijo potrjene uskladitve prikaza v več sočasnih procesih iste namestitve.
 
 ## Prijava in lokalni podatki
 
@@ -261,7 +277,7 @@ Uporabo začnemo brez računa v prostoru Osebno; lokalno lahko ustvarimo tudi go
 
 Skupna baza prek Drift hrani zapise, odhodne operacije, konflikte in kazalce v transakcijah. Katalog razlikuje Osebno, gospodinjstvo in organizacijo; organizacijski projekt je tudi meja članstva. Obstoječi samostojni deljeni projekti ostanejo dostopni. Vlogo vodje določi lastnik organizacije; daje izpeljano branje projektov, pravice pisanja pa ostanejo ločene. Nova vsebina se ureja v tej aplikaciji; Kanboardov spletni vmesnik ni drugi urejevalnik teh tabel.
 
-Lokalni račun je ločen po naslovu strežnika in trajnih identifikatorjih strežnika ter računa. Odjava skrije skupno zbirko in ohrani neposlano delo za isti račun; drugi uporabnik ga ne sme prebrati ali poslati. Žeton naprave je v varni shrambi brez rezervne kopije v običajnih nastavitvah. Novi prenosni izvoz je šifriran; aktivna lokalna baza še nima dodatnega šifriranja.
+Lokalni račun je ločen po naslovu strežnika in trajnih identifikatorjih strežnika ter računa. Odjava skrije skupno zbirko in ohrani neposlano delo za isti račun; drugi uporabnik ga ne sme prebrati ali poslati. Žeton naprave je v varni shrambi brez rezervne kopije v običajnih nastavitvah. Prenosni izvoz je šifriran. Izdana različica 31 še nima šifrirane aktivne baze; nova izvorna native shramba jo odpre prek lokalnega vaulta pred porabniki podatkov.
 
 Sinhronizacija poteka ob urejanju, vrnitvi v aplikacijo in periodično, dokler aplikacija teče. To ni zagotovljena dostava v ozadju zaprte aplikacije. Ob konfliktu uporabnik izbere strežniško različico ali ponovno odda lokalno spremembo na podlagi nove revizije. Preklic dostopa ustavi nove strežniške operacije, ne more pa takoj izbrisati kopije na nepovezani napravi. Ponovno članstvo ne pošlje prej blokiranih sprememb brez izrecnega nadaljevanja.
 

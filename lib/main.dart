@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'organizer/platform/backup_ui_preferences.dart';
 import 'organizer/state/portable_backup_provider.dart';
+import 'organizer/presentation/recovery/local_vault_bootstrap.dart';
 
 final _desktopWindowPersistence = _DesktopWindowPersistence();
 
@@ -29,7 +30,7 @@ Future<void> main() async {
           PlatformBackupUiPreferencesStore(),
         ),
       ],
-      child: const JivieApp(),
+      child: const LocalVaultBootstrap(child: JivieApp()),
     ),
   );
 }

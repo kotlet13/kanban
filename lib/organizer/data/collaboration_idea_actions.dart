@@ -53,10 +53,16 @@ extension CollaborationIdeaActions on CollaborationRepository {
         'SELECT bytes FROM idea_assets WHERE workspace=? AND sha256=?',
         [workspace, asset.sha256],
       );
-      if (rows.isEmpty) {
+      final bytes = rows.isEmpty
+          ? await CryptoMigrationIdeaDraftRecovery.asset(
+              database,
+              workspace,
+              asset,
+            )
+          : Uint8List.fromList(rows.single['bytes'] as List<int>);
+      if (bytes == null) {
         throw const CollaborationException('idea_asset_missing');
       }
-      final bytes = Uint8List.fromList(rows.single['bytes'] as List<int>);
       await verifyIdeaAsset(asset, bytes);
       _checkEpoch(epoch);
       final offset = start['offset'];

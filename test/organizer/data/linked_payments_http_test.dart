@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Only explicitly opted-in synthetic loopback data. No credentials/body logging.
 import 'dart:convert';
 import 'dart:io';
@@ -43,6 +44,7 @@ void main() {
               http,
               sessions ?? MemorySessionStore(),
               ownsDatabase: false,
+              contentRouteGuard: const SyntheticContentRouteGuard(),
             );
         await SqliteOrganizerStorage(db).initialize();
         await repo.initialize();
@@ -304,6 +306,7 @@ void main() {
         offline,
         sessions,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(() async {
         await reopened.close();

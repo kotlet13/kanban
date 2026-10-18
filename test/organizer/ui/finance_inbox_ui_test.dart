@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/data/local_vault_preferences.dart';
 import 'dart:convert';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -255,7 +256,9 @@ void main() {
         ..launchPayload = jsonEncode(plan.target.toJson());
       final adapter = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: await SharedPreferences.getInstance(),
+        preferences: TestLocalVaultPreferences(
+          await SharedPreferences.getInstance(),
+        ),
       );
       final target = await adapter.initialize((_) {});
       expect(target, isNotNull);

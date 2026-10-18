@@ -19,7 +19,8 @@ void main() {
   test('topic display requires negotiated format and strict identity', () {
     final message = SystemPushMessage.tryParse(data())!;
     expect(message.sound, true);
-    expect(message.title, 'Dodano v Nakupi');
+    expect(message.title, 'Jivie');
+    expect(message.body, 'V aplikaciji Jivie imate opomnik.');
     expect(
       SystemPushMessage.tryParse({...data(), 'displayVersion': '1'}),
       isNull,
@@ -55,7 +56,8 @@ void main() {
         title: 'Private',
       ),
     ]);
-    expect(group.lines, ['Projekt Mansarda', 'Dodano v Nakupi']);
+    expect(group.lines, List.filled(2, 'V aplikaciji Jivie imate opomnik.'));
+    expect(group.lines.join(), isNot(contains('Mansarda')));
     expect(group.label('sl'), 'Nova obvestila (2)');
     expect(group.label('en'), 'New notifications (2)');
     expect(message.id, isNot(message.summaryId));

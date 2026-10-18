@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 19;
+const VERSION = 20;
 
 function version_1(PDO $pdo)
 {
@@ -112,4 +112,9 @@ function version_18(PDO $pdo)
 function version_19(PDO $pdo)
 {
     DocumentsSchema::create($pdo, false);
+}
+
+function version_20(PDO $pdo)
+{
+    CryptoSchema::create($pdo,false);
 }

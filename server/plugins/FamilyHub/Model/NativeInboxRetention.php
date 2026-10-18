@@ -19,6 +19,8 @@ class NativeInboxRetention extends NativeDatabase
     /** Caller holds the recipient user lock in its transaction. */
     public function pruneForUser(array $user, $limit = 100, $now = null)
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
         if (!is_int($limit) || $limit < 1 || $limit > 500 || ($now !== null && !is_int($now))) { throw new NativeError('validation_error'); }
         $account = $user['account_id'];
         $writer = new NativeNotificationWriter($this->container);

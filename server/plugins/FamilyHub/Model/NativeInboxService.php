@@ -116,6 +116,7 @@ class NativeInboxService extends NativeDatabase
 
     private function visible($row, $account)
     {
+        if(NativeCryptoFence::workerBlocked($this->pdo,$row['scope_id'])){return false;}
         return (new NativeFinanceAccess($this->container))->visible($row['scope_id'], $account, $this->financialRecordType($row['target_type']));
     }
 

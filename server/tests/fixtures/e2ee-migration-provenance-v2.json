@@ -1,0 +1,67 @@
+{
+  "header": {
+    "version": 2,
+    "serverId": "11111111-1111-4111-8111-111111111111",
+    "migrationId": "44444444-4444-4444-8444-444444444444",
+    "componentHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "scopeToken": "816c77f7072e6c2b2ecf64f8711b3bf3cc91d72cc71c6789d1f3b8f391dbd911",
+    "scopeId": "22222222-2222-4222-8222-222222222222",
+    "domain": "content",
+    "inventoryHash": "25efa9cb246ca73f262dc63c54ea70b3e1b7dfa080c2525d83ca15875f9e608e",
+    "membershipHeadHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "managerAccountId": "55555555-5555-4555-8555-555555555555",
+    "managerDirectoryHeadHash": "9999999999999999999999999999999999999999999999999999999999999999",
+    "sourceRowCount": 1,
+    "materializedRecordProofCount": 1
+  },
+  "leaf": {
+    "version": 2,
+    "migrationId": "44444444-4444-4444-8444-444444444444",
+    "inventoryHash": "25efa9cb246ca73f262dc63c54ea70b3e1b7dfa080c2525d83ca15875f9e608e",
+    "scopeId": "22222222-2222-4222-8222-222222222222",
+    "domain": "content",
+    "membershipHeadHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceTable": "familyhub_records",
+    "sourceId": "33333333-3333-4333-8333-333333333333",
+    "sourceRowHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "legacyRevision": 50,
+    "sourceKind": "records",
+    "canonicalId": "33333333-3333-4333-8333-333333333333",
+    "wireId": "48e295e5-89b4-8825-beb2-20ef53b9face",
+    "type": "task",
+    "recordProofHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "materializationRole": "primary",
+    "contributorAccountId": "66666666-6666-4666-8666-666666666666",
+    "contributorDeviceId": "77777777-7777-4777-8777-777777777777",
+    "contributorDeviceSnapshotHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "archiveManifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "coldParityHash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "sourceInventoryHash": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "leafHash": "f5a036251d6d3ecd42e8b90007232e5cbb4a9456ac3d07a14d64fa1d4b9b94e3",
+  "root": "e5f4b8370efffdddf15053de28f8f29c2249881bbe9bd69f9a0bca9713f70905",
+  "emptyHeader": {
+    "version": 2,
+    "serverId": "11111111-1111-4111-8111-111111111111",
+    "migrationId": "44444444-4444-4444-8444-444444444444",
+    "componentHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "scopeToken": "816c77f7072e6c2b2ecf64f8711b3bf3cc91d72cc71c6789d1f3b8f391dbd911",
+    "scopeId": "22222222-2222-4222-8222-222222222222",
+    "domain": "content",
+    "inventoryHash": "25efa9cb246ca73f262dc63c54ea70b3e1b7dfa080c2525d83ca15875f9e608e",
+    "membershipHeadHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "managerAccountId": "55555555-5555-4555-8555-555555555555",
+    "managerDirectoryHeadHash": "9999999999999999999999999999999999999999999999999999999999999999",
+    "sourceRowCount": 0,
+    "materializedRecordProofCount": 0
+  },
+  "emptyRoot": "f86ec965080ad08a55bc24332fc8bf3cc54248b5145e733e299ca8beb8a93272",
+  "portions": [
+    {
+      "portionToken": "b4cfa310a4503eeff42cb49c0b1cc551d32f202e9a7b8e01f3ba7a6e44d189e5",
+      "inventoryHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "portionToken": "b4cfa310a4503eeff42cb49c0b1cc551d32f202e9a7b8e01f3ba7a6e44d189e5",
+  "inventoryHash": "25efa9cb246ca73f262dc63c54ea70b3e1b7dfa080c2525d83ca15875f9e608e"
+}

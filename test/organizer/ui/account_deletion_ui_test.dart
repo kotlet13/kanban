@@ -4,7 +4,8 @@ import 'package:kanban/organizer/presentation/onboarding/account_deletion_panel.
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'sharing_ui_fixture.dart';
 import 'onboarding_ui_test.dart' show pumpPanel;
-import '../data/account_deletion_preview_test.dart' show preview;
+import '../data/account_deletion_preview_test.dart'
+    show preview, cryptoDeletionPreview;
 
 class DeletionUiController extends SharingUiController {
   DeletionUiController()
@@ -13,7 +14,7 @@ class DeletionUiController extends SharingUiController {
   bool staleOnce = false;
   Map<String, dynamic>? providedPreview;
   Map<String, dynamic>? reviewSent;
-  List<Map<String, Object?>>? transfersSent, resolutionsSent;
+  List<Map<String, Object?>>? transfersSent, resolutionsSent, cryptoSent;
   @override
   Future<Map<String, dynamic>> previewAccountDeletion() async {
     loads++;
@@ -27,6 +28,7 @@ class DeletionUiController extends SharingUiController {
     String? otp,
     List<Map<String, Object?>> ownershipTransfers = const [],
     List<Map<String, Object?>> resolutions = const [],
+    List<Map<String, Object?>> cryptoResolutions = const [],
     List<String> ownedScopeDeletions = const [],
     Map<String, dynamic> review = const {},
   }) async {
@@ -34,6 +36,7 @@ class DeletionUiController extends SharingUiController {
     reviewSent = review;
     transfersSent = ownershipTransfers;
     resolutionsSent = resolutions;
+    cryptoSent = cryptoResolutions;
     if (staleOnce) {
       staleOnce = false;
       throw const CollaborationException('deletion_preview_stale');
@@ -73,6 +76,36 @@ Future<void> choices(WidgetTester tester, {bool withPassword = true}) async {
 }
 
 void main() {
+  testWidgets(
+    'policy4 requires explicit read-only choice and preserves exact head selection at 320px',
+    (tester) async {
+      final controller = DeletionUiController()
+        ..providedPreview = cryptoDeletionPreview();
+      await pumpPanel(
+        tester,
+        controller,
+        const AccountDeletionPanel(),
+        width: 320,
+        language: 'en',
+      );
+      await tester.tap(find.byIcon(Icons.person_remove_outlined));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Encrypted historical backups'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('deletion-password')), findsNothing);
+      final choice = find.byKey(ValueKey('deletion-crypto-$sharingScopeId'));
+      await tester.ensureVisible(choice);
+      await tester.tap(choice);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Keep shared history; remove my access').last);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('deletion-password')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final width in [320.0, 1280.0]) {
     for (final lang in ['sl', 'en']) {
       testWidgets('policy3 conditional shared payment facts $width $lang', (

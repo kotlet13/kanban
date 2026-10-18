@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in private loopback TLS+SMTP fixture. No external mail or production data.
 // KANBAN_EMAIL_HTTP_FIXTURE=/absolute/private/fixture.json flutter test ...
 import 'dart:convert';
@@ -94,6 +95,7 @@ void main() {
           invitationStore: name == 'recipient'
               ? pending
               : MemoryPendingInvitationStore(),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repositories.add(repo);
         await repo.initialize();

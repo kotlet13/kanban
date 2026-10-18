@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'local_vault_preferences_provider.dart';
 import '../domain/local_notification_preferences.dart';
 import '../domain/notification_models.dart';
 import '../platform/notification_providers.dart';
@@ -20,7 +20,7 @@ class LocalNotificationPreferencesController
   @override
   Future<LocalNotificationPreferences> build() async {
     final legacy = await ref.watch(localReminderSettingsProvider.future);
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await ref.read(localVaultPreferencesProvider.future);
     final raw = prefs.getString(storageKey);
     if (raw != null) {
       return LocalNotificationPreferences.fromJson(
@@ -56,7 +56,7 @@ class LocalNotificationPreferencesController
         project: project,
         resetWorkspaces: resetWorkspaces,
       );
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await ref.read(localVaultPreferencesProvider.future);
       if (stillCurrent?.call() == false) {
         throw StateError('Notification account changed');
       }

@@ -1,0 +1,471 @@
+{
+  "format": "jivie-e2ee-existing-representatives-v1",
+  "status": "REQUIRED_HTTP_CLOSED_SOURCE_BOUND_FINAL_FLUTTER_ANALYZE_PENDING",
+  "rules": [
+    "Root must declare the shared source freeze and assign each representative before execution.",
+    "Run serially; no concurrent Flutter/native-assets/HTTP seeds. Fresh starts use fresh synthetic loopback fixtures; root-approved saved continuations preserve the same original synthetic fixture and exact private SQL/secure/session/FILE state without reseeding.",
+    "Set each required fixture environment variable to a private path outside the repository (mode 0600); do not print fixture contents or credentials.",
+    "Do not count fixture-skipped tests as runtime coverage. No JIVIE_TEST_RETRY_RATE_LIMITS override for the public production coordinator.",
+    "Verify the shared source manifest before and after each assigned representative. Source drift DURING that run invalidates that run. A deliberate concrete fix AFTER a completed run creates a new manifest revision; rerun affected checks only, retain unrelated green evidence with original hashes and relevance notes. The final full matrix uses final source."
+  ],
+  "freeze": {
+    "script": "tools/release/freeze_e2ee_source.py",
+    "plan": [
+      "python3",
+      "tools/release/freeze_e2ee_source.py"
+    ],
+    "create": [
+      "python3",
+      "tools/release/freeze_e2ee_source.py",
+      "--write",
+      "${FREEZE_MANIFEST}"
+    ],
+    "verify": [
+      "python3",
+      "tools/release/freeze_e2ee_source.py",
+      "--verify",
+      "${FREEZE_MANIFEST}"
+    ]
+  },
+  "representatives": [
+    {
+      "id": "public-capture3-combined-choices-file-35-idea-audit",
+      "owner": "client_code_map",
+      "status": "PASS_REQUIRED_ASSERTIONS_FULL47_MIGRATION_SAME_STATE_TAIL61",
+      "fixtureEnv": "JIVIE_MIGRATION_HTTP_FIXTURE",
+      "privateSeedStdout": "${JIVIE_MIGRATION_HTTP_FIXTURE}",
+      "seedArgv": [
+        "docker",
+        "exec",
+        "-u",
+        "nginx",
+        "-e",
+        "JIVIE_CAPTURE_TEST_LARGE_RECORD=1",
+        "-e",
+        "JIVIE_CAPTURE_TEST_AUDIT=1",
+        "-e",
+        "JIVIE_CAPTURE_TEST_IDEA=1",
+        "-e",
+        "JIVIE_CAPTURE_TEST_EXTRA_RECORDS=35",
+        "-e",
+        "JIVIE_CAPTURE_TEST_CHOICES=1",
+        "familyhub-crypto-tests-sqlite-1",
+        "php",
+        "/familyhub-tests/crypto2-migration-http-seed.php"
+      ],
+      "environment": {
+        "JIVIE_CAPTURE_TEST_PUBLIC_COORDINATOR": "1",
+        "JIVIE_MIGRATION_HTTP_FIXTURE": "${JIVIE_MIGRATION_HTTP_FIXTURE}",
+        "JIVIE_CAPTURE_TEST_EXTRA_RECORDS": "35"
+      },
+      "argv": [
+        "/Users/anzenovsak/Dev/flutter/bin/flutter",
+        "test",
+        "test/organizer/data/e2ee/crypto_capture_v3_http_test.dart",
+        "--reporter",
+        "expanded"
+      ],
+      "seedProfile": "35 extra rows only; no new 1001-row profile.",
+      "coverage": "ONE merged existing representative: separate issuer/target FILE and journals, signed/sealed split-role choice handoff, final commit lost ACK, fresh FILE blank-SQL normal parent/audit/Idea/attachment read, existing child admission and READ grant, contributor checkpoint and last child finance-link deletion lost ACK exact retry. No separate overlapping public35 run.",
+      "evidence": {
+        "outcome": "PASS_REQUIRED_ASSERTIONS_BY_ORIGINAL_MIGRATION_AND_SAME_STATE_CONTINUATIONS",
+        "completedMigrationAndFile": {
+          "path": "build/qa/e2ee-source-upgrade/shared-freeze-47-public-combined-safe-evidence.json",
+          "sha256": "16dd151e8cdc13f235572dc7e048305b97f730659550387470a9c46569107d8a"
+        },
+        "tailRuns": [
+          {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-48-combined-tail-safe-evidence.json",
+            "sha256": "5cfbacf50184d6271e8c9350ce734adf5b6fc71066972e4b5740c23843208d2a"
+          },
+          {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-49-combined-tail-safe-evidence.json",
+            "sha256": "81358a4b4c7d00088276ce6d62cf3b40603b8238bcd2f9f944bdbf2408bfa1c4"
+          },
+          {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-51-combined-tail-safe-evidence.json",
+            "sha256": "a52799142f185df6fe4ba3ede4c1f98285a2546a7df893c750d3bae03a881a96"
+          },
+          {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-52-combined-tail-safe-evidence.json",
+            "sha256": "266fe32f7cacf4b6d2a4bdf1dafb3ab2dd84f93987f1012c9c751dda06f2d4aa"
+          },
+          {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-53-combined-tail-safe-evidence.json",
+            "sha256": "fc9ebf6e7cd95f614fff740da6053209b63b590b29aca78f55d8b2fca364f61a"
+          }
+        ],
+        "covered": [
+          "47 full migration prefix with35 extra rows and split FILE roles, commit3/exactlostACK, complete fresh FILE/blankSQL recovery",
+          "Consumed normal v4 resume, original policy/READ grant and accepted52 head3 retained",
+          "53 owner ordinary childfinance pull completed",
+          "61 exactdescriptor/parentcomplete before+after/raw unchanged/lastlinkdelete/exactlostACK+requestbytes/sequence+tombstone PASS"
+        ],
+        "pending": [],
+        "stateContinuity": "Original47 private checkpoints retained through53. No new migration prefix, invitation, grant or accepted request regeneration is required. Obsolete lost in-memory30 state is not the current input.",
+        "notClaimed": "Not a new fresh single full-run PASS. Original47 migration and FILE plus same-state61 complete the agreed scenario; no additional finance suite run.",
+        "finalClosure": {
+          "testsPassed": 1,
+          "testsSkipped": 0,
+          "elapsedSeconds": 4.514,
+          "sourceManifest": "shared-freeze-61.json",
+          "sourceFiles": 1485,
+          "sourceAggregateSha256": "2aca1d899a50b38d0755e85bdb6995197e8283b14fef660e3ec984c29a301043",
+          "reportedBy": "Root explicit completed result",
+          "aggregateEvidencePath": "build/qa/e2ee-source-upgrade/public-combined-continuation-evidence.json",
+          "aggregateEvidenceSha256": "63111984dbd31fb8b264f4c52a66b136ce1104558e51e715011e9f4a58620184",
+          "aggregateBindingPending": false,
+          "finalSafeEvidence": {
+            "path": "build/qa/e2ee-source-upgrade/shared-freeze-61-combined-tail-safe-evidence.json",
+            "sha256": "19bed1a55e1110dfe223408e923d5b582b1be1acc5e122c52370799710498124"
+          }
+        },
+        "manifest": {
+          "path": "build/qa/e2ee-source-upgrade/public-combined-continuation-evidence.json",
+          "sha256": "63111984dbd31fb8b264f4c52a66b136ce1104558e51e715011e9f4a58620184"
+        }
+      }
+    },
+    {
+      "id": "inline-project-final-matcher",
+      "owner": "client_e2ee",
+      "status": "PASS_FRESH_REPRESENTATIVE_FREEZE31",
+      "fixtureEnv": "JIVIE_INLINE_DELETE_HTTP_FIXTURE",
+      "privateSeedStdout": "${JIVIE_INLINE_DELETE_HTTP_FIXTURE}",
+      "seedArgv": [
+        "docker",
+        "exec",
+        "-u",
+        "nginx",
+        "familyhub-crypto-tests-sqlite-1",
+        "php",
+        "/familyhub-tests/crypto-http-seed.php"
+      ],
+      "environment": {
+        "JIVIE_INLINE_DELETE_HTTP_FIXTURE": "${JIVIE_INLINE_DELETE_HTTP_FIXTURE}"
+      },
+      "argv": [
+        "/Users/anzenovsak/Dev/flutter/bin/flutter",
+        "test",
+        "test/organizer/data/e2ee/crypto_inline_deletion_http_test.dart",
+        "--reporter",
+        "expanded"
+      ],
+      "evidence": {
+        "outcome": "PASS",
+        "enabledTests": 1,
+        "skippedTests": 0,
+        "sourceManifest": {
+          "path": "build/qa/e2ee-source-upgrade/shared-freeze-31.json",
+          "sha256": "fce1ebf24d50661ca23d23a97cb6886ba406d30122c0423fc95a711e2609bc74"
+        },
+        "sourceAggregateSha256": "0c63d676d001f837f22c29345d31ac9b985352caaa559f4c7ca5e54fe2db0604",
+        "log": {
+          "path": "build/qa/e2ee-source-upgrade/shared-freeze-31-inline-project.log",
+          "sha256": "d5bda3c2a37d91f28820c112e47b9b7c5c16cfea68ab8a9233d93dbd22cb247f"
+        },
+        "interpretation": "Fresh enabled actual >32 inline project deletion; scoped final proof, exact lostACK retry and denial matchers passed. Later unrelated fixes do not require replay of this completed representative."
+      }
+    },
+    {
+      "id": "retained-invitation-recovered-owner-protection",
+      "owner": "client_e2ee",
+      "status": "PASS_REQUIRED_ASSERTIONS_SAME_STATE_CONTINUATIONS",
+      "fixtureEnv": "JIVIE_RETAINED_RECOVERY_HTTP_FIXTURE",
+      "privateSeedStdout": "${JIVIE_RETAINED_RECOVERY_HTTP_FIXTURE}",
+      "seedArgv": [
+        "docker",
+        "exec",
+        "-u",
+        "nginx",
+        "familyhub-crypto-tests-sqlite-1",
+        "php",
+        "/familyhub-tests/crypto2-retained-invitation-recovery-http-seed.php"
+      ],
+      "environment": {
+        "JIVIE_RETAINED_RECOVERY_HTTP_FIXTURE": "${JIVIE_RETAINED_RECOVERY_HTTP_FIXTURE}"
+      },
+      "argv": [
+        "/Users/anzenovsak/Dev/flutter/bin/flutter",
+        "test",
+        "test/organizer/data/e2ee/crypto_retained_invitation_recovery_http_test.dart",
+        "--reporter",
+        "expanded"
+      ],
+      "evidence": {
+        "outcome": "PASS_BY_SAME_STATE_CONTINUATIONS",
+        "coveredByRuns": [
+          "36b",
+          "38",
+          "39",
+          "40",
+          "41"
+        ],
+        "manifest": {
+          "path": "build/qa/e2ee-source-upgrade/retained-invitation-recovery-continuation-evidence.json",
+          "sha256": "8ee5fff33e8234959c7c24418545fa386cb47ce9561be3bbb5821749b5f32e0c"
+        },
+        "notClaimed": "Not a fresh single full-run PASS. The bound manifest identifies source/log/harness hashes and exact state continuity for every required original assertion.",
+        "limitations": [
+          "Same-root FILE recovery profile",
+          "Bounded128-head/16MiB policy-proof-free descriptor ancestry",
+          "Explicit history review retained; no global trust or altered original request bytes"
+        ]
+      }
+    },
+    {
+      "id": "project-relocation",
+      "owner": "server_code_map",
+      "status": "PASS_REQUIRED_ASSERTIONS_SAME_STATE_CONTINUATIONS",
+      "fixtureEnv": "JIVIE_PROJECT_RELOCATION_HTTP_FIXTURE",
+      "privateSeedStdout": "${JIVIE_PROJECT_RELOCATION_HTTP_FIXTURE}",
+      "seedArgv": [
+        "docker",
+        "exec",
+        "-u",
+        "nginx",
+        "familyhub-crypto-tests-sqlite-1",
+        "php",
+        "/familyhub-tests/crypto-project-relocation-http-seed.php"
+      ],
+      "environment": {
+        "JIVIE_PROJECT_RELOCATION_HTTP_FIXTURE": "${JIVIE_PROJECT_RELOCATION_HTTP_FIXTURE}"
+      },
+      "argv": [
+        "/Users/anzenovsak/Dev/flutter/bin/flutter",
+        "test",
+        "test/organizer/data/e2ee/crypto_project_relocation_http_test.dart",
+        "--reporter",
+        "expanded"
+      ],
+      "evidence": {
+        "outcome": "PASS_BY_SAME_STATE_CONTINUATIONS",
+        "coveredByRuns": [
+          "43",
+          "44",
+          "45",
+          "46"
+        ],
+        "manifest": {
+          "path": "build/qa/e2ee-source-upgrade/project-relocation-continuation-evidence.json",
+          "sha256": "8edfe5a30f0ad5c0b0550107de47b2e191a2a30789d05986c7a1fd5e2cabd8b6"
+        },
+        "finalEvidenceSourceAggregateSha256": "5557be2eaec9c38d88614a86cc2507cbd3af22387a19ae6ba1edb588e774fa0b",
+        "notClaimed": "Not a fresh single full-run or performance PASS. Exact committed43 fixture and private checkpoints were continued without reseeding.",
+        "canonicalTestAfterEvidence": {
+          "path": "test/organizer/data/e2ee/crypto_project_relocation_http_test.dart",
+          "sha256": "076da3a844f434118ce39babeb6890219b9d0ad11e19beac26a7d93d809f64aa",
+          "note": "Corrected afterward to model the demonstrated explicit review/confirmation and final recipient complete checkpoint, private durable boundary state and finite30-minute opt-in budget. Narrow analyzer passed; no new fresh prefix run is claimed."
+        },
+        "performanceLimitation": "First full cold/recipient verification took many minutes and thousands of RPCs; same-state later reads were faster. No performance optimization or PASS is implied."
+      }
+    },
+    {
+      "id": "capture3-use3-generation-continuation",
+      "owner": "server_code_map",
+      "status": "PASS_REQUIRED_ASSERTIONS_CANONICAL64_SAME_STATE_WITHDRAWAL65",
+      "fixtureEnv": "JIVIE_MIGRATION_HTTP_FIXTURE",
+      "privateSeedStdout": "${JIVIE_MIGRATION_HTTP_FIXTURE}",
+      "seedArgv": [
+        "docker",
+        "exec",
+        "-u",
+        "nginx",
+        "familyhub-crypto-tests-sqlite-1",
+        "php",
+        "/familyhub-tests/crypto2-migration-use3-generation-http-seed.php"
+      ],
+      "environment": {
+        "JIVIE_MIGRATION_HTTP_FIXTURE": "${JIVIE_MIGRATION_HTTP_FIXTURE}",
+        "JIVIE_CAPTURE_TEST_PUBLIC_COORDINATOR": "1",
+        "JIVIE_USE3_GENERATION_CHECKPOINT_DIRECTORY": "${JIVIE_USE3_GENERATION_CHECKPOINT_DIRECTORY}"
+      },
+      "argv": [
+        "/Users/anzenovsak/Dev/flutter/bin/flutter",
+        "test",
+        "test/organizer/data/e2ee/crypto_capture_use3_generation_http_test.dart",
+        "--reporter",
+        "expanded",
+        "--concurrency",
+        "1"
+      ],
+      "seedProfile": "Canonical short12-row use3 fixture with valid captured relative reminder offset60/due-minus3600 and pending/delivered states; no choices/shared/Idea/audit/extra-record selectors or rate-limit override.",
+      "coverage": "ONE continuous public coordinator probe: prepublication A supersession, accepted-publication B continuation with original proof retention and lost ACK, fresh FILE blank SQL normal list and own READ-independent use3 withdrawal. No worker delivery or real ACL-revocation claim.",
+      "evidence": {
+        "outcome": "PASS_BY_CANONICAL64_AND_EXACT_SAVED_CONTINUATION65",
+        "coveredByRuns": [
+          "64",
+          "65"
+        ],
+        "manifest": {
+          "path": "build/qa/e2ee-source-upgrade/use3-withdrawal64-tail/runtime-safe-evidence.json",
+          "sha256": "cc2ffb1d18511db13c1472eb075b394c75c83f28b6d33d40bb1db5b71e051dae"
+        },
+        "positivePrefix": {
+          "path": "build/qa/e2ee-source-upgrade/use3-valid-offset/runtime-safe-evidence.json",
+          "sha256": "ddfa01c1669526641e3fd436c880acfc207acbf936c9bc9a3078a12c1bd28fa8"
+        },
+        "covered": [
+          "A supersession and original proposal retention",
+          "B retained-material finalization/accepted lostACK exact retry",
+          "FreshFILE9 verified/noquarantine/task+expense payload equality",
+          "Fullattachment bytes/hash and ordinarytransport separation",
+          "Genuine captured-v3 valid60 pending+delivered list",
+          "Original rejected422 body/hash/receipt unchanged; explicit new corrected cancellation and event same new requestID",
+          "Accepted cancellation lostACK exact immutable retry; revision+1/delivered unchanged; zero targetreads/no reminder put"
+        ],
+        "notClaimed": "Not a second fresh full-run PASS. Corrected canonical64 positive prefix and exact saved64 withdrawal65 continuation jointly close required assertions. Historical49\u201363 partial/invalid-offset-negative evidence is not substituted for positive64/65. No realACLrevocation or SMTP/FCM worker/delivery claim."
+      },
+      "checkpointRequirements": "Required fresh absolute directory outside the repository under a private0700 parent; canonical test creates the directory exclusively and stores0600 durable checkpoints. Never include private state in Git or console output."
+    }
+  ],
+  "pendingOwnerInvocations": [],
+  "finalMatrix": {
+    "status": "HISTORICAL_PHP165_REQUIRED_HTTP_CLOSED_FULL66_AFFECTED69_70_VALIDATED_P0_P8_OPEN",
+    "plan": [
+      "python3",
+      "server/tests/run-crypto-freeze-matrix.py"
+    ],
+    "argv": [
+      "python3",
+      "server/tests/run-crypto-freeze-matrix.py",
+      "--run"
+    ],
+    "caution": "Historical PHP pairs and actual HTTP evidence retain their own source bindings. Full Flutter66 completed1924pass/46skip/71fail; affected69/70 closed discovered failures. This is not a fresh final-source whole-suite PASS and counts are not summed. Final analysis0errors/0warnings/510infos; infos include source additions versus baseline. Future PHP56x3 was not run. Independent P0 and physical/deployment/store P8 remain open.",
+    "evidence": {
+      "aggregate": {
+        "path": "build/qa/e2ee-source-upgrade/final-matrix/aggregate-165-pairs.json",
+        "sha256": "3a218f95fbb5c3a0a0f0794eecbdc8d79d8d519ea95506652f5ec1670437d525"
+      },
+      "countsByDatabase": {
+        "sqlite": 55,
+        "mariadb": 55,
+        "mysql": 55
+      },
+      "uniquePairCount": 165,
+      "overlappingAssertionTotal": null,
+      "interpretation": "Historical165 suite/database pairs remain bound to original snapshots. Later affected invitation3 and generation3 results are separate, never counted as a new unique total or full finalsource165. Pure vector/SQLite-memory checks are not independent3driver SQL evidence.",
+      "historicalAggregatePredatesLateProductionFix": true,
+      "lateInvitationAffectedSuite": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/normal-consumed-invitation49-proposal/targeted-three-drivers/summary.json",
+          "sha256": "23780bc4294bcf092ed24ac279906ae8153c9d48b98b06007fae875ffe745cb6"
+        },
+        "suite": "crypto2-invitation-integration.php",
+        "passedDatabases": [
+          "sqlite",
+          "mariadb",
+          "mysql"
+        ],
+        "interpretation": "Targeted3driver recheck after a real late production invitation fix. Do not count168 unique pairs or claim all165 on finalsource."
+      },
+      "lateGenerationAffectedSuite": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/use3-generation-member-parity/three-driver/summary.json",
+          "sha256": "6e193def2199e7a220834e17e3da6305a5a9d4a9149f1ce2cd11f61bf86b2ccc"
+        },
+        "suite": "crypto-migration-generation-prefix-v3.php",
+        "passedDatabases": [
+          "sqlite",
+          "mariadb",
+          "mysql"
+        ],
+        "interpretation": "Separate affected3driver source-bound result; no new aggregate unique total and no finalsource165 claim."
+      }
+    },
+    "futureRunnerSuiteCount": 56,
+    "futureRunnerNote": "Default runner adds the already affected-tested generation-prefix suite for future regressions. This catalog addition does not revise historical55x3 evidence or claim a new56x3 run.",
+    "finalFlutterValidation": {
+      "status": "FULL66_FAILURES_CLOSED_BY_AFFECTED69_70_NOT_FRESH_FULL_RUN",
+      "environment": "All JIVIE_* synthetic switches stripped for final Flutter invocations",
+      "full66": {
+        "outcome": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-66/failures-and-outcome.json",
+          "sha256": "9d62188d40f17623759b4911a35fac4ede01ca4c6aee92002c6a7121efb8599e"
+        },
+        "counts": {
+          "passed": 1924,
+          "skipped": 46,
+          "failed": 71
+        }
+      },
+      "affected67": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-67-affected/summary.json",
+          "sha256": "9f75c6c8d18b0e4603b33f0595fc6b53939e739b39b267e3029f08c53246c3b0"
+        },
+        "classification": "ABORTED_OWNED_HANG_NOT_PASS"
+      },
+      "sender68": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-68-sender-probe/summary.json",
+          "sha256": "ef6732d93170cdf8d92532b47b9a5a67303c75870c453ca0c2ef0efde5d36bbb"
+        },
+        "counts": {
+          "passed": 1,
+          "skipped": 0,
+          "failed": 0
+        }
+      },
+      "affected69": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-69-affected/summary.json",
+          "sha256": "6f5be7dc69f7a57cfb9d2a27f300b7031814a7e1e792d2ac6da54b9371800de7"
+        },
+        "counts": {
+          "passed": 244,
+          "skipped": 0,
+          "failed": 13
+        }
+      },
+      "affected70": {
+        "summary": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-70-affected/summary.json",
+          "sha256": "26c6890959dd153084c7c52ed8ada69469d29a86624b45bdb893c49b03ec1b7a"
+        },
+        "outcome": {
+          "path": "build/qa/e2ee-source-upgrade/final-flutter-70-affected/actual-outcome.json",
+          "sha256": "58eeec71857109252392716bf7d6c6df9c952c519518882daa6684600da3ae61"
+        },
+        "counts": {
+          "passed": 94,
+          "skipped": 0,
+          "failed": 0
+        },
+        "wrapperElapsedSeconds": 29.77,
+        "sourceAggregateSha256": "8e1c77ef9057ff31ec598d948a1ae49899adfa15bec389a3a06b58e9fa3de1b2",
+        "sourceUnchanged": true,
+        "entireFilesExecutedWithoutNameFilter": true,
+        "analysis": {
+          "argv": [
+            "flutter",
+            "analyze",
+            "--no-pub",
+            "--no-fatal-infos"
+          ],
+          "errors": 0,
+          "warnings": 0,
+          "infos": 510,
+          "sameIssueKeysAs69": true
+        }
+      },
+      "counting": "No addition of overlapping pass totals. Expanded concurrent reporter does not print every successful test name; explicit full file invocation/no skips/all-pass finish establishes contained-case closure.",
+      "notClaimed": [
+        "Fresh whole-suite PASS on final source",
+        "All infos predate the upgrade",
+        "Independent protocol or physical/deployment/store release approval"
+      ]
+    }
+  },
+  "coverageNotes": [
+    "Scheduling use3 and interrupted generation A/B run together in the explicitly listed continuation probe; combined35 does not implicitly cover them.",
+    "The continuation probe reuses the existing public Capture3 setup and reachable coordinator generation route; it is the previously agreed representative, not an additional scenario.",
+    "Optional existing structure-successor helper is crypto_migration_structure_successors.dart with crypto2-migration-structure-successors-http-seed.php, controlled by main public fixture; no extra invocation inferred.",
+    "Completed retained and relocation coverage comes from exact same-state continuation manifests with per-run source/log/harness bindings; it is not represented as a fresh single full-run PASS.",
+    "Original relocation canonical test was corrected after continuation proof; the updated future representative has not been rerun from a fresh prefix.",
+    "Required HTTP evidence is closed. Full Flutter66 completed with failures; affected69/70 closed them and final analysis has0errors/0warnings/510infos. No new whole-suite PASS or summed totals. Independent P0 and physical/deployment/store P8 remain open.",
+    "Combined47 full migration/freshFILE and same-state61 lastlink/parentcomplete/exactACK assertions are closed under their bound continuation aggregate; no fresh full-run claim.",
+    "Historical PHP165 and later affected invitation3/generation3 driver checks retain their own source snapshots, without a new unique total or finalsource165 claim.",
+    "Corrected canonical64 genuine valid captured60 positive prefix plus exact saved withdrawal65 close A/B/FILE9/attachment/list/cancellation. Original rejected422 body/hash/receipt is retained; corrected explicit cancel then accepted-lostACK retry passed. Not a fresh second full run."
+  ]
+}

@@ -65,6 +65,11 @@ class NativeIdeaAssetService extends NativeDatabase
     private function wire($r) { return ['sha256'=>$r['sha256'],'mime'=>$r['mime'],'size'=>(int)$r['size'],'width'=>(int)$r['width'],'height'=>(int)$r['height'],'offset'=>(int)$r['received'],'complete'=>(bool)$r['complete']]; }
     private function path($r) { return DATA_DIR.'/familyhub/ideas/'.hash('sha256',$r['scope_id'].':'.$r['board_id']).'/'.$r['sha256']; }
     public function bytes($r) { $bytes=@file_get_contents($this->path($r));if ($bytes===false) { throw new NativeError('asset_storage_unavailable',503); }$this->validateBytes($bytes,$r,false);return $bytes; }
+    /** Reuse the closed normalized image grammar for explicitly disclosed evidence. */
+    public function validateDisclosureBytes($bytes, $descriptor)
+    {
+        $this->validateBytes($bytes, $descriptor, true);
+    }
     private function validateBytes($bytes,$r,$decode=true)
     {
         if (!is_string($bytes) || strlen($bytes)!==(int)$r['size'] || !hash_equals($r['sha256'],hash('sha256',$bytes))) { throw new NativeError('asset_integrity',422); }
@@ -118,6 +123,8 @@ class NativeIdeaAssetService extends NativeDatabase
     /** Bounded cleanup only after 7 days, preserving any board or report reference. */
     public function cleanup()
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
         (new NativeScopeLifecycleService($this->container))->finishFiles();
         $removed=$this->transaction(function(){ $removed=0;foreach ($this->many('SELECT * FROM familyhub_idea_assets WHERE updated_at<? ORDER BY updated_at LIMIT 100',[time()-7*86400]) as $r) {
             $board=$this->one("SELECT payload FROM familyhub_records WHERE scope_id=? AND id=? AND type='idea' AND deleted=0",[$r['scope_id'],$r['board_id']]);

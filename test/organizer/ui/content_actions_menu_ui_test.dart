@@ -156,6 +156,7 @@ Future<void> pumpMenu(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        ...await sharingUiInfrastructureOverrides(tester, controller),
         collaborationProvider.overrideWith(() => controller),
         gardenProvider.overrideWith(_Gardens.new),
         localSpacesProvider.overrideWith(_LocalSpaces.new),

@@ -1,3 +1,4 @@
+import '../../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +82,7 @@ void main() {
       FakeTransport(server),
       MemorySessionStore(),
       invitationStore: store,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     addTearDown(repo.close);
     await repo.initialize();

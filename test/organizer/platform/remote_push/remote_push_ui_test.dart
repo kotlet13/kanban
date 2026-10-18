@@ -1,3 +1,4 @@
+import '../../support/local_vault_test_overrides.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -107,6 +108,7 @@ Widget host(
   bool configured = true,
 }) => ProviderScope(
   overrides: [
+    localVaultTestPreferencesOverride(),
     collaborationProvider.overrideWith(() => controller),
     remotePushSdkProvider.overrideWithValue(sdk),
     remotePushConfigurationProvider.overrideWithValue(

@@ -129,13 +129,31 @@ void main() {
                 target: targets[index],
                 reason: 'task_due',
               ),
-              title: 'Task',
-              body: 'Due',
+              title: 'PRIVATE_TASK_TITLE_SENTINEL',
+              body: 'PRIVATE_FINANCE_BODY_SENTINEL',
+              languageCode: index.isEven ? 'sl' : 'en',
             ),
             'routing-$index',
           );
         }
         expect(captured, hasLength(5));
+        for (var index = 0; index < captured.length; index++) {
+          expect(captured[index]['title'], 'Jivie');
+          expect(
+            captured[index]['body'],
+            index.isEven
+                ? 'V aplikaciji Jivie imate opomnik.'
+                : 'You have a reminder in Jivie.',
+          );
+          expect(
+            captured[index].toString(),
+            isNot(contains('PRIVATE_TASK_TITLE_SENTINEL')),
+          );
+          expect(
+            captured[index].toString(),
+            isNot(contains('PRIVATE_FINANCE_BODY_SENTINEL')),
+          );
+        }
         final specifics = captured
             .map((row) => row['platformSpecifics'] as Map)
             .toList();

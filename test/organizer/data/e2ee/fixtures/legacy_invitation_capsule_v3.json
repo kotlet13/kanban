@@ -1,0 +1,40 @@
+{
+  "synthetic": true,
+  "producer": "PHP libsodium deterministic metadata vector",
+  "token": "fhi3_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "metadata": {
+    "version": 3,
+    "invitationId": "11111111-1111-4111-8111-111111111111",
+    "scopeId": "22222222-2222-4222-8222-222222222222",
+    "recipient": {
+      "kind": "email",
+      "value": "synthetic@example.invalid",
+      "accountId": null
+    },
+    "role": "viewer",
+    "expiresAtEpoch": 4102444800,
+    "acceptedAtEpoch": null,
+    "revokedAtEpoch": null,
+    "legacyContractVersion": 3,
+    "tokenHash": "fe7ccca7685f346dcc3919e8f3d23336089d129e251865c503899340b51dd7aa"
+  },
+  "envelope": {
+    "version": 1,
+    "suite": "sodium-box-seal-xchacha20poly1305-ed25519-v1",
+    "context": {
+      "version": 3,
+      "purpose": "legacyInvitationBridge",
+      "serverId": "11111111-1111-4111-8111-111111111111",
+      "migrationId": "11111111-1111-4111-8111-111111111111",
+      "captureId": "11111111-1111-4111-8111-111111111111",
+      "sourceInventoryRoot": "1111111111111111111111111111111111111111111111111111111111111111",
+      "bridgeId": "11111111-1111-4111-8111-111111111111",
+      "bindingId": "11111111-1111-4111-8111-111111111111",
+      "sourceCommitment": "2222222222222222222222222222222222222222222222222222222222222222",
+      "scopeId": "22222222-2222-4222-8222-222222222222",
+      "membershipHeadHash": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "nonceBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYX",
+    "ciphertextBase64": "TiayEztYkiJu9DtIxuLT1xMiUkMytR7cJXWXP7eEmRJtYFML437k8mHUrlNL11vn5q2f4PfJRb/2wuYVjJXPPzcvqaXUR+BIq0e5l+I3anJgo1MyzsJ9+Pma0a61BD7sjhz1lbto4MG4rIPLX3NpBPCYN0TFj+nfPOwHtuObcXE28gBS9/Bn4arRjxHwZc1y5KaOAOBDMevbZdFYt6biqaq8+dvUgoYRfSpVWpL8qSregB/5FjFQ+EwSDHuytege3CeLRvXDNBf5L3dmaPdq4iF9V+WwKSyyZr0T1uPYdBJrOcSw3U9ZzSqmHWyNzzPaAUg3cRoEw6OT4CpDAKp48rlVc0ys7A6i7Z/KQ4vOE86z+Uonbp/woLx0g23zaSY35ZwecoaIol7WABu9mbWguL3Zeb3pzCjjrXoybsgtbvReATuegP+6xBXybCcio6ErDn8zVvdPg+PePnS7Ba5tiB06qBYIopIthOsVWIKV+GdVMMTGs80p5KQgVqIzjSBZIeqaOGnJkyG+JONANcd+zbxUuUQtM+rr"
+  }
+}

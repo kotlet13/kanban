@@ -13,6 +13,7 @@ class NativeProjectSharingService extends NativeDatabase
             $request=$this->uuid($params['requestId']??null);$hash=$this->hashRequest($operation,$params);$replay=$this->replay($sid,$user['id'],$request,$hash);
             if ($replay) { return $replay['body']; }
         }
+        if ($operation==='scopes.projectSharingApply') { NativeCryptoV2Boundary::guardStructural($this->pdo,$sid); }
         $graph=$this->graph($scope,$pid);$preview=$graph['preview'];
         if ($operation==='scopes.projectSharingPreview') { return $preview; }
         if (!is_string($params['previewHash']??null) || !hash_equals($preview['previewHash'],$params['previewHash'])) { throw new NativeError('project_sharing_preview_changed',409); }

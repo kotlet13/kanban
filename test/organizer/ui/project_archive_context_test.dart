@@ -284,7 +284,10 @@ void main() {
               );
             },
           ),
-          overrides: [collaborationProvider.overrideWith(() => shared)],
+          overrides: [
+            ...await sharingUiInfrastructureOverrides(tester, shared),
+            collaborationProvider.overrideWith(() => shared),
+          ],
         );
         await tester.tap(find.text('Open project'));
         await tester.pumpAndSettle();

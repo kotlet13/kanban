@@ -2216,7 +2216,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get backupTooLarge =>
-      'Kopija je večja od dovoljene omejitve 64 MiB. Podatki niso bili spremenjeni.';
+      'Kopija je prevelika za varen prenos. Podatki niso bili spremenjeni.';
 
   @override
   String get backupMergeConflict =>
@@ -4634,4 +4634,603 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get financeFilteredMovement => 'Pregled prilivov in stroškov';
+
+  @override
+  String get recoverySetupTitle => 'Dodajanje obnovitvenega ključa';
+
+  @override
+  String get recoveryInstallationScope => 'Obnova celotne namestitve';
+
+  @override
+  String get recoveryInstallationExplanation =>
+      'Ta datoteka skupaj s kopijo šifriranih podatkov te naprave odklene vse tukaj shranjene profile, tudi lokalne podatke in odjavljene račune. Razlikuje se od datoteke za obnovo posameznega računa.';
+
+  @override
+  String get recoveryFileWarning =>
+      'Datoteko shranite tudi zunaj te naprave. Kdor ima datoteko in kopijo podatkov, lahko prebere podatke. Ne pošiljajte je podpori. Sama datoteka ne obnovi podatkov, ki niso bili kopirani.';
+
+  @override
+  String get recoveryShareFile => 'Pošlji prek svoje aplikacije';
+
+  @override
+  String get recoverySaveFile => 'Shrani obnovitveno datoteko';
+
+  @override
+  String get recoverySelectSavedFile => 'Izberi shranjeno datoteko';
+
+  @override
+  String get recoveryExternalVerification =>
+      'Z izbirnikom izberite datoteko, ki ste jo shranili. Aplikacija jo preveri lokalno pred spremembo podatkov. Vrnitev iz okna za shranjevanje ali deljenje še ne potrdi varne kopije.';
+
+  @override
+  String get recoveryProtectDevice => 'Šifriraj lokalno bazo';
+
+  @override
+  String get recoveryProtectingDevice =>
+      'Šifriranje lokalne baze. Pustite aplikacijo odprto. Po ponovnem zagonu se isti postopek varno nadaljuje.';
+
+  @override
+  String get recoveryLockedExplanation =>
+      'Ključ obstoječih podatkov ni dosegljiv. Izberite obnovitveno datoteko te namestitve. Obstoječi podatki ostanejo ohranjeni. Geslo računa ne odklene te namestitve.';
+
+  @override
+  String get recoveryUnlockInstallation => 'Odkleni to namestitev';
+
+  @override
+  String get recoveryCleanupPending =>
+      'Šifrirani podatki so pripravljeni. Odstranjevanje starih nešifriranih kopij še ni končano; zaščita naprave še ni zaključena.';
+
+  @override
+  String get recoveryRetry => 'Poskusi znova';
+
+  @override
+  String get recoveryContinue => 'Nadaljuj v lokalne podatke';
+
+  @override
+  String get recoveryUnsupported =>
+      'Ta platforma še ne more odpreti zaščitenih podatkov. Obstoječi podatki so ohranjeni. Za pripravo ali obnovo zaščite uporabite podprto nameščeno aplikacijo.';
+
+  @override
+  String get recoveryOperationFailed =>
+      'Koraka ni bilo mogoče dokončati. Obstoječi podatki so ohranjeni. Preverite izbiro prave datoteke in poskusite znova.';
+
+  @override
+  String get recoveryLocalProtectionOnly =>
+      'To šifrira lokalno bazo aplikacije na tej napravi. Prej izvožene ali začasne kopije s tem niso samodejno zaščitene. Zaščita deljenih prostorov se pripravi posebej in je shranitev te datoteke še ne vključi.';
+
+  @override
+  String get recoveryCheckingDevice => 'Preverjanje lokalne shrambe …';
+
+  @override
+  String get recoveryCleanupLabel => 'Čiščenje nedokončano';
+
+  @override
+  String get recoveryBrowserUnprotected => 'Podatki brskalnika niso zaščiteni';
+
+  @override
+  String get recoveryBrowserContinue =>
+      'Odpri obstoječe podatke brskalnika za uporabo ali izvoz';
+
+  @override
+  String get accountRecoveryTitle => 'Priprava obnove računa';
+
+  @override
+  String get accountRecoveryScope => 'Samo ta račun';
+
+  @override
+  String get accountRecoveryExplanation =>
+      'Ta datoteka obnovi šifrirne ključe tega računa. Ne vsebuje ključa namestitve, drugih profilov ali kopije podatkov. Shranite jo tudi zunaj te naprave in je ne pošiljajte podpori.';
+
+  @override
+  String get accountRecoveryPreview =>
+      'Priprava ključev je na voljo za preizkus. Obstoječa vsebina na strežniku še uporablja sedanjo sinhronizacijo in ni šifrirana od konca do konca. Shranitev datoteke ne preklopi deljenih prostorov na E2EE.';
+
+  @override
+  String get accountRecoveryUnavailable =>
+      'Priprava zaščite povezanega računa trenutno ni na voljo. Lokalni podatki in čakajoče spremembe so ohranjeni; strežnik morda potrebuje nadgradnjo.';
+
+  @override
+  String get accountRecoveryReady =>
+      'Ključi računa so pripravljeni na tej napravi. Deljeni prostori še niso preklopljeni na šifriranje od konca do konca.';
+
+  @override
+  String get accountRecoveryLocked =>
+      'Prijava ne odklene ključev računa. Za odobritev te naprave izberite obnovitveno datoteko tega računa. Samo geslo računa ne obnovi šifrirane vsebine.';
+
+  @override
+  String get accountRecoveryVerify =>
+      'Izberi shranjeno datoteko računa in pripravi ključe';
+
+  @override
+  String get accountRecoveryResume => 'Preveri in nadaljuj čakajočo zahtevo';
+
+  @override
+  String get accountRecoveryFailed =>
+      'Korak ni končan. Obstoječi podatki in čakajoče delo so ohranjeni. Preverite datoteko, povezavo in potrditev e-pošte ter poskusite znova.';
+
+  @override
+  String get accountRecoveryManualShare =>
+      'Po shranitvi lahko datoteko sami pripnete v svoji poštni aplikaciji. Dostop do tega predala lahko omogoči tudi dostop do obnovitvene datoteke.';
+
+  @override
+  String get accountRecoveryRebase =>
+      'Izberi obnovitveno datoteko računa za ponovitev po potrjenem konfliktu';
+
+  @override
+  String get cryptoConnectionPending =>
+      'Zaščita povezanega računa še ni pripravljena. Lokalni podatki in čakajoče spremembe so ohranjeni. Pred pošiljanjem dokončajte pripravo šifriranja; strežnik morda potrebuje nadgradnjo.';
+
+  @override
+  String get notificationPrivateReminder => 'V aplikaciji Jivie imate opomnik.';
+
+  @override
+  String get cryptoDevicesTitle => 'Potrjene naprave';
+
+  @override
+  String get cryptoDevicePairingExplanation =>
+      'Javni zahtevek prenesite neposredno med svojima napravama. Na že potrjeni napravi odobrite samo zahtevek naprave, ki jo imate pred seboj. Nato potrditveno kartico prenesite nazaj.';
+
+  @override
+  String get cryptoDeviceApproved => 'Potrjena';
+
+  @override
+  String get cryptoDeviceRevoked => 'Odstranjena';
+
+  @override
+  String get cryptoShowPublicIdentity => 'Prikaži javno kartico za preverjanje';
+
+  @override
+  String get cryptoCreateDeviceRequest =>
+      'Ustvari zahtevek za potrditev te naprave';
+
+  @override
+  String get cryptoPastePublicCard => 'Prilepite javno kartico druge naprave';
+
+  @override
+  String get cryptoApproveExactDevice => 'Odobri točno to napravo';
+
+  @override
+  String get cryptoAcceptDeviceConfirmation => 'Preveri potrditev moje naprave';
+
+  @override
+  String get cryptoPublicCardExplanation =>
+      'Ta kartica vsebuje samo javne ključe in dokaz za primerjavo. Prenesite jo neposredno drugi napravi oziroma osebi po kanalu, ki mu zaupate.';
+
+  @override
+  String get cryptoCopyPublicCard => 'Kopiraj javno kartico';
+
+  @override
+  String get cryptoHistoryPendingExplanation =>
+      'Potrditev naprave ne potrdi popolnosti stare zgodovine. Deljenje in pošiljanje počakata tudi na preverjene ključe prostorov.';
+
+  @override
+  String get cryptoVerifyContactExplanation =>
+      'Osebo prosite za javno kartico neposredno po znanem kanalu ali v živo. Preverimo njeno identiteto in trenutno stanje potrjenih naprav. Kartica, ki jo ponudi samo strežnik, ne zadostuje.';
+
+  @override
+  String get cryptoContactVerified => 'Identiteta je potrjena.';
+
+  @override
+  String get cryptoCompareContact => 'Primerjaj in potrdi identiteto';
+
+  @override
+  String get cryptoMigrationTitle => 'Zaščita povezanih podatkov';
+
+  @override
+  String get cryptoMigrationPendingContributors =>
+      'Čakamo pooblaščene sodelujoče, da potrdijo svoje podatke in ključe.';
+
+  @override
+  String get cryptoMigrationPreparing =>
+      'Pripravljamo zaščiten prenos. Čakajoče spremembe so ohranjene.';
+
+  @override
+  String get cryptoMigrationVerifying =>
+      'Preverjamo zaščiteno kopijo in obnovo.';
+
+  @override
+  String get cryptoMigrationLocalAvailable =>
+      'Lokalni podatki so na voljo. Pošiljanje počaka na dokončano pripravo zaščite.';
+
+  @override
+  String get cryptoMigrationContinue => 'Nadaljuj pripravo zaščite';
+
+  @override
+  String get cryptoMigrationRetry => 'Ponovi preverjanje';
+
+  @override
+  String get cryptoReplaceRecoveryTitle => 'Zamenjava obnovitvene datoteke';
+
+  @override
+  String get cryptoReplaceRecoveryExplanation =>
+      'Ta postopek uporabite, če je prejšnjo datoteko lahko dobil kdo drug. V novi prijavi izberite prejšnjo datoteko, shranite novo in jo ponovno odprite. Potrditev zamenjave prekliče vse prejšnje naprave in zamenja obnovitvene ključe. Drugim osebam morate znova potrditi svojo identiteto, povezani prostori pa pred novimi spremembami potrebujejo nove zaščitne ključe.';
+
+  @override
+  String get cryptoKeepBothRecoveryFiles =>
+      'Obe datoteki ohranite, dokler aplikacija ne potrdi zaključene zamenjave. Preverjanje nove datoteke samo po sebi še ne pomeni, da stara ne velja več.';
+
+  @override
+  String get cryptoSaveNewRecoveryFile =>
+      'Izberi prejšnjo in shrani novo datoteko';
+
+  @override
+  String get cryptoImportNewRecoveryFile =>
+      'Ponovno odpri novo shranjeno datoteko';
+
+  @override
+  String get cryptoRecoveryReplacementComplete =>
+      'Zamenjava je potrjena. Prejšnja datoteka ne omogoča prihodnjih sprememb ali novih ključev. Že kopiranih starih podatkov s tem ni mogoče preklicati.';
+
+  @override
+  String get cryptoMigrationNoScopes =>
+      'Trenutno ni povezanih prostorov za pripravo. Lokalni podatki ostajajo dostopni.';
+
+  @override
+  String get cryptoMigrationArchiving =>
+      'Obstoječi podatki se ohranjajo in šifrirajo.';
+
+  @override
+  String get cryptoMigrationComplete =>
+      'Nove povezane spremembe se prenašajo šifrirano. Prejšnje strežniške kopije so še ohranjene; rok njihovega izbrisa še ni potrjen.';
+
+  @override
+  String cryptoMigrationContributorCount(int count) {
+    return 'Čakamo še na $count sodelujočih.';
+  }
+
+  @override
+  String cryptoMigrationUnavailableCount(int count) {
+    return 'Trenutno ni na voljo $count sodelujočih.';
+  }
+
+  @override
+  String get cryptoMigrationSpace => 'Povezan prostor';
+
+  @override
+  String get cryptoMigrationWaitingHelp =>
+      'Drugi lastnik mora odpreti posodobljeno aplikacijo in dokončati svoj del. Lokalno uporabo lahko nadaljujete in se vrnete pozneje.';
+
+  @override
+  String get cryptoMigrationUnavailableHelp =>
+      'Potreben lastnik trenutno ni na voljo. Prosite ga, naj posodobi in odpre Jivie, nato poskusite znova. Obstoječi podatki so ohranjeni.';
+
+  @override
+  String get cryptoMigrationBlockedHelp =>
+      'Pred nadaljevanjem je treba preveriti pripravo. Preverite povezavo in dostop do računa ter poskusite znova; podatki ostajajo ohranjeni.';
+
+  @override
+  String get cryptoMigrationReviewTitle => 'Pregled obstoječih podatkov';
+
+  @override
+  String get cryptoMigrationReviewExplanation =>
+      'Potrdite pripravo teh obstoječih podatkov skupaj z drugimi lastniki. Povezane spremembe čakajo, dokler zaščita ni preverjena. Izvirni podatki in lokalni popravki so ohranjeni.';
+
+  @override
+  String cryptoMigrationReviewCounts(int rows, int files) {
+    return '$rows shranjenih vrstic in $files datotek.';
+  }
+
+  @override
+  String get cryptoMigrationConsent => 'Potrdi te podatke';
+
+  @override
+  String get cryptoRevokeDevice => 'Prekliči napravo';
+
+  @override
+  String get cryptoRevokeDeviceExplanation =>
+      'Naprava ne bo več smela prejemati prihodnjih ključev. Povezani prostori pred pošiljanjem novih sprememb potrebujejo nove zaščitne ključe. Obstoječi lokalni podatki ostanejo.';
+
+  @override
+  String get cryptoRecoveryRevokeTitle => 'Obnovim ta račun?';
+
+  @override
+  String get cryptoRecoveryRevokeExplanation =>
+      'Obnova s to datoteko prekliče vse prej potrjene naprave. Povezani prostori pred pošiljanjem novih sprememb potrebujejo nove zaščitne ključe. Če želite dodati napravo in ohraniti druge, namesto obnove uporabite potrditev na obstoječi napravi. Obstoječi podatki ostanejo.';
+
+  @override
+  String get cryptoRecoveryRevokeConfirm =>
+      'Obnovi račun in prekliči prejšnje naprave';
+
+  @override
+  String get cryptoScopeRecoveryTitle => 'Obnova povezanega prostora';
+
+  @override
+  String get cryptoScopeRecoveryExplanation =>
+      'Vaša datoteka lahko odklene shranjene podatke. Strežnik lahko vrne starejši posnetek; sama datoteka ne dokazuje, da nič ne manjka. Preden ga sprejmete kot izhodišče, preglejte razpoložljive podatke. Izvirni dokazi ostanejo ohranjeni, nove spremembe pa bodo uporabljale nove zaščitne ključe.';
+
+  @override
+  String get cryptoScopeRecoveryPending =>
+      'Prostor še ne more nadaljevati. Preverite povezavo in potrditev računa; svoj del bo morda moral dokončati drug pooblaščen lastnik ali bralec financ. Obstoječi podatki so ohranjeni.';
+
+  @override
+  String get cryptoScopeRecoveryComplete =>
+      'Pregledano izhodišče in novi zaščitni ključi so potrjeni. Že kopiranih podatkov s prejšnje naprave ni mogoče odvzeti.';
+
+  @override
+  String get cryptoScopeRecoveryImport =>
+      'Uvozi obnovitveno datoteko računa in preglej';
+
+  @override
+  String cryptoScopeRecoveryCount(String domain, int count) {
+    return '$domain: $count shranjenih zapisov';
+  }
+
+  @override
+  String get cryptoScopeContent => 'Drugi podatki';
+
+  @override
+  String get cryptoScopeDeleted => 'Izbrisani zapis';
+
+  @override
+  String get cryptoScopeNextPreview => 'Naslednji shranjeni zapisi';
+
+  @override
+  String get cryptoScopeAcceptCandidate =>
+      'Pregledal sem razpoložljive podatke in sprejemam ta posnetek kot izhodišče. Morda ne vsebuje najnovejših sprememb.';
+
+  @override
+  String get cryptoScopeConfirmRecovery => 'Sprejmi posnetek in obnovi zaščito';
+
+  @override
+  String get cryptoReviewConnectedSpace => 'Pregled zaščite prostora';
+
+  @override
+  String get cryptoFinanceContributionTitle => 'Priprava zaščite financ';
+
+  @override
+  String get cryptoFinanceContributionExplanation =>
+      'Finančne ključe pripravi pooblaščen bralec financ. Lastniki brez finančnega dostopa prejmejo samo potrditev za dokončanje; vaših finančnih ključev ali zapisov ne prejmejo.';
+
+  @override
+  String get cryptoFinanceContributionPending =>
+      'Priprava čaka na pooblaščenega bralca financ ali lastnika. Preverite dostop in povezavo ter poskusite znova.';
+
+  @override
+  String get cryptoFinanceNoRequests =>
+      'Za vas trenutno ni zahtev za pripravo financ.';
+
+  @override
+  String get cryptoFinanceReviewRequest => 'Preglej pripravo financ';
+
+  @override
+  String get cryptoFinanceWaitingOwner =>
+      'Vaša podpisana priprava je shranjena. Lastnik lahko nadaljuje. Ko pripravi prostor, tukaj dokončajte deljenje finančnih ključev.';
+
+  @override
+  String get cryptoFinanceFinishContribution => 'Dokončaj zaščito financ';
+
+  @override
+  String get cryptoFinanceAcceptContribution =>
+      'Pregledal sem razpoložljive finančne podatke in potrjujem pripravo njihove zaščite. Izhodiščni posnetek je lahko starejši.';
+
+  @override
+  String get cryptoFinanceApproveContribution => 'Potrdi pripravo financ';
+
+  @override
+  String get cryptoReplaceRecoveryConfirm =>
+      'Zamenjaj obnovitvene ključe in prekliči prejšnje naprave';
+
+  @override
+  String get cryptoKeyContributionTitle => 'Potrditev novih ključev prostora';
+
+  @override
+  String get cryptoKeyContributionExplanation =>
+      'Ob spremembi lastnika ali finančnega dostopa novi upravičeni prejemniki pripravijo svoje ključe. Prejšnji lastnik, ki zapusti prostor, ne prejme novih ključev. Nadaljevanje se shrani in ostane na voljo po ponovnem odprtju.';
+
+  @override
+  String get cryptoKeyContributionEmpty =>
+      'Za vas trenutno ni zahtev za potrditev ključev.';
+
+  @override
+  String get cryptoKeyContributionOffer => 'Pripravi moj novi ključ';
+
+  @override
+  String get cryptoKeyContributionSign => 'Potrdi skupni predlog';
+
+  @override
+  String get cryptoKeyContributionPublish => 'Dokončaj deljenje mojih ključev';
+
+  @override
+  String get cryptoKeyContributionAcceptOwner =>
+      'Sprejmi lastništvo in preverjene ključe';
+
+  @override
+  String get cryptoKeyContributionPending =>
+      'Priprava čaka na drugega upravičenega člana ali lastnika. Osvežite in nadaljujte isti predlog.';
+
+  @override
+  String get cryptoScopeManageMembers => 'Člani in prenos lastništva';
+
+  @override
+  String get cryptoScopeMember => 'Član';
+
+  @override
+  String get cryptoScopeOwner => 'Lastnik';
+
+  @override
+  String get cryptoScopeViewer => 'Bralec';
+
+  @override
+  String get cryptoScopeRemoveMember => 'Odstrani dostop';
+
+  @override
+  String get cryptoScopeTransferExplanation =>
+      'Novi lastnik mora v svoji aplikaciji pripraviti nov ključ in sprejeti prenos. Finančni bralec ločeno potrdi finančne ključe. Do zaključka spremembe se novi povezani vnosi zadržijo; lokalni podatki ostanejo.';
+
+  @override
+  String get cryptoScopeResumePreparation => 'Nadaljuj shranjeno pripravo';
+
+  @override
+  String get cryptoScopeCancelPreparation => 'Prekliči ta predlog';
+
+  @override
+  String get cryptoRebindLocalDevice =>
+      'Uporabi že potrjene ključe na tej napravi';
+
+  @override
+  String get cryptoScopeReviewLocal =>
+      'Preglej podatke, ki so že na tej napravi';
+
+  @override
+  String get cryptoEmailVerificationRequired =>
+      'Pred vnosom v povezani račun potrdite svoj e-poštni naslov. Lokalna uporaba ostane na voljo.';
+
+  @override
+  String get cryptoInvitationPendingKeys =>
+      'Povabilo je sprejeto. Lastnik mora še potrditi vaše ključe. Prostor se odpre šele po tej potrditvi; lokalno lahko nadaljujete z delom.';
+
+  @override
+  String get cryptoInvitationVerifyCreator =>
+      'Pred sprejemom preverite osebo, ki vas je povabila. Njeno javno kartico pridobite neposredno po znanem kanalu, ne iz iste povezave povabila.';
+
+  @override
+  String get cryptoUnavailableSpace => 'Nedostopen prostor';
+
+  @override
+  String get cryptoUnavailableTitle => 'Ohrani nedostopne prostore';
+
+  @override
+  String get cryptoUnavailableExplanation =>
+      'Ti prej uporabljeni prostori trenutno niso dostopni. Njihova nadgradnja in zaščita nista potrjeni. Lokalni podatki in neposlane spremembe ostanejo ohranjeni za ogled in izvoz; ta potrditev ne podeli dostopa.';
+
+  @override
+  String get cryptoUnavailableConfirm => 'Razumem in ohranim lokalne podatke';
+
+  @override
+  String get cryptoContinueLocally => 'Nadaljuj lokalno';
+
+  @override
+  String get cryptoInvitationGrantTitle => 'Potrditev dostopa';
+
+  @override
+  String get cryptoInvitationGrantExplanation =>
+      'Povabljeni je sprejel povabilo. Po primerjavi identitete potrdite njegov dostop do dosedanjih podatkov in novih sprememb tega prostora. Finančni podatki zahtevajo posebej dovoljen finančni dostop.';
+
+  @override
+  String get cryptoInvitationGrantConfirm => 'Potrdi dostop in pripravi ključe';
+
+  @override
+  String get accountRecoveryV2Pending =>
+      'Najprej shranite in preverite obnovitveno datoteko tega računa. Nato dokončamo zaščito povezanih prostorov. Doslej ustvarjene strežniške kopije ostanejo do posebej potrjenega odstranjevanja.';
+
+  @override
+  String get accountRecoveryV2Prepared =>
+      'Obnovitev računa in ključi te naprave so pripravljeni. Zaščito posameznih prostorov preverimo v naslednjem koraku; nedokončani prostori ohranijo lokalne podatke in čakajoče spremembe.';
+
+  @override
+  String get financeAuditUnknownTime => 'Čas spremembe ni znan';
+
+  @override
+  String get financeAuditAuthorTime => 'Čas po navedbi avtorja';
+
+  @override
+  String get cryptoRestoreTitle => 'Preverjanje obnovljene kopije';
+
+  @override
+  String get cryptoRestoreExplanation =>
+      'Preverimo vse ohranjene kopije in potrjene identitete. Uvožene spremembe se ne pošljejo samodejno. Lokalni podatki in osnutki ostanejo ohranjeni.';
+
+  @override
+  String get cryptoRestoreCompareIdentities =>
+      'Najprej primerjajte identitete članov po zaupanja vredni poti.';
+
+  @override
+  String get cryptoRestoreHistoryPending =>
+      'Nekatera zgodovina potrebuje pregled lastnika prostora. Posnetek strežnika je lahko starejši; izvirni dokazi ostanejo ohranjeni.';
+
+  @override
+  String get cryptoRestoreVerify => 'Preveri ohranjene kopije';
+
+  @override
+  String get cryptoRestoreConfirm => 'Potrdi preverjene dokaze';
+
+  @override
+  String get cryptoRestoreKeys => 'Uvozi obnovitveno datoteko za ogled';
+
+  @override
+  String get cryptoRestoreComplete =>
+      'Dokazi so preverjeni. Uvoženi zahtevki ostanejo ločeni, dokler izrecno ne nadaljujete svojega dela.';
+
+  @override
+  String cryptoRestoreCounts(int backups, int scopes, int records) {
+    return 'Kopije: $backups · prostori: $scopes · zapisi: $records';
+  }
+
+  @override
+  String get cryptoRestoreDraft => 'Obnovljena lokalna datoteka';
+
+  @override
+  String get preservedFilesTitle => 'Ohranjene datoteke naprave';
+
+  @override
+  String get preservedFilesExplanation =>
+      'To so stare uvožene ali izvožene kopije te namestitve. Lahko pripadajo različnim računom. Niso samodejno vključene v kopijo izbranega računa. Izberite posamezno datoteko in jo shranite v šifrirani kopiji ali izrecno shranite izvirne bajte brez dodatnega šifriranja. Neprepoznane datoteke in kopije nad 64 MiB ostanejo na napravi; ta pregled ne potrjuje njihove odstranitve ali vsebine. Odpiranje kopije ničesar ne namesti ali pošlje strežniku.';
+
+  @override
+  String get preservedFilesReview =>
+      'Izbral sem to datoteko in dovoljujem izvoz njene vsebine, tudi če pripada drugemu računu na tej napravi.';
+
+  @override
+  String get preservedFilesSaveOriginal => 'Shrani izvirno datoteko';
+
+  @override
+  String get preservedFilesOpen => 'Odpri šifrirano ohranjeno datoteko';
+
+  @override
+  String get preservedFilesEmpty => 'V tem delu ni ohranjenih datotek.';
+
+  @override
+  String get preservedFilesNext => 'Naslednje datoteke';
+
+  @override
+  String get recoveryHistoricalExportsRetained =>
+      'Nekatere stare datoteke so prevelike za varen prenos ali jih ni bilo mogoče varno prepoznati. Ostanejo na napravi; zaščita teh kopij še ni potrjena. Ohranjene datoteke so dostopne v Nastavitvah.';
+
+  @override
+  String get backupPendingFilesNeedAccess =>
+      'Za ohranitev vseh čakajočih datotek se povežite in potrdite dostop do njihovih prostorov, nato ponovite kopijo. Brez preverjenega dostopa dodatnih kopij ni mogoče varno združiti v omejitev. Izvirni podatki in čakajoče delo ostanejo na napravi.';
+
+  @override
+  String get deletionCryptoRetention =>
+      'Skupni šifrirani zapisi in njihova točna podpisana zgodovina ostanejo drugim članom. Ostanejo lahko šifrirane zgodovinske kopije in ovojnice ključev v starih podpisih. Vaša prijava, naprave in zasebni obnovitveni dostop se odstranijo. Obstoječih kopij ni mogoče izbrisati. Skupni prostori ostanejo samo za branje, dokler preostali pooblaščeni skrbnik ne zamenja ključev. Do ločeno pregledanega čiščenja lahko ostanejo tudi zamrznjeni migracijski viri.';
+
+  @override
+  String get deletionCryptoPreserve =>
+      'Ohrani skupno zgodovino in odstrani moj dostop';
+
+  @override
+  String get deletionCryptoDeletePrivate =>
+      'Izbriši ta povsem zasebni šifrirani prostor';
+
+  @override
+  String get deletionCryptoChoose =>
+      'Izberite, kaj se zgodi s tem šifriranim prostorom';
+
+  @override
+  String get deletionCryptoScope => 'Šifrirani prostor';
+
+  @override
+  String get deletionWithoutKeys => 'Izbriši račun brez obnovitvenih ključev';
+
+  @override
+  String get deletionWithoutKeysExplanation =>
+      'Izbris računa lahko pregledate z geslom in, če je vključena, potrditveno kodo. Obnovitvena datoteka ni potrebna.';
+
+  @override
+  String get deletionCryptoAcknowledge =>
+      'Razumem, da se moja prijava in zasebni dostop trajno odstranita, drugi člani pa ohranijo skupno šifrirano zgodovino in obstoječe kopije.';
+
+  @override
+  String get scopeDeleteCryptoRetention =>
+      'Aktivni podatki in dostop se odstranijo. Ostanejo lahko podpisana zgodovina, prejšnje kopije in zamrznjeni migracijski viri. S tem se ne izbrišejo ključi ali kopije, ki jih že imajo drugi člani.';
+
+  @override
+  String get accountRecoveryScopesPending =>
+      'Dostop do računa je obnovljen. Nekatere prostore ali shranjeno obnovitveno delo moramo še preveriti. Obnovljeni podatki ostanejo ohranjeni. Za nadaljevanje znova izberite obnovitveno datoteko; potrditve naprave ne bomo ponavljali.';
+
+  @override
+  String get accountRecoveryScopesRetry => 'Nadaljuj obnovo prostorov';
+
+  @override
+  String get accountRecoveryUseRecovered => 'Odpri obnovljene prostore';
 }

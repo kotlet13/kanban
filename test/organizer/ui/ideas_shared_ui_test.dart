@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/data/sqlite_organizer_storage.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -185,6 +186,9 @@ void main() {
       );
       late IdeaRepository privateIdeas;
       await tester.runAsync(() async {
+        // This fixture has no legacy Hive store: materialize its empty local
+        // partition explicitly, without invoking the production vault factory.
+        await SqliteOrganizerStorage(f.db).initialize();
         await f.shared.login(
           serverUrl: 'https://test.invalid',
           username: 'alice',

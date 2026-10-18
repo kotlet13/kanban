@@ -1,19 +1,18 @@
 import 'dart:convert';
+import 'dart:ui' show Locale;
+import '../../../l10n/app_localizations.dart';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../domain/remote_push_models.dart';
 
 class SystemPushMessage {
-  const SystemPushMessage(
-    this.reference,
-    this.title,
-    this.body,
-    this.language,
-    this.sound,
-  );
+  const SystemPushMessage(this.reference, this.language, this.sound);
   final RemotePushReference reference;
-  final String title, body, language;
+  final String language;
+  String get title => 'Jivie';
+  String get body =>
+      lookupAppLocalizations(Locale(language)).notificationPrivateReminder;
   final bool sound;
 
   static Map<String, Object?> referenceData(Map<String, Object?> data) => {
@@ -36,8 +35,6 @@ class SystemPushMessage {
     }
     return SystemPushMessage(
       reference,
-      data['title'] as String,
-      data['body'] as String,
       data['language'] as String,
       data['sound'] == '1',
     );
@@ -70,8 +67,8 @@ class SystemPushGroup {
           if (item.groupKey == message.groupKey &&
               item.id != message.summaryId &&
               item.id != message.id)
-            item.title ?? 'Jivie',
-        message.title,
+            message.body,
+        message.body,
       ];
   final List<String> lines;
   int get count => lines.length;

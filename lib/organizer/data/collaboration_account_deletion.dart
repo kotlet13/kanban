@@ -33,6 +33,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
     String? otp,
     List<Map<String, Object?>> ownershipTransfers = const [],
     List<Map<String, Object?>> resolutions = const [],
+    List<Map<String, Object?>> cryptoResolutions = const [],
     List<String> ownedScopeDeletions = const [],
     Map<String, dynamic> review = const {},
   }) => _deletionSecure(
@@ -42,6 +43,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
       otp: otp,
       ownershipTransfers: ownershipTransfers,
       resolutions: resolutions,
+      cryptoResolutions: cryptoResolutions,
       ownedScopeDeletions: ownedScopeDeletions,
       review: review,
     ),
@@ -53,6 +55,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
     String? otp,
     List<Map<String, Object?>> ownershipTransfers = const [],
     List<Map<String, Object?>> resolutions = const [],
+    List<Map<String, Object?>> cryptoResolutions = const [],
     List<String> ownedScopeDeletions = const [],
     Map<String, dynamic> review = const {},
   }) async {
@@ -71,6 +74,8 @@ extension CollaborationAccountDeletion on CollaborationRepository {
             jsonEncode(previous.ownershipTransfers) !=
                 jsonEncode(ownershipTransfers) ||
             jsonEncode(previous.resolutions) != jsonEncode(resolutions) ||
+            jsonEncode(previous.cryptoResolutions) !=
+                jsonEncode(cryptoResolutions) ||
             jsonEncode(previous.ownedScopeDeletions) !=
                 jsonEncode(ownedScopeDeletions))) {
       throw const CollaborationException('deletion_pending');
@@ -84,6 +89,7 @@ extension CollaborationAccountDeletion on CollaborationRepository {
           previewHash: previewHash,
           ownershipTransfers: ownershipTransfers,
           resolutions: resolutions,
+          cryptoResolutions: cryptoResolutions,
           ownedScopeDeletions: ownedScopeDeletions,
           review: review,
           policyVersion:
@@ -115,6 +121,8 @@ extension CollaborationAccountDeletion on CollaborationRepository {
         'previewHash': request.previewHash,
         'ownershipTransfers': request.ownershipTransfers,
         'resolutions': request.resolutions,
+        if (request.policyVersion == 4)
+          'cryptoResolutions': request.cryptoResolutions,
         'ownedScopeDeletions': request.ownedScopeDeletions,
         'password': password,
         if (otp != null) 'otp': otp,

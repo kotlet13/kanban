@@ -10,6 +10,8 @@ class Plugin extends Base
 {
     public function initialize()
     {
+        $this->container['userModel'] = $this->container->factory(function ($c) { return new \Kanboard\Plugin\FamilyHub\Model\FamilyHubUserModel($c); });
+        $this->authenticationManager->register(new \Kanboard\Plugin\FamilyHub\Auth\FamilyHubDatabaseAuth($this->container));
         $this->applicationAccessMap->add('InvitationController', 'show', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('NativeApiController', 'handle', \Kanboard\Core\Security\Role::APP_PUBLIC);
         $this->applicationAccessMap->add('AccountDeletionController', '*', \Kanboard\Core\Security\Role::APP_PUBLIC);

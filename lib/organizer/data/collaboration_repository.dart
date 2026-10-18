@@ -1,8 +1,22 @@
+import 'e2ee/crypto_migration_idea_draft_recovery.dart';
+import 'e2ee/crypto_legacy_upload_drain.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart' show Sha256;
 import 'dart:math';
+import 'package:sodium/sodium.dart' show SodiumInit;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'e2ee/account_crypto_repository.dart';
+import 'e2ee/account_crypto_store.dart';
+import 'e2ee/account_crypto_v2_workflow.dart';
+import 'e2ee/account_directory_repository.dart';
+import 'e2ee/account_directory_v2.dart';
+import 'e2ee/crypto_identity_store.dart';
+import 'e2ee/crypto_codec.dart';
+import 'e2ee/crypto_domain_router.dart';
+import 'e2ee/crypto_business_router.dart';
+import 'e2ee/crypto_sync_repository.dart' show CryptoAuthorityPending;
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/local_space_models.dart';
@@ -64,20 +78,147 @@ part 'collaboration_backup_actions.dart';
 part 'collaboration_account_deletion.dart';
 
 class CollaborationRepository {
+  /// Key setup is exposed only on the explicitly enabled preview server. This
+  /// does not redirect legacy sync or mark any existing scope encrypted.
+  Future<AccountCryptoWorkflow?> accountCryptoPreview() async {
+    if (kIsWeb || !_cryptoPreviewSupported) return null;
+    final session = _session;
+    if (session == null || _closed) return null;
+    final epoch = _epoch;
+    final capabilities = await transport.call(
+      serverUrl: session.profile.serverUrl,
+      operation: 'capabilities',
+      allowLocalHttp: session.profile.allowLocalHttp,
+    );
+    _checkEpoch(epoch);
+    if (capabilities['serverId'] != session.profile.serverId) {
+      throw const CollaborationException('server_identity_changed');
+    }
+    final versions =
+        capabilities['cryptoTransportVersions'] as List? ?? const [];
+    if (!versions.contains(1) && !versions.contains(2)) {
+      return null;
+    }
+    final sodium = await SodiumInit.init();
+    _checkEpoch(epoch);
+    if (versions.contains(2)) {
+      return AccountCryptoV2Workflow(
+        AccountDirectoryRepository(
+          reducer: AccountDirectoryV2(CryptoCodec(sodium)),
+          session: session,
+          transport: transport,
+          store: CryptoIdentityStore(
+            database,
+            const SecureAccountCryptoStore(),
+            session.profile.partition,
+          ),
+          isCurrent: () =>
+              !_closed && _epoch == epoch && identical(_session, session),
+        ),
+      );
+    }
+    return AccountCryptoRepository(
+      crypto: CryptoCodec(sodium),
+      session: session,
+      transport: transport,
+      store: const SecureAccountCryptoStore(),
+      isCurrent: () =>
+          !_closed && _epoch == epoch && identical(_session, session),
+    );
+  }
+
   CollaborationRepository(
     this.database,
     this.transport,
     this.sessionStore, {
     DateTime Function()? clock,
     this.pushStore,
+    CryptoDomainRouter? cryptoRouter,
+    this.contentRouteGuard,
     this.ownsDatabase = true,
     this.deletionStore = const SecureAccountDeletionStore(),
     this.invitationStore = const SecurePendingInvitationStore(),
-  }) : clock = clock ?? DateTime.now;
+  }) : clock = clock ?? DateTime.now,
+       _cryptoRouterOverride = cryptoRouter;
   final CollaborationDatabase database;
   final CollaborationTransport transport;
   final DeviceSessionStore sessionStore;
   final RemotePushStore? pushStore;
+  final CryptoDomainRouter? _cryptoRouterOverride;
+  CryptoDomainRouter? _productionCryptoRouter;
+  CryptoDomainRouter get cryptoRouter =>
+      _cryptoRouterOverride ??
+      (_productionCryptoRouter ??= CryptoBusinessRouter(
+        database: database,
+        accountFor: _businessCryptoAccount,
+      ));
+  Future<AccountCryptoV2Workflow> connectedCryptoAccount() =>
+      _businessCryptoAccount(_requireSession());
+  Future<AccountCryptoV2Workflow>? _businessCryptoWorkflow;
+  DeviceSession? _businessCryptoWorkflowSession;
+  int? _businessCryptoWorkflowEpoch;
+
+  Future<AccountCryptoV2Workflow> _businessCryptoAccount(
+    DeviceSession session,
+  ) async {
+    if (kIsWeb) {
+      throw const CryptoAuthorityPending('crypto_native_vault_required');
+    }
+    final epoch = _epoch;
+    _checkEpoch(epoch);
+    final ready = await database.rows(
+      "SELECT 1 FROM crypto_identity_secrets WHERE partition=? AND device_id=? AND phase='ready'",
+      [session.profile.partition, session.profile.deviceId],
+    );
+    _checkEpoch(epoch);
+    if (ready.isEmpty) {
+      throw const CollaborationException('crypto_reconciliation_required');
+    }
+    if (!identical(_businessCryptoWorkflowSession, session) ||
+        _businessCryptoWorkflowEpoch != epoch) {
+      _businessCryptoWorkflowSession = session;
+      _businessCryptoWorkflowEpoch = epoch;
+      _businessCryptoWorkflow = () async {
+        final sodium = await SodiumInit.init();
+        _checkEpoch(epoch);
+        if (!identical(_session, session)) {
+          throw const CryptoAuthorityPending('crypto_stale_identity');
+        }
+        return AccountCryptoV2Workflow(
+          AccountDirectoryRepository(
+            reducer: AccountDirectoryV2(CryptoCodec(sodium)),
+            session: session,
+            transport: transport,
+            store: CryptoIdentityStore(
+              database,
+              const SecureAccountCryptoStore(),
+              session.profile.partition,
+            ),
+            isCurrent: () =>
+                !_closed && _epoch == epoch && identical(_session, session),
+          ),
+        );
+      }();
+    }
+    final pending = _businessCryptoWorkflow!;
+    try {
+      final workflow = await pending;
+      _checkEpoch(epoch);
+      if (!identical(_session, session)) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      return workflow;
+    } catch (_) {
+      if (identical(_businessCryptoWorkflow, pending)) {
+        _businessCryptoWorkflow = null;
+        _businessCryptoWorkflowSession = null;
+        _businessCryptoWorkflowEpoch = null;
+      }
+      rethrow;
+    }
+  }
+
+  final ContentRouteGuard? contentRouteGuard;
   final bool ownsDatabase;
   final AccountDeletionStore deletionStore;
   final PendingInvitationStore invitationStore;
@@ -120,6 +261,7 @@ class CollaborationRepository {
   bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
+  bool _cryptoPreviewSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
   bool _financeSupported = false;
   bool _organizationFinanceSupported = false;

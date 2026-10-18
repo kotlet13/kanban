@@ -254,6 +254,11 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
     for (final r in widget.pending?.resolutions ?? <Map<String, Object?>>[])
       '${r['scopeId']}:${r['recordId']}',
   };
+  late final Map<String, String> _cryptoChoices = {
+    for (final row
+        in widget.pending?.cryptoResolutions ?? <Map<String, Object?>>[])
+      row['scopeId'] as String: row['action'] as String,
+  };
   bool _canResolve(Map<String, dynamic> p) {
     final blockers = (p['blockers'] as List).cast<Map>();
     if (blockers.any(
@@ -264,7 +269,10 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
     )) {
       return false;
     }
-    return (p['ownedScopes'] as List? ?? []).every(
+    return (p['cryptoScopes'] as List? ?? []).every(
+          (s) => _cryptoChoices.containsKey((s as Map)['scopeId']),
+        ) &&
+        (p['ownedScopes'] as List? ?? []).every(
           (s) => _owners.containsKey((s as Map)['id']),
         ) &&
         (p['resolutions'] as List? ?? []).every(
@@ -310,6 +318,15 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
         password: password,
         otp: otp.isEmpty ? null : otp,
         review: preview,
+        cryptoResolutions: [
+          for (final scope in preview['cryptoScopes'] as List? ?? [])
+            {
+              'scopeId': scope['scopeId'],
+              'action': _cryptoChoices[scope['scopeId']],
+              'headHash': scope['headHash'],
+              'accessRevision': scope['accessRevision'],
+            },
+        ],
         ownershipTransfers: [
           for (final o in _owners.entries.where((o) => o.value != 'delete'))
             {'scopeId': o.key, 'successorAccountId': o.value},
@@ -371,6 +388,7 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
             _acknowledged = false;
             _owners.clear();
             _preserved.clear();
+            _cryptoChoices.clear();
             _confirmation.clear();
             _retryingOriginal = false;
             _previewGeneration++;
@@ -412,7 +430,8 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                     const SizedBox(height: 12),
                     Text(l.deletionLocalConsequences),
                     const SizedBox(height: 12),
-                    Text(l.deletionRetainedEdits),
+                    if (p != null && p['policyVersion'] != 4)
+                      Text(l.deletionRetainedEdits),
                     const SizedBox(height: 12),
                     Text(l.deletionLegacyLocal),
                     TextButton.icon(
@@ -581,6 +600,60 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                             );
                           },
                         ),
+                      if (p['policyVersion'] == 4) ...[
+                        const SizedBox(height: 12),
+                        Text(l.deletionCryptoRetention),
+                        for (final raw in p['cryptoScopes'] as List)
+                          Builder(
+                            builder: (context) {
+                              final scope = raw as Map;
+                              final id = scope['scopeId'] as String;
+                              String name = l.deletionCryptoScope;
+                              for (final local
+                                  in ref
+                                          .read(collaborationProvider)
+                                          .valueOrNull
+                                          ?.scopes ??
+                                      []) {
+                                if (local.id == id) {
+                                  name = local.name;
+                                  break;
+                                }
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: DropdownButtonFormField<String>(
+                                  key: ValueKey('deletion-crypto-$id'),
+                                  initialValue: _cryptoChoices[id],
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    labelText: name,
+                                    helperText: l.deletionCryptoChoose,
+                                    helperMaxLines: 3,
+                                  ),
+                                  items: [
+                                    for (final action
+                                        in scope['allowedActions'] as List)
+                                      DropdownMenuItem(
+                                        value: action as String,
+                                        child: Text(
+                                          action == 'deletePrivate'
+                                              ? l.deletionCryptoDeletePrivate
+                                              : l.deletionCryptoPreserve,
+                                          maxLines: 4,
+                                        ),
+                                      ),
+                                  ],
+                                  onChanged: _busy || _retryingOriginal
+                                      ? null
+                                      : (v) => setState(() {
+                                          if (v != null) _cryptoChoices[id] = v;
+                                        }),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
                       if (!_canResolve(p)) ...[
                         const SizedBox(height: 12),
                         Text(l.deletionBlocked),
@@ -597,7 +670,11 @@ class _AccountDeletionDialogState extends ConsumerState<AccountDeletionDialog> {
                               : (v) => setState(() {
                                   _acknowledged = v == true;
                                 }),
-                          title: Text(l.deletionAcknowledge),
+                          title: Text(
+                            p['policyVersion'] == 4
+                                ? l.deletionCryptoAcknowledge
+                                : l.deletionAcknowledge,
+                          ),
                         ),
                         PasswordVisibility(
                           key: const ValueKey('deletion-password-visibility'),

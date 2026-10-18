@@ -13,6 +13,7 @@ class NativeAuthService extends NativeDatabase
     {
         if ($operation === 'auth.enroll') { return (new NativeEnrollmentService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
         if (str_starts_with($operation, 'auth.reset.')) { return (new NativePasswordResetService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
+        if ($operation === 'auth.registerInvitation4') { return (new NativeCryptoInvitationV2($this->container, $this->bearer, $this->ip))->register($params); }
         if ($operation === 'auth.login') { return $this->login($params); }
         if (in_array($operation,['auth.registerInvitation2','auth.registerInvitation3'],true)) { return (new NativeEmailInvitationService($this->container, $this->bearer, $this->ip))->register($params,$operation==='auth.registerInvitation3'?3:2); }
         if ($operation === 'auth.register') {
@@ -71,6 +72,7 @@ class NativeAuthService extends NativeDatabase
             $user = $this->one('SELECT * FROM users WHERE LOWER(username) = ?'.$this->lockSuffix(), [$username]);
             $dummy = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi';
             $verified = password_verify($password, $user['password'] ?? $dummy);
+            if($user && NativeCryptoAccountTombstoneV2::user($this->pdo,$user['id'])){return new NativeError('invalid_credentials',401);}
             if ($user && (int)$user['lock_expiration_date'] >= time()) { return new NativeError('invalid_credentials', 401); }
             if (!$user || !$verified || (int)$user['is_active'] !== 1) {
                 if ($user) { $this->failed($user); }
@@ -140,11 +142,13 @@ class NativeAuthService extends NativeDatabase
     /** Called only within the caller's already serialized auth transaction. */
     public function issue(array $user, $deviceName)
     {
+        NativeCryptoAccountTombstoneV2::assertUser($this->pdo,$user['id']);
         $account = $this->one('SELECT * FROM familyhub_accounts WHERE user_id = ?', [$user['id']]);
         if (!$account) {
             $account = ['account_id' => $this->newUuid()];
             $this->change('INSERT INTO familyhub_accounts(user_id,account_id) VALUES(?,?)', [$user['id'], $account['account_id']]);
         }
+        NativeCryptoAccountTombstoneV2::assertAccount($this->pdo,$account['account_id']);
         $user['account_id'] = $account['account_id'];
         $token = 'fh1_'.bin2hex(random_bytes(32)); $now = time();
         $device = ['id' => $this->newUuid(), 'name' => $deviceName, 'expires_at' => $now + self::SESSION_SECONDS];

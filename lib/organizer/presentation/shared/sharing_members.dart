@@ -1,3 +1,4 @@
+import '../recovery/crypto_invitation_page.dart';
 import 'content_actions_menu.dart';
 import 'scope_invitation_form.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
 import 'scope_lifecycle_menu.dart';
+import '../../state/account_crypto_provider.dart';
+import '../../data/e2ee/account_crypto_v2_workflow.dart';
+import '../../data/e2ee/session_crypto_access.dart';
+import '../recovery/account_devices_page.dart';
 
 // invitations.list returns creation order (created_at, id). Keep historical
 // attempts on the server, but present the current invitation for each email.
@@ -84,7 +89,8 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   bool _canRemoveMember(SharedMember member) =>
-      widget.scope.canManage &&
+      (widget.scope.canManage ||
+          _cryptoScope && member.accountId == widget.session.accountId) &&
       member.role != SharedRole.owner &&
       (member.accessSource == 'direct' ||
           member.accessSources.contains('direct')) &&
@@ -96,7 +102,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     session: widget.session,
   );
   late Future<(List<SharedMember>, List<SharedInvitation>)> _future = _load();
-  bool _busy = false;
+  bool _busy = false, _cryptoScope = false;
   final _resendRequests = <String, ({String requestId, String language})>{};
 
   bool _scopeIsCurrent(CollaborationState state) =>
@@ -125,6 +131,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     if (!_isCurrent) throw const CollaborationException('access_revoked');
     final controller = _guard.controller;
     final scope = widget.scope;
+    final repository = await ref.read(collaborationRepositoryProvider.future);
+    _cryptoScope = (await repository.database.rows(
+      "SELECT scope_id FROM crypto_scope_state WHERE partition=? AND scope_id=? AND (floor>0 OR state IN ('active','committed','retired','fenced','verified'))",
+      [widget.session.partition, scope.id],
+    )).isNotEmpty;
     final results = await Future.wait<Object>([
       controller.members(scope.id),
       if (scope.canManage) controller.invitations(scope.id),
@@ -153,7 +164,10 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(sharingErrorMessage(context, error))),
+          SnackBar(
+            content: Text(sharingErrorMessage(context, error)),
+            action: sharingApprovalAction(context, error),
+          ),
         );
       }
     } finally {
@@ -235,19 +249,57 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     }
   }
 
+  Future<void> _verifyIdentity(SharedMember member) async {
+    if (_busy || !_isCurrent) return;
+    try {
+      final workflow = await ref.read(accountCryptoPreviewProvider.future);
+      if (!mounted || !_isCurrent) return;
+      if (workflow is! AccountCryptoV2Workflow) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.cryptoConnectionPending)),
+        );
+        return;
+      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => ContactIdentityVerificationPage(
+            access: SessionCryptoAccess(account: workflow),
+            scopeId: widget.scope.id,
+            accountId: member.accountId,
+            displayName: member.displayName.isEmpty
+                ? member.username
+                : member.displayName,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (mounted && _isCurrent)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.accountRecoveryFailed)),
+        );
+    }
+  }
+
   Future<void> _remove(SharedMember member) async {
+    final self = _cryptoScope && member.accountId == widget.session.accountId;
+    final sl = Localizations.localeOf(context).languageCode == 'sl';
     final directProject =
         widget.scope.kind == SharedScopeKind.project &&
         widget.scope.accessPolicyVersion == 3;
     final confirmed = await confirmSharingAction(
       context,
-      title: directProject
+      title: self
+          ? (sl ? 'Zapusti prostor' : 'Leave space')
+          : directProject
           ? context.l10n.sharingRemoveProjectMembership
           : context.l10n.sharingRemoveMember,
-      description:
-          widget.scope.kind == SharedScopeKind.project &&
-              widget.scope.parentSpaceId != null &&
-              widget.scope.accessPolicyVersion == 3
+      description: self
+          ? (sl
+                ? 'Izstop bo zahteval odobritev upravitelja in novo zaščito prostora. Do zaključka ohranite obstoječi dostop; zahtevo lahko prekličete.'
+                : 'Leaving requires a manager’s approval and renewed scope protection. Existing access remains until completion; you can cancel the request.')
+          : widget.scope.kind == SharedScopeKind.project &&
+                widget.scope.parentSpaceId != null &&
+                widget.scope.accessPolicyVersion == 3
           ? context.l10n.sharingProjectDirectRemoval
           : const {
               SharedScopeKind.organization,
@@ -255,7 +307,9 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
             }.contains(widget.scope.kind)
           ? context.l10n.scopeRemoveMemberDescendants
           : context.l10n.sharingRemoveMemberConfirm,
-      confirmLabel: directProject
+      confirmLabel: self
+          ? (sl ? 'Zahtevaj izstop' : 'Request leave')
+          : directProject
           ? context.l10n.sharingRemoveProjectMembership
           : context.l10n.sharingRemoveMember,
       wrap: (dialog) => SharingSessionBoundary(
@@ -269,6 +323,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
         () => _guard.controller.revokeMember(
           scopeId: widget.scope.id,
           userId: member.userId,
+          accountId: member.accountId,
         ),
       );
     }
@@ -362,6 +417,13 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                               member.accountId.isNotEmpty &&
                               member.accountId != widget.session.accountId,
                           actions: [
+                            if (member.accountId.isNotEmpty &&
+                                member.accountId != widget.session.accountId)
+                              ContentMenuAction(
+                                label: l.cryptoCompareContact,
+                                icon: Icons.verified_user_outlined,
+                                onSelected: () => _verifyIdentity(member),
+                              ),
                             if (_canRemoveMember(member) &&
                                 widget.scope.kind ==
                                     SharedScopeKind.organization &&
@@ -421,6 +483,37 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                             invitation.revokedAt == null
                         ? Wrap(
                             children: [
+                              if (invitation.pendingKeys)
+                                IconButton(
+                                  tooltip: l.cryptoInvitationGrantTitle,
+                                  onPressed: _busy
+                                      ? null
+                                      : () async {
+                                          final repository = await ref.read(
+                                            collaborationRepositoryProvider
+                                                .future,
+                                          );
+                                          final account = await repository
+                                              .connectedCryptoAccount();
+                                          if (!context.mounted ||
+                                              !_guard.isCurrent)
+                                            return;
+                                          await Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  CryptoInvitationPage(
+                                                    account: account,
+                                                    scopeId: widget.scope.id,
+                                                    invitationId: invitation.id,
+                                                    label: widget.scope.name,
+                                                  ),
+                                            ),
+                                          );
+                                          if (mounted && _guard.isCurrent)
+                                            setState(() => _future = _load());
+                                        },
+                                  icon: const Icon(Icons.key_outlined),
+                                ),
                               if (invitation.contractVersion == 3 &&
                                   ref
                                           .read(collaborationProvider)

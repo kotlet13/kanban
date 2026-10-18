@@ -2213,7 +2213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupTooLarge =>
-      'The backup exceeds the 64 MiB limit. Your data was not changed.';
+      'The backup is too large for a safe transfer. Your data was not changed.';
 
   @override
   String get backupMergeConflict =>
@@ -4629,4 +4629,603 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financeFilteredMovement => 'Income and expense overview';
+
+  @override
+  String get recoverySetupTitle => 'Add a recovery key';
+
+  @override
+  String get recoveryInstallationScope =>
+      'Recovery for this entire installation';
+
+  @override
+  String get recoveryInstallationExplanation =>
+      'This file, together with a copy of this device’s encrypted data, can unlock all profiles stored here, including local data and signed-out accounts. It is different from an account recovery file.';
+
+  @override
+  String get recoveryFileWarning =>
+      'Keep the file outside this device. Anyone with the file and a data copy can read the data. Do not send it to support. The file alone cannot recover data that were never copied.';
+
+  @override
+  String get recoveryShareFile => 'Send using your own app';
+
+  @override
+  String get recoverySaveFile => 'Save recovery file';
+
+  @override
+  String get recoverySelectSavedFile => 'Choose the saved file';
+
+  @override
+  String get recoveryExternalVerification =>
+      'Select the file you saved using the file picker. The app verifies it locally before changing your data. Returning from a save or share dialog does not confirm a safe copy.';
+
+  @override
+  String get recoveryProtectDevice => 'Encrypt local database';
+
+  @override
+  String get recoveryProtectingDevice =>
+      'Encrypting the local database. Keep the app open. A restart safely resumes the same process.';
+
+  @override
+  String get recoveryLockedExplanation =>
+      'The key for the existing data is unavailable. Choose this installation’s recovery file. Your existing data will be kept. An account password cannot unlock this installation.';
+
+  @override
+  String get recoveryUnlockInstallation => 'Unlock this installation';
+
+  @override
+  String get recoveryCleanupPending =>
+      'Encrypted data are ready. Removing old unencrypted copies is unfinished; device protection is not complete yet.';
+
+  @override
+  String get recoveryRetry => 'Try again';
+
+  @override
+  String get recoveryContinue => 'Continue to local data';
+
+  @override
+  String get recoveryUnsupported =>
+      'This platform cannot open protected data yet. Existing data are kept. Use a supported installed app to prepare or restore protection.';
+
+  @override
+  String get recoveryOperationFailed =>
+      'The step could not be completed. Your existing data are kept. Check that you selected the correct file and try again.';
+
+  @override
+  String get recoveryLocalProtectionOnly =>
+      'This encrypts the app’s local database on this device. Previously exported or temporary copies are not automatically protected. Protection of shared spaces is prepared separately; saving this file does not enable it.';
+
+  @override
+  String get recoveryCheckingDevice => 'Checking local storage…';
+
+  @override
+  String get recoveryCleanupLabel => 'Cleanup unfinished';
+
+  @override
+  String get recoveryBrowserUnprotected => 'Browser data unprotected';
+
+  @override
+  String get recoveryBrowserContinue =>
+      'Open existing browser data for use or export';
+
+  @override
+  String get accountRecoveryTitle => 'Prepare account recovery';
+
+  @override
+  String get accountRecoveryScope => 'This account only';
+
+  @override
+  String get accountRecoveryExplanation =>
+      'This file restores this account’s encryption keys. It does not contain your installation key, other profiles, or a copy of your data. Keep it outside this device and do not send it to support.';
+
+  @override
+  String get accountRecoveryPreview =>
+      'Key setup is available for testing. Your existing server content still uses the current synchronization and is not end-to-end encrypted. Saving this file does not switch shared spaces to E2EE.';
+
+  @override
+  String get accountRecoveryUnavailable =>
+      'Connected account protection setup is currently unavailable. Local data and pending changes are preserved; the server may need an upgrade.';
+
+  @override
+  String get accountRecoveryReady =>
+      'Account keys are prepared on this device. Shared spaces have not been switched to end-to-end encryption.';
+
+  @override
+  String get accountRecoveryLocked =>
+      'Sign-in does not unlock account keys. Choose this account’s recovery file to approve this device. The account password alone cannot restore encrypted content.';
+
+  @override
+  String get accountRecoveryVerify =>
+      'Choose saved account file and prepare keys';
+
+  @override
+  String get accountRecoveryResume => 'Check and resume the pending request';
+
+  @override
+  String get accountRecoveryFailed =>
+      'The step did not finish. Your existing data and pending work are kept. Check the file, connection and email verification, then try again.';
+
+  @override
+  String get accountRecoveryManualShare =>
+      'After saving, you can attach this file in your own mail app. Access to that mailbox can also grant access to the recovery file.';
+
+  @override
+  String get accountRecoveryRebase =>
+      'Choose the account recovery file to retry a confirmed conflict';
+
+  @override
+  String get cryptoConnectionPending =>
+      'Protection for the connected account is not ready. Local data and pending changes are preserved. Finish encryption setup before sending changes; the server may need an upgrade.';
+
+  @override
+  String get notificationPrivateReminder => 'You have a reminder in Jivie.';
+
+  @override
+  String get cryptoDevicesTitle => 'Approved devices';
+
+  @override
+  String get cryptoDevicePairingExplanation =>
+      'Transfer the public request directly between your devices. On an approved device, approve only the request from the device in front of you. Then transfer the confirmation card back.';
+
+  @override
+  String get cryptoDeviceApproved => 'Approved';
+
+  @override
+  String get cryptoDeviceRevoked => 'Revoked';
+
+  @override
+  String get cryptoShowPublicIdentity => 'Show public verification card';
+
+  @override
+  String get cryptoCreateDeviceRequest =>
+      'Create approval request for this device';
+
+  @override
+  String get cryptoPastePublicCard => 'Paste the other device’s public card';
+
+  @override
+  String get cryptoApproveExactDevice => 'Approve this exact device';
+
+  @override
+  String get cryptoAcceptDeviceConfirmation => 'Verify approval for my device';
+
+  @override
+  String get cryptoPublicCardExplanation =>
+      'This card contains only public keys and comparison evidence. Transfer it directly to the other device or person through a channel you trust.';
+
+  @override
+  String get cryptoCopyPublicCard => 'Copy public card';
+
+  @override
+  String get cryptoHistoryPendingExplanation =>
+      'Device approval does not prove that old history is complete. Sharing and sending also wait for verified space keys.';
+
+  @override
+  String get cryptoVerifyContactExplanation =>
+      'Ask the person for their public card directly through a known channel or in person. We verify their identity and current approved devices. A card supplied only by the server is insufficient.';
+
+  @override
+  String get cryptoContactVerified => 'Identity verified.';
+
+  @override
+  String get cryptoCompareContact => 'Compare and verify identity';
+
+  @override
+  String get cryptoMigrationTitle => 'Protect connected data';
+
+  @override
+  String get cryptoMigrationPendingContributors =>
+      'Waiting for authorized contributors to verify their data and keys.';
+
+  @override
+  String get cryptoMigrationPreparing =>
+      'Preparing protected transfer. Pending changes are preserved.';
+
+  @override
+  String get cryptoMigrationVerifying =>
+      'Verifying the protected copy and recovery.';
+
+  @override
+  String get cryptoMigrationLocalAvailable =>
+      'Local data is available. Sending waits until protection setup is complete.';
+
+  @override
+  String get cryptoMigrationContinue => 'Continue protection setup';
+
+  @override
+  String get cryptoMigrationRetry => 'Retry verification';
+
+  @override
+  String get cryptoReplaceRecoveryTitle => 'Replace recovery file';
+
+  @override
+  String get cryptoReplaceRecoveryExplanation =>
+      'Use this if the previous file may have reached someone else. In a fresh sign-in, select the previous file, save the new one and open it again. Confirming replacement revokes all previous devices and replaces the recovery keys. Other people must verify your identity again, and connected spaces need new protection keys before more changes can be sent.';
+
+  @override
+  String get cryptoKeepBothRecoveryFiles =>
+      'Keep both files until the app confirms the replacement is complete. Verifying the new file alone does not make the old one obsolete.';
+
+  @override
+  String get cryptoSaveNewRecoveryFile =>
+      'Select previous file and save new file';
+
+  @override
+  String get cryptoImportNewRecoveryFile => 'Reopen the newly saved file';
+
+  @override
+  String get cryptoRecoveryReplacementComplete =>
+      'Replacement confirmed. The previous file cannot authorize future changes or access new keys. Previously copied old data cannot be revoked.';
+
+  @override
+  String get cryptoMigrationNoScopes =>
+      'There are no connected spaces available to prepare. Your local data remains available.';
+
+  @override
+  String get cryptoMigrationArchiving =>
+      'Preserving and encrypting the existing data.';
+
+  @override
+  String get cryptoMigrationComplete =>
+      'New connected changes are encrypted in transit and at rest on the server. Previous server copies are still retained; their deletion date has not been confirmed.';
+
+  @override
+  String cryptoMigrationContributorCount(int count) {
+    return 'Waiting for $count contributors.';
+  }
+
+  @override
+  String cryptoMigrationUnavailableCount(int count) {
+    return '$count contributors are currently unavailable.';
+  }
+
+  @override
+  String get cryptoMigrationSpace => 'Connected space';
+
+  @override
+  String get cryptoMigrationWaitingHelp =>
+      'Another owner needs to open the updated app and finish their part. You can keep using your local data and return here later.';
+
+  @override
+  String get cryptoMigrationUnavailableHelp =>
+      'A required owner is unavailable. Ask them to update and open Jivie, then retry. Existing data is kept.';
+
+  @override
+  String get cryptoMigrationBlockedHelp =>
+      'Preparation needs attention before it can continue. Retry after checking the connection and account access; your data is kept.';
+
+  @override
+  String get cryptoMigrationReviewTitle => 'Review existing data';
+
+  @override
+  String get cryptoMigrationReviewExplanation =>
+      'Confirm preparation of this existing data together with the other owners. Connected changes stay queued until protection is verified. Original data and local edits are kept.';
+
+  @override
+  String cryptoMigrationReviewCounts(int rows, int files) {
+    return '$rows saved rows and $files files.';
+  }
+
+  @override
+  String get cryptoMigrationConsent => 'Confirm this data';
+
+  @override
+  String get cryptoRevokeDevice => 'Revoke device';
+
+  @override
+  String get cryptoRevokeDeviceExplanation =>
+      'This device will lose permission to receive future keys. Connected spaces need new protection keys before sending more changes. Existing local data is kept.';
+
+  @override
+  String get cryptoRecoveryRevokeTitle => 'Recover this account?';
+
+  @override
+  String get cryptoRecoveryRevokeExplanation =>
+      'Recovery with this file revokes all previously approved devices. Connected spaces need new protection keys before sending further changes. To add a device while keeping the others, use approval from an existing device instead. Existing data is kept.';
+
+  @override
+  String get cryptoRecoveryRevokeConfirm =>
+      'Recover account and revoke previous devices';
+
+  @override
+  String get cryptoScopeRecoveryTitle => 'Restore connected space';
+
+  @override
+  String get cryptoScopeRecoveryExplanation =>
+      'Your file can unlock the saved data. The server may provide an older snapshot, and the file alone cannot prove that nothing is missing. Review the available data before accepting it as the starting point. Original evidence is kept, and new changes will use new protection keys.';
+
+  @override
+  String get cryptoScopeRecoveryPending =>
+      'This space cannot continue yet. Check the connection and account approval; another authorized owner or finance reader may need to finish their part. Existing data is kept.';
+
+  @override
+  String get cryptoScopeRecoveryComplete =>
+      'The reviewed starting point and new protection keys are confirmed. Existing copied data cannot be withdrawn from a previous device.';
+
+  @override
+  String get cryptoScopeRecoveryImport =>
+      'Import account recovery file and review';
+
+  @override
+  String cryptoScopeRecoveryCount(String domain, int count) {
+    return '$domain: $count saved records';
+  }
+
+  @override
+  String get cryptoScopeContent => 'Other data';
+
+  @override
+  String get cryptoScopeDeleted => 'Deleted record';
+
+  @override
+  String get cryptoScopeNextPreview => 'Next saved records';
+
+  @override
+  String get cryptoScopeAcceptCandidate =>
+      'I reviewed the available data and accept this snapshot as the starting point. It may not contain the latest changes.';
+
+  @override
+  String get cryptoScopeConfirmRecovery =>
+      'Accept snapshot and renew protection';
+
+  @override
+  String get cryptoReviewConnectedSpace => 'Review space protection';
+
+  @override
+  String get cryptoFinanceContributionTitle => 'Prepare financial protection';
+
+  @override
+  String get cryptoFinanceContributionExplanation =>
+      'An authorized finance reader prepares the financial keys. Owners without finance access receive only the confirmation needed to finish; they do not receive your financial keys or records.';
+
+  @override
+  String get cryptoFinanceContributionPending =>
+      'Preparation is waiting for an authorized finance reader or the owner. Check access and the connection, then retry.';
+
+  @override
+  String get cryptoFinanceNoRequests =>
+      'There are no financial preparation requests available to you.';
+
+  @override
+  String get cryptoFinanceReviewRequest => 'Review financial preparation';
+
+  @override
+  String get cryptoFinanceWaitingOwner =>
+      'Your signed preparation is saved. The owner can now continue. After they prepare the space, finish sharing its financial keys here.';
+
+  @override
+  String get cryptoFinanceFinishContribution => 'Finish financial protection';
+
+  @override
+  String get cryptoFinanceAcceptContribution =>
+      'I reviewed the available financial data and approve preparing its protection. The starting snapshot may be older.';
+
+  @override
+  String get cryptoFinanceApproveContribution =>
+      'Approve financial preparation';
+
+  @override
+  String get cryptoReplaceRecoveryConfirm =>
+      'Replace recovery keys and revoke previous devices';
+
+  @override
+  String get cryptoKeyContributionTitle => 'Approve new space keys';
+
+  @override
+  String get cryptoKeyContributionExplanation =>
+      'When ownership or finance access changes, the authorized recipients prepare their own keys. A previous owner who leaves does not receive the new keys. Preparation is saved and can continue after reopening.';
+
+  @override
+  String get cryptoKeyContributionEmpty =>
+      'There are no key approval requests available to you.';
+
+  @override
+  String get cryptoKeyContributionOffer => 'Prepare my new key';
+
+  @override
+  String get cryptoKeyContributionSign => 'Approve the complete proposal';
+
+  @override
+  String get cryptoKeyContributionPublish => 'Finish sharing my keys';
+
+  @override
+  String get cryptoKeyContributionAcceptOwner =>
+      'Accept ownership and checked keys';
+
+  @override
+  String get cryptoKeyContributionPending =>
+      'Preparation is waiting for another authorized member or the owner. Refresh to continue the same proposal.';
+
+  @override
+  String get cryptoScopeManageMembers => 'Members and ownership transfer';
+
+  @override
+  String get cryptoScopeMember => 'Member';
+
+  @override
+  String get cryptoScopeOwner => 'Owner';
+
+  @override
+  String get cryptoScopeViewer => 'Viewer';
+
+  @override
+  String get cryptoScopeRemoveMember => 'Remove access';
+
+  @override
+  String get cryptoScopeTransferExplanation =>
+      'The new owner must prepare a new key and accept the transfer in their app. A finance reader approves financial keys separately. New connected changes wait until preparation finishes; local data remains available.';
+
+  @override
+  String get cryptoScopeResumePreparation => 'Continue saved preparation';
+
+  @override
+  String get cryptoScopeCancelPreparation => 'Cancel this proposal';
+
+  @override
+  String get cryptoRebindLocalDevice =>
+      'Use approved keys already on this device';
+
+  @override
+  String get cryptoScopeReviewLocal => 'Review data already on this device';
+
+  @override
+  String get cryptoEmailVerificationRequired =>
+      'Verify your email address before entering connected account data. Local use remains available.';
+
+  @override
+  String get cryptoInvitationPendingKeys =>
+      'Invitation accepted. The owner still needs to confirm your keys. The space opens after confirmation; you can keep working locally.';
+
+  @override
+  String get cryptoInvitationVerifyCreator =>
+      'Before joining, verify the person who invited you. Obtain their public card directly through a known channel, separately from the invitation link.';
+
+  @override
+  String get cryptoUnavailableSpace => 'Unavailable space';
+
+  @override
+  String get cryptoUnavailableTitle => 'Keep unavailable spaces';
+
+  @override
+  String get cryptoUnavailableExplanation =>
+      'These previously used spaces are currently unavailable. Their upgrade and protection are not confirmed. Local data and unsent changes remain available for viewing and export; this confirmation grants no access.';
+
+  @override
+  String get cryptoUnavailableConfirm => 'I understand; keep local data';
+
+  @override
+  String get cryptoContinueLocally => 'Continue locally';
+
+  @override
+  String get cryptoInvitationGrantTitle => 'Confirm access';
+
+  @override
+  String get cryptoInvitationGrantExplanation =>
+      'The recipient accepted the invitation. After comparing identities, confirm access to this space’s existing data and future changes. Financial data requires separate financial permission.';
+
+  @override
+  String get cryptoInvitationGrantConfirm => 'Confirm access and prepare keys';
+
+  @override
+  String get accountRecoveryV2Pending =>
+      'First save and verify this account’s recovery file. Then finish protection for connected spaces. Existing server copies remain until their removal is separately confirmed.';
+
+  @override
+  String get accountRecoveryV2Prepared =>
+      'Account recovery and this device’s keys are ready. The next step checks each space’s protection; unfinished spaces retain local data and queued changes.';
+
+  @override
+  String get financeAuditUnknownTime => 'Change time unknown';
+
+  @override
+  String get financeAuditAuthorTime => 'Time reported by the author';
+
+  @override
+  String get cryptoRestoreTitle => 'Verify restored backup';
+
+  @override
+  String get cryptoRestoreExplanation =>
+      'We check all retained backups and confirmed identities. Imported changes are not sent automatically. Local data and drafts remain preserved.';
+
+  @override
+  String get cryptoRestoreCompareIdentities =>
+      'First compare member identities through a trusted channel.';
+
+  @override
+  String get cryptoRestoreHistoryPending =>
+      'Some history needs review by the space owner. The server snapshot may be older; original evidence remains preserved.';
+
+  @override
+  String get cryptoRestoreVerify => 'Verify retained backups';
+
+  @override
+  String get cryptoRestoreConfirm => 'Confirm verified evidence';
+
+  @override
+  String get cryptoRestoreKeys => 'Import recovery file for viewing';
+
+  @override
+  String get cryptoRestoreComplete =>
+      'Evidence is verified. Imported requests remain separate until you explicitly resume your work.';
+
+  @override
+  String cryptoRestoreCounts(int backups, int scopes, int records) {
+    return 'Backups: $backups · spaces: $scopes · records: $records';
+  }
+
+  @override
+  String get cryptoRestoreDraft => 'Recovered local file';
+
+  @override
+  String get preservedFilesTitle => 'Preserved device files';
+
+  @override
+  String get preservedFilesExplanation =>
+      'These are old imported or exported copies from this installation. They may belong to different accounts and are not automatically included in the selected account’s backup. Select one file and save an encrypted copy, or explicitly save its original bytes without additional encryption. Unidentified files and copies larger than 64 MiB remain on the device; this view does not confirm their removal or contents. Opening a copy installs or sends nothing.';
+
+  @override
+  String get preservedFilesReview =>
+      'I selected this file and authorize exporting its contents, including data from another account on this device.';
+
+  @override
+  String get preservedFilesSaveOriginal => 'Save original file';
+
+  @override
+  String get preservedFilesOpen => 'Open an encrypted preserved file';
+
+  @override
+  String get preservedFilesEmpty => 'No preserved files in this page.';
+
+  @override
+  String get preservedFilesNext => 'Next files';
+
+  @override
+  String get recoveryHistoricalExportsRetained =>
+      'Some old files exceed the safe transfer limit or could not be safely identified. They remain on the device; protection of those copies is not confirmed. Preserved files are available in Settings.';
+
+  @override
+  String get backupPendingFilesNeedAccess =>
+      'Connect and verify access to the spaces containing pending files, then retry the backup. Without verified access, duplicate copies cannot be safely combined within the size limit. Original data and pending work remain on this device.';
+
+  @override
+  String get deletionCryptoRetention =>
+      'Shared encrypted records and their exact signed history remain available to other members. Encrypted historical backups and key wrappers inside old signatures may remain. Your login, devices and private recovery access are removed. Existing copies cannot be erased. Shared spaces stay read-only until a remaining authorized manager changes the keys. Frozen migration sources may also remain until their separately reviewed cleanup.';
+
+  @override
+  String get deletionCryptoPreserve => 'Keep shared history; remove my access';
+
+  @override
+  String get deletionCryptoDeletePrivate =>
+      'Delete this wholly private encrypted space';
+
+  @override
+  String get deletionCryptoChoose =>
+      'Choose what happens to this encrypted space';
+
+  @override
+  String get deletionCryptoScope => 'Encrypted space';
+
+  @override
+  String get deletionWithoutKeys => 'Delete account without recovery keys';
+
+  @override
+  String get deletionWithoutKeysExplanation =>
+      'You can review account deletion using your password and, if enabled, a verification code. A recovery file is not required.';
+
+  @override
+  String get deletionCryptoAcknowledge =>
+      'I understand that my login and private access will be removed permanently, while other members retain shared encrypted history and existing copies.';
+
+  @override
+  String get scopeDeleteCryptoRetention =>
+      'Active data and access are removed. Signed history, earlier backups and frozen migration sources may remain. This does not erase keys or copies already held by other members.';
+
+  @override
+  String get accountRecoveryScopesPending =>
+      'Account access is restored. Some spaces or saved recovery work still need verification. Recovered data is kept. Select your recovery file again to continue; device approval will not be repeated.';
+
+  @override
+  String get accountRecoveryScopesRetry => 'Continue restoring spaces';
+
+  @override
+  String get accountRecoveryUseRecovered => 'Open recovered spaces';
 }

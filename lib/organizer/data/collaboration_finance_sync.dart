@@ -164,7 +164,23 @@ extension CollaborationFinanceSync on CollaborationRepository {
           await fetchLinkedPayments(PaymentSpaceRef(scope.id, partition: p));
           _checkEpoch(epoch);
         }
+      } on CryptoAuthorityPending {
+        _checkEpoch(epoch);
+        _lastError ??= const CollaborationException(
+          'crypto_reconciliation_required',
+        );
       } on CollaborationApiException catch (e) {
+        if (const {
+          'crypto_scope_head_missing',
+          'crypto_migration_required',
+          'crypto_device_keys_pending',
+        }.contains(e.code)) {
+          _checkEpoch(epoch);
+          _lastError ??= const CollaborationException(
+            'crypto_reconciliation_required',
+          );
+          continue;
+        }
         if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
           rethrow;
         }
@@ -187,18 +203,36 @@ extension CollaborationFinanceSync on CollaborationRepository {
       if (!await _privateScopeAllowed(session.profile.partition, scope)) {
         continue;
       }
-      final policy = await _fetchFinancePolicy(
-        session,
-        epoch,
-        scope.id,
-        syncLease: true,
-      );
-      if (policy.canWrite) {
-        await _pushFinanceScope(
+      try {
+        final policy = await _fetchFinancePolicy(
           session,
           epoch,
           scope.id,
-          dependenciesOnly: true,
+          syncLease: true,
+        );
+        if (policy.canWrite) {
+          await _pushFinanceScope(
+            session,
+            epoch,
+            scope.id,
+            dependenciesOnly: true,
+          );
+        }
+      } on CryptoAuthorityPending {
+        _checkEpoch(epoch);
+        _lastError ??= const CollaborationException(
+          'crypto_reconciliation_required',
+        );
+      } on CollaborationApiException catch (error) {
+        if (!const {
+          'crypto_scope_head_missing',
+          'crypto_migration_required',
+          'crypto_device_keys_pending',
+        }.contains(error.code))
+          rethrow;
+        _checkEpoch(epoch);
+        _lastError ??= const CollaborationException(
+          'crypto_reconciliation_required',
         );
       }
     }
@@ -451,7 +485,13 @@ extension CollaborationFinanceSync on CollaborationRepository {
             }
             await database.execute(
               'UPDATE scopes SET finance_cursor=?,finance_access_revision=?,finance_complete=? WHERE partition=? AND id=?',
-              [cursor, access, more ? 0 : 1, p, scope],
+              [
+                cursor,
+                access,
+                more || reply['cryptoProjectionComplete'] == false ? 0 : 1,
+                p,
+                scope,
+              ],
             );
           });
         }

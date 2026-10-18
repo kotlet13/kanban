@@ -1,4 +1,7 @@
 import 'dart:convert';
+import '../../data/e2ee/invite_crypto_repository.dart';
+import '../../data/e2ee/session_crypto_access.dart';
+import '../../data/pending_invitation_store.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +18,7 @@ import 'content_moderation.dart';
 import 'sharing_errors.dart';
 import 'sharing_invitation_details.dart';
 import 'sharing_session_boundary.dart';
+import '../recovery/account_crypto_wizard.dart';
 
 /// A separate route keeps the invitation alive while authentication and password
 /// recovery change screens. Closing this route never discards its secure record.
@@ -77,6 +81,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
   int _generation = 0;
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
+  bool _cryptoPending = false;
 
   bool get _active {
     final incoming = ref.read(pendingInvitationLinkProvider);
@@ -193,6 +198,26 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       token: link.token,
     );
     if (!_active || _identity != identity) return;
+    if (_matchingSession) {
+      final saved = await ref.read(pendingInvitationStoreProvider).read();
+      if (saved?.token == link.token &&
+          saved?.invitationId != null &&
+          saved?.accountPartition == _session?.partition) {
+        final repository = await ref.read(
+          collaborationRepositoryProvider.future,
+        );
+        final workflow = await repository.connectedCryptoAccount();
+        if (await workflow.localPhase() == 'ready') {
+          final scope = await InviteCryptoRepository(
+            SessionCryptoAccess(account: workflow),
+          ).resumeAccepted(saved!.invitationId!);
+          if (scope != null) {
+            await _openEncryptedTarget(scope, link);
+            return;
+          }
+        }
+      }
+    }
     final preview = await controller.previewInvitation(
       serverUrl: link.serverUrl,
       token: link.token,
@@ -268,6 +293,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       _password.clear();
       _confirm.clear();
       _otp.clear();
+      if (!mounted) return;
+      await showAccountCryptoSetupIfAvailable(context, ref);
+      if (!_active || _link != link) return;
       if (!_matchingSession ||
           _session?.username.toLowerCase() !=
               _username.text.trim().toLowerCase()) {
@@ -287,6 +315,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
 
   Future<void> _join() async {
     if (!_matchingSession || _preview == null || _joined) return;
+    if (_link!.token.startsWith('fhi4_') || _preview!.contractVersion == 4) {
+      await _joinEncrypted();
+      return;
+    }
     final preview = _preview!, link = _link!;
     final guard = SharingSessionGuard(context, ref);
     await _run(() async {
@@ -311,6 +343,158 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       await _finishJoined(preview);
     });
   }
+
+  Future<void> _openEncryptedTarget(String scopeId, InvitationLink link) async {
+    if (!mounted ||
+        !_active ||
+        _link?.token != link.token ||
+        !_sameServer(_link?.serverUrl, link.serverUrl) ||
+        !_matchingSession)
+      return;
+    final guard = SharingSessionGuard(context, ref);
+    await guard.controller.syncNow();
+    if (!mounted || !_active || !guard.isCurrent || _link?.token != link.token)
+      return;
+    final scope = ref
+        .read(collaborationProvider)
+        .valueOrNull
+        ?.scopes
+        .where((s) => s.id == scopeId && s.canRead)
+        .firstOrNull;
+    if (scope == null)
+      throw const CollaborationException('crypto_reconciliation_required');
+    await guard.controller.selectSpace(scopeId);
+    if (!mounted || !_active || !guard.isCurrent || _link?.token != link.token)
+      return;
+    await guard.controller.clearPendingInvitation(expectedToken: link.token);
+    if (!mounted || !_active || !guard.isCurrent || _link?.token != link.token)
+      return;
+    setState(() {
+      _joined = true;
+      _joinedIdentity = _identity;
+    });
+    widget.onAccepted?.call(scopeId);
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _joinEncrypted() => _run(() async {
+    final link = _link!;
+    final identity = _identity;
+    bool current() =>
+        mounted &&
+        _active &&
+        _matchingSession &&
+        _identity == identity &&
+        _link?.token == link.token &&
+        _sameServer(_link?.serverUrl, link.serverUrl);
+    final repository = await ref.read(collaborationRepositoryProvider.future);
+    final workflow = await repository.connectedCryptoAccount();
+    if (!current()) return;
+    final initialPhase = await workflow.localPhase();
+    if (!mounted || !current()) return;
+    if (initialPhase != 'ready') {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => AccountCryptoWizard(workflow: workflow),
+        ),
+      );
+      if (!mounted || !current()) return;
+      final phase = await workflow.localPhase();
+      if (!mounted || !current() || phase != 'ready') return;
+    }
+    final invites = InviteCryptoRepository(
+      SessionCryptoAccess(account: workflow),
+    );
+    final saved = await ref.read(pendingInvitationStoreProvider).read();
+    if (saved?.token == link.token &&
+        saved?.accountPartition == workflow.store.partition &&
+        saved?.invitationId != null) {
+      final target = await invites.resumeAccepted(saved!.invitationId!);
+      if (target != null) {
+        await _openEncryptedTarget(target, link);
+        return;
+      }
+    }
+    final invite = await invites.inspect(token: link.token);
+    if (!current()) return;
+    var trusted = false;
+    try {
+      await invites.access.identities.requireVerified(
+        invite.creator.accountId,
+        invites.access.identities.fingerprint(invite.creator),
+      );
+      trusted = true;
+    } catch (_) {
+      /* Explicit comparison below. */
+    }
+    if (!mounted || !current()) return;
+    if (!trusted) {
+      final input = TextEditingController();
+      String? card;
+      try {
+        card = await showDialog<String>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: Text(context.l10n.cryptoCompareContact),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(context.l10n.cryptoInvitationVerifyCreator),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: input,
+                    minLines: 2,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      labelText: context.l10n.cryptoPastePublicCard,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialog),
+                child: Text(context.l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialog, input.text),
+                child: Text(context.l10n.cryptoCompareContact),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        input.dispose();
+      }
+      if (card == null || !current()) return;
+      await invites.compareCreator(invite, card);
+    }
+    if (!current()) return;
+    await invites.accept(invite, actionId: invite.invitation['id']);
+    if (!current()) return;
+    final previous = await ref.read(pendingInvitationStoreProvider).read();
+    if (previous?.token != link.token || previous?.serverUrl != link.serverUrl)
+      return;
+    await ref
+        .read(pendingInvitationStoreProvider)
+        .write(
+          PendingInvitation(
+            serverUrl: previous!.serverUrl,
+            token: previous.token,
+            serverId: previous.serverId,
+            expiresAt: previous.expiresAt,
+            accountPartition: workflow.store.partition,
+            invitationId: invite.invitation['id'],
+          ),
+        );
+    if (!current()) return;
+    setState(() {
+      _cryptoPending = true;
+      _notice = context.l10n.cryptoInvitationPendingKeys;
+    });
+  });
 
   Future<void> _finishJoined(SharedInvitationPreview preview) async {
     if (!_active || _joinedIdentity != _identity) {
@@ -499,7 +683,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                                 ? () => _run(() => _finishJoined(_preview!))
                                 : _join,
                             child: Text(
-                              _joined
+                              _cryptoPending
+                                  ? l.cryptoMigrationRetry
+                                  : _joined
                                   ? l.invitationFlowOpenSpace
                                   : _preview?.kind == SharedScopeKind.project
                                   ? l.invitationFlowJoinProject

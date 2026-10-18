@@ -281,6 +281,7 @@ class SharedInvitation {
     this.deliveryQueued = false,
     this.acceptedAt,
     this.revokedAt,
+    this.pendingKeys=false,
   });
   final String id;
   final String scopeId;
@@ -292,8 +293,8 @@ class SharedInvitation {
   final String? token, recipientEmail;
   final int contractVersion;
   final String? accessScope;
-  final bool deliveryQueued;
-  bool get isEmailInvitation => const [2, 3].contains(contractVersion);
+  final bool deliveryQueued,pendingKeys;
+  bool get isEmailInvitation => const [2, 3, 4].contains(contractVersion);
   factory SharedInvitation.fromJson(
     Map<String, dynamic> json, {
     String? token,
@@ -323,6 +324,7 @@ class SharedInvitation {
     contractVersion: json['contractVersion'] as int? ?? 1,
     accessScope: json['accessScope'] as String?,
     deliveryQueued: json['deliveryQueued'] == true,
+    pendingKeys: json['pendingKeys']==true,
   );
 }
 
@@ -355,7 +357,7 @@ class SharedInvitationPreview {
   final int contractVersion;
   final String? accessScope;
   final bool projectFinanceIncluded, requiresExplicitAcceptance;
-  bool get isEmailInvitation => const [2, 3].contains(contractVersion);
+  bool get isEmailInvitation => const [2, 3, 4].contains(contractVersion);
   bool get canRegister => registrationAllowed;
 }
 

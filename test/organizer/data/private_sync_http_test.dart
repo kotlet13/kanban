@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Explicit isolated synthetic loopback fixture. No credentials/bodies in logs.
 import 'dart:convert';
 import 'dart:io';
@@ -57,6 +58,7 @@ void main() {
           http,
           store,
           ownsDatabase: false,
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await shared.initialize();
         final backup = PortableBackupRepository(

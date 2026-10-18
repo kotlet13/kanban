@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -34,6 +35,7 @@ void main() {
         transport,
         sessions,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repo.initialize();
       await repo.login(
@@ -145,6 +147,7 @@ void main() {
         transport,
         sessions,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repo.initialize();
       final reopened = await UnsentWorkRecovery.decode(

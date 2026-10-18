@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -84,6 +85,7 @@ class _Fixture {
       MemorySessionStore(),
       invitationStore: pending,
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repository.initialize();
     await repository.login(

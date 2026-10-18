@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in, synthetic loopback fixture only. Never use live accounts or servers.
 // JIVIE_MODERATION_HTTP_FIXTURE=/private/fixture.json flutter test this file
 import 'dart:convert';
@@ -78,6 +79,7 @@ void main() {
           ),
           transport,
           MemorySessionStore(),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repos.add(repo);
         await repo.initialize();

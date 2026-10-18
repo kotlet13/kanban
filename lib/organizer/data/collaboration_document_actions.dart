@@ -22,6 +22,7 @@ class SharedDocumentsContext {
   bool online = true;
   bool spreadsheetsSupported = false, attachmentsSupported = false;
   final _bytes = <String, Uint8List>{};
+  final _legacyUploads = <String, CryptoLegacyUploadDrain>{};
   String get partition => _session.profile.partition;
   String get _prefix => 'document_cache:$partition:$scopeId:';
   SharedScope? get scope => _repo.state.scopes
@@ -80,6 +81,15 @@ class SharedDocumentsContext {
     bool write = false,
   }) async {
     check(write: write);
+    if (write &&
+        const {
+          'tables.create',
+          'tables.save',
+          'attachments.begin',
+        }.contains(operation)) {
+      await _repo.requireVerifiedEmailForConnectedEntry();
+      check(write: true);
+    }
     if (operation.startsWith('tables.') &&
         scope!.kind != SharedScopeKind.organization) {
       throw const CollaborationException('permission_revoked');
@@ -91,10 +101,34 @@ class SharedDocumentsContext {
       throw const CollaborationException('documents_upgrade_required');
     }
     try {
-      final result = await _repo._callSession(_session, _epoch, operation, {
-        ...params,
-        'scopeId': scopeId,
-      });
+      final body = {...params, 'scopeId': scopeId};
+      CryptoLegacyUploadDrain? drain;
+      if (operation == 'attachments.begin') {
+        drain = await CryptoLegacyUploadDrain.begin(
+          _repo.database,
+          _session,
+          scopeId,
+          body,
+          () async =>
+              (await _repo._businessCryptoAccount(_session)).store.secure,
+        );
+        if (drain != null) _legacyUploads[body['id'] as String] = drain;
+      } else if (const {
+        'attachments.chunk',
+        'attachments.complete',
+      }.contains(operation)) {
+        drain = _legacyUploads[body['id']];
+      }
+      final result = await _repo._callSession(
+        _session,
+        _epoch,
+        operation,
+        body,
+        authorizeLegacyUploadDrain: drain == null
+            ? null
+            : () => drain!.authorize(operation, body),
+      );
+      drain?.accept(result);
       check(write: write);
       online = true;
       return result;
@@ -538,12 +572,20 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
       'SELECT value FROM local_meta WHERE name=?',
       [_draftKey(id)],
     );
+    final recovered = rows.isEmpty
+        ? await CryptoMigrationIdeaDraftRecovery.tableDraft(
+            context._repo.database,
+            context.partition,
+            scopeId,
+            id,
+          )
+        : null;
     context.check();
-    return rows.isEmpty
+    return rows.isEmpty && recovered == null
         ? null
         : SpreadsheetDraft.fromJson(
             Map<String, dynamic>.from(
-              jsonDecode(rows.single['value'] as String) as Map,
+              jsonDecode(recovered ?? rows.single['value'] as String) as Map,
             ),
           );
   }
@@ -574,6 +616,13 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
     await context._repo.database.execute(
       'DELETE FROM local_meta WHERE name=?',
       [_draftKey(id)],
+    );
+    await context._repo.database.execute(
+      'INSERT OR REPLACE INTO local_meta VALUES(?,?)',
+      [
+        'migration_table_draft_dismissed:${context.partition}:$scopeId:$id',
+        '1',
+      ],
     );
     context.check();
   }

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Explicit isolated synthetic loopback fixture. Never logs credentials/bodies.
 import 'dart:convert';
 import 'dart:io';
@@ -36,6 +37,7 @@ void main() {
         http,
         MemorySessionStore(),
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       addTearDown(() async {

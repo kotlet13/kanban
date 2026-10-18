@@ -1,5 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
+import '../../platform/private_file_io.dart';
+import '../backup/backup_file_io.dart' show readBoundedBackup;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -16,14 +18,27 @@ class UnsentWorkRecoveryButton extends StatelessWidget {
     label: Text(context.l10n.sharingOpenDrafts),
     onPressed: () async {
       try {
-        final selected = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['json'],
-          withData: true,
-        );
-        if (selected == null) return;
-        final file = selected.files.single;
-        final bytes = file.bytes ?? await File(file.path!).readAsBytes();
+        Uint8List bytes;
+        if (usesPrivateMobileFileIo) {
+          final selected = await pickPrivateFile(
+            extensions: ['json'],
+            maxBytes: 180 * 1024 * 1024,
+          );
+          if (selected == null) return;
+          bytes = selected.bytes;
+        } else {
+          final selected = await FilePicker.platform.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: ['json'],
+            withData: false,
+            withReadStream: true,
+          );
+          if (selected == null) return;
+          bytes = await readBoundedBackup(
+            selected.files.single,
+            maxBytes: 180 * 1024 * 1024,
+          );
+        }
         final recovery = await UnsentWorkRecovery.decode(utf8.decode(bytes));
         if (!context.mounted) return;
         await showDialog<void>(

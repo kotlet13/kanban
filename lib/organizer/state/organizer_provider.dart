@@ -7,6 +7,9 @@ import '../data/organizer_repository.dart';
 import '../data/organizer_storage.dart';
 import '../data/sqlite_organizer_storage.dart';
 import 'local_database_provider.dart';
+import 'collaboration_provider.dart';
+import '../data/collaboration_repository.dart';
+import '../data/connected_personal_entry.dart';
 import '../domain/organizer_models.dart';
 
 typedef OrganizerStorageFactory = Future<OrganizerStorage> Function();
@@ -61,7 +64,19 @@ final organizerRepositoryProvider = FutureProvider<OrganizerRepository>((
     // owner's queued mutations and close before opening a replacement handle.
     await lifecycle.closing;
     final storage = await factory();
-    final repository = OrganizerRepository(storage, clock: clock);
+    final repository = OrganizerRepository(
+      storage,
+      clock: clock,
+      beforeConnectedEntry: () async {
+        if(storage is! SqliteOrganizerStorage)return;
+        await authorizeConnectedPersonalEntry(storage.database,(bound)async {
+          final collaboration=await ref.read(collaborationRepositoryProvider.future);
+          final current=collaboration.state.session;
+          if(current==null || current.partition!=bound.partition || current.deviceId!=bound.deviceId)throw const OrganizerConflictException('Connected workspace changed');
+          await collaboration.requireVerifiedEmailForConnectedEntry();
+        });
+      },
+    );
     try {
       await repository.initialize();
       return repository;
@@ -254,8 +269,10 @@ class OrganizerController extends AsyncNotifier<OrganizerSnapshot> {
   );
   Future<void> updateProject(LocalProject record) =>
       _repo.updateProject(record);
-  Future<Map<String, dynamic>> previewProjectDeletion(String id) => _repo.previewProjectDeletion(id);
-  Future<void> deleteProject(String id, {String? previewHash}) => _repo.deleteProject(id, previewHash: previewHash);
+  Future<Map<String, dynamic>> previewProjectDeletion(String id) =>
+      _repo.previewProjectDeletion(id);
+  Future<void> deleteProject(String id, {String? previewHash}) =>
+      _repo.deleteProject(id, previewHash: previewHash);
 
   Future<void> createTask({
     required String title,

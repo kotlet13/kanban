@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ui' show Locale;
+import '../../l10n/app_localizations.dart';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
@@ -128,6 +130,11 @@ class FlutterNotificationScheduler implements LocalNotificationScheduler {
           .map((request) => request.id)
           .toSet();
   @override
+  Future<void> clearPresentedAndPending() async {
+    if (supported) await _plugin.cancelAll();
+  }
+
+  @override
   Future<void> cancel(int id) => _plugin.cancel(id: id);
   @override
   Future<void> schedule(
@@ -145,10 +152,13 @@ class FlutterNotificationScheduler implements LocalNotificationScheduler {
         : (await Sha256().hash(
             utf8.encode('${target.serverId}:${target.accountId}'),
           )).bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    final generic = lookupAppLocalizations(
+      Locale(request.languageCode == 'en' ? 'en' : 'sl'),
+    ).notificationPrivateReminder;
     await _plugin.zonedSchedule(
       id: id,
-      title: request.title,
-      body: request.body,
+      title: 'Jivie',
+      body: generic,
       scheduledDate: tz.TZDateTime.from(
         request.plan.scheduledAt.toUtc(),
         tz.local,

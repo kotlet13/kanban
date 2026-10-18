@@ -65,6 +65,7 @@ extension LinkedPaymentIntents on LinkedPaymentsRepository {
         collaboration!.state.session?.deviceId != deviceId) {
       throw const CollaborationException('session_changed');
     }
+    var projectionPending = reply['projectionPending'] == true;
     var event = PaymentEvent.fromJson({
       ...Map<String, dynamic>.from(reply['event'] as Map),
       'sourcePartition': partition,
@@ -85,6 +86,8 @@ extension LinkedPaymentIntents on LinkedPaymentsRepository {
           Map<String, Object?>.from(refund as Map),
           partition: partition,
         );
+        projectionPending =
+            projectionPending || applied['projectionPending'] == true;
         event = PaymentEvent.fromJson({
           ...Map<String, dynamic>.from(applied['event'] as Map),
           'sourcePartition': partition,
@@ -129,20 +132,21 @@ extension LinkedPaymentIntents on LinkedPaymentsRepository {
         );
       }
       await _saveEvent(source.space, event);
-      if (personal != null) {
+      if (personal != null && (!projectionPending || personal.isLocal)) {
         await _saveProjection(
           personal,
           event,
           account: intent['personalAccountId'] as String,
         );
       }
-      if (home != null) await _saveProjection(home, event);
+      if (home != null && (!projectionPending || home.isLocal))
+        await _saveProjection(home, event);
       for (final row in await database.rows(
         'SELECT space_key,data FROM linked_payment_projections WHERE event_id=?',
         [event.eventId],
       )) {
         final old = PaymentProjection.fromJson(_map(row['data']));
-        if (old.event.revision > event.revision) continue;
+        if (old.event.revision > event.revision || projectionPending) continue;
         if (old.event.sourcePartition == event.sourcePartition &&
             old.event.sourceScopeId == event.sourceScopeId) {
           await database.execute(
@@ -162,8 +166,8 @@ extension LinkedPaymentIntents on LinkedPaymentsRepository {
         }
       }
       await database.execute(
-        "UPDATE linked_payment_intents SET state='complete' WHERE id=?",
-        [id],
+        "UPDATE linked_payment_intents SET state=? WHERE id=?",
+        [projectionPending ? 'pending' : 'complete', id],
       );
       await database.touchPersonal();
     });

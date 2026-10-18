@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -93,6 +94,7 @@ class OutageFixture {
         client: IOClient(LoopbackClientFactory().createHttpClient(null)),
       ),
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repository.initialize();
     await repository.login(

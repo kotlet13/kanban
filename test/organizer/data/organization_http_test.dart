@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in loopback tests create only new scopes under a synthetic fixture account.
 import 'dart:convert';
 import 'dart:io';
@@ -27,7 +28,12 @@ void main() {
       final owner = fixture['owner'] as Map<String, dynamic>,
           db = CollaborationDatabase(NativeDatabase.memory()),
           http = OfflineHttpTransport();
-      final repo = CollaborationRepository(db, http, MemorySessionStore());
+      final repo = CollaborationRepository(
+        db,
+        http,
+        MemorySessionStore(),
+        contentRouteGuard: const SyntheticContentRouteGuard(),
+      );
       await repo.initialize();
       addTearDown(repo.close);
       await repo.login(
@@ -159,6 +165,7 @@ void main() {
             CollaborationDatabase(NativeDatabase.memory()),
             otherHttp,
             MemorySessionStore(),
+            contentRouteGuard: const SyntheticContentRouteGuard(),
           );
       await other.initialize();
       addTearDown(other.close);

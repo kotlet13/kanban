@@ -5,6 +5,9 @@
         android:label="Jivie"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/jivie_backup_rules"
+        android:dataExtractionRules="@xml/jivie_data_extraction_rules"
         android:enableOnBackInvokedCallback="true">
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
         <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
@@ -39,6 +42,14 @@
                 <data android:scheme="vsakdan" android:host="invite" />
             </intent-filter>
         </activity>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.recovery_files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/recovery_share_paths" />
+        </provider>
         <receiver android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false"

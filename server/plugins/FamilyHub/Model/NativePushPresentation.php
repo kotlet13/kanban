@@ -12,6 +12,9 @@ class NativePushPresentation extends NativeDatabase
     public function topic(array $inbox, $language)
     {
         $en=$language==='en';
+        if (str_starts_with($inbox['kind'],'crypto2.')) {
+            return ['title'=>$inbox['kind']==='crypto2.reminder.due' ? ($en?'Reminder':'Opomnik') : ($en?'Jivie update':'Obvestilo Jivie'), 'body'=>$en?'Open Jivie to view the encrypted content.':'Odprite Jivie za ogled šifrirane vsebine.'];
+        }
         $scope=$this->one('SELECT name FROM familyhub_scopes WHERE id=?',[$inbox['scope_id']]);
         $row=$this->one('SELECT payload,deleted FROM familyhub_records WHERE scope_id=? AND id=? AND type=?',[$inbox['scope_id'],$inbox['target_id'],$inbox['target_type']]);
         $payload=$row && !(int)$row['deleted'] ? json_decode($row['payload'],true) : [];

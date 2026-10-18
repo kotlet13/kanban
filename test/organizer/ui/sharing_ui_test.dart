@@ -1,3 +1,4 @@
+import '../support/local_vault_test_overrides.dart';
 import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'package:kanban/organizer/state/portable_backup_provider.dart';
 import 'backup_ui_fixture.dart';
@@ -38,6 +39,12 @@ Future<void> pumpSharing(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        ...await sharingUiInfrastructureOverrides(
+          tester,
+          controller,
+          emptyLocalCatalog: true,
+        ),
+        localVaultTestPreferencesOverride(),
         notificationLocalSnapshotsProvider.overrideWith(
           (ref) async => [await ref.watch(organizerProvider.future)],
         ),

@@ -1,6 +1,94 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
+import 'package:kanban/organizer/data/collaboration_database.dart';
+import 'package:kanban/organizer/data/collaboration_repository.dart';
+import 'package:kanban/organizer/data/collaboration_transport.dart';
+import 'package:kanban/organizer/data/device_session_store.dart';
+import 'package:kanban/organizer/data/pending_invitation_store.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
+import 'package:kanban/organizer/state/local_database_provider.dart';
+import 'package:kanban/organizer/state/local_spaces_provider.dart';
+
+/// Legacy UI controllers own their synthetic state. Their local crypto-state
+/// lookup still uses a real empty schema, without opening a platform vault or
+/// reading a device session from the host. E2EE/real-provider tests do not use
+/// this helper.
+Future<List<Override>> sharingUiInfrastructureOverrides(
+  WidgetTester tester,
+  SharingUiController controller, {
+  bool emptyLocalCatalog = false,
+}) async {
+  final session = controller.initial.session;
+  final sessions = _SharingUiSessions(
+    session == null ? null : DeviceSession(session, 'synthetic-ui-session'),
+  );
+  // A legacy cached account card is not an incoming native-link capability.
+  // The callers retain their separate securePendingInvitationProvider fixture.
+  final invitations = MemoryPendingInvitationStore();
+  late final CollaborationDatabase database;
+  late final CollaborationRepository repository;
+  // Drift's native opening must finish outside the widget fake clock before a
+  // loading indicator is pumped. Only this helper's memory database is closed.
+  await tester.runAsync(() async {
+    database = CollaborationDatabase(NativeDatabase.memory());
+    repository = CollaborationRepository(
+      database,
+      _SharingUiNoNetwork(),
+      sessions,
+      invitationStore: invitations,
+      ownsDatabase: false,
+    );
+    addTearDown(() async {
+      await repository.close();
+      await database.close();
+    });
+    await repository.initialize();
+  });
+  return [
+    localDatabaseProvider.overrideWith((ref) async => database),
+    deviceSessionStoreProvider.overrideWithValue(sessions),
+    pendingInvitationStoreProvider.overrideWithValue(invitations),
+    collaborationRepositoryProvider.overrideWith((ref) async => repository),
+    if (emptyLocalCatalog)
+      localSpacesProvider.overrideWith(_SharingUiEmptyLocalSpaces.new),
+  ];
+}
+
+class _SharingUiEmptyLocalSpaces extends LocalSpacesController {
+  @override
+  Future<LocalSpacesState> build() async => LocalSpacesState();
+}
+
+class _SharingUiSessions implements DeviceSessionStore {
+  _SharingUiSessions(this.value);
+  DeviceSession? value;
+  @override
+  Future<DeviceSession?> read() async => value;
+  @override
+  Future<void> write(DeviceSession session) async {
+    value = session;
+  }
+
+  @override
+  Future<void> clear() async {
+    value = null;
+  }
+}
+
+class _SharingUiNoNetwork implements CollaborationTransport {
+  @override
+  Future<Map<String, dynamic>> call({
+    required String serverUrl,
+    required String operation,
+    Map<String, Object?> params = const {},
+    String? token,
+    bool allowLocalHttp = false,
+  }) async => throw StateError('Unexpected legacy UI network call: $operation');
+  @override
+  void close() {}
+}
 
 final sharingTestNow = DateTime.utc(2026, 10, 4);
 const sharingScopeId = '10000000-0000-4000-8000-000000000001';
@@ -478,6 +566,7 @@ class SharingUiController extends CollaborationController {
   Future<void> revokeMember({
     required String scopeId,
     required int userId,
+    String? accountId,
   }) async {
     calls.add('remove:$userId');
   }

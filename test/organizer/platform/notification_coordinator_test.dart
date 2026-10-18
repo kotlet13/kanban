@@ -1,3 +1,5 @@
+import 'package:kanban/organizer/data/local_vault_preferences.dart';
+import '../support/local_vault_test_overrides.dart';
 import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'package:kanban/organizer/state/local_notification_preferences_provider.dart';
 import 'dart:async';
@@ -43,6 +45,7 @@ Widget host(List<Override> overrides, Widget child) {
   addTearDown(database.close);
   return ProviderScope(
     overrides: [
+      localVaultTestPreferencesOverride(),
       localDatabaseProvider.overrideWith((ref) async => database),
       notificationLocalSnapshotsProvider.overrideWith(
         (ref) async => [await ref.watch(organizerProvider.future)],
@@ -141,7 +144,7 @@ void main() {
           prefs = await SharedPreferences.getInstance();
       final adapter = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
       );
       await adapter.initialize((_) {});
       await adapter.reconcile([
@@ -255,7 +258,9 @@ void main() {
       await tester.pump();
       final adapter = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: await SharedPreferences.getInstance(),
+        preferences: TestLocalVaultPreferences(
+          await SharedPreferences.getInstance(),
+        ),
       );
       await adapter.initialize((_) {});
       gate.complete(adapter);
@@ -276,7 +281,9 @@ void main() {
       final scheduler = fake.FakeScheduler();
       final adapter = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: await SharedPreferences.getInstance(),
+        preferences: TestLocalVaultPreferences(
+          await SharedPreferences.getInstance(),
+        ),
       );
       await adapter.initialize((_) {});
       await adapter.reconcile([
@@ -321,7 +328,9 @@ void main() {
       final scheduler = fake.FakeScheduler();
       final adapter = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: await SharedPreferences.getInstance(),
+        preferences: TestLocalVaultPreferences(
+          await SharedPreferences.getInstance(),
+        ),
       );
       await adapter.initialize((_) {});
       await adapter.reconcile([

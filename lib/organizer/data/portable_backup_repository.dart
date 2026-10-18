@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'e2ee/crypto_backup_evidence.dart';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart' show Sha256;
 import '../domain/offline_recovery_models.dart';
@@ -17,6 +18,12 @@ import 'collaboration_repository.dart';
 import 'organizer_storage.dart';
 import 'portable_backup_crypto.dart';
 import 'portable_backup_document.dart';
+import 'e2ee/crypto_document_backup_drafts.dart';
+import 'e2ee/crypto_document_backup_recovery.dart';
+import 'e2ee/crypto_document_blob.dart';
+import 'e2ee/session_crypto_access.dart';
+import 'e2ee/crypto_backup_command_codec.dart';
+import 'e2ee/crypto_json.dart';
 import 'sqlite_organizer_storage.dart';
 import 'local_spaces_repository.dart';
 part 'portable_backup_local_recovery.dart';
@@ -47,6 +54,7 @@ class PortableBackupRepository {
     this.storage,
     this.uiPreferences, {
     this.collaboration,
+    this.documentDraftDecryptor,
     PortableBackupCrypto? crypto,
   }) : crypto = crypto ?? PortableBackupCrypto();
   final CollaborationDatabase database;
@@ -54,6 +62,7 @@ class PortableBackupRepository {
   final BackupUiPreferencesStore uiPreferences;
   final CollaborationRepository? Function()? collaboration;
   final PortableBackupCrypto crypto;
+  final CryptoDraftCipherDecryptor? documentDraftDecryptor;
   final _prepared = <String, String>{};
   static const exclusions = [
     'bearer tokens',
@@ -112,14 +121,89 @@ class PortableBackupRepository {
     }
   }
 
+  Future<Uint8List> _decryptBackupDraftCipher(
+    Map<String, dynamic> descriptor,
+    Uint8List cipher,
+  ) async {
+    final repository = collaboration?.call();
+    if (repository == null) throw const CollaborationException('backup_stale');
+    final account = await repository.connectedCryptoAccount();
+    if (account.store.partition != database.personalProfile?.partition) {
+      throw const CollaborationException('backup_stale');
+    }
+    final own = await account.directory.requireFresh();
+    own.activeDevice(account.directory.session.profile.deviceId);
+    final access = SessionCryptoAccess(account: account);
+    return access.withVerifiedOperation(() async {
+      final head = await access.currentHead(
+        descriptor['scopeId'],
+        online: true,
+      );
+      final member = head.member(own.accountId);
+      if (descriptor['domain'] == 'finance' &&
+          member['financeRole'] == 'none') {
+        throw const CollaborationException('forbidden');
+      }
+      final source = await access.headAt(
+        descriptor['scopeId'],
+        descriptor['membershipHeadHash'],
+      );
+      if (source.epoch != descriptor['epoch'])
+        throw const FormatException('crypto_blob_source');
+      final ownPinKey =
+              'directory2:${account.store.partition}:${own.accountId}',
+          scopePinKey = 'scope2:${account.store.partition}:${head.scopeId}';
+      final ownPin = await account.store.secure.read(ownPinKey),
+          scopePin = await account.store.secure.read(scopePinKey);
+      if (ownPin == null || scopePin == null) {
+        throw const CollaborationException('backup_stale');
+      }
+      final key = await access.getScopeKey(
+        descriptor['scopeId'],
+        descriptor['domain'],
+        descriptor['epoch'],
+      );
+      Uint8List? plain;
+      try {
+        plain = await decryptCryptoDocumentCipher(
+          account.directory.reducer.crypto,
+          descriptor,
+          key.key,
+          cipher,
+          serverId: account.directory.session.profile.serverId,
+        );
+        if (!account.directory.isCurrent() ||
+            await account.store.secure.read(ownPinKey) != ownPin ||
+            await account.store.secure.read(scopePinKey) != scopePin ||
+            !account.directory.isCurrent()) {
+          plain.fillRange(0, plain.length, 0);
+          throw const CollaborationException('backup_stale');
+        }
+        return plain;
+      } finally {
+        key.release();
+      }
+    });
+  }
+
   Future<Uint8List> exportEncryptedBackup(String password) async {
     await storage.initialize();
+    final exportPartition = database.personalProfile?.partition;
+    // Network-backed READ/key verification precedes the SQL snapshot. Only
+    // exact decrypted cipher/upload equivalence can remove duplicate bytes.
+    final uploadRecoveries = await verifyCryptoUploadRecoveries(
+      database,
+      exportPartition,
+      documentDraftDecryptor ?? _decryptBackupDraftCipher,
+    );
     final preferences = await uiPreferences.read();
     validateBackupUiPreferences(Map<String, dynamic>.from(preferences));
     late String stamp;
     final doc = await database.transaction(() async {
       stamp = await _rightsStamp();
       final profile = database.personalProfile;
+      if (profile?.partition != exportPartition)
+        throw const CollaborationException('backup_stale');
       final tables = <String, dynamic>{
         for (final table in backupTables.keys) table: <Map<String, dynamic>>[],
       };
@@ -309,10 +393,77 @@ class PortableBackupRepository {
                       (scope) => key == 'remote:${profile.partition}:$scope',
                     );
           }).toList();
+      late Map<String, dynamic> cryptoDrafts;
+      try {
+        cryptoDrafts = await exportCryptoDocumentDrafts(
+          database,
+          profile?.partition,
+          verifiedUploadRecoveries: uploadRecoveries,
+        );
+      } on FormatException catch (error) {
+        if (error.message != 'crypto_private_drafts_size') rethrow;
+        final possible = profile == null
+            ? <Map<String, Object?>>[]
+            : await database.rows(
+                "SELECT u.id FROM crypto_document_uploads u JOIN crypto_document_jobs j ON j.partition=u.partition AND j.scope_id=u.scope_id AND j.record_id=u.id AND j.operation_id=u.id WHERE u.partition=? AND u.state<>'complete' AND u.received=json_extract(u.metadata,'\$.size') AND j.kind='attachment' LIMIT 1",
+                [profile.partition],
+              );
+        throw CollaborationException(
+          possible.isNotEmpty
+              ? 'backup_pending_files_need_access'
+              : 'backup_too_large',
+        );
+      }
+      final cryptoEvidence = await exportCryptoEvidence(
+        database,
+        profile?.partition,
+      );
+      final published = await cryptoDocumentPublishedBlobIds(
+        database,
+        profile?.partition,
+      );
+      final retainedJobs = {
+        for (final row
+            in (cryptoDrafts['tables'] as Map)['crypto_document_jobs'] as List)
+          (row as Map)['id'] as String,
+      };
+      final omittedRequests = <String>{};
+      final evidenceTables = cryptoEvidence['tables'] as Map;
+      evidenceTables['crypto_outbox'] =
+          (evidenceTables['crypto_outbox'] as List).where((raw) {
+            final row = raw as Map;
+            if (row['state'] != 'applied' ||
+                !const {
+                  'crypto2.blob.begin',
+                  'crypto2.blob.chunk',
+                  'crypto2.blob.complete',
+                }.contains(row['operation']))
+              return true;
+            final signed = jsonDecode(row['signed_body'] as String) as Map;
+            final body =
+                CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
+            final blob = (body['payload'] as Map)['id'];
+            if (published.contains(blob) && !retainedJobs.contains(blob)) {
+              omittedRequests.add(row['request_id'] as String);
+              return false;
+            }
+            return true;
+          }).toList();
+      for (final table in ['crypto_command_keys', 'crypto_outbox_attempts']) {
+        evidenceTables[table] = (evidenceTables[table] as List)
+            .where((r) => !omittedRequests.contains((r as Map)['request_id']))
+            .toList();
+      }
+      final compactCryptoEvidence = await CryptoBackupCommandCodec(
+        cryptoDrafts,
+        profile?.partition,
+      ).compactEvidence(cryptoEvidence);
       return <String, dynamic>{
         'format': 'vsakdan-portable-data',
-        'version': 8,
-        'databaseVersion': 10,
+        'version': 9,
+        'databaseVersion': 11,
+        'cryptoPrivateDrafts': cryptoDrafts,
+        'cryptoEvidence': compactCryptoEvidence,
         'localTaskReminderPreferences': await database.rows(
           "SELECT name,value FROM local_meta WHERE name LIKE 'local_task_deadline_reminder:%' ORDER BY name",
         ),
@@ -706,6 +857,14 @@ class PortableBackupRepository {
           );
         }
       }
+      if ((doc['version'] as int) >= 9) {
+        await fenceRestoredCryptoEvidence(
+          database,
+          doc['cryptoEvidence'],
+          sourcePartition as String?,
+          id,
+        );
+      }
       if (!sourceDeleted) {
         await _validateLocalLinkedPayments();
         await database.execute(
@@ -719,6 +878,8 @@ class PortableBackupRepository {
             jsonEncode({
               'preview': _previewJson(_preview(doc)),
               'encrypted': base64Encode(bytes),
+              if (doc['cryptoPrivateDrafts'] != null)
+                'cryptoPrivateDrafts': doc['cryptoPrivateDrafts'],
             }),
           ],
         );

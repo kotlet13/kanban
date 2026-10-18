@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -43,6 +44,7 @@ void main() {
       transport,
       store,
       clock: () => now,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repository.initialize();
   });
@@ -122,6 +124,7 @@ void main() {
         FakeTransport(server),
         store,
         clock: () => now,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await repository.initialize();
       expect(repository.state.session?.username, 'bob');

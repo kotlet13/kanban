@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,7 @@ void main() {
       FakeTransport(server),
       MemorySessionStore(),
       invitationStore: store,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repository.initialize();
     await repository.login(

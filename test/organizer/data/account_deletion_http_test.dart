@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in isolated synthetic HTTP fixture only. No credentials/bodies in output.
 import 'dart:convert';
 import 'dart:io';
@@ -111,6 +112,7 @@ void main() {
       http,
       MemorySessionStore(),
       deletionStore: receipts,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     addTearDown(repo.close);

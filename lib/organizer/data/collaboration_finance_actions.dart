@@ -235,6 +235,8 @@ extension CollaborationFinanceActions on CollaborationRepository {
     Future<void> Function(String) action,
   ) async {
     final session = _requireSession(), epoch = _epoch;
+    await requireVerifiedEmailForConnectedEntry();
+    _checkEpoch(epoch);
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _financeWritable(session.profile.partition, scopeId);

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt in against a private, explicitly synthetic loopback server fixture.
 // KANBAN_SHARED_HTTP_FIXTURE=/absolute/private/fixture.json flutter test ...
 import 'dart:convert';
@@ -69,6 +70,7 @@ void main() {
           ),
           transport,
           store,
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repositories.add(repo);
         await repo.initialize();

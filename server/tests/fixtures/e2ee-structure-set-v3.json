@@ -1,0 +1,59 @@
+{
+  "common": {
+    "version": 3,
+    "serverId": "11111111-1111-4111-8111-111111111111",
+    "migrationId": "22222222-2222-4222-8222-222222222222",
+    "captureId": "33333333-3333-4333-8333-333333333333",
+    "accountId": "44444444-4444-4444-8444-444444444444",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "sections": [
+    {
+      "version": 3,
+      "scopeId": "00000001-1111-4111-8111-111111111111",
+      "membershipHeadHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeMetadataProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "lifecycleHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "sourceBindingCount": 1,
+      "sourceCommitmentRoot": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "structureHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "version": 3,
+      "scopeId": "00000002-1111-4111-8111-111111111111",
+      "membershipHeadHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "scopeMetadataProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "lifecycleHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "sourceBindingCount": 2,
+      "sourceCommitmentRoot": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "structureHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ],
+  "root": "3fbc07f7f3f6e04a8a50752aecbc3528831e2fcf6875e8ec5bf02e6f2471acf4",
+  "emptyRoot": "353cf4423367b5e52fb3a035d457b2d91d4f958d94cb75b87dd1530e45a37038",
+  "contextVector": {
+    "header": {
+      "version": 3,
+      "serverId": "11111111-1111-4111-8111-111111111111",
+      "migrationId": "22222222-2222-4222-8222-222222222222",
+      "captureId": "33333333-3333-4333-8333-333333333333",
+      "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeId": "00000001-1111-4111-8111-111111111111"
+    },
+    "section": {
+      "version": 3,
+      "scopeId": "00000001-1111-4111-8111-111111111111",
+      "membershipHeadHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "scopeMetadataProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "lifecycleHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "sourceBindingCount": 1,
+      "sourceCommitmentRoot": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    "absentHash": "388c6db887a09cb032ca3fae56fc38c8a7b7b2e86c3bc1ec7236399a7b850ab0",
+    "contextProofHashes": [
+      "1111111111111111111111111111111111111111111111111111111111111111",
+      "2222222222222222222222222222222222222222222222222222222222222222"
+    ],
+    "boundHash": "4eac2d30b100fb96bb6a9f8eb692f3c4eb0eaebb2900c302db3b01ec75a25241"
+  }
+}

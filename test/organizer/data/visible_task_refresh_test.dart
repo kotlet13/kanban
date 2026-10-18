@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:drift/native.dart';
@@ -25,6 +26,7 @@ void main() {
       CollaborationDatabase(NativeDatabase.memory()),
       transport,
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     addTearDown(repo.close);

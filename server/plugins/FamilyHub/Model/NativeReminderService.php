@@ -98,7 +98,7 @@ class NativeReminderService extends NativeDatabase
     {
         if (!is_int($limit) || $limit < 1 || $limit > 500 || !defined('FAMILYHUB_ENABLE_NATIVE_API') || FAMILYHUB_ENABLE_NATIVE_API !== true) { throw new NativeError('feature_disabled', 503); }
         $retention = (new NativeInboxRetention($this->container))->run($limit);
-        $rows = $this->many('SELECT r.id,r.scope_id FROM familyhub_reminders r JOIN familyhub_scopes s ON s.id=r.scope_id LEFT JOIN familyhub_scopes parent ON parent.id=COALESCE(s.parent_scope_id,s.organization_id) WHERE r.state=\'pending\' AND s.archived=0 AND s.deleted_at IS NULL AND (parent.id IS NULL OR (parent.archived=0 AND parent.deleted_at IS NULL)) AND r.remind_epoch<=? ORDER BY r.remind_epoch,r.id LIMIT '.$limit, [time()]);
+        $rows = $this->many('SELECT r.id,r.scope_id FROM familyhub_reminders r JOIN familyhub_scopes s ON s.id=r.scope_id LEFT JOIN familyhub_scopes parent ON parent.id=COALESCE(s.parent_scope_id,s.organization_id) WHERE r.state=\'pending\' AND s.archived=0 AND s.deleted_at IS NULL AND (parent.id IS NULL OR (parent.archived=0 AND parent.deleted_at IS NULL)) AND r.remind_epoch<=? AND '.NativeCryptoFence::workerDiscoverySql($this->pdo,'r.scope_id').' ORDER BY r.remind_epoch,r.id LIMIT '.$limit, [time()]);
         $delivered = 0; $cancelled = 0;
         foreach ($rows as $candidate) {
             $state = $this->transaction(function () use ($candidate) {
@@ -117,7 +117,8 @@ class NativeReminderService extends NativeDatabase
             });
             if ($state === 'delivered') { $delivered++; } elseif ($state === 'cancelled') { $cancelled++; }
         }
-        return ['examined' => count($rows), 'delivered' => $delivered, 'cancelled' => $cancelled, 'readNotificationsDeleted' => $retention['deleted'], 'externalPush' => false, 'smtp' => false];
+        $crypto = \Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo) ? (new NativeCryptoNotificationV2($this->container))->runDue($limit) : ['examined'=>0,'delivered'=>0,'cancelled'=>0];
+        return ['crypto2'=>$crypto, 'examined' => count($rows), 'delivered' => $delivered, 'cancelled' => $cancelled, 'readNotificationsDeleted' => $retention['deleted'], 'externalPush' => false, 'smtp' => false];
     }
 
     private function deadlineAt(array $record,$offset)
@@ -161,6 +162,24 @@ class NativeReminderService extends NativeDatabase
         if (array_key_exists('plannedAt',$p)) { $dates[]=$p['plannedAt']; }
         if ($canonical) { $dates = array_map(fn ($date) => $date === null ? null : (new \DateTimeImmutable($date))->format('Y-m-d\\TH:i:s.u\\Z'), $dates); }
         return hash('sha256', json_encode($dates, JSON_THROW_ON_ERROR));
+    }
+
+    /** Internal frozen-source comparison. Never serialize the legacy fingerprint. */
+    public function assertMigrationTargetConsent(array $source)
+    {
+        $target = $this->target($source['scope_id'], $source['target_type'], $source['target_id']);
+        $canonical = $target ? $this->fingerprintTarget($target, true, $source['scope_id']) : null;
+        $legacy = $target ? $this->fingerprintTarget($target, false, $source['scope_id']) : null;
+        if (!$target || (!$canonical || !hash_equals($source['target_fingerprint'], $canonical)) &&
+            (!$legacy || !hash_equals($source['target_fingerprint'], $legacy))) {
+            throw new NativeError('crypto_notification_migration_source_consent_changed', 409);
+        }
+        if (($source['schedule_mode'] ?? 'absolute') === 'deadline') {
+            $at = $this->deadlineAt($target, (int)$source['offset_minutes']);
+            if (!$at || $at->getTimestamp() !== (int)$source['remind_epoch']) {
+                throw new NativeError('crypto_notification_migration_source_consent_changed', 409);
+            }
+        }
     }
 
     public function wire($row)

@@ -18,6 +18,7 @@ class _OrganizationAccessSettingsState
     extends ConsumerState<OrganizationAccessSettings> {
   bool _busy = false, _previewOpen = false;
   String? _error;
+  bool _approvalPending = false;
   late final _guard = SharingSessionGuard(context, ref);
   bool _allows(CollaborationState state) =>
       !state.sessionInvalid &&
@@ -165,7 +166,12 @@ class _OrganizationAccessSettingsState
         }
       }
     } catch (error) {
-      if (mounted) setState(() => _error = sharingErrorMessage(context, error));
+      if (mounted) {
+        setState(() {
+          _error = sharingErrorMessage(context, error);
+          _approvalPending = isCryptoApprovalPending(error);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -192,7 +198,12 @@ class _OrganizationAccessSettingsState
         await _guard.controller.resumeOrganizationAccessChange(widget.scope.id);
       }
     } catch (error) {
-      if (mounted) setState(() => _error = sharingErrorMessage(context, error));
+      if (mounted) {
+        setState(() {
+          _error = sharingErrorMessage(context, error);
+          _approvalPending = isCryptoApprovalPending(error);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -240,6 +251,11 @@ class _OrganizationAccessSettingsState
         if (_busy && !_previewOpen) const LinearProgressIndicator(),
         if (_error != null) ...[
           Text(_error!),
+          if (_approvalPending)
+            TextButton(
+              onPressed: () => openCryptoApprovals(context),
+              child: Text(cryptoApprovalsLabel(context)),
+            ),
           TextButton(
             onPressed: _busy ? null : _resume,
             child: Text(l.organizationAccessResume),

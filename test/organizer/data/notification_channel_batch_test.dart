@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'package:kanban/organizer/data/portable_backup_document.dart';
 import 'package:drift/native.dart';
@@ -56,7 +57,12 @@ void main() {
     final transport = PreferencesTransport(FakeServer())
       ..financeEnabled = finance
       ..recordVersion = version;
-    final repo = CollaborationRepository(db, transport, MemorySessionStore());
+    final repo = CollaborationRepository(
+      db,
+      transport,
+      MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
+    );
     await repo.initialize();
     await repo.login(
       serverUrl: 'https://synthetic.test/',

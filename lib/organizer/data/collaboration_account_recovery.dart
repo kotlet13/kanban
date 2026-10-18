@@ -19,13 +19,46 @@ extension CollaborationAccountRecovery on CollaborationRepository {
     'deviceName': deviceName,
   }, allowLocalHttp);
   Future<AccountStatus> accountStatus() async {
-    final j = await _call('account.status', {});
+    final session = _requireSession(), epoch = _epoch;
+    final j = await _callSession(session, epoch, 'account.status', {});
+    _checkEpoch(epoch);
+    await database.execute(
+      'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+      [
+        'verified_email:${session.profile.partition}',
+        j['emailVerified'] == true ? 'true' : 'false',
+      ],
+    );
+    _checkEpoch(epoch);
     return AccountStatus(
       email: readNullableString(j, 'email'),
       pendingEmail: readNullableString(j, 'pendingEmail'),
       emailVerified: readBool(j, 'emailVerified'),
       resetAvailable: readBool(j, 'resetAvailable'),
     );
+  }
+
+  /// Called before a new connected local mutation, outside its SQL transaction.
+  /// Previously verified offline work stays local; unknown/unverified identities
+  /// cannot create a new connected entry merely because upload is postponed.
+  Future<void> requireVerifiedEmailForConnectedEntry() async {
+    final session = _requireSession(), epoch = _epoch;
+    if (contentRouteGuard != null) {
+      await contentRouteGuard!.authorizeConnectedEntry(session: session);
+      _checkEpoch(epoch);
+      return;
+    }
+    final known = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['verified_email:${session.profile.partition}'],
+    );
+    _checkEpoch(epoch);
+    if (known.isNotEmpty && known.single['value'] == 'true') return;
+    final status = await accountStatus();
+    _checkEpoch(epoch);
+    if (!status.emailVerified) {
+      throw const CollaborationException('email_verification_required');
+    }
   }
 
   Future<void> requestEmailVerification({
@@ -44,6 +77,7 @@ extension CollaborationAccountRecovery on CollaborationRepository {
 
   Future<void> confirmEmailVerification(String token) async {
     await _call('account.email.confirm', {'token': token});
+    await accountStatus();
   }
 
   Future<void> requestPasswordReset({

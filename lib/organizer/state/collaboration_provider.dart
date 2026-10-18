@@ -7,6 +7,7 @@ import 'local_database_provider.dart';
 import 'local_spaces_provider.dart' show localSpacesProvider;
 export 'local_database_provider.dart' show collaborationDatabaseFactoryProvider;
 import '../data/collaboration_repository.dart';
+import '../data/e2ee/account_crypto_repository.dart';
 import '../data/sqlite_organizer_storage.dart';
 import '../data/collaboration_transport.dart';
 import '../data/device_session_store.dart';
@@ -116,6 +117,9 @@ final collaborationProvider =
     );
 
 class CollaborationController extends AsyncNotifier<CollaborationState> {
+  Future<AccountCryptoWorkflow?> accountCryptoPreview() =>
+      _repository?.accountCryptoPreview() ?? Future.value(null);
+
   CollaborationRepository? _repository;
   bool _active = false;
   bool _followingLocalBinding = false;
@@ -422,6 +426,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     String? otp,
     List<Map<String, Object?>> ownershipTransfers = const [],
     List<Map<String, Object?>> resolutions = const [],
+    List<Map<String, Object?>> cryptoResolutions = const [],
     List<String> ownedScopeDeletions = const [],
     Map<String, dynamic> review = const {},
   }) => _repo.confirmAccountDeletion(
@@ -430,6 +435,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     otp: otp,
     ownershipTransfers: ownershipTransfers,
     resolutions: resolutions,
+    cryptoResolutions: cryptoResolutions,
     ownedScopeDeletions: ownedScopeDeletions,
     review: review,
   );
@@ -1001,8 +1007,15 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
 
   Future<void> revokeInvitation(String scopeId, String invitationId) =>
       _repo.revokeInvitation(scopeId, invitationId);
-  Future<void> revokeMember({required String scopeId, required int userId}) =>
-      _repo.revokeMember(scopeId: scopeId, userId: userId);
+  Future<void> revokeMember({
+    required String scopeId,
+    required int userId,
+    String? accountId,
+  }) => _repo.revokeMember(
+    scopeId: scopeId,
+    userId: userId,
+    accountId: accountId,
+  );
   Future<void> resumeBlockedChanges(String scopeId) =>
       _repo.resumeBlockedChanges(scopeId);
   Future<void> resolveConflict({

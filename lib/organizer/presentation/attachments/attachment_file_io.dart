@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../domain/attachment_models.dart';
+import '../../platform/private_file_io.dart';
 
 class PickedAttachmentFile {
   const PickedAttachmentFile({required this.name, required this.bytes});
@@ -12,7 +13,18 @@ class PickedAttachmentFile {
 }
 
 class AttachmentFilePicker {
+  const AttachmentFilePicker({this.mobileIo});
+  final PrivateFileChannel? mobileIo;
   Future<PickedAttachmentFile?> pick() async {
+    if (mobileIo != null || usesPrivateMobileFileIo) {
+      final file = await (mobileIo?.pick ?? pickPrivateFile)(
+        extensions: attachmentMimeByExtension.keys.toList(),
+        maxBytes: attachmentMaxBytes,
+      );
+      if (file == null) return null;
+      validateAttachmentFile(file.name, file.bytes.length);
+      return PickedAttachmentFile(name: file.name, bytes: file.bytes);
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: attachmentMimeByExtension.keys.toList(),
@@ -50,6 +62,9 @@ class AttachmentFilePicker {
 enum AttachmentExportStatus { saved, cancelled, downloadStarted }
 
 class AttachmentFileExporter {
+  const AttachmentFileExporter({this.mobileIo});
+  final PrivateFileChannel? mobileIo;
+
   /// This is an explicit user export through the platform save dialog. The
   /// attachment is never automatically launched or written to a public folder.
   Future<AttachmentExportStatus> save({
@@ -60,6 +75,18 @@ class AttachmentFileExporter {
     attachment.validate();
     if (bytes.length != attachment.size) {
       throw const FormatException('Attachment size mismatch');
+    }
+    if (mobileIo != null || usesPrivateMobileFileIo) {
+      return switch (await (mobileIo?.save ?? savePrivateFile)(
+        bytes: bytes,
+        name: attachment.name,
+        title: title,
+      )) {
+        PrivateSaveStatus.saved => AttachmentExportStatus.saved,
+        PrivateSaveStatus.cancelled => AttachmentExportStatus.cancelled,
+        PrivateSaveStatus.downloadStarted =>
+          AttachmentExportStatus.downloadStarted,
+      };
     }
     final path = await FilePicker.platform.saveFile(
       dialogTitle: title,

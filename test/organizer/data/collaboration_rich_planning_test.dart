@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -78,6 +79,7 @@ void main() {
       transport,
       store,
       clock: () => now,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     repositories.add(repo);
     await repo.initialize();

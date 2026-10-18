@@ -4,6 +4,29 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** No global BCC, core queue, URLs or inbox preferences for security mail. */
 class NativeAccountMailTransport
 {
+    public static function securityMessage($kind, $language)
+    {
+        $labels = [
+            'crypto.initialized'=>['Zaščita računa je pripravljena.','Account protection has been prepared.'],
+            'crypto.deviceAdded'=>['Potrjena je nova naprava.','A new device has been approved.'],
+            'crypto.deviceRevoked'=>['Dostop naprave je preklican.','A device has been revoked.'],
+            'auth.resetRequested'=>['Zahtevana je bila ponastavitev prijavnega gesla.','A login password reset was requested.'],
+            'auth.resetCompleted'=>['Prijavno geslo je bilo ponastavljeno.','The login password was reset.'],
+            'crypto.recoveryStarted'=>['Začela se je obnova dostopa.','Account access recovery has started.'],
+            'crypto.recoveryCompleted'=>['Obnova dostopa je zaključena.','Account access recovery has completed.'],
+        ];
+        if (!isset($labels[$kind])) {
+            throw new NativeError('validation_error');
+        }
+        $sl='Na vašem računu Jivie se je zgodila varnostna sprememba. '.$labels[$kind][0].' Odprite aplikacijo in preverite naprave.' . "\n\n" . 'To obvestilo ne vsebuje obnovitvenega ključa.';
+        $en='There was a security change to your Jivie account. '.$labels[$kind][1].' Open the app and review your devices.' . "\n\n" . 'This notice contains no recovery key.';
+        return match ($language) {
+            'sl'=>['Varnost računa Jivie',$sl],
+            'en'=>['Jivie account security',$en],
+            default=>['Varnost računa Jivie / Jivie account security',$sl."\n\n---\n\n".$en],
+        };
+    }
+
     public function send($recipient, $purpose, $code, $id, $language, array $details = [])
     {
         $config = NativeSmtpTransport::configuration();
@@ -19,7 +42,7 @@ class NativeAccountMailTransport
             $title=$english?'Invitation to Jivie':'Povabilo v Jivie';
             $project=($details['scopeKind']??'')==='project';
             $viewer=($details['role']??'member')==='viewer';
-            $modern=($details['contractVersion']??2)===3;
+            $modern=in_array(($details['contractVersion']??2),[3,4],true);
             $scopeLabel=$project?($english?'project ':'projekt '):($english?'space ':'prostor ');
             $access=$viewer?($english?'You can view this '.$scopeLabel.'in Jivie.':'V Jivie si lahko ogledaš ta '.trim($scopeLabel).'.'):
                 ($english?'You can collaborate in this '.$scopeLabel.'in Jivie.':'V Jivie lahko sodelujete v tem '.($project?'projektu.':'prostoru.'));
@@ -33,6 +56,9 @@ class NativeAccountMailTransport
                 ($english?'Open invitation:':'Odpri povabilo:')."\n".$code."\n\n".
                 ($english?'Review the access and choose whether to join. If you need an account, create one there.':'Preveri dostop in se odloči, ali se pridružiš. Če še nimaš računa, ga ustvariš tam.').
                 ($formatted!==''?"\n\n".($english?'Valid until ':'Velja do ').$formatted.'.':'');
+        }
+        if ($purpose === 'security') {
+            [$title,$body]=self::securityMessage($details['eventKind'] ?? '',$language);
         }
         $message = new \Swift_Message($title);
         $message->setId('familyhub.account.'.$id.'@'.substr(strrchr($config['from'], '@'), 1));

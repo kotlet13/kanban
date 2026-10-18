@@ -1,0 +1,28 @@
+{
+  "common": {
+    "version": 3,
+    "serverId": "00000000-0000-4000-8000-000000000001",
+    "migrationId": "00000000-0000-4000-8000-000000000002",
+    "captureId": "00000000-0000-4000-8000-000000000003",
+    "accountId": "00000000-0000-4000-8000-000000000004",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "content": {
+    "certificateHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "manifestRoot": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "receiptCount": 2
+  },
+  "finance": {
+    "certificateHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "manifestRoot": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "receiptCount": 3
+  },
+  "localIntents": {
+    "artifactId": "00000000-0000-4000-8000-000000000005",
+    "cipherManifestHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "intentCount": 1,
+    "ownEventCommandHash": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "root": "8158c68d65f620dd7c2aba0c4cd26270b871270763ec733556d07159a97919b5",
+  "artifact": "e0d4aea926b7d5d06f3abe1173edd1d4d987b50c60aef5b8cd20b4a67315a155"
+}

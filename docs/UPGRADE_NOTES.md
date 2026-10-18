@@ -7,6 +7,39 @@ izvorno kodo in lokalna preverjanja; nove gostovane namestitve, trgovinske
 objave in fizičnega preizkusa še ne potrjuje. Dokaze, različice pogodb in
 odprte izdajne korake vodi [izvedbeni dnevnik](UPGRADE_IMPLEMENTATION.md).
 
+## E2EE, lokalno šifriranje in obnovitvena datoteka — izvorno povezovanje
+
+Poznejše naročilo za izvedbo obsega prvotna merila P0–P8.
+[Izvedba in trenutni dokazi](E2EE_IMPLEMENTATION.md#dokazi-in-končno-preverjanje)
+ločijo potrjeno migracijo/svežo FILE obnovo in poslovni zaključek prek
+nadaljevanj istega stanja od celotnega Flutter66 z napakami in prizadetih
+ponovitev69/70, ki sta jih zaključili. Zadnja analiza ima0 error/0 warning
+ter510 info; ni trditve novega svežega celotnega teka. Generacija B,
+sveža FILE obnova, običajna priponka ter seznam in umik migriranih opomnikov so potrjeni.
+[Protokol](E2EE_PROTOCOL.md) opisuje dejanske meje zaupanja. Zgodovinski PHP
+rezultati in poznejše prizadete ponovitve imajo ločene source vezave v izvedbi;
+ne pomenijo končnega celotnega PASS. Neodvisni pregled P0, fizična/native
+merila P8 in omejitev prvega hladnega prenosa ostajajo odprti.
+Običajni čarovnik uporablja v2 le pod izrecnim preview/schema/sodium varovalom;
+ni živega preklopa, čiščenja starih kopij, namestitve ali nove izdaje.
+Lokalna uporaba ostane brez računa; uporabnik FILE shrani/deli sam, brez Jivie
+SMTP. Dogovorjenih30 dni za uporabnikovi gostovanji začne teči šele po
+**dokumentirani dejanski uspešni obnovi nove šifrirane kopije**, ločeno za vsako;
+neuspešna obnova rok zadrži. Spodnji planski dogovor ostane zgodovinska odločitev.
+
+### Prvotni načrtni dogovor
+
+17. oktobra 2026 uporabnik naroči podroben načrt, brez implementacije:
+[E2EE nadgradnja](E2EE_UPGRADE_PLAN.md) in [povezave do kode](E2EE_CODE_MAP.md).
+Po posodobitvi aplikacije naj se pojavi nadaljevalni čarovnik »Dodajanje
+obnovitvenega ključa«; soroden korak se vključi v prvo prijavo na strežnik.
+Datoteka nastane lokalno, uporabnik jo shrani ali deli iz svoje aplikacije.
+Geslo obnovi prijavo, datoteka ali zaupanja vredna naprava odklene podatke.
+Povsem lokalna uporaba ostane brez računa in potrjevanja e-pošte; povezani
+vnosi potrebujejo potrjeno e-pošto. Načrt varuje deljenje, finance4, stare
+čakajoče operacije in vse profile med prekinljivim prehodom. Nobena nova
+zaščita še ni implementirana in nobena nova izdaja ni naročena.
+
 ## Hierarhični izbirnik prostorov — izvedeno v izvoru
 
 17. oktobra 2026 dogovorjeni razširljivi krovni prostori s projekti,

@@ -4,6 +4,12 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** Financial ACL is a separate gate, including for historical references and errors. */
 class NativeFinanceAccess extends NativeDatabase
 {
+    /** Crypto endpoints still run the identical account/scope/grant ACL; only the legacy fence is bypassed. */
+    public function policyForCrypto($scopeId,array $user,$write=false,$require=true)
+    {
+        $previous=$this->cryptoAccess;$this->cryptoAccess=true;
+        try{return $this->policy($scopeId,$user,$write,$require);}finally{$this->cryptoAccess=$previous;}
+    }
     public function policy($scopeId, array $user, $write = false, $require = true)
     {
         $scope = $this->scope($scopeId, $user['id']);

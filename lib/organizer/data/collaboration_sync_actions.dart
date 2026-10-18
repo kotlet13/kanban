@@ -108,6 +108,13 @@ extension CollaborationSyncActions on CollaborationRepository {
       final scopes = (reply['scopes'] as List)
           .map((r) => SharedScope.fromJson(r as Map<String, dynamic>))
           .toList();
+      final cryptoPendingIds =
+          (reply['pendingCryptoScopeIds'] as List? ?? const [])
+              .cast<String>()
+              .toSet();
+      if (cryptoPendingIds.any((id) => !isSharedUuid(id))) {
+        throw const CollaborationException('invalid_response');
+      }
       await database.transaction(() async {
         _checkEpoch(epoch);
         await _validLease(partition);
@@ -140,16 +147,48 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
         for (final scope in scopes) {
           await _upsertScope(partition, scope);
-          await database.execute('DELETE FROM local_meta WHERE name=?', [
-            'scope_reconciliation:$partition:${scope.id}',
-          ]);
+          if (!cryptoPendingIds.contains(scope.id)) {
+            await database.execute('DELETE FROM local_meta WHERE name=?', [
+              'scope_reconciliation:$partition:${scope.id}',
+            ]);
+          }
+        }
+        for (final id in cryptoPendingIds) {
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+            ['scope_reconciliation:$partition:$id', 'crypto_pending'],
+          );
         }
       });
+      // Pending discovery preserves the local view/immutable queues while
+      // independent scopes continue. It is not authenticated revocation.
+      scopes.removeWhere((scope) => cryptoPendingIds.contains(scope.id));
       if (_recordContractVersion >= 2) {
         for (final scope in scopes) {
           if (!await _privateScopeAllowed(partition, scope)) continue;
           await _renewLease(partition);
-          await _loadMembers(session, epoch, scope.id, syncLease: true);
+          try {
+            await _loadMembers(session, epoch, scope.id, syncLease: true);
+          } on CryptoAuthorityPending {
+            _checkEpoch(epoch);
+            // One scope awaiting keys/identity must not starve independent scopes.
+            // Cached labels remain display-only and grant no upload authority.
+            _lastError ??= const CollaborationException(
+              'crypto_reconciliation_required',
+            );
+          } on CollaborationApiException catch (error) {
+            if (!const {
+              'crypto_scope_head_missing',
+              'crypto_migration_required',
+              'crypto_device_keys_pending',
+            }.contains(error.code)) {
+              rethrow;
+            }
+            _checkEpoch(epoch);
+            _lastError ??= const CollaborationException(
+              'crypto_reconciliation_required',
+            );
+          }
         }
       }
       if (_financeSupported) {
@@ -485,8 +524,24 @@ extension CollaborationSyncActions on CollaborationRepository {
                 [next, partition, scope.id],
               );
             });
+          } on CryptoAuthorityPending {
+            _checkEpoch(epoch);
+            _lastError ??= const CollaborationException(
+              'crypto_reconciliation_required',
+            );
+            more = false;
           } on CollaborationApiException catch (error) {
-            if ((error.code == 'permission_revoked' ||
+            if (const {
+              'crypto_scope_head_missing',
+              'crypto_migration_required',
+              'crypto_device_keys_pending',
+            }.contains(error.code)) {
+              _checkEpoch(epoch);
+              _lastError ??= const CollaborationException(
+                'crypto_reconciliation_required',
+              );
+              more = false;
+            } else if ((error.code == 'permission_revoked' ||
                 error.code == 'scope_deleted')) {
               await _blockScope(partition, scope.id, epoch);
               more = false;
@@ -545,6 +600,12 @@ extension CollaborationSyncActions on CollaborationRepository {
         );
       }
       completed = true;
+    } on CryptoAuthorityPending {
+      if (epoch == _epoch) {
+        _lastError = const CollaborationException(
+          'crypto_reconciliation_required',
+        );
+      }
     } on CollaborationException catch (error) {
       if (epoch == _epoch) _lastError = error;
     } catch (_) {

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -162,6 +163,7 @@ void main() {
       db,
       FakeTransport(FakeServer()),
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     await repo.login(

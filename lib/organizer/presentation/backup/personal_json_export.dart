@@ -1,3 +1,4 @@
+import '../../platform/private_file_io.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
@@ -50,14 +51,24 @@ Future<void> exportPersonalJsonForLocalRestore(
       throw const CollaborationException('session_changed');
     }
     if (!context.mounted) return;
-    await FilePicker.platform.saveFile(
-      dialogTitle: l.deletionPersonalExport,
-      fileName:
-          'jivie-personal-${DateTime.now().toIso8601String().substring(0, 10)}.json',
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-      bytes: Uint8List.fromList(utf8.encode(json)),
-    );
+    final bytes = Uint8List.fromList(utf8.encode(json));
+    final name =
+        'jivie-personal-${DateTime.now().toIso8601String().substring(0, 10)}.json';
+    if (usesPrivateMobileFileIo) {
+      await savePrivateFile(
+        bytes: bytes,
+        name: name,
+        title: l.deletionPersonalExport,
+      );
+    } else {
+      await FilePicker.platform.saveFile(
+        dialogTitle: l.deletionPersonalExport,
+        fileName: name,
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        bytes: bytes,
+      );
+    }
   } catch (e) {
     if (messenger.mounted && context.mounted) {
       messenger.showSnackBar(

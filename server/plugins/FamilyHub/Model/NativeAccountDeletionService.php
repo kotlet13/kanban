@@ -4,6 +4,11 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** Fail closed for unresolved shared contributions; never deletes another member's scope. */
 class NativeAccountDeletionService extends NativeDatabase
 {
+    protected $retainedCryptoScopeIds=[];
+    protected function legacyScopeFilter($column='scope_id')
+    {
+        return $this->retainedCryptoScopeIds ? ' AND '.$column.' NOT IN ('.implode(',',array_map([$this->pdo,'quote'],$this->retainedCryptoScopeIds)).')' : '';
+    }
     public static function available()
     {
         return defined('FAMILYHUB_ACCOUNT_MODE') && FAMILYHUB_ACCOUNT_MODE === 'self_hosted';
@@ -11,6 +16,12 @@ class NativeAccountDeletionService extends NativeDatabase
 
     public function execute($operation, array $params)
     {
+        if(in_array($operation,['account.deletion.preview','account.deletion.confirm'],true) && ($params['policyVersion']??0)===4){
+            $v4=new NativeCryptoAccountDeletionV2($this->container,$this->bearer,$this->ip);
+            $actor=$this->actor(false);
+            if($v4->hasCryptoUser($actor['user']['id'])){return $v4->execute($operation,$params);}
+            $params['policyVersion']=3;unset($params['cryptoResolutions']);
+        }
         if (!self::available()) { throw new NativeError('feature_disabled',503); }
         $this->rate([['account-delete-ip:'.$this->ip, 120, 60]]);
         if (in_array($operation,['account.deletion.status','account.deletion.cancelPending'],true)) {
@@ -50,6 +61,10 @@ class NativeAccountDeletionService extends NativeDatabase
         $this->rate([[$operation.':'.$actor['user']['account_id'], $operation==='account.deletion.preview' ? 60:10, $operation==='account.deletion.preview' ? 60:900]]);
         $result = $this->transaction(function () use ($operation, $params) {
             $user = $this->actor()['user'];
+            if (NativeCryptoV2Boundary::account($this->pdo, $user['account_id'])) {
+                throw new NativeError('crypto_account_deletion_preparation_required', 409);
+            }
+            if(\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)&&$this->one('SELECT account_id FROM familyhub_crypto_accounts WHERE account_id=?',[$user['account_id']])){throw new NativeError('crypto_account_deletion_preparation_required',409);}
             // Successor and last-admin eligibility cannot change while deleting.
             // Native account deletions share global lock; ordinary requests lock
             // one user before their scope, so these locks precede scope locks too.
@@ -58,7 +73,12 @@ class NativeAccountDeletionService extends NativeDatabase
             // Lock scopes in stable order. Every native write locks its actor first,
             // then scope; after waiting the plan is recomputed from current state.
             $scopes = $this->many('SELECT * FROM familyhub_scopes WHERE deleted_at IS NULL ORDER BY CASE WHEN kind=\'organization\' THEN 0 ELSE 1 END,id'.$this->lockSuffix());
+            $this->guardCryptoAffectedScopes($user, $scopes, ['mutations' => []]);
+            if (NativeCryptoFence::cleanupPaused($this->pdo)) {
+                throw new NativeError('crypto_migration_in_progress', 409);
+            }
             $graph = (new NativeDeletionPlan($this->container))->build($user,$scopes);
+            $this->guardCryptoAffectedScopes($user, $scopes, $graph);
             $plan = $graph['wire'];
             if ($operation === 'account.deletion.preview') {
                 $this->fields($params, [], ['policyVersion']);
@@ -96,7 +116,61 @@ class NativeAccountDeletionService extends NativeDatabase
         return isset($result['operationId']) ? $this->finishFiles($result['operationId']) : $result;
     }
 
-    private function queueIdeaFiles($operation,$user,$deleteScopes)
+    /** The legacy erase/redaction plan cannot mutate a protected foreign scope either. */
+    private function guardCryptoAffectedScopes(array $user, array $scopes, array $graph)
+    {
+        $ids = [];
+        foreach ($scopes as $scope) {
+            if ((int)$scope['owner_id'] === (int)$user['id']) {
+                $ids[$scope['id']] = true;
+            }
+        }
+        foreach ($graph['mutations'] as $mutation) {
+            $ids[$mutation['scopeId']] = true;
+        }
+        foreach ($graph['organizationLinks'] ?? [] as $link) {
+            if (isset($ids[$link['organizationId']])) {
+                $ids[$link['childScopeId']] = true;
+            }
+        }
+        $queries = [
+            ['SELECT scope_id FROM familyhub_members WHERE user_id=?', [$user['id']]],
+            ['SELECT scope_id FROM familyhub_operations WHERE user_id=? OR response LIKE ?', [$user['id'], '%'.$user['account_id'].'%']],
+            ['SELECT scope_id FROM familyhub_invitations WHERE creator_id=? OR accepted_by=? OR recipient_account_id=?', [$user['id'], $user['id'], $user['account_id']]],
+            ['SELECT scope_id FROM familyhub_inbox WHERE actor_account_id=? OR recipient_account_id=?', [$user['account_id'], $user['account_id']]],
+            ['SELECT scope_id FROM familyhub_finance_audit WHERE actor_account_id=? OR before_json LIKE ? OR after_json LIKE ?', [$user['account_id'], '%'.$user['account_id'].'%', '%'.$user['account_id'].'%']],
+            ['SELECT scope_id FROM familyhub_idea_assets WHERE owner_account_id=?', [$user['account_id']]],
+            ['SELECT scope_id FROM familyhub_payment_projections WHERE owner_account_id=?', [$user['account_id']]],
+            ['SELECT scope_id FROM familyhub_moderation_reports WHERE reporter_account_id=? OR (target_type=\'user\' AND target_id=?)', [$user['account_id'], $user['account_id']]],
+        ];
+        if ((new NativeAttachmentService($this->container))->available()) {
+            $queries[] = ['SELECT scope_id FROM familyhub_tables WHERE created_by=? OR lease_account_id=?', [$user['account_id'], $user['account_id']]];
+            $queries[] = ['SELECT scope_id FROM familyhub_attachments WHERE owner_account_id=?', [$user['account_id']]];
+        }
+        foreach (['familyhub_finance_grants', 'familyhub_finance_operations', 'familyhub_organization_leaders', 'familyhub_reminders', 'familyhub_inbox_preferences'] as $table) {
+            $queries[] = ['SELECT scope_id FROM '.$table.' WHERE account_id=?', [$user['account_id']]];
+        }
+        foreach ($queries as [$sql, $params]) {
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($params);
+            while ($row = $statement->fetch(\PDO::FETCH_ASSOC)) {
+                $ids[$row['scope_id']] = true;
+            }
+            $statement->closeCursor();
+        }
+        foreach (array_keys($ids) as $id) {
+            try {
+                NativeCryptoV2Boundary::guardStructural($this->pdo, $id);
+            } catch (NativeError $error) {
+                if ($error->errorCode !== 'crypto_upgrade_required') {
+                    throw $error;
+                }
+                throw new NativeError('crypto_account_deletion_preparation_required', 409);
+            }
+        }
+    }
+
+    protected function queueIdeaFiles($operation,$user,$deleteScopes)
     {
         foreach ($this->many('SELECT * FROM familyhub_idea_assets') as $r) {
             $scope=$this->one('SELECT kind,owner_id FROM familyhub_scopes WHERE id=?',[$r['scope_id']]);
@@ -115,7 +189,7 @@ class NativeAccountDeletionService extends NativeDatabase
         }
     }
 
-    private function purgeModeration($user,$deleteScopes)
+    protected function purgeModeration($user,$deleteScopes)
     {
         $account=$user['account_id'];
         foreach ($deleteScopes as $sid) {
@@ -133,7 +207,7 @@ class NativeAccountDeletionService extends NativeDatabase
         $this->change('DELETE FROM familyhub_moderation_audit WHERE admin_id=?',[$user['id']]);
     }
 
-    private function receiptHash($value)
+    protected function receiptHash($value)
     {
         if (!is_string($value) || !preg_match('/^[a-f0-9]{64}$/D',$value)) { throw new NativeError('validation_error'); }
         return hash('sha256',$value);
@@ -144,7 +218,7 @@ class NativeAccountDeletionService extends NativeDatabase
         return (int)$this->one('SELECT COUNT(*) AS n FROM '.$table.' WHERE '.$where,$params)['n'];
     }
 
-    private function resolve(array $plan,array $params,array $user)
+    protected function resolve(array $plan,array $params,array $user)
     {
         $deletions=$params['ownedScopeDeletions']??[];$transfers=$params['ownershipTransfers']??[];$resolutions=$params['resolutions']??[];
         foreach ([$deletions,$transfers,$resolutions] as $list) { if (!is_array($list) || !array_is_list($list) || count($list)>500) { throw new NativeError('validation_error'); } }
@@ -181,7 +255,7 @@ class NativeAccountDeletionService extends NativeDatabase
         return $value;
     }
 
-    private function applyShared(array $graph,array $user,array $deleteScopes,$operation)
+    protected function applyShared(array $graph,array $user,array $deleteScopes,$operation)
     {
         $account=$user['account_id'];$changedScopes=[];$affectedRecipients=[];
         foreach ($graph['organizationLinks']??[] as $link) {
@@ -231,26 +305,26 @@ class NativeAccountDeletionService extends NativeDatabase
                 $this->change('DELETE FROM familyhub_reminders WHERE scope_id=? AND target_id=?',[$m['scopeId'],$m['id']]);
             }
         }
-        $this->change('DELETE FROM familyhub_finance_audit WHERE actor_account_id=?',[$account]);
-        foreach ($this->many('SELECT * FROM familyhub_finance_audit WHERE before_json LIKE ? OR after_json LIKE ?',['%'.$account.'%','%'.$account.'%']) as $audit) {
+        $this->change('DELETE FROM familyhub_finance_audit WHERE actor_account_id=?'.$this->legacyScopeFilter(),[$account]);
+        foreach ($this->many('SELECT * FROM familyhub_finance_audit WHERE (before_json LIKE ? OR after_json LIKE ?)'.$this->legacyScopeFilter(),['%'.$account.'%','%'.$account.'%']) as $audit) {
             $before=$audit['before_json']===null ? null:$this->redact(json_decode($audit['before_json'],true,32,JSON_THROW_ON_ERROR),$account);
             $after=$this->redact(json_decode($audit['after_json'],true,32,JSON_THROW_ON_ERROR),$account);
             $this->change('UPDATE familyhub_finance_audit SET before_json=?,after_json=? WHERE scope_id=? AND record_id=? AND revision=?',[$before===null?null:json_encode($before,JSON_THROW_ON_ERROR),json_encode($after,JSON_THROW_ON_ERROR),$audit['scope_id'],$audit['record_id'],$audit['revision']]);
         }
         foreach (['familyhub_operations','familyhub_finance_operations'] as $table) {
-            foreach ($this->many('SELECT * FROM '.$table.' WHERE response LIKE ?',['%'.$account.'%']) as $row) {
+            foreach ($this->many('SELECT * FROM '.$table.' WHERE response LIKE ?'.$this->legacyScopeFilter(),['%'.$account.'%']) as $row) {
                 $response=$this->redact(json_decode($row['response'],true,32,JSON_THROW_ON_ERROR),$account);
                 $this->change('UPDATE '.$table.' SET response=? WHERE scope_id=? AND '.($table==='familyhub_operations'?'user_id':'account_id').'=? AND id=?',[json_encode($response,JSON_THROW_ON_ERROR),$row['scope_id'],$row[$table==='familyhub_operations'?'user_id':'account_id'],$row['id']]);
             }
         }
-        $accounts=$this->many('SELECT DISTINCT recipient_account_id FROM familyhub_inbox WHERE actor_account_id=?',[$account]);
+        $accounts=$this->many('SELECT DISTINCT recipient_account_id FROM familyhub_inbox WHERE actor_account_id=?'.$this->legacyScopeFilter(),[$account]);
         $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE actor_account_id=?)',[$account]);
         $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE actor_account_id=?)',[$account]);
-        $this->change('DELETE FROM familyhub_inbox WHERE actor_account_id=?',[$account]);
+        $this->change('DELETE FROM familyhub_inbox WHERE actor_account_id=?'.$this->legacyScopeFilter(),[$account]);
         (new NativeNotificationWriter($this->container))->visibilityChanged(array_values(array_diff(array_unique(array_merge($affectedRecipients,array_column($accounts,'recipient_account_id'))),[$account])));
     }
 
-    private function purgeLegacy(array $user,array $privateProjects,$operation)
+    protected function purgeLegacy(array $user,array $privateProjects,$operation)
     {
         $uid=(int)$user['id'];$files=[];
         if (!empty($user['avatar_path'])) { $files[]=$user['avatar_path']; }
@@ -299,6 +373,15 @@ class NativeAccountDeletionService extends NativeDatabase
 
     public function finishFiles($id)
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        // An unrelated frozen component cannot prevent completion of a
+        // policy4 auth deletion which has no physical cleanup work at all.
+        // Never run global file cleanup through this narrow exception.
+        if(NativeCryptoAccountTombstoneV2::operation($this->pdo,$id)&&$this->countRows('familyhub_deletion_files','operation_id=?',[$id])===0){
+            $this->change('UPDATE familyhub_deletion_receipts SET complete=1 WHERE operation_id=?',[$id]);
+            return ['deleted'=>true,'cleanupPending'=>false,'cancelled'=>false,'serverId'=>$this->serverId()];
+        }
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return ['deleted'=>false,'cleanupPending'=>true,'serverId'=>$this->serverId()];}
         (new NativeAttachmentService($this->container))->finishFiles();
         foreach ($this->many('SELECT path FROM familyhub_deletion_files WHERE operation_id=?',[$id]) as $row) {
             try {
@@ -325,14 +408,14 @@ class NativeAccountDeletionService extends NativeDatabase
         return ['deleted'=>!$pending,'cleanupPending'=>$pending,'cancelled'=>false,'serverId'=>$this->serverId()];
     }
 
-    private function purge(array $user,array $scopes,array $deleteScopes)
+    protected function purge(array $user,array $scopes,array $deleteScopes)
     {
         $id=(int)$user['id'];$account=$user['account_id'];
         $financeScopes=array_column($this->many('SELECT scope_id FROM familyhub_finance_grants WHERE account_id=?',[$account]),'scope_id');
         $this->change('DELETE FROM familyhub_push_jobs WHERE device_id IN (SELECT id FROM familyhub_devices WHERE user_id=?) OR inbox_id IN (SELECT id FROM familyhub_inbox WHERE recipient_account_id=?)',[$id,$account]);
         $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE recipient_account_id=?)',[$account]);
         $this->change('DELETE FROM familyhub_inbox WHERE recipient_account_id=?',[$account]);
-        foreach (['familyhub_inbox_state','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_organization_leaders','familyhub_scope_revocations'] as $table) { $this->change('DELETE FROM '.$table.' WHERE account_id=?',[$account]); }
+        foreach (['familyhub_inbox_state','familyhub_inbox_preferences','familyhub_reminders','familyhub_finance_grants','familyhub_finance_operations','familyhub_organization_leaders','familyhub_scope_revocations'] as $table) { $this->change('DELETE FROM '.$table.' WHERE account_id=?'.(in_array($table,['familyhub_finance_grants','familyhub_organization_leaders'],true)?$this->legacyScopeFilter():''),[$account]); }
         foreach ($this->many('SELECT * FROM familyhub_payment_projections WHERE owner_account_id=?',[$account]) as $projection) {
             $receipt=json_decode($projection['data'],true,32,JSON_THROW_ON_ERROR);
             if(isset($receipt['privateAccountId'])) {
@@ -345,10 +428,10 @@ class NativeAccountDeletionService extends NativeDatabase
                 $this->change('UPDATE familyhub_payment_projections SET data=? WHERE scope_id=? AND event_id=?',[json_encode($receipt,JSON_THROW_ON_ERROR),$projection['scope_id'],$projection['event_id']]);
             }
         }
-        $this->change('DELETE FROM familyhub_operations WHERE user_id=?',[$id]);
-        $this->change('DELETE FROM familyhub_invitations WHERE creator_id=? OR accepted_by=? OR (invitation_contract<>3 AND recipient_username=?) OR recipient_account_id=?',[$id,$id,$user['username'],$user['account_id']]);
-        $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE kind IN (\'organization\',\'household\',\'project\') AND id IN (SELECT scope_id FROM familyhub_members WHERE user_id=? AND active=1)',[$id]);
-        $this->change('DELETE FROM familyhub_members WHERE user_id=?',[$id]);
+        $this->change('DELETE FROM familyhub_operations WHERE user_id=?'.$this->legacyScopeFilter(),[$id]);
+        $this->change('DELETE FROM familyhub_invitations WHERE (creator_id=? OR accepted_by=? OR (invitation_contract<>3 AND recipient_username=?) OR recipient_account_id=?)'.$this->legacyScopeFilter(),[$id,$id,$user['username'],$user['account_id']]);
+        $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1 WHERE kind IN (\'organization\',\'household\',\'project\') AND id IN (SELECT scope_id FROM familyhub_members WHERE user_id=? AND active=1)'.$this->legacyScopeFilter('id'),[$id]);
+        $this->change('DELETE FROM familyhub_members WHERE user_id=?'.$this->legacyScopeFilter(),[$id]);
         foreach ($scopes as $s) {
             if (($s['kind']==='personal' && (int)$s['owner_id']===$id) || in_array($s['id'],$deleteScopes,true)) {
                 $sid=$s['id'];

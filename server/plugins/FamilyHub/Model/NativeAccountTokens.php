@@ -6,6 +6,7 @@ class NativeAccountTokens extends NativeDatabase
 {
     public function issue(array $user, $purpose, $email, $revision, $language)
     {
+        NativeCryptoAccountTombstoneV2::assertAccount($this->pdo,$user['account_id']);
         if (!in_array($language, ['sl', 'en'], true)) { throw new NativeError('validation_error'); }
         $this->revoke($user['account_id'], $purpose);
         $id = $this->newUuid(); $token = ($purpose === 'verify' ? 'fhv1_' : 'fhr1_').bin2hex(random_bytes(32)); $now = time();
@@ -25,6 +26,7 @@ class NativeAccountTokens extends NativeDatabase
     }
     public function valid($token, $purpose, array $user)
     {
+        NativeCryptoAccountTombstoneV2::assertAccount($this->pdo,$user['account_id']);
         $row = $this->lookup($token, $purpose);
         if ($row['account_id'] !== $user['account_id'] || $row['consumed_at'] !== null || $row['revoked_at'] !== null || (int)$row['expires_at'] <= time() || !hash_equals($row['fingerprint'], $this->fingerprint($user))) { throw new NativeError('account_token_invalid', 404); }
         return $row;

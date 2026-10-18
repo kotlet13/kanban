@@ -26,6 +26,7 @@ class NativeModerationService extends NativeDatabase
         if (($group==='tables' && in_array($action,['create','save'],true)) || ($group==='attachments' && in_array($action,['begin','chunk','complete'],true))) { $mutating=true; }
         if (!$mutating) { return; }
         $user=$this->actor(false)['user'];
+        (new NativeConnectedWritePolicy($this->container,$this->bearer,$this->ip))->requireAccount($user['account_id']);
         if (isset($params['scopeId'])) {
             $scope=$this->scope($this->uuid($params['scopeId']),$user['id']);
             if ($scope['kind']==='personal') { return; }
@@ -106,14 +107,29 @@ class NativeModerationService extends NativeDatabase
     /** Resolved/dismissed evidence is retained 180 days after resolution; open reports remain for review. */
     public function purgeExpired()
     {
-        return $this->transaction(function(){
-            $ids=array_column($this->many('SELECT id FROM familyhub_moderation_reports WHERE resolved_at IS NOT NULL AND resolved_at<=? AND redacted_at IS NULL ORDER BY resolved_at,id LIMIT 100',[time()-180*86400]),'id');
-            foreach ($ids as $id) {
-                $this->change('UPDATE familyhub_moderation_reports SET snapshot=NULL,details=NULL,redacted_at=? WHERE id=?',[time(),$id]);
-                $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?',[$id]);
-                $this->change("UPDATE familyhub_moderation_audit SET note='[Retention expired]' WHERE report_id=?",[$id]);
-            }
-            return count($ids);
-        },true);
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
+        return $this->transaction(fn () => $this->purgeReportsInTransaction(), true);
+    }
+
+    /** Shared retention body; caller holds the maintenance lease and SQL lock. */
+    protected function purgeReportsInTransaction($accountId = null)
+    {
+        $parameters = [time() - 180 * 86400];
+        $filter = '';
+        if ($accountId !== null) {
+            $parameters[] = $this->uuid($accountId);
+            $filter = ' AND reporter_account_id=?';
+        }
+        $ids = array_column($this->many('SELECT id FROM familyhub_moderation_reports WHERE resolved_at IS NOT NULL AND resolved_at<=? AND redacted_at IS NULL'.$filter.' ORDER BY resolved_at,id LIMIT 100', $parameters), 'id');
+        foreach ($ids as $id) {
+            $this->change('UPDATE familyhub_moderation_reports SET snapshot=NULL,details=NULL,redacted_at=? WHERE id=?', [time(),$id]);
+            $this->change('DELETE FROM familyhub_idea_report_assets WHERE report_id=?', [$id]);
+            $this->change("UPDATE familyhub_moderation_audit SET note='[Retention expired]' WHERE report_id=?", [$id]);
+        }
+        if (\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)) {
+            (new NativeCryptoModerationDisclosureV2($this->container))->purgeInTransaction($accountId);
+        }
+        return count($ids);
     }
 }

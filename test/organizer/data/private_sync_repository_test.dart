@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -44,6 +45,7 @@ void main() {
       transport,
       store,
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await shared.initialize();
     addTearDown(() async {

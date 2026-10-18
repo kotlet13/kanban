@@ -1,3 +1,4 @@
+import 'package:kanban/organizer/data/local_vault_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -16,6 +17,9 @@ class FakeScheduler implements LocalNotificationScheduler {
   bool inexact = false;
   LocalNotificationPermission permission = LocalNotificationPermission.granted;
   final pending = <int>{};
+  final presented = <int>{};
+  int privacyClears = 0;
+  bool failAfterPrivacyClear = false;
   final scheduled = <int, LocalNotificationRequest>{};
   final canceled = <int>[];
   final payloads = <int, String>{};
@@ -49,6 +53,19 @@ class FakeScheduler implements LocalNotificationScheduler {
 
   @override
   Future<Set<int>> pendingIds() async => {...pending};
+  @override
+  Future<void> clearPresentedAndPending() async {
+    privacyClears++;
+    canceled.addAll(pending.toList()..sort());
+    pending.clear();
+    presented.clear();
+    scheduled.clear();
+    if (failAfterPrivacyClear) {
+      failAfterPrivacyClear = false;
+      throw StateError('interrupted after OS cleanup');
+    }
+  }
+
   @override
   Future<void> cancel(int id) async {
     canceled.add(id);
@@ -98,11 +115,99 @@ void main() {
     scheduler = FakeScheduler();
     adapter = LocalNotificationAdapter(
       scheduler: scheduler,
-      preferences: prefs,
+      preferences: TestLocalVaultPreferences(prefs),
       now: () => now,
     );
     await adapter.initialize((target) {});
   });
+
+  test(
+    'legacy pending presentation is cancelled once then rebuilt from intact reminder requests',
+    () async {
+      final pending = FakeScheduler()..pending.addAll([41, 42]);
+      await prefs.setString(
+        'organizer_notification_ids_v1',
+        jsonEncode({
+          'ids': {'task:1': 41},
+          'fingerprints': {'task:1': 'legacy source title'},
+          'nextId': 43,
+        }),
+      );
+      final fresh = LocalNotificationAdapter(
+        scheduler: pending,
+        preferences: TestLocalVaultPreferences(prefs),
+        now: () => now,
+      );
+      final original = request(1, now.add(const Duration(hours: 1)));
+      await fresh.initialize((_) {});
+      expect(pending.canceled, [41, 42]);
+      expect(pending.pending, isEmpty);
+      await fresh.reconcile([original]);
+      expect(pending.scheduled.values.single.plan.stableKey, 'task:1');
+      expect(original.plan.scheduledAt, now.add(const Duration(hours: 1)));
+      final reopened = LocalNotificationAdapter(
+        scheduler: pending,
+        preferences: TestLocalVaultPreferences(prefs),
+        now: () => now,
+      );
+      await reopened.initialize((_) {});
+      expect(pending.canceled, [41, 42]);
+      expect(
+        (jsonDecode(prefs.getString('organizer_notification_ids_v1')!)
+            as Map)['presentationVersion'],
+        3,
+      );
+    },
+  );
+  test(
+    'delivered cleanup retries safely and preserves launch and consumed state',
+    () async {
+      final past = request(1, now.subtract(const Duration(hours: 1)));
+      final future = request(2, now.add(const Duration(hours: 1)));
+      final seeded = LocalNotificationAdapter(
+        scheduler: scheduler,
+        preferences: TestLocalVaultPreferences(prefs),
+        now: () => now.subtract(const Duration(hours: 2)),
+      );
+      await seeded.initialize((_) {});
+      await seeded.reconcile([past, future]);
+      final saved =
+          jsonDecode(prefs.getString('organizer_notification_ids_v1')!) as Map;
+      saved['presentationVersion'] = 2;
+      await prefs.setString('organizer_notification_ids_v1', jsonEncode(saved));
+      final os = FakeScheduler()
+        ..presented.addAll([99, saved['ids']['task:1'] as int])
+        ..pending.add(saved['ids']['task:2'] as int)
+        ..launchPayload = jsonEncode(future.plan.target.toJson())
+        ..failAfterPrivacyClear = true;
+      final recovering = LocalNotificationAdapter(
+        scheduler: os,
+        preferences: TestLocalVaultPreferences(prefs),
+        now: () => now,
+      );
+      await expectLater(recovering.initialize((_) {}), throwsStateError);
+      expect(os.presented, isEmpty);
+      expect(os.pending, isEmpty);
+      expect(
+        (jsonDecode(prefs.getString('organizer_notification_ids_v1')!)
+            as Map)['presentationVersion'],
+        2,
+      );
+      final launch = await recovering.initialize((_) {});
+      expect(launch?.toJson(), future.plan.target.toJson());
+      await recovering.reconcile([past, future]);
+      expect(os.privacyClears, 2);
+      expect(os.scheduled.values.map((r) => r.plan.stableKey), ['task:2']);
+      final reopened = LocalNotificationAdapter(
+        scheduler: os,
+        preferences: TestLocalVaultPreferences(prefs),
+        now: () => now,
+      );
+      await reopened.initialize((_) {});
+      expect(os.privacyClears, 2);
+      expect(os.scheduled.values.map((r) => r.plan.stableKey), ['task:2']);
+    },
+  );
 
   test(
     'group summary cold launch routes to remote center once, never local target',
@@ -122,7 +227,7 @@ void main() {
         ..launchPayload = message.payload(summary: true);
       final fresh = LocalNotificationAdapter(
         scheduler: cold,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
       );
       var localOpens = 0, remoteOpens = 0;
       final result = await fresh.initialize(
@@ -200,7 +305,7 @@ void main() {
       final ids = {...scheduler.payloads};
       final restarted = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
         now: () => now,
       );
       await restarted.initialize((target) {});
@@ -266,7 +371,7 @@ void main() {
       await adapter.reconcile([one]);
       final later = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
         now: () => now.add(const Duration(minutes: 2)),
       );
       await later.initialize((target) {});
@@ -311,7 +416,7 @@ void main() {
       final opened = <NotificationTarget>[];
       final fresh = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
         now: () => now,
       );
       final launch = await fresh.initialize(opened.add);
@@ -385,7 +490,7 @@ void main() {
       final requests = [sharedFuture, pastPending, pastDelivered, localFuture];
       final legacy = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
         now: () => now.subtract(const Duration(days: 1)),
       );
       await legacy.initialize((_) {});
@@ -414,7 +519,7 @@ void main() {
       expect(scheduler.canceled, [oldIds[sharedFuture.plan.stableKey]]);
       final later = LocalNotificationAdapter(
         scheduler: scheduler,
-        preferences: prefs,
+        preferences: TestLocalVaultPreferences(prefs),
         now: () => now.add(const Duration(hours: 3)),
       );
       await later.initialize((_) {});

@@ -23,13 +23,15 @@ class NativePushQueue extends NativeDatabase
         try {
         $deadline=microtime(true)+40; $counts=['examined'=>0,'accepted'=>0,'retry'=>0,'cancelled'=>0,'coalesced'=>0];
         $transport=$transport ?? new NativeFcmTransport();
-        $rows=$this->many('SELECT * FROM familyhub_push_jobs WHERE (state=\'pending\' AND next_attempt<=?) OR (state=\'processing\' AND lease_until<=?) ORDER BY next_attempt,inbox_id DESC LIMIT '.$limit,[time(),time()]);
+        $rows=$this->many('SELECT j.* FROM familyhub_push_jobs j JOIN familyhub_inbox i ON i.id=j.inbox_id WHERE ((j.state=\'pending\' AND j.next_attempt<=?) OR (j.state=\'processing\' AND j.lease_until<=?)) AND '.$this->notificationWorkerDiscoverySql().' ORDER BY j.next_attempt,j.inbox_id DESC LIMIT '.$limit,[time(),time()]);
         $worker=new NativePushWorker($this->container);
         foreach ($rows as $row) {
             // Reserve the worst-case OAuth+send duration before taking DB locks.
             if (microtime(true)+20>$deadline) { break; }
             $counts['examined']++;
             $lease=$this->transaction(function () use ($row) {
+                $inbox=$this->one('SELECT * FROM familyhub_inbox WHERE id=?',[$row['inbox_id']]);
+                if ($inbox && !$this->lockNotificationDeliveryScope($inbox)) { return null; }
                 $job=$this->one('SELECT * FROM familyhub_push_jobs WHERE inbox_id=? AND device_id=? AND registration_revision=?'.$this->lockSuffix(),[$row['inbox_id'],$row['device_id'],$row['registration_revision']]);
                 if (!$job || !in_array($job['state'],['pending','processing'],true) || ($job['state']==='processing' && (int)$job['lease_until']>time()) || ($job['state']==='pending' && (int)$job['next_attempt']>time())) { return null; }
                 $lease=bin2hex(random_bytes(16));

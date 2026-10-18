@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -16,10 +17,12 @@ class EmailServer extends FakeServer {
       loseRegister = false,
       changeRegisterIdentity = false;
   String? lastPreviewBearer;
+  bool cryptoPreview = false;
+  String? lastPreviewOperation;
   bool changeIdentityAfterPreview = false;
   int credentialRequests = 0;
   String? recipient, scopeId;
-  final token = 'fhi2_${'a' * 64}';
+  String get token => '${cryptoPreview ? 'fhi4' : 'fhi2'}_${'a' * 64}';
   final invitationId = newSharedId();
   int registerCalls = 0, acceptCalls = 0, previewCalls = 0;
   Map<String, dynamic> get invitation => {
@@ -29,7 +32,11 @@ class EmailServer extends FakeServer {
     'recipientEmail': 'synthetic@example.invalid',
     'role': 'member',
     'expiresAt': 4102444800,
-    'contractVersion': 2,
+    'contractVersion': cryptoPreview ? 4 : 2,
+    if (cryptoPreview) ...{
+      'expiresAtEpoch': 4102444800,
+      'recipient': {'kind': 'email', 'value': 'synthetic@example.invalid'},
+    },
   };
   Map<String, dynamic> get preview => {
     'invitation': invitation,
@@ -49,7 +56,11 @@ class EmailServer extends FakeServer {
       final caps = await super.call(operation, params, bearer);
       return {
         ...caps,
-        'invitationContractVersions': [1, if (supported) 2],
+        'invitationContractVersions': [
+          1,
+          if (supported) 2,
+          if (cryptoPreview) 4,
+        ],
         'features': <String, dynamic>{
           ...caps['features'] as Map<String, dynamic>,
           'emailInvitations': supported,
@@ -59,8 +70,10 @@ class EmailServer extends FakeServer {
     if (operation == 'invitations2.create') {
       return {'invitation': invitation, 'deliveryQueued': true};
     }
-    if (operation == 'invitations2.preview') {
+    if (operation == 'invitations2.preview' ||
+        operation == 'crypto2.invitations.preview') {
       previewCalls++;
+      lastPreviewOperation = operation;
       lastPreviewBearer = bearer;
       if (recipient != null &&
           members[scopeId]!.containsKey(recipient) &&
@@ -146,6 +159,7 @@ void main() {
       FakeTransport(server),
       sessions,
       invitationStore: pending,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     repositories.add(repo);
@@ -175,6 +189,26 @@ void main() {
   });
   Matcher failure(String code) => throwsA(
     isA<CollaborationException>().having((e) => e.code, 'code', code),
+  );
+
+  test(
+    'fhi4 preview uses encrypted invitation parser and keeps explicit registration facts',
+    () async {
+      server.cryptoPreview = true;
+      final repo = await open('crypto-recipient', MemorySessionStore());
+      final preview = await repo.previewInvitation(
+        serverUrl: 'https://synthetic.invalid/kanboard',
+        token: server.token,
+      );
+      expect(server.lastPreviewOperation, 'crypto2.invitations.preview');
+      expect(preview.contractVersion, 4);
+      expect(preview.recipientEmail, 'synthetic@example.invalid');
+      expect(preview.isEmailInvitation, true);
+      expect(preview.requiresExplicitAcceptance, true);
+      expect(pending.value?.invitationId, server.invitationId);
+      expect(server.acceptCalls, 0);
+      expect(server.registerCalls, 0);
+    },
   );
 
   test(

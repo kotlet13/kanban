@@ -1,3 +1,4 @@
+import '../../platform/private_file_io.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -16,7 +17,16 @@ class PickedBackupFile {
 enum BackupSaveStatus { saved, cancelled, downloadStarted }
 
 class BackupFileIo {
+  const BackupFileIo({this.mobileIo});
+  final PrivateFileChannel? mobileIo;
   Future<PickedBackupFile?> pick({required int maxBytes}) async {
+    if (mobileIo != null || usesPrivateMobileFileIo) {
+      final file = await (mobileIo?.pick ?? pickPrivateFile)(
+        extensions: ['vsakdan'],
+        maxBytes: maxBytes,
+      );
+      return file == null ? null : PickedBackupFile(file.name, file.bytes);
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['vsakdan'],
@@ -36,6 +46,17 @@ class BackupFileIo {
     required String title,
     required String name,
   }) async {
+    if (mobileIo != null || usesPrivateMobileFileIo) {
+      return switch (await (mobileIo?.save ?? savePrivateFile)(
+        bytes: bytes,
+        name: name,
+        title: title,
+      )) {
+        PrivateSaveStatus.saved => BackupSaveStatus.saved,
+        PrivateSaveStatus.cancelled => BackupSaveStatus.cancelled,
+        PrivateSaveStatus.downloadStarted => BackupSaveStatus.downloadStarted,
+      };
+    }
     final path = await FilePicker.platform.saveFile(
       dialogTitle: title,
       fileName: name,

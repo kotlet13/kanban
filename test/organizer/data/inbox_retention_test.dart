@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -313,6 +314,7 @@ void main() {
         transport,
         MemorySessionStore(),
         clock: () => start,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(repo.close);
       await repo.initialize();
@@ -388,6 +390,7 @@ void main() {
         transport,
         MemorySessionStore(),
         clock: () => start,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(repo.close);
       await repo.initialize();
@@ -431,6 +434,7 @@ void main() {
         transport,
         MemorySessionStore(),
         clock: () => now,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(repo.close);
       await repo.initialize();

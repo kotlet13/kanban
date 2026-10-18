@@ -22,6 +22,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _financeSupported = false;
     _organizationFinanceSupported = false;
     _privateSyncSupported = false;
+    _cryptoPreviewSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
     _externalPushSupported = false;
@@ -51,6 +52,10 @@ extension CollaborationAccountActions on CollaborationRepository {
   }
 
   void _applyCapabilities(Map<String, dynamic> caps) {
+    _cryptoPreviewSupported =
+        (caps['cryptoTransportVersions'] as List? ?? const []).any(
+          (v) => v == 1 || v == 2,
+        );
     final versions = caps['recordContractVersions'];
     _financeContractVersion =
         (caps['financeContractVersions'] is List &&
@@ -59,7 +64,10 @@ extension CollaborationAccountActions on CollaborationRepository {
         : 1;
     _accountDeletionPolicyVersion =
         (caps['accountDeletionPolicyVersions'] is List &&
-            (caps['accountDeletionPolicyVersions'] as List).contains(3))
+            (caps['accountDeletionPolicyVersions'] as List).contains(4))
+        ? 4
+        : (caps['accountDeletionPolicyVersions'] is List &&
+              (caps['accountDeletionPolicyVersions'] as List).contains(3))
         ? 3
         : (caps['accountDeletionPolicyVersions'] is List &&
               (caps['accountDeletionPolicyVersions'] as List).contains(2))
@@ -226,25 +234,36 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String password,
     bool allowLocalHttp = false,
     String deviceName = 'Jivie',
-  }) =>
-      (invitationToken.startsWith('fhi2_') ||
-          invitationToken.startsWith('fhi3_'))
-      ? registerWithEmailInvitation(
-          serverUrl: serverUrl,
-          invitationToken: invitationToken,
-          username: username,
-          name: name,
-          password: password,
-          allowLocalHttp: allowLocalHttp,
-          deviceName: deviceName,
-        )
-      : _authenticate(serverUrl, 'auth.register', {
-          'token': invitationToken,
-          'username': username,
-          'displayName': name,
-          'password': password,
-          'deviceName': deviceName,
-        }, allowLocalHttp);
+  }) async {
+    final encrypted =
+        invitationToken.startsWith('fhi4_') ||
+        invitationToken.startsWith('fhi2_') ||
+        invitationToken.startsWith('fhi3_') ||
+        (await previewInvitation(
+              serverUrl: serverUrl,
+              token: invitationToken,
+              allowLocalHttp: allowLocalHttp,
+            )).contractVersion ==
+            4;
+    if (encrypted) {
+      return registerWithEmailInvitation(
+        serverUrl: serverUrl,
+        invitationToken: invitationToken,
+        username: username,
+        name: name,
+        password: password,
+        allowLocalHttp: allowLocalHttp,
+        deviceName: deviceName,
+      );
+    }
+    return _authenticate(serverUrl, 'auth.register', {
+      'token': invitationToken,
+      'username': username,
+      'displayName': name,
+      'password': password,
+      'deviceName': deviceName,
+    }, allowLocalHttp);
+  }
 
   Future<void> _authenticate(
     String server,
@@ -282,6 +301,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _financeSupported = false;
     _organizationFinanceSupported = false;
     _privateSyncSupported = false;
+    _cryptoPreviewSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
     _externalPushSupported = false;
@@ -429,6 +449,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     String operation,
     Map<String, Object?> params, {
     bool capabilitiesVerified = false,
+    Future<void> Function()? authorizeLegacyUploadDrain,
   }) async {
     _checkEpoch(epoch);
     if (_sessionInvalidReason != null) {
@@ -452,62 +473,98 @@ extension CollaborationAccountActions on CollaborationRepository {
       await _invalidateDeviceSession(session, epoch, 'auth_required');
       throw const CollaborationException('auth_required');
     }
-    if (operation == 'scopes.list') {
-      params = {
-        ...params,
-        if (_privateSyncSupported) 'includePersonal': true,
-        if (_scopeAccessChangesSupported) 'includeAccessChanges': true,
-        if (_organizationsSupported) 'includeOrganizations': true,
-        if (_projectArchivingSupported) 'includeArchived': true,
-      };
-    }
-    if (operation == 'inbox.open') {
-      params = {
-        ...params,
-        if (_financeContractVersion >= 2 &&
-            !params.containsKey('financeContractVersion'))
-          'financeContractVersion': _financeContractVersion,
-        if (_recordContractVersion >= 3 &&
-            !params.containsKey('recordContractVersion'))
-          'recordContractVersion': _recordContractVersion,
-      };
-    }
-    if (await _requiresSharedContentPolicy(session, operation, params)) {
-      await _guardSharedUpload(
-        session,
-        epoch,
-        capabilitiesVerified: capabilitiesVerified,
-      );
-    }
     Map<String, dynamic> reply;
-    if (operation.startsWith('finance.') ||
-        operation.startsWith('finance2.') ||
-        operation.startsWith('finance4.') ||
-        operation == 'sync3.pushTaskWithCost' ||
-        operation == 'sync4.pushTaskWithCost' ||
-        operation == 'sync5.pushTaskWithCost' ||
-        operation == 'sync6.pushTaskWithCost') {
-      final cached = await database.rows(
-        'SELECT value FROM local_meta WHERE name=?',
-        ['capabilities:${session.profile.partition}'],
-      );
-      if (cached.isNotEmpty &&
-          (CollaborationRepository._map(cached.single['value'])['features']
-                  as Map?)?['linkedPayments'] ==
-              true) {
-        params = {...params, 'linkedPaymentsAware': true};
-      }
-    }
     try {
-      reply = await transport.call(
-        serverUrl: session.profile.serverUrl,
-        operation: operation,
-        params: params,
-        token: session.token,
-        allowLocalHttp: session.profile.allowLocalHttp,
-      );
+      if (await _requiresSharedContentPolicy(session, operation, params)) {
+        await _guardSharedUpload(
+          session,
+          epoch,
+          capabilitiesVerified: capabilitiesVerified,
+        );
+      }
+      if (authorizeLegacyUploadDrain != null) {
+        await authorizeLegacyUploadDrain();
+      }
+      final encrypted =
+          const {
+                'account.deletion.preview',
+                'account.deletion.confirm',
+                'account.deletion.status',
+                'account.deletion.cancelPending',
+              }.contains(operation) ||
+              authorizeLegacyUploadDrain != null
+          ? null
+          : await routeProtectedCryptoDomain(
+              database: database,
+              session: session,
+              operation: operation,
+              params: params,
+              router: cryptoRouter,
+              contentGuard: contentRouteGuard,
+              checkCurrent: () => _checkEpoch(epoch),
+            );
+      if (encrypted != null) {
+        reply = encrypted;
+      } else {
+        if (operation == 'scopes.removeMember' &&
+            params.containsKey('accountId')) {
+          params = {...params}..remove('accountId');
+        }
+        if (operation == 'scopes.list') {
+          params = {
+            ...params,
+            if (_privateSyncSupported) 'includePersonal': true,
+            if (_scopeAccessChangesSupported) 'includeAccessChanges': true,
+            if (_organizationsSupported) 'includeOrganizations': true,
+            if (_projectArchivingSupported) 'includeArchived': true,
+          };
+        }
+        if (operation == 'inbox.open') {
+          params = {
+            ...params,
+            if (_financeContractVersion >= 2 &&
+                !params.containsKey('financeContractVersion'))
+              'financeContractVersion': _financeContractVersion,
+            if (_recordContractVersion >= 3 &&
+                !params.containsKey('recordContractVersion'))
+              'recordContractVersion': _recordContractVersion,
+          };
+        }
+        if (operation.startsWith('finance.') ||
+            operation.startsWith('finance2.') ||
+            operation.startsWith('finance4.') ||
+            operation == 'sync3.pushTaskWithCost' ||
+            operation == 'sync4.pushTaskWithCost' ||
+            operation == 'sync5.pushTaskWithCost' ||
+            operation == 'sync6.pushTaskWithCost') {
+          final cached = await database.rows(
+            'SELECT value FROM local_meta WHERE name=?',
+            ['capabilities:${session.profile.partition}'],
+          );
+          if (cached.isNotEmpty &&
+              (CollaborationRepository._map(cached.single['value'])['features']
+                      as Map?)?['linkedPayments'] ==
+                  true) {
+            params = {...params, 'linkedPaymentsAware': true};
+          }
+        }
+        reply = await transport.call(
+          serverUrl: session.profile.serverUrl,
+          operation: operation,
+          params: params,
+          token: session.token,
+          allowLocalHttp: session.profile.allowLocalHttp,
+        );
+      }
     } on CollaborationException catch (e) {
       _checkEpoch(epoch);
+      if (e.code == 'email_verification_required') {
+        await database.execute(
+          'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+          ['verified_email:${session.profile.partition}', 'false'],
+        );
+        _checkEpoch(epoch);
+      }
       if (e.code == 'policy_acceptance_required') {
         _moderationVerifiedEpoch = null;
         _moderationAccepted = false;
@@ -582,7 +639,9 @@ extension CollaborationAccountActions on CollaborationRepository {
     required String token,
     bool allowLocalHttp = false,
   }) async {
-    if ((token.startsWith('fhi2_') || token.startsWith('fhi3_'))) {
+    if ((token.startsWith('fhi2_') ||
+        token.startsWith('fhi3_') ||
+        token.startsWith('fhi4_'))) {
       return previewEmailInvitation(
         serverUrl: serverUrl,
         token: token,
@@ -601,6 +660,11 @@ extension CollaborationAccountActions on CollaborationRepository {
     );
     final invitation = reply['invitation'] as Map<String, dynamic>,
         scope = reply['scope'] as Map<String, dynamic>;
+    if (invitation['contractVersion'] == 4) {
+      // Discovery chooses the strict encrypted verification flow only. It is
+      // not authority to accept a legacy token or install a membership/key.
+      return _emailInvitationPreview(reply);
+    }
     return SharedInvitationPreview(
       scopeName: readString(scope, 'name'),
       scopeId: readString(scope, 'id'),
@@ -909,11 +973,13 @@ extension CollaborationAccountActions on CollaborationRepository {
   Future<void> revokeMember({
     required String scopeId,
     required int userId,
+    String? accountId,
   }) async {
     final session = _requireSession(), epoch = _epoch;
     await _callSession(session, epoch, 'scopes.removeMember', {
       'scopeId': scopeId,
       'userId': userId,
+      if (accountId != null) 'accountId': accountId,
       'requestId': newSharedId(),
     });
     await database.transaction(() async {

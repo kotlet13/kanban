@@ -4025,7 +4025,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'The backup exceeds the 64 MiB limit. Your data was not changed.'**
+  /// **'The backup is too large for a safe transfer. Your data was not changed.'**
   String get backupTooLarge;
 
   /// No description provided for @backupMergeConflict.
@@ -8209,6 +8209,1014 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income and expense overview'**
   String get financeFilteredMovement;
+
+  /// No description provided for @recoverySetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a recovery key'**
+  String get recoverySetupTitle;
+
+  /// No description provided for @recoveryInstallationScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery for this entire installation'**
+  String get recoveryInstallationScope;
+
+  /// No description provided for @recoveryInstallationExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This file, together with a copy of this device’s encrypted data, can unlock all profiles stored here, including local data and signed-out accounts. It is different from an account recovery file.'**
+  String get recoveryInstallationExplanation;
+
+  /// No description provided for @recoveryFileWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the file outside this device. Anyone with the file and a data copy can read the data. Do not send it to support. The file alone cannot recover data that were never copied.'**
+  String get recoveryFileWarning;
+
+  /// No description provided for @recoveryShareFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Send using your own app'**
+  String get recoveryShareFile;
+
+  /// No description provided for @recoverySaveFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Save recovery file'**
+  String get recoverySaveFile;
+
+  /// No description provided for @recoverySelectSavedFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the saved file'**
+  String get recoverySelectSavedFile;
+
+  /// No description provided for @recoveryExternalVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the file you saved using the file picker. The app verifies it locally before changing your data. Returning from a save or share dialog does not confirm a safe copy.'**
+  String get recoveryExternalVerification;
+
+  /// No description provided for @recoveryProtectDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt local database'**
+  String get recoveryProtectDevice;
+
+  /// No description provided for @recoveryProtectingDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypting the local database. Keep the app open. A restart safely resumes the same process.'**
+  String get recoveryProtectingDevice;
+
+  /// No description provided for @recoveryLockedExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The key for the existing data is unavailable. Choose this installation’s recovery file. Your existing data will be kept. An account password cannot unlock this installation.'**
+  String get recoveryLockedExplanation;
+
+  /// No description provided for @recoveryUnlockInstallation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock this installation'**
+  String get recoveryUnlockInstallation;
+
+  /// No description provided for @recoveryCleanupPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted data are ready. Removing old unencrypted copies is unfinished; device protection is not complete yet.'**
+  String get recoveryCleanupPending;
+
+  /// No description provided for @recoveryRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get recoveryRetry;
+
+  /// No description provided for @recoveryContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to local data'**
+  String get recoveryContinue;
+
+  /// No description provided for @recoveryUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This platform cannot open protected data yet. Existing data are kept. Use a supported installed app to prepare or restore protection.'**
+  String get recoveryUnsupported;
+
+  /// No description provided for @recoveryOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The step could not be completed. Your existing data are kept. Check that you selected the correct file and try again.'**
+  String get recoveryOperationFailed;
+
+  /// No description provided for @recoveryLocalProtectionOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This encrypts the app’s local database on this device. Previously exported or temporary copies are not automatically protected. Protection of shared spaces is prepared separately; saving this file does not enable it.'**
+  String get recoveryLocalProtectionOnly;
+
+  /// No description provided for @recoveryCheckingDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking local storage…'**
+  String get recoveryCheckingDevice;
+
+  /// No description provided for @recoveryCleanupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup unfinished'**
+  String get recoveryCleanupLabel;
+
+  /// No description provided for @recoveryBrowserUnprotected.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser data unprotected'**
+  String get recoveryBrowserUnprotected;
+
+  /// No description provided for @recoveryBrowserContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Open existing browser data for use or export'**
+  String get recoveryBrowserContinue;
+
+  /// No description provided for @accountRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare account recovery'**
+  String get accountRecoveryTitle;
+
+  /// No description provided for @accountRecoveryScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This account only'**
+  String get accountRecoveryScope;
+
+  /// No description provided for @accountRecoveryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This file restores this account’s encryption keys. It does not contain your installation key, other profiles, or a copy of your data. Keep it outside this device and do not send it to support.'**
+  String get accountRecoveryExplanation;
+
+  /// No description provided for @accountRecoveryPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Key setup is available for testing. Your existing server content still uses the current synchronization and is not end-to-end encrypted. Saving this file does not switch shared spaces to E2EE.'**
+  String get accountRecoveryPreview;
+
+  /// No description provided for @accountRecoveryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected account protection setup is currently unavailable. Local data and pending changes are preserved; the server may need an upgrade.'**
+  String get accountRecoveryUnavailable;
+
+  /// No description provided for @accountRecoveryReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Account keys are prepared on this device. Shared spaces have not been switched to end-to-end encryption.'**
+  String get accountRecoveryReady;
+
+  /// No description provided for @accountRecoveryLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in does not unlock account keys. Choose this account’s recovery file to approve this device. The account password alone cannot restore encrypted content.'**
+  String get accountRecoveryLocked;
+
+  /// No description provided for @accountRecoveryVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose saved account file and prepare keys'**
+  String get accountRecoveryVerify;
+
+  /// No description provided for @accountRecoveryResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Check and resume the pending request'**
+  String get accountRecoveryResume;
+
+  /// No description provided for @accountRecoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The step did not finish. Your existing data and pending work are kept. Check the file, connection and email verification, then try again.'**
+  String get accountRecoveryFailed;
+
+  /// No description provided for @accountRecoveryManualShare.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving, you can attach this file in your own mail app. Access to that mailbox can also grant access to the recovery file.'**
+  String get accountRecoveryManualShare;
+
+  /// No description provided for @accountRecoveryRebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the account recovery file to retry a confirmed conflict'**
+  String get accountRecoveryRebase;
+
+  /// No description provided for @cryptoConnectionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection for the connected account is not ready. Local data and pending changes are preserved. Finish encryption setup before sending changes; the server may need an upgrade.'**
+  String get cryptoConnectionPending;
+
+  /// No description provided for @notificationPrivateReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a reminder in Jivie.'**
+  String get notificationPrivateReminder;
+
+  /// No description provided for @cryptoDevicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved devices'**
+  String get cryptoDevicesTitle;
+
+  /// No description provided for @cryptoDevicePairingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer the public request directly between your devices. On an approved device, approve only the request from the device in front of you. Then transfer the confirmation card back.'**
+  String get cryptoDevicePairingExplanation;
+
+  /// No description provided for @cryptoDeviceApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get cryptoDeviceApproved;
+
+  /// No description provided for @cryptoDeviceRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked'**
+  String get cryptoDeviceRevoked;
+
+  /// No description provided for @cryptoShowPublicIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Show public verification card'**
+  String get cryptoShowPublicIdentity;
+
+  /// No description provided for @cryptoCreateDeviceRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Create approval request for this device'**
+  String get cryptoCreateDeviceRequest;
+
+  /// No description provided for @cryptoPastePublicCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the other device’s public card'**
+  String get cryptoPastePublicCard;
+
+  /// No description provided for @cryptoApproveExactDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this exact device'**
+  String get cryptoApproveExactDevice;
+
+  /// No description provided for @cryptoAcceptDeviceConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify approval for my device'**
+  String get cryptoAcceptDeviceConfirmation;
+
+  /// No description provided for @cryptoPublicCardExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This card contains only public keys and comparison evidence. Transfer it directly to the other device or person through a channel you trust.'**
+  String get cryptoPublicCardExplanation;
+
+  /// No description provided for @cryptoCopyPublicCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy public card'**
+  String get cryptoCopyPublicCard;
+
+  /// No description provided for @cryptoHistoryPendingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Device approval does not prove that old history is complete. Sharing and sending also wait for verified space keys.'**
+  String get cryptoHistoryPendingExplanation;
+
+  /// No description provided for @cryptoVerifyContactExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the person for their public card directly through a known channel or in person. We verify their identity and current approved devices. A card supplied only by the server is insufficient.'**
+  String get cryptoVerifyContactExplanation;
+
+  /// No description provided for @cryptoContactVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity verified.'**
+  String get cryptoContactVerified;
+
+  /// No description provided for @cryptoCompareContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare and verify identity'**
+  String get cryptoCompareContact;
+
+  /// No description provided for @cryptoMigrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect connected data'**
+  String get cryptoMigrationTitle;
+
+  /// No description provided for @cryptoMigrationPendingContributors.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for authorized contributors to verify their data and keys.'**
+  String get cryptoMigrationPendingContributors;
+
+  /// No description provided for @cryptoMigrationPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing protected transfer. Pending changes are preserved.'**
+  String get cryptoMigrationPreparing;
+
+  /// No description provided for @cryptoMigrationVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying the protected copy and recovery.'**
+  String get cryptoMigrationVerifying;
+
+  /// No description provided for @cryptoMigrationLocalAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data is available. Sending waits until protection setup is complete.'**
+  String get cryptoMigrationLocalAvailable;
+
+  /// No description provided for @cryptoMigrationContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue protection setup'**
+  String get cryptoMigrationContinue;
+
+  /// No description provided for @cryptoMigrationRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry verification'**
+  String get cryptoMigrationRetry;
+
+  /// No description provided for @cryptoReplaceRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace recovery file'**
+  String get cryptoReplaceRecoveryTitle;
+
+  /// No description provided for @cryptoReplaceRecoveryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this if the previous file may have reached someone else. In a fresh sign-in, select the previous file, save the new one and open it again. Confirming replacement revokes all previous devices and replaces the recovery keys. Other people must verify your identity again, and connected spaces need new protection keys before more changes can be sent.'**
+  String get cryptoReplaceRecoveryExplanation;
+
+  /// No description provided for @cryptoKeepBothRecoveryFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep both files until the app confirms the replacement is complete. Verifying the new file alone does not make the old one obsolete.'**
+  String get cryptoKeepBothRecoveryFiles;
+
+  /// No description provided for @cryptoSaveNewRecoveryFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select previous file and save new file'**
+  String get cryptoSaveNewRecoveryFile;
+
+  /// No description provided for @cryptoImportNewRecoveryFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen the newly saved file'**
+  String get cryptoImportNewRecoveryFile;
+
+  /// No description provided for @cryptoRecoveryReplacementComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacement confirmed. The previous file cannot authorize future changes or access new keys. Previously copied old data cannot be revoked.'**
+  String get cryptoRecoveryReplacementComplete;
+
+  /// No description provided for @cryptoMigrationNoScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no connected spaces available to prepare. Your local data remains available.'**
+  String get cryptoMigrationNoScopes;
+
+  /// No description provided for @cryptoMigrationArchiving.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserving and encrypting the existing data.'**
+  String get cryptoMigrationArchiving;
+
+  /// No description provided for @cryptoMigrationComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'New connected changes are encrypted in transit and at rest on the server. Previous server copies are still retained; their deletion date has not been confirmed.'**
+  String get cryptoMigrationComplete;
+
+  /// No description provided for @cryptoMigrationContributorCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {count} contributors.'**
+  String cryptoMigrationContributorCount(int count);
+
+  /// No description provided for @cryptoMigrationUnavailableCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} contributors are currently unavailable.'**
+  String cryptoMigrationUnavailableCount(int count);
+
+  /// No description provided for @cryptoMigrationSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected space'**
+  String get cryptoMigrationSpace;
+
+  /// No description provided for @cryptoMigrationWaitingHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Another owner needs to open the updated app and finish their part. You can keep using your local data and return here later.'**
+  String get cryptoMigrationWaitingHelp;
+
+  /// No description provided for @cryptoMigrationUnavailableHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A required owner is unavailable. Ask them to update and open Jivie, then retry. Existing data is kept.'**
+  String get cryptoMigrationUnavailableHelp;
+
+  /// No description provided for @cryptoMigrationBlockedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation needs attention before it can continue. Retry after checking the connection and account access; your data is kept.'**
+  String get cryptoMigrationBlockedHelp;
+
+  /// No description provided for @cryptoMigrationReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review existing data'**
+  String get cryptoMigrationReviewTitle;
+
+  /// No description provided for @cryptoMigrationReviewExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm preparation of this existing data together with the other owners. Connected changes stay queued until protection is verified. Original data and local edits are kept.'**
+  String get cryptoMigrationReviewExplanation;
+
+  /// No description provided for @cryptoMigrationReviewCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{rows} saved rows and {files} files.'**
+  String cryptoMigrationReviewCounts(int rows, int files);
+
+  /// No description provided for @cryptoMigrationConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm this data'**
+  String get cryptoMigrationConsent;
+
+  /// No description provided for @cryptoRevokeDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke device'**
+  String get cryptoRevokeDevice;
+
+  /// No description provided for @cryptoRevokeDeviceExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This device will lose permission to receive future keys. Connected spaces need new protection keys before sending more changes. Existing local data is kept.'**
+  String get cryptoRevokeDeviceExplanation;
+
+  /// No description provided for @cryptoRecoveryRevokeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover this account?'**
+  String get cryptoRecoveryRevokeTitle;
+
+  /// No description provided for @cryptoRecoveryRevokeExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery with this file revokes all previously approved devices. Connected spaces need new protection keys before sending further changes. To add a device while keeping the others, use approval from an existing device instead. Existing data is kept.'**
+  String get cryptoRecoveryRevokeExplanation;
+
+  /// No description provided for @cryptoRecoveryRevokeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover account and revoke previous devices'**
+  String get cryptoRecoveryRevokeConfirm;
+
+  /// No description provided for @cryptoScopeRecoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore connected space'**
+  String get cryptoScopeRecoveryTitle;
+
+  /// No description provided for @cryptoScopeRecoveryExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Your file can unlock the saved data. The server may provide an older snapshot, and the file alone cannot prove that nothing is missing. Review the available data before accepting it as the starting point. Original evidence is kept, and new changes will use new protection keys.'**
+  String get cryptoScopeRecoveryExplanation;
+
+  /// No description provided for @cryptoScopeRecoveryPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This space cannot continue yet. Check the connection and account approval; another authorized owner or finance reader may need to finish their part. Existing data is kept.'**
+  String get cryptoScopeRecoveryPending;
+
+  /// No description provided for @cryptoScopeRecoveryComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The reviewed starting point and new protection keys are confirmed. Existing copied data cannot be withdrawn from a previous device.'**
+  String get cryptoScopeRecoveryComplete;
+
+  /// No description provided for @cryptoScopeRecoveryImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import account recovery file and review'**
+  String get cryptoScopeRecoveryImport;
+
+  /// No description provided for @cryptoScopeRecoveryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{domain}: {count} saved records'**
+  String cryptoScopeRecoveryCount(String domain, int count);
+
+  /// No description provided for @cryptoScopeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Other data'**
+  String get cryptoScopeContent;
+
+  /// No description provided for @cryptoScopeDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted record'**
+  String get cryptoScopeDeleted;
+
+  /// No description provided for @cryptoScopeNextPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Next saved records'**
+  String get cryptoScopeNextPreview;
+
+  /// No description provided for @cryptoScopeAcceptCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'I reviewed the available data and accept this snapshot as the starting point. It may not contain the latest changes.'**
+  String get cryptoScopeAcceptCandidate;
+
+  /// No description provided for @cryptoScopeConfirmRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept snapshot and renew protection'**
+  String get cryptoScopeConfirmRecovery;
+
+  /// No description provided for @cryptoReviewConnectedSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Review space protection'**
+  String get cryptoReviewConnectedSpace;
+
+  /// No description provided for @cryptoFinanceContributionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare financial protection'**
+  String get cryptoFinanceContributionTitle;
+
+  /// No description provided for @cryptoFinanceContributionExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'An authorized finance reader prepares the financial keys. Owners without finance access receive only the confirmation needed to finish; they do not receive your financial keys or records.'**
+  String get cryptoFinanceContributionExplanation;
+
+  /// No description provided for @cryptoFinanceContributionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation is waiting for an authorized finance reader or the owner. Check access and the connection, then retry.'**
+  String get cryptoFinanceContributionPending;
+
+  /// No description provided for @cryptoFinanceNoRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no financial preparation requests available to you.'**
+  String get cryptoFinanceNoRequests;
+
+  /// No description provided for @cryptoFinanceReviewRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Review financial preparation'**
+  String get cryptoFinanceReviewRequest;
+
+  /// No description provided for @cryptoFinanceWaitingOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Your signed preparation is saved. The owner can now continue. After they prepare the space, finish sharing its financial keys here.'**
+  String get cryptoFinanceWaitingOwner;
+
+  /// No description provided for @cryptoFinanceFinishContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish financial protection'**
+  String get cryptoFinanceFinishContribution;
+
+  /// No description provided for @cryptoFinanceAcceptContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'I reviewed the available financial data and approve preparing its protection. The starting snapshot may be older.'**
+  String get cryptoFinanceAcceptContribution;
+
+  /// No description provided for @cryptoFinanceApproveContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve financial preparation'**
+  String get cryptoFinanceApproveContribution;
+
+  /// No description provided for @cryptoReplaceRecoveryConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace recovery keys and revoke previous devices'**
+  String get cryptoReplaceRecoveryConfirm;
+
+  /// No description provided for @cryptoKeyContributionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve new space keys'**
+  String get cryptoKeyContributionTitle;
+
+  /// No description provided for @cryptoKeyContributionExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'When ownership or finance access changes, the authorized recipients prepare their own keys. A previous owner who leaves does not receive the new keys. Preparation is saved and can continue after reopening.'**
+  String get cryptoKeyContributionExplanation;
+
+  /// No description provided for @cryptoKeyContributionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no key approval requests available to you.'**
+  String get cryptoKeyContributionEmpty;
+
+  /// No description provided for @cryptoKeyContributionOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare my new key'**
+  String get cryptoKeyContributionOffer;
+
+  /// No description provided for @cryptoKeyContributionSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve the complete proposal'**
+  String get cryptoKeyContributionSign;
+
+  /// No description provided for @cryptoKeyContributionPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish sharing my keys'**
+  String get cryptoKeyContributionPublish;
+
+  /// No description provided for @cryptoKeyContributionAcceptOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept ownership and checked keys'**
+  String get cryptoKeyContributionAcceptOwner;
+
+  /// No description provided for @cryptoKeyContributionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation is waiting for another authorized member or the owner. Refresh to continue the same proposal.'**
+  String get cryptoKeyContributionPending;
+
+  /// No description provided for @cryptoScopeManageMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members and ownership transfer'**
+  String get cryptoScopeManageMembers;
+
+  /// No description provided for @cryptoScopeMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get cryptoScopeMember;
+
+  /// No description provided for @cryptoScopeOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get cryptoScopeOwner;
+
+  /// No description provided for @cryptoScopeViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get cryptoScopeViewer;
+
+  /// No description provided for @cryptoScopeRemoveMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access'**
+  String get cryptoScopeRemoveMember;
+
+  /// No description provided for @cryptoScopeTransferExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The new owner must prepare a new key and accept the transfer in their app. A finance reader approves financial keys separately. New connected changes wait until preparation finishes; local data remains available.'**
+  String get cryptoScopeTransferExplanation;
+
+  /// No description provided for @cryptoScopeResumePreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue saved preparation'**
+  String get cryptoScopeResumePreparation;
+
+  /// No description provided for @cryptoScopeCancelPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this proposal'**
+  String get cryptoScopeCancelPreparation;
+
+  /// No description provided for @cryptoRebindLocalDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Use approved keys already on this device'**
+  String get cryptoRebindLocalDevice;
+
+  /// No description provided for @cryptoScopeReviewLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Review data already on this device'**
+  String get cryptoScopeReviewLocal;
+
+  /// No description provided for @cryptoEmailVerificationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email address before entering connected account data. Local use remains available.'**
+  String get cryptoEmailVerificationRequired;
+
+  /// No description provided for @cryptoInvitationPendingKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted. The owner still needs to confirm your keys. The space opens after confirmation; you can keep working locally.'**
+  String get cryptoInvitationPendingKeys;
+
+  /// No description provided for @cryptoInvitationVerifyCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'Before joining, verify the person who invited you. Obtain their public card directly through a known channel, separately from the invitation link.'**
+  String get cryptoInvitationVerifyCreator;
+
+  /// No description provided for @cryptoUnavailableSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable space'**
+  String get cryptoUnavailableSpace;
+
+  /// No description provided for @cryptoUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep unavailable spaces'**
+  String get cryptoUnavailableTitle;
+
+  /// No description provided for @cryptoUnavailableExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These previously used spaces are currently unavailable. Their upgrade and protection are not confirmed. Local data and unsent changes remain available for viewing and export; this confirmation grants no access.'**
+  String get cryptoUnavailableExplanation;
+
+  /// No description provided for @cryptoUnavailableConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand; keep local data'**
+  String get cryptoUnavailableConfirm;
+
+  /// No description provided for @cryptoContinueLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue locally'**
+  String get cryptoContinueLocally;
+
+  /// No description provided for @cryptoInvitationGrantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm access'**
+  String get cryptoInvitationGrantTitle;
+
+  /// No description provided for @cryptoInvitationGrantExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The recipient accepted the invitation. After comparing identities, confirm access to this space’s existing data and future changes. Financial data requires separate financial permission.'**
+  String get cryptoInvitationGrantExplanation;
+
+  /// No description provided for @cryptoInvitationGrantConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm access and prepare keys'**
+  String get cryptoInvitationGrantConfirm;
+
+  /// No description provided for @accountRecoveryV2Pending.
+  ///
+  /// In en, this message translates to:
+  /// **'First save and verify this account’s recovery file. Then finish protection for connected spaces. Existing server copies remain until their removal is separately confirmed.'**
+  String get accountRecoveryV2Pending;
+
+  /// No description provided for @accountRecoveryV2Prepared.
+  ///
+  /// In en, this message translates to:
+  /// **'Account recovery and this device’s keys are ready. The next step checks each space’s protection; unfinished spaces retain local data and queued changes.'**
+  String get accountRecoveryV2Prepared;
+
+  /// No description provided for @financeAuditUnknownTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Change time unknown'**
+  String get financeAuditUnknownTime;
+
+  /// No description provided for @financeAuditAuthorTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time reported by the author'**
+  String get financeAuditAuthorTime;
+
+  /// No description provided for @cryptoRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify restored backup'**
+  String get cryptoRestoreTitle;
+
+  /// No description provided for @cryptoRestoreExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'We check all retained backups and confirmed identities. Imported changes are not sent automatically. Local data and drafts remain preserved.'**
+  String get cryptoRestoreExplanation;
+
+  /// No description provided for @cryptoRestoreCompareIdentities.
+  ///
+  /// In en, this message translates to:
+  /// **'First compare member identities through a trusted channel.'**
+  String get cryptoRestoreCompareIdentities;
+
+  /// No description provided for @cryptoRestoreHistoryPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Some history needs review by the space owner. The server snapshot may be older; original evidence remains preserved.'**
+  String get cryptoRestoreHistoryPending;
+
+  /// No description provided for @cryptoRestoreVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify retained backups'**
+  String get cryptoRestoreVerify;
+
+  /// No description provided for @cryptoRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm verified evidence'**
+  String get cryptoRestoreConfirm;
+
+  /// No description provided for @cryptoRestoreKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Import recovery file for viewing'**
+  String get cryptoRestoreKeys;
+
+  /// No description provided for @cryptoRestoreComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence is verified. Imported requests remain separate until you explicitly resume your work.'**
+  String get cryptoRestoreComplete;
+
+  /// No description provided for @cryptoRestoreCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups: {backups} · spaces: {scopes} · records: {records}'**
+  String cryptoRestoreCounts(int backups, int scopes, int records);
+
+  /// No description provided for @cryptoRestoreDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovered local file'**
+  String get cryptoRestoreDraft;
+
+  /// No description provided for @preservedFilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserved device files'**
+  String get preservedFilesTitle;
+
+  /// No description provided for @preservedFilesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These are old imported or exported copies from this installation. They may belong to different accounts and are not automatically included in the selected account’s backup. Select one file and save an encrypted copy, or explicitly save its original bytes without additional encryption. Unidentified files and copies larger than 64 MiB remain on the device; this view does not confirm their removal or contents. Opening a copy installs or sends nothing.'**
+  String get preservedFilesExplanation;
+
+  /// No description provided for @preservedFilesReview.
+  ///
+  /// In en, this message translates to:
+  /// **'I selected this file and authorize exporting its contents, including data from another account on this device.'**
+  String get preservedFilesReview;
+
+  /// No description provided for @preservedFilesSaveOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Save original file'**
+  String get preservedFilesSaveOriginal;
+
+  /// No description provided for @preservedFilesOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open an encrypted preserved file'**
+  String get preservedFilesOpen;
+
+  /// No description provided for @preservedFilesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No preserved files in this page.'**
+  String get preservedFilesEmpty;
+
+  /// No description provided for @preservedFilesNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next files'**
+  String get preservedFilesNext;
+
+  /// No description provided for @recoveryHistoricalExportsRetained.
+  ///
+  /// In en, this message translates to:
+  /// **'Some old files exceed the safe transfer limit or could not be safely identified. They remain on the device; protection of those copies is not confirmed. Preserved files are available in Settings.'**
+  String get recoveryHistoricalExportsRetained;
+
+  /// No description provided for @backupPendingFilesNeedAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect and verify access to the spaces containing pending files, then retry the backup. Without verified access, duplicate copies cannot be safely combined within the size limit. Original data and pending work remain on this device.'**
+  String get backupPendingFilesNeedAccess;
+
+  /// No description provided for @deletionCryptoRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared encrypted records and their exact signed history remain available to other members. Encrypted historical backups and key wrappers inside old signatures may remain. Your login, devices and private recovery access are removed. Existing copies cannot be erased. Shared spaces stay read-only until a remaining authorized manager changes the keys. Frozen migration sources may also remain until their separately reviewed cleanup.'**
+  String get deletionCryptoRetention;
+
+  /// No description provided for @deletionCryptoPreserve.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep shared history; remove my access'**
+  String get deletionCryptoPreserve;
+
+  /// No description provided for @deletionCryptoDeletePrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this wholly private encrypted space'**
+  String get deletionCryptoDeletePrivate;
+
+  /// No description provided for @deletionCryptoChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what happens to this encrypted space'**
+  String get deletionCryptoChoose;
+
+  /// No description provided for @deletionCryptoScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted space'**
+  String get deletionCryptoScope;
+
+  /// No description provided for @deletionWithoutKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account without recovery keys'**
+  String get deletionWithoutKeys;
+
+  /// No description provided for @deletionWithoutKeysExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'You can review account deletion using your password and, if enabled, a verification code. A recovery file is not required.'**
+  String get deletionWithoutKeysExplanation;
+
+  /// No description provided for @deletionCryptoAcknowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand that my login and private access will be removed permanently, while other members retain shared encrypted history and existing copies.'**
+  String get deletionCryptoAcknowledge;
+
+  /// No description provided for @scopeDeleteCryptoRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Active data and access are removed. Signed history, earlier backups and frozen migration sources may remain. This does not erase keys or copies already held by other members.'**
+  String get scopeDeleteCryptoRetention;
+
+  /// No description provided for @accountRecoveryScopesPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Account access is restored. Some spaces or saved recovery work still need verification. Recovered data is kept. Select your recovery file again to continue; device approval will not be repeated.'**
+  String get accountRecoveryScopesPending;
+
+  /// No description provided for @accountRecoveryScopesRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue restoring spaces'**
+  String get accountRecoveryScopesRetry;
+
+  /// No description provided for @accountRecoveryUseRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Open recovered spaces'**
+  String get accountRecoveryUseRecovered;
 }
 
 class _AppLocalizationsDelegate

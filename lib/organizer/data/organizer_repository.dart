@@ -24,6 +24,7 @@ class OrganizerRepository {
     this.storage, {
     DateTime Function()? clock,
     String Function()? idGenerator,
+    this.beforeConnectedEntry,
   }) : _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? newLocalId {
     if (storage is ObservableOrganizerStorage) {
@@ -46,6 +47,7 @@ class OrganizerRepository {
     }
   });
 
+  final Future<void> Function()? beforeConnectedEntry;
   final OrganizerStorage storage;
   final DateTime Function() _clock;
   final String Function() _idGenerator;
@@ -93,17 +95,20 @@ class OrganizerRepository {
     );
   }
 
-  Future<void> _change(OrganizerSnapshot Function(OrganizerSnapshot) change) =>
-      _enqueue(() async {
-        _snapshot ??= await storage.read();
-        final previous = snapshot;
-        final candidate = _withReminders(
-          change(previous),
-          _clock().toUtc(),
-        ).copyWith(revision: previous.revision + 1);
-        guardArchivedProjectWrites(previous, candidate);
-        await _persist(candidate);
-      });
+  Future<void> _change(
+    OrganizerSnapshot Function(OrganizerSnapshot) change, {
+    bool connectedEntry = true,
+  }) => _enqueue(() async {
+    if (connectedEntry) await beforeConnectedEntry?.call();
+    _snapshot ??= await storage.read();
+    final previous = snapshot;
+    final candidate = _withReminders(
+      change(previous),
+      _clock().toUtc(),
+    ).copyWith(revision: previous.revision + 1);
+    guardArchivedProjectWrites(previous, candidate);
+    await _persist(candidate);
+  });
 
   Future<void> _persist(
     OrganizerSnapshot candidate, {
@@ -240,6 +245,7 @@ class OrganizerRepository {
 
   Future<void> deleteProject(String id, {String? previewHash}) =>
       _enqueue(() async {
+        await beforeConnectedEntry?.call();
         _snapshot ??= await storage.read();
         final previous = snapshot;
         _find(previous.projects, id, (v) => v.id);
@@ -641,7 +647,7 @@ class OrganizerRepository {
             : v,
       ),
     );
-  });
+  }, connectedEntry: false);
 
   Future<void> refreshReminders() => _enqueue(() async {
     _snapshot ??= await storage.read();

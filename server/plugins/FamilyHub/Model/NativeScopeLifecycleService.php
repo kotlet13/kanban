@@ -152,6 +152,8 @@ class NativeScopeLifecycleService extends NativeDatabase
     /** Retryable private cleanup after SQL commit. No payload/path is returned to callers. */
     public function finishFiles()
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
         (new NativeAttachmentService($this->container))->finishFiles();
         foreach ($this->many('SELECT * FROM familyhub_scope_deletion_files ORDER BY scope_id,path_hash LIMIT 500') as $file) {
             if (!preg_match('/^familyhub\/ideas\/[a-f0-9]{64}\/[a-f0-9]{64}$/D',$file['path'])) { continue; }

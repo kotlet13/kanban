@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'package:kanban/organizer/data/local_spaces_repository.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -44,23 +45,27 @@ class Fixture {
   final CollaborationRepository shared;
 }
 
-Future<Fixture> fixture(WidgetTester tester, {FakeServer? server, CollaborationTransport? transport}) async =>
-    (await tester.runAsync(() async {
-      driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-      final db = CollaborationDatabase(NativeDatabase.memory());
-      final organizer = OrganizerRepository(SqliteOrganizerStorage(db));
-      await organizer.initialize();
-      await LocalSpacesRepository(db).read();
-      final shared = CollaborationRepository(
-        db,
-        transport ?? FakeTransport(server ?? FakeServer()),
-        MemorySessionStore(),
-      );
-      await shared.initialize();
-      final ideas = IdeaRepository(IdeaStorage(db));
-      await ideas.initialize();
-      return Fixture(db, ideas, organizer, shared);
-    }))!;
+Future<Fixture> fixture(
+  WidgetTester tester, {
+  FakeServer? server,
+  CollaborationTransport? transport,
+}) async => (await tester.runAsync(() async {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  final db = CollaborationDatabase(NativeDatabase.memory());
+  final organizer = OrganizerRepository(SqliteOrganizerStorage(db));
+  await organizer.initialize();
+  await LocalSpacesRepository(db).read();
+  final shared = CollaborationRepository(
+    db,
+    transport ?? FakeTransport(server ?? FakeServer()),
+    MemorySessionStore(),
+    contentRouteGuard: const SyntheticContentRouteGuard(),
+  );
+  await shared.initialize();
+  final ideas = IdeaRepository(IdeaStorage(db));
+  await ideas.initialize();
+  return Fixture(db, ideas, organizer, shared);
+}))!;
 Future<void> pumpIdeas(
   WidgetTester tester,
   Fixture f, {

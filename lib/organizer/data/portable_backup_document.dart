@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'e2ee/crypto_backup_evidence.dart';
+import 'e2ee/crypto_document_backup_drafts.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 import '../domain/garden_models.dart';
@@ -149,6 +151,10 @@ void validateBackupDocument(Map<String, dynamic> doc) {
           ],
           if ((doc['version'] as int) >= 6) 'localTaskReminderPreferences',
           if ((doc['version'] as int) >= 7) 'tableDrafts',
+          if ((doc['version'] as int) >= 9) ...[
+            'cryptoEvidence',
+            'cryptoPrivateDrafts',
+          ],
           if ((doc['version'] as int) >= 5) ...[
             'ideas',
             'ideaSpaceLinks',
@@ -164,6 +170,8 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 13
                 : doc['version'] == 3
                 ? 15
+                : (doc['version'] as int) >= 9
+                ? 26 + (doc.containsKey('cryptoPrivateDrafts') ? 1 : 0)
                 : (doc['version'] as int) >= 7
                 ? 25
                 : doc['version'] == 6
@@ -174,9 +182,11 @@ void validateBackupDocument(Map<String, dynamic> doc) {
                 ? 18
                 : 17) ||
         doc['format'] != 'vsakdan-portable-data' ||
-        !const [1, 2, 3, 4, 5, 6, 7, 8].contains(doc['version']) ||
+        !const [1, 2, 3, 4, 5, 6, 7, 8, 9].contains(doc['version']) ||
         ((doc['version'] as int) >= 4
-            ? !((doc['version'] as int) >= 6
+            ? !((doc['version'] as int) >= 9
+                      ? const [11]
+                      : (doc['version'] as int) >= 6
                       ? const [10]
                       : doc['version'] == 5
                       ? const [9]
@@ -259,6 +269,17 @@ void validateBackupDocument(Map<String, dynamic> doc) {
             !isSharedUuid(source['serverId'] as String) ||
             !isSharedUuid(source['accountId'] as String))) {
       throw const FormatException();
+    }
+    if ((doc['version'] as int) >= 9) {
+      if (doc.containsKey('cryptoPrivateDrafts'))
+        validateCryptoDocumentDrafts(
+          doc['cryptoPrivateDrafts'],
+          source?['partition'] as String?,
+        );
+      validateCryptoEvidence(
+        doc['cryptoEvidence'],
+        source?['partition'] as String?,
+      );
     }
     final tables = backupMap(doc['tables']);
     if (tables.keys.toSet().difference(backupTables.keys.toSet()).isNotEmpty ||

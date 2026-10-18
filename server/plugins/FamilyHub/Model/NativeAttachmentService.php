@@ -238,6 +238,8 @@ class NativeAttachmentService extends NativeDocumentService
     }
     public function finishFiles()
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
         if (!$this->available()) { return 0; }$removed=0;
         foreach ($this->many('SELECT storage_key FROM familyhub_document_cleanup ORDER BY created_at LIMIT 100') as $r) {
             if (!$this->finishStorageKey($r['storage_key'])) { continue; }
@@ -247,6 +249,8 @@ class NativeAttachmentService extends NativeDocumentService
     /** Worker retry + expired staging + crash-orphan files; never age out a live complete attachment. */
     public function cleanup()
     {
+        $cryptoLease=\Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)?NativeCryptoMaintenanceLease::acquire():null;
+        if(NativeCryptoFence::cleanupPaused($this->pdo)){return 0;}
         if (!$this->available()) { return 0; }
         $this->transaction(function(){foreach ($this->many('SELECT * FROM familyhub_attachments WHERE deleted=0 AND complete=0 AND updated_at<? ORDER BY updated_at LIMIT 100',[time()-7*86400]) as $r) { $this->lockScopeLifecycle($r['scope_id']);$fresh=$this->one('SELECT * FROM familyhub_attachments WHERE scope_id=? AND id=?'.$this->lockSuffix(),[$r['scope_id'],$r['id']]);if ($fresh && !(int)$fresh['deleted'] && !(int)$fresh['complete'] && (int)$fresh['updated_at']<time()-7*86400) { $this->removeRow($fresh); } }});
         $removed=$this->finishFiles();try { $root=$this->root(); } catch (NativeError $e) { return $removed; }

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/notification_models.dart';
 import 'flutter_notification_scheduler.dart';
 import 'local_notification_adapter.dart';
 import 'local_notification_scheduler.dart';
 import 'remote_push/remote_push_providers.dart';
+import '../state/local_vault_preferences_provider.dart';
 
 final localNotificationSchedulerProvider = Provider<LocalNotificationScheduler>(
   (ref) => FlutterNotificationScheduler(),
@@ -15,7 +15,7 @@ final localNotificationAdapterProvider =
     FutureProvider<LocalNotificationAdapter>((ref) async {
       final adapter = LocalNotificationAdapter(
         scheduler: ref.read(localNotificationSchedulerProvider),
-        preferences: await SharedPreferences.getInstance(),
+        preferences: await ref.read(localVaultPreferencesProvider.future),
       );
       var alive = true;
       ref.onDispose(() {
@@ -70,7 +70,7 @@ class LocalReminderSettingsController
   static const _sound = 'organizer_local_reminders_sound_v1';
   @override
   Future<LocalReminderSettings> build() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await ref.read(localVaultPreferencesProvider.future);
     return LocalReminderSettings(
       enabled: prefs.getBool(_enabled) ?? false,
       sound: prefs.getBool(_sound) ?? true,
@@ -78,7 +78,7 @@ class LocalReminderSettingsController
   }
 
   Future<void> save({required bool enabled, required bool sound}) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await ref.read(localVaultPreferencesProvider.future);
     if (!await prefs.setBool(_enabled, enabled) ||
         !await prefs.setBool(_sound, sound)) {
       throw StateError('Reminder preferences could not be saved');

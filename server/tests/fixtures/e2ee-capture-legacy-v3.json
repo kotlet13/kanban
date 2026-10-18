@@ -1,0 +1,93 @@
+{
+  "keyBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "context": {
+    "version": 3,
+    "serverId": "00000001-0001-4001-8001-000000000001",
+    "captureId": "00000002-0002-4002-8002-000000000002",
+    "migrationId": "00000003-0003-4003-8003-000000000003",
+    "accountId": "00000004-0004-4004-8004-000000000004",
+    "scopeId": null,
+    "domain": "private",
+    "sourceTable": "familyhub_operations",
+    "sourceId": "row:0"
+  },
+  "witness": {
+    "version": 3,
+    "context": {
+      "version": 3,
+      "serverId": "00000001-0001-4001-8001-000000000001",
+      "captureId": "00000002-0002-4002-8002-000000000002",
+      "migrationId": "00000003-0003-4003-8003-000000000003",
+      "accountId": "00000004-0004-4004-8004-000000000004",
+      "scopeId": null,
+      "domain": "private",
+      "sourceTable": "familyhub_operations",
+      "sourceId": "row:0"
+    },
+    "typedRow": {
+      "scope_id": {
+        "type": "text",
+        "valueBase64": "MDAwMDAwMDUtMDAwNS00MDA1LTgwMDUtMDAwMDAwMDAwMDA1"
+      },
+      "user_id": {
+        "type": "integer",
+        "valueBase64": "Nw=="
+      },
+      "id": {
+        "type": "text",
+        "valueBase64": "MDAwMDAwMDYtMDAwNi00MDA2LTgwMDYtMDAwMDAwMDAwMDA2"
+      },
+      "request_hash": {
+        "type": "text",
+        "valueBase64": "Nzg4OWZiZDA5ZTk3NTY4NDkxNGRmNGM2ZWZkYmI1YzgyMTlhNzgzMmJmNjI4OWFjZDU0NTk1MzJiNzhiOTMzZA=="
+      },
+      "response": {
+        "type": "text",
+        "valueBase64": "eyJyZWNvcmQiOnsidGl0bGUiOiJQUklWQVRFX1JFQ0VJUFRfMV9FVVIiLCJyZXZpc2lvbiI6NTB9LCJmaW5hbmNlIjp7InJlY29yZCI6eyJhbW91bnQiOjF9fX0="
+      },
+      "status": {
+        "type": "integer",
+        "valueBase64": "MjAw"
+      }
+    },
+    "saltBase64": "zNXDt8mB6icz0MzXpEDj3PzNam8arzSUEpIbHRZ8IqA="
+  },
+  "descriptor": {
+    "scopeId": "00000005-0005-4005-8005-000000000005",
+    "receiptKind": "records",
+    "legacyId": "00000006-0006-4006-8006-000000000006",
+    "legacyDeviceId": null,
+    "bindingId": "89e1c530-b443-4d1f-aec2-e44b6a098c10",
+    "sourceCommitment": "ff11ec3a6bd6f0a9a669ec8a647c60474b1caa98ff71aa4acb91879abf94d48e"
+  },
+  "header": {
+    "captureVersion": 3,
+    "serverId": "00000001-0001-4001-8001-000000000001",
+    "accountId": "00000004-0004-4004-8004-000000000004",
+    "captureId": "00000002-0002-4002-8002-000000000002",
+    "migrationId": "00000003-0003-4003-8003-000000000003",
+    "domain": "content",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "archiveManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "receiptCount": 1,
+    "receiptSelectionHash": "3cc04de9a08830e574f751312d4931703e655f585f8badd23fb5ff0cebae23bf"
+  },
+  "root": "ee94d96b4cb93409d8b18ba24452205e32647ea3dbe71ba4080b565d156db5ba",
+  "emptyRoot": "3833bfe09e002de984dcd883a1199e5aa6042eff7d4e63fbeec2042c41082af9",
+  "responseBase64": "eyJyZWNvcmQiOnsidGl0bGUiOiJQUklWQVRFX1JFQ0VJUFRfMV9FVVIiLCJyZXZpc2lvbiI6NTB9LCJmaW5hbmNlIjp7InJlY29yZCI6eyJhbW91bnQiOjF9fX0=",
+  "requestHash": "7889fbd09e975684914df4c6efdbb5c8219a7832bf6289acd5459532b78b933d",
+  "scopeToken": "ca2cba7f69291d595aeefc6cb8894eaaa86aef4315cd1c025273641d6e389443",
+  "selectionContext": {
+    "captureVersion": 3,
+    "serverId": "00000001-0001-4001-8001-000000000001",
+    "accountId": "00000004-0004-4004-8004-000000000004",
+    "captureId": "00000002-0002-4002-8002-000000000002",
+    "migrationId": "00000003-0003-4003-8003-000000000003",
+    "receiptSelections": [
+      {
+        "scopeId": "00000005-0005-4005-8005-000000000005",
+        "domain": "content"
+      }
+    ]
+  }
+}

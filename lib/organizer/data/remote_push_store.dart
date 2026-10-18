@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'local_vault_secure_storage.dart';
 import '../domain/collaboration_models.dart';
 import 'device_session_store.dart';
 import '../domain/shared_payload_validation.dart';
@@ -151,7 +151,7 @@ abstract interface class RemotePushStore {
 
 class SecureRemotePushStore implements RemotePushStore {
   const SecureRemotePushStore();
-  static const _storage = FlutterSecureStorage();
+  static const _storage = localVaultSecureStorage;
   static const _key = 'organizer_remote_push_intent_v1';
   static const _cleanupKey = 'organizer_remote_push_cleanup_v1';
 

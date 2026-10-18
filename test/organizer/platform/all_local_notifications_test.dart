@@ -1,3 +1,4 @@
+import '../support/local_vault_test_overrides.dart';
 import 'package:kanban/organizer/state/local_notification_preferences_provider.dart';
 import 'package:kanban/organizer/state/inbox_projection_provider.dart';
 import 'package:kanban/organizer/state/reminder_snooze_provider.dart';
@@ -110,6 +111,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             localDatabaseProvider.overrideWith((ref) async => db),
             localSpacesProvider.overrideWith(() => Catalog(snapshots)),
             organizerProvider.overrideWith(
@@ -181,6 +183,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             localDatabaseProvider.overrideWith((ref) async => db),
             localSpacesProvider.overrideWith(() => Catalog({'house-a': snap})),
             organizerProvider.overrideWith(() => Selected(snap)),
@@ -283,6 +286,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             localDatabaseProvider.overrideWith((ref) async => database),
             localSpacesProvider.overrideWith(() => catalog),
             organizerProvider.overrideWith(() => selected),
@@ -359,6 +363,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            localVaultTestPreferencesOverride(),
             localDatabaseProvider.overrideWith((ref) async => database),
             organizerStorageProvider.overrideWithValue(
               () async => SqliteOrganizerStorage(database),

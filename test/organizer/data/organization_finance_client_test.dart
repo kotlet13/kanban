@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -352,6 +353,7 @@ void main() {
       transport,
       store,
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     addTearDown(() async {
@@ -683,6 +685,7 @@ void main() {
         transport,
         MemorySessionStore(),
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       addTearDown(() async {
@@ -775,6 +778,7 @@ void main() {
         f.transport,
         f.store,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       addTearDown(reopened.close);
       f.transport.offline = true;
@@ -842,7 +846,7 @@ void main() {
       const password = 'synthetic encrypted backup';
       final bytes = await backup.exportEncryptedBackup(password);
       final doc = await backup.crypto.decrypt(bytes, password);
-      expect(doc['version'], 8);
+      expect(doc['version'], 9);
       expect(jsonEncode(doc), isNot(contains('finance_account_choices:')));
       final queue = await f.db.rows('SELECT request FROM finance_outbox');
       f.transport.supported = false;

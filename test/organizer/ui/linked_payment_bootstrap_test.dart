@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -173,6 +174,7 @@ class Fixture {
       transport,
       MemorySessionStore(),
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await shared.initialize();
     await shared.login(

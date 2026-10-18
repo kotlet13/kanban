@@ -32,6 +32,10 @@ class NativeAccountMailQueue extends NativeDatabase
             $invitationCounts=(new NativeInvitationMailQueue($this->container))->run($limit-$counts['examined'],$transport,$deadline);
             foreach ($counts as $key=>$count) { $counts[$key]+=$invitationCounts[$key]; }
         }
+        if ($counts['examined'] < $limit && microtime(true)+50 <= $deadline && \Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)) {
+            $cryptoCounts=(new NativeCryptoInvitationMailV2($this->container))->run($limit-$counts['examined'],$transport,$deadline);
+            foreach ($counts as $key=>$count) { $counts[$key]+=$cryptoCounts[$key]; }
+        }
         return $counts;
         } finally { $this->pdo->exec($this->sqlite ? 'PRAGMA busy_timeout='.$previousTimeout : 'SET SESSION innodb_lock_wait_timeout='.$previousTimeout); }
     }

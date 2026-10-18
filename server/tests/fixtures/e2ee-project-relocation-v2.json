@@ -1,0 +1,535 @@
+{
+  "descriptors": [
+    {
+      "id": "00000000-0000-4000-a000-000000000001",
+      "wireId": "00000000-0000-8000-a000-000000000001",
+      "type": "project",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000001",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000002",
+      "wireId": "00000000-0000-8000-a000-000000000002",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000002",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000003",
+      "wireId": "00000000-0000-8000-a000-000000000003",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000003",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000004",
+      "wireId": "00000000-0000-8000-a000-000000000004",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000004",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000005",
+      "wireId": "00000000-0000-8000-a000-000000000005",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000005",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000006",
+      "wireId": "00000000-0000-8000-a000-000000000006",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000006",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000007",
+      "wireId": "00000000-0000-8000-a000-000000000007",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000007",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000008",
+      "wireId": "00000000-0000-8000-a000-000000000008",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000008",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000009",
+      "wireId": "00000000-0000-8000-a000-000000000009",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000009",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000a",
+      "wireId": "00000000-0000-8000-a000-00000000000a",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000a",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000b",
+      "wireId": "00000000-0000-8000-a000-00000000000b",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000b",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000c",
+      "wireId": "00000000-0000-8000-a000-00000000000c",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000c",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000d",
+      "wireId": "00000000-0000-8000-a000-00000000000d",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000d",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000e",
+      "wireId": "00000000-0000-8000-a000-00000000000e",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000e",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000000f",
+      "wireId": "00000000-0000-8000-a000-00000000000f",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000000f",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000010",
+      "wireId": "00000000-0000-8000-a000-000000000010",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000010",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000011",
+      "wireId": "00000000-0000-8000-a000-000000000011",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000011",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000012",
+      "wireId": "00000000-0000-8000-a000-000000000012",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000012",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000013",
+      "wireId": "00000000-0000-8000-a000-000000000013",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000013",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000014",
+      "wireId": "00000000-0000-8000-a000-000000000014",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000014",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000015",
+      "wireId": "00000000-0000-8000-a000-000000000015",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000015",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000016",
+      "wireId": "00000000-0000-8000-a000-000000000016",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000016",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000017",
+      "wireId": "00000000-0000-8000-a000-000000000017",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000017",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000018",
+      "wireId": "00000000-0000-8000-a000-000000000018",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000018",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000019",
+      "wireId": "00000000-0000-8000-a000-000000000019",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000019",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001a",
+      "wireId": "00000000-0000-8000-a000-00000000001a",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001a",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001b",
+      "wireId": "00000000-0000-8000-a000-00000000001b",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001b",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001c",
+      "wireId": "00000000-0000-8000-a000-00000000001c",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001c",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001d",
+      "wireId": "00000000-0000-8000-a000-00000000001d",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001d",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001e",
+      "wireId": "00000000-0000-8000-a000-00000000001e",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001e",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000001f",
+      "wireId": "00000000-0000-8000-a000-00000000001f",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000001f",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000020",
+      "wireId": "00000000-0000-8000-a000-000000000020",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000020",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000021",
+      "wireId": "00000000-0000-8000-a000-000000000021",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000021",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000022",
+      "wireId": "00000000-0000-8000-a000-000000000022",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000022",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000023",
+      "wireId": "00000000-0000-8000-a000-000000000023",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000023",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000024",
+      "wireId": "00000000-0000-8000-a000-000000000024",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000024",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000025",
+      "wireId": "00000000-0000-8000-a000-000000000025",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000025",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000026",
+      "wireId": "00000000-0000-8000-a000-000000000026",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000026",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000027",
+      "wireId": "00000000-0000-8000-a000-000000000027",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000027",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000028",
+      "wireId": "00000000-0000-8000-a000-000000000028",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000028",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000029",
+      "wireId": "00000000-0000-8000-a000-000000000029",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000029",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002a",
+      "wireId": "00000000-0000-8000-a000-00000000002a",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002a",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002b",
+      "wireId": "00000000-0000-8000-a000-00000000002b",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002b",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002c",
+      "wireId": "00000000-0000-8000-a000-00000000002c",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002c",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002d",
+      "wireId": "00000000-0000-8000-a000-00000000002d",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002d",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002e",
+      "wireId": "00000000-0000-8000-a000-00000000002e",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002e",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000000002f",
+      "wireId": "00000000-0000-8000-a000-00000000002f",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "000000000000000000000000000000000000000000000000000000000000002f",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000030",
+      "wireId": "00000000-0000-8000-a000-000000000030",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000030",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000031",
+      "wireId": "00000000-0000-8000-a000-000000000031",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000031",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000032",
+      "wireId": "00000000-0000-8000-a000-000000000032",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000032",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000033",
+      "wireId": "00000000-0000-8000-a000-000000000033",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000033",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000034",
+      "wireId": "00000000-0000-8000-a000-000000000034",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000034",
+      "deleted": false
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000035",
+      "wireId": "00000000-0000-8000-a000-000000000035",
+      "type": "task",
+      "domain": "content",
+      "revision": 3,
+      "logicalRevision": 9,
+      "recordProofHash": "0000000000000000000000000000000000000000000000000000000000000035",
+      "deleted": false
+    }
+  ],
+  "root": "e4d1a37d21f774ec304cd16d10cbad0ca34a88a55793a940693c20882629fc6a"
+}

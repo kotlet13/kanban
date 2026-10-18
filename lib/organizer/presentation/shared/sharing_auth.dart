@@ -9,6 +9,7 @@ import 'sharing_errors.dart';
 import 'sharing_invitation_details.dart';
 import '../onboarding/account_recovery_actions.dart';
 import '../../platform/invitation_links/invitation_link.dart';
+import '../recovery/account_crypto_wizard.dart';
 
 /// Contextual authentication returns directly to the action that opened it.
 Future<bool> showSharingSignIn(
@@ -200,6 +201,8 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
         _password.clear();
         _confirm.clear();
         _otp.clear();
+        await showAccountCryptoSetupIfAvailable(context, ref);
+        if (!mounted) return;
         if (registering) {
           final session = ref.read(collaborationProvider).valueOrNull?.session;
           if (session != null) {

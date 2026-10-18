@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -78,6 +79,7 @@ void main() {
       ),
       transport,
       store,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     container = ProviderContainer(

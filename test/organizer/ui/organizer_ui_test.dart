@@ -1,3 +1,4 @@
+import '../support/local_vault_test_overrides.dart';
 import 'package:drift/native.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/state/local_database_provider.dart';
@@ -7,6 +8,8 @@ import 'package:kanban/organizer/state/linked_payments_provider.dart';
 import 'package:kanban/organizer/state/notification_local_spaces_provider.dart';
 import 'package:kanban/organizer/state/portable_backup_provider.dart';
 import 'backup_ui_fixture.dart';
+import 'sharing_ui_fixture.dart'
+    show SharingUiController, sharingUiInfrastructureOverrides;
 import 'package:kanban/organizer/platform/backup_preferences_replay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +70,13 @@ Future<void> pumpOrganizer(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (collaborationController is SharingUiController)
+          ...await sharingUiInfrastructureOverrides(
+            tester,
+            collaborationController,
+            emptyLocalCatalog: localSpacesController == null,
+          ),
+        localVaultTestPreferencesOverride(),
         if (ideaController != null) ...[
           ideaProvider.overrideWith(() => ideaController),
           ideaDraftsProvider.overrideWith((ref) async => <IdeaBoard>[]),
@@ -79,17 +89,19 @@ Future<void> pumpOrganizer(
         ),
         if (repaintBoundaryKey != null) ...[
           invitationLinkSourceProvider.overrideWithValue(null),
-          pendingInvitationStoreProvider.overrideWithValue(
-            MemoryPendingInvitationStore(),
-          ),
+          if (collaborationController is! SharingUiController)
+            pendingInvitationStoreProvider.overrideWithValue(
+              MemoryPendingInvitationStore(),
+            ),
         ],
         if (localSpacesController != null) ...[
           localSpacesProvider.overrideWith(() => localSpacesController),
-          localDatabaseProvider.overrideWith((ref) async {
-            final db = CollaborationDatabase(NativeDatabase.memory());
-            ref.onDispose(() => db.close());
-            return db;
-          }),
+          if (collaborationController is! SharingUiController)
+            localDatabaseProvider.overrideWith((ref) async {
+              final db = CollaborationDatabase(NativeDatabase.memory());
+              ref.onDispose(() => db.close());
+              return db;
+            }),
         ],
         if (collaborationController != null)
           collaborationProvider.overrideWith(() => collaborationController),

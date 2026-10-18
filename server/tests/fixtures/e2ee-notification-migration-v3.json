@@ -1,0 +1,51 @@
+{
+  "header": {
+    "version": 3,
+    "serverId": "11111111-1111-4111-8111-111111111111",
+    "migrationId": "22222222-2222-4222-8222-222222222222",
+    "captureId": "33333333-3333-4333-8333-333333333333",
+    "accountId": "44444444-4444-4444-8444-444444444444",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "archiveManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "coldParityProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "authorDirectoryHeadHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "transformCount": 2,
+    "sourceCounts": {
+      "reminder": 1,
+      "inbox": 1,
+      "preference": 0,
+      "inboxState": 0
+    },
+    "transformRoot": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "leaves": [
+    {
+      "bindingId": "55555555-5555-4555-8555-555555555555",
+      "kind": "reminder",
+      "transformHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "useProofHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "bindingId": "66666666-6666-4666-8666-666666666666",
+      "kind": "inbox",
+      "transformHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "useProofHash": null
+    }
+  ],
+  "leafDigests": [
+    "c1afdfed015231b9b7a36c54ca9b114b3092ab03677db7d289b9312fce2f500e",
+    "e4dc5d53a7ffb36078df6ce802ed6e8a46c043a502cd1da98cf667393efc6504"
+  ],
+  "transformRoot": "a0ddf860e50073d589055da37fc383dbbe8737e8bbd594ade9bcc3a4ecbbda08",
+  "scopeToken": "5c553e5cae787d975892d7d95902b57953687811ea11984f50bf2fb6580a923b",
+  "selectionContext": {
+    "version": 3,
+    "serverId": "11111111-1111-4111-8111-111111111111",
+    "migrationId": "22222222-2222-4222-8222-222222222222",
+    "captureId": "33333333-3333-4333-8333-333333333333",
+    "accountId": "44444444-4444-4444-8444-444444444444",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "selectionRoot": "2d887b184dbfca745c8f0511fca2408e909fa1baeb345b1a5c1902353774760b",
+  "emptySelectionRoot": "7d2f7892ab1f812a0613b8a0e4ece33b851b99ab335725b6fd63d54e702f3e27"
+}

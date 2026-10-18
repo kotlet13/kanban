@@ -1,5 +1,45 @@
 # Navodila za delo na projektu
 
+18. oktober — **E2EE nadgradnja v zaključnem preverjanju izvora** po
+poznejšem izrecnem naročilu za izvedbo in končni commit/push; trije
+GPT-6.1 Sol/high podagenti, glavni pregled/integracija.
+[Izvedba in točni dokazi](docs/E2EE_IMPLEMENTATION.md),
+[protokol](docs/E2EE_PROTOCOL.md) in [prvotni načrt P0–P8](docs/E2EE_UPGRADE_PLAN.md)
+ločijo potrjene meje od še nedokončanih poslovnih poti. Migracija, sveža
+FILE obnova in zadnji povezani poslovni izbris so potrjeni z vezanimi teki in
+nadaljevanji istega stanja. Generacija B, sveža FILE obnova in običajno
+branje priponke ter seznam in umik migriranih opomnikov use3 so potrjeni z
+vezanim nadaljevanjem istega stanja. Celotni Flutter66 je razkril regresije;
+prizadete ponovitve69/70 so jih zaključile, analiza ima0 error/0 warning ter510 info.
+To ni nov sveži celotni tek. Podrobni source/log hashi,
+zgodovinska PHP matrika in poznejša prizadeta preverjanja so navedeni v izvedbi.
+Ni trditve dokončane podpore ali neodvisnega pregleda P0; fizična/native in
+izdajna merila P8 ostajajo odprta. Prvi hladni prenosi imajo dokumentirano
+omejitev zmogljivosti. Lokalna uporaba ostane brez računa, datoteko uporabnik
+shrani/deli sam, nikoli prek Jivie SMTP. Stari berljivi strežniški viri/kopije
+niso odstranjeni: za uporabnikovi gostovanji ostaja30 dni po dokumentirani
+dejanski uspešni obnovi NOVE šifrirane kopije, ločeno za vsako gostovanje;
+neuspešna obnova rok zadrži. Čiščenje je poznejši namestitveni korak.
+Gostovanja ostajajo na zadnjem dokazanem0.15/schema19; ni nove app verzije,
+gradnje ali trgovinske oddaje. Android31/iOS31 te kode ne vsebujeta.
+Nepovezana varnostni in desktop dokumenta ostaneta nedotaknjena.
+Spodnji planski zapis je zgodovina pred poznejšim naročilom za izvedbo.
+
+17. oktober — **E2EE, šifrirana lokalna shramba in obnovitvena datoteka samo načrtovani**
+po izrecnem naročilu. [Načrt](docs/E2EE_UPGRADE_PLAN.md) in
+[zemljevid kode](docs/E2EE_CODE_MAP.md): dva GPT-6.1 Sol/high za izvor,
+GPT-6 Astra/high za ključne povezave in migracijo, glavni pregled/integracija.
+Nadaljevalni čarovnik »Dodajanje obnovitvenega ključa« ob nadgradnji in
+prvi povezavi; datoteka nastane lokalno in se shrani/deli po uporabnikovi
+izbiri, nikoli prek Jivie SMTP. Potrjena dodatna odločitev: lokalna uporaba
+ostane brez računa, e-pošta pogojuje vnose povezanega računa. Geslo danes
+prejme PHP, zato samo ne odklepa E2EE na novi napravi; potrebna datoteka ali
+potrjena naprava. Celotna lokalna namestitev, finance4, deljenje in nespremenljivi
+stari zahtevki ostanejo migracijske invariante; brez tihega praznjenja ali
+podvajanja. Protokol/knjižnice in dokazljiva obnova zahtevajo preverjanje pred
+izvedbo. **Ni naročila za implementacijo, commit/push, gostovanje, gradnjo ali
+trgovinsko oddajo.** Nepovezana varnostni in desktop dokumenta ostaneta nedotaknjena.
+
 17. oktober — **organizacijske finance in projektni pregledi izvedeni v izvoru**
 po naknadnem izrecnem naročilu »dej kr nared nadgradnjo še financ«; trije
 GPT-6.1 Sol/high podagenti, glavni pregled/integracija.

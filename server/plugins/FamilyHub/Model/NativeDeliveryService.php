@@ -21,11 +21,15 @@ class NativeDeliveryService extends NativeDatabase
         // Match account-mail: reserve the command deadline plus final socket wait.
         $deadline = microtime(true) + 60; $transport = $transport ?? new NativeSmtpTransport();
         $counts = ['examined' => 0, 'accepted' => 0, 'retry' => 0, 'cancelled' => 0];
-        $rows = $this->many('SELECT d.inbox_id,i.scope_id FROM familyhub_deliveries d JOIN familyhub_inbox i ON i.id=d.inbox_id WHERE (d.state=\'pending\' AND d.next_attempt<=?) OR (d.state=\'processing\' AND d.lease_until<=?) ORDER BY d.next_attempt,d.inbox_id LIMIT '.$limit, [time(), time()]);
+        $rows = $this->many('SELECT d.inbox_id,i.scope_id FROM familyhub_deliveries d JOIN familyhub_inbox i ON i.id=d.inbox_id WHERE ((d.state=\'pending\' AND d.next_attempt<=?) OR (d.state=\'processing\' AND d.lease_until<=?)) AND '.$this->notificationWorkerDiscoverySql().' ORDER BY d.next_attempt,d.inbox_id LIMIT '.$limit, [time(), time()]);
         foreach ($rows as $candidate) {
             if (microtime(true) + 50 > $deadline) { break; }
             $counts['examined']++;
             $lease = $this->transaction(function () use ($candidate) {
+                $inbox = $this->one('SELECT * FROM familyhub_inbox WHERE id=?', [$candidate['inbox_id']]);
+                // A fence may have committed after discovery. Never expire,
+                // re-lease or increment a frozen source job.
+                if ($inbox && !$this->lockNotificationDeliveryScope($inbox)) { return null; }
                 $row = $this->one('SELECT * FROM familyhub_deliveries WHERE inbox_id=?'.$this->lockSuffix(), [$candidate['inbox_id']]);
                 if (!$row || !in_array($row['state'], ['pending', 'processing'], true) || ($row['state'] === 'processing' && (int)$row['lease_until'] > time()) || ($row['state'] === 'pending' && (int)$row['next_attempt'] > time())) { return null; }
                 if ((int)$row['expires_at'] <= time() || (int)$row['attempts'] >= 5) {
@@ -51,14 +55,19 @@ class NativeDeliveryService extends NativeDatabase
             // Native mutations lock user -> scope. Core user updates also wait on
             // this row; the Native global mutex alone would not protect email.
             $user = $binding ? $this->one('SELECT id,email,is_active FROM users WHERE id=?'.$this->lockSuffix(), [$binding['user_id']]) : null;
-            if ($inbox) { $deliveryScope=$this->lockScopeLifecycle($inbox['scope_id']); }
+            if ($inbox) {
+                $deliveryScope = $this->lockNotificationDeliveryScope($inbox);
+                // Already leased before the fence: defer without changing any
+                // lease/attempt state captured by that fence.
+                if (!$deliveryScope) { return 'retry'; }
+            }
             $job = $this->one('SELECT * FROM familyhub_deliveries WHERE inbox_id=?'.$this->lockSuffix(), [$id]);
             if (!$job || $job['state'] !== 'processing' || $job['lease_token'] !== $lease) { return 'cancelled'; }
             // Refresh all references after lock waits, including account deletion.
             $inbox = $this->one('SELECT * FROM familyhub_inbox WHERE id=?', [$id]);
             $account = $user ? $this->one('SELECT account_id FROM familyhub_accounts WHERE user_id=?', [$user['id']]) : null;
             $settings = $inbox ? (new NativeNotificationPreferences($this->container))->settings($inbox['scope_id'], $inbox['recipient_account_id'], $inbox['category']) : NativeNotificationPreferences::resolve();
-            $visible = $inbox && $deliveryScope && ($deliveryScope['deleted_at']??null)===null && !(int)($deliveryScope['archived']??0) && (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'], $inbox['recipient_account_id'], $this->financialRecordType($inbox['target_type']));
+            $visible = $inbox && $deliveryScope && ($deliveryScope['deleted_at']??null)===null && !(int)($deliveryScope['archived']??0) && (str_starts_with($inbox['kind'],'crypto2.') ? (new NativeCryptoNotificationV2($this->container))->recipientVisible($inbox['scope_id'],$inbox['recipient_account_id'],(new NativeCryptoNotificationV2($this->container))->routingDomain($inbox['target_type'])) : (new NativeFinanceAccess($this->container))->visible($inbox['scope_id'], $inbox['recipient_account_id'], $this->financialRecordType($inbox['target_type'])));
             if (!$user || (int)$user['is_active'] !== 1 || !$account || !$inbox || NativeInboxRetention::expired($inbox) || $account['account_id'] !== $inbox['recipient_account_id'] || !$visible || !($settings['email'] ?? false) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL) || (int)$job['expires_at'] <= time() || (int)$job['attempts'] > 5) {
                 $this->finish($id, $lease, 'cancelled'); return 'cancelled';
             }

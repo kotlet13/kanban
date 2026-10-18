@@ -4,7 +4,13 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 /** Closed board language: no markup, executable paths, SVG or arbitrary URLs. */
 class NativeIdeaPolicy extends NativeDatabase
 {
-    public function validate($p,$scopeId,$current)
+    /** A reviewed detached report uses the same closed rendering grammar. */
+    public function disclosure($payload)
+    {
+        return $this->validate($payload, null, null, true);
+    }
+
+    public function validate($p,$scopeId,$current,$disclosed=false)
     {
         if (!is_array($p) || array_is_list($p) || (strlen(json_encode($p,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR))>786432 || strlen(json_encode($p,JSON_THROW_ON_ERROR))>1048576)) { throw new NativeError('validation_error'); }
         $this->fields($p,['version','id','title','projectId','width','height','elements','revision','createdAt','updatedAt'],($p['version']??1)===2?['archived']:[]);
@@ -13,9 +19,13 @@ class NativeIdeaPolicy extends NativeDatabase
         $this->number($p['width'],1,16384);$this->number($p['height'],1,16384);
         $policy=new NativeRecordPolicy($this->container);$policy->date($p['createdAt']);$policy->date($p['updatedAt']);
         if ($current && json_decode($current['payload'],true,32,JSON_THROW_ON_ERROR)['createdAt']!==$p['createdAt']) { throw new NativeError('created_at_immutable'); }
-        $scope=$this->one('SELECT * FROM familyhub_scopes WHERE id=?',[$scopeId]);$root=$scope['project_root_id']??(!empty($scope['organization_id'])?$scopeId:null);
-        if ($root!==null && $p['projectId']!==$root) { throw new NativeError('parent_missing'); }
-        if ($p['projectId']!==null) { $policy->parentRecord($scopeId,$p['projectId'],'project'); }
+        if (!$disclosed) {
+            $scope=$this->one('SELECT * FROM familyhub_scopes WHERE id=?',[$scopeId]);$root=$scope['project_root_id']??(!empty($scope['organization_id'])?$scopeId:null);
+            if ($root!==null && $p['projectId']!==$root) { throw new NativeError('parent_missing'); }
+            if ($p['projectId']!==null) { $policy->parentRecord($scopeId,$p['projectId'],'project'); }
+        } elseif ($p['projectId']!==null) {
+            $this->uuid($p['projectId']);
+        }
         if (!is_array($p['elements']) || !array_is_list($p['elements']) || count($p['elements'])>2000) { throw new NativeError('validation_error'); }
         $ids=[];$parents=[];$images=[];$points=0;
         foreach ($p['elements'] as $e) {

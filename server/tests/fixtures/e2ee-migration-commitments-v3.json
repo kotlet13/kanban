@@ -1,0 +1,112 @@
+{
+  "header": {
+    "version": 3,
+    "serverId": "00000001-1111-4111-8111-000000000001",
+    "migrationId": "00000002-1111-4111-8111-000000000002",
+    "componentId": "00000005-1111-4111-8111-000000000005",
+    "componentCommitment": "abe3513623964949038904b1ff15578621698105f0a2b4e1266211de9882ba0f",
+    "inventoryCommitment": "4fab8f86bb4c1c8a1dba29100cf0bbecd95ddf89b19a0b21e727dab5d4a35493",
+    "scopeId": "00000003-1111-4111-8111-000000000003",
+    "scopeToken": "f2c8724e41f7078723b01d8e4d0252c7619cab6ebd47a8f846406b8579880901",
+    "domain": "content",
+    "membershipHeadHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "managerAccountId": "00000004-1111-4111-8111-000000000004",
+    "managerDirectoryHeadHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "sourceRowCount": 1,
+    "materializedRecordProofCount": 2
+  },
+  "leaves": [
+    {
+      "version": 3,
+      "migrationId": "00000002-1111-4111-8111-000000000002",
+      "scopeId": "00000003-1111-4111-8111-000000000003",
+      "domain": "content",
+      "membershipHeadHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "captureId": "00000006-1111-4111-8111-000000000006",
+      "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bindingId": "0000000a-1111-4111-8111-00000000000a",
+      "sourceCommitment": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "legacyRevision": 50,
+      "sourceKind": "records",
+      "canonicalId": "00000008-1111-4111-8111-000000000008",
+      "wireId": "ffefd105-4eb8-8b4c-a651-b123cbafb2ab",
+      "type": "task",
+      "recordProofHash": "8888888888888888888888888888888888888888888888888888888888888888",
+      "materializationRole": "primary",
+      "contributorAccountId": "00000004-1111-4111-8111-000000000004",
+      "contributorDeviceId": "0000000b-1111-4111-8111-00000000000b",
+      "contributorDeviceSnapshotHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "archiveManifestHash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "coldParityHash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "witnessCipherManifestHash": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    {
+      "version": 3,
+      "migrationId": "00000002-1111-4111-8111-000000000002",
+      "scopeId": "00000003-1111-4111-8111-000000000003",
+      "domain": "content",
+      "membershipHeadHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "captureId": "00000006-1111-4111-8111-000000000006",
+      "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bindingId": "0000000a-1111-4111-8111-00000000000a",
+      "sourceCommitment": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "legacyRevision": 50,
+      "sourceKind": "task_derivation_intents",
+      "canonicalId": "00000009-1111-4111-8111-000000000009",
+      "wireId": "7cc2d5ec-b538-88f7-bdfd-4c49c8027943",
+      "type": "taskDerivationIntent",
+      "recordProofHash": "9999999999999999999999999999999999999999999999999999999999999999",
+      "materializationRole": "taskDerivationIntent",
+      "contributorAccountId": "00000004-1111-4111-8111-000000000004",
+      "contributorDeviceId": "0000000b-1111-4111-8111-00000000000b",
+      "contributorDeviceSnapshotHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "archiveManifestHash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "coldParityHash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "witnessCipherManifestHash": "4444444444444444444444444444444444444444444444444444444444444444"
+    }
+  ],
+  "leafHashes": [
+    "8219348a016019abe08d1941b9341970cb4eee7d6f52a2cc6b5931f966f20c08",
+    "e273fcc418ac860467229f49cfd84a5541a84b8cd8ead619261619e135c5ceae"
+  ],
+  "root": "316d88f3ccf1fbb9f59764e2d660f73109d91b5e32b057ba52c30c918cc30cad",
+  "emptyRoot": "af009d4dbad3244dc6ed7793c43ac8bc47b9b4ce1669b8dcb72b7e3791becb5a",
+  "inventoryHeader": {
+    "version": 3,
+    "serverId": "00000001-1111-4111-8111-000000000001",
+    "migrationId": "00000002-1111-4111-8111-000000000002",
+    "componentId": "00000005-1111-4111-8111-000000000005",
+    "portionCount": 2
+  },
+  "portions": [
+    {
+      "portionToken": "1111111111111111111111111111111111111111111111111111111111111111",
+      "captureId": "00000006-1111-4111-8111-000000000006",
+      "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "portionToken": "2222222222222222222222222222222222222222222222222222222222222222",
+      "captureId": "00000007-1111-4111-8111-000000000007",
+      "sourceInventoryRoot": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "inventoryCommitment": "4fab8f86bb4c1c8a1dba29100cf0bbecd95ddf89b19a0b21e727dab5d4a35493",
+  "headerHash": "b23faf3d0fa58eb2b8ff5301f595e89f90feb41be706339032387663dfb83ba6",
+  "contributionHeader": {
+    "version": 3,
+    "serverId": "00000001-1111-4111-8111-000000000001",
+    "migrationId": "00000002-1111-4111-8111-000000000002",
+    "scopeToken": "f2c8724e41f7078723b01d8e4d0252c7619cab6ebd47a8f846406b8579880901",
+    "domain": "content",
+    "headerHash": "b23faf3d0fa58eb2b8ff5301f595e89f90feb41be706339032387663dfb83ba6",
+    "portionToken": "1111111111111111111111111111111111111111111111111111111111111111",
+    "captureId": "00000006-1111-4111-8111-000000000006",
+    "sourceInventoryRoot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "coldParityProofHash": "8888888888888888888888888888888888888888888888888888888888888888",
+    "leafCount": 2,
+    "sourceRowCount": 1,
+    "authorDirectoryHeadHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  },
+  "contributionRoot": "c4f0121003fb3906163e86ffa55fda9d15b7fcc3055c9956f25111ff5997e3b5",
+  "emptyContributionRoot": "5d65c2602ec07c052bf7b7ec42ade18dbafec06ed3710d37a98c4aa8c87dcc87"
+}

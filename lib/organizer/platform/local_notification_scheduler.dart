@@ -8,9 +8,11 @@ class LocalNotificationRequest {
     required this.title,
     required this.body,
     this.sound = true,
+    this.languageCode = 'sl',
   });
   final ReminderPlan plan;
   final String title, body;
+  final String languageCode;
   final bool sound;
 }
 
@@ -38,6 +40,10 @@ abstract interface class LocalNotificationScheduler {
   Future<LocalNotificationPermission> requestPermission();
   Future<String> refreshTimezone();
   Future<Set<int>> pendingIds();
+
+  /// App-owned OS notifications only, including already displayed messages.
+  /// Caller captures the launch payload first and rebuilds future schedules.
+  Future<void> clearPresentedAndPending();
   Future<void> schedule(
     int id,
     LocalNotificationRequest request,

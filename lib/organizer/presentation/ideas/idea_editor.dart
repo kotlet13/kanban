@@ -1,3 +1,6 @@
+import 'dart:convert';
+import '../../data/e2ee/crypto_migration_idea_draft_recovery.dart';
+import '../../platform/private_file_io.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -113,12 +116,60 @@ Future<void> openIdeaEditor(
           createdAt: now,
           updatedAt: now,
         );
-    final draft = snapshot.canEdit
-        ? await controller.readDraft(
-            initial.id,
-            expectedWorkspaceKey: snapshot.workspaceKey,
-          )
-        : null;
+    IdeaBoard? draft;
+    try {
+      draft = snapshot.canEdit
+          ? await controller.readDraft(
+              initial.id,
+              expectedWorkspaceKey: snapshot.workspaceKey,
+            )
+          : null;
+    } on CryptoRecoveredIdeaDraftConflict catch (conflict) {
+      if (!host.mounted) return;
+      final sl = Localizations.localeOf(host).languageCode == 'sl';
+      final choice = await showDialog<int>(
+        context: host,
+        builder: (context) => AlertDialog(
+          title: Text(
+            sl ? 'Več ohranjenih osnutkov' : 'Multiple retained drafts',
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  sl
+                      ? 'Izberite osnutek za pregled. Vsi izvirniki ostanejo ohranjeni; izbira še ne shrani plošče ali pošlje sprememb.'
+                      : 'Select a draft to review. All originals are retained; selecting one does not save the board or send changes.',
+                ),
+                for (var i = 0; i < conflict.versions.length; i++)
+                  ListTile(
+                    title: Text(
+                      '${i + 1}. ${(jsonDecode(conflict.versions[i]['payload'] as String) as Map)['title']}',
+                    ),
+                    subtitle: Text(
+                      '${(jsonDecode(conflict.versions[i]['payload'] as String) as Map)['updatedAt']}',
+                    ),
+                    onTap: () => Navigator.pop(context, i),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            ),
+          ],
+        ),
+      );
+      if (choice == null || !host.mounted) return;
+      await conflict.select(choice);
+      draft = await controller.readDraft(
+        initial.id,
+        expectedWorkspaceKey: snapshot.workspaceKey,
+      );
+    }
     final draftBase = draft == null
         ? null
         : await controller.readDraftBase(
@@ -622,17 +673,27 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
       return;
     }
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png'],
-        withData: false,
-        withReadStream: true,
-      );
-      if (result == null || !mounted || !_editable) return;
-      final bytes = await readBoundedBackup(
-        result.files.single,
-        maxBytes: 20 * 1024 * 1024,
-      );
+      Uint8List bytes;
+      if (usesPrivateMobileFileIo) {
+        final selected = await pickPrivateFile(
+          extensions: ['jpg', 'jpeg', 'png'],
+          maxBytes: 20 * 1024 * 1024,
+        );
+        if (selected == null || !mounted || !_editable) return;
+        bytes = selected.bytes;
+      } else {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['jpg', 'jpeg', 'png'],
+          withData: false,
+          withReadStream: true,
+        );
+        if (result == null || !mounted || !_editable) return;
+        bytes = await readBoundedBackup(
+          result.files.single,
+          maxBytes: 20 * 1024 * 1024,
+        );
+      }
       if (!mounted || !_editable) return;
       setState(() => _busy = true);
       final asset = await ref.read(ideaProvider.notifier).importImage(bytes);

@@ -158,6 +158,7 @@ extension OrganizerPlanningActions on OrganizerRepository {
       }
       return t;
     });
+    await beforeConnectedEntry?.call();
     await _persist(s.copyWith(tasks: tasks, revision: s.revision + 1));
   });
 
@@ -182,6 +183,7 @@ extension OrganizerPlanningActions on OrganizerRepository {
       revision: task.revision + 1,
       updatedAt: _updatedAt(task.updatedAt),
     );
+    await beforeConnectedEntry?.call();
     await _persist(
       s.copyWith(
         tasks: s.tasks.map((t) => t.id == id ? changed : t),

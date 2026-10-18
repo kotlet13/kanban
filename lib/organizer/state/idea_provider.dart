@@ -8,7 +8,8 @@ import '../data/idea_storage.dart';
 import '../domain/idea_models.dart';
 import 'local_database_provider.dart';
 import 'collaboration_provider.dart';
-import '../data/collaboration_repository.dart' show SharedIdeaStorage;
+import '../data/collaboration_repository.dart';
+import '../data/connected_personal_entry.dart';
 
 final ideaRepositoryProvider = FutureProvider<IdeaRepository>((ref) async {
   final db = await ref.watch(localDatabaseProvider.future);
@@ -37,7 +38,16 @@ final ideaRepositoryProvider = FutureProvider<IdeaRepository>((ref) async {
   final storage = scope == null || selected.$1 == null
       ? IdeaStorage(db)
       : SharedIdeaStorage(shared, selected.$1!, scope.id);
-  final repository = IdeaRepository(storage);
+  final repository = IdeaRepository(
+    storage,
+    beforeConnectedEntry: () async {
+      await authorizeConnectedPersonalEntry(db,(bound)async {
+        final current=shared.state.session;
+        if(current==null || current.partition!=bound.partition || current.deviceId!=bound.deviceId)throw StateError('Connected workspace changed');
+        await shared.requireVerifiedEmailForConnectedEntry();
+      });
+    },
+  );
   ref.onDispose(() => unawaited(repository.close()));
   await repository.initialize();
   return repository;

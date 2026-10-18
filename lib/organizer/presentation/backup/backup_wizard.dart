@@ -2,6 +2,7 @@ import '../password_visibility.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'backup_file_io.dart';
+import '../../data/portable_backup_crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
@@ -89,6 +90,7 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
         'backup_stale' || 'stale_revision' => l.backupChanged,
         'backup_conflict' => l.backupMergeConflict,
         'backup_too_large' => l.backupTooLarge,
+        'backup_pending_files_need_access' => l.backupPendingFilesNeedAccess,
         'backup_password_invalid' => l.backupPasswordRule,
         _ => sharingErrorMessage(context, e),
       };
@@ -99,7 +101,7 @@ class _BackupWizardState extends ConsumerState<BackupWizard> {
   Future<void> _pick() async {
     final result = await ref
         .read(backupFileIoProvider)
-        .pick(maxBytes: 64 * 1024 * 1024);
+        .pick(maxBytes: PortableBackupCrypto.maxBytes);
     if (result == null || !mounted || !_validIdentity) return;
     setState(() {
       _bytes = result.bytes;

@@ -38,6 +38,8 @@ extension CollaborationRecordActions on CollaborationRepository {
     Future<void> Function(String partition) action,
   ) async {
     final profile = _requireSession().profile, epoch = _epoch;
+    await requireVerifiedEmailForConnectedEntry();
+    _checkEpoch(epoch);
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _writable(profile.partition, scopeId);

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -231,6 +232,7 @@ void main() {
         CollaborationDatabase(NativeDatabase(file)),
         transport,
         store,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       try {
         await repo.initialize();
@@ -265,6 +267,7 @@ void main() {
           CollaborationDatabase(NativeDatabase(file)),
           transport,
           store,
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await repo.initialize();
         expect(repo.state.financeSupported, true);
@@ -375,6 +378,7 @@ void main() {
       CollaborationDatabase(NativeDatabase.memory()),
       transport,
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     await repo.login(
@@ -499,13 +503,20 @@ void main() {
         f.transport.grantsByScope[f.scope] = 'none';
         f.transport.revisionsByScope[f.scope] = 2;
         await f.repo.refreshFinancePolicy(f.scope);
-        f.transport.beforePolicy = (_) async => throw StateError('Recovery must be local');
+        f.transport.beforePolicy = (_) async =>
+            throw StateError('Recovery must be local');
         final exported = await f.repo.exportUnsentWork();
         expect(exported, contains('Hidden A draft'));
         expect(exported, contains('Visible B draft'));
         expect(exported, contains('Private planned draft'));
-        expect((jsonDecode(exported) as Map)['financeOperations'], hasLength(3));
-        expect((jsonDecode(exported) as Map).containsKey('financeRecords'), false);
+        expect(
+          (jsonDecode(exported) as Map)['financeOperations'],
+          hasLength(3),
+        );
+        expect(
+          (jsonDecode(exported) as Map).containsKey('financeRecords'),
+          false,
+        );
         expect(
           (await f.repo.database.rows(
             'SELECT state FROM commands',
@@ -582,6 +593,7 @@ void main() {
         activeTransport,
         MemorySessionStore(),
         clock: () => clock,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       try {
         await repo.initialize();

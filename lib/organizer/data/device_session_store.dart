@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'local_vault_secure_storage.dart';
 import '../domain/collaboration_models.dart';
 import '../domain/organizer_models.dart';
 
@@ -17,7 +17,7 @@ abstract interface class DeviceSessionStore {
 
 class SecureDeviceSessionStore implements DeviceSessionStore {
   const SecureDeviceSessionStore();
-  static const _storage = FlutterSecureStorage();
+  static const _storage = localVaultSecureStorage;
   static const _key = 'organizer_device_session_v1';
   @override
   Future<DeviceSession?> read() async {

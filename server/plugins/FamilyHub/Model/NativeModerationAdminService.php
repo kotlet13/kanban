@@ -28,6 +28,12 @@ class NativeModerationAdminService extends NativeDatabase
         $this->admin($adminId);$this->uuid($reportId);
         if (!is_string($sha) || !preg_match('/^[a-f0-9]{64}$/D',$sha)) { throw new NativeError('validation_error'); }
         $r=$this->one('SELECT a.* FROM familyhub_idea_assets a JOIN familyhub_idea_report_assets ar ON ar.scope_id=a.scope_id AND ar.board_id=a.board_id AND ar.sha256=a.sha256 JOIN familyhub_moderation_reports r ON r.id=ar.report_id WHERE r.id=? AND a.sha256=? AND r.redacted_at IS NULL AND r.snapshot IS NOT NULL',[$reportId,$sha]);
+        if (!$r && \Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo)) {
+            $selected = $this->one("SELECT s.* FROM familyhub_crypto_moderation_stages_v2 s JOIN familyhub_moderation_reports r ON r.id=s.report_id WHERE s.report_id=? AND s.sha256=? AND s.kind='asset' AND s.included=1 AND s.complete=1 AND r.redacted_at IS NULL AND r.snapshot IS NOT NULL", [$reportId,$sha]);
+            if ($selected) {
+                return ['mime' => $selected['mime'],'bytes' => (new NativeCryptoModerationDisclosureV2($this->container))->bytes($selected)];
+            }
+        }
         if (!$r) { throw new NativeError('report_target_unavailable',404); }
         return ['mime'=>$r['mime'],'bytes'=>(new NativeIdeaAssetService($this->container))->bytes($r)];
     }
@@ -40,15 +46,22 @@ class NativeModerationAdminService extends NativeDatabase
         return $this->transaction(function()use($adminId,$params,$id,$note){
             $this->admin($adminId);$report=$this->one('SELECT * FROM familyhub_moderation_reports WHERE id=?'.$this->lockSuffix(),[$id]);
             if (!$report) { throw new NativeError('report_target_unavailable',404); }
+            $mutating = in_array($params['action'], ['remove_content','restrict_member','unrestrict_member'], true);
+            $cryptoReport = \Kanboard\Plugin\FamilyHub\Schema\CryptoSchema::ready($this->pdo) &&
+                $this->one('SELECT report_id FROM familyhub_crypto_moderation_reports_v2 WHERE report_id=?', [$id]);
+            if ($mutating && !$cryptoReport) { NativeCryptoFence::guard($this->pdo,$report['scope_id']); }
             if ((int)$report['review_revision']!==$params['reviewRevision']) { throw new NativeError('review_changed',409); }
             if ($report['redacted_at']!==null && in_array($params['action'],['remove_content','restrict_member'],true)) { throw new NativeError('report_evidence_expired',409); }
             $scope=$this->one('SELECT * FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$report['scope_id']]);
+            if ($mutating && !$cryptoReport) { NativeCryptoFence::guard($this->pdo,$report['scope_id']); }
             if (in_array($params['action'],['remove_content','restrict_member'],true)) {
                 if (!$scope || $scope['kind']==='personal') { throw new NativeError('report_target_unavailable',404); }
                 if ($params['targetRevision']!==(int)$report['target_revision']) { throw new NativeError('report_preview_changed',409); }
             }
             if ($params['action']==='remove_content') {
-                if (in_array($report['target_type'],['table','attachment'],true)) {
+                if ($cryptoReport) {
+                    (new NativeCryptoModerationAvailabilityV2($this->container))->removeContent($report, $params['targetRevision']);
+                } elseif (in_array($report['target_type'],['table','attachment'],true)) {
                     $service=$report['target_type']==='table'?new NativeTableService($this->container):new NativeAttachmentService($this->container);
                     try { $current=$service->moderationEvidence($scope,$report['target_id']); } catch (NativeError $e) { throw new NativeError('report_preview_changed',409); }
                     $snapshot=json_decode($report['snapshot'],true,32,JSON_THROW_ON_ERROR);

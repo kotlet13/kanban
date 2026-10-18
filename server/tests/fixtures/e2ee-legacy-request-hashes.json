@@ -1,0 +1,287 @@
+{
+    "format": 1,
+    "phpVersion": "8.4.24",
+    "note": "NativeDatabase canonical/hashRequest exact bytes; ALL sync3/4/5/6 compound operations normalize hash op to sync3.pushTaskWithCost. Empty objects become arrays in associative legacy recursion.",
+    "vectors": [
+        {
+            "name": "emptyObject",
+            "operation": "sync.push",
+            "inputJson": "{\"empty\":{},\"array\":[]}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJhcnJheSI6W10sImVtcHR5IjpbXX19",
+            "sha256": "967b1e364eb3fc707d72b38b367b6d26d02f2219ee307584caa3f8b4164c0ccd"
+        },
+        {
+            "name": "integralDouble",
+            "operation": "sync.push",
+            "inputJson": "{\"amount\":80.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJhbW91bnQiOjgwfX0=",
+            "sha256": "ffb563df0b594cf3070b34d33878ce32f1cf7a02b2629e1a4ab2a59120e522dc"
+        },
+        {
+            "name": "smallExponent7",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":1e-7}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MS4wZS03fX0=",
+            "sha256": "7e44711f12ca306da427fe61f801ff63517e8270bcdb1b60d74abf1d29e46991"
+        },
+        {
+            "name": "smallExponent5",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":1e-5}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MS4wZS01fX0=",
+            "sha256": "f1b4cc16bd7736ff286ddc1cc70a22a93e77c19310aaf3f12c25d53f970de875"
+        },
+        {
+            "name": "largeExponent16",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":1e16}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MTAwMDAwMDAwMDAwMDAwMDB9fQ==",
+            "sha256": "718ccdcbea0c0b738b4dabd8650f7c28b8dee61597dbce54f59e93abced1bc30"
+        },
+        {
+            "name": "largeExponent17",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":1e17}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MS4wZSsxN319",
+            "sha256": "a96c07c5b6d569ee6307c1d7438e053648f509adf4a7c932bc3c8f35014d6cba"
+        },
+        {
+            "name": "largeExponent20",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":1e20}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MS4wZSsyMH19",
+            "sha256": "a1e65ab3c73db2f4a030b2d1bc227efc1f3f6e2a62b18708e7b0095d82da62cf"
+        },
+        {
+            "name": "negativeZero",
+            "operation": "sync.push",
+            "inputJson": "{\"value\":-0.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ2YWx1ZSI6MH19",
+            "sha256": "fc83f94826e1be4f7a1f930c3c30a8b476fefc65274318e0915f98607ef240e2"
+        },
+        {
+            "name": "unicode",
+            "operation": "sync.push",
+            "inputJson": "{\"text\":\"\\u2028\\u2029Čebelica 🐝 /\"}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJ0ZXh0IjoiXHUyMDI4XHUyMDI5xIxlYmVsaWNhIPCfkJ0gLyJ9fQ==",
+            "sha256": "445ca7cc4d3391e8fc33671d82fd0b9e92cd72344bbeb99e2473ef7d25fa6069"
+        },
+        {
+            "name": "nested",
+            "operation": "sync.push",
+            "inputJson": "{\"z\":[{},80.0,1e-7,-0.0],\"a\":{\"nested\":{}}}",
+            "canonicalBase64": "eyJvcCI6InN5bmMucHVzaCIsInBhcmFtcyI6eyJhIjp7Im5lc3RlZCI6W119LCJ6IjpbW10sODAsMS4wZS03LDBdfX0=",
+            "sha256": "8f564c86d954cd084f955e35d0da0a9d98d195e08ed51be45cd2ddcd5036dc7f"
+        },
+        {
+            "name": "emptyObject",
+            "operation": "sync6.push",
+            "inputJson": "{\"empty\":{},\"array\":[]}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsiYXJyYXkiOltdLCJlbXB0eSI6W119fQ==",
+            "sha256": "53b2382154d17a853ae2f0d2a140c98a50c8fb930dfe955d4e195da5377fb687"
+        },
+        {
+            "name": "integralDouble",
+            "operation": "sync6.push",
+            "inputJson": "{\"amount\":80.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsiYW1vdW50Ijo4MH19",
+            "sha256": "40b61be57c53ede2158ead90771bf177538d7d7a1ec1bc2c7dc1fd08ebbc0df3"
+        },
+        {
+            "name": "smallExponent7",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":1e-7}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtN319",
+            "sha256": "6983335e9cd72239a6cc25754b0fd2f8e63fdf53dfbe422f58b9b4618e445a52"
+        },
+        {
+            "name": "smallExponent5",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":1e-5}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtNX19",
+            "sha256": "951a11db2f9e3ab550966daac1351457c035b23b84b7d1d4d4720fc7064becaf"
+        },
+        {
+            "name": "largeExponent16",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":1e16}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjEwMDAwMDAwMDAwMDAwMDAwfX0=",
+            "sha256": "de0577c2bf5a2caaace3f89e76d5e13e42d442a959f4ea1578d6f096baa78c54"
+        },
+        {
+            "name": "largeExponent17",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":1e17}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMTd9fQ==",
+            "sha256": "54ce02478b63fd6d04b346f59b11cc92faabd114accde13e70f03b3c7447b9b0"
+        },
+        {
+            "name": "largeExponent20",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":1e20}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMjB9fQ==",
+            "sha256": "c243b7ab1690d1cd7994b579c1288fc3a4e5c0451f96f4d5b2da7c311533d982"
+        },
+        {
+            "name": "negativeZero",
+            "operation": "sync6.push",
+            "inputJson": "{\"value\":-0.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidmFsdWUiOjB9fQ==",
+            "sha256": "28dd36a23c2d9affbbfcb64c8cc95c2c9e3603e97bf7c4eb13ff88b06726d1ab"
+        },
+        {
+            "name": "unicode",
+            "operation": "sync6.push",
+            "inputJson": "{\"text\":\"\\u2028\\u2029Čebelica 🐝 /\"}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsidGV4dCI6Ilx1MjAyOFx1MjAyOcSMZWJlbGljYSDwn5CdIC8ifX0=",
+            "sha256": "51d7476c8d8cf70f8981ade7939164c6327a31d195503ffdc85dcda64662df04"
+        },
+        {
+            "name": "nested",
+            "operation": "sync6.push",
+            "inputJson": "{\"z\":[{},80.0,1e-7,-0.0],\"a\":{\"nested\":{}}}",
+            "canonicalBase64": "eyJvcCI6InN5bmM2LnB1c2giLCJwYXJhbXMiOnsiYSI6eyJuZXN0ZWQiOltdfSwieiI6W1tdLDgwLDEuMGUtNywwXX19",
+            "sha256": "63bbbe0f691db9acb8697ce6f6d97484c55d3c4eb5804561505595a974ec1caf"
+        },
+        {
+            "name": "emptyObject",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"empty\":{},\"array\":[]}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsiYXJyYXkiOltdLCJlbXB0eSI6W119fQ==",
+            "sha256": "a08f4f7140bb8c7e59275bcbe8d6e24f74a3fc3903024d7d0c9af08d9a724f40"
+        },
+        {
+            "name": "integralDouble",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"amount\":80.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsiYW1vdW50Ijo4MH19",
+            "sha256": "a796473a89413f345cb76d8b8980646f7a22220e1698e0a7b6b8132089f3453d"
+        },
+        {
+            "name": "smallExponent7",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":1e-7}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtN319",
+            "sha256": "a5299561553aa8cc02e9889ff2cc8c528ea9444f54aa5d5be07e3aab69e922b9"
+        },
+        {
+            "name": "smallExponent5",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":1e-5}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtNX19",
+            "sha256": "0e8c2a88c7beca1a37f56499e628f020c535f894419c259f69e0457231eb7899"
+        },
+        {
+            "name": "largeExponent16",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":1e16}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjEwMDAwMDAwMDAwMDAwMDAwfX0=",
+            "sha256": "0df141601c72a288567610542fca731b12eecf219e44e84627e2cb94f68cbbe2"
+        },
+        {
+            "name": "largeExponent17",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":1e17}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMTd9fQ==",
+            "sha256": "28552d520d010a88605fe2a4bb248eca4cb11bae38c182cc0458f6ee7dd4eb17"
+        },
+        {
+            "name": "largeExponent20",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":1e20}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMjB9fQ==",
+            "sha256": "d137e47f76f9b7906b7dfcabc3b6904aa81e7b0bbf8765c34d0b99915b0f29f5"
+        },
+        {
+            "name": "negativeZero",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"value\":-0.0}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidmFsdWUiOjB9fQ==",
+            "sha256": "3ad6115c18a2e522d6e550a9d4d9bac1033766c5f0f262bf54800d90e67f78de"
+        },
+        {
+            "name": "unicode",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"text\":\"\\u2028\\u2029Čebelica 🐝 /\"}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsidGV4dCI6Ilx1MjAyOFx1MjAyOcSMZWJlbGljYSDwn5CdIC8ifX0=",
+            "sha256": "d0d4059eb9ac1f05cd117eb8753ffdb66d6a438ec116998f12e29b327f9dc599"
+        },
+        {
+            "name": "nested",
+            "operation": "sync3.pushTaskWithCost",
+            "inputJson": "{\"z\":[{},80.0,1e-7,-0.0],\"a\":{\"nested\":{}}}",
+            "canonicalBase64": "eyJvcCI6InN5bmMzLnB1c2hUYXNrV2l0aENvc3QiLCJwYXJhbXMiOnsiYSI6eyJuZXN0ZWQiOltdfSwieiI6W1tdLDgwLDEuMGUtNywwXX19",
+            "sha256": "1b662a4d8b7ff5c1044fd0a079ea900c92a35bc790bde17618b4552bc075de75"
+        },
+        {
+            "name": "emptyObject",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"empty\":{},\"array\":[]}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsiYXJyYXkiOltdLCJlbXB0eSI6W119fQ==",
+            "sha256": "c94a3efa49eadfa4d8c093563dc2e76b489ae2b25bc08454c7ec93b13a0f2927"
+        },
+        {
+            "name": "integralDouble",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"amount\":80.0}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsiYW1vdW50Ijo4MH19",
+            "sha256": "f9fb02ecb76d9424de35cd9221dac9a6ec5d17de789fc37335c2fdcd29b29d52"
+        },
+        {
+            "name": "smallExponent7",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":1e-7}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtN319",
+            "sha256": "92e671b884586efc747b9b94449aa0299e622e1d835a934875ed2e97e25902a9"
+        },
+        {
+            "name": "smallExponent5",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":1e-5}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUtNX19",
+            "sha256": "57c70568596cb8f70f3856f7f501903dbcef2b4cbc638621b15274c33ea5effa"
+        },
+        {
+            "name": "largeExponent16",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":1e16}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjEwMDAwMDAwMDAwMDAwMDAwfX0=",
+            "sha256": "2e9c4a508b69b6a2f779fb1fdf2607063508cce45795ea734ce216de56af8078"
+        },
+        {
+            "name": "largeExponent17",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":1e17}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMTd9fQ==",
+            "sha256": "60e8b611fd957c0c528d5f016d5d8283753e90900846828a678ba183d5355d63"
+        },
+        {
+            "name": "largeExponent20",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":1e20}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjEuMGUrMjB9fQ==",
+            "sha256": "8cf0c13fb8aeaf62ba0658d745f714dad9bed6c522f7a5053066fe0a7533781f"
+        },
+        {
+            "name": "negativeZero",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"value\":-0.0}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidmFsdWUiOjB9fQ==",
+            "sha256": "8ec0fb015b4e12b1c1cb87acb9886399d28b336fcc9f30b97d6a14d1901a2b37"
+        },
+        {
+            "name": "unicode",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"text\":\"\\u2028\\u2029Čebelica 🐝 /\"}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsidGV4dCI6Ilx1MjAyOFx1MjAyOcSMZWJlbGljYSDwn5CdIC8ifX0=",
+            "sha256": "3e778b2be9f84b05e657cb81652c267ab8abdd16420b3475539a9b957faebb97"
+        },
+        {
+            "name": "nested",
+            "operation": "finance3.paymentCommit",
+            "inputJson": "{\"z\":[{},80.0,1e-7,-0.0],\"a\":{\"nested\":{}}}",
+            "canonicalBase64": "eyJvcCI6ImZpbmFuY2UzLnBheW1lbnRDb21taXQiLCJwYXJhbXMiOnsiYSI6eyJuZXN0ZWQiOltdfSwieiI6W1tdLDgwLDEuMGUtNywwXX19",
+            "sha256": "b0a62312765977dfc8d03a786bd044a783516f2179851bf0f8ead85b73af002b"
+        }
+    ]
+}

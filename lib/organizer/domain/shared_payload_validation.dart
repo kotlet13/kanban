@@ -54,52 +54,7 @@ void validateSharedPayload(
     }
     return;
   }
-  final keys = <String>{
-    if (type != SharedRecordType.householdPerson) 'title',
-    'createdAt',
-    'updatedAt',
-    ...switch (type) {
-      SharedRecordType.idea => <String>[],
-      SharedRecordType.garden => <String>[],
-      SharedRecordType.project => [
-        if (version >= 6 && payload.containsKey('archived')) 'archived',
-        'description',
-        'area',
-        if (version >= 2) ...['startAt', 'endAt'],
-        if (version >= 3) ...[
-          'phases',
-          'availabilityMinutes',
-          'availabilityPeriod',
-        ],
-      ],
-      SharedRecordType.task => [
-        'notes',
-        'projectId',
-        'dueAt',
-        'isCompleted',
-        if (version >= 2) ...['startAt', 'endAt', 'assigneeAccountIds'],
-        if (version >= 3) ...[
-          'phaseId',
-          'estimateMinutes',
-          'availabilityMinutes',
-          'availabilityPeriod',
-          'timer',
-          'assigneePersonId',
-          'subjectPersonIds',
-        ],
-      ],
-      SharedRecordType.householdPerson => ['name', 'notes', 'archived'],
-      SharedRecordType.shoppingList => <String>[],
-      SharedRecordType.shoppingItem => ['listId', 'quantity', 'isChecked'],
-      SharedRecordType.event => [
-        'notes',
-        'projectId',
-        'startAt',
-        'endAt',
-        'assigneeAccountIds',
-      ],
-    },
-  };
+  final keys = sharedPayloadKnownKeys(type, payload, version);
   if (payload.length != keys.length ||
       !payload.keys.every(keys.contains) ||
       utf8
@@ -360,4 +315,58 @@ void addRichPlanningDefaults(Map<String, dynamic> payload, String type) {
     payload.putIfAbsent('assigneePersonId', () => null);
     payload.putIfAbsent('subjectPersonIds', () => <String>[]);
   }
+}
+
+/// Known model fields only; encrypted raw extensions are retained separately.
+Set<String> sharedPayloadKnownKeys(
+  SharedRecordType type,
+  Map<String, dynamic> payload,
+  int version,
+) {
+  return <String>{
+    if (type != SharedRecordType.householdPerson) 'title',
+    'createdAt',
+    'updatedAt',
+    ...switch (type) {
+      SharedRecordType.idea => <String>[],
+      SharedRecordType.garden => <String>[],
+      SharedRecordType.project => [
+        if (version >= 6 && payload.containsKey('archived')) 'archived',
+        'description',
+        'area',
+        if (version >= 2) ...['startAt', 'endAt'],
+        if (version >= 3) ...[
+          'phases',
+          'availabilityMinutes',
+          'availabilityPeriod',
+        ],
+      ],
+      SharedRecordType.task => [
+        'notes',
+        'projectId',
+        'dueAt',
+        'isCompleted',
+        if (version >= 2) ...['startAt', 'endAt', 'assigneeAccountIds'],
+        if (version >= 3) ...[
+          'phaseId',
+          'estimateMinutes',
+          'availabilityMinutes',
+          'availabilityPeriod',
+          'timer',
+          'assigneePersonId',
+          'subjectPersonIds',
+        ],
+      ],
+      SharedRecordType.householdPerson => ['name', 'notes', 'archived'],
+      SharedRecordType.shoppingList => <String>[],
+      SharedRecordType.shoppingItem => ['listId', 'quantity', 'isChecked'],
+      SharedRecordType.event => [
+        'notes',
+        'projectId',
+        'startAt',
+        'endAt',
+        'assigneeAccountIds',
+      ],
+    },
+  };
 }

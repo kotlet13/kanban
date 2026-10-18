@@ -14,6 +14,7 @@ class NativeSpaceSharingAccessService extends NativeDatabase
         if ($operation==='scopes.accessMigrationPreview') { return $this->preview($scope); }
         $request=$this->uuid($params['requestId']??null);$hash=$this->hashRequest($operation,$params);$replay=$this->replay($id,$user['id'],$request,$hash);
         if ($replay) { return $replay['body']; }
+        NativeCryptoV2Boundary::guardStructural($this->pdo, $id);
         $preview=$this->preview($scope);
         if (!($preview['canApply']??true)) { throw new NativeError('access_migration_blocked',409,['blockers'=>$preview['blockers']]); }
         if (!is_string($params['previewHash']??null) || !hash_equals($preview['previewHash'],$params['previewHash'])) { throw new NativeError('access_preview_changed',409); }

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -78,6 +79,7 @@ void main() {
           ),
           transports[index],
           stores[index],
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await repo.initialize();
         repositories.add(repo);

@@ -1,0 +1,9 @@
+{
+    "purpose": "Public synthetic interoperability vector; RFC8032 test seed, never a real account key",
+    "seedBase64": "nWGxne/9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A=",
+    "publicKeyBase64": "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=",
+    "domainBase64": "Sml2aWVFMkVFL3YxCg==",
+    "commandBase64": "eyJhY2NvdW50SWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDMiLCJkZXZpY2VJZCI6IjAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwNCIsIm9wZXJhdGlvbiI6ImNyeXB0by50ZXN0LnZlY3RvciIsInBheWxvYWQiOnsiY291bnQiOjEsImVtcHR5Ijp7fSwiZmxhZyI6ZmFsc2UsImxpc3QiOltdLCJ0ZXh0IjoixaBpZnJpcmFuamUgLyDwn5GL4oCoIn0sInJlcXVlc3RJZCI6IjAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMSIsInNlcnZlcklkIjoiMDAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAyIiwic2lnbmVyIjoiZGV2aWNlIiwidmVyc2lvbiI6MX0=",
+    "signatureBase64": "MWayqM8kUenCvIBGdnSuIG4ncFbcroToXVOsw7T5xM5LUt4Iyxsfh2Jod31zAmuJgnC2ZNswbqtNW+hFQEb2DA==",
+    "sha256": "3e2691a838f7d4ef61a3ee0d6bfa5cf11cdfa569b561f385a35e6d5a29197ba3"
+}

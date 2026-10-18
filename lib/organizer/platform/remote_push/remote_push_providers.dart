@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../state/local_vault_preferences_provider.dart';
 import '../../state/collaboration_provider.dart';
 import 'firebase_mobile_config.dart';
 import 'firebase_push_sdk.dart';
@@ -74,7 +74,7 @@ class RemotePushOptInController extends AsyncNotifier<Map<String, bool>> {
   static const _key = 'organizer_remote_push_device_opt_in_v1';
   @override
   Future<Map<String, bool>> build() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await ref.read(localVaultPreferencesProvider.future);
     final raw = prefs.getString(_key);
     if (raw == null) return {};
     final data = jsonDecode(raw) as Map<String, dynamic>;
@@ -84,7 +84,7 @@ class RemotePushOptInController extends AsyncNotifier<Map<String, bool>> {
   Future<void> save(AccountSession session, bool enabled) async {
     final existing = await future;
     final next = {...existing, pushDeviceKey(session): enabled};
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await ref.read(localVaultPreferencesProvider.future);
     if (!await prefs.setString(_key, jsonEncode(next))) {
       throw StateError('Remote push preferences could not be saved');
     }
@@ -101,10 +101,9 @@ final remotePushLifecycleProvider = FutureProvider<RemotePushLifecycle>((
     alive = false;
     lifecycle?.dispose();
   });
-  final preferences = await SharedPreferences.getInstance();
   lifecycle = RemotePushLifecycle(
     sdk: ref.read(remotePushSdkProvider),
-    preferences: preferences,
+    preferences: await ref.read(localVaultPreferencesProvider.future),
     config: ref.read(remotePushConfigurationProvider),
     onState: (state) {
       if (alive) ref.read(remotePushDeviceStateProvider.notifier).state = state;

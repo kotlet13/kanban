@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -23,6 +24,22 @@ class RenewalServer extends FakeServer {
     Map<String, Object?> params,
     String? token,
   ) async {
+    if (operation == 'invitations.preview' && params['token'] == 'synthetic') {
+      calls.add((operation: operation, token: token, params: params));
+      return {
+        'invitation': {
+          'recipientUsername': 'alice',
+          'role': 'member',
+          'expiresAt': 4102444800,
+        },
+        'scope': {
+          'id': 'synthetic-scope',
+          'name': 'Synthetic household',
+          'kind': 'household',
+        },
+        'registrationAllowed': true,
+      };
+    }
     if (operation == 'auth.renew' || operation == 'auth.me') {
       calls.add((operation: operation, token: token, params: params));
       if (operation == 'auth.renew') {
@@ -94,6 +111,7 @@ void main() {
       transport,
       store,
       clock: () => server.now,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     repositories.add(repository);
     await repository.initialize();

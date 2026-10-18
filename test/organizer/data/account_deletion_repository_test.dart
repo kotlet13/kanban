@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -118,6 +119,7 @@ void main() {
       FakeTransport(server),
       sessions,
       deletionStore: receipts,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     await repo.login(
@@ -377,6 +379,7 @@ void main() {
         sessions,
         deletionStore: receipts,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await restarted.initialize();
       expect(restarted.state.session, null);
@@ -411,6 +414,7 @@ void main() {
         sessions,
         deletionStore: receipts,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await restarted.initialize();
       expect(restarted.state.deletionPending, true);

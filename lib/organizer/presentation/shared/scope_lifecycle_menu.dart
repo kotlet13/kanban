@@ -54,6 +54,10 @@ Future<bool> showScopeDeletionDialog(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(l.scopeDeleteDescription),
+                if (preview['cryptoDeletionVersion'] == 2) ...[
+                  const SizedBox(height: 12),
+                  Text(l.scopeDeleteCryptoRetention),
+                ],
                 const SizedBox(height: 16),
                 for (final name in preview['scopeNames'] as List)
                   Text('• $name'),

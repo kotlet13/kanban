@@ -11,6 +11,11 @@ abstract class NativeDatabase extends Base
     protected $bearer;
     protected $ip;
     protected $sqlite;
+    protected $cryptoAccess=false;
+    /** PDO SQLite does not report transactions opened with BEGIN IMMEDIATE.
+     * Track only this wrapper's successful begin on the exact shared PDO;
+     * nested model objects cannot manufacture a transaction by setting a bool. */
+    private static $nativeTransactions;
 
     public function __construct($container, $bearer = '', $ip = 'unknown')
     {
@@ -68,6 +73,12 @@ abstract class NativeDatabase extends Base
 
     protected function lockSuffix() { return $this->sqlite ? '' : ' FOR UPDATE'; }
 
+    protected function transactionActive()
+    {
+        return $this->pdo->inTransaction() ||
+            (self::$nativeTransactions!==null && isset(self::$nativeTransactions[$this->pdo]));
+    }
+
     protected function transaction(callable $callback, $global = false)
     {
         if ($this->sqlite) { $this->pdo->exec('BEGIN IMMEDIATE'); }
@@ -77,6 +88,8 @@ abstract class NativeDatabase extends Base
             $this->pdo->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
             $this->pdo->beginTransaction();
         }
+        if(self::$nativeTransactions===null){self::$nativeTransactions=new \WeakMap();}
+        self::$nativeTransactions[$this->pdo]=true;
         try {
             if ($global) {
                 $this->one('SELECT counter FROM familyhub_native_lock WHERE id = 1'.$this->lockSuffix());
@@ -89,6 +102,8 @@ abstract class NativeDatabase extends Base
             if ($this->sqlite) { $this->pdo->exec('ROLLBACK'); }
             elseif ($this->pdo->inTransaction()) { $this->pdo->rollBack(); }
             throw $error;
+        } finally {
+            unset(self::$nativeTransactions[$this->pdo]);
         }
     }
 
@@ -140,6 +155,7 @@ abstract class NativeDatabase extends Base
                 (int)$user['disable_login_form'] !== 0 || !hash_equals($device['credentials_hash'], $this->fingerprint($user))) {
             throw new NativeError('device_revoked', 401);
         }
+        NativeCryptoAccountTombstoneV2::assertAccount($this->pdo,$account['account_id']);
         $user['account_id'] = $account['account_id'];
         return ['user' => $user, 'device' => $device];
     }
@@ -170,14 +186,33 @@ abstract class NativeDatabase extends Base
     /** Worker lifecycle gate shares the same parent-before-child lock order as API writes. */
     protected function lockScopeLifecycle($id)
     {
+        if(NativeCryptoFence::workerBlocked($this->pdo,$id)){return null;}
         $links=$this->one('SELECT organization_id,parent_scope_id FROM familyhub_scopes WHERE id=?',[$id]);
         $parentId=$links['parent_scope_id']??$links['organization_id']??null;
         $parent=$parentId?$this->one('SELECT * FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$parentId]):null;
         $scope=$this->one('SELECT * FROM familyhub_scopes WHERE id=?'.$this->lockSuffix(),[$id]);
         if (!$scope) { return null; }
+        // The fence can commit while this worker waits for the parent/child locks.
+        if(NativeCryptoFence::workerBlocked($this->pdo,$id)||$parentId&&NativeCryptoFence::workerBlocked($this->pdo,$parentId)){return null;}
         $scope['archived']=(int)($scope['archived']??0) || (int)($parent['archived']??0);
         if (($parent['deleted_at']??null)!==null) { $scope['deleted_at']=$parent['deleted_at']; }
         return $scope;
+    }
+
+    /** Inbox discovery uses alias i; this only selects candidates, never grants
+     * delivery authority. Each lease/send rechecks under lifecycle locks. */
+    protected function notificationWorkerDiscoverySql()
+    {
+        $legacy = NativeCryptoFence::workerDiscoverySql($this->pdo, 'i.scope_id');
+        $crypto = NativeCryptoFence::workerDiscoverySql($this->pdo, 'i.scope_id', true);
+        return "((i.kind LIKE 'crypto2.%' AND ".$crypto.") OR (i.kind NOT LIKE 'crypto2.%' AND ".$legacy.'))';
+    }
+
+    protected function lockNotificationDeliveryScope(array $inbox)
+    {
+        return str_starts_with($inbox['kind'], 'crypto2.')
+            ? (new NativeCryptoNotificationV2($this->container))->lockDeliveryScope($inbox['scope_id'])
+            : $this->lockScopeLifecycle($inbox['scope_id']);
     }
 
     protected function scope($id, $userId, $write = false, $owner = false)
@@ -197,6 +232,8 @@ abstract class NativeDatabase extends Base
         if (!$scope || ($write && $scope['role'] === 'viewer') || ($owner && $scope['role'] !== 'owner' && !((int)$scope['effective_access_policy_version']===3 && $scope['role']==='member'))) {
             throw new NativeError('permission_revoked', 403);
         }
+        if(!$this->cryptoAccess){NativeCryptoFence::guard($this->pdo,$id);if($parentId){NativeCryptoFence::guard($this->pdo,$parentId);}}
+        if($write){(new NativeConnectedWritePolicy($this->container,$this->bearer,$this->ip))->requireAccount($account['account_id']);}
         if ($write && (int)($scope['archived']??0)===1) { throw new NativeError('scope_archived',403); }
         if ($scope['kind'] === 'personal') {
             $private = $this->one('SELECT scope_id FROM familyhub_personal_scopes WHERE account_id=?', [$account['account_id']]);
@@ -215,6 +252,7 @@ abstract class NativeDatabase extends Base
 
     protected function scopeWire(array $scope)
     {
+        if(!$this->cryptoAccess){NativeCryptoFence::guard($this->pdo,$scope['id']);}
         return ['id' => $scope['id'], 'address'=>$scope['address']??null,'metadataRevision'=>(int)($scope['metadata_revision']??0), 'kind' => $scope['kind'], 'name' => $scope['name'], 'role' => $scope['role'], 'sequence' => (int)$scope['sequence'], 'archived'=>(int)($scope['archived']??0)===1, 'parentScopeId'=>$scope['parent_scope_id']??$scope['organization_id']??null, 'parentScopeKind'=>$scope['parent_scope_kind']??null, 'organizationId' => $scope['organization_id'] ?? null, 'projectRootId'=>$scope['project_root_id']??(!empty($scope['organization_id']) ? $scope['id'] : null), 'requiredRecordContractVersion' => (int)($scope['required_record_contract'] ?? 1), 'accessPolicyVersion'=>(int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1), 'accessRevision'=>(int)($scope['effective_access_revision']??$scope['access_revision']??0), 'organizationLeader'=>(bool)($scope['organization_leader']??false), 'accessSource'=>$scope['access_source']??'direct'];
     }
 

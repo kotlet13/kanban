@@ -1,6 +1,3 @@
-import 'package:drift/native.dart';
-import 'package:kanban/organizer/data/collaboration_database.dart';
-import 'package:kanban/organizer/state/local_database_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,11 +27,7 @@ Future<void> pumpPanel(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        localDatabaseProvider.overrideWith((ref) async {
-          final database = CollaborationDatabase(NativeDatabase.memory());
-          ref.onDispose(() => database.close());
-          return database;
-        }),
+        ...await sharingUiInfrastructureOverrides(tester, controller),
         collaborationProvider.overrideWith(() => controller),
         securePendingInvitationProvider.overrideWith(
           (ref) async => controller.savedInvitation,

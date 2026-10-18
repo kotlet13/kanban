@@ -23,11 +23,62 @@ Map<String, dynamic> decodeAccountDeletionPreview(
 
   if (wire['serverId'] != profile.serverId ||
       wire['accountId'] != profile.accountId ||
-      !const [1, 2, 3].contains(wire['policyVersion']) ||
+      !const [1, 2, 3, 4].contains(wire['policyVersion']) ||
       wire['canDelete'] is! bool ||
       wire['previewHash'] is! String ||
       !RegExp(r'^[a-f0-9]{64}$').hasMatch(wire['previewHash'] as String)) {
     invalid();
+  }
+  if (wire['policyVersion'] == 4) {
+    final retention = wire['cryptoRetention'];
+    const exact = {
+      'version': 1,
+      'retainsSharedSignedEvidence': true,
+      'mayRetainEncryptedWrappers': true,
+      'mayRetainEncryptedHistoricalBackups': true,
+      'mayRetainLegacyMigrationSources': true,
+      'erasesOtherKeyCopies': false,
+      'requiresFutureScopeRotation': true,
+    };
+    if (retention is! Map ||
+        retention.length != exact.length ||
+        exact.entries.any((e) => retention[e.key] != e.value)) {
+      invalid();
+    }
+    final seen = <String>{};
+    for (final scope in rows('cryptoScopes')) {
+      final actions = scope['allowedActions'];
+      if (scope.length != 8 ||
+          !isSharedUuid(scope['scopeId']) ||
+          !seen.add(scope['scopeId'] as String) ||
+          !const [
+            'personal',
+            'household',
+            'organization',
+            'project',
+          ].contains(scope['kind']) ||
+          !const ['owner', 'member', 'viewer'].contains(scope['role']) ||
+          !(scope['headHash'] == null ||
+              scope['headHash'] is String &&
+                  RegExp(r'^[a-f0-9]{64}$').hasMatch(scope['headHash'])) ||
+          scope['accessRevision'] is! int ||
+          scope['accessRevision'] < 0 ||
+          scope['accessRevision'] > 9007199254740991 ||
+          scope['memberCount'] is! int ||
+          scope['memberCount'] < 1 ||
+          scope['memberCount'] > 9007199254740991 ||
+          scope['privateOwned'] is! bool ||
+          actions is! List ||
+          actions.isEmpty ||
+          actions.toSet().length != actions.length ||
+          actions.any(
+            (a) => !const ['preserveReadOnly', 'deletePrivate'].contains(a),
+          ) ||
+          actions.contains('deletePrivate') && scope['privateOwned'] != true ||
+          !actions.contains('preserveReadOnly')) {
+        invalid();
+      }
+    }
   }
   final impact = wire['impact'];
   if (impact is! Map<String, dynamic> ||
@@ -100,7 +151,9 @@ Map<String, dynamic> decodeAccountDeletionPreview(
                     'householdPerson',
                     'organizationProjectLink',
                     'project',
-                    if (wire['policyVersion'] == 3) 'financeEntry',
+                    if ((wire['policyVersion'] as int) >= 3 &&
+                        wire.containsKey('linkedFinancialFacts'))
+                      'financeEntry',
                   ]
                 : const ['shoppingList', 'financeAccount'])
             .contains(r['type']) ||
@@ -125,7 +178,8 @@ Map<String, dynamic> decodeAccountDeletionPreview(
       }
     }
   }
-  if (wire['policyVersion'] == 3) {
+  if ((wire['policyVersion'] as int) >= 3 &&
+      wire.containsKey('linkedFinancialFacts')) {
     for (final fact in rows('linkedFinancialFacts')) {
       if ((fact['scopeId'] != null && !isSharedUuid(fact['scopeId'])) ||
           fact['reason'] != 'retained_shared_financial_fact' ||

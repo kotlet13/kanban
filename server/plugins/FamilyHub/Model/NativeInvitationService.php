@@ -9,6 +9,11 @@ class NativeInvitationService extends NativeDatabase
         return $this->transaction(function () use ($operation, $params) {
             if ($operation === 'invitations.preview') {
                 $this->fields($params, ['token']);
+                if (NativeCryptoService::enabled($this->pdo) && is_string($params['token']) &&
+                    preg_match('/^fhi1_[a-f0-9]{64}$/D',$params['token']) &&
+                    $this->one('SELECT token_hash FROM familyhub_crypto_invitation_routes_v3 WHERE token_hash=?',[hash('sha256',$params['token'])])) {
+                    return (new NativeCryptoInvitationV2($this->container,$this->bearer,$this->ip))->publicRead('crypto2.invitations.preview',$params);
+                }
                 $invitation = $this->fromToken($params['token']);
                 $scope = $this->usable($invitation);
                 $user = $this->one('SELECT id FROM users WHERE LOWER(username)=?', [$invitation['recipient_username']]);
@@ -130,6 +135,7 @@ class NativeInvitationService extends NativeDatabase
 
     protected function grant(array $row, array $user)
     {
+        NativeCryptoV2Boundary::guardStructural($this->pdo,$row['scope_id']);
         if ($this->change('UPDATE familyhub_invitations SET accepted_at=?,accepted_by=?,accepted_account_id=? WHERE id=? AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at>?',
                 [time(), $user['id'], $user['account_id'], $row['id'], time()]) !== 1) { throw new NativeError('invitation_invalid', 409); }
         $this->change('UPDATE familyhub_invitation_mail SET state=\'cancelled\',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state<>\'accepted\'',[$row['id']]);

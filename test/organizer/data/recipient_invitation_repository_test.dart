@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
@@ -80,6 +81,7 @@ void main() {
       CollaborationDatabase(NativeDatabase.memory()),
       FakeTransport(server),
       MemorySessionStore(),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     await repo.login(

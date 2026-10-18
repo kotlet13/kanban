@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -110,6 +111,7 @@ void main() {
               FakeTransport(server),
               MemorySessionStore(),
               invitationStore: MemoryPendingInvitationStore(),
+              contentRouteGuard: const SyntheticContentRouteGuard(),
             );
             await owner.initialize();
             await owner.login(
@@ -128,6 +130,7 @@ void main() {
               sessions,
               invitationStore: pending,
               ownsDatabase: false,
+              contentRouteGuard: const SyntheticContentRouteGuard(),
             );
             await repository.initialize();
           });

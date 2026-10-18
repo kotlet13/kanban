@@ -1,3 +1,5 @@
+import '../support/legacy_schema_fixture.dart';
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -370,6 +372,7 @@ void main() {
     await original.execute('DROP TABLE linked_payment_events');
     await original.execute('DROP TABLE linked_payment_projections');
     await original.execute('DROP TABLE linked_payment_intents');
+    await removeSyntheticCryptoSchema(original);
     await original.execute('PRAGMA user_version=4');
     await original.close();
     final upgraded = await client(file: file);
@@ -502,6 +505,8 @@ void main() {
       ]) {
         gardenV2.remove(field);
       }
+      gardenV2.remove('cryptoEvidence');
+      gardenV2.remove('cryptoPrivateDrafts');
       gardenV2['version'] = 2;
       gardenV2['databaseVersion'] = 5;
       gardenV2['personal'] = legacyTaskBackup(a.personal.snapshot);
@@ -550,6 +555,8 @@ void main() {
       ]) {
         oldDoc.remove(field);
       }
+      oldDoc.remove('cryptoEvidence');
+      oldDoc.remove('cryptoPrivateDrafts');
       oldDoc['version'] = 1;
       oldDoc['databaseVersion'] = 4;
       oldDoc['personal'] = legacyTaskBackup(a.personal.snapshot);
@@ -621,6 +628,7 @@ void main() {
         MemorySessionStore(),
         ownsDatabase: false,
         deletionStore: MemoryAccountDeletionStore(),
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       addTearDown(shared.close);

@@ -32,6 +32,7 @@ class NativePasswordResetService extends NativeDatabase
             }
             $tokens->revoke($user['account_id'], 'reset'); $tokens->revoke($user['account_id'], 'verify');
             $this->change('UPDATE familyhub_email_identities SET pending_email=NULL WHERE account_id=?', [$user['account_id']]);
+            (new NativeCryptoService($this->container))->event($user['account_id'],'auth.resetCompleted');
             return ['reset' => true];
         });
         if ($result instanceof NativeError) { throw $result; }
@@ -52,6 +53,7 @@ class NativePasswordResetService extends NativeDatabase
                 if ($identity && $identity['verified_at'] !== null && $identity['email']) {
                     $user['account_id'] = $account['account_id'];
                     (new NativeAccountTokens($this->container))->issue($user, 'reset', $identity['email'], $identity['revision'], $params['language']);
+                    (new NativeCryptoService($this->container))->event($user['account_id'],'auth.resetRequested');
                 }
             }
             return ['accepted' => true];

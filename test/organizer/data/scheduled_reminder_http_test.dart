@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in synthetic loopback only; fixture credentials and bodies are never logged.
 import 'dart:convert';
 import 'dart:io';
@@ -38,6 +39,7 @@ void main() {
           ),
           transport,
           store,
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repositories.add(repo);
         await repo.initialize();

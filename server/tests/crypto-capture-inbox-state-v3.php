@@ -1,0 +1,41 @@
+<?php
+require '/var/www/app/app/common.php';
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoCaptureInboxStateV3 as C;
+use Kanboard\Plugin\FamilyHub\Model\NativeError;
+$account='11111111-1111-4111-8111-111111111111';
+$row=static function($account,$sequence,$revision) {
+    $cell=static fn($type,$v)=>['type'=>$type,'valueBase64'=>base64_encode($v)];
+    return (object)['account_id'=>$cell('text',$account),'sequence'=>$cell('integer',(string)$sequence),
+        'visibility_revision'=>$cell('integer',(string)$revision)];
+};
+$n=0;
+$check=static function($ok)use(&$n){if(!$ok)throw new RuntimeException('inbox counter snapshot');$n++;};
+$deny=static function($fn)use($check){try{$fn();$ok=false;}catch(NativeError $e){$ok=true;}$check($ok);};
+$baseline=$row($account,17,4);
+$check(C::snapshot($account,$baseline,$baseline)===$baseline);
+$check(C::snapshot($account,$row($account,900,21),$baseline)===$baseline);
+$check(C::snapshot($account,$row($account,17,5),$baseline)===$baseline);
+$deny(fn()=>C::snapshot($account,$row($account,16,4),$baseline));
+$deny(fn()=>C::snapshot($account,$row($account,17,3),$baseline));
+$deny(fn()=>C::snapshot($account,$row('22222222-1111-4111-8111-111111111111',900,21),$baseline));
+$deny(fn()=>C::snapshot($account,$row($account,'9007199254740992',21),$baseline));
+$deny(fn()=>C::snapshot($account,$row($account,'1.0',21),$baseline));
+$extra=clone $baseline;$extra->read_at=['type'=>'integer','valueBase64'=>base64_encode('1')];
+$deny(fn()=>C::snapshot($account,$extra,$baseline));
+$bad=clone $baseline;$bad->sequence=['type'=>'null','valueBase64'=>null];
+$deny(fn()=>C::snapshot($account,$bad,$baseline));
+$bad=clone $baseline;$bad->sequence=['type'=>'blob','valueBase64'=>base64_encode('17')];
+$deny(fn()=>C::snapshot($account,$bad,$baseline));
+$bad=clone $baseline;$bad->account_id=['type'=>'integer','valueBase64'=>base64_encode($account)];
+$deny(fn()=>C::snapshot($account,$bad,$baseline));
+$mysql=clone $baseline;$mysql->account_id['type']='varchar(36)';$mysql->sequence['type']='bigint(20)';$mysql->visibility_revision['type']='bigint';
+$check(C::snapshot($account,$mysql,$mysql)===$mysql);
+$present=C::observe($account,$baseline);
+$prepared=json_decode(json_encode($present,JSON_THROW_ON_ERROR),true,16,JSON_THROW_ON_ERROR);
+$check(C::prepared($account,$prepared)==$baseline);
+$absent=C::observe($account,null);
+$check(C::prepared($account,$absent)===null);
+$deny(fn()=>C::prepared($account,array_replace($prepared,['accountId'=>'22222222-1111-4111-8111-111111111111'])));
+$deny(fn()=>C::prepared($account,array_replace($prepared,['state'=>'absent'])));
+$deny(fn()=>C::prepared($account,array_replace($prepared,['typedRow'=>null])));
+echo 'Capture3 inbox observation '.$n.' PASS'.PHP_EOL;

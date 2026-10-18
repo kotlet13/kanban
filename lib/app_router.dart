@@ -4,13 +4,18 @@ import 'package:go_router/go_router.dart';
 
 import 'l10n/l10n.dart';
 import 'organizer/presentation/organizer_shell.dart';
+import 'organizer/presentation/recovery/account_crypto_startup.dart';
 import 'organizer/presentation/navigation/organizer_navigation_observer.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   observers: [OrganizerNavigationObserver()],
   routes: <RouteBase>[
-    GoRoute(path: '/', builder: (context, state) => const OrganizerShell()),
+    GoRoute(
+      path: '/',
+      builder: (context, state) =>
+          const AccountCryptoStartupCoordinator(child: OrganizerShell()),
+    ),
   ],
   errorBuilder: (context, state) {
     final isApple = switch (Theme.of(context).platform) {

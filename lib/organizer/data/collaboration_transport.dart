@@ -8,6 +8,16 @@ class CollaborationApiException extends CollaborationException {
   final Map<String, dynamic> details;
 }
 
+final _rateLimitPauseZone = Object();
+
+/// Explicit workflow scope only. The transport retains the exact encoded HTTP
+/// body while the caller durably pauses or cancels. Other callers keep their
+/// existing error handling; authorization/network denials are never retried.
+Future<T> withCollaborationRateLimitPause<T>(
+  Future<T> Function() action, {
+  required Future<void> Function(int seconds) pause,
+}) => runZoned(action, zoneValues: {_rateLimitPauseZone: pause});
+
 abstract interface class CollaborationTransport {
   Future<Map<String, dynamic>> call({
     required String serverUrl,
@@ -53,9 +63,13 @@ class HttpCollaborationTransport implements CollaborationTransport {
   HttpCollaborationTransport({
     http.Client? client,
     this.requestTimeout = const Duration(seconds: 20),
+    this.onAttempt,
   }) : _client = client ?? http.Client();
   final http.Client _client;
   final Duration requestTimeout;
+
+  /// Optional operation-name diagnostics, never payloads or credentials.
+  final void Function(String operation)? onAttempt;
   @override
   Future<Map<String, dynamic>> call({
     required String serverUrl,
@@ -63,6 +77,38 @@ class HttpCollaborationTransport implements CollaborationTransport {
     Map<String, Object?> params = const {},
     String? token,
     bool allowLocalHttp = false,
+  }) async {
+    final encoded = jsonEncode({'v': 1, 'op': operation, 'params': params});
+    final pause =
+        Zone.current[_rateLimitPauseZone] as Future<void> Function(int)?;
+    while (true) {
+      try {
+        onAttempt?.call(operation);
+        return await _callOnce(
+          serverUrl: serverUrl,
+          requestBody: encoded,
+          token: token,
+          allowLocalHttp: allowLocalHttp,
+        );
+      } on CollaborationApiException catch (error) {
+        final retry = error.details['retryAfter'];
+        if (pause == null ||
+            error.code != 'rate_limited' ||
+            retry is! int ||
+            retry < 1 ||
+            retry > 60) {
+          rethrow;
+        }
+        await pause(retry);
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> _callOnce({
+    required String serverUrl,
+    required String requestBody,
+    required String? token,
+    required bool allowLocalHttp,
   }) async {
     final base = normalizeCollaborationServer(
       serverUrl,
@@ -81,7 +127,7 @@ class HttpCollaborationTransport implements CollaborationTransport {
       final request = http.Request('POST', endpoint)..followRedirects = false;
       request.headers['Content-Type'] = 'application/json';
       if (token != null) request.headers['Authorization'] = 'Bearer $token';
-      request.body = jsonEncode({'v': 1, 'op': operation, 'params': params});
+      request.body = requestBody;
       final deadline = DateTime.now().add(requestTimeout);
       final streamed = await _client.send(request).timeout(requestTimeout);
       final bytes = <int>[];

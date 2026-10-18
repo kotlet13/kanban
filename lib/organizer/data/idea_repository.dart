@@ -1,3 +1,5 @@
+import 'e2ee/crypto_business_payload.dart';
+import 'e2ee/crypto_migration_idea_draft_recovery.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -13,6 +15,7 @@ class IdeaRepository {
     this.storage, {
     DateTime Function()? clock,
     String Function()? idGenerator,
+    this.beforeConnectedEntry,
   }) : _clock = clock ?? DateTime.now,
        _idGenerator = idGenerator ?? newLocalId {
     _subscription = storage.changes.listen((_) {
@@ -21,6 +24,7 @@ class IdeaRepository {
       }
     });
   }
+  final Future<void> Function()? beforeConnectedEntry;
   final IdeaStorage storage;
   final DateTime Function() _clock;
   final String Function() _idGenerator;
@@ -66,6 +70,7 @@ class IdeaRepository {
     final generation = storage.identityGeneration;
     final workspace = expectedWorkspaceKey ?? storage.workspaceKey;
     return _queue(() async {
+      await beforeConnectedEntry?.call();
       if (generation != storage.identityGeneration ||
           workspace != storage.workspaceKey) {
         throw const OrganizerConflictException('Idea workspace changed');
@@ -243,10 +248,34 @@ class IdeaRepository {
         generation != storage.identityGeneration) {
       throw const OrganizerConflictException('Idea workspace changed');
     }
+    final recovered = await CryptoMigrationIdeaDraftRecovery.rows(
+      storage.database,
+      workspace,
+      'idea_drafts',
+    );
+    await storage.checkDurableAccess();
+    if (workspace != storage.workspaceKey ||
+        generation != storage.identityGeneration) {
+      throw const OrganizerConflictException('Idea workspace changed');
+    }
+    final all = [
+      ...rows,
+      ...recovered.where(
+        (r) => !rows.any(
+          (v) => (jsonDecode(v['payload'] as String) as Map)['id'] == r['id'],
+        ),
+      ),
+    ];
     return List.unmodifiable(
-      rows.map(
+      all.map(
         (r) => IdeaBoard.fromJson(
-          jsonDecode(r['payload'] as String) as Map<String, dynamic>,
+          CryptoBusinessPayload.projection(
+            'content',
+            'idea',
+            Map<String, dynamic>.from(
+              jsonDecode(r['payload'] as String) as Map,
+            ),
+          ),
         ),
       ),
     );
@@ -263,6 +292,32 @@ class IdeaRepository {
     if (workspace != storage.workspaceKey ||
         generation != storage.identityGeneration) {
       throw const OrganizerConflictException('Idea workspace changed');
+    }
+    if (rows.isEmpty) {
+      final recovered = await CryptoMigrationIdeaDraftRecovery.rows(
+        storage.database,
+        workspace,
+        'idea_drafts',
+        id: id,
+      );
+      await storage.checkDurableAccess();
+      if (workspace != storage.workspaceKey ||
+          generation != storage.identityGeneration) {
+        throw const OrganizerConflictException('Idea workspace changed');
+      }
+      if (recovered.isNotEmpty) {
+        return IdeaBoard.fromJson(
+          Map<String, dynamic>.from(
+            CryptoBusinessPayload.projection(
+              'content',
+              'idea',
+              Map<String, dynamic>.from(
+                jsonDecode(recovered.single['payload'] as String) as Map,
+              ),
+            ),
+          ),
+        );
+      }
     }
     return rows.isEmpty
         ? null
@@ -284,6 +339,26 @@ class IdeaRepository {
         generation != storage.identityGeneration) {
       throw const OrganizerConflictException('Idea workspace changed');
     }
+    if (rows.isEmpty) {
+      final recovered = await CryptoMigrationIdeaDraftRecovery.rows(
+        storage.database,
+        workspace,
+        'idea_drafts',
+        id: id,
+      );
+      await storage.checkDurableAccess();
+      if (workspace != storage.workspaceKey ||
+          generation != storage.identityGeneration) {
+        throw const OrganizerConflictException('Idea workspace changed');
+      }
+      if (recovered.isNotEmpty && recovered.single['base'] != null) {
+        return IdeaBoard.fromJson(
+          Map<String, dynamic>.from(
+            jsonDecode(recovered.single['base'] as String) as Map,
+          ),
+        );
+      }
+    }
     return rows.isEmpty || rows.single['base'] == null
         ? null
         : IdeaBoard.fromJson(
@@ -303,6 +378,10 @@ class IdeaRepository {
       await storage.database.execute(
         'DELETE FROM idea_drafts WHERE workspace=? AND id=?',
         [workspace, id],
+      );
+      await storage.database.execute(
+        'INSERT OR REPLACE INTO local_meta VALUES(?,?)',
+        ['migration_idea_draft_dismissed:$workspace:$id', '1'],
       );
       await storage.database.touchPersonal();
     });
@@ -386,8 +465,14 @@ class IdeaRepository {
       'SELECT bytes FROM idea_assets WHERE workspace=? AND sha256=?',
       [workspace, asset.sha256],
     );
-    if (rows.isEmpty) return null;
-    final bytes = Uint8List.fromList(rows.single['bytes'] as List<int>);
+    final bytes = rows.isEmpty
+        ? await CryptoMigrationIdeaDraftRecovery.asset(
+            storage.database,
+            workspace,
+            asset,
+          )
+        : Uint8List.fromList(rows.single['bytes'] as List<int>);
+    if (bytes == null) return null;
     await verifyIdeaAsset(asset, bytes);
     if (workspace != storage.workspaceKey ||
         generation != storage.identityGeneration) {

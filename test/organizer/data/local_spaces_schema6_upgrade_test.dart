@@ -1,3 +1,5 @@
+import '../support/legacy_schema_fixture.dart';
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -33,6 +35,7 @@ void main() {
         transport,
         sessions,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       await shared.login(
@@ -88,6 +91,7 @@ void main() {
       await db.execute('DROP TABLE linked_payment_events');
       await db.execute('DROP TABLE linked_payment_projections');
       await db.execute('DROP TABLE linked_payment_intents');
+      await removeSyntheticCryptoSchema(db);
       await db.execute('PRAGMA user_version=6');
       await db.close();
       db = CollaborationDatabase(NativeDatabase(file));
@@ -100,6 +104,7 @@ void main() {
         transport,
         sessions,
         ownsDatabase: false,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
       );
       await shared.initialize();
       addTearDown(() async {
@@ -107,7 +112,7 @@ void main() {
         await shared.close();
         await db.close();
       });
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 10);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 11);
       expect(
         await db.rows('SELECT * FROM personal_records ORDER BY workspace,id'),
         beforePersonal,
@@ -146,8 +151,8 @@ void main() {
         await backup.exportEncryptedBackup(password),
         password,
       );
-      expect(document['version'], 7);
-      expect(document['databaseVersion'], 10);
+      expect(document['version'], 9);
+      expect(document['databaseVersion'], 11);
       expect((document['localSpaces'] as List).single['space']['id'], 'local');
       expect((document['tables'] as Map)['outbox'], beforeOutbox);
     },

@@ -309,8 +309,8 @@ void main() {
       );
       final bytes = await backup.exportEncryptedBackup('synthetic-password');
       final doc = await crypto.decrypt(bytes, 'synthetic-password');
-      expect(doc['version'], 7);
-      expect(doc['databaseVersion'], 10);
+      expect(doc['version'], 9);
+      expect(doc['databaseVersion'], 11);
       expect(doc['localTaskReminderPreferences'], hasLength(1));
       final restored = CollaborationDatabase(NativeDatabase.memory());
       final restStorage = SqliteOrganizerStorage(restored);

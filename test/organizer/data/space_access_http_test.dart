@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt in against a private synthetic loopback fixture. Never log its credentials.
 // KANBAN_SPACE_HTTP_FIXTURE=/absolute/private/fixture.json flutter test ...
 import 'dart:convert';
@@ -76,6 +77,7 @@ void main() {
           transport,
           sessions,
           invitationStore: MemoryPendingInvitationStore(),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repos.add(repo);
         await repo.initialize();

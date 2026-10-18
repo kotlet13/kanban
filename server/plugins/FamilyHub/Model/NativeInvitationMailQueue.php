@@ -11,12 +11,22 @@ class NativeInvitationMailQueue extends NativeEmailInvitationService
         if (!is_int($limit) || $limit<1 || $limit>50) { throw new NativeError('validation_error'); }
         $transport=$transport??new NativeAccountMailTransport(); $deadline=$deadline??microtime(true)+60;
         $counts=['examined'=>0,'accepted'=>0,'retry'=>0,'cancelled'=>0];
-        // Remove undispatched secrets after accept/revoke/expiry, even beyond this batch.
-        $this->change('UPDATE familyhub_invitation_mail SET state=\'cancelled\',token_cipher=NULL,lease_token=NULL WHERE state IN (\'pending\',\'processing\') AND invitation_id IN (SELECT id FROM familyhub_invitations WHERE accepted_at IS NOT NULL OR revoked_at IS NOT NULL OR expires_at<=?)',[time()]);
-        $rows=$this->many('SELECT invitation_id FROM familyhub_invitation_mail WHERE (state=\'pending\' AND next_attempt<=?) OR (state=\'processing\' AND lease_until<=?) ORDER BY next_attempt,invitation_id LIMIT '.$limit,[time(),time()]);
+        // Never mutate captured mail during a fenced migration, including
+        // expiry cleanup. The same parent/scope lock serializes final cutover.
+        $unfenced=' AND '.NativeCryptoFence::workerDiscoverySql($this->pdo,'i.scope_id');
+        $expired=$this->many("SELECT m.invitation_id,i.scope_id FROM familyhub_invitation_mail m JOIN familyhub_invitations i ON i.id=m.invitation_id JOIN familyhub_scopes s ON s.id=i.scope_id WHERE m.state IN ('pending','processing') AND (i.accepted_at IS NOT NULL OR i.revoked_at IS NOT NULL OR i.expires_at<=?) ".$unfenced." ORDER BY m.invitation_id LIMIT 50",[time()]);
+        foreach ($expired as $item) {
+            $this->transaction(function()use($item){
+                if (!$this->lockScopeLifecycle($item['scope_id'])) return;
+                $this->change("UPDATE familyhub_invitation_mail SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state IN ('pending','processing') AND invitation_id IN (SELECT id FROM familyhub_invitations WHERE accepted_at IS NOT NULL OR revoked_at IS NOT NULL OR expires_at<=?)",[$item['invitation_id'],time()]);
+            });
+        }
+        $rows=$this->many("SELECT m.invitation_id FROM familyhub_invitation_mail m JOIN familyhub_invitations i ON i.id=m.invitation_id JOIN familyhub_scopes s ON s.id=i.scope_id WHERE ((m.state='pending' AND m.next_attempt<=?) OR (m.state='processing' AND m.lease_until<=?))".$unfenced.' ORDER BY m.next_attempt,m.invitation_id LIMIT '.$limit,[time(),time()]);
         foreach ($rows as $row) {
             if (microtime(true)+50>$deadline) { break; }
             $lease=$this->transaction(function() use($row) {
+                $inv=$this->one('SELECT scope_id FROM familyhub_invitations WHERE id=?',[$row['invitation_id']]);
+                if (!$inv || !$this->lockScopeLifecycle($inv['scope_id'])) return null;
                 $job=$this->one('SELECT * FROM familyhub_invitation_mail WHERE invitation_id=?'.$this->lockSuffix(),[$row['invitation_id']]);
                 if (!$job || !in_array($job['state'],['pending','processing'],true) || ($job['state']==='processing' && (int)$job['lease_until']>time()) || ($job['state']==='pending' && (int)$job['next_attempt']>time())) { return null; }
                 $lease=bin2hex(random_bytes(16));
@@ -28,6 +38,7 @@ class NativeInvitationMailQueue extends NativeEmailInvitationService
                 $invitation=$this->one('SELECT * FROM familyhub_invitations WHERE id=?',[$id]);
                 if ($invitation) {
                     $this->one('SELECT id FROM users WHERE id=?'.$this->lockSuffix(),[$invitation['creator_id']]);
+                    if (!$this->lockScopeLifecycle($invitation['scope_id'])) { return 'retry'; }
                     try { $scope=$this->usable($invitation); } catch (NativeError $error) { $scope=null; }
                 } else { $scope=null; }
                 $job=$this->one('SELECT * FROM familyhub_invitation_mail WHERE invitation_id=?'.$this->lockSuffix(),[$id]);

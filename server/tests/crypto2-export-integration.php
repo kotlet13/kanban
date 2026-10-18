@@ -1,0 +1,74 @@
+<?php
+require __DIR__.'/crypto2-creation-integration.php';
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoV2Codec;
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoExportV2;
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoCodec;
+
+$childBody=candidate2($child,$state);
+$childBody['accessBasis']=$child['accessBasis'];
+$childPending=send2('crypto2.scope.headPut',$childBody,$fresh,$freshKeys);
+$childHead=call('crypto2.scope.headGet',['scopeId'=>$child['id'],'headHash'=>$childPending['headHash']],$fresh);
+grants2($childHead,[$childHead],$fresh,$freshKeys,$root,$state['snapshot']['recoveryRootEpochId']);
+$childManifest=call('crypto2.grants.manifest',['scopeId'=>$child['id'],'headHash'=>$childHead['headHash']],$fresh);
+$sourceHead=call('crypto2.scope.headGet',['scopeId'=>$newId],$fresh);
+// The ordinary opaque parent metadata successor is installed atomically with
+// child activation. Only its hash belongs in the child's public inner proof.
+$metadataId=\Kanboard\Plugin\FamilyHub\Model\NativeCryptoReservedRecordV2::derive($fresh['serverId'],$newId,'scopeMetadata');
+$metadata=row2($newId,$sourceHead,$fresh,$freshKeys,$metadataId,'scopeMetadata');
+$metadataAck=call('crypto2.records.batch',batch2([$metadata],$fresh,$freshKeys),$fresh)['records'][0];
+$metadataNext=row2($newId,$sourceHead,$fresh,$freshKeys,$metadataId,'scopeMetadata',1,$metadataAck['recordProofHash']);
+$parentTopologyBatch=['parentScopeId'=>$newId,'childScopeId'=>$child['id'],'authorization'=>batch2([$metadataNext],$fresh,$freshKeys)];
+$activation=['scopeId'=>$child['id'],'headHash'=>$childHead['headHash'],'grantManifestHash'=>$childManifest['grantManifestHash'],'authorDirectoryHeadHash'=>$state['headHash'],
+    'parentTopologyBatchHash'=>hash('sha256',"JivieFinanceTopologyCreationBatch/v3\n".NativeCryptoCodec::canonical((object)$parentTopologyBatch))];
+$activationProof=content2('crypto2.scope.activate',$activation,$fresh,$freshKeys);
+send2('crypto2.scope.activate',['scopeId'=>$child['id'],'headHash'=>$childHead['headHash'],'activationProof'=>$activationProof,'parentTopologyBatch'=>$parentTopologyBatch],$fresh,$freshKeys);
+$accountRow=row2($newId,$sourceHead,$fresh,$freshKeys,null,'financeAccount');
+$sourceAck=call('crypto2.records.batch',batch2([$accountRow],$fresh,$freshKeys),$fresh)['records'][0];
+$nonce=uid();
+$scopeToken=hash('sha256',"JivieExportScope/v2\n".NativeCryptoCodec::canonical((object)['version'=>2,'serverId'=>$fresh['serverId'],'scopeId'=>$child['id'],'sourceScopeId'=>$newId]));
+$subject=hash('sha256',"JivieExportSubject/v2\n".NativeCryptoCodec::canonical((object)['version'=>2,'serverId'=>$fresh['serverId'],'scopeId'=>$child['id'],'purpose'=>'financeAccountChoice','sourceScopeToken'=>$scopeToken,'sourceId'=>$accountRow['id'],'subjectNonce'=>$nonce]));
+$disclosure=['accountId'=>$accountRow['metadata']['identity']['canonicalId'],'accountScopeId'=>$newId,'archived'=>false,'currency'=>'EUR','name'=>'PRIVATE_EXPORT_SENTINEL','sourceRevision'=>1];
+// The server treats this as opaque. The client independently hashes exact business JSON.
+$disclosureSalt=random_bytes(32);
+$disclosureHash=hash('sha256',"JivieScopedDisclosureCommitment/v2\n".NativeCryptoCodec::canonical((object)['version'=>2,'serverId'=>$fresh['serverId'],'scopeId'=>$child['id'],'purpose'=>'financeAccountChoice','membershipHeadHash'=>$childHead['headHash'],'sourceScopeToken'=>$scopeToken,'subjectToken'=>$subject,'sourceMembershipHeadHash'=>$sourceHead['headHash'],'sourceRecordProofHash'=>$sourceAck['recordProofHash'],'sourceRevision'=>1,'accountId'=>$fresh['user']['accountId'],'deviceId'=>$fresh['device']['id'],'deviceSnapshotHash'=>$state['deviceSnapshotHash']])."\n".$disclosureSalt.json_encode($disclosure,JSON_THROW_ON_ERROR));
+$offerBody=['version'=>2,'operation'=>'crypto2.exports.offer','serverId'=>$fresh['serverId'],'purpose'=>'financeAccountChoice','scopeId'=>$child['id'],'membershipHeadHash'=>$childHead['headHash'],'sourceScopeToken'=>$scopeToken,'subjectToken'=>$subject,'sourceMembershipHeadHash'=>$sourceHead['headHash'],'sourceRecordProofHash'=>$sourceAck['recordProofHash'],'sourceRevision'=>1,'accountId'=>$fresh['user']['accountId'],'deviceId'=>$fresh['device']['id'],'authorDirectoryHeadHash'=>$state['headHash'],'deviceSnapshotHash'=>$state['deviceSnapshotHash'],'disclosureHash'=>$disclosureHash,'permittedFields'=>NativeCryptoExportV2::FIELDS['financeAccountChoice']];
+$offerProof=inner2($offerBody,"JivieE2EE/exportOffer/v2\n",$freshKeys);
+$offerRequest=content2('crypto2.exports.propose',['sourceScopeId'=>$newId,'sourceId'=>$accountRow['id'],'subjectNonce'=>$nonce,'offerProof'=>$offerProof],$fresh,$freshKeys);
+$offer=call('crypto2.exports.propose',$offerRequest,$fresh);
+ck(call('crypto2.exports.propose',$offerRequest,$fresh)===$offer,'export offer exact lost ACK preserves immutable commitment');
+ck(call('crypto2.exports.delegation.forOffer',['scopeId'=>$child['id'],'offerHash'=>$offer['offerHash']],$fresh)['authorization']===null,'issuer discovers pending target approval without copying delegation JSON');
+$offers=call('crypto2.exports.offers',['scopeId'=>$child['id']],$fresh);
+$public=json_encode($offers,JSON_THROW_ON_ERROR);
+ck(count($offers['offers'])===1&&!str_contains($public,$newId)&&!str_contains($public,$accountRow['id'])&&!str_contains($public,'PRIVATE_EXPORT_SENTINEL'),'target offer exposes only opaque source tokens and no business values/raw source scope or record ID');
+$badOffer=$offerBody;$badOffer['sourceRecordProofHash']=str_repeat('a',64);
+deny(fn()=>send2('crypto2.exports.propose',['sourceScopeId'=>$newId,'sourceId'=>$accountRow['id'],'subjectNonce'=>$nonce,'offerProof'=>inner2($badOffer,"JivieE2EE/exportOffer/v2\n",$freshKeys)],$fresh,$freshKeys),'crypto_export_source_changed','issuer cannot attest an arbitrary source proof');
+$recipient=['accountId'=>$fresh['user']['accountId'],'deviceId'=>$fresh['device']['id'],'directoryHeadHash'=>$state['headHash'],'deviceSnapshotHash'=>$state['deviceSnapshotHash'],'encryptionPublicKeyBase64'=>$freshKeys['boxPublic']];
+$delegate=['scopeId'=>$child['id'],'membershipHeadHash'=>$childHead['headHash'],'expectedAccessRevision'=>$child['accessRevision'],'authorDirectoryHeadHash'=>$state['headHash'],'delegationId'=>uid(),'purpose'=>'financeAccountChoice','offerHash'=>$offer['offerHash'],'issuerAccountId'=>$fresh['user']['accountId'],'issuerDirectoryHeadHash'=>$state['headHash'],'issuerRootSigningKeyBase64'=>$state['snapshot']['rootSigningKeyBase64'],'issuerRootEncryptionKeyBase64'=>$state['snapshot']['rootEncryptionKeyBase64'],'issuerIdentityEpochId'=>$state['snapshot']['identityEpochId'],'issuerDeviceSnapshotHash'=>$state['deviceSnapshotHash'],'sourceScopeToken'=>$scopeToken,'subjectToken'=>$subject,'permittedFields'=>NativeCryptoExportV2::FIELDS['financeAccountChoice'],'bridgeRecipient'=>$recipient];
+$noRecipient=$delegate;$noRecipient['bridgeRecipient']=null;
+deny(fn()=>send2('crypto2.exports.delegate',$noRecipient,$fresh,$freshKeys),'crypto_export_recipient_required','parent choice must use selected encrypted disclosure bridge');
+$wrongRecipient=$delegate;$wrongRecipient['bridgeRecipient']['encryptionPublicKeyBase64']=base64_encode(random_bytes(32));
+deny(fn()=>send2('crypto2.exports.delegate',$wrongRecipient,$fresh,$freshKeys),'crypto_export_recipient_changed','target manager cannot substitute recipient key outside approved directory');
+$delegateProof=content2('crypto2.exports.delegate',$delegate,$fresh,$freshKeys);
+$delegation=call('crypto2.exports.delegate',$delegateProof,$fresh);
+ck(call('crypto2.exports.delegate',$delegateProof,$fresh)===$delegation,'selected issuer delegation exact lost ACK is stable');
+ck(call('crypto2.exports.delegation.forOffer',['scopeId'=>$child['id'],'offerHash'=>$offer['offerHash']],$fresh)['authorization']===$delegateProof,'issuer discovers the exact current selected delegation after another request approved it');
+deny(fn()=>call('crypto2.exports.delegation.forOffer',['scopeId'=>$newId,'offerHash'=>$offer['offerHash']],$fresh),'permission_revoked','delegation discovery cannot substitute the target scope');
+deny(fn()=>call('crypto2.exports.delegation.forOffer',['scopeId'=>$child['id'],'offerHash'=>$offer['offerHash']],$outsider),'permission_revoked','delegation discovery is not an outsider issuer or target directory oracle');
+$recipientDirectory=call('crypto2.exports.recipient.directory',['delegationHash'=>$delegation['delegationHash'],'limit'=>1],$fresh);
+ck(count($recipientDirectory['proofs'])===1&&$recipientDirectory['hasMore']&&$recipientDirectory['deviceSnapshotHash']===$state['deviceSnapshotHash'],'issuer receives bounded exact recipient proof prefix without target roster');
+$requestId=uid();
+$cipher=sodium_crypto_box_seal(json_encode(['disclosure'=>$disclosure,'disclosureSaltBase64'=>base64_encode($disclosureSalt)],JSON_THROW_ON_ERROR),base64_decode($freshKeys['boxPublic']));
+$certificate=$offerBody;$certificate['operation']='crypto2.exports.certificate';$certificate['offerHash']=$offer['offerHash'];$certificate['delegationProofHash']=$delegation['delegationHash'];$certificate['bridge']=['recipient'=>$recipient,'requestId'=>$requestId,'sealedDisclosureBase64'=>base64_encode($cipher),'ciphertextHash'=>hash('sha256',$cipher)];
+$certificateProof=inner2($certificate,"JivieE2EE/scopedExport/v2\n",$freshKeys);
+$certRequest=content2('crypto2.exports.certify',['offerHash'=>$offer['offerHash'],'delegationHash'=>$delegation['delegationHash'],'sourceRevision'=>1,'sourceRecordProofHash'=>$sourceAck['recordProofHash'],'certificateProof'=>$certificateProof],$fresh,$freshKeys,$requestId);
+$cert=call('crypto2.exports.certify',$certRequest,$fresh);
+ck(call('crypto2.exports.certify',$certRequest,$fresh)===$cert,'certificate exact request ID and sealed payload survive lost ACK');
+$read=call('crypto2.exports.certificates.get',['scopeId'=>$child['id'],'certificateHash'=>$cert['certificateHash']],$fresh);
+ck($read['authorization']===$certificateProof&&!str_contains(json_encode($read),'PRIVATE_EXPORT_SENTINEL'),'certificate read retains exact ciphertext evidence without disclosure values');
+$badCertificate=$certificate;$badCertificate['bridge']['ciphertextHash']=str_repeat('0',64);
+deny(fn()=>send2('crypto2.exports.certify',['offerHash'=>$offer['offerHash'],'delegationHash'=>$delegation['delegationHash'],'sourceRevision'=>1,'sourceRecordProofHash'=>$sourceAck['recordProofHash'],'certificateProof'=>inner2($badCertificate,"JivieE2EE/scopedExport/v2\n",$freshKeys)],$fresh,$freshKeys),'crypto_export_invalid','tampered sealed bytes commitment is rejected');
+$nextSource=row2($newId,$sourceHead,$fresh,$freshKeys,$accountRow['id'],'financeAccount',1,$sourceAck['recordProofHash']);
+call('crypto2.records.batch',batch2([$nextSource],$fresh,$freshKeys),$fresh);
+$newRequest=uid();$stale=$certificate;$stale['bridge']['requestId']=$newRequest;
+deny(fn()=>call('crypto2.exports.certify',content2('crypto2.exports.certify',['offerHash'=>$offer['offerHash'],'delegationHash'=>$delegation['delegationHash'],'sourceRevision'=>1,'sourceRecordProofHash'=>$sourceAck['recordProofHash'],'certificateProof'=>inner2($stale,"JivieE2EE/scopedExport/v2\n",$freshKeys)],$fresh,$freshKeys,$newRequest),$fresh),'crypto_export_source_changed','new attestation cannot use stale formerly valid source revision');
+echo 'Crypto2 scoped export integration: '.$checks.' checks PASS'.PHP_EOL;

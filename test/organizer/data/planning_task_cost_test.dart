@@ -1,3 +1,4 @@
+import '../support/legacy_schema_fixture.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:drift/native.dart';
@@ -348,6 +349,7 @@ void main() {
       await db.execute('DROP TABLE linked_payment_events');
       await db.execute('DROP TABLE linked_payment_projections');
       await db.execute('DROP TABLE linked_payment_intents');
+      await removeSyntheticCryptoSchema(db);
       await db.execute('PRAGMA user_version=5');
       await db.close();
       db = CollaborationDatabase(NativeDatabase(file));
@@ -358,7 +360,7 @@ void main() {
       final operation = (await db.rows('SELECT * FROM finance_outbox')).single;
       expect(operation['request'], body);
       expect(operation['wire_version'], 1);
-      expect((await db.rows('PRAGMA user_version')).single['user_version'], 10);
+      expect((await db.rows('PRAGMA user_version')).single['user_version'], 11);
       await db.close();
     },
   );
@@ -517,8 +519,8 @@ void main() {
         'a long test password',
       );
       validateBackupDocument(doc);
-      expect(doc['version'], 8);
-      expect(doc['databaseVersion'], 10);
+      expect(doc['version'], 9);
+      expect(doc['databaseVersion'], 11);
       expect(doc['operationPairs'], [
         {'genericOpId': generic['op_id'], 'financeOpId': finance['op_id']},
       ]);
@@ -582,6 +584,8 @@ void main() {
       final initial = await portable.exportEncryptedBackup(password),
           crypto = PortableBackupCrypto();
       final legacy = await crypto.decrypt(initial, password);
+      legacy.remove('cryptoEvidence');
+      legacy.remove('cryptoPrivateDrafts');
       legacy['version'] = 2;
       legacy['databaseVersion'] = 5;
       legacy.remove('operationPairs');

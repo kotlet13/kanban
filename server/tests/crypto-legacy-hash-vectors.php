@@ -1,0 +1,8 @@
+<?php
+/** Public synthetic compatibility vectors; never sends an old plaintext operation. */
+require '/var/www/app/app/common.php';
+if(!defined('FAMILYHUB_DEVELOPMENT_MODE')||FAMILYHUB_DEVELOPMENT_MODE!==true){throw new RuntimeException('Synthetic only');}
+$probe=new class($container) extends \Kanboard\Plugin\FamilyHub\Model\NativeDatabase {public function bytes($op,$p){return $this->canonical(['op'=>$op,'params'=>$p]);}public function digest($op,$p){return $this->hashRequest($op,$p);}};
+$inputs=['emptyObject'=>'{"empty":{},"array":[]}','integralDouble'=>'{"amount":80.0}','smallExponent7'=>'{"value":1e-7}','smallExponent5'=>'{"value":1e-5}','largeExponent16'=>'{"value":1e16}','largeExponent17'=>'{"value":1e17}','largeExponent20'=>'{"value":1e20}','negativeZero'=>'{"value":-0.0}','unicode'=>'{"text":"\u2028\u2029Čebelica 🐝 /"}','nested'=>'{"z":[{},80.0,1e-7,-0.0],"a":{"nested":{}}}'];$vectors=[];
+foreach(['sync.push','sync6.push','sync3.pushTaskWithCost','finance3.paymentCommit'] as $op){foreach($inputs as $name=>$json){$p=json_decode($json,true,32,JSON_THROW_ON_ERROR);$bytes=$probe->bytes($op,$p);$vectors[]=['name'=>$name,'operation'=>$op,'inputJson'=>$json,'canonicalBase64'=>base64_encode($bytes),'sha256'=>$probe->digest($op,$p)];}}
+echo json_encode(['format'=>1,'phpVersion'=>PHP_VERSION,'note'=>'NativeDatabase canonical/hashRequest exact bytes; ALL sync3/4/5/6 compound operations normalize hash op to sync3.pushTaskWithCost. Empty objects become arrays in associative legacy recursion.','vectors'=>$vectors],JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR).PHP_EOL;

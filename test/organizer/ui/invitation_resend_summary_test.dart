@@ -92,7 +92,10 @@ Future<void> _pump(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [collaborationProvider.overrideWith(() => controller)],
+      overrides: [
+        ...await sharingUiInfrastructureOverrides(tester, controller),
+        collaborationProvider.overrideWith(() => controller),
+      ],
       child: MaterialApp(
         locale: Locale(locale),
         theme: buildJivieTheme(Brightness.light),

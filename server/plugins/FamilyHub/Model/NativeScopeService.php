@@ -53,6 +53,7 @@ class NativeScopeService extends NativeDatabase
                     $this->uuid($parentId);
                     if ($params['kind'] !== 'project' || (isset($params['organizationId']) && $params['organizationId']!==$parentId)) { throw new NativeError('validation_error'); }
                     $parent = $this->scope($parentId, $user['id'], true, true);
+                    NativeCryptoV2Boundary::guardStructural($this->pdo,$parentId);
                     if (!in_array($parent['kind'],['organization','household'],true) || ($parent['kind']==='household' && (int)$parent['access_policy_version']!==3)) { throw new NativeError('validation_error'); }
                     if ($accessVersion===3 && (int)$parent['access_policy_version']!==3) { throw new NativeError('access_migration_required',409); }
                     $organizationId=$parent['kind']==='organization'?$parentId:null;
@@ -108,6 +109,7 @@ class NativeScopeService extends NativeDatabase
                 if (!is_int($params['expectedRevision']) || $params['expectedRevision']<0) { throw new NativeError('validation_error'); }
                 $hash=$this->hashRequest($operation,$params);$replay=$this->replay($id,$user['id'],$request,$hash);
                 if ($replay) { return $replay['body']; }
+                NativeCryptoV2Boundary::guardStructural($this->pdo,$id);
                 if ((int)$scope['metadata_revision']!==$params['expectedRevision']) { throw new NativeError('metadata_conflict',409,['scope'=>$this->scopeWire($scope)]); }
                 $this->change('UPDATE familyhub_scopes SET name=?,address=?,metadata_revision=metadata_revision+1,sequence=sequence+1 WHERE id=?',[$name,$address,$id]);
                 $result=['scope'=>$this->scopeWire($this->scope($id,$user['id']))];$this->remember($id,$user['id'],$request,$hash,$result);return $result;
@@ -120,6 +122,7 @@ class NativeScopeService extends NativeDatabase
                 if (!in_array($scope['kind'],['household','organization','project'],true)) { throw new NativeError('validation_error'); }
                 $hash=$this->hashRequest($operation,$params);$replay=$this->replay($id,$user['id'],$request,$hash);
                 if ($replay) { return $replay['body']; }
+                NativeCryptoV2Boundary::guardStructural($this->pdo,$id);
                 if ((int)($this->one('SELECT archived FROM familyhub_scopes WHERE id=?',[$id])['archived']??0)!==(int)$params['archived']) {
                     $this->change('UPDATE familyhub_scopes SET archived=?,sequence=sequence+1 WHERE id=?',[(int)$params['archived'],$id]);
                     $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$id]);
@@ -145,6 +148,7 @@ class NativeScopeService extends NativeDatabase
                 $hash = $this->hashRequest($operation, $params);
                 $replay = $this->replay($id, $user['id'], $request, $hash);
                 if ($replay) { return $replay['body']; }
+                NativeCryptoV2Boundary::guardStructural($this->pdo,$id);
                 $member = $this->one('SELECT * FROM familyhub_members WHERE scope_id = ? AND user_id = ?', [$id, $params['userId']]);
                 if (!$member || $member['role'] === 'owner') { throw new NativeError('cannot_remove_owner'); }
                 (new NativeMembershipRevocation($this->container))->apply($scope,$member['account_id'],$params['userId']);

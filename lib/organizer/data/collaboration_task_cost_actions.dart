@@ -15,6 +15,8 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
     final session = _requireSession(),
         epoch = _epoch,
         p = session.profile.partition;
+    await requireVerifiedEmailForConnectedEntry();
+    _checkEpoch(epoch);
     await database.transaction(() async {
       _checkEpoch(epoch);
       await _writable(p, scopeId);

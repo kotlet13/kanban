@@ -1,0 +1,166 @@
+{
+  "header": {
+    "version": 3,
+    "serverId": "00000001-1111-4111-8111-111111111111",
+    "migrationId": "00000002-1111-4111-8111-111111111111",
+    "captureId": "00000003-1111-4111-8111-111111111111",
+    "componentId": "00000004-1111-4111-8111-111111111111",
+    "componentCommitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "accountId": "00000005-1111-4111-8111-111111111111",
+    "sourceInventoryRoot": "3b295eb632b517d8833836f7d05e92432d9a6bb201d0d1a0a78ec226e0f6dd54",
+    "sourceCount": 3,
+    "archiveManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "frames": [
+    {
+      "tag": "binding",
+      "value": {
+        "binding": {
+          "bindingId": "0000000a-1111-4111-8111-111111111111",
+          "scopeId": "00000014-1111-4111-8111-111111111111",
+          "domain": "content",
+          "sourceCommitment": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        "adapter": "canonical",
+        "primaryRecordProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "companionProofHashes": [
+          "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        ],
+        "artifactHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    },
+    {
+      "tag": "binding",
+      "value": {
+        "binding": {
+          "bindingId": "0000000b-1111-4111-8111-111111111111",
+          "scopeId": "00000014-1111-4111-8111-111111111111",
+          "domain": "content",
+          "sourceCommitment": "2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "adapter": "structure",
+        "primaryRecordProofHash": null,
+        "companionProofHashes": [],
+        "artifactHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    },
+    {
+      "tag": "binding",
+      "value": {
+        "binding": {
+          "bindingId": "0000000c-1111-4111-8111-111111111111",
+          "scopeId": null,
+          "domain": "private",
+          "sourceCommitment": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "adapter": "immutableReceipt",
+        "primaryRecordProofHash": null,
+        "companionProofHashes": [],
+        "artifactHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    },
+    {
+      "tag": "file",
+      "value": {
+        "bindingId": "0000000a-1111-4111-8111-111111111111",
+        "id": "0000001e-1111-4111-8111-111111111111",
+        "kind": "attachment",
+        "plainSize": 20,
+        "cipherSize": 50,
+        "cipherSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "manifestHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "tag": "proofBlob",
+      "value": {
+        "bindingId": "0000000a-1111-4111-8111-111111111111",
+        "id": "0000001f-1111-4111-8111-111111111111",
+        "kind": "typedWitness",
+        "plainSize": null,
+        "cipherSize": 50,
+        "cipherSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "manifestHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "tag": "section",
+      "value": {
+        "kind": "audit",
+        "count": 0,
+        "root": "526d91644676cc48add802f857ea6ce95a9d064c5653a9c6b1dfaee5abb0eda0"
+      }
+    },
+    {
+      "tag": "section",
+      "value": {
+        "kind": "invitations",
+        "count": 0,
+        "root": "566f341c9819bd10e14b2a6ff7fc9a55000558545dc36b66e54dab5433586232"
+      }
+    },
+    {
+      "tag": "section",
+      "value": {
+        "kind": "notifications",
+        "count": 0,
+        "root": "9a1efd0b4e573864ef40a60150b0839325ab7faa1a47fa96fc3ff90f44efd9e1"
+      }
+    },
+    {
+      "tag": "section",
+      "value": {
+        "kind": "receipts",
+        "count": 1,
+        "root": "a3273f840b209ab77deeb6aad2d75523cb38f160e9bece5fa54fb25f5c7023ef"
+      }
+    },
+    {
+      "tag": "section",
+      "value": {
+        "kind": "structure",
+        "count": 1,
+        "root": "f6d4654e6a0e522901e2f2cb9e43b90d7c799d8913234e5457ea0e175b940ce8"
+      }
+    }
+  ],
+  "result": {
+    "version": 3,
+    "sourceRowCount": 3,
+    "primaryRecordProofCount": 1,
+    "companionProofCount": 1,
+    "archiveContextRowCount": 1,
+    "userFileCount": 1,
+    "userFileBytes": 20,
+    "witnessBlobCount": 1,
+    "adapterCounts": {
+      "canonical": 1,
+      "canonicalFile": 0,
+      "structure": 1,
+      "notification": 0,
+      "invitation": 0,
+      "immutableReceipt": 1,
+      "auditHistory": 0,
+      "moderationDisclosure": 0,
+      "sourceContext": 0
+    },
+    "hash": "60b1624ec4c49569fe53c921cab23ae2b3695998fdb3757e28c4655a88c39755"
+  },
+  "canonicalArtifact": {
+    "sourceBinding": {
+      "bindingId": "0000000a-1111-4111-8111-111111111111",
+      "scopeId": "00000014-1111-4111-8111-111111111111",
+      "sourceKind": "scope_metadata",
+      "canonicalId": "00000015-1111-4111-8111-111111111111",
+      "wireId": "00000016-1111-8111-8111-111111111111",
+      "domain": "content",
+      "type": "scopeMetadata",
+      "legacyRevision": 0,
+      "recordProofHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "companionProofHashes": [],
+      "witness": null,
+      "objects": []
+    },
+    "hash": "c2f63d513770f4e2eb5ce6fc98238f406ec479c469338936de0c11728346b112"
+  }
+}

@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:drift/native.dart';
@@ -37,6 +38,7 @@ void main() {
       transport,
       MemorySessionStore(),
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await shared.initialize();
     final backup = PortableBackupRepository(

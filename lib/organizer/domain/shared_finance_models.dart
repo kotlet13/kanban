@@ -696,23 +696,48 @@ class SharedFinanceAuditEntry {
     required this.revision,
     required this.actorAccountId,
     required this.changedAt,
+    this.timeBasis = 'legacyServer',
+    this.revisionNamespace = 'legacy',
+    this.sourceEvidenceHash,
+    this.beforeJson,
+    this.afterJson,
+    this.typedRow,
     required this.opId,
     required Map<String, dynamic>? before,
     required Map<String, dynamic>? after,
   }) : before = before == null ? null : Map.unmodifiable(before),
        after = after == null ? null : Map.unmodifiable(after);
-  final String scopeId, recordId, actorAccountId, opId;
+  final String scopeId, recordId;
+  final String? actorAccountId, opId;
+  final String revisionNamespace;
+  final String? sourceEvidenceHash, beforeJson, afterJson;
+  final Map<String, dynamic>? typedRow;
   final int revision;
-  final DateTime changedAt;
+  final DateTime? changedAt;
+
+  /// Author-claimed encrypted times are distinct from legacy server timestamps.
+  final String timeBasis;
   final Map<String, dynamic>? before, after;
   factory SharedFinanceAuditEntry.fromJson(Map<String, dynamic> j) =>
       SharedFinanceAuditEntry(
         scopeId: readString(j, 'scopeId'),
         recordId: readString(j, 'recordId'),
         revision: readInt(j, 'revision'),
-        actorAccountId: readString(j, 'actorAccountId'),
-        changedAt: readSharedDate(j, 'changedAt'),
-        opId: readString(j, 'opId'),
+        actorAccountId: readNullableString(j, 'actorAccountId'),
+        changedAt: j['changedAt'] == null
+            ? null
+            : readSharedDate(j, 'changedAt'),
+        timeBasis: j['timeBasis'] is String
+            ? j['timeBasis'] as String
+            : 'legacyServer',
+        opId: readNullableString(j, 'opId'),
+        revisionNamespace: j['revisionNamespace'] as String? ?? 'legacy',
+        sourceEvidenceHash: j['sourceEvidenceHash'] as String?,
+        beforeJson: j['beforeJson'] as String?,
+        afterJson: j['afterJson'] as String?,
+        typedRow: j['typedRow'] == null
+            ? null
+            : Map<String, dynamic>.unmodifiable(j['typedRow'] as Map),
         before: j['before'] as Map<String, dynamic>?,
         after: j['after'] as Map<String, dynamic>?,
       );

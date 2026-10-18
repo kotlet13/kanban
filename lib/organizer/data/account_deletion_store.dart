@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'local_vault_secure_storage.dart';
 import '../domain/collaboration_models.dart';
 
 /// A receipt only proves the outcome of one request; no password or OTP is kept.
@@ -11,6 +11,7 @@ class PendingAccountDeletion {
     required this.receiptToken,
     this.ownershipTransfers = const [],
     this.resolutions = const [],
+    this.cryptoResolutions = const [],
     this.ownedScopeDeletions = const [],
     this.serverAccepted = false,
     this.review = const {},
@@ -18,7 +19,9 @@ class PendingAccountDeletion {
   });
   final AccountSession profile;
   final String operationId, previewHash, receiptToken;
-  final List<Map<String, Object?>> ownershipTransfers, resolutions;
+  final List<Map<String, Object?>> ownershipTransfers,
+      resolutions,
+      cryptoResolutions;
   final List<String> ownedScopeDeletions;
   final bool serverAccepted;
   final Map<String, dynamic> review;
@@ -30,6 +33,7 @@ class PendingAccountDeletion {
     'receiptToken': receiptToken,
     'ownershipTransfers': ownershipTransfers,
     'resolutions': resolutions,
+    'cryptoResolutions': cryptoResolutions,
     'ownedScopeDeletions': ownedScopeDeletions,
     'serverAccepted': serverAccepted,
     'review': review,
@@ -45,6 +49,9 @@ class PendingAccountDeletion {
             .map((r) => Map<String, Object?>.from(r as Map))
             .toList(),
         resolutions: (j['resolutions'] as List? ?? [])
+            .map((r) => Map<String, Object?>.from(r as Map))
+            .toList(),
+        cryptoResolutions: (j['cryptoResolutions'] as List? ?? [])
             .map((r) => Map<String, Object?>.from(r as Map))
             .toList(),
         ownedScopeDeletions: (j['ownedScopeDeletions'] as List? ?? [])
@@ -65,7 +72,7 @@ abstract interface class AccountDeletionStore {
 
 class SecureAccountDeletionStore implements AccountDeletionStore {
   const SecureAccountDeletionStore();
-  static const _storage = FlutterSecureStorage();
+  static const _storage = localVaultSecureStorage;
   static const _key = 'jivie_account_deletion_receipts_v1';
   @override
   Future<List<PendingAccountDeletion>> read() async {

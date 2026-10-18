@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -137,6 +138,7 @@ void main() {
       transport,
       store,
       clock: () => DateTime.utc(2026, 10, 9),
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     repositories.add(repo);
     await repo.initialize();

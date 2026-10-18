@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -320,6 +321,7 @@ void main() {
       ),
       transport ?? FakeTransport(server),
       store,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await repo.initialize();
     repositories.add(repo);
@@ -752,7 +754,12 @@ void main() {
             NativeDatabase(File('${directory.path}/paused.sqlite')),
           ),
           store = MemorySessionStore();
-      final a = CollaborationRepository(db, FakeTransport(server), store);
+      final a = CollaborationRepository(
+        db,
+        FakeTransport(server),
+        store,
+        contentRouteGuard: const SyntheticContentRouteGuard(),
+      );
       repositories.add(a);
       await a.initialize();
       await login(a, 'alice');

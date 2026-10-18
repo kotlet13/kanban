@@ -7,6 +7,7 @@ import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../shared/sharing_forms.dart';
 import 'offline_spaces_recovery.dart';
+import '../recovery/crypto_restore_page.dart';
 
 class BackupRecoveryPanel extends ConsumerStatefulWidget {
   const BackupRecoveryPanel({super.key});
@@ -246,6 +247,33 @@ class _BackupRecoveryPanelState extends ConsumerState<BackupRecoveryPanel> {
                 ),
               ],
             ),
+            if (ref.watch(collaborationProvider).valueOrNull?.session != null)
+              OutlinedButton.icon(
+                icon: const Icon(Icons.verified_user_outlined),
+                label: Text(l.cryptoRestoreTitle),
+                onPressed: () async {
+                  final guard = SharingSessionGuard(context, ref);
+                  try {
+                    final repository = await ref.read(
+                      collaborationRepositoryProvider.future,
+                    );
+                    final account = await repository.connectedCryptoAccount();
+                    if (!context.mounted || !guard.isCurrent) return;
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => CryptoRestorePage(account: account),
+                      ),
+                    );
+                  } catch (error) {
+                    if (context.mounted && guard.isCurrent)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(sharingErrorMessage(context, error)),
+                        ),
+                      );
+                  }
+                },
+              ),
             FutureBuilder<List<BackupPreview>>(
               future: _future,
               builder: (context, snapshot) {

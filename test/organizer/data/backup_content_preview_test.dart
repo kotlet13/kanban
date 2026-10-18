@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:typed_data';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -49,6 +50,7 @@ class _Fixture {
       PaymentTransport(),
       MemorySessionStore(),
       ownsDatabase: false,
+      contentRouteGuard: const SyntheticContentRouteGuard(),
     );
     await shared.initialize();
     addTearDown(shared.close);
@@ -231,12 +233,14 @@ void main() {
       // UI counters come from the expanded authenticated content7 document.
       // They describe this
       // exact authenticated document, not from the currently selected workspace.
-      expect(f.document['version'], 8);
-      expect(f.document['databaseVersion'], 10);
+      expect(f.document['version'], 9);
+      expect(f.document['databaseVersion'], 11);
       expect(f.document.keys.toSet(), {
         'format',
         'version',
         'databaseVersion',
+        'cryptoEvidence',
+        'cryptoPrivateDrafts',
         'linkedPayments',
         'localSpaces',
         'gardenSpaceLinks',

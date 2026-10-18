@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 // Opt-in synthetic loopback only; no live accounts or user photographs.
 // JIVIE_IDEAS_HTTP_FIXTURE=/private/fixture.json flutter test --no-pub this-file
 import 'dart:convert';
@@ -96,6 +97,7 @@ void main() {
           ),
           transport,
           stores.putIfAbsent(file, MemorySessionStore.new),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         repos.add(repo);
         await repo.initialize();

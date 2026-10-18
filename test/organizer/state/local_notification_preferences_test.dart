@@ -1,3 +1,4 @@
+import '../support/local_vault_test_overrides.dart';
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +46,9 @@ void main() {
         'organizer_local_reminders_enabled_v1': true,
         'organizer_local_reminders_sound_v1': true,
       });
-      final c = ProviderContainer();
+      final c = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       addTearDown(c.dispose);
       final value = await c.read(localNotificationPreferencesProvider.future);
       expect(value.defaults.push, isTrue);
@@ -61,7 +64,9 @@ void main() {
   test(
     'serialized saves retain simultaneous channel changes across a restart',
     () async {
-      final c = ProviderContainer();
+      final c = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       await c.read(localNotificationPreferencesProvider.future);
       await Future.wait([
         c
@@ -72,7 +77,9 @@ void main() {
             .change('push', true, workspace: 'home', project: 'p1'),
       ]);
       c.dispose();
-      final fresh = ProviderContainer();
+      final fresh = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       addTearDown(fresh.dispose);
       final saved = await fresh.read(
         localNotificationPreferencesProvider.future,
@@ -88,7 +95,9 @@ void main() {
       SharedPreferences.setMockInitialValues({
         LocalNotificationPreferencesController.storageKey: 'broken',
       });
-      final c = ProviderContainer();
+      final c = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       addTearDown(c.dispose);
       await expectLater(
         c.read(localNotificationPreferencesProvider.future),
@@ -115,7 +124,9 @@ void main() {
   test(
     'late account guard rejects a local write before it reaches storage',
     () async {
-      final c = ProviderContainer();
+      final c = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       addTearDown(c.dispose);
       await c.read(localNotificationPreferencesProvider.future);
       await expectLater(
@@ -145,7 +156,9 @@ void main() {
       for (final category in sharedNotificationCategories) {
         expect(shared.forCategory(category).sound, isTrue);
       }
-      final c = ProviderContainer();
+      final c = ProviderContainer(
+        overrides: [localVaultTestPreferencesOverride()],
+      );
       addTearDown(c.dispose);
       final prefs = await c.read(localNotificationPreferencesProvider.future);
       for (final workspace in [
@@ -169,7 +182,9 @@ void main() {
           'organizer_local_reminders_enabled_v1': true,
           'organizer_local_reminders_sound_v1': sound,
         });
-        final c = ProviderContainer();
+        final c = ProviderContainer(
+          overrides: [localVaultTestPreferencesOverride()],
+        );
         final prefs = await c.read(localNotificationPreferencesProvider.future);
         expect(prefs.defaults.sound, sound);
         expect(prefs.resolve('new-workspace', 'new-project').sound, sound);
@@ -199,7 +214,9 @@ void main() {
         SharedPreferences.setMockInitialValues({
           LocalNotificationPreferencesController.storageKey: raw,
         });
-        final c = ProviderContainer();
+        final c = ProviderContainer(
+          overrides: [localVaultTestPreferencesOverride()],
+        );
         final settings = await c.read(
           localNotificationPreferencesProvider.future,
         );

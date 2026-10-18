@@ -32,6 +32,7 @@ class NativeSpacesAccessService extends NativeDatabase
         if ($replay) {
             return $replay['body'];
         }
+        NativeCryptoV2Boundary::guardStructural($this->pdo, $id);
         if ($operation === 'scopes.setLeader') {
             if ((int)$scope['access_policy_version'] !== 2) {
                 throw new NativeError('access_migration_required', 409);

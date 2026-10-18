@@ -1,0 +1,23 @@
+<?php
+require '/var/www/app/app/common.php';
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoMigrationStructureV3 as S;
+use Kanboard\Plugin\FamilyHub\Model\NativeError;
+$v=json_decode(file_get_contents(__DIR__.'/fixtures/e2ee-structure-set-v3.json'),true,34,JSON_THROW_ON_ERROR);$n=0;
+$check=function($ok)use(&$n){if(!$ok)throw new RuntimeException('structure set vector');$n++;};
+$deny=function($fn)use($check){try{$fn();$ok=false;}catch(NativeError $e){$ok=true;}$check($ok);};
+$check(S::aggregate($v['common'],$v['sections'])===['kind'=>'structure','count'=>3,'root'=>$v['root']]);
+$check(S::aggregate($v['common'],[])===['kind'=>'structure','count'=>0,'root'=>$v['emptyRoot']]);
+$deny(fn()=>S::aggregate($v['common'],array_reverse($v['sections'])));
+$deny(fn()=>S::aggregate($v['common'],[$v['sections'][0],$v['sections'][0]]));
+$changed=$v['sections'];$changed[0]['structureHash']=str_repeat('1',64);
+$check(S::aggregate($v['common'],$changed)['root']!==$v['root']);
+$check(S::aggregate(array_replace($v['common'],['sourceInventoryRoot'=>str_repeat('1',64)]),$v['sections'])['root']!==$v['root']);
+$bad=$v['sections'];$bad[0]['sourceBindingCount']=-1;$deny(fn()=>S::aggregate($v['common'],$bad));
+$c=$v['contextVector'];
+$check(S::structureHash($c['header'],$c['section'])===$c['absentHash']);
+$check(S::structureHash($c['header'],$c['section'],$c['contextProofHashes'])===$c['boundHash']);
+$check(S::structureHash($c['header'],$c['section'],[str_repeat('3',64)])!==$c['boundHash']);
+$deny(fn()=>S::structureHash($c['header'],$c['section'],[]));
+$deny(fn()=>S::structureHash($c['header'],$c['section'],array_reverse($c['contextProofHashes'])));
+$deny(fn()=>S::structureHash($c['header'],$c['section'],[$c['contextProofHashes'][0],$c['contextProofHashes'][0]]));
+echo 'Structure set3 '.$n.' PASS'.PHP_EOL;

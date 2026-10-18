@@ -1,3 +1,4 @@
+import '../support/synthetic_content_route_guard.dart';
 import 'dart:convert';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -283,6 +284,7 @@ void main() {
           CollaborationDatabase(NativeDatabase.memory()),
           transport,
           MemorySessionStore(),
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await repo.initialize();
         addTearDown(repo.close);
@@ -377,6 +379,7 @@ void main() {
           transport,
           MemorySessionStore(),
           ownsDatabase: false,
+          contentRouteGuard: const SyntheticContentRouteGuard(),
         );
         await shared.initialize();
         addTearDown(() async {

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../data/local_vault_preferences.dart';
 import '../../state/collaboration_provider.dart';
 import 'firebase_mobile_config.dart';
 import 'remote_push_sdk.dart';
@@ -66,7 +66,7 @@ class RemotePushLifecycle {
     required this.onOpened,
   });
   final RemotePushSdk sdk;
-  final SharedPreferences preferences;
+  final LocalVaultPreferences preferences;
   final FirebaseMobileConfig? config;
   final void Function(RemotePushDeviceState) onState;
   final Future<RemotePushRegistrationState> Function(
