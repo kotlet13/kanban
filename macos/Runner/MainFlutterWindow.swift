@@ -12,6 +12,15 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
     let vaultChannel = FlutterMethodChannel(name: "jivie/local_vault", binaryMessenger: flutterViewController.engine.binaryMessenger)
     vaultChannel.setMethodCallHandler { call, result in
+      if call.method == "protectLegacySecrets" {
+        do {
+          try JivieLegacySecrets.protect(call.arguments)
+          result(true)
+        } catch {
+          result(FlutterError(code: "vault_secure_storage", message: "Legacy credential protection could not be verified", details: nil))
+        }
+        return
+      }
       guard call.method == "protectLocalStorage" else {
         result(FlutterMethodNotImplemented)
         return

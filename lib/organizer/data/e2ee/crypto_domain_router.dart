@@ -29,6 +29,18 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Distinguishes a verified native origin from a legacy transport transition.
+/// Null means there is no verified encrypted boundary yet; callers must not
+/// persist a checkpoint that would suppress a later migration rebase.
+enum CryptoProjectionCursorOrigin { nativeOrigin, legacyMigration }
+
+abstract interface class CryptoProjectionCursorTransition {
+  Future<CryptoProjectionCursorOrigin?> verifyProjectionCursorOrigin({
+    required DeviceSession session,
+    required String scopeId,
+  });
+}
+
 /// The persistent floor is consulted on the actual authenticated request path,
 /// independently of server capabilities. No router means a retained local queue
 /// and explicit refusal, never downgrade to a plaintext content endpoint.

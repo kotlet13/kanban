@@ -61,6 +61,9 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
   }
 
   Future<void> _inspect() async {
+    if (ref.read(localVaultServiceProvider).hasError) {
+      ref.invalidate(localVaultServiceProvider);
+    }
     await _run((service) async {
       await ref.read(recoveryFileIoProvider).cleanup();
       return service.inspect();

@@ -1000,6 +1000,10 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   }
 
   Future<bool> canRebindLocalDevice() async {
+    if ((await store.anchor(directory.accountId))?['trustState'] !=
+        'verified') {
+      return false;
+    }
     final state = await directory.refresh();
     if (state == null ||
         (await store.anchor(directory.accountId))?['trustState'] !=

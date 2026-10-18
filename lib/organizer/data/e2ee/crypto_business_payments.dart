@@ -1113,6 +1113,7 @@ class CryptoBusinessPayments {
       projections.add({...raw, 'state': state.name});
     }
     final read = await context.access.readContext(scope, 'finance');
+    final policy = await context.financePolicy(scope);
     final checkpoints = await context.database.rows(
       'SELECT sequence FROM crypto_domain_checkpoints WHERE partition=? AND scope_id=? AND domain=? AND head_hash=? ORDER BY sequence DESC LIMIT 1',
       [p, scope, 'finance', read.headHash],
@@ -1131,7 +1132,7 @@ class CryptoBusinessPayments {
       'cashMovements': [
         for (final r in await _rows(scope, 'cashMovement')) _raw(r),
       ],
-      'accessRevision': read.accessRevision,
+      'accessRevision': policy['revision'],
       'scopeSequence': checkpoints.isEmpty ? 0 : checkpoints.single['sequence'],
       'complete': observedComplete && pending == 0,
       'pendingCount': pending,

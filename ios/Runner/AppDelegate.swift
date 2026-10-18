@@ -36,6 +36,15 @@ import firebase_messaging
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "JivieLocalVault") {
       let channel = FlutterMethodChannel(name: "jivie/local_vault", binaryMessenger: registrar.messenger())
       channel.setMethodCallHandler { call, result in
+        if call.method == "protectLegacySecrets" {
+          do {
+            try JivieLegacySecrets.protect(call.arguments)
+            result(true)
+          } catch {
+            result(FlutterError(code: "vault_secure_storage", message: "Legacy credential protection could not be verified", details: nil))
+          }
+          return
+        }
         guard call.method == "protectLocalStorage" else {
           result(FlutterMethodNotImplemented)
           return

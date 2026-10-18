@@ -22,7 +22,6 @@ extension CollaborationAccountActions on CollaborationRepository {
     _financeSupported = false;
     _organizationFinanceSupported = false;
     _privateSyncSupported = false;
-    _cryptoPreviewSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
     _externalPushSupported = false;
@@ -52,10 +51,6 @@ extension CollaborationAccountActions on CollaborationRepository {
   }
 
   void _applyCapabilities(Map<String, dynamic> caps) {
-    _cryptoPreviewSupported =
-        (caps['cryptoTransportVersions'] as List? ?? const []).any(
-          (v) => v == 1 || v == 2,
-        );
     final versions = caps['recordContractVersions'];
     _financeContractVersion =
         (caps['financeContractVersions'] is List &&
@@ -301,7 +296,6 @@ extension CollaborationAccountActions on CollaborationRepository {
     _financeSupported = false;
     _organizationFinanceSupported = false;
     _privateSyncSupported = false;
-    _cryptoPreviewSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
     _externalPushSupported = false;

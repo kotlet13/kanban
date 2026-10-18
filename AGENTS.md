@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+18. oktober — **izolirani native macOS E2EE preizkus zaključen v omejenem obsegu**.
+[Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): A ponovna prijava iste
+namestitve z ohranjenimi ključi PASS; B se z geslom prijavi, pričakovano pa
+brez računskega FILE ali odobrene naprave ne odklene vsebine; sveža C obnova
+z izvirnim računskim FILE PASS. Ločeni D stari → novi macOS prehod po ozkih
+Apple Keychain in cursor/revision popravkih ohrani sejo ter lokalne/povezane
+vnose, brez nove prijave ali podvojitev; končni sync ob 12:44 je Synced,
+0 pending/conflicting/blocked. D račun 67.89 EUR je preverjen samo kot
+otvoritveni/referenčni znesek; **polni saldo in finančni pregled nista potrjena**,
+opozorili o coverage in mesečni pogodbi ostajata. Vsi testni appi so zaprti.
+To niso fizični Android/iOS preizkusi, zaključek P8 ali neodvisni P0 audit.
+Produkcija in izvirna uporabnikova namestitev ostajata nedotaknjeni; ni nove
+produkcijske namestitve, trgovinske oddaje ali začetka produkcijskega retention
+roka. Nepovezana varnostni in desktop dokumenta ostaneta nedotaknjena.
+
 18. oktober — **E2EE nadgradnja v zaključnem preverjanju izvora** po
 poznejšem izrecnem naročilu za izvedbo in končni commit/push; trije
 GPT-6.1 Sol/high podagenti, glavni pregled/integracija.

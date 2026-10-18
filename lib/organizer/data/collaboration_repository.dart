@@ -81,7 +81,7 @@ class CollaborationRepository {
   /// Key setup is exposed only on the explicitly enabled preview server. This
   /// does not redirect legacy sync or mark any existing scope encrypted.
   Future<AccountCryptoWorkflow?> accountCryptoPreview() async {
-    if (kIsWeb || !_cryptoPreviewSupported) return null;
+    if (kIsWeb) return null;
     final session = _session;
     if (session == null || _closed) return null;
     final epoch = _epoch;
@@ -261,7 +261,6 @@ class CollaborationRepository {
   bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
-  bool _cryptoPreviewSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
   bool _financeSupported = false;
   bool _organizationFinanceSupported = false;

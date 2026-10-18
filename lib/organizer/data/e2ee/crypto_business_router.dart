@@ -54,10 +54,38 @@ import 'session_crypto_access.dart';
 /// Existing UI actions enter this adapter through CollaborationRepository's
 /// authenticated request path. Unsupported operations retain their local queue;
 /// no original plaintext operation is forwarded to a legacy content endpoint.
-class CryptoBusinessRouter implements CryptoDomainRouter {
+class CryptoBusinessRouter
+    implements CryptoDomainRouter, CryptoProjectionCursorTransition {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
+
+  @override
+  Future<CryptoProjectionCursorOrigin?> verifyProjectionCursorOrigin({
+    required DeviceSession session,
+    required String scopeId,
+  }) async {
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    return access.withVerifiedOperation(() async {
+      try {
+        await access.currentHead(scopeId, online: true);
+      } on CollaborationException catch (error) {
+        if (const {
+          'crypto_scope_head_missing',
+          'crypto_migration_required',
+        }.contains(error.code)) {
+          return null;
+        }
+        rethrow;
+      }
+      await access.verifiedScopeDescriptor(scopeId);
+      final migration = await access.recoveredMigrationGenesis(scopeId);
+      return migration == null
+          ? CryptoProjectionCursorOrigin.nativeOrigin
+          : CryptoProjectionCursorOrigin.legacyMigration;
+    });
+  }
 
   /// Shared production semantics for ordinary delivery and pre-fence exact
   /// request reconciliation. This installs no authority or restored rows.
@@ -2717,10 +2745,7 @@ class CryptoBusinessSession {
       'cursor': rows.isEmpty ? cursor : rows.last['sequence'],
       'hasMore': rows.length == 100,
       if (domain == 'finance') ...{
-        'accessRevision': (await access.readContext(
-          scope,
-          domain,
-        )).accessRevision,
+        'accessRevision': (await financePolicy(scope))['revision'],
         'cryptoProjectionComplete': await _observedComplete(scope, domain),
         'cryptoCompletenessBasis': 'signerObservedSnapshot',
         ...await organizationFinanceCoverage(scope),

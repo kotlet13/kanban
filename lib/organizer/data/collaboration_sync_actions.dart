@@ -39,6 +39,62 @@ extension CollaborationSyncActions on CollaborationRepository {
     );
   });
 
+  Future<void> _prepareCryptoProjectionCursors(
+    DeviceSession session,
+    int epoch,
+    List<SharedScope> scopes,
+  ) async {
+    final router = cryptoRouter;
+    if (router is! CryptoProjectionCursorTransition) return;
+    final transition = router as CryptoProjectionCursorTransition;
+    final partition = session.profile.partition;
+    for (final scope in scopes) {
+      // Ordinary cursors and crypto_received.sequence have separate namespaces.
+      // Keep records and immutable pending work while replaying the verified
+      // encrypted projection once. The two domain checkpoints commit together.
+      final keys = [
+        for (final domain in const ['content', 'finance'])
+          'crypto_projection_cursor_v1:$partition:${scope.id}:$domain',
+      ];
+      final prior = await database.rows(
+        'SELECT name FROM local_meta WHERE name IN (?,?)',
+        keys,
+      );
+      _checkEpoch(epoch);
+      if (prior.length == keys.length) continue;
+      final origin = await transition.verifyProjectionCursorOrigin(
+        session: session,
+        scopeId: scope.id,
+      );
+      _checkEpoch(epoch);
+      if (origin == null) continue;
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        await _validLease(partition);
+        for (var index = 0; index < keys.length; index++) {
+          final exists = await database.rows(
+            'SELECT 1 FROM local_meta WHERE name=?',
+            [keys[index]],
+          );
+          if (exists.isNotEmpty) continue;
+          if (origin == CryptoProjectionCursorOrigin.legacyMigration) {
+            await database.execute(
+              index == 0
+                  ? 'UPDATE scopes SET cursor=0 WHERE partition=? AND id=?'
+                  : 'UPDATE scopes SET finance_cursor=0,finance_access_revision=0,finance_complete=0 WHERE partition=? AND id=?',
+              [partition, scope.id],
+            );
+          }
+          await database.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?)',
+            [keys[index], origin.name],
+          );
+        }
+        _checkEpoch(epoch);
+      });
+    }
+  }
+
   Future<void> syncNow({bool resumePayments = true}) async {
     if (_syncing ||
         _session == null ||
@@ -191,6 +247,7 @@ extension CollaborationSyncActions on CollaborationRepository {
           }
         }
       }
+      await _prepareCryptoProjectionCursors(session, epoch, scopes);
       if (_financeSupported) {
         await _pushFinanceDependencies(session, epoch, scopes);
       }

@@ -1335,7 +1335,13 @@ class NativeCryptoScopeV2 extends NativeDatabase
         $crypto = $this->one('SELECT state,migration_id FROM familyhub_crypto_scopes WHERE scope_id=?', [$sid]);
         $migration = !empty($crypto['migration_id']) ? $this->one('SELECT state FROM familyhub_crypto_migrations_v2 WHERE id=?', [$crypto['migration_id']]) : null;
         $origin = $this->one('SELECT scope_id FROM familyhub_crypto_scope_origins WHERE scope_id=?', [$sid]);
-        return ['cryptoOrigin' => (bool)$origin, 'migrationId' => $crypto['migration_id'] ?? null, 'migrationState' => $migration['state'] ?? null, 'expectedAccessRevision' => (int)$scope['effective_access_revision'], 'accessBasis' => $this->accessBasis($scope), 'cryptoState' => $crypto['state'] ?? 'legacy', 'headHash' => $head['head_hash'] ?? null, 'epoch' => $head ? (int)$head['epoch'] : 0, 'id' => $sid, 'kind' => $scope['kind'], 'parentScopeId' => $parent, 'role' => $scope['role'], 'accessRevision' => (int)$scope['effective_access_revision'], 'members' => $members];
+        $cryptoState = $crypto['state'] ?? 'legacy';
+        // Native origins retain their staged storage marker after activation.
+        // This discovery hint still requires the client's signed-head verifier.
+        if ($cryptoState === 'staged' && ($crypto['migration_id'] ?? null) === null && $origin && $head !== null) {
+            $cryptoState = 'active';
+        }
+        return ['cryptoOrigin' => (bool)$origin, 'migrationId' => $crypto['migration_id'] ?? null, 'migrationState' => $migration['state'] ?? null, 'expectedAccessRevision' => (int)$scope['effective_access_revision'], 'accessBasis' => $this->accessBasis($scope), 'cryptoState' => $cryptoState, 'headHash' => $head['head_hash'] ?? null, 'epoch' => $head ? (int)$head['epoch'] : 0, 'id' => $sid, 'kind' => $scope['kind'], 'parentScopeId' => $parent, 'role' => $scope['role'], 'accessRevision' => (int)$scope['effective_access_revision'], 'members' => $members];
     }
 
     public function protectionCatalog($actor)

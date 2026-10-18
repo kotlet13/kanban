@@ -44,7 +44,11 @@ Future<NativeLocalVaultService> openLocalVaultService() => _defaultService ??=
         const SecureLocalVaultKeyStore(),
         preferences: await SharedPreferences.getInstance(),
         pickerRoots: await _nativeLegacyPickerRoots(),
+        legacySecretProtection: Platform.isIOS || Platform.isMacOS
+            ? protectExistingLocalVaultSecrets
+            : null,
       );
+      await service.protectSecretsAtStartup();
       await service.preserveLegacyPickerCaches();
       return service;
     }().catchError((Object error, StackTrace stack) {
@@ -82,12 +86,23 @@ class NativeLocalVaultService implements LocalVaultService {
     LocalVaultFiles? files,
     this.checkpoint,
     this.pickerRoots = const [],
+    this.legacySecretProtection,
   }) : files = files ?? LocalVaultFiles();
   final Directory directory;
   final LocalVaultKeyStore keyStore;
   final SharedPreferences preferences;
   final LocalVaultFiles files;
   final List<LegacyPickerCacheRoot> pickerRoots;
+  final Future<void> Function()? legacySecretProtection;
+
+  /// Every cold bootstrap, including an already-complete journal, protects old
+  /// Apple credentials before inspect/session consumers can open. The same
+  /// installation lease serializes migration and retry across processes.
+  Future<void> protectSecretsAtStartup() async {
+    final protection = legacySecretProtection;
+    if (protection != null) await _exclusive(protection);
+  }
+
   final void Function(String stage)? checkpoint;
   EncryptedLocalVaultPreferences? _privatePreferences;
   Directory get vaultDirectory => Directory('${directory.path}/jivie_vault_v1');
@@ -607,7 +622,9 @@ class NativeLocalVaultService implements LocalVaultService {
         throw const LocalVaultException('vault_archive_missing');
       }
       await _validateArchive(key);
-      if (keyStore is SecureLocalVaultKeyStore) {
+      if (keyStore is SecureLocalVaultKeyStore &&
+          !Platform.isIOS &&
+          !Platform.isMacOS) {
         await protectExistingLocalVaultSecrets();
       }
       if (await sourceFile.exists()) {
