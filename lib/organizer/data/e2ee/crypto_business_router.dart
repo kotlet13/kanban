@@ -2605,7 +2605,11 @@ class CryptoBusinessSession {
 
   /// Complete signer-observed structure plus each readable child's authenticated
   /// complete finance inventory. Unknown private tokens never mean zero money.
-  Future<Map<String, dynamic>> organizationFinanceCoverage(String scope) async {
+  Future<Map<String, dynamic>> organizationFinanceCoverage(
+    String scope, {
+    bool refreshRootFinance = false,
+    String? expectedHeadHash,
+  }) async {
     final incomplete = <String, dynamic>{
       'organizationFinanceComplete': false,
       'organizationFinanceScopeIds': <String>[],
@@ -2614,6 +2618,24 @@ class CryptoBusinessSession {
     final descriptor = await _verifiedScopeDescriptor(scope);
     if (!const ['household', 'organization'].contains(descriptor['kind'])) {
       return incomplete;
+    }
+    CryptoReadContext? rootRead;
+    if (refreshRootFinance) {
+      final head = await access.currentHead(scope, online: true);
+      if (head.headHash != expectedHeadHash ||
+          !const [
+            'read',
+            'write',
+          ].contains(head.member(account.directory.accountId)['financeRole'])) {
+        return incomplete;
+      }
+      await pullVerified(scope, 'finance');
+      rootRead = await access.readContext(scope, 'finance');
+      if (rootRead.headHash != head.headHash ||
+          !await _observedComplete(scope, 'finance') ||
+          !await hasReusableCheckpoint(scope, 'finance', rootRead)) {
+        return incomplete;
+      }
     }
     await pullVerified(scope, 'content');
     final metadata = await _row(
@@ -2637,7 +2659,7 @@ class CryptoBusinessSession {
     final required = (topology['childTokens'] as List).cast<String>().toSet();
     final ids = <String>[], sequences = <String, int>{};
     final checked = <String, String>{
-      scope: (await access.currentHead(scope)).headHash,
+      scope: rootRead?.headHash ?? (await access.currentHead(scope)).headHash,
     };
     for (final candidate in await catalog()) {
       final child = candidate['id'] as String;
@@ -2713,7 +2735,9 @@ class CryptoBusinessSession {
       type: 'scopeMetadata',
     );
     if (!account.directory.isCurrent() ||
-        current?['record_proof_hash'] != metadata['record_proof_hash']) {
+        current?['record_proof_hash'] != metadata['record_proof_hash'] ||
+        rootRead != null &&
+            !await hasReusableCheckpoint(scope, 'finance', rootRead)) {
       return incomplete;
     }
     ids.sort();

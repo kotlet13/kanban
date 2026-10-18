@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+18. oktober — **polni sintetični D saldo potrjen po poznejšem izrecnem naročilu**.
+[Novi dokazi](docs/E2EE_MAC_TEST_2026_10_18.md): ozek popravek dveh runtime
+datotek prepreči, da policy refresh prepiše preverjeno finančno coverage;
+sveži head/inventory/checkpoint in child guards ostanejo. Šest novih ciljnih
+testov PASS, scoped analiza čista; prejšnjih uspešnih zbirk ni bilo ponovljenih.
+Ena izolirana D gradnja in zamenjava samo testnega paketa ohranita iste
+podatke/sejo brez prijave. Običajni Finance UI: celotni saldo 67.89 EUR,
+income/expense 0.00, en Legacy D Racun; incomplete project opozorila ni več.
+Samodejni sync ob 13:10 Synced, 0 pending/conflicting/blocked, brez napake.
+D je po enem običajnem zagonu in preverjanju normalno zaprt, brez urejanja
+ali ročnega Sync.
+Mesečno opozorilo o potrebni novejši pogodbi ostaja ločeno odprto; fizični
+mobilni/P8 in neodvisni P0 audit niso zaključeni. Produkcija, strežniki/sheme
+in izvirna uporabnikova namestitev so nespremenjeni; brez nove trgovinske oddaje.
+Spodnji zapis o nepotrjenem polnem D saldu je zgodovinski checkpoint ob 12:44.
+
 18. oktober — **izolirani native macOS E2EE preizkus zaključen v omejenem obsegu**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): A ponovna prijava iste
 namestitve z ohranjenimi ključi PASS; B se z geslom prijavi, pričakovano pa

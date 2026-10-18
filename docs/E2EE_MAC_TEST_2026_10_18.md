@@ -25,10 +25,20 @@ Zadnji običajni zagon je ohranil sejo brez prijave ali čarovnikov; UI je ob
 20. oktobra 09:15–10:00 (`Europe/Ljubljana`) ter obe nedokončani opravili z
 opombama `PRESERVE-LOCAL-D-20261018` in `PRESERVE-CLOUD-D-20261018` so ohranjeni.
 Lokalno gospodinjstvo ostaja lokalno; ni novih ali podvojenih vidnih vnosov.
-Prikazan je en `Legacy D Racun`, **67.89 EUR potrjeno kot otvoritveni/referenčni
-znesek**. Polni saldo ostaja skrit za opozorilom o nepopolnem projektnem
-finančnem pregledu; mesečno načrtovanje zahteva novejšo pogodbo. **Polni
-finančni pregled ni PASS.** D je normalno zaprt;
+Ob tem zagonu ob 12:44 je bil 67.89 EUR potrjen samo kot otvoritveni/referenčni
+znesek; polni saldo je takrat ostal skrit. Po poznejšem izrecnem naročilu in
+spodnjem coverage popravku je **isti D v običajnem Finance UI potrdil tudi
+polni saldo PASS**: »Entire financial space« → EUR / »Total balance« 67.89 EUR,
+»Income« 0.00, »Expense« 0.00; »Financial accounts« → en `Legacy D Racun`,
+»Joint account · 67.89 EUR«. Opozorila o nepopolnem projektnem pregledu ni več
+v celotnem prikazu/AX. Samodejni sync ob 13:10 je Synced, 0 pending/conflicting/
+blocked, brez napake; ista seja/podatki, brez prijave ali čarovnikov.
+[Končni native UI dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/native-finance-final-ui-evidence.json)
+potrdi en običajen zagon, brez urejanja ali ročnega Sync, nato en normalni
+CmdQ in prazen sveži running inventory. D je zaprt. Mesečno opozorilo
+»Planning in a synced space requires the newer server finance contract«
+ostaja ločeno odprto; ni potrditve celotnega mesečnega načrtovanja.
+Predhodni D je bil ob 12:44 normalno zaprt;
 [runner dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-cursor-fixed-d/capture-window-evidence.json)
 potrdi en zagon, 0 diagnostičnih tagov, exit 0, brez ponovitve ali shranjenega
 surovega konzolnega izhoda. Ni nove produkcijske namestitve ali začetka
@@ -468,7 +478,7 @@ zagona pa še ni bilo. Poznejša
 in zgornji en zagon sta nadaljevala isto stanje. Runner je vezan samo na ta pregledana hasha;
 njegov pregledani allowlist zdaj vključuje še `cursor_transition`.
 
-Ozek source pregled finančne omejitve: migracija pri captured `scopeMetadata`
+Ozek source pregled takratne finančne omejitve ob 12:44: migracija pri captured `scopeMetadata`
 uporabi `CryptoMigrationScopeBaseline.load`, ki za household in organization
 doda `financeTopology`; `withScopeBaseline` jo ohrani, verifier pa jo zahteva
 in validira (`crypto_migration_canonical_stage.dart:63`,
@@ -478,9 +488,52 @@ Ni izvorne podlage za trditev, da migrirani household topology sploh ne izdaja.
 inventories/checkpoints ustreznih otrok ter root observed completeness
 (`crypto_business_router.dart:2615`). Ob manjkajoči potrditvi vrne incomplete;
 policy mapper začne s false, UI pa nepopoln saldo skrije. To razvrsti opozorilo
-kot odprto mejo celotne coverage/projekcije; natančna preostala veja ni bila
-native diagnosticirana. Ni dokaz izgube otvoritvenega zneska in ni trditve
-zaključenih polnih financ. Novih finančnih testnih krogov nismo odprli.
+kot takrat odprto mejo celotne coverage/projekcije; natančna preostala veja še
+ni bila ugotovljena. Ni šlo za dokaz izgube otvoritvenega zneska. Poznejše
+izrecno naročilo je dovolilo spodnji en ozek popravek in saldo preveritev;
+prejšnjih uspešnih testov nismo ponavljali.
+
+### Poznejši coverage popravek in polni D saldo
+
+Na osnovi `085d61e4f89ab7e5779c46a3eacf595811f0dc83` je potrjen vrstni red:
+finance pull shrani preverjeno coverage, nato sync → linked payments → nov
+policy read vrne privzeti false in jo prepiše. Popravljeni zunanji policy
+dispatch na novo izračuna coverage ob pričakovanem root headu; zahteva read
+role, svež root finance pull in reusable checkpoint. Obstoječi signed topology,
+vsi zahtevani otroci, njihove pravice/checkpoints/sequences ter stabilni
+head/metadata pogoji ostanejo. Stari true se ne ohranja na slepo; notranji
+policy/revision izračun ostane brez coverage pulla in brez rekurzije.
+
+Spremenjeni sta samo runtime datoteki `crypto_business_router.dart`
+(SHA256 `7b69ddd81afd3afebb587bef768c81c0da5a736e1dc3850ed39d250fb84adfb9`)
+in `crypto_finance_policy_actions.dart`
+(`d66b12a530444265d8678a58cb6a4de38b52bb257ec66577bc32204892fc734b`).
+[Vezani dokaz](../build/qa/jivie-legacy-upgrade-test-d-20261018/coverage-verification.json),
+[pre-fix fail](../build/qa/jivie-legacy-upgrade-test-d-20261018/coverage-prefailure.log),
+[novih 6 ciljnih PASS](../build/qa/jivie-legacy-upgrade-test-d-20261018/coverage-focused.log)
+in [scoped analiza »No issues found«](../build/qa/jivie-legacy-upgrade-test-d-20261018/coverage-analysis.log)
+pokrivajo actual helper/dispatch/repository/projekcijo ter negativne missing
+child, incomplete root, stale checkpoint, head change in denied finance read.
+Fixture poda že authenticated head/receipt mejo, ne novega signature testa.
+Po testu sta popravljena samo dva braces style zapisa; sledila je čista
+scoped analiza. Neodvisni source/log/hash pregled je PASS, brez ponovitve testov.
+
+Zgrajen je en nov ločeni D kandidat, brez QA diagnostike, z istimi sedmimi
+izolacijskimi datotekami, D identiteto/service/skupino/guardom in shrambo:
+[artifact](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-coverage-fixed-d/artifact-evidence.json),
+[source lineage](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-coverage-fixed-d/source-lineage.json),
+[review hashes](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-coverage-fixed-d/review-hashes.json),
+[namestitev](../build/qa/jivie-legacy-upgrade-test-d-20261018/candidate-coverage-fixed-d/installation-evidence.json).
+Dejanski AOT je
+`746d2dc1365f4c7a0a4994c9292213e14a5c71cf9a238517c59e2e3bf762dd84`,
+izvršna datoteka
+`0c2c50a079f86fc595fac26966c26cd39f7499aa6133596b6e0a49e58b010c68`,
+source tree `56b63739981af251ae18674cc20dd3155cbbb063765ca6a6b3a35d5153ae15f8`.
+Podpis, dejanski hashi in izvorna izolacija so neodvisno pregledani PASS.
+Sledila je zamenjava samo D paketa in zgornji običajni UI finite check istega
+stanja, brez nove prijave, vnosa ali server/schema/produkcijske spremembe.
+To potrdi ta polni sintetični saldo; mesečna pogodba, fizični mobilni/P8 in
+neodvisni P0 audit ostajajo izven tega dokaza.
 
 Pri nadaljevanju primerjaj iste sintetične vrednosti, brez novih vnosov:
 
@@ -524,9 +577,10 @@ ni dokaz uspešnega synca, ponovne prijave ali obnove.
 
 Finance so prikazale opozorili o potrebni novejši strežniški finance pogodbi za
 mesečno načrtovanje in nepopolnem projektnem pregledu do sinhronizacije vseh
-dovoljenih projektov. V A/C je potrjen navedeni sintetični prikaz 123.45 EUR;
-v D samo otvoritveni/referenčni znesek 67.89 EUR. Polnega D salda, drugih
-saldov, obdobij in celotnih financ nismo validirali. Menjava/reset gesla,
+dovoljenih projektov. To je za D zgodovina pred zadnjim coverage popravkom:
+v A/C je potrjen navedeni sintetični prikaz 123.45 EUR, v D po popravku tudi
+polni saldo 67.89 EUR z income/expense 0.00 in enim računom. Mesečno opozorilo
+ostaja; drugih saldov, obdobij in celotnih financ nismo validirali. Menjava/reset gesla,
 nova E2EE offline podatkovna obnova, fizične naprave in deljenje še niso preizkušeni;
 zgornja omejena stara D prenosna obnova je ločen dokaz. Predhodni
 ENOSPC/build-cwd zapleti imajo ločene QA dnevnike; po popravku so bili A/B/C

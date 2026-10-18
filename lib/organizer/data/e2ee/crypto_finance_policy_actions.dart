@@ -315,7 +315,24 @@ class CryptoFinancePolicyActions {
     }
     final scope = params['scopeId'] as String,
         actionName = operation.split('.').last;
-    if (actionName == 'policy') return policy(scope);
+    if (actionName == 'policy') {
+      // Only external policy responses carry aggregate coverage. Internal
+      // revision reads must not recursively pull/project finance records.
+      final head = await context.access.currentHead(scope, online: true);
+      final reply = await policy(scope);
+      if (reply['enabled'] != true ||
+          !const ['read', 'write'].contains(reply['grant'])) {
+        return reply;
+      }
+      return {
+        ...reply,
+        ...await context.organizationFinanceCoverage(
+          scope,
+          refreshRootFinance: true,
+          expectedHeadHash: head.headHash,
+        ),
+      };
+    }
     final head = await context.access.currentHead(scope, online: true);
     if (head.member(context.account.directory.accountId)['manageKeys'] !=
         true) {
