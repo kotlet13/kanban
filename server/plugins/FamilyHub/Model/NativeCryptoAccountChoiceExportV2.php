@@ -55,7 +55,12 @@ class NativeCryptoAccountChoiceExportV2 extends NativeDatabase
         if(!$checkpoint||$checkpoint['manifest_hash']!==$c['manifestHash'])throw new NativeError('crypto_account_choices_checkpoint_changed',409);
         $attestation=$this->one("SELECT authorization FROM familyhub_crypto_domain_attestations WHERE scope_id=? AND domain='finance' AND head_hash=? AND sequence=? AND proof_hash=?",[$sid,$head['head_hash'],$c['sequence'],$c['proofHash']]);
         if(!$attestation)throw new NativeError('crypto_account_choices_checkpoint_changed',409);
-        $actual=[];foreach($this->iterate("SELECT id,authorization FROM familyhub_crypto_records WHERE scope_id=? AND domain='finance' AND type='financeAccount' AND deleted=0 ORDER BY id",[$sid]) as $r){if(count($actual)>=5000)throw new NativeError('crypto_account_choices_capacity',409);$proof=json_decode($r['authorization'],true,34,JSON_THROW_ON_ERROR);$actual[]=['id'=>$r['id'],'recordProofHash'=>$this->digest($proof['recordProof'])];}
+        $actual=[];foreach($this->iterate("SELECT r.id,r.authorization,p.domain AS position_domain FROM familyhub_crypto_records r LEFT JOIN familyhub_crypto_record_positions p ON p.scope_id=r.scope_id AND p.id=r.id WHERE r.scope_id=? AND r.type='financeAccount' AND r.deleted=0 ORDER BY r.id",[$sid]) as $r){
+            // Do not silently omit a live account whose domain position is absent
+            // or inconsistent: this proof must cover the complete source set.
+            if($r['position_domain']!=='finance')throw new NativeError('crypto_account_choices_source_set_changed',409);
+            if(count($actual)>=5000)throw new NativeError('crypto_account_choices_capacity',409);$proof=json_decode($r['authorization'],true,34,JSON_THROW_ON_ERROR);$actual[]=['id'=>$r['id'],'recordProofHash'=>$this->digest($proof['recordProof'])];
+        }
         $historic=[];$inventory=hash_init('sha256');$inventoryCount=0;$inventoryBytes=0;
         foreach($this->iterate("SELECT h.id,h.revision,h.record_proof_hash,h.sequence,h.epoch,h.record_proof FROM familyhub_crypto_record_history h WHERE h.scope_id=? AND h.domain='finance' AND h.sequence<=? AND NOT EXISTS(SELECT 1 FROM familyhub_crypto_record_history n WHERE n.scope_id=h.scope_id AND n.domain=h.domain AND n.id=h.id AND n.sequence<=? AND n.revision>h.revision) ORDER BY h.id",[$sid,$c['sequence'],$c['sequence']]) as $row){
             $inventoryCount++;$inventoryBytes+=strlen($row['record_proof']);

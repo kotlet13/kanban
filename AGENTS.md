@@ -1,26 +1,31 @@
 # Navodila za delo na projektu
 
-18. oktober — **fizični mobile E2EE preizkus ima delne PASS in dve odprti meji**.
-[Runbook in vezani dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
-ločena QA Android/iOS appa sta nameščena poleg originalov, lasten LAN HTTPS/CA
-in Docker sta pregledana. Android A je opravil installation/account FILE,
-lokalno šifriranje/opravilo, račun/e-pošto in isti `MOBILE-PROJECT-1` po enem
-nadaljevanju ohranjenega obrazca. PHP receipt fix ima old FAIL/27 ciljnih PASS
-in je nameščen samo v QA po konsistentni zasebni SQLite kopiji; drugih 180 virov,
-config/SID/schema ni spremenjenih. Poznejši auto sync ob 15:27 ima
-`invalid_response`, 0 pending/conflicting/blocked; varen tek ga omeji na lokalni
-`finance4.accountChoices`. Pregledani parent/schema fix ima 8 novih ciljnih
-PASS/scoped No issues; navadni Android parent-fixed paket je nameščen in-place,
-isti QA dataDir/izvirni metapodatki, auto sync čaka odklep S25. iOS alias cleanup in odklep
-istega vaulta sta fizično PASS (`complete`, cleanup false/residual 0). Po vezanem
-notification SIGSEGV ima immutable-authority popravek 3 nove ciljne PASS in
-scoped No issues; en novi običajni zagon istega vaulta v osebni Utrip je ostal
-živ skozi 85,7 s brez čarovnika/napake, iste datoteke/identity/probe. Zadnji iOS parent-fixed paket ohrani iste štiri vault datoteke/identity/probe
-in z enim običajnim zagonom PID 2005 kaže Osebno/Utrip; 85 s se ne ponavlja.
-SDK ni spremenjen, lokalni opomniki ostanejo vključeni; to ni dolgoročni stability
-dokaz. Eno lokalno MOBILE-LOCAL-B je naslednji naročeni korak, še ne PASS. B račun/deljenje, physical recovery/upgrade
-in P8 ostajajo odprti; to ni neodvisni P0 pregled. FILE ostane zasebna,
-prvi stik uporablja javni kartici. Produkcija/trgovini in Mac PASS so isti.
+18. oktober — **mobilni E2EE QA: isti Android auto sync po SQL popravku PASS**.
+[Aktualni checkpoint in dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
+Android A lokalni/računski koraki in isti MOBILE-PROJECT-1 so PASS. Trenutni
+QA queue-diagnostic APK `c7b18907…`, PID 2050, ohrani ID/sejo/dataDir in original;
+trije varni tagi so potrdili exports.propose pending, brez blocked/rejected
+razloga. En izoliran real-dispatch reproducer je dokazal neobstoječi
+`records.domain` pred receiptom, ne manjkajoč uporabnikov ključ. Pregledani
+LEFT JOIN query fix ohrani scope/id in celotni source-set fail-closed; novi
+ciljni real-schema test/lint sta PASS, brez stare matrike. Ob 14:59:52.664764 UTC
+je z novo konsistentno zasebno SQLite kopijo/integrity atomarno zamenjan samo
+NativeCryptoAccountChoiceExportV2.php v QA; drugih 180 virov/config/SID/schema
+isti, brez DDL/restarta/API. Sveži avtomatični cikel ISTEGA PID/seje je ob
+17:00 lokalno po apply zaključil »Usklajeno«, last success/attempt 17:00,
+0 pending/conflicting/blocked, brez napake. Dokaz je terminalni AX; poznejši
+PNG že kaže naslednji naravni Syncing, ne dokaz drugega končanega cikla.
+Do tega sync zajema brez nove client gradnje, replaya/Done/manual Sync/prijave/
+FILE ali vnosa po apply.
+iOS navadni `af730dd5…` ohrani iste štiri vault datoteke/identity/probe,
+complete/residual 0 in osebni Utrip, PID 2005; predhodni finite startup 85,7 s
+je PASS in se ne ponavlja. Eno shranjeno MOBILE-LOCAL-B je vidno unchecked.
+Po uspešnem syncu je bil en Save MOBILE-SHARED-1/FROM-A-20261018; obrazec
+ostaja odprt brez napake, nastanek še ni potrjen, brez drugega Save/povabila.
+To je ločen nov korak, ne prejšnji sync blocker.
+B račun/deljenje, odvzem, offline/recovery/physical upgrade in P8 ostajajo odprti;
+to ni neodvisni P0 pregled. FILE ostane zasebna. Produkcija/trgovini, originalni
+appi/podatki in Mac PASS so isti; QA diagnostika ni v main.
 
 18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek

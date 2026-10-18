@@ -1,33 +1,53 @@
 # E2EE: dva uporabnika na fizičnem Androidu in iOS — 18. oktober 2026
 
-**Trenutno: Android A lokalni in računski koraki ter isti child projekt so PASS;
-običajni sync in dvouporabniško deljenje še nista zaključena.** Po enem
-nadaljevanju istega obrazca je `MOBILE-PROJECT-1` odprt kot Deljeno, poznejši
-samodejni sync ob 15:27 pa ima `invalid_response`, 0 pending/conflicting/blocked.
-Ni novega opravila ali povabila. Varen diagnostični tek je nato napako omejil na
-lokalno crypto `finance4.accountChoices`; pregledani parent/schema popravek ima
-8 novih ciljnih PASS. Oba običajna popravljena paketa sta zdaj nameščena in-place;
-Androidov zaključen samodejni sync še čaka odklep S25. iOS B je po posodobitvi
-ohranil vault in z enim običajnim zagonom dosegel osebni
-Utrip brez čarovnika/napake; prejšnji notification kandidat je že opravil 85,7 s
-opazovanja, zadnja parent posodobitev pa samo en običajen screen check. Journal je
-`complete`, cleanup false/residual 0. To je startup/cleanup PASS, ne B račun ali
-deljenje.
-Noben od teh delnih izidov še ne potrjuje dvouporabniškega toka. Osnova je
-`de211c37808f137bd3e7b09369c71d873b9f1c34`. Naročena sta ločena testna
-aplikacija in strežnik za dva sintetična uporabnika. Uspešni
-[macOS preizkusi](E2EE_MAC_TEST_2026_10_18.md) ostanejo zaključeni in se ne
-ponavljajo. To ni neodvisni kriptografski pregled P0 ali zaključek vseh meril P8.
-Produkcija, originalni aplikaciji, njuni podatki/ključi in trgovini niso cilj.
+**Aktualni checkpoint: Androidov samodejni sync istega stanja je po ozkem
+strežniškem popravku PASS.** Ob 17:00 lokalno (15:00 UTC), po apply ob
+14:59:52.664764 UTC, je isti PID 2050/seja pokazal »Usklajeno«, last success in
+attempt 17:00, 0 pending/conflicting/blocked in brez napake. Do tega sync zajema po apply ni bilo nove gradnje,
+relaunch/prijave/FILE/vnosa, Done ali manual Sync; samo Back iz
+obstoječe zaščitne strani in read-only sync status.
+[Vezani native dokaz](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/post-server-fix-sync-evidence.json)
+ločuje terminalni AX prikaz od poznejšega PNG, ko se je že začel naslednji
+naravni »Usklajujem …« cikel. Ne trdi uspeha tega naslednjega cikla.
+
+Dokazani SQL vzrok je bil neobstoječi `familyhub_crypto_records.domain` pri
+`exports.propose`: izjemi je sledil unknown receipt/pending. [Izolirani
+reproducer in source/test binding](../build/qa/jivie-mobile-two-user-20261018/account-choice-propose-repro/evidence.json)
+potrjujeta old FAIL in pregledani fail-closed query fix; [QA apply](../build/qa/jivie-mobile-two-user-20261018/account-choice-propose-repro/apply-evidence.json)
+je po novi konsistentni zasebni kopiji zamenjal samo eno PHP datoteko.
+Shema, queue/protokol, drugih 180 QA virov/config/SID in produkcija so isti.
+
+Trenutni Android je QA queue-diagnostic APK `c7b18907…`, isti ID/seja/dataDir,
+PID **2050**, originalni app nespremenjen; običajni APK `dab9bf45…` je shranjen.
+A lokalni/računski koraki in isti `MOBILE-PROJECT-1` so PASS. Skupno opravilo in
+povabilo sta naslednja prvotno načrtovana koraka, še ne PASS.
+Na iOS je navadni IPA `af730dd5…`, isti vault/identity/probe/PID 2005,
+`complete`, cleanup false/residual 0 in osebni Utrip. Eno uporabnikovo lokalno
+`MOBILE-LOCAL-B` je vidno kot ena unchecked vrstica. Predhodni finite startup
+85,7 s se pri zadnji posodobitvi ni ponavljal.
+
+[Po uspešnem syncu en Save](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/shared-task-one-save-checkpoint.json)
+za `MOBILE-SHARED-1` z opombo
+`FROM-A-20261018`. Obrazec ostaja odprt brez napake, nastanek še ni potrjen;
+ni drugega Save ali povabila. To je nov korak, ločen od odpravljenega sync blockerja.
+
+B račun, prvi stik/grant, deljenje, odvzem, offline tok ter fizična FILE obnova/
+old→new upgrade ostajajo odprti. To ni potrjen dvouporabniški tok, neodvisni
+P0 pregled ali zaključek P8. Začetna osnova priprave je
+`de211c37808f137bd3e7b09369c71d873b9f1c34`; poznejši checkpoint `5e5426a` in
+PHP delta so vezani v dokazih. Izvirni aplikaciji/podatki/ključi, trgovini in že
+uspešni [macOS preizkusi](E2EE_MAC_TEST_2026_10_18.md) so nedotaknjeni.
+Spodnji pripravljalni/diagnostični koraki so zgodovina posameznih meja;
+aktualno stanje je zgoraj.
 
 ## Pripravljenost in meje
 
 | Del | Trenutno znano | Še potrebno pred fizičnim tokom |
 | --- | --- | --- |
-| iOS | iPhone 11, iOS 27.0.1; isti vault, journal `complete`, cleanup false/residual 0; popravljeni običajni zagon v osebni Utrip skozi 85,7 s PASS | B lokalno opravilo/račun/invitation še niso potrjeni |
-| Android | Galaxy S25 (`SM_S931B`); lokalni/računski koraki in isti child projekt PASS; navadni parent-fixed APK nameščen in-place | Samodejni sync istega stanja čaka odklep S25; task/invite še ne |
+| iOS | iPhone 11, iOS 27.0.1; isti vault, journal `complete`, cleanup false/residual 0; startup PASS in en vidni nedokončani MOBILE-LOCAL-B | B račun/povabilo/deljenje še niso potrjeni |
+| Android | Galaxy S25 (`SM_S931B`); lokalni/računski koraki, isti child projekt in svež auto sync 17:00 PASS; QA queue APK c7b18907…, PID 2050 | En Save MOBILE-SHARED-1, obrazec odprt brez napake; nastanek ni potrjen, brez drugega Save/povabila |
 | Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A enrollmentu/prijavi | B povezan tok še ni potrjen |
-| Strežnik | Ločen projekt; A in ena organizacija/en child projekt; PHP receipt popravek nameščen po konsistentni kopiji, child metadata že shranjeni | Client parent/schema popravek je nameščen; native sync in task/invite PENDING |
+| Strežnik | Ločen projekt; oba ozka PHP popravka po ločenih konsistentnih kopijah; post-apply native auto sync PASS | B/grant/deljenje še ne; brez DDL/restarta/ročnega API |
 | Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik | Povabilo/sprejem/grant in skupne spremembe še PENDING |
 
 Dejansko nameščena QA ID-ja sta `si.triparna.jivie.e2eetest.android20261018` in
@@ -294,8 +314,13 @@ ISTEGA stanja še ni potrjen, produkcija je nespremenjena.
 in [in-place namestitev](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-parent-fixed/installation-evidence.json)
 vežeta APK `dab9bf45…`, isti podpis/QA ID/verzijo, manifest/native knjižnice ter
 odsotno začasno diagnostiko. En zagon PID 28665, izvirni metapodatki in QA dataDir
-ohranjeni; telefon je bil zaklenjen. Zaključen avtomatični sync po odklepu S25
-je PENDING, brez manual Sync/nove prijave/FILE/ustvarjanja.
+ohranjeni; telefon je bil ob launchu zaklenjen. [Poznejši isti proces po odklepu](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-parent-fixed/unlocked-ui-checkpoint.json)
+je pokazal oba committed prostora; en Done je vrnil običajni Utrip brez nove
+FILE/ključev/migracijskega soglasja ali sprejema unavailable podatkov. NOV cikel
+je bil aktiven ob 14:20:32 UTC in je ob 14:21:01 UTC zaključil pozornost:
+last attempt 16:20 lokalno, last success ni potrjen, pending/conflicting/blocked
+0/0/0, protection-pending besedilo. To ni zgolj prejšnji 16:16 prikaz.
+Natančen pending razlog ostaja neznan; ni manual Sync, novega opravila ali povabila.
 [iOS artifact](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-parent-choices-fixed/ios-artifact-evidence.json),
 [namestitev](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-parent-choices-fixed/installation-evidence.json)
 in [normal screen/continuity](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-parent-choices-fixed/native-update-continuity-evidence.json)
@@ -303,8 +328,79 @@ vežejo IPA `af730dd5…`, isti signer/profile/service/group, štiri bajtno enak
 vault datoteke pred zagonom kljub preselitvi UUID poti, isti identity/probe in
 `complete`, cleanup false/residual 0. En običajen PID 2005 kaže Osebno/Utrip;
 85-sekundni preizkus in AOT disassembly nista ponovljena. Izvirni TestFlight app
-je isti. Naslednje je eno uporabnikovo lokalno `MOBILE-LOCAL-B`; še ni zapisano
-kot PASS. B račun/povabilo/grant/deljenje in preostali koraki spodaj so odprti.
+je isti. [Lokalni B checkpoint](../build/qa/jivie-mobile-two-user-20261018/client-candidates/ios-parent-choices-fixed/native-mobile-local-b-checkpoint.json)
+potrjuje uporabnikovo shranitev in natanko eno vidno, unchecked vrstico
+`MOBILE-LOCAL-B` v Osebno / Planer / Opravila / Brez roka na istem PID 2005.
+Agent ni ponovil save, odprl detaila ali spreminjal podatkov. B račun/povabilo/
+grant/deljenje in preostali koraki spodaj so odprti.
+
+**Predhodni reason-only diagnostični tek — zgodovina pred zadnjim queue zajemom.**
+[Artifact](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-diagnostic/artifact-evidence.json),
+[namestitev](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-diagnostic/installation-evidence.json)
+in [capture evidence](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-diagnostic/capture-evidence.json)
+vežejo en APK `547fa768…`, isti QA ID/podpis/sejo/dataDir in nespremenjene
+metapodatke originala, en launch PID 31944. Pregledani overlay ostane izključno
+v dveh QA datotekah (`collaboration_sync_actions.dart`, `collaboration_finance_sync.dart`),
+ne v main; zajame največ prvi allowlisted pending razlog in terminalni cikel,
+brez payload/ID/URL/exception text/raw stack. Običajni APK `dab9bf45…` ostane
+shranjen. Main runtime od `5e5426a` ni spremenjen.
+
+Zajem je trajal 180,01 s, timeout in 0 tagov; raw log ni shranjen. Opaženi so
+zaklenjen/nebuden telefon in odsoten resumed app, ne natančen razlog ali stanje
+lease/schedulerja. Isti proces ostaja ohranjen, brez novega UI dejanja, testa,
+poizvedbe ali ponovne priprave. Po uporabnikovem odklepu je ločeno odobreno nadaljevanje zbiralnika na ISTEM
+PID 31944 brez relaunch/UI posega v 0,17 s zajelo `first_pending stage=finance
+reason=crypto_command_receipt_pending` in terminalni pending z istim razlogom.
+To določi manjkajoč applied receipt, ne še dejanskega operation/state ali
+blocked admission razloga. Ohranjeno stanje čaka ozko source diagnozo.
+
+## Dokazani SQL vzrok in zadnja QA namestitev
+
+[Zadnji queue capture](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/capture-evidence.json)
+veže en odobren diagnostic build/update/launch, tri finite tage v 2,64 s na
+PID 2050, brez nadaljnjih telefonskih dejanj. [Artifact](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/artifact-evidence.json)
+in [installation](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/installation-evidence.json)
+potrjujeta isti QA ID/podpis/sejo/dataDir in nespremenjen original. Queue tag
+bere samo operation/state/top-level stored reason/code. Foreground-only
+`KEEP_SCREEN_ON` se ob onPause odstrani; ne odklepa telefona ali spreminja globalnih
+nastavitev. Vse to ostane samo v QA overlayu, ne main.
+
+[Reproducer/evidence](../build/qa/jivie-mobile-two-user-20261018/account-choice-propose-repro/evidence.json)
+je uporabil svežo opt-in SQLite bazo, realni `NativeService.dispatch`, nove
+sintetične native org+wrapped child podpise in prazen finance checkpoint.
+Old FAIL je `PDOException / HY000 / no such column: domain`, sled v
+`NativeCryptoAccountChoiceExportV2.php:58`, 0 proposal receipts/0 offers.
+Controller tak Throwable skrije v `server_error` 500 brez loga; client send
+API napako prestreže in unknown receipt pusti pending. Prazni Docker logi zato
+niso izključili tega vzroka.
+
+Popravek z LEFT JOIN poveže `record_positions` po **scope_id in id**, ohrani
+parent scope/type/live filter in vrstni red; manjkajoča ali ne-finance pozicija
+je `source_set_changed`, nikoli tiha izpustitev živega računa. Vsi predhodni
+podpisi/ACL/checkpoint/source-set pogoji ostanejo. [Novi ciljni test](../server/tests/crypto2-account-choice-selection-propose-regression.php)
+ima uspešen prazni 200 receipt/exact retry, nonempty parent proti child filtru
+ter manjkajočo/napačno-scope/napačno-domain pozicijo fail-closed; devet ozkih
+assertionov PASS, oba PHP lint PASS. To ni ponovitev stare zbirke ali fizični
+client export roundtrip. Precreateguard zahteva SQLite, izrecni opt-in in prazne
+accounts/scopes/receipts. Vmesni fixture-only popravek je ločen od product FAIL.
+
+[Apply evidence](../build/qa/jivie-mobile-two-user-20261018/account-choice-propose-repro/apply-evidence.json)
+potrjuje novo zasebno 0700/0600 konsistentno SQLite kopijo 2,473,984 B,
+`integrity_check=ok` (ne trditev dejanske obnove). Ista odobrena Connection.backup
+pot ima own volume RW samo za WAL/SHM, source SQL `mode=ro`/query_only in
+network none. Atomarno je zamenjan samo `NativeCryptoAccountChoiceExportV2.php`,
+old `e35c0ac…` → reviewed/on-container `4c4e89ee…`; drugih 180 datotek,
+config/SID/schema so isti. Dejanski FPM validate_timestamps On/2 s, počakane
+3 s; brez DDL, SQL source zapisov, restarta, opcache reset ali API zahtevka.
+[Post-apply native dokaz](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-pending-queue-diagnostic/post-server-fix-sync-evidence.json),
+SHA256 `af8e0d1d9cb152b6bc13b5490c080282f067d31907d450fd58cb8842d65b44a8`,
+veže isti PID/sejo na ta apply. AX v oknu 15:00:25–15:00:58 UTC je pokazal
+»Usklajeno«, last success/attempt 17:00 lokalno, 0/0/0, brez napake; točna sekunda
+AX ni zabeležena. Poznejši shranjeni PNG že kaže naslednji »Usklajujem …« poll,
+ob ohranjenem uspehu 17:00, zato PNG sam ni terminalni status dokaz. Ni ponovnega
+teka ali trditve, da se je zaključil tudi naslednji cikel. Do tega native sync zajema po apply ni bilo
+manual Sync, Done, relaunch, auth/FILE ali novih content zapisov. To je odprava
+te konkretne account-choice receipt meje; dvouporabniško deljenje še ni PASS.
 
 ## Navodila za en omejen fizični tek
 
