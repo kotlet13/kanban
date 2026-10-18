@@ -1,37 +1,46 @@
 # Navodila za delo na projektu
 
-18. oktober — **mobilni E2EE QA: vzrok Save dokazan in popravljen v izvoru**.
+18. oktober — **mobilni E2EE QA: en skupni task Save in auto sync PASS**.
 [Aktualni checkpoint in dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
-ločeni SQL exports.propose popravek ostaja potrjen z auto sync PASS ob 17:00
-lokalno, isti PID 2050/seja, 0 pending/conflicting/blocked in brez napake.
-Poznejši native Save po dveh oddaljenih/fizičnem poskusu in enem restartu ni
-zaprl obrazca. EN debug QA paket, PID 8920, je potrdil prihod do dejanske
-repozitorijske transakcije in CollaborationException; bralni scroll je razkril
-prej skrito generično napako. Debugger in lastni USB forward sta odstranjena.
-En naravni real-repository/E2EE reproducer je dokazal record_missing: sveži
-native child je imel podpisani scopeMetadata, ne kanoničnega project zapisa.
-Trije pregledani runtime popravki ustvarijo dejanski šifrirani koren z istim
-ID ter popravijo obstoječi malformed child pred izrecnim urejanjem, zunaj SQL
-transakcije. Sveži podpisani origin/parent/lifecycle/owner in popoln inventory
-so obvezni; _put/phase/reference varovala ostanejo. Obstoječi ali izbrisani/
-migrirani koreni se ne prepisujejo ali obujajo, isti intent ostane trajen.
-Pozitivne faze fresh/task, repair/data/idempotence in podpisani tombstone so
-zaključile preverjanja; prvi večfazni tek je šele pri zadnjem negativnem
-primeru prekinila fixture kvota. Ločeni filtered incomplete-inventory primer
-je PASS brez korena/intent. Samo njegov disposable fixture je imel povečano
-kvoto; živi QA/produkcija isti. **Ni whole-file ali broad PASS trditve.**
-Scoped runtime/test analiza je čista. Ločeni četrti UI popravek pokaže isto
-napako trajno nad gumbi z live-region naznanilom; stari FAIL → en ciljni PASS,
-osnutek/fokus in en dispatch ohranjeni. En release QA kandidat je zgrajen,
-še ni nameščen; fizična shranitev/sync istega opravila še PENDING.
-Za prihodnje fizične QA teke pripravimo dovoljen debugger/varen konzolni
-zajem pred prvim poskusom; ob napaki najprej stabilna koda in statična throw
-lokacija, brez payloadov/ključev/tokenov/objektov ali slepih ponovitev.
-iOS af730dd5… ohrani štiri vault datoteke/identity/probe, complete/residual 0
-in osebni Utrip, PID 2005; startup 85,7 s in eno MOBILE-LOCAL-B sta potrjena.
-B račun/deljenje, odvzem, offline/recovery/physical upgrade in P8 so odprti;
-to ni neodvisni P0 pregled. FILE ostane zasebna. Produkcija/trgovini,
-originalni appi/podatki in Mac PASS so isti; QA diagnostika ni v main.
+debug QA 7198d8ec… je enkrat nameščen, PID 14389, ista seja/shramba.
+Običajni startup je pokazal Synced 18:22 lokalno, 0/0/0, brez napake in
+prazen task seznam. Stage zajem je odrezal proračun 512 tagov; neparni begin
+zato ni dokazan await. En logger-rearm helper je dosegel evaluate, izid pa
+ni potrjen; brez drugega evaluate ali app-data branja/mutacije.
+Znani varen catch konzolni zajem je bil aktiven pred ENIM nadaljevalnim Save
+ob 16:32:03.905 UTC. Modal se je zaprl; v istem MOBILE-PROJECT-1 je natanko
+en unchecked MOBILE-SHARED-1. Avtomatični sync ob 18:33 lokalno je Usklajeno,
+0 pending/conflicting/blocked, brez napake; brez drugega Save/manual Sync,
+prijave/FILE ali novega projekta. Vezani one-continuation-save.json ima
+SHA 2836b33…; opomba preverjena pred Save, poznejši detail readback ni izveden.
+En read-only snapshot ob 16:35:21 UTC potrdi en live šifrirani task v točnem
+child scope, revizija 1/global sequence 4/content sequence 3, in en ujemajoči
+batch receipt 200 ob 16:32:05 UTC; SHA 2db0a001…, brez API/mutacije.
+Prvotno čakanje po sprejetem root receipt ostaja nediagnosticirano; trenutni
+uspeh ga ne razloži. Sintetični concurrent scenarij je NOT EXECUTED zaradi
+dveh setup napak pred scenarijem, ne runtime failure; kandidat/logi ostanejo
+v QA, nepreverjeni test je umaknjen, lastni disposable fixture odstranjeni.
+Prejšnji SQL/sync 17:00, canonical-root/source in UI visibility dokazi
+ostajajo zgodovina v runbooku; ni novega broad/whole-file PASS.
+Pri prihodnjem QA dejanju najprej pripravimo točen obrazec/ohranjeni osnutek
+in znano konzolo/obstoječi debugger; ciljna koda ali begin/end faza pred
+retry, brez splošnega diagnostičnega širjenja, slepih ponovitev ali skrivnosti.
+iOS af730dd5… ohrani isti vault/identity/probe, complete/residual 0, PID 2005;
+startup 85,7 s in en MOBILE-LOCAL-B sta potrjena. Eno povabilo je ustvarjeno
+za pripravljeni B e-naslov v Mobile E2EE 20261018, cel prostor s projekti:
+ena pending kartica Član/Polni dostop, A ostane owner. Prvi mail helper ni
+našel sporočila; read-only pregled je potrdil prazni application_url in
+odsoten FAMILYHUB_PUBLIC_URL. Ob 16:42:47 UTC je bil samo v izolirani QA
+config dodan točen javni HTTPS naslov, z zasebno kopijo/lint PASS in enakimi
+app/worker bind bajti; brez restarta/manual send/resend/queue ali DDL zapisa.
+Manjkajoči javni URL je bil potrjeni QA poštni blokator. Običajni worker je
+isto povabilo dostavil ob 16:43:52 UTC; en zajem ob 16:44:27 potrdi natanko
+eno sporočilo/točen QA endpoint, SHA 44d22389…, brez resend/manual send.
+Zasebni 0600 handoff je pripravljen zunaj Gita, vsebina ni izpisana; root
+vodi fizični iPhone korak. B registracija/sprejem/grant, deljenje, odvzem, offline/recovery/physical
+upgrade, celotni mobilni tok in P0/P8/produkcijska pripravljenost niso potrjeni.
+FILE ostane zasebna; produkcija/trgovini, originalni appi/podatki in Mac PASS
+so nedotaknjeni. QA diagnostika ni v glavnem runtime izvoru.
 
 18. oktober — **mesečno pravilo na istem izoliranem D dejansko sinhronizirano**.
 [Dokazi in meje](docs/E2EE_MAC_TEST_2026_10_18.md): contract-2/3 gate popravek

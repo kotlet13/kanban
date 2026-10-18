@@ -1,7 +1,62 @@
 # E2EE: dva uporabnika na fizičnem Androidu in iOS — 18. oktober 2026
 
-**Aktualni checkpoint: Save ima dokazan `record_missing` in pregledani
-izvorni popravek; fizični izid novega paketa še PENDING.**
+**Aktualni checkpoint: skupno opravilo je shranjeno/usklajeno in eno B
+povabilo ustvarjeno; predaja/sprejem ter dvouporabniški tok so PENDING.**
+[Debug QA paket](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/artifact-evidence.json)
+`7198d8ec…` je [enkrat nameščen](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/installation-evidence.json),
+**PID 14389**, z isto sejo/shrambo. [Običajni startup](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/one-launch-native-evidence.json)
+je po navadnem Back pokazal »Usklajeno« ob **18:22 lokalno**, 0/0/0, brez
+napake in prazen task seznam. Startup stage zajem je dosegel proračun 512
+tagov; zadnja neparna begin oznaka zato **ne dokazuje await zastoja**.
+
+[En observational logger rearm](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/logger-rearm-evidence.json)
+je prek točnega helperja dosegel en `evaluate`, izid pa ostane nepotrjen.
+Ni bilo drugega evaluate, app-data branja/mutacije ali ponovnega zagona.
+Znani varni catch konzolni zajem je bil nato pripravljen **pred**
+[enim nadaljevalnim Save](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/one-continuation-save.json)
+ob **16:32:03.905 UTC**: modal se je zaprl, v istem `MOBILE-PROJECT-1` je
+vidna natanko ena unchecked vrstica **MOBILE-SHARED-1**. Samodejni sync je
+ob **18:33 lokalno** zaključil »Usklajeno«, pending/conflicting/blocked
+**0/0/0**, brez napake; brez manual Sync, drugega Save/evaluate ali novega
+projekta/FILE/prijave. SHA256 tega vezanega dokaza je
+`2836b33c1f19eee871d7b813efa7b1f48cd2c1bc8bc39f59561c33c49d7d39ba`.
+Opomba je bila preverjena pred Save, poznejši detail readback ni bil izveden.
+
+[En read-only snapshot ob 16:35:21 UTC](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/post-task-save-readonly-confirmation.json)
+potrdi v točnem child scope **en live šifrirani task**, revizija 1/global
+sequence 4/content sequence 3, ter en ujemajoči batch receipt **200 ob
+16:32:05 UTC**. Brez API/mutacije ali izpisa vsebine/ključev; SHA256
+`2db0a001800a4e38cdbf9bcd1b0b0872e03061df041a744ca42b37192d15ee46`.
+
+To je **PASS trenutne task Save/auto-sync poti**, ne razlaga prvotnega
+čakanja po sprejetem korenu: tega vzroka nismo diagnosticirali. Ločeni
+[sintetični concurrent scenarij](../build/qa/jivie-mobile-two-user-20261018/concurrent-child-save-repro/verification-not-executed.json)
+je **NOT EXECUTED** zaradi dveh setup napak pred scenarijem; kandidat/logi
+so ohranjeni, lastni disposable fixture odstranjeni in nepreverjeni test
+umaknjen iz test drevesa. To ni runtime failure ali concurrency PASS.
+[Eno organizacijsko povabilo](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-root-progress-debug/one-organization-invitation.json)
+je ustvarjeno za pripravljeni zasebni B e-naslov v **Mobile E2EE 20261018**,
+cilj `04beef63-4eaf-490a-8056-03fa3f506e28` (ID ni neposredno prikazan v UI).
+Izbran je cel prostor s sedanjimi/prihodnjimi projekti, **Polni dostop**;
+vidna je ena pending kartica **Član**, A ostane owner. Prvi mail helper ni
+našel ujemajočega sporočila. [En read-only pregled](../build/qa/jivie-mobile-two-user-20261018/invitation-public-url-before.json)
+je potrdil prazni DB `application_url` in odsoten `FAMILYHUB_PUBLIC_URL`.
+[Izolirani QA config popravek](../build/qa/jivie-mobile-two-user-20261018/invitation-public-url-apply-evidence.json)
+je ob **16:42:47 UTC** dodal samo
+`FAMILYHUB_PUBLIC_URL=https://192.168.132.29:18801`: zasebna kopija, PHP lint
+PASS in enaki app/worker bind bajti, brez restarta/manual send/resend ali
+queue/DDL zapisa. Manjkajoči javni URL je bil potrjeni izolirani poštni
+blokator. [Običajni worker je isto povabilo samodejno dostavil](../build/qa/jivie-mobile-two-user-20261018/invitation-public-url-mail-evidence.json)
+ob **16:43:52 UTC**; en zajem ob **16:44:27 UTC** je potrdil natanko eno
+ujemajoče sporočilo in točen QA endpoint, brez manual send ali novega povabila.
+SHA256 `44d22389783a6841a909d8cb7fc6decb513dccd64b93c762489dc17911c91da8`.
+Zasebni lokalni handoff je pripravljen v datoteki 0600 zunaj Gita; vsebuje
+obstoječe B prijavne podatke in originalno QA povezavo, vsebina ni izpisana.
+Root vodi fizični iPhone korak; B registracija/sprejem, primerjava kartic in
+key grant še niso izvedeni. Celotni mobilni teki, P0/P8 in produkcijska
+pripravljenost niso potrjeni.
+
+**Prejšnji source/native checkpointi — zgodovina:**
 [Naravni old FAIL](../build/qa/jivie-mobile-two-user-20261018/shared-task-native-child-repro/old-failure-evidence.json)
 je po dejanskem podpisanem ustvarjanju native organizacije/projekta in pullu
 potrdil eno `scopeMetadata`, nič kanoničnih `project` vrstic in izjemo pri
@@ -31,11 +86,30 @@ oknu; živi QA limiter in glavni PHP izvor sta nespremenjena. Prizadeta
 runtime in test analiza sta čisti. To **ni whole-file/broad/native write-ACK
 PASS**; vsi lastni disposable vsebniki so odstranjeni.
 
-Ločeni četrti runtime popravek vidnosti napake je opisan spodaj. [En novi release QA kandidat](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-fixed/artifact-evidence.json)
-je zgrajen z istimi identitetami/sejo/shrambo, a še ni nameščen.
-Trenutni telefon ima debug APK `0beb5423…`, PID **8920**, ohranjeni obrazec;
-ni novega Save ali povabila. Odločilna je prihodnja shranitev istega osnutka
-in običajni auto sync po pregledani posodobitvi, brez novega projekta/računa.
+[Pregledani release QA APK](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-fixed/artifact-evidence.json)
+`0e650212…` je [enkrat nameščen update-in-place](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-fixed/installation-evidence.json),
+**PID 11988**; ista shramba/seja/prostori in originalni app so ohranjeni.
+Vključeni so trije canonical-root popravki in četrti popravek vidnosti napake.
+[En Save istega osnutka](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-fixed/one-save-native-result.json)
+ob **15:58:26.061786 UTC** ostane v »Dodaj opravilo« busy po **126,425 s**,
+Shrani/Prekliči sta onemogočena; brez drugega Save, povabila ali ročnega Sync.
+Varni konzolni zajem je tekel pred Save in ni zajel exception taga; ker
+beleženje pokriva catch, to ne dokazuje uspeha ali odsotnosti tihega čakanja.
+Meja 120 s je bila presežena za 6,425 s zaradi zadnjega bralnega UI/tool
+povratka, brez dodatnega vnosa. Števci pending/conflict/blocked med busy
+obrazcem niso dostopni; ne prenašamo prejšnjih ničel na ta poskus.
+
+[Query-only snapshot ob 16:02:43 UTC](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-fixed/native-root-save-readonly-snapshot.json)
+potrdi en sprejeti `crypto2.records.batch` receipt 200 ob 15:58:26 za koren
+`project` revizija 1/sequence 3, poleg prejšnjih `scopeMetadata` in
+`financeAccountChoice`; task ali poznejši sprejeti zahtevek ni prisoten.
+Preverjeni rate bucket ima **154/600** poskusov in okno do 15:59:22, ob zajemu
+že poteklo; kvota ni dokazan vzrok. Ozki statični pregled transakcij/čakalnih
+vrst ni dokazal cikla: repair je zunaj lokalne SQL transakcije, controllerjev
+sync po urejanju sledi vrnitvi Save; časovnik lahko teče sočasno. Sprejeti
+koren sam ne dokazuje lokalne projekcije ali task ACK. Tedaj je čakajoče
+stanje ostalo ohranjeno, brez slepega ponavljanja, resetiranja ali
+špekulativnega popravka.
 
 **Prejšnji potrjeni sync in zgodovina lokalizacije Save:** Ozki SQL popravek je ob
 14:59:52.664764 UTC zamenjal samo eno QA PHP datoteko po konsistentni zasebni
@@ -71,9 +145,9 @@ ni dal uporabnih `top` vrstic; nespremenjeni Android gfx števci ne dokazujejo
 zastoja Flutter SurfaceView. [CPU fallback](../build/qa/jivie-mobile-two-user-20261018/shared-task-cpuinfo-fallback.json)
 kaže agregatnih 34 % procesa v prejšnjem intervalu, ne konkretne niti ali vzroka.
 
-Ena pregledana [debug QA gradnja](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-debug/artifact-evidence.json)
+**Zgodovinska debug stopnja:** ena pregledana [debug QA gradnja](../build/qa/jivie-mobile-two-user-20261018/client-candidates/android-task-save-debug/artifact-evidence.json)
 `0beb5423403bdf9b514ba0e6dcd77ac490e7fff12d4d8451933b7a59025f8bd6`
-je nameščena v isti paket/podpis/secure preferences/shemo, **PID 8920**.
+je bila nameščena v isti paket/podpis/secure preferences/shemo, **PID 8920**.
 Štirje pregledani popravki in izolacija ostanejo; trije tag overlayi so
 odstranjeni, brez seeding/reset ali novega runtime popravka. Dodatna debug
 Vulkan knjižnica je vezana na isti SDK engine in obstoječa Gradle merged/
@@ -112,8 +186,8 @@ potrdi stari FAIL → en novi ciljni PASS pri mobilnem pogledu 360 × 640:
 zaključena neuspešna asinhrona shranitev je vidna brez drsenja in dostopno
 naznanjena, osnutek/kontrolniki/izbor/fokus ostanejo ter je izveden natanko en
 klic brez samodejne ponovitve. Analiza obeh prizadetih datotek je čista.
-Popravek je **samo v izvoru, še ni nameščen**; ne odpravlja ali dokazuje
-uspeha ločene repozitorijske odpovedi shranjevanja.
+Ta popravek je v nameščenih QA paketih; sam ne odpravlja čakanja pred catch.
+Poznejši dejanski uspešni task Save/sync je ločen dokaz zgoraj.
 
 Na iOS je navadni IPA `af730dd5…`, isti vault/identity/probe/PID 2005,
 `complete`, cleanup false/residual 0 in osebni Utrip. Eno uporabnikovo lokalno
@@ -130,11 +204,11 @@ checkpointi so zgodovina; aktualno stanje je zgoraj.
 
 | Del | Trenutno znano | Še potrebno pred fizičnim tokom |
 | --- | --- | --- |
-| iOS | iPhone 11, iOS 27.0.1; isti vault, journal `complete`, cleanup false/residual 0; startup PASS in en vidni nedokončani MOBILE-LOCAL-B | B račun/povabilo/deljenje še niso potrjeni |
-| Android | Galaxy S25 (`SM_S931B`); A/child/auto sync 17:00 PASS; trenutno debug APK 0beb5423…, PID 8920/seja, debugger odklopljen | Naravni reproducer potrdi record_missing; 3 canonical-root + UI visibility popravki pregledani. En release kandidat zgrajen, še ni nameščen; fizični task/sync in povabilo PENDING |
+| iOS | iPhone 11, iOS 27.0.1; isti vault, journal `complete`, cleanup false/residual 0; startup PASS in en vidni nedokončani MOBILE-LOCAL-B | B registracija/sprejem/deljenje še niso potrjeni |
+| Android | Galaxy S25 (`SM_S931B`); debug 7198d8ec…, PID 14389, ista seja/shramba; en unchecked MOBILE-SHARED-1 in auto sync 18:33, 0/0/0, brez napake | Trenutni Save/sync PASS; prvotni post-root wait ni diagnosticiran. Eno organizacijsko povabilo samodejno dostavljeno; zasebni handoff pripravljen, B/deljenje PENDING |
 | Omrežje | LAN HTTPS `https://192.168.132.29:18801` dejansko uporabljen pri A enrollmentu/prijavi | B povezan tok še ni potrjen |
-| Strežnik | Ločen projekt; oba ozka PHP popravka po ločenih konsistentnih kopijah; post-apply native auto sync PASS | B/grant/deljenje še ne; brez DDL/restarta/ročnega API |
-| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik | Povabilo/sprejem/grant in skupne spremembe še PENDING |
+| Strežnik | Ločen projekt; ozka PHP popravka in native auto sync PASS; QA public URL popravljen, isto povabilo samodejno dostavljeno 16:43:52 UTC | B/grant/deljenje še ne; brez DDL/restarta/ročnega API |
+| Vlogi | A = S25 lastnik, B = iPhone 11 prejemnik; eno dostavljeno pending organizacijsko povabilo Član/Polni dostop | Fizični B handoff/registracija/sprejem/grant in skupne spremembe še PENDING |
 
 Dejansko nameščena QA ID-ja sta `si.triparna.jivie.e2eetest.android20261018` in
 `si.triparna.jivie.e2eetest.ios20261018`, prikazno ime `Jivie Test`.
@@ -490,18 +564,18 @@ te konkretne account-choice receipt meje; dvouporabniško deljenje še ni PASS.
 
 ## Opazovanje pred prvim fizičnim poskusom
 
-Po izrecni uporabnikovi zahtevi pred naslednjim fizičnim QA poskusom pripravimo
-in povežemo debugger oziroma navadno debug konzolo ter varen omejeni zajem.
-Ponovno uporabimo obstoječi
+Pred ciljnim dejanjem najprej pripravimo točen obrazec/ohranjeni osnutek in
+znani varen konzolni zajem za pravi paket/PID; uporabimo obstoječi debugger,
 [QA runner](../build/qa/jivie-mobile-two-user-20261018/android-task-save-debug-plan/launch-and-observe.py)
-in [opazovalnik](../build/qa/jivie-mobile-two-user-20261018/android-task-save-debug-plan/observe-save.dart),
-z isto izolacijo, avtentikacijo in USB/loopback omejitvijo; ne gradimo novega
-splošnega diagnostičnega ogrodja. Ob prvem neuspehu ali navideznem neodzivu
-pred retry/rebuild preverimo konzolo, stabilno kodo izjeme in statično throw
-lokacijo. Zabeležimo samo te oznake/kontrolni tok ter viden izid; brez
-payloadov, ključev, tokenov, auth URL ali surovih objektov. S tem ne trdimo,
-da je novo runtime beleženje že dodano ali da trenutni runner že zajema
-exception kodo/throw lokacijo: zadnji zajem je potrdil samo kategorijo in pot.
+in [opazovalnik](../build/qa/jivie-mobile-two-user-20261018/android-task-save-debug-plan/observe-save.dart).
+Omejenega zajema ne porabimo za splošno startup raziskovanje. Ob napaki ali
+tihem čakanju pred retry/rebuild zabeležimo stabilno kodo/statično throw
+lokacijo oziroma begin/end ciljne faze in zadnjo doseženo mejo. Odrezan
+proračun ali prazni catch zajem sam ne dokazuje zastoja ali uspeha.
+Brez splošnega širjenja diagnostike ali slepega ponavljanja; ista izolacija,
+avtentikacija in USB/loopback omejitev, brez payloadov, ključev, tokenov,
+auth URL ali runtime objektov. Startup je že pokazal mejo 512 tagov; poznejši
+rearm ni potrjen, zato ne trdimo uspešnega ciljnega stage zajema.
 
 ## Navodila za en omejen fizični tek
 
