@@ -2,15 +2,17 @@
 
 Uporabnik je odobril nadaljevanje odprtih funkcionalnih preizkusov na dveh
 ločenih Mac namestitvah. Osnova je `36139e8` (poenostavitev deljenja).
-Preizkus se po uporabnikovem odklepu Maca nadaljuje. Potrjeni so
-izolacija, začetna nastavitev A/B, isti A prostor/projekt, popravljena
-mirovalna sinhronizacija, eno A opravilo in eno povabilo B. Registracija B,
-FILE, prvi sprejem in popravljeni prikaz čakanja so uspešni. Prva odobritev
-A je aktivirala krovni prostor, ob projektu pa zadela omejitev zahtevkov;
-r4 popravek je uspešno nadaljeval isti shranjeni projekt. B je v dejanski
-aplikaciji prebral eno prvotno opravilo z opombo A-V1. Dvosmerno urejanje,
-offline nadaljevanje, neposredni projekt in odvzem
-dostopa še niso potrjeni.
+Potrjeni so izolacija, začetna nastavitev A/B, sprejem povabila brez kartic,
+lastnikova odobritev in odklep obstoječega podprojekta. Na istem opravilu
+sta potrjena dvosmerno urejanje ter offline shranitev, ponovni zagon in
+samodejni prenos po obnovi povezave. B je prebral tudi neposredno deljeni
+projekt drugega prostora, brez članstva v njegovem staršu in brez prikaza
+sosednjega zasebnega projekta. Zadnji scenarij odvzema je delno potrjen:
+strežnik je odstranil B in aktiviral nove ključe starša ter otroka, klient
+pa napačno obdela uspešni zaključek. Naslednja A sprememba ostane lokalno
+čakajoča, zato zavrnitev nove vsebine pri B ni dokazana. Finančno opozorilo
+in visok strošek zahtevkov ostajata ločeni omejitvi; dodatne finančne
+gradnje/testi so ustavljeni. Ta krog ne potrjuje pripravljenosti za produkcijo.
 Nadaljevanje je na istih podatkih; ne ponavljamo registracije A ali FILE
 čarovnikov. Produkcija, stare namestitve in mobilni checkpoint ostajajo isti.
 
@@ -77,10 +79,10 @@ beleži fazo/kodo napake/čas, ne gesel, žetonov, ključev ali teles zahtevkov.
 | 0 | Podpis, lastna shramba, izolirano gostovanje, pripravljeni dnevniki | Oba nameščena; oba lokalna čarovnika uspela |
 | 1 | A račun, prostor/projekt/opravilo; B zaseben lokalni kontrolni vnos in poznejša registracija skozi povabilo | PASS; B e-pošta/računski FILE pripravljena, lokalni vnos ohranjen pred sprejemom |
 | 2 | Eno povabilo brez kartic, vidno čakanje, lastnikova odobritev in odklep že obstoječega projekta | PASS po r3/r4 popravkih; B prebere isto opravilo/A-V1; visok strošek in429 ostajata omejitev |
-| 3 | Sprememba istega opravila v obe smeri, brez podvojitve ali objave B lokalnega vnosa | Čaka |
-| 4 | Kratka prekinitev povezave in ponovni zagon, nato nadaljevanje istega čakajočega dela | Čaka |
-| 5 | B dobi samo projekt ločenega A prostora; nadrejeni prostor in sorodni projekt ostaneta nedostopna | Čaka |
-| 6 | Odvzem dostopa prepreči prihodnji prenos/spreminjanje; prej prenesena kopija ni obljubljena kot izbrisana | Čaka |
+| 3 | Sprememba istega opravila v obe smeri, brez podvojitve ali objave B lokalnega vnosa | PASS (N4): B-V2 → A in A-V3 → B; zasebni B vnos ostane lokalen |
+| 4 | Kratka prekinitev povezave in ponovni zagon, nato nadaljevanje istega čakajočega dela | PASS (N5): B-OFFLINE-V4 preživi restart in se samodejno prenese v A |
+| 5 | B dobi samo projekt ločenega A prostora; nadrejeni prostor in sorodni projekt ostaneta nedostopna | PASS za native prikaz (N6): ciljna vsebina vidna, starš/sosed odsotna, starš ima samo A |
+| 6 | Odvzem dostopa prepreči prihodnji prenos/spreminjanje; prej prenesena kopija ni obljubljena kot izbrisana | DELNO (N7): strežniški odvzem obeh ciljev potrjen; klientov zaključek ima napako, naslednja A sprememba čaka; zavrnitev novega prenosa/pisanja še ni dokazana |
 
 ### Začetna nastavitev — sprotni zapis
 
@@ -558,7 +560,7 @@ diagnostika z natančnim končnim seznamom statičnih izvornih kod; ne sme
 izpisovati poljubnih message/source/stack vrednosti ali spremeniti poslovne
 kode. Ostali N4/N5/N6/N7 ostanejo odprti.
 
-### Trenutni checkpoint: r5 diagnostika pripravljena; potreben odklep Maca
+### Zgodovinski checkpoint: r5 diagnostika pripravljena; potreben odklep Maca
 
 QA kandidat in zunanji zajem sta neodvisno ter glavno pregledana. Nov
 `_qaFormatCodes` vsebuje1559 natančnih statičnih FormatException literalov
@@ -586,6 +588,393 @@ B-only r5 gradnja, pregled podpisa/paketa, namestitev čez isti vsebnik in
 en zagon z novim varnim zajemom. Počakaj na **samodejni** sync za dejansko
 kodo napake; ne ponavljaj Save, Sync now, prijave, FILE, Join ali odobritve.
 Ohranjen B-V2 je že enkrat poslan v batch200, pri A pa še ni preverjen.
+
+### Po drugem odklepu: r5 zajame natančno napako sinhronizacije
+
+Uporabnik je Mac odklenil. B r4 je normalno zaprt ob19:03:42.822UTC.
+Plan je pred gradnjo vezan na commit47e7ae3, samo polje commit je spremenjeno;
+prvotni plan je ohranjen. Novi plan704364bb… še vedno vsebuje istih584
+vhodov. Ena B-only r5 gradnja in dejanski pregled podpisa, entitlements ter
+hashov PASS. Artifact81dd805c…/AOT6956ed2b… vsebuje samo pregledano QA
+diagnostiko; poslovna koda, identiteta, Keychain, TLS, native in SDK/locks
+so isti r4. Namestitev ob19:05:11.188UTC ohrani isti vsebnik in stari paket.
+
+En pasivni zagon B ob19:05:14.448885UTC, PID55133, brez vnosov ali Save/Sync/
+Join/Done/FILE. Ob19:05:18.981434UTC varni logger zajame dejanski primarni
+`FormatException`, code `crypto_record_context`. Vezani
+`server/n4-r5-b-passive-context-primary-metadata.json`:201HTTP, vsi200,
+nič429; zadnje operacije so exports/certificates/account, osem records.pull
+v oknu. To je lokalna validacijska napaka, ne dokazana HTTP zavrnitev.
+Posnetek `n4-r5-b-passive-crypto-record-context.*` in omejeni safe-tags so
+ohranjeni. B je normalno zaprt ob19:08:34.166UTC, A ostane zaprt.
+
+Izvorni glavni in neodvisni pregled najdeta konkreten kandidat:
+`CryptoFinanceAccountChoices.materialize` poda `legacy_revision`, medtem
+ko publishRaw uporabi kriptografski `record_proof_hash`. Obstoječa sveža
+projekcija ima lahko legacy_revision0 in crypto_revision>=1; par ničelne
+revizije in neničelnega predhodnega hasha sproži točno zajeto varovalo.
+Ozek vzročni preizkus je nato potrjen. Isti ohranjeni sintetični HTTP fixture
+uporabi obstoječe račune/prostor/projekt; brez nove registracije/povabila/
+granta. Testni pripravljalni vnos lokalnega kataloga je najprej naletel na
+manjkajoči lokalni accounts FK, še pred objavo izbire. Dopolnjen je samo
+lokalni profil obstoječe seje, brez strežniške registracije. Prva izbira se
+objavi enkrat; druga potrjena izbira za isti zapis s staro kodo sproži točno
+`crypto_record_context` pred drugim batch (206HTTP/2s). Isti shranjeni
+certifikat in operationId po enovrstičnem popravku na `crypto_revision`
+uspeta (116HTTP/1s): crypto_revision2, legacy_revision0, isti predhodni hash,
+aktualni membership head, preverjeno branje in ponovitev brez dodatnega batch.
+
+En nov ciljni HTTP preizkus, nobene ponovitve starih uspešnih zbirk. Po
+mehanski odstranitvi neuporabljenih delov testnega transporta je končna
+analiza obeh datotek čista (0error/0warning/0info); ni novega teka po tem
+čiščenju. Kriptografski codec/protokol/shema niso spremenjeni. Glavni in
+neodvisni pregled PASS. Izvor bd6b5ff7… in test e185ddce… sta vezana v
+`n4-choice-refresh-source-freeze.json` SHA746211ec…. R6 za isti A/B je
+zgrajen in glavno pregledan: po ena zaporedna native gradnja, dejanski
+strict/deep podpis/entitlements,584 izvornih hashov ter AOT ustrezajo.
+Plana A4bbafbce…/B7eed6362…, artifact Afe06cc27…/Bafd29fee…,
+AOT A958b7ad6…/B4d1c06ac…. Native izvršljiva datoteka in SDK/locks ostajajo
+isti. Edina poslovna sprememba je zgornja vrstica; oba uporabljata že
+pregledano r5 diagnostiko. A je nameščen ob19:16:14.164UTC, B ob19:16:22.849;
+isti vsebnik, Keychain, identiteta in podpis, stara paketa ohranjena.
+
+B pasivna sinhronizacija je ob19:17:20.057UTC dejansko `Synced`, zadnja
+uspešna uskladitev21:16 lokalno,0pending/conflicting/blocked, brez napake.
+Varni log ima samo boot, brez prejšnje FormatException. Glavni pregled
+`n4-r6-b-passive-synced.png` potrdi prikaz. Ni novega Save/Sync/Join/Done/FILE;
+Continue locally samo zapre ohranjeno startup stran. A nato ob19:18:00.581UTC
+dejansko pokaže isto eno MAC-SHARED-1 z B-V2; glavni pregled
+`n4-r6-a-received-B-V2.png` potrdi prenos že prej shranjene spremembe.
+
+Pred A-V3 je pregled rdečega oblačka pokazal splošno opozorilo o zaščiti
+(0/0/0, brez nove izjeme). Prvotna razlaga o nedokončani potrditvi še ni bila
+dokazana. En običajni Done že pripravljenega čarovnika ob19:19:16.154UTC
+do19:19:20.848 vrne stran s pripravljenimi ključi brez napake ali FILE/init.
+`server/n4-r6-a-ready-done-pending-metadata.json`:55HTTP, vsi200, natanko en
+dejanski protectionReady; nič429. Poznejši samodejni cikel še vedno prikaže
+crypto_reconciliation_required, brez A-V3 vnosa. Dokaz
+`n4-r6-a-gate-after-one-done.*` ob19:20:22.701.
+
+Izvorni pregled loči dokončanje od tega opozorila: štirje notranji catchi
+pri members/content/finance/predecessor razlog CryptoAuthorityPending
+preslikajo v splošni crypto_reconciliation_required. Zunanji QA logger jih
+ne zajame. Zato opozorilo ni dokaz neuspešne potrditve; potreben je zajem
+natančnega notranjega razloga. Pripravlja se samo A r7 QA diagnostika,
+brez spremembe poslovne kode. A59717 in B59642 sta normalno zaprta
+ob19:22:17.443/.621UTC. B-V2 se ne shranjuje ponovno, Done/Sync se ne
+ponavljata. Povratna smer N4 in N5–N7 ostajajo odprti.
+
+### A-r7: natančen razlog je terminalni konflikt izpeljanega zapisa
+
+R7 doda samo varni log v štiri notranje pending catche ter štiri že
+filtrirane API catche, za obstoječimi identity/epoch/code varovali.
+Poslovne veje ostajajo bajtno enake po odstranitvi teh logov/catch vezav.
+375 točnih statičnih reason literalov (704 pojavitev/91datotek) in štiri
+končne stage oznake;10 helper privacy kontrol PASS. Collector preveri
+novih375×4 kombinacij ter5 negativnih primerov; starih zbirk ne ponavlja.
+Manifest03418915…, helper4d639769…, sourceplan2ce5dcbc…. Glavni in
+neodvisni pregled PASS. Ena A-only gradnja, dejanski podpis/entitlements,
+584 izvornih hashov in točna tri QA delta PASS. Artifactc812b5c8…,
+AOT8e6c18d5…; native/TLS/SDK/locks isti, B r6 nespremenjen.
+
+En pasivni A zagon19:26:58.761068UTC/PID61749 zajame ob19:27:02.962064
+`sync_finance / CryptoAuthorityPending / crypto_business_delivery_pending`.
+Ni Done/Save/Sync. Ob19:27:29.051 je običajni Pulse odprt brez startup
+čarovnika (`n4-r7-a-passive-finance-delivery-pending.*`); predhodni Done se
+je torej ohranil. Vezani `server/n4-r7-a-finance-delivery-pending-metadata.json`:
+157HTTP vsi200, nič batch/receiptGET/checkpoint/protectionReady. A je
+normalno zaprt19:28:30.854, B ostane zaprt. A-V3 ni bil poskušen; opozorilo
+je account-wide in samo ne dokazuje prepovedi pisanja v izbrani projekt.
+
+Pregled prejšnjega zagona A-r6 odkrije598HTTP,597×200 in en records.batch409
+ob19:17:37. Nginx requestId ni podpisani client requestId, zato povezava
+samo po tej oznaki ni dovoljena. Ena dodatno omejena query-only projekcija
+na testnem strežniku (znani račun A, records.batch,19:17:35–40UTC,status409)
+najde natanko eno vrstico: terminalni rejected/conflict, en financeAccountChoice
+zapis za znani child. RequestId SHA789ec102…; brez raw payload/ključev,
+native vault branja ali mutacij. Dokaz
+`server/n4-r6-prior-choice-terminal-receipt-diagnostic.json`.
+
+`_writeRaw` po resumeUnresolved vsak state, ki ni applied, preslika v
+delivery_pending; terminalni rejected se pravilno ne pošilja znova.
+Izpeljana izbira pa tega konflikta ne razreši in ostaja na istem zahtevku.
+Pripravlja se ozka obravnava samo za to izpeljano vrsto: točen preverjeni
+terminalni conflict, svež preverjeni pull in veljavna novejša izbira;
+originalni zahtevek/receipt/revision claim ostanejo. Neznani izid, druga
+zavrnitev ali neveljavna trenutna izbira ne smejo postati uspeh.
+
+### N4: isto opravilo v obe smeri in lokalna ločenost PASS
+
+Opozorilo na ravni računa ni preprečilo zapisa v izbranem projektu. A je
+ob19:37:12.992UTC enkrat shranil A-V3 na istem MAC-SHARED-1. B je ob
+19:38:14.026 dejansko prikazal A-V3, zelen oblaček in eno opravilo. Glavni
+pregled `n4-r7r6-b-received-A-V3.png` potrdi povratni prenos. Ob19:39:17
+je B Personal/Local še vedno prikazoval LOCAL-B-PRIVATE, A AllTasks pa samo
+skupno opravilo, brez zasebnega B vnosa; dokaza `n4-b-private-sentinel-local.png`
+in `n4-a-all-tasks-no-private-B.png`. N4 je PASS za dvosmerno vsebino in
+lokalno ločenost; A finančno opozorilo ostaja ločen odprt problem.
+
+Oba appa sta normalno zaprta ob19:39:50UTC, z ohranjenima vsebnikoma,
+sejama in podatki. N5 še ni začet: gateway ni ustavljen, offline spremembe
+še ni. A-V3/B-V2, FILE, prijave in prejšnji uspešni testi se ne ponavljajo.
+
+### R8: ozka obravnava konflikta; native potrditev še odprta
+
+Kandidat spremeni samo `crypto_finance_account_choices.dart`. Predhodni
+popravek fizične `crypto_revision` ostane. Ob materializaciji izpeljane
+izbire prestreže samo `crypto_business_delivery_pending`, nato zahteva
+točno eno lokalno terminalno zavrnjeno zahtevo. Preveri lastno svežo
+identiteto, podpis originalnega batch, request/account/server/device/hash,
+točen zapis/operation/scope in svež `receipt.get`. Dovoljen je samo409
+`conflict` z isto podpisano avtoriteto. Znani strežniški receipt po obstoječi
+pogodbi nima obveznega `outcome`; če je prisoten, mora biti `rejected`.
+Neznan ali neskladen izid ne uspe. Sledita dejanski preverjeni pull in
+popolna validacija aktualne izbire z višjo fizično revizijo. Originalni
+zavrnjeni request/receipt/revision claim se ne brišejo, spreminjajo ali
+ponovno pošiljajo. Generična vrsta zahtev, protokol in strežnik so isti.
+
+En nov ciljni HTTP preizkus na ohranjenem sintetičnem stanju potrdi devet
+negativnih kontrol (168HTTP/2s): unknown receipt, neskladen applied,
+druga zavrnitev, permission denial, napačen request hash/authorization,
+zastarelo ali prepovedano branje ter pravi conflict brez preverjene
+aktualne projekcije. Originalni rejected journal ostane isti. Ni nobenega
+od naštetih poslovnih/export/invitation/grant mutacijskih RPC; test ne
+dokazuje odsotnosti vseh metadata zapisov, kot sta checkpoint/scopeObserve.
+
+**Pozitivna HTTP razrešitev konflikta ni dokazana.** Poskus tekmujoče objave
+je ugotovil, da drugi hladni klient nima preverjene finančne projekcije;
+tudi njegova objava je dobila conflict, en navadni read pa ostane pending.
+Širitev vaje je ustavljena: brez novih računov/prostorov, kloniranja,
+resetiranja ali sproščanja claimov. Prvotni owner pending in other rejected
+ostaneta. Začetni manjkajoči import je ustavil test pred izvajanjem; en
+neuspešen prepis skripta je povzročil dodatni enak materialize poskus brez
+pošiljanja. Ti poskusi niso predstavljeni kot uspešna obnova.
+
+Končna analiza obeh datotek0error/0warning/0info, format/diff PASS; po
+mehanskem test-only čiščenju ni nove široke ponovitve. Glavni in neodvisni
+pregled izvora PASS. Freeze `n4-choice-conflict-source-freeze.json`
+SHA13d555bc…, runtime5625acbf…, testef25f6da…. R8 QA helper44fc36d9…
+doda samo novo statično kodo `crypto_account_choices_conflict_binding`;
+ena nova collector kontrola PASS. R7 omejeni zajem se prenese tudi v B,
+brez izpisa surove vsebine. Pripravljata se zaporedni r8 gradnji ob isti
+identiteti/Keychain/TLS/SDK/locks in z ohranjenima starima paketoma. Prva
+native potrditev bo pasivni A na njegovem dejanskem terminalnem konfliktu,
+brez Save/Done/manual Sync; šele nato nadaljujemo N5–N7.
+
+### R8 native: konflikt preverjen, zastareli certifikat razkrije manjkajoče nadaljevanje
+
+Obe zaporedni gradnji sta pregledani: A artifact7394c046…/AOT35a65775…,
+B artifact4206f0e3…/AOT7d68105b…. Dejanski strict/deep podpis, točni
+entitlements/identitete ter vseh584 izvornih hashov na namestitev PASS;
+native izvršljivi datoteki in SDK/locks ostanejo isti. Nameščeni sta čez
+ista lastna vsebnika/Keychain, prejšnja paketa ohranjena.
+
+A prvi pasivni zagon ob19:47:49.583597UTC/PID72515, B ostane zaprt.
+Ob19:47:53.942610 zajame nov točen razlog
+`sync_finance / CryptoAuthorityPending / crypto_account_choices_head_changed`.
+Vezani `server/n4-r8-a-choice-head-changed-primary-metadata.json`:
+169HTTP vsi200, en receiptGET in nato records.pull, nič novih batch.
+To dokazuje napredovanje skozi preverjanje konflikta in sveži pull; ni
+dokaz uspešne razrešitve. Native prikaz ob19:48:43.551 še kaže splošno
+opozorilo in0/0/0. A je normalno zaprt ob19:49:01.576, brez Save/Done/Sync.
+
+Izvorni pregled potrdi manjkajočo nadaljevalno vejo: `ensure` prepozna
+zastarelo izbiro, a `materializeAvailable` ob starejšem certifikatu dobi
+lokalni `head_changed` in prekine, še preden pride do obstoječe priprave
+nove izpeljave. R8 sveži `_currentManifest` pravilno zavrne stari target head;
+tega varovala ne sproščamo. R9 kandidat bo pri omejenem iskanju preskočil
+samo ta razlog za navaden certifikat brez capture3Context in brez migration
+candidate. Vsi drugi pending/error izidi ter capture/migration ostanejo
+nespremenjeni. Glavni in neodvisni pregled predloga PASS. Najprej samo A
+gradnja za native dokaz; B ostane r8. N5 še ni začet.
+
+R9 končni izvor d066b1ab… doda šest vrstic samo v omenjeno catch vejo;
+glavni in neodvisni pregled PASS. Nov test dejansko pokliče discovery
+z nadzorovanim rezultatom materialize: baseline izbrane kontrole pade s
+točnim head_changed, po popravku vseh5 novih kontrol PASS (naslednji
+navadni certifikat, izčrpan seznam→false za obstoječi fallback, druga pending
+napaka, capture3 certifikat in migration candidate). To ni polni verifier
+ali native recovery dokaz. Analiza dveh datotek0/0/0, format/diff PASS;
+brez HTTP/native klicev ali ponavljanja prejšnjih uspešnih zbirk. Test
+2bc0b4cb…, freeze `n4-choice-discovery-source-freeze.json` SHA6304ca83….
+Ni novih diagnostičnih kod ali sprememb QA zajema.
+
+### R9 native: manjkajoč directory proof; checkpoint je izvorna hipoteza
+
+A-only r9 artifactb9a25ed2…/AOT745a4183… je dejansko podpisno in izvorno
+pregledan, nameščen čez isti lastni vsebnik; B ostane nameščen r8 in zaprt.
+A pasivni zagon19:54:44.298003UTC/PID76768 ob19:54:49.181759 zajame
+`sync_finance / CryptoAuthorityPending / directory_proof_pending`.
+Vezani `server/n4-r9-a-directory-proof-pending-metadata.json`:197HTTP
+vsi200, nič429/batch/export propose/delegate/certify. Tok preide skozi
+offers/delegation/certificate/receipt ter drugi offers, nato inventory/
+lifecycle/observations. Vseh12 directory.read je pred prvim offers, noben
+po drugem offers. R9 torej napreduje skozi prejšnji zastoj, celotni sync pa
+še ni PASS. UI/sync posnetka `n4-r9-a-directory-proof-pending*` ohranita
+splošno opozorilo in0/0/0. A normalno zaprt19:55:36.088, brez Save/Done/Sync.
+
+Ne delamo nove native gradnje po ugibanju. Pregled celotne sveže prepare
+poti najde konkretno odvisnost: parent finance pull/reusable checkpoint
+opazovanje kliče `verifyDomainCheckpoint`, ta pa išče podpisnikov točen
+directory prefix s privzetim `online:false`. Prepare pozneje uporabi isti
+verifier. To je izvorni kandidat, točen manjkajoči podpisnik/prefix še ni
+dokazan z native zajemom. Morebitna rešitev mora izrecno omogočiti sveži
+prenos po že obstoječi preverjeni poti samo pri online uporabi, ohraniti
+offline privzete vrednosti ter vse pin/ancestry/authority kontrole. N5 ni
+začet, gateway teče in podatki ostanejo ohranjeni.
+
+### Omejitev finančnega stranskega preverjanja in vrnitev na N5–N7
+
+En omejen diagnostični ensure na istem ohranjenem HTTP drugem klientu
+(41RPC/1s, brez nove priprave) NI ponovil checkpoint hipoteze. Zajel je dva
+`directory_proof_pending` pri choice_manager, peer/child, online=false;
+končni izid je publication_required. To je diagnostični neuspeh, ne PASS.
+Dokaz `n4-choice-proof-dependency-probe.log`. Izvor ostane r9 d066b1ab…;
+predlagano live-proof prepletanje NI izvedeno.
+
+Uporabnik je opozoril na vrtenje pri testih. Glavni agent prizna prevelik
+finančni stranski obseg in ustavi nadaljnje finančne teste/gradnje. N4 PASS
+ostane; nadaljujemo dejanske N5 offline/restart, N6 direct-child in N7 revoke
+na obstoječih A-r9/B-r8. Account-wide finančno opozorilo ostane evidentirano
+in samo po sebi ni razlog za ponavljanje uspešnih prenosov ali nov build.
+Nov dejanski zastoj posameznega scenarija se zajame pred ponovitvijo dejanja.
+
+### N5: sprememba brez povezave preživi ponovni zagon
+
+Na obstoječem B-r8 je odprto isto MAC-SHARED-1 z A-V3; A-r9 je zaprt.
+Ustavljen je samo točen novi gateway (isti container e9c8a9ec…,
+project/service/loopback guard), od20:02:03.920091 do20:03:19.167162UTC,
+75.247s. Drugi vsebniki, volumen in podatki ostanejo isti; gateway je znova
+running, restorePending=false. Dokaz `server/n5-gateway-only-outage.json`.
+
+B enkrat shrani B-OFFLINE-V4 ob20:02:28.792. Prikaz kaže server unreachable,
+1pending/0conflicting/0blocked, natanko eno opravilo. Normalno zaprtje
+20:02:40, ponovni zagon istega B brez povezave20:02:46.483/PID81546;
+ob20:03:05.064 urejevalnik še vedno kaže B-OFFLINE-V4 na istem opravilu.
+Glavni pregled `n5-b-offline-one-pending.png` in
+`n5-b-offline-restart-B-OFFLINE-V4.png` potrdi lokalno shranitev in
+ohranitev po restartu. Ni novega Save/manual Sync ali prijave/FILE.
+Po obnovi gateway je B ob20:03:53 samodejno Synced0/0/0 brez napake,
+brez ročnega Sync. A-r9 je običajno odprt ob20:03:59.312/PID83246 in ob
+20:04:24.295 dejansko pokaže B-OFFLINE-V4 na istem enem MAC-SHARED-1.
+Glavni pregled `n5-b-restored-auto-synced.png` in
+`n5-a-received-B-OFFLINE-V4.png` potrdi prenos brez ponovnega Save ali
+podvojenega opravila. **N5 offline/shranitev/restart/samodejni prenos PASS.**
+A account-wide finančno opozorilo ostaja ločeno, prenosa ni preprečilo.
+
+### N6: neposredno deljeni podprojekt brez članstva v staršu PASS
+
+A-r9 ustvari MAC-PARENT-2 z eno oddajo20:05:42.810UTC. Zgodnje opozorilo
+o še nepotrjenem ustvarjanju je običajni vmesni prikaz shranjenega osnutka,
+ne ugotovljena napaka:66HTTP vsi200, poznejši UI dokončan20:07:13.364;
+ni ponovne oddaje. MAC-DIRECT-ONLY je ustvarjen enkrat20:08:03.853 in eno
+MAC-DIRECT-TASK z opombo N6-DIRECT-CONTENT shranjeno20:09:10. Ločeni
+MAC-PRIVATE-SIBLING ima svoj zasebni kontrolni vnos; ustvarjanje20:09:43.833
+se normalno konča20:10:56.869, približno73s pozneje. To je opažena
+zakasnitev, ne dokaz hitrega uporabniškega toka.
+
+Prvo branje nastavitev20:12:02 dobi429 na scopeObservations in
+invitations.list. Povabilo še ni poslano. En statusni Retry20:13:24.561
+po naravnem izteku omejitve uspe. A po pregledu izrecno projektnega obsega
+enkrat pošlje povabilo ob20:14:13.388 obstoječemu B. B enkrat sprejme
+ob20:15:26.184, brez primerjave kartic ali nove FILE, in vidi čakanje na
+lastnikove ključe. Prvi Confirm20:16:19.510 dobi429 že pri branju
+invitations.acceptance; v tem poskusu ni head/grant/activation mutacij.
+V okoliškem ozadju so bili metadata zapisi, zato to ni trditev nič vseh
+zapisov. En poznejši Retry verification20:18:02.841 in Confirm access
+20:18:07.336 dokončata isto sprejeto povabilo, brez novega Send/Accept.
+
+B-r8 po običajnem zagonu20:20:29.856 dejansko pokaže MAC-DIRECT-TASK in
+N6-DIRECT-CONTENT. Izbirnik ga pokaže v Shared with me; Spaces vsebuje
+samo prvotni MAC-SHARE-SPACE, brez MAC-PARENT-2. All Tasks ne prikaže
+zasebnega sosednjega vnosa. A nastavitve MAC-PARENT-2 kažejo samo A owner,
+brez B članstva. Glavni pregled slik `n6-b-direct-task-plaintext.png`,
+`n6-b-no-parent2-or-sibling.png` in `n6-parent2-owner-only.png` potrdi
+native mejo. Dodatna dokaza sta `n6-b-direct-project-picker.png` in
+`n6-b-all-tasks-no-sibling.png`. To ni dodatna adversarial HTTP/API
+matrika; strežniške membership poizvedbe za ta PASS nismo ponavljali.
+
+**N6 native neposredno deljenje in prikaz meje PASS.** Omejitev429 in
+foreground strošek ostajata odprta. B je po pregledu normalno zaprt.
+Dokazi strežniških časovnih oken so
+`server/n6-r9-a-first-parent-create-unconfirmed-metadata.json`,
+`server/n6-r9-a-direct-settings-rate-limit-metadata.json` in
+`server/n6-r9-direct-owner-confirm-rate-limit-metadata.json`.
+AX datoteke ob skupnem screenshot klicu lahko vsebujejo samo diff/no-change;
+vizualne trditve zgoraj temeljijo na dejanskih slikah, ne praznem AX izpisu.
+
+### N7: strežniški odvzem uspe, klient pa napačno obdela zaključek
+
+A-r9 je v prvotnem MAC-SHARE-SPACE enkrat potrdil Remove member ob
+20:22:33.239UTC. Omejeni native dnevnik ob20:22:36.234847 zajame
+`sharing / FormatException / crypto_membership_applied_head_missing`.
+Prvi prikaz še kaže starega B člana; poznejši samodejni prikaz pokaže samo
+A owner, brez novega klika ali ponovnega odvzema. Zgodovina prvotnega
+sprejetega povabila ostane. Dokaza `n7-remove-first-result.png` in
+`n7-remove-later-owner-only.png`; točen poznejši AX je posebej shranjen
+kot `n7-remove-first-result.full.ax.txt`.
+
+Vezano okno20:22:33–41 vsebuje196HTTP, vsi200: eno access.prepare,
+dve approve, eno activate, dva headPut, štiri closeDomain, dvanajst
+grants.put in44receiptGET. En read-only pregled samo prvotnega starša in
+otroka ob20:25:24 potrdi oba aktivna epoch3, prisotni aktivaciji in ujemanje
+trenutnih kazalcev, brez čakajočih glav. B je odsoten iz obeh shranjenih
+podpisanih seznamov; nima aktivnega članstva ali grant/envelope vrstic pri
+novih glavah. Točno en access intent je applied za oba cilja, pripadajoči
+activate receipt pa200/applied/affected2. **Strežniški odvzem in rotacija
+obeh ciljev sta zaključena; klientova obdelava uspešnega odgovora ima napako.**
+To ni neuspešna child rotacija ali429. Ne ponavljamo odvzema.
+
+Dokaza `server/n7-r9-parent-remove-primary-metadata.json` in
+`server/n7-r9-parent-child-revoke-readonly-state.json` vsebujeta samo
+sanitizirane metapodatke. Ni branja native vaulta, izpisa ključev ali
+spreminjanja strežniškega stanja. Koda napake je v
+`lib/organizer/data/e2ee/crypto_business_structure.dart:270`; popravka v
+tem zaključnem koraku ne uvajamo. Preverjanje nove spremembe po odvzemu je
+ločena zadnja native kontrola; starih prenesenih kopij ni mogoče priklicati
+nazaj in njihov izbris ni merilo tega testa.
+
+A na istem MAC-SHARED-1 enkrat shrani A-AFTER-REVOKE-V5 ob20:26:13.958.
+Urejevalnik se normalno zapre, samodejni sync pa ostane busy z
+1pending/0conflicting/0blocked, brez nove zajete kode napake. Po enem
+običajnem intervalu je isti izid ohranjen na
+`n7-a-post-revoke-sync-final.png` in polnem AX. A je normalno zaprt
+20:27:34.527, s shranjeno lokalno spremembo in čakajočim zahtevkom.
+Ni ponovnega Save ali ročnega Sync. **Dostava nove spremembe ni dokazana,
+zato njen neprikaz pri B ne more biti dokaz zavrnitve po odvzemu.**
+N7 ostane delno potrjen; ne začnemo novega popravka ali gradnje.
+
+Ob enem običajnem odprtju B še prikazuje lokalno predpomnjeno MAC-CHILD-1 /
+MAC-SHARED-1 z B-OFFLINE-V4; urejevalni kontrolniki so vidni, pisanja pa
+NISMO poskusili. Zato ni trditve o zavrnitvi zapisa. Neodvisni
+MAC-DIRECT-ONLY ostaja v izbirniku; to potrjuje ohranitev prikaza, ne novega
+strežniškega branja njegove vsebine po odvzemu. Glavni vizualni pregled
+`n7-b-cached-original-task.png` in `n7-b-final-cached-and-direct-picker.png`
+potrdi točno ta prikaz. Polna AX dokaza in končni
+`n6-n7-native-final-state.json` so v zunanjem QA imeniku.
+
+Oba appa sta normalno zaprta: A20:27:34.527/PID87699 in
+B20:29:05.334/PID88488, oba procesa zaključena. Ista vsebnika, Keychain,
+seji, obnovitvene datoteke in čakajoča A sprememba ostanejo za nadaljevanje.
+Novi Docker gateway je po N5 obnovljen in tem zaključku ni ustavljen.
+Ni nove native gradnje ali nadaljnjih preizkusov.
+
+## Odprti popravki po tem krogu
+
+- Obdelava že uspešnega odvzema: odpraviti
+  `crypto_membership_applied_head_missing` brez novega odstranjevanja B,
+  nove rotacije ali spreminjanja že potrjenega strežniškega izida.
+- Nadaljevanje že shranjenega A-AFTER-REVOKE-V5: ugotoviti vzrok njegovega
+  čakajočega prenosa in nato dokončati samo manjkajoči native dokaz meje
+  po odvzemu. Ne ustvariti novega opravila ali ponoviti uspešnih N4–N6.
+- Ločeno account-wide finančno `directory_proof_pending` in preveliko
+  število zahtevkov pri uporabniških dejanjih/429. Pri finančnem konfliktu
+  so negativna varovala potrjena, pozitivna končna razrešitev pa še ne.
+
+Ti popravki niso razlog za razglasitev celotnega teka kot PASS. Ohranjeni
+aplikaciji, dnevniki in podatki omogočajo nadaljevanje točno istih primerov;
+nov splošni testni krog, ponovna priprava računov ali native gradnja v tem
+zaključku niso izvedeni.
 
 ## Kaj ni del tega teka
 

@@ -1661,16 +1661,102 @@ class CryptoFinanceAccountChoices {
     await verify(raw, expectedScopeId: scope);
     final id = await manifestId(scope),
         previous = await context.record(scope, 'finance', id, type: type);
-    return context.publishRaw(
-      scopeId: scope,
-      domain: 'finance',
-      id: id,
-      type: type,
-      operationId: operationId,
-      expectedRevision: previous?['legacy_revision'] as int? ?? 0,
-      rawPayload: raw,
-      localHash: await CryptoBusinessJson.hash(raw),
+    try {
+      return await context.publishRaw(
+        scopeId: scope,
+        domain: 'finance',
+        id: id,
+        type: type,
+        operationId: operationId,
+        expectedRevision: previous?['crypto_revision'] as int? ?? 0,
+        rawPayload: raw,
+        localHash: await CryptoBusinessJson.hash(raw),
+      );
+    } on CryptoAuthorityPending catch (error) {
+      if (error.reason != 'crypto_business_delivery_pending') rethrow;
+      final rejected = await _conflictedMaterialization(scope, id, operationId);
+      if (rejected == null) rethrow;
+      // This is a derived shared cache. Another authorized materializer may
+      // have won its CAS; only a fresh, fully verified current choice can serve
+      // instead. The rejected request/receipt and its revision claim stay put.
+      await context.pullVerified(scope, 'finance');
+      final current = await _currentManifest(scope);
+      final row = current['row'] as Map;
+      if (row['crypto_revision'] is! int ||
+          row['crypto_revision'] <= rejected['expectedRevision']) {
+        rethrow;
+      }
+      return _map(jsonDecode(row['projection'] as String));
+    }
+  }
+
+  Future<Map<String, dynamic>?> _conflictedMaterialization(
+    String scope,
+    String id,
+    String operation,
+  ) async {
+    final rows = await context.db.rows(
+      'SELECT b.scope_id,b.domain,b.record_id,o.request_id,o.request_hash,o.signed_body,o.state FROM crypto_business_requests b JOIN crypto_outbox o ON o.partition=b.partition AND o.request_id=b.request_id WHERE b.partition=? AND b.operation_id=?',
+      [partition, operation],
     );
+    if (rows.length != 1 || rows.single['state'] != 'rejected') return null;
+    final row = rows.single;
+    if (row['scope_id'] != scope ||
+        row['domain'] != 'finance' ||
+        row['record_id'] != id) {
+      throw const FormatException('crypto_account_choices_conflict_binding');
+    }
+    final signed = _map(jsonDecode(row['signed_body'] as String));
+    final own = await context.account.directory.requireFresh();
+    final command = context.codec.crypto.verifyDomain(
+      signed,
+      cryptoBase64(
+        own.activeDevice(context.account.deviceId)['signingKeyBase64'],
+        length: 32,
+      ),
+      cryptoDirectoryDomain,
+    );
+    final records = command['payload'] is Map
+        ? command['payload']['records']
+        : null;
+    if (command['operation'] != 'crypto2.records.batch' ||
+        command['requestId'] != row['request_id'] ||
+        command['accountId'] != own.accountId ||
+        command['serverId'] != own.serverId ||
+        command['deviceId'] != context.account.deviceId ||
+        records is! List ||
+        records.length != 1 ||
+        await cryptoSha256(cryptoBase64(signed['commandBase64'])) !=
+            row['request_hash']) {
+      throw const FormatException('crypto_account_choices_conflict_binding');
+    }
+    final record = _body(_map(records.single));
+    context.codec.validateUntrustedRecord(record);
+    if (record['scopeId'] != scope ||
+        record['domain'] != 'finance' ||
+        record['type'] != type ||
+        record['operationId'] != operation ||
+        record['deleted'] != false ||
+        record['id'] != context.address(scope, 'finance', type, id).wireId) {
+      throw const FormatException('crypto_account_choices_conflict_binding');
+    }
+    final receipt = await context.account.directory.call(
+      'crypto2.receipt.get',
+      {'requestId': row['request_id'], 'requestHash': row['request_hash']},
+    );
+    if (receipt['outcome'] == 'unknown') return null;
+    if (receipt['requestId'] != row['request_id'] ||
+        receipt['requestHash'] != row['request_hash'] ||
+        !_same(receipt['authorization'], signed)) {
+      throw const FormatException('crypto_receipt_substitution');
+    }
+    if (receipt.containsKey('outcome') && receipt['outcome'] != 'rejected' ||
+        receipt['status'] != 409 ||
+        receipt['response'] is! Map ||
+        receipt['response']['errorCode'] != 'conflict') {
+      return null;
+    }
+    return record;
   }
 
   Future<Map<String, dynamic>> prepareFinancialRecord(
@@ -2153,6 +2239,12 @@ class CryptoFinanceAccountChoices {
             'crypto_scope_head_changed',
             'crypto_export_issuer_changed',
           }.contains(e.code)) {
+            rethrow;
+          }
+        } on CryptoAuthorityPending catch (e) {
+          if (candidate != null ||
+              body.containsKey('capture3Context') ||
+              e.reason != 'crypto_account_choices_head_changed') {
             rethrow;
           }
         }

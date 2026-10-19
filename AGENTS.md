@@ -1,5 +1,89 @@
 # Navodila za delo na projektu
 
+19. oktober — **zaključek Mac deljenja: N4/N5/N6 PASS, N7 delno potrjen**.
+[Dokazi in naslednje meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): isti
+A-r9/B-r8/Docker18811. N6 B dejansko prebere MAC-DIRECT-TASK z
+N6-DIRECT-CONTENT, ne vidi MAC-PARENT-2/soseda; A starš ima samo A owner.
+En projektni Send/Accept brez kartic/FILE; settings in prvi owner-read429
+se nadaljujeta po naravnem izteku, brez novega povabila. N7 en Remove
+20:22:33UTC strežniško uspe za prvotni starš+child: oba activeepoch3, B
+odsoten iz signed rosters/aktivnih članstev/grantov, nič pending heads;
+enapplied intent/activation affected2. Klient kljub temu zajame
+crypto_membership_applied_head_missing; poznejši UI kaže samo A owner.
+NE PONOVI Remove. En A-AFTER-REVOKE-V5 Save20:26:13 na istem MAC-SHARED-1
+ostane1pending/0conflicting/0blocked; A normalno zaprt20:27:34. Novega
+prenosa/odklonjenega pisanja pri B ni dokazano, zato N7 ni celotni PASS.
+B ob enem odprtju še kaže cached B-OFFLINE-V4 z vidnimi edit kontrolniki;
+write NI poskušen. Neodvisni direct projekt ostaja v izbirniku. Oba appa
+normalno zaprta, B20:29:05UTC; seji/vsebnika/FILE/pending podatki ohranjeni.
+Finančno directory_proof_pending in foreground strošek/429 ostajata odprta.
+Brez novih gradenj/finančne diagnostike ali ponavljanja starih PASS;
+nadaljnje delo popravi konkretna zaključek odvzema in pending sync ter
+nadaljuje ISTO stanje. P0/mobile/P8 in produkcijska pripravljenost niso
+zaključeni. Produkcija, stare QA, trgovini in nepovezana dokumenta isti.
+
+19. oktober — **N5 offline/restart/samodejni prenos PASS; nadaljuje se N6**.
+Isti A-r9/B-r8, brez novih gradenj. Samo novi gateway18811 je bil ustavljen
+20:02:03.920–20:03:19.167UTC (75.247s), nato isti container obnovljen/running.
+B en Save B-OFFLINE-V4 na istem MAC-SHARED-1, pending1/0/0; običajni quit/
+restart brez povezave ohrani vsebino. Po povezavi B samodejno Synced0/0/0,
+A ob20:04:24 dejansko prebere B-OFFLINE-V4 na istem enem opravilu. Glavni
+pregled slik PASS, brez ponovnega Save/Sync/prijave/FILE. Finančno opozorilo
+A ostaja ločeno in prenosa ni preprečilo. N6 MAC-PARENT-2 je ustvarjen
+natanko enkrat; zgodnji retained-draft notice je bil normalen vmesni prikaz,
+ne napaka (66HTTP vsi200, poznejši UI dokončan). Pripravljata se samo nujna
+MAC-DIRECT-ONLY in MAC-PRIVATE-SIBLING. N7 odvzem še ni začet. Podrobnosti v
+[runbooku](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md); stari PASS se ne ponavljajo.
+
+19. oktober — **prednostna vrnitev na N5–N7 po uporabnikovem opozorilu na zanko**.
+Finančni stranski testi/gradnje USTAVLJENI; brez r10 ali live-proof sprememb.
+Izvor r9 d066b1ab… ohranjen, nameščena A-r9/B-r8. N4 dvosmerno opravilo in
+lokalna ločenost PASS se ne ponavljata. En omejen existing-other HTTP ensure
+41RPC/1s ni ponovil checkpoint hipoteze: dva choice_manager peer/child
+online=false proof_pending, končni publication_required; diagnostični FAIL,
+ne recovery PASS. Sledi dejanski N5 offline/restart istega MAC-SHARED-1,
+nato N6 direct-child in N7 revoke. Samo novi Docker18811 gateway se začasno
+ustavi po koordinaciji UI; vedno obnovi po offline checkpointu. Finančno
+account-wide opozorilo je ločena odprta omejitev, ne pogoj za nov build.
+Zajemi le nov dejanski zastoj scenarija, pred retry. Podatki/prod/stare QA isti.
+
+19. oktober pozno zvečer — **isti Mac A/B ohranjeni; dvosmerna vsebina PASS, account-wide sync še ne**.
+[Točni dokazi](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): R8 A/B nameščena,
+A r9 po dodatnem šestvrstičnem popravku običajnega stale certifikata. 5novih
+ciljnih discovery kontrol PASS, analiza čista, glavni/neodvisni pregled PASS;
+izvor d066b1ab…/freeze6304ca83…. A r9 artifactb9a25ed2…/AOT745a4183…;
+B ostane r8. Prvi pasivni A19:54:49UTC zdaj directory_proof_pending pri
+sync_finance,197HTTP vsi200, nič batch/propose/delegate/certify. Pot po drugem
+offers pride do sveže prepare odvisnosti inventory/lifecycle/observations;
+verifier checkpointa uporablja offline directoryAt za podpisnikov prefix.
+To je konkreten izvorni kandidat, ne še dokazan točen native podpisnik ali
+popravek. Pred novo gradnjo preverjamo celotno pot; ne sproščamo pin/authority
+ali offline varoval. A normalno zaprt19:55:36UTC, B zaprt, oba podatki/seji
+isti. N4 A-V3/B-V2 in zasebna ločenost PASS ostanejo, brez ponovitev. N5 ni
+začet, gateway teče; N6/N7 odprta. Produkcija/stare QA/trgovini isti.
+
+19. oktober zvečer — **Mac dvosmerno deljenje in lokalna ločenost PASS; r8 odpravlja terminalni konflikt izbire računov**.
+[Aktualni dokaz](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): isti A/B/Docker18811,
+eno MAC-SHARED-1: A je dejansko prejel B-V2, B ob19:38UTC A-V3. B lokalni
+LOCAL-B-PRIVATE ostane Personal/Local in je odsoten v A AllTasks. N4 PASS;
+ni novega povabila ali ponovitve Save. R6 popravi crypto_revision namesto
+legacy_revision pri izbiri računov: vzročni HTTP preizkus in native B
+Synced0/0/0 PASS. A Done se je ohranil; r7 zajame ločen sync_finance /
+crypto_business_delivery_pending. En omejen read-only server dokaz poveže
+A terminalni409 conflict s točno enim financeAccountChoice v znanem child.
+R8 zamrznjeni izvor5625acbf… zahteva točen podpisani terminalni conflict in
+svežo popolnoma preverjeno novejšo izbiro; originalni request/receipt/claim
+ostanejo. Devet novih negativnih HTTP kontrol PASS, analiza čista in
+neodvisni/glavni pregled PASS. Pozitivna sintetična HTTP obnova NI dokazana;
+hladni drugi klient ostane pending, razširjanje vaje ustavljeno brez resetov.
+Zero mutacij pomeni samo naštete poslovne RPC, ne vseh metadata zapisov.
+Freeze13d555bc…; pripravljata se zaporedni r8 gradnji ob istem vsebniku/
+Keychain/TLS/SDK/locks. Oba appa normalno zaprta19:39:50UTC. Najprej pasivni
+A native dokaz razrešitve njegovega pravega konflikta, brez Done/Save/Sync.
+N5 offline NI začet, gateway ni ustavljen; N6 direct-child in N7 revoke
+ostajata odprta. Foreground strošek ostaja omejitev. Produkcija, stare
+Mac/mobile QA namestitve, trgovini in nepovezana dokumenta isti.
+
 19. oktober — **Mac deljenje obstoječega projekta PASS; prva B sprememba čaka diagnozo sync parserja**.
 [Checkpoint in meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): po odklepu
 isti A/B in Docker18811, eno MAC-SHARED-1/A-V1 ter eno parent povabilo.
