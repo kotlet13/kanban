@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/account_protection_ready.dart';
 import '../../data/e2ee/crypto_sync_repository.dart'
     show CryptoAuthorityPending;
 import 'scope_recovery_page.dart';
+import '../../state/account_summary_refresh_provider.dart';
 
 Future<bool> finishAccountProtection(
   BuildContext context,
@@ -197,6 +199,13 @@ Future<bool> finishAccountProtection(
         ),
       );
     }
+  }
+  if (complete && context.mounted && account.directory.isCurrent()) {
+    refreshAccountSummaries(
+      ProviderScope.containerOf(context, listen: false),
+      partition: account.store.partition,
+      deviceId: account.deviceId,
+    );
   }
   return complete;
 }

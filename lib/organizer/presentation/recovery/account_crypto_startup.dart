@@ -45,10 +45,15 @@ bool matchesStartupAcknowledgment(
 /// guard, while the local application remains accessible.
 final accountCryptoStartupActionProvider =
     FutureProvider<AccountCryptoStartupAction?>((ref) async {
+      // A local sync/projection emission is not a new startup. Watching the
+      // whole state here repeatedly queried the directory and catalog while
+      // an already completed wizard remained in this account's navigation.
+      final identity = ref.watch(accountCryptoStartupIdentityProvider);
       final workflow = await ref.watch(accountCryptoPreviewProvider.future);
       if (workflow is! AccountCryptoV2Workflow) return null;
-      final session = ref.watch(collaborationProvider).valueOrNull?.session;
+      final session = ref.read(collaborationProvider).valueOrNull?.session;
       if (session == null ||
+          identity != '${session.partition}:${session.deviceId}' ||
           session.partition != workflow.store.partition ||
           session.deviceId != workflow.deviceId)
         return null;

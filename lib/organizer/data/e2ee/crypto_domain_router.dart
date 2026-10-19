@@ -29,6 +29,22 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Client-owned background permission queries do not also refresh aggregate
+/// finance snapshots. This is not a server response flag or an authority cache.
+abstract interface class CryptoFinancePolicyReadContext {
+  Future<CryptoFinancePolicyReadResult<T>> withFinancePolicyOnly<T>(
+    Future<T> Function() read,
+  );
+}
+
+class CryptoFinancePolicyReadResult<T> {
+  const CryptoFinancePolicyReadResult(this.value, {required this.policyOnly});
+  final T value;
+
+  /// Set by the local adapter after actual crypto policy dispatch, never wire.
+  final bool policyOnly;
+}
+
 /// Repairs only the absent canonical root of an authenticated native project.
 /// Called before an explicit local edit, outside the ordinary SQL transaction.
 abstract interface class CryptoNativeProjectRootRepair {

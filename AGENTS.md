@@ -1,5 +1,23 @@
 # Navodila za delo na projektu
 
+19. oktober — **dve novi Mac namestitvi pripravljeni; deljenje čaka odklep Maca**.
+[Checkpoint in meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): izolirani
+Jivie Test Share A/B in Docker18811; A račun/e-pošta/FILE ter isti
+MAC-SHARE-SPACE/MAC-CHILD-1 pripravljeni, B lokalni LOCAL-B-PRIVATE ohranjen.
+Prvi child create je zadel429; isto delno delo se je nadaljevalo brez novega
+scope/projekta. Popravljena zastarela account povzetka, odvisnost startup
+preverjanja in podvojene finančne preflight poti; ustaljeni strošek220→140.
+Nov urnik:60s idle, takojšnje novo delo,15/30/60 backoff, identity-bound
+RetryAfter, polni začetki/zaključki; brez authority cache ali višje kvote.
+52 novih ciljnih +7 prizadetih PASS, analiza0error/0warning/73starihinfo;
+neodvisni pregled PASS. Dve podpisani r2 gradnji nameščeni čez isti lastni
+vsebnik/Keychain, stara paketa ohranjena. Native A pasivno307HTTP/200,
+nič429, drugi prehod61s po koncu prvega; B še ni povezan. Mac je zaklenjen,
+CUA zahteva ročni odklep; po r2 ni novega opravila/povabila. Nadaljuj pri
+MAC-SHARED-1/A-V1, nato istem enkratnem povabilu B; ne ponavljaj setupa A/B.
+Dvostransko deljenje/child grant/offline/direct-child/revoke ostajajo odprti.
+Produkcija, prejšnji Mac/mobile QA, trgovini in nepovezana dokumenta isti.
+
 19. oktober — **deljenje E2EE poenostavljeno v izvoru** po novi izrecni
 odobritvi uporabnika; trije GPT-6.1 Sol/high, glavni pregled/integracija.
 [Izvedba in meje](docs/E2EE_SHARING_SIMPLIFICATION.md): običajni tok nima

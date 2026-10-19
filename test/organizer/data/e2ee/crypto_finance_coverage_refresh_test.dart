@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -187,6 +188,12 @@ class _Runtime extends CryptoBusinessSession {
   final financePullReplies = <Map<String, dynamic>>[];
   final pulls = <String>[];
   bool changeHeadDuringContent = false;
+  bool failFinancePull = false;
+  Map<String, dynamic> policyReplyOverrides = {};
+  Future<void> Function()? onPolicyReply, beforeFinancePull;
+  @override
+  bool get financePolicyOnly =>
+      Zone.current[_PolicyRouter.policyOnlyKey] is Map;
   @override
   Future<List<Map<String, dynamic>>> catalog() async => [
     {'id': _scope},
@@ -199,6 +206,10 @@ class _Runtime extends CryptoBusinessSession {
   }) async {
     await access.readContext(scopeId, domain);
     pulls.add(domain);
+    if (domain == 'finance') {
+      await beforeFinancePull?.call();
+      if (failFinancePull) throw const CollaborationException('network');
+    }
     if (domain == 'content' && changeHeadDuringContent) {
       (access as _Access).head.headHash = 'd' * 64;
     }
@@ -218,9 +229,25 @@ class _Repository extends CollaborationRepository {
 }
 
 class _PolicyRouter
-    implements CryptoDomainRouter, CryptoProjectionCursorTransition {
+    implements
+        CryptoDomainRouter,
+        CryptoProjectionCursorTransition,
+        CryptoFinancePolicyReadContext {
   _PolicyRouter(this.runtime);
   final CryptoBusinessSession runtime;
+  static final policyOnlyKey = Object();
+  @override
+  Future<CryptoFinancePolicyReadResult<T>> withFinancePolicyOnly<T>(
+    Future<T> Function() read,
+  ) async {
+    final attempt = {'dispatched': false};
+    final value = await runZoned(read, zoneValues: {policyOnlyKey: attempt});
+    return CryptoFinancePolicyReadResult(
+      value,
+      policyOnly: attempt['dispatched']!,
+    );
+  }
+
   @override
   Future<CryptoProjectionCursorOrigin?> verifyProjectionCursorOrigin({
     required DeviceSession session,
@@ -254,7 +281,14 @@ class _PolicyRouter
       return reply;
     }
     if (operation == 'finance4.policy' || operation == 'finance2.policy') {
-      return CryptoFinancePolicyActions(runtime).dispatch(operation, params);
+      final attempt = Zone.current[policyOnlyKey];
+      if (attempt is Map) attempt['dispatched'] = true;
+      final reply = await CryptoFinancePolicyActions(
+        runtime,
+      ).dispatch(operation, params);
+      final fixture = runtime as _Runtime;
+      await fixture.onPolicyReply?.call();
+      return {...reply, ...fixture.policyReplyOverrides};
     }
     if (operation == 'finance3.payments') {
       final result = await CryptoBusinessPayments(
@@ -406,6 +440,127 @@ Future<void> _seed(dynamic f) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'policy-only background retains old coverage but a failed pull never claims fresh sync',
+    () async {
+      final f = await _fixture(headRevision: 0, policyRevision: 2);
+      await _seed(f);
+      await f.repository.syncNow();
+      final success = f.repository.state.lastSuccessfulSyncAt;
+      expect(success, isNotNull);
+      var policyOnlyReads = 0;
+      f.runtime.onPolicyReply = () async {
+        expect(f.runtime.financePolicyOnly, isTrue);
+        policyOnlyReads++;
+      };
+      f.runtime.beforeFinancePull = () async {
+        final row = (await f.db.rows(
+          'SELECT finance_policy FROM scopes WHERE id=?',
+          [_scope],
+        )).single;
+        expect(
+          (jsonDecode(row['finance_policy'] as String)
+              as Map)['organizationFinanceComplete'],
+          isTrue,
+        );
+      };
+      f.runtime.failFinancePull = true;
+      await f.repository.syncNow();
+      expect(policyOnlyReads, 1);
+      expect(f.repository.state.lastError?.code, 'network');
+      expect(f.repository.state.lastSuccessfulSyncAt, success);
+      // A default/manual refresh still performs full coverage work.
+      f.runtime.onPolicyReply = null;
+      await expectLater(
+        f.repository.refreshFinancePolicy(_scope),
+        throwsA(isA<CollaborationException>()),
+      );
+    },
+  );
+
+  for (final change in <String, Object>{
+    'enabled': false,
+    'grant': 'none',
+    'revision': 3,
+    'requiredContractVersion': 2,
+    'managedByOrganizationPolicy': false,
+    'readAccessFromMembership': false,
+    'linkedPaymentsRequired': false,
+  }.entries) {
+    test(
+      'policy-only change to ${change.key} invalidates prior aggregate immediately',
+      () async {
+        final f = await _fixture(headRevision: 0, policyRevision: 2);
+        await _seed(f);
+        await f.repository.syncNow();
+        expect(
+          f.repository.state
+              .financePolicyForScope(_scope)
+              .organizationFinanceComplete,
+          isTrue,
+        );
+        f.runtime.policyReplyOverrides = {change.key: change.value};
+        var sawFreshPolicy = false;
+        f.runtime.beforeFinancePull = () async {
+          final row = (await f.db.rows(
+            'SELECT finance_policy FROM scopes WHERE id=?',
+            [_scope],
+          )).single;
+          expect(
+            (jsonDecode(row['finance_policy'] as String)
+                as Map)['organizationFinanceComplete'],
+            isFalse,
+          );
+          sawFreshPolicy = true;
+        };
+        f.runtime.failFinancePull = true;
+        await f.repository.syncNow();
+        expect(
+          f.repository.state
+              .financePolicyForScope(_scope)
+              .organizationFinanceComplete,
+          isFalse,
+        );
+        if (change.key == 'enabled' || change.key == 'grant') {
+          expect(
+            f.repository.state.financePolicyForScope(_scope).canRead,
+            isFalse,
+          );
+          expect(sawFreshPolicy, isFalse);
+        } else {
+          expect(sawFreshPolicy, isTrue);
+          expect(f.repository.state.lastError?.code, 'network');
+        }
+      },
+    );
+  }
+
+  test(
+    'policy-only generation race stays pending instead of returning cached write permission',
+    () async {
+      final f = await _fixture(headRevision: 0, policyRevision: 2);
+      await _seed(f);
+      await f.repository.syncNow();
+      final success = f.repository.state.lastSuccessfulSyncAt;
+      expect(f.repository.state.financePolicyForScope(_scope).canWrite, isTrue);
+      f.runtime.onPolicyReply = () async {
+        final key = 'finance_access_generation:${f.runtime.partition}:$_scope';
+        await f.db.execute(
+          "UPDATE local_meta SET value=CAST(CAST(value AS INTEGER)+1 AS TEXT) WHERE name=?",
+          [key],
+        );
+      };
+      f.runtime.financePullReplies.clear();
+      await f.repository.syncNow();
+      expect(f.runtime.financePullReplies, isEmpty);
+      expect(
+        f.repository.state.lastError?.code,
+        'crypto_reconciliation_required',
+      );
+      expect(f.repository.state.lastSuccessfulSyncAt, success);
+    },
+  );
+
   test(
     'fresh empty-child household coverage survives linked-payment and policy refresh',
     () async {

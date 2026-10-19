@@ -115,6 +115,18 @@ class _Access extends SessionCryptoAccess {
   final _Head head;
   final VerifiedAccountDirectory peer;
   bool revoked = false;
+  final boundaries = <bool>[];
+  void Function(bool)? beforeBoundary;
+  @override
+  Future<T> withVerifiedOperation<T>(
+    Future<T> Function() body, {
+    bool freshBoundary = false,
+  }) {
+    boundaries.add(freshBoundary);
+    beforeBoundary?.call(freshBoundary);
+    return super.withVerifiedOperation(body, freshBoundary: freshBoundary);
+  }
+
   @override
   Future<VerifiedScopeHead> currentHead(
     String scopeId, {
@@ -355,6 +367,51 @@ void main() {
     );
   }
 
+  test(
+    'caller read operation retains independent fresh missing-key boundaries',
+    () async {
+      await prepareGrant();
+      await access.ensureScopeReadKeys(scope, 'content');
+      expect(access.boundaries, [false, true, true]);
+      expect(transport.grantReads, 1);
+      access.boundaries.clear();
+      await access.ensureScopeReadKeys(scope, 'content');
+      expect(access.boundaries, [false]);
+      expect(transport.grantReads, 1);
+    },
+  );
+  test(
+    'caller read operation cannot bypass revocation before fresh grant admission',
+    () async {
+      await prepareGrant();
+      access.beforeBoundary = (fresh) {
+        if (fresh) access.revoked = true;
+      };
+      await expectLater(
+        access.ensureScopeReadKeys(scope, 'content'),
+        throwsA(isA<CryptoDirectoryException>()),
+      );
+      expect(access.boundaries, [false, true]);
+      expect(transport.grantReads, 0);
+      expect(await db.rows('SELECT * FROM crypto_scope_keys'), isEmpty);
+    },
+  );
+  test(
+    'caller read operation rechecks revocation after grant hydration',
+    () async {
+      await prepareGrant();
+      var freshChecks = 0;
+      access.beforeBoundary = (fresh) {
+        if (fresh && ++freshChecks == 2) access.revoked = true;
+      };
+      await expectLater(
+        access.ensureScopeReadKeys(scope, 'content'),
+        throwsA(isA<CryptoDirectoryException>()),
+      );
+      expect(access.boundaries, [false, true, true]);
+      expect(transport.grantReads, 1);
+    },
+  );
   test(
     'missing active grants remain pending without installing keys',
     () async {

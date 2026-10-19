@@ -3,6 +3,7 @@ import 'crypto_scheduling_use.dart';
 import 'crypto_finance_topology_creation.dart';
 import 'crypto_finance_topology.dart';
 import 'crypto_project_relocation_lineage.dart';
+import 'dart:async';
 import 'crypto_finance_account_choices.dart';
 import 'crypto_business_project_relocation.dart';
 import 'dart:convert';
@@ -108,11 +109,24 @@ Future<Map<String, dynamic>> cryptoScopeParentProjection({
 class CryptoBusinessRouter
     implements
         CryptoDomainRouter,
+        CryptoFinancePolicyReadContext,
         CryptoProjectionCursorTransition,
         CryptoNativeProjectRootRepair {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
+  static final _financePolicyOnly = Object();
+  @override
+  Future<CryptoFinancePolicyReadResult<T>> withFinancePolicyOnly<T>(
+    Future<T> Function() read,
+  ) async {
+    final attempt = _FinancePolicyOnlyAttempt();
+    final value = await runZoned(
+      read,
+      zoneValues: {_financePolicyOnly: attempt},
+    );
+    return CryptoFinancePolicyReadResult(value, policyOnly: attempt.dispatched);
+  }
 
   @override
   Future<CryptoProjectionCursorOrigin?> verifyProjectionCursorOrigin({
@@ -212,7 +226,17 @@ class CryptoBusinessRouter
   }) async {
     final account = await accountFor(session);
     final access = SessionCryptoAccess(account: account);
-    final runtime = CryptoBusinessSession(account, access, database);
+    final attempt = Zone.current[_financePolicyOnly];
+    final policyOnly =
+        attempt is _FinancePolicyOnlyAttempt &&
+        RegExp(r'^finance[24]?\.policy$').hasMatch(operation);
+    if (policyOnly) attempt.dispatched = true;
+    final runtime = CryptoBusinessSession(
+      account,
+      access,
+      database,
+      financePolicyOnly: policyOnly,
+    );
     return access.withVerifiedOperation(() async {
       final adapters = configurePayloads(runtime);
       final documents = adapters.documents, payments = adapters.payments;
@@ -347,8 +371,18 @@ class CryptoBusinessRouter
   }
 }
 
+class _FinancePolicyOnlyAttempt {
+  bool dispatched = false;
+}
+
 class CryptoBusinessSession {
-  CryptoBusinessSession(this.account, this.access, this.db);
+  CryptoBusinessSession(
+    this.account,
+    this.access,
+    this.db, {
+    this.financePolicyOnly = false,
+  });
+  final bool financePolicyOnly;
   CollaborationDatabase get database => db;
   String get partition => p;
   Future<void> Function(List<CryptoProjectionRecord>)? prepareRecords;

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'local_database_provider.dart';
+import 'collaboration_sync_schedule.dart';
 import 'local_spaces_provider.dart' show localSpacesProvider;
 export 'local_database_provider.dart' show collaborationDatabaseFactoryProvider;
 import '../data/collaboration_repository.dart';
@@ -122,6 +123,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
 
   CollaborationRepository? _repository;
   bool _active = false;
+  void Function()? _requestAutomaticSync;
+  void Function()? _latchSyncDemand;
   bool _followingLocalBinding = false;
   int _spaceSelectionGeneration = 0;
   ({String partition, String localId, String scopeId, bool available})?
@@ -130,12 +133,18 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   Future<CollaborationState> build() async {
     var active = true;
     StreamSubscription<CollaborationState>? subscription;
+    StreamSubscription<CollaborationSyncCompletion>? completionSubscription;
+    StreamSubscription<CollaborationSyncStart>? startSubscription;
     Timer? timer;
     _ResumeObserver? observer;
     ref.onDispose(() {
       active = false;
       _active = false;
+      _requestAutomaticSync = null;
+      _latchSyncDemand = null;
       unawaited(subscription?.cancel());
+      unawaited(completionSubscription?.cancel());
+      unawaited(startSubscription?.cancel());
       timer?.cancel();
       if (observer != null) WidgetsBinding.instance.removeObserver(observer);
     });
@@ -154,24 +163,43 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       state = AsyncData(value);
       followSelectedLocalBinding();
     });
-    var ticks = 0, busy = false;
+    final schedule = CollaborationSyncSchedule();
+    var busy = false;
     void refresh() {
       if (!active || busy) return;
       busy = true;
-      final startedIdentity = _backgroundIdentity(repository.state);
+      final startedIdentity = repository.backgroundSyncIdentity;
       bool current() =>
-          active && _backgroundIsCurrent(repository, startedIdentity);
+          active &&
+          identical(repository, _repository) &&
+          repository.backgroundSyncIdentity == startedIdentity;
       unawaited(() async {
         try {
           await repository.refreshLocal();
           if (!current()) return;
-          if (ticks++ % 4 == 0) await repository.syncNow();
-          if (current()) {
-            ref.read(collaborationBackgroundErrorProvider.notifier).state =
-                null;
+          schedule.identity(startedIdentity);
+          void completion() {
+            final result = repository.lastSyncCompletion;
+            if (result != null && schedule.complete(result) && current()) {
+              ref.read(collaborationBackgroundErrorProvider.notifier).state =
+                  result.error;
+            }
+          }
+
+          completion();
+          final work = await repository.syncWork();
+          if (!current()) return;
+          schedule.work(work);
+          if (schedule.due(
+            repository.clock().toUtc(),
+            busy: repository.state.isSyncing,
+          )) {
+            await repository.syncNow();
+            if (current()) completion();
           }
         } catch (error) {
           if (current()) {
+            schedule.failed(repository.clock().toUtc());
             ref.read(collaborationBackgroundErrorProvider.notifier).state =
                 error;
           }
@@ -181,9 +209,34 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       }());
     }
 
+    startSubscription = repository.syncStarts.listen((attempt) {
+      if (!active || attempt.identity != repository.backgroundSyncIdentity) {
+        return;
+      }
+      schedule.identity(attempt.identity);
+      schedule.beginAttempt();
+    });
+    completionSubscription = repository.syncCompletions.listen((result) {
+      if (!active ||
+          !identical(repository, _repository) ||
+          result.identity != repository.backgroundSyncIdentity) {
+        return;
+      }
+      schedule.identity(repository.backgroundSyncIdentity);
+      if (schedule.complete(result)) {
+        ref.read(collaborationBackgroundErrorProvider.notifier).state =
+            result.error;
+      }
+      scheduleMicrotask(refresh);
+    });
+    _latchSyncDemand = schedule.localEdit;
+    _requestAutomaticSync = () {
+      schedule.localEdit();
+      refresh();
+    };
     timer = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
     observer = _ResumeObserver(() {
-      ticks = 0;
+      schedule.resume(repository.clock().toUtc());
       refresh();
     });
     WidgetsBinding.instance.addObserver(observer);
@@ -293,22 +346,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     final repo = _repo, identity = _backgroundIdentity(_repo.state);
     final result = await action(repo);
     if (_backgroundIsCurrent(repo, identity)) {
-      unawaited(
-        repo.syncNow().then<void>(
-          (_) {
-            if (_backgroundIsCurrent(repo, identity)) {
-              ref.read(collaborationBackgroundErrorProvider.notifier).state =
-                  null;
-            }
-          },
-          onError: (Object error, StackTrace _) {
-            if (_backgroundIsCurrent(repo, identity)) {
-              ref.read(collaborationBackgroundErrorProvider.notifier).state =
-                  error;
-            }
-          },
-        ),
-      );
+      _requestAutomaticSync?.call();
     }
     return result;
   }
@@ -868,9 +906,16 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   Future<void> syncNow() async {
     final repo = _repo, identity = _backgroundIdentity(_repo.state);
     try {
-      await repo.syncNow();
-      if (_backgroundIsCurrent(repo, identity)) {
-        ref.read(collaborationBackgroundErrorProvider.notifier).state = null;
+      _latchSyncDemand?.call();
+      final previous = repo.lastSyncCompletion?.sequence;
+      await repo.syncNow(manual: true);
+      final result = repo.lastSyncCompletion;
+      if (_backgroundIsCurrent(repo, identity) &&
+          result != null &&
+          result.identity == repo.backgroundSyncIdentity &&
+          result.sequence != previous) {
+        ref.read(collaborationBackgroundErrorProvider.notifier).state =
+            result.error;
       }
     } catch (error) {
       if (_backgroundIsCurrent(repo, identity)) {

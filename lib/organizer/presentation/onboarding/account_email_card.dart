@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
+import '../../state/account_summary_refresh_provider.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_forms.dart';
 import '../shared/sharing_session_boundary.dart';
@@ -103,6 +104,18 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      accountSummaryRefreshProvider((
+        widget.session.partition,
+        widget.session.deviceId,
+      )),
+      (_, _) {
+        if (!mounted || !_guard.isCurrent) return;
+        setState(() {
+          _future = _guard.controller.accountStatus();
+        });
+      },
+    );
     final state = ref.watch(collaborationProvider).valueOrNull;
     if (!_guard.isCurrent || state?.session == null) {
       return const SizedBox.shrink();

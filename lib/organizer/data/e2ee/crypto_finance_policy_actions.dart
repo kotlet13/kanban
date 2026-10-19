@@ -320,7 +320,8 @@ class CryptoFinancePolicyActions {
       // revision reads must not recursively pull/project finance records.
       final head = await context.access.currentHead(scope, online: true);
       final reply = await policy(scope);
-      if (reply['enabled'] != true ||
+      if (context.financePolicyOnly ||
+          reply['enabled'] != true ||
           !const ['read', 'write'].contains(reply['grant'])) {
         return reply;
       }

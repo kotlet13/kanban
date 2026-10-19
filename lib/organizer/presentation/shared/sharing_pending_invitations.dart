@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
+import '../../state/account_summary_refresh_provider.dart';
 import 'sharing_errors.dart';
 import 'content_moderation.dart';
 import 'sharing_invitation_details.dart';
@@ -275,6 +276,22 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      accountSummaryRefreshProvider((
+        widget.session.partition,
+        widget.session.deviceId,
+      )),
+      (_, _) {
+        if (!mounted || !_guard.isCurrent) return;
+        if (_busy) {
+          _reloadAfterBusy = true;
+        } else {
+          setState(() {
+            _future = _load();
+          });
+        }
+      },
+    );
     ref.watch(collaborationProvider);
     if (!_guard.isCurrent) return const SizedBox.shrink();
     return FutureBuilder<_InvitationInbox>(

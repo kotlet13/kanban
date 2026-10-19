@@ -1,6 +1,8 @@
 import 'e2ee/crypto_migration_idea_draft_recovery.dart';
 import 'e2ee/crypto_legacy_upload_drain.dart';
 import 'dart:async';
+import 'collaboration_sync_status.dart';
+export 'collaboration_sync_status.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart' show Sha256;
@@ -225,6 +227,55 @@ class CollaborationRepository {
   final DateTime Function() clock;
   final _events = StreamController<CollaborationState>.broadcast();
   Stream<CollaborationState> get changes => _events.stream;
+  final _syncCompletions =
+      StreamController<CollaborationSyncCompletion>.broadcast();
+  Stream<CollaborationSyncCompletion> get syncCompletions =>
+      _syncCompletions.stream;
+  final _syncStarts = StreamController<CollaborationSyncStart>.broadcast(
+    sync: true,
+  );
+  Stream<CollaborationSyncStart> get syncStarts => _syncStarts.stream;
+  int _syncCompletionSequence = 0;
+  int? _fullAttemptEpoch;
+  CollaborationSyncCompletion? lastSyncCompletion;
+  DateTime? _automaticSyncRetryAt;
+  String? _automaticSyncRetryIdentity;
+  String? get backgroundSyncIdentity => _session == null
+      ? null
+      : '$_epoch:${_session!.profile.partition}:${_session!.profile.deviceId}';
+
+  Future<CollaborationSyncWork> syncWork() async {
+    final identity = backgroundSyncIdentity;
+    final partition = _session?.profile.partition;
+    if (partition == null) {
+      return const CollaborationSyncWork('', unresolved: false);
+    }
+    final rows = await database.rows(
+      "SELECT 'record' AS kind,op_id AS id,sequence,state FROM outbox WHERE partition=? "
+      "UNION ALL SELECT 'finance',op_id,sequence,state FROM finance_outbox WHERE partition=? "
+      "UNION ALL SELECT 'command',id,sequence,state FROM commands WHERE partition=? "
+      "UNION ALL SELECT 'crypto',request_id,sequence,state FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked') "
+      "UNION ALL SELECT 'payment',id,rowid,state FROM linked_payment_intents WHERE "
+      "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
+      "AND state IN ('pending','waiting_source_publication','quarantine','complete','local_only') "
+      "ORDER BY kind,id,sequence,state",
+      [partition, partition, partition, partition, partition],
+    );
+    if (identity != backgroundSyncIdentity) {
+      throw const CollaborationException('session_changed');
+    }
+    // Retained complete/local-only payment intents trigger once on transitions,
+    // but are not permanently urgent. resumePending remains canonical delivery.
+    return CollaborationSyncWork(
+      jsonEncode(rows),
+      unresolved: rows.any(
+        (row) =>
+            row['kind'] != 'payment' ||
+            !const {'complete', 'local_only'}.contains(row['state']),
+      ),
+    );
+  }
+
   CollaborationState state = CollaborationState();
   DeviceSession? _session;
   Future<void> _secureQueue = Future.value();
@@ -815,6 +866,8 @@ class CollaborationRepository {
     await _pushSyncDone?.future;
     if (ownsDatabase) await database.close();
     await _events.close();
+    await _syncCompletions.close();
+    await _syncStarts.close();
   }
 
   static Map<String, dynamic> _map(Object? value) =>

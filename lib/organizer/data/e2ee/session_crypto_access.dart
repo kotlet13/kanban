@@ -4948,7 +4948,9 @@ class SessionCryptoAccess {
           );
     }
 
-    final head = await withVerifiedOperation(readableHead, freshBoundary: true);
+    // Retained keys can use the caller's still-current bounded read operation.
+    // New key admission below always rechecks independent fresh boundaries.
+    final head = await withVerifiedOperation(readableHead);
     if (await hasKeys(head)) return;
     if (_readOnlyFrozen != null ||
         Zone.current[_deletedScopeEvidenceZone] != null) {

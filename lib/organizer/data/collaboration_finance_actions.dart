@@ -39,13 +39,26 @@ extension CollaborationFinanceActions on CollaborationRepository {
     final partition = session.profile.partition;
     final generation = await _financeAccessGeneration(partition, scopeId);
     _checkEpoch(epoch);
+    final router = cryptoRouter;
+    var policyOnly = false;
     late final SharedFinancePolicy policy;
     try {
-      policy = SharedFinancePolicy.fromJson(
-        await _callSession(session, epoch, '$_financeNamespace.policy', {
-          'scopeId': scopeId,
-        }),
+      Future<Map<String, dynamic>> read() => _callSession(
+        session,
+        epoch,
+        '$_financeNamespace.policy',
+        {'scopeId': scopeId},
       );
+      Map<String, dynamic> reply;
+      if (syncLease && router is CryptoFinancePolicyReadContext) {
+        final result = await (router as CryptoFinancePolicyReadContext)
+            .withFinancePolicyOnly(read);
+        policyOnly = result.policyOnly;
+        reply = result.value;
+      } else {
+        reply = await read();
+      }
+      policy = SharedFinancePolicy.fromJson(reply);
     } on CollaborationApiException catch (error) {
       if (error.code == 'finance_forbidden' ||
           error.code == 'permission_revoked') {
@@ -70,8 +83,44 @@ extension CollaborationFinanceActions on CollaborationRepository {
       _checkEpoch(epoch);
       if (syncLease) await _validLease(partition);
       _checkEpoch(epoch);
-      if (generation == await _financeAccessGeneration(partition, scopeId)) {
-        await _storeFinancePolicy(partition, scopeId, policy);
+      if (generation != await _financeAccessGeneration(partition, scopeId)) {
+        if (policyOnly) {
+          // A concurrent permission change must not turn a previously cached
+          // canWrite into the result of this fresh background authorization.
+          throw const CryptoAuthorityPending(
+            'finance_policy_changed_during_read',
+          );
+        }
+      } else {
+        var stored = policy;
+        if (policyOnly && policy.canRead) {
+          final previous = await _cachedFinancePolicy(partition, scopeId);
+          final sameAuthorization =
+              previous.enabled == policy.enabled &&
+              previous.grant == policy.grant &&
+              previous.revision == policy.revision &&
+              previous.requiredContractVersion ==
+                  policy.requiredContractVersion &&
+              previous.managedByOrganizationPolicy ==
+                  policy.managedByOrganizationPolicy &&
+              previous.readAccessFromMembership ==
+                  policy.readAccessFromMembership &&
+              previous.linkedPaymentsRequired == policy.linkedPaymentsRequired;
+          if (sameAuthorization) {
+            // Retain only the OLD verified aggregate. The ordinary finance
+            // pull still has to establish fresh coverage before sync succeeds.
+            stored = SharedFinancePolicy.fromJson({
+              ...policy.toJson(),
+              'organizationFinanceComplete':
+                  previous.organizationFinanceComplete,
+              'organizationFinanceScopeIds':
+                  previous.organizationFinanceScopeIds,
+              'organizationFinanceSequences':
+                  previous.organizationFinanceSequences,
+            });
+          }
+        }
+        await _storeFinancePolicy(partition, scopeId, stored);
       }
       _checkEpoch(epoch);
       return _cachedFinancePolicy(partition, scopeId);

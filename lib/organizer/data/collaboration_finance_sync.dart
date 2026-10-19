@@ -161,7 +161,10 @@ extension CollaborationFinanceSync on CollaborationRepository {
                 policy.canWrite &&
                 (scope.kind == SharedScopeKind.organization ||
                     scope.organizationId != null)) {
-          await fetchLinkedPayments(PaymentSpaceRef(scope.id, partition: p));
+          await _fetchLinkedPayments(
+            PaymentSpaceRef(scope.id, partition: p),
+            syncLease: true,
+          );
           _checkEpoch(epoch);
         }
       } on CryptoAuthorityPending {
@@ -203,6 +206,19 @@ extension CollaborationFinanceSync on CollaborationRepository {
       if (!await _privateScopeAllowed(session.profile.partition, scope)) {
         continue;
       }
+      // Full policy/aggregate verification is needed only when this preflight
+      // can actually send a dependency. The ordinary finance pass still checks
+      // current policy, and task-cost delivery checks its predecessors again.
+      final dependencies = await database.rows(
+        "SELECT 1 FROM finance_outbox f WHERE f.partition=? AND f.scope_id=? AND f.state='pending' AND json_extract(f.request,'\$.type') IN ('financeAccount','personalFinanceAccount','financeRecurrenceRule') AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name LIKE ? AND m.value=f.op_id) LIMIT 1",
+        [
+          session.profile.partition,
+          scope.id,
+          'task_cost_pair:${session.profile.partition}:%',
+        ],
+      );
+      _checkEpoch(epoch);
+      if (dependencies.isEmpty) continue;
       try {
         final policy = await _fetchFinancePolicy(
           session,

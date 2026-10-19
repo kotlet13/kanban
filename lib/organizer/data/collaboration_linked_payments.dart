@@ -42,14 +42,25 @@ extension CollaborationLinkedPayments on CollaborationRepository {
     return reply;
   }
 
-  Future<PaymentSnapshot> fetchLinkedPayments(PaymentSpaceRef space) async {
+  Future<PaymentSnapshot> fetchLinkedPayments(PaymentSpaceRef space) =>
+      _fetchLinkedPayments(space);
+
+  Future<PaymentSnapshot> _fetchLinkedPayments(
+    PaymentSpaceRef space, {
+    bool syncLease = false,
+  }) async {
     final session = _requireSession(), epoch = _epoch;
     if (space.isLocal || space.partition != session.profile.partition) {
       throw const CollaborationException('session_changed');
     }
     final partition = session.profile.partition;
     await _negotiate(session, epoch);
-    final policy = await _fetchFinancePolicy(session, epoch, space.id);
+    final policy = await _fetchFinancePolicy(
+      session,
+      epoch,
+      space.id,
+      syncLease: syncLease,
+    );
     if (!policy.canRead) {
       throw const CollaborationException('finance_forbidden');
     }
