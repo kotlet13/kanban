@@ -184,8 +184,10 @@ class _Runtime extends CryptoBusinessSession {
   bool interruptAfterCheckpoint = false;
   @override
   Future<Map<String, dynamic>> organizationFinanceCoverage(
-    String scope,
-  ) async => {
+    String scope, {
+    bool refreshRootFinance = false,
+    String? expectedHeadHash,
+  }) async => {
     'organizationFinanceComplete': false,
     'organizationFinanceScopeIds': <String>[],
     'organizationFinanceSequences': <String, int>{},

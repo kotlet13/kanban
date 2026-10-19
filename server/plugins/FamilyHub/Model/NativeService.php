@@ -3,6 +3,26 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 
 class NativeService extends NativeDatabase
 {
+    /** Only explicitly public operator metadata: never infer from admin users,
+     * SMTP credentials, workspace owners, request headers, or secret config. */
+    public static function hostingInformation()
+    {
+        $result = [];
+        foreach (['operatorName' => 'FAMILYHUB_HOSTING_OPERATOR_NAME',
+                  'operatorContact' => 'FAMILYHUB_HOSTING_OPERATOR_CONTACT'] as $key => $constant) {
+            $value = defined($constant) ? constant($constant) : null;
+            if (!is_string($value)) { continue; }
+            $value = trim($value);
+            // Single-line, bounded UTF-8 text; no bidi/control spoofing.
+            if ($value === '' || strlen($value) > 1200 ||
+                preg_match('//u', $value) !== 1 ||
+                preg_match('/[\\x{0000}-\\x{001f}\\x{007f}-\\x{009f}\\x{202a}-\\x{202e}\\x{2066}-\\x{2069}]/u', $value) !== 0 ||
+                preg_match('/^.{1,300}$/us', $value) !== 1) { continue; }
+            $result[$key] = $value;
+        }
+        return (object) $result;
+    }
+
     public function dispatch($operation, array $params, $bearer, $ip)
     {
         $supported = in_array($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME), ['sqlite', 'mysql'], true);
@@ -12,7 +32,7 @@ class NativeService extends NativeDatabase
             $ideasAvailable=$enabled && NativeIdeaAssetService::available();
             $pushConfigured=$enabled && NativeFcmConfig::configured();
             $cryptoReady=$enabled && NativeCryptoService::enabled($this->pdo);
-            return ['api' => 'familyhub_native', 'version' => 1, 'serverId' => $supported ? $this->serverId() : null, 'enabled' => $enabled,
+            return ['api' => 'familyhub_native', 'version' => 1, 'serverId' => $supported ? $this->serverId() : null, 'enabled' => $enabled, 'hostingInformation' => self::hostingInformation(),
                     'cryptoTransportVersions'=>$cryptoReady?[1,2]:[], 'cryptoCutoverSupported'=>$cryptoReady, 'cryptoCutoverVersion'=>$cryptoReady?3:null,
                     'organizationFinanceContractVersions'=>[1], 'scopeLifecycleContractVersions'=>[1], 'gardenDocumentVersions'=>[2,3], 'moderationContractVersions'=>[1], 'sharedContentPolicyVersions'=>[1], 'invitationContractVersions'=>$cryptoReady?[1,2,3,4]:[1,2,3], 'spaceAccessPolicyVersions'=>[3], 'organizationAccessPolicyVersions'=>[1,2,3], 'linkedPaymentContractVersions'=>[3], 'features' => ['organizationFinance'=>$enabled,'spreadsheets'=>$documentsReady,'attachments'=>$documentsReady,'scopeDeletion'=>$enabled,'scopeArchiving'=>$enabled,'gardenSceneV3'=>$enabled,'ideas'=>$ideasAvailable,'ideaAssets'=>$ideasAvailable,'contentReporting'=>$enabled,'sharedContentPolicy'=>$enabled,'spaceProjectMembership'=>$enabled,'scopedInvitations'=>$enabled,'projectSharingMigration'=>$enabled,'usernameInvitations'=>$enabled,'invitationResend'=>$enabled,'emailInvitations'=>$enabled && NativeEmailInvitationService::available(),'linkedPayments'=>$enabled,'scopeMetadata'=>$enabled,'householdGardenSync'=>$enabled,'scopeAccessChanges'=>$enabled,'organizationLeadership'=>$enabled,'projectFinanceMembership'=>$enabled,'accessMigrationPreview'=>$enabled,'stableScopePublication'=>$enabled,'projectArchiving'=>$enabled, 'financePlanning' => $enabled, 'taskCosts' => $enabled, 'organizations' => $enabled, 'householdPeople' => $enabled, 'richPlanning' => $enabled, 'accountDeletion' => $enabled && NativeAccountDeletionService::available(), 'privateSync' => $enabled, 'personalFinanceEntry' => $enabled, 'accountEnrollment' => $enabled && (new NativeEnrollmentService($this->container))->available(), 'emailVerification' => $enabled && NativeAccountMailCrypto::configured(), 'passwordReset' => $enabled && NativeAccountMailCrypto::configured(), 'sessionRenewal' => $enabled, 'deviceLogin' => $enabled, 'totp' => $enabled, 'invitationRegistration' => $enabled,
                                    'recordSync' => $enabled, 'collaboration' => $enabled, 'inbox' => $enabled, 'scheduledReminders' => $enabled, 'externalPush' => $pushConfigured, 'smtp' => $enabled && NativeSmtpTransport::configured(), 'finance' => $enabled, 'legacyProjectSharing' => false],

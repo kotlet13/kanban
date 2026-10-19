@@ -149,3 +149,25 @@ The web deletion controller and form source use policy 2 and explicit preserve/d
 ## Space sharing policy3
 
 Version 0.11.0/schema15 adds explicit full-space and project-only email invitations. Full members collaborate on all shared content and finances, including future project children; project-only membership grants no parent access. Existing policies remain unchanged until an owner applies a fresh migration preview, which revokes pending older invitations. Household inline projects can be extracted atomically only with a closed dependency graph; reused household accounts, people, recurring rules and linked payments require resolving the reported blockers first. Personal records and private account projections remain private. This source version does not confirm any hosted deployment. See the packaged space-sharing API contract for methods and compatibility.
+
+
+### Public hosting operator disclosure
+
+The unauthenticated `capabilities` reply adds optional `hostingInformation`:
+`operatorName` and `operatorContact` are plain text, each limited to 300 characters.
+Configure `FAMILYHUB_HOSTING_OPERATOR_NAME` and
+`FAMILYHUB_HOSTING_OPERATOR_CONTACT` in the existing private Kanboard config only
+with information intended for public display. Neither field is inferred from
+administrator accounts, workspace ownership, SMTP settings or credentials.
+Empty, malformed/control-containing values are omitted. No database schema or
+private cryptographic key changes are required.
+
+The native app identifies the selected endpoint and labels these claims as
+supplied by that server, without claiming independent verification. Missing or
+older metadata honestly displays that no operator name was supplied. It explains
+that hosting manages accounts and the identity directory; first contact trusts
+that directory and later key changes require confirmation, while E2EE content
+stays encrypted. Initial connection and invitation screens carry this disclosure
+alongside the existing Continue/Connect/Join action; account settings keep it
+visible. This trust role belongs to the hosting operator, distinct from the
+owner of a shared space. Contact text is displayed as text, never an active link.

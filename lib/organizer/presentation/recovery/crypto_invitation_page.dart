@@ -1,86 +1,239 @@
 import 'package:flutter/material.dart';
+
 import '../../../l10n/l10n.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/invite_crypto_repository.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 import '../../data/e2ee/scope_crypto_manager.dart';
-import 'crypto_public_card_dialog.dart';
+import '../shared/sharing_errors.dart';
+import '../shared/hosting_disclosure.dart';
 
-/// Initial identity comparison is deliberate; routine membership and envelope
-/// contributions travel through the authenticated queue without copying JSON.
+/// Joining and granting access remain deliberate. Signed directory validation
+/// and secure first-use identity pins run without asking people to copy cards.
 class CryptoInvitationPage extends StatefulWidget {
-  const CryptoInvitationPage({required this.account,required this.invitationId,this.scopeId,this.label,super.key});
+  const CryptoInvitationPage({
+    required this.account,
+    required this.invitationId,
+    this.scopeId,
+    this.label,
+    this.recipientLabel,
+    this.repository,
+    super.key,
+  });
+
   final AccountCryptoV2Workflow account;
   final String invitationId;
-  final String? scopeId,label;
-  @override State<CryptoInvitationPage> createState()=>_CryptoInvitationPageState();
+  final String? scopeId, label, recipientLabel;
+  final InviteCryptoRepository? repository;
+
+  @override
+  State<CryptoInvitationPage> createState() => _CryptoInvitationPageState();
 }
+
 class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
-  late final invites=InviteCryptoRepository(SessionCryptoAccess(account:widget.account));
-  bool _busy=false,_failed=false,_pending=false,_verified=false;
+  late final invites =
+      widget.repository ??
+      InviteCryptoRepository(SessionCryptoAccess(account: widget.account));
+  bool _busy = false, _pending = false;
+  Object? _error;
   VerifiedCryptoInvitation? _invite;
   ScopeRotationReview? _review;
-  @override void initState(){super.initState();_load();}
-  Future<void> _run(Future<void> Function() action)async {
-    if(_busy)return;
-    setState((){_busy=true;_failed=false;});
-    try {await action();}catch(_){if(mounted)setState(()=>_failed=true);}
-    finally {if(mounted)setState(()=>_busy=false);}
+
+  bool get _current => mounted && widget.account.directory.isCurrent();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
   }
-  Future<void> _load()=>_run(()async {
-    if(widget.scopeId==null) {
-      final opened=await invites.resumeAccepted(widget.invitationId);
-      if(!mounted)return;
-      if(opened!=null){Navigator.of(context).pop(opened);return;}
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) setState(() => _error = error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    final invite=widget.scopeId==null?await invites.inspect(invitationId:widget.invitationId):await invites.acceptedRecipient(widget.scopeId!,widget.invitationId);
-    var trusted=false;
-    try {await invites.access.identities.requireVerified(invite.creator.accountId,invites.access.identities.fingerprint(invite.creator));trusted=true;}catch(_){/* Comparison remains explicit. */}
-    if(mounted)setState((){_invite=invite;_verified=trusted;});
+  }
+
+  Future<void> _load() => _run(() async {
+    if (!_current) return;
+    // Failed or stale reloads must not leave an older grant enabled.
+    setState(() {
+      _invite = null;
+      _review = null;
+    });
+    if (widget.scopeId == null) {
+      final opened = await invites.resumeAccepted(widget.invitationId);
+      if (!mounted || !_current) return;
+      if (opened != null) {
+        Navigator.of(context).pop(opened);
+        return;
+      }
+    }
+    final invite = widget.scopeId == null
+        ? await invites.inspect(invitationId: widget.invitationId)
+        : await invites.acceptedRecipient(widget.scopeId!, widget.invitationId);
+    if (!_current) return;
+    await invites.trustCreatorFromDirectory(invite);
+    if (!_current) return;
+    ScopeRotationReview? review;
+    if (widget.scopeId != null) {
+      final pending = await invites.manager.pendingRotationReviews(
+        widget.scopeId!,
+      );
+      if (!_current) return;
+      review = pending.isNotEmpty
+          ? pending.first
+          : await invites.manager.reviewRotation(widget.scopeId!);
+      if (!_current) return;
+    }
+    setState(() {
+      _invite = invite;
+      _review = review;
+    });
   });
-  Future<void> _compare()=>_run(()async {
-    final invite=_invite;if(invite==null)return;
-    final card=await showCryptoPublicCardDialog(context);
-    if(card==null || !mounted)return;
-    await invites.compareCreator(invite,card);
-    if(mounted)setState(()=>_verified=true);
-  });
-  Future<void> _continue()=>_run(()async {
-    final invite=_invite;if(invite==null || !_verified)return;
-    if(widget.scopeId==null) {
-      await invites.accept(invite,actionId:widget.invitationId);
-      if(mounted)setState(()=>_pending=true);
+
+  Future<void> _continue() => _run(() async {
+    final invite = _invite;
+    if (invite == null || !_current || _pending) return;
+    if (widget.scopeId == null) {
+      await invites.accept(invite, actionId: widget.invitationId);
+      if (_current) setState(() => _pending = true);
       return;
     }
-    final manager=invites.manager;
-    final pending=await manager.pendingRotationReviews(widget.scopeId!);
-    final review=pending.isNotEmpty?pending.first:await manager.reviewRotation(widget.scopeId!);
-    if(!mounted)return;
-    if(_review?.id!=review.id) {
-      final allowed=await showDialog<bool>(context:context,builder:(dialog)=>AlertDialog(
-        title:Text(context.l10n.cryptoInvitationGrantTitle),
-        content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text(context.l10n.cryptoInvitationGrantExplanation),
-          for(final domain in review.domains.entries)Text('${domain.key=="finance"?context.l10n.organizerFinances:context.l10n.cryptoMigrationTitle}: ${domain.value['count']}'),
-        ])),actions:[TextButton(onPressed:()=>Navigator.pop(dialog,false),child:Text(context.l10n.cancel)),FilledButton(onPressed:()=>Navigator.pop(dialog,true),child:Text(context.l10n.cryptoInvitationGrantConfirm))]));
-      if(allowed!=true || !mounted)return;
-      _review=review;
-    }
-    await invites.admit(invite,review);
-    if(mounted)Navigator.of(context).pop(widget.scopeId);
+    final review = _review;
+    if (review == null) return;
+    await invites.admit(invite, review);
+    if (mounted && _current) Navigator.of(context).pop(widget.scopeId);
   });
-  @override Widget build(BuildContext context) {
-    final l=context.l10n;
-    return Scaffold(appBar:AppBar(title:Text(widget.label??l.cryptoInvitationGrantTitle)),body:SafeArea(child:Center(child:ConstrainedBox(constraints:const BoxConstraints(maxWidth:640),child:ListView(padding:const EdgeInsets.all(24),children:[
-      Text(widget.scopeId==null?l.cryptoInvitationVerifyCreator:l.cryptoInvitationGrantExplanation),
-      if(_busy)const LinearProgressIndicator(),
-      if(_failed)Text(l.accountRecoveryFailed,style:TextStyle(color:Theme.of(context).colorScheme.error)),
-      if(_pending)Text(l.cryptoInvitationPendingKeys),
-      if(_invite!=null && !_verified)OutlinedButton(onPressed:_busy?null:_compare,child:Text(l.cryptoCompareContact)),
-      if(_verified)Text(l.cryptoContactVerified),
-      if(_verified && !_pending)FilledButton(onPressed:_busy?null:_continue,child:Text(widget.scopeId==null?l.invitationFlowJoinSpace:l.cryptoInvitationGrantConfirm)),
-      TextButton(onPressed:_busy?null:_load,child:Text(l.cryptoMigrationRetry)),
-      TextButton(onPressed:()=>Navigator.of(context).pop(),child:Text(l.cryptoContinueLocally)),
-    ])))));
+
+  Widget _permissions(VerifiedCryptoInvitation invite) {
+    final proposed = invite.response['proposedMember'] as Map?;
+    final role = proposed?['role'] ?? invite.invitation['role'];
+    final label = switch (role) {
+      'owner' => context.l10n.sharingOwner,
+      'member' || 'editor' => context.l10n.sharingMember,
+      'viewer' => context.l10n.sharingViewer,
+      _ => throw const FormatException('invitation_role'),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text('${context.l10n.cryptoSharingAccessLabel}: $label'),
+        if (proposed != null) ...[
+          Text(switch (proposed['financeRole']) {
+            'write' => context.l10n.cryptoSharingFinanceWrite,
+            'read' => context.l10n.cryptoSharingFinanceRead,
+            _ => context.l10n.cryptoSharingFinanceNone,
+          }),
+          if (proposed['manageKeys'] == true)
+            Text(context.l10n.cryptoSharingManageAccess),
+        ],
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.label ?? l.cryptoInvitationGrantTitle),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Text(
+                    widget.scopeId == null
+                        ? l.cryptoInvitationVerifyCreator
+                        : l.cryptoInvitationGrantExplanation,
+                  ),
+                  HostingDisclosureForServer(
+                    serverUrl:
+                        widget.account.directory.session.profile.serverUrl,
+                    allowLocalHttp:
+                        widget.account.directory.session.profile.allowLocalHttp,
+                    compact: true,
+                  ),
+                  if (widget.recipientLabel != null)
+                    Text(
+                      widget.recipientLabel!,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  if (_busy) const LinearProgressIndicator(),
+                  if (_error != null)
+                    Text(
+                      sharingErrorMessage(context, _error!),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  if (_pending) Text(l.cryptoInvitationPendingKeys),
+                  if (_invite != null) _permissions(_invite!),
+                  if (_review != null) ...[
+                    const SizedBox(height: 16),
+                    Text(l.cryptoSharingExistingContent),
+                    for (final domain in _review!.domains.entries)
+                      Text(
+                        '${domain.key == 'finance' ? l.organizerFinances : l.cryptoSharingContent}: ${domain.value['count']}',
+                      ),
+                  ],
+                  if (_invite != null && !_pending && _error == null)
+                    FilledButton(
+                      key: const ValueKey('crypto-invitation-confirm'),
+                      onPressed: _busy ? null : _continue,
+                      child: Text(
+                        widget.scopeId == null
+                            ? l.invitationFlowJoinSpace
+                            : l.cryptoInvitationGrantConfirm,
+                      ),
+                    ),
+                  if (widget.scopeId != null && _error != null)
+                    TextButton(
+                      key: const ValueKey(
+                        'crypto-invitation-pending-approvals',
+                      ),
+                      onPressed: _busy
+                          ? null
+                          : () => openCryptoApprovals(context),
+                      child: Text(cryptoApprovalsLabel(context)),
+                    ),
+                  if (_error != null || _pending)
+                    TextButton(
+                      key: const ValueKey('crypto-invitation-retry'),
+                      onPressed: _busy || isSharingIdentityChanged(_error)
+                          ? null
+                          : _load,
+                      child: Text(
+                        _pending
+                            ? l.cryptoSharingCheckAccess
+                            : l.cryptoMigrationRetry,
+                      ),
+                    ),
+                  TextButton(
+                    onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                    child: Text(l.cryptoContinueLocally),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

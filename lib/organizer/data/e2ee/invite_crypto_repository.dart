@@ -12,6 +12,7 @@ import 'crypto_directory_promotion.dart';
 import 'crypto_legacy_invitation_capsule.dart';
 import 'crypto_legacy_invitation_evidence.dart';
 import 'crypto_directory_consistency.dart';
+import 'crypto_inherited_invitation_grants.dart';
 
 class VerifiedCryptoInvitation {
   VerifiedCryptoInvitation(
@@ -54,6 +55,15 @@ class InviteCryptoRepository {
       await compare?.call();
       if (!access.account.directory.isCurrent()) {
         throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      final known = await store.anchor(directory.accountId);
+      if (compare != null &&
+          known != null &&
+          (known['generation'] as int) > directory.generation &&
+          known['fingerprint'] == directory.rootFingerprint) {
+        // Hosting verification has reconnected this historical invitation
+        // prefix to the newer secure head; keep that stronger anchor intact.
+        return;
       }
       // The shared secure-anchor CAS must succeed before any immutable live
       // directory row is installed. A newer fork cannot poison this cache.
@@ -549,6 +559,7 @@ class InviteCryptoRepository {
     }
     var page = Map<String, dynamic>.from(response['recipientDirectory'] as Map);
     VerifiedAccountDirectory? state;
+    VerifiedAccountDirectory? authorPrefix;
     final entries = <Map<String, dynamic>>[];
     String? genesis;
     var after = 0;
@@ -584,6 +595,9 @@ class InviteCryptoRepository {
           pinnedRootFingerprint: genesis,
         );
         entries.add(entry);
+        if (state.headHash == raw['payload']['authorDirectoryHeadHash']) {
+          authorPrefix = state;
+        }
         after = state.generation;
       }
       if (page['hasMore'] != true) break;
@@ -604,9 +618,18 @@ class InviteCryptoRepository {
     }
     if (state!.headHash != page['headHash'] ||
         state.generation != page['generation'] ||
-        state.snapshotHash != page['snapshotHash']) {
+        state.snapshotHash != page['snapshotHash'] ||
+        authorPrefix == null) {
       throw const FormatException('invitation_directory_head');
     }
+    // The acceptance signature must belong to the signed author prefix as
+    // well as an active current recipient device before owner key disclosure.
+    final originalDevice = authorPrefix.activeDevice(raw['deviceId']);
+    access.account.directory.reducer.crypto.verifyDomain(
+      proof,
+      cryptoBase64(originalDevice['signingKeyBase64'], length: 32),
+      cryptoDirectoryDomain,
+    );
     final device = state.activeDevice(raw['deviceId']);
     access.account.directory.reducer.crypto.verifyDomain(
       proof,
@@ -625,11 +648,50 @@ class InviteCryptoRepository {
     );
   }
 
+  /// A normal invitation trusts the hosting public-key directory at first use.
+  /// Re-fetch the exact creator/acceptance proof before installing its signed
+  /// history, so a stale UI selection never establishes a replacement identity.
+  /// This grants identity trust only; acceptance and owner key admission remain
+  /// separate signed operations.
+  Future<void> trustCreatorFromDirectory(
+    VerifiedCryptoInvitation invitation,
+  ) async {
+    final accepted = invitation.response['acceptanceProofHash'] != null;
+    final fresh = accepted
+        ? await acceptedRecipient(
+            invitation.invitation['scopeId'],
+            invitation.invitation['id'],
+          )
+        : await inspect(invitationId: invitation.invitation['id']);
+    if (fresh.creator.rootFingerprint != invitation.creator.rootFingerprint) {
+      throw const CryptoDirectoryException('directory_root_changed');
+    }
+    if (fresh.creator.accountId != invitation.creator.accountId ||
+        fresh.creator.headHash != invitation.creator.headHash ||
+        fresh.creator.snapshotHash != invitation.creator.snapshotHash ||
+        await cryptoSha256(CryptoJson.encode(fresh.authorization)) !=
+            await cryptoSha256(CryptoJson.encode(invitation.authorization)) ||
+        fresh.response['acceptanceProofHash'] !=
+            invitation.response['acceptanceProofHash']) {
+      throw const CryptoAuthorityPending('invitation_acceptance_changed');
+    }
+    await _promoteDirectory(
+      fresh.creator,
+      fresh.entries,
+      compare: () => access.identities.trustHostDirectory(
+        directory: fresh.creator,
+        expectedServerId: access.account.directory.session.profile.serverId,
+        isCurrent: access.account.directory.isCurrent,
+      ),
+    );
+  }
+
   Future<void> admit(
     VerifiedCryptoInvitation recipient,
     ScopeRotationReview reviewedInventory,
   ) async {
     final directory = recipient.creator;
+    await trustCreatorFromDirectory(recipient);
     await access.identities.requireVerified(
       directory.accountId,
       access.identities.fingerprint(directory),
@@ -670,6 +732,15 @@ class InviteCryptoRepository {
         'acceptanceProofHash': fresh.response['acceptanceProofHash'],
       },
     ];
+    final inherited = CryptoInheritedInvitationGrants(access);
+    // Retain the continuation before the parent activates: invitation
+    // consumption or a lost response must not hide outstanding child keys.
+    await inherited.prepare(
+      parentScopeId: reviewedInventory.scopeId,
+      invitationId: recipient.invitation['id'],
+      recipientAccountId: directory.accountId,
+      acceptanceProofHash: fresh.response['acceptanceProofHash'],
+    );
     await manager.confirmRotation(
       reviewedInventory,
       acceptedCandidateHistory: true,
@@ -687,6 +758,10 @@ class InviteCryptoRepository {
         await _promoteDirectory(checked.creator, checked.entries);
         return checked.creator;
       },
+    );
+    await inherited.finish(
+      reviewedInventory.scopeId,
+      recipient.invitation['id'],
     );
   }
 
@@ -789,6 +864,7 @@ class InviteCryptoRepository {
       throw const FormatException('crypto_invitation_bridge_binding');
     }
     final own = await access.account.directory.requireFresh();
+    await trustCreatorFromDirectory(invite);
     await access.identities.requireVerified(
       invite.creator.accountId,
       access.identities.fingerprint(invite.creator),

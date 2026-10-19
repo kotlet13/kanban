@@ -5077,11 +5077,11 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Povabilo je sprejeto. Lastnik mora še potrditi vaše ključe. Prostor se odpre šele po tej potrditvi; lokalno lahko nadaljujete z delom.';
+      'Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Prostor se odpre po odobritvi; lokalno lahko nadaljujete z delom.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
-      'Pred sprejemom preverite osebo, ki vas je povabila. Njeno javno kartico pridobite neposredno po znanem kanalu, ne iz iste povezave povabila.';
+      'Preglejte povabilo in se pridružite, ko ste pripravljeni. Aplikacija samodejno preveri zaščito računa.';
 
   @override
   String get cryptoUnavailableSpace => 'Nedostopen prostor';
@@ -5104,10 +5104,10 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get cryptoInvitationGrantExplanation =>
-      'Povabljeni je sprejel povabilo. Po primerjavi identitete potrdite njegov dostop do dosedanjih podatkov in novih sprememb tega prostora. Finančni podatki zahtevajo posebej dovoljen finančni dostop.';
+      'Povabljeni je sprejel povabilo. Potrdite spodnji dostop do dosedanje vsebine in novih sprememb tega prostora.';
 
   @override
-  String get cryptoInvitationGrantConfirm => 'Potrdi dostop in pripravi ključe';
+  String get cryptoInvitationGrantConfirm => 'Potrdi dostop';
 
   @override
   String get accountRecoveryV2Pending =>
@@ -5233,4 +5233,68 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get accountRecoveryUseRecovered => 'Odpri obnovljene prostore';
+
+  @override
+  String get hostingDisclosureTitle => 'Gostovanje in zaupanje';
+
+  @override
+  String get hostingOperatorNotProvided =>
+      'Strežnik ni navedel imena upravljavca.';
+
+  @override
+  String hostingOperatorSupplied(String name) {
+    return 'Upravljavec (podatek tega strežnika): $name';
+  }
+
+  @override
+  String hostingContactSupplied(String contact) {
+    return 'Kontakt (podatek tega strežnika): $contact';
+  }
+
+  @override
+  String get hostingTrustExplanation =>
+      'Upravljavec skrbi za račune in povezovanje uporabnikov. Z nadaljevanjem mu zaupate, da uporabnike pravilno prepozna. Pri E2EE se vsebina odklepa na napravah; na nepričakovano spremembo identitete vas aplikacija opozori.';
+
+  @override
+  String get cryptoSharingIdentityChanged =>
+      'Identiteta računa se je spremenila ali ne ustreza shranjenemu zaupanju. Dostop je zaradi zaščite ustavljen. Pred nadaljevanjem preverite osebo in gostovanje po znanem kanalu.';
+
+  @override
+  String get cryptoSharingCheckAccess => 'Preveri dostop';
+
+  @override
+  String get cryptoSharingAccessLabel => 'Dostop';
+
+  @override
+  String get cryptoSharingFinanceWrite => 'Finance: ogled in urejanje';
+
+  @override
+  String get cryptoSharingFinanceRead => 'Finance: samo ogled';
+
+  @override
+  String get cryptoSharingFinanceNone => 'Brez dostopa do financ';
+
+  @override
+  String get cryptoSharingManageAccess => 'Lahko upravlja dostop članov.';
+
+  @override
+  String get cryptoSharingExistingContent => 'Vključena dosedanja vsebina';
+
+  @override
+  String get cryptoSharingContent => 'Vsebina';
+
+  @override
+  String get hostingOperatorUnavailable => 'Podatek o upravljavcu ni na voljo.';
+
+  @override
+  String get cryptoSharingFinishInheritedProjects =>
+      'Dokončaj dostop do projektov';
+
+  @override
+  String get cryptoSharingProjectsPending =>
+      'Dostop do prostora je potrjen. Dostop do projektov se še pripravlja. Nadaljujte v Čakajočih odobritvah.';
+
+  @override
+  String get cryptoSharingAccessChanged =>
+      'Dostop do prostora ali projektov se je spremenil. Pred nadaljevanjem znova preglejte dovoljenja.';
 }

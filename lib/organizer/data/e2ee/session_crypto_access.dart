@@ -1398,7 +1398,9 @@ class SessionCryptoAccess {
       if (own?['fingerprint'] != fp) {
         throw const CryptoAuthorityPending('identity_verification_required');
       }
-    } else if (!allowUnverifiedContact) {
+    } else if (!allowUnverifiedContact &&
+        anchor != null &&
+        target.generation < (anchor['generation'] as int)) {
       await identities.requireVerified(accountId, fp);
     }
     if (_hasScopedIdentityAnchor(scopeId)) {
@@ -1426,6 +1428,17 @@ class SessionCryptoAccess {
           await account.store.stageReplay(run, accountId, entry);
         }
         try {
+          if (accountId != account.directory.accountId) {
+            // This exact scoped account/server/head has been fully replayed
+            // above, including the existing secure anchor. Hosting trust pins
+            // identity only; the signed scope roster and owner authorization
+            // are still verified by the caller before granting any access.
+            await identities.trustHostDirectory(
+              directory: target,
+              expectedServerId: account.directory.session.profile.serverId,
+              isCurrent: account.directory.isCurrent,
+            );
+          }
           await account.store.pinRoot(
             accountId,
             target.serverId,
@@ -1484,14 +1497,18 @@ class SessionCryptoAccess {
   Future<VerifiedAccountDirectory> inspectContact(
     String scopeId,
     String accountId,
-  ) async {
+  ) async => (await _inspectContactWithScope(scopeId, accountId)).directory;
+
+  Future<({VerifiedAccountDirectory directory, String scopeHeadHash})>
+  _inspectContactWithScope(String scopeId, String accountId) async {
     final status = await _scopeCall('crypto2.directory.status', {
       'scopeId': scopeId,
       'accountId': accountId,
     });
     // A first-contact check also precedes the first encrypted scope head.
-    // The catalog pointer only selects the bounded proof route; the external
-    // card and full directory signatures establish identity independently.
+    // The catalog pointer only selects the bounded proof route. Full directory
+    // signatures and the selected hosting/manual trust policy establish the
+    // identity; catalog metadata grants no membership or content keys.
     String? cursor;
     String? scopeHash;
     while (true) {
@@ -1515,7 +1532,7 @@ class SessionCryptoAccess {
       }
       cursor = next;
     }
-    return directoryAt(
+    final directory = await directoryAt(
       scopeId: scopeId,
       scopeHeadHash: scopeHash,
       accountId: accountId,
@@ -1523,6 +1540,7 @@ class SessionCryptoAccess {
       online: true,
       allowUnverifiedContact: true,
     );
+    return (directory: directory, scopeHeadHash: scopeHash);
   }
 
   Future<void> verifyContactCard(
@@ -1549,6 +1567,28 @@ class SessionCryptoAccess {
       externallyComparedSafetyCode: card['safetyCode'],
       externallyComparedGeneration: card['generation'],
       externallyComparedHeadHash: card['headHash'],
+    );
+    _directories.clear();
+    _heads.clear();
+  }
+
+  /// First-use hosting trust for a selected account already visible through
+  /// this scope's authorized directory endpoint. Manual card comparison remains
+  /// available independently through [verifyContactCard].
+  Future<void> trustContactFromDirectory(
+    String scopeId,
+    String accountId,
+  ) async {
+    final candidate = await _inspectContactWithScope(scopeId, accountId);
+    // Use the normal exact scoped route for the durable replay journal as
+    // well as hosting trust. A later historical invitation can then reconnect
+    // to this newer secure head without depending on the server's old prefix.
+    await directoryAt(
+      scopeId: scopeId,
+      scopeHeadHash: candidate.scopeHeadHash,
+      accountId: accountId,
+      directoryHeadHash: candidate.directory.headHash,
+      online: true,
     );
     _directories.clear();
     _heads.clear();
@@ -4866,6 +4906,75 @@ class SessionCryptoAccess {
   Future<void> hydrateScopeKeys(String scopeId) async {
     final head = await currentHead(scopeId, online: true);
     await _hydrateHeadKeys(head);
+  }
+
+  /// Normal receiving may discover a newly activated inherited membership
+  /// before this device has its content keys. Admit only the current signed
+  /// grant set, including historical source keys, through the ordinary full
+  /// manifest/recipient/wrapper/commitment verifier. Candidate recovery remains
+  /// separate, and possession alone never selects the current membership.
+  Future<void> ensureScopeReadKeys(String scopeId, String domain) async {
+    if (!const {'content', 'finance'}.contains(domain)) {
+      throw const FormatException('scope_domain');
+    }
+    Future<VerifiedScopeHead> readableHead() async {
+      final head = await currentHead(scopeId, online: true);
+      final member = head.member(account.directory.accountId);
+      if (!head.active ||
+          domain == 'finance' && member['financeRole'] == 'none') {
+        throw const CryptoAuthorityPending('scope_read_forbidden');
+      }
+      return head;
+    }
+
+    Future<bool> hasKeys(VerifiedScopeHead head) async {
+      final rows = await account.store.database.rows(
+        'SELECT epoch_id,key_id FROM crypto_scope_keys WHERE partition=? AND scope_id=? AND domain=?',
+        [account.store.partition, scopeId, domain],
+      );
+      return [..._heads.values, head]
+          .where(
+            (source) =>
+                source.scopeId == scopeId &&
+                source.epoch <= head.epoch &&
+                source.commitment(domain) != null,
+          )
+          .every(
+            (source) => rows.any(
+              (row) =>
+                  row['epoch_id'] == source.headHash &&
+                  row['key_id'] == (source.body['keyIds'] as Map)[domain],
+            ),
+          );
+    }
+
+    final head = await withVerifiedOperation(readableHead, freshBoundary: true);
+    if (await hasKeys(head)) return;
+    if (_readOnlyFrozen != null ||
+        Zone.current[_deletedScopeEvidenceZone] != null) {
+      throw const CryptoAuthorityPending('scope_key_pending');
+    }
+    void requireSameHead(VerifiedScopeHead current) {
+      if (current.headHash != head.headHash ||
+          current.epoch != head.epoch ||
+          (current.body['keyIds'] as Map)[domain] !=
+              (head.body['keyIds'] as Map)[domain]) {
+        throw const CryptoAuthorityPending('crypto_scope_head_changed');
+      }
+    }
+
+    await withVerifiedOperation(() async {
+      final current = await readableHead();
+      requireSameHead(current);
+      await _hydrateHeadKeys(current, onlyDomain: domain);
+    }, freshBoundary: true);
+    await withVerifiedOperation(() async {
+      final current = await readableHead();
+      requireSameHead(current);
+      if (!await hasKeys(current)) {
+        throw const CryptoAuthorityPending('scope_key_pending');
+      }
+    }, freshBoundary: true);
   }
 
   /// Explicit recovery phase: encryption roots exist only until this future

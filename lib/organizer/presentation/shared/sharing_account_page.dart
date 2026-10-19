@@ -1,3 +1,4 @@
+import 'hosting_disclosure.dart';
 import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -264,9 +265,10 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          session.serverUrl,
-                          style: Theme.of(context).textTheme.bodySmall,
+                        HostingDisclosureForServer(
+                          serverUrl: session.serverUrl,
+                          allowLocalHttp: session.allowLocalHttp,
+                          compact: true,
                         ),
                         const SizedBox(height: 8),
                         if (state.sessionRenewalSupported &&

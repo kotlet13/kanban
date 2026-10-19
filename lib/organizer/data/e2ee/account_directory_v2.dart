@@ -47,11 +47,13 @@ class VerifiedAccountDirectory {
     required this.snapshotHash,
     required this.deviceSnapshotHash,
     required this.rootFingerprint,
+    required this.genesisRootFingerprint,
     required _DirectoryLineage lineage,
   }) : _lineage = lineage;
   final Map<String, dynamic> snapshot;
   final int generation;
   final String headHash, snapshotHash, deviceSnapshotHash, rootFingerprint;
+  final String genesisRootFingerprint;
   final _DirectoryLineage _lineage;
   bool includesAnchor(int generation, String hash) {
     if (generation == 0) return hash == cryptoZeroHash;
@@ -385,6 +387,8 @@ class AccountDirectoryV2 {
       throw const CryptoDirectoryException('directory_head_mismatch');
     }
     return VerifiedAccountDirectory._(
+      genesisRootFingerprint:
+          previous?.genesisRootFingerprint ?? pinnedRootFingerprint,
       rootFingerprint: crypto.fingerprint(
         cryptoBase64(snapshot['rootSigningKeyBase64'], length: 32),
         cryptoBase64(snapshot['rootEncryptionKeyBase64'], length: 32),

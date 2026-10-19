@@ -358,6 +358,9 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                               builder: (obscure, toggle) => TextFormField(
                                 key: ValueKey('sharing-${field.id}'),
                                 controller: _controllers[field.id],
+                                onChanged: widget.detailsBuilder == null
+                                    ? null
+                                    : (_) => setState(() {}),
                                 obscureText: obscure,
                                 minLines: field.obscure || field.maxLines == 1
                                     ? 1

@@ -88,8 +88,13 @@ računski dogodek, brez vsebine, DEK ali datoteke.
 `AccountDirectoryV2` preveri celoten append-only dnevnik, identiteto,
 generacijo, prejšnjo glavo, command hash, snapshot in device snapshot.
 `CryptoIdentityStore` loči SQL predpomnilnik od neodvisnega varnega sidra.
-Prvi tuji stik zahteva izrecno primerjavo varnostne kode; javni koren iz
-strežniškega odgovora ni samostojen trust pin.
+Po [uporabnikovi odločitvi 19. oktobra](E2EE_SHARING_SIMPLIFICATION.md) prvi
+tuji stik zaupa povezavi račun–javni ključ, ki jo sporoči izbrano gostovanje.
+Odjemalec še vedno preveri podpisano verigo in varno shrani koren; ta
+samodejni način je ločen od neobvezne neodvisne primerjave varnostne kode.
+Že pripetega korena ne zamenja tiho. Zaupanje imeniku ne nadomesti podpisanega
+pooblastila za članstvo ali predajo ključev. Ta model ne zagotavlja zaščite
+pred aktivnim upravljavcem, ki ponaredi identiteto ob prvem stiku.
 
 Obnova preveri lastno verigo iz FILE pripetega korena, odobri novo napravo in
 ohrani zgodovinske dokaze. Stara podpisana naprava ni zato ponovno trenutna.

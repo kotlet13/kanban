@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../l10n/l10n.dart';
 import '../../domain/collaboration_models.dart';
 import '../organizer_errors.dart';
+import '../../data/e2ee/account_directory_v2.dart'
+    show CryptoDirectoryException;
 import '../../data/e2ee/crypto_sync_repository.dart'
     show CryptoAuthorityPending;
 import '../recovery/crypto_approvals_page.dart';
@@ -11,6 +13,8 @@ bool isCryptoApprovalPending(Object error) =>
     error is CryptoAuthorityPending &&
     const {
       'crypto_access_approval_required',
+      'crypto_inherited_invitation_pending',
+      'crypto_inherited_invitation_manager_required',
       'crypto_lifecycle_delegation_required',
       'crypto_lifecycle_approval_required',
       'crypto_access_cleanup_required',
@@ -34,7 +38,40 @@ SnackBarAction? sharingApprovalAction(BuildContext context, Object error) =>
         onPressed: () => openCryptoApprovals(context),
       );
 
+bool isSharingIdentityChanged(Object? error) =>
+    error is CryptoDirectoryException &&
+    const {
+      'directory_root_changed',
+      'directory_server_mismatch',
+      'directory_anchor_fork',
+      'directory_rollback',
+    }.contains(error.code);
+
 String sharingErrorMessage(BuildContext context, Object error) {
+  if (isSharingIdentityChanged(error)) {
+    return context.l10n.cryptoSharingIdentityChanged;
+  }
+  if (error is CryptoDirectoryException &&
+          error.code == 'directory_stale_identity' ||
+      error is CryptoAuthorityPending &&
+          error.reason == 'crypto_stale_identity') {
+    return context.l10n.sharingSessionExpired;
+  }
+  if (error is CryptoAuthorityPending) {
+    if (const {
+      'crypto_inherited_invitation_pending',
+      'crypto_inherited_invitation_manager_required',
+    }.contains(error.reason)) {
+      return context.l10n.cryptoSharingProjectsPending;
+    }
+    if (const {
+      'crypto_inherited_invitation_changed',
+      'crypto_inherited_invitation_policy',
+      'crypto_inherited_invitation_parent',
+    }.contains(error.reason)) {
+      return context.l10n.cryptoSharingAccessChanged;
+    }
+  }
   if (error is CryptoAuthorityPending &&
       error.reason == 'crypto_leave_renewal_required') {
     return Localizations.localeOf(context).languageCode == 'sl'

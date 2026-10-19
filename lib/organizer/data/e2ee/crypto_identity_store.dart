@@ -32,6 +32,9 @@ class CryptoIdentityStore {
     late String effectiveTrust;
     await withCryptoAnchorLock(partition, () async {
       final old = await anchor(directory.accountId);
+      if (old != null && old['serverId'] != directory.serverId) {
+        throw const CryptoDirectoryException('directory_server_mismatch');
+      }
       if (old != null &&
           !directory.includesAnchor(
             old['generation'] as int,
@@ -77,6 +80,12 @@ class CryptoIdentityStore {
             'rootEncryptionKeyBase64': s['rootEncryptionKeyBase64'],
             'identityEpochId': directory.identityEpochId,
             'trustState': effectiveTrust,
+            if (old?['verificationMethod'] != null)
+              'verificationMethod': old!['verificationMethod'],
+            if (old?['comparedHeadHash'] != null)
+              'comparedHeadHash': old!['comparedHeadHash'],
+            if (old?['comparedGeneration'] != null)
+              'comparedGeneration': old!['comparedGeneration'],
             if (completingHandoff)
               'fingerprint': directory.rootFingerprint
             else if (old?['fingerprint'] != null)
@@ -441,11 +450,84 @@ class CryptoIdentityStore {
             'deviceSnapshotHash': directory.deviceSnapshotHash,
             'identityEpochId': directory.identityEpochId,
             'trustState': 'verified',
+            'verificationMethod': 'safetyCode',
+            'comparedHeadHash': directory.headHash,
+            'comparedGeneration': directory.generation,
           }),
         ),
       );
     });
   }
+
+  /// Trust the hosting directory on first contact only. The argument can only
+  /// be produced by replaying the signed account history. Persisting its root
+  /// in secure storage prevents SQL rollback from silently replacing identity.
+  Future<void> pinHostDirectory(
+    VerifiedAccountDirectory directory, {
+    required String expectedServerId,
+    required bool Function() isCurrent,
+  }) => withCryptoAnchorLock(partition, () async {
+    if (directory.serverId != expectedServerId) {
+      throw const CryptoDirectoryException('directory_server_mismatch');
+    }
+    final old = await anchor(directory.accountId);
+    if (old != null) {
+      if (old['serverId'] != directory.serverId ||
+          old['accountId'] != directory.accountId) {
+        throw const CryptoDirectoryException('directory_server_mismatch');
+      }
+      if (old['fingerprint'] != null &&
+              old['fingerprint'] != directory.rootFingerprint ||
+          old['rootSigningKeyBase64'] != null &&
+              old['rootSigningKeyBase64'] !=
+                  directory.snapshot['rootSigningKeyBase64'] ||
+          old['rootEncryptionKeyBase64'] != null &&
+              old['rootEncryptionKeyBase64'] !=
+                  directory.snapshot['rootEncryptionKeyBase64']) {
+        throw const CryptoDirectoryException('directory_root_changed');
+      }
+      if ((old['generation'] as int) > directory.generation) {
+        throw const CryptoDirectoryException('directory_rollback');
+      }
+      if (!directory.includesAnchor(
+        old['generation'] as int,
+        old['headHash'] as String,
+      )) {
+        throw const CryptoDirectoryException('directory_anchor_fork');
+      }
+    }
+    if (!isCurrent()) {
+      throw const CryptoDirectoryException('directory_stale_identity');
+    }
+    await secure.write(
+      _anchor(directory.accountId),
+      utf8.decode(
+        CryptoJson.encode({
+          ...?old,
+          'serverId': directory.serverId,
+          'accountId': directory.accountId,
+          'fingerprint': directory.rootFingerprint,
+          'genesisFingerprint': directory.genesisRootFingerprint,
+          'rootSigningKeyBase64': directory.snapshot['rootSigningKeyBase64'],
+          'rootEncryptionKeyBase64':
+              directory.snapshot['rootEncryptionKeyBase64'],
+          'generation': directory.generation,
+          'headHash': directory.headHash,
+          'snapshotHash': directory.snapshotHash,
+          'deviceSnapshotHash': directory.deviceSnapshotHash,
+          'identityEpochId': directory.identityEpochId,
+          'trustState': 'verified',
+          // Legacy verified anchors came from manual comparison. Do not weaken
+          // that provenance when they predate the explicit secure method field.
+          'verificationMethod':
+              old?['verificationMethod'] ??
+              (old?['trustState'] == 'verified'
+                  ? 'safetyCode'
+                  : 'hostDirectory'),
+        }),
+      ),
+    );
+  });
 
   Future<void> authorizeRootHandoff(
     Map<String, dynamic> proof,

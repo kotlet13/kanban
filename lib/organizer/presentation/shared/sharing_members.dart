@@ -506,6 +506,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                                                     scopeId: widget.scope.id,
                                                     invitationId: invitation.id,
                                                     label: widget.scope.name,
+                                                    recipientLabel: invitation.recipientEmail ?? invitation.recipientUsername,
                                                   ),
                                             ),
                                           );

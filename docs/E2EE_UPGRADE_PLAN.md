@@ -427,6 +427,14 @@ Navadnih izvozov ne uvajamo kot samodejnega nadomestila ob napaki šifriranja.
 
 ## 9 Deljenje, preverjanje identitet in naprave
 
+**Sprememba dogovora, 19. oktober:** uporabnik je odobril
+[poenostavljeno deljenje](E2EE_SHARING_SIMPLIFICATION.md). Običajni prvi stik
+samodejno zaupa imeniku izbranega gostovanja, po preverjanju podpisane verige
+varno pripne koren in opozori ob nepojasnjeni spremembi. Obvezna ročna
+primerjava kartic spodaj je prvotni strožji predlog, ne več privzeti tok.
+Neodvisna primerjava ostane napredna možnost. Ostale zahteve po podpisanem
+članstvu, dovoljenih ključih, obnovljivosti in ločitvi obsegov ostanejo.
+
 Strežniški ACL ostane obvezen, vendar samo sprememba vrstice v
 `familyhub_members` ne sme sprožiti izdaje ključev. Odjemalec preveri podpisano
 zgodovino pooblastil in ključ prejemnika. Javni ključ iz nepreverjenega odgovora

@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+19. oktober — **deljenje E2EE poenostavljeno v izvoru** po novi izrecni
+odobritvi uporabnika; trije GPT-6.1 Sol/high, glavni pregled/integracija.
+[Izvedba in meje](docs/E2EE_SHARING_SIMPLIFICATION.md): običajni tok nima
+obvezne primerjave kartic. Prvi stik zaupa povezavi računa z javnim ključem
+pri gostovanju; podpisano verigo preveri in koren varno zapomni. Nepričakovana
+zamenjava ostane blokirana, ročna primerjava neobvezna. Javni podatki
+upravljavca so vidni ob povezavi/povabilu in v nastavitvah; nikoli se ne
+izpeljejo iz zasebnih skrbniških/SMTP podatkov. Ključi vsebine ostanejo na
+napravah. Model ne ščiti pred namerno zamenjavo prve identitete pri gostovanju.
+Trajna lastnikova odobritev nadaljuje tudi obstoječe podedovane projekte,
+preveri popoln podpisan seznam in ohrani vloge/finance/preklic/svežino;
+običajno branje prevzame manjkajoče dovoljene ključe. Ciljni testi zaupanja,
+UI, nadaljevanja in sprejema ključev PASS; končni analizni rezultat vodi zapis
+izvedbe. Nov izoliran Docker HTTP potrdi isti sprejem z enim zahtevkom,
+odobritev, branje prejšnje projektne vsebine ter zavrnitev po dejanski menjavi
+korena brez predaje ključev. Hladni poti imata izmerjenih 152/70 zahtevkov;
+večji prostori in fizični tok ostajajo za nadaljnje preverjanje. Samo nov
+začasni vsebnik in njegove sintetične skrivnosti so odstranjeni. Produkcija,
+ohranjene Mac/mobilne QA namestitve/podatki, SDK/locks/verzije/trgovini so
+nedotaknjeni. Mobilni spodnji checkpoint še ni nadaljevan, P0/P8 nista
+zaključena; ni nove native gradnje ali namestitve. Nepovezana varnostni in
+desktop dokument ostaneta nedotaknjena.
+
 18. oktober — **mobilni E2EE QA: skupno opravilo/sync/mail in isti B predogled/registracija/e-pošta/FILE potrjeni; B je sprejel isto povabilo, owner grant še čaka**.
 [Aktualni checkpoint in vezani dokazi](docs/E2EE_MOBILE_TWO_USER_TEST_2026_10_18.md):
 A je shranil eno MOBILE-SHARED-1 v istem projektu; UI/samodejni sync in en

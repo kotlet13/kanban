@@ -8951,13 +8951,13 @@ abstract class AppLocalizations {
   /// No description provided for @cryptoInvitationPendingKeys.
   ///
   /// In en, this message translates to:
-  /// **'Invitation accepted. The owner still needs to confirm your keys. The space opens after confirmation; you can keep working locally.'**
+  /// **'Invitation accepted. The owner still needs to approve your access. The space opens after approval; you can keep working locally.'**
   String get cryptoInvitationPendingKeys;
 
   /// No description provided for @cryptoInvitationVerifyCreator.
   ///
   /// In en, this message translates to:
-  /// **'Before joining, verify the person who invited you. Obtain their public card directly through a known channel, separately from the invitation link.'**
+  /// **'Review the invitation, then join when you are ready. The app checks the account’s protection automatically.'**
   String get cryptoInvitationVerifyCreator;
 
   /// No description provided for @cryptoUnavailableSpace.
@@ -8999,13 +8999,13 @@ abstract class AppLocalizations {
   /// No description provided for @cryptoInvitationGrantExplanation.
   ///
   /// In en, this message translates to:
-  /// **'The recipient accepted the invitation. After comparing identities, confirm access to this space’s existing data and future changes. Financial data requires separate financial permission.'**
+  /// **'The recipient accepted the invitation. Confirm the access below to share this space’s existing content and future changes.'**
   String get cryptoInvitationGrantExplanation;
 
   /// No description provided for @cryptoInvitationGrantConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Confirm access and prepare keys'**
+  /// **'Confirm access'**
   String get cryptoInvitationGrantConfirm;
 
   /// No description provided for @accountRecoveryV2Pending.
@@ -9217,6 +9217,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open recovered spaces'**
   String get accountRecoveryUseRecovered;
+
+  /// No description provided for @hostingDisclosureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hosting and trust'**
+  String get hostingDisclosureTitle;
+
+  /// No description provided for @hostingOperatorNotProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'The server has not provided an operator name.'**
+  String get hostingOperatorNotProvided;
+
+  /// No description provided for @hostingOperatorSupplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator (supplied by this server): {name}'**
+  String hostingOperatorSupplied(String name);
+
+  /// No description provided for @hostingContactSupplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact (supplied by this server): {contact}'**
+  String hostingContactSupplied(String contact);
+
+  /// No description provided for @hostingTrustExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The operator manages accounts and connects users. By continuing, you trust it to identify users correctly. With E2EE, content is unlocked on devices; the app alerts you to an unexpected identity change.'**
+  String get hostingTrustExplanation;
+
+  /// No description provided for @cryptoSharingIdentityChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The account identity changed or does not match the saved trust. Access is blocked for protection. Verify the person and hosting through a known channel before continuing.'**
+  String get cryptoSharingIdentityChanged;
+
+  /// No description provided for @cryptoSharingCheckAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Check access'**
+  String get cryptoSharingCheckAccess;
+
+  /// No description provided for @cryptoSharingAccessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Access'**
+  String get cryptoSharingAccessLabel;
+
+  /// No description provided for @cryptoSharingFinanceWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances: view and edit'**
+  String get cryptoSharingFinanceWrite;
+
+  /// No description provided for @cryptoSharingFinanceRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Finances: view only'**
+  String get cryptoSharingFinanceRead;
+
+  /// No description provided for @cryptoSharingFinanceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to finances'**
+  String get cryptoSharingFinanceNone;
+
+  /// No description provided for @cryptoSharingManageAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Can manage member access.'**
+  String get cryptoSharingManageAccess;
+
+  /// No description provided for @cryptoSharingExistingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing content included'**
+  String get cryptoSharingExistingContent;
+
+  /// No description provided for @cryptoSharingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get cryptoSharingContent;
+
+  /// No description provided for @hostingOperatorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator information is unavailable.'**
+  String get hostingOperatorUnavailable;
+
+  /// No description provided for @cryptoSharingFinishInheritedProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish project access'**
+  String get cryptoSharingFinishInheritedProjects;
+
+  /// No description provided for @cryptoSharingProjectsPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Access to the space is confirmed. Project access is still being prepared. Continue in Pending approvals.'**
+  String get cryptoSharingProjectsPending;
+
+  /// No description provided for @cryptoSharingAccessChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Access to the space or projects changed. Review the permissions again before continuing.'**
+  String get cryptoSharingAccessChanged;
 }
 
 class _AppLocalizationsDelegate

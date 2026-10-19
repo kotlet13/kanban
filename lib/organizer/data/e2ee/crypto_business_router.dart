@@ -1166,6 +1166,7 @@ class CryptoBusinessSession {
     required bool attest,
   }) async {
     await rateLimitedRead(scopeId, domain, () async {
+      await access.ensureScopeReadKeys(scopeId, domain);
       await queue.pull(
         scopeId: scopeId,
         domain: domain,

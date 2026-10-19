@@ -6,6 +6,13 @@ izvor, **ne** namestitve, izdane aplikacije ali končno zaključenega preverjanj
 [Protokol](E2EE_PROTOCOL.md) opisuje dejanske meje zaupanja;
 [zemljevid](E2EE_CODE_MAP.md) vodi do trenutnih vstopnih točk.
 
+**19. oktober — nov dogovor za deljenje:**
+[poenostavitev prvega stika](E2EE_SHARING_SIMPLIFICATION.md) nadomesti
+obvezno ročno primerjanje kartic z zaupanjem imeniku izbranega gostovanja,
+preverjanjem podpisov in varno zapomnjenim korenom. Neodvisna primerjava
+ostane izbirna. Stare spodnje navedbe o obveznem prvem ročnem preverjanju
+opisujejo prejšnji model; podatkovni, obnovitveni in izdajni pogoji ostanejo.
+
 Prejšnji opis samo V1 temeljev je zastarel: delovni izvor zdaj vsebuje
 podpisane računske dnevnike, V2 poslovne adapterje, Capture3 in atomski commit3.
 Obstoječa dovoljenja za izvor/končni commit ne dovoljujejo strežniške

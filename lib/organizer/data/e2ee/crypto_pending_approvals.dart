@@ -7,6 +7,7 @@ import 'crypto_business_leave.dart';
 import 'crypto_business_router.dart';
 import 'crypto_finance_account_choices.dart';
 import 'crypto_json.dart';
+import 'crypto_inherited_invitation_grants.dart';
 import 'crypto_sync_repository.dart' show CryptoAuthorityPending;
 
 /// Discovery is only a candidate list. Each approval re-reads and verifies its
@@ -18,6 +19,33 @@ class CryptoPendingApprovals {
   Future<CryptoPendingApprovalList> load() async {
     final items = <CryptoPendingApproval>[];
     final unavailable = <String>{};
+    try {
+      // Journal rows only select work. Each continuation independently checks
+      // current signed parent membership and child policy before any key grant.
+      for (final value in await CryptoInheritedInvitationGrants(
+        context.access,
+      ).pending()) {
+        final scopeId = value['parentScopeId'] as String;
+        final cached = await context.database.rows(
+          'SELECT data FROM scopes WHERE partition=? AND id=?',
+          [context.partition, scopeId],
+        );
+        final label = cached.isEmpty
+            ? null
+            : (jsonDecode(cached.single['data'] as String) as Map)['name'];
+        items.add(
+          CryptoPendingApproval(
+            scopeId,
+            label is String && label.isNotEmpty ? label : scopeId,
+            value,
+            false,
+            inheritedInvitation: true,
+          ),
+        );
+      }
+    } catch (_) {
+      unavailable.add('inheritedInvitations');
+    }
     final choices = CryptoFinanceAccountChoices(context);
     try {
       for (final value in await choices.ownPending()) {
@@ -263,11 +291,13 @@ class CryptoPendingApproval {
     this.choiceReview = false,
     this.choiceFinish = false,
     this.choiceMaterialize = false,
+    this.inheritedInvitation = false,
   }) : value = Map.unmodifiable(value);
   final String scopeId, name;
   final Map<String, dynamic> value;
   final bool lifecycle, cleanup, ownLeave, leaveRequest, leaveFinish;
   final bool choiceReview, choiceFinish, choiceMaterialize;
+  final bool inheritedInvitation;
 }
 
 class CryptoPendingApprovalList {

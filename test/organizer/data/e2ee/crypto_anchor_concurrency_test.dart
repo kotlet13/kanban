@@ -48,7 +48,24 @@ class _InterceptStore extends CryptoIdentityStore {
   _InterceptStore(super.database, super.secure, super.partition);
   Future<void> Function()? beforeRemember;
   Future<void> Function()? beforeComparison;
+  Future<void> Function()? beforeHostingTrust;
   int? failGeneration;
+  @override
+  Future<void> pinHostDirectory(
+    VerifiedAccountDirectory directory, {
+    required String expectedServerId,
+    required bool Function() isCurrent,
+  }) async {
+    final callback = beforeHostingTrust;
+    beforeHostingTrust = null;
+    await callback?.call();
+    await super.pinHostDirectory(
+      directory,
+      expectedServerId: expectedServerId,
+      isCurrent: isCurrent,
+    );
+  }
+
   @override
   Future<void> pinComparedIdentity(
     VerifiedAccountDirectory directory,
@@ -633,7 +650,7 @@ void main() {
                 ),
               ),
             );
-        foreignStore.beforeRemember = () async {
+        foreignStore.beforeHostingTrust = () async {
           await CryptoIdentityStore(
             db,
             secure,

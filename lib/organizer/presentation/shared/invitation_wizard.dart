@@ -1,7 +1,7 @@
 import 'dart:convert';
 import '../../data/e2ee/invite_crypto_repository.dart';
+import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/session_crypto_access.dart';
-import '../../data/pending_invitation_store.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,10 +16,10 @@ import '../onboarding/account_recovery_actions.dart';
 import '../password_visibility.dart';
 import 'content_moderation.dart';
 import 'sharing_errors.dart';
+import 'hosting_disclosure.dart';
 import 'sharing_invitation_details.dart';
 import 'sharing_session_boundary.dart';
 import '../recovery/account_crypto_wizard.dart';
-import '../recovery/crypto_public_card_dialog.dart';
 
 /// A separate route keeps the invitation alive while authentication and password
 /// recovery change screens. Closing this route never discards its secure record.
@@ -56,10 +56,13 @@ class InvitationWizard extends ConsumerStatefulWidget {
     this.initialLink,
     this.onAccepted,
     this.originConfirmed = false,
+    this.cryptoRepository,
   });
   final InvitationLink? initialLink;
   final ValueChanged<String>? onAccepted;
   final bool originConfirmed;
+  final InviteCryptoRepository Function(AccountCryptoV2Workflow)?
+  cryptoRepository;
 
   @override
   ConsumerState<InvitationWizard> createState() => _InvitationWizardState();
@@ -78,6 +81,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
   InvitationLink? _link;
   SharedInvitationPreview? _preview;
   String? _error, _notice;
+  Object? _lastError;
   bool _busy = true, _needsOtp = false, _joined = false;
   int _generation = 0;
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
@@ -156,7 +160,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
         _step = _InvitationStep.origin;
       }
     } catch (error) {
-      if (mounted) _error = sharingErrorMessage(context, error);
+      if (mounted) {
+        _lastError = error;
+        _error = sharingErrorMessage(context, error);
+      }
     } finally {
       if (mounted) {
         if (_superseded) {
@@ -211,8 +218,8 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
         );
         final workflow = await repository.connectedCryptoAccount();
         if (await workflow.localPhase() == 'ready') {
-          final scope = await InviteCryptoRepository(
-            SessionCryptoAccess(account: workflow),
+          final scope = await _cryptoInvites(
+            workflow,
           ).resumeAccepted(saved!.invitationId!);
           if (scope != null) {
             await _openEncryptedTarget(scope, link);
@@ -240,11 +247,17 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     setState(() {
       _busy = true;
       _error = null;
+      _lastError = null;
     });
     try {
       await action();
     } catch (error) {
-      if (mounted) setState(() => _error = sharingErrorMessage(context, error));
+      if (mounted) {
+        setState(() {
+          _lastError = error;
+          _error = sharingErrorMessage(context, error);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -380,6 +393,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     Navigator.of(context).pop();
   }
 
+  InviteCryptoRepository _cryptoInvites(AccountCryptoV2Workflow workflow) =>
+      widget.cryptoRepository?.call(workflow) ??
+      InviteCryptoRepository(SessionCryptoAccess(account: workflow));
+
   Future<void> _joinEncrypted() => _run(() async {
     final link = _link!;
     final identity = _identity;
@@ -405,9 +422,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       final phase = await workflow.localPhase();
       if (!mounted || !current() || phase != 'ready') return;
     }
-    final invites = InviteCryptoRepository(
-      SessionCryptoAccess(account: workflow),
-    );
+    final invites = _cryptoInvites(workflow);
     final saved = await ref.read(pendingInvitationStoreProvider).read();
     if (saved?.token == link.token &&
         saved?.accountPartition == workflow.store.partition &&
@@ -417,28 +432,16 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
         await _openEncryptedTarget(target, link);
         return;
       }
+      if (!current()) return;
+      setState(() {
+        _cryptoPending = true;
+        _notice = context.l10n.cryptoInvitationPendingKeys;
+      });
+      return;
     }
     final invite = await invites.inspect(token: link.token);
     if (!current()) return;
-    var trusted = false;
-    try {
-      await invites.access.identities.requireVerified(
-        invite.creator.accountId,
-        invites.access.identities.fingerprint(invite.creator),
-      );
-      trusted = true;
-    } catch (_) {
-      /* Explicit comparison below. */
-    }
-    if (!mounted || !current()) return;
-    if (!trusted) {
-      final card = await showCryptoPublicCardDialog(
-        context,
-        explanation: context.l10n.cryptoInvitationVerifyCreator,
-      );
-      if (card == null || !current()) return;
-      await invites.compareCreator(invite, card);
-    }
+    await invites.trustCreatorFromDirectory(invite);
     if (!current()) return;
     await invites.accept(invite, actionId: invite.invitation['id']);
     if (!current()) return;
@@ -602,10 +605,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                       ),
                     ] else if (_step == _InvitationStep.origin) ...[
                       Text(l.inviteOpenWarning),
-                      const SizedBox(height: 16),
-                      Text(
-                        _link!.serverUrl,
+                      HostingDisclosureForServer(
                         key: const ValueKey('invitation-flow-origin'),
+                        serverUrl: _link!.serverUrl,
+                        compact: true,
                       ),
                       const SizedBox(height: 24),
                       FilledButton(
@@ -634,9 +637,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                         ],
                       ],
                       const SizedBox(height: 16),
-                      Text(
-                        _link!.serverUrl,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      HostingDisclosureForServer(
+                        serverUrl: _link!.serverUrl,
+                        compact: true,
                       ),
                       const SizedBox(height: 24),
                       if (!auth) ...[
@@ -645,14 +648,15 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                           const SizedBox(height: 12),
                           FilledButton(
                             key: const ValueKey('invitation-flow-join'),
-                            onPressed: _busy
+                            onPressed:
+                                _busy || isSharingIdentityChanged(_lastError)
                                 ? null
                                 : _joined
                                 ? () => _run(() => _finishJoined(_preview!))
                                 : _join,
                             child: Text(
                               _cryptoPending
-                                  ? l.cryptoMigrationRetry
+                                  ? l.cryptoSharingCheckAccess
                                   : _joined
                                   ? l.invitationFlowOpenSpace
                                   : _preview?.kind == SharedScopeKind.project
@@ -812,7 +816,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                       ),
                       if (_link != null && !auth)
                         TextButton(
-                          onPressed: _busy || _joined
+                          onPressed:
+                              _busy ||
+                                  _joined ||
+                                  isSharingIdentityChanged(_lastError)
                               ? null
                               : () => _run(_loadPreview),
                           child: Text(l.organizerRetry),

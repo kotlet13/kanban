@@ -1,3 +1,4 @@
+import 'hosting_disclosure.dart';
 import '../password_visibility.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -402,6 +403,15 @@ class _SharingAuthPanelState extends ConsumerState<SharingAuthPanel> {
                         l.serverURL,
                         readOnly: _preview != null,
                         keyboardType: TextInputType.url,
+                      ),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _server,
+                        builder: (context, value, _) =>
+                            HostingDisclosureForServer(
+                              serverUrl: value.text,
+                              allowLocalHttp: _allowLocalHttp,
+                              compact: true,
+                            ),
                       ),
                       if (_preview == null && _isLocalHttp)
                         CheckboxListTile(

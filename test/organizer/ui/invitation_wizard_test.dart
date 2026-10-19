@@ -14,6 +14,12 @@ import 'package:kanban/organizer/platform/invitation_links/invitation_link.dart'
 import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
 import 'package:kanban/organizer/presentation/shared/invitation_wizard.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
+import 'package:kanban/organizer/data/collaboration_repository.dart';
+import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
+import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_identity_store.dart';
+import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
+import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
 
 import 'sharing_ui_fixture.dart';
 import 'local_spaces_navigation_test.dart' show loadCaptureFonts;
@@ -24,10 +30,10 @@ final _link = InvitationLink(
 );
 
 class _Controller extends SharingUiController {
-  _Controller({super.initial, this.viewer = false}) {
+  _Controller({super.initial, this.viewer = false, this.encrypted = false}) {
     emailPreview = true;
   }
-  final bool viewer;
+  final bool viewer, encrypted;
   int previews = 0;
   Completer<void>? previewGate, acceptGate;
   int selectFailures = 0;
@@ -66,7 +72,7 @@ class _Controller extends SharingUiController {
       role: viewer ? SharedRole.viewer : SharedRole.member,
       expiresAt: p.expiresAt,
       registrationAllowed: p.registrationAllowed,
-      contractVersion: 3,
+      contractVersion: encrypted ? 4 : 3,
       accessScope: 'space',
       requiresExplicitAcceptance: true,
     );
@@ -86,6 +92,82 @@ class _Controller extends SharingUiController {
     password: password,
     otp: otp,
   );
+}
+
+class _CryptoStore implements CryptoIdentityStore {
+  @override
+  String get partition => sharingSession().partition;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CryptoAccount implements AccountCryptoV2Workflow {
+  @override
+  final CryptoIdentityStore store = _CryptoStore();
+  @override
+  Future<String> localPhase() async => 'ready';
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CryptoCollaboration implements CollaborationRepository {
+  _CryptoCollaboration(this.account);
+  final AccountCryptoV2Workflow account;
+  @override
+  Future<AccountCryptoV2Workflow> connectedCryptoAccount() async => account;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CryptoDirectory implements VerifiedAccountDirectory {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CryptoInvites extends InviteCryptoRepository {
+  _CryptoInvites(_CryptoAccount account)
+    : super(SessionCryptoAccess(account: account));
+  int trusts = 0, accepts = 0, resumes = 0;
+  Object? trustError;
+  Completer<void>? trustGate;
+  @override
+  Future<String?> resumeAccepted(String invitationId) async {
+    resumes++;
+    return null;
+  }
+
+  @override
+  Future<VerifiedCryptoInvitation> inspect({
+    String? token,
+    String? invitationId,
+  }) async => VerifiedCryptoInvitation(
+    {
+      'invitation': {
+        'id': 'saved-invite',
+        'scopeId': sharingScopeId,
+        'role': 'viewer',
+      },
+    },
+    _CryptoDirectory(),
+    [],
+  );
+  @override
+  Future<void> trustCreatorFromDirectory(
+    VerifiedCryptoInvitation invite,
+  ) async {
+    trusts++;
+    await trustGate?.future;
+    if (trustError != null) throw trustError!;
+  }
+
+  @override
+  Future<Map<String, dynamic>> accept(
+    VerifiedCryptoInvitation invite, {
+    required String actionId,
+  }) async {
+    accepts++;
+    return {};
+  }
 }
 
 GlobalKey? _captureKey;
@@ -112,6 +194,7 @@ Future<void> _pump(
   double width = 390,
   String locale = 'sl',
   MemoryPendingInvitationStore? store,
+  _CryptoInvites? crypto,
 }) async {
   await loadCaptureFonts(tester);
   if (Platform.environment['JIVIE_UI_CAPTURE'] == '1') {
@@ -134,6 +217,10 @@ Future<void> _pump(
     ProviderScope(
       overrides: [
         collaborationProvider.overrideWith(() => controller),
+        if (crypto != null)
+          collaborationRepositoryProvider.overrideWith(
+            (ref) async => _CryptoCollaboration(crypto.access.account),
+          ),
         pendingInvitationStoreProvider.overrideWithValue(
           store ?? MemoryPendingInvitationStore(),
         ),
@@ -157,8 +244,16 @@ Future<void> _pump(
           home: Consumer(
             builder: (context, ref, _) => Scaffold(
               body: TextButton(
-                onPressed: () =>
-                    showInvitationWizard(context, ref, initialLink: link),
+                onPressed: () => crypto == null
+                    ? showInvitationWizard(context, ref, initialLink: link)
+                    : Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => InvitationWizard(
+                            initialLink: link,
+                            cryptoRepository: (_) => crypto,
+                          ),
+                        ),
+                      ),
                 child: const Text('open'),
               ),
             ),
@@ -187,6 +282,92 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  testWidgets(
+    'encrypted wizard joins without card and resumes without repeating acceptance',
+    (tester) async {
+      final controller = _Controller(encrypted: true, viewer: true);
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = MemoryPendingInvitationStore()
+      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      expect(crypto.accepts, 0);
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.trusts, 1);
+      expect(crypto.accepts, 1);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(store.value?.invitationId, 'saved-invite');
+      expect(store.value?.accountPartition, sharingSession().partition);
+      expect(find.text('Preveri dostop'), findsOneWidget);
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.resumes, 1);
+      expect(crypto.accepts, 1);
+      expect(store.value?.token, _link.token);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('encrypted wizard blocks changed root without generic retry', (
+    tester,
+  ) async {
+    final controller = _Controller(encrypted: true, viewer: true);
+    final crypto = _CryptoInvites(_CryptoAccount())
+      ..trustError = const CryptoDirectoryException('directory_root_changed');
+    final store = MemoryPendingInvitationStore()
+      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+    await _pump(tester, controller, link: _link, crypto: crypto, store: store);
+    await _tap(tester, 'invitation-flow-join');
+    expect(
+      find.textContaining('Identiteta računa se je spremenila'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('invitation-flow-join')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(crypto.accepts, 0);
+    expect(store.value?.token, _link.token);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'encrypted wizard ignores old identity completion after account switch',
+    (tester) async {
+      final controller = _Controller(encrypted: true, viewer: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..trustGate = Completer<void>();
+      final store = MemoryPendingInvitationStore()
+      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      final button = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('invitation-flow-join')),
+      );
+      final joining = (button.onPressed as dynamic)() as Future<void>;
+      await tester.pump();
+      controller.switchAccount();
+      crypto.trustGate!.complete();
+      await joining;
+      await tester.pumpAndSettle();
+      expect(crypto.accepts, 0);
+      expect(store.value?.invitationId, isNull);
+      expect(controller.state.requireValue.selectedSpaceId, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final width in [320.0, 390.0, 1280.0]) {
     for (final locale in ['sl', 'en']) {
       testWidgets(

@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/l10n.dart';
 
 import '../../data/e2ee/crypto_business_router.dart';
 import '../../data/e2ee/crypto_business_leave.dart';
 import '../../data/e2ee/crypto_finance_account_choices.dart';
+import '../../data/e2ee/crypto_inherited_invitation_grants.dart';
 import '../../data/e2ee/crypto_sync_repository.dart'
     show CryptoAuthorityPending;
 import '../../data/e2ee/crypto_pending_approvals.dart';
@@ -14,7 +16,7 @@ import '../../data/e2ee/scope_crypto_manager.dart';
 import '../../data/e2ee/account_directory_v2.dart'
     show VerifiedAccountDirectory;
 import '../../state/collaboration_provider.dart';
-import 'account_devices_page.dart';
+import '../shared/sharing_errors.dart' show sharingErrorMessage;
 import 'crypto_record_preview.dart';
 import 'scope_recovery_page.dart';
 
@@ -34,6 +36,7 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
   CryptoPendingApprovals? _service;
   CryptoPendingApprovalList? _list;
   bool _busy = false, _failed = false, _waiting = false;
+  Object? _failure;
 
   @override
   void initState() {
@@ -45,6 +48,7 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
     setState(() {
       _busy = true;
       _failed = false;
+      _failure = null;
     });
     try {
       final repository = await ref.read(collaborationRepositoryProvider.future);
@@ -60,8 +64,13 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
           _list = list;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _failure = error;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -71,7 +80,6 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
     String scopeId,
     String headHash,
     String accountId,
-    String displayName,
   ) async {
     final access = _service!.context.access;
     if (accountId == access.account.directory.accountId) return;
@@ -85,37 +93,15 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
       accountId: accountId,
       directoryHeadHash: status['headHash'],
       online: true,
-      allowUnverifiedContact: true,
     );
-    await _verifyIdentity(scopeId, directory, displayName);
+    await _verifyIdentity(directory);
   }
 
-  Future<void> _verifyIdentity(
-    String scopeId,
-    VerifiedAccountDirectory directory,
-    String displayName,
-  ) async {
+  Future<void> _verifyIdentity(VerifiedAccountDirectory directory) async {
     final access = _service!.context.access;
-    try {
-      await access.identities.requireVerified(
-        directory.accountId,
-        access.identities.fingerprint(directory),
-      );
-      return;
-    } catch (_) {
-      /* Independent comparison is required for an unknown identity. */
-    }
-    if (!mounted) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ContactIdentityVerificationPage(
-          access: access,
-          scopeId: scopeId,
-          accountId: directory.accountId,
-          displayName: displayName,
-        ),
-      ),
-    );
+    // The normal scoped directory route has replayed the signed history and
+    // pinned first-use hosting trust. Manual comparison remains optional in
+    // member settings; a changed existing root propagates as a typed failure.
     await access.identities.requireVerified(
       directory.accountId,
       access.identities.fingerprint(directory),
@@ -127,10 +113,15 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
     setState(() {
       _busy = true;
       _failed = false;
+      _failure = null;
       _waiting = false;
     });
     try {
-      if (item.choiceReview) {
+      if (item.inheritedInvitation) {
+        await CryptoInheritedInvitationGrants(
+          _service!.context.access,
+        ).finish(item.scopeId, item.value['invitationId'] as String);
+      } else if (item.choiceReview) {
         await _approveChoices(item);
       } else if (item.choiceFinish) {
         await CryptoFinanceAccountChoices(
@@ -213,18 +204,9 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
           accountId: item.value['parentAccountId'],
           directoryHeadHash: item.value['parentDirectoryHeadHash'],
           online: true,
-          allowUnverifiedContact: true,
         );
         if (!mounted) return;
-        await _verifyIdentity(
-          item.scopeId,
-          directory,
-          _text(
-            context,
-            'Upravitelj nadrejenega prostora',
-            'Parent space manager',
-          ),
-        );
+        await _verifyIdentity(directory);
         if (!mounted) return;
         final accepted = await showDialog<bool>(
           context: context,
@@ -281,12 +263,6 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
                 item.scopeId,
                 review.source.headHash,
                 id,
-                names[id] ??
-                    _text(
-                      context,
-                      'Novi član projekta',
-                      'Proposed project member',
-                    ),
               );
             }
             if (!mounted) return false;
@@ -333,10 +309,16 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
         setState(() {
           _waiting = error.reason == 'crypto_access_approval_required';
           _failed = !_waiting;
+          _failure = _waiting ? null : error;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _failure = error;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -353,7 +335,6 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
       item.scopeId,
       body['targetHeadHash'] as String,
       body['accountId'] as String,
-      _text(context, 'Izdajatelj finančnih izbir', 'Account selection issuer'),
     );
     final service = CryptoFinanceAccountChoices(_service!.context);
     final review = await service.reviewOffer(item.scopeId, proof);
@@ -572,11 +553,13 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              _text(
-                context,
-                'Nekaterih zahtev še ni mogoče preveriti. Obstoječi podatki in pravice so ohranjeni. Preverite povezavo in poskusite znova.',
-                'Some requests cannot be verified yet. Existing data and access are preserved. Check the connection and retry.',
-              ),
+              _failed && _failure != null
+                  ? sharingErrorMessage(context, _failure!)
+                  : _text(
+                      context,
+                      'Nekaterih zahtev še ni mogoče preveriti. Obstoječi podatki in pravice so ohranjeni. Preverite povezavo in poskusite znova.',
+                      'Some requests cannot be verified yet. Existing data and access are preserved. Check the connection and retry.',
+                    ),
             ),
           ),
         if (_list != null && _list!.items.isEmpty && _list!.unavailable == 0)
@@ -595,7 +578,9 @@ class _CryptoApprovalsPageState extends ConsumerState<CryptoApprovalsPage> {
             child: ListTile(
               title: Text(item.name),
               subtitle: Text(
-                item.choiceReview
+                item.inheritedInvitation
+                    ? context.l10n.cryptoSharingFinishInheritedProjects
+                    : item.choiceReview
                     ? _text(
                         context,
                         'Pregled celotnega nabora računov',

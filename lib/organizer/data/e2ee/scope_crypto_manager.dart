@@ -14,6 +14,7 @@ import 'scope_crypto_codec.dart';
 import 'scope_key_contributions.dart';
 import 'crypto_lifecycle_evidence.dart';
 import 'session_crypto_access.dart';
+import 'crypto_inherited_invitation_evidence.dart';
 
 class ScopeRotationReview {
   ScopeRotationReview(Map<String, dynamic> value)
@@ -854,10 +855,19 @@ class ScopeCryptoManager {
     String scopeId, {
     Uint8List? recoveryFile,
     bool financeOnly = false,
+    VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
   }) => _exclusive(scopeId, () async {
     final account = access.account, crypto = account.directory.reducer.crypto;
     await account.directory.requireFresh();
     final source = await access.recoveryCandidateHead(scopeId);
+    await inheritedInvitationAdmission?.revalidate(
+      access: access,
+      source: source,
+    );
+    final transportAccessRevision = inheritedInvitationAdmission == null
+        ? source.accessRevision
+        : inheritedInvitationAdmission.liveAccess['expectedAccessRevision']
+              as int;
     if ((!financeOnly &&
             source.member(account.directory.accountId)['manageKeys'] != true) ||
         (financeOnly &&
@@ -891,10 +901,14 @@ class ScopeCryptoManager {
       }
       var cursor = 0, sequence = -1;
       while (true) {
+        await inheritedInvitationAdmission?.revalidate(
+          access: access,
+          source: source,
+        );
         final page = await account.directory.call('crypto2.records.pull', {
           'scopeId': scopeId,
           'domain': domain,
-          'accessRevision': source.accessRevision,
+          'accessRevision': transportAccessRevision,
           'cursor': cursor,
           'limit': 20,
         });
@@ -903,7 +917,7 @@ class ScopeCryptoManager {
             page['hasMore'] is! bool ||
             page['cursor'] is! int ||
             page['cursor'] < cursor ||
-            page['accessRevision'] != source.accessRevision ||
+            page['accessRevision'] != transportAccessRevision ||
             page['epoch'] != source.epoch ||
             sequence >= 0 && page['scopeSequence'] != sequence) {
           throw const CryptoAuthorityPending('scope_review_changed');
@@ -1119,6 +1133,7 @@ class ScopeCryptoManager {
     Map<String, dynamic>? ownerAcceptanceProof,
     Map<String, dynamic>? financePolicyIntentProof,
     Map<String, dynamic>? accessIntentProof,
+    VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
     Future<Map<String, dynamic>> Function(
       List<Map<String, dynamic>> members,
       VerifiedAccountDirectory author,
@@ -1148,12 +1163,26 @@ class ScopeCryptoManager {
     if ((members ?? source.members).length > 100) {
       throw const FormatException('scope_members_limit');
     }
+    if (inheritedInvitationAdmission != null) {
+      if (membershipIntents.isNotEmpty ||
+          accessIntentProof != null ||
+          accessConsentBuilder != null ||
+          joiningDirectory != null) {
+        throw const FormatException('scope_inherited_admission_ambiguous');
+      }
+      await inheritedInvitationAdmission.revalidate(
+        access: access,
+        source: source,
+        proposedMembers: members ?? source.members,
+      );
+    }
     final normalized = <Map<String, dynamic>>[];
     for (final member in members ?? source.members) {
       final isJoining = !source.members.any(
         (m) => m['accountId'] == member['accountId'],
       );
       if (isJoining &&
+          inheritedInvitationAdmission == null &&
           accessIntentProof == null &&
           accessConsentBuilder == null &&
           (joiningDirectory == null ||
@@ -1162,7 +1191,12 @@ class ScopeCryptoManager {
               ))) {
         throw const CryptoAuthorityPending('invitation_acceptance_required');
       }
-      final directory = isJoining && joiningDirectory != null
+      final directory =
+          inheritedInvitationAdmission != null &&
+              member['accountId'] ==
+                  inheritedInvitationAdmission.recipientAccountId
+          ? inheritedInvitationAdmission.recipientDirectory
+          : isJoining && joiningDirectory != null
           ? await joiningDirectory(member['accountId'])
           : await access.currentMemberDirectory(
               review.scopeId,
@@ -1281,6 +1315,7 @@ class ScopeCryptoManager {
         source,
         originalAuthor,
         ownerAcceptanceProof,
+        inheritedInvitationAdmission: inheritedInvitationAdmission,
       );
     }
     final commitments = <String, dynamic>{'content': null, 'finance': null},
@@ -1431,6 +1466,7 @@ class ScopeCryptoManager {
         source,
         author,
         ownerAcceptanceProof,
+        inheritedInvitationAdmission: inheritedInvitationAdmission,
       );
     } finally {
       for (final key in rawKeys.values) {
@@ -1445,9 +1481,19 @@ class ScopeCryptoManager {
     String headHash,
     VerifiedScopeHead source,
     VerifiedAccountDirectory author,
-    Map<String, dynamic>? ownerAcceptanceProof,
-  ) async {
+    Map<String, dynamic>? ownerAcceptanceProof, {
+    VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
+  }) async {
     final account = access.account;
+    Future<void> validateInherited() async {
+      await inheritedInvitationAdmission?.revalidate(
+        access: access,
+        source: source,
+        proposedMembers: (body['members'] as List).cast<Map<String, dynamic>>(),
+      );
+    }
+
+    await validateInherited();
     if ((body['members'] as List).any((m) => m['financeRole'] != 'none') &&
         body['keyCommitments']['finance'] == null) {
       final resolved = await _obtainFinanceContribution(
@@ -1501,6 +1547,7 @@ class ScopeCryptoManager {
         base64Encode(publication)) {
       throw const FormatException('scope_review_publication_changed');
     }
+    await validateInherited();
     await _mutate('crypto2.scope.headPut', review.scopeId, body);
     final proposalWire = await account.directory.call('crypto2.scope.headGet', {
       'scopeId': review.scopeId,
@@ -1553,6 +1600,7 @@ class ScopeCryptoManager {
               source.member(author.accountId)['financeRole'] == 'none') {
         continue;
       }
+      await validateInherited();
       await _mutate('crypto2.scope.closeDomain', review.scopeId, {
         'scopeId': review.scopeId,
         'candidateHeadHash': headHash,
@@ -1573,6 +1621,9 @@ class ScopeCryptoManager {
       author: author,
       previous: source,
       ownerAcceptanceProof: ownerAcceptanceProof,
+      beforeDisclosure: inheritedInvitationAdmission == null
+          ? null
+          : validateInherited,
     );
     if (body['accessIntentProof'] != null) return active;
     if (active.members.any((m) => m['accountId'] == author.accountId)) {
@@ -2342,8 +2393,10 @@ class ScopeCryptoManager {
     String? migrationId,
     String? captureId,
     Map<String, dynamic>? parentTopologyBatch,
+    Future<void> Function()? beforeDisclosure,
   }) async {
     final account = access.account, crypto = account.directory.reducer.crypto;
+    await beforeDisclosure?.call();
     final scopeId = pending.scopeId, headHash = pending.headHash;
     final actor = pending.members
         .where((m) => m['accountId'] == author.accountId)
@@ -2433,6 +2486,7 @@ class ScopeCryptoManager {
             var generation = 0;
             final proofHashes = <String>[];
             for (var offset = 0; offset < recipients.length; offset += 32) {
+              await beforeDisclosure?.call();
               final chunk = recipients
                   .skip(offset)
                   .take(32)
@@ -2461,6 +2515,7 @@ class ScopeCryptoManager {
                     },
                   )
                   .toList();
+              await beforeDisclosure?.call();
               final ack = await _mutate(
                 'crypto2.grants.put',
                 scopeId,
@@ -2845,6 +2900,7 @@ class ScopeCryptoManager {
         'parentTopologyBatch': parentTopologyBatch,
       };
     }
+    await beforeDisclosure?.call();
     final activationAck = await _mutate(
       'crypto2.scope.activate',
       scopeId,

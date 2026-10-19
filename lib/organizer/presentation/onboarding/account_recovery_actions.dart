@@ -1,3 +1,4 @@
+import '../shared/hosting_disclosure.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -44,6 +45,11 @@ Future<bool> showAccountEnrollment(
     context,
     title: l.accountFirstTitle,
     description: l.accountFirstDescription,
+    detailsBuilder: (values) => HostingDisclosureForServer(
+      serverUrl: values['server'] ?? '',
+      allowLocalHttp: allowLocalHttp,
+      compact: true,
+    ),
     fields: [
       SharingField(
         id: 'server',

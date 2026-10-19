@@ -5073,11 +5073,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Invitation accepted. The owner still needs to confirm your keys. The space opens after confirmation; you can keep working locally.';
+      'Invitation accepted. The owner still needs to approve your access. The space opens after approval; you can keep working locally.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
-      'Before joining, verify the person who invited you. Obtain their public card directly through a known channel, separately from the invitation link.';
+      'Review the invitation, then join when you are ready. The app checks the account’s protection automatically.';
 
   @override
   String get cryptoUnavailableSpace => 'Unavailable space';
@@ -5100,10 +5100,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoInvitationGrantExplanation =>
-      'The recipient accepted the invitation. After comparing identities, confirm access to this space’s existing data and future changes. Financial data requires separate financial permission.';
+      'The recipient accepted the invitation. Confirm the access below to share this space’s existing content and future changes.';
 
   @override
-  String get cryptoInvitationGrantConfirm => 'Confirm access and prepare keys';
+  String get cryptoInvitationGrantConfirm => 'Confirm access';
 
   @override
   String get accountRecoveryV2Pending =>
@@ -5228,4 +5228,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountRecoveryUseRecovered => 'Open recovered spaces';
+
+  @override
+  String get hostingDisclosureTitle => 'Hosting and trust';
+
+  @override
+  String get hostingOperatorNotProvided =>
+      'The server has not provided an operator name.';
+
+  @override
+  String hostingOperatorSupplied(String name) {
+    return 'Operator (supplied by this server): $name';
+  }
+
+  @override
+  String hostingContactSupplied(String contact) {
+    return 'Contact (supplied by this server): $contact';
+  }
+
+  @override
+  String get hostingTrustExplanation =>
+      'The operator manages accounts and connects users. By continuing, you trust it to identify users correctly. With E2EE, content is unlocked on devices; the app alerts you to an unexpected identity change.';
+
+  @override
+  String get cryptoSharingIdentityChanged =>
+      'The account identity changed or does not match the saved trust. Access is blocked for protection. Verify the person and hosting through a known channel before continuing.';
+
+  @override
+  String get cryptoSharingCheckAccess => 'Check access';
+
+  @override
+  String get cryptoSharingAccessLabel => 'Access';
+
+  @override
+  String get cryptoSharingFinanceWrite => 'Finances: view and edit';
+
+  @override
+  String get cryptoSharingFinanceRead => 'Finances: view only';
+
+  @override
+  String get cryptoSharingFinanceNone => 'No access to finances';
+
+  @override
+  String get cryptoSharingManageAccess => 'Can manage member access.';
+
+  @override
+  String get cryptoSharingExistingContent => 'Existing content included';
+
+  @override
+  String get cryptoSharingContent => 'Content';
+
+  @override
+  String get hostingOperatorUnavailable =>
+      'Operator information is unavailable.';
+
+  @override
+  String get cryptoSharingFinishInheritedProjects => 'Finish project access';
+
+  @override
+  String get cryptoSharingProjectsPending =>
+      'Access to the space is confirmed. Project access is still being prepared. Continue in Pending approvals.';
+
+  @override
+  String get cryptoSharingAccessChanged =>
+      'Access to the space or projects changed. Review the permissions again before continuing.';
 }
