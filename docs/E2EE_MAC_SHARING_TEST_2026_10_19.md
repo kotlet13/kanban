@@ -2,10 +2,15 @@
 
 Uporabnik je odobril nadaljevanje odprtih funkcionalnih preizkusov na dveh
 ločenih Mac namestitvah. Osnova je `36139e8` (poenostavitev deljenja).
-Preizkus je delno izveden in trenutno čaka ročni odklep Maca. Potrjeni so
-izolacija, začetna nastavitev A/B, isti A prostor/projekt in popravljena
-mirovalna sinhronizacija. Opravilo, povabilo, prenos med računoma, offline
-nadaljevanje, neposredni projekt in odvzem dostopa še niso potrjeni.
+Preizkus se po uporabnikovem odklepu Maca nadaljuje. Potrjeni so
+izolacija, začetna nastavitev A/B, isti A prostor/projekt, popravljena
+mirovalna sinhronizacija, eno A opravilo in eno povabilo B. Registracija B,
+FILE, prvi sprejem in popravljeni prikaz čakanja so uspešni. Prva odobritev
+A je aktivirala krovni prostor, ob projektu pa zadela omejitev zahtevkov;
+r4 popravek je uspešno nadaljeval isti shranjeni projekt. B je v dejanski
+aplikaciji prebral eno prvotno opravilo z opombo A-V1. Dvosmerno urejanje,
+offline nadaljevanje, neposredni projekt in odvzem
+dostopa še niso potrjeni.
 Nadaljevanje je na istih podatkih; ne ponavljamo registracije A ali FILE
 čarovnikov. Produkcija, stare namestitve in mobilni checkpoint ostajajo isti.
 
@@ -70,8 +75,8 @@ beleži fazo/kodo napake/čas, ne gesel, žetonov, ključev ali teles zahtevkov.
 | Korak | Kaj potrjujemo | Stanje |
 | --- | --- | --- |
 | 0 | Podpis, lastna shramba, izolirano gostovanje, pripravljeni dnevniki | Oba nameščena; oba lokalna čarovnika uspela |
-| 1 | A račun, prostor/projekt/opravilo; B zaseben lokalni kontrolni vnos in poznejša registracija skozi povabilo | A račun in isti projekt pripravljena, B lokalni vnos ohranjen; opravilo in B račun še čakata |
-| 2 | Eno povabilo brez kartic, vidno čakanje, lastnikova odobritev in odklep že obstoječega projekta | Čaka |
+| 1 | A račun, prostor/projekt/opravilo; B zaseben lokalni kontrolni vnos in poznejša registracija skozi povabilo | PASS; B e-pošta/računski FILE pripravljena, lokalni vnos ohranjen pred sprejemom |
+| 2 | Eno povabilo brez kartic, vidno čakanje, lastnikova odobritev in odklep že obstoječega projekta | PASS po r3/r4 popravkih; B prebere isto opravilo/A-V1; visok strošek in429 ostajata omejitev |
 | 3 | Sprememba istega opravila v obe smeri, brez podvojitve ali objave B lokalnega vnosa | Čaka |
 | 4 | Kratka prekinitev povezave in ponovni zagon, nato nadaljevanje istega čakajočega dela | Čaka |
 | 5 | B dobi samo projekt ločenega A prostora; nadrejeni prostor in sorodni projekt ostaneta nedostopna | Čaka |
@@ -294,6 +299,293 @@ Naslednji korak po odklepu: na istem A v `MAC-CHILD-1` ustvariti eno
 `MAC-SHARED-1` z opombo `A-V1`, nato eno povabilo B. B že ima samo lokalno
 `LOCAL-B-PRIVATE`; registracija B gre skozi to povabilo. Nadaljnji N2–N8
 koraki iz kontrolnega seznama ostajajo odprti.
+
+## Nadaljevanje po odklepu — isti r2 paketi
+
+Uporabnik je Mac odklenil. Ker je med večurnim čakanjem potekla omejitev
+7.200 sekund starih collectorjev, sta bili obe isti namestitvi normalno
+zaprti in znova zagnani s svežim zajemom: A PID36169 ob16:06:24 UTC,
+B PID36187 ob16:06:29 UTC. Brez gradnje, ponovne prijave ali začetnih FILE
+čarovnikov; jedro ustreza commitu `4478236`.
+
+A je samodejno pokazal »Protect connected data« z obema obstoječima prostoroma.
+Ozek pregled izvora razloži, da prejšnje potrdilo za prvotni prazni katalog
+ne ustreza pozneje razširjenemu seznamu prostorov. Dejansko prikazan »Done«
+in besedilo committed pomenita, da sta obsega že preverjena kot zaščitena;
+generično opozorilo »not ready« in pomožni gumbi so zavajajoč UI. En običajni
+Done je do16:08:30 vrnil normalen Pulse, isti prostor/projekt in zelen oblak.
+Ni bilo nove datoteke, inicializacije ali ročnega ponavljanja migracije.
+B po ponovnem zagonu dejansko še kaže `LOCAL-B-PRIVATE` v lokalnem Personal.
+Izvorne povezave in meja sklepanja so v
+`n1-r2-protection-startup-source-finding.md`; zasebne readiness vrstice niso
+bile prebrane. Ta izvorni UX problem v tem koraku ni popravljen.
+
+**N1 PASS:** en Save ob16:09:30.474 UTC je ustvaril `MAC-SHARED-1` v istem
+`MAC-CHILD-1`. Običajni ponovni prikaz urejevalnika potrdi opombo `A-V1`,
+eno opravilo in zelen oblak; nato Cancel brez drugega Save. Glavni agent je
+vizualno pregledal `n1-r2-shared-task-A-V1.png`. Bounded gateway zajem do
+16:09:58.743:358 HTTP/200, nič429/napak, en records.batch,14 receipt.get,
+pet checkpointov in nič novega scope/head/activation. To je strošek dejanskega
+vnosa s sinhronizacijo, ne ustaljeni140 idle strošek. Dokaz
+`server/n1-r2-task-save-metadata.json`.
+
+**N2 v teku:** en Send ob16:10:56.059 UTC ustvari eno Member povabilo B
+za krovni prostor; UI prej jasno pove dostop do sedanjih in prihodnjih
+projektov. Lokalna pošta je pridobljena natanko enkrat v zasebno0600 datoteko,
+brez izpisa povezave/žetona. Gateway zajem:15 HTTP/200, en invitations.create,
+nič429/napak (`server/n2-r2-parent-invitation-metadata.json`). B nadaljuje
+skozi to isto povabilo; sprejem in odklep še nista potrjena.
+
+### B registracija, FILE in dejanski sprejem — popravek nadaljevanja
+
+B je skozi isto prvotno povabilo odprl podpisan predogled z vidnim HTTPS
+gostovanjem/upravljavcem, brez kartic. Ena oddaja registracije ob16:15:08.012
+UTC uspe v e-poštni/FILE čarovnik; gateway potrdi en
+`auth.registerInvitation4`, brez429 ali napake. En vnos kode ob16:16:14.934
+potrdi e-pošto. Ena509B računska obnovitvena datoteka je shranjena in ponovno
+izbrana ob16:16:50.838; ključi pripravljeni, prazni katalog Done uspe.
+Običajni Back vrne isto avtenticirano povabilo z vlogo Member, pojasnilom
+lokalne zasebnosti in izrecnim Join. Lokalni vnos B ni objavljen.
+
+**Prvi sprejem je strežniško PASS, UI nadaljevanje FAIL:** en Join ob
+16:17:28.216 UTC pusti isti omogočen zaslon brez obvestila do16:18:28.385.
+Klik ni bil ponovljen. Bounded metadata potrdi natanko en invitations.accept
+HTTP200 ob16:17:28, brez429/HTTP napak. En omejeni `query_only` read-only zajem
+istega povabila/računa potrdi en accepted acceptance, istega B, shranjen
+receipt HTTP200 z `pendingKeys` in nič aktivnih B članstev. Dokaza
+`server/n2-r2-b-first-join-dispatch-diagnostic.json` in
+`server/n2-r2-b-first-join-readonly-state.json`. UI/safe log ne pokažeta nove
+napake; stari pre-FILE crypto_reconciliation_required ni vzrok tega zastoja.
+
+Izvorna diagnoza: HTTPS parser odstrani `/index.php` in dobi naslov brez
+zaključne poševnice, pending store pa hrani normaliziran naslov s poševnico.
+Po uspešnem sprejemu je wizard primerjal surova niza in tiho končal pred
+zapisom invitationId/prikazom čakanja. Ozek popravek v
+`lib/organizer/presentation/shared/invitation_wizard.dart` uporabi obstoječi
+normalizirani `_sameServer`, ohrani točen token/serverId/accountPartition
+ter ponovno preveri trenutno sejo po await. Pending read/check/write je v
+obstoječi skupni serializirani vrsti; obvestilo sledi uspešnemu trenutnemu
+zapisu. Noben protokol ali predaja ključev se ne spremeni.
+
+Sedem novih ciljnih widget kontrol PASS: dejanski HTTPS root link,
+normalizirana shramba, pending prikaz in ponovni resume; drugačen host/pot/
+token/server/partition in sprememba seje med await so zavrnjeni. Dve novi
+kontroli dejanskega ScopeCryptoManager PASS potrdita, da isto že potrjeno
+dejanje vrne ohranjen receipt pred send, brez transportnega klica; drugačen
+payload je zavrnjen brez klica. Analiza runtime+2testov:0error/0warning,
+pet obstoječih info. Neodvisni in glavni izvorni pregled PASS.
+Runtime SHA256 `e8d2ba6b5c9f84e2a3c1003b8e8a027898349462a283b11de78bfd5df5583b2e`.
+Native nadaljevanje mora posebej potrditi nič novega accept RPC.
+
+Pred r3 sta B ob16:21:37.627 in A ob16:21:45.878 normalno zaprta, exit0;
+seji/isti sprejem/FILE/podatki ohranjeni. Oba r3 izvora imata584 preverjenih
+vhodov in samo en runtime popravek čarovnika s staro varno QA diagnostiko.
+Vsi drugi runtime/native/TLS/SDK/locks vhodi so isti. Gradnja in native
+nadaljevanje sta potrjena spodaj; ni novega povabila.
+
+### r3: isto povabilo nadaljevano brez novega sprejema
+
+Oba podpisana r3 paketa sta nameščena čez isti lastni vsebnik in Keychain.
+Glavni pregled potrdi manifest, dejanski podpis/entitlements in omejitev na
+en runtime popravek; native izvršilni datoteki ostaneta bajtno isti r2,
+spremeni se AOT. Manifest A SHA256
+`6403a4ce6af319ca77fed1211585d90f67c8604d121962c32d44e4237b254469`,
+B `44eb1b1b7a413240c8168bfe43a1eb721c498896631ceee0302e3192454102d8`.
+Pregledana predaja `runtime-r3-approved-handoff.json` SHA256
+`dbbe807987a4fb1ecea815ed97e769ddd55da1f9ac5fc061be1555116d31dec4`.
+
+Po normalnem zagonu A40382/B40397 en nadaljevalni Join ob16:29:42.561UTC
+do16:29:47.534 pokaže »Invitation accepted. The owner still needs to
+approve…« in Check access. Glavni agent je pregledal dejanski posnetek
+`n2-r3-b-waiting-owner.png`. Vezani
+`server/n2-r3-confirmed-join-continuation-metadata.json` potrdi štiri HTTP200,
+nič novih `invitations.accept` RPC in nič429. To je nadaljevanje istega že
+potrjenega dejanja; ni novega sprejema ali povabila.
+
+### Prva odobritev: parent uspešen, child prekinjen in osnutek ne nadaljuje
+
+En A Confirm access ob16:31:11.143UTC ob16:31:15.928581 zajame `rate_limited`
+v fazah owner/sharing. `server/n3-r3-first-owner-grant-primary-metadata.json`
+v tem oknu zabeleži434 HTTP,433status200 in en429 pri `crypto2.scope.headGet`.
+Med njimi sta dva headPut, deset grants.put in ena aktivacija. To je visoki
+strošek prve odobritve; uspešno zmanjšanje mirovalne sinhronizacije samo po
+sebi ne dokazuje primerne zmogljivosti deljenja. Poznejši samodejni sync
+vrne `crypto_scope_head_changed`; to ni dokaz izgube ali poškodbe podatkov.
+
+En omejeni read-only zajem ob16:33:57 (`server/n3-r3-first-owner-grant-readonly-state.json`)
+potrdi isti invitation/acceptance CONSUMED, parent epoch2 ACTIVE z B in
+aktivnim članstvom B. Child ima še epoch1 ACTIVE brez B in epoch2 PENDING
+z B, brez aktivacije. Povabila in parent odobritve ne ponavljamo. Trajni
+`inherited:<invitationId>` journal je nastal pred parent aktivacijo in
+usmerja obstoječi »Finish project access«.
+
+Po naravnem izteku okna je en klik tega nadaljevanja ob16:36:26.216UTC
+ob16:36:26.943818 zajel `CryptoAuthorityPending` /
+`scope_rotation_reauthorization_required` v fazi approvals; UI pokaže
+splošno napako shranjevanja. Natančen native stack ni zajet (logger file=none).
+Dejanje ni ponovljeno. `server/n3-r3-child-finish-primary-metadata.json`
+potrdi nič write/mutation RPC in nič429; poznejši `records.pull`409 ob16:36:29
+nastane po primarni lokalni zavrnitvi in ni dokazan kot njen vzrok.
+Izvorni pregled poveže napako s primerjavo ohranjenega rotation osnutka in
+svežih podatkov o članih/pravicah. Dodaten omejeni primerjalnik potrdi, da
+sta napredovala directory head tako A kot B; korenska ključa, naprave,
+identity/recovery epoch, vloge, finančne pravice, manageKeys, access revision
+in kanonični access basis pa se ujemajo. Prvi basis primerjalnik ni
+kanoniziral vrstnega reda ključev in je označen kot inconclusive; ozek
+popravni zajem `server/n3-r3-child-basis-canonical-correction.json` potrdi
+ujemanje. Ti strežniški diagnostični podatki niso nadomestilo za odjemalčevo
+preverjanje podpisane verige. Popravek mora ohraniti prvotni osnutek, ključe
+in zahteve ter zavrniti dejanske spremembe identitete/naprav/pravic; ni
+slepega prepisovanja osnutka, nove parent odobritve ali novih ključev za obvoz.
+
+### r4 izvorni popravek in preizkus prekinitve
+
+Ozek popravek samo `scope_crypto_manager.dart` pri nadaljevanju podedovanega
+povabila dopušča napredovanje `directoryHeadHash`, če zgodovinski zapis
+ponovno preveri in je prednik sveže, v celoti preverjene podpisane verige.
+Vsi drugi podatki člana, root/identity/recovery epoch, seznam naprav,
+finance/access proof ter access revision/basis ostanejo nespremenjeni.
+Za obstoječega člana uporabi že potrjeni child head, za novega prejemnika
+preverjeni parent head; zato ne zahteva, da je osnutek že objavljen.
+Prvotni body/head, DEK, key ID in zahteve ostanejo isti. Sveže preverjanje
+pravic pred vsako predajo ključev in aktivacijo ostane; ni skupnega cachea,
+spremembe kvote ali spremembe successor/departure poti.
+
+Nov ločen sintetični HTTP preizkus je v enem teku potrdil isto delo skozi
+dve prekinitvi: pred headPut, nato med grants po objavi. Med vsakim
+nadaljevanjem sta napredovala imenika obeh računov. Končni prejemnik prek
+običajnega pull/read prebere točen prvotni naslov in opis, originalni
+body/head/DEK/key ID/commitment in request bytes so ohranjeni; ni drugega
+sprejema povabila ali druge parent aktivacije. PASS185s,1551 HTTP za **celoten
+fixture s pripravo in tremi fazami**, ne za eno odobritev. Stanje fixturea
+je ohranjeno; native strežnik ni uporabljen za sintetične mutacije.
+
+Štirinajst novih negativnih kontrol dejanskega manager guard PASS preveri
+zavrnitev spremenjene naprave/preklicanega device snapshot, identitete,
+recovery/root, vlog/financ/manageKeys, rostra, revision/basis/policy in
+nepovezanega ali spremenjenega zgodovinskega prefixa. To so sintetične
+negativne kontrole; native odvzem dostopa je še ločen odprt korak. Končna
+analiza treh datotek čista, format/diff check PASS. Pred prvim HTTP tekom
+sta popravljeni dve testni tipovni/podatkovni pomanjkljivosti; HTTP in vseh
+14 negativnih kontrol nato uspejo ob prvem teku, brez ponovitve stare matrike.
+Poznejši testni slogovni popravek ne spreminja vedenja in ni nov testni tek.
+
+Glavni in neodvisni pregled PASS. Runtime SHA256
+`f66149d2a2100866f748c83e761637cb9025a814da9c8c0c323e67b36a8e9272`;
+`n3-r4-source-freeze.json` SHA256
+`2aba8646af61cc0538d78eb675d0a9406d074a824f591f0cdea0527a177363ba`;
+`n3-r4-interrupted-resume-test-results.json` SHA256
+`ff6c639028361f70e3d7111b0187262c33a1793e2661472b799c316e43c40094`.
+Predaja za r4 združi isti r3 wizard in en novi manager popravek:
+`runtime-r4-approved-handoff.json` SHA256
+`fd5f814328f867e5796a50bf5458228f31a0793541acfc6e301c4fccc4e08068`.
+Native nadaljevanje istega pending projekta ostaja naslednji dokaz.
+
+Oba r4 paketa sta nato zgrajena po enkrat in nameščena čez isto lastno
+namestitev; predhodni r3 paketi so ohranjeni. Vsak ima584 vhodov in natanko
+en runtime delta proti r3 (manager); wizard, native izvršilni datoteki,
+SDK/locks/TLS ter identiteti/shrambi ostanejo isti. Glavni pregled dejanskih
+podpisov/entitlements/AOT/source plan PASS. Plan A SHA256
+`3aa135e44c994f1f9027a85b32c7b5f643c2f176c58f7ee1853c2b00baacca50`,
+B `032e50f7763aa5c1ad17d261eecb50ee3e852a2e61967869c68dafba76c79ed8`;
+artifact A `c290b2bfac1eab3bde0f88a5d809c996ab5e6fd760487545ba8a02d260b686c4`,
+B `ddb6a50c67e19d12125af54af025dac7817b6700ebdc094ed2d99def0b341b58`.
+
+A se prvi zažene ob16:57:46.105UTC, PID45426; B ostane zaprt do konca
+lastnikovega koraka. S tem ne trdimo, da je sočasni foreground strošek
+odpravljen. Startup prikazuje child pending ter splošno opozorilo o zaščiti.
+Glavni pregled dejanskega zaslona in handlerja potrdi, da »Continue locally«
+v tem stanju samo zapre stran; ne potrdi zaščite ali spremeni podatkov.
+Nadaljevanje gre po tej poti do istega »Finish project access«, brez novega
+FILE ali generične priprave drugega child osnutka.
+
+En klik nadaljevanja A ob16:58:44.479UTC do16:58:51.723 pokaže »No pending
+approvals«, obe prejšnji vrstici sta odstranjeni, brez napake. Glavni agent
+je pregledal dejanski `n3-r4-a-no-pending-approvals.png`. Vezani
+`server/n3-r4-saved-child-finish-success-metadata.json`:568 HTTP, vsi200,
+šest grants.put, ena activate, nič novega accept/headPut/closeDomain.
+To je uspešno native nadaljevanje istega child dela, ne še dokaz prikaza B.
+Strošek568 zahtevkov ostaja dejanska odprta omejitev.
+
+B je prvič zagnan ob16:59:09.417UTC. Startup pokaže oba scopea encrypted in
+omogočen Done, en Done ob16:59:27.687 pa prikaže splošno napako. Prvi varni
+oznaki reconciliation_required ob16:59:11 in sync rate_limited ob16:59:13
+sta pred Done in sami ne dokazujeta njegovega vzroka. To razreši en vezani
+`server/n3-r4-b-startup-done-primary-metadata.json`: startup267 zahtevkov,
+prvi429 pri directory.status; v Done oknu natanko en account.status429,
+nič drugih zahtevkov ali mutacij. Natančen iztek kvote iz tega loggerja ni
+dokazljiv (ne beleži RetryAfter). Ni nove FILE inicializacije ali napake
+kriptografskega preverjanja, dokazane s tem Done poskusom.
+
+Izvorni pregled pojasni, da unavailableReview pred zaščitenim completion
+korakom najprej zahteva svež account.status; wizard napako prikaže splošno.
+»Continue locally« zapre startup stran in vrne isto ohranjeno povabilo,
+trenutno z napako predogleda. Njegov navadni »Try again« kliče _loadPreview,
+ki ob točnem token/account/invitationId uporabi resumeAccepted, brez novega
+accept. Pred enim omejenim B nadaljevanjem je predvideno normalno zaprtje A,
+z ohranjenimi sejami in podatki. To izolira prejemnikov korak in ne pomeni rešitve
+sočasnega stroška obeh aplikacij. Dejanski B prikaz je potrjen spodaj.
+
+### N3 native branje PASS; N4 prva sprememba in odprta sinhronizacijska napaka
+
+A je normalno zaprt ob17:01:48.457UTC. En B Try again istega shranjenega
+povabila ob17:01:53.172 odpre navadni parent do17:02:04.435. Vezani
+`server/n3-r4-b-saved-invitation-resume-success-metadata.json`:182HTTP,
+vsi200, nič novega accept ali drugih mutacij. Ob17:02:26.184 je v dejanskem
+B viden MAC-CHILD-1, natanko eno MAC-SHARED-1 in v urejevalniku Notes A-V1.
+Glavni pregled `n3-r4-b-child-task-A-V1.png` potrdi prikaz. N3 odklep in
+branje obstoječega projekta/opravila sta PASS, brez kartic ali novih ključev.
+
+B spremeni opombo istega opravila v B-V2, en Save ob17:02:53.972 odpre
+prva pravila sodelovanja. En Accept ob17:03:04.909 vrne seznam z enim
+opravilom; ni drugega Save. Modal sinhronizacije ob17:03:32 kaže0pending/
+conflicting/blocked, nobene potrjene uspešne uskladitve in invalid_response.
+Prva dejanska varna sync oznaka FormatException/codeother je že ob16:59:52.570,
+pred B-V2, pozneje se ponovi. Izris sharing/invalid_response na tri sekunde
+sam ni nov transportni poskus.
+
+En vezani `server/n4-r4-b-single-edit-primary-metadata.json`: pri prvi
+napaki41HTTP vsi200, med njimi exports operacije in records.pull; v oknu
+Save/Accept365HTTP vsi200, natanko en records.batch ob17:03:05,12receiptGET,
+4checkpoint in eno moderation.acceptPolicy. Ni429 ali druge HTTP napake.
+To potrjuje eno oddajo zapisa, ne še točnega oddaljenega B-V2 ali uspešnega
+parserja; A ostane zaprt in Save/Sync se ne ponavljata.
+
+Vzrok trenutno ni znan. QA logger bere error.code/reason, FormatException
+pa ima message; zato vse take napake postanejo other. Release stack ne
+vsebuje pričakovanega package:file:line zapisa. Pripravlja se samo B QA
+diagnostika z natančnim končnim seznamom statičnih izvornih kod; ne sme
+izpisovati poljubnih message/source/stack vrednosti ali spremeniti poslovne
+kode. Ostali N4/N5/N6/N7 ostanejo odprti.
+
+### Trenutni checkpoint: r5 diagnostika pripravljena; potreben odklep Maca
+
+QA kandidat in zunanji zajem sta neodvisno ter glavno pregledana. Nov
+`_qaFormatCodes` vsebuje1559 natančnih statičnih FormatException literalov
+(2480 pojavitev/152 datotek), izvorne datoteke in seznam se ujemajo.
+Samo `error is FormatException` in exact membership dovolita izpis te kode;
+poljubna message/source/stack vrednost ne zapusti pomnilnika. Collector
+uporabi isti končni seznam in polno ujemanje vrstice, ohrani4096B/1000oznak/
+7200s omejitve zapisovanja ter zavrže surove vrstice. Šest helper privacy
+kontrol PASS; vseh1559 kod in14 negativnih primerov collectorja PASS.
+To ni nov poslovni test ali popravek vzroka FormatException.
+
+Kandidat SHA256 `6451cee9ef469f9b4b01fbad174b58d87a60041e71676a8f92f3736d77b8fef8`,
+collector `1c0bfb9980a70dee678584226372e1b65640287409332d765f24b7cb1ef7e946`.
+Ob17:09:53UTC je spremenjen samo QA helper v zunanjem source-b; vseh584
+vhodov preverjenih, poslovna koda/native/TLS/SDK/locks isti r4, A vir/paket
+nespremenjen. Plan B-r5 SHA256
+`33b55945e1c2e53e3f33c48b5ca600da7f2a71b7322e9aa661b2c27436dece04`.
+Root je dejanski delta pregledal. **R5 še ni zgrajen ali nameščen.**
+
+Mac se je ponovno zaklenil. CUA zahteva ročni odklep; uporabnik je o tem
+vprašan. A ostaja normalno zaprt, B r4 PID45559 je ohranjen na sync prikazu.
+Normalno zaprtje B ni bilo izvedeno; gradilno varovalo zahteva zaprti testni
+aplikaciji in se ne sprošča. Po odklepu: normalno zapri B, ena pregledana
+B-only r5 gradnja, pregled podpisa/paketa, namestitev čez isti vsebnik in
+en zagon z novim varnim zajemom. Počakaj na **samodejni** sync za dejansko
+kodo napake; ne ponavljaj Save, Sync now, prijave, FILE, Join ali odobritve.
+Ohranjen B-V2 je že enkrat poslan v batch200, pri A pa še ni preverjen.
 
 ## Kaj ni del tega teka
 

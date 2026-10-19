@@ -1177,6 +1177,7 @@ class ScopeCryptoManager {
       );
     }
     final normalized = <Map<String, dynamic>>[];
+    final memberDirectories = <String, VerifiedAccountDirectory>{};
     for (final member in members ?? source.members) {
       final isJoining = !source.members.any(
         (m) => m['accountId'] == member['accountId'],
@@ -1206,6 +1207,7 @@ class ScopeCryptoManager {
       if (directory.accountId != author.accountId) {
         await access.requireExistingScopeMemberIdentity(source, directory);
       }
+      memberDirectories[directory.accountId] = directory;
       normalized.add({
         ...member,
         'rootSigningKeyBase64': directory.snapshot['rootSigningKeyBase64'],
@@ -1289,8 +1291,19 @@ class ScopeCryptoManager {
               )
               as Map;
       final body = Map<String, dynamic>.from(draft['body'] as Map);
-      if (base64Encode(CryptoJson.encode(body['members'])) !=
-              base64Encode(CryptoJson.encode(normalized)) ||
+      var sameMembers =
+          base64Encode(CryptoJson.encode(body['members'])) ==
+          base64Encode(CryptoJson.encode(normalized));
+      if (!sameMembers && inheritedInvitationAdmission != null) {
+        sameMembers = await _sameInheritedDraftMembers(
+          source: source,
+          admission: inheritedInvitationAdmission,
+          recorded: (body['members'] as List).cast<Map<String, dynamic>>(),
+          normalized: normalized,
+          directories: memberDirectories,
+        );
+      }
+      if (!sameMembers ||
           base64Encode(CryptoJson.encode(body['financePolicyIntentProof'])) !=
               base64Encode(CryptoJson.encode(financePolicyIntentProof)) ||
           base64Encode(CryptoJson.encode(body['accessIntentProof'])) !=
@@ -1474,6 +1487,58 @@ class ScopeCryptoManager {
       }
     }
   });
+
+  /// A retained inherited grant keeps its exact proposal and keys. Ordinary
+  /// account observations may advance a directory without changing its devices.
+  /// Reverify the recorded prefix and its ancestry; no other roster field moves.
+  Future<bool> _sameInheritedDraftMembers({
+    required VerifiedScopeHead source,
+    required VerifiedInheritedInvitationAdmission admission,
+    required List<Map<String, dynamic>> recorded,
+    required List<Map<String, dynamic>> normalized,
+    required Map<String, VerifiedAccountDirectory> directories,
+  }) async {
+    if (recorded.length != normalized.length) return false;
+    for (var i = 0; i < recorded.length; i++) {
+      final old = recorded[i], current = normalized[i];
+      final oldFields = Map<String, dynamic>.from(old)
+        ..remove('directoryHeadHash');
+      final currentFields = Map<String, dynamic>.from(current)
+        ..remove('directoryHeadHash');
+      if (base64Encode(CryptoJson.encode(oldFields)) !=
+          base64Encode(CryptoJson.encode(currentFields))) {
+        return false;
+      }
+      if (old['directoryHeadHash'] == current['directoryHeadHash']) continue;
+      final directory = directories[old['accountId']];
+      if (directory == null) return false;
+      // The current directory was fully replayed under its secure pin above.
+      // Historical replay must reconnect to it, including for a recipient whose
+      // joining authority is the verified parent rather than the old child.
+      final context =
+          source.members.any(
+            (member) => member['accountId'] == directory.accountId,
+          )
+          ? source
+          : admission.parent;
+      final prefix = await access.directoryAt(
+        scopeId: context.scopeId,
+        scopeHeadHash: context.headHash,
+        accountId: directory.accountId,
+        directoryHeadHash: old['directoryHeadHash'],
+        online: true,
+      );
+      if (!directory.includesAnchor(prefix.generation, prefix.headHash) ||
+          prefix.rootFingerprint != directory.rootFingerprint ||
+          prefix.identityEpochId != directory.identityEpochId ||
+          prefix.snapshot['recoveryRootEpochId'] !=
+              directory.snapshot['recoveryRootEpochId'] ||
+          prefix.deviceSnapshotHash != directory.deviceSnapshotHash) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   Future<VerifiedScopeHead> _publishRotation(
     ScopeRotationReview review,

@@ -130,6 +130,7 @@ class _CryptoInvites extends InviteCryptoRepository {
   int trusts = 0, accepts = 0, resumes = 0;
   Object? trustError;
   Completer<void>? trustGate;
+  Future<void> Function()? afterAccept;
   @override
   Future<String?> resumeAccepted(String invitationId) async {
     resumes++;
@@ -166,7 +167,21 @@ class _CryptoInvites extends InviteCryptoRepository {
     required String actionId,
   }) async {
     accepts++;
+    await afterAccept?.call();
     return {};
+  }
+}
+
+class _GatedPendingStore extends MemoryPendingInvitationStore {
+  Completer<void>? readGate;
+  Completer<void>? readEntered;
+  @override
+  Future<PendingInvitation?> read() async {
+    if (readGate != null) {
+      if (readEntered?.isCompleted == false) readEntered!.complete();
+      await readGate!.future;
+    }
+    return super.read();
   }
 }
 
@@ -282,13 +297,141 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  final rootEmailLink = InvitationLink.tryParseInput(
+    'https://sharing.example.test/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=en#token=fhi4_${'a' * 64}',
+  )!;
+  testWidgets(
+    'canonical HTTPS Join persists pending keys and resumes same accepted invitation',
+    (tester) async {
+      expect(rootEmailLink.serverUrl, 'https://sharing.example.test');
+      final controller = _Controller(encrypted: true, viewer: true);
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: 'https://sharing.example.test/',
+          token: rootEmailLink.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(store.value?.serverUrl, 'https://sharing.example.test/');
+      expect(store.value?.invitationId, 'saved-invite');
+      expect(store.value?.accountPartition, sharingSession().partition);
+      expect(find.text('Check access'), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(crypto.resumes, greaterThanOrEqualTo(1));
+      expect(find.text('Check access'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final changed in ['host', 'path', 'token', 'serverId', 'partition']) {
+    testWidgets(
+      'canonical HTTPS Join preserves newer pending $changed after accept',
+      (tester) async {
+        final controller = _Controller(encrypted: true, viewer: true);
+        final crypto = _CryptoInvites(_CryptoAccount());
+        final store = MemoryPendingInvitationStore()
+          ..value = PendingInvitation(
+            serverUrl: 'https://sharing.example.test/',
+            token: rootEmailLink.token,
+            serverId: sharingSession().serverId,
+          );
+        final newer = PendingInvitation(
+          serverUrl: changed == 'host'
+              ? 'https://other.example.test/'
+              : changed == 'path'
+              ? 'https://sharing.example.test/other/'
+              : 'https://sharing.example.test/',
+          token: changed == 'token' ? 'fhi4_${'c' * 64}' : rootEmailLink.token,
+          serverId: changed == 'serverId'
+              ? 'different-server'
+              : sharingSession().serverId,
+          accountPartition: changed == 'partition'
+              ? 'different-partition'
+              : null,
+        );
+        crypto.afterAccept = () async => store.value = newer;
+        await _pump(
+          tester,
+          controller,
+          link: rootEmailLink,
+          crypto: crypto,
+          store: store,
+          locale: 'en',
+        );
+        await _tap(tester, 'invitation-flow-join');
+        expect(crypto.accepts, 1);
+        expect(store.value, same(newer));
+        expect(store.value?.invitationId, isNull);
+        expect(find.text('Check access'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets(
+    'canonical HTTPS Join ignores session change during awaited pending read',
+    (tester) async {
+      final controller = _Controller(encrypted: true, viewer: true);
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = _GatedPendingStore()
+        ..value = PendingInvitation(
+          serverUrl: 'https://sharing.example.test/',
+          token: rootEmailLink.token,
+          serverId: sharingSession().serverId,
+        );
+      crypto.afterAccept = () async {
+        store.readGate = Completer<void>();
+        store.readEntered = Completer<void>();
+      };
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+      );
+      final button = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('invitation-flow-join')),
+      );
+      final joining = (button.onPressed as dynamic)() as Future<void>;
+      await tester.pump();
+      await store.readEntered!.future;
+      controller.switchAccount();
+      store.readGate!.complete();
+      await joining;
+      await tester.pumpAndSettle();
+      expect(crypto.accepts, 1);
+      expect(store.value?.accountPartition, isNull);
+      expect(store.value?.invitationId, isNull);
+      expect(find.text('Check access'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'encrypted wizard joins without card and resumes without repeating acceptance',
     (tester) async {
       final controller = _Controller(encrypted: true, viewer: true);
       final crypto = _CryptoInvites(_CryptoAccount());
       final store = MemoryPendingInvitationStore()
-      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+        );
       await _pump(
         tester,
         controller,
@@ -318,7 +461,10 @@ void main() {
     final crypto = _CryptoInvites(_CryptoAccount())
       ..trustError = const CryptoDirectoryException('directory_root_changed');
     final store = MemoryPendingInvitationStore()
-      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+      ..value = PendingInvitation(
+        serverUrl: _link.serverUrl,
+        token: _link.token,
+      );
     await _pump(tester, controller, link: _link, crypto: crypto, store: store);
     await _tap(tester, 'invitation-flow-join');
     expect(
@@ -344,7 +490,10 @@ void main() {
       final crypto = _CryptoInvites(_CryptoAccount())
         ..trustGate = Completer<void>();
       final store = MemoryPendingInvitationStore()
-      ..value = PendingInvitation(serverUrl: _link.serverUrl, token: _link.token);
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+        );
       await _pump(
         tester,
         controller,

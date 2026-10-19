@@ -1,5 +1,7 @@
 import 'dart:convert';
 import '../../data/e2ee/invite_crypto_repository.dart';
+import '../../data/pending_invitation_store.dart'
+    show PendingInvitationStoreSerialization;
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 
@@ -445,22 +447,32 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     if (!current()) return;
     await invites.accept(invite, actionId: invite.invitation['id']);
     if (!current()) return;
-    final previous = await ref.read(pendingInvitationStoreProvider).read();
-    if (previous?.token != link.token || previous?.serverUrl != link.serverUrl)
-      return;
-    await ref
-        .read(pendingInvitationStoreProvider)
-        .write(
-          PendingInvitation(
-            serverUrl: previous!.serverUrl,
-            token: previous.token,
-            serverId: previous.serverId,
-            expiresAt: previous.expiresAt,
-            accountPartition: workflow.store.partition,
-            invitationId: invite.invitation['id'],
-          ),
-        );
-    if (!current()) return;
+    final store = ref.read(pendingInvitationStoreProvider);
+    var savedAcceptance = false;
+    await store.serialized(() async {
+      final previous = await store.read();
+      if (!current() ||
+          previous?.token != link.token ||
+          !_sameServer(previous?.serverUrl, link.serverUrl) ||
+          previous!.serverId != null &&
+              previous.serverId != _session?.serverId ||
+          previous.accountPartition != null &&
+              previous.accountPartition != workflow.store.partition) {
+        return;
+      }
+      await store.write(
+        PendingInvitation(
+          serverUrl: previous.serverUrl,
+          token: previous.token,
+          serverId: previous.serverId,
+          expiresAt: previous.expiresAt,
+          accountPartition: workflow.store.partition,
+          invitationId: invite.invitation['id'],
+        ),
+      );
+      savedAcceptance = true;
+    });
+    if (!current() || !savedAcceptance) return;
     setState(() {
       _cryptoPending = true;
       _notice = context.l10n.cryptoInvitationPendingKeys;

@@ -1,5 +1,42 @@
 # Navodila za delo na projektu
 
+19. oktober — **Mac deljenje obstoječega projekta PASS; prva B sprememba čaka diagnozo sync parserja**.
+[Checkpoint in meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): po odklepu
+isti A/B in Docker18811, eno MAC-SHARED-1/A-V1 ter eno parent povabilo.
+B registracija/e-pošta/računski FILE PASS, LOCAL-B-PRIVATE ohranjen pred Join.
+Prvi accept je uspel na strežniku, UI pa primerjal nekanonični URL; r3 popravek
+istega čarovnika (7novih widget+2journal PASS) dejansko nadaljuje isto dejanje
+z nič novimi accept RPC in pokaže čakanje na ključe. En A Confirm access
+aktivira parent v epoch2 z B, child epoch2 ostane pending ob429 (434HTTP v vezanem oknu).
+En poznejši Finish project access lokalno zavrne scope_rotation_reauthorization_required;
+nič write RPC, poznejši pull409 ni vzrok. Primerjava potrdi samo napredovanje
+A/B directory heads, vsi root/device/epoch/role/access basis/revision isti.
+R4 manager dopušča samo preverjeni zgodovinski prefix ob nespremenjeni
+avtoriteti in originalnem osnutku/DEK/zahtevah; uporablja obstoječi child ali
+parent kontekst tudi pred headPut. Realni izolirani HTTP preizkus istega
+osnutka pred/po objavi PASS, točna stara vsebina prebrana, brez drugega
+sprejema/parent aktivacije;14novih negativnih PASS, analiza čista, neodvisni
+pregled PASS. Oba podpisana r4 nameščena čez ista vsebnika/Keychain.
+En native A Finish16:58UTC uspe (568HTTP vsi200,6grant/1activate),
+brez novega accept/headPut; B startupDone zadene dokazani account.status429.
+A se normalno zapre ob17:01:48UTC; en B isti saved-invite Retry uspe,
+182HTTP vsi200/brez accept ali mutacij. B ob17:02:26UTC dejansko prebere
+MAC-CHILD-1/eno MAC-SHARED-1/A-V1. N3 PASS, brez primerjave kartic.
+En B Save B-V2 in prvi Rules Accept ob17:03UTC oddata en records.batch200;
+prikaz pri A še ni preverjen. B sync je invalid_response/FormatException,
+prva primarna oznaka že pred spremembo; ničpending/conflicting/blocked,
+HTTP okni vsi200. QA logger ne bere FormatException.message, zato se
+pripravljena samo B finite-code diagnostika brez surovih podatkov, privacy
+kontrole PASS. R5 source-b ima samo QA helper delta, plan33b55945…;
+NI zgrajen/nameščen. Mac spet zaklenjen, CUA zahteva ročni odklep in
+uporabnik je vprašan. A zaprt, B r4 PID45559 ohranjen. Po odklepu normalno
+zapri B, ena r5 B-only gradnja/pregled/namestitev in samodejni sync zajem.
+Ne ponavljaj Save/Sync/setup/FILE/povabila/parent granta.
+Dvosmerno urejanje/offline/direct-child/revoke ostajajo odprti; večji
+foreground strošek ni rešen z idle popravkom. Produkcija, stare Mac/mobile
+QA namestitve, trgovini in nepovezana dokumenta isti. Spodnji jutranji
+checkpoint je zgodovina pred nadaljevanjem.
+
 19. oktober — **dve novi Mac namestitvi pripravljeni; deljenje čaka odklep Maca**.
 [Checkpoint in meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): izolirani
 Jivie Test Share A/B in Docker18811; A račun/e-pošta/FILE ter isti

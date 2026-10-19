@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'package:sodium/sodium.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_codec.dart';
+import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,6 +48,12 @@ class _Directory implements AccountDirectoryRepository {
   final CryptoIdentityStore store;
   bool current = true;
   int calls = 0;
+  AccountDirectoryV2? testReducer;
+  final owner = _Peer(_owner);
+  @override
+  AccountDirectoryV2 get reducer => testReducer!;
+  @override
+  Future<VerifiedAccountDirectory> requireFresh() async => owner;
   List<Map<String, dynamic>> catalog = [];
   @override
   String get accountId => _owner;
@@ -90,11 +99,22 @@ class _Account implements AccountCryptoV2Workflow {
 }
 
 class _Peer implements VerifiedAccountDirectory {
+  _Peer([this.id = _recipient]);
+  final String id;
+  String hash = 'directory-head';
+  bool hasAncestor = true;
   String snapshotHashValue = 'device-snapshot';
   @override
-  String get accountId => _recipient;
+  String get rootFingerprint => 'same-root';
   @override
-  String get headHash => 'directory-head';
+  int get generation => hash == 'directory-head' ? 1 : 2;
+  @override
+  bool includesAnchor(int generation, String hash) =>
+      hasAncestor && generation == 1 && hash == 'directory-head';
+  @override
+  String get accountId => id;
+  @override
+  String get headHash => hash;
   @override
   String get deviceSnapshotHash => snapshotHashValue;
   @override
@@ -178,6 +198,38 @@ class _Access extends SessionCryptoAccess {
   _Access(_Account account) : super(account: account);
   late _Head parent, child;
   final peer = _Peer();
+  bool mockKnownIdentities = false;
+  Map<String, _Peer> oldPrefixes = {};
+  @override
+  Future<void> requireExistingScopeMemberIdentity(
+    VerifiedScopeHead head,
+    VerifiedAccountDirectory directory,
+  ) async {
+    if (!mockKnownIdentities) {
+      await super.requireExistingScopeMemberIdentity(head, directory);
+    }
+  }
+
+  @override
+  Future<VerifiedAccountDirectory> directoryAt({
+    required String scopeId,
+    required String scopeHeadHash,
+    required String accountId,
+    required String directoryHeadHash,
+    bool online = false,
+    bool allowUnverifiedContact = false,
+  }) async {
+    if (mockKnownIdentities) return oldPrefixes[accountId]!;
+    return super.directoryAt(
+      scopeId: scopeId,
+      scopeHeadHash: scopeHeadHash,
+      accountId: accountId,
+      directoryHeadHash: directoryHeadHash,
+      online: online,
+      allowUnverifiedContact: allowUnverifiedContact,
+    );
+  }
+
   Map<String, dynamic> parentPolicy = {
     'kind': 'organization',
     'accessPolicyVersion': 3,
@@ -201,7 +253,8 @@ class _Access extends SessionCryptoAccess {
     String scopeId,
     String headHash,
     String accountId,
-  ) async => peer;
+  ) async =>
+      accountId == _owner ? (account.directory as _Directory).owner : peer;
   @override
   Future<CryptoReadContext> readContext(String scopeId, String domain) async =>
       CryptoReadContext(
@@ -329,6 +382,141 @@ void main() {
         lifecycleService: lifecycle,
         financePolicyService: finance,
       );
+  for (final change in [
+    'replaced-device',
+    'revoked-device',
+    'identity',
+    'recovery',
+    'root',
+    'role',
+    'finance',
+    'manage',
+    'roster',
+    'revision',
+    'basis',
+    'policy',
+    'unrelated-prefix',
+    'prefix-device',
+  ]) {
+    test(
+      'inherited draft resume rejects $change without changing keys or requests',
+      () async {
+        account.directory.testReducer = AccountDirectoryV2(
+          CryptoCodec(await SodiumInit.init()),
+        );
+        account.directory.owner.hash = 'directory-advanced';
+        access.peer.hash = 'directory-advanced';
+        access.mockKnownIdentities = true;
+        access.oldPrefixes = {_owner: _Peer(_owner), _recipient: _Peer()};
+        final capability = await verify();
+        final recorded = [_member(_owner, role: 'owner'), _member(_recipient)];
+        final body = <String, dynamic>{
+          'members': recorded,
+          'financePolicyIntentProof': null,
+          'accessIntentProof': null,
+          'expectedAccessRevision': 2,
+          'accessBasis': access.child.body['accessBasis'],
+          'authorDirectoryHeadHash': 'directory-head',
+        };
+        switch (change) {
+          case 'replaced-device':
+            recorded.last['deviceSnapshotHash'] = 'new-device';
+          case 'revoked-device':
+            recorded.last['deviceSnapshotHash'] = 'revoked-device';
+          case 'identity':
+            recorded.last['identityEpochId'] = 'other-identity';
+          case 'recovery':
+            recorded.last['recoveryRootEpochId'] = 'other-recovery';
+          case 'root':
+            recorded.last['rootSigningKeyBase64'] = 'other-root';
+          case 'role':
+            recorded.last['role'] = 'viewer';
+          case 'finance':
+            recorded.last['financeRole'] = 'none';
+          case 'manage':
+            recorded.last['manageKeys'] = false;
+          case 'roster':
+            recorded.add(_member(_invitation));
+          case 'revision':
+            body['expectedAccessRevision'] = 3;
+          case 'basis':
+            body['accessBasis'] = [];
+          case 'policy':
+            body['financePolicyIntentProof'] = {'changed': true};
+          case 'unrelated-prefix':
+            access.peer.hasAncestor = false;
+          case 'prefix-device':
+            access.oldPrefixes[_recipient]!.snapshotHashValue =
+                'old-revoked-snapshot';
+        }
+        final review = ScopeRotationReview({
+          'reviewId': _invitation,
+          'scopeId': _child,
+          'sourceHeadHash': access.child.headHash,
+          'historyBasis': 'observedCheckpointHistory',
+          'domains': <String, dynamic>{},
+        });
+        await db.execute(
+          'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL)',
+          [
+            'synthetic',
+            _child,
+            _invitation,
+            'scopeRotationReview',
+            CryptoJson.encode(review.value),
+          ],
+        );
+        await db.execute(
+          'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL)',
+          [
+            'synthetic',
+            _child,
+            'retained-draft',
+            'scopeRotationDraft',
+            CryptoJson.encode({
+              'reviewId': _invitation,
+              'headHash': 'original-head',
+              'body': body,
+            }),
+          ],
+        );
+        final before = await db.rows(
+          'SELECT * FROM crypto_membership_intents ORDER BY intent_id',
+        );
+        final calls = account.directory.calls;
+        await expectLater(
+          ScopeCryptoManager(access).confirmRotation(
+            review,
+            acceptedCandidateHistory: true,
+            members: capability.members,
+            inheritedInvitationAdmission: capability,
+          ),
+          throwsA(
+            isA<CryptoAuthorityPending>().having(
+              (e) => e.reason,
+              'reason',
+              'scope_rotation_reauthorization_required',
+            ),
+          ),
+        );
+        final after = await db.rows(
+          'SELECT * FROM crypto_membership_intents ORDER BY intent_id',
+        );
+        expect(
+          base64Encode(CryptoJson.encodeDerivedState(before)) ==
+              base64Encode(CryptoJson.encodeDerivedState(after)),
+          isTrue,
+        );
+        expect(await db.rows('SELECT 1 FROM crypto_scope_keys'), isEmpty);
+        expect(
+          account.directory.calls - calls,
+          lessThanOrEqualTo(3),
+          reason:
+              'Only read-only catalog checks may run; fixture rejects every mutation',
+        );
+      },
+    );
+  }
   final changed = isA<CryptoAuthorityPending>().having(
     (e) => e.reason,
     'reason',
