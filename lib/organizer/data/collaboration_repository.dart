@@ -442,14 +442,14 @@ class CollaborationRepository {
         ['project_sharing_pending:${profile.partition}:%'],
       );
       final scopes = await database.rows(
-        'SELECT data,blocked FROM scopes WHERE partition=? ORDER BY id',
+        "SELECT s.data,s.blocked,EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||s.partition||':'||s.id) AS reconciliation_pending FROM scopes s WHERE s.partition=? ORDER BY s.id",
         [profile.partition],
       );
       final parsedScopes = scopes
           .map(
             (r) => SharedScope.fromJson({
               ..._map(r['data']),
-              'blocked': r['blocked'] == 1,
+              'blocked': r['blocked'] == 1 || r['reconciliation_pending'] == 1,
             }),
           )
           .toList();
@@ -556,7 +556,7 @@ class CollaborationRepository {
               as int;
       final blockedCommands =
           (await database.rows(
-                "SELECT COUNT(*) AS count FROM commands WHERE partition=? AND state='blocked'",
+                "SELECT COUNT(*) AS count FROM commands c WHERE c.partition=? AND (c.state='blocked' OR (c.state='pending' AND EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||c.partition||':'||json_extract(c.params,'\$.scopeId'))))",
                 [profile.partition],
               )).first['count']
               as int;
@@ -565,7 +565,7 @@ class CollaborationRepository {
         [profile.partition],
       );
       final blocked = await database.rows(
-        "SELECT COUNT(*) AS count FROM outbox WHERE partition=? AND state='blocked'",
+        "SELECT COUNT(*) AS count FROM outbox o WHERE o.partition=? AND (o.state='blocked' OR (o.state='pending' AND EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||o.partition||':'||o.scope_id)))",
         [profile.partition],
       );
       final conflicts = await database.rows(
@@ -573,7 +573,7 @@ class CollaborationRepository {
         [profile.partition],
       );
       final financeQueue = await database.rows(
-        'SELECT state FROM finance_outbox WHERE partition=?',
+        "SELECT f.state,EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||f.partition||':'||f.scope_id) AS reconciliation_pending FROM finance_outbox f WHERE f.partition=?",
         [profile.partition],
       );
       final financeConflicts = <SharedFinanceConflict>[];
@@ -659,7 +659,11 @@ class CollaborationRepository {
         financeConflicts: financeConflicts,
         financePendingCount: financeQueue.length,
         financeBlockedCount: financeQueue
-            .where((e) => e['state'] == 'blocked')
+            .where(
+              (e) =>
+                  e['state'] == 'blocked' ||
+                  e['state'] == 'pending' && e['reconciliation_pending'] == 1,
+            )
             .length,
         sessionRenewalSupported: _sessionRenewalSupported,
         organizationsSupported: _organizationsSupported,

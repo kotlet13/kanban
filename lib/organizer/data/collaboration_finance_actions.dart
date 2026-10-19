@@ -234,6 +234,7 @@ extension CollaborationFinanceActions on CollaborationRepository {
   }
 
   Future<void> _financeWritable(String partition, String scopeId) async {
+    await _requireScopeReconciled(partition, scopeId);
     final sharing = await database.rows(
       r"SELECT 1 FROM local_meta WHERE name=? OR (name LIKE ? AND json_extract(value,'$.projectId')=?)",
       [

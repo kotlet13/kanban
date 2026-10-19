@@ -1,5 +1,44 @@
 # Navodila za delo na projektu
 
+19. oktober — **omejeno nadaljevanje N7 zaključeno pri tretjem poskusu**.
+[Končni dokazi in odprte meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md):
+A-r12/B-r13/isti Docker18811, oba normalno zaprta. Odvzema in uspešnih
+N0–N6 nismo ponovili. Izvorni activation-boundary popravek5PASS; B optional
+finance parent-unavailable9PASS/native syncPASS; readonly/reconciliation
+guard2PASS/native tretji poskusPASS: star task brez urejanja, izvirni lokalni
+osnutek ohranjen1pending/0conflicting/1derivedblocked, nič task transporta.
+B ne prejme V5, neodvisni direct projekt ostane dostopen (poskus2, ne ponovi).
+N7 ni neomejen fullPASS: sveža serverwrite-denial ni izvedena; generic
+blocked opozorilo napačno enači reconciliation z revoked/explicitresume.
+Besedilo ostane OPEN/SKIP po3.poskusu, brez četrtega kroga.
+A čakalne vrste0 in finance brez napake; starega directory_proof_pending
+vzročnega popravka ne zatrjujemo. No-work guard4PASS, vendar strošek še
+412HTTP/cikel, bistven prihranek ni dokazan. Costposkus2 analizaBLOCKED:
+potreben ločen bounded combined-read pristop, brez unsafe cache/TTL/kvote;
+brez umetnega3.poskusa. Skupaj20novih ciljnih kontrolPASS, brez celotne
+ponovitve zbirk. Produkcija/stareQA/trgovini/SDK/locks nedotaknjeni;
+P0/mobile/P8 in produkcijska pripravljenost ostajajo odprti.
+
+19. oktober — **novo naročilo: popraviti zaključek odvzema in pending sync,
+nato finančno opozorilo in strošek zahtevkov**. Nadaljuj ISTI Mac A/B in
+ISTI N7; odvzem obeh epoch3 je že izveden, A-AFTER-REVOKE-V5 že shranjen.
+Ne ponavljaj Remove/Save/prijav/FILE ali uspešnih N0–N6. Novi ozki popravki,
+ciljni testi in potrebne izolirane gradnje so odobreni; produkcija/stare QA
+ostanejo nedotaknjene. Delo isti GPT-6.1 Sol/high, glavni pregled.
+**Nova izrecna meja: največ trije poskusi rešitve težavnega testa.** Ob
+tretjem neuspehu zapiši dokaz in test preskoči; nadaljuj naslednji neodvisni
+test, odvisne označi blokirane/neizvedene. Vodi števec po težavi, ne
+začenjaj novega kroga z novimi računi/fixtures. Na koncu poročaj PASS/FAIL/
+BLOCKED. Prvi popravek zaključka odvzema prekine staro authority-operation
+memo po preverjeni aktivaciji;5novih ciljnih PASS, baselineFAIL, brez novega
+odvzema. A r10 nameščen in en polni navadni cikel PASS: Synced0/0/0,
+finance brez napake,418HTTP vsi200. Vrste so bile prazne že ob BEGIN,
+vzrok starega pending ni dokazan; originalni V5 je strežniško applied/rev5.
+B r8 native meja poskus1 FAIL: crypto_account_choices_target po offers in
+contentpull pri direct-child-only brez dostopnega parenta;162HTTP vsi200,
+brez writeprobe. Oba appa zaprta. Naslednji B popravek/tek je poskus2/3;
+po prvi primarni napaki zapri, ne čakaj ponavljajočih avtomatskih ciklov.
+
 19. oktober — **zaključek Mac deljenja: N4/N5/N6 PASS, N7 delno potrjen**.
 [Dokazi in naslednje meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md): isti
 A-r9/B-r8/Docker18811. N6 B dejansko prebere MAC-DIRECT-TASK z

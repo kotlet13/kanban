@@ -749,6 +749,10 @@ class CryptoAccessCoordinator {
         result['state'] != (cancel ? 'cancelled' : 'applied')) {
       throw const FormatException('crypto_access_outcome');
     }
+    // Activation installs the component's new current heads. The enclosing
+    // operation may still contain the source heads reviewed before this commit,
+    // including when the result was recovered from an immutable saved receipt.
+    if (!cancel) context.access.invalidateAuthorityOperation();
     return result;
   }
 

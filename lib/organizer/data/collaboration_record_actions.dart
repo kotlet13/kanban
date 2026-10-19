@@ -2,7 +2,20 @@ part of 'collaboration_repository.dart';
 
 /// Atomic local record edits, dependency ordering and explicit personal copies.
 extension CollaborationRecordActions on CollaborationRepository {
+  Future<void> _requireScopeReconciled(String partition, String scopeId) async {
+    final pending = await database.rows(
+      'SELECT 1 FROM local_meta WHERE name=? LIMIT 1',
+      ['scope_reconciliation:$partition:$scopeId'],
+    );
+    if (pending.isNotEmpty) {
+      // Missing discovery is not authenticated revocation. Keep cached data and
+      // immutable drafts, while requiring current access before another edit.
+      throw const CollaborationException('changes_blocked');
+    }
+  }
+
   Future<void> _writable(String partition, String scopeId) async {
+    await _requireScopeReconciled(partition, scopeId);
     final sharing = await database.rows(
       r"SELECT 1 FROM local_meta WHERE name=? OR (name LIKE ? AND json_extract(value,'$.projectId')=?)",
       [

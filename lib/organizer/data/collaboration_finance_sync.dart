@@ -147,12 +147,23 @@ extension CollaborationFinanceSync on CollaborationRepository {
         await _pullFinanceScope(session, epoch, scope.id);
         if (_organizationFinanceSupported &&
             scope.kind == SharedScopeKind.project) {
-          await _fetchFinanceAccountChoices(
-            session,
-            epoch,
-            scope.id,
-            syncLease: true,
-          );
+          try {
+            await _fetchFinanceAccountChoices(
+              session,
+              epoch,
+              scope.id,
+              syncLease: true,
+            );
+          } on CryptoAuthorityPending catch (error) {
+            // The selector is optional when this project-only member cannot
+            // discover the parent needed to issue a new endorsed selection.
+            // Existing target manifests were still tried; no empty selection
+            // or refreshed completeness is inferred from this condition.
+            if (error.reason != 'crypto_account_choices_parent_unavailable') {
+              rethrow;
+            }
+            _checkEpoch(epoch);
+          }
         }
         // A first personal payment needs a verified empty sidecar snapshot too.
         // `required` only becomes true once a linked financial fact exists.

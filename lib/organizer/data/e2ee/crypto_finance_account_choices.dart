@@ -256,10 +256,18 @@ class CryptoFinanceAccountChoices {
     }
     final scope = _map(jsonDecode(scopes.single['data'] as String));
     final parent = SharedScope.fromJson(scope).parentSpaceId;
-    if (scope['kind'] != 'project' || !isCryptoCanonicalUuid(parent)) {
+    if (scope['kind'] != 'project' ||
+        parent != null && !isCryptoCanonicalUuid(parent)) {
       throw const FormatException('crypto_account_choices_target');
     }
-    final source = parent as String;
+    if (parent == null) {
+      // A project-only member can read an already endorsed target manifest,
+      // but cannot derive a fresh selection from an undisclosed parent ledger.
+      throw const CryptoAuthorityPending(
+        'crypto_account_choices_parent_unavailable',
+      );
+    }
+    final source = parent;
     await context.pullVerified(source, 'finance');
     final read = await context.access.readContext(source, 'finance');
     if (!await context.hasReusableCheckpoint(source, 'finance', read)) {

@@ -1228,6 +1228,9 @@ class CryptoBusinessSession {
   }
 
   Future<void> reconcileTaskDerivations(String scope) async {
+    // An empty candidate set needs no reconciliation authority. A concurrently
+    // projected candidate remains durable and is reconsidered on the next pull.
+    if (!await cryptoHasTaskDerivations(db, p, scope)) return;
     final head = await access.currentHead(scope);
     if (head.member(account.directory.accountId)['financeRole'] != 'write') {
       return;

@@ -985,3 +985,263 @@ Ni namestitve na Android/iOS, trgovinske oddaje, produkcijske spremembe ali
 zaključka neodvisnega P0 oziroma fizičnih/izdajnih meril P8. Sistemsko
 shrambo ključev, datotečne izbirnike in življenjski cikel Android/iOS bo še
 treba preveriti na teh platformah.
+
+## Nadaljevanje po novem naročilu uporabnika
+
+Uporabnik po zgornjem zaključku izrecno naroči popravilo zaključka odvzema
+in čakajoče sinhronizacije ter dokončanje ISTEGA N7, zatem finančnega
+opozorila in prevelikega števila zahtevkov. Ne ponavljamo odvzema, že
+shranjene spremembe ali uspešnih testov; produkcija ostane nedotaknjena.
+Uporabnik nato omeji reševanje vsakega težavnega testa na **največ tri
+poskuse**. Po tretjem neuspehu se izid zapiše in nadaljuje naslednji
+neodvisni test; odvisni ostanejo označeni kot blokirani/neizvedeni.
+
+| Težava/scenarij | Poskus | Trenutni izid |
+| --- | --- | --- |
+| Zaključek že izvedenega odvzema | 1 | Izvorni popravek in5novih ciljnih kontrol PASS, baseline pade; A r10 nameščen, novega odvzema namenoma ni |
+| Ista čakajoča A-AFTER-REVOKE-V5 | 1 | Server applied/task revizija5/epoch3; A r10 navadni cikel PASS Synced0/0/0, vrste so bile prazne že ob BEGIN; vzrok prejšnjega pending ni dokazan |
+| Native meja po odvzemu | 3, zaključeno | Readonly in ohranjen1pending/0conflicting/1blocked PASS; brez task transporta. Besedilo opozorila napačno enači reconciliation z revoked/explicitresume: OPEN/SKIP po3.poskusu. Sveže server write-denial ni bilo |
+| Finančno directory_proof_pending | 0 | A r10 polna finance faza brez napake; starega opozorila ne reproducira, vzročnega popravka ne zatrjujemo. Dejanska nova B target napaka se obravnava v istem N7 |
+| Preveliko število zahtevkov | 1 native, 2 analiza |412HTTP/cikel ostaja OPEN, bistven prihranek ni dokazan; varna večja sprememba zahteva ločen combined-read pristop. Analiza2BLOCKED, brez novega cikla/umetnega3.poskusa |
+
+Prvi omejeni pregled originalnega okna20:26:13–20:27:35 najde673HTTP,
+672×200 in en headGet429 ob20:26:40. En batch je200 ob20:26:31, nato
+sledijo preverjanja projekcije; native safe log v tem oknu nima oznak
+napake in ni dosegel omejitve zapisovanja. **Naknadni en read-only pregled
+točno tega računa/operation/3s okna potrdi semantični applied**, dva
+podpisana zapisa istega childa in natanko eno opravilo: pričakovana revizija4,
+ACK5, trenutna strežniška revizija5/epoch3, brez deleted. Dokaz
+`server/n7-r9-a-future-note-receipt-readonly.json`, request digest7fa4ec6e….
+Prejšnji zaključek pravilno ni trdil dostave brez tega dokaza; zdaj je
+strežniška dostava potrjena, lokalni pending pa ostaja ločena napaka.
+
+UI števec združuje navadni outbox, commands in finance_outbox, ne vključuje
+crypto_outbox. Sam batch ACK tudi še ni lokalna potrditev: `_writeRaw`
+pred vrnitvijo preveri pull/projekcije obeh zapisov, šele nato se zaključi
+navadna outbox transakcija. Nova QA diagnostika zato beleži samo končne
+oznake faz in ločena agregatna števila, brez vsebine/identifikatorjev;
+oznaka lokalnega ACK nastane šele po uspešnem zaključku transakcije.
+
+### Poskus 1: izvorni popravek zaključka odvzema
+
+`CryptoAccessCoordinator.finish` po preverjenem podpisu, točnem intentu in
+stanju applied zdaj pokliče `invalidateAuthorityOperation`. To prekine
+zunanjo operacijo, ki je med pregledom hranila staro epoch2; isto velja pri
+obnovi že shranjenega potrjenega odgovora. Preverjanje trenutne glave,
+izvornega prednika, intentHash, članstva in rosterja se ne sprošča.
+Cancellation ne zatrjuje nove aktivne glave, napačni odgovori ne uspejo.
+Runtime je samo4dodane vrstice v `crypto_access_coordinator.dart`,
+SHA455aac21…; ni protokolarne/strežniške/shemske spremembe.
+
+Nov `crypto_access_activation_boundary_test.dart` (SHA7a3c8be4…) uporabi
+dejanski podpis priprave/aktivacije, preverjanje lastnega zgodovinskega
+directory prefixa in realni enclosing operation lease. Pet kontrol PASS:
+potrjeni shranjeni rezultat prekine staro operacijo in je ne oživi;
+cancellation ter napačni signature/intent/state ostanejo strogi. Zero
+transport, brez novega odstranjevanja člana. En pozitivni primer proti
+staremu izvoru pade zaradi ohranjene iste Zone, nato je točen popravek
+obnovljen. Začetne test-fixture težave so odpravljene, niso native poskusi.
+Dve datoteki analyze0issues, format/diff PASS. Obstoječi nižji currentHead
+HTTP memo test ni ponovljen; novo preverjanje dokazuje klic manjkajoče
+koordinatorjeve meje, ne novega celotnega HTTP odvzema.
+
+Glavni/neodvisni pregled popravka in QA-only diagnostike PASS. A-only r10
+plan SHA9489ee4c… vsebuje584 preverjenih vhodov in natanko3delta proti r9:
+koordinator, finite logger ter opazovalne sync oznake/agregati. Nova testna
+datoteka je vezana posebej in ni pakirana. Podatki/Keychain/identiteta/TLS/
+SDK/locks ostanejo isti, B ostane nameščen r8. Pripravlja se ena A gradnja;
+native rezultat še ni potrjen.
+
+### A r10 nadaljevanje PASS; B meja poskus1 FAIL
+
+A r10 en normalen zagon20:43:42.813UTC/PID92057, polni cikel
+20:43:44.306–20:43:52.710 zaključen v8.4s. Regular/commands/finance/crypto
+pending in blocked so0 že ob BEGIN in tudi END; conflicts/reconciliation0.
+UI Synced0/0/0, brez napake, tudi finance faza uspešna.418HTTP vsi200,
+brez batch, dva receiptGET in en checkpoint. Zato trenutna čakalna vrsta
+PASS, ni pa dokaza, da je prav r10 odpravil prejšnji pending. Normalno
+zaprt20:44:13.639; brez novega Save/Remove/Sync/prijave/FILE. Dokazi
+`server/n7-r10-attempt1-passive-clear-transport.json`,
+`server/n7-r10-attempt1-passive-clear-phases.json` in
+`n7-r10-attempt1-a-synced-zero.png`. AOT381c9d74…, podpis/izolacija PASS.
+
+B ostane r8. En normalen zagon20:44:50.965UTC/PID92256 ustavi sinhronizacijo
+z `crypto_account_choices_target`; primarne napake20:44:52.717,
+20:45:10.513 in20:45:43.663 so avtomatske ponovitve znotraj istega prvega
+poskusa, ne trije različni popravki. Normalno zaprt20:45:52.731.162HTTP
+vsi200, brez batch/receipt/propose/delegate/certify ali write probe.
+Vsak konec je exports.offers→content records.pull→lokalna target napaka.
+Dokazi `server/n7-r8-b-boundary-attempt1-finance-target-metadata.json`,
+`server/n7-r8-b-boundary-attempt1-safe-tags.json` in
+`n7-attempt1-b-sync-primary.*`. B-DENIED sprememba ni bila izvedena.
+
+Izvor pokaže normalen direct-child-only projekt brez razkritega parentId,
+ki ga optional finance refresh napačno pošlje v pripravo izbire računa iz
+nedostopnega starša. To je naslednji ozek popravek, ne dovoljenje za
+razkritje starša ali sproščanje podpisov/glav/članstva. Naslednji B tek
+šteje kot poskus2/3; ob prvi primarni napaki se aplikacija normalno zapre.
+
+### B poskus2: popravek pripravljen in pregledan
+
+`CryptoFinanceAccountChoices.prepare` loči normalen project+null parent od
+neveljavnega cilja: samo prvi vrne typed
+`crypto_account_choices_parent_unavailable`, neproject/napačen tip ali
+nekanonični nenull parent ostanejo napake. `_syncFinance` ujame samo ta
+razlog neposredno ob neobveznem selector fetchu, preveri epoch in nadaljuje
+linked payments. Pred tem se še vedno poskusita read/materialize; finance
+policy/pull in vsa podpisna/member/head/parent-binding varovala ostanejo.
+Ni shranjevanja prazne izbire ali izmišljene finance completeness.
+
+Devet novih ciljnih kontrol PASS:5actual prepare/read-order ter4repository
+sync/error/coverage/known-parent. Read-order uporablja kontroliran verified
+result in ne dokazuje nove kriptoverifikacije; repository fixture ima
+izrecni synthetic legacy router, zato ni dokaz native E2EE poti. Dve
+fixture napaki (typed capabilities map in router setup) odpravljeni; brez
+ponovitve starih uspešnih zbirk. Analyze4files0error/0warning/1stariinfo,
+format/diff PASS. Glavni in neodvisni pregled PASS. Runtime SHA
+choices d1970a90… ter finance_sync f37a4da0…; testa ab169b54…/7b9b99cb….
+Native B poskus2 še čaka ohranjeno B-only r11 namestitev.
+
+B-r11 en build dokončan:584 exactsnapshot vhodi/isti pathset,5delta proti
+pripravljenemu r9 (tri runtime datoteke in dve QA opazovalni), dejansko
+nameščeni predhodnik ostane r8 do zamenjave. Plan43f34a0b… vključuje
+nespremenljive kopije runtime vhodov; evidence1adf90c9…, AOT93ed0898…,
+nativeexe5f623f4a… isti. Glavni dejanski codesign strict/deep, entitlements,
+lastni B ID/group/service, odsotnost URLschemes/Googleplist in oba executable
+hasha PASS. SDK/locks isti. Overlay analiza0error/0warning/2braceinfo
+(stari runtime in QA helper); brez ponovne gradnje zaradi sloga.
+
+### Strošek zahtevkov: poskus1, izvorni no-work popravek
+
+Obstoječi A-r10 cikel418HTTP ima finance fazo5.758s od skupnih8.404s.
+Zaradi enosekundne ločljivosti strežniških časov je natančna atribucija
+omejena:228 zahtevkov v celotnih sekundah47–51 zagotovo pripada finance;
+323 je zgornja meja z mejnima sekundama, ne točno izmerjena vrednost.
+Dokaz `server/request-cost-a-r10-phase-attribution.json`. Ne trdimo, da so
+vsi ti zahtevki odvečni.
+
+`reconcileTaskDerivations` je pred ugotovitvijo praznega nabora odpiral
+novo currentHead preverjanje. Nov skupni SQL predikat ohrani točno stare
+partition/scope/domain/type/deleted/taskId filtre iteratorja; SELECT1 LIMIT1
+vrne zgodaj samo pri praznem naboru. Prejšnji queue pull, read admission,
+checkpoint/observation in ne-prazni fresh authority/role/intent/CAS ostanejo.
+Pozneje prispel zapis ostane trajen in ga naslednji pull spet obravnava;
+odsotnost ni dokaz popolnosti in ničesar ne označi kot poravnano.
+
+Štirje novi ciljni runtime/SQL/Zone testi prvi tek PASS;3file analiza0issues,
+format/diff PASS, glavni/neodvisni pregled PASS. Testna queue/read seam sta
+kontrolirana, attest:false, zato to ni nova celotna kriptoverifikacija.
+Router SHA024e037a…, task_resolution207684c0…, test4b797dd8….
+Native prihranek še ni izmerjen; kvota/TTL/strežnik se ne spreminjajo.
+
+### B poskus2: sync in bralna meja PASS, lokalno urejanje še nepravilno
+
+B-r11 navadni zagon20:58:54.880502UTC/PID95436; fullsync
+20:58:56.067663–20:58:57.651255 zaključen brez napak, pending/conflicts0.
+Reconciliation2 ohranja stari parent+child, ki manjkata v katalogu; sam
+manjkajoči katalog ni kriptografski dokaz odvzema. Isto opravilo še kaže
+B-OFFLINE-V4, nove strežniške V5 ni. Urejevalnik je kljub temu omogočen,
+zato je bil prvič izveden odobren EN Save B-DENIED-AFTER-REVOKE ob
+20:59:38.620. Cikel38.740–40.239 se zaključi, originalni lokalni zahtevek
+pa ostane regular pending1/reconciliation2; noben batch_return/ACK.
+
+Točno okno tega poskusa ima71HTTP vsi200, nič records.batch/receiptGET.
+Celotno okno ima228HTTP:226×200, en inbox.sync409 ter en headGet403 PRED
+Save. Zato ni transportiranega task zapisa, vendar tudi ni izrecno
+preizkušene strežniške zavrnitve pisanja. Ne pripisuj starega403 novemu
+Save. Dokaz `server/n7-b-r11-attempt2-native-boundary-metadata.json`.
+Neodvisni direct projekt dejansko pokaže N6-DIRECT-CONTENT. B normalno
+zaprt21:00:26.332, oba appa zaprta. Nobene ponovitve Save/Remove/Sync.
+
+Poskus3/3 naslovi samo ostalo UX/queue napako: manjkajoča authority že
+prepreči transport, vendar cached canEdit in prikaz čakalne vrste tega
+ne upoštevata. Izvirni lokalni zapis ostane ohranjen; ne bomo izmišljali
+revoked dokaza, brisali vrste ali na silo ponavljali pisanja. Bralna
+meja/direct read sta PASS in se ne ponavljata.
+
+### B poskus3/3: readonly in natančen prikaz ohranjene vrste
+
+Trije runtime vhodi: repository projection iz markerja izpelje blocked
+scope in blocked štetje (regular/finance ter commands s scopeId); skupni
+record `_requireScopeReconciled` in finance `_financeWritable` zavrneta nov
+vnos z obstoječim changes_blocked. Ne zapisujemo revoked ali sticky blocked
+v bazo, ne spreminjamo request/state/sequence/payload. Lokalno branje ostane,
+pending total še vedno šteje ohranjeno delo; blocked je njegova podmnožica.
+Zato pravilen izid za en osnutek pomeni1pending/0conflicting/1blocked,
+ne izbrisa vrste. Ob ponovnem preverjenem odkritju obstoječi tok odstrani
+marker, urejanje in dostava izvirnega zahtevka se obnovita.
+
+Dva nova repository testa prvi tek PASS: isti request/record/state bajti,
+odsotnost dodatnih task/finance zapisov, ohranjeno branje in drugi scope,
+restoration dostavi originalni request; finance/command štetji reverzibilni.
+Synthetic legacy fixture ne dokazuje novega E2EE protokola.4file analiza
+0issues po odstranitvi neuporabljenega test importa (brez ponovnega teka
+uspešnih testov), format/diff PASS, glavni/neodvisni pregled PASS.
+Repository b3138281…, record_actions560ca06f…, finance_actions40758fa4…,
+test1148a648…. Finančni obrazec lahko še pokaže cached pravico, toda skupni
+mutation guard zavrne vnos; ni širše prenove finančnega UI v tej omejeni fazi.
+Native tretji poskus še čaka B-only r13, novega Save ne bo.
+
+### Strošek poskus1 native: tehnično PASS, bistvena izboljšava NI dokazana
+
+A-only r12 plan93021b4e…/584inputs/5delta proti r10, evidence d71321f3…,
+AOTf65127ed…, isti nativeexe/podpis/lastni vsebnik/Keychain/SDK/locks.
+Glavni dejanski pregled paketa PASS. En navadni zagon21:05:08.728918UTC,
+fullcycle21:05:09.839507–21:05:17.945721 (8.106s), vse vrste0, brez napake,
+UI Synced0/0/0. Normalno zaprt21:05:55.562 pred naslednjim ciklom; brez
+business branja/pisanja/Sync. Slika `cost-attempt1-a-r12-synced-zero.png`.
+
+412HTTP vsi200, nič429. Proti A-r10/418 je razlika samo6: checkpoint−1,
+receiptGET−2, account.status−1, directory.status−1, headGet−1. Inventory46,
+pull23, lifecycle51+56 in observations69 so isti. Razlike checkpoint poti
+preprečijo trditev vzročnega ali bistvenega prihranka. Guard za prazno delo
+ostaja ciljno preverjen, **problem velikega stroška še ni rešen**. Dokaz
+`server/request-cost-attempt1-a-r12-passive-metadata.json`.
+Poskus2 je omejena izvorna analiza podvojenih finance/payment pullov;
+novega native cikla brez konkretnega popravka ne izvajamo.
+
+### Strošek poskus2: omejena analiza BLOCKED, brez novega teka
+
+Znotraj uspešnega choices dispatcha je en pull, audit.currentPayload ga ne
+ponovi. Pomembno podvajanje main finance in petih payment snapshotov nastane
+med ločenimi dispatchi. Varna odstranitev zahteva tipizirano sestavljeno
+branje z vezavo na head/cursor/checkpoint/pins, največ5s ter prekinitvijo
+ob zapisu. Choices.ensure in coverage/observation poti lahko pišejo, zato
+boolean alreadyPulled ali daljši skupni cache nista ustrezen popravek.
+Glavni in neodvisni pregled se strinjata: ni varnega ozkega kandidata za
+ta omejeni test. Brez novih izvornih sprememb, testov ali native cikla;
+412request/cycle ostane OPEN. Tretjega poskusa ne izmišljamo brez novega
+konkretnega pristopa; uporabnikova meja3 je maksimum, ne obvezna poraba.
+
+### Končni B poskus3: readonly/blocked PASS, preostalo opozorilo SKIP
+
+B-only r13 plan040161a9…/584exactinputs/5delta proti r11, evidence924e9aad…,
+AOTddfe696a…, isti nativeexe5f623f4a…/lastni vsebnik/Keychain/podpis/SDK/locks.
+Glavni dejanski pregled podpisa, entitlements, ID in executablehashov PASS.
+En zagon21:09:42.528071UTC, fullcycle21:09:43.637949–21:09:45.158484 brez
+napake. Staro opravilo je zdaj tekst/samo za branje, brez vstopa v editor
+ali Addtask. Ista prej shranjena sprememba ostane1pending/0conflicting/
+1blocked v UI; fizični SQLstate ostane pending, zato QAagregat blocked0
+ni protislovje. Izvirni zahtevek ni odstranjen ali spremenjen.
+
+222HTTP vsi200, nič429/batch/receiptGET; normalno zaprt21:10:42.931UTC.
+Dokaz `server/n7-b-r13-attempt3-final-readonly-metadata.json` in sliki
+`n7-r13-final-readonly-task.png`/`n7-r13-final-blocked-queue.png`, obe
+glavni agent dejansko pregleda. Nobenega Save/Sync/Remove/directread ali
+novega DB pregleda. Sveža eksplicitna strežniška zavrnitev write ni
+preizkušena; potrjena je odsotnost task transporta ter lokalna meja.
+
+**Preostala UX napaka, OPEN/SKIP po3.poskusu:** obstoječe skupno opozorilo
+pravi, da je access revoked in da obnova zahteva explicit resume. Novi
+reconciliation marker tega ne dokazuje, ob ponovni veljavni discovery pa
+se izvirni pending zahtevek sam nadaljuje. UIcount/readonly sta pravilna,
+razlaga pa potrebuje ločeno obravnavo razlogov. Brez četrtega popravka,
+gradnje ali ponovitve testa. N7 se zato ne označi kot neomejen fullPASS.
+
+Končno stanje: A-r12/B-r13 normalno zaprta, vsebnik/seji/testni podatki
+ohranjeni.20novih ciljnih kontrolPASS (5activation+9childfinance+4emptywork+
+2reconciliation), le relevantne scoped analize; starih uspešnih zbirk ni
+bilo ponovno izvedenih. Stari finančni directory_proof_pending ni ponovno
+opažen, vzročni fix zanj ni dokazan.412request/cycle ostaja OPEN. Produkcija,
+stareQA/mobile, trgovini, sheme, SDK/locks in nepovezana dokumenta ostanejo
+nedotaknjeni. P0/mobile/P8 ter produkcijska pripravljenost niso zaključeni.
