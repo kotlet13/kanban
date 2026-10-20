@@ -92,6 +92,11 @@ fizičnih/mutacijskih preizkusov ne zatrjujemo.
 
 ### Ločena odkrita težava: zastarela izbira računov
 
+**Poznejše naročilo: popravljeno.** [Ozki popravek in dejanski HTTP dokaz](E2EE_ACCOUNT_CHOICES_STALE_RECOVERY.md)
+potrjujeta samodejno osvežitev na istem stanju, brez ročnega čarovnika.
+Spodnji opis OPEN in ročnega nadaljevanja dokumentira prvotno ugotovitev
+pred tem dodatnim naročilom.
+
 Prva dva poskusa nove HTTP priprave sta zadela
 `crypto_account_choices_source_set_changed`: projekt je imel potrjeno prazno
 izbiro, nadrejeni prostor pa je pozneje dobil finančni račun.

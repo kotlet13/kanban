@@ -4,8 +4,9 @@
 pull, izbira računov in povezana plačila znotraj iste obdelave prostora
 ponovno uporabijo nespremenjeno preverjeno podlago. Novi ciljni testi20 PASS,
 dejanski HTTP finančni del58 →39 zahtevkov/7 →4 pullov; isti saldo/vnosi.
-Prihranek časa ali bajtov celotnega cikla ni dokazan. Ločena obstoječa
-težava samodejnega nadaljevanja zastarele izbire računov ostaja OPEN.
+Prihranek časa ali bajtov celotnega cikla ni dokazan. Pozneje je odpravljena tudi
+[napaka samodejne obnove zastarele izbire računov](docs/E2EE_ACCOUNT_CHOICES_STALE_RECOVERY.md):
+12novih ciljnih kontrol in isti dejanski HTTP tok PASS, podatki ohranjeni.
 [Izvedba, meritve in meje](docs/E2EE_FINANCE_READ_REUSE.md). Brez nove sheme,
 namestitve ali spremembe urnika/Firebase; produkcija in stari QA nedotaknjeni.
 

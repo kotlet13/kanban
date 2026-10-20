@@ -2218,13 +2218,30 @@ class CryptoFinanceAccountChoices {
         final item = _map(value),
             certificate = _map(item['authorization']),
             body = _body(certificate);
-        final offerResponse = await context.account.directory
-            .call('crypto2.exports.delegation.forOffer', {
-              'variant': variant,
-              'scopeId': scope,
-              'offerHash': body['offerHash'],
-              'includeOffer': true,
-            });
+        late Map<String, dynamic> offerResponse;
+        // The issuer's fetch can reject an obsolete source before materialize.
+        // Only ordinary discovery skips it; captured derivations stay strict.
+        try {
+          offerResponse = await context.account.directory
+              .call('crypto2.exports.delegation.forOffer', {
+                'variant': variant,
+                'scopeId': scope,
+                'offerHash': body['offerHash'],
+                'includeOffer': true,
+              });
+        } on CollaborationApiException catch (e) {
+          if (candidate != null ||
+              body.containsKey('capture3Context') ||
+              !const {
+                'crypto_account_choices_source_set_changed',
+                'crypto_export_source_changed',
+                'crypto_scope_head_changed',
+                'crypto_export_issuer_changed',
+              }.contains(e.code)) {
+            rethrow;
+          }
+          continue;
+        }
         final delegation = _map(offerResponse['authorization']);
         final offer = _map(offerResponse['offerAuthorization']);
         try {
@@ -2291,7 +2308,21 @@ class CryptoFinanceAccountChoices {
         head = await context.access.currentHead(scope, online: true),
         member = head.member(own.accountId);
     if (member['financeRole'] == 'write' && await materializeAvailable(scope)) {
-      return await read(scope);
+      try {
+        return await read(scope);
+      } on CryptoAuthorityPending catch (e) {
+        if (!const {
+          'crypto_account_choices_publication_required',
+          'crypto_account_choices_head_changed',
+        }.contains(e.reason)) {
+          rethrow;
+        }
+        replaceStale =
+            replaceStale || e.reason == 'crypto_account_choices_head_changed';
+      } on CollaborationApiException catch (e) {
+        if (!_stale(e.code)) rethrow;
+        replaceStale = true;
+      }
     }
     await context.db.execute(
       'CREATE TABLE IF NOT EXISTS crypto_account_choice_selections(partition TEXT NOT NULL,action_id TEXT NOT NULL,scope_id TEXT NOT NULL,selection TEXT NOT NULL,PRIMARY KEY(partition,action_id))',

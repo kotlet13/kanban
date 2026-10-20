@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+20. oktober — **samodejna obnova zastarele izbire računov popravljena** po
+novem izrecnem naročilu; dva GPT-6.1 Sol/high, glavni/neodvisni pregled.
+[Izvedba in dokazi](docs/E2EE_ACCOUNT_CHOICES_STALE_RECOVERY.md): `ensure`
+obravnava isti dovoljeni stale tudi po materializeAvailable; ordinary-only
+`forOffer` discovery preskoči obstoječe4stale kode pred materializacijo.
+Capture3/kandidati/podpisi/pini/pravice/ročne odobritve ohranijo stroge
+zavrnitve; ista2poskusa, brez spreminjanja starih podpisanih zahtevkov.
+9novih ensurePASS(poskus3: fixtureFAIL, stari praviFAIL, popravljeniPASS),
+3dodatni discoveryPASS(poskus1); stari uspešni testi niso ponovljeni.
+HTTPstariFAIL potrjen(poskus2, prvi samo compilefixtureFAIL); popravljeni
+prviFAIL razkrije forOffer mejo, drugiPASS na ISTEM stanju brez čarovnika.
+Nov zero-opening račun v istemparentu,2choices,0error/0unresolved/0rateLimits,
+saldo33,33EUR/strošek12,34EUR, vsi3phase-finance in vseh48phase-signed
+zahtevkov točno ohranjeni (tudi prvotna2/42). Docker59776 spet ustavljen,
+zasebno stanje ohranjeno; prod/stareQA/mobile/SDK/locks/Firebase/urnik isti.
+Spodnji OPEN za source_set_changed je zgodovina pred tem popravkom.
+P0/mobile/P8/N7 ostajajo odprti. Končna analiza v zapisu, commit/push;
+brez native namestitve ali ponovitve prejšnjega benchmarka.
+
 20. oktober — **skupno preverjeno branje financ zaključeno v izvoru** po
 naročilu samo prvega nadaljevanja; trije GPT-6.1 Sol/high, glavni pregled.
 [Izvedba in dokazi](docs/E2EE_FINANCE_READ_REUSE.md): per-scope kontekst
