@@ -19,6 +19,7 @@ class CryptoAuthoritySnapshot {
     required this.isValid,
     required this.onMutation,
     this.accountAfterGeneration,
+    this.directoryAfterGenerations,
   });
 
   final CryptoAuthorityRead read;
@@ -26,6 +27,7 @@ class CryptoAuthoritySnapshot {
   final Future<bool> Function() isValid;
   final void Function() onMutation;
   final Future<int> Function()? accountAfterGeneration;
+  final Future<Map<String, int>> Function()? directoryAfterGenerations;
   bool _active = true, _unsupported = false, _capabilityChecked = false;
   final _entries = <String, Map<String, dynamic>>{};
   final _attempted = <String>{};
@@ -265,10 +267,14 @@ class CryptoAuthoritySnapshot {
     Map<String, dynamic> response;
     try {
       final after = await accountAfterGeneration?.call() ?? 0;
+      final directoryAfter =
+          await directoryAfterGenerations?.call() ?? const <String, int>{};
       if (!_active || !await isValid()) return;
       response = await read('crypto2.authority.snapshot', {
         ...selector,
         'accountAfterGeneration': after,
+        if (directoryAfter.isNotEmpty)
+          'directoryAfterGenerations': directoryAfter,
       });
     } on CollaborationApiException catch (error) {
       if (!const {

@@ -93,6 +93,7 @@ class AccountDirectoryRepository {
           _verified?.generation ??
           (await store.anchor(accountId))?['generation'] as int? ??
           0,
+      directoryAfterGenerations: _verifiedDirectoryCursorHints,
     );
     try {
       return await runZoned(
@@ -104,6 +105,32 @@ class AccountDirectoryRepository {
     } finally {
       snapshot.close();
     }
+  }
+
+  /// A transport hint for the own prefix already replayed by this repository.
+  /// This skips repeated unused log bodies, not any consumer's proof replay.
+  /// A cold/incomplete or changed local prefix keeps the original page-zero
+  /// bundle; a missing historical page still uses its exact ordinary endpoint.
+  Future<Map<String, int>> _verifiedDirectoryCursorHints() async {
+    _current();
+    final verified = _verified;
+    if (verified == null) return const {};
+    final anchor = await store.anchor(accountId);
+    _current();
+    if (!identical(_verified, verified) ||
+        anchor == null ||
+        anchor['serverId'] != session.profile.serverId ||
+        anchor['accountId'] != accountId ||
+        anchor['trustState'] != 'verified' ||
+        anchor['generation'] != verified.generation ||
+        anchor['headHash'] != verified.headHash ||
+        anchor['snapshotHash'] != verified.snapshotHash ||
+        anchor['fingerprint'] != verified.rootFingerprint) {
+      return const {};
+    }
+    // At most one account, independent of catalog size. Contact and lifecycle
+    // hints are deliberately absent: their consumers may need full histories.
+    return {accountId: verified.generation};
   }
 
   Future<Map<String, dynamic>> _callDirect(

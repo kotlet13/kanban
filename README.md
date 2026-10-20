@@ -1,5 +1,12 @@
 # Jivie
 
+**20. oktober — manj prenosa že preverjene zgodovine računa:** običajni
+testni sync prejme714.801 B namesto1.363.662 B odgovorov (približno48 % manj).
+Število zahtevkov ostane69, pomemben časovni pospešek ni dokazan.
+14novih ciljnih kontrol in primerjalni HTTP tok PASS; podatki ohranjeni.
+[Izvedba in omejitve](docs/E2EE_AUTHORITY_DIRECTORY_TRANSFER.md).
+Svežina pravic, podpisi in urnik so enaki; brez produkcijske namestitve.
+
 **20. oktober — izmerjena hitrost običajne sinhronizacije:** na ohranjenem
 majhnem lokalnem testnem naboru tri osvežitve brez novih vnosov trajajo
 1,05–1,10 s, vsaka69 HTTP/1,32 MB odgovorov; en urejen naslov1,94 s/137 HTTP.

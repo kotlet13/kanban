@@ -1,5 +1,22 @@
 # Navodila za delo na projektu
 
+20. oktober — **prenos preverjenega lastnega imenika zmanjšan** po naročilu
+naslednje optimizacije; trije GPT-6.1 Sol/high, glavni/neodvisni pregled.
+[Izvedba in meje](docs/E2EE_AUTHORITY_DIRECTORY_TRANSFER.md):33vrstic/2datoteki,
+obstoječi directoryAfterGenerations samo za lasten rekonstruiran prefix ob
+točnem ujemanju varnega sidra; cold/mismatch brez namiga, zgodovinski
+after0 pade na izvirno podpisano branje. Brez sharedauthority/TTL/urnika/
+kvote/Firebase/server/schema sprememb.12novih guardPASSposkus1,2podpisana
+fallbackPASSposkus2(prvi samo fixturepinFAIL), scoped0error/0warning/1oldinfo.
+HTTP609cc52→nova koda na enakih ločenih postedit kopijah:69→69HTTP,
+1.363.662→714.801B odgovorov(−47,58%), zahtevki+936B. Čas1,093→1,084s
+je šum, pomemben pospešek ni dokazan. Authority13/capability17 ostaneta.
+Strežniški checkpoint med vejama napreduje(+2.374B inventory), dokumentirano.
+Obe veji prviPASS,6ciklov200/0error429,3finance/62predhodnihsigned točno
+ohranjeni, saldo33,33/strošek12,34,vrste0/0/0. Originalni klient isti;
+Docker59776 spet ustavljen. Prod/stareQA/native/SDK/locks nedotaknjeni.
+P0/mobile/P8/N7 ostajajo odprti; ni ponavljanja starihPASS ali novega urejanja.
+
 20. oktober — **namenska meritev hitrosti sinhronizacije PASS**.
 [Rezultati in meje](docs/E2EE_SYNC_SPEED_2026_10_20.md): isti zasebni
 Docker59776/odjemalec, trenutna73fd3d6, brez produkcijskih sprememb.
