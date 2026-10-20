@@ -95,6 +95,11 @@ class _Transport extends HttpCollaborationTransport {
   _Transport(this.wire) : super(client: wire);
   final _Wire wire;
   final calls = <Map<String, Object?>>[];
+  final scopeLabels = <String, String>{};
+  String? dispatchLabel;
+  int? dispatchSequence;
+  String? directoryRead;
+  List<String>? directoryParamNames;
   @override
   Future<Map<String, dynamic>> call({
     required String serverUrl,
@@ -103,7 +108,27 @@ class _Transport extends HttpCollaborationTransport {
     String? token,
     bool allowLocalHttp = false,
   }) async {
-    final metric = <String, Object?>{'operation': operation, 'errorCode': null};
+    final metric = <String, Object?>{
+      'operation': operation,
+      'errorCode': null,
+      'dispatch': dispatchLabel,
+      'dispatchSequence': dispatchSequence,
+      // Only fixture-relative labels and public request-shape counts leave the
+      // transport. Do not log scope/account IDs, tokens, hashes or payloads.
+      if (operation == 'crypto2.authority.snapshot')
+        'snapshotSelector': {
+          'triggerOperation': directoryRead,
+          'triggerParamNames': directoryParamNames,
+          'scope': params['scopeId'] == null
+              ? 'account_catalog'
+              : scopeLabels[params['scopeId']] ?? 'other',
+          'includeChildren': params['includeChildren'] == true,
+          'accountAfterGeneration': params['accountAfterGeneration'],
+          'directoryHintCount': params['directoryAfterGenerations'] is Map
+              ? (params['directoryAfterGenerations'] as Map).length
+              : 0,
+        },
+    };
     calls.add(metric);
     final watch = Stopwatch()..start();
     try {
@@ -126,6 +151,36 @@ class _Transport extends HttpCollaborationTransport {
   }
 }
 
+class _Directory extends AccountDirectoryRepository {
+  _Directory({
+    required super.reducer,
+    required super.session,
+    required _Transport transport,
+    required super.store,
+    required super.isCurrent,
+  }) : traceTransport = transport,
+       super(transport: transport);
+
+  final _Transport traceTransport;
+
+  @override
+  Future<Map<String, dynamic>> call(
+    String operation, [
+    Map<String, dynamic> params = const {},
+  ]) async {
+    final previousRead = traceTransport.directoryRead;
+    final previousNames = traceTransport.directoryParamNames;
+    traceTransport.directoryRead = operation;
+    traceTransport.directoryParamNames = params.keys.toList()..sort();
+    try {
+      return await super.call(operation, params);
+    } finally {
+      traceTransport.directoryRead = previousRead;
+      traceTransport.directoryParamNames = previousNames;
+    }
+  }
+}
+
 class _Router extends CryptoBusinessRouter {
   _Router({
     required super.database,
@@ -134,6 +189,7 @@ class _Router extends CryptoBusinessRouter {
   });
   final _Transport transport;
   final segments = <Map<String, Object?>>[];
+  int _dispatchSequence = 0;
   @override
   Future<Map<String, dynamic>> dispatch({
     required DeviceSession session,
@@ -142,6 +198,11 @@ class _Router extends CryptoBusinessRouter {
     required Set<String> protectedScopeIds,
   }) async {
     final start = transport.wire.calls.length;
+    final previousLabel = transport.dispatchLabel;
+    final previousSequence = transport.dispatchSequence;
+    final sequence = ++_dispatchSequence;
+    transport.dispatchLabel = operation;
+    transport.dispatchSequence = sequence;
     final watch = Stopwatch()..start();
     try {
       return await super.dispatch(
@@ -154,9 +215,12 @@ class _Router extends CryptoBusinessRouter {
       watch.stop();
       segments.add({
         'dispatch': operation,
+        'dispatchSequence': sequence,
         'httpRequests': transport.wire.calls.length - start,
         'elapsedMicroseconds': watch.elapsedMicroseconds,
       });
+      transport.dispatchLabel = previousLabel;
+      transport.dispatchSequence = previousSequence;
     }
   }
 }
@@ -274,7 +338,7 @@ void main() {
       final transport = _Transport(_Wire());
       final codec = CryptoCodec(await SodiumInit.init());
       final account = AccountCryptoV2Workflow(
-        AccountDirectoryRepository(
+        _Directory(
           reducer: AccountDirectoryV2(codec),
           session: session,
           transport: transport,
@@ -320,6 +384,7 @@ void main() {
               as Map;
       final parent = setup['parent'] as String,
           child = setup['child'] as String;
+      transport.scopeLabels.addAll({parent: 'parent', child: 'child'});
       final result = output.existsSync()
           ? Map<String, Object?>.from(
               jsonDecode(await output.readAsString()) as Map,
@@ -450,6 +515,9 @@ void main() {
           'after': after,
           'httpOperations': _aggregate(httpCalls),
           'rpcOperations': _aggregate(rpcCalls),
+          'authoritySnapshotCalls': rpcCalls
+              .where((c) => c['operation'] == 'crypto2.authority.snapshot')
+              .toList(),
           'businessDispatches': router.segments.skip(dispatchStart).toList(),
         };
         (result['samples'] as List).add(metric);

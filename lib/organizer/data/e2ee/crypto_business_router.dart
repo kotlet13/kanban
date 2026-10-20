@@ -130,6 +130,7 @@ class CryptoBusinessRouter
       return await runZoned(read, zoneValues: {_combinedFinanceRead: combined});
     } finally {
       combined.active = false;
+      combined.authority?.close();
       combined.reads.close();
     }
   }
@@ -257,6 +258,7 @@ class CryptoBusinessRouter
             ).hasMatch(operation) ||
             operation == 'finance3.payments');
     if (combined != null && !combinedRead) {
+      combined.authority?.close();
       combined.reads.invalidate();
       access.invalidateAuthorityOperation();
     }
@@ -273,7 +275,17 @@ class CryptoBusinessRouter
       financeReads: combinedRead ? combined.reads : null,
       invalidateFinanceReads: combined?.reads.invalidate,
     );
-    return access.withVerifiedOperation(() async {
+    Future<Map<String, dynamic>> runRead(
+      Future<Map<String, dynamic>> Function() body,
+    ) {
+      Future<Map<String, dynamic>> verified() =>
+          access.withVerifiedOperation(body);
+      return combinedRead
+          ? (combined.authority ??= access.createReadOperation()).run(verified)
+          : verified();
+    }
+
+    return runRead(() async {
       final adapters = configurePayloads(runtime);
       final documents = adapters.documents, payments = adapters.payments;
       final invitations = InviteCryptoRepository(access);
@@ -417,6 +429,7 @@ class _CombinedFinanceRead {
   final DeviceSession session;
   AccountCryptoV2Workflow? account;
   SessionCryptoAccess? access;
+  CryptoVerifiedReadOperation? authority;
   Future<void>? _initializing;
   Future<void> initialize() => _initializing ??= _initialize();
   Future<void> _initialize() async {
@@ -1332,7 +1345,9 @@ class CryptoBusinessSession {
         }
       }
     });
-    if (domain == 'finance' && !_resolvingTaskCosts) {
+    if (domain == 'finance' &&
+        !_resolvingTaskCosts &&
+        await cryptoHasTaskDerivations(db, p, scopeId)) {
       await access.withVerifiedOperation(
         () => reconcileTaskDerivations(scopeId),
         freshBoundary: true,

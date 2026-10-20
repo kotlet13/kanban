@@ -1,5 +1,13 @@
 # Jivie
 
+**20. oktober — manj ponavljanja dokazil pravic pri financah:** zaporedna
+branja istega prostora uporabijo isto preverjeno podlago s prvotno
+petsekundno mejo. Testni cikel: 54 → 47 HTTP zahtevkov, 13 → 6 snapshotov
+in približno 44 % manj prenesenih podatkov v odgovorih. Petnajst novih kontrol, en
+prizadeti obstoječi primer in primerjalni HTTP tok PASS; podatki ohranjeni.
+[Izvedba, meritve in meje](docs/E2EE_FINANCE_AUTHORITY_REUSE.md).
+Brez produkcijske ali native namestitve.
+
 **20. oktober — manj poizvedb o strežniških funkcijah:** znotraj enega
 synca se javni capability odgovor pridobi enkrat na način avtentikacije.
 Dejanska primerjava:17→2 capability klica,69→54 HTTP zahtevkov skupaj

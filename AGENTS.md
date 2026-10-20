@@ -1,5 +1,23 @@
 # Navodila za delo na projektu
 
+20. oktober — **skupna dokazila pravic med finančnim branjem zaključena**.
+[Izvedba in dokazi](docs/E2EE_FINANCE_AUTHORITY_REUSE.md): GPT-6.1 Sol/high
+podagenti, glavni in neodvisni pregled PASS. Isti operation/snapshot/prvotna
+5s ura znotraj obstoječega per-scope finance konteksta; napaka, mutacija,
+fresh boundary, sočasnost, lifecycle/identity/pin/generation umaknejo uporabo.
+Pin union razveljavi tudi stare podlage; prazni task reconciliation brez
+nepotrebne sveže meje, neprazni ohrani notranji guard in fresh boundary.
+15 novih kontrol PASS (10 prvi poskus, 5 signed drugi po HTTP stub fixture
+popravku); en prizadeti no-op primer PASS drugi poskus po fixture popravku.
+Končna scoped analiza 0 error/0 warning/66 starih info. Primerjava 5cca8bb
+in nove kode obe prvi PASS: 54→47 HTTP, 13→6 snapshotov, 683.951→383.867 B
+odgovorov (−43,88 %), povprečje 1,015→0,859 s le dva loopback vzorca.
+Inventory +2.380 B zaradi checkpointa ločeno; 3 finance/62 starih podpisanih
+zahtevkov točno ohranjeni, saldo 33,33/strošek 12,34, vrste/napake/429 nič.
+Originalni klient in 55 predhodnih dokazov isti; Docker59776 spet ustavljen.
+Brez starih PASS/native ponovitev, produkcija/stare QA/SDK/locks isti.
+P0/mobile/P8/N7 ostajajo odprti; ni nove namestitve ali trditve pripravljenosti.
+
 20. oktober — **capability poizvedbe združene znotraj enega synca** po
 naročilu naslednjega cilja; GPT-6.1 Sol/high podagenti/glavni pregled.
 [Izvedba in dokazi](docs/E2EE_SYNC_CAPABILITY_DISCOVERY.md): točen

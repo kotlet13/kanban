@@ -9,6 +9,8 @@ import 'recovery_file_codec.dart';
 
 import 'account_crypto_v2_workflow.dart';
 import 'account_directory_v2.dart';
+import 'account_directory_repository.dart'
+    show CryptoDirectoryAuthoritySnapshot;
 import 'crypto_identity_verification.dart';
 import 'crypto_json.dart';
 import 'crypto_record_proof_codec.dart';
@@ -360,6 +362,75 @@ class _AuthorityOperation {
   final heads = <String, VerifiedScopeHead>{};
   final directories = <String, VerifiedAccountDirectory>{};
   final pins = <String, String?>{};
+}
+
+/// Retains the SAME proof memo, transport snapshot and original clock across
+/// sequential consumers of one combined financial read. Closed handles never
+/// resume; their callers fall back to ordinary independently verified reads.
+class CryptoVerifiedReadOperation {
+  CryptoVerifiedReadOperation._(this._owner);
+  final SessionCryptoAccess _owner;
+  _AuthorityOperation? _operation;
+  CryptoDirectoryAuthoritySnapshot? _snapshot;
+  bool _active = true, _running = false;
+
+  void close() {
+    _active = false;
+    final operation = _operation;
+    if (operation != null) {
+      operation.active = false;
+      operation.heads.clear();
+      operation.directories.clear();
+      operation.pins.clear();
+    }
+    _snapshot?.close();
+  }
+
+  void _discard() {
+    if (!_active) return;
+    close();
+    _owner.invalidateAuthorityOperation();
+  }
+
+  Future<T> run<T>(Future<T> Function() body) async {
+    if (_running) _discard();
+    if (!_active) return _owner.withVerifiedOperation(body);
+    _running = true;
+    final operation = _operation ??= _AuthorityOperation(_owner);
+    final snapshot = _snapshot ??= _owner.account.directory
+        .createAuthoritySnapshot(
+          isValid: () async =>
+              _active &&
+              identical(_owner._operation, operation) &&
+              await _owner._operationPinsValid(operation),
+          onMutation: _discard,
+          onFailure: _discard,
+        );
+    try {
+      return await runZoned(
+        () => snapshot.run(() async {
+          if (!await _owner._operationPinsValid(operation)) {
+            _discard();
+            return _owner.withVerifiedOperation(body);
+          }
+          final result = await body();
+          if (_active && !await _owner._operationPinsValid(operation)) {
+            _discard();
+          }
+          return result;
+        }),
+        zoneValues: {
+          SessionCryptoAccess._operationKey: operation,
+          SessionCryptoAccess._retainedReadKey: this,
+        },
+      );
+    } catch (_) {
+      _discard();
+      rethrow;
+    } finally {
+      _running = false;
+    }
+  }
 }
 
 /// A read-only capability for one exact authenticated predecessor chain.
@@ -1611,6 +1682,10 @@ class SessionCryptoAccess {
   }
 
   static final _operationKey = Object();
+  static final _retainedReadKey = Object();
+
+  CryptoVerifiedReadOperation createReadOperation() =>
+      CryptoVerifiedReadOperation._(this);
 
   /// A bounded logical read uses one verified authority snapshot. Every write
   /// delivery starts a fresh boundary; server ACL checks remain per request.
@@ -1618,6 +1693,14 @@ class SessionCryptoAccess {
     Future<T> Function() body, {
     bool freshBoundary = false,
   }) async {
+    if (freshBoundary) {
+      final retained = Zone.current[_retainedReadKey];
+      if (retained is CryptoVerifiedReadOperation &&
+          identical(retained._owner, this) &&
+          retained._active) {
+        retained._discard();
+      }
+    }
     final inherited = Zone.current[_operationKey];
     if (!freshBoundary &&
         inherited is _AuthorityOperation &&

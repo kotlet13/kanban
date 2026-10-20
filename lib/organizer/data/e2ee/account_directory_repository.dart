@@ -10,10 +10,35 @@ import 'crypto_json.dart';
 import 'crypto_authority_snapshot.dart';
 import 'crypto_capability_discovery.dart';
 
-class _DirectoryAuthoritySnapshot {
-  const _DirectoryAuthoritySnapshot(this.owner, this.snapshot);
-  final AccountDirectoryRepository owner;
-  final CryptoAuthoritySnapshot snapshot;
+/// Owns transport material for exactly one bounded verified operation.
+class CryptoDirectoryAuthoritySnapshot {
+  const CryptoDirectoryAuthoritySnapshot._(
+    this._owner,
+    this._snapshot,
+    this._onFailure,
+  );
+  final AccountDirectoryRepository _owner;
+  final CryptoAuthoritySnapshot _snapshot;
+  final void Function()? _onFailure;
+
+  Future<Map<String, dynamic>> _call(
+    String operation,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      return await _snapshot.call(operation, params);
+    } catch (_) {
+      _onFailure?.call();
+      rethrow;
+    }
+  }
+
+  Future<T> run<T>(Future<T> Function() body) => runZoned(
+    body,
+    zoneValues: {AccountDirectoryRepository._authoritySnapshotZone: this},
+  );
+
+  void close() => _snapshot.close();
 }
 
 /// A complete signed prefix is identity evidence, not an assertion that the
@@ -67,9 +92,9 @@ class AccountDirectoryRepository {
   ]) async {
     _current();
     final snapshot = Zone.current[_authoritySnapshotZone];
-    if (snapshot is _DirectoryAuthoritySnapshot &&
-        identical(snapshot.owner, this)) {
-      final result = await snapshot.snapshot.call(operation, params);
+    if (snapshot is CryptoDirectoryAuthoritySnapshot &&
+        identical(snapshot._owner, this)) {
+      final result = await snapshot._call(operation, params);
       _current();
       return result;
     }
@@ -83,7 +108,24 @@ class AccountDirectoryRepository {
     required Future<bool> Function() isValid,
     required void Function() onMutation,
   }) async {
-    final snapshot = CryptoAuthoritySnapshot(
+    final snapshot = createAuthoritySnapshot(
+      isValid: isValid,
+      onMutation: onMutation,
+    );
+    try {
+      return await snapshot.run(body);
+    } finally {
+      snapshot.close();
+    }
+  }
+
+  CryptoDirectoryAuthoritySnapshot createAuthoritySnapshot({
+    required Future<bool> Function() isValid,
+    required void Function() onMutation,
+    void Function()? onFailure,
+  }) => CryptoDirectoryAuthoritySnapshot._(
+    this,
+    CryptoAuthoritySnapshot(
       read: _callDirect,
       serverId: session.profile.serverId,
       accountId: accountId,
@@ -95,18 +137,9 @@ class AccountDirectoryRepository {
           (await store.anchor(accountId))?['generation'] as int? ??
           0,
       directoryAfterGenerations: _verifiedDirectoryCursorHints,
-    );
-    try {
-      return await runZoned(
-        body,
-        zoneValues: {
-          _authoritySnapshotZone: _DirectoryAuthoritySnapshot(this, snapshot),
-        },
-      );
-    } finally {
-      snapshot.close();
-    }
-  }
+    ),
+    onFailure,
+  );
 
   /// A transport hint for the own prefix already replayed by this repository.
   /// This skips repeated unused log bodies, not any consumer's proof replay.

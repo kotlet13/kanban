@@ -22,6 +22,12 @@ class _Directory implements AccountDirectoryRepository {
   @override
   String get accountId => 'owner';
   @override
+  Future<T> withAuthoritySnapshot<T>(
+    Future<T> Function() body, {
+    required Future<bool> Function() isValid,
+    required void Function() onMutation,
+  }) => body();
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw StateError('No transport or directory proof expected at this seam');
 }
@@ -158,7 +164,7 @@ void main() {
       expect(access.keyAdmissions, 1);
       expect(runtime.verifiedQueue.pulls, 1);
       expect(access.heads, 0);
-      expect(access.boundaries, [false, true]);
+      expect(access.boundaries, [false]);
     },
   );
 
