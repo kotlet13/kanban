@@ -1,5 +1,12 @@
 # Jivie
 
+**20. oktober — izmerjena hitrost običajne sinhronizacije:** na ohranjenem
+majhnem lokalnem testnem naboru tri osvežitve brez novih vnosov trajajo
+1,05–1,10 s, vsaka69 HTTP/1,32 MB odgovorov; en urejen naslov1,94 s/137 HTTP.
+Brez napak ali429, podatki ohranjeni. Authority snapshot odgovori predstavljajo
+89,4 % prenosa običajnega cikla. [Meritev in omejitve](docs/E2EE_SYNC_SPEED_2026_10_20.md);
+to ni meritev telefona/interneta ali dokaz pospešitve proti prejšnji izdaji.
+
 **20. oktober — skupno preverjeno branje financ v izvoru:** glavni finančni
 pull, izbira računov in povezana plačila znotraj iste obdelave prostora
 ponovno uporabijo nespremenjeno preverjeno podlago. Novi ciljni testi20 PASS,

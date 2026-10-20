@@ -1,5 +1,18 @@
 # Navodila za delo na projektu
 
+20. oktober — **namenska meritev hitrosti sinhronizacije PASS**.
+[Rezultati in meje](docs/E2EE_SYNC_SPEED_2026_10_20.md): isti zasebni
+Docker59776/odjemalec, trenutna73fd3d6, brez produkcijskih sprememb.
+Začetni cikel1,976s/99HTTP; trije brez novih vnosov1,100/1,052/1,053s,
+vsak69HTTP/1.316.134B odgovorov; en title-only edit1,935s/137HTTP,
+pending1→0,0napak/429, isti saldo/vnosi/53starih podpisanih zahtevkov.
+Authority snapshot13klicev/89,4%prejetih teles v običajnem ciklu; capability17.
+To je loopback majhen nabor, ne mobile/internet ali dokaz odstotka pospešitve.
+Prvi HTTPtekPASS, pred njim popravljena statična napaka novega ogrodja;
+uspešni scenariji niso ponovljeni. Docker spet ustavljen, izvirnik enega
+spremenjenega testnega naslova zasebno ohranjen. Naslednje optimizacije samo
+predlog; produkcija/stareQA/native/SDK/locks/urnik/Firebase nedotaknjeni.
+
 20. oktober — **samodejna obnova zastarele izbire računov popravljena** po
 novem izrecnem naročilu; dva GPT-6.1 Sol/high, glavni/neodvisni pregled.
 [Izvedba in dokazi](docs/E2EE_ACCOUNT_CHOICES_STALE_RECOVERY.md): `ensure`
