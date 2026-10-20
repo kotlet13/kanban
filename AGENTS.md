@@ -1,5 +1,16 @@
 # Navodila za delo na projektu
 
+20. oktober — **selektivno čiščenje Dockerja**.
+Odstranjenih16 starih ustavljenih documents/moderation/lifecycle testnih
+vsebnikov,15 dokazano praznih pripadajočih volumes,8 praznih projektnih
+omrežij,2 neuporabljeni tokenizer/FCM testni sliki in en tokenizer cache
+zapis. Vseh52 drugih vsebnikov ohrani status/image/mounts; vsi neprazni
+volumes ostanejo, tudi pri odstranjenih starih vsebnikih. Aktualni mobilni,
+Mac/legacy/benchmark testi, obnovljene kopije in drugi projekti ohranjeni.
+Ni global prune; iPhone težave nismo nadaljevali. Dokaz:
+`build/qa/cleanup-20261020/docker-cleanup-manifest.json`; majhne zasebne
+konfiguracije odstranjenih vsebnikov so v JivieLocalTest/docker-cleanup-20261020.
+
 20. oktober — **čiščenje prostora po izrecnem naročilu uporabnika**.
 Odstranjenih 284 regenerabilnih map prevajanja iz repozitorijevih
 `build`/`.dart_tool` in zasebnih `share-20261019/source-a,b`: Xcode
