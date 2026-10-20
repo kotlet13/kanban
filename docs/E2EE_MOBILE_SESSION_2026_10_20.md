@@ -3,8 +3,10 @@
 **Aktualni checkpoint: obe testni aplikaciji sta posodobljeni; Android
 bootstrap in en običajni samodejni sync po povezavi Wi-Fi sta PASS.
 Lastnikova odobritev in predaja parent/child ključev sta strežniško PASS;
-iOS prvo nadaljevanje je pokazalo generično napako neznanega vzroka.
-Dejansko B branje skupne vsebine še čaka.** Po vrnitvi
+iOS nadaljevanje tudi v tretjem in zadnjem native poskusu odpove z
+`directory_proof_pending` pri `preview_resume_accepted`. Nadaljevanje je
+FAIL/SKIP po treh poskusih; odvisni B prikaz in mobilni scenariji so
+BLOCKED, brez četrtega kroga.** Po vrnitvi
 je uporabnik priključil in odklenil oba telefona ter odobril namestitev in
 skupne preizkuse. Nadaljujemo isti S25/A in iPhone 11/B, ista računa,
 projekt in prvotno že sprejeto povabilo iz
@@ -24,7 +26,7 @@ je opisano spodaj. To ne pomeni, da je treba ponoviti sprejem: prvi omejeni
 strežniški pregled je potrdil že sprejeto prvotno povabilo. En pozneje
 dostavljeni owner Confirm je uspešno porabil isti sprejem ter aktiviral
 parent in child z B ključi. Novega povabila ali accept ni bilo; dejansko
-B branje ostaja ločeno preverjanje.
+B branje ostaja ločeno, zdaj blokirano preverjanje.
 
 | Preverjanje | Dejanski izid in meja |
 | --- | --- |
@@ -32,11 +34,11 @@ B branje ostaja ločeno preverjanje.
 | iOS namestitev | PASS v prvem poskusu: isti QA bundle/storage service/group; šifrirani vault ima pred/po iste hashe. Sistem je zamenjal pot podatkovnega vsebnika, ne vsebine vaulta. |
 | Android prvi zagon | FAIL pri težavi zagona, poskus 1: `PlatformException`, `channel-error` za `PathProviderApi.getApplicationDocumentsPath`; faza bootstrap `null`. Pakirni vzrok potrjen, brez dokaza napake šifriranih podatkov. |
 | Android popravek | Bootstrap PASS v poskusu 2: popravljeni APK je nameščen; po enem običajnem zagonu VM potrdi `ready`, brez izjeme. Uporabnik je potrdil običajni prikaz; poznejši sync je v ločenem zapisu spodaj. |
-| iOS zagon / prvo nadaljevanje | Po znanem retained-copy opozorilu in fizičnem Continue isti predogled. Po owner grantu prvo nadaljevanje FAIL z generično napako; vzrok neznan, drugega Retry ni. |
+| iOS nadaljevanje | Poskus 1 FAIL z generično napako; poskusa 2 in 3 FAIL z dokazanim `preview_resume_accepted/CryptoAuthorityPending/directory_proof_pending`. Po tretjem FAIL/SKIP, brez četrtega Retry/build/fix kroga. |
 | Prvotno povabilo | Read-only PASS za ohranitev: en isti sprejem 18. oktobra, po owner grantu `consumed`, brez nadomestitve/novega sprejema. |
 | Android navadni samodejni sync | PASS po uporabnikovi povezavi Wi-Fi: ni v teku, 0 pending/conflicting/blocked, brez napake; ni ročnega Sync/Retry. |
 | Owner grant parent/child | PASS po enem dejansko dostavljenem Confirm: isti sprejem consumed, parent/child active epoch2 in B granti. |
-| B branje skupne vsebine | PENDING; ni novega PASS. |
+| B branje skupne vsebine in odvisni mobilni testi | BLOCKED zaradi neuspešnega iOS nadaljevanja; ni novega PASS. |
 
 Android ob **16:04:34 UTC** prejme APK SHA-256
 `7fef105a9341b5ee6378a3d4e7004e6e0b0a028f24f077b73adbcdb79f15a72b`.
@@ -107,8 +109,12 @@ sta ločena od poznejšega uporabnikovega Continue in prikaza povabila.
 [iOS konzolni zajem](../build/qa/jivie-mobile-readiness-20261020/ios/later-capture-20261020T160918Z/result.json)
 je trajal 180,16 s in ni dobil nobene NET oznake. Ustavljen je bil samo
 host konzolni proces; telefonu ni bil poslan signal ali nov zagon.
-Dejanska povezanost konzole zato ostaja nepotrjena, nič oznak pa ne dokazuje
-odsotnosti HTTP prometa.
+Ta prvi zajem ni potrdil povezanosti konzole; nič oznak ni dokaz odsotnosti
+HTTP prometa. Poznejši [pasivni konzolni zajem istega PID 1147](../build/qa/jivie-mobile-readiness-20261020/ios/passive-console-20261020/20261020T163058Z/result.json)
+se je zaključil ob 16:32:59 UTC po 120,204 s in prejel **47 dovoljenih NET
+oznak, vse HTTP200**. Povezanost konzole je zdaj potrjena. Ni novega zagona,
+UI vnosa, signala telefonu ali shranjenih surovih izpisov. Ta poznejši
+pasivni zajem pa ne določi kode že ujete prvotne UI izjeme.
 
 Strežniški preflight ob **16:03:06 UTC** potrdi isti
 `https://192.168.132.29:18801`, običajno preverjanje istega CA/hostname,
@@ -131,6 +137,8 @@ GET200 so združljivi z običajnimi healthchecki, ne dokaz telefonske povezave.
 | 4 | Naravno nadaljevanje po povezavi Wi-Fi ter poznejši pregled key details; prvi poskus aktivacije PASS, opažen 16:22:03 UTC, zaključek/obnova 16:24:56 UTC. 6 GET200, 175 POST200; skupaj 481.139 B odgovorov. Brez ročnega Sync/Retry/zagona; pred zaključkom ni potrjenega Confirm. [Dokaz](../build/qa/jivie-mobile-readiness-20261020/joint-session/server-metadata-window4-summary.json). |
 | 5 | Pred owner Confirm prvi poskus aktivacije PASS, opažen 16:25:08 UTC, zaključek/obnova 16:28:01 UTC. 6 GET200 in 247 POST200; skupaj 642.515 B odgovorov. Prva dva dotika nista sprožila dejanja; točno prekrivanje dejanskega začetka z oknom ni dokazano. [Dokaz](../build/qa/jivie-mobile-readiness-20261020/joint-session/server-metadata-window5-summary.json). |
 | 6 | Pred nadaljevanjem istega iOS predogleda prvi poskus aktivacije PASS, opažen 16:29:25 UTC, zaključek/obnova 16:32:19 UTC. 6 GET200 in 390 POST200; skupaj 1.852.081 B odgovorov. UI napaka ni vezana na konkretno operacijo/klienta. Zajem je nato OFF. [Dokaz](../build/qa/jivie-mobile-readiness-20261020/joint-session/server-metadata-window6-summary.json). |
+| 7 | Pred enim diagnostic iOS zagonom/Continue prvi poskus aktivacije PASS, opažen 16:44:21 UTC, zaključek/obnova 16:47:15 UTC. 6 GET200 in 348 POST200; skupaj 1.499.197 B odgovorov. Dejanski samodejni resume je poskus 2; njegova koda prihaja iz klientovega cache dokaza. Zajem je OFF. [Dokaz](../build/qa/jivie-mobile-readiness-20261020/joint-session/server-metadata-window7-summary.json). |
+| 8 | Pred finalnim iOS enim zagonom aktiviran v prvem poskusu, opažen 16:55:41 UTC, zaključek/obnova 16:58:35 UTC. 6 GET200 in 230 POST200; skupaj 1.018.980 B odgovorov. Native resume je poskus 3 FAIL, koda iz dveh v2 cache datotek. Izvirna gateway konfiguracija točno obnovljena, zajem OFF. [Dokaz](../build/qa/jivie-mobile-readiness-20261020/joint-session/server-metadata-window8-summary.json). |
 
 Prva dva poskusa aktivacije okna 2 sta odpovedala pri `nginx -t` nad
 spremenjenim bindom, pred aktivacijo zajema. Oba sta povrnila izvirno
@@ -208,14 +216,109 @@ Fake fixture napakami; tretji tek po popravku fixture in callbacka je PASS.
 To ni čist samostojen baseline z zadnjim fixture, zato te meje ne skrivamo.
 Analiza: 0 error/0 warning, dva stara slogovna info. Glavni in
 [neodvisni izvorni pregled](../build/qa/jivie-mobile-readiness-20261020/joint-session/sharing-members-grant-return-independent-review.json)
-sta PASS, brez novega teka testov pri neodvisnem pregledu. To je source
-popravek; ni dokaz nove native namestitve tega popravka ali pojasnilo
+sta PASS, brez novega teka testov pri neodvisnem pregledu. Popravek je
+commit/push `d7533f9`. To je source popravek; ni dokaz nove native namestitve tega popravka ali pojasnilo
 neznane iOS napake nadaljevanja. Owner granta ne ponavljamo zaradi te regresije.
+
+Za neznano iOS napako je po glavnem in neodvisnem Android pregledu PASS
+odobren **QA-only diagnostični kandidat z dvema datotekama**:
+[izvorni preflight](../build/qa/jivie-mobile-readiness-20261020/ios/continuation-diagnostic-proposal-20261020/candidate/source-preflight.json).
+Ozek catch ovitek v `invitation_wizard.dart` in novi pomočnik zapišeta samo
+končno oznako faze, fiksni razred in dovoljeno kodo prve napake. Dve majhni
+datoteki sta v `Library/Caches/jivie_qa_invitation_continuation_20261020`,
+izven native retained-copy scannerja za Documents/tmp. Ni surovega sporočila,
+stacka, payloadov, tokenov ali identitet; diagnostični IO ne postane pogoj
+za aplikacijsko logiko in ne spremeni prvotne izjeme. TLS, podpisovanje,
+SDK in štiri lock datoteke ostanejo isti. Ena odobrena arhivska gradnja je
+uspešna; [artifact-only dokaz](../build/qa/jivie-mobile-readiness-20261020/ios/continuation-diagnostic-proposal-20261020/candidate/artifact-evidence.json)
+veže IPA SHA-256
+`6051f146e26f49004edb89d6762346249b8172deb285f5b0d2f20840a7885b2c`,
+isti QA podpis/profil/service/group in bajtno enaka nepodpisana sodium ter
+sqlite3mc. Root je paket pregledal PASS. [Ena namestitev ob 16:44:00 UTC](../build/qa/jivie-mobile-readiness-20261020/ios/native-continuation-attempt2-20261020/installation-evidence.json)
+ohrani vse štiri šifrirane vault datoteke pred/po, z novo zasebno kopijo;
+Keychain ni bran ali spreminjan. QA proces pred kopijo in po namestitvi ni
+bil zagnan, podatkovni container UUID se je sistemsko spremenil ob enaki
+vsebini. To je PASS paketa/namestitve, **ne odprave neznanega vzroka**.
+Pred enim običajnim zagonom je ob 16:44:21 UTC potrjeno novo 180-sekundno
+strežniško okno 7. Če ob enem root/CUA Continue skozi staro QA opozorilo
+samodejna obnova izvede nadaljevanje, se šteje kot **poskus 2 iste težave**;
+števca ne ponastavimo. En običajni zagon ob 16:45:16 UTC ima PID 1158. Po enem dostavljenem
+root/CUA Continue je viden računski čarovnik **Zaščita povezanih
+podatkov**: račun še ni pripravljen, vidni sta ohranjeni parent/child kartici
+z oznako encrypted. Povabilni UI še ni prikazan. [Poznejši ozki trajni diagnostični datoteki](../build/qa/jivie-mobile-readiness-20261020/ios/native-continuation-attempt2-20261020/durable-metadata-result.json)
+potrdita, da je samodejno nadaljevanje dejansko teklo in odpovedalo:
+**poskus 2 FAIL — stage `preview_resume_accepted`, razred
+`CryptoAuthorityPending`, koda `directory_proof_pending`**. Za ta poskus je
+koda dokazana; ne sklepamo, da je bil vzrok prve generične napake nujno
+isti. Računski zaščitni čarovnik trenutno prekriva dejansko napako
+nadaljevanja. Takrat ni dodatnega UI dejanja, Retry/Join ali tretjega
+native poskusa, auth poizvedbe, SQL pollinga ali ponovitve granta. Sledi
+ozka izvorna diagnoza glavnega iOS in neodvisnega Android pregleda.
+
+Izvorna diagnoza potrdi konkretno napačno mejo: običajni
+`currentHead(..., online:true)` pri `_ensureInvitationAnchor` ni posredoval
+online namena, zato je helper za zgodovinski creator prefix uporabil offline
+`directoryAt` in zavrnil manjkajoči dokaz z istim `directory_proof_pending`.
+Pripravljen ozki popravek v `session_crypto_access.dart` ohrani helperjev
+privzeti `online=false`; samo dva običajna klica posredujeta svoj obstoječi
+`online`, `directoryAt` pa ga uporabi. Frozen in drugi klici ostanejo na
+prejšnji privzeti meji. Ne gre za sprostitev preverjanja podpisov, pinov ali
+razvejane zgodovine.
+
+[Štiri nove ozke kontrole](../build/qa/jivie-mobile-readiness-20261020/ios/invitation-anchor-fix-20261020/fixed-attempt3.log)
+so PASS v tretjem source poskusu: online hladen zgodovinski prefix,
+offline zavrnitev brez HTTP, ponarejen podpis in fork. Prvi source tek je
+obstal zaradi manjkajočega `pinRoot` v fixture
+(`directory_freshness_pending`); drugi na stari kodi potrdi pravi
+`CryptoAuthorityPending(directory_proof_pending)`; tretji s popravkom
+potrdi štiri PASS. Pozitivni primer se namerno ustavi pri `headGet`
+sentinel izjemi po dveh preverjenih directory branjih: dokazuje prehod
+anchor meje, **ne celotnega resume, ključev ali native prikaza vsebine**.
+Neodvisni Android in glavni pregled popravka ter diff-check so PASS.
+Finalni [kandidatov paket](../build/qa/jivie-mobile-readiness-20261020/ios/invitation-anchor-fix-20261020/candidate/artifact-evidence.json)
+SHA-256 `a08bfa240fbf5e56d6d88199f0993219e7584a96dd27ad60f544cc5bcb829a54`
+je zgrajen in glavno/neodvisno pregledan PASS. Poleg anchor popravka
+vsebuje že pregledani `sharing_members` void callback popravek ter v2
+build/cache oznako, ki ohrani prvotno v1 diagnostiko. SDK/locks/TLS/podpis
+so isti, nepodpisani sodium/sqlite3mc sta bajtno enaka.
+[Ena namestitev ob 16:55:20 UTC](../build/qa/jivie-mobile-readiness-20261020/ios/native-continuation-attempt3-20261020/installation-evidence.json)
+ohrani štiri vault datoteke (1.802.630 B), novo zasebno kopijo in iste
+varne storage identitete; Keychain ni bran ali spremenjen. Pred kopijo je
+bil opažen stari 6051f146 proces neznanega izvora; priprava se je ustavila,
+root je potrdil odsotnost sočasnega UI in proces je bil normalno zaprt.
+Tega opažanja ne štejemo za dokaz novega funkcionalnega poskusa.
+Strežniško okno 8 je potrjeno ob 16:55:41 UTC pred enim običajnim zagonom
+ob 16:55:49 UTC, PID 1170. Samodejni resume po enem root/CUA Continue se je dejansko izvedel kot
+**zadnji native poskus 3 iste težave in FAIL**. [V2 trajni dokaz](../build/qa/jivie-mobile-readiness-20261020/ios/native-continuation-attempt3-20261020/durable-metadata-result.json)
+ponovno pokaže `preview_resume_accepted`, `CryptoAuthorityPending`,
+`directory_proof_pending`. Source anchor kontrole ostanejo štiri PASS,
+vendar **popravek ni odpravil potrjene native meje**; ne trdimo rešene
+native napake ali dokazanega celotnega vzroka. Dosežena je izrecna meja
+treh native poskusov: nadaljevanje označimo FAIL/SKIP, odvisno B branje,
+dvosmerno deljenje, lokalno ločenost po deljenju, finančno članstvo/pravice
+in saldo ter offline/odvzem pa BLOCKED.
+Ni četrtega Retry, builda, novega popravnega kroga, novega računa/fixture,
+ponovnega Join ali owner granta. Source števec je ločen od native
+nadaljevanja (zdaj trije izvedeni poskusi iste težave).
+
+[Končni iOS izid](../build/qa/jivie-mobile-readiness-20261020/ios/native-continuation-attempt3-20261020/outcome.json)
+loči trajni dokaz napake od konzolnega zajema: zadnji pasivni zajem je
+trajal 114,478 s in prejel nič dovoljenih NET oznak, zato povezanost
+konzole v tem zadnjem procesu ni potrjena. Dejanska koda napake je
+preverjena v dveh fiksnih v2 cache datotekah, ne iz odsotnosti konzolnih
+oznak. Zgodnejši uspešni pasivni zajem 47 oznak ostane ločen dokaz.
+iOS PID 1170 je normalno zaprt s SIGTERM in potrjeno odsoten ob
+**16:57:20 UTC**; Android QA PID 6237 je force-stopped in potrjeno odsoten
+ob **16:57:24.073360 UTC**. Ciljana sta samo točna QA paketa, podatki/seji,
+FILE in nameščena paketa ostanejo ohranjeni. Ni odjave, brisanja ali novega
+account/auth/grant dejanja.
 
 Produkcija, originalni trgovinski aplikaciji, Mac 18811 in benchmark 59776
 ostanejo nedotaknjeni. Aktivni QA podatki in FILE so ohranjeni; običajno
 delo aplikacije lahko zapisuje lastne metapodatke. Pri vsaki težavi velja
 isti števec največ treh poskusov: ob tretjem neuspehu dokaz in SKIP/BLOCKED,
 brez novega računa, fixture ali ponastavitve števca. Uspešnih starih scenarijev
-ne ponavljamo. Po potrjenem Android bootstrapu, običajnem samodejnem syncu in enem
-uspešnem owner grantu čaka dejansko B branje; mobile/P0/P8 in produkcijska pripravljenost ostajajo odprti.
+ne ponavljamo. Potrjeni Android bootstrap, običajni samodejni sync in en owner grant
+ostanejo PASS. Po tretjem iOS neuspehu so odvisni B prikaz ter mobilno
+nadaljevanje BLOCKED/SKIP; mobile/P0/P8 in produkcijska pripravljenost
+ostajajo odprti.

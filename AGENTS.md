@@ -14,12 +14,24 @@ En dejansko dostavljen owner Confirm aktivira parent in child epoch2;
 isti prvotni sprejem je consumed, B ima članstvo in ključe. NE PONAVLJAJ
 Confirm/accept/povabila. CUA prikaza uporabljaj v glavnih oknih Android
 Studia/Device Huba, ne v ločenih kompaktnih oknih z nezanesljivim klikom.
-iOS prvo nadaljevanje po odobritvi FAIL s splošno napako, vzrok še ni
-zajet; brez drugega Retry. Ločena debug napaka setState callback returned
+iOS prvo nadaljevanje po odobritvi FAIL s splošno napako; diagnostični
+drugi in tretji poskus zajameta preview_resume_accepted /
+CryptoAuthorityPending / directory_proof_pending. Po tretjem STOP/SKIP,
+brez četrtega Retry, novega povabila ali novega kroga diagnostike.
+Ozek izvorni popravek prenese obstoječi online parameter v preverjanje
+sidra povabila; offline/frozen in varovala ostanejo ista. Štiri nove
+kontrole PASS v tretjem izvornem teku (prvi fixture FAIL, drugi stara koda
+z isto pending napako); pozitivna kontrola doseže headGet, ni celotni
+resume. Glavni/neodvisni pregled PASS, analiza0error/0warning/65starihinfo.
+Končna iOS IPAa08bfa24… vsebuje ta popravek in spodnji callback popravek;
+ista QA shramba/podpis/TLS, štiri vault datoteke pred/po namestitvi enake.
+Kljub temu native nadaljevanje ostane FAIL, točno notranje mesto napake
+še ni dokazano. Dvosmerno urejanje/offline/finančna meja/odvzem so BLOCKED
+za B-jevim še nepotrjenim branjem. Ločena debug napaka setState callback returned
 Future po vrnitvi iz odobritve je popravljena v izvoru; en ciljni widget PASS
 v tretjem poskusu po fixture popravkih, analiza brez error/warning in
-glavni/neodvisni pregled PASS. Novi native paket s tem popravkom še ni
-nameščen; uspešnega granta nismo ponovili. Produkcija/trgovinski aplikaciji/Mac18811/benchmark59776
+glavni/neodvisni pregled PASS. Android ostaja na APK56fbc372… brez poznejših
+izvornih popravkov; uspešnega granta nismo ponovili. Produkcija/trgovinski aplikaciji/Mac18811/benchmark59776
 nedotaknjeni, aktivni QA podatki ohranjeni. Mobile/P0/P8/N7 ostajajo odprti.
 Spodnje navedbe »brez namestitve« opisujejo prejšnjo pripravo.
 

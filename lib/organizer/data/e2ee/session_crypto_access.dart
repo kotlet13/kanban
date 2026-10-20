@@ -1019,7 +1019,10 @@ class SessionCryptoAccess {
     }
   }
 
-  Future<void> _ensureInvitationAnchor(String scopeId) async {
+  Future<void> _ensureInvitationAnchor(
+    String scopeId, {
+    bool online = false,
+  }) async {
     final ownHead =
         (await account.store.anchor(account.directory.accountId))?['headHash']
             as String?;
@@ -1142,6 +1145,7 @@ class SessionCryptoAccess {
       scopeHeadHash: payload['membershipHeadHash'],
       accountId: raw['accountId'],
       directoryHeadHash: payload['authorDirectoryHeadHash'],
+      online: online,
     );
     await identities.requireVerified(
       directory.accountId,
@@ -1893,7 +1897,7 @@ class SessionCryptoAccess {
       await _guardReadOnlyFrozen(frozen);
       return candidate;
     }
-    await _ensureInvitationAnchor(scopeId);
+    await _ensureInvitationAnchor(scopeId, online: online);
     final operation = _operation, cached = operation?.heads[scopeId];
     if (cached != null && await _operationPinsValid(operation!)) {
       for (final member in cached.members.where(
@@ -1958,7 +1962,7 @@ class SessionCryptoAccess {
         );
       }
     }
-    await _ensureInvitationAnchor(scopeId);
+    await _ensureInvitationAnchor(scopeId, online: online);
     final verified = await _verifyHead(
       scopeId,
       wire,
