@@ -1,6 +1,102 @@
 # Skupno mobilno nadaljevanje — 20. oktober 2026
 
-**Aktualni checkpoint: obe testni aplikaciji sta posodobljeni; Android
+**Aktualno: točen vzrok `directory_proof_pending` je zajet in odpravljen.
+Isto iOS povabilo je z nameščenim popravkom `bbc61dc6…` dejansko zaključilo
+`resumeAccepted` (`resumeCompleted=true`, `outcome=resumed`). Sedem novih
+izvornih kontrol PASS. Prikaz skupne vsebine in preostali mobilni scenariji
+s tem še niso potrjeni. Produkcija je nedotaknjena.**
+
+## Ponovno odprta diagnoza po izrecnem naročilu uporabnika
+
+Po čiščenju je uporabnik naročil določitev točnega izvora
+`directory_proof_pending` pred novim popravkom. Spodnji trije neuspešni
+poskusi ostanejo zgodovina; nov zajem ni ponovitev sprejema ali odobritve.
+Ena QA diagnostična gradnja brez spremembe delovanja, IPA `ea9d6805…`,
+je označila vseh 37 klicev, ki lahko dosežejo offline zavrnitev (preostalih
+69 izrecno zahteva online). Neodvisni pregled pokritosti in sprememb PASS.
+Isti izvorni QA imenik in predpomnilnik sta ponovno uporabljena.
+
+Namestitev ohrani isti podpis, QA identiteto, Keychain in vse štiri šifrirane
+datoteke vaulta bajtno enake. En zagon ob **17:30:02 UTC**, PID1183, in en
+Continue nadaljujeta isto povabilo. [Dejanski zapis izjeme](../build/qa/jivie-mobile-readiness-20261020/ios/native-proof-diagnostic-20261020/durable-proof-result.json)
+določi pot:
+
+`resumeAccepted → CryptoScopeObservations.observe → verifyDomainCheckpoint
+→ directoryAt → directory_proof_pending`.
+
+To je klic podpisnikovega imenika pri kontrolnem zapisu, oznaka `dp_033`,
+izvorna vrstica 4262 v `session_crypto_access.dart`, ne preverjanje začetnega
+sidra povabila. `currentHead` in prevzem ključev sta se pred tem vrnila.
+Lokalna veriga obstaja in njen konec ustreza varnemu sidru (glava, posnetek,
+generacija); zahtevanega podpisnikovega zapisa ni v njej ali v predpomnilniku.
+Klic ima `online=false`, zato ne sme pridobiti manjkajočega dokazila.
+Iz samega zajema ni mogoče določiti, ali je zahtevani zapis starejši ali
+novejši od sidra, niti potrditi njegove veljavnosti. To mora preveriti
+obstoječi podpisani replay.
+
+Zapis vsebuje le stalne oznake in logične predikate, ne vsebine, ključev,
+identifikatorjev ali surovega sklada. Začetek nadaljevanja je potrjen;
+zaključek ni dosežen. Sledi ozek izvorni popravek z ločenim dokazom.
+Novega povabila, accept, owner granta ali poslovnega vnosa ni bilo.
+
+### Ciljni izvorni popravek
+
+`verifyDomainCheckpoint` ima nov izbirni `onlineAuthorDirectory=false`.
+Samo `CryptoScopeObservations.observe`, po svojem obstoječem spletnem
+preverjanju glave, izrecno omogoči pridobitev podpisnikovega točnega
+imenika. Notranji `currentHead`/`headAt`, druga dva klicatelja ter
+privzeto offline delovanje ostanejo isti; frozen/deleted evidence konteksta
+nov dostop dodatno izključita. Obstoječi replay, sidro/CAS, podpis,
+vloga in preverjanje zgodovine ostanejo obvezni.
+
+Nova [ciljna regresija](../test/organizer/data/e2ee/crypto_checkpoint_author_directory_test.dart)
+na stari funkcionalni poti v prvem poskusu reproducira isto
+`directory_proof_pending`. Z ozkim popravkom v drugem poskusu uspe vseh
+sedem novih kontrol: spletna pot observe, offline brez zahtevka,
+frozen brez zahtevka, zavrnitev fork, napačnega podpisa, manjkajočega
+ciljnega zapisa in vloge viewer. Varno sidro in globalna identitetna
+veriga ostaneta enaka. Pozitivna kontrola doseže namensko mejo po
+dejanskem preverjanju kontrolnega podpisa; predpreverjena glava v
+ogrodju pomeni, da to ni dokaz celotnega native nadaljevanja ali objave
+observation. [Rezultat](../build/qa/jivie-mobile-readiness-20261020/ios/checkpoint-author-fix-20261020/fixed-attempt2.log).
+Scoped analiza: 0 napak, 0 opozoril, 86 obstoječih info; nova testna datoteka
+brez pripomb. Glavni in neodvisni pregled PASS. Starih PASS testov nismo
+ponovili.
+
+### Dejanska potrditev na istem iPhonu
+
+Druga namenska gradnja, zdaj s popravkom in svežo v4 oznako diagnostike,
+IPA SHA-256 `bbc61dc62d278cd43372a736f6e5b1ab6d23c7d39bb9bed7a8093316944e6532`
+(16.468.237 B), je nameščena čez isto Jivie Test. Ista QA identiteta,
+profil, podpis, Keychain in TLS; štiri šifrirane vault datoteke imajo
+pred/po namestitvi iste hashe. Brez nove polne izvorne kopije.
+
+En zagon ob **17:40:34 UTC**, PID1192, in en Continue nadaljujeta prvotno
+povabilo. [Sveži trajni zapis v4](../build/qa/jivie-mobile-readiness-20261020/ios/native-checkpoint-author-fix-20261020/durable-proof-result.json)
+ob **17:41:21 UTC** potrdi `resumeStarted=true`, `resumeCompleted=true`,
+`outcome=resumed`. To dokazuje zaključek preverjanja glave in sprejema,
+prevzem ključev, `observe` in posodobitev lokalnega sidra v `resumeAccepted`.
+UI se vrne v prazen obrazec za povabilo brez prejšnje rdeče napake.
+PASS temelji na izrecnem zaključnem zapisu, ne na odsotnosti datoteke napake.
+
+**Native popravek PASS v drugem poskusu ponovno odprte diagnoze**:
+prvi namerni zajem v3 je razkril točen klic, drugi v4 s popravkom uspe.
+Predhodni trije neuspehi so ohranjeni spodaj. Nobenega novega povabila,
+Join/accept, owner granta, prijave, FILE ali poslovnega vnosa.
+Prikaz in urejanje skupnega opravila na iPhonu, offline, odvzem in
+obnova na fizičnih napravah ostajajo ločeni odprti testi; niso ponovno
+zagnani ali označeni PASS. Prav tako ostajajo splošne P0/P8 meje.
+Isti QA proces je ob **17:41:54 UTC** normalno ustavljen in odsoten.
+Pasivna konzola v 87,714 s ni zajela NET oznak, zato povezava konzole
+ni potrjena; dokaz uspeha je zgornji trajni zaključni zapis.
+Po predaji paketa je odstranjenih pet regenerabilnih cache map iz istega
+QA izvornega imenika, skupaj 1.190.924.288 B zasedenega prostora.
+Vsi izvori, končni paketi, dokazi in zasebne kopije ostanejo.
+[Manifest čiščenja](../build/qa/jivie-mobile-readiness-20261020/ios/checkpoint-author-fix-20261020/regenerated-cache-cleanup-manifest.json).
+
+## Prejšnji omejeni preizkus
+
+**Prejšnji checkpoint pred zgornjim popravkom: obe testni aplikaciji sta posodobljeni; Android
 bootstrap in en običajni samodejni sync po povezavi Wi-Fi sta PASS.
 Lastnikova odobritev in predaja parent/child ključev sta strežniško PASS;
 iOS nadaljevanje tudi v tretjem in zadnjem native poskusu odpove z

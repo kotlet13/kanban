@@ -78,7 +78,7 @@ class CryptoScopeObservations {
       final row = rows.single, proof = _decode(row['authorization']!);
       // These rows are populated only after full manifest verification. Verify
       // the certificate again before committing its exact observation hash.
-      await access.verifyDomainCheckpoint(proof);
+      await access.verifyDomainCheckpoint(proof, onlineAuthorDirectory: true);
       final signed =
               CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map,
           p = signed['payload'] as Map;

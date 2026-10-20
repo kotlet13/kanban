@@ -4214,8 +4214,9 @@ class SessionCryptoAccess {
   /// The caller still verifies the complete paginated descriptor stream and
   /// compares every previously trusted local/peer checkpoint before projection.
   Future<CryptoCheckpointAuthority> verifyDomainCheckpoint(
-    Map<String, dynamic> proof,
-  ) async {
+    Map<String, dynamic> proof, {
+    bool onlineAuthorDirectory = false,
+  }) async {
     final raw = CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
     final payload = Map<String, dynamic>.from(raw['payload'] as Map);
     const fields = {
@@ -4264,6 +4265,10 @@ class SessionCryptoAccess {
       scopeHeadHash: current.headHash,
       accountId: raw['accountId'],
       directoryHeadHash: payload['authorDirectoryHeadHash'],
+      online:
+          onlineAuthorDirectory &&
+          _readOnlyFrozen == null &&
+          Zone.current[_deletedScopeEvidenceZone] == null,
     );
     final member = head.member(raw['accountId']);
     if (member['role'] == 'viewer' ||

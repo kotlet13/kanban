@@ -1,5 +1,27 @@
 # Navodila za delo na projektu
 
+20. oktober — **iPhone directory_proof_pending natančno diagnosticiran in popravljen**.
+[Dokaz in meje](docs/E2EE_MOBILE_SESSION_2026_10_20.md): po novem izrecnem
+naročilu ena diagnostična gradnja ea9d6805… in isti Continue zajameta
+resumeAccepted→observe→verifyDomainCheckpoint→directoryAt, dp_033.
+Zahtevanega podpisnikovega zapisa ni lokalno, trenutna veriga pa ustreza
+varnemu sidru; online=false. Vrstni red manjkajočega zapisa glede na sidro
+ni dokazan. Ozek opt-in onlineAuthorDirectory samo za observe; drugi
+klicatelji/offline/frozen/deleted in podpisna varovala ostanejo.
+Baseline isti FAIL v prvem izvornem poskusu; sedem novih kontrol PASS v
+drugem, analiza0error0warning86starihinfo, glavni/neodvisni pregled PASS.
+Druga namenska IPA bbc61dc6… nameščena na isti iPhone/QA/Keychain/TLS,
+štiri šifrirane datoteke pred/po enake. En zagon17:40:34UTC/PID1192 in
+Continue: sveži v4 zapis17:41:21UTC resumeCompleted=true/outcome=resumed.
+Native nadaljevanje PASS; ne ponavljaj povabila/accept/owner granta/FILE
+ali starih PASS. Skupna vsebina in preostali fizični testi/P0/P8 so še
+odprti. Produkcija/Android/server nedotaknjeni; ni nove polne izvorne
+kopije. Spodnji trije FAIL/STOP so zgodovina pred novim naročilom.
+QA proces1192 normalno ustavljen17:41:54UTC; uspeh temelji na trajnem
+zaključnem zapisu, ne konzoli (0NET/connected ni potrjen). Po predaji
+odstranjenih pet obnovljivih cache map istega QA izvora,1.190.924.288B;
+paketi/izvori/dokazi/zasebne kopije ostanejo.
+
 20. oktober — **selektivno čiščenje Dockerja**.
 Odstranjenih16 starih ustavljenih documents/moderation/lifecycle testnih
 vsebnikov,15 dokazano praznih pripadajočih volumes,8 praznih projektnih
