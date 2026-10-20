@@ -74,6 +74,7 @@ class NativeCryptoV2Service extends NativeDatabase
         $readOperations[] = 'crypto2.moderation.reportPreview';
         $readOperations[] = 'crypto2.moderation.disclosure.status';
         $readOperations[] = 'crypto2.exports.delegation.forOffer';
+        $readOperations[] = 'crypto2.authority.snapshot';
         if (!in_array($operation, $readOperations, true)) {
             $decoded = NativeCryptoCodec::decode($params);
             $command = $decoded[0];
@@ -106,6 +107,12 @@ class NativeCryptoV2Service extends NativeDatabase
             $account = $actor['user']['account_id'];
             $directory = new NativeCryptoDirectoryV2($this->container, $this->bearer, $this->ip);
             $current = $directory->current($account);
+            if ($operation === 'crypto2.authority.snapshot') {
+                return (new NativeCryptoAuthoritySnapshotV2($this->container, $this->bearer, $this->ip))->read(
+                    $params, $actor, $this->status($account, $current),
+                    fn($page)=> $this->logPage($page, $account, $current)
+                );
+            }
             if ($operation === 'crypto2.account.scopeObservation.put') {
                 (new NativeConnectedWritePolicy($this->container, $this->bearer, $this->ip))->requireAccount($account);
                 $directory->authorizeContent(['signer'=>'device','deviceId'=>$actor['device']['id']],$current);
@@ -363,7 +370,7 @@ class NativeCryptoV2Service extends NativeDatabase
             $receiptProof = $this->moderationReceipt($operation) ? $this->moderationReceiptCard($command, $proof, $digest) : $proof;
             $this->change('INSERT INTO familyhub_crypto_receipts VALUES(?,?,?,?,?,?,?)', [$account,$request,$digest,json_encode($out, JSON_THROW_ON_ERROR),$status,time(),json_encode($receiptProof, JSON_THROW_ON_ERROR)]);
             return $status === 200 ? $out : new NativeError($out['errorCode'], $status, $out['details']);
-        }, true);
+        }, $operation !== 'crypto2.authority.snapshot', $operation === 'crypto2.authority.snapshot');
         if ($result instanceof NativeError) {
             throw $result;
         }return $result;

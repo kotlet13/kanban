@@ -58,8 +58,8 @@ function scenario($action) {
 class LeaseBarrierDelivery extends NativeDeliveryService {
     private $hook;
     public function __construct($container, $hook) { parent::__construct($container); $this->hook=$hook; }
-    protected function transaction(callable $callback, $global=false) {
-        $result=parent::transaction($callback,$global);
+    protected function transaction(callable $callback, $global=false, $snapshot=false) {
+        $result=parent::transaction($callback,$global,$snapshot);
         // Pause after the actual durable lease commit, never within its lock.
         if ($this->hook) { $hook=$this->hook; $this->hook=null; $hook(); }
         return $result;

@@ -1,5 +1,27 @@
 # Navodila za delo na projektu
 
+20. oktober — **združeno pridobivanje pravic zaključeno v izvoru** po novem
+ozkem naročilu uporabnika; GPT-6.1 Sol/high podagenti in glavni pregled.
+[Izvedba, dokazi in nadaljevanja](docs/E2EE_AUTHORITY_BATCHING.md): izbirni
+`crypto2.authority.snapshot` združi račun/prostor/dovoljene projekte, ohrani
+podpise, direct-child-only, ločene finance, zavrnitve in isto največ5s mejo.
+Stari strežnik ostane na točnih metodah; večji paketi/historija imajo omejitve
+in nadomestne posamezne poti. Ni novega TTL ali spremembe urnika/pusha.
+12novih odjemalčevih kontrol PASS (sočasni fallback v2.poskusu), dejanski HTTP
+račun/starš/projekt+ponarejen podpis PASS v2.poskusu; prvi HTTP zajem je
+ogrodje/izgubljen rezultat, ne appFAIL/PASS, delno stanje ohranjeno. SQLite
+42novih kontrol PASS v3.poskusu po ozkem popravku read-side housekeeping;
+MariaDB10.11.19 šest sočasnostnih kontrol PASS v1.poskusu. PHP lint PASS,
+celotni analyze0error/0warning/515info, novi helper/testi čisti. HTTP14→4
+vključuje capability (originalne metode13); JSON32.460→67.991B, torej ni
+dokaza manjše pasovne širine ali nove meritve native412. Velike zgodovine
+in celotni strošek ostajajo odprti. Novi HTTP59775 vsebnik ustavljen/stanje
+ohranjeno, nova MariaDB vsebnika odstranjena. A-r12/B-r13/Docker18811 ter
+stare/mobileQA/prod/trgovine/SDK/locks/sheme in nepovezana dokumenta isti.
+N7/P0/mobile/P8 niso zaključeni; ne ponavljaj starih uspešnih scenarijev.
+Predlogi osveževanja ob zaslonu/aktivaciji,5min omejitve, push in združevanja
+finančne vsebine so samo zapisani za morebitno naslednje naročilo.
+
 19. oktober — **omejeno nadaljevanje N7 zaključeno pri tretjem poskusu**.
 [Končni dokazi in odprte meje](docs/E2EE_MAC_SHARING_TEST_2026_10_19.md):
 A-r12/B-r13/isti Docker18811, oba normalno zaprta. Odvzema in uspešnih

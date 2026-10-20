@@ -728,7 +728,10 @@ class NativeCryptoScopeV2 extends NativeDatabase
             NativeCryptoScopeCreationV2::guardBusiness($this->pdo, $sid);
             $this->assertCurrentMembership($scope,$current);
         }
-        $this->refreshPending($sid, $current);
+        // A read-only authority snapshot uses the captured signed state. The
+        // derived closure refresh writes housekeeping rows which are consumed
+        // only by the write guard below; ordinary routes retain their behavior.
+        if ($write || !$this->snapshotRead()) { $this->refreshPending($sid, $current); }
         $state = $this->one('SELECT * FROM familyhub_crypto_scope_state WHERE scope_id=?', [$sid]);
         if ($write && (int)$state[$domain.'_closed']) {
             throw new NativeError('crypto_domain_closed', 409);

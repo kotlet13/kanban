@@ -7,6 +7,13 @@ import 'account_directory_v2.dart';
 import 'crypto_identity_store.dart';
 import 'crypto_directory_promotion.dart';
 import 'crypto_json.dart';
+import 'crypto_authority_snapshot.dart';
+
+class _DirectoryAuthoritySnapshot {
+  const _DirectoryAuthoritySnapshot(this.owner, this.snapshot);
+  final AccountDirectoryRepository owner;
+  final CryptoAuthoritySnapshot snapshot;
+}
 
 /// A complete signed prefix is identity evidence, not an assertion that the
 /// server has shown the latest prefix. Freshness is separately compared with a
@@ -24,6 +31,7 @@ class AccountDirectoryRepository {
   final CollaborationTransport transport;
   final CryptoIdentityStore store;
   final bool Function() isCurrent;
+  static final _authoritySnapshotZone = Object();
   VerifiedAccountDirectory? _verified;
   static final _queues = <String, Future<void>>{};
   String get accountId => session.profile.accountId;
@@ -56,6 +64,52 @@ class AccountDirectoryRepository {
     String operation, [
     Map<String, dynamic> params = const {},
   ]) async {
+    _current();
+    final snapshot = Zone.current[_authoritySnapshotZone];
+    if (snapshot is _DirectoryAuthoritySnapshot &&
+        identical(snapshot.owner, this)) {
+      final result = await snapshot.snapshot.call(operation, params);
+      _current();
+      return result;
+    }
+    return _callDirect(operation, params);
+  }
+
+  /// Scope transport coalescing to the same verified-operation lease as the
+  /// signed-proof memo. This never changes directory or scope admission.
+  Future<T> withAuthoritySnapshot<T>(
+    Future<T> Function() body, {
+    required Future<bool> Function() isValid,
+    required void Function() onMutation,
+  }) async {
+    final snapshot = CryptoAuthoritySnapshot(
+      read: _callDirect,
+      serverId: session.profile.serverId,
+      accountId: accountId,
+      deviceId: session.profile.deviceId,
+      isValid: isValid,
+      onMutation: onMutation,
+      accountAfterGeneration: () async =>
+          _verified?.generation ??
+          (await store.anchor(accountId))?['generation'] as int? ??
+          0,
+    );
+    try {
+      return await runZoned(
+        body,
+        zoneValues: {
+          _authoritySnapshotZone: _DirectoryAuthoritySnapshot(this, snapshot),
+        },
+      );
+    } finally {
+      snapshot.close();
+    }
+  }
+
+  Future<Map<String, dynamic>> _callDirect(
+    String operation,
+    Map<String, dynamic> params,
+  ) async {
     _current();
     final result = await transport.call(
       serverUrl: session.profile.serverUrl,

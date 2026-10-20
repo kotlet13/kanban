@@ -1,5 +1,15 @@
 # Jivie
 
+**20. oktober — združeno pridobivanje pravic v izvoru:** nova izbirna metoda
+FamilyHub sestavi račun, prostor in dovoljene projekte v omejen skupen
+odgovor; odjemalec ohrani preverjanje podpisov in obstoječo kratko mejo
+ponovne uporabe. Novi ciljni testi vključujejo sočasni odvzem na MariaDB.
+Dejanska sintetična HTTP pot: 14 → 4 zahtevki, JSON rezultati 32.460 → 67.991
+bajtov; to ni meritev celotnega native cikla. [Izvedba, meje in možna nadaljevanja](docs/E2EE_AUTHORITY_BATCHING.md).
+Urnik sinhronizacije/push ostaneta ista. Gostovanja in aplikacije niso
+nameščene na novo; večji prostori uporabljajo omejene pakete in točne
+nadomestne poti. Ni spremembe sheme ali migracije podatkov.
+
 **18. oktober — E2EE nadgradnja v zaključnem preverjanju izvora:** lokalni
 vault, obnovitvena datoteka, podpisani imenik v2 in Capture3 so povezani pod
 izrecnim preview varovalom. Migracija, sveža FILE obnova in povezani

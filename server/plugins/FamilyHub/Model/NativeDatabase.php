@@ -16,6 +16,7 @@ abstract class NativeDatabase extends Base
      * Track only this wrapper's successful begin on the exact shared PDO;
      * nested model objects cannot manufacture a transaction by setting a bool. */
     private static $nativeTransactions;
+    private static $snapshotTransactions;
 
     public function __construct($container, $bearer = '', $ip = 'unknown')
     {
@@ -65,13 +66,21 @@ abstract class NativeDatabase extends Base
 
     protected function change($sql, array $params = [])
     {
+        if ($this->snapshotRead()) {
+            throw new NativeError('crypto_authority_snapshot_read_only', 500);
+        }
         $statement = $this->query($sql, $params);
         $count = $statement->rowCount();
         $statement->closeCursor();
         return $count;
     }
 
-    protected function lockSuffix() { return $this->sqlite ? '' : ' FOR UPDATE'; }
+    protected function snapshotRead()
+    {
+        return self::$snapshotTransactions !== null && isset(self::$snapshotTransactions[$this->pdo]);
+    }
+
+    protected function lockSuffix() { return $this->sqlite || self::$snapshotTransactions !== null && isset(self::$snapshotTransactions[$this->pdo]) ? '' : ' FOR UPDATE'; }
 
     protected function transactionActive()
     {
@@ -79,13 +88,14 @@ abstract class NativeDatabase extends Base
             (self::$nativeTransactions!==null && isset(self::$nativeTransactions[$this->pdo]));
     }
 
-    protected function transaction(callable $callback, $global = false)
+    protected function transaction(callable $callback, $global = false, $snapshot = false)
     {
-        if ($this->sqlite) { $this->pdo->exec('BEGIN IMMEDIATE'); }
+        if ($this->sqlite) { $this->pdo->exec($snapshot ? 'BEGIN' : 'BEGIN IMMEDIATE'); }
         else {
             // Earlier identity reads must not establish a stale repeatable-read
             // snapshot before waiting for the scope lock and reading its cursor.
-            $this->pdo->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+            $this->pdo->exec('SET TRANSACTION ISOLATION LEVEL '.($snapshot ? 'REPEATABLE READ' : 'READ COMMITTED'));
+            if ($snapshot) { $this->pdo->exec('SET TRANSACTION READ ONLY'); }
             $this->pdo->beginTransaction();
         }
         if(self::$nativeTransactions===null){self::$nativeTransactions=new \WeakMap();}
@@ -93,6 +103,15 @@ abstract class NativeDatabase extends Base
         try {
             if ($global) {
                 $this->one('SELECT counter FROM familyhub_native_lock WHERE id = 1'.$this->lockSuffix());
+            }
+            // The snapshot view starts at the callback's first ordinary read
+            // (after the optional global lock). All
+            // nested ACL/identity reads must use that same view, never a mix of
+            // repeatable reads and newer SELECT FOR UPDATE rows. This mode is
+            // reserved for the bounded authority reader, which cannot write.
+            if ($snapshot) {
+                if(self::$snapshotTransactions===null){self::$snapshotTransactions=new \WeakMap();}
+                self::$snapshotTransactions[$this->pdo]=true;
             }
             $result = $callback();
             if ($this->sqlite) { $this->pdo->exec('COMMIT'); }
@@ -104,6 +123,7 @@ abstract class NativeDatabase extends Base
             throw $error;
         } finally {
             unset(self::$nativeTransactions[$this->pdo]);
+            if(self::$snapshotTransactions!==null){unset(self::$snapshotTransactions[$this->pdo]);}
         }
     }
 

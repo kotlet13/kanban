@@ -1613,7 +1613,16 @@ class SessionCryptoAccess {
     }
     final operation = _AuthorityOperation(this);
     try {
-      return await runZoned(body, zoneValues: {_operationKey: operation});
+      return await runZoned(
+        () => account.directory.withAuthoritySnapshot(
+          body,
+          isValid: () async =>
+              identical(_operation, operation) &&
+              await _operationPinsValid(operation),
+          onMutation: invalidateAuthorityOperation,
+        ),
+        zoneValues: {_operationKey: operation},
+      );
     } finally {
       operation.active = false;
       operation.heads.clear();

@@ -41,11 +41,11 @@ function workerInbox($sid,$next,$state='pending'){
 }
 class FencingDeliveryFairness extends NativeDeliveryService {
     public $fenceScope;
-    protected function transaction(callable $callback,$global=false){if($this->fenceScope){workerQ("UPDATE familyhub_crypto_scopes SET state='fenced' WHERE scope_id=?",[$this->fenceScope]);$this->fenceScope=null;}return parent::transaction($callback,$global);}
+    protected function transaction(callable $callback,$global=false,$snapshot=false){if($this->fenceScope){workerQ("UPDATE familyhub_crypto_scopes SET state='fenced' WHERE scope_id=?",[$this->fenceScope]);$this->fenceScope=null;}return parent::transaction($callback,$global,$snapshot);}
 }
 class FencingPushFairness extends NativePushQueue {
     public $fenceScope;
-    protected function transaction(callable $callback,$global=false){if($this->fenceScope){workerQ("UPDATE familyhub_crypto_scopes SET state='fenced' WHERE scope_id=?",[$this->fenceScope]);$this->fenceScope=null;}return parent::transaction($callback,$global);}
+    protected function transaction(callable $callback,$global=false,$snapshot=false){if($this->fenceScope){workerQ("UPDATE familyhub_crypto_scopes SET state='fenced' WHERE scope_id=?",[$this->fenceScope]);$this->fenceScope=null;}return parent::transaction($callback,$global,$snapshot);}
 }
 try {
     $uid=$container['userModel']->create(['username'=>'worker_fairness_'.bin2hex(random_bytes(6)),'password'=>bin2hex(random_bytes(16)),'email'=>'worker@capture.invalid','role'=>'app-user']);

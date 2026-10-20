@@ -19,7 +19,7 @@ class RetentionProbe extends NativeInboxRetention {
 class BarrierInbox extends NativeInboxService {
     private $count=0; private $hook;
     public function __construct($container,$token,$ip,$hook) { parent::__construct($container,'Bearer '.$token,$ip); $this->hook=$hook; }
-    protected function transaction(callable $callback,$global=false) { $this->count++; $hook=$this->count===3 ? $this->hook : null; return parent::transaction(function () use ($callback,$hook) { $result=$callback(); if ($hook) { $hook(); } return $result; },$global); }
+    protected function transaction(callable $callback,$global=false,$snapshot=false) { $this->count++; $hook=$this->count===3 ? $this->hook : null; return parent::transaction(function () use ($callback,$hook) { $result=$callback(); if ($hook) { $hook(); } return $result; },$global,$snapshot); }
 }
 function child($fixture) {
     $file=tempnam('/tmp','familyhub-retention-'); chmod($file,0600); file_put_contents($file,json_encode($fixture,JSON_THROW_ON_ERROR));
