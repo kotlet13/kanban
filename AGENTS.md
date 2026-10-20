@@ -1,5 +1,23 @@
 # Navodila za delo na projektu
 
+20. oktober — **priprava telefonov delno zaključena; iOS BLOCKED po treh gradnjah**.
+[Priprava in nadaljevanje](docs/E2EE_MOBILE_READINESS_2026_10_20.md):
+uporabnik naroči pripravo, skupni testi šele po vrnitvi domov. Sol6.1/high
+podagenti, glavni pregled. Izvor cf97e2d zamrznjen (1560 vhodov,
+7756cdb9…); main runtime/SDK/locks isti. Android APK 7fef105a… pripravljen,
+isti QA ID/podpis/storage, vseh 7 native knjižnic enakih, brez namestitve.
+Isti mobilni Docker18801 posodobljen: 182 source datotek, shema20,
+vseh220 tabel vrstično istih in499 SQLite objektov istih. Zasebna kopija212
+datotek preverjena; app/gateway/Mailpit tečejo, worker namenoma ustavljen.
+CA velja do21.10.2026 12:25:42UTC. iOS ni ustvaril novega paketa: globalni
+profil, nato globalni podpisnik, nato podvojeni Runner CODE_SIGN_STYLE
+Manual/Automatic; napake naše QA priprave, ne app/Apple račun. Po3poskusih
+STOP, brez četrtega teka; predlog popravka samo shranjen, ni uporabljen.
+Diagnostika pripravljena, dejanski priklop konzol še NEPREVERJEN. Nobenih
+telefonskih ukazov, namestitev, zagonov ali poslovnih scenarijev; isti
+računi/FILE/sprejeto povabilo/pending owner grant se ohranijo. Produkcija,
+Mac18811/benchmark59776/trgovini nedotaknjeni. P0/mobile/P8/N7 odprti.
+
 20. oktober — **skupna dokazila pravic med finančnim branjem zaključena**.
 [Izvedba in dokazi](docs/E2EE_FINANCE_AUTHORITY_REUSE.md): GPT-6.1 Sol/high
 podagenti, glavni in neodvisni pregled PASS. Isti operation/snapshot/prvotna
