@@ -1,5 +1,22 @@
 # Navodila za delo na projektu
 
+20. oktober — **capability poizvedbe združene znotraj enega synca** po
+naročilu naslednjega cilja; GPT-6.1 Sol/high podagenti/glavni pregled.
+[Izvedba in dokazi](docs/E2EE_SYNC_CAPABILITY_DISCOVERY.md): točen
+transport/seja/epoch/current, ločena anonymous/bearer odgovora, svež kontekst
+vsakega syncNow tudi nested, finallyclose, failure/mismatch brez retencije,
+globoke kopije. _negotiate/accountCryptoPreview/directorycap povezani;
+authority/podpisi/5s/freshboundary/urnik/server/kvote nedotaknjeni.
+21novihPASSposkus1, scoped0error/0warning/1oldinfo, neodvisni/glavniPASS.
+HTTP2af5fb4→nova:69→54HTTP(−21,74%),cap17→2,snapshot13→13,
+717.179→681.575Bodgovorov,čas1,058→1,015s(le2lokalnavzorca,brez
+trditve zanesljivega pospeška). Inventory+2.376B zaradi napredovanja
+checkpointa med vejama dokumentirano. Obe veji prviPASS/6ciklov200,
+0napak/429/vrst,3finance/62predhodnihsigned točno isti. Izvirni klient
+in stare meritve nedotaknjeni; novi capability-comparison kopiji ločeni.
+Docker59776 spet ustavljen; prod/stareQA/native/SDK/locks isti.
+P0/mobile/P8/N7 odprti; nobenega novega poslovnega urejanja ali starihPASS.
+
 20. oktober — **prenos preverjenega lastnega imenika zmanjšan** po naročilu
 naslednje optimizacije; trije GPT-6.1 Sol/high, glavni/neodvisni pregled.
 [Izvedba in meje](docs/E2EE_AUTHORITY_DIRECTORY_TRANSFER.md):33vrstic/2datoteki,

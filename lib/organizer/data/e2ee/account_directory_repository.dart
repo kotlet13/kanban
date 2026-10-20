@@ -8,6 +8,7 @@ import 'crypto_identity_store.dart';
 import 'crypto_directory_promotion.dart';
 import 'crypto_json.dart';
 import 'crypto_authority_snapshot.dart';
+import 'crypto_capability_discovery.dart';
 
 class _DirectoryAuthoritySnapshot {
   const _DirectoryAuthoritySnapshot(this.owner, this.snapshot);
@@ -138,6 +139,15 @@ class AccountDirectoryRepository {
     Map<String, dynamic> params,
   ) async {
     _current();
+    if (operation == 'capabilities' && params.isEmpty) {
+      final result = await CryptoCapabilityDiscovery.read(
+        transport: transport,
+        session: session,
+        authenticated: true,
+      );
+      _current();
+      return result;
+    }
     final result = await transport.call(
       serverUrl: session.profile.serverUrl,
       operation: operation,

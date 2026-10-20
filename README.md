@@ -1,5 +1,13 @@
 # Jivie
 
+**20. oktober — manj poizvedb o strežniških funkcijah:** znotraj enega
+synca se javni capability odgovor pridobi enkrat na način avtentikacije.
+Dejanska primerjava:17→2 capability klica,69→54 HTTP zahtevkov skupaj
+(približno22 % manj).21novih testov in primerjalni HTTP tok PASS, podatki
+ohranjeni; dokazila pravic in svežina nespremenjeni.
+[Izvedba in meritve](docs/E2EE_SYNC_CAPABILITY_DISCOVERY.md).
+Brez produkcijske ali native namestitve.
+
 **20. oktober — manj prenosa že preverjene zgodovine računa:** običajni
 testni sync prejme714.801 B namesto1.363.662 B odgovorov (približno48 % manj).
 Število zahtevkov ostane69, pomemben časovni pospešek ni dokazan.

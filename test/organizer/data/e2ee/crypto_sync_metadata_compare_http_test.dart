@@ -210,7 +210,23 @@ void main() {
           Uri.parse(url).port != 59776) {
         throw StateError('Existing synthetic loopback59776 required');
       }
-      final root = '${File(fixturePath).parent.path}/metadata-comparison';
+      // A new comparison can reuse this harness with its own frozen seed and
+      // result directory, leaving completed comparisons untouched.
+      final comparisonRoot =
+          Platform.environment['JIVIE_METADATA_COMPARE_ROOT'];
+      final root =
+          comparisonRoot ??
+          '${File(fixturePath).parent.path}/metadata-comparison';
+      if (comparisonRoot != null &&
+          (!Directory(comparisonRoot).isAbsolute ||
+              Directory(comparisonRoot).parent.resolveSymbolicLinksSync() !=
+                  File(fixturePath).parent.resolveSymbolicLinksSync() ||
+              Directory(comparisonRoot).resolveSymbolicLinksSync() ==
+                  Directory(
+                    '${File(fixturePath).parent.path}/metadata-comparison',
+                  ).resolveSymbolicLinksSync())) {
+        throw StateError('A separate absolute comparison directory required');
+      }
       final statePath = '$root/$arm/client';
       final baseline =
           jsonDecode(

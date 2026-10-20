@@ -133,10 +133,9 @@ extension CollaborationAccountActions on CollaborationRepository {
 
   Future<void> _negotiate(DeviceSession session, int epoch) async {
     _checkEpoch(epoch);
-    final caps = await transport.call(
-      serverUrl: session.profile.serverUrl,
-      operation: 'capabilities',
-      allowLocalHttp: session.profile.allowLocalHttp,
+    final caps = await CryptoCapabilityDiscovery.read(
+      transport: transport,
+      session: session,
     );
     _checkEpoch(epoch);
     if (caps['serverId'] != session.profile.serverId) {

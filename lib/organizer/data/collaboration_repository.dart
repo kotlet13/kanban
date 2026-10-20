@@ -15,6 +15,7 @@ import 'e2ee/account_crypto_v2_workflow.dart';
 import 'e2ee/account_directory_repository.dart';
 import 'e2ee/account_directory_v2.dart';
 import 'e2ee/crypto_identity_store.dart';
+import 'e2ee/crypto_capability_discovery.dart';
 import 'e2ee/crypto_codec.dart';
 import 'e2ee/crypto_domain_router.dart';
 import 'e2ee/crypto_business_router.dart';
@@ -87,10 +88,9 @@ class CollaborationRepository {
     final session = _session;
     if (session == null || _closed) return null;
     final epoch = _epoch;
-    final capabilities = await transport.call(
-      serverUrl: session.profile.serverUrl,
-      operation: 'capabilities',
-      allowLocalHttp: session.profile.allowLocalHttp,
+    final capabilities = await CryptoCapabilityDiscovery.read(
+      transport: transport,
+      session: session,
     );
     _checkEpoch(epoch);
     if (capabilities['serverId'] != session.profile.serverId) {

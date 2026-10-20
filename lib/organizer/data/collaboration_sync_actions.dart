@@ -95,9 +95,26 @@ extension CollaborationSyncActions on CollaborationRepository {
     }
   }
 
-  Future<void> syncNow({
-    bool resumePayments = true,
-    bool manual = false,
+  Future<void> syncNow({bool resumePayments = true, bool manual = false}) {
+    final session = _session, epoch = _epoch;
+    if (session == null) {
+      return _syncNow(resumePayments: resumePayments, manual: manual);
+    }
+    return CryptoCapabilityDiscovery.withSync(
+      () => _syncNow(resumePayments: resumePayments, manual: manual),
+      transport: transport,
+      session: session,
+      isCurrent: () =>
+          !_closed &&
+          _epoch == epoch &&
+          identical(_session, session) &&
+          _sessionInvalidReason == null,
+    );
+  }
+
+  Future<void> _syncNow({
+    required bool resumePayments,
+    required bool manual,
   }) async {
     if (_syncing ||
         _session == null ||
