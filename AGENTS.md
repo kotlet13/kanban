@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+20. oktober — **obe testni aplikaciji nameščeni; mobilna odobritev prostora in projekta potrjena**.
+[Aktualna skupna seja](docs/E2EE_MOBILE_SESSION_2026_10_20.md):
+isti Sol6.1/high podagenti in glavni/neodvisni pregled. Android prvi QA APK
+ni vseboval GeneratedPluginRegistrant; originalna VM izjema channel-error
+PathProviderApi je potrjena. Generator ob istem SDK/lockih in nov APK56fbc372…
+odpravita pakirno napako v drugem poskusu; isti podpis/storage, štiri vault
+datoteke pred/po enake, bootstrap ready in uporabnikov običajni zaslon PASS.
+S25 je imel Wi-Fi izklopljen; po uporabnikovi povezavi samodejni sync PASS,
+vrste0/0/0 in lastError null. iOS ista IPA51a42425…/shramba; stari QA
+diagnostični mapi povzročita znano opozorilo, fizični Continue ohrani prijavo.
+En dejansko dostavljen owner Confirm aktivira parent in child epoch2;
+isti prvotni sprejem je consumed, B ima članstvo in ključe. NE PONAVLJAJ
+Confirm/accept/povabila. CUA prikaza uporabljaj v glavnih oknih Android
+Studia/Device Huba, ne v ločenih kompaktnih oknih z nezanesljivim klikom.
+iOS prvo nadaljevanje po odobritvi FAIL s splošno napako, vzrok še ni
+zajet; brez drugega Retry. Ločena debug napaka setState callback returned
+Future po vrnitvi iz odobritve je popravljena v izvoru; en ciljni widget PASS
+v tretjem poskusu po fixture popravkih, analiza brez error/warning in
+glavni/neodvisni pregled PASS. Novi native paket s tem popravkom še ni
+nameščen; uspešnega granta nismo ponovili. Produkcija/trgovinski aplikaciji/Mac18811/benchmark59776
+nedotaknjeni, aktivni QA podatki ohranjeni. Mobile/P0/P8/N7 ostajajo odprti.
+Spodnje navedbe »brez namestitve« opisujejo prejšnjo pripravo.
+
 20. oktober — **iOS podpisovanje popravljeno po novem izrecnem naročilu; oba paketa pripravljena**.
 [Aktualno nadaljevanje](docs/E2EE_MOBILE_READINESS_2026_10_20.md):
 isti Sol6.1/high podagent in neodvisni/glavni pregled. Odstranjeni podvojeni

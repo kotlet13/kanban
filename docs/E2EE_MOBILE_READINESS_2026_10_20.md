@@ -1,5 +1,10 @@
 # Priprava mobilnega nadaljevanja — 20. oktober 2026
 
+**Poznejša skupna seja je že začeta:** dejanske namestitve, popravek
+Androidove registracije dodatkov in mobilna odobritev dostopa so zapisani v
+[aktualnem nadaljevanju](E2EE_MOBILE_SESSION_2026_10_20.md). Spodnji opis
+je dokaz predhodne priprave, ne trenutni status naprav.
+
 Uporabnik je naročil pripravo za skupno testiranje po vrnitvi domov.
 Ta korak pripravlja pakete, testni strežnik in diagnostiko; ne izvaja
 namestitev na telefona ali uporabniških testnih scenarijev.

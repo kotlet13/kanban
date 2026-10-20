@@ -510,8 +510,11 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                                                   ),
                                             ),
                                           );
-                                          if (mounted && _guard.isCurrent)
-                                            setState(() => _future = _load());
+                                          if (mounted && _guard.isCurrent) {
+                                            setState(() {
+                                              _future = _load();
+                                            });
+                                          }
                                         },
                                   icon: const Icon(Icons.key_outlined),
                                 ),
