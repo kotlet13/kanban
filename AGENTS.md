@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+20. oktober — **čiščenje prostora po izrecnem naročilu uporabnika**.
+Odstranjenih 284 regenerabilnih map prevajanja iz repozitorijevih
+`build`/`.dart_tool` in zasebnih `share-20261019/source-a,b`: Xcode
+intermediates/module/index caches, Dart flutter_build/hooks_runner in
+Gradle intermediates. Prosti prostor približno30→75GiB; manifest je
+`build/qa/cleanup-20261020/cache-cleanup-manifest.json`. Izvorne kopije,
+končni paketi/arhivi, dnevniki, podatki, FILE/ključi in Docker volumes
+ostanejo; APK56fbc372…/IPAa08bfa24… SHA256 po čiščenju ista. iPhone
+težave nismo nadaljevali. Manjkajoči build cache se obnovi ob naslednji
+gradnji; ne obnavljaj ga samo zaradi starega dokaznega manifesta.
+**Za nadaljnje delo:** ponovno uporabi obstoječi QA source/build imenik.
+Novo polno kopijo naredi samo za potrebno vzporedno ali baseline primerjavo.
+Po preverjeni predaji paketa odstrani odvečne vmesne rezultate; ohrani
+potrebne končne pakete, majhen izvorni diff/manifest in dokaze. Zaradi
+čiščenja ne ustvarjaj novih kopij build cachev in ne ponavljaj PASS testov.
+
 20. oktober — **obe testni aplikaciji nameščeni; mobilna odobritev prostora in projekta potrjena**.
 [Aktualna skupna seja](docs/E2EE_MOBILE_SESSION_2026_10_20.md):
 isti Sol6.1/high podagenti in glavni/neodvisni pregled. Android prvi QA APK
