@@ -4,9 +4,11 @@ Uporabnik je naročil pripravo za skupno testiranje po vrnitvi domov.
 Ta korak pripravlja pakete, testni strežnik in diagnostiko; ne izvaja
 namestitev na telefona ali uporabniških testnih scenarijev.
 
-**Končni izid: Android in testni strežnik pripravljena; iOS gradnja BLOCKED
-po treh poskusih.** Skupni dvoplatformni test se še ne more začeti z obema
-novima paketoma. Telefona in njuni podatki niso bili spremenjeni.
+**Aktualni izid po uporabnikovem dodatnem naročilu popravka: Android,
+iOS in testni strežnik so pripravljeni.** iOS podpisovanje je popravljeno
+in novi podpisani paket preverjen. Telefona in njuni podatki niso bili
+spremenjeni; namestitev in skupni test počakata na uporabnikovo vrnitev.
+Prejšnji blokirani korak in njegovi trije poskusi so ohranjeni spodaj.
 
 ## Osnova in izolacija
 
@@ -38,7 +40,8 @@ certifikata preverimo še ob dejanskem začetku, ker se lahko IP spremeni.
 
 ## Začetek skupnega testiranja
 
-Spodnji skupni tok počaka na prihodnji uspešno zgrajeni in preverjeni iOS paket.
+Spodnji skupni tok počaka na uporabnikovo vrnitev. Oba paketa sta pripravljena;
+pred namestitvijo ponovno preverimo napravi in dosegljivost testnega gostovanja.
 
 1. Uporabnik priključi in odklene S25 ter iPhone 11. Oba sta na istem Wi-Fi
    kot Mac. Potrdimo prepoznani napravi in izključno testna ID-ja.
@@ -157,11 +160,11 @@ ni trajno porabljena že pred uporabnikovim dejanjem. Zunanja zajema sta
 Glavni in neodvisni pregled TLS/diagnostike sta uspešna. Pomočnik je samo
 v izoliranih testnih gradnjah; glavni izvor in produkcijska koda ostaneta
 nespremenjena. Konzola, prvi dejanski telefonski zagon in razhroščevanje
-še niso potrjeni. Android debug podpira poznejši Dart debugger. Za prihodnji
+še niso potrjeni. Android debug podpira poznejši Dart debugger. Za pripravljeni
 iOS AOT kandidat sta predvidena native konzola in simboli, ne Dart VM
-priklop; trenutnega iOS AOT paketa in njegovih simbolov ni.
+priklop. Uspešna gradnja ne dokazuje dejanskega priklopa konzole.
 
-## iOS: gradnja blokirana, brez novega paketa
+## Zgodovina: iOS blokiran po prvih treh poskusih
 
 Pripravljen je izolirani izvor za isti QA bundle ID, service in Keychain
 skupino. Obstoječi razvojni podpisnik je veljaven, profil vključuje
@@ -179,20 +182,69 @@ Trije poskusi native arhiva so odpovedali pred prevajanjem:
    podvojena nastavitev: za dodanim `CODE_SIGN_STYLE = Manual` je še vedno
    `CODE_SIGN_STYLE = Automatic`. Slednja prepiše prvo.
 
-To je napaka naše priprave QA projekta, ne ugotovljena napaka aplikacije,
-računa Apple ali telefona. Po tretjem poskusu je delo na tej težavi
-ustavljeno. **Novega podpisanega iOS paketa ni.** Stari nameščeni testni
-paket in njegovo stanje ostaneta nedotaknjena.
+To je bila napaka naše priprave QA projekta, ne ugotovljena napaka aplikacije,
+računa Apple ali telefona. Po tretjem poskusu je bilo delo ustavljeno brez
+novega podpisanega paketa. Stari nameščeni testni paket in njegovo stanje
+sta ostala nedotaknjena.
 
-Dokumentiran naslednji popravek je zamenjava obstoječe nastavitve samo v
+Takrat dokumentiran predlog je bila zamenjava obstoječe nastavitve samo v
 treh Runner konfiguracijah, brez dodajanja podvojenih ključev ali globalnega
 profila za knjižnice. Pred morebitno naslednjo gradnjo je treba statično
-preveriti eno učinkovito nastavitev v vsaki konfiguraciji. Četrta gradnja
-ni bila izvedena; ne začenjamo novega števca ali drugega testnega računa.
+preveriti eno učinkovito nastavitev v vsaki konfiguraciji. V prvem naročilu
+četrta gradnja ni bila izvedena. Nadaljevanje spodaj sledi šele novemu
+izrecnemu uporabnikovemu naročilu; testni računi in stanje ostanejo isti.
 
-Dokazi: `ios/readiness-evidence.json`, `ios/native-attempts.json`,
+Zgodovinski dokazi: `ios/native-attempts.json`,
 `ios/LATER_SESSION.md` in dnevniki vseh treh arhivov v istem imeniku
-priprave. Predlog popravka `next-signing-correction-NOT-APPLIED.patch`
-ni uporabljen. `ios/later-capture.py` je pripravljen in statično pregledan,
-vendar za uporabo potrebuje prihodnji preverjeni podpisani paket in
-njegov `artifact-evidence.json`; danes ga ne zaganjamo.
+priprave. Prvotni `readiness-evidence.json` je shranjen tudi kot
+`ios/signing-fix-20261020/previous-readiness-evidence.json`.
+
+## iOS popravek po novem naročilu: paket pripravljen
+
+Uporabnik je izrecno naročil: »Implementiraj popravek. Ce ga ne mores sam,
+me pocakaj da pridem domou.« Popravek je izveden brez posega uporabnika,
+naprave ali računa Apple.
+
+Najprej so odstranjeni trije podvojeni ključi. Statični pregled in dejanski
+`xcodebuild -showBuildSettings` potrdita eno nastavitev v vsaki od treh
+Runner konfiguracij ter odsotnost vsiljenega profila pri 43 odvisnostih.
+Prvi arhiv po novem naročilu nato razkrije dodatni vzrok: obstoječi profil
+upravlja Xcode, zato ni združljiv z ročnim načinom.
+
+Končni popravek ima v Runner konfiguracijah eno `CODE_SIGN_STYLE = Automatic`
+in splošno `Apple Development`, brez izrecnega UUID profila ali certifikata.
+Knjižnicam se nastavitve ne vsiljujejo. Tudi ta popravek je pred gradnjo
+pregledan statično, z učinkovitimi nastavitvami in neodvisnim pregledom.
+Ukaz za arhiv nima globalnih podpisnih nastavitev, `allowProvisioningUpdates`,
+registracije naprav ali cilja fizične naprave.
+
+**Drugi arhiv po novem naročilu uspe.** Xcode uporabi isti že obstoječi
+lokalni profil `50458f86-da56-4cef-81e7-873a8fecef4f` in isti podpisni
+certifikat. Ni ustvarjanja novih profilov, novih podpisnih pravic ali
+spremembe Apple računa. Zgodovina prvih treh napak ter novega neuspelega
+ročnega poskusa je ohranjena; po uspešnem arhivu ni nove gradnje.
+
+Paket je v
+`build/qa/jivie-mobile-readiness-20261020/ios/signing-fix-20261020/automatic-existing-profile/Jivie-Test-iOS-current-development.ipa`,
+16.460.353 B, SHA-256
+`51a42425076cad618fb96aaf8e1f71facd5b100eac72e2b372468d1216e62651`.
+V istem imeniku je preverjeni arhiv z `Runner.app`.
+
+Preverjeni so strict/deep podpis, dejanski profil z vključenim iPhonom 11,
+testni bundle ID, ime Jivie Test, različica 1.10.1 (31), service in izključna
+testna Keychain skupina. Ni produkcijskih URL shem, Firebase konfiguracije
+ali APNs entitlements. Razvojni podpis ostane namenjen testni namestitvi.
+
+sqlite3mc je po odstranitvi podpisa bajtno enak prejšnjemu kandidatu.
+sodium ni bajtno enak: razlikuje se 16-bajtni `LC_UUID`, pri podpisanem
+izdelku tudi podpisni blok. Vseh 14 sekcij kode/podatkov in izvozov se ujema;
+to sta neodvisno potrdila dva pregleda. Knjižnica ni bila zamenjana ali
+popravljena. SDK, zaklenjene odvisnosti in 1.760 vhodov izoliranega izvora
+ostanejo vezani na manifest; glavni zamrznjeni izvor je nespremenjen.
+
+`artifact-evidence.json`, `readiness-evidence.json`, dokazi nastavitev,
+native primerjava in dnevnik uspešnega arhiva so v istem imeniku.
+Vrhnja `ios/HANDOFF.md` in priprava konzole kažeta na novi preverjeni
+paket. **Namestitev, zagon, telefonski scenariji in dejanski priklop konzole
+niso izvedeni.** Android, testni strežnik in produkcija v tem nadaljevanju
+niso spremenjeni.

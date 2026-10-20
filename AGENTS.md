@@ -1,5 +1,21 @@
 # Navodila za delo na projektu
 
+20. oktober — **iOS podpisovanje popravljeno po novem izrecnem naročilu; oba paketa pripravljena**.
+[Aktualno nadaljevanje](docs/E2EE_MOBILE_READINESS_2026_10_20.md):
+isti Sol6.1/high podagent in neodvisni/glavni pregled. Odstranjeni podvojeni
+Runner ključi; prvi novi arhiv pokaže nezdružljivost Manual z Xcode-managed
+profilom. Končno single Automatic/Apple Development samo Runner, brez
+globalnega profila/certifikata ali provisioning/device flags. Učinkovite
+nastavitve 3 Runner/43 odvisnosti pregledane pred arhivom. Drugi novi arhiv
+PASS, isti že lokalni profil/certifikat in QA ID/service/Keychain. IPA51a42425…
+16.460.353 B, strictdeep/profile/entitlements PASS. sqlite3mc unsigned isti;
+sodium vseh14 code/data sekcij in exports isti, razlikuje se LC_UUID16B in
+podpis; ne trdimo wholebyte parity. Stari3FAIL in novi prviFAIL ohranjeni.
+SDK/locks/glavni izvor cf97e2d isti, Android/server v tem nadaljevanju isti.
+Ni naprav/namestitev/zagonov/scenarijev/konzole; čakamo uporabnikovo vrnitev.
+Spodnji iOS BLOCKED je zgodovina, ne trenutno stanje. CA še vedno velja do
+21.10.2026 12:25:42UTC; ne podaljšujemo zaupanja. P0/mobile/P8/N7 odprti.
+
 20. oktober — **priprava telefonov delno zaključena; iOS BLOCKED po treh gradnjah**.
 [Priprava in nadaljevanje](docs/E2EE_MOBILE_READINESS_2026_10_20.md):
 uporabnik naroči pripravo, skupni testi šele po vrnitvi domov. Sol6.1/high
