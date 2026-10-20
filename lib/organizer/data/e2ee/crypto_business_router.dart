@@ -41,6 +41,7 @@ import 'crypto_domain_checkpoint_publisher.dart';
 import 'crypto_domain_router.dart';
 import 'crypto_business_json.dart';
 import 'crypto_read_retry.dart';
+import 'crypto_verified_finance_reads.dart';
 import 'crypto_inventory_json.dart';
 import 'crypto_migration_record_source.dart';
 import 'account_directory_v2.dart' show cryptoSha256;
@@ -110,12 +111,29 @@ class CryptoBusinessRouter
     implements
         CryptoDomainRouter,
         CryptoFinancePolicyReadContext,
+        CryptoFinanceReadContext,
         CryptoProjectionCursorTransition,
         CryptoNativeProjectRootRepair {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
   static final _financePolicyOnly = Object();
+  static final _combinedFinanceRead = Object();
+
+  @override
+  Future<T> withFinanceRead<T>({
+    required DeviceSession session,
+    required Future<T> Function() read,
+  }) async {
+    final combined = _CombinedFinanceRead(this, session);
+    try {
+      return await runZoned(read, zoneValues: {_combinedFinanceRead: combined});
+    } finally {
+      combined.active = false;
+      combined.reads.close();
+    }
+  }
+
   @override
   Future<CryptoFinancePolicyReadResult<T>> withFinancePolicyOnly<T>(
     Future<T> Function() read,
@@ -224,8 +242,24 @@ class CryptoBusinessRouter
     required Map<String, Object?> params,
     required Set<String> protectedScopeIds,
   }) async {
-    final account = await accountFor(session);
-    final access = SessionCryptoAccess(account: account);
+    final candidate = Zone.current[_combinedFinanceRead];
+    final combined =
+        candidate is _CombinedFinanceRead && candidate.matches(this, session)
+        ? candidate
+        : null;
+    if (combined != null) await combined.initialize();
+    final account = combined?.account ?? await accountFor(session);
+    final access = combined?.access ?? SessionCryptoAccess(account: account);
+    final combinedRead =
+        combined != null &&
+        (RegExp(
+              r'^finance[24]?\.(pull|accountChoices|policy)$',
+            ).hasMatch(operation) ||
+            operation == 'finance3.payments');
+    if (combined != null && !combinedRead) {
+      combined.reads.invalidate();
+      access.invalidateAuthorityOperation();
+    }
     final attempt = Zone.current[_financePolicyOnly];
     final policyOnly =
         attempt is _FinancePolicyOnlyAttempt &&
@@ -236,6 +270,8 @@ class CryptoBusinessRouter
       access,
       database,
       financePolicyOnly: policyOnly,
+      financeReads: combinedRead ? combined.reads : null,
+      invalidateFinanceReads: combined?.reads.invalidate,
     );
     return access.withVerifiedOperation(() async {
       final adapters = configurePayloads(runtime);
@@ -375,14 +411,43 @@ class _FinancePolicyOnlyAttempt {
   bool dispatched = false;
 }
 
+class _CombinedFinanceRead {
+  _CombinedFinanceRead(this.owner, this.session);
+  final CryptoBusinessRouter owner;
+  final DeviceSession session;
+  AccountCryptoV2Workflow? account;
+  SessionCryptoAccess? access;
+  Future<void>? _initializing;
+  Future<void> initialize() => _initializing ??= _initialize();
+  Future<void> _initialize() async {
+    final resolved = await owner.accountFor(session);
+    account = resolved;
+    access = SessionCryptoAccess(account: resolved);
+  }
+
+  final reads = CryptoVerifiedFinanceReads();
+  bool active = true;
+  bool matches(CryptoBusinessRouter router, DeviceSession current) =>
+      active &&
+      identical(owner, router) &&
+      session.token == current.token &&
+      CryptoInventoryJson.canonical(session.profile.toJson()) ==
+          CryptoInventoryJson.canonical(current.profile.toJson()) &&
+      (account?.directory.isCurrent() ?? true);
+}
+
 class CryptoBusinessSession {
   CryptoBusinessSession(
     this.account,
     this.access,
     this.db, {
     this.financePolicyOnly = false,
+    this.financeReads,
+    this.invalidateFinanceReads,
   });
   final bool financePolicyOnly;
+  final CryptoVerifiedFinanceReads? financeReads;
+  final void Function()? invalidateFinanceReads;
   CollaborationDatabase get database => db;
   String get partition => p;
   Future<void> Function(List<CryptoProjectionRecord>)? prepareRecords;
@@ -519,7 +584,10 @@ class CryptoBusinessSession {
       }
       return context;
     },
-    beforeDelivery: access.beforeDelivery,
+    beforeDelivery: (signed) {
+      invalidateFinanceReads?.call();
+      return access.beforeDelivery(signed);
+    },
     project: project,
     resolveHistoricalSiblings: CryptoBusinessGroupHistory(this).resolve,
     prepareProjection: (batch) async {
@@ -1176,9 +1244,54 @@ class CryptoBusinessSession {
     String scopeId,
     String domain, {
     bool attest = true,
-  }) => access.withVerifiedOperation(
-    () => _pullVerified(scopeId, domain, attest: attest),
-  );
+  }) => access.withVerifiedOperation(() {
+    final combined = financeReads;
+    if (combined == null || domain != 'finance' || !attest) {
+      // A non-attesting read cannot satisfy an attesting consumer later.
+      if (!attest) combined?.invalidate();
+      return _pullVerified(scopeId, domain, attest: attest);
+    }
+    return combined.read(
+      scopeId,
+      pull: () => _pullVerified(scopeId, domain, attest: true),
+      capture: () => _verifiedFinanceSnapshot(scopeId),
+    );
+  });
+
+  Future<CryptoVerifiedFinanceSnapshot?> _verifiedFinanceSnapshot(
+    String scope,
+  ) => access.withVerifiedOperation(() async {
+    final state = CryptoFinanceReadState(db, p);
+    Future<String?> fingerprint() => state.capture(scope);
+    final before = await fingerprint();
+    if (before == null) return null;
+    final read = await access.readContext(scope, 'finance');
+    if (!await hasReusableCheckpoint(scope, 'finance', read) ||
+        !await _observedComplete(scope, 'finance')) {
+      return null;
+    }
+    final lease = await access.verifiedReadLease();
+    if (lease == null ||
+        !await access.isVerifiedReadLeaseCurrent(lease) ||
+        await fingerprint() != before ||
+        !await access.isVerifiedReadLeaseCurrent(lease)) {
+      return null;
+    }
+    return CryptoVerifiedFinanceSnapshot(
+      scopeId: scope,
+      read: read,
+      stateDigest: before,
+      // Keep local SQL changes outside the entire equality/authority check.
+      // The authority clock belongs to the original observation; no network
+      // refresh or newer lease may extend a previously pulled snapshot.
+      isCurrent: () => db.transaction(
+        () async =>
+            await access.isVerifiedReadLeaseCurrent(lease) &&
+            await fingerprint() == before &&
+            await access.isVerifiedReadLeaseCurrent(lease),
+      ),
+    );
+  });
 
   Future<T> rateLimitedRead<T>(
     String scopeId,

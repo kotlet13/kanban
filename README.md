@@ -1,5 +1,14 @@
 # Jivie
 
+**20. oktober — skupno preverjeno branje financ v izvoru:** glavni finančni
+pull, izbira računov in povezana plačila znotraj iste obdelave prostora
+ponovno uporabijo nespremenjeno preverjeno podlago. Novi ciljni testi20 PASS,
+dejanski HTTP finančni del58 →39 zahtevkov/7 →4 pullov; isti saldo/vnosi.
+Prihranek časa ali bajtov celotnega cikla ni dokazan. Ločena obstoječa
+težava samodejnega nadaljevanja zastarele izbire računov ostaja OPEN.
+[Izvedba, meritve in meje](docs/E2EE_FINANCE_READ_REUSE.md). Brez nove sheme,
+namestitve ali spremembe urnika/Firebase; produkcija in stari QA nedotaknjeni.
+
 **20. oktober — združeno pridobivanje pravic v izvoru:** nova izbirna metoda
 FamilyHub sestavi račun, prostor in dovoljene projekte v omejen skupen
 odgovor; odjemalec ohrani preverjanje podpisov in obstoječo kratko mejo

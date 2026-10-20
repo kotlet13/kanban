@@ -135,76 +135,101 @@ extension CollaborationFinanceSync on CollaborationRepository {
     for (final scope in scopes) {
       if (!await _privateScopeAllowed(p, scope)) continue;
       await _renewLease(p);
-      try {
-        final policy = await _fetchFinancePolicy(
-          session,
-          epoch,
-          scope.id,
-          syncLease: true,
+      Future<void> syncScope() => _syncFinanceScope(
+        session,
+        epoch,
+        scope,
+        linkedPaymentsSupported: linkedPaymentsSupported,
+      );
+      final router = cryptoRouter;
+      if (router is CryptoFinanceReadContext) {
+        await (router as CryptoFinanceReadContext).withFinanceRead(
+          session: session,
+          read: syncScope,
         );
-        if (!policy.canRead) continue;
-        if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
-        await _pullFinanceScope(session, epoch, scope.id);
-        if (_organizationFinanceSupported &&
-            scope.kind == SharedScopeKind.project) {
-          try {
-            await _fetchFinanceAccountChoices(
-              session,
-              epoch,
-              scope.id,
-              syncLease: true,
-            );
-          } on CryptoAuthorityPending catch (error) {
-            // The selector is optional when this project-only member cannot
-            // discover the parent needed to issue a new endorsed selection.
-            // Existing target manifests were still tried; no empty selection
-            // or refreshed completeness is inferred from this condition.
-            if (error.reason != 'crypto_account_choices_parent_unavailable') {
-              rethrow;
-            }
-            _checkEpoch(epoch);
-          }
-        }
-        // A first personal payment needs a verified empty sidecar snapshot too.
-        // `required` only becomes true once a linked financial fact exists.
-        if (policy.linkedPaymentsRequired ||
-            linkedPaymentsSupported &&
-                policy.canWrite &&
-                (scope.kind == SharedScopeKind.organization ||
-                    scope.organizationId != null)) {
-          await _fetchLinkedPayments(
-            PaymentSpaceRef(scope.id, partition: p),
+      } else {
+        await syncScope();
+      }
+      _checkEpoch(epoch);
+    }
+  }
+
+  Future<void> _syncFinanceScope(
+    DeviceSession session,
+    int epoch,
+    SharedScope scope, {
+    required bool linkedPaymentsSupported,
+  }) async {
+    final p = session.profile.partition;
+    try {
+      final policy = await _fetchFinancePolicy(
+        session,
+        epoch,
+        scope.id,
+        syncLease: true,
+      );
+      if (!policy.canRead) return;
+      if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
+      await _pullFinanceScope(session, epoch, scope.id);
+      if (_organizationFinanceSupported &&
+          scope.kind == SharedScopeKind.project) {
+        try {
+          await _fetchFinanceAccountChoices(
+            session,
+            epoch,
+            scope.id,
             syncLease: true,
           );
+        } on CryptoAuthorityPending catch (error) {
+          // The selector is optional when this project-only member cannot
+          // discover the parent needed to issue a new endorsed selection.
+          // Existing target manifests were still tried; no empty selection
+          // or refreshed completeness is inferred from this condition.
+          if (error.reason != 'crypto_account_choices_parent_unavailable') {
+            rethrow;
+          }
           _checkEpoch(epoch);
         }
-      } on CryptoAuthorityPending {
+      }
+      // A first personal payment needs a verified empty sidecar snapshot too.
+      // `required` only becomes true once a linked financial fact exists.
+      if (policy.linkedPaymentsRequired ||
+          linkedPaymentsSupported &&
+              policy.canWrite &&
+              (scope.kind == SharedScopeKind.organization ||
+                  scope.organizationId != null)) {
+        await _fetchLinkedPayments(
+          PaymentSpaceRef(scope.id, partition: p),
+          syncLease: true,
+        );
+        _checkEpoch(epoch);
+      }
+    } on CryptoAuthorityPending {
+      _checkEpoch(epoch);
+      _lastError ??= const CollaborationException(
+        'crypto_reconciliation_required',
+      );
+    } on CollaborationApiException catch (e) {
+      if (const {
+        'crypto_scope_head_missing',
+        'crypto_migration_required',
+        'crypto_device_keys_pending',
+      }.contains(e.code)) {
         _checkEpoch(epoch);
         _lastError ??= const CollaborationException(
           'crypto_reconciliation_required',
         );
-      } on CollaborationApiException catch (e) {
-        if (const {
-          'crypto_scope_head_missing',
-          'crypto_migration_required',
-          'crypto_device_keys_pending',
-        }.contains(e.code)) {
-          _checkEpoch(epoch);
-          _lastError ??= const CollaborationException(
-            'crypto_reconciliation_required',
-          );
-          continue;
-        }
-        if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
-          rethrow;
-        }
-        await database.transaction(() async {
-          _checkEpoch(epoch);
-          await _validLease(p);
-          _checkEpoch(epoch);
-          await _storeFinancePolicy(p, scope.id, const SharedFinancePolicy());
-        });
+        return;
       }
+      if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
+        rethrow;
+      }
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        await _validLease(p);
+        _checkEpoch(epoch);
+        await _storeFinancePolicy(p, scope.id, const SharedFinancePolicy());
+      });
     }
   }
 

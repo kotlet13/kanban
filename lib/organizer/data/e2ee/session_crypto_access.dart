@@ -330,6 +330,22 @@ class CryptoWriteContext {
   final CryptoKeyLease key;
 }
 
+/// Opaque original-operation authority for one combined materialized read.
+class CryptoVerifiedReadLease {
+  CryptoVerifiedReadLease._(
+    this._owner,
+    this._generation,
+    this._lifecycle,
+    this._watch,
+    this._pins,
+  );
+  final SessionCryptoAccess _owner;
+  final int _generation;
+  final int? _lifecycle;
+  final Stopwatch _watch;
+  final Map<String, String?> _pins;
+}
+
 /// The production bridge between signed membership, local vault keys and sync.
 /// Missing authority remains pending; malformed cryptographic evidence fails.
 class _AuthorityOperation {
@@ -1654,6 +1670,47 @@ class SessionCryptoAccess {
       if (await account.store.secure.read(pin.key) != pin.value) return false;
     }
     return identical(_operation, operation);
+  }
+
+  /// A combined read may carry exact verified material between dispatches.
+  /// Its age starts at the original authority operation, never at reuse.
+  Future<CryptoVerifiedReadLease?> verifiedReadLease() async {
+    final operation = _operation;
+    if (operation == null ||
+        operation.heads.isEmpty ||
+        !await _operationPinsValid(operation)) {
+      return null;
+    }
+    return CryptoVerifiedReadLease._(
+      this,
+      operation.generation,
+      operation.lifecycle,
+      operation.watch,
+      Map.unmodifiable(operation.pins),
+    );
+  }
+
+  Future<bool> isVerifiedReadLeaseCurrent(CryptoVerifiedReadLease lease) async {
+    if (!identical(lease._owner, this) ||
+        lease._generation != _authorityGeneration ||
+        !canReuseCryptoReadAuthority(
+          age: lease._watch.elapsed,
+          identityCurrent: account.directory.isCurrent(),
+          lifecycleMatches:
+              lease._lifecycle == _BlobLifecycleEpoch.shared?.generation,
+          pinsMatch: true,
+          onlineVerified: true,
+          active: true,
+        )) {
+      return false;
+    }
+    for (final pin in lease._pins.entries) {
+      if (await account.store.secure.read(pin.key) != pin.value) return false;
+    }
+    return lease._generation == _authorityGeneration &&
+        account.directory.isCurrent() &&
+        lease._watch.elapsed < const Duration(seconds: 5) &&
+        lease._lifecycle == _BlobLifecycleEpoch.shared?.generation;
   }
 
   Future<void> _captureOperationPin(

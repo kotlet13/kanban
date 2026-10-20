@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+20. oktober — **skupno preverjeno branje financ zaključeno v izvoru** po
+naročilu samo prvega nadaljevanja; trije GPT-6.1 Sol/high, glavni pregled.
+[Izvedba in dokazi](docs/E2EE_FINANCE_READ_REUSE.md): per-scope kontekst
+običajnega finančnega synca, lazy account/shared access, ločen runtime na
+poslovni dispatch. Samo dokončan attested pull+checkpoint/izpeljave z
+izvirno največ5s authority lease in točnim transakcijskim SQL odtisom sme
+preskočiti ponovno branje. Pisanje/nepodprti dispatch/ne-attest/napaka/
+sprememba dokazil razveljavijo podlago; ni globalcache ali podaljšanja TTL.
+Veliki obsegi nad128records/128received/8checkpoints/256KiB gredo po običajni
+poti. Jedro16PASS(poskus1), integracija4PASS(poskus2; prvi fixturemap type),
+nov dejanski HTTP parPASS: finance58→39HTTP/7→4pull, celotno88→85HTTP;
+isti saldo33,33EUR/strošek12,34/ID/revizije/vsebina/1choice/2completepayment
+markerja. Bajti in čas niso boljši/dokazani: prvi cikel dodatna metadata
+preverjanja, brez ponovitev za lepšo meritev. Priprava2FAIL source_set_changed,
+tretji isti-stanje explicit prepare/approve/finish PASS; stari requests ostali.
+Samodejni ensure po materializeAvailable ostaja ločen OPEN, ni popravljen.
+Ni dejanskega novega testa menjave pina/identitete/lifecycle, temveč izvorni
+pregled in generične kontrole guardov. Novi Docker59776 ustavljen, zasebno
+stanje ohranjeno; produkcija/stareQA/SDK/locks/trgovini/urnik/Firebase isti.
+N7odvzema in starihPASS ne ponavljaj. P0/mobile/P8 ostajajo odprti.
+Končna analiza0error/0warning/515starihinfo, novi helper/test brez pripomb;
+izvedba commit/push, brez namestitve.
+
 20. oktober — **združeno pridobivanje pravic zaključeno v izvoru** po novem
 ozkem naročilu uporabnika; GPT-6.1 Sol/high podagenti in glavni pregled.
 [Izvedba, dokazi in nadaljevanja](docs/E2EE_AUTHORITY_BATCHING.md): izbirni

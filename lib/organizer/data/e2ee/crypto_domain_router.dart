@@ -29,6 +29,17 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Shares verified financial reads only within one scope's ordinary sync pass.
+/// Implementations bind the context to the initiating authenticated session,
+/// revalidate its read evidence, and discard it when [read] completes or fails.
+/// This never authorizes reuse by a later sync or a standalone UI action.
+abstract interface class CryptoFinanceReadContext {
+  Future<T> withFinanceRead<T>({
+    required DeviceSession session,
+    required Future<T> Function() read,
+  });
+}
+
 /// Client-owned background permission queries do not also refresh aggregate
 /// finance snapshots. This is not a server response flag or an authority cache.
 abstract interface class CryptoFinancePolicyReadContext {
