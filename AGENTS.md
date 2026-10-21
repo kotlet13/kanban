@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+21. oktober — **policy opozorilo popravljeno in ista iPhone QA posodobljena**.
+Sol6.1/high implementacija, glavni/neodvisni pregled PASS. Send catch
+ponovno vrže SAMO policy_acceptance_required; pending podpis/ID/claims
+ostanejo, druge napake ohranijo exact receipt pot. Finance/outer sync
+ohranita kodo do obstoječega gumba »Pravila sodelovanja«. Tri nove kontrole
+PASS poskus2 po pričakovanem starem FAIL1; analiza0error/0warning/4stariinfo.
+Main sprememba6vrstic, QA samo4dodane po ohranjenem loggerju. En arhiv in
+ena in-place namestitev IPA2621b85d… PASS16:27:54UTC; isti podpis/Keychain/
+shramba/CA/native knjižnici. QA PID1732 normalno ustavljen; fresh4vault
+datoteke1.896.838B pred/po bajtno enake, produkcijski metapodatki isti.
+Nič launch/UI/Sync/FILE/povabila/sprejema pravil. Stari v2 dnevnik je
+ZGODOVINSKI, ni ponastavljen in ne dokazuje izida novega paketa.
+NASLEDNJE: uporabnik odpre Jivie Test, po potrebi znani Continue, v istem
+skupnem prostoru/projektu odpre oblaček in »Pravila sodelovanja« ter jih
+sam pregleda/potrdi. Native prikaz in nadaljnji sync še nista preverjena;
+ne ponavljaj PASS, granta ali povabila. Android/server/produkcija isti.
+Dokazi: [aktualni zapis](docs/E2EE_MOBILE_READINESS_2026_10_20.md),
+`build/qa/jivie-mobile-readiness-20261020/ios/policy-acceptance-fix-20261021/`.
+
 21. oktober — **v2 potrdil pravi vzrok sync opozorila: nepotrjena pravila**.
 Uporabnik odpre isto Jivie Test in Continue. Sveži v2 zapis16:19:37–42UTC
 (native poskus2) potrdi finance_choices → delivery pending/response absent,

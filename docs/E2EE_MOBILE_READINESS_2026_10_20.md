@@ -251,6 +251,61 @@ ponavljanja uspešnih scenarijev. Android in produkcija ostaneta nedotaknjena.
 Dokaz: `ios/sync-warning-detail-20261021/native/latest-durable-result.json`
 pod istim mobilnim QA imenikom. Zgornje čakanje na v2 zagon je zgodovina.
 
+### Funkcionalni popravek pravil sodelovanja
+
+Po izrecnem naročilu uporabnika je v glavnem izvoru popravljen samo catch
+pošiljanja v `lib/organizer/data/e2ee/crypto_sync_repository.dart`: koda
+`policy_acceptance_required` se ponovno vrže, vse druge API napake ohranijo
+prejšnjo pot do točnega potrdila. Ista čakajoča podpisana zahteva ostane,
+brez novega podpisa/ID, umetnega potrdila ali samodejnega sprejema pravil.
+Obstoječa finance API in zunanja sync obravnava kodo preneseta do že
+obstoječega sporočila in gumba »Pravila sodelovanja«. Uporabnik pregled in
+potrditev opravi v obstoječem skupnem prostoru; osebni prostor ima ločeno
+obstoječo obravnavo pravil.
+
+GPT-6.1 Sol/high izvede popravek in tri nove ciljne kontrole, drugi podagent
+in glavni agent opravita pregled PASS. Prvi tek nove prve kontrole na stari
+kodi FAIL reproducira skrito izjemo; drugi tek vseh treh novih kontrol PASS:
+ista izjema/nespremenjena čakajoča zahteva in claims, nadaljevanje istega
+podpisa po spremembi testnega pogoja, drugi409 ohrani točno potrdilo in
+zgodovinski ACK prepreči ponovno pošiljanje/preflight. Stari PASS niso
+ponovljeni. Format/diff check PASS, scoped flutter analyze0error/0warning
+in4stari testni style info (vrstice preverjene proti izvirniku).
+Glavni runtime SHA `d884164aa56271fa2bea3014678927d93a0d4a9eb6fdc24534d06c55fe4a0e45`.
+Dokaz: `ios/policy-required-fix-20261021/main-evidence` pod istim QA imenikom.
+
+V istem QA izvoru se ohrani diagnostika v2 in doda samo štirivrstični guard
+za policy napako. Drugih1762 vhodov je bajtno enakih nameščeni osnovi
+b2ec0e0a…, SDK/locki/podpis/shramba/CA nespremenjeni. QA runtime SHA
+`d57c269e546ddb74d876950e38d43fa0e3349e7bedc3ea201757c2a5e4e71474`.
+Pipeline in overlay izrecno označita funkcionalni popravek; obstoječi v2
+dnevnik ostane zgodovinski dokaz, brez novega cache/ponastavitve ali trditve
+o novem uspešnem syncu. Izvedba paketa: `ios/policy-acceptance-fix-20261021`.
+
+Arhiv PASS v prvem poskusu, IPA
+`2621b85d8113bbc3de74698d1b3b5327c7cfff446cd56f0084578346f0e27bcd`
+(16.483.522 B). Dejanski podpis/profil/certifikat/Keychain/shramba/CA
+preverjeni; obe native knjižnici brez podpisa bajtno isti kot b2ec, vseh148
+datotek IPA ustreza arhivu. Glavni pregled artefakta PASS.
+
+QA PID1732 normalno ustavljen16:27:42UTC, sveža kopija štirih šifriranih
+vault datotek1.896.838B. Ena in-place namestitev16:27:54UTC PASS; vse štiri
+datoteke pred/po imajo iste hashe. iOS ponovno dodeli pot vsebnika, ne
+spreminja preverjene vsebine; produkcijski metapodatki so isti. Brez
+uninstall/reset/restore/prijave/FILE/novega povabila, brez zagona ali UI
+dejanj z orodji. V2 cache in dokazi ostanejo zgodovinski; ni novega arm/read.
+
+Naslednji fizični korak opravi uporabnik: odpre Jivie Test, po potrebi
+znani Continue, v istem skupnem prostoru/projektu odpre oblaček in
+»Pravila sodelovanja« ter jih sam pregleda in potrdi. Vidnost gumba,
+sprejem pravil in poznejši uspešni sync še niso native potrjeni. Ne
+ponavljamo že uspešnih scenarijev. Android/server/produkcija nespremenjeni.
+
+Po predaji odstranjenih pet dovoljenih regenerabilnih cache map,
+1.188.716.544 alociranih B (dejanski prirast prostega prostora1.005.531.136B).
+Vseh pet potrebnih IPA ohrani iste hashe; izvori/arhivi/diffi/dokazi in
+zasebne kopije ostanejo. Ni nove polne kopije izvora ali drugih čiščenj.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

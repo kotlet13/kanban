@@ -537,6 +537,126 @@ void main() {
   }
 
   test(
+    'policy gate surfaces required acceptance and resumes the exact retained request',
+    () async {
+      final id = await enqueue(await wire());
+      final original = Map<String, Object?>.from((await store.outgoing(id))!);
+      final claims = await db.rows('SELECT * FROM crypto_outbox_records');
+      var policyEligible = false, delivered = false, preflights = 0;
+      final required = const CollaborationApiException(
+        'policy_acceptance_required',
+        details: {'policyVersion': 1},
+      );
+      final target = clone(
+        beforeDelivery: (_) async {
+          preflights++;
+        },
+      );
+      transport.handler = (op, params) async {
+        if (op == 'crypto2.receipt.get') {
+          return delivered ? receipt(original) : {'outcome': 'unknown'};
+        }
+        expect(op, 'crypto2.records.batch');
+        if (!policyEligible) throw required;
+        delivered = true;
+        return {'status': 'applied'};
+      };
+      await expectLater(target.deliver(), throwsA(same(required)));
+      expect(await store.outgoing(id), original);
+      expect(await db.rows('SELECT * FROM crypto_outbox_records'), claims);
+      expect(transport.calls.map((c) => c.operation), [
+        'crypto2.receipt.get',
+        'crypto2.records.batch',
+      ]);
+      expect(preflights, 1);
+      // This changes only the synthetic server guard, not account policy state.
+      policyEligible = true;
+      await target.resumeUnresolved(requestIds: {id});
+      final sent = transport.calls
+          .where((c) => c.operation == 'crypto2.records.batch')
+          .toList();
+      expect(sent, hasLength(2));
+      expect(sent[0].params, jsonDecode(original['signed_body'] as String));
+      expect(sent[1].params, sent[0].params);
+      expect(preflights, 2);
+      final applied = (await store.outgoing(id))!;
+      for (final name in [
+        'request_id',
+        'request_hash',
+        'signed_body',
+        'sequence',
+      ]) {
+        expect(applied[name], original[name]);
+      }
+      expect(applied['state'], 'applied');
+      expect(await db.rows('SELECT * FROM crypto_outbox'), hasLength(1));
+      expect(await db.rows('SELECT * FROM crypto_outbox_records'), claims);
+      expect(observed, isEmpty);
+    },
+  );
+
+  test(
+    'policy gate leaves other conclusive send errors on exact receipt path',
+    () async {
+      final id = await enqueue(await wire());
+      final original = Map<String, Object?>.from((await store.outgoing(id))!);
+      final claims = await db.rows('SELECT * FROM crypto_outbox_records');
+      var sent = false;
+      final rejected = {
+        ...receipt(original),
+        'status': 409,
+        'response': {'errorCode': 'conflict'},
+      };
+      transport.handler = (op, params) async {
+        if (op == 'crypto2.receipt.get') {
+          return sent ? rejected : {'outcome': 'unknown'};
+        }
+        expect(op, 'crypto2.records.batch');
+        sent = true;
+        throw const CollaborationApiException('conflict');
+      };
+      await repo.deliver();
+      final retained = (await store.outgoing(id))!;
+      expect(retained['state'], 'rejected');
+      expect(jsonDecode(retained['response'] as String), rejected);
+      expect(retained['signed_body'], original['signed_body']);
+      expect(retained['request_hash'], original['request_hash']);
+      expect(await db.rows('SELECT * FROM crypto_outbox_records'), claims);
+      expect(transport.calls.map((c) => c.operation), [
+        'crypto2.receipt.get',
+        'crypto2.records.batch',
+        'crypto2.receipt.get',
+      ]);
+    },
+  );
+
+  test(
+    'policy gate retains historical ACK before any send or authority retry',
+    () async {
+      final id = await enqueue(await wire());
+      final original = Map<String, Object?>.from((await store.outgoing(id))!);
+      var preflights = 0;
+      final target = clone(
+        beforeDelivery: (_) async {
+          preflights++;
+        },
+      );
+      transport.handler = (op, params) async {
+        expect(op, 'crypto2.receipt.get');
+        return receipt(original);
+      };
+      await target.deliver();
+      expect(preflights, 0);
+      expect(transport.calls.map((c) => c.operation), ['crypto2.receipt.get']);
+      expect((await store.outgoing(id))!['state'], 'applied');
+      expect(
+        (await store.outgoing(id))!['signed_body'],
+        original['signed_body'],
+      );
+    },
+  );
+
+  test(
     'two repositories serialize pull and do not reproject terminal evidence',
     () async {
       final value = await wire();

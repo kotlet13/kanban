@@ -746,7 +746,11 @@ class CryptoSyncRepository {
             throw const FormatException('crypto_capture_sidecar_operation');
           }
           await _call(row['operation'] as String, {...signed, ...sidecar});
-        } on CollaborationApiException {
+        } on CollaborationApiException catch (error) {
+          // Required acceptance has no terminal receipt; keep the exact pending work.
+          if (error.code == 'policy_acceptance_required') {
+            rethrow;
+          }
           /* Persisted conclusive failures are resolved by their exact receipt. */
         }
         final afterSend = await lookup();
