@@ -1,5 +1,46 @@
 # Navodila za delo na projektu
 
+21. oktober — **lokalni celotni sync: H1/H2/H3/H5/H6 PASS; H4/H7 STOP**.
+Izrecno naročilo uporabnika: resnični lokalni HTTP/dva odjemalca, brez
+telefonov/produkcije/ponovitve uspešnih testov; Sol6.1/high podagenti in
+glavni/neodvisni pregled. Samo novi Docker jivie-fullsync-lab-20261021 na
+127.0.0.1:59777, nove lastne volumes in dve sintetični identiteti. Zasebni
+fixture /tmp/jivie-fullsync-lab-20261021 (0700/0600), javni metapodatki v
+build/qa/local-diagnostics/full-sync-lab-20261021/. Brez native gradenj.
+Vsaka faza ima največ3 zunanje poskuse pred kompilacijo; pretekli FAIL in
+isto stanje ohranjeni. PASS faze in podkoraki se NE ponavljajo.
+H2 izgubljeni applied odgovor: realni pending-receipt gap popravljen,
+isti restartPASS2 z enim receiptom/nič resend/nespremenjenimi claims.
+H3 current projection proof gap popravljen, isti B FINAL3PASS; nov izoliran
+controlPASS3 po2fixtureoracleFAIL, brez ponovitve starega controltesta.
+H5 pre-send outage/restartPASS1+1, ista originalna zahteva sprejeta enkrat.
+H6 cold current-read proof gap popravljen; FINAL3PASS, realni same-base
+owner200/member409, oba navadna synca do iste rev5, finance33,33/12,34 iste.
+H4 cold outgoing descriptor gap popravljen (spletni dokaz samo writeRaw,
+FILE/frozen/deleted/default varovala ista); baseupload/catchupPASS2.
+H4FINAL3 nato pravi CAS owner200/member409, vendar B wire6 draft ostane
+pending namesto conflict; crypto zahteva rejected409/claims isti. Dejanska
+napaka: _writeRaw non-applied outcome pretvori v delivery_pending in s tem
+ne doseže app conflict handlerja. STOP po3, BREZ četrtega testa/popravljanja
+ali novega opravila; vnos ni izgubljen. H7 ohrani ta draft in staging opravi
+prek dejanskega scoped accountChoices API, ker H4 blokira polni sync.
+H7FAIL1 je pričakovana outage izjema napačne vrste v fixture. H7poskus2
+signed parent/child revoke in exactrequest403 permission_revoked PASS,
+navadni recovery0batch/isti podpis+claim+H4draft; lokalno revokedfalse,
+selector1 in2scope_reconciliation=missing. FAIL/STOP po2, brez slepega3.
+Catalogodsotnost ni podpisanodokazilo odvzema; runtime scopes vrača revokedIds[].
+Potrebna explicitdenial/revocation pot, ne unsafe odsotnost→revoked. Sync
+completionerror/work ni bil shranjen, zato no-send ni cleanfullsyncPASS.
+NE ponovi odstranitev/probe/uspešnihfaz, NE odstrani pendingpodatkov.
+Podrobnosti in omejitve: [poročilo](docs/E2EE_FULL_SYNC_LOCAL_2026_10_21.md).
+Scenariji zaključeni. Glavni/neodvisni pregled PASS za izvedene popravke;
+scoped analyze0error/0warning/69starihinfo, sourcea4c3ae3e…. Samo novi
+Docker ustavljen, otherContainerStateChanges[]; volumes/clients ohranjeni.
+23ohranjenihHTTPattemptsets imajo0actual429 (testpacing, ne speedbenchmark).
+Javni dokazi777.107B/zasebni16.314.524B/serverdata5.894.144B. Ni nativebuildov.
+H4/H7 odprti meji sta prednost pred naslednjimi telefonskimi testi.
+Telefoni, obstoječe QA in produkcija nedotaknjeni; native uspeh ni trjen.
+
 21. oktober — **lokalni popravek zastarelega seznama PASS; telefoni še stari**.
 Uporabnik zahteva nadaljnje eksperimente lokalno in obvestilo ob zaključku;
 S25 bo odklopljen, ne zahtevaj priklopa za lokalno delo. Sol6.1/high

@@ -655,7 +655,18 @@ class CryptoSyncRepository {
     });
   }
 
-  Future<void> _deliver({Set<String>? requestIds}) async {
+  /// Consume only already recorded terminal outcomes for an exact selection.
+  /// Unknown or denied lookups retain pending work; this never sends a mutation
+  /// or retries blocked work, even when a verified projection is already newer.
+  Future<void> reconcileTerminalReceipts({required Set<String> requestIds}) {
+    final selected = Set<String>.unmodifiable(requestIds);
+    return _exclusive(() => _deliver(requestIds: selected, terminalOnly: true));
+  }
+
+  Future<void> _deliver({
+    Set<String>? requestIds,
+    bool terminalOnly = false,
+  }) async {
     await for (final row in store.pendingDelivery()) {
       _current();
       if (requestIds != null && !requestIds.contains(row['request_id'])) {
@@ -680,6 +691,7 @@ class CryptoSyncRepository {
           }.contains(error.code)) {
             rethrow;
           }
+          if (terminalOnly) return null;
           await store.transaction(() async {
             _current();
             await store.outcome(row['request_id'] as String, 'blocked', {
@@ -695,6 +707,7 @@ class CryptoSyncRepository {
       if (historical == null) continue;
       receipt = historical;
       if (receipt['outcome'] == 'unknown') {
+        if (terminalOnly) continue;
         final fresh = beforeDelivery;
         if (fresh == null) {
           throw const CryptoAuthorityPending(

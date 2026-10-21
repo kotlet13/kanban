@@ -272,6 +272,9 @@ class CryptoBusinessRouter
       access,
       database,
       financePolicyOnly: policyOnly,
+      onlineAccountChoiceDirectories: RegExp(
+        r'^finance[24]?\.accountChoices$',
+      ).hasMatch(operation),
       financeReads: combinedRead ? combined.reads : null,
       invalidateFinanceReads: combined?.reads.invalidate,
     );
@@ -455,10 +458,12 @@ class CryptoBusinessSession {
     this.access,
     this.db, {
     this.financePolicyOnly = false,
+    this.onlineAccountChoiceDirectories = false,
     this.financeReads,
     this.invalidateFinanceReads,
   });
   final bool financePolicyOnly;
+  final bool onlineAccountChoiceDirectories;
   final CryptoVerifiedFinanceReads? financeReads;
   final void Function()? invalidateFinanceReads;
   CollaborationDatabase get database => db;
@@ -2234,7 +2239,10 @@ class CryptoBusinessSession {
             domain,
             type,
             raw,
-            personal: await _personal(scopeId),
+            personal: await _personal(
+              scopeId,
+              online: access.canReadAuthorDirectoryOnline,
+            ),
           );
         }
       }
@@ -2989,17 +2997,21 @@ class CryptoBusinessSession {
     return result;
   }
 
-  Future<bool> _personal(String scope) async {
-    return (await _verifiedScopeDescriptor(scope))['kind'] == 'personal';
+  Future<bool> _personal(String scope, {bool online = false}) async {
+    return (await _verifiedScopeDescriptor(scope, online: online))['kind'] ==
+        'personal';
   }
 
   /// Uses the explicit isolated FILE descriptor capability only in cold verification.
   Future<Map<String, dynamic>> verifiedBusinessScopeDescriptor(String scope) =>
       _verifiedScopeDescriptor(scope);
 
-  Future<Map<String, dynamic>> _verifiedScopeDescriptor(String scope) async {
+  Future<Map<String, dynamic>> _verifiedScopeDescriptor(
+    String scope, {
+    bool online = false,
+  }) async {
     try {
-      return await access.verifiedScopeDescriptor(scope);
+      return await access.verifiedScopeDescriptor(scope, online: online);
     } on CryptoAuthorityPending catch (error) {
       if (error.reason != 'scope_descriptor_migration_pending') rethrow;
       final resolve = coldScopeDescriptor;

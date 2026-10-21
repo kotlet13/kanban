@@ -930,6 +930,12 @@ class SessionCryptoAccess {
       <String, VerifiedCryptoMigrationGenesisDescriptor>{};
   Map<String, Map<String, String>> get _committedGenesisAnchors =>
       _descriptorVerification?.genesisAnchors ?? _verifiedGenesisAnchors;
+
+  /// Restricted evidence reads never expand their directory evidence online.
+  bool get canReadAuthorDirectoryOnline =>
+      _readOnlyFrozen == null &&
+      Zone.current[_deletedScopeEvidenceZone] == null;
+
   _ReadOnlyFrozenScope? get _readOnlyFrozen =>
       Zone.current[_readOnlyFrozenScopeZone] as _ReadOnlyFrozenScope?;
 

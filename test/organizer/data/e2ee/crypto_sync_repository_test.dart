@@ -537,6 +537,85 @@ void main() {
   }
 
   test(
+    'terminal-only receipt selection never sends unknown or denied work and validates exact ACK',
+    () async {
+      final ignored = await enqueue(await wire()),
+          selected = await enqueue(await wire());
+      final ignoredOriginal = await store.outgoing(ignored);
+      final original = (await store.outgoing(selected))!;
+      final claims = await db.rows('SELECT * FROM crypto_outbox_records');
+      var mode = 'unknown', preflights = 0;
+      final target = clone(
+        beforeDelivery: (_) async {
+          preflights++;
+        },
+      );
+      transport.handler = (op, params) async {
+        expect(op, 'crypto2.receipt.get');
+        expect(params['requestId'], selected);
+        if (mode == 'unknown') {
+          return {'outcome': 'unknown'};
+        }
+        if (mode == 'denied') {
+          throw const CollaborationApiException('permission_revoked');
+        }
+        if (mode == 'substituted') {
+          return {...receipt(original), 'requestHash': '0' * 64};
+        }
+        if (mode == 'bad_ack') {
+          return {
+            ...receipt(original),
+            'response': {'status': 'applied', 'records': []},
+          };
+        }
+        return receipt(original);
+      };
+      for (final state in ['unknown', 'denied']) {
+        mode = state;
+        await target.reconcileTerminalReceipts(requestIds: {selected});
+        expect(await store.outgoing(selected), original);
+      }
+      for (final state in ['substituted', 'bad_ack']) {
+        mode = state;
+        await expectLater(
+          target.reconcileTerminalReceipts(requestIds: {selected}),
+          throwsFormatException,
+        );
+        expect(await store.outgoing(selected), original);
+      }
+      mode = 'applied';
+      final selection = <String>{selected};
+      final reconciliation = target.reconcileTerminalReceipts(
+        requestIds: selection,
+      );
+      selection.add(ignored);
+      await reconciliation;
+      final applied = (await store.outgoing(selected))!;
+      expect(applied['state'], 'applied');
+      for (final key in [
+        'request_id',
+        'request_hash',
+        'signed_body',
+        'sequence',
+      ]) {
+        expect(applied[key], original[key]);
+      }
+      expect(preflights, 0);
+      expect(await store.outgoing(ignored), ignoredOriginal);
+      expect(await db.rows('SELECT * FROM crypto_outbox_records'), claims);
+      expect(
+        transport.calls.every(
+          (c) =>
+              c.operation == 'crypto2.receipt.get' &&
+              c.params['requestId'] == selected,
+        ),
+        isTrue,
+      );
+      expect(observed, isEmpty);
+    },
+  );
+
+  test(
     'policy gate surfaces required acceptance and resumes the exact retained request',
     () async {
       final id = await enqueue(await wire());

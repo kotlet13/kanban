@@ -950,6 +950,7 @@ class CryptoFinanceAccountChoices {
     Map<String, dynamic>? snapshotRecord,
     CryptoMigrationCandidate? issuerCandidate,
     VerifiedScopeHead? exactTargetHead,
+    bool onlineAuthorDirectory = false,
   }) async {
     final command = _body(proof),
         p = _map(command['payload']),
@@ -1082,7 +1083,9 @@ class CryptoFinanceAccountChoices {
       accountId: command['accountId'],
       directoryHeadHash: p['authorDirectoryHeadHash'],
       allowUnverifiedContact: snapshotRecord != null,
-      online: offer.containsKey('capture3Context') && snapshotRecord != null,
+      online:
+          offer.containsKey('capture3Context') && snapshotRecord != null ||
+          onlineAuthorDirectory,
     );
     if (snapshotRecord == null) {
       final current = await context.access.currentMemberDirectory(
@@ -1134,6 +1137,7 @@ class CryptoFinanceAccountChoices {
     required String expectedScopeId,
     Map<String, dynamic>? snapshotRecord,
     Map<String, dynamic>? migrationOrigin,
+    bool onlineAuthorDirectory = false,
   }) async {
     final frozenOwn =
         raw.containsKey('capture3') &&
@@ -1330,7 +1334,22 @@ class CryptoFinanceAccountChoices {
             snapshotRecord['membershipHeadHash'] != offer['targetHeadHash'])) {
       throw const FormatException('crypto_account_choices_snapshot_binding');
     }
-    await _verifyManager(offer, delegation, snapshotRecord: snapshotRecord);
+    final onlineOrdinaryDirectory =
+        onlineAuthorDirectory &&
+        context.access.canReadAuthorDirectoryOnline &&
+        !raw.containsKey('capture3') &&
+        (snapshotRecord == null
+            ? offer['targetHeadHash'] == currentRead.headHash
+            : snapshotRecord['membershipHeadHash'] == currentRead.headHash &&
+                  snapshotRecord['epoch'] == currentRead.epoch &&
+                  snapshotRecord['accessRevision'] ==
+                      currentRead.accessRevision);
+    await _verifyManager(
+      offer,
+      delegation,
+      snapshotRecord: snapshotRecord,
+      onlineAuthorDirectory: onlineOrdinaryDirectory,
+    );
     final d = _map(_body(delegation)['payload']);
     final issuer = await context.access.directoryAt(
       scopeId: offer['targetScopeId'],
@@ -1338,6 +1357,7 @@ class CryptoFinanceAccountChoices {
       accountId: offer['accountId'],
       directoryHeadHash: offer['authorDirectoryHeadHash'],
       allowUnverifiedContact: true,
+      online: onlineOrdinaryDirectory,
     );
     if (issuer.deviceSnapshotHash != offer['deviceSnapshotHash'] ||
         issuer.identityEpochId != d['issuerIdentityEpochId'] ||
@@ -2466,12 +2486,52 @@ class CryptoFinanceAccountChoices {
     );
   }
 
+  /// A pull can install an accepted manifest before its lost ACK is read.
+  /// Settle only older, strictly bound ordinary materializations after current
+  /// verification. Unknown outcomes never authorize a resend or a new intent.
+  Future<Map<String, dynamic>> _readAndReconcileTerminal(String scope) async {
+    final result = await read(scope), id = await manifestId(scope);
+    final current = await context.record(scope, 'finance', id, type: type);
+    if (current == null) return result;
+    final raw = _map(jsonDecode(current['raw_payload'] as String));
+    if (raw.containsKey('capture3')) return result;
+    final claims = await context.db.rows(
+      "SELECT c.request_id,c.expected_revision,b.operation_id FROM crypto_outbox_records c JOIN crypto_business_requests b ON b.partition=c.partition AND b.request_id=c.request_id JOIN crypto_outbox o ON o.partition=c.partition AND o.request_id=c.request_id WHERE c.partition=? AND c.scope_id=? AND c.domain='finance' AND c.record_id=? AND b.scope_id=? AND b.domain='finance' AND b.record_id=? AND o.state='pending' AND c.expected_revision<? ORDER BY o.sequence LIMIT 32",
+      [
+        partition,
+        scope,
+        context.address(scope, 'finance', type, id).wireId,
+        scope,
+        id,
+        current['crypto_revision'],
+      ],
+    );
+    final selected = <String>{};
+    for (final claim in claims) {
+      final saved = await _materializationRequest(
+        scope,
+        id,
+        claim['operation_id'] as String,
+      );
+      if (saved == null ||
+          saved['row']['request_id'] != claim['request_id'] ||
+          saved['record']['expectedRevision'] != claim['expected_revision']) {
+        throw const FormatException('crypto_account_choices_conflict_binding');
+      }
+      selected.add(claim['request_id'] as String);
+    }
+    if (selected.isNotEmpty) {
+      await context.queue.reconcileTerminalReceipts(requestIds: selected);
+    }
+    return result;
+  }
+
   /// Same-actor roles may advance the already authorized derivation directly.
   /// Split roles remain durable review/materialization work in Approvals.
   Future<Map<String, dynamic>> ensure(String scope) async {
     var replaceStale = false;
     try {
-      return await read(scope);
+      return await _readAndReconcileTerminal(scope);
     } on CryptoAuthorityPending catch (e) {
       if (!const {
         'crypto_account_choices_publication_required',
@@ -2489,7 +2549,7 @@ class CryptoFinanceAccountChoices {
         member = head.member(own.accountId);
     if (member['financeRole'] == 'write' && await materializeAvailable(scope)) {
       try {
-        return await read(scope);
+        return await _readAndReconcileTerminal(scope);
       } on CryptoAuthorityPending catch (e) {
         if (!const {
           'crypto_account_choices_publication_required',
@@ -2531,7 +2591,7 @@ class CryptoFinanceAccountChoices {
           );
         }
         await finish(scope, action);
-        return await read(scope);
+        return await _readAndReconcileTerminal(scope);
       } on CollaborationApiException catch (e) {
         if (attempt != 0 || !_stale(e.code)) rethrow;
       } on CryptoAuthorityPending catch (e) {
@@ -2612,6 +2672,8 @@ class CryptoFinanceAccountChoices {
       expectedScopeId: scope,
       snapshotRecord: value.record,
       migrationOrigin: value.migrationOrigin,
+      onlineAuthorDirectory:
+          context.onlineAccountChoiceDirectories && !value.historicalOnly,
     );
     return raw;
   }
@@ -2720,7 +2782,11 @@ class CryptoFinanceAccountChoices {
       }
       return {
         ...verified,
-        'choices': await verify(raw, expectedScopeId: scope),
+        'choices': await _verify(
+          raw,
+          expectedScopeId: scope,
+          onlineAuthorDirectory: context.onlineAccountChoiceDirectories,
+        ),
       };
     } finally {
       await helper.close();
