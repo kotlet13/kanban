@@ -1,5 +1,26 @@
 # Navodila za delo na projektu
 
+21. oktober — **nadaljevanje obstoječe revizijske zahteve popravljeno; čaka ročni sync**.
+Sol6.1/high implementacija in glavni/neodvisni source pregled PASS. Ordinary
+financeAccountChoice preveri točnega lastnika revizije, pending nadaljuje
+samo izvirni requestId; terminalni vezani409/conflict ali200 ter sveže
+preverjen napredovan manifest omogočijo nadaljevanje. Claim/journal/podpisi
+ostanejo; generic guard in policy popravek nespremenjena. Ciljni tek kot
+celota FAIL:16PASS/3UNVERIFIED po treh poskusih; tri fixture napake statično
+popravljene brez četrtega teka. Scoped analyze0issues. Native uspeh še NI
+potrjen. Podrobnosti in omejitve: [aktualni zapis](docs/E2EE_MOBILE_READINESS_2026_10_20.md).
+En arhiv in ena in-place namestitev IPAd0bb1685… PASS17:35:20UTC;
+isti QA/podpis/Keychain/CA/native knjižnici. PID1750 normalno ustavljen,
+fresh4vault datoteke1.986.950B pred/po bajtno enake; iOS spremeni pot
+vsebnika, ne trdimo iste poti. Produkcijski metapodatki isti. Ni launch/UI/
+Sync/read s strani agenta. V4 cache dokazano odsoten17:35:27UTC, stari
+v3 dokazi ohranjeni.5cachemap1.188.970.496B odstranjenih; potrebni paketi/
+izvori/diffi/dokazi/zasebne kopije ostanejo. Android/server/produkcija isti.
+NASLEDNJE: uporabnik odpre isto Jivie Test, po potrebi znani Continue,
+isti projekt/oblaček in ENKRAT »Uskladi zdaj«, nato sporoči izid.
+Potem `python3 build/qa/jivie-mobile-readiness-20261020/ios/claim-continuation-fix-20261021/pipeline.py read`.
+Ne ponavljaj PASS/povabila/granta/FILE/pravil in ne briši rezervacij.
+
 21. oktober — **v3 zajel točno lokalno napako crypto_local_revision_claimed**.
 Uporabnikov ročni sync17:03:26–31UTC, manual=true, finance_choices,
 unexpected_catch, lastChoiceCheckpoint=choice_publish, FormatException/

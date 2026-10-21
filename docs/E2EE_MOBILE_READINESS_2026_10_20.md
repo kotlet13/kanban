@@ -423,6 +423,77 @@ varovala. V tem koraku ni implementacije, nove gradnje, UI/sync dejanja ali
 ponovitve poslovnih testov. Pravil ni treba potrjevati znova. Celotni sync
 ostaja FAIL; dokaz izgube uporabniških podatkov ni pridobljen, produkcija ista.
 
+### Nadaljevanje obstoječe revizijske zahteve
+
+Po izrecnem naročilu uporabnika je popravljena samo ordinary materializacija
+izpeljanega financeAccountChoice v `crypto_finance_account_choices.dart`.
+Pred novo objavo poišče točno rezervacijo revizije. Obstoječa operacija
+ohrani staro pot; drug lastnik mora biti vezan na en zapis business journal,
+veljavno podpisano enozapisno zahtevo istega računa/naprave/prostora/domene/
+tipa/wireID/revizije in točen hash. Pending/blocked nadaljuje samo izvirni
+requestId skozi obstoječo vrsto. Ni brisanja/prenosa claimov, novega podpisa
+izvirne zahteve ali obvoda splošnega varovala.
+
+Terminalna zavrnitev se upošteva samo z vezanim409/conflict potrdilom;
+applied mora imeti vezano200 potrdilo. Upoštevana je dejanska strežniška
+pogodba, kjer terminalni odgovor lahko nima outcome. Nato sveža meja
+avtoritete, preverjen pull in popolnoma preverjen trenutni manifest z
+večjo crypto_revision dovolijo uporabo veljavnega izpeljanega seznama.
+Neznan izid, napačna vezava/potrdilo, zavrnjen dostop ali nespremenjena
+revizija ne smejo postati uspeh. Stara same-operation zgodnja state meja
+ostane; generic `claimRecord` je nespremenjen.
+
+Sol6.1/high implementacija ter glavni/neodvisni pregled source PASS za SHA
+`1b251e835195ad830c1211fae8dbe637d25e51285b2147ea9a35c0a6b35eadbc`.
+**Ciljni testni tek kot celota FAIL:16 PASS in3 FAIL/UNVERIFIED.** Prvi
+poskus fixture compile FAIL (mock podpisi), drugi fixture setup FAIL
+(pogodba finance/previousHash); tretji potrdi16 kontrol. Te pokrijejo
+terminalni409/200 brez outcome, nespremenjene dnevnike in rezervacije,
+podpis/hash/revizijo/vezavo, zamenjano/neznano/ne-conflict potrdilo,
+zavrnjen/zastarel/izbrisan/nenapredovan manifest in staro isto operacijo.
+
+Tri preostale kontrole se ustavijo pred nameravanimi trditvami: pending→200
+in pending replay na napačni testni partition, wrong-type pri manjkajoči
+testni notificationState. Fixture je statično popravljen, **brez četrtega
+zagona**, zato te tri niso PASS. Test SHA po statičnem popravku
+`996359bc06e28280f08ef7ea1503ab2ecff2b646f414cae22dc223c78ddcda18`;
+končna scoped analiza0issues/format/diff check PASS. Uporabljeni so prava
+baza, podpisi/hash/record commitment in dešifriranje; authority/pull ter
+vhodni certificate/selection verifier imajo nadzorovane testne nadomestke.
+Ni dejanskega HTTP/native dokaza nadaljevanja. Glavni/neodvisni pregled
+ne najdeta materialne ovire za odobreno QA namestitev s temi omejitvami;
+to ne potrjuje produkcijske pripravljenosti ali uspešnega native synca.
+
+Dokazi so `ios/claim-continuation-fix-20261021/main-evidence` pod istim QA
+imenikom. Attempt3 je celotni raw log; prvi dve dokazili sta jasno označena
+izseka izhodov orodja, ne celotni raw log. Starih PASS ni ponavljanja.
+
+QA overlay ohrani obstoječo diagnostiko; drugi in edini dodatni runtime
+delta sta nova v4 namespace/tag, da zgodovinski v3 zapis ne porabi zajema.
+Pregled1764 runtime vhodov potrdi samo dve spremenjeni datoteki. En arhiv
+PASS17:33:55UTC; IPA
+`d0bb16853af90f85594f5618cd0b254c2fd2551ac1ee945404bf3ca5e2cbb9ae`
+(16.494.895B),23 podpisnih tarč/148 datotek preverjenih. Isti profil,
+certifikat, QA ID, Keychain/service, CA/endpoint/SDK/locks; obe native
+knjižnici brez podpisa bajtno enaki prejšnjemu paketu. QA source SHA
+`640b85ff479a280b50b6bea87c4d10a8a507497bac5b96619a1913ee18e254c6`.
+
+Isti QA PID1750 normalno ustavljen17:35:08UTC, ena in-place namestitev
+PASS17:35:20UTC. Sveža zasebna kopija štirih vault datotek1.986.950B:
+vsi hashi pred/po enaki, produkcijski metapodatki isti. iOS poroča novi
+poti QA vsebnika; ohranitev potrjuje vsebina, ne ista pot. Ni launch/UI/
+Sync/read/poslovnega testa. V4 namespace dokazano odsotna17:35:27UTC;
+zajem samo prvega manual/full cikla, stari dnevniki ohranjeni. Odstranjenih
+pet dovoljenih obnovljivih cache map1.188.970.496B; vseh sedem potrebnih
+paketov ohrani hashe, izvori/diffi/dokazi/zasebne kopije ostanejo.
+
+Namestitveni dokaz: `ios/claim-continuation-fix-20261021/HANDOFF.json` ter
+`native/installation-evidence.json`. Naslednji korak je uporabnikov isti
+projekt/oblaček in en »Uskladi zdaj«, po potrebi najprej znani Continue.
+Šele nato agent prebere
+`python3 build/qa/jivie-mobile-readiness-20261020/ios/claim-continuation-fix-20261021/pipeline.py read`.
+Celotni native sync ostaja odprt; Android/strežnik/produkcija nespremenjeni.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

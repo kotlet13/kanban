@@ -1669,6 +1669,13 @@ class CryptoFinanceAccountChoices {
     await verify(raw, expectedScopeId: scope);
     final id = await manifestId(scope),
         previous = await context.record(scope, 'finance', id, type: type);
+    final claimed = await _reconcileMaterializationClaim(
+      scope,
+      id,
+      operationId,
+      previous?['crypto_revision'] as int? ?? 0,
+    );
+    if (claimed != null) return claimed;
     try {
       return await context.publishRaw(
         scopeId: scope,
@@ -1698,16 +1705,91 @@ class CryptoFinanceAccountChoices {
     }
   }
 
-  Future<Map<String, dynamic>?> _conflictedMaterialization(
+  /// A newer certificate is a different derived intent, not permission to
+  /// replace an older revision claim. Finish its exact owner first, then use
+  /// only an independently verified, advanced current choice.
+  Future<Map<String, dynamic>?> _reconcileMaterializationClaim(
     String scope,
     String id,
     String operation,
+    int expectedRevision,
   ) async {
+    final existing = await context.db.rows(
+      'SELECT 1 FROM crypto_business_requests WHERE partition=? AND operation_id=?',
+      [partition, operation],
+    );
+    if (existing.isNotEmpty) return null;
+    final claims = await context.db.rows(
+      'SELECT c.request_id,b.operation_id FROM crypto_outbox_records c LEFT JOIN crypto_business_requests b ON b.partition=c.partition AND b.request_id=c.request_id WHERE c.partition=? AND c.scope_id=? AND c.domain=? AND c.record_id=? AND c.expected_revision=?',
+      [
+        partition,
+        scope,
+        'finance',
+        context.address(scope, 'finance', type, id).wireId,
+        expectedRevision,
+      ],
+    );
+    if (claims.isEmpty) return null;
+    if (claims.length != 1 || claims.single['operation_id'] is! String) {
+      throw const FormatException('crypto_account_choices_conflict_binding');
+    }
+    final owner = claims.single['operation_id'] as String;
+    if (owner == operation) return null; // Existing exact-intent retry path.
+    Future<Map<String, dynamic>> boundOwner() async {
+      final saved = await _materializationRequest(scope, id, owner);
+      if (saved == null ||
+          saved['row']['request_id'] != claims.single['request_id'] ||
+          saved['record']['expectedRevision'] != expectedRevision) {
+        throw const FormatException('crypto_account_choices_conflict_binding');
+      }
+      return saved;
+    }
+
+    var saved = await boundOwner();
+    if (const {'pending', 'blocked'}.contains(saved['row']['state'])) {
+      await context.queue.resumeUnresolved(
+        requestIds: {claims.single['request_id'] as String},
+      );
+      saved = await boundOwner();
+    }
+    final state = saved['row']['state'];
+    final receipt = await _materializationReceipt(saved);
+    if (state != 'rejected' && state != 'applied' ||
+        receipt == null ||
+        state == 'rejected' && !_isMaterializationConflict(receipt) ||
+        state == 'applied' &&
+            (receipt.containsKey('outcome') &&
+                    receipt['outcome'] != 'applied' ||
+                receipt['status'] != 200)) {
+      throw const CryptoAuthorityPending('crypto_business_delivery_pending');
+    }
+    context.financeReads?.invalidate();
+    return context.access.withVerifiedOperation(() async {
+      await context.pullVerified(scope, 'finance');
+      final current = await _currentManifest(scope);
+      final row = current['row'] as Map;
+      if (row['crypto_revision'] is! int ||
+          row['crypto_revision'] <= expectedRevision) {
+        throw const CryptoAuthorityPending('crypto_business_delivery_pending');
+      }
+      return _map(jsonDecode(row['projection'] as String));
+    }, freshBoundary: true);
+  }
+
+  Future<Map<String, dynamic>?> _materializationRequest(
+    String scope,
+    String id,
+    String operation, {
+    String? requiredState,
+  }) async {
     final rows = await context.db.rows(
       'SELECT b.scope_id,b.domain,b.record_id,o.request_id,o.request_hash,o.signed_body,o.state FROM crypto_business_requests b JOIN crypto_outbox o ON o.partition=b.partition AND o.request_id=b.request_id WHERE b.partition=? AND b.operation_id=?',
       [partition, operation],
     );
-    if (rows.length != 1 || rows.single['state'] != 'rejected') return null;
+    if (rows.length != 1 ||
+        requiredState != null && rows.single['state'] != requiredState) {
+      return null;
+    }
     final row = rows.single;
     if (row['scope_id'] != scope ||
         row['domain'] != 'finance' ||
@@ -1728,6 +1810,8 @@ class CryptoFinanceAccountChoices {
         ? command['payload']['records']
         : null;
     if (command['operation'] != 'crypto2.records.batch' ||
+        command['version'] != 2 ||
+        command['signer'] != 'device' ||
         command['requestId'] != row['request_id'] ||
         command['accountId'] != own.accountId ||
         command['serverId'] != own.serverId ||
@@ -1741,6 +1825,10 @@ class CryptoFinanceAccountChoices {
     final record = _body(_map(records.single));
     context.codec.validateUntrustedRecord(record);
     if (record['scopeId'] != scope ||
+        record['serverId'] != own.serverId ||
+        record['accountId'] != own.accountId ||
+        record['deviceId'] != context.account.deviceId ||
+        record['batchId'] != command['payload']['batchId'] ||
         record['domain'] != 'finance' ||
         record['type'] != type ||
         record['operationId'] != operation ||
@@ -1748,6 +1836,13 @@ class CryptoFinanceAccountChoices {
         record['id'] != context.address(scope, 'finance', type, id).wireId) {
       throw const FormatException('crypto_account_choices_conflict_binding');
     }
+    return {'row': row, 'signed': signed, 'record': record};
+  }
+
+  Future<Map<String, dynamic>?> _materializationReceipt(
+    Map<String, dynamic> saved,
+  ) async {
+    final row = saved['row'] as Map;
     final receipt = await context.account.directory.call(
       'crypto2.receipt.get',
       {'requestId': row['request_id'], 'requestHash': row['request_hash']},
@@ -1755,16 +1850,34 @@ class CryptoFinanceAccountChoices {
     if (receipt['outcome'] == 'unknown') return null;
     if (receipt['requestId'] != row['request_id'] ||
         receipt['requestHash'] != row['request_hash'] ||
-        !_same(receipt['authorization'], signed)) {
+        !_same(receipt['authorization'], saved['signed'])) {
       throw const FormatException('crypto_receipt_substitution');
     }
-    if (receipt.containsKey('outcome') && receipt['outcome'] != 'rejected' ||
-        receipt['status'] != 409 ||
-        receipt['response'] is! Map ||
-        receipt['response']['errorCode'] != 'conflict') {
-      return null;
-    }
-    return record;
+    return receipt;
+  }
+
+  bool _isMaterializationConflict(Map<String, dynamic> receipt) =>
+      (!receipt.containsKey('outcome') || receipt['outcome'] == 'rejected') &&
+      receipt['status'] == 409 &&
+      receipt['response'] is Map &&
+      receipt['response']['errorCode'] == 'conflict';
+
+  Future<Map<String, dynamic>?> _conflictedMaterialization(
+    String scope,
+    String id,
+    String operation,
+  ) async {
+    final saved = await _materializationRequest(
+      scope,
+      id,
+      operation,
+      requiredState: 'rejected',
+    );
+    if (saved == null || saved['row']['state'] != 'rejected') return null;
+    final receipt = await _materializationReceipt(saved);
+    return receipt != null && _isMaterializationConflict(receipt)
+        ? saved['record'] as Map<String, dynamic>
+        : null;
   }
 
   Future<Map<String, dynamic>> prepareFinancialRecord(
