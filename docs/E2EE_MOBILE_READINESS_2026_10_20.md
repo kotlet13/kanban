@@ -74,6 +74,98 @@ Prvi ročni korak je odprtje Jivie Test na iPhonu, ob znanem opozorilu
 »Nadaljuj v lokalne podatke«, nato sporočilo o prikazanem zaslonu.
 Povabila, sprejema in lastnikove odobritve ne ponavljamo.
 
+### Prvi ročni prikaz skupne vsebine
+
+Uporabnik odpre iOS Jivie Test in izbere »Nadaljuj v lokalne podatke«.
+Glavni agent samo opazuje Device Hub, brez klikov: najprej zaslon zaščite
+povezanih podatkov z opozorilom o nedokončani pripravi/čakajočem pošiljanju.
+Uporabnikov Nazaj pokaže Utrip skupnega prostora, nato odpre projekt
+MOBILE-PROJECT-1 in opravilo MOBILE-SHARED-1. V obrazcu »Uredi opravilo«
+sta dejansko vidna isti naslov in opomba FROM-A-20261018: **PASS prikaza
+obstoječe skupne vsebine na iPhonu**, ne dokaz novega synca ali pisanja.
+Uporabnik oceni odpiranje opravila na približno eno sekundo; to je
+opažanje brez meritve ali ugotovljenega vzroka. Ni zahteve za ponovitev.
+Rdeči indikator synca in zgornje opozorilo ostaneta odprta za pregled.
+Uporabnik še ni shranil spremembe.
+
+Prvi omejeni zajem se zaključi sam: iOS prepozna QA PID1718, a sprejme
+0 NET oznak (povezana konzola ni potrjena); strežnik zabeleži 254 POST200,
+4 POST403 in 6 GET200 brez pripisa klientu/operaciji/vzroku. Gateway se
+ob 15:37:13 UTC vrne v točno prvotno konfiguracijo, oba zajema sta OFF.
+403 sam po sebi ni diagnoza trenutnega opozorila. Stari v4 PASS ni ponovno
+uporabljen kot dokaz današnjega scenarija.
+
+### Pregled opozorila v oblačku — 21. oktober
+
+Uporabnik odpre oblaček. Dialog pokaže zadnji poskus 17:40 lokalno,
+zadnjo uspešno uskladitev »Še ni potrjena« in vrste 0/0/0. Sporočilo
+`cryptoConnectionPending` ni enolična diagnoza: `sharing_errors.dart:91–93`
+združi `crypto_reconciliation_required`, `crypto_transport_required` in
+`crypto_server_upgrade_required`. Predhodni napis na zaslonu zaščite je
+v `crypto_migration_wizard.dart:542` prikazan brez pogoja; sam po sebi ni
+dokaz nepripravljenega računa.
+
+Pregled istega iOS QA izvora potrdi izgubo prvotnega razloga:
+`collaboration_sync_actions.dart` pretvori `CryptoAuthorityPending` pri
+članih (280), branju (650) in zunanji meji (729) v splošno napako;
+`collaboration_finance_sync.dart` enako naredi pri finančnem obsegu (207)
+in odvisnostih (273). Nekatere API napake so prav tako združene.
+`_lastError` je pomnilniško stanje. QA omrežni dnevnik opazuje HTTP, ne
+poznejšega lokalnega preverjanja podpisov. Trajna v4 diagnostika je vezana
+na nadaljevanje povabila in ne zajema običajnega synca. **Točno mesto in
+prvotni razlog današnje native napake še nista dokazana.**
+
+Omejen read-only pregled treh streženih PHP datotek (`NativeService`,
+`NativeCryptoV2Service`, `NativeApiController`) potrdi bajtno ujemanje s
+trenutnim izvorom in QA izvorom. Oglaševane pogodbe podpirajo crypto2;
+ni dokaza za razlago »strežnik potrebuje nadgradnjo«. Štirih starih POST403
+ni mogoče pripisati operaciji ali računu iz zbranih metapodatkov.
+
+Potreben naslednji diagnostični korak je en omejen zapis **prvotne**
+napake običajnega synca pred pretvorbo: faza, dovoljena koda in statična
+oznaka mesta, prvi vzrok ter zaključek istega poskusa. Zapis mora biti v
+novem QA imeniku `Library/Caches`, brez vsebine, identifikatorjev, ključev,
+žetonov ali surovega stacka; brez novih map v Documents in brez spremembe
+varoval, ponovitev ali urnika. Uporabnik upravlja naslednji ročni korak;
+prvotno povabilo, seji in podatki ostanejo, produkcija je nedotaknjena.
+
+Po pregledu je v istem izoliranem iOS izvoru pripravljen samo diagnostični
+dodatek: štiri obstoječe datoteke, dva nova pomočnika in en nov testni vir.
+Prva opozorilna izjema se shrani pred pretvorbo, zaključek po končnem
+knjiženju statusa; namenoma obravnavana odsotnost nadrejenega finančnega
+prostora ostane izvzeta. Ohranijo se izvorne končne kode in obstoječe
+oznake `dp_*`, kadar je napaka v preverjanju imenika. Zapis je enkraten
+tudi po ponovnem zagonu, nepopoln ali preskočen poskus ni uspeh.
+Pet novih ciljnih kontrol PASS v prvem teku; analiza 0 napak/0 opozoril
+in 1 stara slogovna pripomba. Glavni in neodvisni pregled PASS. To preveri
+diagnostiko, ne razrešitve telefonske napake.
+
+Dokazi in majhen diff so v
+`build/qa/jivie-mobile-readiness-20261020/ios/sync-warning-diagnostic-20261021/`:
+`manifest.json`, `diagnostic.patch`, `evidence.json`, `root-source-review.md`.
+Odobren je en arhiv ob istih SDK, locks, podpisu, shrambi in obnovljenem CA;
+celotna izvorna kopija ni ustvarjena. Funkcionalni popravek še ni določen.
+
+Prvi diagnostični arhiv PASS: IPA `569b4626aca124c61075fe6a625ec7a4c3f1f17cd8847f9c9f2138de3be74317`,
+16.477.059 B. Preverjeni podpis/profil/Keychain/TLS/SDK/locks isti;
+sqlite3mc in sodium brez podpisa bajtno enaka prejšnjemu be48 paketu.
+Enaka QA aplikacija je posodobljena enkrat ob 15:58:47 UTC, brez zagona.
+Pred tem je isti QA PID1718 normalno ustavljen; sveža zasebna kopija štirih
+vault datotek 1.896.838 B ima pred/po namestitvi enake hashe. Produkcijski
+metapodatki so enaki, ni odjave/ponovnega povabila/FILE ali branja Keychaina.
+
+Ob 15:58:52 UTC je potrjena odsotnost novega diagnostičnega imenika
+`Library/Caches/jivie_qa_sync_warning_20261021_v1`; naslednji zapis bo zato
+nov, ne zgodovinski v4. Pripravljen je `native/read-durable.py`, ki prebere
+samo tri fiksne datoteke in preveri oznako gradnje, čas in dovoljene vrednosti.
+Priklop omrežne konzole ni potrjen in za ta zapis ni potreben. **Čakamo
+uporabnikov zagon iste Jivie Test** ter po potrebi znani Continue; orodja
+aplikacije ne zaženejo. Točen izvorni razlog še ni zajet in napaka ni označena
+kot odpravljena. Android in testni strežnik v tej preiskavi nista spremenjena.
+Po preverjeni namestitvi odstranjenih pet regenerabilnih cache map tega
+arhiva (1.224.544.256 alociranih B); izvor, diff, arhiv/IPA, dokazi in
+zasebne kopije ostanejo. Hashi novega in dveh predhodnih IPA so nespremenjeni.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

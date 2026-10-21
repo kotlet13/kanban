@@ -1,5 +1,24 @@
 # Navodila za delo na projektu
 
+21. oktober — **iPhone bere skupno opravilo; opozorilo sync čaka nov diagnostični zapis**.
+Uporabnikov prikaz MOBILE-SHARED-1/FROM-A-20261018 PASS, brez urejanja.
+Oblaček kaže 0/0/0 in uspešen sync še ni potrjen. Generično opozorilo združi
+več razlogov; ordinary sync izgubi prvotno CryptoAuthorityPending.reason.
+Stari v4 zajema le povabilo; današnja konzola0NET ni dokaz povezave, štirje
+POST403 niso pripisani operaciji. Ni dokaza za zastarel strežnik. Glej
+[aktualni zapis](docs/E2EE_MOBILE_READINESS_2026_10_20.md).
+Sol6.1/high pripravi QA-only first-original-error logger v istem iOS izvoru,
+5novih kontrol PASS poskus1, analiza0error/0warning/1oldinfo, glavni in
+neodvisni pregled PASS. En arhiv in ena namestitev IPA569b4626… PASS;
+isti podpis/CA/shramba, fresh4vault datoteke1.896.838B pred/po enake.
+PID1718 normalno ustavljen, aplikacija ni zagnana z orodji. Novi v1 cache
+ob15:58:52UTC dokazano odsoten, bralnik pripravljen v
+`build/qa/jivie-mobile-readiness-20261020/ios/sync-warning-diagnostic-20261021/native/read-durable.py`.
+NASLEDNJE: uporabnik odpre isto Jivie Test, po potrebi znani Continue;
+agent prebere tri trajne metapodatke prvega synca. Ne ponavljaj povabila,
+granta ali PASS prikaza; ne proži Sync/UI sam. Native vzrok še NI dokazan
+in funkcionalnega popravka ni. Produkcija/Android/server nespremenjeni.
+
 21. oktober popoldne — **oba TLS paketa nameščena; uporabnik izvaja UI teste**.
 Po vrnitvi uporabnika en install-r Android982d6893… in ena in-place iOS
 be48d130… namestitev PASS. Ista QA ID/podpisa/shrambi, fresh kopiji štirih
