@@ -398,6 +398,31 @@ potrebi znani Continue, v istem skupnem projektu odpre oblaček in **enkrat**
 Ne potrjuj pravil/povabila znova, ne ponavljaj starih PASS. Novi native
 vzrok in uspešen sync še nista potrjena; Android/server/produkcija isti.
 
+### Sveži ročni v3 zapis: lokalna kolizija revizijske zahteve
+
+Uporabnik ročno sproži sync in sporoči, da težava ostaja. Branje ob17:03:48UTC
+potrdi sveži v3 cikel17:03:26–31UTC, manual=true. Prva napaka:
+`finance_choices` / `unexpected_catch` / `FormatException` /
+`crypto_local_revision_claimed`; lastChoiceCheckpoint je `choice_publish`.
+Zaključek ima veljavno sejo/lease, completed=false, končno `invalid_response`
+in outcome=failed. Dokaz je `native/latest-durable-result.json` v v3 imeniku.
+
+Glavni in omejeni Sol6.1/high izvorni pregled povežeta edini literal z
+`CryptoSyncStore.claimRecord`: drugačen requestId že rezervira isto
+partition/scope/domain/wire-record/expectedRevision, nova zahteva pa nima
+dovoljene izrecne zamenjave rejected zahtevka. Običajni publishRaw/_writeRaw/
+enqueueBatch te zamenjave ne pošlje. Napaka nastane lokalno znotraj
+transakcijske priprave, pred dostavo novega batcha; splošno besedilo o
+strežniškem odgovoru je zato za ta poskus zavajajoče.
+
+Neposredno še ne poznamo identitete/stanja lastnika stare rezervacije in
+njegove povezave s prej prebranim409 potrdilom. Zavrnjene/neznane zahteve
+namerno ohranijo rezervacije. Popravek mora urediti nadaljevanje obstoječega
+dela oziroma preverjeno uskladitev; ne izbrisati rezervacije ali izklopiti
+varovala. V tem koraku ni implementacije, nove gradnje, UI/sync dejanja ali
+ponovitve poslovnih testov. Pravil ni treba potrjevati znova. Celotni sync
+ostaja FAIL; dokaz izgube uporabniških podatkov ni pridobljen, produkcija ista.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

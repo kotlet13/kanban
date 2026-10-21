@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+21. oktober — **v3 zajel točno lokalno napako crypto_local_revision_claimed**.
+Uporabnikov ročni sync17:03:26–31UTC, manual=true, finance_choices,
+unexpected_catch, lastChoiceCheckpoint=choice_publish, FormatException/
+crypto_local_revision_claimed; končni invalid_response/failed, veljavna
+seja/lease, completed=false. Guard v crypto_sync_store.dart claimRecord
+zavrne drug requestId za isto partition/scope/domain/record/expectedRevision
+brez dovoljene eksplicitne zamenjave rejected zahtevka. To je dokaz lokalne
+kolizije pri pripravi zahteve, NE strežniškega parserja ali redirecta.
+Identiteta/stanje starega lastnika claim in povezava s prej prebranim409
+še nista neposredno potrjena. Ne briši claimov in ne sproščaj varovala.
+Dokaz: `build/qa/jivie-mobile-readiness-20261020/ios/manual-sync-diagnostic-20261021/native/latest-durable-result.json`.
+Samo branje/izvorni pregled; brez novega sync/gradnje/UI/poslovnega testa.
+Pravila ostajajo PASS; celotni sync FAIL. Produkcija nespremenjena.
+
 21. oktober — **v3 diagnostika nameščena; čaka uporabnikov ročni sync**.
 Po novem naročilu QA-only logger zajame samo prvi manual&&full cikel;
 startup/partial ga ne porabi. Nova namespace/tag v3 ohranita stare dokaze.
