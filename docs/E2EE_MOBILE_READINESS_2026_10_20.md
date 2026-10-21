@@ -166,6 +166,69 @@ Po preverjeni namestitvi odstranjenih pet regenerabilnih cache map tega
 arhiva (1.224.544.256 alociranih B); izvor, diff, arhiv/IPA, dokazi in
 zasebne kopije ostanejo. Hashi novega in dveh predhodnih IPA so nespremenjeni.
 
+### Prvi sveži sync zapis in ožja diagnostika dostave
+
+Uporabnik odpre aplikacijo in isti oblaček. Branje treh fiksnih v1 datotek
+ob 16:01:29 UTC potrdi nov samodejni poskus 16:00:40–16:00:45 UTC:
+`finance_choices` / `finance_authority` / `CryptoAuthorityPending` /
+`crypto_business_delivery_pending`. Zaključek ima veljavno sejo in lease,
+izid `failed`, končno kodo `crypto_reconciliation_required`. To je prvi
+dejanski native poskus te diagnostike; ni novega Save/Sync/povabila.
+
+Pot je izbira finančnih računov → ensure/materialize → publishRaw →
+resumeUnresolved → lokalni crypto_outbox ni `applied`. Slednja koda lahko
+pomeni pending, blocked ali rejected; sama ne dokazuje konflikta. En
+omejen SELECT na istem testnem strežniku, mode=ro/query_only, ne najde
+ohranjenih potrdil B za financeAccountChoice prvotnega podrejenega prostora.
+Strežnik zavrnitve 401/403 vrne pred zapisom potrdila, zato odsotnost potrdila
+ne izključuje zavrnitve. Dodatni ozki SELECT potrdi: B nima sprejetih pravil
+v1 in prvotni podrejeni prostor je skupen. `uploadPolicy` bi zato ob dosegu
+te meje zavrnil records.batch s `policy_acceptance_required`/403. To še ni
+neposredni dokaz, da je konkretni native zahtevek dosegel mejo pošiljanja.
+
+Pripravljena v2 diagnostika v istem QA izvoru doda samo lokalno stanje,
+dovoljena polja shranjenega odgovora in prvo prestreženo napako točno
+izbrane dostave (lookup/before_delivery/send). Povezovalni ID ostane le v
+pomnilniku; podrobnost se zapiše šele ob isti končni pending izjemi.
+Obstoječi SELECT dobi stolpec response, brez nove poizvedbe ali spremembe
+ponavljanja, podpisov in teles zahtev. Nov v2 cache ohrani v1 dokaz.
+Tri nove kontrole PASS v drugem teku; prvi je compile FAIL (manjkajoči
+testni import in podvojena konstanta), ohranjen v dokazu. Analiza 0 issues,
+glavni/neodvisni pregled PASS; zaključna dva dovoljena niza preverjena
+statično in z analizo, brez ponovitve starih PASS. Funkcionalnega popravka
+še ni in pravil uporabnika nismo potrdili.
+
+Dokazi: `ios/sync-warning-detail-20261021/{manifest.json,diagnostic-v2.patch,evidence.json}`
+pod istim mobilnim QA imenikom; strežniška izida sta
+`build/qa/jivie-mobile-manual-20261021/server/b-choice-receipts-readonly.json`
+in `b-policy-guard-readonly.json`. Native števec ostaja 1; v2 še čaka zagon.
+
+V2 arhiv PASS v prvem poskusu; IPA
+`b2ec0e0a34d43dd488e48260d3697d49019fee0481c19b1338a047e499101000`
+(16.482.954 B). Dejanski podpis/profil/Keychain/shramba/obnovljeni CA
+preverjeni; sqlite3mc in sodium brez podpisa bajtno isti kot v1, vseh148
+datotek IPA ustreza podpisanemu arhivu. Samo tri pregledane runtime
+datoteke se razlikujejo; SDK in locki ostanejo isti.
+
+Isti QA PID1727 je normalno ustavljen16:16:49UTC. Ena in-place namestitev
+ob16:17:03UTC PASS, sveža kopija štirih vault datotek1.896.838B in hashi
+pred/po enaki. iOS je spremenil pot vsebnika, vsebina pa je ohranjena;
+produkcijski metapodatki so isti. Ni uninstall/reset/restore/prijave/FILE
+ali zagona z orodji. Novi v2 cache je dokazano odsoten16:17:15UTC.
+Dokazi so `candidate/artifact-evidence.json`, `native/installation-evidence.json`
+in `native/readback-armed.json` pod istim v2 imenikom.
+
+Naslednji korak je samo uporabnikov zagon Jivie Test in po potrebi znani
+»Nadaljuj v lokalne podatke«. Nato agent izvede
+`python3 build/qa/jivie-mobile-readiness-20261020/ios/sync-warning-detail-20261021/pipeline.py read`.
+To bo native poskus2 iste diagnostike; nobenega novega poslovnega scenarija,
+Sync, povabila ali ponavljanja PASS. V2 še ni funkcionalni popravek.
+
+Po preverjeni predaji odstranjenih pet dovoljenih regenerabilnih cache map,
+1.236.004.864 alociranih B; dejanski prosti prostor se poveča za1.053.630.464B.
+Vsi štirje potrebni IPA (v2/v1/be48/bbc61), izvori, arhivi, diffi, dokazi in
+zasebne kopije ostanejo; hashi paketov so isti. Nove polne kopije izvora ni.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

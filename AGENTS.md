@@ -1,5 +1,26 @@
 # Navodila za delo na projektu
 
+21. oktober — **sync napaka zožena na finančno dostavo; v2 diagnostika nameščena**.
+Uporabnikov prvi nov samodejni sync16:00:40–16:00:45UTC zajame
+finance_choices/finance_authority/crypto_business_delivery_pending;
+končna splošna koda crypto_reconciliation_required skrije prvotni razlog.
+Read-only testni SELECT potrdi B brez sprejetih pravilv1 in skupni child;
+ni ohranjenega matching financeAccountChoice potrdila. Policy403 je zato
+možen vzrok ob dosegu send, NE še potrjena native zavrnitev. Pravil ne
+potrjuj namesto uporabnika. V2 beleži le finite stanje/odgovor/izvorno napako
+točne obstoječe dostave, brez ID/teles/ključev ali spremembe kontrolnega toka.
+3nove kontrole PASS poskus2 (prvi compileFAIL ohranjen), analiza0issues,
+glavni/neodvisni pregled PASS. En arhiv in ena in-place namestitev
+IPAb2ec0e0a… PASS16:17:03UTC; isti podpis/shramba/CA/native knjižnici,
+fresh4vault datoteke1.896.838B pred/po bajtno enake, produkcijski metapodatki
+isti. QA PID1727 normalno ustavljen, nič launch/UI. V2 cache dokazano
+odsoten16:17:15UTC. NASLEDNJE: uporabnik odpre Jivie Test, po potrebi znani
+Continue; agent prebere `python3 build/qa/jivie-mobile-readiness-20261020/ios/sync-warning-detail-20261021/pipeline.py read`.
+Native števec te diagnostike1; v2 bo poskus2. Funkcionalnega popravka še ni.
+Ne ponavljaj PASS/povabila/granta/FILE/Sync. Android/produkcija nedotaknjena.
+Podrobnosti v [aktualnem zapisu](docs/E2EE_MOBILE_READINESS_2026_10_20.md).
+Spodnji v1 »čaka zagon« je zgodovina; njegov prebrani dokaz je ohranjen.
+
 21. oktober — **iPhone bere skupno opravilo; opozorilo sync čaka nov diagnostični zapis**.
 Uporabnikov prikaz MOBILE-SHARED-1/FROM-A-20261018 PASS, brez urejanja.
 Oblaček kaže 0/0/0 in uspešen sync še ni potrjen. Generično opozorilo združi
