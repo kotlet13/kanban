@@ -306,6 +306,35 @@ Po predaji odstranjenih pet dovoljenih regenerabilnih cache map,
 Vseh pet potrebnih IPA ohrani iste hashe; izvori/arhivi/diffi/dokazi in
 zasebne kopije ostanejo. Ni nove polne kopije izvora ali drugih čiščenj.
 
+### Po uporabnikovi potrditvi pravil: nova napaka odgovora
+
+Uporabnik sporoči sprejem pravil in ročni sync. Root samo opazuje fresh
+Device Hub prikaz: MOBILE-PROJECT-1, zadnji poskus21.10.18:40lokalno,
+zadnji uspeh še ni potrjen, vrste0/0/0, besedilo `sharingInvalidResponse`.
+Besedilo združuje kodi `invalid_response` in `redirect_rejected`; samo
+zaslon ne dokazuje natančne kode ali nezdružljivosti strežnika.
+
+En omejen read-only/query_only SELECT16:41:12UTC na istem QA18801 potrdi
+B policyv1 accepted=true in eno matching financeAccountChoice potrdilo
+prvotnega childa, ustvarjeno16:39:28UTC,409/errorCode conflict, en zapis
+expectedRevision1, brez appliedACK. Prejšnja policy ovira je odpravljena.
+Potrdilo ni neposredno korelirano s konkretnim native requestom v zadnjem
+prikazanem poskusu; konflikt še ne dokazuje vzroka novega splošnega opozorila.
+Dokaz: `build/qa/jivie-mobile-manual-20261021/server/b-policy-and-choice-after-manual-sync-20261021T1640Z.json`.
+
+Omejen izvorni pregled: materialize ob terminalnem409 preveri podpisano
+zahtevo in točno potrdilo, nato pullVerified/_currentManifest/novejšo
+crypto_revision. Napake ob teh korakih se lahko pretvorijo v splošno
+invalid_response, obstajajo pa tudi druge poti. Stari Mac legacy_revision
+popravek je že prisoten; starega vzroka zato ne prenašamo na nov primer.
+Obstoječi v2 logger je one-shot in ohranja16:19 zgodovinski zapis; tudi nov
+FormatException bi zabeležil kot other brez konkretne statične kode.
+Trenutnega izvornega mesta/izjeme nimamo. Naslednji dokaz mora zajeti
+aktualno fazo, tip in dovoljeno statično kodo napake, ne ponavljati
+potrditve pravil ali starega povabila. Brez nove gradnje/resetiranja dnevnika,
+samodejnih UI dejanj, novih poslovnih vnosov ali ponovitev PASS v tem koraku.
+Celotni sync ostaja odprt; podatkovna izguba ni dokazana. Produkcija ista.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

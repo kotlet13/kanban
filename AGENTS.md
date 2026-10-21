@@ -1,5 +1,20 @@
 # Navodila za delo na projektu
 
+21. oktober — **uporabnik potrdil pravila; nova sync napaka še ni diagnosticirana**.
+Na isti IPA2621b85d… uporabnik potrdi pravila in sproži sync. Root fresh
+Device Hub prikaz: MOBILE-PROJECT-1, zadnji poskus18:40lokalno, uspešen
+sync še ni potrjen,0/0/0, sharingInvalidResponse; gumba pravil ni več.
+Besedilo združuje invalid_response in redirect_rejected, ne loči kode.
+En bounded read-only SELECT16:41:12UTC potrdi policyv1 accepted=true ter
+eno matching B originalchild financeAccountChoice potrdilo16:39:28UTC,
+409conflict/expectedRevision1, brez appliedACK. To ne dokazuje točne
+klientove izjeme ali korelacije tega requesta s prikazanim poskusom.
+Ne predstavljaj 409 kot že dokazan vzrok invalid_response ali kot izgubo
+podatkov. V2 logger je one-shot/zgodovinski, ni svež zapis te napake.
+Agent ni sprožil Sync/UI, resetiral loggerja ali gradil novega paketa.
+Dokaz: `build/qa/jivie-mobile-manual-20261021/server/b-policy-and-choice-after-manual-sync-20261021T1640Z.json`.
+Pravila PASS; celotni sync ostaja FAIL/odprt. Produkcija nedotaknjena.
+
 21. oktober — **policy opozorilo popravljeno in ista iPhone QA posodobljena**.
 Sol6.1/high implementacija, glavni/neodvisni pregled PASS. Send catch
 ponovno vrže SAMO policy_acceptance_required; pending podpis/ID/claims
