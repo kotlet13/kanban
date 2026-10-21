@@ -229,6 +229,28 @@ Po preverjeni predaji odstranjenih pet dovoljenih regenerabilnih cache map,
 Vsi štirje potrebni IPA (v2/v1/be48/bbc61), izvori, arhivi, diffi, dokazi in
 zasebne kopije ostanejo; hashi paketov so isti. Nove polne kopije izvora ni.
 
+### V2 native dokaz: zavrnitev zaradi nepotrjenih pravil
+
+Uporabnik odpre isto aplikacijo in izbere »Nadaljuj v lokalne podatke«.
+Bralnik ob16:19:46UTC potrdi sveži v2 samodejni cikel16:19:37–42UTC,
+veljavno sejo/lease in prvo napako `finance_choices` / `finance_authority` /
+`crypto_business_delivery_pending`. Natančna dostava je `pending`, brez
+shranjenega odgovora; prestrežena izvorna napaka je **send /
+CollaborationException / policy_acceptance_required**. Zaključek `failed`
+jo spremeni v `crypto_reconciliation_required`. To je native poskus2 in
+neposredna potrditev prej domnevne zavrnitve zaradi nepotrjenih pravil.
+
+`crypto_sync_repository.dart` pri send prestreže CollaborationApiException
+in nato išče potrdilo; ta policy403 pa potrdila nima. Zahteva zato ostane
+pending. Obstoječi oblaček prikaže gumb za pravila samo pri izvirni kodi
+`policy_acceptance_required`, zato jo pretvorba skrije. Predlagani ozek
+popravek prenese to actionable napako do UI, obdrži isto čakajočo podpisano
+zahtevo in ne ustvarja umetnega potrdila. Še ni implementiran; uporabnik
+pravil v tem koraku ni potrdil. Nobenega novega Save/Sync/povabila ali
+ponavljanja uspešnih scenarijev. Android in produkcija ostaneta nedotaknjena.
+Dokaz: `ios/sync-warning-detail-20261021/native/latest-durable-result.json`
+pod istim mobilnim QA imenikom. Zgornje čakanje na v2 zagon je zgodovina.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

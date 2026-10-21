@@ -1,5 +1,17 @@
 # Navodila za delo na projektu
 
+21. oktober — **v2 potrdil pravi vzrok sync opozorila: nepotrjena pravila**.
+Uporabnik odpre isto Jivie Test in Continue. Sveži v2 zapis16:19:37–42UTC
+(native poskus2) potrdi finance_choices → delivery pending/response absent,
+send/CollaborationException/policy_acceptance_required. Končna splošna
+crypto_reconciliation_required je napačna predstavitev zavrnitve; prej
+domnevna policy meja je zdaj neposredno potrjena v native pošiljanju.
+Ni novega Sync/Save/povabila ali ponovitve PASS. Funkcionalni popravek še
+ni izveden: ohraniti isto čakajočo zahtevo in prenesti actionable policy
+napako do obstoječega UI za pravila; ne potrjuj pravil namesto uporabnika.
+Dokaz: `build/qa/jivie-mobile-readiness-20261020/ios/sync-warning-detail-20261021/native/latest-durable-result.json`.
+Spodnji v2 »čaka zagon« je zgodovina. Produkcija/Android nespremenjena.
+
 21. oktober — **sync napaka zožena na finančno dostavo; v2 diagnostika nameščena**.
 Uporabnikov prvi nov samodejni sync16:00:40–16:00:45UTC zajame
 finance_choices/finance_authority/crypto_business_delivery_pending;
