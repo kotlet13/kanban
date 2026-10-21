@@ -526,6 +526,57 @@ vsebine in morebitno novo objavo izN+1. Tak test/popravek še NI izveden;
 ob potrditvi ločiti preverjen napredek revizije od uporabnosti izbire,
 ne sproščati varovala ali sprejemati zastarelega seznama.
 
+### Lokalno diagnostično okolje namesto ponavljajočih gradenj telefona
+
+Po uporabnikovem naročilu je pripravljeno in dejansko zagnano novo ozko
+okolje: `test/organizer/data/e2ee/crypto_account_choice_diagnostic_harness_test.dart`
+in `tools/diagnostics/local_crypto_runner.py` z navodili v istem README.
+Izvedba Sol6.1/high, glavni/neodvisni pregled PASS. Produkcijska runtime
+koda je nespremenjena (choices SHA1b251e835195ad830c1211fae8dbe637d25e51285b2147ea9a35c0a6b35eadbc).
+
+Scenarij kliče pravo `CryptoFinanceAccountChoices.materialize` in njen
+nespremenjeni verifier, uporablja pravi SQL journal/claims, queue,
+sodium podpise, šifrirano disclosure, record signature/commitment in
+dešifriranje. Oba sklopa notranjih dokazil najprej uspešno preveri pri
+ujemajočih glavah. `head_changed` ni vbrizgana izjema in verifier ni
+nadomeščen. Trust provider/directory/head/pull/transport so nadzorovani
+sintetični odgovori; ni kopije telefonske baze, HTTP strežnika, realne
+verifikacije celotne authority verige ali celotnega `syncNow`/`ensure`.
+
+Prvi tek v3,034s se ustavi pri pripravi vseh štirih novih scenarijev zaradi
+manjkajočega `Access.account`, ki ga zahteva `parentToken`. Napaka ohranjena,
+ni predstavljena kot napaka aplikacije. Pred drugim tekom dodan pravi
+fixture account in izboljšano branje obeh Dart stack formatov. Drugi tek
+v2,429s potrdi štiri nove kontrole, brez escaping/protocol napak in brez
+spremembe izvorov med tekom:
+
+- Terminalni409 + novejši zastarel seznam: REPRODUCED_EXPECTED_FAILURE.
+- Terminalni200 + isti sprejeti zapis pri novi glavi: REPRODUCED_EXPECTED_FAILURE.
+- Neznan izid: PENDING_GUARD_CONFIRMED, samo originalni podpisani replay.
+- Terminalni409 + seznam z veljavnimi dokazili: MATCHING_HEAD_CONTROL_PASS.
+
+Obe stale poti dejansko vržeta `crypto_account_choices_head_changed` na
+main1037 `_verifyManager`, s skladom `_verify`1333 → `_currentManifest`2656
+→ `_reconcileMaterializationClaim`1769 → `materialize`1672. Vseh štirih
+SQL outbox/journal/claim posnetki ostanejo enaki; pending pot nima pull.
+To potrdi ponovljiv scenarij v skupni Dart kodi na Macu, zato ta vrsta
+zavrnitve ne potrebuje iPhona. Ne določa za nazaj točne nativev4 veje.
+Native sinhronizacija še NI popravljena, celotni sync ostaja FAIL.
+
+Runner shrani po scenarijih razvrščene finite faze, izvorne datoteke/
+vrstice/stolpce/simbole sklada, source/SDK/dependency hashe in ločene izide.
+Ne hrani ključev, uporabniške vsebine, exception messages ali rawstdout.
+Vsak zagon ima180s celotno mejo,45s/test,2MiB izhoda, največ tri trajno
+zabeležene poskuse in nič samodejnih ponovitev. Ne kopira source treeja.
+Poskusa3 ni bilo; stari PASS niso ponovljeni. Telefoni, nameščeni paketi,
+mobilni QA strežnik, Android in produkcija so nespremenjeni.
+
+Dokazi: `build/qa/local-diagnostics/account-choice-production-path/attempt-1/`
+in `attempt-2/` (`manifest.json`, `result.json`). Končni harness SHA
+`7b315865b21c6c4622f1d8c5f915832c56f72a5be67e7a030ca3f762020c34c0`.
+To okolje je podlaga za naslednji popravek in njegovo lokalno preverjanje;
+pričakovane zavrnitve v diagnostičnem testu niso oznaka uspešne aplikacije.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

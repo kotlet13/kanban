@@ -1,5 +1,26 @@
 # Navodila za delo na projektu
 
+21. oktober — **lokalno diagnostično okolje ponovi head_changed brez iPhona**.
+Po uporabnikovem naročilu Sol6.1/high pripravi nov in-memory sintetični
+`crypto_account_choice_diagnostic_harness_test.dart` in
+`tools/diagnostics/local_crypto_runner.py`. Pravi nespremenjeni choices/
+verifier, SQL/queue/podpisi/commitment/dešifriranje; nadzorovani trust/head/
+directory/pull/transport odgovori, NE replay iPhone baze ali celotni syncNow.
+Poskus1 fixtureFAIL4 (Access.account za parentToken manjka), poskus2 PASS4:
+terminal409stale in200stale ponovita dejanski _verifyManager1037 → _verify1333
+→ _currentManifest2656 → _reconcileMaterializationClaim1769 → materialize1672;
+pendingunknown original exact replay/guard PASS, matchinghead kontrola PASS.
+Stare zahteve/claim/journal ostanejo enaki. To je dokaz skupnega Dart
+scenarija na Macu, NE dokaz točne nativev4 veje ali popravljenega synca.
+Glavni/neodvisni pregled PASS. Ni poskusa3, ponovitve starihPASS, runtime
+spremembe/phonebuild/UI/server/prod dejanja. Rezultat:
+`build/qa/local-diagnostics/account-choice-production-path/attempt-2/result.json`.
+Runner shrani finite faze in točne source stackframes, source/SDK manifest,
+ločene expectedfailure/control/pending izide; brez ključev/payloadov/rawstdout,
+180s/2MiB meje in trajni max3 brez samodejnih retry. README ima navodila.
+Naslednji popravek se preverja lokalno na tej podlagi; uspešnih diagnostičnih
+scenarijev brez relevantne spremembe ne ponavljaj. Native sync ostaja FAIL.
+
 21. oktober — **v4 ročni sync še FAIL: crypto_account_choices_head_changed**.
 Sveži uporabnikov manual poskus17:44:04–18UTC na isti IPAd0bb1685…;
 read17:44:36UTC potrdi finance_choices/finance_authority,
