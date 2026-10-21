@@ -1,5 +1,25 @@
 # Navodila za delo na projektu
 
+21. oktober — **v3 diagnostika nameščena; čaka uporabnikov ročni sync**.
+Po novem naročilu QA-only logger zajame samo prvi manual&&full cikel;
+startup/partial ga ne porabi. Nova namespace/tag v3 ohranita stare dokaze.
+Finite1811staticFormat kod, type in lastChoiceCheckpoint (zadnja dosežena
+oznaka, NE točen callsite) ter parseroriginal pred genericpretvorbo.
+3nove kontrole PASSposkus1/analyze0issues, glavni/neodvisni pregled PASS;
+stari PASS niso ponovljeni. En arhiv PASS pred prekinitvijo, nadaljevanje
+uporabi isti paket brez nove gradnje. IPAc9bd6b7e… nameščena enkrat
+16:59:43UTC; isto QA/podpis/Keychain/CA/policyfix. PID1737 normalno ustavljen,
+fresh4vault datoteke1.986.950B pred/po bajtno enake; iOS spremeni pot
+vsebnika, preverjena vsebina ostane. Produkcijski metapodatki isti.
+V3 cache dokazano odsoten16:59:47UTC, nič launch/UI/Sync/read s straniagenta.
+NASLEDNJE: uporabnik odpre Jivie Test, znani Continue po potrebi, isti
+skupni projekt/oblaček, ENKRAT »Uskladi zdaj« in sporoči izid.
+Potem `python3 build/qa/jivie-mobile-readiness-20261020/ios/manual-sync-diagnostic-20261021/pipeline.py read`.
+Stare v2datoteke niso nov dokaz. Vzrok nove napake in uspešen sync še
+nista potrjena.5dovoljenih cachemap1.236.070.400B odstranjenih; paketi/
+izvori/diffi/dokazi/zasebne kopije ohranjeni. Android/server/prod isti.
+Podrobnosti: [aktualni zapis](docs/E2EE_MOBILE_READINESS_2026_10_20.md).
+
 21. oktober — **uporabnik potrdil pravila; nova sync napaka še ni diagnosticirana**.
 Na isti IPA2621b85d… uporabnik potrdi pravila in sproži sync. Root fresh
 Device Hub prikaz: MOBILE-PROJECT-1, zadnji poskus18:40lokalno, uspešen

@@ -335,6 +335,69 @@ potrditve pravil ali starega povabila. Brez nove gradnje/resetiranja dnevnika,
 samodejnih UI dejanj, novih poslovnih vnosov ali ponovitev PASS v tem koraku.
 Celotni sync ostaja odprt; podatkovna izguba ni dokazana. Produkcija ista.
 
+### V3 diagnostika naslednje ročne sinhronizacije
+
+Po novem izrecnem naročilu uporabnika isti Sol6.1/high podagenti pripravijo
+QA-only zajem prve naslednje **ročne polne** sinhronizacije. Samodejni in
+delni cikli ne smejo porabiti zajema. Nov namespace
+`jivie_qa_manual_sync_20261021_v3` in tag `ios-manual-sync-20261021-v3`
+ohranita stare v1/v2 dokaze. Obstoječi funkcionalni policy popravek ima še
+vedno isti QA hash d57c269e…; ni spremembe poslovnih pravil, SQL/omrežnih
+operacij, podpisov ali ponovnega pošiljanja.
+
+Štiri runtime datoteke (tri dopolnjene in ena nova) dodajo ročni gate,
+fiksni seznam1811 izvornih FormatException literalov, oznake korakov
+finančne izbire in zajem izvirne parser izjeme pred pretvorbo. Sporočila
+z dinamično vsebino se ne zapisujejo; TypeError/StateError beležita samo
+tip. `lastChoiceCheckpoint` pomeni zadnjo doseženo oznako in NI dokaz
+točnega mesta izjeme ali uspešno dokončanega koraka; nova širša faza jo
+počisti. Surovih stackov/ID/ključev/podatkov ni. Trije fiksni zasebni
+dnevniki ohranijo obstoječe atomic/no-overwrite omejitve.
+
+Tri nove kontrole PASS v prvem poskusu: auto/partial ne porabi manual
+zajema, izvirna parser napaka preživi poznejšo pretvorbo, neznana vsebina
+in zastarele oznake se ne zapišejo. Scoped analiza0issues; glavni in
+neodvisni pregled PASS. Stari PASS niso ponovljeni. Manifest SHA
+`361f93ddf56ad8f0e875deceb0e6a4fb02d7dda6d111ca33119b76e7ee8c0cac`,
+patch SHA `2814986e84e777f85a2eaa54aa87c2f7e7003fba133894c40891be09edd74a51`.
+Dokazi/patch/bralnik/paket so pod
+`build/qa/jivie-mobile-readiness-20261020/ios/manual-sync-diagnostic-20261021/`.
+
+Bralnik zahteva dokazano odsoten nov cache pred uporabnikovim zagonom,
+točen build/source hash/čas, started.manual=true in finite shemo vsake
+datoteke (največ8192B posamezno/16384B skupaj). Manjkajoča napaka sama ni
+PASS; brez veljavnega started/completed ni uspeha. Bralnik ne odpre aplikacije
+in ne sproži sinhronizacije. Pravi vzrok nove napake in uspešen sync še nista
+dokazana. Naslednji ročni zagon nadaljuje isti neuspešni primer, brez novega
+sprejema pravil/povabila/računa ali ponovitve poslovnih PASS.
+
+Arhiv16:51:50–16:52:58UTC PASS v prvem poskusu. Podpisani IPA
+`c9bd6b7e7bd19d0f5a3c3a60a68da8475ce04e062efd24b2ac1c12d3a8819b81`
+(16.492.697B),1764 runtime vhodov. Dejanski profil/podpis/Keychain/shramba/
+obnovljeni CA in v3 tag preverjeni; obe native knjižnici brez podpisa bajtno
+isti kot2621, vseh148 datotek IPA ustreza arhivu. Glavni pregled PASS.
+Prekinitev pogovora je nastopila po gradnji in pred namestitvijo; ob izrecnem
+»nadaljuj« uporabnika je pregledan obstoječi HANDOFF, brez ponovitve gradnje
+ali že uspešnih testov. Nadaljuje se pripravljeni postopek iste namestitve.
+
+Nadaljevanje: QA PID1737 normalno ustavljen; sveža zasebna kopija štirih
+šifriranih vault datotek1.986.950B, ena in-place namestitev16:59:43UTC PASS.
+Vse štiri datoteke pred/po bajtno enake; iOS dodeli drugo pot vsebnika,
+preverjena vsebina ostane. Produkcijski metapodatki isti, nič uninstall/
+reset/restore/prijava/FILE/povabilo/launch/UI. V3 namespace dokazano odsoten
+16:59:47UTC; readback pripravljen, brez branja ali sprožitve synca.
+Namestitev in arming: `native/installation-evidence.json` in
+`native/readback-armed.json` v istem v3 imeniku.
+
+Po predaji odstranjenih pet dovoljenih regenerabilnih cache map,
+1.236.070.400 alociranih B. Potrebni paketi/izvori/diffi/dokazi/zasebne
+kopije ostanejo. Naslednji korak: uporabnik odpre isto Jivie Test, po
+potrebi znani Continue, v istem skupnem projektu odpre oblaček in **enkrat**
+»Uskladi zdaj«. Agent nato prebere
+`python3 build/qa/jivie-mobile-readiness-20261020/ios/manual-sync-diagnostic-20261021/pipeline.py read`.
+Ne potrjuj pravil/povabila znova, ne ponavljaj starih PASS. Novi native
+vzrok in uspešen sync še nista potrjena; Android/server/produkcija isti.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek
