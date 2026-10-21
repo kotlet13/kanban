@@ -1,5 +1,19 @@
 # Navodila za delo na projektu
 
+21. oktober — **v4 ročni sync še FAIL: crypto_account_choices_head_changed**.
+Sveži uporabnikov manual poskus17:44:04–18UTC na isti IPAd0bb1685…;
+read17:44:36UTC potrdi finance_choices/finance_authority,
+lastChoiceCheckpoint=choice_manifest_verify, CryptoAuthorityPending/
+crypto_account_choices_head_changed. completed=true pomeni končan cikel,
+NE uspeh: outcome=failed, finalCode=crypto_reconciliation_required.
+Prejšnji crypto_local_revision_claimed ni prvi zabeleženi razlog; uspeh
+nadaljevanja stare zahteve in točen throw/caller s tem še nista dokazana.
+Checkpoint je zgodovinski; head_changed ima več throw mest. Celotni sync
+ostaja FAIL, varovala se ne sproščajo. Dokaz:
+`build/qa/jivie-mobile-readiness-20261020/ios/claim-continuation-fix-20261021/native/latest-durable-result.json`.
+Samo read/source analiza; brez nove gradnje, Sync/UI ali ponovitve PASS.
+Spodnji »čaka ročni sync« je zgodovina; v4 je zdaj porabljen, ne resetiraj.
+
 21. oktober — **nadaljevanje obstoječe revizijske zahteve popravljeno; čaka ročni sync**.
 Sol6.1/high implementacija in glavni/neodvisni source pregled PASS. Ordinary
 financeAccountChoice preveri točnega lastnika revizije, pending nadaljuje

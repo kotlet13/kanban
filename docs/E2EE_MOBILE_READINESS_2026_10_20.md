@@ -494,6 +494,38 @@ projekt/oblaček in en »Uskladi zdaj«, po potrebi najprej znani Continue.
 `python3 build/qa/jivie-mobile-readiness-20261020/ios/claim-continuation-fix-20261021/pipeline.py read`.
 Celotni native sync ostaja odprt; Android/strežnik/produkcija nespremenjeni.
 
+### Ročni rezultat v4: spremenjeno stanje dokazil seznama računov
+
+Uporabnik na isti IPAd0bb1685… sproži »Uskladi zdaj«. En omejen read ob
+17:44:36UTC prebere sveži v4 zapis manual=true, začetek17:44:04.416UTC,
+prva napaka17:44:17.863UTC: finance_choices/finance_authority,
+CryptoAuthorityPending/`crypto_account_choices_head_changed`, zadnji
+checkpoint `choice_manifest_verify`. Zaključek17:44:18.043UTC ima
+completed=true, veljavno sejo/lease, vendar outcome=failed in končni
+`crypto_reconciliation_required`. Completed ni dokaz uspešnega synca.
+
+Prejšnja lokalna kolizija revizije ni zabeležena kot prva napaka tega
+poskusa. To ne dokazuje uspešno zaključene stare zahteve ali prehoda skozi
+novi reconciliation helper. `_currentManifest` preverja vezavo na trenutno
+glavo in kliče verifier; ista pending koda ima več izvornih mest, zato
+zgodovinski checkpoint ni točen stack/caller dokaz. Ni dokazov izgube
+podatkov. Native celotni sync ostaja FAIL. V4 zapis je porabljen in ohranjen;
+brez novega UI/Sync/build/testa ali sprememb naprav/strežnika/produkcije.
+Dokaz: `ios/claim-continuation-fix-20261021/native/latest-durable-result.json`.
+
+Sol6.1/high omejeni izvorni pregled identificira relevantna mesta main
+2641 (capture target head),1037 (ordinary offer head),1215 (capture final
+identity/snapshot/head stabilnost). Hipoteza: novi helper na1769 kliče
+strogi `_currentManifest` pred preverjanjem napredovane revizije, zato
+avtenticiran, a semantično zastarel zmagovalni zapis lahko ovira novo
+izpeljavo. To ni dokazana native veriga. Naslednji najmanjši neponovljeni
+regresijski primer: stara točno vezana terminalna409 zahteva priN,
+preverjen winner priN+1 z zastarelim choice head in veljaven nov certifikat.
+Preveriti ohranitev stare zahteve/potrdila/claim, zavrnitev zastarele
+vsebine in morebitno novo objavo izN+1. Tak test/popravek še NI izveden;
+ob potrditvi ločiti preverjen napredek revizije od uporabnosti izbire,
+ne sproščati varovala ali sprejemati zastarelega seznama.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek
