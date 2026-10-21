@@ -1,5 +1,18 @@
 # Navodila za delo na projektu
 
+21. oktober popoldne — **oba TLS paketa nameščena; uporabnik izvaja UI teste**.
+Po vrnitvi uporabnika en install-r Android982d6893… in ena in-place iOS
+be48d130… namestitev PASS. Ista QA ID/podpisa/shrambi, fresh kopiji štirih
+šifriranih datotek (Android2.941.318B/iOS1.847.686B) pred/po bajtno enaki.
+Produkcijski metapodatki isti. Android ni tekel; iOS obstoječi QA proces
+normalno ustavljen pred kopijo. Nobenega zagona aplikacij/UI scenarija.
+Obe QA aplikaciji po posodobitvi zaprti; brez uninstall/reset/prijave/FILE.
+Strežnik18801/newCA/strictHTTPS200 isti. Diagnostika pripravljena za omejeni
+ročno sproženi zagon iPhona; Android zajem počaka na njegov korak.
+Stari v4 resumeCompleted je zgodovinski dokaz, ne rezultat novega zagona.
+Prvi uporabnikov korak: odpre Jivie Test na iPhonu, po potrebi znani
+»Nadaljuj v lokalne podatke«, nato sporoči zaslon; brez Retry/Join/granta.
+
 21. oktober — **uporabnik prevzame ročno testiranje; obnova testnega TLS je odobrena**.
 Od zdaj uporabnik upravlja testni aplikaciji. Agent pripravlja okolje/paketa,
 spremlja diagnostiko, beleži izide in popravlja napake; brez samostojnega

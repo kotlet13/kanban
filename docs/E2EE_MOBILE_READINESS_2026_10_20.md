@@ -27,9 +27,9 @@ med naloženim novim certifikatom in vrnjenima starima datotekama. Tretji
 uskladi nove datoteke, različen mtime in naloženi certifikat. Razlaga z
 nginx predpomnjenjem SSL objektov ostaja sklep, ne neposredno izmerjen vzrok.
 
-Nova paketa sta pripravljena, **še nista nameščena ali preizkušena na
-telefonih**. Pred popoldanskim ročnim testiranjem posodobi isti Jivie Test
-na obeh napravah, brez odstranitve aplikacij ali praznjenja podatkov:
+Nova paketa sta **21. oktobra popoldne nameščena čez isti Jivie Test**;
+novi uporabniški preizkus še čaka. Namestitev ohrani podatke, brez
+odstranitve aplikacij ali praznjenja:
 
 - [Android APK](../build/qa/jivie-mobile-tls-renewal-20261021/android/Jivie-Test-Android-cf97e2d-TLS-20261021.apk), SHA-256 `982d6893c37ea86579d972d946c781a012f1872eaece5ae2662999802933003e`, 105.713.405 B.
 - [iOS IPA](../build/qa/jivie-mobile-readiness-20261020/ios/tls-renewal-20261021/candidate/Jivie-Test-iOS-QA-TLS-20261021-development.ipa), SHA-256 `be48d130f83e47d2c4c19e892dec315be49cc015356bfabff1a89e27bcf936a2`, 16.468.271 B; pripadajoči `Runner.app` je v istoimenskem xcarchive.
@@ -49,6 +49,30 @@ Izvori, novi in prejšnji paketi, zasebne kopije ter dokazi ostanejo.
 Uporabnik od zdaj izvaja UI scenarije. Agent pripravlja okolje, diagnostiko
 in popravke. Obnova TLS ni ponovitev deljenja, obnove ali drugih PASS
 scenarijev; produkcija, podatki in prvotno povabilo ostanejo nedotaknjeni.
+
+### Namestitev pred uporabnikovim ročnim testiranjem
+
+Po izrecnem naročilu uporabnika ob priklopljenih odklenjenih telefonih je
+vsak paket nameščen enkrat čez svoj QA ID. Android ohrani podpis, UID in
+dataDir; štiri šifrirane datoteke (2.941.318 B) so pred/po enake. iOS
+ohrani podpis/Keychain/service/group; njegove štiri šifrirane datoteke
+(1.847.686 B) so pred/po enake. Sveži kopiji sta zasebni. Produkcijski
+metapodatki ostanejo nespremenjeni. Android QA ni tekel; iOS stari QA
+proces je normalno ustavljen pred kopijo. Po namestitvah oba zaprta,
+brez našega launch/UI ukaza ali poslovnega scenarija.
+
+Dokaza: [Android](../build/qa/jivie-mobile-tls-renewal-20261021/android/installation-20261021/installation-evidence.json)
+in [iOS](../build/qa/jivie-mobile-readiness-20261020/ios/native-TLS-update-20261021/installation-evidence.json).
+Read-only preflight strežnika ob 15:31:03 UTC potrdi isti IP, novi streženi
+certifikat in en javni HTTP200, brez poslovnega RPC. Pripravljena sta
+omejeni pasivni iOS zajem in 180-sekundni strežniški zajem samo metapodatkov
+z avtomatsko obnovo konfiguracije; vklop neposredno pred uporabnikovim
+prvim korakom. Android zajem počaka na njegov korak. Pripravljen zajem
+ni dokaz povezane konzole; stari v4 zaključni zapisi niso nov PASS.
+
+Prvi ročni korak je odprtje Jivie Test na iPhonu, ob znanem opozorilu
+»Nadaljuj v lokalne podatke«, nato sporočilo o prikazanem zaslonu.
+Povabila, sprejema in lastnikove odobritve ne ponavljamo.
 
 ## Zgodovina priprave 20. oktobra
 
