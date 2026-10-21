@@ -44,6 +44,8 @@ class _Own implements VerifiedAccountDirectory {
   Map<String, dynamic> get snapshot => {
     'rootSigningKeyBase64': base64Encode(signing.publicKey),
     'rootEncryptionKeyBase64': base64Encode(encryption.publicKey),
+    'identityEpochId': identityEpochId,
+    'recoveryRootEpochId': _batch,
   };
   @override
   String get accountId => _account;
@@ -173,8 +175,15 @@ class _Access implements SessionCryptoAccess {
     bool online = false,
   }) async {
     diagnostic('current_head_check', 'entered');
-    return _Head(headHash);
+    return _Head(headHash, own);
   }
+
+  @override
+  Future<VerifiedScopeHead> headAt(
+    String scopeId,
+    String headHash, {
+    bool online = false,
+  }) async => _Head(headHash, own);
 
   @override
   Future<VerifiedAccountDirectory> directoryAt({
@@ -225,6 +234,16 @@ class _Runtime extends CryptoBusinessSession {
   final CryptoSyncRepository delivery;
   late Map<String, Object?> initial, current;
   int pulls = 0;
+  int currentReads = 0, publications = 0;
+  bool changeBase = false;
+  String? nextHead;
+  Future<Map<String, dynamic>> Function(
+    String,
+    int,
+    Map<String, dynamic>,
+    String,
+  )?
+  capturePublication;
   @override
   String get p => account.directory.session.profile.partition;
   @override
@@ -240,7 +259,14 @@ class _Runtime extends CryptoBusinessSession {
     String domain,
     String id, {
     String? type,
-  }) async => pulls == 0 ? initial : current;
+  }) async {
+    if (pulls == 0) return initial;
+    currentReads++;
+    return changeBase && currentReads > 1
+        ? {...current, 'record_proof_hash': 'f' * 64}
+        : current;
+  }
+
   @override
   Future<void> pullVerified(
     String scopeId,
@@ -248,7 +274,35 @@ class _Runtime extends CryptoBusinessSession {
     bool attest = true,
   }) async {
     pulls++;
+    if (nextHead != null) (access as _Access).headHash = nextHead!;
     diagnostic('current_pull', 'entered');
+  }
+
+  @override
+  Future<Map<String, dynamic>> publishRaw({
+    required String scopeId,
+    String domain = 'content',
+    required String id,
+    required String type,
+    required String operationId,
+    required int expectedRevision,
+    required Map<String, dynamic>? rawPayload,
+    required String localHash,
+    List<Map<String, dynamic>> tableLeases = const [],
+  }) async {
+    expect(scopeId, _scope);
+    expect(domain, 'finance');
+    expect(id, _manifest);
+    expect(type, CryptoFinanceAccountChoices.type);
+    expect(rawPayload, isNotNull);
+    expect((access as _Access).boundaries.last, isTrue);
+    publications++;
+    return capturePublication!(
+      operationId,
+      expectedRevision,
+      rawPayload!,
+      localHash,
+    );
   }
 
   @override
@@ -263,7 +317,8 @@ class _Runtime extends CryptoBusinessSession {
 }
 
 class _Head implements VerifiedScopeHead {
-  _Head(this.headHash);
+  _Head(this.headHash, this.own);
+  final _Own own;
   @override
   final String headHash;
   @override
@@ -271,7 +326,11 @@ class _Head implements VerifiedScopeHead {
   @override
   int get accessRevision => 1;
   @override
-  Map<String, dynamic> member(String accountId) => {'manageKeys': true};
+  Map<String, dynamic> member(String accountId) => {
+    'manageKeys': true,
+    'deviceSnapshotHash': own.deviceSnapshotHash,
+    ...own.snapshot,
+  };
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw StateError('Unexpected fixture head dependency');
@@ -306,6 +365,8 @@ void main() {
     'applied_stale',
     'pending_unknown',
     'conflict_current',
+    'incoming_head_changed',
+    'advanced_base_changed',
   ]) {
     test('diagnostic production choice continuation $mode', () async {
       diagnostic('setup', 'entered');
@@ -512,8 +573,11 @@ void main() {
       diagnostic('incoming_verify', 'passed');
       Future<Map<String, dynamic>> seal(
         Map<String, dynamic> raw,
-        String operation,
-      ) async => records.sealRecord(
+        String operation, {
+        int expectedRevision = 1,
+        String previousHash =
+            '3333333333333333333333333333333333333333333333333333333333333333',
+      }) async => records.sealRecord(
         serverId: _server,
         accountId: _account,
         deviceId: _device,
@@ -521,14 +585,14 @@ void main() {
         scopeId: _scope,
         id: address.wireId,
         type: CryptoFinanceAccountChoices.type,
-        expectedRevision: 1,
+        expectedRevision: expectedRevision,
         epoch: 1,
         accessRevision: 1,
         membershipHeadHash: raw['selection']['context']['targetHeadHash'],
         domain: 'finance',
         contentContract: 3,
         operationId: operation,
-        previousRecordHash: '3' * 64,
+        previousRecordHash: previousHash,
         deleted: false,
         plaintext: Uint8List.fromList(
           utf8.encode(
@@ -673,10 +737,73 @@ void main() {
           'verified',
         ],
       );
+      String? stagedRequest;
+      // This is the publication boundary, not a server ACK or full publishRaw
+      // implementation. The actual queue still signs/stages the new batch and
+      // enforces revision claims atomically using the production store.
+      runtime.capturePublication = (operation, revision, raw, localHash) async {
+        expect(operation, _newOperation);
+        expect(revision, 2);
+        expect(CryptoJson.encode(raw), CryptoJson.encode(fresh));
+        expect(localHash, await hash(fresh));
+        diagnostic('publication_boundary', 'entered');
+        final proof = await seal(
+          raw,
+          operation,
+          expectedRevision: revision,
+          previousHash: runtime.current['record_proof_hash'] as String,
+        );
+        final record = Map<String, dynamic>.from(
+          CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map,
+        );
+        final opened = records.openVerified(record, content)!;
+        try {
+          final envelope = jsonDecode(utf8.decode(opened)) as Map;
+          expect(
+            CryptoJson.encode(envelope['payload']),
+            CryptoJson.encode(fresh),
+          );
+        } finally {
+          opened.fillRange(0, opened.length, 0);
+        }
+        stagedRequest = await delivery.enqueueBatch(
+          batchId: _batch,
+          recordProofs: [proof],
+          commitment: await commitment(proof),
+          applyLocal: () async {},
+          onStaged: (request) => db.execute(
+            'INSERT INTO crypto_business_requests VALUES(?,?,?,?,?,?,?)',
+            [
+              partition,
+              operation,
+              _scope,
+              'finance',
+              localHash,
+              request,
+              _manifest,
+            ],
+          ),
+        );
+        expect(record['expectedRevision'], 2);
+        expect(
+          record['previousRecordHash'],
+          runtime.current['record_proof_hash'],
+        );
+        return {'diagnosticPublicationStaged': true};
+      };
+      runtime.changeBase = mode == 'advanced_base_changed';
+      runtime.nextHead = mode == 'incoming_head_changed' ? '4' * 64 : null;
       Future<String> snapshot() async => jsonEncode([
-        await db.rows('SELECT * FROM crypto_outbox'),
-        await db.rows('SELECT * FROM crypto_outbox_records'),
-        await db.rows('SELECT * FROM crypto_business_requests'),
+        await db.rows('SELECT * FROM crypto_outbox WHERE request_id=?', [
+          _request,
+        ]),
+        await db.rows(
+          'SELECT * FROM crypto_outbox_records WHERE expected_revision=1',
+        ),
+        await db.rows(
+          'SELECT * FROM crypto_business_requests WHERE operation_id=?',
+          [_ownerOperation],
+        ),
         await db.rows('SELECT * FROM crypto_outbox_reconciliations'),
       ]);
       final before = await snapshot();
@@ -695,8 +822,25 @@ void main() {
           ),
           operationId: _newOperation,
         );
-        expect(mode, 'conflict_current');
-        expect(result, {'newDiagnosticProjection': true});
+        if (mode == 'conflict_current') {
+          expect(result, {'newDiagnosticProjection': true});
+          expect(runtime.publications, 0);
+        } else {
+          expect({'conflict_stale', 'applied_stale'}, contains(mode));
+          expect(result, {'diagnosticPublicationStaged': true});
+          expect(runtime.publications, 1);
+          expect(stagedRequest, isNotNull);
+          final nextClaim = await db.rows(
+            'SELECT request_id FROM crypto_outbox_records WHERE expected_revision=2',
+          );
+          expect(nextClaim.single['request_id'], stagedRequest);
+          expect((await db.rows('SELECT * FROM crypto_outbox')).length, 2);
+          expect(
+            (await db.rows('SELECT * FROM crypto_business_requests')).length,
+            2,
+          );
+          diagnostic('continuation_verified', 'passed');
+        }
       } on CryptoAuthorityPending catch (error, stack) {
         observed = error.reason;
         diagnostic('scenario_result', 'failed', error: error, stack: stack);
@@ -704,7 +848,7 @@ void main() {
           expect(error.reason, 'crypto_business_delivery_pending');
           expect(transport.sent, [signed]);
           expect(runtime.pulls, 0);
-        } else {
+        } else if (mode == 'incoming_head_changed') {
           expect(error.reason, 'crypto_account_choices_head_changed');
           expect(
             stack.toString(),
@@ -717,9 +861,27 @@ void main() {
             ),
           );
           expect(runtime.pulls, 1);
+          expect(runtime.publications, 0);
+          diagnostic('continuation_guard', 'passed');
+        } else {
+          expect(mode, 'advanced_base_changed');
+          expect(error.reason, 'crypto_account_choices_authority_changed');
+          expect(runtime.publications, 0);
+          expect(runtime.pulls, 1);
+          diagnostic('continuation_guard', 'passed');
         }
       }
-      if (mode != 'conflict_current') expect(observed, isNotNull);
+      if ({
+        'pending_unknown',
+        'incoming_head_changed',
+        'advanced_base_changed',
+      }.contains(mode)) {
+        expect(observed, isNotNull);
+        expect(stagedRequest, isNull);
+        expect((await db.rows('SELECT * FROM crypto_outbox')).length, 1);
+      } else {
+        expect(observed, isNull);
+      }
       expect(await snapshot(), before);
       diagnostic('journal_immutable', 'passed');
       diagnostic('scenario_result', 'passed');

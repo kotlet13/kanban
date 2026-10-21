@@ -577,6 +577,51 @@ in `attempt-2/` (`manifest.json`, `result.json`). Končni harness SHA
 To okolje je podlaga za naslednji popravek in njegovo lokalno preverjanje;
 pričakovane zavrnitve v diagnostičnem testu niso oznaka uspešne aplikacije.
 
+### Lokalna odprava zastalega nadaljevanja — brez posegov v telefone
+
+Uporabnik zahteva, da nadaljnji eksperimenti potekajo lokalno in da ga
+obvestimo, ko bo popravek pripravljen za njegov telefonski preizkus. S25
+lahko ostane odklopljen. Implementacija Sol6.1/high in glavni pregled;
+implementacijski podagent se ustavi zaradi samodejne content oznake
+possible cybersecurity risk, zato drugi Sol6.1/high dokonča test in pregled.
+To ni razlog za obvoz aplikacijskih varoval; vsa ostanejo aktivna.
+
+Runtime sprememba77 vrstic loči veljavno podpisan zgodovinski zapis od
+trenutno uporabnega seznama. Točno vezan terminalni receipt ostane pogoj.
+Po fresh pull preveri fizično napredovanje row/wire/signed record revizij;
+ordinary winner preveri s snapshot verifierjem na njegovi zgodovinski
+glavi. Če je target head zastarel, njegove projekcije ne vrne. Ponovno
+preveri vhodno svežo izbiro z aktualno avtoriteto/online availability,
+potrdi nespremenjeno revizijo in proofhash ter znotraj iste fresh boundary
+objavi NOVO izpeljano zahtevo na napredovani reviziji. Staro signed zahtevo,
+potrdilo in rezervacijo ohrani. Captured path ostane strog; ni splošnega
+lovljenja head_changed, sproščanja claimov ali sprejema neznanih izidov.
+
+Isti diagnostični scenario uporabi zadnji, tretji poskus — brez novega
+števca ali ponovitve uspešnih pending/matchinghead kontrol. Izbrani štirje
+primeri v3,298s PASS: popravljeni409stale/200stale dejansko ustvarita nov
+podpisan staged request, business journal in claim pri expectedRevision2;
+nova headchange in baseproofchange kontrola zavrneta objavo. Prvotne zahteve,
+potrdila in claim pri1 ostanejo enaki. Brez escaping/protocol napak in brez
+spreminjanja source med tekom. Ni četrtega teka. Glavni/neodvisni pregled
+PASS, scoped analiza runtime/testa0issues, diffcheck PASS.
+
+Objavni rob v testu je nadzorovan: preveri argumente in uporabi pravi
+record seal/commit/queue.enqueueBatch/SQL claim, ne izvaja celotnega
+publishRaw, strežniškega ACK ali syncNow. Trust/head/pull odgovori so še
+sintetični. To potrjuje lokalni popravek ponovljene poti in varovala,
+ne že uspešne telefonske sinhronizacije ali točne nativev4 korelacije.
+
+Dokaz: `build/qa/local-diagnostics/account-choice-production-path/attempt-3/result.json`.
+Source SHA `47a039402dcb21e62abe5750b381a8f534d1ca96f183a55e3c3a468979c9eeb4`,
+test SHA `cc87db8b93365db9d8451f5a6a56a7e3e48fc04861d9afce244795b45700cafe`.
+Runner doda eksplicitni fix profile in točen izbor primerov; odsotnost
+napake sama ne pomeni uspeha, zahtevani so publication/staging dokazi.
+Prejšnja poskusa in njuni pomeni ostanejo ohranjeni. Telefona, nameščena
+paketa, testni strežnik in produkcija niso spremenjeni. Novi runtime še ni
+vgrajen/nameščen; naslednji korak je priprava QA posodobitve za uporabnikov
+ozki preizkus na telefonih, brez ponavljanja prejšnjih PASS scenarijev.
+
 ## Zgodovina priprave 20. oktobra
 
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek

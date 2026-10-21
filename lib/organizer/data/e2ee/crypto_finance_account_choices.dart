@@ -1674,8 +1674,25 @@ class CryptoFinanceAccountChoices {
       id,
       operationId,
       previous?['crypto_revision'] as int? ?? 0,
+      raw,
     );
     if (claimed != null) return claimed;
+    return _publishMaterialization(
+      scope,
+      id,
+      operationId,
+      previous?['crypto_revision'] as int? ?? 0,
+      raw,
+    );
+  }
+
+  Future<Map<String, dynamic>> _publishMaterialization(
+    String scope,
+    String id,
+    String operationId,
+    int expectedRevision,
+    Map<String, dynamic> raw,
+  ) async {
     try {
       return await context.publishRaw(
         scopeId: scope,
@@ -1683,7 +1700,7 @@ class CryptoFinanceAccountChoices {
         id: id,
         type: type,
         operationId: operationId,
-        expectedRevision: previous?['crypto_revision'] as int? ?? 0,
+        expectedRevision: expectedRevision,
         rawPayload: raw,
         localHash: await CryptoBusinessJson.hash(raw),
       );
@@ -1713,6 +1730,7 @@ class CryptoFinanceAccountChoices {
     String id,
     String operation,
     int expectedRevision,
+    Map<String, dynamic> incoming,
   ) async {
     final existing = await context.db.rows(
       'SELECT 1 FROM crypto_business_requests WHERE partition=? AND operation_id=?',
@@ -1766,13 +1784,62 @@ class CryptoFinanceAccountChoices {
     context.financeReads?.invalidate();
     return context.access.withVerifiedOperation(() async {
       await context.pullVerified(scope, 'finance');
-      final current = await _currentManifest(scope);
-      final row = current['row'] as Map;
-      if (row['crypto_revision'] is! int ||
-          row['crypto_revision'] <= expectedRevision) {
+      final helper = CryptoFinanceAuditEvidence(context);
+      late Map<String, dynamic> base;
+      try {
+        base = await helper.currentPayload(scope, id, type: type);
+      } finally {
+        await helper.close();
+      }
+      final row = base['row'] as Map,
+          record = _map(base['record']),
+          wire = _map(base['wire']),
+          raw = _map(base['raw']);
+      final revision = row['crypto_revision'];
+      if (revision is! int ||
+          revision <= expectedRevision ||
+          wire['revision'] != revision ||
+          record['expectedRevision'] + 1 != revision) {
         throw const CryptoAuthorityPending('crypto_business_delivery_pending');
       }
-      return _map(jsonDecode(row['projection'] as String));
+      if (!raw.containsKey('capture3')) {
+        // The signed winner can be a valid historical derivation whose head
+        // is no longer current. It establishes the physical CAS base only;
+        // its stale selection must never satisfy a current-choice read.
+        await _verify(raw, expectedScopeId: scope, snapshotRecord: record);
+        if (_manifestBinding(raw)['targetHeadHash'] !=
+            (await context.access.currentHead(scope, online: true)).headHash) {
+          await verify(incoming, expectedScopeId: scope);
+          final current = await context.record(
+            scope,
+            'finance',
+            id,
+            type: type,
+          );
+          if (current == null ||
+              current['deleted'] != 0 ||
+              current['crypto_revision'] != revision ||
+              current['record_proof_hash'] != row['record_proof_hash']) {
+            throw const CryptoAuthorityPending(
+              'crypto_account_choices_authority_changed',
+            );
+          }
+          return _publishMaterialization(
+            scope,
+            id,
+            operation,
+            revision,
+            incoming,
+          );
+        }
+      }
+      final current = await _currentManifest(scope);
+      final currentRow = current['row'] as Map;
+      if (currentRow['crypto_revision'] is! int ||
+          currentRow['crypto_revision'] <= expectedRevision) {
+        throw const CryptoAuthorityPending('crypto_business_delivery_pending');
+      }
+      return _map(jsonDecode(currentRow['projection'] as String));
     }, freshBoundary: true);
   }
 

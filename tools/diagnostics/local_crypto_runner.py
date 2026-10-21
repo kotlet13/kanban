@@ -19,9 +19,13 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 PREFIX = 'JIVIE_DIAGNOSTIC '
 STAGES = {'setup', 'incoming_verify', 'owner_receipt', 'owner_replay',
-          'current_pull', 'current_wire_open', 'current_head_check', 'journal_immutable', 'scenario_result'}
+          'current_pull', 'current_wire_open', 'current_head_check', 'journal_immutable',
+          'continuation_verified', 'continuation_guard', 'publication_boundary', 'scenario_result'}
+BASELINE_CASES = ['conflict_stale', 'applied_stale', 'pending_unknown', 'conflict_current']
+GUARD_CODES = {'incoming_head_changed': 'crypto_account_choices_head_changed',
+               'advanced_base_changed': 'crypto_account_choices_authority_changed'}
 CASES = {'diagnostic production choice continuation ' + case: case for case in
-         ['conflict_stale', 'applied_stale', 'pending_unknown', 'conflict_current']}
+         [*BASELINE_CASES, *GUARD_CODES]}
 TYPES = {'FormatException', 'StateError', 'TypeError', 'CryptoAuthorityPending',
          'CryptoDirectoryException', 'CollaborationException', 'TestFailure',
          'TimeoutException', 'AssertionError', 'other'}
@@ -106,8 +110,10 @@ def diagnostic(value, root: Path, codes: set[str]):
 
 
 class Capture:
-    def __init__(self, root, codes):
+    def __init__(self, root, codes, *, expect_fix=False, expected_cases=None):
         self.root, self.codes = root, codes
+        self.expect_fix = expect_fix
+        self.expected_cases = list(expected_cases if expected_cases is not None else BASELINE_CASES)
         self.events = []
         self.passed = self.failed = self.skipped = self.started = 0
         self.escaping = 0
@@ -202,20 +208,29 @@ class Capture:
         if self.done is not True or not self.started or self.skipped:
             return 'incomplete_not_pass'
         scenarios = self.scenarios()
-        if len(scenarios) != 4 or any(x['classification'] == 'UNVERIFIED' for x in scenarios.values()):
+        if set(self.case_results) - set(self.expected_cases):
+            return 'unexpected_scenarios_executed'
+        if len(scenarios) != len(self.expected_cases) or any(x['classification'] == 'UNVERIFIED' for x in scenarios.values()):
             return 'incomplete_scenarios_not_pass'
-        return 'synthetic_reproduction_and_controls_confirmed'
+        return 'synthetic_fix_regression_confirmed' if self.expect_fix else 'synthetic_reproduction_and_controls_confirmed'
 
     def scenarios(self):
         results = {}
-        for case in CASES.values():
+        for case in self.expected_cases:
             events = [x for x in self.events if x.get('scenario') == case]
             terminal = all(any(x.get('stage') == stage and x.get('outcome') == 'passed' for x in events)
                            for stage in ['journal_immutable', 'scenario_result'])
             failures = [x for x in events if x['origin'] == 'harness_caught_error' and x.get('outcome') == 'failed']
             verified = self.case_results.get(case) == 'success' and terminal
             classification = 'UNVERIFIED'
-            if verified and case in {'conflict_stale', 'applied_stale'} and len(failures) == 1 and failures[0].get('code') == 'crypto_account_choices_head_changed' and failures[0].get('stack_frames'):
+            continuation = any(x.get('stage') == 'continuation_verified' and x.get('outcome') == 'passed' for x in events)
+            publication = any(x.get('stage') == 'publication_boundary' and x.get('outcome') == 'entered' for x in events)
+            guard = any(x.get('stage') == 'continuation_guard' and x.get('outcome') == 'passed' for x in events)
+            if self.expect_fix and verified and case in {'conflict_stale', 'applied_stale'} and not failures and continuation and publication:
+                classification = 'FIXED_CONTINUATION_CONFIRMED'
+            elif self.expect_fix and verified and case in GUARD_CODES and not publication and guard and len(failures) == 1 and failures[0].get('code') == GUARD_CODES[case] and failures[0].get('stack_frames'):
+                classification = 'CONTINUATION_GUARD_CONFIRMED'
+            elif not self.expect_fix and verified and case in {'conflict_stale', 'applied_stale'} and len(failures) == 1 and failures[0].get('code') == 'crypto_account_choices_head_changed' and failures[0].get('stack_frames'):
                 classification = 'REPRODUCED_EXPECTED_FAILURE'
             elif verified and case == 'pending_unknown' and len(failures) == 1 and failures[0].get('code') == 'crypto_business_delivery_pending' and failures[0].get('stack_frames'):
                 classification = 'PENDING_GUARD_CONFIRMED'
@@ -240,6 +255,9 @@ def run(args):
         raise ValueError('existing Flutter SDK and package configuration required; runner never resolves dependencies')
     if not 10 <= args.wall_timeout <= 600 or not 1 <= args.max_output_mib <= 8:
         raise ValueError('wall timeout must be 10..600s and output cap 1..8MiB')
+    if args.expect_fix and (not args.case or args.plain_name) or args.case and not args.expect_fix:
+        raise ValueError('fix expectation requires an explicit finite --case list and cannot combine --plain-name')
+    expected_cases = list(dict.fromkeys(args.case)) if args.expect_fix else BASELINE_CASES.copy()
     scenario = root / 'build/qa/local-diagnostics' / args.scenario
     scenario.mkdir(parents=True, exist_ok=True)
     # Atomic directory allocation counts a compile failure/interruption as an attempt.
@@ -263,18 +281,23 @@ def run(args):
                '--timeout=45s', str(test.relative_to(root))]
     if args.plain_name:
         command.extend(['--plain-name', args.plain_name])
+    if args.expect_fix:
+        names = [name for name, case in CASES.items() if case in expected_cases]
+        command.extend(['--name', '^(?:' + '|'.join(re.escape(name) for name in names) + ')$'])
     environment = {k: os.environ[k] for k in ['HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL', 'USER', 'LOGNAME'] if k in os.environ}
     environment.update({'CI': 'true', 'FLUTTER_SUPPRESS_ANALYTICS': 'true', 'DART_SUPPRESS_ANALYTICS': 'true'})
     save(attempt / 'manifest.json', {'label': 'synthetic-local-not-native-not-phone-state',
          'started_utc': dt.datetime.now(dt.timezone.utc).isoformat(), 'attempt': number,
          'attempt_limit': 3, 'command': command, 'wall_timeout_seconds': args.wall_timeout,
+         'expectation': 'fix_regression' if args.expect_fix else 'reproduction',
+         'expected_cases': expected_cases,
          'output_limit_bytes': args.max_output_mib * 1024 ** 2, 'source_files': manifest,
          'environment_names_only': sorted(environment), 'python': platform.python_version(),
          'platform': platform.system(), 'machine': platform.machine(),
          'sdk_files': [{'path': str(p.relative_to(sdk)), 'sha256': sha(p)} for p in
                        [flutter, sdk / 'bin/cache/flutter.version.json', sdk / 'bin/cache/dart-sdk/bin/dart']],
          'raw_output_retained': False, 'phone_or_server_actions_by_runner': False})
-    capture = Capture(root, codes)
+    capture = Capture(root, codes, expect_fix=args.expect_fix, expected_cases=expected_cases)
     started = time.monotonic()
     reason = None
     total = 0
@@ -343,6 +366,9 @@ def run(args):
         reason = reason or 'runner_infrastructure_error'
     result = {'classification': capture.classification(reason, proc.returncode if proc else None, source_changed),
               'label': 'synthetic-local-not-native-not-phone-state', 'attempt': number, 'attempt_limit': 3,
+              'expectation': 'fix_regression' if args.expect_fix else 'reproduction',
+              'expected_cases': expected_cases,
+              'not_selected_cases': [case for case in CASES.values() if case not in expected_cases],
               'elapsed_seconds': round(time.monotonic() - started, 3),
               'finished_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
               'process_exit_code': proc.returncode if proc else None, 'source_changed': source_changed,
@@ -355,7 +381,7 @@ def run(args):
     save(attempt / 'result.json', result)
     print(json.dumps({'artifact_directory': str(attempt), 'classification': result['classification'],
                       'tests': result['tests'], 'attempt': number, 'escaping_test_errors': capture.escaping}))
-    return 0 if result['classification'] == 'synthetic_reproduction_and_controls_confirmed' else 1
+    return 0 if result['classification'] in {'synthetic_reproduction_and_controls_confirmed', 'synthetic_fix_regression_confirmed'} else 1
 
 
 def main():
@@ -364,6 +390,8 @@ def main():
     parser.add_argument('--scenario', required=True, help='Stable issue/scenario slug; persistent maximum three attempts.')
     parser.add_argument('--flutter-sdk', default='/Users/anzenovsak/Dev/flutter')
     parser.add_argument('--plain-name', help='Optional literal Flutter test name selector.')
+    parser.add_argument('--expect-fix', action='store_true', help='Require explicit fixed-continuation evidence for selected cases.')
+    parser.add_argument('--case', action='append', choices=list(CASES.values()), help='Finite case selected for fix regression; repeat for each changed/new case.')
     parser.add_argument('--wall-timeout', type=int, default=180)
     parser.add_argument('--max-output-mib', type=int, default=2)
     args = parser.parse_args()

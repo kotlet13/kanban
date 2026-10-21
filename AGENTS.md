@@ -1,5 +1,27 @@
 # Navodila za delo na projektu
 
+21. oktober — **lokalni popravek zastarelega seznama PASS; telefoni še stari**.
+Uporabnik zahteva nadaljnje eksperimente lokalno in obvestilo ob zaključku;
+S25 bo odklopljen, ne zahtevaj priklopa za lokalno delo. Sol6.1/high
+implementacija/pregled, po samodejni content blokadi implementacijskega
+podagenta dokonča test drugi Sol6.1/high; glavni pregled obeh delov PASS.
+Ordinary stale winner je samo podpisana fizična podlaga za novo revizijo,
+ne uporaben trenutni seznam. Historical snapshot verifier in točen napredek
+row/wire/record; nato fresh incoming verify, stabilen revision/proofhash in
+nova objava ZNOTRAJ iste fresh boundary. Captured/unknown/claim varovala
+ostanejo; stara zahteva/potrdilo/claim se ne spreminjajo.
+Isti scenario account-choice-production-path FINALposkus3 PASS4/3,298s:
+409stale/200stale nova podpisana staged zahteva pri expectedRevision2;
+novi headchange/baseproofchange kontroli zavrneta objavo. Stara pending/
+matchinghead PASS nista ponovljena. Ni poskusa4/resetov. Source47a03940…,
+glavni/neodvisni reviewPASS, scopedanalyze0issues. Dokaz:
+`build/qa/local-diagnostics/account-choice-production-path/attempt-3/result.json`.
+Test uporablja pravi verifier/queue/claims, publication boundary je nadzorovan
+in ni HTTP ACK/celotni syncNow/native dokaz. Runtime popravek še NI v paketih.
+Telefoni/QA server/produkcija nedotaknjeni, brez build/install/UI/Sync.
+Naslednje: po dogovoru pripraviti posodobitev QA paketov in uporabnikov
+ozki telefonski preizkus; ne trditi, da je že nameščeno ali celotni sync PASS.
+
 21. oktober — **lokalno diagnostično okolje ponovi head_changed brez iPhona**.
 Po uporabnikovem naročilu Sol6.1/high pripravi nov in-memory sintetični
 `crypto_account_choice_diagnostic_harness_test.dart` in
