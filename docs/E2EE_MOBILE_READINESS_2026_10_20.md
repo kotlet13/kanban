@@ -1,5 +1,57 @@
 # Priprava mobilnega nadaljevanja — 20. oktober 2026
 
+## Obnova testnega TLS — 21. oktober
+
+Po izrecnem naročilu uporabnika sta CA in strežniški certifikat istega
+mobilnega QA `https://192.168.132.29:18801/` obnovljena za 30 dni:
+**21.10.2026 07:23:22 UTC–20.11.2026 07:23:22 UTC** (konec 20.11. ob
+08:23:22 po lokalnem času). Ista zasebna ključa, subjekta in točen IP SAN;
+originali so zasebno ohranjeni. Nov javni CA PEM SHA-256:
+`b9af2a77f19f4b541fd035858d4800408239b8d32d696f6075add608afe540f5`.
+
+[Staging](../build/qa/jivie-mobile-tls-renewal-20261021/staged-evidence.json)
+potrdi osem ciljnih kontrol, tudi napačen IP/izdajatelja in iztek veljavnosti.
+Staro vgrajeno CA potrdilo po svojem izteku ostane neveljavno kljub istemu
+ključu, zato sta potrebna tudi nova paketa. Ni izklopa preverjanja,
+spremembe sistemske ure ali dodajanja sistemskih zaupanih izdajateljev.
+
+[Namestitev certifikata](../build/qa/jivie-mobile-tls-renewal-20261021/deployment-evidence.json)
+ob 07:29:44 UTC potrdi novi streženi certifikat s svežo strogo TLS povezavo
+in en javni capabilities HTTP200 istega serverId. Spremenjeni sta samo
+CA/leaf datoteki; nginx config test in reload, brez ponovnega zagona
+vsebnikov. Identitete, časi zagonov in stanja štirih storitev, ključi in
+konfiguracije ostanejo enaki. Brez avtenticiranega ali poslovnega RPC.
+Končni PASS je tretji omejeni poskus: prvi ni potrdil takojšnjega stanja
+po reloadu in je vrnil datoteki; drugi je pred spremembami pokazal razliko
+med naloženim novim certifikatom in vrnjenima starima datotekama. Tretji
+uskladi nove datoteke, različen mtime in naloženi certifikat. Razlaga z
+nginx predpomnjenjem SSL objektov ostaja sklep, ne neposredno izmerjen vzrok.
+
+Nova paketa sta pripravljena, **še nista nameščena ali preizkušena na
+telefonih**. Pred popoldanskim ročnim testiranjem posodobi isti Jivie Test
+na obeh napravah, brez odstranitve aplikacij ali praznjenja podatkov:
+
+- [Android APK](../build/qa/jivie-mobile-tls-renewal-20261021/android/Jivie-Test-Android-cf97e2d-TLS-20261021.apk), SHA-256 `982d6893c37ea86579d972d946c781a012f1872eaece5ae2662999802933003e`, 105.713.405 B.
+- [iOS IPA](../build/qa/jivie-mobile-readiness-20261020/ios/tls-renewal-20261021/candidate/Jivie-Test-iOS-QA-TLS-20261021-development.ipa), SHA-256 `be48d130f83e47d2c4c19e892dec315be49cc015356bfabff1a89e27bcf936a2`, 16.468.271 B; pripadajoči `Runner.app` je v istoimenskem xcarchive.
+
+Vsak paket nastane v prvem poskusu v svojem obstoječem QA imeniku. Samo
+vgrajeni javni PEM je spremenjen; funkcionalni osnovi ostaneta Android
+56fbc372… in iOS bbc61dc6… (vključno z iOS popravkom povabila). QA ID,
+podpis, Keychain/service/group, URL, SDK in locks isti. Androidovih sedem
+native knjižnic in vseh 19 DEX vsebin je enakih (štiri imena DEX se
+prerazporedijo), 13 registriranih vtičnikov ostane. iOS native knjižnici
+brez podpisa sta bajtno enaki, podpisi paketa/frameworkov preverjeni.
+Oba dejanska paketa vsebujeta novi CA, starega PEM ne več.
+Po predaji sta odstranjena samo regenerirana predpomnilnika teh gradenj:
+Android 16 map/1.370.484.736 B zasedenega prostora, iOS pet map/1.188.519.936 B.
+Izvori, novi in prejšnji paketi, zasebne kopije ter dokazi ostanejo.
+
+Uporabnik od zdaj izvaja UI scenarije. Agent pripravlja okolje, diagnostiko
+in popravke. Obnova TLS ni ponovitev deljenja, obnove ali drugih PASS
+scenarijev; produkcija, podatki in prvotno povabilo ostanejo nedotaknjeni.
+
+## Zgodovina priprave 20. oktobra
+
 **Poznejša skupna seja je že začeta:** dejanske namestitve, popravek
 Androidove registracije dodatkov in mobilna odobritev dostopa so zapisani v
 [aktualnem nadaljevanju](E2EE_MOBILE_SESSION_2026_10_20.md). Spodnji opis
@@ -38,10 +90,10 @@ Nadaljujemo stanje iz
   Mac deljenja na 18811 ali benchmarka na 59776. Zaupanje ostane omejeno
   na isti namenski CA in točen HTTPS cilj.
 
-CA poteče **21. oktobra 2026 ob 12:25:42 UTC (14:25:42 po lokalnem času)**.
-Za nadaljevanje po tem času je treba najprej obnoviti testno TLS pripravo;
-preverjanja certifikata se ne izklopi. Dostopnost LAN in veljavnost
-certifikata preverimo še ob dejanskem začetku, ker se lahko IP spremeni.
+Takratni CA poteče **21. oktobra 2026 ob 12:25:42 UTC**; zgornja obnova
+21. oktobra ga nadomesti na strežniku in v pripravljenih novih paketih.
+Stari nameščeni aplikaciji potrebujeta posodobitev. Dostopnost LAN in
+veljavnost certifikata preverimo še ob dejanskem začetku, ker se IP lahko spremeni.
 
 ## Začetek skupnega testiranja
 

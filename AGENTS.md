@@ -1,5 +1,25 @@
 # Navodila za delo na projektu
 
+21. oktober — **uporabnik prevzame ročno testiranje; obnova testnega TLS je odobrena**.
+Od zdaj uporabnik upravlja testni aplikaciji. Agent pripravlja okolje/paketa,
+spremlja diagnostiko, beleži izide in popravlja napake; brez samostojnega
+ponavljanja UI scenarijev. Uporabnik izrecno naroči obnovo certifikata pred
+popoldanskim prihodom. To nadomesti prejšnjo mejo »ne podaljšujemo zaupanja«
+za isti mobilni QA18801. Obnova vključuje vgrajeni javni CA v obeh QA
+paketih, brez izklopa TLS preverjanja, novega sistemskega zaupanja ali
+sprememb produkcije. Trenutne prijave, podatki, FILE in povabilo ostanejo.
+Obnova zaključena: [dokazi in paketi](docs/E2EE_MOBILE_READINESS_2026_10_20.md).
+CA/leaf veljata do20.11.2026 07:23:22UTC (08:23 lokalno), isti ključi in
+točen IP192.168.132.29. Končni gateway PASS v3.poskusu, nov streženi leaf
+in strictHTTPS200; samo nginx reload, vsebniki/config/worker stanja isti.
+Prva dva izida in razlika loadedNEW/filesOLD dokumentirani. Novi CA PEM
+b9af2a77… v obeh pripravljenih paketih: Android982d6893… in iOSbe48d130…,
+oba prvi buildPASS, vsak samoPEMdelta ob istem SDK/locks/podpisu/shrambi.
+Funkcionalni osnovi Android56fbc372…/iOSbbc61dc6… ostaneta. PAKETA ŠE
+NISTA NAMEŠČENA; ob vrnitvi uporabnika najprej posodobitev istega Jivie Test
+brez uninstall/reset. Stari vgrajeni CA po21.10.12:25:42UTC ne zadošča.
+Ni dejanj na napravah/UI ali novih poslovnih testov. Produkcija nedotaknjena.
+
 20. oktober — **iPhone directory_proof_pending natančno diagnosticiran in popravljen**.
 [Dokaz in meje](docs/E2EE_MOBILE_SESSION_2026_10_20.md): po novem izrecnem
 naročilu ena diagnostična gradnja ea9d6805… in isti Continue zajameta
