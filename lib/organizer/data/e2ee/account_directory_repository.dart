@@ -101,6 +101,15 @@ class AccountDirectoryRepository {
     return _callDirect(operation, params);
   }
 
+  /// Denial metadata is an ordinary authenticated read, independent of the
+  /// signed authority snapshot. It cannot carry scope content or signed work.
+  Future<Map<String, dynamic>> scopeAccessChanges(List<String> scopeIds) =>
+      _callDirect('scopes.list', {
+        'includeAccessChanges': true,
+        'accessChangesOnly': true,
+        'scopeIds': List<String>.unmodifiable(scopeIds),
+      });
+
   /// Scope transport coalescing to the same verified-operation lease as the
   /// signed-proof memo. This never changes directory or scope admission.
   Future<T> withAuthoritySnapshot<T>(

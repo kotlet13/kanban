@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../collaboration_database.dart';
+import '../collaboration_transport.dart';
 import '../device_session_store.dart';
 import '../../domain/collaboration_models.dart';
 import '../../domain/shared_payload_validation.dart';
@@ -24,6 +25,7 @@ import 'crypto_business_history.dart';
 import 'crypto_business_group_history.dart';
 import 'crypto_business_finance.dart';
 import 'crypto_task_resolution.dart';
+import 'crypto_task_conflict.dart';
 import 'crypto_business_references.dart';
 import 'crypto_business_notifications.dart';
 import 'crypto_business_lifecycle.dart';
@@ -35,6 +37,7 @@ import 'crypto_finance_policy_actions.dart';
 import 'crypto_finance_audit_evidence.dart';
 import 'crypto_lifecycle_evidence.dart';
 import 'crypto_scope_observations.dart';
+import 'crypto_scope_access_changes.dart';
 import 'invite_crypto_repository.dart';
 import 'crypto_domain_checkpoint.dart';
 import 'crypto_domain_checkpoint_publisher.dart';
@@ -113,10 +116,26 @@ class CryptoBusinessRouter
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
         CryptoProjectionCursorTransition,
-        CryptoNativeProjectRootRepair {
+        CryptoNativeProjectRootRepair,
+        CryptoTerminalTaskConflicts {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
+
+  @override
+  Future<bool> hasTerminalTaskConflict({
+    required DeviceSession session,
+    required String scopeId,
+    required Map<String, dynamic> operation,
+  }) async {
+    final account = await accountFor(session);
+    return CryptoBusinessSession(
+      account,
+      SessionCryptoAccess(account: account),
+      database,
+    ).hasTerminalTaskConflict(scopeId, operation);
+  }
+
   static final _financePolicyOnly = Object();
   static final _combinedFinanceRead = Object();
 
@@ -735,7 +754,7 @@ class CryptoBusinessSession {
   }
 
   Future<Map<String, dynamic>> scopes() async {
-    await account.directory.requireFresh();
+    final own = await account.directory.requireFresh();
     final result = <Map<String, dynamic>>[];
     final pending = <String>[];
     final discovered = await catalog();
@@ -819,11 +838,63 @@ class CryptoBusinessSession {
         ),
       );
     }
+    final cached = await db.rows('SELECT id FROM scopes WHERE partition=?', [
+      p,
+    ]);
+    final omitted =
+        cached
+            .map((row) => row['id'])
+            .whereType<String>()
+            .where(
+              (id) =>
+                  isSharedUuid(id) && !discovered.any((row) => row['id'] == id),
+            )
+            .toSet()
+            .toList()
+          ..sort();
+    final revoked = <String>[], deleted = <String>[];
+    for (var start = 0; start < omitted.length; start += 50) {
+      final requested = omitted.skip(start).take(50).toList();
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      Object? notice;
+      try {
+        notice = await account.directory.scopeAccessChanges(requested);
+      } on CollaborationException catch (error) {
+        if (const {
+          'device_revoked',
+          'auth_required',
+          'session_expired',
+          'invalid_credentials',
+          'server_identity_changed',
+        }.contains(error.code)) {
+          rethrow;
+        }
+        // Unsupported/transient denial discovery retains the missing marker.
+      } on FormatException {
+        // Malformed or old-server replies cannot revoke a cached scope.
+      }
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      final changes = parseScopeAccessChanges(
+        notice,
+        requested: requested,
+        serverId: own.serverId,
+        accountId: own.accountId,
+        deviceId: account.deviceId,
+      );
+      if (changes != null) {
+        revoked.addAll(changes.revoked);
+        deleted.addAll(changes.deleted);
+      }
+    }
     return {
       'scopes': result,
       'revocations': <Object>[],
-      'revokedScopeIds': <String>[],
-      'deletedScopeIds': <String>[],
+      'revokedScopeIds': revoked,
+      'deletedScopeIds': deleted,
       'pendingCryptoScopeIds': pending,
     };
   }
@@ -1854,17 +1925,26 @@ class CryptoBusinessSession {
         : Map<String, dynamic>.from(
             CryptoBusinessPayload.merge(retained, changed) as Map,
           );
-    await _writeRaw(
-      scopeId: scope,
-      domain: domain,
-      id: id,
-      type: op['type'] as String,
-      operationId: operationId as String,
-      expectedRevision: previous?['crypto_revision'] as int? ?? 0,
-      raw: merged,
-      previousHash: previous?['record_proof_hash'] as String?,
-      localHash: await CryptoBusinessJson.hash(op),
-    );
+    try {
+      await _writeRaw(
+        scopeId: scope,
+        domain: domain,
+        id: id,
+        type: op['type'] as String,
+        operationId: operationId as String,
+        expectedRevision: previous?['crypto_revision'] as int? ?? 0,
+        raw: merged,
+        previousHash: previous?['record_proof_hash'] as String?,
+        localHash: await CryptoBusinessJson.hash(op),
+      );
+    } on CryptoAuthorityPending catch (error) {
+      if (error.reason == 'crypto_business_delivery_pending' &&
+          domain == 'content' &&
+          await hasTerminalTaskConflict(scope, op)) {
+        throw const CollaborationApiException('conflict');
+      }
+      rethrow;
+    }
     final canonical = await _row(scope, domain, id, type: op['type'] as String);
     if (canonical == null) {
       throw const CryptoAuthorityPending('crypto_projection_pending');
@@ -1873,6 +1953,65 @@ class CryptoBusinessSession {
       'status': 'applied',
       'record': jsonDecode(canonical['projection'] as String),
     };
+  }
+
+  Future<bool> hasTerminalTaskConflict(
+    String scope,
+    Map<String, dynamic> operation,
+  ) async {
+    if (operation['type'] != 'task' ||
+        !isSharedUuid(operation['opId']) ||
+        !isSharedUuid(operation['recordId'] ?? operation['id'])) {
+      return false;
+    }
+    final task = (operation['recordId'] ?? operation['id']) as String;
+    if (operation['recordId'] != null &&
+        operation['id'] != null &&
+        operation['recordId'] != operation['id']) {
+      return false;
+    }
+    final rows = await db.rows(
+      'SELECT * FROM crypto_business_requests WHERE partition=? AND operation_id=?',
+      [p, operation['opId']],
+    );
+    if (rows.length != 1) return false;
+    final outgoing = await db.rows(
+      'SELECT * FROM crypto_outbox WHERE partition=? AND request_id=?',
+      [p, rows.single['request_id']],
+    );
+    if (outgoing.length != 1 || outgoing.single['state'] != 'rejected') {
+      return false;
+    }
+    final own = await account.directory.cachedVerifiedDirectory();
+    final claims = await db.rows(
+      'SELECT * FROM crypto_outbox_records WHERE partition=? AND request_id=?',
+      [p, rows.single['request_id']],
+    );
+    if (!account.directory.isCurrent()) {
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    }
+    final result = await isBoundOrdinaryTaskConflict(
+      codec: codec,
+      signingPublicKey: cryptoBase64(
+        own.activeDevice(account.deviceId)['signingKeyBase64'],
+        length: 32,
+      ),
+      partition: p,
+      serverId: own.serverId,
+      accountId: own.accountId,
+      deviceId: account.deviceId,
+      scopeId: scope,
+      taskId: task,
+      operationId: operation['opId'],
+      localHash: await CryptoBusinessJson.hash(operation),
+      business: rows.single,
+      outgoing: outgoing.single,
+      claims: claims,
+    );
+    if (!account.directory.isCurrent()) {
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    }
+    return result;
   }
 
   Future<Map<String, dynamic>> pushTaskWithCost(

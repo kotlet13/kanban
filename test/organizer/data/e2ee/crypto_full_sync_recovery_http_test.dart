@@ -92,8 +92,10 @@ List<Map<String, Object?>> _frames(StackTrace stack) {
 }
 
 class _Lab {
-  _Lab(this.root, this.fixture, this.ledger);
+  _Lab(this.root, this.fixture, this.ledger, {Directory? evidenceRoot})
+    : evidenceRoot = evidenceRoot ?? root;
   final Directory root;
+  final Directory evidenceRoot;
   final Map fixture;
   final Map<String, dynamic> ledger;
   final clients = <String, _Client>{};
@@ -106,9 +108,9 @@ class _Lab {
   Future<void> save() {
     final next = _saveTail.then((_) async {
       ledger['aliases'] = aliases;
-      final tmp = File('${root.path}/ledger-private.tmp');
+      final tmp = File('${evidenceRoot.path}/ledger-private.tmp');
       await tmp.writeAsString(jsonEncode(ledger), flush: true);
-      await tmp.rename('${root.path}/ledger-private.json');
+      await tmp.rename('${evidenceRoot.path}/ledger-private.json');
     });
     _saveTail = next;
     return next;
@@ -229,7 +231,7 @@ class _Lab {
         'phases': {for (final entry in phases.entries) entry.key: entry.value},
       };
       await File(
-        '${root.path}/result.json',
+        '${evidenceRoot.path}/result.json',
       ).writeAsString(jsonEncode(safe), flush: true);
       debugPrint(
         'FULLSYNC_EVENT ${jsonEncode({'stage': name, 'outcome': phase['passed'] == true ? 'passed' : 'failed', 'code': phase['code']})}',
@@ -251,6 +253,7 @@ class _Wire extends http.BaseClient {
   final delegate = http.Client();
   bool armLostChoice = false;
   bool readOnly = false;
+  bool correctionReadsOnly = false;
   String? controlDirectoryTarget;
   String? controlDirectoryAccount;
   bool offline = false;
@@ -266,6 +269,27 @@ class _Wire extends http.BaseClient {
     Map? command;
     if (params['commandBase64'] is String) {
       command = CryptoJson.decode(cryptoBase64(params['commandBase64'])) as Map;
+    }
+    if (correctionReadsOnly) {
+      check(
+        command == null &&
+            const {
+              'capabilities',
+              'moderation.policyStatus',
+              'crypto2.authority.snapshot',
+              'crypto2.scopes.catalog',
+              'crypto2.scope.headGet',
+              'crypto2.scope.lifecycle.baseline',
+              'crypto2.scope.lifecycle.list',
+              'crypto2.account.scopeObservations',
+              'crypto2.directory.read',
+              'crypto2.inbox.sync',
+              'crypto2.account.status',
+              'crypto2.account.directory',
+              'scopes.list',
+            }.contains(operation),
+        'correction_mutation_forbidden',
+      );
     }
     if (readOnly) {
       check(
@@ -308,6 +332,10 @@ class _Wire extends http.BaseClient {
       'requestBytes': request.contentLength,
       'responseBytes': 0,
     };
+    if (operation == 'scopes.list' && params['accessChangesOnly'] == true) {
+      metric['accessChangesOnly'] = true;
+      metric['requestedScopeCount'] = (params['scopeIds'] as List).length;
+    }
     if (command != null) {
       metric['requestAlias'] = client.lab.alias(command['requestId']);
       metric['requestHash'] = await cryptoSha256(
@@ -705,6 +733,337 @@ class _Client {
 
 void check(bool condition, String code) {
   if (!condition) throw StateError(code);
+}
+
+/// New explicit 22 October correction scope; old phase ledgers are read-only.
+Future<void> runRetainedTaskConflictCorrection(
+  String fixturePath,
+  String correctionRoot,
+) async {
+  final fixtureFile = File(fixturePath);
+  final fixture = jsonDecode(await fixtureFile.readAsString()) as Map;
+  check(
+    fixture['synthetic'] == true &&
+        fixture['serverUrl'] == 'http://127.0.0.1:59777',
+    'correction_fixture_target',
+  );
+  final legacyFile = File('${fixtureFile.parent.path}/ledger-private.json');
+  final legacyBytes = await legacyFile.readAsBytes();
+  final legacyHash = await cryptoSha256(legacyBytes);
+  final old = jsonDecode(utf8.decode(legacyBytes)) as Map;
+  final output = Directory(correctionRoot);
+  check(
+    output.parent.path == fixtureFile.parent.path &&
+        output.path.endsWith('/corrections-20261022'),
+    'correction_private_root',
+  );
+  await output.create(recursive: true);
+  final result = File('${output.path}/ledger-private.json');
+  final ledger = result.existsSync()
+      ? Map<String, dynamic>.from(
+          jsonDecode(await result.readAsString()) as Map,
+        )
+      : <String, dynamic>{
+          'explicitScope': '2026-10-22-H4-H7-corrections',
+          'legacyLedgerSha256': legacyHash,
+          'parent': old['parent'],
+          'child': old['child'],
+          'baselineFinance': old['baselineFinance'],
+        };
+  check(ledger['legacyLedgerSha256'] == legacyHash, 'legacy_evidence_changed');
+  final lab = _Lab(fixtureFile.parent, fixture, ledger, evidenceRoot: output);
+  try {
+    await lab.stage('H4_task_conflict_correction', () async {
+      final b = await lab.open('member');
+      b.wire.correctionReadsOnly = true;
+      final h4 = old['h4'] as Map;
+      final task = h4['taskId'] as String;
+      Future<Map<String, dynamic>> appRow() async => (await b.db.rows(
+        'SELECT * FROM outbox WHERE partition=? AND op_id=?',
+        [b.partition, h4['memberOriginalQueue']['op_id']],
+      )).single;
+      Future<List<Map<String, dynamic>>> journals() => b.db.rows(
+        'SELECT * FROM crypto_outbox WHERE partition=? ORDER BY sequence',
+        [b.partition],
+      );
+      Future<List<Map<String, dynamic>>> claims() => b.db.rows(
+        'SELECT * FROM crypto_outbox_records WHERE partition=? ORDER BY scope_id,domain,record_id,expected_revision',
+        [b.partition],
+      );
+      Future<Map<String, dynamic>> draft() async => (await b.db.rows(
+        'SELECT * FROM records WHERE partition=? AND scope_id=? AND id=?',
+        [b.partition, old['child'], task],
+      )).single;
+      Future<List<Map<String, dynamic>>> missing() => b.db.rows(
+        "SELECT name,value FROM local_meta WHERE name LIKE ? ORDER BY name",
+        ['scope_reconciliation:${b.partition}:%'],
+      );
+      final state =
+          ledger.putIfAbsent('h4Correction', () => <String, dynamic>{}) as Map;
+      if (state['before'] == null) {
+        final original = await appRow();
+        check(
+          original['state'] == 'pending' &&
+              original['request'] == h4['memberOriginalQueue']['request'],
+          'correction_original_pending_required',
+        );
+        state['before'] = {
+          'app': original,
+          'journals': await journals(),
+          'claims': await claims(),
+          'draft': await draft(),
+          'missing': await missing(),
+        };
+        await lab.save();
+      }
+      final before = state['before'] as Map;
+      if (state['syncCompleted'] != true) {
+        check(
+          state['syncStarted'] != true,
+          'correction_ambiguous_sync_preserve',
+        );
+        state['syncStarted'] = true;
+        await lab.save();
+        final start = lab.calls.length;
+        await b.sync(success: false);
+        final completion = b.repo.lastSyncCompletion!;
+        state['syncCompleted'] = true;
+        state['completionError'] = _code(completion.error);
+        state['workUnresolved'] = completion.work.unresolved;
+        state['syncCalls'] = lab.calls.skip(start).toList();
+        await lab.save();
+      }
+      final after = await appRow();
+      check(after['state'] == 'conflict', 'correction_task_not_surfaced');
+      for (final key in (before['app'] as Map).keys) {
+        if (key != 'state') {
+          check(
+            after[key] == before['app'][key],
+            'correction_original_app_work_changed',
+          );
+        }
+      }
+      final conflict = (await b.db.rows(
+        'SELECT * FROM conflicts WHERE partition=? AND id=?',
+        [b.partition, after['op_id']],
+      )).single;
+      check(
+        conflict['record_id'] == task &&
+            conflict['scope_id'] == old['child'] &&
+            conflict['type'] == 'task' &&
+            conflict['reason'] == 'conflict' &&
+            conflict['remote'] == null,
+        'correction_conflict_identity_or_remote',
+      );
+      check(
+        jsonEncode(await journals()) == jsonEncode(before['journals']) &&
+            jsonEncode(await claims()) == jsonEncode(before['claims']),
+        'correction_signed_work_changed',
+      );
+      check(
+        jsonEncode(await draft()) == jsonEncode(before['draft']),
+        'correction_losing_draft_changed',
+      );
+      check(
+        jsonEncode(await missing()) == jsonEncode(before['missing']),
+        'correction_missing_marker_changed',
+      );
+      check(
+        !(state['syncCalls'] as List).cast<Map>().any(
+          (call) => call['operation'] == 'crypto2.records.batch',
+        ),
+        'correction_sent_business_batch',
+      );
+      await b.assertBaseline();
+      (ledger['phases'] as Map)['H4_task_conflict_correction'].addAll({
+        'retainedOriginalTaskConflictSurfaced': true,
+        'remoteUnverifiedDataUsed': false,
+        'originalDraftAndSignedWorkPreserved': true,
+        'noBusinessBatch': true,
+        'missingScopeMarkersPreserved': true,
+        'completionError': state['completionError'],
+        'workUnresolved': state['workUnresolved'],
+        'globalCleanSyncClaimed': false,
+      });
+    });
+  } finally {
+    await lab.close();
+    check(
+      await cryptoSha256(await legacyFile.readAsBytes()) == legacyHash,
+      'legacy_evidence_changed',
+    );
+  }
+}
+
+Future<void> runRetainedRevokedAccessCorrection(
+  String fixturePath,
+  String correctionRoot,
+) async {
+  final file = File(fixturePath);
+  final fixture = jsonDecode(await file.readAsString()) as Map;
+  check(
+    fixture['synthetic'] == true &&
+        fixture['serverUrl'] == 'http://127.0.0.1:59777',
+    'correction_fixture_target',
+  );
+  final legacy = File('${file.parent.path}/ledger-private.json');
+  final oldBytes = await legacy.readAsBytes();
+  final oldHash = await cryptoSha256(oldBytes);
+  final old = jsonDecode(utf8.decode(oldBytes)) as Map;
+  final output = Directory(correctionRoot);
+  check(
+    output.parent.path == file.parent.path &&
+        output.path.endsWith('/corrections-20261022'),
+    'correction_private_root',
+  );
+  final ledger = Map<String, dynamic>.from(
+    jsonDecode(await File('${output.path}/ledger-private.json').readAsString())
+        as Map,
+  );
+  check(
+    ledger['legacyLedgerSha256'] == oldHash &&
+        ledger['phases']['H4_task_conflict_correction']['passed'] == true,
+    'correction_prior_evidence_required',
+  );
+  final lab = _Lab(file.parent, fixture, ledger, evidenceRoot: output);
+  try {
+    await lab.stage('H7_revoked_access_correction', () async {
+      final b = await lab.open('member');
+      b.wire.correctionReadsOnly = true;
+      final state =
+          ledger.putIfAbsent('h7Correction', () => <String, dynamic>{}) as Map;
+      Future<String> tableHash(String table) async => cryptoSha256(
+        utf8.encode(
+          jsonEncode(
+            await b.db.rows(
+              'SELECT * FROM $table WHERE partition=? ORDER BY rowid',
+              [b.partition],
+            ),
+          ),
+        ),
+      );
+      Future<Map<String, dynamic>> taskDraft() async => (await b.db.rows(
+        'SELECT * FROM records WHERE partition=? AND scope_id=? AND id=?',
+        [b.partition, old['child'], old['h4']['taskId']],
+      )).single;
+      Future<Map<String, dynamic>> conflict() async => (await b.db.rows(
+        'SELECT * FROM conflicts WHERE partition=? AND id=?',
+        [b.partition, old['h4']['memberOriginalQueue']['op_id']],
+      )).single;
+      Future<List<Map<String, dynamic>>> taskQueue() => b.db.rows(
+        'SELECT * FROM outbox WHERE partition=? AND op_id=?',
+        [b.partition, old['h4']['memberOriginalQueue']['op_id']],
+      );
+      const immutableTables = [
+        'crypto_outbox',
+        'crypto_outbox_records',
+        'crypto_business_records',
+        'crypto_received',
+        'crypto_domain_checkpoints',
+      ];
+      if (state['before'] == null) {
+        final hashes = <String, String>{};
+        for (final table in immutableTables) {
+          hashes[table] = await tableHash(table);
+        }
+        state['before'] = {
+          'hashes': hashes,
+          'draft': await taskDraft(),
+          'conflict': await conflict(),
+          'queue': await taskQueue(),
+        };
+        await lab.save();
+      }
+      if (state['syncCompleted'] != true) {
+        check(
+          state['syncStarted'] != true,
+          'correction_ambiguous_revoked_sync_preserve',
+        );
+        state['syncStarted'] = true;
+        await lab.save();
+        final start = lab.calls.length;
+        await b.sync(success: false);
+        state['syncCompleted'] = true;
+        state['completionError'] = _code(b.repo.lastSyncCompletion!.error);
+        state['workUnresolved'] = b.repo.lastSyncCompletion!.work.unresolved;
+        state['syncCalls'] = lab.calls.skip(start).toList();
+        await lab.save();
+      }
+      final before = state['before'] as Map;
+      for (final table in immutableTables) {
+        check(
+          await tableHash(table) == before['hashes'][table],
+          'correction_crypto_evidence_changed',
+        );
+      }
+      check(
+        jsonEncode(await taskDraft()) == jsonEncode(before['draft']) &&
+            jsonEncode(await conflict()) == jsonEncode(before['conflict']) &&
+            jsonEncode(await taskQueue()) == jsonEncode(before['queue']),
+        'correction_task_conflict_or_draft_changed',
+      );
+      for (final scopeId in [old['parent'], old['child']]) {
+        final row = (await b.db.rows(
+          'SELECT data,blocked,finance_policy FROM scopes WHERE partition=? AND id=?',
+          [b.partition, scopeId],
+        )).single;
+        check(
+          jsonDecode(row['data'] as String)['revoked'] == true &&
+              row['blocked'] == 1,
+          'correction_scope_not_revoked',
+        );
+        check(
+          jsonDecode(row['finance_policy'] as String)['enabled'] == false,
+          'correction_finance_policy_still_enabled',
+        );
+        check(
+          (await b.db.rows('SELECT 1 FROM local_meta WHERE name IN (?,?)', [
+            'scope_reconciliation:${b.partition}:$scopeId',
+            'finance_account_choices:${b.partition}:$scopeId',
+          ])).isEmpty,
+          'correction_stale_selector_or_missing_marker',
+        );
+      }
+      final calls = (state['syncCalls'] as List).cast<Map>();
+      check(
+        !calls.any(
+          (call) =>
+              call['operation'] == 'crypto2.records.batch' ||
+              call['operation'] == 'crypto2.receipt.get',
+        ),
+        'correction_replayed_old_work',
+      );
+      final notices = calls
+          .where((call) => call['accessChangesOnly'] == true)
+          .toList();
+      check(
+        notices.length == 1 &&
+            notices.single['status'] == 200 &&
+            notices.single['requestedScopeCount'] == 2,
+        'correction_one_batched_notice_required',
+      );
+      final a = await lab.open('owner');
+      await a.assertBaseline();
+      (ledger['phases'] as Map)['H7_revoked_access_correction'].addAll({
+        'explicitBatchedDenialNotice': true,
+        'bothCachedScopesRevoked': true,
+        'staleSelectorAndMissingMarkersRemoved': true,
+        'originalSignedWorkAndClaimsPreserved': true,
+        'taskConflictAndDraftPreserved': true,
+        'noOldBatchOrReceiptReplay': true,
+        'ownerFinanceBaselinePreserved': true,
+        'completionError': state['completionError'],
+        'workUnresolved': state['workUnresolved'],
+        'globalCleanSyncClaimed': false,
+      });
+    });
+  } finally {
+    await lab.close();
+    check(
+      await cryptoSha256(await legacy.readAsBytes()) == oldHash,
+      'legacy_evidence_changed',
+    );
+  }
 }
 
 void main() {

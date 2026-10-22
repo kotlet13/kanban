@@ -21,6 +21,28 @@ class NativeScopeService extends NativeDatabase
             if (in_array($operation,['scopes.projectSharingPreview','scopes.projectSharingApply'],true)) { return (new NativeProjectSharingService($this->container))->inTransaction($operation,$params,$user); }
             if (in_array($operation,['scopes.deletionPreview','scopes.delete'],true)) { return (new NativeScopeLifecycleService($this->container))->inTransaction($operation,$params,$user); }
             if ($operation === 'scopes.list') {
+                if (array_key_exists('accessChangesOnly', $params) || array_key_exists('scopeIds', $params)) {
+                    $this->fields($params, ['includeAccessChanges', 'accessChangesOnly', 'scopeIds']);
+                    if ($params['includeAccessChanges'] !== true || $params['accessChangesOnly'] !== true
+                        || !is_array($params['scopeIds']) || !array_is_list($params['scopeIds'])
+                        || count($params['scopeIds']) < 1 || count($params['scopeIds']) > 50) {
+                        throw new NativeError('validation_error');
+                    }
+                    $ids = array_map(fn ($id) => $this->uuid($id), $params['scopeIds']);
+                    $sorted = $ids; sort($sorted, SORT_STRING);
+                    if (count(array_unique($ids)) !== count($ids) || $sorted !== $ids) { throw new NativeError('validation_error'); }
+                    $notices = $this->many('SELECT r.scope_id,s.deleted_at FROM familyhub_scope_revocations r JOIN familyhub_scopes s ON s.id=r.scope_id WHERE r.account_id=? AND r.scope_id IN ('.implode(',', array_fill(0, count($ids), '?')).') ORDER BY r.scope_id', array_merge([$user['account_id']], $ids));
+                    $access = new NativeOrganizationAccess($this->container);
+                    $revoked = []; $deleted = [];
+                    foreach ($notices as $notice) {
+                        if ($access->visibleScope($notice['scope_id'], $user['account_id'])) { continue; }
+                        $revoked[] = $notice['scope_id'];
+                        if ($notice['deleted_at'] !== null) { $deleted[] = $notice['scope_id']; }
+                    }
+                    return ['accessChangesVersion' => 1, 'serverId' => $this->serverId(),
+                        'accountId' => $user['account_id'], 'deviceId' => $actor['device']['id'],
+                        'scopeIds' => $ids, 'revokedScopeIds' => $revoked, 'deletedScopeIds' => $deleted];
+                }
                 $this->fields($params, [], ['includePersonal', 'includeOrganizations','includeArchived','includeAccessChanges']);
                 $includePersonal = $params['includePersonal'] ?? false;
                 $includeOrganizations = $params['includeOrganizations'] ?? false;

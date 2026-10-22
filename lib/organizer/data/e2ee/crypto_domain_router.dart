@@ -29,6 +29,16 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Classifies only a locally retained, exact terminal task rejection. This
+/// cannot fetch a scope, send a request, or restore revoked access.
+abstract interface class CryptoTerminalTaskConflicts {
+  Future<bool> hasTerminalTaskConflict({
+    required DeviceSession session,
+    required String scopeId,
+    required Map<String, dynamic> operation,
+  });
+}
+
 /// Shares verified financial reads only within one scope's ordinary sync pass.
 /// Implementations bind the context to the initiating authenticated session,
 /// revalidate its read evidence, and discard it when [read] completes or fails.

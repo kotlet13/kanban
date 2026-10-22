@@ -1,5 +1,34 @@
 # Navodila za delo na projektu
 
+22. oktober — **H4/H7 lokalna popravka PASS na istem ohranjenem stanju**.
+Novo izrecno naročilo je dovolilo omejena popravka; stari STOP, števci in
+dokazi ostajajo isti. Sol6.1/high podagenti, glavni/neodvisni pregled PASS.
+H4 correction zunanji poskus3 PASS: prva dva sta fixtureFAIL pred odprtjem
+klienta (notificationState/reminderState). Ena dejanska B sinhronizacija
+označi isti draft kot conflict/remoteNULL; točen terminalni409, originalni
+podpisani task+reserved intent, zahteva in dva claima so vezani. Brez resend.
+Lokalna klasifikacija pred scopeupsert ohrani konflikt tudi ob odvzemu.
+H7 correction poskus2 PASS: prvi je evidencehash fixtureFAIL pred sync/HTTP;
+že uspešne parser/session kontrole niso ponovljene. Ena navadna B sinhronizacija,
+en notice-only scopes.list200 za2IDs: oba scopes revoked/blocked, selector in
+scope_reconciliation odstranjena. Zahteve/claims/crypto records/checkpoints,
+H4 draft/conflict in vault datoteke ostajajo isti; lastnikove finance iste.
+Notice je authenticated account denial, NE podpisan članstveni dokaz ali
+dovoljenje za branje. Katalogodsotnost/oldserver/malformed sami ne odvzamejo
+dostopa. Dedicated read ohrani sejo/TLS in ne invalidira authority snapshot.
+PHP20kontrol PASSposkus2 (prvi samo fixturepathFAIL, brez model/SQL).
+Oba correction synca error=null, workUnresolved=true zaradi ohranjenega
+konflikta/pending; NE trdi cleanqueues ali uspeha razrešitve konflikta.
+Končna scoped analiza0error/0warning/1stariinfo, source09af6958…717inputs.
+Samo namenski Docker59777 je spet ustavljen; otherContainerStateChanges[].
+Volumi/klienti/stari ledgers ohranjeni;0actual429, ni speedbenchmark.
+Ni novega CAS/opravila, odvzema, probe403, povabila/regranta ali starihPASS.
+Telefoni/produkcija/stareQA nedotaknjeni, brez nativebuild/install; telefoni
+še nimajo teh popravkov. Dokazi/omejitve v docs/E2EE_FULL_SYNC_LOCAL_2026_10_21.md
+in build/qa/local-diagnostics/full-sync-lab-20261021/corrections-20261022/.
+Starih ali novih PASS ne ponavljaj. Naslednji korak po dogovoru: priprava
+paketov in uporabnikov ozki ročni preizkus na telefonih.
+
 21. oktober — **lokalni celotni sync: H1/H2/H3/H5/H6 PASS; H4/H7 STOP**.
 Izrecno naročilo uporabnika: resnični lokalni HTTP/dva odjemalca, brez
 telefonov/produkcije/ponovitve uspešnih testov; Sol6.1/high podagenti in

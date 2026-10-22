@@ -1,10 +1,84 @@
 # Local full-sync integration checks — 21 October 2026
 
-Status: local scenarios concluded. H1/H2/H3/H5/H6 passed; H4 stopped after
+Historical status, 21 October: local scenarios concluded. H1/H2/H3/H5/H6 passed; H4 stopped after
 three attempts and H7 stopped after two with unresolved client behavior.
 This is a separate local HTTP integration run, not a phone or production
 readiness result. Previously successful tests and phone scenarios were not
 rerun. Do not start phone regression yet expecting these two gaps to be fixed.
+
+## Authorized corrections — 22 October 2026
+
+The user explicitly requested fixes for the two remaining gaps. The original
+scenario results, attempt counters and signed work remain unchanged. A separate
+dated correction ledger uses the same retained clients and server. It does not
+repeat task creation/CAS, removal, the denied request probe or any passed phase.
+No phone, native build, old QA server or production operation is included.
+
+H4 correction passed on its third new launch. The first two launches stopped in
+the new synthetic signed-record fixture, before opening a retained client or
+making an HTTP request: task notification metadata, then reminder metadata were
+missing. Both failures remain recorded. The final launch passed the signed
+binding controls and one ordinary sync of the original losing client.
+
+The task draft is now represented by an application conflict, rather than a
+pending delivery. Classification requires the original task and reserved
+derivation sibling, exact signed request/receipt, operation hash and two revision
+claims. It performs no new submission and accepts no raw remote payload. Local
+reconciliation runs before scope withdrawal so the original conflict survives a
+later revocation update. The draft, signed journals, claims, missing-scope markers
+and finance baseline were unchanged in this correction. The remote conflict
+value is deliberately null: this already-revoked user has no new read authority.
+This verifies conflict classification, not active-member conflict-resolution UI
+or a globally clean sync with all retained work resolved.
+
+The server's new notice-only access-change route passed 20 new in-memory
+controls on launch 2. Launch 1 stopped at the test loader's incorrect container
+path before any model or SQL ran. The route returns only explicit account-bound
+revocation/deletion notices for requested cached scope IDs; missing catalog
+entries alone remain insufficient. Current visibility suppresses stale notices
+after a regrant.
+
+H7 correction passed on its second new launch. The first stopped before any
+sync or HTTP request because the test's evidence hash used the size-limited
+protocol encoder on a large table dump. Only that evidence encoding changed;
+the protocol limit was preserved. The already-passed notice/parser/session
+controls were skipped on launch 2.
+
+One ordinary sync of the same B client made one actual batched notice request
+for the two cached scope IDs. Both scopes became revoked/blocked; stale finance
+choices and missing-scope markers were removed. The original H4 task draft and
+conflict, all crypto outgoing requests and claims, business records, received
+records and domain checkpoints remained unchanged. No old batch or receipt was
+replayed. The owner's finance baseline remained unchanged. The revoked client's
+derived finance cache may be withdrawn by the existing access-removal behavior;
+this is not deletion of its original encrypted records or unsent work.
+
+Client validation binds the exact requested set to server, account and device,
+rejects malformed/unsupported replies and requires deleted IDs to be a subset of
+explicitly revoked IDs. A dedicated authenticated read preserves session checks
+without invalidating the signed authority snapshot. Notice metadata withdraws
+local access only; it never grants membership, supplies decryption authority or
+replaces signed heads. No background timer or per-scope request loop was added.
+
+The final H7 sync completed with no error. Its unresolved-work flag remains true
+because the preserved conflict and pending work intentionally remain. Neither
+correction is a claim of conflict resolution, empty queues or native/UI success.
+The two reported local gaps are fixed; updated phone packages and user-run
+mobile confirmation remain a later step.
+
+Final main and independent reviews passed. Scoped Dart analysis reported zero
+errors, zero warnings and one existing informational diagnostic. The final
+reviewed source digest is `09af6958d62589a99818ee9d1f4d1d5c6b9650e269d3dc48136695cff04a1e6a`
+(717 inputs). No correction HTTP attempt returned 429; this is not a speed
+benchmark. Only the owned lab was started and then stopped; comparison with the
+54-container baseline found no other container state changes. Volumes, original
+clients and historical ledgers are retained. New correction artifacts occupy
+215,125 bytes publicly and 1,291,572 bytes privately; no native build or full
+source/database copy was created.
+
+New evidence lives under
+`build/qa/local-diagnostics/full-sync-lab-20261021/corrections-20261022/`.
+Historical results below describe 21 October and have not been overwritten.
 
 ## Isolation and evidence
 
@@ -262,7 +336,7 @@ bytes, private files 16,314,524 bytes, and server data 5,894,144 bytes plus a
 Across all 23 retained HTTP attempt sets, actual 429 responses total zero;
 this reflects test quota pacing and is not a performance result.
 
-## Remaining work before phone regression
+## Historical remaining work — 21 October
 
 1. Propagate a verified terminal task revision conflict from the crypto journal
    into the application's existing conflict handling, preserving the original

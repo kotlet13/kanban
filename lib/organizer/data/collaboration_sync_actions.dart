@@ -223,6 +223,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         if (cryptoPendingIds.any((id) => !isSharedUuid(id))) {
           throw const CollaborationException('invalid_response');
         }
+        await _reconcileTerminalTaskConflicts(session, epoch);
         await database.transaction(() async {
           _checkEpoch(epoch);
           await _validLease(partition);
@@ -244,6 +245,9 @@ extension CollaborationSyncActions on CollaborationRepository {
                   'deleted': deletedIds.contains(scope.id) || scope.deleted,
                 }),
               );
+              await database.execute('DELETE FROM local_meta WHERE name=?', [
+                'scope_reconciliation:$partition:${scope.id}',
+              ]);
             } else if (!scopes.any((r) => r.id == scope.id) && !scope.revoked) {
               // A missing row is not proof of revoked membership: a restored or
               // incomplete server must not silently lock the only local copy.
@@ -549,23 +553,12 @@ extension CollaborationSyncActions on CollaborationRepository {
                     ],
                   );
                 }
-                await database.execute(
-                  "UPDATE outbox SET state='conflict' WHERE partition=? AND scope_id=? AND record_id=?",
-                  [partition, scopeId, op['record_id']],
-                );
-                await database.execute(
-                  'INSERT OR REPLACE INTO conflicts(id,partition,scope_id,record_id,type,reason,remote) VALUES(?,?,?,?,?,?,?)',
-                  [
-                    op['op_id'],
-                    partition,
-                    scopeId,
-                    op['record_id'],
-                    CollaborationRepository._map(op['request'])['type'],
-                    canonical?['deleted'] == true
-                        ? 'record_deleted'
-                        : error.code,
-                    canonical == null ? null : jsonEncode(canonical),
-                  ],
+                await _persistRecordConflict(
+                  partition,
+                  scopeId,
+                  op,
+                  canonical?['deleted'] == true ? 'record_deleted' : error.code,
+                  canonical,
                 );
               });
             } else if (financePair != null &&
@@ -879,6 +872,101 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
       }
     }
+  }
+
+  Future<void> _reconcileTerminalTaskConflicts(
+    DeviceSession session,
+    int epoch,
+  ) async {
+    final router = cryptoRouter;
+    if (router is! CryptoTerminalTaskConflicts) return;
+    final partition = session.profile.partition;
+    final candidates = await database.rows(
+      "SELECT o.* FROM outbox o WHERE o.partition=? AND o.state='pending' "
+      "AND json_extract(o.request,'\$.type')='task' AND o.wire_version=6 "
+      "AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='task_cost_pair:'||o.partition||':'||o.op_id) "
+      'ORDER BY o.sequence LIMIT 32',
+      [partition],
+    );
+    for (final row in candidates) {
+      _checkEpoch(epoch);
+      await _validLease(partition);
+      final operation = CollaborationRepository._map(row['request']);
+      if (operation['opId'] != row['op_id'] ||
+          (operation['recordId'] ?? operation['id']) != row['record_id']) {
+        throw const FormatException('crypto_task_conflict_binding');
+      }
+      if (!await (router as CryptoTerminalTaskConflicts)
+          .hasTerminalTaskConflict(
+            session: session,
+            scopeId: row['scope_id'] as String,
+            operation: operation,
+          )) {
+        continue;
+      }
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        await _validLease(partition);
+        final current = await database.rows(
+          'SELECT state,request,scope_id,record_id,sequence,wire_version FROM outbox WHERE partition=? AND op_id=?',
+          [partition, row['op_id']],
+        );
+        if (current.length != 1 ||
+            current.single['state'] != 'pending' ||
+            current.single['request'] != row['request'] ||
+            current.single['scope_id'] != row['scope_id'] ||
+            current.single['record_id'] != row['record_id'] ||
+            current.single['sequence'] != row['sequence'] ||
+            current.single['wire_version'] != row['wire_version'] ||
+            (await database.rows('SELECT 1 FROM local_meta WHERE name=?', [
+              'task_cost_pair:$partition:${row['op_id']}',
+            ])).isNotEmpty) {
+          return;
+        }
+        _checkEpoch(epoch);
+        await _persistRecordConflict(
+          partition,
+          row['scope_id'] as String,
+          row,
+          'conflict',
+          null,
+          exactOperation: true,
+        );
+      });
+    }
+  }
+
+  /// Caller owns the epoch/lease-checked transaction and retains original bytes.
+  Future<void> _persistRecordConflict(
+    String partition,
+    String scopeId,
+    Map<String, dynamic> operation,
+    String reason,
+    Map<String, dynamic>? canonical, {
+    bool exactOperation = false,
+  }) async {
+    await database.execute(
+      "UPDATE outbox SET state='conflict' WHERE partition=? AND scope_id=? AND record_id=?"
+      '${exactOperation ? ' AND op_id=?' : ''}',
+      [
+        partition,
+        scopeId,
+        operation['record_id'],
+        if (exactOperation) operation['op_id'],
+      ],
+    );
+    await database.execute(
+      'INSERT OR REPLACE INTO conflicts(id,partition,scope_id,record_id,type,reason,remote) VALUES(?,?,?,?,?,?,?)',
+      [
+        operation['op_id'],
+        partition,
+        scopeId,
+        operation['record_id'],
+        CollaborationRepository._map(operation['request'])['type'],
+        reason,
+        canonical == null ? null : jsonEncode(canonical),
+      ],
+    );
   }
 
   Map<String, dynamic> _canonical(Object? value, {bool personal = false}) {
