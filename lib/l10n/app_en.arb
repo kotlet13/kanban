@@ -212,6 +212,7 @@
   "sharingUnsupported": "This server does not support the required sharing features yet.",
   "sharingOperationFailed": "The action failed. Check the connection and try again.",
   "sharingInvalidInvite": "The invitation is invalid, expired, or already used.",
+  "sharingAccountChanged": "The account is still loading or the sign-in changed. Reopen the action once the account is ready.",
   "sharingSessionExpired": "Your session expired. Sign in again; personal data stays on this device.",
   "sharingPermissionDenied": "You do not have permission for this action.",
   "sharingNoSharedListsDescription": "Create a list to collaborate. Personal lists are not shared automatically.",

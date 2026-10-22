@@ -55,7 +55,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
           error.code == 'directory_stale_identity' ||
       error is CryptoAuthorityPending &&
           error.reason == 'crypto_stale_identity') {
-    return context.l10n.sharingSessionExpired;
+    return context.l10n.sharingAccountChanged;
   }
   if (error is CryptoAuthorityPending) {
     if (const {
@@ -170,8 +170,8 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'invalid_token' => l.sharingInvalidInvite,
     'auth_required' ||
     'unauthenticated' ||
-    'session_expired' ||
-    'session_changed' => l.sharingSessionExpired,
+    'session_expired' => l.sharingSessionExpired,
+    'session_changed' => l.sharingAccountChanged,
     'device_revoked' => l.sharingSessionRevoked,
     'forbidden' || 'permission_denied' => l.sharingPermissionDenied,
     'finance_forbidden' || 'finance_disabled' => l.financeNoAccess,

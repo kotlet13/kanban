@@ -1,5 +1,10 @@
 # Opombe za nadgradnje in popravke
 
+**Dogovor 22. oktobra 2026:** popravek ponovnega odpiranja že obravnavanih
+povabil je del skupne, še neobjavljene nadgradnje. Objava sledi šele po
+zaključnem preizkusu celote; ta sprememba ne sproži ločene namestitve ali izdaje.
+[Izvedba in lokalni dokazi](EMAIL_INVITATIONS.md#neobjavljena-nadgradnja-zagona--22-oktober-2026).
+
 Uporabnik je 14. oktobra 2026 po začetnem zbiranju opomb naročil izvedbo,
 commit in push po zaključenih sklopih ter nato javno Android izdajo in iOS
 TestFlight. **Prvotnih 19 oštevilčenih opomb je lokalno izvedenih.** Ta status pomeni

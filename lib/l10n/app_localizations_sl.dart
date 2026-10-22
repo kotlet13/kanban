@@ -613,6 +613,10 @@ class AppLocalizationsSl extends AppLocalizations {
       'Povabilo ni veljavno, je poteklo ali je že porabljeno.';
 
   @override
+  String get sharingAccountChanged =>
+      'Račun se še nalaga ali se je prijava spremenila. Ko je račun pripravljen, znova odpri dejanje.';
+
+  @override
   String get sharingSessionExpired =>
       'Seja je potekla. Ponovno se prijavi; osebni podatki ostanejo na napravi.';
 

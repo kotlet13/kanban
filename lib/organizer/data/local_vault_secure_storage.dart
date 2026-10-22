@@ -41,6 +41,7 @@ Future<void> protectExistingLocalVaultSecrets({
   for (final key in [
     'organizer_device_session_v1',
     'jivie_pending_invitation_v1',
+    'jivie_retired_invitation_links_v1',
     'organizer_remote_push_intent_v1',
     'organizer_remote_push_cleanup_v1',
     'jivie_account_deletion_receipts_v1',

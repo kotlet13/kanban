@@ -1238,6 +1238,12 @@ abstract class AppLocalizations {
   /// **'The invitation is invalid, expired, or already used.'**
   String get sharingInvalidInvite;
 
+  /// No description provided for @sharingAccountChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The account is still loading or the sign-in changed. Reopen the action once the account is ready.'**
+  String get sharingAccountChanged;
+
   /// No description provided for @sharingSessionExpired.
   ///
   /// In en, this message translates to:

@@ -1,5 +1,56 @@
 # Povabila po e-pošti
 
+## Neobjavljena nadgradnja zagona — 22. oktober 2026
+
+Ta popravek je del skupne nadgradnje in se objavi šele po njenem zaključnem
+preizkusu. Telefoni, trgovinski aplikaciji, produkcija, Docker in obstoječe QA
+namestitve pri tem delu niso bili spremenjeni. Posnetek stare Google Play
+različice sam ne dokazuje točnega vzroka na uporabnikovi napravi; lokalni pregled
+je potrdil spodnje poti ponovnega odpiranja v skupni kodi.
+
+- Uporabnikov Nazaj shrani odlog samodejnega odpiranja pred zaprtjem čarovnika.
+  Zapis povabila, račun, strežnik in ID že opravljenega sprejema ostanejo.
+  Napaka varne shrambe ostane vidna in ne prikrije neuspešnega odloga.
+- Pred odstranitvijo končanega povabila se v isti varni shrambi zabeleži SHA-256
+  odtis normaliziranega izvora in žetona. Hrani se največ 32 odtisov, brez
+  izvirnih žetonov. To je namig za navigacijo, ne dokaz članstva ali pravic.
+  Neuspešno brisanje ohrani izvirni zapis za izrecno nadaljevanje.
+- Zakasnjena začetna povezava ne prepiše novejše prejete povezave. Začetni
+  dogodki se združijo ob največ dvosekundnem čakanju; eno sekundo se prepozna
+  morebitni neposredni odmev iste začetne povezave. Kasnejša izrecna povezava
+  oziroma ročni vnos omogočata nadaljevanje tudi odloženega povabila.
+- Ob samodejnem odpiranju se ponovno preverijo trenutni zapis, odlog in vezava
+  na račun. Starejši odgovor predogleda ohrani sveže shranjeno vezavo sprejema;
+  nasprotujoči ID ali strežnik se zavrne. Čakanje na ključe ni razlog za brisanje.
+- Ob uspešnem zaključku se odstrani tudi morebitni podvojeni čakajoči navigacijski
+  signal istega izvora in žetona; signal novejšega povabila ostane nedotaknjen.
+- `session_changed` in sprememba kriptografske identitete imata ločeno sporočilo
+  od dejanskega poteka seje. Obstoječa varovala identitete, izvora in dostopa
+  ostanejo veljavna; članstva se ne sklepajo iz uspešnega branja prostora.
+
+Stari zapisi brez novega polja so združljivi in privzeto omogočajo samodejno
+odpiranje. Za že končana stara povabila brez ohranjenega odtisa ni mogoče
+naknadno dokazati zaključka; uporabnikov Nazaj nato trajno odloži ohranjeni
+zapis. Dvoumnost izvirnih mobilnih dogodkov ostaja predmet zaključnega
+preizkusa na Androidu in iOS, ne trditev lokalnih widget testov.
+
+Lokalni dokazi: `build/qa/local-diagnostics/invitation-startup-fix-20261022/`
+(13 kontrol usmerjanja/shrambe PASS v prvem teku, tri kontrole sočasnega
+predogleda PASS v prvem teku) in
+`build/qa/local-diagnostics/invitation-upgrade-20261022/` (devet UI kontrol:
+sedem PASS v prvem teku, dve jezikovni kontroli PASS v drugem teku po popravku
+premajhnega testnega prikaza; sedem uspešnih ni bilo ponovljenih). Dodatni trije
+UI primeri za podvojeni signal ob zaključku in ohranitev novejšega povabila
+so PASS v prvem ločenem teku (`ui-success-replay-result.json` v isti mapi).
+Skupaj 28 novih ciljno preverjenih primerov. Končna analiza spremenjenih
+sklopov: nič napak in opozoril, pet prej obstoječih informacijskih pripomb v UI.
+Prilagojena je tudi stara trditev o številu ključev po neuspešnem brisanju;
+tega starega testa nismo ponavljali, novo vedenje pokriva novi test shrambe.
+Testi uporabljajo sintetične podatke in nadzorovan transport oziroma UI
+kriptografski nadomestek; niso celotni HTTP sync ali native dokaz. Prejšnji
+diagnostični test treh slabih vedenj ostane zgodovina v
+`build/qa/local-diagnostics/invitation-reopen-audit-20261022/`.
+
 ## Potrjen uporabniški tok — 10. oktober 2026
 
 Lastnik prostora v Nastavitvah prostora → Člani vnese **e-poštni naslov** in

@@ -212,6 +212,7 @@
   "sharingUnsupported": "Ta strežnik še ne podpira potrebnih funkcij deljenja.",
   "sharingOperationFailed": "Dejanje ni uspelo. Preveri povezavo in poskusi znova.",
   "sharingInvalidInvite": "Povabilo ni veljavno, je poteklo ali je že porabljeno.",
+  "sharingAccountChanged": "Račun se še nalaga ali se je prijava spremenila. Ko je račun pripravljen, znova odpri dejanje.",
   "sharingSessionExpired": "Seja je potekla. Ponovno se prijavi; osebni podatki ostanejo na napravi.",
   "sharingPermissionDenied": "Za to dejanje nimaš dovoljenja.",
   "sharingNoSharedListsDescription": "Ustvari seznam za sodelovanje. Osebni seznami se ne delijo samodejno.",

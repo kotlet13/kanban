@@ -31,7 +31,7 @@ class InvitationLinkReceiver {
   final void Function() onInvalid;
   Uri? _first;
   void receiveInitial(Uri uri) {
-    if (uri == _first) return;
+    if (_first != null) return;
     receive(uri);
   }
 

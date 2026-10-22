@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+22. oktober — **ponovno odpiranje povabil popravljeno v neobjavljeni nadgradnji**.
+Uporabnik izrecno zahteva vključitev v skupno izdajo šele po zaključnem testu.
+Sol6.1/high implementacija/neodvisni pregled in glavni pregled PASS. Nazaj
+trajno odloži samodejni prikaz, ohrani capability/accepted ID/račun/izvor.
+Secure store pred brisanjem shrani največ32 SHA256 odtisov; napaka ohrani
+izvirni zapis, odtisi niso članstveni dokaz. Začetni native dogodki se združijo,
+late initial ne prepiše novejše povezave; timeout2s/echo1s sta navigacijski meji.
+Samodejna objava/restore ponovno preverita svež zapis in račun. Preview med
+čakanjem ne prepiše novejšega acceptance checkpointa; mismatch se zavrne.
+Uspešen konec počisti matching origin/token route hint po zadnjem await,
+novejši signal ostane. session_changed ima ločeno SL/EN besedilo od expiry.
+28 novih lokalnih testov PASS: routing/storage13 in preview3 prvi tek;
+UI7 prvi tek +2 locale po fixtureoverflow popravku drugi tek, nato3 novi
+success-signal prvi tek. Uspešni niso ponovljeni; stari audit3badbehaviors
+ostane zgodovina. Analiza0error0warning/5starihUIinfo. Stari failed-delete
+test prilagojen novi dodatni hash hrambi brez ponovitve, nova kontrola PASS.
+Dokazi v build/qa/local-diagnostics/invitation-startup-fix-20261022/ in
+invitation-upgrade-20261022/; podrobnosti docs/EMAIL_INVITATIONS.md.
+Samo sintetični Dart/widget/secure-channel testi, ne native/HTTP/realaccept
+dokaz. Za stare že končane povezave brez odtisa ni retroaktivnega dokaza;
+Nazaj odloži ohranjeni zapis. Telefonov/produkcije/QA/Dockerja se nismo
+dotikali, brez gradnje/namestitve/objave. Mobilni zaključni preizkus še sledi.
+
 22. oktober — **H4/H7 lokalna popravka PASS na istem ohranjenem stanju**.
 Novo izrecno naročilo je dovolilo omejena popravka; stari STOP, števci in
 dokazi ostajajo isti. Sol6.1/high podagenti, glavni/neodvisni pregled PASS.

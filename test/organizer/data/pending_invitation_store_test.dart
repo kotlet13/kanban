@@ -153,7 +153,10 @@ void main() {
       await store.write(session());
       loseDeletes = true;
       await expectLater(store.write(null), failure);
-      expect(values.length, 1);
+      expect(values.containsKey('jivie_pending_invitation_v1'), isTrue);
+      // Retirement is durable before deletion, so failed deletion must retain
+      // both the recoverable capability and its automatic-replay suppression.
+      expect(values.containsKey('jivie_retired_invitation_links_v1'), isTrue);
     },
   );
   test('secure read unavailable never falls back to plaintext', () async {

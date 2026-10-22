@@ -615,6 +615,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The invitation is invalid, expired, or already used.';
 
   @override
+  String get sharingAccountChanged =>
+      'The account is still loading or the sign-in changed. Reopen the action once the account is ready.';
+
+  @override
   String get sharingSessionExpired =>
       'Your session expired. Sign in again; personal data stays on this device.';
 

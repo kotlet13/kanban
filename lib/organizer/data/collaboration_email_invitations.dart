@@ -156,14 +156,17 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       if (current?.token != token || current?.serverUrl != pending.serverUrl) {
         throw const CollaborationException('session_changed');
       }
+      if (current!.serverId != null && current.serverId != caps['serverId']) {
+        throw const CollaborationException('server_identity_changed');
+      }
       await invitationStore.write(
         PendingInvitation(
           serverUrl: pending.serverUrl,
           token: token,
           serverId: caps['serverId'] as String,
-          expiresAt: pending.expiresAt,
-          accountPartition: pending.accountPartition,
-          invitationId: pending.invitationId,
+          expiresAt: current.expiresAt,
+          accountPartition: current.accountPartition,
+          invitationId: current.invitationId,
         ),
       );
     });
@@ -202,13 +205,18 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       if (current?.token != token || current?.serverUrl != pending.serverUrl) {
         throw const CollaborationException('session_changed');
       }
+      if ((current!.serverId != null && current.serverId != caps['serverId']) ||
+          (current.invitationId != null &&
+              current.invitationId != preview.invitationId)) {
+        throw const CollaborationException('invitation_identity_mismatch');
+      }
       await invitationStore.write(
         PendingInvitation(
           serverUrl: pending.serverUrl,
           token: token,
           serverId: caps['serverId'] as String,
           expiresAt: preview.expiresAt,
-          accountPartition: pending.accountPartition,
+          accountPartition: current.accountPartition,
           invitationId: preview.invitationId,
         ),
       );

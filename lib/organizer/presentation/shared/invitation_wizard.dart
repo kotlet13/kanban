@@ -268,6 +268,64 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     }
   }
 
+  Future<void> _dismiss() async {
+    if (_busy) return;
+    final link = _link;
+    if (link == null || _superseded) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _lastError = null;
+    });
+    var deferred = false;
+    try {
+      await ref
+          .read(pendingInvitationStoreProvider)
+          .deferLink(serverUrl: link.serverUrl, token: link.token);
+      deferred = true;
+      if (mounted) _consumeRouteHint(link);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _lastError = error;
+          _error = sharingErrorMessage(context, error);
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+    if (mounted && (deferred || _superseded)) Navigator.of(context).pop();
+  }
+
+  void _consumeRouteHint(InvitationLink link) {
+    final incoming = ref.read(pendingInvitationLinkProvider);
+    if (incoming?.token == link.token &&
+        _sameServer(incoming?.serverUrl, link.serverUrl)) {
+      ref.read(pendingInvitationLinkProvider.notifier).state = null;
+    }
+  }
+
+  String _sessionMismatchMessage(BuildContext context) {
+    final l = context.l10n;
+    if (!_sameServer(_session?.serverUrl, _link?.serverUrl)) {
+      return l.invitationFlowDifferentServer;
+    }
+    final state = ref.read(collaborationProvider).valueOrNull;
+    if (state?.sessionInvalid == true ||
+        _session?.expiresAt.isAfter(DateTime.now()) != true) {
+      return l.sharingSessionExpired;
+    }
+    if (_pinnedServerId != null && _session?.serverId != _pinnedServerId) {
+      return l.cryptoSharingIdentityChanged;
+    }
+    return l.sharingAccountChanged;
+  }
+
   Future<void> _authenticate() async {
     if (!_form.currentState!.validate()) return;
     final link = _link!;
@@ -387,6 +445,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     await guard.controller.clearPendingInvitation(expectedToken: link.token);
     if (!mounted || !_active || !guard.isCurrent || _link?.token != link.token)
       return;
+    _consumeRouteHint(link);
     setState(() {
       _joined = true;
       _joinedIdentity = _identity;
@@ -504,6 +563,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
       );
     }
     if (!mounted || !_active || !guard.isCurrent) return;
+    _consumeRouteHint(_link!);
     widget.onAccepted?.call(preview.scopeId);
     Navigator.of(context).pop();
   }
@@ -588,9 +648,15 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
         _step == _InvitationStep.login || _step == _InvitationStep.register;
     final register = _step == _InvitationStep.register;
     return PopScope(
-      canPop: !_busy,
+      canPop: !_busy && _link == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _dismiss();
+      },
       child: Scaffold(
-        appBar: AppBar(title: Text(l.invitationFlowTitle)),
+        appBar: AppBar(
+          title: Text(l.invitationFlowTitle),
+          leading: BackButton(onPressed: _busy ? null : _dismiss),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
@@ -684,11 +750,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                           Text(l.invitationFlowSignInToJoin),
                           const SizedBox(height: 12),
                           if (_session != null)
-                            Text(
-                              _sameServer(_session?.serverUrl, _link?.serverUrl)
-                                  ? l.sharingSessionExpired
-                                  : l.invitationFlowDifferentServer,
-                            ),
+                            Text(_sessionMismatchMessage(context)),
                           FilledButton(
                             key: const ValueKey('invitation-flow-login-choice'),
                             onPressed: _busy ? null : () => _chooseAuth(false),
