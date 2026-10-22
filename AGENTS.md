@@ -1,5 +1,29 @@
 # Navodila za delo na projektu
 
+22. oktober — **trije novi lokalni sklopi: L1/L3 PASS, L2 DELNO/STOP1**.
+Uporabnik naroči samo ciljne teste pred telefoni; Sol6.1/high podagenti in
+glavni/neodvisni pregled. Novi izolirani Docker59778 `jivie-sync-gaps-lab-20261022`,
+štiri nove sintetične identitete/dva neodvisna para. Stari59777/H4/H7/QA/
+telefoni/produkcija nedotaknjeni. L1 PASS1: oba dejanska409, keepremote rev2,
+keeplocal rev3, oba klienta usklajena, stare podpisane zahteve/namere/claims
+ohranjene; lokalna izbira doda2noviclaim pri expectedRevision2. L3 UI3PASS
+v2tekih, ponovljen samo fixturefinderFAIL za prekrit exportgumb; sintetični
+controller/retry/export/login, ne pravi sync/auth/file dokaz. L2 lostappliedACK
+in restartPASS1: pravo receipt200, nič resend, isti podpis/hash/claims/10€vnos.
+Nato lokalni `sync6.pushTaskWithCost` vrže CollaborationException/stale_edit
+v crypto_business_router.dart2098; paired handler lovi CollaborationApiException.
+Član ohrani15€draft/task pending1+finance pending1/pairmarker1/conflicts0,
+lastnik ima20€/rev2, en zapis brez podvojitev. Ni novega batch409 za ta osnutek.
+STOP po1 brez slepega retry; finančna razrešitev in saldo85€ NEPREVERJENA.
+Naslednje ločeno delo: ozek pairedconflict popravek in nadaljevanje ISTEGA
+L2 podkoraka, ne ponavljaj PASS/ACK/prekinitev/L1/L3/ne ustvari novega para.
+Runtime ni spremenjen, analiza0issues, actual429=0 (pacing, ne speedtest).
+Samo novi59778 ustavljen, klienti/volumi ohranjeni; zasebno9,3MB/javno228kB.
+Zaznana zunanja sprememba aidiagramer vsebnika, brez dejanj te naloge;
+ne trdi popolne parity drugihvsebnikov. Dokazi/omejitve:
+docs/E2EE_PRE_MOBILE_GAPS_2026_10_22.md ter build/qa/local-diagnostics/
+sync-resolution-cost-20261022/ in pre-mobile-gaps-20261022/ui/.
+
 22. oktober — **ponovno odpiranje povabil popravljeno v neobjavljeni nadgradnji**.
 Uporabnik izrecno zahteva vključitev v skupno izdajo šele po zaključnem testu.
 Sol6.1/high implementacija/neodvisni pregled in glavni pregled PASS. Nazaj
