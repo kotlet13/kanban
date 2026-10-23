@@ -20,6 +20,7 @@ import 'content_moderation.dart';
 import 'sharing_errors.dart';
 import 'hosting_disclosure.dart';
 import 'sharing_invitation_details.dart';
+import 'verified_invitation_permissions.dart';
 import 'sharing_session_boundary.dart';
 import '../recovery/account_crypto_wizard.dart';
 
@@ -83,6 +84,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   _InvitationStep _step = _InvitationStep.input;
   InvitationLink? _link;
   SharedInvitationPreview? _preview;
+  VerifiedCryptoInvitation? _verifiedInvitation;
+  String? _verifiedIdentity;
+  InvitationLink? _verifiedLink;
   String? _error, _notice;
   Object? _lastError;
   bool _busy = true, _needsOtp = false, _joined = false;
@@ -90,6 +94,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
   bool _cryptoPending = false;
+  bool _cryptoSetupRequired = false;
   final _accessRefreshClock = Stopwatch()..start();
   Duration? _lastAccessRefresh;
 
@@ -178,6 +183,12 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       ref.read(collaborationProvider).valueOrNull?.session;
   String? get _identity =>
       _session == null ? null : '${_session!.partition}:${_session!.deviceId}';
+  bool get _reviewMatchesCurrent =>
+      _verifiedInvitation != null &&
+      _verifiedIdentity == _identity &&
+      _verifiedLink?.token == _link?.token &&
+      _sameServer(_verifiedLink?.serverUrl, _link?.serverUrl) &&
+      _matchingSession;
   bool get _matchingSession {
     final state = ref.read(collaborationProvider).valueOrNull;
     return state != null &&
@@ -280,6 +291,12 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   Future<void> _loadPreview() async {
     final link = _link!;
     final identity = _identity;
+    setState(() {
+      _verifiedInvitation = null;
+      _verifiedIdentity = null;
+      _verifiedLink = null;
+      _cryptoSetupRequired = false;
+    });
     final controller = ref.read(collaborationProvider.notifier);
     await controller.rememberInvitation(
       serverUrl: link.serverUrl,
@@ -320,6 +337,55 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         _username.text = preview.recipientUsername;
       }
     });
+    if (preview.contractVersion == 4 &&
+        !preview.awaitingApproval &&
+        _matchingSession) {
+      final repository = await ref.read(collaborationRepositoryProvider.future);
+      if (!_active ||
+          !_matchingSession ||
+          _identity != identity ||
+          _link != link) {
+        return;
+      }
+      final workflow = await repository.connectedCryptoAccount();
+      if (!_active ||
+          !_matchingSession ||
+          _identity != identity ||
+          _link != link) {
+        return;
+      }
+      final phase = await workflow.localPhase();
+      if (!_active ||
+          !_matchingSession ||
+          _identity != identity ||
+          _link != link) {
+        return;
+      }
+      if (phase != 'ready') {
+        setState(() => _cryptoSetupRequired = true);
+        return;
+      }
+      final verified = await _cryptoInvites(
+        workflow,
+      ).inspect(token: link.token);
+      if (!_active ||
+          !_matchingSession ||
+          _identity != identity ||
+          _link != link) {
+        return;
+      }
+      validateInvitationReview(
+        verified,
+        invitationId: preview.invitationId ?? '',
+        scopeId: preview.scopeId,
+        creatorAccountId: preview.inviterAccountId,
+      );
+      setState(() {
+        _verifiedInvitation = verified;
+        _verifiedIdentity = identity;
+        _verifiedLink = link;
+      });
+    }
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -561,6 +627,12 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       final phase = await workflow.localPhase();
       if (!mounted || !current() || phase != 'ready') return;
     }
+    // Preparing an account does not accept an invitation. Return to this same
+    // route with verified permissions before the deliberate final action.
+    if (!_reviewMatchesCurrent) {
+      await _loadPreview();
+      return;
+    }
     final invites = _cryptoInvites(workflow);
     final saved = await ref.read(pendingInvitationStoreProvider).read();
     if (saved?.token == link.token &&
@@ -578,10 +650,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       });
       return;
     }
-    final invite = await invites.inspect(token: link.token);
-    if (!current()) return;
-    await invites.trustCreatorFromDirectory(invite);
-    if (!current()) return;
+    final invite = _verifiedInvitation;
+    if (invite == null || !current() || !_reviewMatchesCurrent) return;
+    // accept rechecks the exact reviewed authorization and fresh creator
+    // directory before signing. Keep that freshness boundary in the repository.
     await invites.accept(invite, actionId: invite.invitation['id']);
     if (!current()) return;
     final store = ref.read(pendingInvitationStoreProvider);
@@ -783,9 +855,20 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
                         const SizedBox(height: 12),
-                        if (!auth && _matchingSession && !_joined)
-                          SharingInvitationDetails(invitation: _preview!)
-                        else ...[
+                        if (!auth && _matchingSession && !_joined) ...[
+                          SharingInvitationDetails(
+                            invitation: _preview!,
+                            showPermissions: _preview!.contractVersion != 4,
+                            verifiedInvitation: _reviewMatchesCurrent
+                                ? _verifiedInvitation
+                                : null,
+                          ),
+                          if (_reviewMatchesCurrent)
+                            VerifiedInvitationPermissions(
+                              invitation: _verifiedInvitation!,
+                              explainContent: true,
+                            ),
+                        ] else ...[
                           Text(
                             _preview!.scopeNameAvailable
                                 ? l.invitationFlowInvitationTo(
@@ -794,8 +877,13 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                                 : l.cryptoInvitationTargetUnavailable,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          if (_preview!.inviterName.isNotEmpty)
-                            Text(l.emailInviteFrom(_preview!.inviterName)),
+                          if (_preview!.inviterEmail != null ||
+                              _preview!.inviterName.isNotEmpty)
+                            Text(
+                              l.emailInviteFrom(
+                                _preview!.inviterEmail ?? _preview!.inviterName,
+                              ),
+                            ),
                         ],
                       ],
                       const SizedBox(height: 16),
@@ -811,7 +899,13 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                           FilledButton(
                             key: const ValueKey('invitation-flow-join'),
                             onPressed:
-                                _busy || isSharingIdentityChanged(_lastError)
+                                _busy ||
+                                    isSharingIdentityChanged(_lastError) ||
+                                    (_preview?.contractVersion == 4 &&
+                                        !_joined &&
+                                        !_cryptoPending &&
+                                        !_cryptoSetupRequired &&
+                                        !_reviewMatchesCurrent)
                                 ? null
                                 : _joined
                                 ? () => _run(() => _finishJoined(_preview!))
@@ -823,11 +917,29 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                                   ? l.cryptoSharingCheckAccess
                                   : _joined
                                   ? l.invitationFlowOpenSpace
+                                  : _cryptoSetupRequired
+                                  ? l.invitationFlowPrepareAccount
+                                  : _preview?.contractVersion == 4
+                                  ? l.invitationFlowAgreeAccept
                                   : _preview?.kind == SharedScopeKind.project
                                   ? l.invitationFlowJoinProject
                                   : l.invitationFlowJoinSpace,
                             ),
                           ),
+                          if (_preview?.contractVersion == 4 &&
+                              !_busy &&
+                              !_cryptoPending &&
+                              !_joined &&
+                              !_cryptoSetupRequired &&
+                              !_reviewMatchesCurrent &&
+                              _error == null)
+                            TextButton(
+                              key: const ValueKey(
+                                'invitation-flow-review-retry',
+                              ),
+                              onPressed: () => _run(_loadPreview),
+                              child: Text(l.organizerRetry),
+                            ),
                           TextButton(
                             onPressed: _busy ? null : () => _chooseAuth(false),
                             child: Text(l.invitationFlowOtherAccount),

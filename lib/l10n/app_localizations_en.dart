@@ -4503,6 +4503,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitationFlowJoinSpace => 'Join space';
 
   @override
+  String get invitationFlowAgreeAccept => 'Agree and accept invitation';
+
+  @override
+  String get invitationFlowPrepareAccount => 'Prepare account';
+
+  @override
+  String get invitationFlowContentVisibility =>
+      'Content you add to this space will be visible to the inviter and other members according to their permissions.';
+
+  @override
   String get invitationFlowOtherAccount => 'Use another account';
 
   @override

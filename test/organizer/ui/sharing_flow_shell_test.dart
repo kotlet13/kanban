@@ -131,6 +131,38 @@ Future<void> _capture(WidgetTester tester, GlobalKey key, String name) async {
 }
 
 void main() {
+  testWidgets('invitation-review26 Send returns to the captured workspace', (
+    tester,
+  ) async {
+    final controller = _ShellController();
+    await pumpOrganizer(
+      tester,
+      MemoryOrganizerStorage(),
+      localSpacesController: LocalSpaceUiController(LocalSpaceKind.personal),
+      collaborationController: controller,
+      repaintBoundaryKey: GlobalKey(),
+    );
+    await tester.tap(find.byKey(const ValueKey('organizer-share-space')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('sharing-recipient')),
+      'new-review@example.test',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('sharing-submit')));
+    await tester.pumpAndSettle();
+    expect(controller.emailInviteTargets, hasLength(1));
+    expect(controller.emailInviteTargets.single.$1, sharingScopeId);
+    expect(controller.state.valueOrNull?.selectedSpaceId, sharingScopeId);
+    expect(find.byKey(const ValueKey('sharing-recipient')), findsNothing);
+    expect(find.byType(SharingMembersPage), findsNothing);
+    expect(find.byType(SharingAccountPage), findsNothing);
+    expect(controller.memberLoads, 0);
+    expect(find.byKey(const ValueKey('organizer-share-space')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final local in [false, true]) {
     testWidgets('Utrip opens received invitations directly local=$local', (
       tester,
@@ -196,7 +228,7 @@ void main() {
   );
   for (final width in [320.0, 390.0, 1280.0]) {
     testWidgets(
-      'Share opens exact space directly and one send reaches members $width',
+      'Share opens exact space directly and one send returns to work $width',
       (tester) async {
         await loadCaptureFonts(tester);
         if (Platform.environment['JIVIE_UI_CAPTURE'] == '1') {
@@ -244,7 +276,7 @@ void main() {
         );
         expect(controller.emailInviteTargets.single.$1, sharingScopeId);
         expect(controller.emailInviteTargets.single.$2, 'space');
-        expect(find.byType(SharingMembersPage), findsOneWidget);
+        expect(find.byType(SharingMembersPage), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );

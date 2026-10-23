@@ -240,11 +240,14 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     /** Host display metadata only. The scope title and domain keys stay private. */
     private function inviterDisplay($row)
     {
-        $creator = $this->one('SELECT a.account_id,u.username,u.name FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=? AND u.is_active=1', [$row['creator_account_id']]);
+        $creator = $this->one('SELECT a.account_id,u.username,u.name,e.email AS verified_email FROM familyhub_accounts a JOIN users u ON u.id=a.user_id LEFT JOIN familyhub_email_identities e ON e.account_id=a.account_id AND e.verified_at IS NOT NULL WHERE a.account_id=? AND u.is_active=1', [$row['creator_account_id']]);
         if (!$creator || !is_string($creator['username']) || $creator['username']==='' || strlen($creator['username'])>100 || preg_match('/[\x00-\x1f\x7f]/', $creator['username'])) return [];
         $name = $creator['name'] ?: $creator['username'];
         if (!is_string($name) || strlen($name)>200 || preg_match('/[\x00-\x1f\x7f]/', $name)) $name=$creator['username'];
-        return ['inviterAccountId'=>$creator['account_id'],'inviterUsername'=>$creator['username'],'inviterName'=>$name];
+        $display = ['inviterAccountId'=>$creator['account_id'],'inviterUsername'=>$creator['username'],'inviterName'=>$name];
+        $email = $creator['verified_email'];
+        if (is_string($email) && strlen($email)<=254 && preg_match('/^[\x21-\x7e]+$/D',$email) && filter_var($email,FILTER_VALIDATE_EMAIL)) $display['inviterEmail']=$email;
+        return $display;
     }
 
     private function candidateHeads($row)

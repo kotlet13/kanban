@@ -4509,6 +4509,16 @@ class AppLocalizationsSl extends AppLocalizations {
   String get invitationFlowJoinSpace => 'Pridruži se prostoru';
 
   @override
+  String get invitationFlowAgreeAccept => 'Strinjam se in sprejmi povabilo';
+
+  @override
+  String get invitationFlowPrepareAccount => 'Pripravi račun';
+
+  @override
+  String get invitationFlowContentVisibility =>
+      'Vsebina, ki jo dodaš v ta prostor, bo vidna pošiljatelju povabila in drugim članom glede na njihova dovoljenja.';
+
+  @override
   String get invitationFlowOtherAccount => 'Uporabi drug račun';
 
   @override

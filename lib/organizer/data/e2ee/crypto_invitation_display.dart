@@ -8,6 +8,7 @@ Map<String, String> parseCryptoInvitationDisplay(Map<String, dynamic> reply) {
   final id = reply['inviterAccountId'];
   if (id == null) return const {};
   final name = reply['inviterName'], username = reply['inviterUsername'];
+  final email = reply['inviterEmail'];
   bool label(Object? value, int maximum, {bool empty = false}) =>
       value is String &&
       (empty || value.isNotEmpty) &&
@@ -15,7 +16,12 @@ Map<String, String> parseCryptoInvitationDisplay(Map<String, dynamic> reply) {
       !value.contains(RegExp(r'[\x00-\x1f\x7f]'));
   if (!isCryptoCanonicalUuid(id) ||
       !label(name, 200, empty: true) ||
-      !label(username, 100)) {
+      !label(username, 100) ||
+      email != null &&
+          (!label(email, 254) ||
+              !RegExp(r'^[\x21-\x7e]+$').hasMatch(email as String) ||
+              email.indexOf('@') <= 0 ||
+              email.lastIndexOf('@') == email.length - 1)) {
     throw const FormatException('crypto_invitation_display');
   }
   final proof = reply['creatorAuthorization'];
@@ -43,5 +49,6 @@ Map<String, String> parseCryptoInvitationDisplay(Map<String, dynamic> reply) {
     'accountId': id as String,
     'displayName': name as String,
     'username': username as String,
+    if (email != null) 'email': email as String,
   };
 }

@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+23. oktober — **priprava enotnega soglasja; samodejna odobritev še NI izvedena**.
+Po uporabnikovem »izvedi« Sol6.1/high podagenti ter root/neodvisni pregled
+pripravijo neodvisni del: Send ostane pri prostoru; prejemnik vidi en končni
+»Strinjam se in sprejmi«, podpisano vlogo/prejemnika/rok in razlago vidnosti.
+Review je vezan na exact invitation/scope/creator/account/device/token/server;
+zamenjan ali napačen odgovor ne omogoči sprejema. Pošiljateljev email je
+trenutni verified email istega creator account, host display, ne identityproof;
+final sender je iz istega verified response, ne starega preview. Stari host
+ima fallback. Recipient ne zaupa vstavljenemu proposedMember. Final accept
+uporabi pregledan proof in obstoječi fresh verifier, brez dodatnih duplicate
+inspect/trust klicev. 31 novih lokalnih kontrol PASS (18 metadata+13 UI),
+3 fixtureFAIL ohranjeni; starih PASS ni ponovljenih. UI začetnih8 pred zadnjo
+binding utrditvijo, nato5 novih; zaključna copy samo source/genl10n/analyze.
+Analiza0errors/0warnings/5starihinfo. Brez build/install/GUI/real invite/HTTP;
+en ephemeral readonly/network-none PHP container, samo memorySQL, odstranjen.
+Telefoni, obstoječe QA in produkcija nedotaknjeni. Stari manual grant/policy
+in ključi ostajajo; NE trdi celotnega 4-click toka ali offline sprejema.
+Odprto vprašanje uporabniku: ali je dovolj avtomatski grant, ko se lastnikova
+aplikacija poveže? Novi račun ob pošiljanju še nima ključev, fhi4 pozna SMTP
+host; token ni skrivnost za key escrow. Brez odgovora ne spreminjaj te meje.
+Dokazi invitation-email-display-20261023 in invitation-review-20261023 v
+local-diagnostics; stanje in nadaljevanje docs/UX_SHARING_REVIEW_2026_10_23.md.
+
 23. oktober — **r20: povabila in projektni UX; lokalni in ozki Mac pregled PASS**.
 Novo naročilo za preostale ugotovitve; Sol6.1/high implementacija ter root/
 neodvisni pregled. V4 kartica je kratek povzetek→Preglej povabilo, končni

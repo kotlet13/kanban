@@ -7988,6 +7988,24 @@ abstract class AppLocalizations {
   /// **'Join space'**
   String get invitationFlowJoinSpace;
 
+  /// No description provided for @invitationFlowAgreeAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and accept invitation'**
+  String get invitationFlowAgreeAccept;
+
+  /// No description provided for @invitationFlowPrepareAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare account'**
+  String get invitationFlowPrepareAccount;
+
+  /// No description provided for @invitationFlowContentVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Content you add to this space will be visible to the inviter and other members according to their permissions.'**
+  String get invitationFlowContentVisibility;
+
   /// No description provided for @invitationFlowOtherAccount.
   ///
   /// In en, this message translates to:

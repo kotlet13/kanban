@@ -127,6 +127,8 @@ class _UiCryptoRepository implements CollaborationRepository {
 
 class _UiDirectory implements VerifiedAccountDirectory {
   @override
+  String get accountId => sharingSession().accountId;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -145,6 +147,10 @@ class _UiInvites extends InviteCryptoRepository {
         'id': 'accepted-ui-invitation',
         'scopeId': sharingScopeId,
         'role': 'viewer',
+      },
+      'creatorAuthorization': {
+        'commandBase64':
+            'eyJhY2NvdW50SWQiOiIzMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcGVyYXRpb24iOiJjcnlwdG8yLmludml0YXRpb25zLmNyZWF0ZSIsInBheWxvYWQiOnsiZXhwaXJlc0F0Ijo0MDcwOTA4ODAwLCJpbnZpdGF0aW9uSWQiOiJhY2NlcHRlZC11aS1pbnZpdGF0aW9uIiwicmVjaXBpZW50Ijp7ImtpbmQiOiJ1c2VybmFtZSIsInZhbHVlIjoicmVjaXBpZW50In0sInJvbGUiOiJ2aWV3ZXIiLCJzY29wZUlkIjoiMTAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAxIn0sInZlcnNpb24iOjJ9',
       },
     },
     _UiDirectory(),

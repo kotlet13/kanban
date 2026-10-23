@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -12,11 +13,14 @@ import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_repository.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_inherited_invitation_evidence.dart';
 import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
 import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
 import 'package:kanban/organizer/presentation/recovery/crypto_invitation_page.dart';
 import 'package:kanban/organizer/domain/collaboration_models.dart';
+import 'package:kanban/organizer/presentation/organizer_widgets.dart';
+import 'package:kanban/organizer/presentation/shared/sharing_invitation_details.dart';
 
 class _Directory implements AccountDirectoryRepository {
   bool current = true;
@@ -38,12 +42,37 @@ class _Account implements AccountCryptoV2Workflow {
 
 class _VerifiedDirectory implements VerifiedAccountDirectory {
   @override
+  String get accountId => sharingSession().accountId;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+String _signedReview(
+  String role, {
+  String invitationId = 'invite',
+  String scopeId = 'scope',
+}) => base64Encode(
+  CryptoJson.encode({
+    'accountId': sharingSession().accountId,
+    'operation': 'crypto2.invitations.create',
+    'payload': {
+      'expiresAt': 4070908800,
+      'invitationId': invitationId,
+      'recipient': {'kind': 'username', 'value': 'recipient'},
+      'role': role,
+      'scopeId': scopeId,
+    },
+    'version': 2,
+  }),
+);
 
 final _invite = VerifiedCryptoInvitation(
   {
     'invitation': {'id': 'invite', 'scopeId': 'scope', 'role': 'viewer'},
+    'creatorAuthorization': {
+      'commandBase64':
+          'eyJhY2NvdW50SWQiOiIzMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcGVyYXRpb24iOiJjcnlwdG8yLmludml0YXRpb25zLmNyZWF0ZSIsInBheWxvYWQiOnsiZXhwaXJlc0F0Ijo0MDcwOTA4ODAwLCJpbnZpdGF0aW9uSWQiOiJpbnZpdGUiLCJyZWNpcGllbnQiOnsia2luZCI6InVzZXJuYW1lIiwidmFsdWUiOiJyZWNpcGllbnQifSwicm9sZSI6InZpZXdlciIsInNjb3BlSWQiOiJzY29wZSJ9LCJ2ZXJzaW9uIjoyfQ==',
+    },
     'proposedMember': {
       'accountId': 'recipient',
       'role': 'viewer',
@@ -83,6 +112,7 @@ class _Invites extends InviteCryptoRepository {
   Completer<void>? trustGate, grantGate;
   String? resumed;
   int trusts = 0, accepts = 0, grants = 0, resumes = 0;
+  VerifiedCryptoInvitation inspectedInvitation = _invite;
   @override
   ScopeCryptoManager get manager => _Manager(access);
   @override
@@ -95,7 +125,7 @@ class _Invites extends InviteCryptoRepository {
   Future<VerifiedCryptoInvitation> inspect({
     String? token,
     String? invitationId,
-  }) async => _invite;
+  }) async => inspectedInvitation;
   @override
   Future<VerifiedCryptoInvitation> acceptedRecipient(
     String scopeId,
@@ -185,6 +215,239 @@ Future<void> _pump(
 
 void main() {
   testWidgets(
+    'invitation-display26 rejects malformed sender before publishing',
+    (tester) async {
+      final account = _Account(), invites = _Invites(_Account());
+      invites.inspectedInvitation = VerifiedCryptoInvitation(
+        {
+          ..._invite.response,
+          'inviterAccountId': sharingSession().accountId,
+          'inviterName': 'Current name',
+          'inviterUsername': 'sender',
+          'inviterEmail': 'invalid sender@example.test',
+        },
+        _VerifiedDirectory(),
+        [],
+      );
+      await _pump(tester, account, invites);
+      expect(invites.trusts, 0);
+      expect(invites.accepts, 0);
+      expect(invites.grants, 0);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final changed in ['invitation', 'scope', 'creator']) {
+    testWidgets(
+      'invitation-binding26 rejects substituted $changed before trust',
+      (tester) async {
+        final account = _Account(), invites = _Invites(_Account());
+        invites.inspectedInvitation = VerifiedCryptoInvitation(
+          {
+            ..._invite.response,
+            'creatorAuthorization': {
+              'commandBase64': _signedReview(
+                'viewer',
+                invitationId: changed == 'invitation'
+                    ? 'another-invite'
+                    : 'invite',
+                scopeId: changed == 'scope' ? 'another-scope' : 'scope',
+              ),
+            },
+          },
+          _VerifiedDirectory(),
+          [],
+        );
+        await _pump(
+          tester,
+          account,
+          invites,
+          preview: SharedInvitationPreview(
+            scopeName: 'Encrypted target',
+            scopeId: 'scope',
+            kind: SharedScopeKind.project,
+            recipientUsername: 'recipient',
+            role: SharedRole.viewer,
+            expiresAt: DateTime.utc(2099),
+            registrationAllowed: false,
+            invitationId: 'invite',
+            inviterAccountId: changed == 'creator'
+                ? sharingSession(second: true).accountId
+                : sharingSession().accountId,
+            contractVersion: 4,
+          ),
+        );
+        expect(invites.trusts, 0);
+        expect(invites.accepts, 0);
+        expect(invites.grants, 0);
+        expect(
+          find.byKey(const ValueKey('crypto-invitation-confirm')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'invitation-binding26 final sender uses fresh bound host metadata',
+    (tester) async {
+      final account = _Account(), invites = _Invites(_Account());
+      invites.inspectedInvitation = VerifiedCryptoInvitation(
+        {
+          ..._invite.response,
+          'inviterAccountId': sharingSession().accountId,
+          'inviterName': 'Current name',
+          'inviterUsername': 'current.sender',
+          'inviterEmail': 'current.sender@example.test',
+        },
+        _VerifiedDirectory(),
+        [],
+      );
+      await _pump(
+        tester,
+        account,
+        invites,
+        preview: SharedInvitationPreview(
+          scopeName: 'Encrypted target',
+          scopeId: 'scope',
+          kind: SharedScopeKind.project,
+          recipientUsername: 'recipient',
+          role: SharedRole.viewer,
+          expiresAt: DateTime.utc(2099),
+          registrationAllowed: false,
+          invitationId: 'invite',
+          inviterAccountId: sharingSession().accountId,
+          inviterEmail: 'stale.sender@example.test',
+          contractVersion: 4,
+        ),
+      );
+      expect(
+        find.text('Invited by current.sender@example.test'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('stale.sender'), findsNothing);
+      expect(invites.accepts, 0);
+      expect(invites.grants, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final locale in ['en', 'sl']) {
+    testWidgets(
+      'invitation-review26 final recipient review ignores injected owner projection $locale',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 1200);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final account = _Account(), invites = _Invites(_Account());
+        invites.inspectedInvitation = VerifiedCryptoInvitation(
+          {
+            ..._invite.response,
+            'inviterAccountId': sharingSession().accountId,
+            'inviterName': 'Current sender',
+            'inviterUsername': 'current.sender',
+            'inviterEmail': 'sender@example.test',
+            'invitation': {
+              'id': 'invite',
+              'scopeId': 'scope',
+              'role': 'member',
+            },
+            'proposedMember': {
+              'role': 'owner',
+              'financeRole': 'write',
+              'manageKeys': true,
+            },
+          },
+          _VerifiedDirectory(),
+          [],
+        );
+        await _pump(
+          tester,
+          account,
+          invites,
+          locale: locale,
+          preview: SharedInvitationPreview(
+            scopeName: 'Wire target',
+            scopeNameAvailable: false,
+            scopeId: 'scope',
+            kind: SharedScopeKind.project,
+            recipientUsername: 'wire-recipient',
+            recipientEmail: 'wire-recipient@example.test',
+            inviterEmail: 'sender@example.test',
+            inviterName: 'Display name',
+            role: SharedRole.owner,
+            expiresAt: DateTime.utc(2030, 6, 11),
+            registrationAllowed: false,
+            invitationId: 'invite',
+            contractVersion: 4,
+          ),
+        );
+        expect(
+          find.text(locale == 'sl' ? 'Dostop: Bere' : 'Access: Can view'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('sender@example.test'), findsOneWidget);
+        expect(find.textContaining('wire-recipient'), findsNothing);
+        expect(find.text('recipient'), findsOneWidget);
+        final reviewContext = tester.element(
+          find.byType(SharingInvitationDetails),
+        );
+        expect(
+          find.textContaining(organizerDate(reviewContext, DateTime.utc(2099))),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            organizerDate(reviewContext, DateTime.utc(2030, 6, 11)),
+          ),
+          findsNothing,
+        );
+        expect(find.text('Owner'), findsNothing);
+        expect(find.text('Lastnik'), findsNothing);
+        expect(find.textContaining('finances'), findsNothing);
+        expect(invites.accepts, 0);
+        final label = locale == 'sl'
+            ? 'Strinjam se in sprejmi povabilo'
+            : 'Agree and accept invitation';
+        expect(find.text(label), findsOneWidget);
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+        expect(invites.accepts, 1);
+        expect(invites.grants, 0);
+        expect(find.text(label), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('invitation-review26 signed member role overrides wire viewer', (
+    tester,
+  ) async {
+    final account = _Account(), invites = _Invites(_Account());
+    invites.inspectedInvitation = VerifiedCryptoInvitation(
+      {
+        'invitation': {'id': 'invite', 'scopeId': 'scope', 'role': 'viewer'},
+        'creatorAuthorization': {'commandBase64': _signedReview('member')},
+      },
+      _VerifiedDirectory(),
+      [],
+    );
+    await _pump(tester, account, invites);
+    expect(find.text('Access: Member'), findsOneWidget);
+    expect(find.text('Access: Can view'), findsNothing);
+    expect(invites.accepts, 0);
+    expect(invites.grants, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
     'ux26 verified final permissions override stale preview metadata',
     (tester) async {
       tester.view.physicalSize = const Size(800, 1400);
@@ -210,7 +473,7 @@ void main() {
         ),
       );
       expect(find.text('Access: Can view'), findsOneWidget);
-      expect(find.text('No access to finances'), findsOneWidget);
+      expect(find.text('No access to finances'), findsNothing);
       expect(find.text('Owner'), findsNothing);
       expect(
         find.textContaining('includes access to all finances'),
@@ -250,7 +513,7 @@ void main() {
         find.textContaining('owner still needs to approve'),
         findsOneWidget,
       );
-      expect(find.text('Join project'), findsNothing);
+      expect(find.text('Agree and accept invitation'), findsNothing);
       expect(
         find.byKey(const ValueKey('crypto-invitation-confirm')),
         findsNothing,
@@ -322,7 +585,7 @@ void main() {
           registrationAllowed: false,
           inviterName: 'Sender',
           inviterUsername: 'sender.account',
-          inviterAccountId: 'sender-account',
+          inviterAccountId: sharingSession().accountId,
           invitationId: 'invite',
           contractVersion: 4,
         ),
@@ -334,8 +597,11 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Invited by Sender (sender.account)'), findsOneWidget);
-      expect(find.text('Join project'), findsOneWidget);
+      expect(
+        find.text('Invited by ${sharingSession().accountId}'),
+        findsOneWidget,
+      );
+      expect(find.text('Agree and accept invitation'), findsOneWidget);
       expect(find.textContaining('sharing.example.test'), findsOneWidget);
       await tester.ensureVisible(
         find.byKey(const ValueKey('crypto-invitation-confirm')),
@@ -346,13 +612,13 @@ void main() {
         find.textContaining('owner still needs to approve'),
         findsOneWidget,
       );
-      expect(find.text('Join project'), findsNothing);
+      expect(find.text('Agree and accept invitation'), findsNothing);
       expect(find.text('Check access'), findsOneWidget);
       expect(invites.accepts, 1);
       await tester.tap(find.byKey(const ValueKey('crypto-invitation-retry')));
       await tester.pumpAndSettle();
       expect(invites.accepts, 1);
-      expect(find.text('Join project'), findsNothing);
+      expect(find.text('Agree and accept invitation'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

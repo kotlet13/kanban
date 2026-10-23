@@ -129,6 +129,8 @@ class _CryptoCollaboration implements CollaborationRepository {
 
 class _CryptoDirectory implements VerifiedAccountDirectory {
   @override
+  String get accountId => sharingSession().accountId;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -139,6 +141,10 @@ class _CryptoInvites extends InviteCryptoRepository {
   Object? trustError, resumeError;
   Completer<void>? trustGate;
   Future<void> Function()? afterAccept;
+  Completer<void>? inspectionGate;
+  Object? inspectionError;
+  VerifiedCryptoInvitation? inspectedInvitation;
+  int inspections = 0;
   @override
   Future<String?> resumeAccepted(String invitationId) async {
     resumes++;
@@ -150,17 +156,28 @@ class _CryptoInvites extends InviteCryptoRepository {
   Future<VerifiedCryptoInvitation> inspect({
     String? token,
     String? invitationId,
-  }) async => VerifiedCryptoInvitation(
-    {
-      'invitation': {
-        'id': 'saved-invite',
-        'scopeId': sharingScopeId,
-        'role': 'viewer',
-      },
-    },
-    _CryptoDirectory(),
-    [],
-  );
+  }) async {
+    inspections++;
+    await inspectionGate?.future;
+    if (inspectionError != null) throw inspectionError!;
+    return inspectedInvitation ??
+        VerifiedCryptoInvitation(
+          {
+            'invitation': {
+              'id': 'saved-invite',
+              'scopeId': sharingScopeId,
+              'role': 'viewer',
+            },
+            'creatorAuthorization': {
+              'commandBase64':
+                  'eyJhY2NvdW50SWQiOiIzMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJvcGVyYXRpb24iOiJjcnlwdG8yLmludml0YXRpb25zLmNyZWF0ZSIsInBheWxvYWQiOnsiZXhwaXJlc0F0Ijo0MDcwOTA4ODAwLCJpbnZpdGF0aW9uSWQiOiJzYXZlZC1pbnZpdGUiLCJyZWNpcGllbnQiOnsia2luZCI6InVzZXJuYW1lIiwidmFsdWUiOiJyZWNpcGllbnQifSwicm9sZSI6InZpZXdlciIsInNjb3BlSWQiOiIxMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEifSwidmVyc2lvbiI6Mn0=',
+            },
+          },
+          _CryptoDirectory(),
+          [],
+        );
+  }
+
   @override
   Future<void> trustCreatorFromDirectory(
     VerifiedCryptoInvitation invite,
@@ -175,6 +192,7 @@ class _CryptoInvites extends InviteCryptoRepository {
     VerifiedCryptoInvitation invite, {
     required String actionId,
   }) async {
+    await trustCreatorFromDirectory(invite);
     accepts++;
     await afterAccept?.call();
     return {};
@@ -219,6 +237,7 @@ Future<void> _pump(
   String locale = 'sl',
   MemoryPendingInvitationStore? store,
   _CryptoInvites? crypto,
+  bool settle = true,
 }) async {
   await loadCaptureFonts(tester);
   if (Platform.environment['JIVIE_UI_CAPTURE'] == '1') {
@@ -288,7 +307,12 @@ Future<void> _pump(
   );
   await tester.pumpAndSettle();
   await tester.tap(find.text('open'));
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+  }
 }
 
 Future<void> _tap(WidgetTester tester, String key) async {
@@ -306,6 +330,136 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  for (final locale in ['en', 'sl']) {
+    testWidgets(
+      'invitation-review26 link renders signed review before one consent $locale',
+      (tester) async {
+        final controller = _Controller(encrypted: true);
+        final crypto = _CryptoInvites(_CryptoAccount());
+        final store = MemoryPendingInvitationStore()
+          ..value = PendingInvitation(
+            serverUrl: _link.serverUrl,
+            token: _link.token,
+            serverId: sharingSession().serverId,
+          );
+        await _pump(
+          tester,
+          controller,
+          link: _link,
+          crypto: crypto,
+          store: store,
+          locale: locale,
+        );
+        expect(
+          find.text(locale == 'sl' ? 'Dostop: Bere' : 'Access: Can view'),
+          findsOneWidget,
+        );
+        expect(find.text('recipient'), findsOneWidget);
+        expect(crypto.inspections, 1);
+        expect(crypto.trusts, 0);
+        expect(crypto.accepts, 0);
+        expect(find.text('Review invitation'), findsNothing);
+        final label = locale == 'sl'
+            ? 'Strinjam se in sprejmi povabilo'
+            : 'Agree and accept invitation';
+        expect(find.text(label), findsOneWidget);
+        await _tap(tester, 'invitation-flow-join');
+        expect(crypto.accepts, 1);
+        expect(crypto.inspections, 1);
+        expect(crypto.trusts, 1);
+        expect(store.value?.invitationId, 'saved-invite');
+        expect(find.text(label), findsNothing);
+        expect(
+          find.textContaining(
+            locale == 'sl'
+                ? 'Lastnik mora še odobriti'
+                : 'owner still needs to approve',
+          ),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'invitation-review26 same-server account switch invalidates review',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+      );
+      expect(find.text('Access: Can view'), findsOneWidget);
+      controller.switchAccount();
+      await tester.pumpAndSettle();
+      expect(find.text('Access: Can view'), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('invitation-flow-join')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(crypto.accepts, 0);
+      expect(store.value?.invitationId, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'invitation-review26 superseded hydration never publishes review',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectionGate = Completer<void>();
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+        settle: false,
+      );
+      expect(crypto.inspections, 1);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      final newer = InvitationLink(
+        serverUrl: _link.serverUrl,
+        token: 'fhi4_${'d' * 64}',
+      );
+      container.read(pendingInvitationLinkProvider.notifier).state = newer;
+      await tester.pump();
+      crypto.inspectionGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(InvitationWizard), findsNothing);
+      expect(container.read(pendingInvitationLinkProvider), same(newer));
+      expect(crypto.accepts, 0);
+      expect(crypto.trusts, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   final rootEmailLink = InvitationLink.tryParseInput(
     'https://sharing.example.test/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=en#token=fhi4_${'a' * 64}',
   )!;

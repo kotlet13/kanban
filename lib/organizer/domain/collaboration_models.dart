@@ -351,6 +351,7 @@ class SharedInvitationPreview {
     bool? scopeNameAvailable,
     this.inviterAccountId,
     this.inviterUsername = '',
+    this.inviterEmail,
     this.awaitingApproval = false,
   }) : scopeNameAvailable = scopeNameAvailable ?? contractVersion != 4;
   final String scopeName;
@@ -366,6 +367,7 @@ class SharedInvitationPreview {
   /// Display metadata from the pinned host; never an identity or access proof.
   final String? inviterAccountId;
   final String inviterUsername;
+  final String? inviterEmail;
 
   /// V4 pre-accept previews contain no decrypted scope title.
   final bool scopeNameAvailable;

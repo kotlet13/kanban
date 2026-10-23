@@ -8,6 +8,7 @@ import '../../data/e2ee/scope_crypto_manager.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/hosting_disclosure.dart';
 import '../shared/sharing_invitation_details.dart';
+import '../shared/verified_invitation_permissions.dart';
 import '../../domain/collaboration_models.dart';
 
 /// Joining and granting access remain deliberate. Signed directory validation
@@ -112,6 +113,14 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
         ? await invites.inspect(invitationId: widget.invitationId)
         : await invites.acceptedRecipient(widget.scopeId!, widget.invitationId);
     if (!_current) return;
+    if (widget.scopeId == null) {
+      validateInvitationReview(
+        invite,
+        invitationId: widget.invitationId,
+        scopeId: widget.preview?.scopeId,
+        creatorAccountId: widget.preview?.inviterAccountId,
+      );
+    }
     await invites.trustCreatorFromDirectory(invite);
     if (!_current) return;
     ScopeRotationReview? review;
@@ -150,33 +159,6 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     if (mounted && _current) Navigator.of(context).pop(widget.scopeId);
   });
 
-  Widget _permissions(VerifiedCryptoInvitation invite) {
-    final proposed = invite.response['proposedMember'] as Map?;
-    final role = proposed?['role'] ?? invite.invitation['role'];
-    final label = switch (role) {
-      'owner' => context.l10n.sharingOwner,
-      'member' || 'editor' => context.l10n.sharingMember,
-      'viewer' => context.l10n.sharingViewer,
-      _ => throw const FormatException('invitation_role'),
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Text('${context.l10n.cryptoSharingAccessLabel}: $label'),
-        if (proposed != null) ...[
-          Text(switch (proposed['financeRole']) {
-            'write' => context.l10n.cryptoSharingFinanceWrite,
-            'read' => context.l10n.cryptoSharingFinanceRead,
-            _ => context.l10n.cryptoSharingFinanceNone,
-          }),
-          if (proposed['manageKeys'] == true)
-            Text(context.l10n.cryptoSharingManageAccess),
-        ],
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
@@ -201,6 +183,9 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                     SharingInvitationDetails(
                       invitation: widget.preview!,
                       showPermissions: false,
+                      verifiedInvitation: widget.scopeId == null
+                          ? _invite
+                          : null,
                     )
                   else if (widget.label != null)
                     Text(
@@ -236,7 +221,12 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                       ),
                     ),
                   if (_pending) Text(l.cryptoInvitationPendingKeys),
-                  if (_invite != null) _permissions(_invite!),
+                  if (_invite != null)
+                    VerifiedInvitationPermissions(
+                      invitation: _invite!,
+                      explainContent: widget.scopeId == null,
+                      showOwnerProjection: widget.scopeId != null,
+                    ),
                   if (_review != null) ...[
                     const SizedBox(height: 16),
                     Text(l.cryptoInvitationContentAccess),
@@ -250,10 +240,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                       onPressed: _busy ? null : _continue,
                       child: Text(
                         widget.scopeId == null
-                            ? (widget.preview?.kind ?? widget.kind) ==
-                                      SharedScopeKind.project
-                                  ? l.invitationFlowJoinProject
-                                  : l.invitationFlowJoinSpace
+                            ? l.invitationFlowAgreeAccept
                             : l.cryptoInvitationGrantConfirm,
                       ),
                     ),

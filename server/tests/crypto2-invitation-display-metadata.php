@@ -14,6 +14,7 @@ namespace {
     $pdo=new \PDO('sqlite::memory:');$pdo->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
     $pdo->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,is_active INTEGER,username TEXT,name TEXT);
       CREATE TABLE familyhub_accounts(account_id TEXT PRIMARY KEY,user_id INTEGER);
+      CREATE TABLE familyhub_email_identities(account_id TEXT PRIMARY KEY,email TEXT,verified_at INTEGER);
       CREATE TABLE familyhub_scopes(id TEXT PRIMARY KEY,kind TEXT,name TEXT,access_policy_version INTEGER);');
     $creator='00000000-0000-4000-a000-000000000001';$other='00000000-0000-4000-a000-000000000002';$sid='00000000-0000-4000-a000-000000000003';
     $pdo->exec("INSERT INTO users VALUES(1,1,'synthetic_owner','Synthetic owner'),(2,1,'other_user','Other user')");

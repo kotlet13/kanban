@@ -391,19 +391,12 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       final scope = state!.scopes.where((s) => s.id == target).firstOrNull;
       if (scope == null) return;
       if (invite) {
-        final sent = await showScopeInvitation(
+        await showScopeInvitation(
           context,
           ref,
           scope: scope,
           session: state.session!,
         );
-        if (sent &&
-            mounted &&
-            identity == _accountIdentity &&
-            ref.read(collaborationProvider).valueOrNull?.selectedSpaceId ==
-                target) {
-          _openSpaceSettings(target);
-        }
       }
     } catch (error) {
       if (mounted) {

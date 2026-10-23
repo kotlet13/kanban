@@ -121,6 +121,7 @@ extension CollaborationEmailInvitations on CollaborationRepository {
           : reply['inviterName'] as String? ?? '',
       inviterAccountId: inviter['accountId'],
       inviterUsername: inviter['username'] ?? '',
+      inviterEmail: inviter['email'],
       scopeNameAvailable: !encrypted,
       awaitingApproval: encrypted && invitation['state'] == 'accepted',
       projectFinanceIncluded: scope['projectFinanceIncluded'] == true,
