@@ -62,6 +62,9 @@ final remotePushLaunchReferenceProvider = StateProvider<RemotePushReference?>(
 );
 final remotePushSummaryLaunchProvider = StateProvider<bool>((ref) => false);
 final remotePushPermissionRequestProvider = StateProvider<int>((ref) => 0);
+final foregroundInvitationApprovalRequestProvider = StateProvider<int>(
+  (ref) => 0,
+);
 
 String pushDeviceKey(AccountSession session) =>
     '${session.partition}:${session.deviceId}';
@@ -120,9 +123,15 @@ final remotePushLifecycleProvider = FutureProvider<RemotePushLifecycle>((
     disable: (identity) => ref
         .read(collaborationProvider.notifier)
         .disableRemotePush(identity: identity),
-    receive: (reference) => ref
-        .read(collaborationProvider.notifier)
-        .receiveRemotePushReference(reference),
+    receive: (reference) async {
+      final received = await ref
+          .read(collaborationProvider.notifier)
+          .receiveRemotePushReference(reference);
+      if (alive && received) {
+        ref.read(foregroundInvitationApprovalRequestProvider.notifier).state++;
+      }
+      return received;
+    },
     onOpened: (reference) {
       if (alive) {
         ref.read(remotePushLaunchReferenceProvider.notifier).state = reference;

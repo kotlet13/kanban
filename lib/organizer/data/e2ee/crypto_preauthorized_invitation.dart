@@ -282,6 +282,28 @@ Future<void> verifyPreauthorizedMemberRights({
   required int policyVersion,
   required Map<String, dynamic> member,
 }) async {
+  final rights = await projectedInvitationRights(
+    access: access,
+    scopeId: scopeId,
+    policyVersion: policyVersion,
+    role: member['role'],
+    accountId: member['accountId'],
+  );
+  if (member['financeRole'] != rights['financeRole'] ||
+      member['manageKeys'] != rights['manageKeys']) {
+    throw const FormatException('crypto_invitation_preauthorization_rights');
+  }
+}
+
+/// Complete signed policy context for an invitation's original role. The hash
+/// is retained at Send and compared again before any automatic key disclosure.
+Future<Map<String, dynamic>> projectedInvitationRights({
+  required SessionCryptoAccess access,
+  required String scopeId,
+  required int policyVersion,
+  required String role,
+  String? accountId,
+}) async {
   final descriptor = await access.verifiedScopeDescriptor(
     scopeId,
     online: true,
@@ -289,9 +311,7 @@ Future<void> verifyPreauthorizedMemberRights({
   final source = await access.recoveryCandidateHead(scopeId);
   if (descriptor['accessPolicyVersion'] != policyVersion ||
       !const {1, 2, 3}.contains(policyVersion) ||
-      !const {'member', 'viewer'}.contains(member['role']) ||
-      member['manageKeys'] !=
-          (policyVersion == 3 && member['role'] == 'member')) {
+      !const {'member', 'viewer'}.contains(role)) {
     throw const FormatException('crypto_invitation_preauthorization_rights');
   }
   final policy = await CryptoFinancePolicyActions(
@@ -308,11 +328,10 @@ Future<void> verifyPreauthorizedMemberRights({
   );
   var grant = 'none';
   if (policyVersion == 3) {
-    grant = member['role'] == 'viewer' ? 'read' : 'write';
+    grant = role == 'viewer' ? 'read' : 'write';
   } else {
     for (final value in policy.grants) {
-      if (value['accountId'] == member['accountId'])
-        grant = value['grant'] as String;
+      if (value['accountId'] == accountId) grant = value['grant'] as String;
     }
     if (grant == 'none' &&
         policyVersion == 2 &&
@@ -354,12 +373,19 @@ Future<void> verifyPreauthorizedMemberRights({
   }
   if (!policy.enabled) grant = 'none';
   if (grant == 'write' &&
-      (member['role'] == 'viewer' ||
+      (role == 'viewer' ||
           lifecycle['ownArchived'] == true ||
           lifecycle['inheritedArchived'] == true)) {
     grant = 'read';
   }
-  if (member['financeRole'] != grant) {
-    throw const FormatException('crypto_invitation_preauthorization_rights');
-  }
+  return {
+    'role': role,
+    'financeRole': grant,
+    'manageKeys': policyVersion == 3 && role == 'member',
+    'policyVersion': policyVersion,
+    'descriptorHash': await cryptoSha256(CryptoJson.encode(descriptor)),
+    'financePolicyHash': await policy.hash(),
+    'ownArchived': lifecycle['ownArchived'] == true,
+    'inheritedArchived': lifecycle['inheritedArchived'] == true,
+  };
 }

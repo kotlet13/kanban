@@ -1,4 +1,5 @@
 import 'crypto_finance_topology_creation.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -44,6 +45,30 @@ class _PreparedMigrationGenerationDraft implements Exception {
 /// envelopes; exact proposals, grants and activation survive accepted lost ACKs.
 class ScopeCryptoManager {
   ScopeCryptoManager(this.access);
+  static final _foregroundInvitationJournal = Object();
+
+  /// Provenance only: exact signed permissions and foreground guards remain
+  /// required at admission. Generic pending resumption skips these commands.
+  static Future<T> foregroundInvitationOperation<T>(
+    String invitationId,
+    Future<T> Function() body, {
+    required bool Function() isForegroundCurrent,
+  }) => runZoned(
+    body,
+    zoneValues: {
+      _foregroundInvitationJournal: (invitationId, isForegroundCurrent),
+    },
+  );
+  void _foregroundDeliveryGuard() {
+    final context = Zone.current[_foregroundInvitationJournal];
+    if (context is (String, bool Function()) &&
+        (!context.$2() || !access.account.directory.isCurrent())) {
+      throw const CryptoAuthorityPending(
+        'crypto_invitation_foreground_required',
+      );
+    }
+  }
+
   final SessionCryptoAccess access;
   static final _queues = <String, Future<void>>{};
   Future<T> _exclusive<T>(String scopeId, Future<T> Function() body) async {
@@ -225,7 +250,16 @@ class ScopeCryptoManager {
           'pending',
           Uint8List.fromList(
             utf8.encode(
-              jsonEncode({'operation': operation, 'actionKey': actionKey}),
+              jsonEncode({
+                'operation': operation,
+                'actionKey': actionKey,
+                if (Zone.current[_foregroundInvitationJournal]
+                    is (String, bool Function()))
+                  'foregroundInvitationId':
+                      (Zone.current[_foregroundInvitationJournal]
+                              as (String, bool Function()))
+                          .$1,
+              }),
             ),
           ),
           CryptoJson.encode(proof),
@@ -248,8 +282,10 @@ class ScopeCryptoManager {
   Future<Map<String, dynamic>> _send(
     String scopeId,
     String requestId,
-    Map<String, dynamic> proof,
-  ) async {
+    Map<String, dynamic> proof, {
+    bool receiptOnly = false,
+  }) async {
+    _foregroundDeliveryGuard();
     final account = access.account;
     final c = CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
     final hash = await cryptoSha256(cryptoBase64(proof['commandBase64']));
@@ -268,12 +304,16 @@ class ScopeCryptoManager {
       if (receipt['outcome'] != 'unknown') {
         throw const FormatException('scope_receipt_substitution');
       }
+      if (receiptOnly) {
+        throw const CryptoAuthorityPending('scope_receipt_pending');
+      }
       await account.directory.requireFresh();
       try {
         final delivery = await account.store.database.rows(
           'SELECT token FROM crypto_invitation_deliveries WHERE partition=? AND request_id=?',
           [account.store.partition, requestId],
         );
+        _foregroundDeliveryGuard();
         await account.directory.call(c['operation'], {
           ...proof,
           if (delivery.isNotEmpty) 'deliveryToken': delivery.single['token'],
@@ -323,12 +363,81 @@ class ScopeCryptoManager {
     };
   }
 
+  /// After a verified exact activation is already current, reconcile only its
+  /// retained request receipt. Never replay an unknown activation or new keys.
+  Future<void> reconcileAppliedRotation({
+    required String scopeId,
+    required String reviewId,
+    required String headHash,
+    Future<void> Function()? beforeDisclosure,
+  }) => _exclusive(scopeId, () async {
+    await beforeDisclosure?.call();
+    final db = access.account.store.database,
+        partition = access.account.store.partition;
+    final publications = await db.rows(
+      "SELECT payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=? AND state='scopeRotationPublished'",
+      [partition, scopeId, '$reviewId:published'],
+    );
+    if (publications.length != 1) {
+      throw const CryptoAuthorityPending('scope_review_confirmation_required');
+    }
+    final publication =
+        CryptoJson.decode(
+              Uint8List.fromList(
+                (publications.single['payload'] as List).cast<int>(),
+              ),
+            )
+            as Map;
+    if (publication['reviewId'] != reviewId ||
+        publication['headHash'] != headHash) {
+      throw const FormatException('scope_review_publication_changed');
+    }
+    final rows = await db.rows(
+      "SELECT intent_id,state,authorization FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND state IN ('pending','confirmed') AND authorization IS NOT NULL",
+      [partition, scopeId],
+    );
+    final matching = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final proof = Map<String, dynamic>.from(
+        CryptoJson.decode(
+              Uint8List.fromList((row['authorization'] as List).cast<int>()),
+            )
+            as Map,
+      );
+      final c = CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+      if (c['operation'] == 'crypto2.scope.activate' &&
+          c['payload']['scopeId'] == scopeId &&
+          c['payload']['headHash'] == headHash) {
+        matching.add({...row, 'proof': proof});
+      }
+    }
+    if (matching.length != 1) {
+      throw const CryptoAuthorityPending('scope_receipt_pending');
+    }
+    await beforeDisclosure?.call();
+    if (matching.single['state'] == 'pending') {
+      await _send(
+        scopeId,
+        matching.single['intent_id'],
+        matching.single['proof'],
+        receiptOnly: true,
+      );
+    }
+    await db.execute(
+      "UPDATE crypto_membership_intents SET state='scopeRotationReviewComplete' WHERE partition=? AND scope_id=? AND intent_id=? AND state='scopeRotationReview'",
+      [partition, scopeId, reviewId],
+    );
+  });
+
   Future<void> resume(String scopeId) => _exclusive(scopeId, () async {
     final rows = await access.account.store.database.rows(
-      "SELECT intent_id,authorization FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND state='pending' AND authorization IS NOT NULL ORDER BY rowid",
+      "SELECT intent_id,authorization,payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND state='pending' AND authorization IS NOT NULL ORDER BY rowid",
       [access.account.store.partition, scopeId],
     );
     for (final row in rows) {
+      final metadata =
+          jsonDecode(utf8.decode((row['payload'] as List).cast<int>())) as Map;
+      if (metadata['foregroundInvitationId'] is String) continue;
       final proof =
           CryptoJson.decode(
                 Uint8List.fromList((row['authorization'] as List).cast<int>()),
@@ -1183,6 +1292,8 @@ class ScopeCryptoManager {
 
   Future<VerifiedScopeHead> confirmRotation(
     ScopeRotationReview review, {
+    Future<void> Function()? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
     required bool acceptedCandidateHistory,
     List<Map<String, dynamic>>? members,
     List<Map<String, dynamic>> membershipIntents = const [],
@@ -1199,6 +1310,7 @@ class ScopeCryptoManager {
     )?
     accessConsentBuilder,
   }) => _exclusive(review.scopeId, () async {
+    await beforeDisclosure?.call();
     final account = access.account, crypto = account.directory.reducer.crypto;
     final author = await account.directory.requireFresh();
     final source = await access.recoveryCandidateHead(review.scopeId);
@@ -1410,6 +1522,8 @@ class ScopeCryptoManager {
         originalAuthor,
         ownerAcceptanceProof,
         inheritedInvitationAdmission: inheritedInvitationAdmission,
+        beforeDisclosure: beforeDisclosure,
+        freshDisclosureBoundary: freshDisclosureBoundary,
       );
     }
     final commitments = <String, dynamic>{'content': null, 'finance': null},
@@ -1581,6 +1695,8 @@ class ScopeCryptoManager {
         author,
         ownerAcceptanceProof,
         inheritedInvitationAdmission: inheritedInvitationAdmission,
+        beforeDisclosure: beforeDisclosure,
+        freshDisclosureBoundary: freshDisclosureBoundary,
       );
     } finally {
       for (final key in rawKeys.values) {
@@ -1649,9 +1765,12 @@ class ScopeCryptoManager {
     VerifiedAccountDirectory author,
     Map<String, dynamic>? ownerAcceptanceProof, {
     VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
+    Future<void> Function()? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
   }) async {
     final account = access.account;
     Future<void> validateInherited() async {
+      await beforeDisclosure?.call();
       await inheritedInvitationAdmission?.revalidate(
         access: access,
         source: source,
@@ -1782,14 +1901,13 @@ class ScopeCryptoManager {
           'closingLifecycleHash': pending.body['previousLifecycleHash'],
       });
     }
+    await freshDisclosureBoundary?.call();
     final active = await _grantAndActivate(
       pending: pending,
       author: author,
       previous: source,
       ownerAcceptanceProof: ownerAcceptanceProof,
-      beforeDisclosure: inheritedInvitationAdmission == null
-          ? null
-          : validateInherited,
+      beforeDisclosure: validateInherited,
     );
     if (body['accessIntentProof'] != null) return active;
     if (active.members.any((m) => m['accountId'] == author.accountId)) {

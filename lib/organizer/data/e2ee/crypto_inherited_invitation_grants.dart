@@ -3,12 +3,52 @@ import 'dart:convert';
 
 import 'crypto_inherited_invitation_evidence.dart';
 import 'crypto_json.dart';
+import 'crypto_record_address.dart' show isCryptoCanonicalUuid;
 import 'crypto_finance_topology.dart';
 import 'crypto_business_router.dart';
 import 'crypto_lifecycle_evidence.dart';
 import 'crypto_sync_repository.dart';
 import 'scope_crypto_manager.dart';
 import 'session_crypto_access.dart';
+
+/// UUIDs are values in canonical protocol JSON, never object property names.
+/// This small codec keeps each automatic review bound to exactly one child.
+class InheritedInvitationReviewJournal {
+  static Map<String, String> decode(Object? value) {
+    if (value == null) return {};
+    if (value is! List || value.length > 1000) {
+      throw const FormatException('crypto_inherited_invitation_review_journal');
+    }
+    final out = <String, String>{}, usedReviews = <String>{};
+    String? previous;
+    for (final entry in value) {
+      if (entry is! Map ||
+          entry.length != 2 ||
+          !isCryptoCanonicalUuid(entry['scopeId']) ||
+          !isCryptoCanonicalUuid(entry['reviewId']) ||
+          previous != null &&
+              (entry['scopeId'] as String).compareTo(previous) <= 0 ||
+          !usedReviews.add(entry['reviewId'] as String)) {
+        throw const FormatException(
+          'crypto_inherited_invitation_review_journal',
+        );
+      }
+      previous = entry['scopeId'] as String;
+      out[previous] = entry['reviewId'] as String;
+    }
+    return out;
+  }
+
+  static List<Map<String, dynamic>> encode(Map<String, String> reviews) {
+    final scopes = reviews.keys.toList()..sort();
+    final value = [
+      for (final scope in scopes)
+        {'scopeId': scope, 'reviewId': reviews[scope]},
+    ];
+    decode(value);
+    return value;
+  }
+}
 
 /// Durable continuation of the same explicitly approved parent invitation.
 /// Journal rows route work only; every child grant requires fresh signed parent
@@ -198,6 +238,7 @@ class CryptoInheritedInvitationGrants {
     required String invitationId,
     required String recipientAccountId,
     required String acceptanceProofHash,
+    bool foregroundOnly = false,
   }) => _serial(parentScopeId, () async {
     if (!access.account.directory.isCurrent()) {
       throw const CryptoAuthorityPending('crypto_stale_identity');
@@ -233,6 +274,7 @@ class CryptoInheritedInvitationGrants {
     }
     await _write(parentScopeId, invitationId, {
       'version': 1,
+      if (foregroundOnly) 'foregroundOnly': true,
       'parentScopeId': parentScopeId,
       'invitationId': invitationId,
       'recipientAccountId': recipientAccountId,
@@ -251,8 +293,11 @@ class CryptoInheritedInvitationGrants {
 
   Future<void> finish(
     String parentScopeId,
-    String invitationId,
-  ) => _serial(parentScopeId, () async {
+    String invitationId, {
+    bool verifiedHistoryOnly = false,
+    Future<void> Function()? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
+  }) => _serial(parentScopeId, () async {
     final rows = await access.account.store.database.rows(
       "SELECT payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=? AND state='invitationInheritedGrants'",
       [_partition, parentScopeId, 'inherited:$invitationId'],
@@ -266,6 +311,7 @@ class CryptoInheritedInvitationGrants {
       throw const FormatException('crypto_inherited_invitation_journal');
     }
     Future<void> verifyParent() async {
+      await beforeDisclosure?.call();
       await VerifiedInheritedInvitationAdmission.requireParent(
         access: access,
         parentScopeId: parentScopeId,
@@ -278,10 +324,14 @@ class CryptoInheritedInvitationGrants {
     await verifyParent();
     final children = (payload['children'] as List).cast<String>().toSet();
     final done = <String>{};
+    final autoReviews = InheritedInvitationReviewJournal.decode(
+      payload['automaticReviewIds'],
+    );
     // A final fresh sweep includes children created while the parent grant was
     // being activated. Concurrent growth remains pending after this bound.
     for (var sweep = 0; sweep < 4; sweep++) {
       for (final child in children.toList()..sort()) {
+        await beforeDisclosure?.call();
         if (done.contains(child)) continue;
         final evidence = await VerifiedInheritedInvitationAdmission.verify(
           access: access,
@@ -294,20 +344,61 @@ class CryptoInheritedInvitationGrants {
         if (!evidence.alreadyAvailable) {
           final manager = ScopeCryptoManager(access);
           final pending = await manager.pendingRotationReviews(child);
+          if (verifiedHistoryOnly && autoReviews[child] == null) {
+            autoReviews[child] = access.account.directory.reducer.crypto
+                .randomId();
+            payload['automaticReviewIds'] =
+                InheritedInvitationReviewJournal.encode(autoReviews);
+            await _write(parentScopeId, invitationId, payload);
+          }
           final matching = pending
-              .where((r) => r.sourceHeadHash == evidence.source.headHash)
+              .where(
+                (r) => verifiedHistoryOnly
+                    ? r.id == autoReviews[child]
+                    : r.sourceHeadHash == evidence.source.headHash,
+              )
               .firstOrNull;
+          if (verifiedHistoryOnly && matching == null) {
+            final retained = await access.account.store.database.rows(
+              'SELECT state FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=?',
+              [_partition, child, autoReviews[child]],
+            );
+            if (retained.isNotEmpty) {
+              throw const CryptoAuthorityPending(
+                'scope_review_confirmation_required',
+              );
+            }
+          }
           final review =
               matching ??
               await manager.reviewRotation(
                 child,
                 inheritedInvitationAdmission: evidence,
+                fixedReviewId: verifiedHistoryOnly ? autoReviews[child] : null,
               );
+          if (verifiedHistoryOnly &&
+              review.historyBasis != 'verifiedCheckpoint') {
+            throw const CryptoAuthorityPending(
+              'scope_review_confirmation_required',
+            );
+          }
           await manager.confirmRotation(
             review,
-            acceptedCandidateHistory: true,
+            beforeDisclosure: beforeDisclosure,
+            freshDisclosureBoundary: freshDisclosureBoundary,
+            acceptedCandidateHistory: !verifiedHistoryOnly,
             members: evidence.members,
             inheritedInvitationAdmission: evidence,
+          );
+        }
+        if (verifiedHistoryOnly &&
+            evidence.alreadyAvailable &&
+            autoReviews[child] != null) {
+          await ScopeCryptoManager(access).reconcileAppliedRotation(
+            scopeId: child,
+            reviewId: autoReviews[child]!,
+            headHash: evidence.source.headHash,
+            beforeDisclosure: beforeDisclosure,
           );
         }
         done.add(child);
@@ -352,6 +443,7 @@ class CryptoInheritedInvitationGrants {
 
   Future<void> resumeAll() async {
     for (final row in await pending()) {
+      if (row['foregroundOnly'] == true) continue;
       await finish(row['parentScopeId'], row['invitationId']);
     }
   }

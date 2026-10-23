@@ -13,6 +13,68 @@ enum NotificationOpenStatus {
   wrongAccount,
 }
 
+/// Host-authenticated routing hints. Fresh signed acceptance and the original
+/// Send authorization still decide whether any keys may be granted.
+class InvitationAcceptanceNotification {
+  const InvitationAcceptanceNotification({
+    required this.scopeId,
+    required this.invitationId,
+    required this.acceptanceProofHash,
+    required this.creatorProofHash,
+    required this.tokenHash,
+  });
+  final String scopeId, invitationId;
+  final String acceptanceProofHash, creatorProofHash, tokenHash;
+  static const kind = 'invitation.accepted';
+  Map<String, Object?> toJson() => {
+    'scopeId': scopeId,
+    'invitationId': invitationId,
+    'acceptanceProofHash': acceptanceProofHash,
+    'creatorProofHash': creatorProofHash,
+    'tokenHash': tokenHash,
+  };
+  factory InvitationAcceptanceNotification.fromJson(Map<String, dynamic> j) {
+    const keys = {
+      'scopeId',
+      'invitationId',
+      'acceptanceProofHash',
+      'creatorProofHash',
+      'tokenHash',
+    };
+    final uuid = RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    );
+    final digest = RegExp(r'^[0-9a-f]{64}$');
+    if (j.length != keys.length ||
+        !j.keys.every(keys.contains) ||
+        ![
+          'scopeId',
+          'invitationId',
+        ].every((k) => j[k] is String && uuid.hasMatch(j[k] as String)) ||
+        ![
+          'acceptanceProofHash',
+          'creatorProofHash',
+          'tokenHash',
+        ].every((k) => j[k] is String && digest.hasMatch(j[k] as String))) {
+      throw const FormatException('invitation_notification_binding');
+    }
+    return InvitationAcceptanceNotification(
+      scopeId: j['scopeId'],
+      invitationId: j['invitationId'],
+      acceptanceProofHash: j['acceptanceProofHash'],
+      creatorProofHash: j['creatorProofHash'],
+      tokenHash: j['tokenHash'],
+    );
+  }
+  bool same(InvitationAcceptanceNotification? other) =>
+      other != null &&
+      scopeId == other.scopeId &&
+      invitationId == other.invitationId &&
+      acceptanceProofHash == other.acceptanceProofHash &&
+      creatorProofHash == other.creatorProofHash &&
+      tokenHash == other.tokenHash;
+}
+
 class NotificationRecordTarget {
   const NotificationRecordTarget({required this.type, required this.recordId});
   final String type, recordId;
@@ -34,6 +96,7 @@ class NotificationTarget {
     String? localSpaceId,
     required Iterable<NotificationRecordTarget> records,
     Iterable<int> inboxIds = const [],
+    this.invitationAcceptance,
   }) : localSpaceId = localSpaceId == 'local' ? null : localSpaceId,
        records = List.unmodifiable(records),
        inboxIds = List.unmodifiable(inboxIds) {
@@ -46,6 +109,16 @@ class NotificationTarget {
             scopeId != null)) {
       throw const FormatException('Invalid local notification target');
     }
+    final acceptance = invitationAcceptance;
+    if (acceptance != null &&
+        (isPersonal ||
+            scopeId != acceptance.scopeId ||
+            this.inboxIds.isEmpty ||
+            this.records.length != 1 ||
+            this.records.single.type != 'membership' ||
+            this.records.single.recordId != acceptance.invitationId)) {
+      throw const FormatException('invitation_notification_target');
+    }
   }
   final String? serverUrl, serverId, accountId, scopeId;
 
@@ -54,6 +127,7 @@ class NotificationTarget {
   String get localWorkspaceId => localSpaceId ?? 'local';
   final List<NotificationRecordTarget> records;
   final List<int> inboxIds;
+  final InvitationAcceptanceNotification? invitationAcceptance;
   bool get isPersonal =>
       serverUrl == null &&
       serverId == null &&
@@ -71,6 +145,8 @@ class NotificationTarget {
     if (localSpaceId != null) 'localSpaceId': localSpaceId,
     'records': records.map((r) => r.toJson()).toList(),
     'inboxIds': inboxIds,
+    if (invitationAcceptance != null)
+      'invitationAcceptance': invitationAcceptance!.toJson(),
   };
   factory NotificationTarget.fromJson(Map<String, dynamic> j) =>
       NotificationTarget(
@@ -83,6 +159,11 @@ class NotificationTarget {
           (r) => NotificationRecordTarget.fromJson(r as Map<String, dynamic>),
         ),
         inboxIds: (j['inboxIds'] as List? ?? const []).cast<int>(),
+        invitationAcceptance: j['invitationAcceptance'] == null
+            ? null
+            : InvitationAcceptanceNotification.fromJson(
+                Map<String, dynamic>.from(j['invitationAcceptance'] as Map),
+              ),
       );
 }
 
@@ -120,6 +201,7 @@ class SharedInboxEntry {
     required this.createdAt,
     this.readAt,
     this.actorAccountId,
+    this.invitationAcceptance,
   });
   final int id;
   final int revision, sequence, targetRevision;
@@ -128,6 +210,7 @@ class SharedInboxEntry {
   final DateTime createdAt;
   final DateTime? readAt;
   final String? actorAccountId;
+  final InvitationAcceptanceNotification? invitationAcceptance;
   bool get isRead => readAt != null;
   SharedInboxEntry withReadAt(DateTime? value) => SharedInboxEntry(
     id: id,
@@ -144,6 +227,7 @@ class SharedInboxEntry {
     createdAt: createdAt,
     actorAccountId: actorAccountId,
     readAt: value,
+    invitationAcceptance: invitationAcceptance,
   );
   Map<String, Object?> toJson() => {
     'id': id,
@@ -160,6 +244,8 @@ class SharedInboxEntry {
     'createdAt': createdAt.toUtc().toIso8601String(),
     'readAt': readAt?.toUtc().toIso8601String(),
     'actorAccountId': actorAccountId,
+    if (invitationAcceptance != null)
+      'invitationAcceptance': invitationAcceptance!.toJson(),
   };
   factory SharedInboxEntry.fromJson(Map<String, dynamic> j) => SharedInboxEntry(
     id: readInt(j, 'id'),
@@ -178,7 +264,30 @@ class SharedInboxEntry {
     createdAt: readSharedDate(j, 'createdAt'),
     readAt: readNullableSharedDate(j, 'readAt'),
     actorAccountId: readNullableString(j, 'actorAccountId'),
+    invitationAcceptance: _acceptance(j),
   );
+
+  static InvitationAcceptanceNotification? _acceptance(Map<String, dynamic> j) {
+    final raw = j['invitationAcceptance'];
+    if (raw == null) {
+      if (j['kind'] == InvitationAcceptanceNotification.kind) {
+        throw const FormatException('invitation_notification_binding');
+      }
+      return null;
+    }
+    final value = InvitationAcceptanceNotification.fromJson(
+      Map<String, dynamic>.from(raw as Map),
+    );
+    if (j['kind'] != InvitationAcceptanceNotification.kind ||
+        j['targetType'] != 'membership' ||
+        j['category'] != 'membership' ||
+        j['audience'] != 'personal' ||
+        j['scopeId'] != value.scopeId ||
+        j['targetId'] != value.invitationId) {
+      throw const FormatException('invitation_notification_binding');
+    }
+    return value;
+  }
 }
 
 class SharedInboxGroup {
@@ -200,6 +309,15 @@ class SharedInboxGroup {
         ),
     }.values,
     inboxIds: ids,
+    invitationAcceptance: entries.first.invitationAcceptance == null
+        ? null
+        : entries.every(
+            (e) => entries.first.invitationAcceptance!.same(
+              e.invitationAcceptance,
+            ),
+          )
+        ? entries.first.invitationAcceptance
+        : throw const FormatException('invitation_notification_group'),
   );
 }
 

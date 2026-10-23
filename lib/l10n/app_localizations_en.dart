@@ -5091,7 +5091,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Invitation accepted. The owner still needs to approve your access. You can check access again or keep working locally.';
+      'Invitation accepted. The sender can finish granting access in their app. You can check access again or keep working locally.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
@@ -5378,4 +5378,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cryptoInvitationAcceptanceUnavailable =>
       'This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.';
+
+  @override
+  String get sharingInvitationNewAccountAccess =>
+      'If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.';
 }

@@ -2,6 +2,106 @@ part of 'collaboration_repository.dart';
 
 /// Account-bound notification navigation with current server authorization.
 extension CollaborationNotificationRouting on CollaborationRepository {
+  /// Refresh display-only acceptance notices after proven admission. A complete
+  /// bounded host snapshot may hide stale notices; it never establishes a
+  /// membership change, grants keys or alters the ordinary inbox sync cursor.
+  Future<void> refreshInvitationApprovalInbox({
+    required bool Function() isCurrent,
+  }) async {
+    final session = _session, epoch = _epoch;
+    if (session == null || _sessionInvalidReason != null || !isCurrent()) {
+      return;
+    }
+    final captured = {
+      for (final item in state.inbox)
+        if (item.invitationAcceptance != null)
+          item.id: item.invitationAcceptance!,
+    };
+    if (captured.isEmpty) return;
+    final entries = <SharedInboxEntry>[];
+    int? before;
+    for (var pageNumber = 0; pageNumber < 5; pageNumber++) {
+      _checkEpoch(epoch);
+      if (!isCurrent()) return;
+      final reply = await _callSession(session, epoch, 'inbox.list', {
+        'limit': 100,
+        if (before != null) 'beforeId': before,
+      });
+      _checkEpoch(epoch);
+      if (!isCurrent()) return;
+      final page = (reply['items'] as List)
+          .map(
+            (v) =>
+                SharedInboxEntry.fromJson(Map<String, dynamic>.from(v as Map)),
+          )
+          .toList();
+      var previous = before;
+      for (final item in page) {
+        if (item.id < 1 || previous != null && item.id >= previous) {
+          throw const CollaborationException('invalid_response');
+        }
+        previous = item.id;
+      }
+      if (page.length > 100) {
+        throw const CollaborationException('invalid_response');
+      }
+      entries.addAll(page);
+      if (readBool(reply, 'hasMore')) {
+        final next = reply['nextBeforeId'];
+        if (next is! int ||
+            next < 1 ||
+            before != null && next >= before ||
+            page.any((item) => item.id < next)) {
+          throw const CollaborationException('invalid_response');
+        }
+        before = next;
+        continue;
+      }
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        if (!isCurrent()) return;
+        for (final entry in entries.where(
+          (e) => e.invitationAcceptance != null,
+        )) {
+          _checkEpoch(epoch);
+          if (!isCurrent()) return;
+          await _applyInbox(session.profile.partition, entry);
+        }
+        for (final id in captured.keys) {
+          if (entries.any((e) => e.id == id)) continue;
+          // Preserve the orchestration of an immutable read already in flight.
+          // The existing notification_missing reconciliation retires it safely.
+          final queued = await database.rows(
+            "SELECT 1 FROM commands WHERE partition=? AND entity_key=? AND state='pending'",
+            [session.profile.partition, 'inbox:$id'],
+          );
+          if (queued.isNotEmpty) continue;
+          final current = await database.rows(
+            'SELECT data FROM inbox WHERE partition=? AND id=?',
+            [session.profile.partition, id],
+          );
+          if (current.length == 1 &&
+              captured[id]!.same(
+                SharedInboxEntry.fromJson(
+                  CollaborationRepository._map(current.single['data']),
+                ).invitationAcceptance,
+              )) {
+            _checkEpoch(epoch);
+            if (!isCurrent()) return;
+            await database.execute(
+              'DELETE FROM inbox WHERE partition=? AND id=?',
+              [session.profile.partition, id],
+            );
+          }
+        }
+      });
+      _checkEpoch(epoch);
+      if (isCurrent()) await refreshLocal();
+      return;
+    }
+    // A partial snapshot cannot show that an older exact notice disappeared.
+  }
+
   /// Revalidate a task that is already in the active local projection. This
   /// cannot grant access to a new target or read any financial record. The
   /// single scope pull is bounded to one page; the normal sync owns its cursor.
@@ -161,7 +261,11 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       );
     }
     final scope = state.scopes.where((s) => s.id == target.scopeId).firstOrNull;
-    if (scope == null || scope.revoked) {
+    if (scope == null ||
+        scope.revoked ||
+        scope.blocked ||
+        scope.archived ||
+        (target.invitationAcceptance != null && !scope.canManage)) {
       return NotificationOpenResult(
         status: NotificationOpenStatus.permissionDenied,
         target: target,
@@ -200,6 +304,15 @@ extension CollaborationNotificationRouting on CollaborationRepository {
                 (r) => r.type == wire['type'] && r.recordId == wire['id'],
               )) {
             throw const CollaborationException('invalid_notification_target');
+          }
+          if (target.invitationAcceptance != null) {
+            final item = SharedInboxEntry.fromJson(
+              Map<String, dynamic>.from(reply['item'] as Map),
+            );
+            if (item.id != id ||
+                !target.invitationAcceptance!.same(item.invitationAcceptance)) {
+              throw const CollaborationException('invalid_notification_target');
+            }
           }
           if (wire['type'] != 'membership' &&
               (reply['record'] == null ||
@@ -294,6 +407,12 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       }
     }
     _checkEpoch(epoch);
+    if (offline && target.invitationAcceptance != null) {
+      return NotificationOpenResult(
+        status: NotificationOpenStatus.requiresConnection,
+        target: target,
+      );
+    }
     if (financial && !state.financePolicyForScope(scope.id).canRead) {
       return NotificationOpenResult(
         status: NotificationOpenStatus.permissionDenied,

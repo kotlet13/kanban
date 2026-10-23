@@ -377,6 +377,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         $this->change("UPDATE familyhub_crypto_invitations_v2 SET state='accepted',recipient_account_id=? WHERE id=?", [$actor['user']['account_id'],$row['id']]);
         $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state<>'accepted'", [$row['id']]);
         $activation=$preauthorization?$prepared->acceptPrepared($row,$p,$actor,$hash):[];
+        if (!$preauthorization) (new NativeCryptoInvitationNotificationV2($this->container))->accepted($row['id'], $hash);
         return $activation+['scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','role' => $row['role']],'state' => 'pendingKeys','invitationId' => $row['id'],'acceptanceProofHash' => $hash,'candidateHeads' => []];
     }
 
@@ -384,6 +385,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     {
         $this->change('UPDATE familyhub_crypto_invitations_v2 SET state=? WHERE id=?', [$state,$id]);
         $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state<>'accepted'", [$id]);
+        (new NativeCryptoInvitationNotificationV2($this->container))->resolved($id);
     }
 
     /** Preview a new direct member without publishing membership or side effects. */
@@ -564,6 +566,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     {
         $this->change("UPDATE familyhub_crypto_invitation_acceptances_v2 SET state='consumed' WHERE invitation_id=? AND proof_hash=?",[$intent['invitationId'],$intent['acceptanceProofHash']]);
         $this->change("UPDATE familyhub_crypto_invitations_v2 SET state='consumed' WHERE id=?",[$intent['invitationId']]);
+        (new NativeCryptoInvitationNotificationV2($this->container))->resolved($intent['invitationId']);
     }
 
     public function aad($id)

@@ -1,5 +1,49 @@
 # Navodila za delo na projektu
 
+23. oktober — **obvestilo po sprejemu in foreground dokončanje; HTTP DELNO/STOP3**.
+Uporabnik izbere običajno email povabilo za nov račun; neodvisna skrivnost
+spodaj ZAVRNJENA. Sol6.1/high server/core/UI, root in neodvisni pregledi.
+Prejemnik izrecno sprejme, originalni pošiljatelj dobi exact obvestilo; nov
+potrjen Send na isti napravi lahko v resumed/current account samodejno
+preda ključe. Brez background workerja/pollinga/autoaccept/starih grantov.
+Same rights/policy/identity, verifiedCheckpoint, exact parent+child reviewID,
+receipt-only consumed continuation, foreground guard tik pred pošiljanjem;
+generic resume preskoči auto provenance. Wire invitation.accepted (interno
+crypto2 prefix); notice ni authority, fresh exact open/proof binding.
+Consumed/revoked prekliče unsent push; lastni stale read ob še veljavnem scope
+vrne notification_missing namesto false revocation. Inbox refresh display-only,
+bounded5pages, pending read orchestration ohranjena; brez novega fullsync.
+59različnih novih ozkihPASS:19PHP+20core+11UI/data+9canonicaljournal.
+FixtureFAILi ohranjeni;1core uspešen primer se je pomotoma ponovil zaradi
+filtra in ni štet ponovno.3manualpage+1queuedread continuation UNVERIFIED/
+STOP3, explicit skip z razlogom; brez4.tekov. Scopedanalysis0error0warning,
+UI0issues, core1stariinfo+testinfo. Native/APNs/FCM/produkcija NEPREVERJENI.
+Lastni novi127.0.0.1:59780/owner+registriran recipient. HTTP3zagoni: prvi2
+fixtureFAIL(deliveryQueuedv4/publicURL), istiSend/mail ohranjen brez ponovitve.
+PASS setup,parent+child/history,Send,realregister/confirm/ownkeys,explicitaccept
+owneroffline,exactnotice/crossaccountdenial,backgroundnogrant,realparent200
+lostACK. Restart parent originalreceipt confirmed/sameproof/1activate0resend;
+childjournal nato crypto_key: UUIDmapkeys kršijo CryptoJson. Popravljeno v
+sortedlist{scopeId,reviewId};9novih lokalnihPASS2, brez4.HTTP. MainSTOP3
+ostane, childcompletion/recipientread NEPREVERJENA. Parent2člana/epoch2,
+child1član/epoch1, pendingjournal/podatki/ključi/volumi isti; pushcancelled0attempts.
+0actual429 s pacing, ni speedbenchmark. Lastni59780ustavljen, freshother
+ContainerStateOrImageChanges[]. Telefoni/prod/stariQA/59779 nedotaknjeni.
+Poročilo docs/E2EE_INVITATION_FOREGROUND_APPROVAL.md; dokazi lokalno v
+invitation-approval-20261023 in invitation-foreground-approval-20261023.
+Nadaljevanje samo po novem dogovoru: ISTI child pending in recipientread,
+ne ponovi Send/register/accept/parentactivation/starihPASS/ne ustvari novega para.
+
+23. oktober — **nov račun brez čakanja: predlog, izbira kanala PENDING**.
+Obstoječi v5 je zaključen v b4648a7. Samo izvorni pregled in dokumentacija:
+docs/E2EE_NEW_ACCOUNT_INVITATION_DESIGN.md. Osebno poslana pošta/sistemsko
+deljenje neodvisne skrivnosti še čaka uporabnikovo izbiro UX; ta pot še ni
+izvedena. Omejeni principal in nova različica sprejemnega protokola sta predlog,
+točna podpisana semantika še v analizi. Lastnik ne ustvarja računskih korenov
+prejemnika; skrivnost ne sme skozi host SMTP ali host HTTPS JavaScript.
+Brez runtime sprememb/testov/native/telefonov/QA/strežnikov/produkcije;
+stari podatki/podpisi/ključi in PASS ostanejo, nič ponovitev ali commita.
+
 23. oktober — **obstoječi E2EE račun sprejme brez lastnika; lokalni HTTP PASS**.
 Novo naročilo brez čakanja nadomesti spodnje odprto vprašanje. Sol6.1/high
 implementacija in root/neodvisni pregled. Send podpiše točnega prejemnika in

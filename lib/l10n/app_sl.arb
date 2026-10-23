@@ -1883,7 +1883,7 @@
   "cryptoRebindLocalDevice": "Uporabi že potrjene ključe na tej napravi",
   "cryptoScopeReviewLocal": "Preglej podatke, ki so že na tej napravi",
   "cryptoEmailVerificationRequired": "Pred vnosom v povezani račun potrdite svoj e-poštni naslov. Lokalna uporaba ostane na voljo.",
-  "cryptoInvitationPendingKeys": "Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.",
+  "cryptoInvitationPendingKeys": "Povabilo je sprejeto. Pošiljatelj lahko dokonča odobritev dostopa v svoji aplikaciji. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.",
   "cryptoInvitationVerifyCreator": "Preglejte povabilo in se pridružite, ko ste pripravljeni. Aplikacija samodejno preveri zaščito računa.",
   "cryptoUnavailableSpace": "Nedostopen prostor",
   "cryptoUnavailableTitle": "Ohrani nedostopne prostore",
@@ -1985,5 +1985,6 @@
   "cryptoInvitationReview": "Preglej povabilo",
   "cryptoInvitationAcceptedNeedsApproval": "Povabilo sprejeto — potrdite dostop",
   "cryptoInvitationContentAccess": "S tem delite dosedanjo vsebino in nove spremembe skladno z zgornjimi dovoljenji.",
-  "cryptoInvitationAcceptanceUnavailable": "Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni."
+  "cryptoInvitationAcceptanceUnavailable": "Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni.",
+  "sharingInvitationNewAccountAccess": "Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih."
 }

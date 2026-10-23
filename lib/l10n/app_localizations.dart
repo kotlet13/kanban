@@ -8981,7 +8981,7 @@ abstract class AppLocalizations {
   /// No description provided for @cryptoInvitationPendingKeys.
   ///
   /// In en, this message translates to:
-  /// **'Invitation accepted. The owner still needs to approve your access. You can check access again or keep working locally.'**
+  /// **'Invitation accepted. The sender can finish granting access in their app. You can check access again or keep working locally.'**
   String get cryptoInvitationPendingKeys;
 
   /// No description provided for @cryptoInvitationVerifyCreator.
@@ -9463,6 +9463,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.'**
   String get cryptoInvitationAcceptanceUnavailable;
+
+  /// No description provided for @sharingInvitationNewAccountAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.'**
+  String get sharingInvitationNewAccountAccess;
 }
 
 class _AppLocalizationsDelegate

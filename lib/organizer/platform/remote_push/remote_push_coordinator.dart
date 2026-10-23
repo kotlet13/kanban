@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/collaboration_provider.dart';
 import 'remote_push_lifecycle.dart';
 import 'remote_push_providers.dart';
+import 'foreground_invitation_approval_coordinator.dart';
 
 class RemotePushCoordinator extends ConsumerStatefulWidget {
   const RemotePushCoordinator({super.key, required this.child});
@@ -106,6 +107,6 @@ class _RemotePushCoordinatorState extends ConsumerState<RemotePushCoordinator>
       _language = language;
       WidgetsBinding.instance.addPostFrameCallback((_) => _update());
     }
-    return widget.child;
+    return ForegroundInvitationApprovalCoordinator(child: widget.child);
   }
 }

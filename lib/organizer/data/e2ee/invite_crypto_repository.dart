@@ -18,6 +18,8 @@ import 'crypto_preauthorized_invitation.dart';
 import 'crypto_invitation_preauthorization_codec.dart';
 import 'scope_crypto_codec.dart';
 
+part 'crypto_invitation_autoapproval.dart';
+
 class VerifiedCryptoInvitation {
   VerifiedCryptoInvitation(
     this.response,
@@ -63,6 +65,23 @@ class InviteCryptoRepository {
   InviteCryptoRepository(this.access);
   final SessionCryptoAccess access;
   ScopeCryptoManager get manager => ScopeCryptoManager(access);
+
+  Future<Map<String, dynamic>> foregroundInvitationRights(
+    Map<String, dynamic> payload, {
+    String? accountId,
+  }) async {
+    final descriptor = await access.verifiedScopeDescriptor(
+      payload['scopeId'],
+      online: true,
+    );
+    return projectedInvitationRights(
+      access: access,
+      scopeId: payload['scopeId'],
+      policyVersion: descriptor['accessPolicyVersion'],
+      role: payload['role'],
+      accountId: accountId,
+    );
+  }
 
   Future<void> _promoteDirectory(
     VerifiedAccountDirectory directory,
@@ -218,6 +237,7 @@ class InviteCryptoRepository {
         payload = Map<String, dynamic>.from(draft['payload'] as Map);
         token = saved.single['token'] as String?;
       } else {
+        Map<String, dynamic>? foregroundIntent;
         final own = await access.account.directory.requireFresh();
         final head = await access.currentHead(scope, online: true);
         final actor = head.member(access.account.directory.accountId);
@@ -260,11 +280,13 @@ class InviteCryptoRepository {
             });
             recipient = Map<String, dynamic>.from(resolved['recipient'] as Map);
           }
+          var unregistered = false;
           if (!payload.containsKey('preauthorization')) {
             final resolved = await _resolvePreauthorized(
               scope,
               recipient['value'] as String,
               role,
+              onUnregistered: () => unregistered = true,
             );
             if (resolved != null) {
               recipient = resolved.recipient;
@@ -286,16 +308,36 @@ class InviteCryptoRepository {
             ),
             if (replacing != null) 'replacesInvitationId': replacing,
           });
+          if (unregistered && recipient['kind'] == 'email') {
+            foregroundIntent = await _prepareForegroundApproval(
+              action,
+              payload,
+            );
+          }
         }
-        await db.execute(
-          'INSERT INTO crypto_invitation_drafts VALUES(?,?,?,?)',
-          [
-            partition,
-            action,
-            jsonEncode({'callerHash': callerHash, 'payload': payload}),
-            token,
-          ],
-        );
+        await db.transaction(() async {
+          await db.execute(
+            'INSERT INTO crypto_invitation_drafts VALUES(?,?,?,?)',
+            [
+              partition,
+              action,
+              jsonEncode({'callerHash': callerHash, 'payload': payload}),
+              token,
+            ],
+          );
+          if (foregroundIntent != null) {
+            await db.execute(
+              'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL)',
+              [
+                partition,
+                scope,
+                'autoInvitation:${payload['invitationId']}',
+                'invitationForegroundApproval',
+                CryptoJson.encode(foregroundIntent),
+              ],
+            );
+          }
+        });
       }
       final response = await manager.invitationCommand(
         op,
@@ -499,8 +541,9 @@ class InviteCryptoRepository {
   Future<_PreauthorizedRecipient?> _resolvePreauthorized(
     String scope,
     String recipient,
-    String role,
-  ) async {
+    String role, {
+    void Function()? onUnregistered,
+  }) async {
     final capabilities = await access.account.directory.call(
       'capabilities',
       const {},
@@ -531,8 +574,10 @@ class InviteCryptoRepository {
         });
       } on CollaborationApiException catch (error) {
         if (after == 0 &&
-            error.code == 'crypto_invitation_recipient_unregistered')
+            error.code == 'crypto_invitation_recipient_unregistered') {
+          onUnregistered?.call();
           return null;
+        }
         rethrow;
       }
       final nextBound = Map<String, dynamic>.from(
@@ -1162,9 +1207,12 @@ class InviteCryptoRepository {
 
   Future<VerifiedCryptoInvitation> acceptedRecipient(
     String scopeId,
-    String invitationId,
-  ) async {
+    String invitationId, {
+    String? acceptanceProofHash,
+  }) async {
     final response = await _call('acceptance', {
+      if (acceptanceProofHash != null)
+        'acceptanceProofHash': acceptanceProofHash,
       'scopeId': scopeId,
       'invitationId': invitationId,
       'limit': 50,
@@ -1177,7 +1225,9 @@ class InviteCryptoRepository {
         raw['payload']['scopeId'] != scopeId ||
         raw['payload']['invitationId'] != invitationId ||
         response['acceptanceProofHash'] !=
-            await cryptoSha256(CryptoJson.encode(proof))) {
+            await cryptoSha256(CryptoJson.encode(proof)) ||
+        acceptanceProofHash != null &&
+            response['acceptanceProofHash'] != acceptanceProofHash) {
       throw const FormatException('invitation_acceptance_binding');
     }
     var page = Map<String, dynamic>.from(response['recipientDirectory'] as Map);
@@ -1311,8 +1361,11 @@ class InviteCryptoRepository {
 
   Future<void> admit(
     VerifiedCryptoInvitation recipient,
-    ScopeRotationReview reviewedInventory,
-  ) async {
+    ScopeRotationReview reviewedInventory, {
+    Future<void> Function(VerifiedCryptoInvitation)? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
+  }) async {
+    await beforeDisclosure?.call(recipient);
     final directory = recipient.creator;
     await trustCreatorFromDirectory(recipient);
     await access.identities.requireVerified(
@@ -1328,6 +1381,7 @@ class InviteCryptoRepository {
             recipient.response['acceptanceProofHash']) {
       throw const CryptoAuthorityPending('invitation_acceptance_changed');
     }
+    await beforeDisclosure?.call(fresh);
     final command =
         CryptoJson.decode(cryptoBase64(fresh.authorization['commandBase64']))
             as Map;
@@ -1363,10 +1417,15 @@ class InviteCryptoRepository {
       invitationId: recipient.invitation['id'],
       recipientAccountId: directory.accountId,
       acceptanceProofHash: fresh.response['acceptanceProofHash'],
+      foregroundOnly: beforeDisclosure != null,
     );
     await manager.confirmRotation(
       reviewedInventory,
-      acceptedCandidateHistory: true,
+      acceptedCandidateHistory: beforeDisclosure == null,
+      freshDisclosureBoundary: freshDisclosureBoundary,
+      beforeDisclosure: beforeDisclosure == null
+          ? null
+          : () => beforeDisclosure(fresh),
       members: members,
       membershipIntents: intents,
       joiningDirectory: (id) async {
@@ -1385,6 +1444,11 @@ class InviteCryptoRepository {
     await inherited.finish(
       reviewedInventory.scopeId,
       recipient.invitation['id'],
+      verifiedHistoryOnly: beforeDisclosure != null,
+      freshDisclosureBoundary: freshDisclosureBoundary,
+      beforeDisclosure: beforeDisclosure == null
+          ? null
+          : () => beforeDisclosure(fresh),
     );
   }
 

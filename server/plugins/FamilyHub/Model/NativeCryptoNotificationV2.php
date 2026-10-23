@@ -165,9 +165,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
     {
         if ($op === 'crypto2.inbox.read') {
             $row = $this->one('SELECT * FROM familyhub_inbox WHERE id=?', [$p['id'] ?? 0]);
-            if (!$this->inboxVisible($row, $actor)) {
-                throw new NativeError('permission_revoked', 403);
-            }
+            $this->assertInboxRead($row, $actor);
         }
         if ($op === 'crypto2.reminders.put') {
             $domain = (new NativeCryptoRecordProofV2($this->container))->domain($p['targetType'] ?? '');
@@ -461,8 +459,26 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         if (!$row || $row['recipient_account_id'] !== $actor['user']['account_id'] || !str_starts_with($row['kind'], 'crypto2.') || NativeInboxRetention::expired($row)) {
             return false;
         }
-        $domain = $this->routingDomain($row['target_type']);
-        return $this->recipientVisible($row['scope_id'], $row['recipient_account_id'], $domain);
+        return $this->deliveryVisible($row);
+    }
+
+    public function deliveryVisible($row)
+    {
+        if ($row['kind'] === NativeCryptoInvitationNotificationV2::KIND
+            && (new NativeCryptoInvitationNotificationV2($this->container))->reference($row) === null) return false;
+        return $this->recipientVisible($row['scope_id'], $row['recipient_account_id'], $this->routingDomain($row['target_type']));
+    }
+
+    /** Retired exact invitation notices are terminal queue targets, not a scope denial. */
+    private function assertInboxRead($row, $actor)
+    {
+        if ($this->inboxVisible($row, $actor)) return;
+        if ($row && $row['kind'] === NativeCryptoInvitationNotificationV2::KIND
+            && $row['recipient_account_id'] === $actor['user']['account_id']
+            && $this->recipientVisible($row['scope_id'], $row['recipient_account_id'], 'content')) {
+            throw new NativeError('notification_missing', 404);
+        }
+        throw new NativeError('permission_revoked', 403);
     }
 
     private function inboxWire($row)
@@ -476,6 +492,9 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         } elseif ($wire['targetIdentity'] === null) {
             $baseline = $this->one('SELECT target_identity FROM familyhub_crypto_migration_inbox_v3 WHERE account_id=? AND inbox_id=?',[$row['recipient_account_id'],$row['id']]);
             $wire['targetIdentity'] = $baseline ? json_decode($baseline['target_identity'],true,34,JSON_THROW_ON_ERROR) : null;
+        }
+        if ($row['kind'] === NativeCryptoInvitationNotificationV2::KIND) {
+            $wire['invitationAcceptance'] = (new NativeCryptoInvitationNotificationV2($this->container))->reference($row);
         }
         return $wire;
     }
@@ -516,9 +535,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             throw new NativeError('validation_error');
         }
         $row = $this->one('SELECT * FROM familyhub_inbox WHERE id=?', [$p['id']]);
-        if (!$this->inboxVisible($row, $actor)) {
-            throw new NativeError('permission_revoked', 403);
-        }
+        $this->assertInboxRead($row, $actor);
         if ((int)$row['revision'] !== $p['expectedRevision']) {
             throw new NativeError('inbox_conflict', 409, ['item' => $this->inboxWire($row)]);
         }

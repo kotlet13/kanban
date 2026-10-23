@@ -72,6 +72,8 @@ class _OrganizerInboxPageState extends ConsumerState<OrganizerInboxPage> {
       'shoppingItem.created' => l.inboxShoppingItemsCreated(count),
       'shoppingItem.checked' => l.inboxShoppingChecked,
       'member.joined' => l.inboxJoinedScope,
+      InvitationAcceptanceNotification.kind =>
+        l.cryptoInvitationAcceptedNeedsApproval,
       'reminder.due' => l.inboxReminderDue,
       _ =>
         kind.startsWith('finance')

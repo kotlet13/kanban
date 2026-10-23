@@ -12,6 +12,10 @@ class NativePushPresentation extends NativeDatabase
     public function topic(array $inbox, $language)
     {
         $en=$language==='en';
+        if ($inbox['kind'] === NativeCryptoInvitationNotificationV2::KIND) {
+            return ['title'=>$en?'Invitation accepted':'Povabilo sprejeto',
+                'body'=>$en?'The recipient accepted your invitation. Confirm access.':'Prejemnik je sprejel vaše povabilo. Potrdite dostop.'];
+        }
         if (str_starts_with($inbox['kind'],'crypto2.')) {
             return ['title'=>$inbox['kind']==='crypto2.reminder.due' ? ($en?'Reminder':'Opomnik') : ($en?'Jivie update':'Obvestilo Jivie'), 'body'=>$en?'Open Jivie to view the encrypted content.':'Odprite Jivie za ogled šifrirane vsebine.'];
         }

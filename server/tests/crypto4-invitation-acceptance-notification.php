@@ -1,0 +1,57 @@
+<?php
+/** NEW in-memory exact invitation notification controls, not a replay of any old test. */
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoInvitationV2 as Invitations;
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoInvitationNotificationV2 as Notices;
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoNotificationV2 as Notifications;
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoV2Codec as V2;
+require __DIR__.'/crypto5-invitation-preauthorization-memory-fixture.php';
+$pdo->exec('CREATE TABLE familyhub_inbox(id INTEGER PRIMARY KEY AUTOINCREMENT,event_key TEXT,recipient_account_id TEXT,scope_id TEXT,category TEXT,kind TEXT,audience TEXT,actor_account_id TEXT,target_type TEXT,target_id TEXT,target_revision INTEGER,group_key TEXT,created_at TEXT,sequence INTEGER,in_app INTEGER,read_at TEXT DEFAULT NULL,revision INTEGER DEFAULT 1,UNIQUE(event_key,recipient_account_id));
+ CREATE TABLE familyhub_inbox_state(account_id TEXT PRIMARY KEY,sequence INTEGER,visibility_revision INTEGER);
+ CREATE TABLE familyhub_inbox_preferences(scope_id TEXT,account_id TEXT,category TEXT,settings TEXT);
+ CREATE TABLE familyhub_push_jobs(inbox_id INTEGER,device_id TEXT,state TEXT,lease_token TEXT,lease_until INTEGER);
+ CREATE TABLE familyhub_deliveries(inbox_id INTEGER,state TEXT,lease_token TEXT,lease_until INTEGER);');
+[$sid,$body,$head]=scopeFixture(3,$owner);
+$invites=new Invitations($container);$notices=new Notices($container);$notifications=new Notifications($container);
+function invitationFixture($sid,$head,$owner,$recipient,$override=[]) {
+    global $invites;
+    $id=uid();$payload=array_replace(['scopeId'=>$sid,'invitationId'=>$id,'recipient'=>['kind'=>'email','value'=>$recipient['email'],'accountId'=>null],'role'=>'viewer','expiresAt'=>time()+3600,'language'=>'en','expectedAccessRevision'=>0,'membershipHeadHash'=>$head,'authorDirectoryHeadHash'=>$owner['head'],'tokenHash'=>hash('sha256',random_bytes(32))],$override);
+    $proof=signCommand('crypto2.invitations.create',$payload,$owner);
+    sql('INSERT INTO familyhub_crypto_invitations_v2 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)',[$id,$sid,$owner['user']['account_id'],$owner['device']['id'],$payload['recipient']['kind'],$payload['recipient']['value'],$payload['recipient']['accountId'],$payload['role'],$payload['tokenHash'],time(),$payload['expiresAt'],'pending',json_encode($proof),'en']);
+    $accept=['scopeId'=>$sid,'invitationId'=>$id,'tokenHash'=>$payload['tokenHash'],'creatorProofHash'=>V2::hash((object)$proof),'role'=>$payload['role'],'expiresAt'=>$payload['expiresAt'],'membershipHeadHash'=>$head,'authorDirectoryHeadHash'=>$recipient['head']];
+    return [$id,$payload,$accept];
+}
+[$id,$sent,$accept]=invitationFixture($sid,$head,$owner,$recipient);
+$proof=signCommand('crypto2.invitations.accept',$accept,$recipient);$hash=V2::hash((object)$proof);
+$result=$invites->write('crypto2.invitations.accept',$accept,$recipient,$proof);
+$rows=sql('SELECT * FROM familyhub_inbox');$row=$rows[0];
+ck(count($rows)===1 && $row['recipient_account_id']===$owner['user']['account_id'] && $row['actor_account_id']===$recipient['user']['account_id'] && $row['target_id']===$id && $row['kind']===Notices::KIND,'new-account email acceptance creates one exact original-inviter event');
+ck($result['state']==='pendingKeys' && count(sql('SELECT * FROM familyhub_members WHERE scope_id=?',[$sid]))===1,'acceptance notification does not grant membership or keys');
+$notices->accepted($id,$hash);
+ck(count(sql('SELECT * FROM familyhub_inbox'))===1,'duplicate exact acceptance emission is idempotent');
+$reference=$notices->reference($row);
+ck($reference===['scopeId'=>$sid,'invitationId'=>$id,'acceptanceProofHash'=>$hash,'creatorProofHash'=>$accept['creatorProofHash'],'tokenHash'=>$sent['tokenHash']],'routing metadata binds exact signed creation and acceptance');
+$opened=$notifications->read('crypto2.inbox.open',['id'=>(int)$row['id']],$owner);
+ck($opened['item']['invitationAcceptance']===$reference && $opened['item']['targetIdentity']===['sourceKind'=>'membership','canonicalId'=>$id] && $opened['target']===['scopeId'=>$sid,'type'=>'membership','id'=>$id],'authenticated notification open preserves exact invitation metadata');
+denied(fn()=>$notifications->read('crypto2.inbox.open',['id'=>(int)$row['id']],$recipient),'permission_revoked','recipient cannot open inviter-only notification');
+$foreign=$row;$foreign['recipient_account_id']=$recipient['user']['account_id'];$bad=$row;$bad['group_key']=str_replace($hash,str_repeat('0',64),$bad['group_key']);$wrongActor=$row;$wrongActor['actor_account_id']=$owner['user']['account_id'];
+ck($notices->reference($foreign)===null && $notices->reference($bad)===null && $notices->reference($wrongActor)===null,'cross-account changed-proof and actor substitutions have no routing reference');
+$presentation=(new \Kanboard\Plugin\FamilyHub\Model\NativePushPresentation($container))->topic($row,'en');
+$message=\Kanboard\Plugin\FamilyHub\Model\NativeFcmTransport::message(['sound'=>false,'language'=>'en','accountId'=>$owner['user']['account_id'],'groupKey'=>$row['group_key'],'kind'=>$row['kind'],'inboxId'=>(int)$row['id'],'token'=>'synthetic-device-token','platform'=>'ios','expiresAt'=>time()+60,'presentation'=>$presentation],$server);
+ck($presentation['body']==='The recipient accepted your invitation. Confirm access.' && array_keys($message['data'])===['type','serverId','accountId','notificationId'] && !str_contains(json_encode($message),$recipient['email']) && !str_contains(json_encode($message),$hash),'push presentation carries only generic acceptance copy and routing IDs');
+sql("INSERT INTO familyhub_push_jobs VALUES(?,'synthetic','pending',NULL,NULL)",[$row['id']]);sql("INSERT INTO familyhub_push_jobs VALUES(?,'sent-device','sent',NULL,NULL)",[$row['id']]);sql("INSERT INTO familyhub_deliveries VALUES(?,'processing','synthetic-lease',100)",[$row['id']]);
+$before=(int)sql('SELECT visibility_revision FROM familyhub_inbox_state WHERE account_id=?',[$owner['user']['account_id']])[0]['visibility_revision'];
+$invites->consume(['invitationId'=>$id,'acceptanceProofHash'=>$hash]);
+ck($notices->reference($row)===null && !$notifications->deliveryVisible($row) && sql('SELECT state FROM familyhub_push_jobs WHERE device_id=?',['synthetic'])[0]['state']==='cancelled' && sql('SELECT state FROM familyhub_deliveries')[0]['state']==='cancelled' && sql('SELECT state FROM familyhub_push_jobs WHERE device_id=?',['sent-device'])[0]['state']==='sent' && (int)sql('SELECT visibility_revision FROM familyhub_inbox_state WHERE account_id=?',[$owner['user']['account_id']])[0]['visibility_revision']===$before+1,'consume hides stale event cancels unsent jobs preserves delivered history and invalidates inbox visibility');
+denied(fn()=>$notifications->read('crypto2.inbox.open',['id'=>(int)$row['id']],$owner),'permission_revoked','consumed notification cannot reopen confirmation');
+[$muted,$sentMuted,$acceptMuted]=invitationFixture($sid,$head,$owner,$recipient);
+sql('INSERT INTO familyhub_inbox_preferences VALUES(?,?,?,?)',[$sid,$owner['user']['account_id'],'membership',json_encode(['inApp'=>false,'push'=>false,'email'=>false,'sound'=>false])]);
+$invites->write('crypto2.invitations.accept',$acceptMuted,$recipient,signCommand('crypto2.invitations.accept',$acceptMuted,$recipient));
+ck(count(sql('SELECT * FROM familyhub_inbox'))===1,'inviter membership notification preferences remain respected');
+sql('DELETE FROM familyhub_inbox_preferences');
+[$old,$sentOld,$acceptOld]=invitationFixture($sid,$head,$owner,$recipient,['recipient'=>['kind'=>'username','value'=>'synthetic_recipient','accountId'=>$recipient['user']['account_id']]]);
+$invites->write('crypto2.invitations.accept',$acceptOld,$recipient,signCommand('crypto2.invitations.accept',$acceptOld,$recipient));
+ck(count(sql('SELECT * FROM familyhub_inbox'))===1,'old account-bound invitation acceptances remain outside new-account notification route');
+[$preparedId,$preparedSent,$preparedAccept]=invitationFixture($sid,$head,$owner,$recipient,['preauthorization'=>['synthetic'=>'only eligibility check']]);
+sql("UPDATE familyhub_crypto_invitations_v2 SET state='accepted',recipient_account_id=? WHERE id=?",[$recipient['user']['account_id'],$preparedId]);$notices->accepted($preparedId,str_repeat('a',64));
+ck(count(sql('SELECT * FROM familyhub_inbox'))===1,'prepared v5 invitation is excluded before notification creation');
+echo json_encode(['status'=>'pass','checks'=>$checks,'fixture'=>'new SQLite memory acceptance+notification model','limitations'=>'No HTTP, OS delivery, SMTP, native or full admission proof']).PHP_EOL;

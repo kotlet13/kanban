@@ -5095,7 +5095,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.';
+      'Povabilo je sprejeto. Pošiljatelj lahko dokonča odobritev dostopa v svoji aplikaciji. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
@@ -5384,4 +5384,8 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get cryptoInvitationAcceptanceUnavailable =>
       'Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni.';
+
+  @override
+  String get sharingInvitationNewAccountAccess =>
+      'Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih.';
 }

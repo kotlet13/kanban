@@ -112,6 +112,8 @@ Future<bool> showScopeInvitation(
                 ? l.sharingViewerDescription
                 : l.sharingMemberFullDescription,
           ),
+          const SizedBox(height: 12),
+          Text(l.sharingInvitationNewAccountAccess),
         ],
       ],
     ),

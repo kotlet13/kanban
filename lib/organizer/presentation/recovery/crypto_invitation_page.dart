@@ -5,6 +5,7 @@ import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/invite_crypto_repository.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 import '../../data/e2ee/scope_crypto_manager.dart';
+import '../../data/e2ee/crypto_json.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/hosting_disclosure.dart';
 import '../shared/sharing_invitation_details.dart';
@@ -23,6 +24,7 @@ class CryptoInvitationPage extends StatefulWidget {
     this.repository,
     this.preview,
     this.kind,
+    this.expectedAcceptance,
     super.key,
   });
 
@@ -32,6 +34,7 @@ class CryptoInvitationPage extends StatefulWidget {
   final InviteCryptoRepository? repository;
   final SharedInvitationPreview? preview;
   final SharedScopeKind? kind;
+  final InvitationAcceptanceNotification? expectedAcceptance;
 
   @override
   State<CryptoInvitationPage> createState() => _CryptoInvitationPageState();
@@ -112,8 +115,27 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     }
     final invite = widget.scopeId == null
         ? await invites.inspect(invitationId: widget.invitationId)
-        : await invites.acceptedRecipient(widget.scopeId!, widget.invitationId);
+        : await invites.acceptedRecipient(
+            widget.scopeId!,
+            widget.invitationId,
+            acceptanceProofHash: widget.expectedAcceptance?.acceptanceProofHash,
+          );
     if (!_current) return;
+    final expected = widget.expectedAcceptance;
+    if (expected != null) {
+      final command =
+          CryptoJson.decode(cryptoBase64(invite.authorization['commandBase64']))
+              as Map;
+      final payload = command['payload'] as Map;
+      if (widget.scopeId != expected.scopeId ||
+          widget.invitationId != expected.invitationId ||
+          invite.response['acceptanceProofHash'] !=
+              expected.acceptanceProofHash ||
+          payload['creatorProofHash'] != expected.creatorProofHash ||
+          payload['tokenHash'] != expected.tokenHash) {
+        throw const FormatException('invitation_acceptance_changed');
+      }
+    }
     if (widget.scopeId == null) {
       validateInvitationReview(
         invite,

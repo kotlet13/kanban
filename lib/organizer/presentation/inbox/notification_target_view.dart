@@ -25,6 +25,7 @@ import '../organizer_widgets.dart';
 import '../shared/collaboration_actions.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
+import '../recovery/crypto_invitation_page.dart';
 import 'reminder_snooze.dart';
 import 'local_task_reminder_editor.dart';
 import 'local_notification_target.dart';
@@ -96,6 +97,54 @@ Future<bool> showNotificationTarget(
     if (!target.isPersonal &&
         (current?.session == null || !target.matches(current!.session!))) {
       return false;
+    }
+    final acceptance = result.target.invitationAcceptance;
+    if (acceptance != null) {
+      final scope = current?.scopes
+          .where((s) => s.id == acceptance.scopeId)
+          .firstOrNull;
+      if (result.status != NotificationOpenStatus.available ||
+          scope == null ||
+          !scope.canManage ||
+          scope.blocked ||
+          scope.archived ||
+          scope.revoked) {
+        return false;
+      }
+      final repository = await ref.read(collaborationRepositoryProvider.future);
+      if (!context.mounted || isCurrent?.call() == false) return false;
+      final account = await repository.connectedCryptoAccount();
+      if (!context.mounted ||
+          isCurrent?.call() == false ||
+          !account.directory.isCurrent()) {
+        return false;
+      }
+      final now = ref.read(collaborationProvider).valueOrNull;
+      if (now?.session?.partition != capturedSession?.partition ||
+          now?.session?.deviceId != capturedSession?.deviceId ||
+          !now!.scopes.any(
+            (s) =>
+                s.id == scope.id &&
+                s.canManage &&
+                !s.revoked &&
+                !s.blocked &&
+                !s.archived,
+          )) {
+        return false;
+      }
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute(
+          builder: (_) => CryptoInvitationPage(
+            account: account,
+            scopeId: scope.id,
+            invitationId: acceptance.invitationId,
+            label: scope.name,
+            kind: scope.kind,
+            expectedAcceptance: acceptance,
+          ),
+        ),
+      );
+      return true;
     }
     if (target.records.isNotEmpty &&
         target.records.every(
