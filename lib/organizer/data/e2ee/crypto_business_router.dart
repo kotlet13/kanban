@@ -3372,14 +3372,36 @@ class CryptoBusinessSession {
     if (cursor is! int || cursor < 0) {
       throw const FormatException('crypto_business_cursor');
     }
+    // Page the verified stream before routing it to the ordinary models. The
+    // document adapter reads table/attachment projections from this same store;
+    // scanning their sequence must still advance an ordinary content cursor.
     final rows = await db.rows(
-      'SELECT b.projection,r.sequence FROM crypto_business_records b JOIN crypto_received r ON r.partition=b.partition AND r.scope_id=b.scope_id AND r.domain=b.domain AND r.record_id=b.id AND r.revision=b.crypto_revision WHERE b.partition=? AND b.scope_id=? AND b.domain=? AND r.sequence>? AND b.type NOT IN (\'scopeMetadata\',\'taskDerivationIntent\',\'taskDerivationResolution\',\'financeAccountChoice\') ORDER BY r.sequence LIMIT 100',
+      'SELECT b.type,b.projection,r.sequence FROM crypto_business_records b JOIN crypto_received r ON r.partition=b.partition AND r.scope_id=b.scope_id AND r.domain=b.domain AND r.record_id=b.id AND r.revision=b.crypto_revision WHERE b.partition=? AND b.scope_id=? AND b.domain=? AND r.sequence>? ORDER BY r.sequence LIMIT 100',
       [p, scope, domain, cursor],
     );
+    final records = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final projection = jsonDecode(row['projection'] as String);
+      if (projection is! Map<String, dynamic> ||
+          projection['type'] != row['type']) {
+        throw const FormatException('crypto_business_projection_type');
+      }
+      final type = row['type'];
+      if (const {
+            'scopeMetadata',
+            'taskDerivationIntent',
+            'taskDerivationResolution',
+            'financeAccountChoice',
+          }.contains(type) ||
+          (domain == 'content' &&
+              const {'table', 'attachment'}.contains(type))) {
+        continue;
+      }
+      // Unknown types stay visible to the consumer's fail-closed validation.
+      records.add(projection);
+    }
     return {
-      'records': [
-        for (final row in rows) jsonDecode(row['projection'] as String),
-      ],
+      'records': records,
       'cursor': rows.isEmpty ? cursor : rows.last['sequence'],
       'hasMore': rows.length == 100,
       if (domain == 'finance') ...{

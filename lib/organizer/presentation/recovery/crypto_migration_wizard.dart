@@ -539,10 +539,14 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Text(l.cryptoConnectionPending),
+                Text(
+                  canFinish
+                      ? l.cryptoMigrationReviewReady
+                      : l.cryptoMigrationReviewDescription,
+                ),
                 const SizedBox(height: 16),
                 Text(
-                  l.cryptoMigrationLocalAvailable,
+                  l.cryptoMigrationLocalPreserved,
                   key: const ValueKey('migration_local_preserved'),
                 ),
                 if (_busy) const LinearProgressIndicator(),
@@ -580,7 +584,11 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
                           }
                           if (context.mounted) Navigator.of(context).pop();
                         }),
-                  child: Text(canFinish ? l.done : l.cryptoContinueLocally),
+                  child: Text(
+                    canFinish
+                        ? l.cryptoMigrationFinishReview
+                        : l.cryptoContinueLocally,
+                  ),
                 ),
                 if (canFinish)
                   TextButton(

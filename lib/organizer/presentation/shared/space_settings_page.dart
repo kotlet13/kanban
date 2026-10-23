@@ -235,9 +235,11 @@ class SpaceSettingsPage extends ConsumerWidget {
                     leading: const Icon(Icons.policy_outlined),
                     title: Text(l.moderationPolicyTitle),
                     subtitle: Text(
-                      state.sharedContentPolicy?.accepted == true
-                          ? l.moderationPolicyAccepted
-                          : l.moderationPolicyRequired,
+                      switch (state.sharedContentPolicy?.accepted) {
+                        true => l.moderationPolicyAccepted,
+                        false => l.moderationPolicyRequired,
+                        null => l.moderationPolicyUnknown,
+                      },
                     ),
                     onTap: () => showSharedContentPolicy(
                       context,

@@ -1,5 +1,55 @@
 # Navodila za delo na projektu
 
+23. oktober — **Mac sync po dokumentih, iskanje in čitljivost popravljeni**.
+Izrecno naročilo: Sol6.1/high podagenti, root/neodvisni pregled PASS;
+samo ista Mac Share A in lokalni18811, brez telefonov/produkcije/starihPASS.
+Diagnostična r15 originalni autosync09:53:59UTC: content_canonical/table/
+ArgumentError→invalid_response, frames[]; native throwline ni neposredno
+prebran. Pravi SQL+repo baselinePASS2 pofixtureFAIL1 potrdi enum byName.
+Crypto pull zdaj strani po100preverjenih vrstic, typebinding in eksplicitno
+content table/attachment prepusti obstoječemu documentadapterju; cursor po
+zadnji pregledani vrstici, unknownfailclosed, brez reset/brisanja/ključnih
+sprememb.8novih routing/seam kontrolPASS1, vključnofinance, ne proof/HTTPtest.
+Iskanje vključi open+done prek isteprojekcije/dedup/accessguard;4noviPASS1.
+Ideje render-onlyhalo pri nizkemkontrastu, barve/model isti; SL/ENcopy loči
+pripravo/verify, policyunknown, nedostopneračune/netospremembo/začetnostanje,
+pravoscope/no-project in lokalno invalidresponse odredirecta.15aktualnih
+novihUXPASS;4protectionPASS2 pofixtureUUIDFAIL;2whitecanvasPASS superseded.
+Skupaj27novihkontrolpopravkovPASS, scopedanalize0issues, genl10n/diffPASS.
+R15inr16 vsak1build+1install, istaQAidentiteta/Keychain/CA; vaultbyteparity
+UNVERIFIEDzaradiTCC, brezobvoda. Končnir16AOT97c91a9a…dbde3f,588inputov,
+8QAoverlays, diagnosticodstranjen. NativeGUI: Synced12:01lokalno,0/0/0,
+brezerror; searchUX26najde8vključnoodprtoopravilo; staraidejaberljiva in
+novacopyvidna. Ni manualSync/novihvnosov/Save. AppnormalQuit,A/Bodsotna.
+Po predaji4obnovljivicachi1.698.377.933B odstranjeni; source/paketi/dokazi isti.
+Mobilna/produkcijskaodobritev še sledi. Dokazi in omejitve:
+docs/UX_SYNC_FIXES_2026_10_23.md in build/qa/local-diagnostics/
+document-content-sync-20261023/, desktop-search-task-fix-20261023/,
+ux-clarity-20261023/. Spodnji r14odprtiproblem je zgodovina predpopravkom.
+
+23. oktober — **aktualni Mac GUI pregled r14, nova sync meja odprta**.
+Po izrecnem naročilu uporabnika stari r12 ni več podlaga za aktualni pregled.
+Share A r14 in lokalni Docker18811 sta posodobljena na e2910f9; Sol6.1/high
+priprava in neodvisni pregled, root upravlja GUI. Ista QA identiteta/Keychain,
+brez reset/uninstall; vault byte parity UNVERIFIED zaradi TCC. Strežniških
+220 table hashov čez nadgradnjo istih; nato novi sintetični GUI vnosi UX26.
+Lokalni CRUD, finance100−12,34=87,66, tabela7×2=14/save/reopen in56B
+priloga/upload/export byte equality PASS. Novo account-wide sync opozorilo:
+zadnji uspeh11:07lokalno, poskus11:16,0/0/0, generic invalid_response/redirect
+besedilo. Točna koda/throw še neznana; SOURCE-ONLY kandidat table/attachment
+iz crypto pull doseže ordinary SharedRecordType.byName brez teh tipov.
+Ni manualSync/retry/popravka. Globalno iskanje izpusti samostojno odprto
+opravilo; showCompleted:true pomeni samo completed. Temno besedilo idej,
+zastarela E2EEcopy, zavajajoče scope/empty/policy oznake potrjene.2482HTTP200,
+0actual429; ne cleanfullsync/speedbenchmark. OSmonitor le5,982s/bytecap,
+poznejše napake ni zajel. Appnormalquit/PID74963odsoten; vsi podatki ostanejo.
+Telefoni/produkcija nedotaknjeni, stari PASS niso ponovljeni. Naslednje delo
+po dogovoru: ozka lokalna diagnoza dokumentnega synca, ne slepi nov UI krog.
+Končni neodvisni izvorni/strežniški pregled poročila PASS. Štirje obnovljivi
+r14cache imeniki1.664.277.212B odstranjeni; končni paketi/izvori/dokazi isti.
+Poročilo: docs/UX_LATEST_MAC_REVIEW_2026_10_23.md; dokazi v
+build/qa/mac-exploratory-latest-20261023/. Stari UX report je označen zgodovinski.
+
 23. oktober — **paired task/cost popravek in isti L2 PASS2**.
 Novo izrecno naročilo; Sol6.1/high implementacija ter glavni/neodvisni pregled.
 Samo preverjeni pre-staging revision mismatch v pushTaskWithCost vrne paired

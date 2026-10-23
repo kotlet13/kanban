@@ -195,7 +195,8 @@ class OrganizerTaskRow extends StatelessWidget {
         '${context.l10n.peopleTaskSubjects}: ${task.subjectPersonIds.map((id) => snapshot.people.where((p) => p.id == id).firstOrNull?.name ?? context.l10n.planningFormerMember).join(', ')}',
       if (task.estimateMinutes != null)
         '${context.l10n.planningEstimated}: ${planningDuration(task.estimateMinutes! * 60)}',
-      if (project == null && task.dueAt == null) context.l10n.organizerPersonal,
+      if (project == null && task.dueAt == null)
+        context.l10n.organizerNoProject,
     ].join(' · ');
     return Container(
       decoration: BoxDecoration(

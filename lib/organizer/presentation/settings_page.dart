@@ -103,7 +103,7 @@ class OrganizerSettingsPage extends ConsumerWidget {
         const SizedBox(height: 24),
         OrganizerHeading(
           title: l.organizerSettings,
-          subtitle: l.organizerLocalDescription,
+          subtitle: l.organizerSettingsDescription,
         ),
         if (ref.watch(backupPreferencesReplayProvider).hasError)
           Card(

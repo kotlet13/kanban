@@ -1523,7 +1523,7 @@ abstract class AppLocalizations {
   /// No description provided for @sharingInvalidResponse.
   ///
   /// In en, this message translates to:
-  /// **'The server response cannot be used safely. Check plugin compatibility. Local changes remain on this device.'**
+  /// **'The app could not process the data for this operation. Local changes remain on this device. Check for an app update; if the problem continues, contact support.'**
   String get sharingInvalidResponse;
 
   /// No description provided for @sharingRequestMismatch.
@@ -8369,7 +8369,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountRecoveryPreview.
   ///
   /// In en, this message translates to:
-  /// **'Key setup is available for testing. Your existing server content still uses the current synchronization and is not end-to-end encrypted. Saving this file does not switch shared spaces to E2EE.'**
+  /// **'Manage the account keys and recovery file for this device. Keep the recovery file safe; it can restore access to encrypted account data. Protection of each connected space is checked separately.'**
   String get accountRecoveryPreview;
 
   /// No description provided for @accountRecoveryUnavailable.
@@ -8381,7 +8381,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountRecoveryReady.
   ///
   /// In en, this message translates to:
-  /// **'Account keys are prepared on this device. Shared spaces have not been switched to end-to-end encryption.'**
+  /// **'Account keys are prepared on this device. Check the protection status of each connected space separately.'**
   String get accountRecoveryReady;
 
   /// No description provided for @accountRecoveryLocked.
@@ -9331,6 +9331,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Access to the space or projects changed. Review the permissions again before continuing.'**
   String get cryptoSharingAccessChanged;
+
+  /// No description provided for @organizerSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance, reminders, backups and protection for local and connected spaces.'**
+  String get organizerSettingsDescription;
+
+  /// No description provided for @moderationPolicyUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceptance status has not been checked. Open the rules to check it.'**
+  String get moderationPolicyUnknown;
+
+  /// No description provided for @financePlanAllAccountsNetChange.
+  ///
+  /// In en, this message translates to:
+  /// **'This view combines net changes in the selected currency. Account opening balances are excluded; select an account to see its projected balance.'**
+  String get financePlanAllAccountsNetChange;
+
+  /// No description provided for @financePlanOpeningBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get financePlanOpeningBalanceLabel;
+
+  /// No description provided for @cryptoMigrationReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the protection status of the connected spaces listed below. Available actions depend on each space’s verified state.'**
+  String get cryptoMigrationReviewDescription;
+
+  /// No description provided for @cryptoMigrationReviewReady.
+  ///
+  /// In en, this message translates to:
+  /// **'No further preparation steps are listed for the available spaces. Check and finish to verify account protection.'**
+  String get cryptoMigrationReviewReady;
+
+  /// No description provided for @cryptoMigrationLocalPreserved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your local data remains available. Each connected space has its own protection status.'**
+  String get cryptoMigrationLocalPreserved;
+
+  /// No description provided for @cryptoMigrationFinishReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Check and finish'**
+  String get cryptoMigrationFinishReview;
+
+  /// No description provided for @sharingRedirectRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The app rejected a server redirect. Local changes remain on this device. Check the configured server address.'**
+  String get sharingRedirectRejected;
 }
 
 class _AppLocalizationsDelegate

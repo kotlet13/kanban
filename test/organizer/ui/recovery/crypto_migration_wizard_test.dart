@@ -155,7 +155,7 @@ void main() {
           return false;
         },
       );
-      final done = find.widgetWithText(TextButton, 'Done');
+      final done = find.widgetWithText(TextButton, 'Check and finish');
       await tester.ensureVisible(done);
       await tester.tap(done);
       await tester.pumpAndSettle();
@@ -189,7 +189,7 @@ void main() {
           final done = find.widgetWithText(
             TextButton,
             phase == CryptoMigrationPhase.committed
-                ? (locale == 'sl' ? 'Končano' : 'Done')
+                ? (locale == 'sl' ? 'Preveri in končaj' : 'Check and finish')
                 : (locale == 'sl' ? 'Nadaljuj lokalno' : 'Continue locally'),
           );
           await tester.scrollUntilVisible(done, 160);
@@ -274,7 +274,7 @@ void main() {
     (tester) async {
       final c = _Controller()..candidates = [];
       await _pump(tester, c);
-      expect(find.text('Done'), findsOneWidget);
+      expect(find.text('Check and finish'), findsOneWidget);
       expect(
         find.textContaining('local data remains available'),
         findsOneWidget,

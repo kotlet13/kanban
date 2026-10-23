@@ -432,7 +432,7 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
                   ? l.financePlanAccountArchived
                   : a.openingBalanceMinor == null
                   ? l.financePlanNoOpening
-                  : '${sharedMoneyLabel(context, BigInt.from(a.openingBalanceMinor!), a.currency)} · ${a.openingBalanceAt == null ? l.financePlanOpeningUndated : organizerDate(context, a.openingBalanceAt!)}',
+                  : '${l.financePlanOpeningBalanceLabel}: ${sharedMoneyLabel(context, BigInt.from(a.openingBalanceMinor!), a.currency)} · ${a.openingBalanceAt == null ? l.financePlanOpeningUndated : organizerDate(context, a.openingBalanceAt!)}',
             ),
           ),
         if (snapshot.financeRecurrenceRules.isNotEmpty)
@@ -499,7 +499,12 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
             sharedMoneyLabel(context, forecast.endMinor, currency),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          if (!forecast.hasOpeningBalance) Text(l.financePlanNoOpening),
+          if (!forecast.hasOpeningBalance)
+            Text(
+              account == null
+                  ? l.financePlanAllAccountsNetChange
+                  : l.financePlanNoOpening,
+            ),
           if (forecast.undatedCount > 0) Text(l.financePlanUndated),
           if (forecast.points.isEmpty) Text(l.financePlanEmpty),
           for (final day in dailyPoints.entries)

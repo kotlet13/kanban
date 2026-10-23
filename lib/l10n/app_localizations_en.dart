@@ -784,7 +784,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingInvalidResponse =>
-      'The server response cannot be used safely. Check plugin compatibility. Local changes remain on this device.';
+      'The app could not process the data for this operation. Local changes remain on this device. Check for an app update; if the problem continues, contact support.';
 
   @override
   String get sharingRequestMismatch =>
@@ -4723,7 +4723,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountRecoveryPreview =>
-      'Key setup is available for testing. Your existing server content still uses the current synchronization and is not end-to-end encrypted. Saving this file does not switch shared spaces to E2EE.';
+      'Manage the account keys and recovery file for this device. Keep the recovery file safe; it can restore access to encrypted account data. Protection of each connected space is checked separately.';
 
   @override
   String get accountRecoveryUnavailable =>
@@ -4731,7 +4731,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountRecoveryReady =>
-      'Account keys are prepared on this device. Shared spaces have not been switched to end-to-end encryption.';
+      'Account keys are prepared on this device. Check the protection status of each connected space separately.';
 
   @override
   String get accountRecoveryLocked =>
@@ -5296,4 +5296,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cryptoSharingAccessChanged =>
       'Access to the space or projects changed. Review the permissions again before continuing.';
+
+  @override
+  String get organizerSettingsDescription =>
+      'Appearance, reminders, backups and protection for local and connected spaces.';
+
+  @override
+  String get moderationPolicyUnknown =>
+      'Acceptance status has not been checked. Open the rules to check it.';
+
+  @override
+  String get financePlanAllAccountsNetChange =>
+      'This view combines net changes in the selected currency. Account opening balances are excluded; select an account to see its projected balance.';
+
+  @override
+  String get financePlanOpeningBalanceLabel => 'Opening balance';
+
+  @override
+  String get cryptoMigrationReviewDescription =>
+      'Review the protection status of the connected spaces listed below. Available actions depend on each space’s verified state.';
+
+  @override
+  String get cryptoMigrationReviewReady =>
+      'No further preparation steps are listed for the available spaces. Check and finish to verify account protection.';
+
+  @override
+  String get cryptoMigrationLocalPreserved =>
+      'Your local data remains available. Each connected space has its own protection status.';
+
+  @override
+  String get cryptoMigrationFinishReview => 'Check and finish';
+
+  @override
+  String get sharingRedirectRejected =>
+      'The app rejected a server redirect. Local changes remain on this device. Check the configured server address.';
 }

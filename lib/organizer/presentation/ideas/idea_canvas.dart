@@ -615,6 +615,12 @@ class IdeaBoardPainter extends CustomPainter {
               : Color(e.color),
           e.fontSize,
           Offset(padding, padding),
+          // Protect plain text against theme changes without changing its ink.
+          // Photo annotations keep their original appearance: their backdrop
+          // is the image, rather than the document surface.
+          outline: e.kind == IdeaElementKind.text && !child
+              ? _textOutline(Color(e.color))
+              : null,
         );
         canvas.restore();
       case IdeaElementKind.stroke:
@@ -684,8 +690,26 @@ class IdeaBoardPainter extends CustomPainter {
     double width,
     Color color,
     double fontSize,
-    Offset offset,
-  ) {
+    Offset offset, {
+    Color? outline,
+  }) {
+    if (outline != null) {
+      final halo = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            foreground: Paint()
+              ..color = outline
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = (fontSize * .08).clamp(1.0, 3.0),
+            fontSize: fontSize,
+            fontFamily: 'Roboto',
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: width);
+      halo.paint(canvas, offset);
+    }
     final painter = TextPainter(
       text: TextSpan(
         text: text,
@@ -698,6 +722,20 @@ class IdeaBoardPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: width);
     painter.paint(canvas, offset);
+  }
+
+  Color? _textOutline(Color ink) {
+    final paper = Color.alphaBlend(surface, Colors.white);
+    final visibleInk = Color.alphaBlend(ink, paper);
+    double contrast(Color a, Color b) {
+      final first = a.computeLuminance(), second = b.computeLuminance();
+      return (math.max(first, second) + .05) / (math.min(first, second) + .05);
+    }
+
+    if (contrast(visibleInk, paper) >= 4.5) return null;
+    return contrast(Colors.black, paper) >= contrast(Colors.white, paper)
+        ? Colors.black
+        : Colors.white;
   }
 
   @override

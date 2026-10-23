@@ -780,7 +780,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingInvalidResponse =>
-      'Odgovora strežnika ni mogoče varno uporabiti. Preveri združljivost vtičnika. Lokalne spremembe ostanejo na napravi.';
+      'Aplikacija ni mogla obdelati podatkov za to dejanje. Lokalne spremembe ostanejo na tej napravi. Preveri, ali je na voljo posodobitev aplikacije; če se težava ponavlja, se obrni na podporo.';
 
   @override
   String get sharingRequestMismatch =>
@@ -4727,7 +4727,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get accountRecoveryPreview =>
-      'Priprava ključev je na voljo za preizkus. Obstoječa vsebina na strežniku še uporablja sedanjo sinhronizacijo in ni šifrirana od konca do konca. Shranitev datoteke ne preklopi deljenih prostorov na E2EE.';
+      'Upravljaj ključe računa in obnovitveno datoteko za to napravo. Datoteko varno shrani, saj omogoča obnovitev dostopa do šifriranih podatkov računa. Zaščita vsakega povezanega prostora se preverja posebej.';
 
   @override
   String get accountRecoveryUnavailable =>
@@ -4735,7 +4735,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get accountRecoveryReady =>
-      'Ključi računa so pripravljeni na tej napravi. Deljeni prostori še niso preklopljeni na šifriranje od konca do konca.';
+      'Ključi računa so pripravljeni na tej napravi. Stanje zaščite posameznega povezanega prostora preveri posebej.';
 
   @override
   String get accountRecoveryLocked =>
@@ -5301,4 +5301,38 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get cryptoSharingAccessChanged =>
       'Dostop do prostora ali projektov se je spremenil. Pred nadaljevanjem znova preglejte dovoljenja.';
+
+  @override
+  String get organizerSettingsDescription =>
+      'Videz, opomniki, varnostne kopije in zaščita lokalnih ter povezanih prostorov.';
+
+  @override
+  String get moderationPolicyUnknown =>
+      'Stanje sprejema še ni preverjeno. Za preverjanje odpri pravila.';
+
+  @override
+  String get financePlanAllAccountsNetChange =>
+      'Ta pogled združuje neto spremembe v izbrani valuti brez začetnih stanj računov. Za napovedano stanje izberi posamezen račun.';
+
+  @override
+  String get financePlanOpeningBalanceLabel => 'Začetno stanje';
+
+  @override
+  String get cryptoMigrationReviewDescription =>
+      'Preglej stanje zaščite povezanih prostorov spodaj. Razpoložljiva dejanja so odvisna od preverjenega stanja posameznega prostora.';
+
+  @override
+  String get cryptoMigrationReviewReady =>
+      'Za razpoložljive prostore ni navedenih dodatnih korakov priprave. Za preverjanje zaščite računa izberi Preveri in končaj.';
+
+  @override
+  String get cryptoMigrationLocalPreserved =>
+      'Lokalni podatki ostajajo dostopni. Vsak povezani prostor ima svoje stanje zaščite.';
+
+  @override
+  String get cryptoMigrationFinishReview => 'Preveri in končaj';
+
+  @override
+  String get sharingRedirectRejected =>
+      'Aplikacija je zavrnila preusmeritev strežnika. Lokalne spremembe ostanejo na tej napravi. Preveri nastavljeni naslov strežnika.';
 }

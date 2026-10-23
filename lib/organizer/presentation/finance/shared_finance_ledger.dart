@@ -29,6 +29,7 @@ class SharedFinanceLedger extends StatefulWidget {
     required this.onAudit,
     this.payments,
     this.cashAvailable = true,
+    this.accountsAvailable = true,
     this.onPersonalPayment,
     this.canPersonalPayment,
     this.showHeading = true,
@@ -52,7 +53,7 @@ class SharedFinanceLedger extends StatefulWidget {
   final List<SharedFinanceTransfer> transfers;
   final List<OrganizerPersonOption> people;
   final bool canWrite;
-  final bool cashAvailable;
+  final bool cashAvailable, accountsAvailable;
   final bool showHeading, showBalances, allowTransfers, allowNewAccounts;
   final Map<String, String> additionalAccountNames, accountLabels;
   final Map<String, String> projectOptions, entryProjectKeys, entryScopeIds;
@@ -274,7 +275,9 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           )
         else
           Text(l.sharingReadOnly),
-        if (widget.accounts.isEmpty && widget.additionalAccountNames.isEmpty)
+        if (widget.accountsAvailable &&
+            widget.accounts.isEmpty &&
+            widget.additionalAccountNames.isEmpty)
           OrganizerEmpty(
             icon: Icons.account_balance_outlined,
             title: l.financeNoAccounts,

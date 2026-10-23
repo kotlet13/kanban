@@ -2524,6 +2524,11 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.shopping => OrganizerShoppingPage(
         snapshot: snapshot,
         actions: actions,
+        scopeLabel:
+            ref.watch(localSpacesProvider).valueOrNull?.selectedSpace?.kind ==
+                LocalSpaceKind.personal
+            ? null
+            : ref.watch(localSpacesProvider).valueOrNull?.selectedSpace?.name,
         selectedId: _navigationState.shoppingId,
         onSelection: (id) =>
             _changeNavigation(() => _navigationState.shoppingId = id),

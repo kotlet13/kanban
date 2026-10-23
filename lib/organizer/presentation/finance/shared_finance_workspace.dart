@@ -281,6 +281,11 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             scopeName: scope.name,
             payments: projection?.payments ?? payments,
             cashAvailable: cashAvailable,
+            accountsAvailable: isProject
+                ? !(state.organizationFinanceSupported &&
+                      safeChoices.isEmpty &&
+                      data.financeAccounts.isEmpty)
+                : projection?.complete != false,
             showBalances: !isProject,
             allowNewAccounts:
                 (!isProject || scope.parentSpaceId == null) &&

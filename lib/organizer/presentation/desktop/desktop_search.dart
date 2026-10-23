@@ -49,6 +49,14 @@ class _OrganizerDesktopSearchState
         }
       }
 
+      // The Tasks view selects one completion state; search indexes both.
+      for (final row in allSpacesRows(
+        snapshot,
+        AllSpacesArea.tasks,
+        now: DateTime.now(),
+      )) {
+        add(row);
+      }
       for (final area in [
         AllSpacesArea.tasks,
         AllSpacesArea.calendar,
