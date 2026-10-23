@@ -1,5 +1,28 @@
 # Navodila za delo na projektu
 
+23. oktober — **paired task/cost popravek in isti L2 PASS2**.
+Novo izrecno naročilo; Sol6.1/high implementacija ter glavni/neodvisni pregled.
+Samo preverjeni pre-staging revision mismatch v pushTaskWithCost vrne paired
+CollaborationApiException/conflict z obema trenutnima projekcijama; binding
+id/type/revision/deleted in current-account guard. Saved exact zahteva ostane
+prednostna, proof/access/claims/financeReview varovala ista.7novih seamkontrol
+PASSposkus2 po compilefixtureFAIL1; prvotni Flutter done.success/7PASS dokaz,
+naknadni parser popravljen brez reruna, procesnirc ni shranjen. Analiza0issues.
+Isti L2 realHTTP zagon2 PASS72,331s/sourceeb72dc81…; paired_conflictPASS2,
+financial_reviewPASS1, vseh7starihPASS števci1. Generic keepLocal zavrnjen,
+pravi resolveFinanceConflict nato oba klienta na istem15€strošku/saldo85€,
+brez podvojitev, enaki canonical/revisions/proofs, prazne vrste/pairmarkerji,
+zaključni sync error=null/unresolved=false. Stari errorType/frames konflikta
+so zgodovina, ne nova napaka. Actual429=0,pacing,ne speedtest. Brez L1/L3/
+ACK/restart ponovitev ali novihidentitet. Telefoni/produkcija/oldQA nedotaknjeni,
+brez nativebuild/install. Vsi stari podpisani requesti/namere/11claims isti;
+član4noviclaim pri expectedRevision2,1novbatch200,nič resend/ACKdrop.
+L1 istebaze/76servertabel, staraL2history11podmnožica15. Samo59778ustavljen,
+klienti/ključi/volumi ohranjeni, fresh otherContainerStateOrImageChanges[].
+Dokazi: docs/E2EE_PRE_MOBILE_GAPS_2026_10_22.md,
+build/qa/local-diagnostics/paired-task-cost-conflict-20261023/ in
+sync-resolution-cost-20261022/corrections-20261023/. Mobilni ročni test še sledi.
+
 22. oktober — **trije novi lokalni sklopi: L1/L3 PASS, L2 DELNO/STOP1**.
 Uporabnik naroči samo ciljne teste pred telefoni; Sol6.1/high podagenti in
 glavni/neodvisni pregled. Novi izolirani Docker59778 `jivie-sync-gaps-lab-20261022`,

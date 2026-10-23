@@ -2095,7 +2095,36 @@ class CryptoBusinessSession {
             (beforeTask == null ? 0 : _localRevision(beforeTask)) ||
         financeOp['expectedRevision'] !=
             (beforeEntry == null ? 0 : _localRevision(beforeEntry))) {
-      throw const CollaborationException('stale_edit');
+      // These are the canonical projections from the verified pulls above,
+      // never the optimistic task/finance drafts. Keep the saved-request path
+      // ahead of this check so an unknown delivery still resumes exact bytes.
+      Map<String, dynamic>? conflictRecord(
+        Map<String, Object?>? row,
+        String id,
+        String type,
+      ) {
+        if (row == null) return null;
+        final canonical = Map<String, dynamic>.from(
+          jsonDecode(row['projection'] as String) as Map,
+        );
+        if (canonical['id'] != id ||
+            canonical['type'] != type ||
+            row['type'] != type ||
+            canonical['revision'] != _localRevision(row) ||
+            canonical['deleted'] != (row['deleted'] == 1)) {
+          throw const FormatException('crypto_task_cost_projection_binding');
+        }
+        return canonical;
+      }
+
+      final details = {
+        'serverRecord': conflictRecord(beforeTask, taskId, 'task'),
+        'financeRecord': conflictRecord(beforeEntry, entryId, 'financeEntry'),
+      };
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      throw CollaborationApiException('conflict', details: details);
     }
     Map<String, dynamic> merge(Map<String, Object?>? before, Map changed) =>
         Map<String, dynamic>.from(

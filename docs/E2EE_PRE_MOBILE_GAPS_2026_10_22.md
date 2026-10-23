@@ -1,5 +1,9 @@
 # Ciljni lokalni preizkusi pred telefoni — 22. oktober 2026
 
+**Posodobitev 23. oktobra:** po ločenem naročilu za popravek je tudi L2
+zaključen s PASS na istem ohranjenem paru. L1 in L3 nista bila ponovljena.
+Spodnji prvotni STOP ostaja zgodovina; popravek in novi dokazi so na koncu.
+
 Uporabnik je naročil tri nove sklope: dokončno razrešitev konflikta opravila,
 prekinitev oziroma konflikt opravila s povezanim stroškom in pravilna dejanja
 ob opozorilih sinhronizacije. Uspešni stari testi se ne ponavljajo. Vsak sklop
@@ -135,3 +139,66 @@ sliko. Ta naloga na njem ni izvedla dejanj; zato ne trdimo, da so bila vsa
 druga stanja ves čas nespremenjena. Vse mutacije te naloge so bile omejene
 na novi namenski laboratorij. Podrobnosti in omejitev primerjave:
 `build/qa/local-diagnostics/sync-resolution-cost-20261022/final-retention.json`.
+
+## 23. oktober — popravek in nadaljevanje istega L2: PASS
+
+Uporabnik izrecno odobri popravek. Implementacijo in neodvisni pregled
+opravijo podagenti GPT‑6.1 Sol/high, glavni agent pregleda kodo in rezultate.
+Sprememba je omejena na lokalno primerjavo revizij v `pushTaskWithCost`:
+po preverjenem branju obeh domen zastarelost vrne obstoječi paired `conflict`
+z obema kanoničnima strežniškima različicama. Identiteta, tip, revizija in
+oznaka izbrisa se ujemajo s preverjenim zapisom; pred vrnitvijo se preveri
+še aktualnost računa. Manjkajoči zapis ostane izrecno `null`.
+
+Prednostna pot že pripravljene podpisane zahteve, podpisi, rezervacije,
+preverjanje dokazov in dovoljenj ostanejo nespremenjeni. Napak podpisov,
+odvzema dostopa ali zamrznjenega prostora se ne pretvarja v poslovni
+konflikt. Lokalna razvrstitev konflikta ni nov strežniški odgovor 409 in
+sama ne dovoljuje zapisa. Ohranjen je izrecni finančni pregled pred izbiro
+lokalne različice obeh delov.
+
+Sedem novih ozkih kontrol je PASS v drugem poskusu. Prvi je odpovedal pri
+tipizaciji testne priprave še pred izvedbo primerov; uspešnih testov ni bilo
+ponovljenih. Drugi izvirni Flutter dnevnik vsebuje sedem uspehov in
+`done.success=true`. Naknadni parser povzetka je odpovedal in povzetek je
+bil obnovljen iz istega dnevnika brez novega teka; točen procesni izhod ni
+bil shranjen in je označen kot neznan. Scoped analiza obeh datotek ima
+nič pripomb. Te kontrole uporabljajo sintetično mejo preverjenega branja;
+ne dokazujejo samega kriptografskega preverjanja ali HTTP prenosa.
+
+Dejansko nadaljevanje istega L2 prek lokalnega HTTP strežnika je **PASS v
+drugem skupnem zagonu**, 72,331 s, izhod 0 in nespremenjen izvor
+`eb72dc817378453b27f4cdf0c7d7a5146a05629535eb9863763955addce947c0`.
+Sedem prej uspešnih podkorakov ostane pri enem poskusu; priprava računa,
+prostora, deljenja ter izguba odgovora in obnova se ne ponovijo.
+`paired_conflict` je PASS v poskusu 2, `explicit_financial_review` PASS
+v prvem poskusu. Stari `errorType`/stack v trajnem zapisu konflikta sta
+zgodovinska podatka prve napake, ne nova napaka drugega zagona.
+
+Običajna razrešitev opravila z lokalno različico se pravilno zavrne z
+`requires_finance_resolution`. Nato pravi `resolveFinanceConflict` in
+navadni `syncNow` obeh odjemalcev potrdita isto opravilo ter isti povezani
+strošek **15 €**, brez podvojitev ali odvezanega vnosa. Ob začetnem stanju
+100 € je končni saldo **85 €**. Kanonična vsebina, revizije in dokazi se
+ujemajo, obe vrsti ter povezovalni zapisi so prazni in zaključni sync nima
+napake ali nerešenega dela. HTTP 429 ni bilo; to ni meritev hitrosti,
+ker test namerno omejuje pogostost zahtevkov.
+
+Primerjava pred/po ohrani vse stare podpisane zahteve, rezervirane namere in
+11 obstoječih rezervacij revizij; članova namerna razrešitev doda štiri nove
+pri pričakovani reviziji 2. Prvotni sprejeti paket ni ponovno poslan. En nov
+članov paket prejme 200; starih 11 strežniških zgodovinskih zapisov ostane
+med sedanjimi 15. L1 podatki in njegovi dokazi ostanejo enaki. Namenski
+vsebnik 59778 je znova ustavljen, njegove baze, ključi in volumes ohranjeni.
+Sveža primerjava stanj/slik drugih vsebnikov ne pokaže sprememb; to ni
+trditev o popolni enakosti njihove notranjosti. Glavni in neodvisni pregled
+popravka, kontrol in ohranjenega L2 stanja sta PASS.
+
+Dokazi novih kontrol:
+`build/qa/local-diagnostics/paired-task-cost-conflict-20261023/`.
+Dokazi nadaljevanja in primerjav ohranjenega stanja:
+`build/qa/local-diagnostics/sync-resolution-cost-20261022/corrections-20261023/`.
+Stari neuspešni zagon in podpisano stanje ostanejo ohranjeni. Telefonov,
+produkcije in drugih testnih namestitev se ta popravek ne dotika; novih
+native paketov ali namestitev ni. Zaključni uporabnikov preizkus na
+telefonih ostaja ločen naslednji korak.
