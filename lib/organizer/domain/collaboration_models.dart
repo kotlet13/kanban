@@ -285,7 +285,7 @@ class SharedInvitation {
     this.deliveryQueued = false,
     this.acceptedAt,
     this.revokedAt,
-    this.pendingKeys=false,
+    this.pendingKeys = false,
   });
   final String id;
   final String scopeId;
@@ -297,7 +297,7 @@ class SharedInvitation {
   final String? token, recipientEmail;
   final int contractVersion;
   final String? accessScope;
-  final bool deliveryQueued,pendingKeys;
+  final bool deliveryQueued, pendingKeys;
   bool get isEmailInvitation => const [2, 3, 4].contains(contractVersion);
   factory SharedInvitation.fromJson(
     Map<String, dynamic> json, {
@@ -328,7 +328,7 @@ class SharedInvitation {
     contractVersion: json['contractVersion'] as int? ?? 1,
     accessScope: json['accessScope'] as String?,
     deliveryQueued: json['deliveryQueued'] == true,
-    pendingKeys: json['pendingKeys']==true,
+    pendingKeys: json['pendingKeys'] == true,
   );
 }
 
@@ -348,7 +348,11 @@ class SharedInvitationPreview {
     this.accessScope,
     this.projectFinanceIncluded = false,
     this.requiresExplicitAcceptance = false,
-  });
+    bool? scopeNameAvailable,
+    this.inviterAccountId,
+    this.inviterUsername = '',
+    this.awaitingApproval = false,
+  }) : scopeNameAvailable = scopeNameAvailable ?? contractVersion != 4;
   final String scopeName;
   final String scopeId;
   final SharedScopeKind kind;
@@ -358,6 +362,16 @@ class SharedInvitationPreview {
   final bool registrationAllowed;
   final String? recipientEmail, invitationId;
   final String inviterName;
+
+  /// Display metadata from the pinned host; never an identity or access proof.
+  final String? inviterAccountId;
+  final String inviterUsername;
+
+  /// V4 pre-accept previews contain no decrypted scope title.
+  final bool scopeNameAvailable;
+
+  /// Host status for waiting UI only; never signed membership authority.
+  final bool awaitingApproval;
   final int contractVersion;
   final String? accessScope;
   final bool projectFinanceIncluded, requiresExplicitAcceptance;

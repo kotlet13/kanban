@@ -81,6 +81,78 @@ class _Controller extends SharingUiController {
 
 void main() {
   testWidgets(
+    'ux26 accepted invitation exposes readable confirmation at narrow width',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      late CollaborationDatabase database;
+      late _Repository repository;
+      await tester.runAsync(() async {
+        database = CollaborationDatabase(NativeDatabase.memory());
+        repository = _Repository(database);
+        await repository.initialize();
+      });
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox());
+        await tester.runAsync(() async {
+          await repository.close();
+          await database.close();
+        });
+      });
+      final controller = _Controller();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            collaborationRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+            collaborationProvider.overrideWith(() => controller),
+          ],
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: SharingMembersPage(
+                  scope: sharingScope(),
+                  session: sharingSession(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final approval = find.byKey(
+        const ValueKey('sharing-approve-invitation-pending-keys'),
+      );
+      await tester.ensureVisible(approval);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Invitation accepted — confirm access'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(FilledButton, 'Confirm access'),
+        findsOneWidget,
+      );
+      expect(controller.memberLoads, 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(
+        controller.memberLoads,
+        1,
+        reason: 'A rapid return does not duplicate the initial load',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'returning from key approval refreshes members without a Future setState callback',
     (tester) async {
       late CollaborationDatabase database;
@@ -126,8 +198,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.memberLoads, 1);
       expect(find.text('Member Beta'), findsNothing);
-      await tester.ensureVisible(find.byIcon(Icons.key_outlined));
-      await tester.tap(find.byIcon(Icons.key_outlined));
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('sharing-approve-invitation-pending-keys')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('sharing-approve-invitation-pending-keys')),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(CryptoInvitationPage), findsOneWidget);
       controller.includeSecondMember = true;

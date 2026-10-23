@@ -5077,7 +5077,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Invitation accepted. The owner still needs to approve your access. The space opens after approval; you can keep working locally.';
+      'Invitation accepted. The owner still needs to approve your access. You can check access again or keep working locally.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
@@ -5104,7 +5104,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoInvitationGrantExplanation =>
-      'The recipient accepted the invitation. Confirm the access below to share this space’s existing content and future changes.';
+      'The recipient accepted the invitation. Review their permissions, then confirm access.';
 
   @override
   String get cryptoInvitationGrantConfirm => 'Confirm access';
@@ -5342,4 +5342,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingProjectMembershipUnavailable =>
       'Membership for this project is not ready yet. Finish synchronizing the project first.';
+
+  @override
+  String get cryptoInvitationTargetUnavailable =>
+      'Encrypted invitation. The name becomes visible after the owner confirms access.';
+
+  @override
+  String get cryptoInvitationSenderUnavailable => 'Sender details unavailable';
+
+  @override
+  String get cryptoInvitationReview => 'Review invitation';
+
+  @override
+  String get cryptoInvitationAcceptedNeedsApproval =>
+      'Invitation accepted — confirm access';
+
+  @override
+  String get cryptoInvitationContentAccess =>
+      'This shares existing content and future changes according to the permissions above.';
+
+  @override
+  String get cryptoInvitationAcceptanceUnavailable =>
+      'This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.';
 }

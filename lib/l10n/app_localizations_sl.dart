@@ -5081,7 +5081,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get cryptoInvitationPendingKeys =>
-      'Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Prostor se odpre po odobritvi; lokalno lahko nadaljujete z delom.';
+      'Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.';
 
   @override
   String get cryptoInvitationVerifyCreator =>
@@ -5108,7 +5108,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get cryptoInvitationGrantExplanation =>
-      'Povabljeni je sprejel povabilo. Potrdite spodnji dostop do dosedanje vsebine in novih sprememb tega prostora.';
+      'Povabljeni je sprejel povabilo. Preglejte njegova dovoljenja in potrdite dostop.';
 
   @override
   String get cryptoInvitationGrantConfirm => 'Potrdi dostop';
@@ -5347,4 +5347,27 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingProjectMembershipUnavailable =>
       'Članstvo tega projekta še ni pripravljeno. Najprej dokončajte sinhronizacijo projekta.';
+
+  @override
+  String get cryptoInvitationTargetUnavailable =>
+      'Šifrirano povabilo. Ime bo vidno, ko lastnik potrdi dostop.';
+
+  @override
+  String get cryptoInvitationSenderUnavailable =>
+      'Podatki o pošiljatelju niso na voljo';
+
+  @override
+  String get cryptoInvitationReview => 'Preglej povabilo';
+
+  @override
+  String get cryptoInvitationAcceptedNeedsApproval =>
+      'Povabilo sprejeto — potrdite dostop';
+
+  @override
+  String get cryptoInvitationContentAccess =>
+      'S tem delite dosedanjo vsebino in nove spremembe skladno z zgornjimi dovoljenji.';
+
+  @override
+  String get cryptoInvitationAcceptanceUnavailable =>
+      'Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni.';
 }

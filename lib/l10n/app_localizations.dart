@@ -8957,7 +8957,7 @@ abstract class AppLocalizations {
   /// No description provided for @cryptoInvitationPendingKeys.
   ///
   /// In en, this message translates to:
-  /// **'Invitation accepted. The owner still needs to approve your access. The space opens after approval; you can keep working locally.'**
+  /// **'Invitation accepted. The owner still needs to approve your access. You can check access again or keep working locally.'**
   String get cryptoInvitationPendingKeys;
 
   /// No description provided for @cryptoInvitationVerifyCreator.
@@ -9005,7 +9005,7 @@ abstract class AppLocalizations {
   /// No description provided for @cryptoInvitationGrantExplanation.
   ///
   /// In en, this message translates to:
-  /// **'The recipient accepted the invitation. Confirm the access below to share this space’s existing content and future changes.'**
+  /// **'The recipient accepted the invitation. Review their permissions, then confirm access.'**
   String get cryptoInvitationGrantExplanation;
 
   /// No description provided for @cryptoInvitationGrantConfirm.
@@ -9403,6 +9403,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Membership for this project is not ready yet. Finish synchronizing the project first.'**
   String get sharingProjectMembershipUnavailable;
+
+  /// No description provided for @cryptoInvitationTargetUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted invitation. The name becomes visible after the owner confirms access.'**
+  String get cryptoInvitationTargetUnavailable;
+
+  /// No description provided for @cryptoInvitationSenderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sender details unavailable'**
+  String get cryptoInvitationSenderUnavailable;
+
+  /// No description provided for @cryptoInvitationReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review invitation'**
+  String get cryptoInvitationReview;
+
+  /// No description provided for @cryptoInvitationAcceptedNeedsApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted — confirm access'**
+  String get cryptoInvitationAcceptedNeedsApproval;
+
+  /// No description provided for @cryptoInvitationContentAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'This shares existing content and future changes according to the permissions above.'**
+  String get cryptoInvitationContentAccess;
+
+  /// No description provided for @cryptoInvitationAcceptanceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.'**
+  String get cryptoInvitationAcceptanceUnavailable;
 }
 
 class _AppLocalizationsDelegate

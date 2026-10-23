@@ -58,6 +58,9 @@ String sharingErrorMessage(BuildContext context, Object error) {
     return context.l10n.sharingAccountChanged;
   }
   if (error is CryptoAuthorityPending) {
+    if (error.reason == 'invitation_proof_pending') {
+      return context.l10n.cryptoInvitationAcceptanceUnavailable;
+    }
     if (const {
       'crypto_inherited_invitation_pending',
       'crypto_inherited_invitation_manager_required',

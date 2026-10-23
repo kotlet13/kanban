@@ -14,6 +14,7 @@ import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
 import 'scope_lifecycle_menu.dart';
 import '../../state/account_crypto_provider.dart';
+import '../../state/account_summary_refresh_provider.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 import '../recovery/account_devices_page.dart';
@@ -73,7 +74,8 @@ class SharingMembersPage extends ConsumerStatefulWidget {
   ConsumerState<SharingMembersPage> createState() => _SharingMembersPageState();
 }
 
-class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
+class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
+    with WidgetsBindingObserver {
   String _memberAccessLabel(SharedMember member) {
     final l = context.l10n;
     final inherited =
@@ -103,7 +105,40 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
     session: widget.session,
   );
   late Future<(List<SharedMember>, List<SharedInvitation>)> _future = _load();
-  bool _busy = false, _cryptoScope = false;
+  bool _busy = false, _cryptoScope = false, _loading = false;
+  final _refreshClock = Stopwatch()..start();
+  Duration? _lastRefresh;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _eventRefresh() {
+    if (!_isCurrent ||
+        _busy ||
+        _loading ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        (_lastRefresh != null &&
+            _refreshClock.elapsed - _lastRefresh! <
+                const Duration(seconds: 5))) {
+      return;
+    }
+    _refresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _eventRefresh();
+  }
+
   final _resendRequests = <String, ({String requestId, String language})>{};
 
   bool _scopeIsCurrent(CollaborationState state) =>
@@ -129,14 +164,27 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   Future<(List<SharedMember>, List<SharedInvitation>)> _load() async {
+    _loading = true;
+    _lastRefresh = _refreshClock.elapsed;
+    try {
+      return await _readMembers();
+    } finally {
+      _loading = false;
+    }
+  }
+
+  Future<(List<SharedMember>, List<SharedInvitation>)> _readMembers() async {
     if (!_isCurrent) throw const CollaborationException('access_revoked');
     final controller = _guard.controller;
     final scope = widget.scope;
     final repository = await ref.read(collaborationRepositoryProvider.future);
-    _cryptoScope = (await repository.database.rows(
+    if (!_isCurrent) throw const CollaborationException('session_changed');
+    final cryptoScope = (await repository.database.rows(
       "SELECT scope_id FROM crypto_scope_state WHERE partition=? AND scope_id=? AND (floor>0 OR state IN ('active','committed','retired','fenced','verified'))",
       [widget.session.partition, scope.id],
     )).isNotEmpty;
+    if (!_isCurrent) throw const CollaborationException('session_changed');
+    _cryptoScope = cryptoScope;
     final results = await Future.wait<Object>([
       controller.members(scope.id),
       if (scope.canManage) controller.invitations(scope.id),
@@ -150,6 +198,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
   }
 
   void _refresh() {
+    if (!_isCurrent || _loading) return;
     final future = _load();
     setState(() {
       _future = future;
@@ -334,6 +383,13 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
       return Text(context.l10n.privateSyncDescription);
     }
     ref.watch(collaborationProvider);
+    ref.listen(
+      accountSummaryRefreshProvider((
+        widget.session.partition,
+        widget.session.deviceId,
+      )),
+      (_, _) => _eventRefresh(),
+    );
     if (!_isCurrent) return Text(context.l10n.sharingSessionExpired);
     final l = context.l10n;
     return FutureBuilder<(List<SharedMember>, List<SharedInvitation>)>(
@@ -464,55 +520,66 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
                     title: Text(
                       invitation.recipientEmail ?? invitation.recipientUsername,
                     ),
-                    subtitle: Text(
-                      '${sharingRoleLabel(context, invitation.role)} · ${invitation.acceptedAt != null
-                          ? l.sharingAccepted
-                          : invitation.revokedAt != null
-                          ? l.sharingRevoked
-                          : !invitation.expiresAt.isAfter(now)
-                          ? l.sharingExpired
-                          : '${resent ? '${l.sharingInvitationResent} · ' : ''}${l.sharingExpires} ${organizerDate(context, invitation.expiresAt.toLocal())} ${TimeOfDay.fromDateTime(invitation.expiresAt.toLocal()).format(context)}'}',
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${sharingRoleLabel(context, invitation.role)} · ${invitation.pendingKeys
+                              ? l.cryptoInvitationAcceptedNeedsApproval
+                              : invitation.acceptedAt != null
+                              ? l.sharingAccepted
+                              : invitation.revokedAt != null
+                              ? l.sharingRevoked
+                              : !invitation.expiresAt.isAfter(now)
+                              ? l.sharingExpired
+                              : '${resent ? '${l.sharingInvitationResent} · ' : ''}${l.sharingExpires} ${organizerDate(context, invitation.expiresAt.toLocal())} ${TimeOfDay.fromDateTime(invitation.expiresAt.toLocal()).format(context)}'}',
+                        ),
+                        if (invitation.pendingKeys &&
+                            invitation.revokedAt == null &&
+                            invitation.acceptedAt == null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: FilledButton.tonalIcon(
+                              key: ValueKey(
+                                'sharing-approve-invitation-${invitation.id}',
+                              ),
+                              label: Text(l.cryptoInvitationGrantConfirm),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _run(() async {
+                                      final repository = await ref.read(
+                                        collaborationRepositoryProvider.future,
+                                      );
+                                      final account = await repository
+                                          .connectedCryptoAccount();
+                                      if (!context.mounted || !_isCurrent) {
+                                        return;
+                                      }
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => CryptoInvitationPage(
+                                            account: account,
+                                            scopeId: widget.scope.id,
+                                            invitationId: invitation.id,
+                                            label: widget.scope.name,
+                                            kind: widget.scope.kind,
+                                            recipientLabel:
+                                                invitation.recipientEmail ??
+                                                invitation.recipientUsername,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                              icon: const Icon(Icons.person_add_alt_1_outlined),
+                            ),
+                          ),
+                      ],
                     ),
                     trailing:
                         invitation.acceptedAt == null &&
                             invitation.revokedAt == null
                         ? Wrap(
                             children: [
-                              if (invitation.pendingKeys)
-                                IconButton(
-                                  tooltip: l.cryptoInvitationGrantTitle,
-                                  onPressed: _busy
-                                      ? null
-                                      : () async {
-                                          final repository = await ref.read(
-                                            collaborationRepositoryProvider
-                                                .future,
-                                          );
-                                          final account = await repository
-                                              .connectedCryptoAccount();
-                                          if (!context.mounted ||
-                                              !_guard.isCurrent)
-                                            return;
-                                          await Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  CryptoInvitationPage(
-                                                    account: account,
-                                                    scopeId: widget.scope.id,
-                                                    invitationId: invitation.id,
-                                                    label: widget.scope.name,
-                                                    recipientLabel: invitation.recipientEmail ?? invitation.recipientUsername,
-                                                  ),
-                                            ),
-                                          );
-                                          if (mounted && _guard.isCurrent) {
-                                            setState(() {
-                                              _future = _load();
-                                            });
-                                          }
-                                        },
-                                  icon: const Icon(Icons.key_outlined),
-                                ),
                               if (invitation.contractVersion == 3 &&
                                   ref
                                           .read(collaborationProvider)

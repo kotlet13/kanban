@@ -7,6 +7,8 @@ import '../../data/e2ee/session_crypto_access.dart';
 import '../../data/e2ee/scope_crypto_manager.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/hosting_disclosure.dart';
+import '../shared/sharing_invitation_details.dart';
+import '../../domain/collaboration_models.dart';
 
 /// Joining and granting access remain deliberate. Signed directory validation
 /// and secure first-use identity pins run without asking people to copy cards.
@@ -18,6 +20,8 @@ class CryptoInvitationPage extends StatefulWidget {
     this.label,
     this.recipientLabel,
     this.repository,
+    this.preview,
+    this.kind,
     super.key,
   });
 
@@ -25,12 +29,15 @@ class CryptoInvitationPage extends StatefulWidget {
   final String invitationId;
   final String? scopeId, label, recipientLabel;
   final InviteCryptoRepository? repository;
+  final SharedInvitationPreview? preview;
+  final SharedScopeKind? kind;
 
   @override
   State<CryptoInvitationPage> createState() => _CryptoInvitationPageState();
 }
 
-class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
+class _CryptoInvitationPageState extends State<CryptoInvitationPage>
+    with WidgetsBindingObserver {
   late final invites =
       widget.repository ??
       InviteCryptoRepository(SessionCryptoAccess(account: widget.account));
@@ -38,12 +45,35 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
   Object? _error;
   VerifiedCryptoInvitation? _invite;
   ScopeRotationReview? _review;
+  final _refreshClock = Stopwatch()..start();
+  Duration? _lastRefresh;
 
   bool get _current => mounted && widget.account.directory.isCurrent();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed ||
+        !_current ||
+        _busy ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        (_lastRefresh != null &&
+            _refreshClock.elapsed - _lastRefresh! <
+                const Duration(seconds: 5))) {
+      return;
+    }
     _load();
   }
 
@@ -56,7 +86,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
     try {
       await action();
     } catch (error) {
-      if (mounted) setState(() => _error = error);
+      if (_current) setState(() => _error = error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -64,6 +94,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
 
   Future<void> _load() => _run(() async {
     if (!_current) return;
+    _lastRefresh = _refreshClock.elapsed;
     // Failed or stale reloads must not leave an older grant enabled.
     setState(() {
       _invite = null;
@@ -97,6 +128,11 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
     setState(() {
       _invite = invite;
       _review = review;
+      _pending =
+          widget.scopeId == null &&
+          (_pending ||
+              widget.preview?.awaitingApproval == true ||
+              invite.invitation['state'] == 'accepted');
     });
   });
 
@@ -148,7 +184,11 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
       canPop: !_busy,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.label ?? l.cryptoInvitationGrantTitle),
+          title: Text(
+            widget.scopeId == null
+                ? l.invitationFlowTitle
+                : l.cryptoInvitationGrantTitle,
+          ),
         ),
         body: SafeArea(
           child: Center(
@@ -157,6 +197,19 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
               child: ListView(
                 padding: const EdgeInsets.all(24),
                 children: [
+                  if (widget.preview != null)
+                    SharingInvitationDetails(
+                      invitation: widget.preview!,
+                      showPermissions: false,
+                    )
+                  else if (widget.label != null)
+                    Text(
+                      widget.label!,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    )
+                  else if (widget.scopeId == null)
+                    Text(l.cryptoInvitationTargetUnavailable),
+                  const SizedBox(height: 12),
                   Text(
                     widget.scopeId == null
                         ? l.cryptoInvitationVerifyCreator
@@ -186,19 +239,21 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage> {
                   if (_invite != null) _permissions(_invite!),
                   if (_review != null) ...[
                     const SizedBox(height: 16),
-                    Text(l.cryptoSharingExistingContent),
-                    for (final domain in _review!.domains.entries)
-                      Text(
-                        '${domain.key == 'finance' ? l.organizerFinances : l.cryptoSharingContent}: ${domain.value['count']}',
-                      ),
+                    Text(l.cryptoInvitationContentAccess),
                   ],
-                  if (_invite != null && !_pending && _error == null)
+                  if (_invite != null &&
+                      !_pending &&
+                      _error == null &&
+                      _current)
                     FilledButton(
                       key: const ValueKey('crypto-invitation-confirm'),
                       onPressed: _busy ? null : _continue,
                       child: Text(
                         widget.scopeId == null
-                            ? l.invitationFlowJoinSpace
+                            ? (widget.preview?.kind ?? widget.kind) ==
+                                      SharedScopeKind.project
+                                  ? l.invitationFlowJoinProject
+                                  : l.invitationFlowJoinSpace
                             : l.cryptoInvitationGrantConfirm,
                       ),
                     ),

@@ -1879,7 +1879,7 @@
   "cryptoRebindLocalDevice": "Uporabi že potrjene ključe na tej napravi",
   "cryptoScopeReviewLocal": "Preglej podatke, ki so že na tej napravi",
   "cryptoEmailVerificationRequired": "Pred vnosom v povezani račun potrdite svoj e-poštni naslov. Lokalna uporaba ostane na voljo.",
-  "cryptoInvitationPendingKeys": "Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Prostor se odpre po odobritvi; lokalno lahko nadaljujete z delom.",
+  "cryptoInvitationPendingKeys": "Povabilo je sprejeto. Lastnik mora še odobriti vaš dostop. Dostop lahko znova preverite ali nadaljujete z lokalnim delom.",
   "cryptoInvitationVerifyCreator": "Preglejte povabilo in se pridružite, ko ste pripravljeni. Aplikacija samodejno preveri zaščito računa.",
   "cryptoUnavailableSpace": "Nedostopen prostor",
   "cryptoUnavailableTitle": "Ohrani nedostopne prostore",
@@ -1887,7 +1887,7 @@
   "cryptoUnavailableConfirm": "Razumem in ohranim lokalne podatke",
   "cryptoContinueLocally": "Nadaljuj lokalno",
   "cryptoInvitationGrantTitle": "Potrditev dostopa",
-  "cryptoInvitationGrantExplanation": "Povabljeni je sprejel povabilo. Potrdite spodnji dostop do dosedanje vsebine in novih sprememb tega prostora.",
+  "cryptoInvitationGrantExplanation": "Povabljeni je sprejel povabilo. Preglejte njegova dovoljenja in potrdite dostop.",
   "cryptoInvitationGrantConfirm": "Potrdi dostop",
   "accountRecoveryV2Pending": "Najprej shranite in preverite obnovitveno datoteko tega računa. Nato dokončamo zaščito povezanih prostorov. Doslej ustvarjene strežniške kopije ostanejo do posebej potrjenega odstranjevanja.",
   "accountRecoveryV2Prepared": "Obnovitev računa in ključi te naprave so pripravljeni. Zaščito posameznih prostorov preverimo v naslednjem koraku; nedokončani prostori ohranijo lokalne podatke in čakajoče spremembe.",
@@ -1975,5 +1975,11 @@
       }
     }
   },
-  "sharingProjectMembershipUnavailable": "Članstvo tega projekta še ni pripravljeno. Najprej dokončajte sinhronizacijo projekta."
+  "sharingProjectMembershipUnavailable": "Članstvo tega projekta še ni pripravljeno. Najprej dokončajte sinhronizacijo projekta.",
+  "cryptoInvitationTargetUnavailable": "Šifrirano povabilo. Ime bo vidno, ko lastnik potrdi dostop.",
+  "cryptoInvitationSenderUnavailable": "Podatki o pošiljatelju niso na voljo",
+  "cryptoInvitationReview": "Preglej povabilo",
+  "cryptoInvitationAcceptedNeedsApproval": "Povabilo sprejeto — potrdite dostop",
+  "cryptoInvitationContentAccess": "S tem delite dosedanjo vsebino in nove spremembe skladno z zgornjimi dovoljenji.",
+  "cryptoInvitationAcceptanceUnavailable": "Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni."
 }

@@ -15,6 +15,8 @@ class ReceivedInvitationNoticeState {
 /// A session-scoped, event-driven summary; no timer or background polling.
 final receivedInvitationNoticeProvider =
     FutureProvider<ReceivedInvitationNoticeState?>((ref) async {
+      var disposed = false;
+      ref.onDispose(() => disposed = true);
       ref.watch(pendingInvitationRevisionProvider);
       final now = ref.read(collaborationClockProvider);
       final identity = ref.watch(
@@ -37,6 +39,16 @@ final receivedInvitationNoticeProvider =
       final invitations = await ref
           .read(collaborationProvider.notifier)
           .pendingInvitations();
+      if (disposed) return null;
+      final current = ref.read(collaborationProvider).valueOrNull;
+      if (current == null ||
+          current.sessionInvalid ||
+          current.deletionPending ||
+          current.session?.partition != identity.$1 ||
+          current.session?.deviceId != identity.$2 ||
+          current.session?.expiresAt.isAfter(now()) != true) {
+        return null;
+      }
       return ReceivedInvitationNoticeState(
         partition: identity.$1,
         deviceId: identity.$2,

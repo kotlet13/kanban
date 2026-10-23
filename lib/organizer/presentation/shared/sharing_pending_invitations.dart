@@ -64,7 +64,8 @@ class _InvitationInbox {
   final Object? savedError, inboxError;
 }
 
-class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
+class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
+    with WidgetsBindingObserver {
   late final _guard = SharingSessionGuard(
     context,
     ref,
@@ -74,6 +75,41 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
   String? _error;
   bool _busy = false;
   bool _reloadAfterBusy = false;
+  bool _loading = false;
+  final _refreshClock = Stopwatch()..start();
+  Duration? _lastRefresh;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _eventRefresh() {
+    if (!mounted ||
+        !_guard.isCurrent ||
+        _busy ||
+        _loading ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        (_lastRefresh != null &&
+            _refreshClock.elapsed - _lastRefresh! <
+                const Duration(seconds: 5))) {
+      return;
+    }
+    setState(() => _future = _load(refreshSaved: true));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _eventRefresh();
+  }
+
   final _acceptedInvitations = <String>{};
   String _invitationKey(SharedInvitationPreview invitation) =>
       invitation.invitationId ?? invitation.scopeId;
@@ -100,6 +136,16 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       : (pending.serverUrl, pending.token, pending.accountPartition);
 
   Future<_InvitationInbox> _load({bool refreshSaved = false}) async {
+    _loading = true;
+    _lastRefresh = _refreshClock.elapsed;
+    try {
+      return await _readInvitations(refreshSaved: refreshSaved);
+    } finally {
+      _loading = false;
+    }
+  }
+
+  Future<_InvitationInbox> _readInvitations({bool refreshSaved = false}) async {
     if (!_guard.isCurrent ||
         !widget.session.expiresAt.isAfter(DateTime.now())) {
       return const _InvitationInbox([]);
@@ -200,16 +246,34 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
       _error = null;
     });
     try {
-      if(invitation.contractVersion==4) {
-        final repository=await ref.read(collaborationRepositoryProvider.future);
-        final account=await repository.connectedCryptoAccount();
-        if(!mounted || !_guard.isCurrent)return;
-        final scope=await Navigator.of(context).push<String>(MaterialPageRoute(builder:(_)=>CryptoInvitationPage(account:account,invitationId:invitation.invitationId!)));
-        if(scope!=null && mounted && _guard.isCurrent) {
+      if (invitation.contractVersion == 4) {
+        final repository = await ref.read(
+          collaborationRepositoryProvider.future,
+        );
+        final account = await repository.connectedCryptoAccount();
+        if (!mounted || !_guard.isCurrent) return;
+        final scope = await Navigator.of(context).push<String>(
+          MaterialPageRoute(
+            builder: (_) => CryptoInvitationPage(
+              account: account,
+              invitationId: invitation.invitationId!,
+              preview: invitation,
+            ),
+          ),
+        );
+        if (scope != null && mounted && _guard.isCurrent) {
           await _guard.controller.syncNow();
-          if(!mounted || !_guard.isCurrent)return;
+          if (!mounted || !_guard.isCurrent) return;
           await _guard.controller.selectSpace(scope);
-          if(mounted && _guard.isCurrent)widget.onAccepted(scope);
+          if (mounted && _guard.isCurrent) widget.onAccepted(scope);
+        }
+        if (mounted && _guard.isCurrent) {
+          setState(() {
+            // This fresh projection also consumes any summary refresh queued
+            // while the invitation route or its catch-up was busy.
+            _reloadAfterBusy = false;
+            _future = _load(refreshSaved: true);
+          });
         }
         return;
       }
@@ -286,9 +350,7 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
         if (_busy) {
           _reloadAfterBusy = true;
         } else {
-          setState(() {
-            _future = _load();
-          });
+          _eventRefresh();
         }
       },
     );
@@ -329,14 +391,14 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        context.l10n.invitationFlowInvitationTo(
-                          invitation.scopeName,
-                        ),
-                        style: Theme.of(context).textTheme.titleMedium,
+                      SharingInvitationDetails(
+                        invitation: invitation,
+                        compact: invitation.contractVersion == 4,
                       ),
-                      const SizedBox(height: 12),
-                      SharingInvitationDetails(invitation: invitation),
+                      if (invitation.awaitingApproval) ...[
+                        const SizedBox(height: 12),
+                        Text(context.l10n.cryptoInvitationPendingKeys),
+                      ],
                       const SizedBox(height: 16),
                       FilledButton.icon(
                         key: ValueKey(
@@ -351,6 +413,10 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations> {
                                 _invitationKey(invitation),
                               )
                               ? context.l10n.invitationFlowOpenSpace
+                              : invitation.awaitingApproval
+                              ? context.l10n.cryptoSharingCheckAccess
+                              : invitation.contractVersion == 4
+                              ? context.l10n.cryptoInvitationReview
                               : invitation.kind == SharedScopeKind.project
                               ? context.l10n.invitationFlowJoinProject
                               : context.l10n.invitationFlowJoinSpace,

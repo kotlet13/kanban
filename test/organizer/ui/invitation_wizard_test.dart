@@ -20,6 +20,8 @@ import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_identity_store.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
 import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_sync_repository.dart'
+    show CryptoAuthorityPending;
 
 import 'sharing_ui_fixture.dart';
 import 'local_spaces_navigation_test.dart' show loadCaptureFonts;
@@ -30,10 +32,15 @@ final _link = InvitationLink(
 );
 
 class _Controller extends SharingUiController {
-  _Controller({super.initial, this.viewer = false, this.encrypted = false}) {
+  _Controller({
+    super.initial,
+    this.viewer = false,
+    this.encrypted = false,
+    this.awaitingApproval = false,
+  }) {
     emailPreview = true;
   }
-  final bool viewer, encrypted;
+  final bool viewer, encrypted, awaitingApproval;
   int previews = 0;
   Completer<void>? previewGate, acceptGate;
   int selectFailures = 0;
@@ -73,6 +80,7 @@ class _Controller extends SharingUiController {
       expiresAt: p.expiresAt,
       registrationAllowed: p.registrationAllowed,
       contractVersion: encrypted ? 4 : 3,
+      awaitingApproval: awaitingApproval,
       accessScope: 'space',
       requiresExplicitAcceptance: true,
     );
@@ -128,12 +136,13 @@ class _CryptoInvites extends InviteCryptoRepository {
   _CryptoInvites(_CryptoAccount account)
     : super(SessionCryptoAccess(account: account));
   int trusts = 0, accepts = 0, resumes = 0;
-  Object? trustError;
+  Object? trustError, resumeError;
   Completer<void>? trustGate;
   Future<void> Function()? afterAccept;
   @override
   Future<String?> resumeAccepted(String invitationId) async {
     resumes++;
+    if (resumeError != null) throw resumeError!;
     return null;
   }
 
@@ -300,6 +309,49 @@ void main() {
   final rootEmailLink = InvitationLink.tryParseInput(
     'https://sharing.example.test/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=en#token=fhi4_${'a' * 64}',
   )!;
+
+  testWidgets(
+    'ux26 accepted preview without link checkpoint checks status and surfaces proof error',
+    (tester) async {
+      final controller = _Controller(
+        encrypted: true,
+        viewer: true,
+        awaitingApproval: true,
+      );
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: 'https://sharing.example.test/',
+          token: rootEmailLink.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+      );
+      expect(find.text('Check access'), findsOneWidget);
+      expect(store.value?.accountPartition, isNull);
+      expect(crypto.resumes, 0);
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.resumes, 1);
+      expect(crypto.accepts, 0);
+      crypto.resumeError = const CryptoAuthorityPending(
+        'invitation_proof_pending',
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.resumes, 2);
+      expect(crypto.accepts, 0);
+      expect(
+        find.textContaining('cannot verify the saved acceptance'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'canonical HTTPS Join persists pending keys and resumes same accepted invitation',
     (tester) async {

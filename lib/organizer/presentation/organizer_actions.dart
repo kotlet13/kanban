@@ -96,6 +96,7 @@ class OrganizerActions implements OrganizerCollectionActions {
     onShare: project == null || onProjectShare == null
         ? null
         : () => onProjectShare!(project),
+    shareActionLabel: context.l10n.sharingCopyAction,
     draft: OrganizerDraft(
       phases: project?.phases ?? const [],
       availabilityMinutes: project?.availabilityMinutes,

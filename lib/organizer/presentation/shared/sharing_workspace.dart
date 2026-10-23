@@ -315,9 +315,19 @@ class SharingWorkspace extends ConsumerWidget {
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
             final readOnly = !scope.canEdit || !state.localAccessAllowed;
+            final canonicalProject = scope.kind == SharedScopeKind.project
+                ? data.projects
+                      .where((project) => project.id == scope.projectRootId)
+                      .firstOrNull
+                : null;
+            final dedicatedProject =
+                canonicalProject != null && data.projects.length == 1;
+            final effectiveProjectId = dedicatedProject
+                ? canonicalProject.id
+                : selectedProjectId;
             final projectDetail =
                 view == SharingView.projects &&
-                data.projects.any((p) => p.id == selectedProjectId);
+                data.projects.any((p) => p.id == effectiveProjectId);
             final status = view == SharingView.agenda || projectDetail
                 ? syncStatus
                 : Row(
@@ -435,6 +445,56 @@ class SharingWorkspace extends ConsumerWidget {
                     },
               );
             }
+            Widget projectMenu(LocalProject project, {bool card = false}) =>
+                SharedContentActionsMenu(
+                  scopeId: scope.id,
+                  targetId: project.id,
+                  actions: [
+                    if (card)
+                      ContentMenuAction(
+                        label: l.sharingProjectMembersAction,
+                        icon: Icons.people_outline,
+                        onSelected: () => actions.shareProject(project),
+                      ),
+                    if (project.id == scope.projectRootId ||
+                        project.id == scope.id)
+                      ContentMenuAction(
+                        label: l.documentsAttachments,
+                        icon: Icons.attach_file,
+                        onSelected: () => openSharedDocuments(context, scope),
+                      ),
+                    if (!readOnly && !project.archived)
+                      ContentMenuAction(
+                        label: l.organizerEditProject,
+                        icon: Icons.edit_outlined,
+                        onSelected: () => actions.project(project),
+                      ),
+                    if (project.id == scope.projectRootId)
+                      ...scopeLifecycleContentActions(context, ref, scope)
+                    else ...[
+                      if (!readOnly && state.projectArchivingSupported)
+                        ContentMenuAction(
+                          label: project.archived
+                              ? l.peopleRestore
+                              : l.peopleArchive,
+                          icon: project.archived
+                              ? Icons.unarchive_outlined
+                              : Icons.archive_outlined,
+                          onSelected: () => actions.archiveProject(
+                            project,
+                            archived: !project.archived,
+                          ),
+                        ),
+                      if (!readOnly && state.scopeDeletionSupported)
+                        ContentMenuAction(
+                          label: l.delete,
+                          icon: Icons.delete_outline,
+                          destructive: true,
+                          onSelected: () => actions.deleteProject(project),
+                        ),
+                    ],
+                  ],
+                );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -500,51 +560,9 @@ class SharingWorkspace extends ConsumerWidget {
                       titleAccessory: status,
                       onShare: (project) => actions.shareProject(project),
                       shareActionLabel: l.sharingProjectMembersAction,
-                      detailMenuBuilder: (project) => SharedContentActionsMenu(
-                        scopeId: scope.id,
-                        targetId: project.id,
-                        actions: [
-                          if (project.id == scope.projectRootId ||
-                              project.id == scope.id)
-                            ContentMenuAction(
-                              label: l.documentsAttachments,
-                              icon: Icons.attach_file,
-                              onSelected: () =>
-                                  openSharedDocuments(context, scope),
-                            ),
-                          if (!readOnly && !project.archived)
-                            ContentMenuAction(
-                              label: l.organizerEditProject,
-                              icon: Icons.edit_outlined,
-                              onSelected: () => actions.project(project),
-                            ),
-                          if (project.id == scope.projectRootId)
-                            ...scopeLifecycleContentActions(context, ref, scope)
-                          else ...[
-                            if (!readOnly && state.projectArchivingSupported)
-                              ContentMenuAction(
-                                label: project.archived
-                                    ? l.peopleRestore
-                                    : l.peopleArchive,
-                                icon: project.archived
-                                    ? Icons.unarchive_outlined
-                                    : Icons.archive_outlined,
-                                onSelected: () => actions.archiveProject(
-                                  project,
-                                  archived: !project.archived,
-                                ),
-                              ),
-                            if (!readOnly && state.scopeDeletionSupported)
-                              ContentMenuAction(
-                                label: l.delete,
-                                icon: Icons.delete_outline,
-                                destructive: true,
-                                onSelected: () =>
-                                    actions.deleteProject(project),
-                              ),
-                          ],
-                        ],
-                      ),
+                      detailMenuBuilder: (project) => projectMenu(project),
+                      cardMenuBuilder: (project) =>
+                          projectMenu(project, card: true),
                       reminderScopeId: scope.id,
                       reportScopeId: scope.id,
                       allowProjectCreation:
@@ -555,7 +573,8 @@ class SharingWorkspace extends ConsumerWidget {
                       ),
                       snapshot: sharedPresentationSnapshot(data),
                       actions: actions,
-                      selectedId: selectedProjectId,
+                      selectedId: effectiveProjectId,
+                      detailOnly: dedicatedProject,
                       onSelection: onProjectSelected ?? (_) {},
                       readOnly: readOnly,
                       scopeLabel: '${scope.name} · ${l.sharingShared}',

@@ -27,6 +27,8 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.onShare,
     this.shareActionLabel,
     this.detailMenuBuilder,
+    this.cardMenuBuilder,
+    this.detailOnly = false,
   });
   final OrganizerSnapshot snapshot;
   final OrganizerCollectionActions actions;
@@ -39,6 +41,10 @@ class OrganizerProjectsPage extends StatefulWidget {
   final ValueChanged<LocalProject>? onShare;
   final String? shareActionLabel;
   final Widget Function(LocalProject)? detailMenuBuilder;
+  final Widget Function(LocalProject)? cardMenuBuilder;
+
+  /// A dedicated project scope has no sibling project list to navigate back to.
+  final bool detailOnly;
   final bool home;
   final String? selectedId;
   final ValueChanged<String?> onSelection;
@@ -68,10 +74,20 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               (_category == null || p.area == _category),
         )
         .toList();
-    final selected = [
-      ...visibleProjects,
-      ...archivedProjects,
-    ].where((p) => p.id == widget.selectedId).firstOrNull;
+    final selected =
+        (widget.detailOnly
+                ? widget.snapshot.projects
+                : [...visibleProjects, ...archivedProjects])
+            .where((p) => p.id == widget.selectedId)
+            .firstOrNull;
+    if (widget.detailOnly) {
+      return selected == null
+          ? OrganizerEmpty(
+              icon: Icons.folder_outlined,
+              title: l.organizerNoProjects,
+            )
+          : _detail(selected, false);
+    }
     final projects = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -297,8 +313,11 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
     );
   }
 
-  Widget _projectMenu(LocalProject project) {
+  Widget _projectMenu(LocalProject project, {bool card = true}) {
     final l = context.l10n;
+    if (card && widget.cardMenuBuilder != null) {
+      return widget.cardMenuBuilder!(project);
+    }
     if (widget.readOnly) return const Icon(Icons.chevron_right, size: 20);
     return PopupMenuButton<String>(
       key: ValueKey('project-menu-${project.id}'),
@@ -363,9 +382,13 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
             Expanded(
               child: OrganizerHeading(
                 title: project.title,
-                titleAccessory: back ? widget.titleAccessory : null,
+                titleAccessory: back || widget.detailOnly
+                    ? widget.titleAccessory
+                    : null,
                 subtitle: project.description.isEmpty
-                    ? (widget.scopeLabel ?? l.organizerPersonal)
+                    ? (widget.detailOnly
+                          ? null
+                          : widget.scopeLabel ?? l.organizerPersonal)
                     : project.description,
               ),
             ),
@@ -384,12 +407,8 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                     ),
                 ],
               )
-            else if (!readOnly)
-              IconButton(
-                tooltip: l.organizerEditProject,
-                onPressed: () => widget.actions.project(project),
-                icon: const Icon(Icons.more_horiz),
-              ),
+            else if (!widget.readOnly)
+              _projectMenu(project, card: false),
           ],
         ),
         if (widget.onShare != null)

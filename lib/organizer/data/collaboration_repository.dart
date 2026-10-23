@@ -15,6 +15,7 @@ import 'e2ee/account_crypto_v2_workflow.dart';
 import 'e2ee/account_directory_repository.dart';
 import 'e2ee/account_directory_v2.dart';
 import 'e2ee/crypto_identity_store.dart';
+import 'e2ee/crypto_invitation_display.dart';
 import 'e2ee/crypto_capability_discovery.dart';
 import 'e2ee/crypto_codec.dart';
 import 'e2ee/crypto_domain_router.dart';

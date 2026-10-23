@@ -70,7 +70,8 @@ class InvitationWizard extends ConsumerStatefulWidget {
   ConsumerState<InvitationWizard> createState() => _InvitationWizardState();
 }
 
-class _InvitationWizardState extends ConsumerState<InvitationWizard> {
+class _InvitationWizardState extends ConsumerState<InvitationWizard>
+    with WidgetsBindingObserver {
   final _form = GlobalKey<FormState>();
   final _input = TextEditingController();
   final _server = TextEditingController();
@@ -89,6 +90,80 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
   bool _cryptoPending = false;
+  final _accessRefreshClock = Stopwatch()..start();
+  Duration? _lastAccessRefresh;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed ||
+        !_cryptoPending ||
+        _busy ||
+        !_active ||
+        !_matchingSession ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        (_lastAccessRefresh != null &&
+            _accessRefreshClock.elapsed - _lastAccessRefresh! <
+                const Duration(seconds: 5))) {
+      return;
+    }
+    _refreshPendingAccess();
+  }
+
+  // A lifecycle refresh only checks an already accepted invitation. It never
+  // invokes accept, creates a grant, or replaces the saved capability.
+  Future<void> _refreshPendingAccess({
+    bool allowSetup = false,
+  }) => _run(() async {
+    _lastAccessRefresh = _accessRefreshClock.elapsed;
+    final link = _link;
+    final identity = _identity;
+    if (link == null || !_active || !_matchingSession) return;
+    bool current() =>
+        mounted &&
+        _active &&
+        _matchingSession &&
+        _identity == identity &&
+        _link?.token == link.token &&
+        _sameServer(_link?.serverUrl, link.serverUrl);
+    final repository = await ref.read(collaborationRepositoryProvider.future);
+    if (!current()) return;
+    final workflow = await repository.connectedCryptoAccount();
+    if (!current()) return;
+    final saved = await ref.read(pendingInvitationStoreProvider).read();
+    if (!current()) return;
+    if (saved?.token != link.token ||
+        !_sameServer(saved?.serverUrl, link.serverUrl) ||
+        saved?.serverId != null && saved!.serverId != _session?.serverId ||
+        saved?.accountPartition != null &&
+            saved!.accountPartition != workflow.store.partition) {
+      throw const CollaborationException('session_changed');
+    }
+    // A link opened after acceptance in the inbox may have no account-bound
+    // link checkpoint. Its current preview ID can only request status;
+    // resumeAccepted still requires the exact local signed intent to activate.
+    final invitationId = saved?.accountPartition == workflow.store.partition
+        ? saved?.invitationId ?? _preview?.invitationId
+        : _preview?.invitationId;
+    if (invitationId == null) {
+      throw const CollaborationException('invitation_invalid');
+    }
+    final phase = await workflow.localPhase();
+    if (!current()) return;
+    if (phase != 'ready') {
+      if (!allowSetup || !mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => AccountCryptoWizard(workflow: workflow),
+        ),
+      );
+      if (!current()) return;
+      final ready = await workflow.localPhase();
+      if (!current() || ready != 'ready') return;
+    }
+    final target = await _cryptoInvites(workflow).resumeAccepted(invitationId);
+    if (!current()) return;
+    if (target != null) await _openEncryptedTarget(target, link);
+  });
 
   bool get _active {
     final incoming = ref.read(pendingInvitationLinkProvider);
@@ -118,6 +193,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _restore());
   }
 
@@ -237,6 +313,8 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     if (!_active || _identity != identity || _link != link) return;
     setState(() {
       _preview = preview;
+      _cryptoPending = preview.awaitingApproval;
+      if (_cryptoPending) _notice = context.l10n.cryptoInvitationPendingKeys;
       _step = _InvitationStep.preview;
       if (!preview.isEmailInvitation) {
         _username.text = preview.recipientUsername;
@@ -534,6 +612,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
     if (!current() || !savedAcceptance) return;
     setState(() {
       _cryptoPending = true;
+      _lastAccessRefresh = _accessRefreshClock.elapsed;
       _notice = context.l10n.cryptoInvitationPendingKeys;
     });
   });
@@ -608,6 +687,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _generation++;
     for (final c in [
       _input,
@@ -707,7 +787,11 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                           SharingInvitationDetails(invitation: _preview!)
                         else ...[
                           Text(
-                            l.invitationFlowInvitationTo(_preview!.scopeName),
+                            _preview!.scopeNameAvailable
+                                ? l.invitationFlowInvitationTo(
+                                    _preview!.scopeName,
+                                  )
+                                : l.cryptoInvitationTargetUnavailable,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           if (_preview!.inviterName.isNotEmpty)
@@ -731,6 +815,8 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard> {
                                 ? null
                                 : _joined
                                 ? () => _run(() => _finishJoined(_preview!))
+                                : _cryptoPending
+                                ? () => _refreshPendingAccess(allowSetup: true)
                                 : _join,
                             child: Text(
                               _cryptoPending

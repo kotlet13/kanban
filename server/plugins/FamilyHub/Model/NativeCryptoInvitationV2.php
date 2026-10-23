@@ -234,7 +234,17 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     {
         $scope = $retainedRecipient ? $this->one('SELECT * FROM familyhub_scopes WHERE id=?', [$row['scope_id']]) : $this->usable($row);
         if (!$scope) throw new NativeError('invitation_invalid',404);
-        return ($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+['invitation' => $this->wire($row),'scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','projectFinanceIncluded' => (int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1) >= 2],'registrationAllowed' => $row['recipient_kind'] === 'email','creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
+        return $this->inviterDisplay($row)+($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+['invitation' => $this->wire($row),'scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','projectFinanceIncluded' => (int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1) >= 2],'registrationAllowed' => $row['recipient_kind'] === 'email','creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
+    }
+
+    /** Host display metadata only. The scope title and domain keys stay private. */
+    private function inviterDisplay($row)
+    {
+        $creator = $this->one('SELECT a.account_id,u.username,u.name FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=? AND u.is_active=1', [$row['creator_account_id']]);
+        if (!$creator || !is_string($creator['username']) || $creator['username']==='' || strlen($creator['username'])>100 || preg_match('/[\x00-\x1f\x7f]/', $creator['username'])) return [];
+        $name = $creator['name'] ?: $creator['username'];
+        if (!is_string($name) || strlen($name)>200 || preg_match('/[\x00-\x1f\x7f]/', $name)) $name=$creator['username'];
+        return ['inviterAccountId'=>$creator['account_id'],'inviterUsername'=>$creator['username'],'inviterName'=>$name];
     }
 
     private function candidateHeads($row)

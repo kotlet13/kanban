@@ -111,6 +111,7 @@ Future<void> showOrganizerEditor(
   Future<void> Function()? onDelete,
   Future<bool> Function()? onDeleteWithReview,
   Future<void> Function()? onShare,
+  String? shareActionLabel,
   String? projectContext,
   Future<void> Function()? onReport,
   String Function(Object)? errorMessage,
@@ -144,6 +145,7 @@ Future<void> showOrganizerEditor(
       onDelete: onDelete,
       onDeleteWithReview: onDeleteWithReview,
       onShare: onShare,
+      shareActionLabel: shareActionLabel,
       projectContext: projectContext,
       onReport: onReport,
       errorMessage: errorMessage,
@@ -182,6 +184,7 @@ class _RecordEditor extends StatefulWidget {
     this.onDelete,
     this.onDeleteWithReview,
     this.onShare,
+    this.shareActionLabel,
     this.projectContext,
     this.onReport,
     this.errorMessage,
@@ -198,6 +201,7 @@ class _RecordEditor extends StatefulWidget {
   final String? projectContext;
   final Future<bool> Function()? onDeleteWithReview;
   final Future<void> Function()? onShare;
+  final String? shareActionLabel;
   final Set<String>? localRecordIds;
   final String? recordId;
   final List<OrganizerPersonOption> people;
@@ -540,7 +544,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                     key: const ValueKey('project-editor-sharing'),
                     onPressed: _busy ? null : widget.onShare,
                     icon: const Icon(Icons.people_outline),
-                    label: Text(l.sharingMembers),
+                    label: Text(widget.shareActionLabel ?? l.sharingMembers),
                   ),
                 ],
                 if (widget.kind == OrganizerEditorKind.project &&

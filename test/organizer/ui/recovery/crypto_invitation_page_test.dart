@@ -16,6 +16,7 @@ import 'package:kanban/organizer/data/e2ee/crypto_inherited_invitation_evidence.
 import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
 import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
 import 'package:kanban/organizer/presentation/recovery/crypto_invitation_page.dart';
+import 'package:kanban/organizer/domain/collaboration_models.dart';
 
 class _Directory implements AccountDirectoryRepository {
   bool current = true;
@@ -81,11 +82,15 @@ class _Invites extends InviteCryptoRepository {
   Object? trustError, grantError;
   Completer<void>? trustGate, grantGate;
   String? resumed;
-  int trusts = 0, accepts = 0, grants = 0;
+  int trusts = 0, accepts = 0, grants = 0, resumes = 0;
   @override
   ScopeCryptoManager get manager => _Manager(access);
   @override
-  Future<String?> resumeAccepted(String invitationId) async => resumed;
+  Future<String?> resumeAccepted(String invitationId) async {
+    resumes++;
+    return resumed;
+  }
+
   @override
   Future<VerifiedCryptoInvitation> inspect({
     String? token,
@@ -133,6 +138,7 @@ Future<void> _pump(
   bool settle = true,
   String locale = 'en',
   ValueChanged<String?>? onResult,
+  SharedInvitationPreview? preview,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -155,6 +161,7 @@ Future<void> _pump(
                       account: account,
                       repository: invites,
                       invitationId: 'invite',
+                      preview: preview,
                       scopeId: owner ? 'scope' : null,
                     ),
                   ),
@@ -177,6 +184,227 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets(
+    'ux26 verified final permissions override stale preview metadata',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final account = _Account(), invites = _Invites(_Account());
+      await _pump(
+        tester,
+        account,
+        invites,
+        preview: SharedInvitationPreview(
+          scopeName: 'Encrypted space',
+          scopeId: 'scope',
+          kind: SharedScopeKind.project,
+          recipientUsername: 'recipient',
+          role: SharedRole.owner,
+          expiresAt: DateTime.utc(2099),
+          registrationAllowed: false,
+          invitationId: 'invite',
+          contractVersion: 4,
+          projectFinanceIncluded: true,
+        ),
+      );
+      expect(find.text('Access: Can view'), findsOneWidget);
+      expect(find.text('No access to finances'), findsOneWidget);
+      expect(find.text('Owner'), findsNothing);
+      expect(
+        find.textContaining('includes access to all finances'),
+        findsNothing,
+      );
+      expect(find.textContaining('older access rules'), findsNothing);
+      expect(invites.accepts, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'ux26 restored accepted preview retains explicit waiting without accepting again',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final account = _Account(), invites = _Invites(_Account());
+      await _pump(
+        tester,
+        account,
+        invites,
+        preview: SharedInvitationPreview(
+          scopeName: 'Encrypted space',
+          scopeId: 'scope',
+          kind: SharedScopeKind.project,
+          recipientUsername: 'recipient',
+          role: SharedRole.viewer,
+          expiresAt: DateTime.utc(2099),
+          registrationAllowed: false,
+          invitationId: 'invite',
+          contractVersion: 4,
+          awaitingApproval: true,
+        ),
+      );
+      expect(
+        find.textContaining('owner still needs to approve'),
+        findsOneWidget,
+      );
+      expect(find.text('Join project'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-retry')));
+      await tester.pumpAndSettle();
+      expect(invites.accepts, 0);
+      expect(invites.resumes, 2);
+      expect(
+        find.textContaining('owner still needs to approve'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final locale in ['en', 'sl']) {
+    testWidgets(
+      'ux26 approval shows permissions without internal counts $locale',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final account = _Account(), invites = _Invites(_Account());
+        await _pump(tester, account, invites, owner: true, locale: locale);
+        expect(
+          find.text(
+            locale == 'sl' ? 'Brez dostopa do financ' : 'No access to finances',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(
+            locale == 'sl' ? 'zgornjimi dovoljenji' : 'permissions above',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text(locale == 'sl' ? 'Vsebina: 3' : 'Content: 3'),
+          findsNothing,
+        );
+        expect(invites.grants, 0);
+        expect(invites.accepts, 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets(
+    'ux26 recipient sees one honest preview then waits without another Join',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final account = _Account(), invites = _Invites(_Account());
+      await _pump(
+        tester,
+        account,
+        invites,
+        preview: SharedInvitationPreview(
+          scopeName: 'Encrypted space',
+          scopeNameAvailable: false,
+          scopeId: 'scope',
+          kind: SharedScopeKind.project,
+          recipientUsername: 'recipient',
+          role: SharedRole.viewer,
+          expiresAt: DateTime.utc(2099),
+          registrationAllowed: false,
+          inviterName: 'Sender',
+          inviterUsername: 'sender.account',
+          inviterAccountId: 'sender-account',
+          invitationId: 'invite',
+          contractVersion: 4,
+        ),
+      );
+      expect(find.text('Encrypted space'), findsNothing);
+      expect(
+        find.textContaining(
+          'name becomes visible after the owner confirms access',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Invited by Sender (sender.account)'), findsOneWidget);
+      expect(find.text('Join project'), findsOneWidget);
+      expect(find.textContaining('sharing.example.test'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+      );
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('owner still needs to approve'),
+        findsOneWidget,
+      );
+      expect(find.text('Join project'), findsNothing);
+      expect(find.text('Check access'), findsOneWidget);
+      expect(invites.accepts, 1);
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-retry')));
+      await tester.pumpAndSettle();
+      expect(invites.accepts, 1);
+      expect(find.text('Join project'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'ux26 resume opens approved target once and throttles duplicate lifecycle events',
+    (tester) async {
+      final account = _Account(), invites = _Invites(_Account());
+      await _pump(tester, account, invites);
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(
+        invites.resumes,
+        1,
+        reason: 'The startup read and immediate resume are coalesced',
+      );
+      invites.resumed = 'scope';
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5100)),
+      );
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(invites.resumes, 2);
+      expect(invites.accepts, 1);
+      expect(invites.grants, 0);
+      expect(find.byType(CryptoInvitationPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('ux26 stale account resume cannot refresh or accept invitation', (
+    tester,
+  ) async {
+    final account = _Account(), invites = _Invites(_Account());
+    await _pump(tester, account, invites);
+    account.directory.current = false;
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5100)),
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(invites.resumes, 1);
+    expect(invites.accepts, 0);
+    expect(invites.grants, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final locale in ['en', 'sl']) {
     testWidgets('recipient deliberately joins without card or code $locale', (
       tester,
@@ -231,7 +459,7 @@ void main() {
         );
         expect(
           find.text(locale == 'sl' ? 'Vsebina: 3' : 'Content: 3'),
-          findsOneWidget,
+          findsNothing,
         );
         expect(find.byType(AlertDialog), findsNothing);
         await tester.tap(

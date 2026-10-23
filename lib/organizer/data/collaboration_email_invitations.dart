@@ -95,6 +95,10 @@ extension CollaborationEmailInvitations on CollaborationRepository {
   SharedInvitationPreview _emailInvitationPreview(Map<String, dynamic> reply) {
     final invitation = reply['invitation'] as Map<String, dynamic>,
         scope = reply['scope'] as Map<String, dynamic>;
+    final encrypted = invitation['contractVersion'] == 4;
+    final inviter = encrypted
+        ? parseCryptoInvitationDisplay(reply)
+        : const <String, String>{};
     return SharedInvitationPreview(
       scopeName: readString(scope, 'name'),
       scopeId: readString(scope, 'id'),
@@ -112,7 +116,13 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       invitationId: readString(invitation, 'id'),
       contractVersion: invitation['contractVersion'] as int? ?? 2,
       accessScope: invitation['accessScope'] as String?,
-      inviterName: reply['inviterName'] as String? ?? '',
+      inviterName: encrypted
+          ? inviter['displayName'] ?? ''
+          : reply['inviterName'] as String? ?? '',
+      inviterAccountId: inviter['accountId'],
+      inviterUsername: inviter['username'] ?? '',
+      scopeNameAvailable: !encrypted,
+      awaitingApproval: encrypted && invitation['state'] == 'accepted',
       projectFinanceIncluded: scope['projectFinanceIncluded'] == true,
       requiresExplicitAcceptance: reply['requiresExplicitAcceptance'] == true,
       role: SharedRole.values.byName(readString(invitation, 'role')),

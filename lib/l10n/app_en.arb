@@ -1879,7 +1879,7 @@
   "cryptoRebindLocalDevice": "Use approved keys already on this device",
   "cryptoScopeReviewLocal": "Review data already on this device",
   "cryptoEmailVerificationRequired": "Verify your email address before entering connected account data. Local use remains available.",
-  "cryptoInvitationPendingKeys": "Invitation accepted. The owner still needs to approve your access. The space opens after approval; you can keep working locally.",
+  "cryptoInvitationPendingKeys": "Invitation accepted. The owner still needs to approve your access. You can check access again or keep working locally.",
   "cryptoInvitationVerifyCreator": "Review the invitation, then join when you are ready. The app checks the account’s protection automatically.",
   "cryptoUnavailableSpace": "Unavailable space",
   "cryptoUnavailableTitle": "Keep unavailable spaces",
@@ -1887,7 +1887,7 @@
   "cryptoUnavailableConfirm": "I understand; keep local data",
   "cryptoContinueLocally": "Continue locally",
   "cryptoInvitationGrantTitle": "Confirm access",
-  "cryptoInvitationGrantExplanation": "The recipient accepted the invitation. Confirm the access below to share this space’s existing content and future changes.",
+  "cryptoInvitationGrantExplanation": "The recipient accepted the invitation. Review their permissions, then confirm access.",
   "cryptoInvitationGrantConfirm": "Confirm access",
   "accountRecoveryV2Pending": "First save and verify this account’s recovery file. Then finish protection for connected spaces. Existing server copies remain until their removal is separately confirmed.",
   "accountRecoveryV2Prepared": "Account recovery and this device’s keys are ready. The next step checks each space’s protection; unfinished spaces retain local data and queued changes.",
@@ -1975,5 +1975,11 @@
       }
     }
   },
-  "sharingProjectMembershipUnavailable": "Membership for this project is not ready yet. Finish synchronizing the project first."
+  "sharingProjectMembershipUnavailable": "Membership for this project is not ready yet. Finish synchronizing the project first.",
+  "cryptoInvitationTargetUnavailable": "Encrypted invitation. The name becomes visible after the owner confirms access.",
+  "cryptoInvitationSenderUnavailable": "Sender details unavailable",
+  "cryptoInvitationReview": "Review invitation",
+  "cryptoInvitationAcceptedNeedsApproval": "Invitation accepted — confirm access",
+  "cryptoInvitationContentAccess": "This shares existing content and future changes according to the permissions above.",
+  "cryptoInvitationAcceptanceUnavailable": "This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved."
 }

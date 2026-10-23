@@ -1,5 +1,32 @@
 # Navodila za delo na projektu
 
+23. oktober — **r20: povabila in projektni UX; lokalni in ozki Mac pregled PASS**.
+Novo naročilo za preostale ugotovitve; Sol6.1/high implementacija ter root/
+neodvisni pregled. V4 kartica je kratek povzetek→Preglej povabilo, končni
+pregled kaže preverjena dovoljenja; brez trditve o manj klikih celotnega
+deljenja. Naslov pred grantom ostaja šifriran/neznan; jasen fallback in
+account-bound host display pošiljatelj, ne identityproof. Viden pending/
+Potrdi dostop; lifecycle/return osvežitev5s/currentroute/account/singleflight,
+brez polling/autoaccept/grant. Manjkajoč linkcheckpoint uporabi previewID
+samo za status; exact signed intent še obvezen pred aktivacijo. Notranji
+števci skriti; exact sole canonicalproject odpre detail, ambiguous ostane
+list; categoryfilter ne skrije dedicatedroot. Meniji poenoteni/lokalna
+kopija pravilno poimenovana.33novihkontrolPASS(13metadata+10nav+10UI),
+fixtureFAIL ohranjeni; zadnji reloadAfterBusy clear samo source-review,
+ni34.PASS. Native r20 A/B:1build+1install vsak,1novGUI pregled vsak:
+Projects→isti projekt neposredno, en Sharingandmembers, pričakovani meniji.
+Brez clickmembership/CRUD/manualSync/reinvite/accept/grant/oldPASS.
+224HTTP200/0actual429, ne speedbenchmark. KnownContinue oba; začetni
+AX stale click A nedostavljen, ne appFAIL. NormalQuit oba/procesaodsotna.
+Backend samo1PHPdisplaydelta,183files/schema20/config/TLS isti; fresh
+otherContainerStateOrImageChanges[],4drugeappmetapodatki isti. Vaultbyte
+parity UNVERIFIED/TCC brezobvoda.8cachemap3.328.540.209B odstranjenih;
+592sourceinputs/instanco, paketi/ključi/podatki/dokazi ohranjeni. AOT
+A40a7ad52…/Bc8a4d331…; nativepovabilo/mobile/produkcijskaizdaja še NE.
+Poročilo docs/UX_SHARING_REVIEW_2026_10_23.md; dokazi sharing-followup-,
+sharing-ux-fixes- in project-navigation-ux-20261023 v local-diagnostics.
+Final environment e7400ecf… v zasebnem share-20261019/r20-final-environment-metadata.json.
+
 23. oktober — **Mac: prenos, imena in neposredni člani PASS**.
 Novo naročilo: najprej429, nato projectroot/članstvo in imena; Sol6.1/high
 implementacija ter glavni/neodvisni pregled PASS. Samo isti Mac A/B in

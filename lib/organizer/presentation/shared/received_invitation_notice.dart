@@ -20,6 +20,9 @@ class ReceivedInvitationNotice extends ConsumerStatefulWidget {
 class _ReceivedInvitationNoticeState
     extends ConsumerState<ReceivedInvitationNotice>
     with WidgetsBindingObserver {
+  final _refreshClock = Stopwatch()..start();
+  Duration _lastRefresh = Duration.zero;
+
   @override
   void initState() {
     super.initState();
@@ -34,9 +37,24 @@ class _ReceivedInvitationNoticeState
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.invalidate(receivedInvitationNoticeProvider);
+    if (state != AppLifecycleState.resumed ||
+        !mounted ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        _refreshClock.elapsed - _lastRefresh < const Duration(seconds: 5)) {
+      return;
     }
+    final current = ref.read(collaborationProvider).valueOrNull;
+    final session = current?.session;
+    if (current == null ||
+        session == null ||
+        current.sessionInvalid ||
+        current.deletionPending ||
+        !session.expiresAt.isAfter(ref.read(collaborationClockProvider)())) {
+      return;
+    }
+    if (ref.read(receivedInvitationNoticeProvider).isLoading) return;
+    _lastRefresh = _refreshClock.elapsed;
+    ref.invalidate(receivedInvitationNoticeProvider);
   }
 
   @override

@@ -105,6 +105,30 @@ Future<ProviderContainer> _pumpNotice(
 
 void main() {
   testWidgets(
+    'ux26 resumed notice keeps a delayed invitation read single flight',
+    (tester) async {
+      final delayed = Completer<List<SharedInvitationPreview>>();
+      final controller = _NoticeController()..paused = delayed;
+      await _pumpNotice(tester, controller);
+      expect(controller.pendingCalls, 1);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5100)),
+      );
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(controller.pendingCalls, 1);
+      delayed.complete([noticeInvitation()]);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('received-invitation-notice')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'SMTP-off username notice opens dedicated explicit decision route',
     (tester) async {
       final controller = _NoticeController()
