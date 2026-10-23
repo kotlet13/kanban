@@ -41,7 +41,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         },true);
     }
 
-    private function recipient($value)
+    protected function recipient($value)
     {
         $value = $this->text($value, 254);
         if (str_contains($value, '@')) {
@@ -59,7 +59,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         return ['kind' => 'username','value' => $username,'accountId' => $user['account_id']];
     }
 
-    private function matches($row, $actor)
+    protected function matches($row, $actor)
     {
         if ($row['recipient_kind'] === 'username') {
             return $row['recipient_account_id'] === $actor['user']['account_id'];
@@ -105,7 +105,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
             ? $this->bridgeHelper()->retained($row['token_hash']) : null;
     }
 
-    private function invitation($id)
+    protected function invitation($id)
     {
         $row = $this->one('SELECT * FROM familyhub_crypto_invitations_v2 WHERE id=?', [$this->uuid($id)]);
         if (!$row) {
@@ -206,7 +206,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         return $this->directoryPrefix($row['creator_account_id'],$reference,$after,$limit);
     }
 
-    private function directoryPrefix($account,$hash,$after,$limit)
+    protected function directoryPrefix($account,$hash,$after,$limit)
     {
         if (!is_int($after) || $after < 0 || !is_int($limit) || $limit < 1 || $limit > 50) {
             throw new NativeError('invalid_cursor');
@@ -234,7 +234,8 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     {
         $scope = $retainedRecipient ? $this->one('SELECT * FROM familyhub_scopes WHERE id=?', [$row['scope_id']]) : $this->usable($row);
         if (!$scope) throw new NativeError('invitation_invalid',404);
-        return $this->inviterDisplay($row)+($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+['invitation' => $this->wire($row),'scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','projectFinanceIncluded' => (int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1) >= 2],'registrationAllowed' => $row['recipient_kind'] === 'email','creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
+        $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);$publication=$prepared->binding($row)?$prepared->publication($row['id']):null;
+        return $this->inviterDisplay($row)+($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+($publication?['preauthorizationHeadHash'=>$publication['head_hash'],'publicationAuthorization'=>json_decode($publication['authorization'],true,34,JSON_THROW_ON_ERROR)]:[])+['invitation' => $this->wire($row),'scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','projectFinanceIncluded' => (int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1) >= 2],'registrationAllowed' => $row['recipient_kind'] === 'email'&&$row['recipient_account_id']===null,'creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
     }
 
     /** Host display metadata only. The scope title and domain keys stay private. */
@@ -272,11 +273,12 @@ class NativeCryptoInvitationV2 extends NativeDatabase
 
     private function wire($row)
     {
-        return ['id' => $row['id'],'scopeId' => $row['scope_id'],'role' => $row['role'],'expiresAt' => gmdate('Y-m-d\TH:i:s\Z', (int)$row['expires_at']),'expiresAtEpoch' => (int)$row['expires_at'],'state' => $row['state'],'recipient' => ['kind' => $row['recipient_kind'],'value' => $row['recipient_value'],'accountId' => $row['recipient_account_id']],'createdAt' => gmdate('Y-m-d\TH:i:s\Z', (int)$row['created_at']),'contractVersion' => 4,'tokenHash' => $row['token_hash'],'creatorProofHash' => NativeCryptoV2Codec::hash((object)json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR))]+(($legacy=$this->bridgeEvidence($row))===null?[]:['legacyAcceptedAtEpoch'=>$legacy['legacyAcceptedAtEpoch'],'legacyRevokedAtEpoch'=>$legacy['legacyRevokedAtEpoch']]);
+        return ['id' => $row['id'],'scopeId' => $row['scope_id'],'role' => $row['role'],'expiresAt' => gmdate('Y-m-d\TH:i:s\Z', (int)$row['expires_at']),'expiresAtEpoch' => (int)$row['expires_at'],'state' => $row['state'],'recipient' => ['kind' => $row['recipient_kind'],'value' => $row['recipient_value'],'accountId' => $row['recipient_account_id']],'createdAt' => gmdate('Y-m-d\TH:i:s\Z', (int)$row['created_at']),'contractVersion' => 4,'tokenHash' => $row['token_hash'],'creatorProofHash' => NativeCryptoV2Codec::hash((object)json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR))]+((new NativeCryptoInvitationPreauthorizationV5($this->container))->binding($row)?['admissionMode'=>'preauthorized']:[])+(($legacy=$this->bridgeEvidence($row))===null?[]:['legacyAcceptedAtEpoch'=>$legacy['legacyAcceptedAtEpoch'],'legacyRevokedAtEpoch'=>$legacy['legacyRevokedAtEpoch']]);
     }
 
     public function write($op, $p, $actor, $proof, $deliveryToken = null)
     {
+        if($op==='crypto2.invitations.publishPreauthorization')return (new NativeCryptoInvitationPreauthorizationV5($this->container,$this->bearer,$this->ip))->publish($p,$actor,$proof);
         if ($op === 'crypto2.invitations.accept') {
             return $this->accept($p, $actor, $proof);
         }
@@ -305,12 +307,15 @@ class NativeCryptoInvitationV2 extends NativeDatabase
             $this->cancel($row['id'], 'revoked');
             return ['revoked' => true];
         }
-        $this->fields($p, ['scopeId','invitationId','recipient','role','expiresAt','language','expectedAccessRevision','membershipHeadHash','authorDirectoryHeadHash','tokenHash'], $op === 'crypto2.invitations.resend' ? ['replacesInvitationId'] : []);
+        $optional=['preauthorization'];if($op==='crypto2.invitations.resend')$optional[]='replacesInvitationId';
+        $this->fields($p, ['scopeId','invitationId','recipient','role','expiresAt','language','expectedAccessRevision','membershipHeadHash','authorDirectoryHeadHash','tokenHash'], $optional);
         if (!in_array($op, ['crypto2.invitations.create','crypto2.invitations.resend'], true) || !is_array($p['recipient'])) {
             throw new NativeError('validation_error');
         }
         $this->fields($p['recipient'], ['kind','value','accountId']);
-        $recipient = $this->recipient($p['recipient']['value']);
+        $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);
+        $recipient = isset($p['preauthorization'])?$prepared->resolveRecipient($p['recipient']['value']):$this->recipient($p['recipient']['value']);
+        if(isset($p['preauthorization']))$prepared->validateCreation($p,$scope,$recipient);
         if (NativeCryptoCodec::canonical((object)$recipient) !== NativeCryptoCodec::canonical((object)$p['recipient']) || $recipient['accountId'] === $actor['user']['account_id'] || !in_array($p['role'], ['member','viewer'], true) || !in_array($p['language'], ['sl','en'], true) || !is_int($p['expiresAt']) || $p['expiresAt'] < time() + 60 || $p['expiresAt'] > time() + 604800 || !is_string($p['tokenHash']) || !preg_match('/^[0-9a-f]{64}$/D', $p['tokenHash'])) {
             throw new NativeError('validation_error');
         }
@@ -340,7 +345,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         }
         $this->change('INSERT INTO familyhub_crypto_invitations_v2 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)', [$id,$sid,$actor['user']['account_id'],$actor['device']['id'],$recipient['kind'],$recipient['value'],$recipient['accountId'],$p['role'],$p['tokenHash'],time(),$p['expiresAt'],'pending',json_encode($proof, JSON_THROW_ON_ERROR),$p['language']]);
         if ($recipient['kind'] === 'email') {
-            $this->change("INSERT INTO familyhub_crypto_invitation_mail_v2(invitation_id,token_cipher,language,state,next_attempt) VALUES(?,?,?,'pending',?)", [$id,NativeAccountMailCrypto::encrypt($deliveryToken, $this->aad($id)),$p['language'],time()]);
+            $this->change("INSERT INTO familyhub_crypto_invitation_mail_v2(invitation_id,token_cipher,language,state,next_attempt) VALUES(?,?,?,?,?)", [$id,NativeAccountMailCrypto::encrypt($deliveryToken, $this->aad($id)),$p['language'],isset($p['preauthorization'])?'held':'pending',time()]);
         }
         if ($old) {
             $this->cancel($old['id'], 'revoked');
@@ -351,9 +356,11 @@ class NativeCryptoInvitationV2 extends NativeDatabase
 
     private function accept($p, $actor, $proof)
     {
-        $this->fields($p, ['scopeId','invitationId','tokenHash','creatorProofHash','role','expiresAt','membershipHeadHash','authorDirectoryHeadHash']);
+        $this->fields($p, ['scopeId','invitationId','tokenHash','creatorProofHash','role','expiresAt','membershipHeadHash','authorDirectoryHeadHash'],['preauthorizationHeadHash']);
         $row = $this->invitation($p['invitationId']);
         $scope = $this->usable($row);
+        $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);$preauthorization=$prepared->binding($row);
+        if(!$preauthorization&&isset($p['preauthorizationHeadHash']))throw new NativeError('validation_error');
         $creation = json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR);
         [$command] = NativeCryptoCodec::decode($creation);
         if ($row['scope_id'] !== $p['scopeId'] || !$this->matches($row, $actor) || $row['token_hash'] !== $p['tokenHash'] || $p['creatorProofHash'] !== NativeCryptoV2Codec::hash((object)$creation) || $p['role'] !== $row['role'] || $p['expiresAt'] !== (int)$row['expires_at'] || $p['membershipHeadHash'] !== ($command['payload']['context']['membershipHeadHash']??$command['payload']['membershipHeadHash'])) {
@@ -369,7 +376,8 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         }
         $this->change("UPDATE familyhub_crypto_invitations_v2 SET state='accepted',recipient_account_id=? WHERE id=?", [$actor['user']['account_id'],$row['id']]);
         $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state<>'accepted'", [$row['id']]);
-        return ['scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','role' => $row['role']],'state' => 'pendingKeys','invitationId' => $row['id'],'acceptanceProofHash' => $hash,'candidateHeads' => []];
+        $activation=$preauthorization?$prepared->acceptPrepared($row,$p,$actor,$hash):[];
+        return $activation+['scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','role' => $row['role']],'state' => 'pendingKeys','invitationId' => $row['id'],'acceptanceProofHash' => $hash,'candidateHeads' => []];
     }
 
     private function cancel($id, $state)
@@ -379,7 +387,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
     }
 
     /** Preview a new direct member without publishing membership or side effects. */
-    private function proposedMember($scopeId,$accepted,$role)
+    protected function proposedMember($scopeId,$accepted,$role)
     {
         $account=$accepted['account_id'];
         $user=$this->one('SELECT a.account_id,u.* FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=? AND u.is_active=1',[$account]);
@@ -400,6 +408,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
 
     public function read($op, $p, $actor)
     {
+        if($op==='crypto2.invitations.resolvePreauthorization')return (new NativeCryptoInvitationPreauthorizationV5($this->container))->resolve($p,$actor);
         if ($op==='crypto2.invitations.status') {
             $this->fields($p,['invitationId']);
             $row=$this->invitation($p['invitationId']);
@@ -407,6 +416,11 @@ class NativeCryptoInvitationV2 extends NativeDatabase
             $scope=$this->scope($row['scope_id'],$actor['user']['id']);
             $acceptances=$this->many("SELECT proof_hash FROM familyhub_crypto_invitation_acceptances_v2 WHERE invitation_id=? AND account_id=? AND state='consumed'",[$row['id'],$actor['user']['account_id']]);
             $hashes=array_column($acceptances,'proof_hash');
+            $publication=(new NativeCryptoInvitationPreauthorizationV5($this->container))->publication($row['id']);
+            if($publication&&$hashes){
+                $accepted=$this->one("SELECT authorization FROM familyhub_crypto_invitation_acceptances_v2 WHERE invitation_id=? AND proof_hash=? AND account_id=? AND state='consumed'",[$row['id'],$hashes[0],$actor['user']['account_id']]);
+                return ['state'=>'consumed','admissionMode'=>'preauthorized','invitationId'=>$row['id'],'acceptanceProofHash'=>$hashes[0],'recipientAcceptanceAuthorization'=>json_decode($accepted['authorization'],true,34,JSON_THROW_ON_ERROR),'activatedHeadHash'=>$publication['head_hash'],'scope'=>['id'=>$scope['id'],'kind'=>$scope['kind'],'role'=>$scope['role'],'name'=>'Encrypted space']];
+            }
             $heads=$this->many('SELECT head_hash,payload FROM familyhub_crypto_scope_heads WHERE scope_id=? AND activation_authorization IS NOT NULL AND payload LIKE ? ORDER BY epoch DESC LIMIT 2',[$row['scope_id'],'%'.$row['id'].'%']);
             foreach($heads as $head){
                 $body=json_decode($head['payload'],true,34,JSON_THROW_ON_ERROR);

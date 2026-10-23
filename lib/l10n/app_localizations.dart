@@ -8006,6 +8006,12 @@ abstract class AppLocalizations {
   /// **'Content you add to this space will be visible to the inviter and other members according to their permissions.'**
   String get invitationFlowContentVisibility;
 
+  /// No description provided for @invitationFlowAccessVerificationPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation accepted. Access has not been verified yet. Check access again to continue.'**
+  String get invitationFlowAccessVerificationPending;
+
   /// No description provided for @invitationFlowOtherAccount.
   ///
   /// In en, this message translates to:

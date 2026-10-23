@@ -209,6 +209,7 @@ class NativeCryptoAccessV2 extends NativeDatabase
             (new NativeMembershipRevocation($this->container))->apply($scope, $action['accountId'], $member['user_id']);
             $this->portions($row, function ($portion) use ($action) {
                 $sid = $portion['scope_id'];
+                (new NativeCryptoInvitationPreauthorizationV5($this->container))->retireForAccess($sid,$action['accountId']);
                 $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE scope_id=? AND account_id=? AND state='pending'", [$sid, $action['accountId']]);
                 $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL,lease_until=NULL WHERE invitation_id IN (SELECT id FROM familyhub_crypto_invitations_v2 WHERE scope_id=? AND recipient_account_id=? AND state IN ('pending','accepted'))", [$sid, $action['accountId']]);
                 $this->change("UPDATE familyhub_crypto_invitation_acceptances_v2 SET state='revoked' WHERE invitation_id IN (SELECT id FROM familyhub_crypto_invitations_v2 WHERE scope_id=? AND recipient_account_id=? AND state IN ('pending','accepted')) AND state='accepted'", [$sid, $action['accountId']]);
@@ -228,6 +229,7 @@ class NativeCryptoAccessV2 extends NativeDatabase
             $this->change('UPDATE familyhub_scopes SET access_policy_version=?,access_revision=access_revision+1,sequence=sequence+1 WHERE id=?', [$target,$row['scope_id']]);
             $this->portions($row, function ($portion) use ($row, $target) {
                 $sid = $portion['scope_id'];
+                (new NativeCryptoInvitationPreauthorizationV5($this->container))->retireForAccess($sid,null,true);
                 if ($target === 3 && $sid !== $row['scope_id']) {
                     $this->change('UPDATE familyhub_scopes SET access_policy_version=3,access_revision=access_revision+1 WHERE id=?', [$sid]);
                 }
@@ -457,10 +459,13 @@ class NativeCryptoAccessV2 extends NativeDatabase
             NativeCryptoCodec::canonical((object)$consent['resultingDescriptor']) !== NativeCryptoCodec::canonical((object)$this->descriptor($future))) {
                 throw new NativeError('crypto_access_intent_invalid', 409);
             }
+            $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);
+            $conditions=$prepared->validatePreauthorizations($future,$body);
+            $prepared->synchronize($future,$conditions,$body['members']);
             $this->scopes()->assertMembershipParity($future, $body['members']);
             return $future;
         });
-        return ['changed' => false,'transfer' => false,'accessTransition' => true,'futureScope' => $future,'actual' => [],'desired' => [],'additions' => []];
+        return ['changed' => false,'transfer' => false,'accessTransition' => true,'futureScope' => $future,'actual' => [],'desired' => $body['members'],'additions' => [],'invitationPreauthorizations'=>$body['invitationPreauthorizations']??[]];
     }
 
     public function write($op, $p, $actor, $proof, $command)
@@ -772,9 +777,11 @@ class NativeCryptoAccessV2 extends NativeDatabase
             $future = $this->future($row, function () use ($scope,$ownConsequence) {
                 $future = $this->ownerScope($scope['id']);
                 $members = [];
-                foreach ($this->scopes()->effectiveMembers($scope['id']) as $member) {
+                $effectiveMembers=$this->scopes()->effectiveMembers($scope['id']);
+                $projectedPolicies=array_filter($effectiveMembers,fn($m)=>!empty($m['invitationPreauthorization']))?(new NativeCryptoInvitationPreauthorizationV5($this->container))->projectedPolicies($scope['id']):[];
+                foreach ($effectiveMembers as $member) {
                     $user = $this->one('SELECT a.account_id,u.* FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=?', [$member['accountId']]);
-                    $finance = (new NativeFinanceAccess($this->container))->policyForCrypto($scope['id'], $user, false, false);
+                    $finance = (!empty($member['invitationPreauthorization'])?($projectedPolicies[$member['accountId']]??null):null)??(new NativeFinanceAccess($this->container))->policyForCrypto($scope['id'], $user, false, false);
                     $members[] = ['accountId' => $member['accountId'],'role' => $member['role'],'financeRole' => $finance['enabled'] ? $finance['grant'] : 'none','manageKeys' => $member['role'] === 'owner' || (int)$future['effective_access_policy_version'] === 3 && $member['role'] === 'member'];
                 }
                 $policy = (new NativeCryptoFinancePolicyV2($this->container))->policy($scope['id']);

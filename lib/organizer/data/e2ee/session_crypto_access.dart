@@ -1875,6 +1875,49 @@ class SessionCryptoAccess {
     );
   }
 
+  /// Hosting lifecycle metadata for the member list only. Send already
+  /// authorizes the signed roster; this projection must never gate keys,
+  /// signatures, or manager authority.
+  Future<List<Map<String, dynamic>>> acceptedMembersForDisplay(
+    VerifiedScopeHead head,
+  ) async {
+    if (head.invitationPreauthorizations.isEmpty) return head.members;
+    final wire = await _scopeCall('crypto2.scope.headGet', {
+      'scopeId': head.scopeId,
+    });
+    if (!account.directory.isCurrent() ||
+        wire['headHash'] != head.headHash ||
+        wire['payload'] is! Map ||
+        wire['payload']['scopeId'] != head.scopeId ||
+        await codec.headHash(
+              Map<String, dynamic>.from(wire['payload'] as Map),
+            ) !=
+            head.headHash) {
+      throw const CryptoAuthorityPending('crypto_member_labels_stale');
+    }
+    final ids = wire['acceptedAccountIds'];
+    if (ids == null) {
+      // An older host cannot label a preparation marker as accepted.
+      final prepared = head.invitationPreauthorizations
+          .map((marker) => marker['accountId'])
+          .toSet();
+      return head.members
+          .where((member) => !prepared.contains(member['accountId']))
+          .toList();
+    }
+    final roster = head.members.map((member) => member['accountId']).toSet();
+    if (ids is! List ||
+        ids.length > roster.length ||
+        ids.any((id) => !isCryptoCanonicalUuid(id) || !roster.contains(id)) ||
+        ids.toSet().length != ids.length) {
+      throw const FormatException('crypto_member_display_projection');
+    }
+    final accepted = ids.toSet();
+    return head.members
+        .where((member) => accepted.contains(member['accountId']))
+        .toList();
+  }
+
   Future<VerifiedScopeHead> _currentHead(
     String scopeId, {
     bool online = false,
@@ -2402,6 +2445,44 @@ class SessionCryptoAccess {
   Future<String> verifiedLifecycleHash(String scopeId) async =>
       (await CryptoLifecycleEvidence(this).current(scopeId))['headHash']
           as String;
+
+  /// New-child prepare markers come from the signed parent and the child's
+  /// verified public origin relationship, never the catalog hint alone.
+  Future<List<Map<String, dynamic>>> preauthorizationsForNewScope({
+    required String scopeId,
+    required String? parentScopeId,
+  }) async {
+    if (parentScopeId == null) return const [];
+    final parent = await currentHead(parentScopeId, online: true);
+    if (parent.invitationPreauthorizations.isEmpty) return const [];
+    final baseline = await _scopeCall('crypto2.scope.lifecycle.baseline', {
+      'scopeId': scopeId,
+    });
+    await verifyInitialLifecycle(
+      scopeId,
+      baseline,
+      scopeHeadHash: cryptoZeroHash,
+    );
+    final raw =
+        CryptoJson.decode(
+              cryptoBase64(baseline['originAuthorization']['commandBase64']),
+            )
+            as Map;
+    if (raw['operation'] != 'crypto2.scope.origin' ||
+        raw['kind'] != 'project' ||
+        raw['parentScopeToken'] !=
+            await CryptoLifecycleEvidence(
+              this,
+            ).parentToken(scopeId, parentScopeId)) {
+      throw const CryptoAuthorityPending('crypto_invitation_new_child_origin');
+    }
+    final descriptor = await verifiedScopeDescriptor(
+      parentScopeId,
+      online: true,
+    );
+    if (descriptor['accessPolicyVersion'] != 3) return const [];
+    return parent.invitationPreauthorizations;
+  }
 
   Future<String> initialLifecycleHash(String scopeId) async {
     final baseline = await _scopeCall('crypto2.scope.lifecycle.baseline', {
@@ -3280,6 +3361,7 @@ class SessionCryptoAccess {
       'expiresAt',
       'membershipHeadHash',
       'authorDirectoryHeadHash',
+      if (expected['preauthorization'] != null) 'preauthorizationHeadHash',
     };
     if (command.length != 8 ||
         command['version'] != 2 ||
@@ -3293,6 +3375,9 @@ class SessionCryptoAccess {
         p['invitationId'] != invitation ||
         p['creatorProofHash'] != anchorHash ||
         p['membershipHeadHash'] != _invitationHead ||
+        expected['preauthorization'] != null &&
+            (status['admissionMode'] != 'preauthorized' ||
+                p['preauthorizationHeadHash'] != status['activatedHeadHash']) ||
         !['tokenHash', 'role', 'expiresAt'].every((k) => p[k] == expected[k]) ||
         await cryptoSha256(CryptoJson.encode(proof)) !=
             status['acceptanceProofHash']) {
@@ -3330,21 +3415,34 @@ class SessionCryptoAccess {
               (m) => m['accountId'] == own.accountId,
             )
             as Map;
-    final intents = (body['membershipIntents'] as List)
-        .where(
-          (i) =>
-              i['accountId'] == own.accountId &&
-              i['invitationId'] == invitation &&
-              i['acceptanceProofHash'] == status['acceptanceProofHash'],
-        )
-        .toList();
+    final intents =
+        (expected['preauthorization'] != null
+                ? admitted.invitationPreauthorizations
+                : body['membershipIntents'] as List)
+            .where(
+              (i) =>
+                  i['accountId'] == own.accountId &&
+                  i['invitationId'] == invitation &&
+                  (expected['preauthorization'] != null
+                      ? i['preauthorizationProofHash'] == anchorHash
+                      : i['acceptanceProofHash'] ==
+                            status['acceptanceProofHash']),
+            )
+            .toList();
+    final acceptedIdentity = expected['preauthorization'] is Map
+        ? expected['preauthorization']['member'] as Map
+        : null;
     if (intents.length != 1 ||
         member['role'] != p['role'] ||
-        member['deviceSnapshotHash'] != own.deviceSnapshotHash ||
+        member['deviceSnapshotHash'] !=
+            (acceptedIdentity?['deviceSnapshotHash'] ??
+                own.deviceSnapshotHash) ||
         member['rootSigningKeyBase64'] !=
-            own.snapshot['rootSigningKeyBase64'] ||
+            (acceptedIdentity?['rootSigningKeyBase64'] ??
+                own.snapshot['rootSigningKeyBase64']) ||
         member['rootEncryptionKeyBase64'] !=
-            own.snapshot['rootEncryptionKeyBase64']) {
+            (acceptedIdentity?['rootEncryptionKeyBase64'] ??
+                own.snapshot['rootEncryptionKeyBase64'])) {
       throw const FormatException('invitation_activation_substitution');
     }
     final result = CryptoMigrationDescriptorAdmission._(

@@ -163,6 +163,18 @@ class CryptoInheritedInvitationGrants {
     return out..sort();
   }
 
+  /// Complete verified graph for Send-time sealing; never a recipient consent.
+  Future<List<String>> preauthorizationChildren(String parentScopeId) async {
+    final descriptor = await access.verifiedScopeDescriptor(
+      parentScopeId,
+      online: true,
+    );
+    if (!const {'household', 'organization'}.contains(descriptor['kind']) ||
+        descriptor['accessPolicyVersion'] != 3)
+      return const [];
+    return _children(parentScopeId);
+  }
+
   Future<void> _write(
     String parent,
     String invitationId,

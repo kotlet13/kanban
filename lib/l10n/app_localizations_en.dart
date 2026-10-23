@@ -4513,6 +4513,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Content you add to this space will be visible to the inviter and other members according to their permissions.';
 
   @override
+  String get invitationFlowAccessVerificationPending =>
+      'Invitation accepted. Access has not been verified yet. Check access again to continue.';
+
+  @override
   String get invitationFlowOtherAccount => 'Use another account';
 
   @override

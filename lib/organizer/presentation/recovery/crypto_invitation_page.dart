@@ -43,6 +43,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
       widget.repository ??
       InviteCryptoRepository(SessionCryptoAccess(account: widget.account));
   bool _busy = false, _pending = false;
+  bool _preauthorizedAccepted = false;
   Object? _error;
   VerifiedCryptoInvitation? _invite;
   ScopeRotationReview? _review;
@@ -142,6 +143,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
           (_pending ||
               widget.preview?.awaitingApproval == true ||
               invite.invitation['state'] == 'accepted');
+      _preauthorizedAccepted = _pending && isPreauthorizedInvitation(invite);
     });
   });
 
@@ -150,7 +152,19 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     if (invite == null || !_current || _pending) return;
     if (widget.scopeId == null) {
       await invites.accept(invite, actionId: widget.invitationId);
-      if (_current) setState(() => _pending = true);
+      if (!_current) return;
+      setState(() {
+        _pending = true;
+        _preauthorizedAccepted = isPreauthorizedInvitation(invite);
+      });
+      if (_preauthorizedAccepted) {
+        final scope = await invites.resumeAccepted(widget.invitationId);
+        if (!mounted || !_current) return;
+        if (scope == null) {
+          throw const FormatException('invitation_activation_incomplete');
+        }
+        Navigator.of(context).pop(scope);
+      }
       return;
     }
     final review = _review;
@@ -220,7 +234,12 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                         color: Theme.of(context).colorScheme.error,
                       ),
                     ),
-                  if (_pending) Text(l.cryptoInvitationPendingKeys),
+                  if (_pending)
+                    Text(
+                      _preauthorizedAccepted
+                          ? l.invitationFlowAccessVerificationPending
+                          : l.cryptoInvitationPendingKeys,
+                    ),
                   if (_invite != null)
                     VerifiedInvitationPermissions(
                       invitation: _invite!,

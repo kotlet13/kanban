@@ -57,7 +57,7 @@ class NativeCryptoScopeV2 extends NativeDatabase
     }
     public function validateProposal($p)
     {
-        $this->fields($p, ['scopeId','epoch','previousHeadHash','authorDirectoryHeadHash','expectedAccessRevision','accessBasis','accessRevision','members','membershipIntents','closures','keyCommitments','keyIds','contentKeyProposalProof','financeKeyProposalProof','initialLifecycleHash','previousLifecycleHash','financePolicyIntentProof'],['accessIntentProof']);
+        $this->fields($p, ['scopeId','epoch','previousHeadHash','authorDirectoryHeadHash','expectedAccessRevision','accessBasis','accessRevision','members','membershipIntents','closures','keyCommitments','keyIds','contentKeyProposalProof','financeKeyProposalProof','initialLifecycleHash','previousLifecycleHash','financePolicyIntentProof'],['accessIntentProof','invitationPreauthorizations']);
         $this->uuid($p['scopeId']);
         $this->digest($p['previousHeadHash']);
         $this->digest($p['authorDirectoryHeadHash']);
@@ -92,10 +92,11 @@ class NativeCryptoScopeV2 extends NativeDatabase
             if (!is_array($intent)) {
                 throw new NativeError('validation_error');
             }
-            $this->fields($intent, ['accountId','invitationId','acceptanceProofHash']);
+            $proofField=array_key_exists('preauthorizationProofHash',$intent)?'preauthorizationProofHash':'acceptanceProofHash';
+            $this->fields($intent, ['accountId','invitationId',$proofField]);
             $id = $this->uuid($intent['accountId']);
             $this->uuid($intent['invitationId']);
-            $this->digest($intent['acceptanceProofHash']);
+            $this->digest($intent[$proofField]);
             if (strcmp($id, $lastIntent) <= 0) {
                 throw new NativeError('validation_error');
             }
@@ -516,6 +517,9 @@ class NativeCryptoScopeV2 extends NativeDatabase
         if ($body['expectedAccessRevision'] !== (int)$scope['effective_access_revision'] || NativeCryptoCodec::canonical($body['accessBasis']) !== NativeCryptoCodec::canonical($this->accessBasis($scope))) {
             throw new NativeError('crypto_access_changed', 409);
         }
+        $preauthorizations=new NativeCryptoInvitationPreauthorizationV5($this->container);
+        $conditions=$preauthorizations->validatePreauthorizations($scope,$body);
+        $directReservations=[];foreach($preauthorizations->reservations($scope['id'])as $reservation)if($reservation['scope_id']===$scope['id'])$directReservations[$reservation['account_id']]=$reservation;
         $actual = [];
         foreach ($this->effectiveMembers($scope['id']) as $member) {
             $actual[$member['accountId']] = $member;
@@ -531,12 +535,15 @@ class NativeCryptoScopeV2 extends NativeDatabase
             $account=$member['accountId'];
             $direct=$this->one('SELECT active FROM familyhub_members WHERE scope_id=? AND account_id=?',[$scope['id'],$account]);
             $hasDirect=$direct && (int)$direct['active']===1;
+            $reserved=$directReservations[$account]??false;
+            if($reserved)$hasDirect=true;
             $intent=$intents[$account]??null;
+            $replacement=$intent&&isset($intent['preauthorizationProofHash'])&&$reserved&&$reserved['invitation_id']!==$intent['invitationId'];
             $newDirect=$intent && !$hasDirect;
             $requiresIntent=!isset($actual[$account]) || !$hasDirect && isset($actual[$account]) && $actual[$account]['role']!==$member['role'];
-            if ($newDirect || $requiresIntent) {
+            if ($replacement || $newDirect || $requiresIntent) {
                 if (!$intent) { throw new NativeError('crypto_invitation_acceptance_required',409); }
-                $additions[$account]=(new NativeCryptoInvitationV2($this->container,$this->bearer,$this->ip))->intent($scope['id'],$intent,$member);
+                $additions[$account]=isset($intent['preauthorizationProofHash'])?$preauthorizations->intent($scope['id'],$intent,$member):(new NativeCryptoInvitationV2($this->container,$this->bearer,$this->ip))->intent($scope['id'],$intent,$member);
                 unset($intents[$account]);
             }
             $desired[$member['accountId']] = $member;
@@ -547,7 +554,7 @@ class NativeCryptoScopeV2 extends NativeDatabase
         if ($intents) {
             throw new NativeError('crypto_invitation_intent_unexpected', 409);
         }
-        $changed = count($actual) !== count($desired) || (bool)$additions;
+        $changed = count($actual) !== count($desired) || (bool)array_filter($additions,fn($addition)=>empty($addition['preauthorizationReplacement'])&&empty($addition['preauthorizationInherited']));
         foreach ($actual as $account => $member) {
             if (!isset($desired[$account]) || $desired[$account]['role'] !== $member['role']) {
                 $changed = true;
@@ -570,14 +577,18 @@ class NativeCryptoScopeV2 extends NativeDatabase
         if ($body['accessRevision'] !== $expected) {
             throw new NativeError('crypto_access_changed', 409);
         }
-        return ['changed' => $changed, 'transfer' => $transfer, 'actual' => $actual, 'desired' => $desired, 'newOwner' => $newOwner, 'additions' => $additions];
+        return ['changed' => $changed, 'transfer' => $transfer, 'actual' => $actual, 'desired' => $desired, 'newOwner' => $newOwner, 'additions' => $additions,'invitationPreauthorizations'=>$conditions];
     }
 
     private function applyMembershipPlan($scope, $plan)
     {
         if (isset($plan['accessTransition'])) {
+            (new NativeCryptoInvitationPreauthorizationV5($this->container))->synchronize($plan['futureScope'],$plan['invitationPreauthorizations']??[],array_values($plan['desired']));
             return $plan['futureScope'];
         }
+        $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);$pendingReservations=[];
+        foreach($prepared->reservations($scope['id'])as $reservation)if(!$prepared->consented($reservation['invitation_id']))$pendingReservations[$reservation['account_id']]=true;
+        $prepared->synchronize($scope,$plan['invitationPreauthorizations']??[],array_values($plan['desired']));
         if (!$plan['changed']) {
             return $scope;
         }
@@ -589,19 +600,22 @@ class NativeCryptoScopeV2 extends NativeDatabase
                     $this->change('UPDATE familyhub_members SET active=0 WHERE scope_id=? AND account_id=?', [$scope['id'], $account]);
                 }
             } elseif ($direct) {
-                $this->change('UPDATE familyhub_members SET role=?,active=1 WHERE scope_id=? AND account_id=?', [$desired['role'], $scope['id'], $account]);
+                $pending=isset($pendingReservations[$account]);
+                $this->change('UPDATE familyhub_members SET role=?,active=? WHERE scope_id=? AND account_id=?', [$desired['role'],$pending?0:1, $scope['id'], $account]);
             } elseif ($member['role'] !== $desired['role']) {
                 $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,?,1)', [$scope['id'], $member['userId'], $account, $desired['role']]);
             }
         }
         foreach ($plan['additions'] as $account => $addition) {
+            if(!empty($addition['preauthorizationInherited']))continue;
+            $active=empty($addition['preauthorization'])?1:0;
             $old = $this->one('SELECT user_id FROM familyhub_members WHERE scope_id=? AND user_id=?', [$scope['id'], $addition['userId']]);
             if ($old) {
-                $this->change('UPDATE familyhub_members SET account_id=?,role=?,active=1 WHERE scope_id=? AND user_id=?', [$account, $plan['desired'][$account]['role'], $scope['id'], $addition['userId']]);
+                $this->change('UPDATE familyhub_members SET account_id=?,role=?,active=? WHERE scope_id=? AND user_id=?', [$account, $plan['desired'][$account]['role'],$active, $scope['id'], $addition['userId']]);
             } else {
-                $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,?,1)', [$scope['id'], $addition['userId'], $account, $plan['desired'][$account]['role']]);
+                $this->change('INSERT INTO familyhub_members(scope_id,user_id,account_id,role,active) VALUES(?,?,?,?,?)', [$scope['id'], $addition['userId'], $account, $plan['desired'][$account]['role'],$active]);
             }
-            (new NativeCryptoInvitationV2($this->container))->consume($addition);
+            if($active)(new NativeCryptoInvitationV2($this->container))->consume($addition);
         }
         if ($plan['transfer']) {
             $scope['owner_id'] = (int)$plan['newOwner']['userId'];
@@ -672,6 +686,7 @@ class NativeCryptoScopeV2 extends NativeDatabase
             throw new NativeError('crypto_membership_changed', 409);
         }
         $finance = new NativeFinanceAccess($this->container);
+        $projectedPolicies=array_filter($actual,fn($m)=>!empty($m['invitationPreauthorization']))?(new NativeCryptoInvitationPreauthorizationV5($this->container))->projectedPolicies($scope['id']):[];
         $directory = new NativeCryptoDirectoryV2($this->container);
         foreach ($members as $m) {
             $sql = $mapped[$m['accountId']] ?? null;
@@ -681,7 +696,8 @@ class NativeCryptoScopeV2 extends NativeDatabase
             $user = $this->one('SELECT a.account_id,u.* FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=? AND u.is_active=1', [$m['accountId']]);
             if (!$user) {
                 throw new NativeError('crypto_membership_changed', 409);
-            }$policy = $finance->policyForCrypto($scope['id'], $user, false, false);
+            }$projected=!empty($sql['invitationPreauthorization'])?($projectedPolicies[$m['accountId']]??null):null;
+            $policy=$projected??$finance->policyForCrypto($scope['id'], $user, false, false);
             $role = $policy['enabled'] ? $policy['grant'] : 'none';
             if ($role !== $m['financeRole']) {
                 throw new NativeError('crypto_finance_membership_changed', 409);
@@ -1143,6 +1159,14 @@ class NativeCryptoScopeV2 extends NativeDatabase
         }
     }
 
+    /** Current host membership display only; the signed roster remains key authority. */
+    private function acceptedAccountIds($sid,$body)
+    {
+        $roster=array_fill_keys(array_column($body['members'],'accountId'),true);$ids=[];
+        foreach((new NativeOrganizationAccess($this->container))->members($sid)as $member)if(isset($roster[$member['accountId']]))$ids[]=$member['accountId'];
+        sort($ids,SORT_STRING);return $ids;
+    }
+
     public function read($op, $p, $actor)
     {
         $sid = $this->uuid($p['scopeId'] ?? null);
@@ -1158,7 +1182,9 @@ class NativeCryptoScopeV2 extends NativeDatabase
             $financeManifest = $this->one('SELECT authorization FROM familyhub_crypto_finance_manifests WHERE scope_id=? AND head_hash=?', [$sid, $head['head_hash']]);
             $ownerAcceptance = $this->one('SELECT authorization FROM familyhub_crypto_owner_acceptances WHERE scope_id=? AND head_hash=?', [$sid, $head['head_hash']]);
             $contentManifest = $this->one('SELECT authorization FROM familyhub_crypto_content_manifests WHERE scope_id=? AND head_hash=?', [$sid, $head['head_hash']]);
-            return (new NativeCryptoLifecycleV2($this->container))->initialBaseline($sid) + ['ownerAcceptanceProof' => $ownerAcceptance ? json_decode($ownerAcceptance['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'contentGrantManifestProof' => $contentManifest ? json_decode($contentManifest['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'financeGrantManifestProof' => $financeManifest ? json_decode($financeManifest['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'scopeId' => $sid, 'headHash' => $head['head_hash'], 'state' => $head['state'], 'payload' => $this->body($head), 'authorization' => json_decode($head['authorization'], true, 34, JSON_THROW_ON_ERROR), 'activationAuthorization' => $head['activation_authorization'] ? json_decode($head['activation_authorization'], true, 34, JSON_THROW_ON_ERROR) : null];
+            $body = $this->body($head);
+            $display = !empty($body['invitationPreauthorizations']) ? ['acceptedAccountIds'=>$this->acceptedAccountIds($sid,$body)] : [];
+            return (new NativeCryptoLifecycleV2($this->container))->initialBaseline($sid) + $display + ['ownerAcceptanceProof' => $ownerAcceptance ? json_decode($ownerAcceptance['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'contentGrantManifestProof' => $contentManifest ? json_decode($contentManifest['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'financeGrantManifestProof' => $financeManifest ? json_decode($financeManifest['authorization'], true, 34, JSON_THROW_ON_ERROR) : null, 'scopeId' => $sid, 'headHash' => $head['head_hash'], 'state' => $head['state'], 'payload' => $body, 'authorization' => json_decode($head['authorization'], true, 34, JSON_THROW_ON_ERROR), 'activationAuthorization' => $head['activation_authorization'] ? json_decode($head['activation_authorization'], true, 34, JSON_THROW_ON_ERROR) : null];
         }
         if ($op === 'crypto2.grants.manifest') {
             $this->fields($p, ['scopeId', 'headHash'], ['domain', 'afterAccountId', 'afterEpoch', 'limit','pendingCapability']);
@@ -1288,6 +1314,9 @@ class NativeCryptoScopeV2 extends NativeDatabase
                 }
             }
         }
+        foreach((new NativeCryptoInvitationPreauthorizationV5($this->container))->reservations($sid)as $reservation){
+            if(!isset($members[$reservation['account_id']]))$members[$reservation['account_id']]=['accountId'=>$reservation['account_id'],'userId'=>(int)$reservation['user_id'],'role'=>$reservation['projectedMember']['role'],'invitationPreauthorization'=>true];
+        }
         ksort($members, SORT_STRING);
         return array_values($members);
     }
@@ -1328,9 +1357,11 @@ class NativeCryptoScopeV2 extends NativeDatabase
             $parent = null;
         }
         $members = [];
-        foreach ($this->effectiveMembers($sid) as $m) {
+        $effectiveMembers=$this->effectiveMembers($sid);
+        $projectedPolicies=array_filter($effectiveMembers,fn($m)=>!empty($m['invitationPreauthorization']))?(new NativeCryptoInvitationPreauthorizationV5($this->container))->projectedPolicies($sid):[];
+        foreach ($effectiveMembers as $m) {
             $user = $this->one('SELECT a.account_id,u.* FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=?', [$m['accountId']]);
-            $policy = (new NativeFinanceAccess($this->container))->policyForCrypto($sid, $user, false, false);
+            $policy = (!empty($m['invitationPreauthorization'])?($projectedPolicies[$m['accountId']]??null):null)??(new NativeFinanceAccess($this->container))->policyForCrypto($sid, $user, false, false);
             $memberDirectory = (new NativeCryptoDirectoryV2($this->container))->current($m['accountId']);
             $members[] = ['deviceSnapshotHash' => $memberDirectory['device_snapshot_hash'] ?? null, 'accountId' => $m['accountId'], 'role' => $m['role'], 'financeRole' => $policy['enabled'] ? $policy['grant'] : 'none', 'manageKeys' => $m['role'] === 'owner' || (int)$scope['effective_access_policy_version'] === 3 && $m['role'] === 'member'];
         }
@@ -1389,6 +1420,7 @@ class NativeCryptoScopeV2 extends NativeDatabase
         $member = $this->member($body, $target);
         $activeMember = $active ? $this->member($this->body($active), $target) : null;
         $references = [];
+        $references=array_merge($references,(new NativeCryptoInvitationPreauthorizationV5($this->container))->directoryReferences($body,$target));
         if ($member) {
             $references[] = $member['directoryHeadHash'];
         }

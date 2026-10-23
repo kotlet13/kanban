@@ -949,6 +949,7 @@ class CryptoBusinessSession {
 
   Future<Map<String, dynamic>> members(String scope) async {
     final head = await access.currentHead(scope, online: true);
+    final displayedMembers = await access.acceptedMembersForDisplay(head);
     final descriptor = await access.verifiedScopeDescriptor(scope);
     final organization = descriptor['kind'] == 'organization';
     final leaders = descriptor['leaderAccountIds'];
@@ -958,7 +959,7 @@ class CryptoBusinessSession {
       throw const CryptoAuthorityPending('crypto_scope_leadership_pending');
     }
     final requested =
-        head.members
+        displayedMembers
             .map((member) => member['accountId'] as String)
             .where((id) => id != account.directory.accountId)
             .toList()
@@ -992,7 +993,7 @@ class CryptoBusinessSession {
     }
     return {
       'members': [
-        for (final member in head.members)
+        for (final member in displayedMembers)
           {
             'accountId': member['accountId'],
             'role': member['role'],

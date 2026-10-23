@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
@@ -19,6 +20,7 @@ import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_identity_store.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
 import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_sync_repository.dart'
     show CryptoAuthorityPending;
@@ -75,7 +77,7 @@ class _Controller extends SharingUiController {
       recipientUsername: p.recipientUsername,
       recipientEmail: p.recipientEmail,
       inviterName: p.inviterName,
-      invitationId: p.invitationId,
+      invitationId: encrypted ? 'saved-invite' : p.invitationId,
       role: viewer ? SharedRole.viewer : SharedRole.member,
       expiresAt: p.expiresAt,
       registrationAllowed: p.registrationAllowed,
@@ -141,6 +143,8 @@ class _CryptoInvites extends InviteCryptoRepository {
   Object? trustError, resumeError;
   Completer<void>? trustGate;
   Future<void> Function()? afterAccept;
+  String? resumedScope, resumedAfterAccept;
+  Completer<void>? resumeGate;
   Completer<void>? inspectionGate;
   Object? inspectionError;
   VerifiedCryptoInvitation? inspectedInvitation;
@@ -148,8 +152,9 @@ class _CryptoInvites extends InviteCryptoRepository {
   @override
   Future<String?> resumeAccepted(String invitationId) async {
     resumes++;
+    await resumeGate?.future;
     if (resumeError != null) throw resumeError!;
-    return null;
+    return resumedScope;
   }
 
   @override
@@ -194,6 +199,7 @@ class _CryptoInvites extends InviteCryptoRepository {
   }) async {
     await trustCreatorFromDirectory(invite);
     accepts++;
+    if (resumedAfterAccept != null) resumedScope = resumedAfterAccept;
     await afterAccept?.call();
     return {};
   }
@@ -330,6 +336,157 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  VerifiedCryptoInvitation preauthorizedReview() => VerifiedCryptoInvitation(
+    {
+      'invitation': {
+        'id': 'saved-invite',
+        'scopeId': sharingScopeId,
+        'role': 'viewer',
+      },
+      'creatorAuthorization': {
+        'commandBase64': base64Encode(
+          CryptoJson.encode({
+            'accountId': sharingSession().accountId,
+            'operation': 'crypto2.invitations.create',
+            'payload': {
+              'expiresAt': 4070908800,
+              'invitationId': 'saved-invite',
+              'preauthorization': {'version': 1},
+              'recipient': {'kind': 'username', 'value': 'recipient'},
+              'role': 'viewer',
+              'scopeId': sharingScopeId,
+            },
+            'version': 2,
+          }),
+        ),
+      },
+    },
+    _CryptoDirectory(),
+    [],
+  );
+
+  testWidgets(
+    'preauthorization-link26 account change during activation cannot select',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectedInvitation = preauthorizedReview()
+        ..resumedAfterAccept = sharingScopeId
+        ..resumeGate = Completer<void>();
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      final button = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('invitation-flow-join')),
+      );
+      final continuing = (button.onPressed as dynamic)() as Future<void>;
+      await tester.pump();
+      expect(crypto.accepts, 1);
+      expect(crypto.resumes, 1);
+      controller.switchAccount();
+      await tester.pump();
+      crypto.resumeGate!.complete();
+      await continuing;
+      await tester.pumpAndSettle();
+      expect(
+        controller.state.valueOrNull?.session?.accountId,
+        sharingSession(second: true).accountId,
+      );
+      expect(controller.state.valueOrNull?.selectedSpaceId, isNull);
+      expect(store.value?.invitationId, 'saved-invite');
+      expect(crypto.accepts, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'preauthorization-link26 one consent selects target using ready account',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectedInvitation = preauthorizedReview()
+        ..resumedAfterAccept = sharingScopeId;
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      expect(crypto.accepts, 0);
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(crypto.resumes, 1);
+      expect(crypto.inspections, 1);
+      expect(controller.state.valueOrNull?.selectedSpaceId, sharingScopeId);
+      expect(
+        controller.state.valueOrNull?.session?.deviceId,
+        sharingSession().deviceId,
+      );
+      expect(controller.savedInvitation, isNull);
+      expect(find.byType(InvitationWizard), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'preauthorization-link26 activation error offers status without second consent',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectedInvitation = preauthorizedReview()
+        ..resumeError = const CryptoAuthorityPending(
+          'crypto_reconciliation_required',
+        );
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+        locale: 'en',
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(store.value?.invitationId, 'saved-invite');
+      expect(find.text('Agree and accept invitation'), findsNothing);
+      expect(find.text('Check access'), findsOneWidget);
+      expect(find.textContaining('owner still needs'), findsNothing);
+      expect(
+        find.textContaining('Access has not been verified'),
+        findsOneWidget,
+      );
+      crypto.resumeError = null;
+      crypto.resumedScope = sharingScopeId;
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(find.byType(InvitationWizard), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final locale in ['en', 'sl']) {
     testWidgets(
       'invitation-review26 link renders signed review before one consent $locale',

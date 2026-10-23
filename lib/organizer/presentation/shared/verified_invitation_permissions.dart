@@ -15,6 +15,9 @@ Map verifiedInvitationPayload(VerifiedCryptoInvitation invitation) =>
             as Map)['payload']
         as Map;
 
+bool isPreauthorizedInvitation(VerifiedCryptoInvitation invitation) =>
+    verifiedInvitationPayload(invitation)['preauthorization'] is Map;
+
 /// Bind a recipient decision to the requested signed invitation.
 void validateInvitationReview(
   VerifiedCryptoInvitation invitation, {
@@ -57,11 +60,16 @@ class VerifiedInvitationPermissions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final signed = verifiedInvitationPayload(invitation);
+    final preauthorization = signed['preauthorization'];
     final proposed = showOwnerProjection
         ? invitation.response['proposedMember'] as Map?
+        : preauthorization is Map
+        ? preauthorization['member'] as Map?
         : null;
-    final signed = verifiedInvitationPayload(invitation);
-    final role = proposed?['role'] ?? signed['role'];
+    final role = showOwnerProjection
+        ? (proposed?['role'] ?? signed['role'])
+        : signed['role'];
     final label = switch (role) {
       'owner' => l.sharingOwner,
       'member' || 'editor' => l.sharingMember,

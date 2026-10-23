@@ -94,6 +94,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
   bool _cryptoPending = false;
+  bool _preauthorizedAccepted = false;
   bool _cryptoSetupRequired = false;
   final _accessRefreshClock = Stopwatch()..start();
   Duration? _lastAccessRefresh;
@@ -291,11 +292,13 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   Future<void> _loadPreview() async {
     final link = _link!;
     final identity = _identity;
+    var acceptedCheckpoint = false;
     setState(() {
       _verifiedInvitation = null;
       _verifiedIdentity = null;
       _verifiedLink = null;
       _cryptoSetupRequired = false;
+      _preauthorizedAccepted = false;
     });
     final controller = ref.read(collaborationProvider.notifier);
     await controller.rememberInvitation(
@@ -308,6 +311,11 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       if (saved?.token == link.token &&
           saved?.invitationId != null &&
           saved?.accountPartition == _session?.partition) {
+        acceptedCheckpoint = true;
+        setState(() {
+          _cryptoPending = true;
+          _notice = context.l10n.invitationFlowAccessVerificationPending;
+        });
         final repository = await ref.read(
           collaborationRepositoryProvider.future,
         );
@@ -330,16 +338,14 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     if (!_active || _identity != identity || _link != link) return;
     setState(() {
       _preview = preview;
-      _cryptoPending = preview.awaitingApproval;
-      if (_cryptoPending) _notice = context.l10n.cryptoInvitationPendingKeys;
+      _cryptoPending = preview.awaitingApproval || acceptedCheckpoint;
+      _notice = null;
       _step = _InvitationStep.preview;
       if (!preview.isEmailInvitation) {
         _username.text = preview.recipientUsername;
       }
     });
-    if (preview.contractVersion == 4 &&
-        !preview.awaitingApproval &&
-        _matchingSession) {
+    if (preview.contractVersion == 4 && _matchingSession) {
       final repository = await ref.read(collaborationRepositoryProvider.future);
       if (!_active ||
           !_matchingSession ||
@@ -384,6 +390,13 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         _verifiedInvitation = verified;
         _verifiedIdentity = identity;
         _verifiedLink = link;
+        _preauthorizedAccepted =
+            _cryptoPending && isPreauthorizedInvitation(verified);
+        if (_cryptoPending) {
+          _notice = _preauthorizedAccepted
+              ? context.l10n.invitationFlowAccessVerificationPending
+              : context.l10n.cryptoInvitationPendingKeys;
+        }
       });
     }
   }
@@ -646,7 +659,12 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       if (!current()) return;
       setState(() {
         _cryptoPending = true;
-        _notice = context.l10n.cryptoInvitationPendingKeys;
+        _preauthorizedAccepted = isPreauthorizedInvitation(
+          _verifiedInvitation!,
+        );
+        _notice = _preauthorizedAccepted
+            ? context.l10n.invitationFlowAccessVerificationPending
+            : context.l10n.cryptoInvitationPendingKeys;
       });
       return;
     }
@@ -685,8 +703,19 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     setState(() {
       _cryptoPending = true;
       _lastAccessRefresh = _accessRefreshClock.elapsed;
-      _notice = context.l10n.cryptoInvitationPendingKeys;
+      _preauthorizedAccepted = isPreauthorizedInvitation(invite);
+      _notice = _preauthorizedAccepted
+          ? context.l10n.invitationFlowAccessVerificationPending
+          : context.l10n.cryptoInvitationPendingKeys;
     });
+    if (_preauthorizedAccepted) {
+      final scope = await invites.resumeAccepted(invite.invitation['id']);
+      if (!current()) return;
+      if (scope == null) {
+        throw const FormatException('invitation_activation_incomplete');
+      }
+      await _openEncryptedTarget(scope, link);
+    }
   });
 
   Future<void> _finishJoined(SharedInvitationPreview preview) async {
@@ -778,6 +807,21 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   @override
   Widget build(BuildContext context) {
     ref.watch(collaborationProvider);
+    ref.listen(collaborationProvider, (previous, next) {
+      final before = previous?.valueOrNull?.session;
+      final after = next.valueOrNull?.session;
+      if (before?.partition == after?.partition &&
+          before?.deviceId == after?.deviceId) {
+        return;
+      }
+      _verifiedInvitation = null;
+      _verifiedIdentity = null;
+      _verifiedLink = null;
+      _preauthorizedAccepted = false;
+      _cryptoSetupRequired = false;
+      _cryptoPending = false;
+      _notice = null;
+    });
     ref.listen(pendingInvitationLinkProvider, (_, incoming) {
       if (incoming == null ||
           _link == null ||
@@ -786,6 +830,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         return;
       }
       _superseded = true;
+      _preauthorizedAccepted = false;
       _generation++;
       if (!_busy) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

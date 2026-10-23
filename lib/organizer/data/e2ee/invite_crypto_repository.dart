@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'account_directory_v2.dart';
 import '../collaboration_transport.dart';
 import 'crypto_json.dart';
+import 'crypto_record_address.dart' show isCryptoCanonicalUuid;
 import 'crypto_sync_repository.dart';
 import 'scope_crypto_manager.dart';
 import 'session_crypto_access.dart';
@@ -13,6 +14,9 @@ import 'crypto_legacy_invitation_capsule.dart';
 import 'crypto_legacy_invitation_evidence.dart';
 import 'crypto_directory_consistency.dart';
 import 'crypto_inherited_invitation_grants.dart';
+import 'crypto_preauthorized_invitation.dart';
+import 'crypto_invitation_preauthorization_codec.dart';
+import 'scope_crypto_codec.dart';
 
 class VerifiedCryptoInvitation {
   VerifiedCryptoInvitation(
@@ -31,8 +35,30 @@ class VerifiedCryptoInvitation {
       Map<String, dynamic>.from(response['creatorAuthorization'] as Map);
 }
 
-/// Recipient acceptance is an intent only. It never installs an unsigned SQL
-/// membership or exposes business records before the signed head activates.
+class _PreauthorizedRecipient {
+  _PreauthorizedRecipient(
+    this.recipient,
+    this.preauthorization,
+    this.directory,
+  );
+  final Map<String, dynamic> recipient, preauthorization;
+  final VerifiedAccountDirectory directory;
+}
+
+class _RetainedPreauthorizationAction {
+  _RetainedPreauthorizationAction(
+    this.action,
+    this.state,
+    this.payload,
+    this.publicationPending,
+  );
+  final String action, state;
+  final Map<String, dynamic> payload;
+  final bool publicationPending;
+}
+
+/// Legacy acceptance records an intent. Preauthorized Send installs the exact
+/// signed roster and sealed grants before recipient consent opens SQL access.
 class InviteCryptoRepository {
   InviteCryptoRepository(this.access);
   final SessionCryptoAccess access;
@@ -152,16 +178,32 @@ class InviteCryptoRepository {
       return {'invitations': all};
     }
     final scope = params['scopeId'] as String;
-    final action =
+    var action =
         params['requestId'] as String? ??
         access.account.directory.reducer.crypto.randomId();
-    return manager.serialize(scope, () async {
+    final created = await manager.serialize(scope, () async {
       final db = access.account.store.database,
           partition = access.account.store.partition;
-      final saved = await db.rows(
+      var saved = await db.rows(
         'SELECT payload,token FROM crypto_invitation_drafts WHERE partition=? AND action_id=?',
         [partition, action],
       );
+      var resumedAuthorizedDraft = false;
+      if (saved.isEmpty && (kind == 'create' || kind == 'resend')) {
+        final retained = await _unfinishedPreauthorizationAction(
+          kind,
+          scope,
+          params,
+        );
+        if (retained != null) {
+          action = retained;
+          resumedAuthorizedDraft = true;
+          saved = await db.rows(
+            'SELECT payload,token FROM crypto_invitation_drafts WHERE partition=? AND action_id=?',
+            [partition, action],
+          );
+        }
+      }
       late Map<String, dynamic> payload;
       String? token;
       final op = 'crypto2.invitations.$kind';
@@ -170,7 +212,7 @@ class InviteCryptoRepository {
       );
       if (saved.isNotEmpty) {
         final draft = jsonDecode(saved.single['payload'] as String) as Map;
-        if (draft['callerHash'] != callerHash) {
+        if (!resumedAuthorizedDraft && draft['callerHash'] != callerHash) {
           throw const FormatException('invitation_intent_changed');
         }
         payload = Map<String, dynamic>.from(draft['payload'] as Map);
@@ -218,6 +260,17 @@ class InviteCryptoRepository {
             });
             recipient = Map<String, dynamic>.from(resolved['recipient'] as Map);
           }
+          if (!payload.containsKey('preauthorization')) {
+            final resolved = await _resolvePreauthorized(
+              scope,
+              recipient['value'] as String,
+              role,
+            );
+            if (resolved != null) {
+              recipient = resolved.recipient;
+              payload['preauthorization'] = resolved.preauthorization;
+            }
+          }
           final crypto = access.account.directory.reducer.crypto;
           token =
               'fhi4_${crypto.randomId().replaceAll('-', '')}${crypto.randomId().replaceAll('-', '')}';
@@ -261,6 +314,576 @@ class InviteCryptoRepository {
         if (token != null) 'localToken': token,
       };
     });
+    // The scope manager queue is deliberately not reentrant. Rotation starts
+    // only after exact invitation creation has left that queue.
+    final authorization = created['authorization'];
+    if (authorization is Map) {
+      final command =
+          CryptoJson.decode(cryptoBase64(authorization['commandBase64']))
+              as Map;
+      if ((command['payload'] as Map)['preauthorization'] != null) {
+        return _completePreauthorization(
+          created,
+          Map<String, dynamic>.from(authorization),
+        );
+      }
+    }
+    return created;
+  }
+
+  /// A new form request after restart may continue only an unfinished Send
+  /// whose immutable signed meaning is the same. Completed/manual invitations
+  /// never enter this path, and the original action, token and proof survive.
+  Future<String?> _unfinishedPreauthorizationAction(
+    String kind,
+    String scope,
+    Map<String, Object?> params,
+  ) async {
+    final recipient =
+        params['recipient'] ??
+        params['recipientEmail'] ??
+        params['recipientUsername'];
+    if (kind == 'create' && recipient is! String) return null;
+    final language = params['language'] ?? 'sl';
+    final role = params['role'] ?? 'member';
+    final replacing = kind == 'resend' ? params['invitationId'] : null;
+    final rows = await access.account.store.database.rows(
+      '''SELECT d.action_id,d.payload,i.authorization,i.intent_id,i.state
+         FROM crypto_invitation_drafts d
+         JOIN crypto_membership_action_keys a
+           ON a.partition=d.partition AND a.action_key='invite:'||d.action_id
+         JOIN crypto_membership_intents i
+           ON i.partition=a.partition AND i.scope_id=a.scope_id
+          AND i.intent_id=a.request_id
+         WHERE d.partition=? AND i.scope_id=? AND i.state IN ('pending','confirmed')
+           AND json_extract(d.payload,'\$.payload.preauthorization.version')=1
+           AND json_extract(d.payload,'\$.payload.expiresAt')>?
+           AND json_extract(d.payload,'\$.payload.language')=?
+           AND ${kind == 'create' ? "json_extract(d.payload,'\$.payload.replacesInvitationId') IS NULL AND lower(json_extract(d.payload,'\$.payload.recipient.value'))=? AND json_extract(d.payload,'\$.payload.role')=?" : "json_extract(d.payload,'\$.payload.replacesInvitationId')=?"}
+           AND NOT EXISTS (
+             SELECT 1 FROM crypto_membership_action_keys p
+             JOIN crypto_membership_intents publication
+               ON publication.partition=p.partition
+              AND publication.scope_id=p.scope_id
+              AND publication.intent_id=p.request_id
+             WHERE p.partition=d.partition AND p.scope_id=i.scope_id
+               AND p.action_key='preauthorize-publish:'||json_extract(d.payload,'\$.payload.invitationId')
+               AND publication.state IN ('confirmed','rejected'))
+         ORDER BY d.rowid DESC LIMIT 33''',
+      [
+        access.account.store.partition,
+        scope,
+        DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000,
+        language,
+        if (kind == 'create') ...[
+          (recipient as String).trim().toLowerCase(),
+          role,
+        ] else
+          replacing,
+      ],
+    );
+    if (rows.length > 32) {
+      throw const CryptoAuthorityPending(
+        'invitation_preparation_review_required',
+      );
+    }
+    if (rows.isEmpty) return null;
+    final candidates = <_RetainedPreauthorizationAction>[];
+    for (final row in rows) {
+      final draft = jsonDecode(row['payload'] as String) as Map;
+      final payload = Map<String, dynamic>.from(draft['payload'] as Map);
+      final proof = Map<String, dynamic>.from(
+        CryptoJson.decode(
+              Uint8List.fromList((row['authorization'] as List).cast<int>()),
+            )
+            as Map,
+      );
+      final command =
+          CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+      if (command['operation'] != 'crypto2.invitations.$kind' ||
+          command['version'] != 2 ||
+          command['signer'] != 'device' ||
+          command['requestId'] != row['intent_id'] ||
+          payload['scopeId'] != scope ||
+          command['serverId'] !=
+              access.account.directory.session.profile.serverId ||
+          command['accountId'] != access.account.directory.accountId ||
+          command['deviceId'] != access.account.deviceId ||
+          !samePreauthorizationValue(command['payload'], payload)) {
+        throw const FormatException(
+          'invitation_preparation_draft_substitution',
+        );
+      }
+      final publication = await access.account.store.database.rows(
+        '''SELECT i.state FROM crypto_membership_action_keys a
+           JOIN crypto_membership_intents i
+             ON i.partition=a.partition AND i.scope_id=a.scope_id
+            AND i.intent_id=a.request_id
+           WHERE a.partition=? AND a.scope_id=? AND a.action_key=?''',
+        [
+          access.account.store.partition,
+          scope,
+          'preauthorize-publish:${payload['invitationId']}',
+        ],
+      );
+      candidates.add(
+        _RetainedPreauthorizationAction(
+          row['action_id'] as String,
+          row['state'] as String,
+          payload,
+          publication.isNotEmpty && publication.single['state'] == 'pending',
+        ),
+      );
+    }
+    // Classify every candidate without replaying any request. An ambiguous
+    // unknown create must not transmit several old actions before rejection.
+    final pendingIds = candidates.map((c) => c.payload['invitationId']).toSet();
+    final invitations = <String, Map<String, dynamic>>{};
+    String? after;
+    var complete = false;
+    for (var page = 0; page < 20; page++) {
+      final response = await _call('list', {
+        'scopeId': scope,
+        'limit': 50,
+        if (after != null) 'afterId': after,
+      });
+      if (response['invitations'] is! List ||
+          (response['invitations'] as List).length > 50 ||
+          response['hasMore'] is! bool) {
+        throw const FormatException('invitation_list_page');
+      }
+      for (final raw in response['invitations'] as List) {
+        if (raw is! Map || !isCryptoCanonicalUuid(raw['id'])) {
+          throw const FormatException('invitation_list_page');
+        }
+        final id = raw['id'] as String;
+        if (pendingIds.remove(id)) {
+          invitations[id] = Map<String, dynamic>.from(raw);
+        }
+      }
+      complete = response['hasMore'] == false;
+      if (complete || pendingIds.isEmpty) break;
+      final next = response['nextAfterId'];
+      if (!isCryptoCanonicalUuid(next) ||
+          after != null && (next as String).compareTo(after) <= 0) {
+        throw const FormatException('invitation_list_cursor');
+      }
+      after = next as String;
+    }
+    String? selected;
+    for (final candidate in candidates) {
+      final invitation = invitations[candidate.payload['invitationId']];
+      if (invitation == null) {
+        // Only an unsent/unknown original creation may be absent. A confirmed
+        // creation missing from the list cannot authorize a replacement.
+        if (!complete || candidate.state != 'pending') {
+          throw const CryptoAuthorityPending('invitation_list_pending');
+        }
+      } else if (invitation['expiresAtEpoch'] !=
+              candidate.payload['expiresAt'] ||
+          !(const ['pending', 'accepted'].contains(invitation['state']) ||
+              candidate.publicationPending &&
+                  invitation['state'] == 'consumed')) {
+        continue;
+      }
+      if (selected != null) {
+        throw const CryptoAuthorityPending(
+          'invitation_preparation_review_required',
+        );
+      }
+      selected = candidate.action;
+    }
+    return selected;
+  }
+
+  Future<_PreauthorizedRecipient?> _resolvePreauthorized(
+    String scope,
+    String recipient,
+    String role,
+  ) async {
+    final capabilities = await access.account.directory.call(
+      'capabilities',
+      const {},
+    );
+    if (capabilities['serverId'] !=
+        access.account.directory.session.profile.serverId) {
+      throw const FormatException('invitation_server_identity');
+    }
+    if (!(capabilities['invitationPreauthorizationVersions'] as List? ??
+            const [])
+        .contains(1)) {
+      return null; // Explicit old-host compatibility; never a failed v5 fallback.
+    }
+    Map<String, dynamic>? bound, target;
+    VerifiedAccountDirectory? state;
+    String? genesis;
+    final entries = <Map<String, dynamic>>[];
+    var after = 0;
+    while (true) {
+      late Map<String, dynamic> response;
+      try {
+        response = await _call('resolvePreauthorization', {
+          'scopeId': scope,
+          'recipient': recipient,
+          'role': role,
+          'afterGeneration': after,
+          'limit': 50,
+        });
+      } on CollaborationApiException catch (error) {
+        if (after == 0 &&
+            error.code == 'crypto_invitation_recipient_unregistered')
+          return null;
+        rethrow;
+      }
+      final nextBound = Map<String, dynamic>.from(
+            response['preauthorization'] as Map,
+          ),
+          nextTarget = Map<String, dynamic>.from(response['recipient'] as Map),
+          page = response['recipientDirectory'] as Map;
+      if (bound != null &&
+          (!samePreauthorizationValue(bound, nextBound) ||
+              !samePreauthorizationValue(target, nextTarget))) {
+        throw const CryptoAuthorityPending(
+          'crypto_invitation_recipient_changed',
+        );
+      }
+      bound = nextBound;
+      target = nextTarget;
+      final values = page['entries'];
+      if (values is! List ||
+          values.isEmpty ||
+          values.length > 50 ||
+          entries.length + values.length > 100000) {
+        throw const FormatException('invitation_directory_page');
+      }
+      for (final value in values) {
+        final entry = Map<String, dynamic>.from(value as Map);
+        if (genesis == null) {
+          final first =
+              CryptoJson.decode(
+                    cryptoBase64(entry['authorization']['commandBase64']),
+                  )
+                  as Map;
+          genesis = access.account.directory.reducer.crypto.fingerprint(
+            cryptoBase64(first['payload']['rootSigningKeyBase64'], length: 32),
+            cryptoBase64(
+              first['payload']['rootEncryptionKeyBase64'],
+              length: 32,
+            ),
+          );
+        }
+        state = await access.account.directory.reducer.apply(
+          previous: state,
+          entry: entry,
+          serverId: access.account.directory.session.profile.serverId,
+          accountId: target['accountId'] as String,
+          pinnedRootFingerprint: genesis,
+        );
+        entries.add(entry);
+        after = state.generation;
+      }
+      if (page['hasMore'] != true) {
+        if (state!.headHash != page['headHash'] ||
+            state.generation != page['generation'] ||
+            state.snapshotHash != page['snapshotHash'] ||
+            bound['member']['directoryHeadHash'] != state.headHash ||
+            bound['member']['deviceSnapshotHash'] != state.deviceSnapshotHash) {
+          throw const FormatException('invitation_directory_head');
+        }
+        await verifyPreauthorizedMemberRights(
+          access: access,
+          scopeId: scope,
+          policyVersion: bound['policyVersion'] as int,
+          member: Map<String, dynamic>.from(bound['member'] as Map),
+        );
+        await _promoteDirectory(
+          state,
+          entries,
+          compare: () => access.identities.trustHostDirectory(
+            directory: state!,
+            expectedServerId: access.account.directory.session.profile.serverId,
+            isCurrent: access.account.directory.isCurrent,
+          ),
+        );
+        return _PreauthorizedRecipient(target, bound, state);
+      }
+      if (page['nextGeneration'] != after) {
+        throw const FormatException('invitation_directory_cursor');
+      }
+    }
+  }
+
+  Future<VerifiedAccountDirectory> _retainedRecipientPrefix(
+    String accountId,
+    String headHash,
+  ) async {
+    VerifiedAccountDirectory? state;
+    String? genesis;
+    var count = 0;
+    await for (final entry in access.account.store.streamEntries(accountId)) {
+      if (++count > 100000) break;
+      if (genesis == null) {
+        final raw =
+            CryptoJson.decode(
+                  cryptoBase64(entry['authorization']['commandBase64']),
+                )
+                as Map;
+        genesis = access.account.directory.reducer.crypto.fingerprint(
+          cryptoBase64(raw['payload']['rootSigningKeyBase64'], length: 32),
+          cryptoBase64(raw['payload']['rootEncryptionKeyBase64'], length: 32),
+        );
+      }
+      state = await access.account.directory.reducer.apply(
+        previous: state,
+        entry: entry,
+        serverId: access.account.directory.session.profile.serverId,
+        accountId: accountId,
+        pinnedRootFingerprint: genesis,
+      );
+      if (state.headHash == headHash) {
+        await requireKnownDirectoryPrefix(
+          directory: access.account.directory,
+          store: access.account.store,
+          prefix: state,
+        );
+        return state;
+      }
+    }
+    throw const CryptoAuthorityPending(
+      'crypto_invitation_recipient_prefix_pending',
+    );
+  }
+
+  static final _preparations = <String, Future<Map<String, dynamic>>>{};
+  Future<Map<String, dynamic>> _completePreauthorization(
+    Map<String, dynamic> created,
+    Map<String, dynamic> authorization,
+  ) async {
+    final command =
+        CryptoJson.decode(cryptoBase64(authorization['commandBase64'])) as Map;
+    final p = command['payload'] as Map;
+    final key = '${access.account.store.partition}:${p['invitationId']}';
+    final running = _preparations[key];
+    if (running != null) return running;
+    final task = _preparePreauthorization(created, authorization);
+    _preparations[key] = task;
+    try {
+      return await task;
+    } finally {
+      if (identical(_preparations[key], task)) _preparations.remove(key);
+    }
+  }
+
+  Future<Map<String, dynamic>> _preparePreauthorization(
+    Map<String, dynamic> created,
+    Map<String, dynamic> authorization,
+  ) async {
+    final p =
+        (CryptoJson.decode(cryptoBase64(authorization['commandBase64']))
+                as Map)['payload']
+            as Map;
+    final target = p['preauthorization']['member'] as Map;
+    final savedPublication = await access.account.store.database.rows(
+      'SELECT i.authorization FROM crypto_membership_action_keys a JOIN crypto_membership_intents i ON i.partition=a.partition AND i.scope_id=a.scope_id AND i.intent_id=a.request_id WHERE a.partition=? AND a.scope_id=? AND a.action_key=?',
+      [
+        access.account.store.partition,
+        p['scopeId'],
+        'preauthorize-publish:${p['invitationId']}',
+      ],
+    );
+    if (savedPublication.isNotEmpty) {
+      final proof = Map<String, dynamic>.from(
+        CryptoJson.decode(
+              Uint8List.fromList(
+                (savedPublication.single['authorization'] as List).cast<int>(),
+              ),
+            )
+            as Map,
+      );
+      final savedCommand =
+          CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+      final payload = Map<String, dynamic>.from(savedCommand['payload'] as Map);
+      if (savedCommand['operation'] !=
+              'crypto2.invitations.publishPreauthorization' ||
+          payload['scopeId'] != p['scopeId'] ||
+          payload['invitationId'] != p['invitationId']) {
+        throw const FormatException(
+          'crypto_invitation_publication_substitution',
+        );
+      }
+      final published = await manager.invitationCommand(
+        'crypto2.invitations.publishPreauthorization',
+        p['scopeId'],
+        payload,
+        actionKey: 'preauthorize-publish:${p['invitationId']}',
+      );
+      return _publishedInvitation(created, published);
+    }
+    // Re-resolve current keys before disclosure. Directory-head-only changes are
+    // allowed through their verified prefix; root/device replacement is not.
+    final fresh = await _resolvePreauthorized(
+      p['scopeId'],
+      p['recipient']['value'],
+      p['role'],
+    );
+    if (fresh == null ||
+        !samePreauthorizationValue(
+          preauthorizedIdentity(fresh.preauthorization['member'] as Map),
+          preauthorizedIdentity(target),
+        )) {
+      throw const CryptoAuthorityPending('crypto_invitation_recipient_changed');
+    }
+    final directory = await _retainedRecipientPrefix(
+      target['accountId'],
+      target['directoryHeadHash'],
+    );
+    final admission = await VerifiedPreauthorizedInvitationAdmission.verify(
+      access: access,
+      authorization: authorization,
+      recipientDirectory: directory,
+    );
+    final parent = await _preparePreauthorizedScope(admission);
+    final childHeads = <Map<String, dynamic>>[];
+    final children = await CryptoInheritedInvitationGrants(
+      access,
+    ).preauthorizationChildren(admission.invitationScopeId);
+    for (final child in children) {
+      final childAdmission = await admission.forChild(child);
+      final head = await _preparePreauthorizedScope(childAdmission);
+      childHeads.add({'scopeId': child, 'headHash': head.headHash});
+    }
+    childHeads.sort(
+      (a, b) => (a['scopeId'] as String).compareTo(b['scopeId'] as String),
+    );
+    final own = await access.account.directory.requireFresh();
+    final published = await manager.invitationCommand(
+      'crypto2.invitations.publishPreauthorization',
+      admission.scopeId,
+      {
+        'scopeId': admission.scopeId,
+        'invitationId': admission.invitationId,
+        'preauthorizationHeadHash': parent.headHash,
+        'childHeads': childHeads,
+        'authorDirectoryHeadHash': own.headHash,
+      },
+      actionKey: 'preauthorize-publish:${admission.invitationId}',
+    );
+    return _publishedInvitation(created, published);
+  }
+
+  Map<String, dynamic> _publishedInvitation(
+    Map<String, dynamic> created,
+    Map<String, dynamic> published,
+  ) => {
+    ...created,
+    ...published,
+    'admissionMode': 'preauthorized',
+    if (created['invitation'] is Map)
+      'invitation': {
+        ...Map<String, dynamic>.from(created['invitation'] as Map),
+        'deliveryQueued': published['deliveryQueued'] == true,
+      },
+  };
+
+  Future<VerifiedScopeHead> _preparePreauthorizedScope(
+    VerifiedPreauthorizedInvitationAdmission admission,
+  ) async {
+    final current = await access.recoveryCandidateHead(admission.scopeId);
+    if (current.invitationPreauthorizations.any(
+      (c) => samePreauthorizationValue(c, admission.condition),
+    )) {
+      final member = current.member(admission.recipientAccountId);
+      if (!samePreauthorizationValue(
+            preauthorizedIdentity(member),
+            preauthorizedIdentity(admission.member),
+          ) ||
+          !const [
+            'role',
+            'financeRole',
+            'manageKeys',
+          ].every((key) => member[key] == admission.member[key])) {
+        throw const CryptoAuthorityPending(
+          'crypto_invitation_preauthorization_changed',
+        );
+      }
+      // Preparation is already installed. Before the first publication use the
+      // current verified descendant, not a frozen original head; no new keys.
+      return current;
+    }
+    final db = access.account.store.database,
+        partition = access.account.store.partition;
+    final id = 'preauthorize:${admission.invitationId}';
+    final rows = await db.rows(
+      'SELECT payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=?',
+      [partition, admission.scopeId, id],
+    );
+    Map<String, dynamic> journal;
+    if (rows.isEmpty) {
+      journal = {
+        'proofHash': admission.proofHash,
+        'reviewId': access.account.directory.reducer.crypto.randomId(),
+      };
+      await db.execute(
+        'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL)',
+        [
+          partition,
+          admission.scopeId,
+          id,
+          'invitationPreauthorization',
+          CryptoJson.encode(journal),
+        ],
+      );
+    } else {
+      journal = Map<String, dynamic>.from(
+        CryptoJson.decode(
+              Uint8List.fromList((rows.single['payload'] as List).cast<int>()),
+            )
+            as Map,
+      );
+      if (journal['proofHash'] != admission.proofHash ||
+          journal['activatedHeadHash'] != null) {
+        throw const CryptoAuthorityPending(
+          'crypto_invitation_preauthorization_changed',
+        );
+      }
+    }
+    await admission.revalidate(current);
+    final review = await manager.reviewRotation(
+      admission.scopeId,
+      preauthorizedInvitationAdmission: admission,
+      fixedReviewId: journal['reviewId'] as String,
+    );
+    if (review.historyBasis != 'verifiedCheckpoint') {
+      throw const CryptoAuthorityPending(
+        'crypto_invitation_preauthorization_review',
+      );
+    }
+    final members =
+        [
+          for (final m in current.members)
+            if (m['accountId'] != admission.recipientAccountId) m,
+          admission.member,
+        ]..sort(
+          (a, b) =>
+              (a['accountId'] as String).compareTo(b['accountId'] as String),
+        );
+    final head = await manager.confirmRotation(
+      review,
+      acceptedCandidateHistory: false,
+      members: members,
+      membershipIntents: [admission.intent],
+      preauthorizedInvitationAdmission: admission,
+    );
+    await db.execute(
+      'UPDATE crypto_membership_intents SET payload=? WHERE partition=? AND scope_id=? AND intent_id=?',
+      [
+        CryptoJson.encode({...journal, 'activatedHeadHash': head.headHash}),
+        partition,
+        admission.scopeId,
+        id,
+      ],
+    );
+    return head;
   }
 
   Future<void> _verifyBoundLegacyRecipient(
@@ -820,6 +1443,88 @@ class InviteCryptoRepository {
               ),
             )
             as Map<String, dynamic>;
+    final anchorPayload =
+        (CryptoJson.decode(cryptoBase64(anchor['commandBase64']))
+                as Map)['payload']
+            as Map;
+    final preauthorized = anchorPayload['preauthorization'] != null;
+    final anchorHash = await cryptoSha256(CryptoJson.encode(anchor));
+    if (preauthorized) {
+      final acceptance = Map<String, dynamic>.from(
+        status['recipientAcceptanceAuthorization'] as Map? ??
+            (throw const CryptoAuthorityPending(
+              'invitation_acceptance_pending',
+            )),
+      );
+      final command =
+          CryptoJson.decode(cryptoBase64(acceptance['commandBase64'])) as Map;
+      final payload = command['payload'];
+      final ownDirectory = await access.account.directory.requireFresh();
+      if (command.length != 8 ||
+          command['version'] != 2 ||
+          command['operation'] != 'crypto2.invitations.accept' ||
+          command['signer'] != 'device' ||
+          command['serverId'] != ownDirectory.serverId ||
+          command['accountId'] != ownDirectory.accountId ||
+          payload is! Map ||
+          payload.length != 9 ||
+          payload['creatorProofHash'] != anchorHash ||
+          payload['preauthorizationHeadHash'] != status['activatedHeadHash'] ||
+          !const [
+            'scopeId',
+            'invitationId',
+            'tokenHash',
+            'role',
+            'expiresAt',
+            'membershipHeadHash',
+          ].every((key) => payload[key] == anchorPayload[key]) ||
+          await cryptoSha256(CryptoJson.encode(acceptance)) !=
+              status['acceptanceProofHash']) {
+        throw const FormatException('invitation_activation_substitution');
+      }
+      final signer = await _retainedRecipientPrefix(
+        ownDirectory.accountId,
+        payload['authorDirectoryHeadHash'] as String,
+      );
+      if (!ownDirectory.includesAnchor(signer.generation, signer.headHash)) {
+        throw const FormatException('invitation_acceptance_fork');
+      }
+      access.account.directory.reducer.crypto.verifyDomain(
+        acceptance,
+        cryptoBase64(
+          signer.activeDevice(command['deviceId'])['signingKeyBase64'],
+          length: 32,
+        ),
+        cryptoDirectoryDomain,
+      );
+      final journal = await access.account.store.database.rows(
+        'SELECT i.authorization,a.action_key FROM crypto_membership_intents i JOIN crypto_membership_action_keys a ON a.partition=i.partition AND a.scope_id=i.scope_id AND a.request_id=i.intent_id WHERE i.partition=? AND i.scope_id=? AND i.intent_id=?',
+        [access.account.store.partition, scopeId, command['requestId']],
+      );
+      if (journal.length != 1 ||
+          journal.single['action_key'] is! String ||
+          !samePreauthorizationValue(
+            CryptoJson.decode(
+              Uint8List.fromList(
+                (journal.single['authorization'] as List).cast<int>(),
+              ),
+            ),
+            acceptance,
+          )) {
+        throw const CryptoAuthorityPending('invitation_acceptance_pending');
+      }
+      // The original accept request reconciles its exact receipt before any
+      // scope anchor/key material is used. An applied lost ACK is never resent.
+      await manager.serialize(
+        scopeId,
+        () => manager.invitationCommand(
+          'crypto2.invitations.accept',
+          scopeId,
+          Map<String, dynamic>.from(payload),
+          actionKey: journal.single['action_key'] as String,
+        ),
+      );
+    }
     final scoped = SessionCryptoAccess(
       account: access.account,
       invitationAnchor: anchor,
@@ -829,12 +1534,21 @@ class InviteCryptoRepository {
     final activated = scoped.verifiedCandidateAncestor(
       status['activatedHeadHash'],
     );
-    final own = (activated.body['membershipIntents'] as List).where(
-      (i) =>
-          i['accountId'] == access.account.directory.accountId &&
-          i['invitationId'] == invitationId &&
-          i['acceptanceProofHash'] == status['acceptanceProofHash'],
-    );
+    final own =
+        (preauthorized
+                ? activated.invitationPreauthorizations
+                : (activated.body['membershipIntents'] as List))
+            .where(
+              (i) =>
+                  i['accountId'] == access.account.directory.accountId &&
+                  i['invitationId'] == invitationId &&
+                  (preauthorized
+                      ? status['admissionMode'] == 'preauthorized' &&
+                            i['preauthorizationProofHash'] == anchorHash &&
+                            i['invitationScopeId'] == scopeId
+                      : i['acceptanceProofHash'] ==
+                            status['acceptanceProofHash']),
+            );
     if (own.length != 1) {
       throw const FormatException('invitation_activation_substitution');
     }
@@ -885,6 +1599,12 @@ class InviteCryptoRepository {
       'expiresAt': p['expiresAt'],
       'membershipHeadHash': p['membershipHeadHash'],
       'authorDirectoryHeadHash': own.headHash,
+      if (p['preauthorization'] != null)
+        'preauthorizationHeadHash':
+            invite.response['preauthorizationHeadHash'] ??
+            (throw const CryptoAuthorityPending(
+              'crypto_invitation_preauthorization_unready',
+            )),
     };
     await access.account.store.database.execute(
       'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,?) ON CONFLICT(partition,scope_id,intent_id) DO NOTHING',

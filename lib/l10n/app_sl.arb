@@ -1680,6 +1680,7 @@
   "invitationFlowAgreeAccept": "Strinjam se in sprejmi povabilo",
   "invitationFlowPrepareAccount": "Pripravi račun",
   "invitationFlowContentVisibility": "Vsebina, ki jo dodaš v ta prostor, bo vidna pošiljatelju povabila in drugim članom glede na njihova dovoljenja.",
+  "invitationFlowAccessVerificationPending": "Povabilo je sprejeto. Dostop še ni preverjen. Za nadaljevanje znova preveri dostop.",
   "invitationFlowOtherAccount": "Uporabi drug račun",
   "invitationFlowDifferentServer": "Trenutno si prijavljen/a z drugim strežnikom. Nadaljuj s prijavo v strežnik tega povabila.",
   "invitationFlowSignInToJoin": "Prijavi se ali ustvari račun. Nato se odločiš, ali se pridružiš.",

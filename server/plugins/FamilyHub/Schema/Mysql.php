@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 20;
+const VERSION = 21;
 
 function version_1(PDO $pdo)
 {
@@ -122,4 +122,9 @@ function version_19(PDO $pdo)
 function version_20(PDO $pdo)
 {
     CryptoSchema::create($pdo,true);
+}
+
+function version_21(PDO $pdo)
+{
+    PreauthorizedInvitationSchema::create($pdo,true);
 }

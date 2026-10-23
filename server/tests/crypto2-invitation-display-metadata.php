@@ -10,7 +10,7 @@ namespace Kanboard\Core {
 namespace {
     use Kanboard\Plugin\FamilyHub\Model\NativeCryptoInvitationV2;
     $model=__DIR__.'/../plugins/FamilyHub/Model/';
-    foreach (['NativeError','NativeDatabase','NativeCryptoCodec','NativeCryptoV2Codec','NativeCryptoInvitationV2'] as $file) require $model.$file.'.php';
+    foreach (['NativeError','NativeDatabase','NativeCryptoCodec','NativeCryptoV2Codec','NativeCryptoInvitationV2','NativeCryptoInvitationPreauthorizationV5'] as $file) require $model.$file.'.php';
     $pdo=new \PDO('sqlite::memory:');$pdo->setAttribute(\PDO::ATTR_ERRMODE,\PDO::ERRMODE_EXCEPTION);
     $pdo->exec('CREATE TABLE users(id INTEGER PRIMARY KEY,is_active INTEGER,username TEXT,name TEXT);
       CREATE TABLE familyhub_accounts(account_id TEXT PRIMARY KEY,user_id INTEGER);

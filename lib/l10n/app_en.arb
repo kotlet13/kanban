@@ -1680,6 +1680,7 @@
   "invitationFlowAgreeAccept": "Agree and accept invitation",
   "invitationFlowPrepareAccount": "Prepare account",
   "invitationFlowContentVisibility": "Content you add to this space will be visible to the inviter and other members according to their permissions.",
+  "invitationFlowAccessVerificationPending": "Invitation accepted. Access has not been verified yet. Check access again to continue.",
   "invitationFlowOtherAccount": "Use another account",
   "invitationFlowDifferentServer": "You are signed in to another server. Continue by signing in to the server for this invitation.",
   "invitationFlowSignInToJoin": "Sign in or create an account. Then decide whether to join.",

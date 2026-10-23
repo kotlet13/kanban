@@ -15,6 +15,7 @@ import 'scope_key_contributions.dart';
 import 'crypto_lifecycle_evidence.dart';
 import 'session_crypto_access.dart';
 import 'crypto_inherited_invitation_evidence.dart';
+import 'crypto_preauthorized_invitation.dart';
 
 class ScopeRotationReview {
   ScopeRotationReview(Map<String, dynamic> value)
@@ -567,9 +568,35 @@ class ScopeCryptoManager {
           'expectedAccessRevision': accessRevision,
         });
       }
+      final inheritedPreauthorizations = await access
+          .preauthorizationsForNewScope(
+            scopeId: scopeId,
+            parentScopeId:
+                generationId == null && existing.single['cryptoOrigin'] == true
+                ? existing.single['parentScopeId'] as String?
+                : null,
+          );
       final normalized = <Map<String, dynamic>>[];
       for (final member in members) {
-        final directory = member['accountId'] == author.accountId
+        final inheritedMarker = inheritedPreauthorizations.where((entry) =>
+          entry['accountId'] == member['accountId']).firstOrNull;
+        VerifiedAccountDirectory? retainedInheritedDirectory;
+        if (inheritedMarker != null) {
+          final parent = await access.currentHead(
+            inheritedMarker['invitationScopeId'] as String, online: true);
+          final parentMember = parent.member(member['accountId'] as String);
+          final role = parentMember['role'] == 'viewer' ? 'viewer' : 'member';
+          if (member['role'] != role || member['manageKeys'] != (role == 'member') ||
+              role == 'viewer' && member['financeRole'] == 'write') {
+            throw const FormatException('crypto_invitation_new_child_rights');
+          }
+          retainedInheritedDirectory = await access.directoryAt(
+            scopeId: parent.scopeId, scopeHeadHash: parent.headHash,
+            accountId: member['accountId'] as String,
+            directoryHeadHash: parentMember['directoryHeadHash'] as String,
+            online: true);
+        }
+        final directory = retainedInheritedDirectory ?? (member['accountId'] == author.accountId
             ? author
             : await access.currentMemberDirectory(
                 scopeId,
@@ -577,7 +604,7 @@ class ScopeCryptoManager {
                     ? cryptoZeroHash
                     : (existing.single['headHash'] ?? cryptoZeroHash),
                 member['accountId'],
-              );
+              ));
         if (directory.accountId != author.accountId) {
           await access.identities.requireVerified(
             directory.accountId,
@@ -641,6 +668,8 @@ class ScopeCryptoManager {
           'authorDirectoryHeadHash': author.headHash,
           'members': normalized,
           'membershipIntents': <Map<String, dynamic>>[],
+          if (inheritedPreauthorizations.isNotEmpty)
+            'invitationPreauthorizations': inheritedPreauthorizations,
           'closures': {'content': null, 'finance': null},
           'keyIds': ids,
           'keyCommitments': commitments,
@@ -856,15 +885,44 @@ class ScopeCryptoManager {
     Uint8List? recoveryFile,
     bool financeOnly = false,
     VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
+    VerifiedPreauthorizedInvitationAdmission? preauthorizedInvitationAdmission,
+    String? fixedReviewId,
   }) => _exclusive(scopeId, () async {
     final account = access.account, crypto = account.directory.reducer.crypto;
     await account.directory.requireFresh();
     final source = await access.recoveryCandidateHead(scopeId);
+    if (fixedReviewId != null) {
+      final retained = await account.store.database.rows(
+        "SELECT payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=? AND state='scopeRotationReview'",
+        [account.store.partition, scopeId, fixedReviewId],
+      );
+      if (retained.isNotEmpty) {
+        final value = Map<String, dynamic>.from(
+          CryptoJson.decode(
+                Uint8List.fromList(
+                  (retained.single['payload'] as List).cast<int>(),
+                ),
+              )
+              as Map,
+        );
+        if (value['sourceHeadHash'] != source.headHash ||
+            preauthorizedInvitationAdmission == null) {
+          throw const CryptoAuthorityPending(
+            'scope_review_confirmation_required',
+          );
+        }
+        await preauthorizedInvitationAdmission.revalidate(source);
+        return ScopeRotationReview(value);
+      }
+    }
     await inheritedInvitationAdmission?.revalidate(
       access: access,
       source: source,
     );
-    final transportAccessRevision = inheritedInvitationAdmission == null
+    await preauthorizedInvitationAdmission?.revalidate(source);
+    final transportAccessRevision = preauthorizedInvitationAdmission != null
+        ? (await _catalogScope(scopeId))['expectedAccessRevision'] as int
+        : inheritedInvitationAdmission == null
         ? source.accessRevision
         : inheritedInvitationAdmission.liveAccess['expectedAccessRevision']
               as int;
@@ -880,7 +938,7 @@ class ScopeCryptoManager {
     } else {
       await access.hydrateExistingCandidateKeys(scopeId);
     }
-    final id = crypto.randomId();
+    final id = fixedReviewId ?? crypto.randomId();
     final domains = <String, dynamic>{};
     var emergency = false;
     for (final member in source.members) {
@@ -1134,6 +1192,7 @@ class ScopeCryptoManager {
     Map<String, dynamic>? financePolicyIntentProof,
     Map<String, dynamic>? accessIntentProof,
     VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
+    VerifiedPreauthorizedInvitationAdmission? preauthorizedInvitationAdmission,
     Future<Map<String, dynamic>> Function(
       List<Map<String, dynamic>> members,
       VerifiedAccountDirectory author,
@@ -1143,6 +1202,23 @@ class ScopeCryptoManager {
     final account = access.account, crypto = account.directory.reducer.crypto;
     final author = await account.directory.requireFresh();
     final source = await access.recoveryCandidateHead(review.scopeId);
+    if (preauthorizedInvitationAdmission != null) {
+      if (review.historyBasis != 'verifiedCheckpoint' ||
+          inheritedInvitationAdmission != null ||
+          accessIntentProof != null ||
+          accessConsentBuilder != null ||
+          joiningDirectory != null ||
+          membershipIntents.length != 1 ||
+          base64Encode(CryptoJson.encode(membershipIntents.single)) !=
+              base64Encode(
+                CryptoJson.encode(preauthorizedInvitationAdmission.intent),
+              )) {
+        throw const CryptoAuthorityPending(
+          'crypto_invitation_preauthorization_review',
+        );
+      }
+      await preauthorizedInvitationAdmission.revalidate(source);
+    }
     if (source.headHash != review.sourceHeadHash ||
         review.historyBasis == 'reviewedRecoveryBaseline' &&
             !acceptedCandidateHistory) {
@@ -1184,6 +1260,7 @@ class ScopeCryptoManager {
       );
       if (isJoining &&
           inheritedInvitationAdmission == null &&
+          preauthorizedInvitationAdmission == null &&
           accessIntentProof == null &&
           accessConsentBuilder == null &&
           (joiningDirectory == null ||
@@ -1193,9 +1270,13 @@ class ScopeCryptoManager {
         throw const CryptoAuthorityPending('invitation_acceptance_required');
       }
       final directory =
-          inheritedInvitationAdmission != null &&
+          preauthorizedInvitationAdmission != null &&
               member['accountId'] ==
-                  inheritedInvitationAdmission.recipientAccountId
+                  preauthorizedInvitationAdmission.recipientAccountId
+          ? preauthorizedInvitationAdmission.directory
+          : inheritedInvitationAdmission != null &&
+                member['accountId'] ==
+                    inheritedInvitationAdmission.recipientAccountId
           ? inheritedInvitationAdmission.recipientDirectory
           : isJoining && joiningDirectory != null
           ? await joiningDirectory(member['accountId'])
@@ -1376,6 +1457,26 @@ class ScopeCryptoManager {
         'authorDirectoryHeadHash': author.headHash,
         'members': normalized,
         'membershipIntents': membershipIntents,
+        if (source.invitationPreauthorizations.isNotEmpty ||
+            preauthorizedInvitationAdmission != null)
+          'invitationPreauthorizations':
+              ([
+                for (final condition in source.invitationPreauthorizations)
+                  if (normalized.any(
+                        (m) => m['accountId'] == condition['accountId'],
+                      ) &&
+                      (preauthorizedInvitationAdmission == null ||
+                          condition['accountId'] !=
+                              preauthorizedInvitationAdmission
+                                  .recipientAccountId))
+                    condition,
+                if (preauthorizedInvitationAdmission != null)
+                  preauthorizedInvitationAdmission.condition,
+              ]..sort(
+                (a, b) => (a['accountId'] as String).compareTo(
+                  b['accountId'] as String,
+                ),
+              )),
         'closures': {
           for (final domain in ['content', 'finance'])
             domain: review.domains[domain]?['manifestHash'],
@@ -2192,6 +2293,7 @@ class ScopeCryptoManager {
       'crypto2.invitations.resend',
       'crypto2.invitations.revoke',
       'crypto2.invitations.accept',
+      'crypto2.invitations.publishPreauthorization',
     }.contains(operation)) {
       throw const FormatException('invitation_operation');
     }

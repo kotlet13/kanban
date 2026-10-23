@@ -6,6 +6,7 @@ import 'account_directory_v2.dart';
 import 'crypto_codec.dart';
 import 'crypto_json.dart';
 import 'crypto_record_address.dart';
+import 'crypto_invitation_preauthorization_codec.dart';
 import 'session_crypto_access.dart' show VerifiedProjectRelocationGenesis;
 
 typedef CryptoDirectoryAtHead =
@@ -36,6 +37,9 @@ class VerifiedScopeHead {
     orElse: () =>
         throw const CryptoDirectoryException('scope_membership_missing'),
   );
+  List<Map<String, dynamic>> get invitationPreauthorizations =>
+      (body['invitationPreauthorizations'] as List? ?? const [])
+          .cast<Map<String, dynamic>>();
   String? commitment(String domain) =>
       (body['keyCommitments'] as Map)[domain] as String?;
 }
@@ -905,6 +909,8 @@ class ScopeCryptoCodec {
       'contentKeyProposalProof',
       if (p.containsKey('financePolicyIntentProof')) 'financePolicyIntentProof',
       if (p.containsKey('accessIntentProof')) 'accessIntentProof',
+      if (p.containsKey('invitationPreauthorizations'))
+        'invitationPreauthorizations',
     });
     _uuid(p['scopeId']);
     _hash(p['previousHeadHash']);
@@ -1001,10 +1007,19 @@ class ScopeCryptoCodec {
       if (raw is! Map<String, dynamic>) {
         throw const FormatException('scope_membership_intents');
       }
-      _fields(raw, {'accountId', 'invitationId', 'acceptanceProofHash'});
+      final preauthorized = raw.containsKey('preauthorizationProofHash');
+      _fields(raw, {
+        'accountId',
+        'invitationId',
+        preauthorized ? 'preauthorizationProofHash' : 'acceptanceProofHash',
+      });
       _uuid(raw['accountId']);
       _uuid(raw['invitationId']);
-      _hash(raw['acceptanceProofHash']);
+      _hash(
+        raw[preauthorized
+            ? 'preauthorizationProofHash'
+            : 'acceptanceProofHash'],
+      );
       if ((raw['accountId'] as String).compareTo(lastIntent) <= 0 ||
           !(p['members'] as List).any(
             (m) => m['accountId'] == raw['accountId'],
@@ -1012,6 +1027,26 @@ class ScopeCryptoCodec {
         throw const FormatException('scope_membership_intents');
       }
       lastIntent = raw['accountId'];
+    }
+    if (p.containsKey('invitationPreauthorizations')) {
+      final conditions = p['invitationPreauthorizations'];
+      if (conditions is! List || conditions.length > 100) {
+        throw const FormatException('crypto_conditional_admission_shape');
+      }
+      String lastCondition = '';
+      for (final condition in conditions) {
+        if (condition is! Map<String, dynamic>) {
+          throw const FormatException('crypto_conditional_admission_shape');
+        }
+        validateInvitationPreauthorizationMarker(condition);
+        if ((condition['accountId'] as String).compareTo(lastCondition) <= 0 ||
+            !(p['members'] as List).any(
+              (m) => m['accountId'] == condition['accountId'],
+            )) {
+          throw const FormatException('crypto_conditional_admission_shape');
+        }
+        lastCondition = condition['accountId'];
+      }
     }
     if (owners != 1) throw const FormatException('scope_owner_required');
     final ids = Map<String, dynamic>.from(p['keyIds'] as Map);

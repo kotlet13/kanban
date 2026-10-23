@@ -13,6 +13,19 @@ class NativeFinanceAccess extends NativeDatabase
     public function policy($scopeId, array $user, $write = false, $require = true)
     {
         $scope = $this->scope($scopeId, $user['id']);
+        return $this->policyForScope($scope,$user,$write,$require);
+    }
+
+    /** Projection metadata only: no endpoint exposes this as scope/access authorization. */
+    public function projectedInvitationPolicy(array $scope,$accountId,$role)
+    {
+        $scope['role']=$role;$scope['organization_leader']=false;
+        return $this->policyForScope($scope,['account_id'=>$accountId],false,false);
+    }
+
+    private function policyForScope(array $scope,array $user,$write,$require)
+    {
+        $scopeId=$scope['id'];
         $policy = $this->one('SELECT * FROM familyhub_finance_policy WHERE scope_id=?', [$scopeId]);
         $grant = $this->one('SELECT access_level FROM familyhub_finance_grants WHERE scope_id=? AND account_id=?', [$scopeId, $user['account_id']]);
         $access = $grant['access_level'] ?? 'none';

@@ -186,7 +186,15 @@ class CryptoDomainCheckpointPublisher {
         }
         return;
       }
-      final verified = await context.checkpoints.reconcile(scope, domain, read);
+      // Command delivery uses the durable queue's transport directly. Its fresh
+      // pre-delivery review does not end the caller's outer inventory memo.
+      // This applied checkpoint changes that inventory, so retire the outer
+      // lease before reading and verifying the newly published attestation.
+      context.access.invalidateAuthorityOperation();
+      final verified = await context.access.withVerifiedOperation(
+        () => context.checkpoints.reconcile(scope, domain, read),
+        freshBoundary: true,
+      );
       if (verified == null) return;
       await db.transaction(() async {
         final state = (await db.rows(

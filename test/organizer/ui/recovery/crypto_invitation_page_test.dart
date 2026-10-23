@@ -15,6 +15,7 @@ import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_inherited_invitation_evidence.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_preauthorized_invitation.dart';
 import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
 import 'package:kanban/organizer/data/e2ee/session_crypto_access.dart';
 import 'package:kanban/organizer/presentation/recovery/crypto_invitation_page.dart';
@@ -51,6 +52,7 @@ String _signedReview(
   String role, {
   String invitationId = 'invite',
   String scopeId = 'scope',
+  bool preauthorized = false,
 }) => base64Encode(
   CryptoJson.encode({
     'accountId': sharingSession().accountId,
@@ -61,6 +63,7 @@ String _signedReview(
       'recipient': {'kind': 'username', 'value': 'recipient'},
       'role': role,
       'scopeId': scopeId,
+      if (preauthorized) 'preauthorization': {'version': 1},
     },
     'version': 2,
   }),
@@ -103,6 +106,8 @@ class _Manager extends ScopeCryptoManager {
     Uint8List? recoveryFile,
     bool financeOnly = false,
     VerifiedInheritedInvitationAdmission? inheritedInvitationAdmission,
+    VerifiedPreauthorizedInvitationAdmission? preauthorizedInvitationAdmission,
+    String? fixedReviewId,
   }) async => _review;
 }
 
@@ -111,6 +116,7 @@ class _Invites extends InviteCryptoRepository {
   Object? trustError, grantError;
   Completer<void>? trustGate, grantGate;
   String? resumed;
+  String? resumedAfterAccept;
   int trusts = 0, accepts = 0, grants = 0, resumes = 0;
   VerifiedCryptoInvitation inspectedInvitation = _invite;
   @override
@@ -146,6 +152,7 @@ class _Invites extends InviteCryptoRepository {
     required String actionId,
   }) async {
     accepts++;
+    if (resumedAfterAccept != null) resumed = resumedAfterAccept;
     return {};
   }
 
@@ -214,6 +221,143 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets(
+    'preauthorization-ui26 reopened signed pending never asks owner',
+    (tester) async {
+      final account = _Account(), invites = _Invites(_Account());
+      invites.inspectedInvitation = VerifiedCryptoInvitation(
+        {
+          ..._invite.response,
+          'creatorAuthorization': {
+            'commandBase64': _signedReview('viewer', preauthorized: true),
+          },
+        },
+        _VerifiedDirectory(),
+        [],
+      );
+      await _pump(
+        tester,
+        account,
+        invites,
+        preview: SharedInvitationPreview(
+          scopeName: 'Encrypted target',
+          scopeId: 'scope',
+          kind: SharedScopeKind.project,
+          recipientUsername: 'recipient',
+          role: SharedRole.viewer,
+          expiresAt: DateTime.utc(2099),
+          registrationAllowed: false,
+          invitationId: 'invite',
+          awaitingApproval: true,
+          contractVersion: 4,
+        ),
+      );
+      expect(
+        find.textContaining('Access has not been verified'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('owner still needs'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(invites.accepts, 0);
+      expect(invites.grants, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('preauthorization-ui26 active consent opens once without owner', (
+    tester,
+  ) async {
+    final account = _Account(), invites = _Invites(_Account());
+    invites.inspectedInvitation = VerifiedCryptoInvitation(
+      {
+        ..._invite.response,
+        'creatorAuthorization': {
+          'commandBase64': _signedReview('viewer', preauthorized: true),
+        },
+      },
+      _VerifiedDirectory(),
+      [],
+    );
+    invites.resumedAfterAccept = 'scope';
+    String? selected;
+    await _pump(tester, account, invites, onResult: (id) => selected = id);
+    expect(invites.accepts, 0);
+    expect(invites.resumes, 1);
+    await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+    await tester.pumpAndSettle();
+    expect(invites.accepts, 1);
+    expect(invites.resumes, 2);
+    expect(invites.grants, 0);
+    expect(selected, 'scope');
+    expect(find.byType(CryptoInvitationPage), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'preauthorization-ui26 incomplete activation preserves one consent',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final account = _Account(), invites = _Invites(_Account());
+      invites.inspectedInvitation = VerifiedCryptoInvitation(
+        {
+          ..._invite.response,
+          'creatorAuthorization': {
+            'commandBase64': _signedReview('viewer', preauthorized: true),
+          },
+        },
+        _VerifiedDirectory(),
+        [],
+      );
+      await _pump(tester, account, invites);
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      expect(invites.accepts, 1);
+      expect(invites.resumes, 2);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(find.textContaining('owner still needs'), findsNothing);
+      expect(
+        find.textContaining('Access has not been verified'),
+        findsOneWidget,
+      );
+      invites.resumed = 'scope';
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('crypto-invitation-retry')),
+      );
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-retry')));
+      await tester.pumpAndSettle();
+      expect(invites.accepts, 1);
+      expect(invites.grants, 0);
+      expect(find.byType(CryptoInvitationPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'preauthorization-ui26 absent signed mode retains manual boundary',
+    (tester) async {
+      final account = _Account(), invites = _Invites(_Account());
+      invites.resumedAfterAccept = 'scope';
+      await _pump(tester, account, invites);
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      expect(invites.accepts, 1);
+      expect(invites.resumes, 1);
+      expect(invites.grants, 0);
+      expect(find.byType(CryptoInvitationPage), findsOneWidget);
+      expect(find.textContaining('owner still needs'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'invitation-display26 rejects malformed sender before publishing',
     (tester) async {

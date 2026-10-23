@@ -4519,6 +4519,10 @@ class AppLocalizationsSl extends AppLocalizations {
       'Vsebina, ki jo dodaš v ta prostor, bo vidna pošiljatelju povabila in drugim članom glede na njihova dovoljenja.';
 
   @override
+  String get invitationFlowAccessVerificationPending =>
+      'Povabilo je sprejeto. Dostop še ni preverjen. Za nadaljevanje znova preveri dostop.';
+
+  @override
   String get invitationFlowOtherAccount => 'Uporabi drug račun';
 
   @override

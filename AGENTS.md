@@ -1,5 +1,43 @@
 # Navodila za delo na projektu
 
+23. oktober — **obstoječi E2EE račun sprejme brez lastnika; lokalni HTTP PASS**.
+Novo naročilo brez čakanja nadomesti spodnje odprto vprašanje. Sol6.1/high
+implementacija in root/neodvisni pregled. Send podpiše točnega prejemnika in
+pravice, pripravi encrypted grants celotnega grafa, šele objava sprosti email.
+Obstoječa prijava in ključi zadostujejo za dodaten prostor; en podpisan sprejem
+in exact receipt odpreta prostor brez owner-online/grant/relogin. Send je že
+kriptografska odobritev prejemnika, host vodi consent/SQL lifecycle; marker
+ni crypto consent overlay. acceptedAccountIds je display-only. Host nima
+berljivih ključev; first-use directory trust ostane, ne trdi malicious-host
+identity proof. Nov neobstoječ račun ostaja v4/owner-grant; brezčakalna pot
+zanj NI izvedena. Stari app potrebuje nadgradnjo za novo podpisano glavo.
+Schema21 je additive/two tables, stara povabila/podatki/podpisi ohranjeni.
+Explicit sameSend po restartu najprej read-only izbere en exact unfinished
+draft; dvoumnost ne pošilja, nato receipt-first isti request/token/keys.
+Brez startup workerja/timerja. Odpravljena prava checkpoint napaka: applied
+publish invalidira outer authority memo pred fresh signed reconcile; pending
+se ne šteje completed. 35 novih lokalnih kontrol PASS: UI7/PHP24/checkpoint2/
+retryselector2; fixtureFAIL in superseded17 PHP dokazov ohranjeni, ne štejejo.
+Lastni localhost59779/4 sintetični računi: mainSTOP3 ohranjen (dva dejanska
+checkpointFAIL popravljena, SendPASS3 nato malformedprobe422/fixtureFAIL).
+Ni main4. ACKPASS3 uporabi isto povabilo in po dropped200/restart samo exact
+receipt: skupaj1accept/0resend, owneroffline0requests, B oldspace/session isti.
+RevokePASS1; tamperPASS3:1wrongaccept/409, falseconsumed brez lastnega podpisa
+zavrnjen pred ključi. GraphSendRestartPASS1/313,012s: parent+existingchild
+policy3, outage predpublish/heldmail, ownerrestart/newUIid exactsameSend in
+vsi originalni hashes isti, mailpending, oba preaccept403, enaccept/readboth
+owneroffline0HTTP/0attempts; B oldspace/session ohranjen. 11HTTP zagonov,
+0actual429 s pacing300/61s, NE speedbenchmark. Končni sourcebcb372de…726inputs
+unchanged. Ni native/mobile/financeplaintext/4click oziroma productionready
+dokaza. Telefoni/produkcija/stari MacA/B/Docker18811 nedotaknjeni.
+Lastni59779ustavljen; freshotherContainerStateOrImageChanges[]. Vsi klienti,
+ključi/volumi ostanejo; private10.189.018B/public361.688B pred finalsummary,
+serverdata4.669.440B. Scopedanalysis0error0warning/UI5starihinfo/protocol1.
+Končni metapodatki final-bounded-summary.json/source final-source-manifest.json.
+Dokazi local-diagnostics/invitation-preauthorization-20261023; pogodba
+docs/E2EE_PREAUTHORIZED_INVITATIONS_V5.md in končni sklop
+docs/UX_SHARING_REVIEW_2026_10_23.md. Starih PASS ne ponavljaj.
+
 23. oktober — **priprava enotnega soglasja; samodejna odobritev še NI izvedena**.
 Po uporabnikovem »izvedi« Sol6.1/high podagenti ter root/neodvisni pregled
 pripravijo neodvisni del: Send ostane pri prostoru; prejemnik vidi en končni
