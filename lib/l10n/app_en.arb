@@ -1965,5 +1965,15 @@
   "cryptoMigrationReviewReady": "No further preparation steps are listed for the available spaces. Check and finish to verify account protection.",
   "cryptoMigrationLocalPreserved": "Your local data remains available. Each connected space has its own protection status.",
   "cryptoMigrationFinishReview": "Check and finish",
-  "sharingRedirectRejected": "The app rejected a server redirect. Local changes remain on this device. Check the configured server address."
+  "sharingRedirectRejected": "The app rejected a server redirect. Local changes remain on this device. Check the configured server address.",
+  "sharingProjectMembersAction": "Sharing and members",
+  "sharingMemberNameUnavailable": "Name unavailable · {accountId}",
+  "@sharingMemberNameUnavailable": {
+    "placeholders": {
+      "accountId": {
+        "type": "String"
+      }
+    }
+  },
+  "sharingProjectMembershipUnavailable": "Membership for this project is not ready yet. Finish synchronizing the project first."
 }

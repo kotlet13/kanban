@@ -1965,5 +1965,15 @@
   "cryptoMigrationReviewReady": "Za razpoložljive prostore ni navedenih dodatnih korakov priprave. Za preverjanje zaščite računa izberi Preveri in končaj.",
   "cryptoMigrationLocalPreserved": "Lokalni podatki ostajajo dostopni. Vsak povezani prostor ima svoje stanje zaščite.",
   "cryptoMigrationFinishReview": "Preveri in končaj",
-  "sharingRedirectRejected": "Aplikacija je zavrnila preusmeritev strežnika. Lokalne spremembe ostanejo na tej napravi. Preveri nastavljeni naslov strežnika."
+  "sharingRedirectRejected": "Aplikacija je zavrnila preusmeritev strežnika. Lokalne spremembe ostanejo na tej napravi. Preveri nastavljeni naslov strežnika.",
+  "sharingProjectMembersAction": "Člani in deljenje",
+  "sharingMemberNameUnavailable": "Ime še ni pridobljeno · {accountId}",
+  "@sharingMemberNameUnavailable": {
+    "placeholders": {
+      "accountId": {
+        "type": "String"
+      }
+    }
+  },
+  "sharingProjectMembershipUnavailable": "Članstvo tega projekta še ni pripravljeno. Najprej dokončajte sinhronizacijo projekta."
 }

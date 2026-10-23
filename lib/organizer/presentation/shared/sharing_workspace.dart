@@ -498,6 +498,8 @@ class SharingWorkspace extends ConsumerWidget {
                     ),
                     SharingView.projects => OrganizerProjectsPage(
                       titleAccessory: status,
+                      onShare: (project) => actions.shareProject(project),
+                      shareActionLabel: l.sharingProjectMembersAction,
                       detailMenuBuilder: (project) => SharedContentActionsMenu(
                         scopeId: scope.id,
                         targetId: project.id,

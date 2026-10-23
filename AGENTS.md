@@ -1,5 +1,58 @@
 # Navodila za delo na projektu
 
+23. oktober — **Mac: prenos, imena in neposredni člani PASS**.
+Novo naročilo: najprej429, nato projectroot/članstvo in imena; Sol6.1/high
+implementacija ter glavni/neodvisni pregled PASS. Samo isti Mac A/B in
+lokalni18811, brez telefonov/produkcije/resetov/ponovitev starihPASS.
+Točne observations/inventory strani se združijo le znotraj istega5s lease,
+64vnosov/512KiB; dohiten observationcursor najprej preveri svež podpisan
+lastni imenik. Mutation/pin/account/lifecycle/napake varovala ostanejo,
+600/60s omejitev ista. Imena so account-bound strežniški displaymetadata,
+ne identitetni dokaz; podpisane vloge iste, največ100imen/izrecenfallback.
+R18 isti task UX26 deljenje – dokaz A v B pri B PASSposkus2; A/B imena
+prekSpaceSettings PASS,505HTTP200/0actual429. B stari pending1/blocked1
+ostane, ne trdi cleanqueues. Nova neposredna pot na obeh FAIL1 zaradi
+wireUUIDv8 namesto canonicalUUID; SQLaddress/projection binding popravek
+po3SQL+1actualscopes novihPASS1. Skupaj49različnih novihlokalnihPASS,
+prejšnjiFAIL/fixtureizidi ohranjeni; brez ponovitve uspešnihkontrol.
+R19 istiProjectdetails→Sharingandmembers ENklik PASSposkus2 na A in B:
+točen naslovprojekta/člana/Owner/Member/prvotnosprejetopovabilo. Noben
+manualSync/CRUD/reinvite/grant ali ponovitev prenosa.287HTTP200/0actual429,
+ne speedbenchmark/stalnojamstvo429. ObeappnormalQuit/procesaodsotna;
+vaultbyteparity ostaneUNVERIFIED/TCC, brezobvoda. Odstranjenih8obnovljivih
+cachemap,3.397.356.145B; paketi/izvori/dokazi/podatki ostanejo. R19AOT
+A514eea67…/B991b3637…, oba1build+1install; backendr18/183datotek,
+config/TLS isti, freshotherContainerStateOrImageChanges[]. DrugiUX (povabiloEncryptedspace,
+dvojniJoin/skritočakanje/podvojenimeniji/listasamegasebe) nespremenjen.
+Poročilo docs/UX_SHARING_REVIEW_2026_10_23.md; dokazi v
+build/qa/local-diagnostics/{request-volume-fix,project-members-labels}-20261023/
+in sharing-ux-20261023/*r18*public.json ter *r19*public.json.
+PrvotniSTOP429 in r18 neposredniFAIL ostajata ohranjena zgodovina.
+
+23. oktober — **dve aktualni Mac instanci: deljenje PASS, nov prenos STOP429**.
+Uporabnik naroči UX pregled deljenja/klikov/menijev; Sol6.1/high okolje in
+izvorni pregled, root GUI. Brez runtime sprememb, telefonov ali produkcije.
+A r16/B r17 uporabljata logiko1bbc4fd; B1build+1install na isti shrambi/
+Keychain/CA. Vaultbyteparity UNVERIFIED/TCC, brezobvoda. Novi projekt
+UX26 Projekt A – deljenje, isto A/B, parentMAC-SHARE-SPACE; stari B revoked/
+pending1/blocked1 ostanejo. Inviteusername1/accept1/ownergrant1/Bresume1
+PASS; brez ročnihkartic. Izbrana pot10navigacijskih/potrditvenihklikov,
+neglobalniminimum. ProjektEdit→Members FAIL1 napačno zunanjelink opozorilo;
+source rootIdgap kandidat, liveNULL ni prebran. Space settings pot PASS.
+Drugičlan je Jivie/Jivie, recipient Encryptedspace brezimena, dvojniJoin,
+pendingkey skrit brezstatusa, podvojeniprojektmeniji/listasamegasebe.
+A novoopravilo UX26 deljenje – dokaz A v B shranjeno1/Synced12:47/0/0/0;
+read-only appliedreceipt10:46:57UTC task+intentrev1 potrjen. B prikaz še
+FAIL/STOP po1manualSync Too many attempts; NE ponovi povabila/granta/
+vnosa/starihPASS, nadaljuj istoopravilo. Pasivno10:38:42–10:48:59UTC3275HTTP:
+3269x200/4x429/1x403/1x499;429inventory/observations/inbox/snapshot.
+SkupniIP600/60s, trailing60s694/602/608/602 zaoba; točenhistbucketinference.
+ObeappnormalQuit/procesaodsotna.4Bcache1.664.419.659B odstranjeni;
+paketi/izvori/dokazi/podatki ostanejo. Ni novefullsourcekopije.
+Poročilo docs/UX_SHARING_REVIEW_2026_10_23.md; pasivnidokazi
+build/qa/local-diagnostics/sharing-ux-20261023/ in zasebnicandidate-b-r17/.
+Naslednji predlog:429izvor, projectrootčlanstvo/imenauporabnikov, potemUX.
+
 23. oktober — **Mac sync po dokumentih, iskanje in čitljivost popravljeni**.
 Izrecno naročilo: Sol6.1/high podagenti, root/neodvisni pregled PASS;
 samo ista Mac Share A in lokalni18811, brez telefonov/produkcije/starihPASS.

@@ -75,6 +75,7 @@ class NativeCryptoV2Service extends NativeDatabase
         $readOperations[] = 'crypto2.moderation.disclosure.status';
         $readOperations[] = 'crypto2.exports.delegation.forOffer';
         $readOperations[] = 'crypto2.authority.snapshot';
+        $readOperations[] = 'crypto2.scope.memberLabels';
         if (!in_array($operation, $readOperations, true)) {
             $decoded = NativeCryptoCodec::decode($params);
             $command = $decoded[0];
@@ -107,6 +108,9 @@ class NativeCryptoV2Service extends NativeDatabase
             $account = $actor['user']['account_id'];
             $directory = new NativeCryptoDirectoryV2($this->container, $this->bearer, $this->ip);
             $current = $directory->current($account);
+            if ($operation === 'crypto2.scope.memberLabels') {
+                return (new NativeCryptoMemberLabelsV2($this->container, $this->bearer, $this->ip))->read($params, $actor);
+            }
             if ($operation === 'crypto2.authority.snapshot') {
                 return (new NativeCryptoAuthoritySnapshotV2($this->container, $this->bearer, $this->ip))->read(
                     $params, $actor, $this->status($account, $current),

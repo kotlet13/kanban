@@ -688,7 +688,22 @@ class CryptoScopeObservations {
           : _decode(cursor['payload']!)['generation'] as int;
       if (after > own.generation)
         throw const FormatException('scope_observation_cursor_ahead');
-      while (true) {
+      if (after == own.generation && readOnlyOwnPrefix == null) {
+        // A cached own prefix cannot establish an empty remote tail. Refresh
+        // through the ordinary signed directory route (the enclosing authority
+        // snapshot already carries its status/prefix). A newer signed event
+        // still requires its companion page below. Frozen readers stay at their
+        // exact supplied prefix and never refresh beyond that boundary.
+        own =
+            (await account.directory.refresh()) ??
+            (throw const FormatException(
+              'scope_observation_directory_missing',
+            ));
+      }
+      // The cursor only avoids an empty companion request. The complete signed
+      // operation stream and every included bundle are still checked below;
+      // neither this local cursor nor server pagination proves completeness.
+      while (after < own.generation) {
         final page = await account.directory.call(
           'crypto2.account.scopeObservations',
           {'afterGeneration': after, 'limit': 20},

@@ -9385,6 +9385,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The app rejected a server redirect. Local changes remain on this device. Check the configured server address.'**
   String get sharingRedirectRejected;
+
+  /// No description provided for @sharingProjectMembersAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing and members'**
+  String get sharingProjectMembersAction;
+
+  /// No description provided for @sharingMemberNameUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Name unavailable · {accountId}'**
+  String sharingMemberNameUnavailable(String accountId);
+
+  /// No description provided for @sharingProjectMembershipUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Membership for this project is not ready yet. Finish synchronizing the project first.'**
+  String get sharingProjectMembershipUnavailable;
 }
 
 class _AppLocalizationsDelegate

@@ -6,6 +6,8 @@ import 'crypto_project_relocation_lineage.dart';
 import 'dart:async';
 import 'crypto_finance_account_choices.dart';
 import 'crypto_business_project_relocation.dart';
+import 'crypto_project_root_projection.dart';
+import 'crypto_member_labels.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -651,6 +653,20 @@ class CryptoBusinessSession {
     String scope,
     String domain,
     CryptoReadContext read,
+  ) => _hasReusableCheckpoint(
+    scope,
+    domain,
+    read.headHash,
+    read.epoch,
+    read.accessRevision,
+  );
+
+  Future<bool> _hasReusableCheckpoint(
+    String scope,
+    String domain,
+    String headHash,
+    int epoch,
+    int accessRevision,
   ) async {
     final snapshots = await db.rows(
       '''SELECT c.snapshot_id,c.record_count FROM crypto_domain_checkpoints c
@@ -663,11 +679,11 @@ class CryptoBusinessSession {
         p,
         scope,
         domain,
-        read.headHash,
-        read.epoch,
-        read.accessRevision,
-        read.epoch,
-        read.accessRevision,
+        headHash,
+        epoch,
+        accessRevision,
+        epoch,
+        accessRevision,
       ],
     );
     if (snapshots.length != 1) return false;
@@ -805,12 +821,40 @@ class CryptoBusinessSession {
       descriptors[scope['id'] as String] = descriptor;
       final head = await access.currentHead(scope['id'] as String);
       final member = head.member(account.directory.accountId);
+      final roots = await cryptoProjectRootCandidates(
+        database: db,
+        partition: p,
+        serverId: account.directory.session.profile.serverId,
+        scopeId: scope['id'] as String,
+      );
+      final rootNeedsInventory = roots.any(
+        (row) =>
+            row['deleted'] == 0 &&
+            (row['id'] != scope['id'] ||
+                row['legacy_revision'] != 0 ||
+                row['revision_namespace'] == 'legacy'),
+      );
+      final rootId = cryptoProjectRootProjection(
+        scopeId: scope['id'] as String,
+        descriptor: descriptor,
+        projects: roots,
+        completeVerifiedInventory:
+            rootNeedsInventory &&
+            await _hasReusableCheckpoint(
+              scope['id'] as String,
+              'content',
+              head.headHash,
+              head.epoch,
+              head.accessRevision,
+            ),
+      );
       // Catalog titles are never accepted; only already local or authenticated
       // encrypted scope metadata supplies the visible name/address.
       result.add({
         ...local,
         'id': scope['id'],
         'kind': descriptor['kind'],
+        'projectRootId': rootId,
         'role': member['role'],
         'accessRevision': head.accessRevision,
         'name': source['name'] ?? 'Jivie',
@@ -913,15 +957,39 @@ class CryptoBusinessSession {
         leaders is! List) {
       throw const CryptoAuthorityPending('crypto_scope_leadership_pending');
     }
-    final cached = await db.rows(
-      'SELECT data FROM members WHERE partition=? AND scope_id=?',
-      [p, scope],
-    );
-    final labels = <String, Map>{
-      for (final row in cached)
-        (jsonDecode(row['data'] as String) as Map)['accountId'] as String:
-            jsonDecode(row['data'] as String) as Map,
-    };
+    final requested =
+        head.members
+            .map((member) => member['accountId'] as String)
+            .where((id) => id != account.directory.accountId)
+            .toList()
+          ..sort();
+    final bounded = requested.take(100).toList();
+    var labels = <String, Map<String, dynamic>>{};
+    if (bounded.isNotEmpty) {
+      try {
+        final response = await account.directory.memberLabels(
+          scopeId: scope,
+          headHash: head.headHash,
+          accountIds: bounded,
+        );
+        labels = parseCryptoMemberLabels(
+          response,
+          serverId: account.directory.session.profile.serverId,
+          accountId: account.directory.accountId,
+          deviceId: account.deviceId,
+          scopeId: scope,
+          headHash: head.headHash,
+          requested: bounded,
+        );
+      } on CollaborationException catch (error) {
+        // Old servers retain the signed roster with an explicit missing label.
+        if (error.code != 'unsupported_operation') rethrow;
+      }
+    }
+    if (!account.directory.isCurrent() ||
+        (await access.currentHead(scope)).headHash != head.headHash) {
+      throw const CryptoAuthorityPending('crypto_member_labels_stale');
+    }
     return {
       'members': [
         for (final member in head.members)
@@ -938,10 +1006,14 @@ class CryptoBusinessSession {
                 : labels[member['accountId']]?['userId'] ?? 0,
             'username': member['accountId'] == account.directory.accountId
                 ? account.directory.session.profile.username
-                : labels[member['accountId']]?['username'] ?? 'Jivie',
+                : labels[member['accountId']]?['username'] ??
+                      member['accountId'],
             'displayName': member['accountId'] == account.directory.accountId
                 ? account.directory.session.profile.displayName
-                : labels[member['accountId']]?['displayName'] ?? 'Jivie',
+                : labels[member['accountId']]?['displayName'] ?? '',
+            'labelUnavailable':
+                member['accountId'] != account.directory.accountId &&
+                labels[member['accountId']] == null,
           },
       ],
     };

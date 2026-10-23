@@ -33,6 +33,18 @@ class CryptoAuthoritySnapshot {
   final _attempted = <String>{};
   Future<void>? _loading;
 
+  // Repeated consumers still replay their ordinary signed evidence. Retain only
+  // exact wire pages within this operation's existing authority lease, never a
+  // latestness assertion or a cursor/completeness decision.
+  static const _exactReads = {
+    'crypto2.account.scopeObservations',
+    'crypto2.domain.inventory',
+  };
+  static const _maxExactEntries = 64, _maxExactBytes = 512 * 1024;
+  final _exactEntries = <String, String>{};
+  final _exactLoading = <String, Future<String>>{};
+  int _exactBytes = 0;
+
   static const bundledReads = {
     'crypto2.account.status',
     'crypto2.account.directory',
@@ -170,6 +182,47 @@ class CryptoAuthoritySnapshot {
     _active = false;
     _entries.clear();
     _attempted.clear();
+    _exactEntries.clear();
+    _exactLoading.clear();
+    _exactBytes = 0;
+  }
+
+  Future<Map<String, dynamic>> _readExact(
+    String operation,
+    Map<String, dynamic> params,
+  ) async {
+    if (!_active || !await isValid()) return read(operation, params);
+    final key = _key(operation, params);
+    final saved = _exactEntries[key];
+    if (saved != null) {
+      // Each caller owns its decoded map, including nested proof/list values.
+      return Map<String, dynamic>.from(jsonDecode(saved) as Map);
+    }
+    final previous = _exactLoading[key];
+    if (previous == null &&
+        _exactEntries.length + _exactLoading.length >= _maxExactEntries) {
+      return read(operation, params);
+    }
+    final task =
+        previous ?? (() async => jsonEncode(await read(operation, params)))();
+    _exactLoading[key] = task;
+    try {
+      final encoded = await task;
+      // A mutation, changed pin/account/lifecycle or expired original clock
+      // cannot admit a late response into another authority boundary.
+      if (!_active || !await isValid()) return await read(operation, params);
+      final bytes = utf8.encode(key).length + utf8.encode(encoded).length;
+      if (!_exactEntries.containsKey(key) &&
+          _exactEntries.length < _maxExactEntries &&
+          _exactBytes + bytes <= _maxExactBytes) {
+        _exactEntries[key] = encoded;
+        _exactBytes += bytes;
+      }
+      return Map<String, dynamic>.from(jsonDecode(encoded) as Map);
+    } finally {
+      // Failed requests are never retained or retried by this memo.
+      if (identical(_exactLoading[key], task)) _exactLoading.remove(key);
+    }
   }
 
   Future<Map<String, dynamic>> call(
@@ -181,6 +234,10 @@ class CryptoAuthoritySnapshot {
       close();
       onMutation();
       return read(operation, params);
+    }
+    if (_exactReads.contains(operation) &&
+        !params.containsKey('pendingCapability')) {
+      return _readExact(operation, params);
     }
     if (!bundledReads.contains(operation) ||
         params.containsKey('pendingCapability')) {

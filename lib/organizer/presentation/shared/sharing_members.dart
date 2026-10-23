@@ -1,3 +1,4 @@
+import 'sharing_member_label.dart';
 import '../recovery/crypto_invitation_page.dart';
 import 'content_actions_menu.dart';
 import 'scope_invitation_form.dart';
@@ -266,9 +267,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
             access: SessionCryptoAccess(account: workflow),
             scopeId: widget.scope.id,
             accountId: member.accountId,
-            displayName: member.displayName.isEmpty
-                ? member.username
-                : member.displayName,
+            displayName: sharingMemberLabel(context, member),
           ),
         ),
       );
@@ -388,11 +387,7 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.person_outline),
-                  title: Text(
-                    member.displayName.isEmpty
-                        ? member.username
-                        : member.displayName,
-                  ),
+                  title: Text(sharingMemberLabel(context, member)),
                   subtitle: Text(
                     [
                       member.username,

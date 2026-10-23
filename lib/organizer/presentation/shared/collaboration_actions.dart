@@ -1,3 +1,4 @@
+import 'sharing_member_label.dart';
 import 'scope_lifecycle_menu.dart';
 import 'sharing_members.dart';
 import 'project_sharing_settings.dart';
@@ -34,9 +35,7 @@ class CollaborationActions implements OrganizerCollectionActions {
       if (member.accountId.isNotEmpty)
         OrganizerPersonOption(
           id: member.accountId,
-          label: member.displayName.isEmpty
-              ? member.username
-              : member.displayName,
+          label: sharingMemberLabel(context, member),
           active: member.active,
         ),
   ];
@@ -218,6 +217,99 @@ class CollaborationActions implements OrganizerCollectionActions {
     );
   }
 
+  Future<void> shareProject(LocalProject project) async {
+    if (!guard.isCurrent) return;
+    final state = ref.read(collaborationProvider).valueOrNull;
+    final current = state?.scopes
+        .where((item) => item.id == scope.id)
+        .firstOrNull;
+    final session = state?.session;
+    if (state == null ||
+        session == null ||
+        current == null ||
+        !state.localAccessAllowed ||
+        !current.canRead ||
+        current.blocked ||
+        current.deleted ||
+        state.data[current.id]?.projects.any((item) => item.id == project.id) !=
+            true) {
+      return;
+    }
+    final root = project.id == current.projectRootId;
+    final inline =
+        current.kind == SharedScopeKind.household &&
+        current.canManage &&
+        current.accessPolicyVersion == 3 &&
+        state.spaceProjectMembershipSupported;
+    if (!root && !inline) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(context.l10n.sharingProjectMembersAction),
+          content: Text(context.l10n.sharingProjectMembershipUnavailable),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    if (!guard.isCurrent) return;
+    await Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute(
+        builder: (routeContext) => SharingSessionBoundary(
+          guard: guard,
+          visibleWhen: (fresh) {
+            final target = fresh.scopes
+                .where((item) => item.id == current.id)
+                .firstOrNull;
+            return fresh.localAccessAllowed &&
+                target != null &&
+                target.canRead &&
+                !target.deleted &&
+                !target.blocked &&
+                fresh.data[current.id]?.projects.any(
+                      (item) => item.id == project.id,
+                    ) ==
+                    true &&
+                (root
+                    ? target.projectRootId == project.id
+                    : target.kind == SharedScopeKind.household &&
+                          target.canManage &&
+                          target.accessPolicyVersion == 3 &&
+                          fresh.spaceProjectMembershipSupported);
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                '${context.l10n.sharingProjectMembersAction} · ${project.title}',
+              ),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: root
+                  ? SharingMembersPage(scope: current, session: session)
+                  : ProjectSharingSettings(
+                      scope: current,
+                      projectId: project.id,
+                      onProjectSelected: (id) async {
+                        if (!guard.isCurrent) return;
+                        await guard.controller.selectSpace(id);
+                        if (guard.isCurrent && routeContext.mounted) {
+                          Navigator.of(routeContext).pop();
+                        }
+                      },
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Future<void> project([
     LocalProject? project,
@@ -240,61 +332,7 @@ class CollaborationActions implements OrganizerCollectionActions {
     kind: OrganizerEditorKind.project,
     projectAreaEnabled: false,
     projectContext: scope.name,
-    onShare: project == null
-        ? null
-        : () async {
-            final session = ref
-                .read(collaborationProvider)
-                .valueOrNull
-                ?.session;
-            if (session == null || !guard.isCurrent) return;
-            if (project.id != scope.projectRootId &&
-                (scope.kind != SharedScopeKind.household ||
-                    !scope.canManage ||
-                    scope.accessPolicyVersion != 3 ||
-                    ref
-                            .read(collaborationProvider)
-                            .valueOrNull
-                            ?.spaceProjectMembershipSupported !=
-                        true)) {
-              await showDialog<void>(
-                context: context,
-                builder: (dialogContext) => AlertDialog(
-                  title: Text(context.l10n.sharingProjectSharingAction),
-                  content: Text(context.l10n.sharingProjectSharingBlocked),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: Text(context.l10n.close),
-                    ),
-                  ],
-                ),
-              );
-              return;
-            }
-            await Navigator.of(context, rootNavigator: true).push<void>(
-              MaterialPageRoute(
-                builder: (routeContext) => Scaffold(
-                  appBar: AppBar(title: Text(context.l10n.sharingMembers)),
-                  body: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: project.id == scope.projectRootId
-                        ? SharingMembersPage(scope: scope, session: session)
-                        : ProjectSharingSettings(
-                            scope: scope,
-                            projectId: project.id,
-                            onProjectSelected: (id) {
-                              ref
-                                  .read(collaborationProvider.notifier)
-                                  .selectSpace(id);
-                              Navigator.of(routeContext).pop();
-                            },
-                          ),
-                  ),
-                ),
-              ),
-            );
-          },
+    onShare: project == null ? null : () => shareProject(project),
     draft: OrganizerDraft(
       title: project?.title ?? '',
       notes: project?.description ?? '',

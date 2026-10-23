@@ -25,6 +25,7 @@ class OrganizerProjectsPage extends StatefulWidget {
     this.reminderScopeId,
     this.reportScopeId,
     this.onShare,
+    this.shareActionLabel,
     this.detailMenuBuilder,
   });
   final OrganizerSnapshot snapshot;
@@ -36,6 +37,7 @@ class OrganizerProjectsPage extends StatefulWidget {
   final String? reminderScopeId;
   final String? reportScopeId;
   final ValueChanged<LocalProject>? onShare;
+  final String? shareActionLabel;
   final Widget Function(LocalProject)? detailMenuBuilder;
   final bool home;
   final String? selectedId;
@@ -398,7 +400,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               child: OutlinedButton.icon(
                 onPressed: () => widget.onShare!(project),
                 icon: const Icon(Icons.people_outline, size: 18),
-                label: Text(l.sharingCopyAction),
+                label: Text(widget.shareActionLabel ?? l.sharingCopyAction),
               ),
             ),
           ),

@@ -5335,4 +5335,16 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingRedirectRejected =>
       'Aplikacija je zavrnila preusmeritev strežnika. Lokalne spremembe ostanejo na tej napravi. Preveri nastavljeni naslov strežnika.';
+
+  @override
+  String get sharingProjectMembersAction => 'Člani in deljenje';
+
+  @override
+  String sharingMemberNameUnavailable(String accountId) {
+    return 'Ime še ni pridobljeno · $accountId';
+  }
+
+  @override
+  String get sharingProjectMembershipUnavailable =>
+      'Članstvo tega projekta še ni pripravljeno. Najprej dokončajte sinhronizacijo projekta.';
 }

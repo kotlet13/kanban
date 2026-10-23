@@ -222,6 +222,7 @@ class SharedMember {
     required this.role,
     required this.active,
     this.organizationLeader = false,
+    this.labelUnavailable = false,
     this.accessSource = 'direct',
     this.membershipScopeId,
     this.inheritedFromScopeId,
@@ -237,6 +238,7 @@ class SharedMember {
   final SharedRole role;
   final bool active;
   final bool organizationLeader;
+  final bool labelUnavailable;
   Map<String, Object?> toJson() => {
     'userId': userId,
     'accountId': accountId,
@@ -245,6 +247,7 @@ class SharedMember {
     'role': role.name,
     'active': active,
     'organizationLeader': organizationLeader,
+    'labelUnavailable': labelUnavailable,
     'accessSource': accessSource,
     'membershipScopeId': membershipScopeId,
     'inheritedFromScopeId': inheritedFromScopeId,
@@ -258,6 +261,7 @@ class SharedMember {
     role: SharedRole.values.byName(readString(json, 'role')),
     active: readBool(json, 'active'),
     organizationLeader: json['organizationLeader'] == true,
+    labelUnavailable: json['labelUnavailable'] == true,
     accessSource: json['accessSource'] as String? ?? 'direct',
     membershipScopeId: json['membershipScopeId'] as String?,
     inheritedFromScopeId: json['inheritedFromScopeId'] as String?,

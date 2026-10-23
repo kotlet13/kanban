@@ -5330,4 +5330,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingRedirectRejected =>
       'The app rejected a server redirect. Local changes remain on this device. Check the configured server address.';
+
+  @override
+  String get sharingProjectMembersAction => 'Sharing and members';
+
+  @override
+  String sharingMemberNameUnavailable(String accountId) {
+    return 'Name unavailable · $accountId';
+  }
+
+  @override
+  String get sharingProjectMembershipUnavailable =>
+      'Membership for this project is not ready yet. Finish synchronizing the project first.';
 }

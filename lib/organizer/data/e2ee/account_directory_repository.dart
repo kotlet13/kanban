@@ -110,6 +110,27 @@ class AccountDirectoryRepository {
         'scopeIds': List<String>.unmodifiable(scopeIds),
       });
 
+  /// Display metadata is independent of signed authority snapshot material.
+  Future<Map<String, dynamic>> memberLabels({
+    required String scopeId,
+    required String headHash,
+    required List<String> accountIds,
+  }) async {
+    final capabilities = await _callDirect('capabilities', const {});
+    if (capabilities['serverId'] != session.profile.serverId) {
+      throw const CryptoDirectoryException('directory_server_identity');
+    }
+    final versions = capabilities['cryptoMemberLabelsVersions'];
+    if (versions is! List || !versions.contains(1)) {
+      throw const CollaborationApiException('unsupported_operation');
+    }
+    return _callDirect('crypto2.scope.memberLabels', {
+      'scopeId': scopeId,
+      'headHash': headHash,
+      'accountIds': List<String>.unmodifiable(accountIds),
+    });
+  }
+
   /// Scope transport coalescing to the same verified-operation lease as the
   /// signed-proof memo. This never changes directory or scope admission.
   Future<T> withAuthoritySnapshot<T>(
