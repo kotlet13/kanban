@@ -224,6 +224,7 @@ class _Lab {
   final clients = <String, _Client>{};
   final calls = <Map<String, Object?>>[];
   String get scope => ledger['scope'] as String;
+  bool get continuation => scenario == 'continuation-20261024';
   Future<void> _tail = Future.value();
   Future<void> save() {
     final next = _tail.then((_) async {
@@ -278,6 +279,7 @@ class _Lab {
     await save();
     final start = calls.length;
     final watch = Stopwatch()..start();
+    if (continuation) ledger['checkpoint'] = name;
     try {
       await body();
       state['passed'] = true;
@@ -290,6 +292,9 @@ class _Lab {
     } finally {
       state['elapsedMicroseconds'] = watch.elapsedMicroseconds;
       state['calls'] = calls.skip(start).toList();
+      if (continuation && state['passed'] == true) {
+        ledger['checkpoint'] = '$name:passed';
+      }
       await save();
     }
   }
@@ -337,6 +342,36 @@ class _Wire extends http.BaseClient {
     final command = params['commandBase64'] is String
         ? CryptoJson.decode(cryptoBase64(params['commandBase64'])) as Map
         : null;
+    if (client.lab.continuation) {
+      const forbidden = {
+        'crypto2.invitations.create',
+        'crypto2.invitations.resend',
+        'crypto2.invitations.accept',
+        'crypto2.invitations.revoke',
+        'crypto2.invitations.publishPreauthorization',
+        'auth.registerInvitation4',
+        'auth.register',
+      };
+      const parentMutations = {
+        'crypto2.scope.prepare',
+        'crypto2.scope.headPut',
+        'crypto2.scope.activate',
+        'crypto2.scope.cancel',
+        'crypto2.scope.closeDomain',
+        'crypto2.grants.put',
+      };
+      if (forbidden.contains(body['op']) ||
+          parentMutations.contains(body['op']) &&
+              command?['payload']['scopeId'] == client.lab.scope) {
+        client.lab.calls.add({
+          'actor': client.actor,
+          'operation': body['op'],
+          'status': null,
+          'fault': 'forbidden_continuation_mutation_blocked',
+        });
+        throw StateError('forbidden_continuation_mutation');
+      }
+    }
     final metric = <String, Object?>{
       'actor': client.actor,
       'operation': body['op'],
@@ -466,7 +501,11 @@ Future<void> _publishHistory(_Lab lab, String actor, String scopeKey) async {
   });
 }
 
-Future<Map<String, dynamic>> _fixtureRead(String action, String id) async {
+Future<Map<String, dynamic>> _fixtureRead(
+  String action,
+  String id, [
+  List<String> extra = const [],
+]) async {
   final result = await Process.run('docker', [
     'exec',
     'jivie-invitation-approval-lab-20261023',
@@ -474,6 +513,7 @@ Future<Map<String, dynamic>> _fixtureRead(String action, String id) async {
     '/familyhub-tests/invitation-approval-fixture.php',
     action,
     id,
+    ...extra,
   ]);
   if (result.exitCode != 0) {
     final root = File(
@@ -988,8 +1028,215 @@ Future<void> _runApproval(_Lab lab) async {
   });
 }
 
+Future<Map<String, dynamic>> _continuationState(_Lab lab) => _fixtureRead(
+  'continuation-state',
+  lab.ledger['invitationId'],
+  [lab.ledger['childScope'], lab.ledger['lostActivation']['requestId']],
+);
+
+Future<void> _checkOriginalAuthorizations(_Lab lab, Map baseline) async {
+  for (final key in ['send', 'parentActivation', 'accept']) {
+    final actor = key == 'accept' ? 'member' : 'owner';
+    final client = await lab.open(actor);
+    final expected = baseline['originalAuthorizations'][key] as Map;
+    final rows = await client.db.rows(
+      'SELECT state,authorization FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=?',
+      [client.partition, lab.scope, expected['requestId']],
+    );
+    check(
+      rows.length == 1 &&
+          rows.single['state'] == 'confirmed' &&
+          await cryptoSha256(
+                (rows.single['authorization'] as List).cast<int>(),
+              ) ==
+              expected['proofHash'],
+      'original_${key}_authorization_changed',
+    );
+  }
+}
+
+Future<void> _runContinuation(_Lab lab, Map baseline) async {
+  final owner = await lab.open('owner');
+  final member = await lab.open('member');
+  await lab.step('retained_pending_child_baseline', () async {
+    await _checkOriginalAuthorizations(lab, baseline);
+    final actual = await _continuationState(lab);
+    final expected = baseline['serverBaseline'] as Map;
+    check(
+      actual['invitationState'] == 'consumed' &&
+          actual['parent']['headHash'] == expected['parent']['headHash'] &&
+          actual['parent']['hasRecipient'] == true &&
+          actual['child']['headHash'] == expected['child']['headHash'] &&
+          actual['child']['hasRecipient'] == false,
+      'retained_pending_child_baseline_changed',
+    );
+    check(
+      actual['parentActivationReceipt']['status'] == 200 &&
+          actual['parentActivationReceipt']['commandHash'] ==
+              lab.ledger['lostActivation']['commandHash'] &&
+          actual['parentActivationReceipt']['proofHash'] ==
+              lab.ledger['lostActivation']['requestHash'],
+      'original_parent_receipt_changed',
+    );
+    check(
+      actual['creationProofHash'] == lab.ledger['originalSendProofHash'] &&
+          (actual['acceptances'] as List).length == 1 &&
+          actual['acceptances'][0]['proofHash'] ==
+              lab.ledger['acceptanceProofHash'],
+      'original_server_invitation_proofs_changed',
+    );
+    lab.ledger['baselineState'] = actual;
+  });
+  await lab.step('continue_same_pending_child_foreground', () async {
+    member.wire.offline = true;
+    final beforeMember = lab.calls.where((c) => c['actor'] == 'member').length;
+    final summary = await InviteCryptoRepository(owner.access)
+        .processForegroundAutoApprovals(
+          isForegroundCurrent: () => true,
+          invitationIds: {lab.ledger['invitationId']},
+        );
+    lab.ledger['continuationSummary'] = {
+      'completed': summary.completed,
+      'pending': summary.pending,
+      'codes': [
+        for (final item in summary.invitations)
+          RegExp(r'^[a-z0-9_]{1,160}$').hasMatch(item.errorCode)
+              ? item.errorCode
+              : 'unclassified_error',
+      ],
+      'lastOperations': [
+        for (final call in lab.calls.skip(
+          lab.calls.length > 8 ? lab.calls.length - 8 : 0,
+        ))
+          {'operation': call['operation'], 'status': call['status']},
+      ],
+    };
+    await lab.save();
+    check(
+      summary.completed == 1 && summary.pending == 0,
+      'same_pending_child_foreground_incomplete',
+    );
+    check(
+      member.wire.offlineAttempts == 0 &&
+          lab.calls.where((c) => c['actor'] == 'member').length == beforeMember,
+      'recipient_used_during_child_continuation',
+    );
+    final after = await _continuationState(lab);
+    check(
+      after['parent']['headHash'] ==
+              baseline['serverBaseline']['parent']['headHash'] &&
+          after['child']['hasRecipient'] == true &&
+          after['child']['epoch'] == 2,
+      'child_not_completed_with_same_parent',
+    );
+    lab.ledger['afterChildState'] = after;
+  });
+  member.wire.offline = false;
+  await lab.step('recipient_resume_same_acceptance', () async {
+    final receiver = InviteCryptoRepository(member.access);
+    check(
+      await receiver.resumeAccepted(lab.ledger['invitationId']) == lab.scope,
+      'recipient_same_acceptance_resume_failed',
+    );
+  });
+  await lab.step('recipient_first_ordinary_sync_and_read_both', () async {
+    await member.sync();
+    for (final key in ['scope', 'childScope']) {
+      await member.runtime.pullVerified(lab.ledger[key], 'content');
+      final actual = await member.runtime.record(
+        lab.ledger[key],
+        'content',
+        lab.ledger['${key}Record'],
+        type: 'project',
+      );
+      final original = await owner.runtime.record(
+        lab.ledger[key],
+        'content',
+        lab.ledger['${key}Record'],
+        type: 'project',
+      );
+      check(
+        actual != null &&
+            original != null &&
+            actual['record_proof_hash'] == original['record_proof_hash'] &&
+            actual['raw_payload'] == original['raw_payload'],
+        'recipient_preserved_${key}_record_mismatch',
+      );
+      final visible = member.repo.state
+          .dataForScope(lab.ledger[key])
+          .projects
+          .where((p) => p.id == lab.ledger['${key}Record'])
+          .toList();
+      check(
+        visible.length == 1 && visible.single.title == 'Preserved $key content',
+        'recipient_${key}_not_visible_in_repository',
+      );
+    }
+    lab.ledger['recipientOrdinarySync'] = {
+      'error': null,
+      'unresolved': false,
+      'parentAndChildVisible': true,
+    };
+  });
+  await lab.step('previously_unrun_stale_notice_hidden', () async {
+    var denied = false;
+    try {
+      await owner.account.directory.call('crypto2.inbox.open', {
+        'id': lab.ledger['notificationId'],
+      });
+    } on CollaborationApiException catch (error) {
+      denied = error.code == 'permission_revoked';
+    }
+    check(denied, 'consumed_notice_still_actionable');
+    final inbox = await owner.account.directory.call('crypto2.inbox.list', {
+      'limit': 50,
+    });
+    check(
+      !(inbox['items'] as List).cast<Map>().any(
+        (v) => v['id'] == lab.ledger['notificationId'],
+      ),
+      'consumed_notice_still_visible',
+    );
+  });
+  await lab.step('original_parent_and_all_signed_actions_preserved', () async {
+    await _checkOriginalAuthorizations(lab, baseline);
+    final finalState = await _continuationState(lab);
+    check(
+      finalState['parent']['headHash'] ==
+              baseline['serverBaseline']['parent']['headHash'] &&
+          finalState['parentActivationReceipt']['status'] == 200 &&
+          finalState['parentActivationReceipt']['commandHash'] ==
+              lab.ledger['lostActivation']['commandHash'] &&
+          finalState['parentActivationReceipt']['proofHash'] ==
+              lab.ledger['lostActivation']['requestHash'] &&
+          finalState['creationProofHash'] ==
+              lab.ledger['originalSendProofHash'] &&
+          finalState['acceptances'][0]['proofHash'] ==
+              lab.ledger['acceptanceProofHash'],
+      'original_parent_or_signed_proofs_changed',
+    );
+    check(
+      (finalState['pushReferences'] as List).every(
+        (j) => j['state'] == 'cancelled' && j['attempts'] == 0,
+      ),
+      'retired_push_reference_changed',
+    );
+    check(
+      !lab.calls.any(
+        (call) => call['fault'] == 'forbidden_continuation_mutation_blocked',
+      ),
+      'continuation_attempted_forbidden_repetition',
+    );
+    lab.ledger['finalState'] = finalState;
+    lab.ledger['newSendRegisterAcceptParentMutationHttp'] = 0;
+  });
+}
+
 void main() {
   final path = Platform.environment['JIVIE_INVITATION_APPROVAL_FIXTURE'];
+  final continuation =
+      Platform.environment['JIVIE_INVITATION_APPROVAL_CONTINUATION'] ==
+      '20261024';
   test(
     'new-account invitation explicit acceptance and foreground owner admission',
     () async {
@@ -1004,15 +1251,68 @@ void main() {
         'exact_new_approval_fixture_required',
       );
       final ledgerFile = File(
-        '${file.parent.path}/approval-ledger-private.json',
+        '${file.parent.path}/${continuation ? 'continuation-20261024' : 'approval'}-ledger-private.json',
       );
       final ledger = ledgerFile.existsSync()
           ? Map<String, dynamic>.from(
               jsonDecode(await ledgerFile.readAsString()) as Map,
             )
           : <String, dynamic>{};
+      Map<String, dynamic>? baseline;
+      if (continuation) {
+        baseline = Map<String, dynamic>.from(
+          jsonDecode(
+                await File(
+                  '${file.parent.path}/continuation-baseline-20261024-private.json',
+                ).readAsString(),
+              )
+              as Map,
+        );
+        final history = Map<String, dynamic>.from(
+          jsonDecode(
+                await File(
+                  '${file.parent.path}/approval-ledger-private.json',
+                ).readAsString(),
+              )
+              as Map,
+        );
+        check(
+          await cryptoSha256(
+                await File(
+                  '${file.parent.path}/approval-ledger-private.json',
+                ).readAsBytes(),
+              ) ==
+              baseline['historicalLedgerSha256'],
+          'historical_stop_ledger_changed',
+        );
+        if (ledger.isEmpty) {
+          for (final key in [
+            'scope',
+            'childScope',
+            'scopeRecord',
+            'childScopeRecord',
+            'invitationId',
+            'notificationId',
+            'lostActivation',
+            'originalSendRequestId',
+            'originalSendProofHash',
+            'acceptanceProofHash',
+            'creatorProofHash',
+            'tokenHash',
+          ]) {
+            ledger[key] = history[key];
+          }
+          ledger['renewedAuthorizationDate'] = '20261024';
+          ledger['sourceHistorySha256'] = baseline['historicalLedgerSha256'];
+        }
+      }
       check(ledger['passed'] != true, 'passed_scenario_must_not_rerun');
-      final lab = _Lab(file.parent, fixture, ledger, 'approval');
+      final lab = _Lab(
+        file.parent,
+        fixture,
+        ledger,
+        continuation ? 'continuation-20261024' : 'approval',
+      );
       final priorPrint = debugPrint;
       debugPrint = (message, {wrapWidth}) {
         if (message?.startsWith('GAP_EVENT ') == true) {
@@ -1020,7 +1320,11 @@ void main() {
         }
       };
       try {
-        await _runApproval(lab);
+        if (continuation) {
+          await _runContinuation(lab, baseline!);
+        } else {
+          await _runApproval(lab);
+        }
         ledger['passed'] = true;
         await lab.save();
       } finally {

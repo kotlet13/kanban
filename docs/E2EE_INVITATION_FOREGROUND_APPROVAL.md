@@ -1,8 +1,11 @@
 # Potrditev dostopa po sprejemu povabila
 
-Izvedba 23. oktobra 2026. Sprememba je implementirana in izvorno pregledana;
-59 različnih novih ozkih kontrol je uspelo. Celotni HTTP scenarij ostaja
-DELNO / STOP3. To še ni potrdilo za mobilno ali produkcijsko izdajo.
+Izvedba 23. oktobra in dovoljeno nadaljevanje 24. oktobra 2026. Sprememba je
+implementirana in pregledana; 63 različnih ozkih kontrol je uspelo. Nadaljevanje
+istega ohranjenega HTTP scenarija je uspešno zaključilo vseh šest preostalih
+korakov v prvem poskusu. Prvotna zgodovina STOP3 ostaja ohranjena.
+Mobilni prikaz in dejanska dostava sistemskih obvestil še čakata ročni preizkus;
+to ni odobritev produkcijske izdaje.
 
 ## Uporabniški potek
 
@@ -63,11 +66,12 @@ Obstoječi QA, telefoni in produkcija niso del preverjanja.
 | Prebrano zastarelo obvestilo | 6 novih PASS1 | Lastno nedostopno obvestilo ob veljavnem dostopu do prostora je `notification_missing`; napačen račun/dejanski odvzem ostaneta zavrnjena |
 | Samodejna odobritev in potrdila zahtev | 20 različnih novih PASS | Dart/SQL, kontrolirani vmesniki in podpisi; ena popravljena testna predpostavka v drugem poskusu |
 | Trenutna žična oblika, usmerjanje in koordinator | 11 različnih novih PASS | Model/repository/widget kontrole, ne fizični telefon |
-| Trije ročni pregledi sprejema na strani povabila | UNVERIFIED / STOP3 | Napake testnega okolja in prevajanja; brez četrtega poskusa |
-| Nadaljevanje čakajočega označevanja obvestila kot prebranega | UNVERIFIED / STOP3 | Ohranitev izvirne zahteve skozi osvežitev je potrjena; celotni sintetični sync ni dokazal odstranitve obvestila. Točen razlog ni zajet, zato ne trdimo niti uspeha niti nove napake aplikacije |
-| Novi HTTP potek z novim računom | DELNO / STOP3 | Potrjeni Send, registracija, e-pošta, ključi novega računa, izrecni sprejem brez lastnika, točno obvestilo, zavrnitev napačnega računa ter prepoved odobritve v ozadju. Resnični parent activation 200 z izgubljenim odgovorom je potrjen; nadaljevanje podprostora je obstalo pri `crypto_key` |
+| Trije ročni pregledi sprejema na strani povabila | PASS, nadaljevanje 24. oktobra | Spremenjeni odtisi sprejema, pošiljatelja in žetona zavrnejo pregled pred zaupanjem ali predajo ključev; vsak primer prvi dejanski tek |
+| Nadaljevanje čakajočega označevanja obvestila kot prebranega | PASS2, nadaljevanje 24. oktobra | Izvirna zahteva ostane skozi osvežitev; navadni sintetični sync prejme `notification_missing`, odstrani obvestilo in zahtevo, brez blokade prostora ali napake |
+| Novi HTTP potek z novim računom, stanje 23. oktobra | Zgodovinsko DELNO / STOP3 | Potrjeni Send, registracija, e-pošta, ključi novega računa, izrecni sprejem brez lastnika, točno obvestilo, zavrnitev napačnega računa ter prepoved odobritve v ozadju. Resnični parent activation 200 z izgubljenim odgovorom je potrjen; nadaljevanje podprostora je obstalo pri `crypto_key` |
 
-Prva dva HTTP zagona sta se ustavila zaradi nastavitev testa: stari v4
+Spodnji opis in stanje podprostora sta zgodovina 23. oktobra; nadaljevanje
+24. oktobra je opisano posebej. Prva dva HTTP zagona sta se ustavila zaradi nastavitev testa: stari v4
 odgovor ne nastavi `deliveryQueued`, čeprav je pošta pravilno v vrsti; novo
 testno okolje pa ni imelo URL za sestavo zajete e-pošte. Isti Send in ista
 poštna vrsta sta bila ohranjena; ni bilo novega povabila, ponastavitve ali
@@ -102,3 +106,53 @@ Dokazi so v `build/qa/local-diagnostics/invitation-approval-20261023/` ter
 Dejanska dostava APNs/FCM in prikaz na fizičnih telefonih ostajata za poznejši
 mobilni pregled. Že začete omrežne zahteve ni mogoče preklicati za nazaj;
 varovalo prepreči naslednjo novo predajo po izgubi aktivnega ospredja.
+
+
+## Nadaljevanje 24. oktobra 2026
+
+Po uporabnikovem naročilu smo nadaljevali samo odprte korake. Nov datiran
+proračun je dovoljeval največ tri poskuse na preostali primer; prvotni STOP3,
+njegovi dnevniki in podpisi niso bili spremenjeni. Uporabljeni so isti lokalni
+strežnik 59780, računa, podatkovni bazi, ključi in sprejeto povabilo.
+
+HTTP nadaljevanje PASS1 (131,761 s, šest korakov):
+
+1. Ohranjeno stanje, prvotni podpisi in potrdilo že izvedene aktivacije so enaki.
+2. Lastnikova aplikacija v ospredju dokonča isti čakajoči podprostor.
+   Prejemnik je med tem brez povezave, brez njegovih omrežnih poskusov.
+3. Prejemnik pozneje nadaljuje isto sprejeto povabilo.
+4. Navadna sinhronizacija se zaključi brez napake ali nerešenega dela.
+   Oba ohranjena projekta sta vidna v podatkovnem modelu aplikacije;
+   dešifrirana vsebina in odtisi dokazil se ujemajo z lastnikovima zapisoma.
+5. Že porabljeno obvestilo je skrito in ga ni več mogoče odpreti kot veljavno.
+6. Glava glavnega prostora, prvotno potrdilo in podpisi pošiljanja, sprejema
+   ter aktivacije ostanejo nespremenjeni. Ni novega Send, registracije,
+   sprejema ali ponovne spremembe članstva glavnega prostora.
+
+Štiri preostale sintetične kontrole so prav tako PASS. Trije ročni pregledi
+zavrnejo spremenjen odtis sprejema, pošiljatelja ali žetona, preden pokličejo
+zaupanje ali odobritev. Čakajoča zahteva za označitev obvestila kot prebranega
+ostane nespremenjena med osvežitvijo prikaza, nato se ob `notification_missing`
+pravilno zaključi brez odvzema dostopa. Ta kontrola uporablja sintetično staro
+pot obvestil, ne dokazuje celotne kriptografske sinhronizacije. Prvi obnovljeni
+poskus je odkril napako testa: privzeti kriptografski adapter je zahteval
+identiteto, ki je ta test nima. Test uporablja izrecen adapter, ki zavrne
+vsak dejanski kriptografski klic. Produkcijska varovala niso bila spremenjena.
+
+Prvi filter ni izbral treh ročnih kontrol zaradi začetnega presledka v imenu
+skupine. V drugem zagonu so bile izvedene prvič; kontrola obvestila je uspela
+v svojem drugem poskusu. Stari neuspehi so ohranjeni. V tem nadaljevanju ni
+bilo ponovitve prejšnjih uspešnih poslovnih testov. Spremenjeni so samo testi,
+diagnostična orodja in ta dokumentacija; dodatni popravek aplikacije ni bil potreben.
+
+Dokazi: `build/qa/local-diagnostics/invitation-approval-continuation-20261024/`
+in `build/qa/local-diagnostics/invitation-foreground-approval-20261024/ui/`.
+Izvor HTTP testa med tekom nespremenjen: `b830a768…`, 733 vhodnih datotek.
+Zabeleženih HTTP 429 je nič; trajanje vključuje namerno omejevanje zahtevkov
+in ni meritev odzivnosti aplikacije. Telefoni, produkcija in stare QA namestitve
+niso bili uporabljeni. Za mobilni preizkus je treba še posodobiti testna paketa
+ter preveriti prikaz in dejansko dostavo obvestila na Androidu/iOS.
+
+Lastni strežnik 59780 je po preverjanju ponovno ustavljen. Isti trije volumni,
+računa in ključi so ohranjeni; sveža primerjava drugih vsebnikov ni pokazala
+sprememb njihovega stanja ali slike.

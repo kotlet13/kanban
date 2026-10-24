@@ -4,6 +4,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
+import 'package:kanban/organizer/data/device_session_store.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_domain_router.dart';
 import 'package:kanban/organizer/data/collaboration_transport.dart'
     show CollaborationApiException;
 import 'package:kanban/organizer/domain/collaboration_models.dart';
@@ -11,10 +13,29 @@ import 'collaboration_repository_test.dart'
     show FakeServer, MemorySessionStore, code;
 import 'remote_push_test_support.dart';
 
+/// This legacy notification seam has no crypto identity or projection cursor.
+/// The explicit content guard permits only the synthetic legacy transport;
+/// unexpectedly dispatching any protected crypto operation still fails closed.
+class _SyntheticNotificationRouter implements CryptoDomainRouter {
+  const _SyntheticNotificationRouter();
+  @override
+  Future<Map<String, dynamic>> dispatch({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> params,
+    required Set<String> protectedScopeIds,
+  }) async => throw StateError(
+    'Unexpected crypto dispatch in legacy notification seam',
+  );
+}
+
 class _Transport extends PushTransport {
   _Transport(super.server);
   bool substitute = false;
   bool readMissing = false;
+  final operationNames = <String>[];
+  final capabilityInboxFlags = <bool>[];
+  final terminalReadErrors = <String>[];
   Future<Map<String, dynamic>> Function(Map<String, Object?>)? listReply;
   @override
   Future<Map<String, dynamic>> call({
@@ -24,7 +45,9 @@ class _Transport extends PushTransport {
     String? token,
     bool allowLocalHttp = false,
   }) async {
+    operationNames.add(operation);
     if (operation == 'inbox.read' && readMissing) {
+      terminalReadErrors.add('notification_missing');
       throw const CollaborationApiException('notification_missing');
     }
     if (operation == 'inbox.list' && listReply != null) {
@@ -52,6 +75,7 @@ class _Transport extends PushTransport {
       allowLocalHttp: allowLocalHttp,
     );
     if (operation == 'capabilities' && readMissing) {
+      capabilityInboxFlags.add(true);
       return {
         ...reply,
         'features': {
@@ -60,6 +84,7 @@ class _Transport extends PushTransport {
         },
       };
     }
+    if (operation == 'capabilities') capabilityInboxFlags.add(false);
     if (operation == 'inbox.open' && substitute) {
       final item = Map<String, dynamic>.from(reply['item'] as Map);
       item['invitationAcceptance'] = {
@@ -85,6 +110,7 @@ void main() {
       transport,
       MemorySessionStore(),
       contentRouteGuard: const SyntheticContentRouteGuard(),
+      cryptoRouter: const _SyntheticNotificationRouter(),
     );
     await repository.initialize();
     await repository.login(
@@ -228,15 +254,51 @@ void main() {
         before,
       );
       transport.readMissing = true;
-      await repository.syncNow(resumePayments: false);
+      expect(
+        await repository.database.rows('SELECT 1 FROM crypto_scope_state'),
+        isEmpty,
+      );
+      final syncTraceStart = transport.operationNames.length;
+      await repository.syncNow();
+      final after = await repository.database.rows(
+        'SELECT state FROM commands ORDER BY sequence',
+      );
+      final completion = repository.lastSyncCompletion;
+      String? safeError(Object? value) => value == null
+          ? null
+          : value is CollaborationException
+          ? value.code
+          : value.runtimeType.toString();
+      // Bounded synthetic test evidence, without payloads, tokens or keys.
+      // ignore: avoid_print
+      print(
+        'INVITATION_APPROVAL_DIAGNOSTIC ${jsonEncode({
+          'phase': 'queued_read_after_sync',
+          'operations': transport.operationNames.skip(syncTraceStart).toList(),
+          'capabilityInboxFlags': transport.capabilityInboxFlags,
+          'terminalReadErrors': transport.terminalReadErrors,
+          'inboxSupported': repository.state.inboxSupported,
+          'inboxCount': repository.state.inbox.length,
+          'commands': after.map((row) => row['state']).toList(),
+          'error': safeError(repository.state.lastError),
+          'scopeBlocked': repository.state.scopes.map((s) => s.blocked).toList(),
+          'scopeRevoked': repository.state.scopes.map((s) => s.revoked).toList(),
+          'completion': completion == null ? null : {'sequence': completion.sequence, 'error': safeError(completion.error), 'workUnresolved': completion.work.unresolved},
+        })}',
+      );
+      expect(completion, isNotNull);
+      expect(completion!.error, isNull);
+      expect(
+        transport.operationNames.skip(syncTraceStart),
+        contains('inbox.read'),
+      );
+      expect(transport.terminalReadErrors, ['notification_missing']);
       expect(repository.state.inbox, isEmpty);
       expect(await repository.database.rows('SELECT * FROM commands'), isEmpty);
       expect(repository.state.scopes.single.blocked, isFalse);
       expect(repository.state.scopes.single.revoked, isFalse);
       expect(repository.state.lastError, isNull);
     },
-    skip:
-        'UNVERIFIED STOP3 queued read continuation fixture; docs/E2EE_INVITATION_FOREGROUND_APPROVAL.md',
   );
   test(
     'accepted invitation push resolves exact authenticated invitation without key writes',

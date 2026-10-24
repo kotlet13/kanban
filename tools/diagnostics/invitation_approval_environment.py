@@ -15,6 +15,7 @@ NAME = 'jivie-invitation-approval-lab-20261023'
 PORT = 59780
 LABEL_KEY = 'si.triparna.jivie.invitation-approval'
 VOLUMES = {suffix: f'{NAME}-{suffix}' for suffix in ('data', 'plugins', 'tls')}
+CONTINUATION_EVIDENCE = REPO / 'build/qa/local-diagnostics/invitation-approval-continuation-20261024/environment'
 save = infrastructure.save
 run = infrastructure.run
 
@@ -73,14 +74,65 @@ def bootstrap():
             'cryptoStateCreated': False, 'mailDeliveryClaimed': False}
 
 
+def continuation_status():
+    obj = inspect_owned()
+    baseline = json.loads((CONTINUATION_EVIDENCE / 'initial-docker-inventory.json').read_text())
+    old = {row['Names']: row for row in baseline}
+    current = {row['Names']: row for row in infrastructure.inventory()}
+    changed = [name for name in sorted(set(old) | set(current)) if name != NAME and
+               (name not in old or name not in current or
+                any(old[name][field] != current[name][field] for field in ('ID', 'State', 'Image')))]
+    result = {'running': obj['State']['Running'], 'otherContainerStateOrImageChanges': changed,
+              'ownedVolumes': VOLUMES, 'container': NAME, 'baselineDate': '20261024'}
+    save(CONTINUATION_EVIDENCE / 'environment-status.json', result)
+    print(json.dumps(result))
+
+
+def resume_continuation():
+    obj = inspect_owned()
+    if obj['State']['Running']:
+        raise RuntimeError('Preserve the already running environment; do not assume this run owns its start')
+    baseline_path = CONTINUATION_EVIDENCE / 'initial-docker-inventory.json'
+    if baseline_path.exists():
+        raise RuntimeError('Preserve existing continuation environment baseline')
+    with __import__('socket').socket() as sock:
+        sock.bind(('127.0.0.1', PORT))
+    save(baseline_path, infrastructure.inventory())
+    ownership = json.loads((EVIDENCE / 'ownership.json').read_text())
+    if obj['Image'] != ownership['imageId']:
+        raise RuntimeError('Owned lab image changed since the retained STOP3')
+    mounts = {mount['Destination']: mount for mount in obj['Mounts']}
+    for source, destination in [(REPO / 'server/plugins/FamilyHub', '/var/www/app/plugins/FamilyHub'),
+                                (REPO / 'server/tests', '/familyhub-tests')]:
+        mount = mounts.get(destination, {})
+        if (mount.get('Type') != 'bind' or mount.get('RW') is not False or
+                mount.get('Source', '').removeprefix('/host_mnt') != str(source)):
+            raise RuntimeError('Exact retained read-only source binds required')
+    save(CONTINUATION_EVIDENCE / 'ownership.json', {
+        'containerId': obj['Id'], 'imageId': obj['Image'], 'volumes': VOLUMES,
+        'serverUrl': f'http://127.0.0.1:{PORT}', 'retainedStoppedState': True,
+        'bootstrap': False, 'newAccounts': False, 'sourceCopies': False})
+    run(['docker', 'start', NAME])
+    result = infrastructure.ready_existing()
+    save(CONTINUATION_EVIDENCE / 'readiness.json', result)
+    continuation_status()
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['up', 'resume-readiness', 'bootstrap', 'refresh-source', 'status', 'stop'])
+    parser.add_argument('action', choices=['up', 'resume-readiness', 'bootstrap', 'refresh-source', 'status', 'stop',
+                                         'resume-continuation-20261024', 'continuation-status-20261024', 'stop-continuation-20261024'])
     args = parser.parse_args()
     os.umask(0o077)
     ROOT.mkdir(mode=0o700, exist_ok=True)
     ROOT.chmod(0o700)
-    if args.action == 'up': infrastructure.phase('server-readiness', infrastructure.up)
+    if args.action == 'resume-continuation-20261024': resume_continuation()
+    elif args.action == 'continuation-status-20261024': continuation_status()
+    elif args.action == 'stop-continuation-20261024':
+        inspect_owned()
+        run(['docker', 'stop', '--time', '20', NAME])
+        continuation_status()
+    elif args.action == 'up': infrastructure.phase('server-readiness', infrastructure.up)
     elif args.action == 'resume-readiness': infrastructure.phase('server-readiness', infrastructure.ready_existing)
     elif args.action == 'bootstrap': infrastructure.phase('owner-only-bootstrap', bootstrap)
     elif args.action == 'refresh-source':

@@ -1,5 +1,33 @@
 # Navodila za delo na projektu
 
+24. oktober — **isti čakajoči podprostor in štiri odprte kontrole PASS**.
+Novo uporabnikovo naročilo dovoli nadaljevanje; Sol6.1/high podagenti,
+root/neodvisni pregled. Nov datiran max3 proračun, prvotni STOP3 in hash obeh
+zgodovinskih ledgerjev ostaneta nespremenjena. Brez runtime popravkov.
+Isti owned59780, računa/ključi/povabilo/shrambi; HTTP continuation PASS1,
+131,761s/6korakov/sourceb830a768…/733inputs. Baseline/izvirni3podpisi PASS;
+isti child foreground completed1/pending0, recipient offline0calls. Recipient
+nadaljuje istiaccept, navadni sync errornull/unresolvedfalse; oba ohranjena
+projekta vidna v repo, plaintext/proofhash enaka. Consumednotice hidden/open
+expected403. Parenthead/epoch2/receipt200/Send/accept/activateproofs isti;
+child zdaj epoch2/2člana. Ni novegaSend/register/accept/parentmembershipmutacije,
+lostACK/stariPASS niso ponovljeni. 865HTTP/864x200+1expected403/0actual429;
+pacing, NI speedbenchmark. Pushreferenca cancelled0attempts.
+Odprte4kontrole PASS: manual3 prvi dejanski tek, queuedread drugi. Prvi filter
+manual imen ni izbral zaradi leadingblank; queuefixtureFAIL zaradi privzetega
+crypto cursor adapterja brez identitete. Test-only failclosed legacyrouter,
+ni fakekeys/odstranitve produkcijskega varovala. Queue dejansko inbox.read→
+notification_missing, preservedcommand čez displayrefresh, potem inbox0/
+commands0/errornull/scopenotblocked-notrevoked. Manualmismatch trust0/grant0.
+Meja: sintetični notification/widget/SQLtest, ne crypto/nativeproof.
+Scopedanalysis0issues; zgodovinski FAIL ostanejo. Owned59780 spet ustavljen,
+freshotherContainerStateOrImageChanges[], isti3volumi ohranjeni. Telefoni,
+produkcija/stareQA/18811/59779 nedotaknjeni, brez build/install. NativeAPNs/FCM
+in mobilni prikaz še NEPREVERJENI; naslednje testnapaketa in uporabnikov ročni
+pregled. Ne ponavljaj teh PASS. docs/E2EE_INVITATION_FOREGROUND_APPROVAL.md;
+dokazi invitation-approval-continuation-20261024 in
+invitation-foreground-approval-20261024/ui v build/qa/local-diagnostics.
+
 23. oktober — **obvestilo po sprejemu in foreground dokončanje; HTTP DELNO/STOP3**.
 Uporabnik izbere običajno email povabilo za nov račun; neodvisna skrivnost
 spodaj ZAVRNJENA. Sol6.1/high server/core/UI, root in neodvisni pregledi.

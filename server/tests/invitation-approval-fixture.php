@@ -18,6 +18,24 @@ if ($action==='verification') {
 }
 $rows=$query("SELECT i.* FROM familyhub_crypto_invitations_v2 i JOIN familyhub_accounts a ON a.account_id=i.creator_account_id JOIN users u ON u.id=a.user_id WHERE i.id=? AND u.username LIKE 'inviteapproval_%'",[$id]);
 if(count($rows)!==1)throw new RuntimeException('Exact synthetic invitation required');$invitation=$rows[0];
+if($action==='continuation-state'){
+    $child=$argv[3]??'';$request=$argv[4]??'';
+    foreach([$child,$request]as$value)if(!preg_match('/^[a-f0-9-]{36}$/D',$value))throw new RuntimeException('Exact continuation IDs required');
+    $out=[];
+    foreach(['parent'=>$invitation['scope_id'],'child'=>$child]as$label=>$sid){
+        $heads=$query('SELECT h.head_hash,h.epoch,h.payload FROM familyhub_crypto_scope_state s JOIN familyhub_crypto_scope_heads h ON h.scope_id=s.scope_id AND h.head_hash=s.head_hash WHERE s.scope_id=?',[$sid]);
+        if(count($heads)!==1)throw new RuntimeException('Exact current scope required');$head=$heads[0];$body=json_decode($head['payload'],true,34,JSON_THROW_ON_ERROR);
+        $out[$label]=['headHash'=>$head['head_hash'],'epoch'=>(int)$head['epoch'],'memberCount'=>count($body['members']),'hasRecipient'=>in_array($invitation['recipient_account_id'],array_column($body['members'],'accountId'),true)];
+    }
+    $receipts=$query('SELECT status,request_hash,authorization FROM familyhub_crypto_receipts WHERE account_id=? AND request_id=?',[$invitation['creator_account_id'],$request]);
+    if(count($receipts)!==1)throw new RuntimeException('Exact retained receipt required');$receipt=$receipts[0];
+    $out['parentActivationReceipt']=['status'=>(int)$receipt['status'],'commandHash'=>$receipt['request_hash'],'proofHash'=>\Kanboard\Plugin\FamilyHub\Model\NativeCryptoV2Codec::hash((object)json_decode($receipt['authorization'],true,34,JSON_THROW_ON_ERROR))];
+    $out['creationProofHash']=\Kanboard\Plugin\FamilyHub\Model\NativeCryptoV2Codec::hash((object)json_decode($invitation['authorization'],true,34,JSON_THROW_ON_ERROR));
+    $out['acceptances']=$query('SELECT proof_hash AS proofHash,state FROM familyhub_crypto_invitation_acceptances_v2 WHERE invitation_id=?',[$id]);
+    $out['invitationState']=$invitation['state'];
+    $out['pushReferences']=$query('SELECT j.state,j.attempts FROM familyhub_push_jobs j JOIN familyhub_inbox i ON i.id=j.inbox_id WHERE i.target_id=?',[$id]);
+    echo json_encode($out,JSON_THROW_ON_ERROR);return;
+}
 if($action==='capture-invitation'){
     $fake=new class($id){public $messages=[];private $id;public function __construct($id){$this->id=$id;}public function send($to,$purpose,$url,$id,$language,$details=[]){if($id!==$this->id||$purpose!=='invitation')throw new RuntimeException('Wrong synthetic mail');$this->messages[]=['to'=>$to,'url'=>$url,'id'=>$id];return ['accepted'=>true];}};
     $result=(new \Kanboard\Plugin\FamilyHub\Model\NativeCryptoInvitationMailV2($container))->run(1,$fake);

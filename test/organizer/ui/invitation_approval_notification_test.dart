@@ -8,6 +8,7 @@ import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_repository.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
+import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
 import 'package:kanban/organizer/data/device_session_store.dart';
 import 'package:kanban/organizer/platform/remote_push/foreground_invitation_approval_coordinator.dart';
 import 'package:kanban/organizer/platform/remote_push/remote_push_providers.dart';
@@ -90,6 +91,7 @@ class _Invites extends Fake implements InviteCryptoRepository {
   _Invites(this.changed);
   final String changed;
   int trusted = 0;
+  int admitted = 0;
   @override
   Future<VerifiedCryptoInvitation> acceptedRecipient(
     String scopeId,
@@ -128,6 +130,16 @@ class _Invites extends Fake implements InviteCryptoRepository {
     VerifiedCryptoInvitation invitation,
   ) async {
     trusted++;
+  }
+
+  @override
+  Future<void> admit(
+    VerifiedCryptoInvitation recipient,
+    ScopeRotationReview reviewedInventory, {
+    Future<void> Function(VerifiedCryptoInvitation)? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
+  }) async {
+    admitted++;
   }
 }
 
@@ -204,58 +216,53 @@ void main() {
       );
     },
   );
-  group(
-    '',
-    () {
-      for (final changed in ['acceptance', 'creator', 'token']) {
-        testWidgets(
-          'exact manual review rejects changed $changed before trust or grant',
-          (tester) async {
-            final invites = _Invites(changed);
-            await tester.pumpWidget(
-              ProviderScope(
-                overrides: [
-                  hostingInformationProvider.overrideWith(
-                    (ref, target) async => const HostingInformation(),
-                  ),
-                ],
-                child: MaterialApp(
-                  locale: const Locale('en'),
-                  localizationsDelegates:
-                      AppLocalizations.localizationsDelegates,
-                  supportedLocales: AppLocalizations.supportedLocales,
-                  home: CryptoInvitationPage(
-                    account: _Account(),
-                    invitationId: inviteId,
-                    scopeId: sharingScopeId,
-                    expectedAcceptance: hint(),
-                    repository: invites,
-                  ),
+  group('', () {
+    for (final changed in ['acceptance', 'creator', 'token']) {
+      testWidgets(
+        'exact manual review rejects changed $changed before trust or grant',
+        (tester) async {
+          final invites = _Invites(changed);
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                hostingInformationProvider.overrideWith(
+                  (ref, target) async => const HostingInformation(),
+                ),
+              ],
+              child: MaterialApp(
+                locale: const Locale('en'),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: CryptoInvitationPage(
+                  account: _Account(),
+                  invitationId: inviteId,
+                  scopeId: sharingScopeId,
+                  expectedAcceptance: hint(),
+                  repository: invites,
                 ),
               ),
-            );
-            await tester.pumpAndSettle();
-            expect(invites.trusted, 0);
-            await tester.scrollUntilVisible(
-              find.byKey(const ValueKey('crypto-invitation-retry')),
-              160,
-            );
-            expect(
-              find.byKey(const ValueKey('crypto-invitation-confirm')),
-              findsNothing,
-            );
-            expect(
-              find.byKey(const ValueKey('crypto-invitation-retry')),
-              findsOneWidget,
-            );
-            expect(tester.takeException(), isNull);
-          },
-        );
-      }
-    },
-    skip:
-        'UNVERIFIED STOP3 manual page fixtures; docs/E2EE_INVITATION_FOREGROUND_APPROVAL.md',
-  );
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(invites.trusted, 0);
+          expect(invites.admitted, 0);
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('crypto-invitation-retry')),
+            160,
+          );
+          expect(
+            find.byKey(const ValueKey('crypto-invitation-confirm')),
+            findsNothing,
+          );
+          expect(
+            find.byKey(const ValueKey('crypto-invitation-retry')),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  });
   testWidgets(
     'foreground coordinator ignores ordinary sync, duplicate and removed events',
     (tester) async {
