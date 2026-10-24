@@ -1,5 +1,37 @@
 # Navodila za delo na projektu
 
+24. oktober — **oba ločena mobilna QA posodobljena; čaka uporabnikov prvi sync**.
+User priklopi S25/iPhone11 istiWiFi in naroči vzporedna Android/iOS agenta;
+Sol6.1/high, rootreview. HEAD149ed06 v obeh ISTIH QAworkspace, brez fullcopy.
+Android si.triparna.jivie.e2eetest.android20261018 APKbbdcdbbb…1build1install-r,
+isti signer/UID10292/dataDir,4vaultfiles2.941.318B byteparity, prodGooglePlay
+si.triparna.jivie APK/meta/process untouched. iOS isti .ios20261018
+IPA070388ae…/AOT3503bf81…/616inputs,1archive1actualinstall, isti profile/cert/
+Keychainservice/group,4vaultfiles4.157.830B byteparity. Containerpathchanged,
+noKeychainread/TCCbypass. QA reopenedPID2783: guardstopBEFOREinstall,
+normalstop+freshcurrentbackup (samehashes), no rollback; oldguard retained.
+Oba closed/agentlaunch0/UI0/sync0. QA-onlyfreshdiagnostic namespace
+jivie_qa_mobile_sync_20261024_v1 v ApplicationSupport,3startup+3manualfull,
+18filesmax8KiB, firstCAUGHTcode/phase/allowedframes in samecyclecompletion;
+firstcaught ni nujno rootcause. Newlogger smokePASS1, scoped0error0warning/
+1preexistingfinanceinfo. Nativeactualsync UNVERIFIED, uspešnih testov ni ponovitev.
+Localmobile18801 sameSID/LAN/renewedCA b9af…valid20Nov, deployed17PHP/186files,
+schema21 additive2emptytables,219olddata tables+alloldDDL exact/versionrowonly.
+Privatecoldbackup retained; config/TLS/keys/4ownedIDsimages isti running.
+Preparation1inactiveportfixtureFAIL,2privateWALsnapshotfixtureFAIL before
+livechange;3targetchecksPASS then externalothercontainerparityFAIL due
+observedaidiagramerrollout. No4th, readonlyfinalreadytrue; othercontainers
+untouched, NEtrdi globalparity. 1publicstrictTLS200/0authbusinessRPC.
+FCMserverdisabled/0registrations, QAappsnoFirebase/iOSnoaps: OS push šeNI
+nastavljen; inapp/foregroundtest mogoča. StrežniškizajempreparedINACTIVE.
+Android16cache1.420.058.624B+iOS5cache1.189.871.616B removed;
+packages/source/dSYM/evidence/backups held.
+Naslednje: uporabnik odpre samo iPhoneJivieTest, po potrebi knownContinue,
+isti skupniprojekt/oblaček, report; neponavljajinvite/grant/register/FILE.
+Read `python3 build/qa/jivie-mobile-update-20261024/ios/read_diagnostics.py --after-user-test`;
+Android reader v isti androidmapi. docs/E2EE_MOBILE_SESSION_2026_10_24.md;
+dokazi build/qa/jivie-mobile-update-20261024/. Produkcija nedotaknjena.
+
 24. oktober — **isti čakajoči podprostor in štiri odprte kontrole PASS**.
 Novo uporabnikovo naročilo dovoli nadaljevanje; Sol6.1/high podagenti,
 root/neodvisni pregled. Nov datiran max3 proračun, prvotni STOP3 in hash obeh
