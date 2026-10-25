@@ -8,6 +8,7 @@ import '../../data/e2ee/session_crypto_access.dart';
 import '../../data/collaboration_repository.dart'
     show CollaborationNotificationRouting;
 import '../../state/collaboration_provider.dart';
+import '../../state/application_sync_activity.dart';
 import 'remote_push_providers.dart';
 
 typedef ForegroundInvitationApprovalRunner =
@@ -79,10 +80,11 @@ class _ForegroundInvitationApprovalCoordinatorState
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final wasActive = collaborationAppActive(_lifecycle);
     _lifecycle = state;
-    if (state != AppLifecycleState.resumed) {
+    if (!collaborationAppActive(state)) {
       _generation++;
-    } else {
+    } else if (!wasActive) {
       _entered = false;
       _changed(ref.read(collaborationProvider).valueOrNull);
     }
@@ -92,7 +94,7 @@ class _ForegroundInvitationApprovalCoordinatorState
     final shared = ref.read(collaborationProvider);
     final state = shared.valueOrNull;
     return mounted &&
-        _lifecycle == AppLifecycleState.resumed &&
+        collaborationAppActive(_lifecycle) &&
         !shared.isLoading &&
         !shared.hasError &&
         state != null &&

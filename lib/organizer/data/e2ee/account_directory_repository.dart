@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import '../account_work_coordinator.dart';
 import '../collaboration_transport.dart';
 import '../device_session_store.dart';
 import 'account_directory_v2.dart';
@@ -87,6 +88,15 @@ class AccountDirectoryRepository {
   }
 
   Future<Map<String, dynamic>> call(
+    String operation, [
+    Map<String, dynamic> params = const {},
+  ]) => withAccountWorkJob(
+    transport,
+    AccountWorkKind.account,
+    () => _accountWorkCall(operation, params),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkCall(
     String operation, [
     Map<String, dynamic> params = const {},
   ]) async {
@@ -198,6 +208,15 @@ class AccountDirectoryRepository {
   }
 
   Future<Map<String, dynamic>> _callDirect(
+    String operation,
+    Map<String, dynamic> params,
+  ) => withAccountWorkJob(
+    transport,
+    AccountWorkKind.account,
+    () => _accountWorkCallDirect(operation, params),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkCallDirect(
     String operation,
     Map<String, dynamic> params,
   ) async {

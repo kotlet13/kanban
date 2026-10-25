@@ -314,7 +314,13 @@ class SharingWorkspace extends ConsumerWidget {
             }
             final data = state.dataForScope(scope.id);
             final actions = CollaborationActions(context, ref, scope, data);
-            final readOnly = !scope.canEdit || !state.localAccessAllowed;
+            final readOnly =
+                !state.localAccessAllowed ||
+                !scope.canRead ||
+                scope.blocked ||
+                scope.archived ||
+                scope.deleted ||
+                scope.recordPolicyVersion == 0 && !scope.canEdit;
             final canonicalProject = scope.kind == SharedScopeKind.project
                 ? data.projects
                       .where((project) => project.id == scope.projectRootId)

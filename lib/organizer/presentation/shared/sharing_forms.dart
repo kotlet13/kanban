@@ -49,6 +49,9 @@ Future<void> showSharingForm(
   Widget? leading,
   Widget Function(Map<String, String>)? detailsBuilder,
   required List<SharingField> fields,
+  Listenable? updates,
+  List<SharingField> Function(Map<String, String>)? fieldsBuilder,
+  bool Function(Map<String, String>)? canSubmit,
   required String submitLabel,
   required Future<void> Function(Map<String, String>) onSubmit,
   required String Function(Object) errorMessage,
@@ -68,6 +71,9 @@ Future<void> showSharingForm(
       leading: leading,
       detailsBuilder: detailsBuilder,
       fields: fields,
+      updates: updates,
+      fieldsBuilder: fieldsBuilder,
+      canSubmit: canSubmit,
       submitLabel: submitLabel,
       onSubmit: onSubmit,
       errorMessage: errorMessage,
@@ -93,6 +99,9 @@ class _SharingFormDialog extends StatefulWidget {
   const _SharingFormDialog({
     required this.title,
     required this.fields,
+    this.updates,
+    this.fieldsBuilder,
+    this.canSubmit,
     required this.submitLabel,
     required this.onSubmit,
     required this.errorMessage,
@@ -111,6 +120,9 @@ class _SharingFormDialog extends StatefulWidget {
   final Widget? leading;
   final Widget Function(Map<String, String>)? detailsBuilder;
   final List<SharingField> fields;
+  final Listenable? updates;
+  final List<SharingField> Function(Map<String, String>)? fieldsBuilder;
+  final bool Function(Map<String, String>)? canSubmit;
   final String submitLabel;
   final Future<void> Function(Map<String, String>) onSubmit;
   final String Function(Object) errorMessage;
@@ -135,8 +147,30 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
     for (final entry in _controllers.entries) entry.key: entry.value.text,
   };
 
+  bool get _canSubmit => widget.canSubmit?.call(_values) ?? true;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.updates?.addListener(_updated);
+  }
+
+  void _updated() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void didUpdateWidget(covariant _SharingFormDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.updates, widget.updates)) {
+      oldWidget.updates?.removeListener(_updated);
+      widget.updates?.addListener(_updated);
+    }
+  }
+
   @override
   void dispose() {
+    widget.updates?.removeListener(_updated);
     for (final controller in _controllers.values) {
       controller.dispose();
     }
@@ -144,7 +178,7 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
   }
 
   Future<void> _submit() async {
-    if (_busy) return;
+    if (_busy || !_canSubmit) return;
     final invalid = _form.currentState!.validateGranularly();
     if (invalid.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -181,6 +215,14 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
         return;
       }
       if (!mounted) return;
+      // Permission/options can change while the policy dialog is open. Keep the
+      // same controllers and show current field validation instead of saving a
+      // destination which disappeared during that await.
+      if (!_canSubmit) {
+        _form.currentState?.validate();
+        setState(() => _busy = false);
+        return;
+      }
       await widget.onSubmit(_values);
       if (mounted) Navigator.pop(context);
     } catch (error) {
@@ -240,6 +282,12 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 600;
+    final fields = widget.fieldsBuilder?.call(_values) ?? widget.fields;
+    assert(
+      widget.fieldsBuilder == null ||
+          fields.length == _controllers.length &&
+              fields.every((field) => _controllers.containsKey(field.id)),
+    );
     final dialog = AlertDialog(
       insetPadding: compact
           ? const EdgeInsets.symmetric(horizontal: 12, vertical: 12)
@@ -276,7 +324,7 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                   widget.leading!,
                   const SizedBox(height: 16),
                 ],
-                for (final field in widget.fields)
+                for (final field in fields)
                   _fieldContainer(
                     field,
                     Padding(
@@ -324,8 +372,14 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                           ? DropdownButtonFormField<String>(
                               key: ValueKey('sharing-${field.id}'),
                               initialValue:
-                                  field.options!.containsKey(field.initialValue)
-                                  ? field.initialValue
+                                  field.options!.containsKey(
+                                    widget.fieldsBuilder == null
+                                        ? field.initialValue
+                                        : _controllers[field.id]!.text,
+                                  )
+                                  ? (widget.fieldsBuilder == null
+                                        ? field.initialValue
+                                        : _controllers[field.id]!.text)
                                   : null,
                               validator: (value) =>
                                   field.required && value == null
@@ -426,6 +480,7 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
             busy: _busy,
             onCancel: () => Navigator.pop(context),
             onSave: _submit,
+            saveEnabled: _canSubmit,
             onDelete: widget.onDelete == null ? null : _delete,
           )
         else ...[
@@ -441,7 +496,7 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
           ),
           FilledButton(
             key: const ValueKey('sharing-submit'),
-            onPressed: _busy ? null : _submit,
+            onPressed: _busy || !_canSubmit ? null : _submit,
             child: _busy
                 ? const SizedBox(
                     width: 18,

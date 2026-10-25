@@ -1,3 +1,4 @@
+import 'sharing_role_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
@@ -73,7 +74,11 @@ class _OrganizationAccessSettingsState
                   Text(
                     scoped
                         ? widget.scope.kind == SharedScopeKind.project
-                              ? '${context.l10n.sharingInviteProjectDescription}\n\n${context.l10n.sharingMemberFullDescription}'
+                              ? '${context.l10n.sharingInviteProjectDescription}\n\n${sharingPermissionDescription(context.l10n, 'member', recordPolicyVersion: widget.scope.recordPolicyVersion)}'
+                              : widget.scope.recordPolicyVersion == 1
+                              ? context
+                                    .l10n
+                                    .sharingRecordAccessReviewDescription
                               : context.l10n.sharingAccessReviewDescription
                         : context.l10n.organizationAccessReviewDescription,
                   ),

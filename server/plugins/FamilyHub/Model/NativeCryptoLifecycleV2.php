@@ -375,6 +375,7 @@ class NativeCryptoLifecycleV2 extends NativeDatabase
             $this->change('UPDATE familyhub_scopes SET archived=?,sequence=sequence+1 WHERE id=?', [(int)$own,$scopeId]);
         }
         if ($own || $inherited) {
+            (new NativeNotificationWriter($this->container))->configurationForScope($scopeId);
             $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending'", [$scopeId]);
         }
         return $this->current($scopeId);

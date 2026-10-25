@@ -118,7 +118,12 @@ Future<void> openIdeaEditor(
         );
     IdeaBoard? draft;
     try {
-      draft = snapshot.canEdit
+      draft =
+          canEditIdeaBoard(
+            container.read(collaborationProvider).valueOrNull,
+            snapshot,
+            board,
+          )
           ? await controller.readDraft(
               initial.id,
               expectedWorkspaceKey: snapshot.workspaceKey,
@@ -195,7 +200,11 @@ Future<void> openIdeaEditor(
           base: draftBase ?? (draftOnly ? null : board),
           workspaceKey: snapshot.workspaceKey,
           sharedScopeId: snapshot.sharedScopeId,
-          canEdit: snapshot.canEdit,
+          canEdit: canEditIdeaBoard(
+            container.read(collaborationProvider).valueOrNull,
+            snapshot,
+            board,
+          ),
         ),
       ),
     );
@@ -318,7 +327,12 @@ class _IdeaEditorState extends ConsumerState<IdeaEditor> {
       _sameContext &&
       widget.canEdit &&
       ref.read(ideaProvider).valueOrNull?.workspaceKey == widget.workspaceKey &&
-      ref.read(ideaProvider).valueOrNull?.canEdit == true;
+      ref.read(ideaProvider).valueOrNull != null &&
+      canEditIdeaBoard(
+        ref.read(collaborationProvider).valueOrNull,
+        ref.read(ideaProvider).valueOrNull!,
+        widget.base == null ? null : _board,
+      );
   IdeaElement? get _selectedElement =>
       _board.elements.where((e) => e.id == _selected).firstOrNull;
 

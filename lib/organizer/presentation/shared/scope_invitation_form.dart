@@ -1,3 +1,4 @@
+import 'sharing_role_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -85,10 +86,18 @@ Future<bool> showScopeInvitation(
         advanced: true,
         options: {
           'member': scope.accessPolicyVersion == 3
-              ? l.spaceFlowFullAccess
+              ? sharingInvitationRoleLabel(
+                  l,
+                  'member',
+                  recordPolicyVersion: scope.recordPolicyVersion,
+                )
               : l.sharingMember,
           'viewer': scope.accessPolicyVersion == 3
-              ? l.spaceFlowViewOnly
+              ? sharingInvitationRoleLabel(
+                  l,
+                  'viewer',
+                  recordPolicyVersion: scope.recordPolicyVersion,
+                )
               : l.sharingViewer,
         },
       ),
@@ -108,9 +117,11 @@ Future<bool> showScopeInvitation(
         if (scope.accessPolicyVersion == 3) ...[
           const SizedBox(height: 12),
           Text(
-            values['role'] == 'viewer'
-                ? l.sharingViewerDescription
-                : l.sharingMemberFullDescription,
+            sharingPermissionDescription(
+              l,
+              values['role'] ?? 'member',
+              recordPolicyVersion: scope.recordPolicyVersion,
+            ),
           ),
           const SizedBox(height: 12),
           Text(l.sharingInvitationNewAccountAccess),

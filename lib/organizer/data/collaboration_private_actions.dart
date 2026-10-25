@@ -150,7 +150,8 @@ extension CollaborationPrivateActions on CollaborationRepository {
         ? const <String, dynamic>{}
         : CollaborationRepository._map(caps.single['value'])['features'] as Map;
     if (candidates.isNotEmpty &&
-        (_recordContractVersion < (candidates.any((b) => b.version >= 2) ? 6 : 5) ||
+        (_recordContractVersion <
+                (candidates.any((b) => b.version >= 2) ? 6 : 5) ||
             features['ideas'] != true ||
             candidates.any((b) => b.assets.isNotEmpty) &&
                 features['ideaAssets'] != true)) {
@@ -596,6 +597,10 @@ extension CollaborationPrivateActions on CollaborationRepository {
       done.complete();
       await refreshLocal();
     }
+    // A previously disabled personal scope may have been intentionally skipped
+    // by an acknowledged account snapshot. Reconcile it before accepting a new
+    // account cursor, including when activation created no outgoing records.
+    await invalidateAccountChangesCursor();
     await syncNow();
   }
 
@@ -614,6 +619,7 @@ extension CollaborationPrivateActions on CollaborationRepository {
       'UPDATE personal_workspaces SET paused=0 WHERE id=?',
       ['private:$p'],
     );
+    await invalidateAccountChangesCursor();
     await refreshLocal();
     await syncNow();
   }

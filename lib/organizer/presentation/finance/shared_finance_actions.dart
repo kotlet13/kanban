@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'finance_entry_accounts.dart';
 import '../shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -191,7 +193,21 @@ class SharedFinanceActions {
     );
   }
 
+  static final _entryOpenings = Expando<Set<String>>();
+
   Future<void> entry([SharedFinanceEntry? entry]) async {
+    final key =
+        '${state.session?.partition}:${state.session?.deviceId}:${scope.id}:${entry?.id ?? 'new'}';
+    final open = _entryOpenings[context] ??= <String>{};
+    if (!open.add(key)) return;
+    try {
+      await _entry(entry);
+    } finally {
+      open.remove(key);
+    }
+  }
+
+  Future<void> _entry(SharedFinanceEntry? entry) async {
     if (entry == null && scope.kind != SharedScopeKind.project) {
       final current = ref.read(collaborationProvider).valueOrNull ?? state;
       final children = current.scopes
@@ -233,6 +249,7 @@ class SharedFinanceActions {
           final fresh = ref.read(collaborationProvider).valueOrNull;
           if (fresh == null ||
               fresh.session?.partition != state.session?.partition ||
+              fresh.session?.deviceId != state.session?.deviceId ||
               !fresh.financePolicyForScope(target.id).canWrite) {
             return;
           }
@@ -240,55 +257,11 @@ class SharedFinanceActions {
         }
       }
     }
-    if (scope.kind == SharedScopeKind.project &&
-        scope.parentSpaceId != null &&
-        state.organizationFinanceSupported) {
-      try {
-        await ref
-            .read(collaborationProvider.notifier)
-            .refreshFinanceAccountChoices(scope.id);
-      } catch (_) {
-        // Previously synced safe choices and legacy accounts remain available
-        // offline. A failed refresh cannot reveal parent finance data.
-      }
-      if (!context.mounted) return;
-    }
     final current = ref.read(collaborationProvider).valueOrNull ?? state;
-    if (current.session?.partition != state.session?.partition) return;
-    final accountOptions =
-        <String, ({String id, String? scopeId, String name, String currency})>{
-          for (final a in data.financeAccounts.where(
-            (a) =>
-                !a.archived ||
-                a.id == entry?.accountId && entry?.accountScopeId == null,
-          ))
-            a.id: (id: a.id, scopeId: null, name: a.name, currency: a.currency),
-          for (final a
-              in current.financeAccountChoices[scope.id] ??
-                  <SharedFinanceAccountChoice>[])
-            if (!a.archived ||
-                a.id == entry?.accountId && a.scopeId == entry?.accountScopeId)
-              '${a.scopeId}:${a.id}': (
-                id: a.id,
-                scopeId: a.scopeId,
-                name: a.name,
-                currency: a.currency,
-              ),
-        };
-    final selectedAccount = entry?.accountScopeId == null
-        ? entry?.accountId
-        : '${entry!.accountScopeId}:${entry.accountId}';
-    if (entry != null &&
-        selectedAccount != null &&
-        !accountOptions.containsKey(selectedAccount)) {
-      accountOptions[selectedAccount] = (
-        id: entry.accountId,
-        scopeId: entry.accountScopeId,
-        name: context.l10n.financeUnavailableAccount,
-        currency: entry.currency,
-      );
+    if (current.session?.partition != state.session?.partition ||
+        current.session?.deviceId != state.session?.deviceId) {
+      return;
     }
-
     if (entry != null && !supportedCurrencies.contains(entry.currency)) {
       return run(() async {
         throw const CollaborationException('unsupported_currency');
@@ -348,170 +321,234 @@ class SharedFinanceActions {
         ),
       );
     }
-    if (accountOptions.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.financeAccountChoicesUnavailable),
-          ),
-        );
-      }
-      return;
+    final accounts = FinanceEntryAccounts(
+      scopeId: scope.id,
+      original: entry,
+      unavailableLabel: l.financeUnavailableAccount,
+      initial: current,
+    );
+    final initialSelection = accounts.initialSelection;
+    final accountOptions = accounts.displayOptions(initialSelection);
+    final needsChoices =
+        scope.kind == SharedScopeKind.project &&
+        scope.parentSpaceId != null &&
+        current.organizationFinanceSupported;
+    accounts.loading = needsChoices;
+    final fields = [
+      SharingField(
+        id: 'title',
+        label: l.organizerTitle,
+        initialValue: entry?.title ?? '',
+      ),
+      SharingField(
+        id: 'account',
+        label: l.financeAccount,
+        initialValue: initialSelection,
+        options: {
+          for (final a in accountOptions.entries)
+            a.key:
+                '${a.value.name} · ${a.value.currency}${a.value.scopeId == null ? '' : ' · ${l.financeParentAccount}'}',
+        },
+      ),
+      if (current.organizationFinanceSupported &&
+          scope.kind != SharedScopeKind.project &&
+          data.projects.isNotEmpty)
+        SharingField(
+          id: 'project',
+          label: l.financeProjectFilter,
+          initialValue: entry?.projectId ?? '',
+          required: false,
+          options: {
+            '': l.financeSpaceOnly,
+            for (final p in data.projects.where(
+              (p) => !p.archived || p.id == entry?.projectId,
+            ))
+              p.id: p.title,
+          },
+        ),
+      SharingField(
+        id: 'kind',
+        label: l.type,
+        initialValue: entry?.kind.name ?? 'expense',
+        options: {'expense': l.organizerExpense, 'income': l.organizerIncome},
+      ),
+      SharingField(
+        id: 'amount',
+        label: l.financeAccountCurrencyAmount,
+        initialValue: entry == null
+            ? ''
+            : formatSharedMoneyMinor(BigInt.from(entry.amountMinor)),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: (value, _) => _money(value),
+      ),
+      SharingField(
+        id: 'status',
+        label: l.financeStatus,
+        initialValue: entry?.status.name ?? 'posted',
+        options: {'posted': l.financePosted, 'planned': l.financePlanned},
+      ),
+      SharingField(
+        id: 'occurred',
+        label: l.financeDate,
+        initialValue: (entry?.occurredAt ?? DateTime.now())
+            .toUtc()
+            .toIso8601String(),
+        dateTime: true,
+      ),
+      SharingField(
+        id: 'payer',
+        label: l.financePayer,
+        initialValue: entry?.payerAccountId ?? '',
+        required: false,
+        options: {
+          ..._people,
+          if (entry?.payerAccountId != null &&
+              !_people.containsKey(entry!.payerAccountId))
+            entry.payerAccountId!: l.planningFormerMember,
+        },
+      ),
+      SharingField(
+        id: 'recipient',
+        label: l.financeRecipient,
+        initialValue: entry?.recipientAccountId ?? '',
+        required: false,
+        options: {
+          ..._people,
+          if (entry?.recipientAccountId != null &&
+              !_people.containsKey(entry!.recipientAccountId))
+            entry.recipientAccountId!: l.planningFormerMember,
+        },
+      ),
+      SharingField(
+        id: 'category',
+        label: l.financeCategory,
+        initialValue: entry?.category ?? '',
+        required: false,
+      ),
+      SharingField(
+        id: 'notes',
+        label: l.organizerNotes,
+        initialValue: entry?.notes ?? '',
+        required: false,
+        maxLines: 3,
+      ),
+    ];
+    var open = true;
+    final subscription = ProviderScope.containerOf(context, listen: false)
+        .listen(collaborationProvider, (previous, next) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!open || !guard.isCurrent) return;
+            final value = next.valueOrNull;
+            if (value != null) accounts.update(value);
+          });
+        });
+    if (needsChoices) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!open || !guard.isCurrent) return;
+        unawaited(() async {
+          var failed = false;
+          try {
+            await guard.controller.refreshFinanceEntryAccountChoices(scope.id);
+          } catch (_) {
+            failed = true;
+          }
+          if (!open || !guard.isCurrent) return;
+          final value = ref.read(collaborationProvider).valueOrNull;
+          if (value != null) accounts.finishRefresh(value, failed: failed);
+        }());
+      });
     }
-    return showSharingForm(
-      context,
-      title: entry == null ? l.organizerAddFinance : l.financeEditEntry,
-      sharedPolicyScopeId: scope.id,
-      fields: [
-        SharingField(
-          id: 'title',
-          label: l.organizerTitle,
-          initialValue: entry?.title ?? '',
-        ),
-        SharingField(
-          id: 'account',
-          label: l.financeAccount,
-          initialValue:
-              selectedAccount ??
-              accountOptions.entries
-                  .where((a) => a.value.scopeId != null)
-                  .firstOrNull
-                  ?.key ??
-              accountOptions.keys.first,
-          options: {
-            for (final a in accountOptions.entries)
-              a.key:
-                  '${a.value.name} · ${a.value.currency}${a.value.scopeId == null ? '' : ' · ${l.financeParentAccount}'}',
+    try {
+      await showSharingForm(
+        context,
+        title: entry == null ? l.organizerAddFinance : l.financeEditEntry,
+        sharedPolicyScopeId: scope.id,
+        leading: AnimatedBuilder(
+          animation: accounts,
+          builder: (context, _) {
+            if (accounts.loading) {
+              return Row(
+                key: const ValueKey('finance-entry-accounts-loading'),
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(l.financeEntryAccountsLoading)),
+                ],
+              );
+            }
+            if (accounts.refreshUnavailable) {
+              return Text(
+                l.financeEntryAccountsUnavailable,
+                key: const ValueKey('finance-entry-accounts-unavailable'),
+              );
+            }
+            if (accounts.displayOptions('').isEmpty) {
+              return Text(l.financeAccountChoicesUnavailable);
+            }
+            return const SizedBox.shrink();
           },
         ),
-        if (current.organizationFinanceSupported &&
-            scope.kind != SharedScopeKind.project &&
-            data.projects.isNotEmpty)
-          SharingField(
-            id: 'project',
-            label: l.financeProjectFilter,
-            initialValue: entry?.projectId ?? '',
-            required: false,
-            options: {
-              '': l.financeSpaceOnly,
-              for (final p in data.projects.where(
-                (p) => !p.archived || p.id == entry?.projectId,
-              ))
-                p.id: p.title,
-            },
-          ),
-        SharingField(
-          id: 'kind',
-          label: l.type,
-          initialValue: entry?.kind.name ?? 'expense',
-          options: {'expense': l.organizerExpense, 'income': l.organizerIncome},
-        ),
-        SharingField(
-          id: 'amount',
-          label: l.financeAccountCurrencyAmount,
-          initialValue: entry == null
-              ? ''
-              : formatSharedMoneyMinor(BigInt.from(entry.amountMinor)),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (value, _) => _money(value),
-        ),
-        SharingField(
-          id: 'status',
-          label: l.financeStatus,
-          initialValue: entry?.status.name ?? 'posted',
-          options: {'posted': l.financePosted, 'planned': l.financePlanned},
-        ),
-        SharingField(
-          id: 'occurred',
-          label: l.financeDate,
-          initialValue: (entry?.occurredAt ?? DateTime.now())
-              .toUtc()
-              .toIso8601String(),
-          dateTime: true,
-        ),
-        SharingField(
-          id: 'payer',
-          label: l.financePayer,
-          initialValue: entry?.payerAccountId ?? '',
-          required: false,
-          options: {
-            ..._people,
-            if (entry?.payerAccountId != null &&
-                !_people.containsKey(entry!.payerAccountId))
-              entry.payerAccountId!: l.planningFormerMember,
-          },
-        ),
-        SharingField(
-          id: 'recipient',
-          label: l.financeRecipient,
-          initialValue: entry?.recipientAccountId ?? '',
-          required: false,
-          options: {
-            ..._people,
-            if (entry?.recipientAccountId != null &&
-                !_people.containsKey(entry!.recipientAccountId))
-              entry.recipientAccountId!: l.planningFormerMember,
-          },
-        ),
-        SharingField(
-          id: 'category',
-          label: l.financeCategory,
-          initialValue: entry?.category ?? '',
-          required: false,
-        ),
-        SharingField(
-          id: 'notes',
-          label: l.organizerNotes,
-          initialValue: entry?.notes ?? '',
-          required: false,
-          maxLines: 3,
-        ),
-      ],
-      submitLabel: l.save,
-      compactSaveActions: true,
-      errorMessage: (error) => sharingErrorMessage(context, error),
-      wrap: guard.wrap,
-      onSubmit: (values) async {
-        final selected = accountOptions[values['account']]!;
-        if (!supportedCurrencies.contains(selected.currency)) {
-          throw const CollaborationException('unsupported_currency');
-        }
-        final controller = guard.controller;
-        final amount = parseSharedMoneyMinor(values['amount']!),
-            kind = FinanceEntryKind.values.byName(values['kind']!),
-            status = SharedFinanceStatus.values.byName(values['status']!),
-            occurred = DateTime.parse(values['occurred']!),
-            payer = _nullable(values['payer']!),
-            recipient = _nullable(values['recipient']!);
-        if (entry == null) {
-          await controller.createFinanceEntry(
-            scopeId: scope.id,
-            accountId: selected.id,
-            accountScopeId: selected.scopeId,
-            projectId: _nullable(values['project'] ?? ''),
-            kind: kind,
-            status: status,
-            amountMinor: amount,
-            currency: selected.currency,
-            title: values['title']!.trim(),
-            notes: values['notes']!.trim(),
-            category: values['category']!.trim(),
-            payerAccountId: payer,
-            recipientAccountId: recipient,
-            occurredAt: occurred,
-          );
-        } else {
-          await controller.updateFinanceEntry(
-            scope.id,
-            entry.copyWith(
+        fields: fields,
+        updates: accounts,
+        fieldsBuilder: (values) => [
+          for (final field in fields)
+            if (field.id != 'account')
+              field
+            else
+              SharingField(
+                id: 'account',
+                label: l.financeAccount,
+                initialValue: initialSelection,
+                options: {
+                  for (final account
+                      in accounts
+                          .displayOptions(values['account'] ?? '')
+                          .entries)
+                    account.key:
+                        '${account.value.name} · ${account.value.currency}${account.value.scopeId == null ? '' : ' · ${l.financeParentAccount}'}',
+                },
+                validator: (value, _) => accounts.option(value) == null
+                    ? l.financeAccountChoicesUnavailable
+                    : null,
+              ),
+        ],
+        canSubmit: (values) =>
+            guard.isCurrent && accounts.option(values['account'] ?? '') != null,
+        submitLabel: l.save,
+        compactSaveActions: true,
+        errorMessage: (error) =>
+            error is CollaborationException &&
+                error.code == 'finance_account_choice_unavailable'
+            ? l.financeAccountChoicesUnavailable
+            : sharingErrorMessage(context, error),
+        wrap: guard.wrap,
+        onSubmit: (values) async {
+          final selected = accounts.option(values['account'] ?? '');
+          if (selected == null) {
+            throw const CollaborationException(
+              'finance_account_choice_unavailable',
+            );
+          }
+          if (!supportedCurrencies.contains(selected.currency)) {
+            throw const CollaborationException('unsupported_currency');
+          }
+          final controller = guard.controller;
+          final amount = parseSharedMoneyMinor(values['amount']!),
+              kind = FinanceEntryKind.values.byName(values['kind']!),
+              status = SharedFinanceStatus.values.byName(values['status']!),
+              occurred = DateTime.parse(values['occurred']!),
+              payer = _nullable(values['payer']!),
+              recipient = _nullable(values['recipient']!);
+          if (entry == null) {
+            await controller.createFinanceEntry(
+              scopeId: scope.id,
               accountId: selected.id,
               accountScopeId: selected.scopeId,
-              projectId: values.containsKey('project')
-                  ? _nullable(values['project']!)
-                  : entry.projectId,
-              ledgerAccountId: entry.ledgerAccountId == null
-                  ? null
-                  : selected.id,
+              projectId: _nullable(values['project'] ?? ''),
               kind: kind,
               status: status,
               amountMinor: amount,
@@ -522,18 +559,46 @@ class SharedFinanceActions {
               payerAccountId: payer,
               recipientAccountId: recipient,
               occurredAt: occurred,
-              paidAt: entry.paidAt == null ? null : occurred,
-            ),
-          );
-        }
-        if (!guard.isCurrent) {
-          throw const CollaborationException('finance_forbidden');
-        }
-      },
-      onDelete: entry == null
-          ? null
-          : () => guard.controller.deleteFinanceEntry(scope.id, entry.id),
-    );
+            );
+          } else {
+            await controller.updateFinanceEntry(
+              scope.id,
+              entry.copyWith(
+                accountId: selected.id,
+                accountScopeId: selected.scopeId,
+                projectId: values.containsKey('project')
+                    ? _nullable(values['project']!)
+                    : entry.projectId,
+                ledgerAccountId: entry.ledgerAccountId == null
+                    ? null
+                    : selected.id,
+                kind: kind,
+                status: status,
+                amountMinor: amount,
+                currency: selected.currency,
+                title: values['title']!.trim(),
+                notes: values['notes']!.trim(),
+                category: values['category']!.trim(),
+                payerAccountId: payer,
+                recipientAccountId: recipient,
+                occurredAt: occurred,
+                paidAt: entry.paidAt == null ? null : occurred,
+              ),
+            );
+          }
+          if (!guard.isCurrent) {
+            throw const CollaborationException('finance_forbidden');
+          }
+        },
+        onDelete: entry == null
+            ? null
+            : () => guard.controller.deleteFinanceEntry(scope.id, entry.id),
+      );
+    } finally {
+      open = false;
+      subscription.close();
+      accounts.dispose();
+    }
   }
 
   Future<void> transfer([SharedFinanceTransfer? transfer]) {

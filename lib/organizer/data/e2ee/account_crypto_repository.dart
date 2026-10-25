@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -79,6 +80,15 @@ class AccountCryptoRepository implements AccountCryptoWorkflow {
   }
 
   Future<Map<String, dynamic>> _call(
+    String operation, [
+    Map<String, dynamic> params = const {},
+  ]) => withAccountWorkJob(
+    transport,
+    AccountWorkKind.legacyCrypto,
+    () => _accountWorkCall(operation, params),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkCall(
     String operation, [
     Map<String, dynamic> params = const {},
   ]) async {

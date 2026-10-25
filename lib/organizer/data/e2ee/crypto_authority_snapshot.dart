@@ -40,6 +40,12 @@ class CryptoAuthoritySnapshot {
     'crypto2.account.scopeObservations',
     'crypto2.domain.inventory',
   };
+  // Keep bundle lookup first. Only missing exact selectors use this memo;
+  // historical hashes never trigger broader snapshot discovery.
+  static const _exactFallbackReads = {
+    'crypto2.directory.status',
+    'crypto2.scope.headGet',
+  };
   static const _maxExactEntries = 64, _maxExactBytes = 512 * 1024;
   final _exactEntries = <String, String>{};
   final _exactLoading = <String, Future<String>>{};
@@ -161,6 +167,8 @@ class CryptoAuthoritySnapshot {
     'crypto2.scope.financeDraft.list',
     'crypto2.scope.keyDraft.get',
     'crypto2.scope.keyDraft.list',
+    'crypto2.scope.recordPolicy.status',
+    'crypto2.scope.recordPolicy.baseline',
     'crypto2.scope.lifecycle.children',
     'crypto2.scope.lifecycle.pendingDelegations',
   };
@@ -285,7 +293,11 @@ class CryptoAuthoritySnapshot {
       return read(operation, params);
     }
     final entry = _entries[key];
-    if (entry == null) return read(operation, params);
+    if (entry == null) {
+      return _exactFallbackReads.contains(operation)
+          ? _readExact(operation, params)
+          : read(operation, params);
+    }
     final error = entry['error'];
     if (error is Map) {
       throw CollaborationApiException(

@@ -22,8 +22,13 @@ class SharedDocumentsContext {
   bool online = true;
   bool spreadsheetsSupported = false, attachmentsSupported = false;
   final _bytes = <String, Uint8List>{};
+  final _documentCreators = <String, String?>{};
   final _legacyUploads = <String, CryptoLegacyUploadDrain>{};
+  Future<void>? _onlinePreparation;
   String get partition => _session.profile.partition;
+  Stream<void> get changes => _repo.database
+      .documentChanges(partition, scopeId)
+      .where((_) => isCurrent);
   String get _prefix => 'document_cache:$partition:$scopeId:';
   SharedScope? get scope => _repo.state.scopes
       .where(
@@ -47,6 +52,76 @@ class SharedDocumentsContext {
       scope != null &&
       (_visible?.call() ?? true);
   bool get canEdit => isCurrent && scope!.canEdit;
+  bool _canEditDocument(String type, String id, {bool delete = false}) {
+    if (!isCurrent || scope!.archived) return false;
+    if (scope!.recordPolicyVersion != 1) return canEdit;
+    final creator = _documentCreators['$type:$id'];
+    return delete
+        ? SharedRecordPermissions.canDelete(
+            scope: scope!,
+            accountId: _session.profile.accountId,
+            creator: creator,
+          )
+        : SharedRecordPermissions.canEdit(
+            scope: scope!,
+            accountId: _session.profile.accountId,
+            creator: creator,
+            type: type,
+          );
+  }
+
+  bool canEditTable(SpreadsheetDocument document) =>
+      _canEditDocument('table', document.id);
+  bool canDeleteTable(SpreadsheetDocument document) =>
+      _canEditDocument('table', document.id, delete: true);
+  bool canDeleteAttachment(AttachmentMetadata attachment) =>
+      _canEditDocument('attachment', attachment.id, delete: true);
+  bool canAddAttachment(AttachmentTarget target) =>
+      target.scopeId == scopeId && canEdit && !scope!.archived;
+
+  Future<void> _refreshDocumentCreators() async {
+    final rows = await _repo.database.rows(
+      "SELECT projection FROM crypto_business_records WHERE partition=? AND scope_id=? AND domain='content' AND type IN ('table','attachment')",
+      [partition, scopeId],
+    );
+    if (!isCurrent) return;
+    for (final row in rows) {
+      final canonical = CollaborationRepository._map(row['projection']);
+      _documentCreators['${canonical['type']}:${canonical['id']}'] =
+          canonical['createdByAccountId'] as String?;
+    }
+  }
+
+  void _checkDocumentWrite(String operation, Map<String, Object?> params) {
+    check();
+    if (scope!.recordPolicyVersion != 1) {
+      check(write: true);
+      return;
+    }
+    final id = params['id'];
+    final deleting =
+        operation == 'tables.delete' || operation == 'attachments.delete';
+    final existingTable = const {
+      'tables.acquire',
+      'tables.renew',
+      'tables.release',
+      'tables.save',
+      'tables.delete',
+    }.contains(operation);
+    final existingAttachment = operation == 'attachments.delete';
+    final allowed = id is String && (existingTable || existingAttachment)
+        ? _canEditDocument(
+            existingTable ? 'table' : 'attachment',
+            id,
+            delete: deleting,
+          )
+        : canEdit && !scope!.archived;
+    if (!allowed)
+      throw CollaborationException(
+        deleting ? 'record_delete_forbidden' : 'record_edit_forbidden',
+      );
+  }
+
   void check({bool write = false}) {
     _repo._checkEpoch(_epoch);
     if (!isCurrent || (write && !canEdit)) {
@@ -54,7 +129,34 @@ class SharedDocumentsContext {
     }
   }
 
-  Future<void> _initialize() async {
+  Future<void> _initialize({String? localPreviewFeature}) async {
+    check();
+    if (localPreviewFeature != null) {
+      await _refreshDocumentCreators();
+      await _readCapabilities(tolerateUnknown: true);
+      if ((localPreviewFeature == 'spreadsheets' && spreadsheetsSupported) ||
+          (localPreviewFeature == 'attachments' && attachmentsSupported)) {
+        return;
+      }
+    }
+    await _prepareOnline();
+  }
+
+  Future<void> _prepareOnline() {
+    final running = _onlinePreparation;
+    if (running != null) return running;
+    final attempt = _negotiateDocuments();
+    _onlinePreparation = attempt;
+    return attempt.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stack) {
+        if (identical(_onlinePreparation, attempt)) _onlinePreparation = null;
+        Error.throwWithStackTrace(error, stack);
+      },
+    );
+  }
+
+  Future<void> _negotiateDocuments() async {
     check();
     try {
       await _repo._negotiate(_session, _epoch);
@@ -63,16 +165,46 @@ class SharedDocumentsContext {
       online = false;
     }
     check();
+    await _refreshDocumentCreators();
+    await _readCapabilities();
+  }
+
+  Future<void> _readCapabilities({bool tolerateUnknown = false}) async {
     final caps = await _repo.database.rows(
       'SELECT value FROM local_meta WHERE name=?',
       ['capabilities:$partition'],
     );
     check();
-    final features = caps.isEmpty
-        ? const <String, dynamic>{}
-        : CollaborationRepository._map(caps.single['value'])['features'] as Map;
-    spreadsheetsSupported = features['spreadsheets'] == true;
-    attachmentsSupported = features['attachments'] == true;
+    spreadsheetsSupported = false;
+    attachmentsSupported = false;
+    if (caps.isEmpty) return;
+    try {
+      final data = CollaborationRepository._map(caps.single['value']);
+      final features = data['features'];
+      if (features is! Map || data['serverId'] != _session.profile.serverId) {
+        throw const FormatException('document_capabilities');
+      }
+      spreadsheetsSupported = features['spreadsheets'] == true;
+      attachmentsSupported = features['attachments'] == true;
+    } on FormatException {
+      if (!tolerateUnknown) rethrow;
+    } on TypeError {
+      if (!tolerateUnknown) rethrow;
+    }
+  }
+
+  Future<bool> locallyDeleted(String type, String id) async {
+    check();
+    final rows = await _repo.database.rows(
+      '''SELECT b.deleted FROM crypto_business_addresses a
+      JOIN crypto_business_records b ON b.partition=a.partition
+        AND b.scope_id=a.scope_id AND b.domain=a.domain AND b.id=a.wire_id
+      WHERE a.partition=? AND a.scope_id=? AND a.domain='content'
+        AND a.type=? AND a.canonical_id=?''',
+      [partition, scopeId, type, id],
+    );
+    check();
+    return rows.any((row) => row['deleted'] == 1);
   }
 
   Future<Map<String, dynamic>> call(
@@ -80,27 +212,39 @@ class SharedDocumentsContext {
     Map<String, Object?> params, {
     bool write = false,
   }) async {
-    check(write: write);
-    if (write &&
-        const {
-          'tables.create',
-          'tables.save',
-          'attachments.begin',
-        }.contains(operation)) {
-      await _repo.requireVerifiedEmailForConnectedEntry();
-      check(write: true);
-    }
-    if (operation.startsWith('tables.') &&
-        scope!.kind != SharedScopeKind.organization) {
-      throw const CollaborationException('permission_revoked');
-    }
-    final supported = operation.startsWith('tables.')
-        ? spreadsheetsSupported
-        : attachmentsSupported;
-    if (!supported) {
-      throw const CollaborationException('documents_upgrade_required');
+    if (write) {
+      _checkDocumentWrite(operation, params);
+    } else {
+      check();
     }
     try {
+      // Preview capability metadata grants no remote operation. Complete the
+      // original negotiation once and recheck authority/support after its await.
+      await _prepareOnline();
+      if (write) {
+        _checkDocumentWrite(operation, params);
+      } else {
+        check();
+      }
+      if (write &&
+          const {
+            'tables.create',
+            'tables.save',
+            'attachments.begin',
+          }.contains(operation)) {
+        await _repo.requireVerifiedEmailForConnectedEntry();
+        _checkDocumentWrite(operation, params);
+      }
+      if (operation.startsWith('tables.') &&
+          scope!.kind != SharedScopeKind.organization) {
+        throw const CollaborationException('permission_revoked');
+      }
+      final supported = operation.startsWith('tables.')
+          ? spreadsheetsSupported
+          : attachmentsSupported;
+      if (!supported) {
+        throw const CollaborationException('documents_upgrade_required');
+      }
       final body = {...params, 'scopeId': scopeId};
       CryptoLegacyUploadDrain? drain;
       if (operation == 'attachments.begin') {
@@ -129,7 +273,12 @@ class SharedDocumentsContext {
             : () => drain!.authorize(operation, body),
       );
       drain?.accept(result);
-      check(write: write);
+      await _refreshDocumentCreators();
+      if (write) {
+        _checkDocumentWrite(operation, params);
+      } else {
+        check();
+      }
       online = true;
       return result;
     } on CollaborationException catch (error) {
@@ -245,6 +394,25 @@ class SharedDocumentsContext {
     }
   }
 
+  Future<T?> localPreview<T>(Future<T?> Function() read) async {
+    check();
+    try {
+      final result = await read();
+      check();
+      return result;
+    } on FormatException {
+      check();
+      return null;
+    } on TypeError {
+      check();
+      return null;
+    } on CollaborationException catch (error) {
+      if (error.code != 'invalid_response') rethrow;
+      check();
+      return null;
+    }
+  }
+
   Future<void> evictTable(String id) async {
     check();
     _documentGeneration++;
@@ -337,6 +505,7 @@ extension CollaborationDocumentActions on CollaborationRepository {
     String scopeId, {
     bool Function()? visible,
     void Function()? onAccessLost,
+    String? localPreviewFeature,
   }) async {
     final context = SharedDocumentsContext._(
       this,
@@ -346,18 +515,28 @@ extension CollaborationDocumentActions on CollaborationRepository {
       visible,
       onAccessLost,
     );
-    await context._initialize();
+    await context._initialize(localPreviewFeature: localPreviewFeature);
     return context;
   }
 }
 
-class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
+class _RemoteSpreadsheetGateway
+    implements
+        SpreadsheetGateway,
+        SpreadsheetRecordPermissions,
+        SpreadsheetLocalPreview {
   _RemoteSpreadsheetGateway(this.context);
   final SharedDocumentsContext context;
   @override
   String get scopeId => context.scopeId;
   @override
   bool get canEdit => context.canEdit && context.spreadsheetsSupported;
+  @override
+  bool canEditDocument(SpreadsheetDocument document) =>
+      context.spreadsheetsSupported && context.canEditTable(document);
+  @override
+  bool canDeleteDocument(SpreadsheetDocument document) =>
+      context.spreadsheetsSupported && context.canDeleteTable(document);
   @override
   bool get online => context.online;
   @override
@@ -388,7 +567,8 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
       context._repo.database.transaction(() async {
         context.check();
         final old = await context.cache('table', doc.id);
-        if (await context.cache('tableGone', doc.id) == true) {
+        if (await context.cache('tableGone', doc.id) == true ||
+            await context.locallyDeleted('table', doc.id)) {
           throw const CollaborationException('table_unavailable');
         }
         if (old is Map && (old['revision'] as int) > doc.revision) {
@@ -404,9 +584,33 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
     final result = <SpreadsheetDocument>[];
     for (final row in rows) {
       final doc = _document(row);
-      if (await context.cache('tableGone', doc.id) != true) result.add(doc);
+      if (await context.cache('tableGone', doc.id) != true &&
+          !await context.locallyDeleted('table', doc.id)) {
+        result.add(doc);
+      }
     }
     return result;
+  }
+
+  @override
+  Future<List<SpreadsheetDocument>?> cachedList() =>
+      context.localPreview(_cachedList);
+
+  @override
+  Future<SpreadsheetRead?> cachedRead(String id) =>
+      context.localPreview(() => _cachedRead(id));
+
+  Future<SpreadsheetRead?> _cachedRead(String id) async {
+    context.check();
+    if (await context.cache('tableGone', id) == true ||
+        await context.locallyDeleted('table', id)) {
+      throw const CollaborationException('table_unavailable');
+    }
+    final cached = await context.cache('table', id);
+    context.check();
+    return cached == null
+        ? null
+        : SpreadsheetRead(document: _document(cached, id: id));
   }
 
   @override
@@ -420,7 +624,10 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
     final docs = <SpreadsheetDocument>[];
     for (final value in reply['sheets'] as List) {
       var doc = _document(value);
-      if (await context.cache('tableGone', doc.id) == true) continue;
+      if (await context.cache('tableGone', doc.id) == true ||
+          await context.locallyDeleted('table', doc.id)) {
+        continue;
+      }
       final cached = await context.cache('table', doc.id);
       if (cached is Map && (cached['revision'] as int) > doc.revision) {
         doc = _document(cached, id: doc.id);
@@ -435,27 +642,17 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
     return docs;
   }, _cachedList);
   @override
-  Future<SpreadsheetRead> read(String id) => context.cachedRead(
-    () async {
-      final result = await context.call('tables.get', {'id': id});
-      final doc = await _cache(_document(result['sheet'], id: id));
-      final lease = result['lease'];
-      return SpreadsheetRead(
-        document: doc,
-        lease: lease == null
-            ? null
-            : SpreadsheetLease.fromJson(
-                Map<String, dynamic>.from(lease as Map),
-              ),
-      );
-    },
-    () async {
-      final cached = await context.cache('table', id);
-      return cached == null
+  Future<SpreadsheetRead> read(String id) => context.cachedRead(() async {
+    final result = await context.call('tables.get', {'id': id});
+    final doc = await _cache(_document(result['sheet'], id: id));
+    final lease = result['lease'];
+    return SpreadsheetRead(
+      document: doc,
+      lease: lease == null
           ? null
-          : SpreadsheetRead(document: _document(cached, id: id));
-    },
-  );
+          : SpreadsheetLease.fromJson(Map<String, dynamic>.from(lease as Map)),
+    );
+  }, () => cachedRead(id));
   @override
   Future<SpreadsheetDocument> create(String title) async {
     final payload = <String, Object?>{'title': title};
@@ -628,7 +825,8 @@ class _RemoteSpreadsheetGateway implements SpreadsheetGateway {
   }
 }
 
-class _RemoteAttachmentGateway implements AttachmentGateway {
+class _RemoteAttachmentGateway
+    implements AttachmentGateway, AttachmentLocalPreview {
   _RemoteAttachmentGateway(this.context, this.target);
   final SharedDocumentsContext context;
   @override
@@ -651,15 +849,48 @@ class _RemoteAttachmentGateway implements AttachmentGateway {
 
   Map<String, Object?> get _params => target.toJson();
   @override
+  Future<List<AttachmentMetadata>?> cachedList() =>
+      context.localPreview(_cachedMetadata);
+
+  Future<List<AttachmentMetadata>?> _cachedMetadata() async {
+    context.check();
+    final rows = await context.cache('attachments', _targetKey);
+    if (rows == null) return null;
+    return _visibleMetadata(
+      (rows as List).map((row) => _metadata(row)).toList(),
+    );
+  }
+
+  Future<List<AttachmentMetadata>> _visibleMetadata(
+    List<AttachmentMetadata> entries,
+  ) async {
+    if ((target.targetType == 'table' &&
+            await context.cache('tableGone', target.targetId) == true) ||
+        await context.locallyDeleted(target.targetType, target.targetId)) {
+      return const [];
+    }
+    final result = <AttachmentMetadata>[];
+    for (final metadata in entries) {
+      if (metadata.complete &&
+          !await context.locallyDeleted('attachment', metadata.id)) {
+        result.add(metadata);
+      }
+    }
+    context.check();
+    return result;
+  }
+
+  @override
   Future<List<AttachmentMetadata>> list() => context.cachedRead(
     () async {
       final reply = await context.call('attachments.list', _params);
-      final entries = (reply['attachments'] as List)
+      var entries = (reply['attachments'] as List)
           .map((v) => _metadata(v))
           .toList();
       if (entries.any((entry) => !entry.complete)) {
         throw const CollaborationException('invalid_response');
       }
+      entries = await _visibleMetadata(entries);
       await context.putCache(
         'attachments',
         _targetKey,
@@ -668,10 +899,8 @@ class _RemoteAttachmentGateway implements AttachmentGateway {
       return entries;
     },
     () async {
-      final rows = await context.cache('attachments', _targetKey);
-      return rows == null
-          ? null
-          : await _ready((rows as List).map((r) => _metadata(r)).toList());
+      final rows = await cachedList();
+      return rows == null ? null : await _ready(rows);
     },
   );
   Future<List<AttachmentMetadata>> _ready(

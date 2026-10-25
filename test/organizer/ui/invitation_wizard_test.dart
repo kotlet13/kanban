@@ -14,6 +14,7 @@ import 'package:kanban/organizer/data/pending_invitation_store.dart';
 import 'package:kanban/organizer/platform/invitation_links/invitation_link.dart';
 import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
 import 'package:kanban/organizer/presentation/shared/invitation_wizard.dart';
+import 'package:kanban/organizer/presentation/shared/verified_invitation_permissions.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
 import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
@@ -336,6 +337,120 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  Future<NavigatorState> coverInvitation(WidgetTester tester) async {
+    final navigator = Navigator.of(
+      tester.element(find.byType(InvitationWizard)),
+    );
+    unawaited(
+      navigator.push<void>(
+        MaterialPageRoute(
+          builder: (_) => const Scaffold(body: Text('account setup fixture')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    return navigator;
+  }
+
+  testWidgets(
+    'key setup return refresh clears only a fresh verified invitation error',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectionGate = Completer<void>()
+        ..inspectionError = const CryptoAuthorityPending(
+          'crypto_reconciliation_required',
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        settle: false,
+      );
+      expect(crypto.inspections, 1);
+      final navigator = await coverInvitation(tester);
+      crypto.inspectionGate!.complete();
+      await tester.pumpAndSettle();
+      crypto.inspectionGate = null;
+      crypto.inspectionError = null;
+      navigator.pop();
+      await tester.pumpAndSettle();
+      final l = AppLocalizations.of(
+        tester.element(find.byType(InvitationWizard)),
+      )!;
+      expect(crypto.inspections, 2);
+      expect(find.text(l.cryptoConnectionPending), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('invitation-flow-join')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      expect(crypto.accepts, 0);
+      expect(crypto.resumes, 0);
+    },
+  );
+
+  testWidgets(
+    'key setup return failed fresh review retains error without a rebuild retry loop',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectionError = const CollaborationException(
+          'crypto_reconciliation_required',
+        );
+      await _pump(tester, controller, link: _link, crypto: crypto);
+      final l = AppLocalizations.of(
+        tester.element(find.byType(InvitationWizard)),
+      )!;
+      expect(find.text(l.cryptoConnectionPending), findsOneWidget);
+      final navigator = await coverInvitation(tester);
+      crypto.inspectionGate = Completer<void>();
+      navigator.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(crypto.inspections, 2);
+      expect(find.text(l.cryptoConnectionPending), findsOneWidget);
+      crypto.inspectionGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text(l.cryptoConnectionPending), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(crypto.inspections, 2);
+      expect(crypto.accepts, 0);
+      expect(crypto.resumes, 0);
+    },
+  );
+
+  testWidgets(
+    'key setup return ignores verified old-account reply after identity changes',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectionError = const CryptoAuthorityPending(
+          'crypto_reconciliation_required',
+        );
+      await _pump(tester, controller, link: _link, crypto: crypto);
+      final navigator = await coverInvitation(tester);
+      crypto.inspectionGate = Completer<void>();
+      crypto.inspectionError = null;
+      navigator.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(crypto.inspections, 2);
+      controller.switchAccount();
+      await tester.pump();
+      crypto.inspectionGate!.complete();
+      await tester.pumpAndSettle();
+      expect(crypto.inspections, 2);
+      expect(crypto.accepts, 0);
+      expect(crypto.resumes, 0);
+      expect(find.byType(VerifiedInvitationPermissions), findsNothing);
+    },
+  );
+
   VerifiedCryptoInvitation preauthorizedReview() => VerifiedCryptoInvitation(
     {
       'invitation': {

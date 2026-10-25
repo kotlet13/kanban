@@ -25,7 +25,7 @@ class CollaborationSchema
         // Preserve any early development inbox rows with a full cursor backfill.
         foreach ($pdo->query('SELECT DISTINCT recipient_account_id FROM familyhub_inbox')->fetchAll(\PDO::FETCH_COLUMN) as $account) {
             $insert = $mysql ? 'INSERT IGNORE' : 'INSERT OR IGNORE';
-            $pdo->prepare($insert.' INTO familyhub_inbox_state VALUES(?,0,0)')->execute([$account]);
+            $pdo->prepare($insert.' INTO familyhub_inbox_state(account_id,sequence,visibility_revision) VALUES(?,0,0)')->execute([$account]);
             $rows = $pdo->prepare('SELECT id FROM familyhub_inbox WHERE recipient_account_id=? AND sequence=0 ORDER BY id'); $rows->execute([$account]);
             $ids = $rows->fetchAll(\PDO::FETCH_COLUMN); $rows->closeCursor();
             foreach ($ids as $id) {

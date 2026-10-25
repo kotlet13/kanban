@@ -44,6 +44,7 @@ class SharedFinanceLedger extends StatefulWidget {
     this.recordIds = const {},
     this.canEditEntry,
     this.canEditAccount,
+    this.canEditTransfer,
     this.description,
   });
   final String scopeName;
@@ -60,6 +61,7 @@ class SharedFinanceLedger extends StatefulWidget {
   final Map<String, String> recordIds;
   final bool Function(SharedFinanceEntry)? canEditEntry;
   final bool Function(SharedFinanceAccount)? canEditAccount;
+  final bool Function(SharedFinanceTransfer)? canEditTransfer;
   final String? description;
   final PaymentSnapshot? payments;
   final ValueChanged<SharedFinanceEntry>? onPersonalPayment;
@@ -486,10 +488,16 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
       '${context.l10n.financeTransfer} · ${_statusLabel(t.status)}',
     _ => '',
   };
+  bool _canEdit(Object row) =>
+      widget.canWrite &&
+      switch (row) {
+        SharedFinanceEntry entry => widget.canEditEntry?.call(entry) ?? true,
+        SharedFinanceTransfer transfer =>
+          widget.canEditTransfer?.call(transfer) ?? true,
+        _ => false,
+      };
   void _edit(Object row) {
-    if (!widget.canWrite ||
-        row is SharedFinanceEntry &&
-            !(widget.canEditEntry?.call(row) ?? true)) {
+    if (!_canEdit(row)) {
       return;
     }
     switch (row) {
@@ -516,9 +524,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
               ? 'financeEntry'
               : null,
           actions: [
-            if (widget.canWrite &&
-                (row is! SharedFinanceEntry ||
-                    (widget.canEditEntry?.call(row) ?? true)))
+            if (_canEdit(row))
               ContentMenuAction(
                 label: context.l10n.edit,
                 icon: Icons.edit_outlined,
@@ -621,7 +627,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
           account: _accountText(row),
           people: _personText(row),
           author: _author(row),
-          onOpen: widget.canWrite ? () => _edit(row) : null,
+          onOpen: _canEdit(row) ? () => _edit(row) : null,
           source: row is SharedFinanceEntry && widget.scopeId != null
               ? FinanceSourceLink(
                   entryId: widget.recordIds[row.id] ?? row.id,
@@ -717,7 +723,7 @@ class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
                     ],
                   ),
                 ),
-                onTap: widget.canWrite ? () => _edit(row) : null,
+                onTap: _canEdit(row) ? () => _edit(row) : null,
               ),
               DataCell(Text(_typeStatus(row))),
               DataCell(Text(_amount(row))),

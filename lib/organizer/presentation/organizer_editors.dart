@@ -76,6 +76,29 @@ class OrganizerDraft {
   ProjectArea area;
 }
 
+/// Live, presentation-only updates for an already open editor. Replacing a
+/// pristine task advances its save base; a dirty draft retains its original base.
+class OrganizerEditorUpdates extends ChangeNotifier {
+  OrganizerDraft? replacementDraft;
+  VoidCallback? acceptReplacement;
+  bool editingAllowed = true;
+  bool costEditingEnabled = false;
+  bool costVisible = true;
+  bool financeLoading = false;
+  bool financeUnavailable = false;
+  VoidCallback? onCostSectionOpened;
+  Map<String, ({String name, String currency, bool archived})>
+  financeAccountChoices = const {};
+
+  void replaceDraft(OrganizerDraft value, VoidCallback accept) {
+    replacementDraft = value;
+    acceptReplacement = accept;
+    notifyListeners();
+  }
+
+  void financeChanged() => notifyListeners();
+}
+
 enum OrganizerEditorKind {
   project,
   task,
@@ -117,12 +140,14 @@ Future<void> showOrganizerEditor(
   String Function(Object)? errorMessage,
   Widget Function(Widget)? wrap,
   String? sharedPolicyScopeId,
+  OrganizerEditorUpdates? updates,
 }) {
   final inspector = organizerUsesDesktopLayout(context)
       ? OrganizerDesktopInspectorScope.maybeOf(context)
       : null;
   Widget builder(BuildContext context) {
     final editor = _RecordEditor(
+      updates: updates,
       heading: heading,
       kind: kind,
       draft: draft,
@@ -162,6 +187,7 @@ Future<void> showOrganizerEditor(
 
 class _RecordEditor extends StatefulWidget {
   const _RecordEditor({
+    this.updates,
     required this.heading,
     required this.kind,
     required this.draft,
@@ -192,6 +218,7 @@ class _RecordEditor extends StatefulWidget {
     this.sharedPolicyScopeId,
     this.embedded = false,
   });
+  final OrganizerEditorUpdates? updates;
   final String heading;
   final OrganizerEditorKind kind;
   final OrganizerDraft draft;
@@ -225,10 +252,56 @@ class _RecordEditor extends StatefulWidget {
 }
 
 class _RecordEditorState extends State<_RecordEditor> {
-  final _form = GlobalKey<FormState>();
+  var _form = GlobalKey<FormState>();
+  late OrganizerDraft _draft;
+  OrganizerDraft? _lastReplacement;
+  bool _dirty = false;
+  bool _newerVersion = false;
   bool _busy = false;
   String? _failure;
-  OrganizerDraft get draft => widget.draft;
+  OrganizerDraft get draft => _draft;
+  bool get _readOnly => widget.updates?.editingAllowed == false;
+
+  @override
+  void initState() {
+    super.initState();
+    _draft = widget.draft;
+    widget.updates?.addListener(_applyUpdates);
+  }
+
+  @override
+  void dispose() {
+    widget.updates?.removeListener(_applyUpdates);
+    super.dispose();
+  }
+
+  void _applyUpdates() {
+    if (!mounted) return;
+    final updates = widget.updates!;
+    final replacement = updates.replacementDraft;
+    if (!updates.editingAllowed) FocusScope.of(context).unfocus();
+    setState(() {
+      if (replacement != null && replacement != _lastReplacement) {
+        _lastReplacement = replacement;
+        if (_dirty || _busy) {
+          _newerVersion = true;
+        } else {
+          _draft = replacement;
+          _form = GlobalKey<FormState>();
+          updates.acceptReplacement?.call();
+        }
+      }
+    });
+  }
+
+  void _edit(VoidCallback change) {
+    if (_readOnly) return;
+    setState(() {
+      _dirty = true;
+      change();
+    });
+  }
+
   bool get _hasProject => {
     OrganizerEditorKind.task,
     OrganizerEditorKind.event,
@@ -240,6 +313,7 @@ class _RecordEditorState extends State<_RecordEditor> {
       widget.kind != OrganizerEditorKind.shoppingItem;
 
   Future<void> _save() async {
+    if (_busy || _readOnly) return;
     final invalidFields = _form.currentState!.validateGranularly();
     if (invalidFields.isNotEmpty) {
       // Validation can happen while the user is at the bottom of the form.
@@ -308,7 +382,7 @@ class _RecordEditorState extends State<_RecordEditor> {
   }
 
   Future<void> _delete() async {
-    if (_busy) return;
+    if (_busy || _readOnly) return;
     if (widget.onDeleteWithReview != null) {
       setState(() => _busy = true);
       try {
@@ -405,7 +479,7 @@ class _RecordEditorState extends State<_RecordEditor> {
         time.minute,
       );
     }
-    setState(() => draft.date = next);
+    _edit(() => draft.date = next);
   }
 
   @override
@@ -470,12 +544,32 @@ class _RecordEditorState extends State<_RecordEditor> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Form(
             key: _form,
+            onChanged: () => _dirty = true,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_readOnly)
+                  Padding(
+                    key: const ValueKey('organizer-record-read-only'),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(l.recordEditForbidden),
+                    ),
+                  ),
+                if (_newerVersion)
+                  Padding(
+                    key: const ValueKey('organizer-newer-version'),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      l.organizerNewerVersion,
+                      semanticsLabel: l.organizerNewerVersion,
+                    ),
+                  ),
                 TextFormField(
                   key: const ValueKey('organizer-title-field'),
+                  readOnly: _readOnly,
                   initialValue: draft.title,
                   autofocus: true,
                   style: fieldStyle,
@@ -498,15 +592,16 @@ class _RecordEditorState extends State<_RecordEditor> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(l.organizerCompleted),
                     value: draft.isCompleted,
-                    onChanged: _busy
+                    onChanged: _busy || _readOnly
                         ? null
-                        : (value) => setState(() => draft.isCompleted = value!),
+                        : (value) => _edit(() => draft.isCompleted = value!),
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
                 if (_hasNotes) ...[
                   SizedBox(height: fieldGap),
                   TextFormField(
                     key: const ValueKey('organizer-notes-field'),
+                    readOnly: _readOnly,
                     initialValue: draft.notes,
                     minLines: compact ? 2 : 3,
                     maxLines: compact ? 4 : 3,
@@ -572,6 +667,7 @@ class _RecordEditorState extends State<_RecordEditor> {
                 if (_hasProject && widget.projectSelectionEnabled) ...[
                   SizedBox(height: fieldGap),
                   DropdownButtonFormField<String>(
+                    key: const ValueKey('organizer-project-field'),
                     initialValue: draft.projectId ?? '',
                     isExpanded: true,
                     decoration: InputDecoration(labelText: l.project),
@@ -586,16 +682,19 @@ class _RecordEditorState extends State<_RecordEditor> {
                           child: Text(p.title, overflow: TextOverflow.ellipsis),
                         ),
                     ],
-                    onChanged: _busy
+                    onChanged: _busy || _readOnly
                         ? null
-                        : (v) => setState(() {
+                        : (v) => _edit(() {
                             draft.projectId = v == '' ? null : v;
                             draft.phaseId = null;
                             draft.assigneePersonId = null;
                             draft.subjectPersonIds = [];
-                            draft.ledgerAccountId = null;
-                            draft.payerPersonId = null;
-                            draft.recipientPersonId = null;
+                            if (widget.updates?.costEditingEnabled ??
+                                widget.costEditingEnabled) {
+                              draft.ledgerAccountId = null;
+                              draft.payerPersonId = null;
+                              draft.recipientPersonId = null;
+                            }
                           }),
                   ),
                 ],
@@ -609,19 +708,18 @@ class _RecordEditorState extends State<_RecordEditor> {
                     showStart: widget.kind != OrganizerEditorKind.event,
                     endAt: draft.endAt,
                     onStartChanged: (value) =>
-                        setState(() => draft.startAt = value),
-                    onEndChanged: (value) =>
-                        setState(() => draft.endAt = value),
+                        _edit(() => draft.startAt = value),
+                    onEndChanged: (value) => _edit(() => draft.endAt = value),
                     people: widget.people,
                     assigneeIds: draft.assigneeIds,
                     onAssigneesChanged:
                         widget.assignmentEnabled &&
                             (widget.kind == OrganizerEditorKind.task ||
                                 widget.kind == OrganizerEditorKind.event)
-                        ? (ids) => setState(() => draft.assigneeIds = ids)
+                        ? (ids) => _edit(() => draft.assigneeIds = ids)
                         : null,
                     creatorLabel: widget.creatorLabel,
-                    enabled: !_busy,
+                    enabled: !_busy && !_readOnly,
                     wrap: widget.wrap,
                   ),
                 if (widget.kind == OrganizerEditorKind.project ||
@@ -633,19 +731,41 @@ class _RecordEditorState extends State<_RecordEditor> {
                     key: ValueKey(localOwnership),
                     people: allowedPeople,
                     financeAccounts: allowedAccounts,
-                    financeAccountChoices: widget.financeAccountChoices,
-                    costEditingEnabled: widget.costEditingEnabled,
+                    financeAccountChoices:
+                        widget.updates?.financeAccountChoices ??
+                        widget.financeAccountChoices,
+                    costEditingEnabled:
+                        widget.updates?.costEditingEnabled ??
+                        widget.costEditingEnabled,
+                    costVisible: widget.updates?.costVisible ?? true,
+                    onCostSectionOpened: _busy || _readOnly
+                        ? null
+                        : widget.updates?.onCostSectionOpened,
                     costAccountRequired: widget.costAccountRequired,
-                    enabled: !_busy,
+                    enabled: !_busy && !_readOnly,
                     wrap: widget.wrap,
-                    onChanged: () => setState(() {}),
+                    onChanged: () => _edit(() {}),
+                  ),
+                if (widget.kind == OrganizerEditorKind.task &&
+                    widget.updates?.financeLoading == true)
+                  Padding(
+                    key: const ValueKey('organizer-finance-loading'),
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(l.organizerFinanceChoicesLoading),
+                  ),
+                if (widget.kind == OrganizerEditorKind.task &&
+                    widget.updates?.financeUnavailable == true)
+                  Padding(
+                    key: const ValueKey('organizer-finance-unavailable'),
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(l.organizerFinanceChoicesUnavailable),
                   ),
                 if (widget.kind == OrganizerEditorKind.task &&
                     widget.onTimerToggle != null)
                   TaskTimerPanel(
                     timer: draft.timer,
                     estimateMinutes: draft.estimateMinutes,
-                    onToggle: _busy
+                    onToggle: _busy || _readOnly
                         ? null
                         : () async {
                             setState(() => _busy = true);
@@ -777,9 +897,9 @@ class _RecordEditorState extends State<_RecordEditor> {
                     key: const ValueKey('task-due-date'),
                     label: l.planningDue,
                     value: draft.date,
-                    enabled: !_busy,
+                    enabled: !_busy && !_readOnly,
                     wrap: widget.wrap,
-                    onChanged: (date) => setState(() => draft.date = date),
+                    onChanged: (date) => _edit(() => draft.date = date),
                   ),
                 ],
                 if (_hasDate && widget.kind != OrganizerEditorKind.task) ...[
@@ -795,9 +915,9 @@ class _RecordEditorState extends State<_RecordEditor> {
                   ),
                   if (!dateRequired && draft.date != null)
                     TextButton(
-                      onPressed: _busy
+                      onPressed: _busy || _readOnly
                           ? null
-                          : () => setState(() => draft.date = null),
+                          : () => _edit(() => draft.date = null),
                       child: Text(l.organizerRemoveDate),
                     ),
                 ],
@@ -829,8 +949,11 @@ class _RecordEditorState extends State<_RecordEditor> {
               busy: _busy,
               onCancel: () => Navigator.pop(context),
               onSave: _save,
+              saveEnabled: !_readOnly,
               onDelete:
-                  widget.onDelete == null && widget.onDeleteWithReview == null
+                  _readOnly ||
+                      widget.onDelete == null &&
+                          widget.onDeleteWithReview == null
                   ? null
                   : _delete,
             ),

@@ -582,6 +582,7 @@ class NativeCryptoMigrationNotificationStageV3 extends NativeDatabase
                     $c['state'],$c['scheduleMode'],$c['offsetMinutes'],$encoded,$encoded]);
                 // Retain the old exact source for retirement evidence, while
                 // making the plaintext worker incapable of delivering it.
+                (new NativeNotificationWriter($this->container))->configurationChanged($coverage['accountId']);
                 $this->change("UPDATE familyhub_reminders SET state='migrated' WHERE id=? AND account_id=?",[$c['id'],$coverage['accountId']]);
                 if ($body['useAuthorization'] !== null) {
                     (new NativeCryptoSchedulingUseV2($this->container,$this->bearer,$this->ip))->installMigrationBaseline(

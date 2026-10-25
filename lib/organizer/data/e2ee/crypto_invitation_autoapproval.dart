@@ -122,6 +122,20 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
   Future<ForegroundInvitationApprovalSummary> processForegroundAutoApprovals({
     required bool Function() isForegroundCurrent,
     Set<String> invitationIds = const {},
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.foregroundInvitation,
+    () => _accountWorkProcessForegroundAutoApprovals(
+      isForegroundCurrent: isForegroundCurrent,
+      invitationIds: invitationIds,
+    ),
+    priority: AccountWorkPriority.background,
+  );
+
+  Future<ForegroundInvitationApprovalSummary>
+  _accountWorkProcessForegroundAutoApprovals({
+    required bool Function() isForegroundCurrent,
+    Set<String> invitationIds = const {},
   }) async {
     _foregroundGuard(isForegroundCurrent);
     final partition = access.account.store.partition;

@@ -60,6 +60,7 @@ class NativeCryptoModerationAvailabilityV2 extends NativeDatabase
         foreach ($metadata['blobIds'] as $id) {
             $this->change($insert.' INTO familyhub_crypto_moderation_blob_refs_v2 VALUES(?,?,?,?)', [$report['scope_id'],$id,$record['id'],$revision]);
         }
+        (new NativeNotificationWriter($this->container))->configurationForScope($report['scope_id'],$record['id']);
         $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE scope_id=? AND target_id=? AND state='pending'",[$report['scope_id'],$record['id']]);
         // Leave record/history, revision floors, DEKs, ownership and membership
         // untouched. An availability notice is not a signed logical tombstone.

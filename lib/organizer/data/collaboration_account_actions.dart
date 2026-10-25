@@ -443,6 +443,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     Map<String, Object?> params, {
     bool capabilitiesVerified = false,
     Future<void> Function()? authorizeLegacyUploadDrain,
+    CryptoVisibleTaskMetadataTarget? visibleTaskMetadata,
   }) async {
     _checkEpoch(epoch);
     if (_sessionInvalidReason != null) {
@@ -495,6 +496,7 @@ extension CollaborationAccountActions on CollaborationRepository {
               router: cryptoRouter,
               contentGuard: contentRouteGuard,
               checkCurrent: () => _checkEpoch(epoch),
+              visibleTaskMetadata: visibleTaskMetadata,
             );
       if (encrypted != null) {
         reply = encrypted;
@@ -598,6 +600,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   ) async {
     _checkEpoch(epoch);
     _sessionInvalidReason = reason;
+    accountWork.cancelStale();
     // Expiry preserves local content; a confirmed device revocation still closes it.
     if (reason == 'device_revoked') database.activatePersonal(null);
     _remotePushState = RemotePushRegistrationState(

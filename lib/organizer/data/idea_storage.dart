@@ -55,7 +55,7 @@ class IdeaStorage {
     checkAccess();
   }
 
-  Stream<void> get changes => database.personalChanges.stream;
+  Stream<void> get changes => database.changesFor('ideas');
   Future<IdeaSnapshot> read() => database.transaction(() async {
     final all = await readAll();
     final space = database.selectedLocalWorkspaceId;

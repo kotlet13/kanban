@@ -99,6 +99,7 @@ class NativeInboxService extends NativeDatabase
             $replay = $this->replay($scope, $user['id'], $request, $hash); if ($replay) { return $replay['body']; }
             $this->change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$scope, $user['account_id'], $params['category']]);
             $this->change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,?,?)', [$scope, $user['account_id'], $params['category'], json_encode($params['settings'], JSON_THROW_ON_ERROR)]);
+            (new NativeNotificationWriter($this->container))->configurationChanged($user['account_id']);
         }
         $preferences = array_fill_keys(self::CATEGORIES, NativeNotificationPreferences::resolve());
         foreach ($this->many('SELECT * FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=?', [$scope, $user['account_id']]) as $row) { $preferences[$row['category']] = NativeNotificationPreferences::resolve($row['settings']); }

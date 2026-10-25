@@ -3537,6 +3537,22 @@ class AppLocalizationsSl extends AppLocalizations {
       'Samo ta projekt: opravila, dogodki, obvestila in finance. Brez članstva v nadrejenem prostoru.';
 
   @override
+  String get sharingRecordMemberDescription =>
+      'Lahko ustvarja zapise, ureja in briše svoje zapise, ureja dodeljena opravila ter označuje nakupe. Zapise drugih lahko briše samo lastnik. Finančne pravice so ločene.';
+
+  @override
+  String get sharingRecordViewerDescription =>
+      'Lahko vidi skupno vsebino, ureja in briše svoje zapise, ureja dodeljena opravila ter označuje nakupe. Ne more ustvarjati zapisov ali brisati zapisov drugih. Finančne pravice so ločene.';
+
+  @override
+  String get sharingRecordOwnerDescription =>
+      'Lastnik lahko ureja in briše vse zapise v tem obsegu. Finančne pravice so ločene.';
+
+  @override
+  String get sharingRecordAccessReviewDescription =>
+      'Člani dobijo dostop do skupne vsebine ter sedanjih in prihodnjih projektov. Lahko ustvarjajo zapise, urejajo in brišejo svoje zapise, urejajo dodeljena opravila ter označujejo nakupe. Finančne pravice in upravljanje dostopa se dodelijo ločeno. Osebe, povabljene samo v projekt, ohranijo projektni obseg. Stara čakajoča povabila bodo preklicana.';
+
+  @override
   String get sharingMemberFullDescription =>
       'Polni dostop: ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve in povabila ter vabi in odstranjuje člane. Lastništvo ostane zaščiteno.';
 
@@ -4644,6 +4660,14 @@ class AppLocalizationsSl extends AppLocalizations {
       'Računi prostora še niso na voljo. Povežite se in osvežite projekt.';
 
   @override
+  String get financeEntryAccountsLoading =>
+      'Pripravljamo račune. Vnos lahko že urejate.';
+
+  @override
+  String get financeEntryAccountsUnavailable =>
+      'Računov trenutno ni mogoče osvežiti. Osnutek in že znani računi so ohranjeni.';
+
+  @override
   String get financeProjectMovement => 'Gibanje projekta';
 
   @override
@@ -5388,4 +5412,51 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingInvitationNewAccountAccess =>
       'Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih.';
+
+  @override
+  String get organizerNewerVersion =>
+      'Na voljo je novejša različica. Vaše spremembe so ohranjene; ob shranjevanju jih bomo primerjali.';
+
+  @override
+  String get organizerFinanceChoicesLoading =>
+      'Pripravljamo račune za strošek. Opravilo lahko že uredite in shranite.';
+
+  @override
+  String get organizerFinanceChoicesUnavailable =>
+      'Računi za strošek trenutno niso na voljo. Opravilo lahko še vedno uredite.';
+
+  @override
+  String get recordEditForbidden =>
+      'Ta zapis lahko ureja lastnik prostora ali avtor; opravilo tudi dodeljeni uporabnik.';
+
+  @override
+  String get recordDeleteForbidden =>
+      'Ta zapis lahko izbriše lastnik prostora ali avtor.';
+
+  @override
+  String get recordAssignmentForbidden =>
+      'Dodelitev opravila lahko spremeni lastnik prostora ali avtor.';
+
+  @override
+  String get sharingRestoreRecord => 'Obnovi';
+
+  @override
+  String get sharingRestorePairedPending =>
+      'Zapis je povezan s stroškom opravila ali njegovih finančnih povezav ni bilo mogoče preveriti. Obnova ni bila izvedena. Osnutek je ohranjen.';
+
+  @override
+  String get sharingRestoreBlobPending =>
+      'Ta obnova zahteva nov prenos velike šifrirane vsebine. Obnova ni bila izvedena. Osnutek je ohranjen.';
+
+  @override
+  String get sharingRestoreTablePending =>
+      'Za izbrisano tabelo ni mogoče pridobiti zakupa za urejanje, ki je potreben za obnovo. Obnova ni bila izvedena. Osnutek je ohranjen.';
+
+  @override
+  String get sharingRestoreHistoryPending =>
+      'Obnova čaka na preverjeno zgodovino ali podporo strežnika. Osnutek je ohranjen.';
+
+  @override
+  String get sharingRestoreForbidden =>
+      'Zapis lahko obnovi samo lastnik prostora ali prvotni avtor. Osnutek je ohranjen.';
 }

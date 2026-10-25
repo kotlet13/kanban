@@ -1,4 +1,8 @@
+import 'crypto_verified_dispatch_reads.dart';
+import 'crypto_account_directory_changes.dart';
 import 'crypto_consent_generation.dart';
+import 'crypto_record_authorship.dart';
+import 'crypto_record_blob_target.dart';
 import 'crypto_scheduling_use.dart';
 import 'crypto_finance_topology_creation.dart';
 import 'crypto_finance_topology.dart';
@@ -28,6 +32,7 @@ import 'crypto_business_group_history.dart';
 import 'crypto_business_finance.dart';
 import 'crypto_task_resolution.dart';
 import 'crypto_task_conflict.dart';
+import 'crypto_record_conflict.dart';
 import 'crypto_business_references.dart';
 import 'crypto_business_notifications.dart';
 import 'crypto_business_lifecycle.dart';
@@ -49,7 +54,11 @@ import 'crypto_read_retry.dart';
 import 'crypto_verified_finance_reads.dart';
 import 'crypto_inventory_json.dart';
 import 'crypto_migration_record_source.dart';
-import 'account_directory_v2.dart' show cryptoSha256;
+import 'account_directory_v2.dart' show cryptoSha256, cryptoDirectoryDomain;
+import 'scope_crypto_codec.dart' show VerifiedScopeHead;
+import 'crypto_capability_discovery.dart';
+import 'crypto_record_policy.dart';
+import 'crypto_codec.dart';
 import 'crypto_record_proof_codec.dart';
 import 'crypto_business_ack_history.dart';
 import 'crypto_json.dart';
@@ -57,6 +66,11 @@ import 'crypto_sync_repository.dart';
 import 'crypto_sync_store.dart';
 import 'scope_crypto_manager.dart';
 import 'session_crypto_access.dart';
+
+part 'crypto_record_policy_baseline.dart';
+part 'crypto_record_policy_business.dart';
+part 'crypto_record_restore.dart';
+part 'crypto_visible_task_scope.dart';
 
 /// Catalog/cache IDs are discovery candidates only. A verified signed child
 /// descriptor admits exactly the parent whose purpose-separated token matches.
@@ -117,12 +131,109 @@ class CryptoBusinessRouter
         CryptoDomainRouter,
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
+        CryptoVerifiedReadGroupContext,
+        CryptoAccountDirectoryChanges,
         CryptoProjectionCursorTransition,
         CryptoNativeProjectRootRepair,
-        CryptoTerminalTaskConflicts {
+        CryptoTerminalTaskConflicts,
+        CryptoTerminalRecordConflicts,
+        CryptoRecordPolicyUpgrade,
+        CryptoRecordRestores,
+        CryptoVisibleTaskMetadataReader,
+        CryptoTaskDerivationDependencies {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
+
+  static final _verifiedMetadataReads = Object();
+
+  @override
+  Future<bool> refreshAccountDirectory({required DeviceSession session}) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    return refreshVerifiedAccountDirectoryJournal(account.directory);
+  }
+
+  @override
+  Future<T> withVerifiedReads<T>({
+    required DeviceSession session,
+    required Future<T> Function() read,
+  }) async {
+    _metadataReadGroup?.close();
+    final group = CryptoVerifiedDispatchReads(
+      session: session,
+      accountFor: accountFor,
+    );
+    try {
+      return await runZoned(
+        read,
+        zoneValues: {_verifiedMetadataReads: (this, group)},
+      );
+    } finally {
+      group.close();
+    }
+  }
+
+  CryptoVerifiedDispatchReads? get _metadataReadGroup {
+    final value = Zone.current[_verifiedMetadataReads];
+    if (value is! (CryptoBusinessRouter, CryptoVerifiedDispatchReads))
+      return null;
+    if (!identical(value.$1, this)) {
+      value.$2.close();
+      return null;
+    }
+    return value.$2;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> prepareVisibleTaskMetadata({
+    required DeviceSession session,
+    required CryptoVisibleTaskMetadataTarget target,
+  }) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    final business = CryptoBusinessSession(account, access, database);
+    configurePayloads(business);
+    final read = access.createReadOperation();
+    try {
+      return await read.run(
+        () => access.withVerifiedOperation(
+          () => business.visibleTaskScope(target),
+        ),
+      );
+    } finally {
+      read.close();
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> prepareRecordRestore({
+    required DeviceSession session,
+    required String scopeId,
+    required String domain,
+    required String type,
+    required String recordId,
+    required int expectedRevision,
+  }) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    final business = CryptoBusinessSession(
+      account,
+      SessionCryptoAccess(account: account),
+      database,
+    );
+    configurePayloads(business);
+    return business.access.withVerifiedOperation(
+      () => business.prepareExplicitRestore(
+        scope: scopeId,
+        domain: domain,
+        type: type,
+        canonicalId: recordId,
+        expectedRevision: expectedRevision,
+      ),
+    );
+  }
 
   @override
   Future<bool> hasTerminalTaskConflict({
@@ -130,12 +241,65 @@ class CryptoBusinessRouter
     required String scopeId,
     required Map<String, dynamic> operation,
   }) async {
+    // Terminal recovery is outside the retained metadata read phase.
+    _metadataReadGroup?.close();
     final account = await accountFor(session);
     return CryptoBusinessSession(
       account,
       SessionCryptoAccess(account: account),
       database,
     ).hasTerminalTaskConflict(scopeId, operation);
+  }
+
+  @override
+  Future<bool> hasTerminalRecordConflict({
+    required DeviceSession session,
+    required String scopeId,
+    required Map<String, dynamic> operation,
+  }) async {
+    // Terminal recovery is outside the retained metadata read phase.
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    return CryptoBusinessSession(
+      account,
+      SessionCryptoAccess(account: account),
+      database,
+    ).hasTerminalRecordConflict(scopeId, operation);
+  }
+
+  @override
+  Future<void> ensureRecordPolicy({
+    required DeviceSession session,
+    required String scopeId,
+  }) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    final business = CryptoBusinessSession(account, access, database);
+    configurePayloads(business);
+    await access.withVerifiedOperation(
+      () => business.recordPolicies.ensure(scopeId),
+    );
+  }
+
+  @override
+  Future<bool> needsFinanceForTaskDerivations({
+    required DeviceSession session,
+    required String scopeId,
+  }) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    return access.withVerifiedOperation(() async {
+      final head = await access.currentHead(scopeId);
+      return cryptoNeedsTaskDerivationFinanceRefresh(
+        database,
+        account.store.partition,
+        scopeId,
+        financeRole:
+            head.member(account.directory.accountId)['financeRole'] as String,
+      );
+    });
   }
 
   static final _financePolicyOnly = Object();
@@ -146,6 +310,7 @@ class CryptoBusinessRouter
     required DeviceSession session,
     required Future<T> Function() read,
   }) async {
+    _metadataReadGroup?.close();
     final combined = _CombinedFinanceRead(this, session);
     try {
       return await runZoned(read, zoneValues: {_combinedFinanceRead: combined});
@@ -160,6 +325,7 @@ class CryptoBusinessRouter
   Future<CryptoFinancePolicyReadResult<T>> withFinancePolicyOnly<T>(
     Future<T> Function() read,
   ) async {
+    _metadataReadGroup?.close();
     final attempt = _FinancePolicyOnlyAttempt();
     final value = await runZoned(
       read,
@@ -173,26 +339,35 @@ class CryptoBusinessRouter
     required DeviceSession session,
     required String scopeId,
   }) async {
-    final account = await accountFor(session);
-    final access = SessionCryptoAccess(account: account);
-    return access.withVerifiedOperation(() async {
-      try {
-        await access.currentHead(scopeId, online: true);
-      } on CollaborationException catch (error) {
-        if (const {
-          'crypto_scope_head_missing',
-          'crypto_migration_required',
-        }.contains(error.code)) {
-          return null;
+    Future<CryptoProjectionCursorOrigin?> read(
+      SessionCryptoAccess? shared,
+    ) async {
+      final account = shared?.account ?? await accountFor(session);
+      final access = shared ?? SessionCryptoAccess(account: account);
+      return access.withVerifiedOperation(() async {
+        try {
+          await access.currentHead(scopeId, online: true);
+        } on CollaborationException catch (error) {
+          if (const {
+            'crypto_scope_head_missing',
+            'crypto_migration_required',
+          }.contains(error.code)) {
+            return null;
+          }
+          rethrow;
         }
-        rethrow;
-      }
-      await access.verifiedScopeDescriptor(scopeId);
-      final migration = await access.recoveredMigrationGenesis(scopeId);
-      return migration == null
-          ? CryptoProjectionCursorOrigin.nativeOrigin
-          : CryptoProjectionCursorOrigin.legacyMigration;
-    });
+        await access.verifiedScopeDescriptor(scopeId);
+        final migration = await access.recoveredMigrationGenesis(scopeId);
+        return migration == null
+            ? CryptoProjectionCursorOrigin.nativeOrigin
+            : CryptoProjectionCursorOrigin.legacyMigration;
+      });
+    }
+
+    final group = _metadataReadGroup;
+    return group == null
+        ? read(null)
+        : group.runProjectionCursorOrigin(session, read);
   }
 
   @override
@@ -201,6 +376,7 @@ class CryptoBusinessRouter
     required String scopeId,
     required String? parentScopeId,
   }) async {
+    _metadataReadGroup?.close();
     final account = await accountFor(session);
     final access = SessionCryptoAccess(account: account);
     final runtime = CryptoBusinessSession(account, access, database);
@@ -264,14 +440,36 @@ class CryptoBusinessRouter
     required Map<String, Object?> params,
     required Set<String> protectedScopeIds,
   }) async {
+    final group = _metadataReadGroup;
+    if (group == null)
+      return _dispatch(session, operation, params, protectedScopeIds, null);
+    return group.run(
+      operation,
+      session,
+      (shared) =>
+          _dispatch(session, operation, params, protectedScopeIds, shared),
+    );
+  }
+
+  Future<Map<String, dynamic>> _dispatch(
+    DeviceSession session,
+    String operation,
+    Map<String, Object?> params,
+    Set<String> protectedScopeIds,
+    SessionCryptoAccess? sharedAccess,
+  ) async {
     final candidate = Zone.current[_combinedFinanceRead];
     final combined =
         candidate is _CombinedFinanceRead && candidate.matches(this, session)
         ? candidate
         : null;
     if (combined != null) await combined.initialize();
-    final account = combined?.account ?? await accountFor(session);
-    final access = combined?.access ?? SessionCryptoAccess(account: account);
+    final account =
+        sharedAccess?.account ?? combined?.account ?? await accountFor(session);
+    final access =
+        sharedAccess ??
+        combined?.access ??
+        SessionCryptoAccess(account: account);
     final combinedRead =
         combined != null &&
         (RegExp(
@@ -297,7 +495,12 @@ class CryptoBusinessRouter
         r'^finance[24]?\.accountChoices$',
       ).hasMatch(operation),
       financeReads: combinedRead ? combined.reads : null,
-      invalidateFinanceReads: combined?.reads.invalidate,
+      invalidateFinanceReads: () {
+        // Any checkpoint/bootstrap delivery ends metadata reuse before its
+        // existing fresh beforeDelivery guard or receipt-driven continuation.
+        _metadataReadGroup?.close();
+        combined?.reads.invalidate();
+      },
     );
     Future<Map<String, dynamic>> runRead(
       Future<Map<String, dynamic>> Function() body,
@@ -541,6 +744,9 @@ class CryptoBusinessSession {
   final AccountCryptoV2Workflow account;
   final SessionCryptoAccess access;
   final CollaborationDatabase db;
+  late final recordPolicies = CryptoRecordPolicyBaseline(this);
+  Future<bool>? _recordPolicyBlobSupport;
+  Future<bool>? _recordRestoreSupport;
 
   /// Set only by the fresh FILE-only migration verifier. Ordinary sessions
   /// never derive descriptor authority from imported projection/cache rows.
@@ -575,6 +781,7 @@ class CryptoBusinessSession {
     signingKey: access.signingKey,
     authorKey: access.recordAuthority,
     contentKey: access.recordKey,
+    supportsRecordPolicy: recordPolicies.supported,
     readContext: (scope, domain) async {
       final context = await access.readContext(scope, domain);
       final observed = access.observedDomainCheckpointAnchors(
@@ -752,11 +959,26 @@ class CryptoBusinessSession {
       if (out.length + (page['scopes'] as List).length > 1000) {
         throw const CryptoAuthorityPending('crypto_scope_catalog_capacity');
       }
-      out.addAll(
-        (page['scopes'] as List).map(
-          (r) => Map<String, dynamic>.from(r as Map),
-        ),
-      );
+      // Policy discovery is outside the original protection-catalog descriptor
+      // and its signed hash. It selects evidence verification, never authority.
+      final hints = page['recordPolicyVersions'];
+      final ids = {
+        for (final row in page['scopes'] as List) (row as Map)['id'],
+      };
+      if (hints != null &&
+          (hints is! Map ||
+              hints.keys.any((id) => id is! String || !ids.contains(id)) ||
+              hints.values.any(
+                (version) => version is! int || version < 0 || version > 1,
+              ))) {
+        throw const FormatException('crypto_scope_catalog_policy_hints');
+      }
+      for (final raw in page['scopes'] as List) {
+        final scope = Map<String, dynamic>.from(raw as Map);
+        if (hints is Map && hints.containsKey(scope['id']))
+          scope['recordPolicyVersion'] = hints[scope['id']];
+        out.add(scope);
+      }
       if (page['hasMore'] != true) return out;
       final next = page['nextAfterId'];
       if (next is! String ||
@@ -776,111 +998,12 @@ class CryptoBusinessSession {
     final discovered = await catalog();
     final descriptors = <String, Map<String, dynamic>>{};
     for (final scope in discovered) {
-      final cached = await db.rows(
-        'SELECT data FROM scopes WHERE partition=? AND id=?',
-        [p, scope['id']],
-      );
-      final local = cached.isEmpty
-          ? <String, dynamic>{}
-          : Map<String, dynamic>.from(
-              jsonDecode(cached.single['data'] as String) as Map,
-            );
-      var metadata = await _row(
-        scope['id'] as String,
-        'content',
-        await _reservedId(scope['id'] as String, 'scopeMetadata'),
-        type: 'scopeMetadata',
-      );
-      if (metadata == null) {
-        try {
-          await access.currentHead(scope['id'] as String, online: true);
-        } on CollaborationException catch (error) {
-          if (error.code != 'crypto_scope_head_missing') rethrow;
-          // Catalog absence of a head is discovery, not authority to synthesize
-          // a policy/name or revoke retained local records. P7 handles the
-          // explicit legacy migration; an unrelated new origin can proceed.
-          pending.add(scope['id'] as String);
-          if (local.isNotEmpty) result.add({...local, 'blocked': true});
-          continue;
-        }
-        await pullVerified(scope['id'] as String, 'content');
-        metadata = await _row(
-          scope['id'] as String,
-          'content',
-          await _reservedId(scope['id'] as String, 'scopeMetadata'),
-          type: 'scopeMetadata',
-        );
-      }
-      final source = metadata == null
-          ? local
-          : jsonDecode(metadata['raw_payload'] as String) as Map;
-      final lifecycle = await CryptoLifecycleEvidence(
-        access,
-      ).current(scope['id'] as String);
-      final descriptor = await _verifiedScopeDescriptor(scope['id'] as String);
-      descriptors[scope['id'] as String] = descriptor;
-      final head = await access.currentHead(scope['id'] as String);
-      final member = head.member(account.directory.accountId);
-      final roots = await cryptoProjectRootCandidates(
-        database: db,
-        partition: p,
-        serverId: account.directory.session.profile.serverId,
-        scopeId: scope['id'] as String,
-      );
-      final rootNeedsInventory = roots.any(
-        (row) =>
-            row['deleted'] == 0 &&
-            (row['id'] != scope['id'] ||
-                row['legacy_revision'] != 0 ||
-                row['revision_namespace'] == 'legacy'),
-      );
-      final rootId = cryptoProjectRootProjection(
-        scopeId: scope['id'] as String,
-        descriptor: descriptor,
-        projects: roots,
-        completeVerifiedInventory:
-            rootNeedsInventory &&
-            await _hasReusableCheckpoint(
-              scope['id'] as String,
-              'content',
-              head.headHash,
-              head.epoch,
-              head.accessRevision,
-            ),
-      );
-      // Catalog titles are never accepted; only already local or authenticated
-      // encrypted scope metadata supplies the visible name/address.
-      result.add({
-        ...local,
-        'id': scope['id'],
-        'kind': descriptor['kind'],
-        'projectRootId': rootId,
-        'role': member['role'],
-        'accessRevision': head.accessRevision,
-        'name': source['name'] ?? 'Jivie',
-        'address': source['address'],
-        'sequence': local['sequence'] ?? 0,
-        'archived':
-            lifecycle['ownArchived'] == true ||
-            lifecycle['inheritedArchived'] == true,
-        'requiredRecordContractVersion': 6,
-        'accessPolicyVersion': descriptor['accessPolicyVersion'],
-        'metadataRevision': metadata == null ? 0 : _localRevision(metadata),
-      });
+      final projected = await _projectScopeForRead(scope, descriptors);
+      if (projected.pending) pending.add(scope['id'] as String);
+      if (projected.value != null) result.add(projected.value!);
     }
     for (final scope in result) {
-      final descriptor = descriptors[scope['id']];
-      if (descriptor == null) continue;
-      scope.addAll(
-        await cryptoScopeParentProjection(
-          scopeId: scope['id'] as String,
-          descriptor: descriptor,
-          cached: scope,
-          catalog: discovered,
-          verifiedDescriptors: descriptors,
-          parentToken: CryptoLifecycleEvidence(access).parentToken,
-        ),
-      );
+      await _finishScopeForRead(scope, discovered, descriptors);
     }
     final cached = await db.rows('SELECT id FROM scopes WHERE partition=?', [
       p,
@@ -1137,6 +1260,56 @@ class CryptoBusinessSession {
       },
       localHash: await CryptoBusinessJson.hash(params),
     );
+    // A marker is created only for this device's verified new origin, before
+    // the first business record or invitation can be issued by this call.
+    // Existing scopes never acquire a marker from discovery or cached data.
+    if (await recordPolicies.supported()) {
+      final head = await access.currentHead(id, online: true);
+      final originWire = await account.directory.call('crypto2.scope.headGet', {
+        'scopeId': id,
+      });
+      await access.verifyInitialLifecycle(
+        id,
+        originWire,
+        scopeHeadHash: head.headHash,
+      );
+      final proof = originWire['originAuthorization'];
+      if (proof is Map) {
+        final origin =
+            CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+        if (origin['operation'] == 'crypto2.scope.origin' &&
+            origin['scopeId'] == id &&
+            origin['serverId'] == account.directory.session.profile.serverId &&
+            origin['accountId'] == account.directory.accountId &&
+            origin['deviceId'] == account.deviceId) {
+          await db.execute(
+            'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO NOTHING',
+            [
+              'record_policy_new_scope_v1:$p:$id',
+              jsonEncode({
+                'version': 1,
+                'serverId': account.directory.session.profile.serverId,
+                'scopeId': id,
+                'accountId': account.directory.accountId,
+                'deviceId': account.deviceId,
+                'originProofHash': await codec.digest(
+                  Map<String, dynamic>.from(proof),
+                ),
+              }),
+            ],
+          );
+          try {
+            await recordPolicies.ensure(id);
+          } on CryptoAuthorityPending catch (error) {
+            if (!const {
+              'crypto_record_policy_existing_scope_upgrade_pending',
+              'crypto_record_policy_owner_pending',
+            }.contains(error.reason))
+              rethrow;
+          }
+        }
+      }
+    }
     final root = kind == 'project'
         ? await ensureNativeProjectRoot(id, parent)
         : null;
@@ -1854,6 +2027,7 @@ class CryptoBusinessSession {
     required int expectedRevision,
     required Map<String, dynamic>? rawPayload,
     List<String>? uniqueRefs,
+    Map<String, dynamic>? recordPolicy,
     List<Map<String, dynamic>> stagedReferenceVersions = const [],
   }) async {
     final refs = _references(scopeId, type, rawPayload);
@@ -1878,6 +2052,7 @@ class CryptoBusinessSession {
     );
     return {
       'identity': address(scopeId, domain, type, canonicalId).identity,
+      if (recordPolicy != null) 'recordPolicy': recordPolicy,
       'references': refs,
       'referenceVersions': versions,
       'uniqueRefs':
@@ -2013,7 +2188,7 @@ class CryptoBusinessSession {
     } on CryptoAuthorityPending catch (error) {
       if (error.reason == 'crypto_business_delivery_pending' &&
           domain == 'content' &&
-          await hasTerminalTaskConflict(scope, op)) {
+          await hasTerminalRecordConflict(scope, op)) {
         throw const CollaborationApiException('conflict');
       }
       rethrow;
@@ -2084,6 +2259,65 @@ class CryptoBusinessSession {
     if (!account.directory.isCurrent()) {
       throw const CryptoAuthorityPending('crypto_stale_identity');
     }
+    return result;
+  }
+
+  Future<bool> hasTerminalRecordConflict(
+    String scope,
+    Map<String, dynamic> operation,
+  ) async {
+    if (operation['type'] == 'task')
+      return hasTerminalTaskConflict(scope, operation);
+    if (!const {
+          'project',
+          'event',
+          'shoppingList',
+          'shoppingItem',
+          'householdPerson',
+        }.contains(operation['type']) ||
+        !isSharedUuid(operation['opId']) ||
+        !isSharedUuid(operation['recordId'] ?? operation['id']))
+      return false;
+    final id = (operation['recordId'] ?? operation['id']) as String;
+    final rows = await db.rows(
+      'SELECT * FROM crypto_business_requests WHERE partition=? AND operation_id=?',
+      [p, operation['opId']],
+    );
+    if (rows.length != 1) return false;
+    final outgoing = await db.rows(
+      'SELECT * FROM crypto_outbox WHERE partition=? AND request_id=?',
+      [p, rows.single['request_id']],
+    );
+    if (outgoing.length != 1 || outgoing.single['state'] != 'rejected')
+      return false;
+    final own = await account.directory.cachedVerifiedDirectory();
+    final claims = await db.rows(
+      'SELECT * FROM crypto_outbox_records WHERE partition=? AND request_id=?',
+      [p, rows.single['request_id']],
+    );
+    if (!account.directory.isCurrent())
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    final result = await isBoundOrdinaryRecordConflict(
+      codec: codec,
+      signingPublicKey: cryptoBase64(
+        own.activeDevice(account.deviceId)['signingKeyBase64'],
+        length: 32,
+      ),
+      partition: p,
+      serverId: own.serverId,
+      accountId: own.accountId,
+      deviceId: account.deviceId,
+      scopeId: scope,
+      recordId: id,
+      recordType: operation['type'] as String,
+      operationId: operation['opId'] as String,
+      localHash: await CryptoBusinessJson.hash(operation),
+      business: rows.single,
+      outgoing: outgoing.single,
+      claims: claims,
+    );
+    if (!account.directory.isCurrent())
+      throw const CryptoAuthorityPending('crypto_stale_identity');
     return result;
   }
 
@@ -2209,8 +2443,8 @@ class CryptoBusinessSession {
               )
               as Map,
         );
-    final taskRaw = merge(beforeTask, taskOp['payload']);
-    final entryRaw = await CryptoFinanceAccountChoices(
+    var taskRaw = merge(beforeTask, taskOp['payload']);
+    var entryRaw = await CryptoFinanceAccountChoices(
       this,
     ).prepareFinancialRecord(scope, merge(beforeEntry, financeOp['payload']));
     CryptoBusinessPayload.projection(
@@ -2238,7 +2472,31 @@ class CryptoBusinessSession {
                 taskId)) {
       throw const FormatException('crypto_task_cost_pair');
     }
-    final content = await access.writeContext(scope, 'content'),
+    final taskPolicy = await prepareRecordPolicy(
+      scope: scope,
+      domain: 'content',
+      type: 'task',
+      canonicalId: taskId,
+      expectedRevision: beforeTask?['crypto_revision'] as int? ?? 0,
+      raw: taskRaw,
+      before: beforeTask,
+    );
+    final entryPolicy = await prepareRecordPolicy(
+      scope: scope,
+      domain: 'finance',
+      type: 'financeEntry',
+      canonicalId: entryId,
+      expectedRevision: beforeEntry?['crypto_revision'] as int? ?? 0,
+      raw: entryRaw,
+      before: beforeEntry,
+    );
+    taskRaw = taskPolicy.raw!;
+    entryRaw = entryPolicy.raw!;
+    final content = await access.writeContext(
+          scope,
+          'content',
+          allowRecordPolicy: taskPolicy.active,
+        ),
         finance = await access.writeContext(scope, 'finance'),
         signer = await access.signingKey();
     try {
@@ -2255,6 +2513,7 @@ class CryptoBusinessSession {
         Map<String, dynamic> raw,
         Map<String, Object?>? before, {
         bool intent = false,
+        Map<String, Object?>? companionTask,
       }) async {
         final write = domain == 'content' ? content : finance,
             a = address(scope, domain, type, id),
@@ -2262,6 +2521,13 @@ class CryptoBusinessSession {
         final metadata = intent
             ? {
                 'identity': a.identity,
+                if (taskPolicy.active && companionTask != null)
+                  'recordPolicyCompanion': {
+                    'version': 1,
+                    'taskId': address(scope, 'content', 'task', taskId).wireId,
+                    'taskRevision': companionTask['crypto_revision'],
+                    'taskProofHash': companionTask['record_proof_hash'],
+                  },
                 'references': <Object>[],
                 'referenceVersions': <Object>[],
                 'uniqueRefs': <String>[],
@@ -2275,6 +2541,9 @@ class CryptoBusinessSession {
                 expectedRevision: expected,
                 rawPayload: raw,
                 stagedReferenceVersions: versions,
+                recordPolicy: domain == 'content'
+                    ? taskPolicy.policy
+                    : entryPolicy.policy,
               );
         final bytes = CryptoBusinessJson.encode({
           'format': 2,
@@ -2295,7 +2564,11 @@ class CryptoBusinessSession {
             accessRevision: write.accessRevision,
             membershipHeadHash: write.headHash,
             domain: domain,
-            contentContract: domain == 'content' ? 6 : 3,
+            contentContract: intent
+                ? (domain == 'content' ? 6 : 3)
+                : (domain == 'content'
+                      ? (taskPolicy.active ? 7 : 6)
+                      : (entryPolicy.active ? 4 : 3)),
             operationId: operation,
             previousRecordHash:
                 before?['record_proof_hash'] as String? ?? '0' * 64,
@@ -2346,6 +2619,7 @@ class CryptoBusinessSession {
         intentRaw,
         beforeIntent,
         intent: true,
+        companionTask: task,
       );
       final entry = await seal(
         'finance',
@@ -2470,6 +2744,57 @@ class CryptoBusinessSession {
         throw const FormatException('crypto_immutable_business_request');
       }
     } else {
+      Map<String, dynamic>? restoreTag;
+      final restoreMarkers = await db.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['record_restore_intent:$p:$operationId'],
+      );
+      if (restoreMarkers.isNotEmpty) {
+        final intent = Map<String, dynamic>.from(
+          jsonDecode(restoreMarkers.single['value'] as String) as Map,
+        );
+        if (intent['version'] != 1 ||
+            intent['scopeId'] != scopeId ||
+            intent['domain'] != domain ||
+            intent['type'] != type ||
+            intent['recordId'] != id ||
+            raw == null) {
+          throw const FormatException('crypto_record_restore_invalid');
+        }
+        final exact = await _row(scopeId, domain, id, type: type);
+        if (exact == null ||
+            jsonDecode(exact['projection'] as String)['revision'] !=
+                intent['expectedRevision'] ||
+            exact['record_proof_hash'] !=
+                intent['recordRestore']['tombstoneProofHash']) {
+          throw const CryptoAuthorityPending(
+            'crypto_record_restore_predecessor',
+          );
+        }
+        restoreTag = Map<String, dynamic>.from(intent['recordRestore'] as Map);
+        final source = await _recordRestoreSource(
+          scope: scopeId,
+          domain: domain,
+          type: type,
+          canonicalId: id,
+          before: exact,
+          expectedTag: restoreTag,
+        );
+        raw = Map<String, dynamic>.from(
+          CryptoBusinessPayload.merge(source.raw, raw) as Map,
+        );
+        // Restoration never starts a fresh asset or large-payload upload. This
+        // check precedes prepareOutgoing, which may otherwise stage idea bytes.
+        if (CryptoBusinessJson.encode(raw).length > 90000 ||
+            type == 'idea' &&
+                (raw['elements'] as List? ?? const []).any(
+                  (e) => e is Map && e['asset'] != null,
+                )) {
+          throw const CryptoAuthorityPending(
+            'crypto_record_restore_large_blob_pending',
+          );
+        }
+      }
       if (raw != null && prepareOutgoing != null) {
         raw = await prepareOutgoing!(scopeId, type, id, raw, operationId);
       }
@@ -2490,11 +2815,34 @@ class CryptoBusinessSession {
       if (domain == 'finance') {
         await CryptoBusinessFinance(this).outgoing(scopeId, id, type, raw);
       }
-      final write = await access.writeContext(scopeId, domain),
+      final beforePolicy = await _row(scopeId, domain, id, type: type);
+      final preparedPolicy = await prepareRecordPolicy(
+        scope: scopeId,
+        domain: domain,
+        type: type,
+        canonicalId: id,
+        expectedRevision: expectedRevision,
+        raw: raw,
+        before: beforePolicy,
+        restoreTag: restoreTag,
+      );
+      raw = preparedPolicy.raw;
+      final write = await access.writeContext(
+            scopeId,
+            domain,
+            allowRecordPolicy: preparedPolicy.active,
+          ),
           signing = await access.signingKey();
       Uint8List? plaintext;
       try {
-        final wireRaw = raw == null
+        if (restoreTag != null &&
+            raw != null &&
+            CryptoBusinessJson.encode(raw).length > 90000) {
+          throw const CryptoAuthorityPending(
+            'crypto_record_restore_large_blob_pending',
+          );
+        }
+        final encodedRaw = raw == null
             ? null
             : await encodePayload?.call(
                     scopeId,
@@ -2505,6 +2853,14 @@ class CryptoBusinessSession {
                     operationId,
                   ) ??
                   raw;
+        final wireRaw = encodedRaw == null
+            ? null
+            : {
+                ...encodedRaw,
+                if (raw?.containsKey(CryptoRecordPolicy.secretField) == true)
+                  CryptoRecordPolicy.secretField:
+                      raw![CryptoRecordPolicy.secretField],
+              };
         final recordAddress = address(scopeId, domain, type, id);
         plaintext = wireRaw == null
             ? null
@@ -2536,13 +2892,18 @@ class CryptoBusinessSession {
           accessRevision: write.accessRevision,
           membershipHeadHash: write.headHash,
           domain: domain,
-          contentContract: write.contentContract,
+          contentContract: preparedPolicy.active
+              ? (domain == 'content' ? 7 : 4)
+              : write.contentContract,
           operationId: operationId,
           previousRecordHash: previousHash ?? '0' * 64,
           deleted: raw == null,
           plaintext: plaintext,
           metadata: {
             'identity': recordAddress.identity,
+            if (preparedPolicy.policy != null)
+              'recordPolicy': preparedPolicy.policy,
+            if (restoreTag != null) 'recordRestore': restoreTag,
             if (domain == 'finance')
               'auditState': {
                 'version': 1,
@@ -2623,6 +2984,13 @@ class CryptoBusinessSession {
                 plaintext: bytes,
                 metadata: {
                   'identity': intentAddress.identity,
+                  if (preparedPolicy.active)
+                    'recordPolicyCompanion': {
+                      'version': 1,
+                      'taskId': recordAddress.wireId,
+                      'taskRevision': expectedRevision + 1,
+                      'taskProofHash': await codec.digest(proof),
+                    },
                   'references': <Object>[],
                   'referenceVersions': <Object>[],
                   'uniqueRefs': <String>[],
@@ -3525,6 +3893,15 @@ class CryptoBusinessSession {
         if (history.isEmpty) throw const CryptoProjectionPending();
         previous = {
           ...history.single,
+          'type':
+              (jsonDecode(history.single['record_body'] as String)
+                  as Map)['type'],
+          'deleted':
+              (jsonDecode(history.single['record_body'] as String)
+                      as Map)['deleted'] ==
+                  true
+              ? 1
+              : 0,
           'crypto_revision': history.single['revision'],
           'record_proof_hash': history.single['proof_hash'],
           'legacy_revision': visiblePrevious?['legacy_revision'] ?? 0,
@@ -3543,6 +3920,8 @@ class CryptoBusinessSession {
       }
       final semanticPrevious = r['expectedRevision'] == 0 ? null : previous;
       Map<String, dynamic>? raw;
+      String? originCreator, originUpdater;
+      bool verifiedCreatorSource = false;
       Map<String, dynamic>? decodedEnvelope;
       if (value.plaintext != null) {
         final body = jsonDecode(utf8.decode(value.plaintext!));
@@ -3581,12 +3960,18 @@ class CryptoBusinessSession {
           ),
           envelope: decodedEnvelope,
           detachedWitness: value.migrationWitness,
+          onVerifiedSource: (source) {
+            verifiedCreatorSource = source.hasCapturedCreator;
+            originCreator = source.createdByAccountId;
+            originUpdater = source.updatedByAccountId;
+          },
           reservedId: reservedRecordId,
         );
       }
       if (raw != null && expandPayload != null) {
         raw = await expandPayload!(value, raw);
       }
+      await verifyRecordPolicyProjection(value, raw, semanticPrevious, batch);
       final type = r['type'] as String;
       if (_notifiable(type)) {
         if ((r['expectedRevision'] as int) > 0 && previous == null) {
@@ -3769,7 +4154,68 @@ class CryptoBusinessSession {
           value.migrationOrigin != null &&
           (value.migrationOrigin!['materializationRole'] ?? 'primary') ==
               'primary';
-      final relocation = await verifiedProjectRelocationLineage(this, value);
+      Map<String, dynamic>? previousCanonical = previous?['projection'] == null
+          ? null
+          : Map<String, dynamic>.from(
+              jsonDecode(previous!['projection'] as String) as Map,
+            );
+      var creatorProvenance =
+          previousCanonical?['creatorProvenance'] as String?;
+      if (verifiedCreatorSource) creatorProvenance = 'verifiedSource';
+      if (CryptoRecordAuthorship.nativeCreation(r) != null)
+        creatorProvenance = 'verifiedCreation';
+      var creator = CryptoRecordAuthorship.resolve(
+        verifiedRecord: r,
+        previousCanonical: previousCanonical,
+        verifiedOriginCreator: originCreator,
+      );
+      final relocation = await verifiedProjectRelocationLineage(
+        this,
+        value,
+        onVerifiedAncestor: creator != null
+            ? null
+            : (ancestor, authority, ancestorWire) async {
+                if (ancestor['expectedRevision'] != 0) return;
+                final native = CryptoRecordAuthorship.nativeCreation(ancestor);
+                if (native != null) {
+                  creator = native;
+                  creatorProvenance = 'verifiedCreation';
+                  return;
+                }
+                if (authority.migrationOrigin == null ||
+                    ancestor['deleted'] == true) {
+                  return;
+                }
+                final key = await access.recordKey(ancestor);
+                Uint8List? bytes;
+                try {
+                  bytes = codec.openVerified(ancestor, key.key);
+                  if (bytes == null) return;
+                  await verifyCryptoMigrationWitness(
+                    record: ancestor,
+                    origin: authority.migrationOrigin!,
+                    recordProofHash: await codec.digest(
+                      Map<String, dynamic>.from(
+                        ancestorWire['authorization']['recordProof'] as Map,
+                      ),
+                    ),
+                    envelope: Map<String, dynamic>.from(
+                      jsonDecode(utf8.decode(bytes)) as Map,
+                    ),
+                    detachedWitness: authority.migrationWitness,
+                    reservedId: reservedRecordId,
+                    onVerifiedSource: (source) {
+                      creator = source.createdByAccountId;
+                      if (source.hasCapturedCreator)
+                        creatorProvenance = 'verifiedSource';
+                    },
+                  );
+                } finally {
+                  bytes?.fillRange(0, bytes.length, 0);
+                  key.release();
+                }
+              },
+      );
       int? relocationBase;
       if (relocation != null) {
         const keys = {
@@ -3827,12 +4273,26 @@ class CryptoBusinessSession {
           const {'legacy', 'relocation'}.contains(revisionNamespace)
           ? legacy + (wire['revision'] as int) - 1
           : wire['revision'] as int;
+      final recordPolicy = (r['metadata'] as Map)['recordPolicy'];
+      if (recordPolicy is Map) {
+        if (creatorProvenance != null &&
+            creator != recordPolicy['createdByAccountId']) {
+          throw const FormatException('crypto_record_author_substitution');
+        }
+        creator = recordPolicy['createdByAccountId'] as String?;
+        creatorProvenance ??= 'verifiedPolicy';
+      }
       final canonical = {
         'id': recordAddress.canonicalId,
         'type': type,
         'revision': revision,
         'deleted': r['deleted'],
         'payload': projected,
+        'createdByAccountId': creator,
+        if (creatorProvenance != null) 'creatorProvenance': creatorProvenance,
+        'updatedByAccountId': value.migrationOrigin != null
+            ? originUpdater
+            : CryptoRecordAuthorship.account(r['accountId']),
         'contractVersion': r['domain'] == 'finance' ? 3 : 6,
       };
       next.add({
@@ -3855,6 +4315,7 @@ class CryptoBusinessSession {
         'previousRaw': semanticPrevious?['raw_payload'] == null
             ? null
             : jsonDecode(semanticPrevious!['raw_payload'] as String),
+        'previousDocumentProofHash': visiblePrevious?['record_proof_hash'],
       });
     }
     await CryptoBusinessFinance(this).validate([
@@ -3997,6 +4458,10 @@ class CryptoBusinessSession {
         ],
       );
       final origin = value['migrationOrigin'];
+      if (const {'table', 'attachment'}.contains(r['type']) &&
+          value['previousDocumentProofHash'] != value['hash']) {
+        db.documentsChanged(p, r['scopeId'] as String);
+      }
       if (r['type'] == 'scopeMetadata' &&
           origin is Map &&
           origin['sourceTable'] == 'familyhub_scopes') {

@@ -10,6 +10,7 @@ import '../device_session_store.dart';
 import 'crypto_codec.dart';
 import 'crypto_json.dart';
 import 'crypto_record_proof_codec.dart';
+import 'crypto_record_policy.dart';
 import 'crypto_record_address.dart'
     show isCryptoCanonicalUuid, isCryptoWireRecordId;
 import 'crypto_sync_store.dart';
@@ -145,7 +146,9 @@ class CryptoSyncRepository {
     this.beforeDelivery,
     this.readContext,
     this.deliverySidecar,
+    this.supportsRecordPolicy,
   });
+  final Future<bool> Function()? supportsRecordPolicy;
   final CryptoCodec crypto;
   final DeviceSession session;
   final CollaborationTransport transport;
@@ -260,6 +263,9 @@ class CryptoSyncRepository {
           'crypto2.scope.lifecycle.cancel',
           'crypto2.scope.lifecycle.delegate',
           'crypto2.scope.financePolicy.propose',
+          'crypto2.scope.recordPolicy.prepare',
+          'crypto2.scope.recordPolicy.stage',
+          'crypto2.scope.recordPolicy.activate',
           'crypto2.scope.delete',
           'crypto2.inlineDelete.prepare',
           'crypto2.inlineDelete.stage',
@@ -462,8 +468,272 @@ class CryptoSyncRepository {
     );
   });
 
+  /// A separate policy adoption successor, never a rewrite of an old request.
+  /// The authority callback must use already verified/cached baseline and
+  /// predecessor evidence, including expanded document payloads. It must not
+  /// call this queue or perform network work while its partition lock is held.
+  Future<String> reauthorizeRejectedPolicyBatch({
+    required String rejectedRequestId,
+    required String batchId,
+    required List<Map<String, dynamic>> recordProofs,
+    required Map<String, dynamic> commitment,
+    required Future<void> Function(
+      Map<String, dynamic> previous,
+      Map<String, dynamic> next,
+      Map<String, dynamic>? previousPayload,
+      Map<String, dynamic>? nextPayload,
+    )
+    validateAuthority,
+    required Future<void> Function(String requestId) onStaged,
+    List<Map<String, dynamic>> tableLeases = const [],
+  }) => _exclusive(() async {
+    _current();
+    final old = await store.outgoing(rejectedRequestId);
+    if (old == null ||
+        old['operation'] != 'crypto2.records.batch' ||
+        old['state'] != 'rejected' ||
+        old['response'] is! String) {
+      throw const FormatException('crypto_policy_successor_requires_rejection');
+    }
+    final signed =
+        jsonDecode(old['signed_body'] as String) as Map<String, dynamic>;
+    final receipt = jsonDecode(old['response'] as String) as Map;
+    final command =
+        CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
+    if (await _hash(signed) != old['request_hash'] ||
+        receipt['status'] != 409 ||
+        receipt['response'] is! Map ||
+        receipt['response']['errorCode'] != 'crypto_upgrade_required' ||
+        receipt['requestId'] != rejectedRequestId ||
+        receipt['requestHash'] != old['request_hash'] ||
+        base64Encode(CryptoJson.encode(receipt['authorization'])) !=
+            base64Encode(CryptoJson.encode(signed)) ||
+        command['serverId'] != session.profile.serverId ||
+        command['accountId'] != session.profile.accountId ||
+        command['deviceId'] != session.profile.deviceId) {
+      throw const FormatException('crypto_policy_successor_receipt');
+    }
+    final payload = command['payload'] as Map;
+    if ((payload['exportBindings'] as List? ?? const []).isNotEmpty) {
+      throw const CryptoAuthorityPending(
+        'crypto_export_reauthorization_required',
+      );
+    }
+    final priorLinks = await store.database.rows(
+      'SELECT new_request_id FROM crypto_outbox_reconciliations WHERE partition=? AND old_request_id=?',
+      [store.partition, rejectedRequestId],
+    );
+    if (priorLinks.isNotEmpty) {
+      final prior = await store.outgoing(
+        priorLinks.single['new_request_id'] as String,
+      );
+      if (prior == null)
+        throw const FormatException('crypto_policy_successor_missing');
+      final next =
+          CryptoJson.decode(
+                cryptoBase64(
+                  (jsonDecode(prior['signed_body'] as String)
+                      as Map)['commandBase64'],
+                ),
+              )
+              as Map;
+      if (base64Encode(CryptoJson.encode(next['payload'])) !=
+          base64Encode(
+            CryptoJson.encode({
+              'batchId': batchId,
+              'records': recordProofs,
+              'commitment': commitment,
+              if (tableLeases.isNotEmpty) 'tableLeases': tableLeases,
+            }),
+          )) {
+        throw const FormatException('crypto_policy_successor_exists');
+      }
+      return prior['request_id'] as String;
+    }
+    final original = (payload['records'] as List).cast<Map>();
+    if (original.length != recordProofs.length)
+      throw const FormatException('crypto_policy_successor_group');
+    final before = <String, Map<String, dynamic>>{},
+        after = <String, Map<String, dynamic>>{};
+    final hashes = <String, String>{};
+    String address(Map r) => '${r['scopeId']}:${r['domain']}:${r['id']}';
+    for (final proof in original) {
+      final r = Map<String, dynamic>.from(
+        CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map,
+      );
+      if (before.containsKey(address(r)))
+        throw const FormatException('crypto_policy_successor_group');
+      before[address(r)] = r;
+    }
+    for (final proof in recordProofs) {
+      final r = Map<String, dynamic>.from(
+        CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map,
+      );
+      if (after.containsKey(address(r)))
+        throw const FormatException('crypto_policy_successor_group');
+      after[address(r)] = r;
+    }
+    if (before.keys.toSet().difference(after.keys.toSet()).isNotEmpty ||
+        after.length != before.length) {
+      throw const FormatException('crypto_policy_successor_group');
+    }
+    for (final proof in original) {
+      final r = CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+      final nextProof = recordProofs.singleWhere(
+        (p) =>
+            address(
+              CryptoJson.decode(cryptoBase64(p['commandBase64'])) as Map,
+            ) ==
+            address(r),
+      );
+      hashes[await records.digest(Map<String, dynamic>.from(proof))] =
+          await records.digest(nextProof);
+    }
+    Object? canonical(Object? value) => base64Encode(CryptoJson.encode(value));
+    Map<String, dynamic> normalizedMetadata(
+      Map<String, dynamic> r, {
+      required bool next,
+    }) {
+      final result = Map<String, dynamic>.from(r['metadata'] as Map);
+      if (next) {
+        result.remove('recordPolicy');
+        result.remove('recordPolicyCompanion');
+      }
+      final refs = result['referenceVersions'];
+      if (!next && refs is List) {
+        result['referenceVersions'] = [
+          for (final ref in refs)
+            {
+              ...Map<String, dynamic>.from(ref as Map),
+              'recordProofHash':
+                  hashes[ref['recordProofHash']] ?? ref['recordProofHash'],
+            },
+        ];
+      }
+      return result;
+    }
+
+    var ordinary = 0;
+    for (final key in before.keys) {
+      final previous = before[key]!, next = after[key]!;
+      if (const [
+        'serverId',
+        'accountId',
+        'deviceId',
+        'scopeId',
+        'domain',
+        'id',
+        'type',
+        'operationId',
+        'expectedRevision',
+        'previousRecordHash',
+        'deleted',
+        'membershipHeadHash',
+        'epoch',
+        'accessRevision',
+      ].any((field) => previous[field] != next[field])) {
+        throw const FormatException('crypto_policy_successor_identity');
+      }
+      final business = CryptoRecordPolicy.businessTypes.contains(next['type']);
+      if (business) {
+        ordinary++;
+        if (previous['contentContract'] !=
+                (previous['domain'] == 'finance' ? 3 : 6) ||
+            next['contentContract'] != (next['domain'] == 'finance' ? 4 : 7) ||
+            (previous['metadata'] as Map).containsKey('recordPolicy')) {
+          throw const FormatException('crypto_policy_successor_contract');
+        }
+        CryptoRecordPolicy.validate(
+          Map<String, dynamic>.from(next['metadata']['recordPolicy'] as Map),
+        );
+      } else if (!const {
+            'taskDerivationIntent',
+            'taskDerivationResolution',
+          }.contains(next['type']) ||
+          previous['contentContract'] != next['contentContract']) {
+        throw const CryptoAuthorityPending(
+          'crypto_policy_successor_type_pending',
+        );
+      }
+      if (canonical(normalizedMetadata(previous, next: false)) !=
+          canonical(normalizedMetadata(next, next: true))) {
+        throw const FormatException('crypto_policy_successor_metadata');
+      }
+      Uint8List? oldBytes, newBytes;
+      final oldKey = await contentKey(previous);
+      CryptoKeyLease? nextKey;
+      try {
+        nextKey = await contentKey(next);
+        oldBytes = records.openVerified(previous, oldKey.key);
+        newBytes = records.openVerified(next, nextKey.key);
+        Map<String, dynamic>? oldPayload, nextPayload;
+        if (previous['deleted'] != true) {
+          if (oldBytes == null || newBytes == null)
+            throw const FormatException('crypto_policy_successor_payload');
+          final oldEnvelope = Map<String, dynamic>.from(
+            jsonDecode(utf8.decode(oldBytes)) as Map,
+          );
+          final nextEnvelope = Map<String, dynamic>.from(
+            jsonDecode(utf8.decode(newBytes)) as Map,
+          );
+          oldPayload = Map<String, dynamic>.from(oldEnvelope['payload'] as Map);
+          nextPayload = Map<String, dynamic>.from(
+            nextEnvelope['payload'] as Map,
+          );
+          final oldSemantic = Map<String, dynamic>.from(oldPayload),
+              nextSemantic = Map<String, dynamic>.from(nextPayload);
+          if (business) {
+            if (oldSemantic.containsKey(CryptoRecordPolicy.secretField))
+              throw const FormatException(
+                'crypto_policy_successor_existing_secret',
+              );
+            final secret = CryptoRecordPolicy.secret(nextSemantic);
+            secret.fillRange(0, secret.length, 0);
+            nextSemantic.remove(CryptoRecordPolicy.secretField);
+          }
+          if (next['type'] == 'taskDerivationResolution') {
+            for (final field in const [
+              'intentProofHash',
+              'taskProofHash',
+              'financeRecordProofHash',
+            ]) {
+              if (hashes.containsKey(oldSemantic[field]))
+                oldSemantic[field] = hashes[oldSemantic[field]];
+            }
+          }
+          oldEnvelope['payload'] = oldSemantic;
+          nextEnvelope['payload'] = nextSemantic;
+          if (canonical(oldEnvelope) != canonical(nextEnvelope))
+            throw const FormatException('crypto_policy_successor_payload');
+        } else if (oldBytes != null || newBytes != null) {
+          throw const FormatException('crypto_policy_successor_payload');
+        }
+        await validateAuthority(previous, next, oldPayload, nextPayload);
+        _current();
+      } finally {
+        oldBytes?.fillRange(0, oldBytes.length, 0);
+        newBytes?.fillRange(0, newBytes.length, 0);
+        oldKey.release();
+        nextKey?.release();
+      }
+    }
+    if (ordinary == 0)
+      throw const FormatException('crypto_policy_successor_group');
+    return _enqueueBatch(
+      batchId: batchId,
+      recordProofs: recordProofs,
+      commitment: commitment,
+      tableLeases: tableLeases,
+      applyLocal: () async {},
+      replacesRejectedRequestId: rejectedRequestId,
+      reconciliationReason: 'record_policy_upgrade',
+      onStaged: onStaged,
+    );
+  });
+
   Future<String> _enqueueBatch({
     String? replacesRejectedRequestId,
+    String reconciliationReason = 'definitive_rejection',
     List<Map<String, dynamic>> tableLeases = const [],
     List<Map<String, dynamic>> exportBindings = const [],
     Future<void> Function(String requestId)? onStaged,
@@ -615,8 +885,13 @@ class CryptoSyncRepository {
       }
       if (replacesRejectedRequestId != null) {
         await store.database.execute(
-          "INSERT INTO crypto_outbox_reconciliations(partition,old_request_id,new_request_id,reason) VALUES(?,?,?,'definitive_rejection')",
-          [store.partition, replacesRejectedRequestId, id],
+          'INSERT INTO crypto_outbox_reconciliations(partition,old_request_id,new_request_id,reason) VALUES(?,?,?,?)',
+          [
+            store.partition,
+            replacesRejectedRequestId,
+            id,
+            reconciliationReason,
+          ],
         );
       }
       await onStaged?.call(id);
@@ -891,6 +1166,8 @@ class CryptoSyncRepository {
     var cursor = state?['transport_cursor'] as int? ?? 0;
     var projectionCursor = state?['projection_cursor'] as int? ?? 0;
     final siblingBudget = CryptoProjectionHistoryBudget();
+    final recordPolicySupported = await supportsRecordPolicy?.call() ?? false;
+    _current();
     while (true) {
       final page = await _call('crypto2.records.pull', {
         'scopeId': scopeId,
@@ -898,6 +1175,7 @@ class CryptoSyncRepository {
         'accessRevision': accessRevision,
         'cursor': cursor,
         'limit': 20,
+        if (recordPolicySupported) 'supportedRecordPolicyVersion': 1,
       });
       final next = page['cursor'],
           sequence = page['scopeSequence'],

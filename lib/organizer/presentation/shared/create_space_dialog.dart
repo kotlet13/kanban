@@ -307,7 +307,7 @@ class _CreateSpaceDialogState extends ConsumerState<_CreateSpaceDialog> {
                     '${session.username} · ${Uri.tryParse(session.serverUrl)?.host ?? session.serverUrl}',
                   ),
                 if (_cloud && needsLogin) Text(l.spaceFlowSignInCreate),
-                if (_submitted)
+                if (_submitted && !_busy)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(l.spaceFlowCreateUnknown),
@@ -336,7 +336,7 @@ class _CreateSpaceDialogState extends ConsumerState<_CreateSpaceDialog> {
             key: const ValueKey('sharing-submit'),
             onPressed: _busy ? null : _create,
             child: Text(
-              _submitted
+              _submitted && !_busy
                   ? l.organizerRetry
                   : _cloud && needsLogin
                   ? l.spaceFlowSignInCreate

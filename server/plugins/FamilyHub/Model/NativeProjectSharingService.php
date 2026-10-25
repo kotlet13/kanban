@@ -43,7 +43,7 @@ class NativeProjectSharingService extends NativeDatabase
             }
             $this->change('UPDATE '.$policy.' SET sequence=? WHERE '.$key.'=?',[$sequence,$pid]);
         }
-        foreach ($preview['movedReminderIds'] as $id) { $this->change('UPDATE familyhub_reminders SET scope_id=? WHERE scope_id=? AND id=?',[$pid,$sid,$id]); }
+        foreach ($preview['movedReminderIds'] as $id) { $reminder=$this->one('SELECT account_id FROM familyhub_reminders WHERE scope_id=? AND id=?',[$sid,$id]);if($reminder){(new NativeNotificationWriter($this->container))->configurationChanged($reminder['account_id']);}$this->change('UPDATE familyhub_reminders SET scope_id=? WHERE scope_id=? AND id=?',[$pid,$sid,$id]); }
         $affected=array_column((new NativeOrganizationAccess($this->container))->members($sid),'accountId');(new NativeNotificationWriter($this->container))->visibilityChanged($affected);
         $result=['scope'=>$this->scopeWire($this->scope($pid,$user['id'])),'projectRoot'=>(new NativeRecordPolicy($this->container))->wire($this->one('SELECT * FROM familyhub_records WHERE scope_id=? AND id=?',[$pid,$pid]),3),'movedRecordIds'=>$preview['movedRecordIds'],'movedFinanceRecordIds'=>$preview['movedFinanceRecordIds'],'movedReminderIds'=>$preview['movedReminderIds']];
         $this->remember($sid,$user['id'],$request,$hash,$result);return $result;

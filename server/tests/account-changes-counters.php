@@ -1,0 +1,45 @@
+<?php
+/** New schema22 + real document transaction seams, independent of prior controls. */
+require __DIR__.'/account-changes-fixture.php';
+use Kanboard\Plugin\FamilyHub\Model\NativeTableService;
+use Kanboard\Plugin\FamilyHub\Model\NativeAttachmentService;
+use Kanboard\Plugin\FamilyHub\Schema\AccountChangesSchema;
+use Kanboard\Plugin\FamilyHub\Model\NativeError;
+function sequence($sid){return (int)sql('SELECT documents_sequence FROM familyhub_scopes WHERE id=?',[$sid])->fetchColumn();}
+sql("UPDATE familyhub_scopes SET kind='organization',access_policy_version=1 WHERE id=?",[id(4)]);
+sql("INSERT INTO familyhub_email_identities(account_id,email,verified_at,revision) VALUES(?,'synthetic@invalid',1,1)",[id(1)]);
+sql('INSERT INTO familyhub_policy_acceptances(account_id,policy_version,accepted_at) VALUES(?,1,1)',[id(1)]);
+$table=new NativeTableService(['db'=>$db],bearer(1),'synthetic-doc-counter');
+$attachment=new NativeAttachmentService(['db'=>$db],bearer(1),'synthetic-doc-counter');
+$current=$probe(null)['cursor'];$create=['scopeId'=>id(4),'id'=>id(40),'title'=>'Synthetic','requestId'=>id(140)];
+$sheet=$table->execute('tables.create',$create);
+ck(sequence(id(4))===1&&$probe($current)['scopes']===[['scopeId'=>id(4),'domains'=>['documents']]],'table creation atomically bumps one document sequence and document-only hint');
+$table->execute('tables.create',$create);ck(sequence(id(4))===1,'document receipt replay does not advance sequence');
+$lease=$table->execute('tables.acquire',['scopeId'=>id(4),'id'=>id(40)]);
+ck(sequence(id(4))===1,'read and lease-only changes create no content invalidation');
+$save=['scopeId'=>id(4),'id'=>id(40),'token'=>$lease['lease']['token'],'expectedRevision'=>1,'requestId'=>id(141),'title'=>'Changed','cells'=>['A1'=>'Synthetic']];
+$table->execute('tables.save',$save);ck(sequence(id(4))===2,'table save updates document counter in its transaction');
+$table->execute('tables.save',$save);ck(sequence(id(4))===2,'saved document ACK retry preserves sequence');
+$rejected=$save;$rejected['requestId']=id(142);$rejected['expectedRevision']=1;
+deny(fn()=> $table->execute('tables.save',$rejected),'table_conflict','rejected document revision retains real conflict guard');
+ck(sequence(id(4))===2,'failed document mutation leaves durable counter unchanged');
+$begin=['scopeId'=>id(4),'targetType'=>'table','targetId'=>id(40),'id'=>id(41),'name'=>'synthetic.txt','mime'=>'text/plain','size'=>4,'sha256'=>hash('sha256','test'),'requestId'=>id(143)];
+$attachment->execute('attachments.begin',$begin);ck(sequence(id(4))===3,'new attachment upload metadata bumps document counter');
+$chunk=['scopeId'=>id(4),'targetType'=>'table','targetId'=>id(40),'id'=>id(41),'offset'=>0,'dataBase64'=>base64_encode('test')];
+$attachment->execute('attachments.chunk',$chunk);ck(sequence(id(4))===4,'new attachment bytes update the durable transfer hint');
+$attachment->execute('attachments.chunk',$chunk);ck(sequence(id(4))===4,'identical uploaded chunk retry does not create another hint');
+$current=$probe(null)['cursor'];
+$table->execute('tables.delete',['scopeId'=>id(4),'id'=>id(40),'token'=>$lease['lease']['token'],'expectedRevision'=>2,'requestId'=>id(144)]);
+ck(sequence(id(4))===6&&$probe($current)['scopes']===[['scopeId'=>id(4),'domains'=>['documents']]],'table cascade deletes attachment and table with durable document progress');
+$service->queries=[];$current=$probe(null)['cursor'];$service->queries=[];$stable=$probe($current);
+ck(!$stable['changed']&&!preg_match('/familyhub_(tables|attachments|crypto_records|records|finance_records)\b/',implode("\n",$service->queries)),'final unchanged probe reads counters and never inventories documents or business records');
+$before=sql('SELECT id,documents_sequence FROM familyhub_scopes ORDER BY id')->fetchAll(\PDO::FETCH_ASSOC);AccountChangesSchema::create($pdo,false);
+ck(sql('SELECT id,documents_sequence FROM familyhub_scopes ORDER BY id')->fetchAll(\PDO::FETCH_ASSOC)===$before,'additive schema22 reapplies without resetting document counters');
+$service->clock=100;
+sql("INSERT INTO familyhub_crypto_invitations_v2 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)",[id(50),id(3),id(1),id(101),'email','person@invalid',id(2),'member',str_repeat('a',64),1,101,'accepted','PROOF_SENTINEL','en']);
+$active=$probe(null)['cursor'];$service->clock=101;$expired=$probe($active);
+ck($expired['accountDomains']===['invitations']&&$expired['scopes']===[],'clock crossing invitation expiry wakes approval lifecycle without any database write');
+ck(!$probe($expired['cursor'])['changed'],'expired historical invitation causes no repeated work');
+sql("UPDATE familyhub_crypto_invitations_v2 SET state='revoked' WHERE id=?",[id(50)]);
+ck(!$probe($expired['cursor'])['changed'],'expired terminal invitation history is absent from polling inventory');
+echo json_encode(['test'=>'account-changes-counters','status'=>'pass','checks'=>$checks,'fixture'=>'isolated-memory-sqlite','http'=>false,'proofVerification'=>false]).PHP_EOL;

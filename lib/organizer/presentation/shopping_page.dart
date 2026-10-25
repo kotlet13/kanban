@@ -124,7 +124,10 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
           title: l.organizerShopping,
           titleAccessory: widget.titleAccessory,
           subtitle: widget.scopeLabel ?? l.organizerShoppingIntro,
-          action: widget.snapshot.shoppingLists.isEmpty || widget.readOnly
+          action:
+              widget.snapshot.shoppingLists.isEmpty ||
+                  widget.readOnly ||
+                  !widget.actions.canCreateRecords
               ? null
               : FilledButton.icon(
                   onPressed: () => widget.actions.shoppingList(),
@@ -138,8 +141,10 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             title: l.organizerNoLists,
             description:
                 widget.emptyDescription ?? l.organizerNoListsDescription,
-            action: widget.readOnly ? null : l.organizerAddList,
-            onAction: widget.readOnly
+            action: widget.readOnly || !widget.actions.canCreateRecords
+                ? null
+                : l.organizerAddList,
+            onAction: widget.readOnly || !widget.actions.canCreateRecords
                 ? null
                 : () => widget.actions.shoppingList(),
           ),
@@ -244,7 +249,8 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                 scopeId: widget.reportScopeId!,
                 targetId: list.id,
                 actions: [
-                  if (!widget.readOnly)
+                  if (!widget.readOnly &&
+                      widget.actions.canEditRecord('shoppingList', list.id))
                     ContentMenuAction(
                       label: l.organizerEditList,
                       icon: Icons.edit_outlined,
@@ -252,7 +258,8 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
                     ),
                 ],
               )
-            else if (!widget.readOnly)
+            else if (!widget.readOnly &&
+                widget.actions.canEditRecord('shoppingList', list.id))
               IconButton(
                 tooltip: l.organizerEditList,
                 onPressed: () => widget.actions.shoppingList(list),
@@ -293,7 +300,7 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
               ),
             ),
           ),
-        if (!widget.readOnly)
+        if (!widget.readOnly && widget.actions.canCreateRecords)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -378,14 +385,16 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
       children: [
         Checkbox(
           value: item.isChecked,
-          onChanged: widget.readOnly
+          onChanged: widget.readOnly || !widget.actions.canCheckShoppingItems
               ? null
               : (v) => widget.actions.setShoppingItemChecked(item.id, v!),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         Expanded(
           child: InkWell(
-            onTap: widget.readOnly
+            onTap:
+                widget.readOnly ||
+                    !widget.actions.canEditRecord('shoppingItem', item.id)
                 ? null
                 : () => widget.actions.shoppingItem(item.listId, item),
             child: Padding(

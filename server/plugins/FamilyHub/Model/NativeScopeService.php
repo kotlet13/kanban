@@ -148,7 +148,7 @@ class NativeScopeService extends NativeDatabase
                 if ((int)($this->one('SELECT archived FROM familyhub_scopes WHERE id=?',[$id])['archived']??0)!==(int)$params['archived']) {
                     $this->change('UPDATE familyhub_scopes SET archived=?,sequence=sequence+1 WHERE id=?',[(int)$params['archived'],$id]);
                     $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$id]);
-                    if (!$params['archived']) { foreach ((new NativeOrganizationAccess($this->container))->relatedScopeIds($id) as $restored) { $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending' AND remind_epoch<=?",[$restored,time()]); } }
+                    if (!$params['archived']) { foreach ((new NativeOrganizationAccess($this->container))->relatedScopeIds($id) as $restored) { (new NativeNotificationWriter($this->container))->configurationForScope($restored);$this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending' AND remind_epoch<=?",[$restored,time()]); } }
                 }
                 $result=['scope'=>$this->scopeWire($this->scope($id,$user['id'],false,true))];$this->remember($id,$user['id'],$request,$hash,$result);return $result;
             }

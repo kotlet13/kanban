@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -201,7 +202,13 @@ class CryptoScopeObservations {
   /// A bounded retry preserves readable recovered scopes. Durable cursors and
   /// route rows are discovery only; completion uses a fresh random run handle
   /// whose covered commands were produced by full cryptographic verification.
-  Future<void> hydrateObservedScopes(Uint8List file) async {
+  Future<void> hydrateObservedScopes(Uint8List file) => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkHydrateObservedScopes(file),
+  );
+
+  Future<void> _accountWorkHydrateObservedScopes(Uint8List file) async {
     final db = account.store.database, partition = account.store.partition;
     final own = await account.directory.cachedVerifiedDirectory();
     final info = account.files.inspect(

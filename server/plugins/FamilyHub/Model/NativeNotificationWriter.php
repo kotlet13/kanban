@@ -18,6 +18,26 @@ class NativeNotificationWriter extends NativeDatabase
         return $sequence;
     }
 
+    /** Account-owned reminder/preferences progress, committed with its mutation. */
+    public function configurationChanged($accountId)
+    {
+        if (!$this->transactionActive()) { throw new NativeError('notification_change_transaction', 500); }
+        $this->state($accountId);
+        $this->change('UPDATE familyhub_inbox_state SET configuration_revision=configuration_revision+1 WHERE account_id=?', [$accountId]);
+    }
+
+    /** Bulk lifecycle/moderation cleanup retains each recipient's own progress. */
+    public function configurationForScope($scopeId, $targetId = null, $pendingOnly = true)
+    {
+        $accounts = [];
+        foreach (['familyhub_reminders','familyhub_crypto_reminders_v2'] as $table) {
+            $where = 'scope_id=?'.($targetId === null ? '' : ' AND target_id=?').($pendingOnly ? " AND state='pending'" : '');
+            foreach ($this->many('SELECT DISTINCT account_id FROM '.$table.' WHERE '.$where, $targetId === null ? [$scopeId] : [$scopeId,$targetId]) as $row) { $accounts[$row['account_id']]=true; }
+        }
+        $ids = array_keys($accounts);sort($ids, SORT_STRING);
+        foreach ($ids as $id) { $this->configurationChanged($id); }
+    }
+
     public function visibilityChanged($accountIds)
     {
         sort($accountIds, SORT_STRING);

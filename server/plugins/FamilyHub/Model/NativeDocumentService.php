@@ -5,6 +5,12 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 abstract class NativeDocumentService extends NativeDatabase
 {
     public function available() { return \Kanboard\Plugin\FamilyHub\Schema\DocumentsSchema::ready($this->pdo); }
+    /** Enclosing mutation owns the transaction, including cascade/restore. */
+    public function changedScope($scope)
+    {
+        if (!$this->transactionActive()) { throw new NativeError('document_change_transaction', 500); }
+        $this->change('UPDATE familyhub_scopes SET documents_sequence=documents_sequence+1 WHERE id=?', [$scope]);
+    }
     protected function receipt($scope,$actor,$request,$hash)
     {
         $r=$this->one('SELECT * FROM familyhub_document_requests WHERE scope_id=? AND account_id=? AND device_id=? AND request_id=?',[$scope,$actor['user']['account_id'],$actor['device']['id'],$request]);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../domain/attachment_models.dart';
@@ -9,12 +10,16 @@ class AttachmentsPanel extends StatefulWidget {
     super.key,
     required this.gateway,
     required this.canEdit,
+    this.changes,
+    this.canDelete,
     this.filePicker,
     this.fileExporter,
     this.onReport,
   });
   final AttachmentGateway gateway;
   final bool canEdit;
+  final Stream<void>? changes;
+  final bool Function(AttachmentMetadata)? canDelete;
   final AttachmentFilePicker? filePicker;
   final AttachmentFileExporter? fileExporter;
   final Future<void> Function(AttachmentMetadata)? onReport;
@@ -27,6 +32,30 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
   List<AttachmentMetadata> _items = [];
   bool _loading = true, _busy = false;
   int _generation = 0;
+  StreamSubscription<void>? _changes;
+  bool _reading = false, _refreshPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _changes = widget.changes?.listen((_) => _changed());
+  }
+
+  void _changed() {
+    if (!mounted) return;
+    if (_busy || _reading) {
+      _refreshPending = true;
+      return;
+    }
+    unawaited(_load());
+  }
+
+  @override
+  void dispose() {
+    unawaited(_changes?.cancel());
+    super.dispose();
+  }
+
   String? _error, _activity;
   double? _progress;
   Future<void> Function()? _retry;
@@ -43,6 +72,10 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
   @override
   void didUpdateWidget(AttachmentsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.changes, widget.changes)) {
+      unawaited(_changes?.cancel());
+      _changes = widget.changes?.listen((_) => _changed());
+    }
     if (!identical(oldWidget.gateway, widget.gateway)) {
       _generation++;
       _items = [];
@@ -68,6 +101,10 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
       (!edit || (widget.canEdit && gateway.isOnline));
 
   Future<void> _load() async {
+    if (_reading) {
+      _refreshPending = true;
+      return;
+    }
     final gateway = widget.gateway, generation = _generation;
     if (!gateway.isCurrent) {
       if (mounted) {
@@ -78,20 +115,24 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
       }
       return;
     }
+    _reading = true;
     setState(() {
       _loading = true;
       _error = null;
       _retry = null;
     });
     try {
-      final items = await gateway.list();
-      if (!_active(gateway, generation)) return;
-      for (final attachment in items) {
-        attachment.validate();
-        if (attachment.target != gateway.target) {
-          throw const FormatException('Attachment target mismatch');
+      if (gateway is AttachmentLocalPreview) {
+        final cached = await (gateway as AttachmentLocalPreview).cachedList();
+        if (cached != null && _active(gateway, generation)) {
+          _validateItems(gateway, cached);
+          setState(() => _items = List.unmodifiable(cached));
         }
       }
+      if (!_active(gateway, generation)) return;
+      final items = await gateway.list();
+      if (!_active(gateway, generation)) return;
+      _validateItems(gateway, items);
       setState(() => _items = List.unmodifiable(items));
     } catch (_) {
       if (_active(gateway, generation)) {
@@ -101,11 +142,28 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
         });
       }
     } finally {
+      _reading = false;
       if (mounted && generation == _generation) {
         setState(() {
           _loading = false;
           _clearIfAccessLost();
         });
+      }
+      if (_refreshPending && mounted && !_busy) {
+        _refreshPending = false;
+        unawaited(_load());
+      }
+    }
+  }
+
+  void _validateItems(
+    AttachmentGateway gateway,
+    List<AttachmentMetadata> items,
+  ) {
+    for (final attachment in items) {
+      attachment.validate();
+      if (attachment.target != gateway.target) {
+        throw const FormatException('Attachment target mismatch');
       }
     }
   }
@@ -126,6 +184,10 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
         _progress = null;
         _clearIfAccessLost();
       });
+      if (_refreshPending && !_reading) {
+        _refreshPending = false;
+        unawaited(_load());
+      }
     }
   }
 
@@ -243,7 +305,12 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
 
   Future<void> _delete(AttachmentMetadata attachment) async {
     final gateway = widget.gateway, generation = _generation;
-    if (_busy || !_active(gateway, generation, edit: true)) return;
+    if (_busy ||
+        !(_active(gateway, generation) &&
+            gateway.isOnline &&
+            (widget.canDelete?.call(attachment) ?? widget.canEdit))) {
+      return;
+    }
     final l = AttachmentStrings(context);
     setState(() {
       _busy = true;
@@ -269,14 +336,23 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
           ],
         ),
       );
-      if (confirmed != true || !_active(gateway, generation, edit: true)) {
+      if (confirmed != true ||
+          !(_active(gateway, generation) &&
+              gateway.isOnline &&
+              (widget.canDelete?.call(attachment) ?? widget.canEdit))) {
         return;
       }
       _begin(l.deleting);
       await gateway.delete(attachment);
-      if (_active(gateway, generation, edit: true)) await _load();
+      if ((_active(gateway, generation) &&
+          gateway.isOnline &&
+          (widget.canDelete?.call(attachment) ?? widget.canEdit))) {
+        await _load();
+      }
     } catch (_) {
-      if (_active(gateway, generation, edit: true)) {
+      if ((_active(gateway, generation) &&
+          gateway.isOnline &&
+          (widget.canDelete?.call(attachment) ?? widget.canEdit))) {
         setState(() {
           _error = AttachmentStrings(context).deleteError;
           _retry = () => _delete(attachment);
@@ -425,7 +501,7 @@ class _AttachmentsPanelState extends State<AttachmentsPanel> {
                     enabled: item.complete && (gateway.isOnline || cached),
                     child: _menuLabel(Icons.download_outlined, l.save),
                   ),
-                  if (widget.canEdit)
+                  if (widget.canDelete?.call(item) ?? widget.canEdit)
                     PopupMenuItem(
                       key: ValueKey('attachment-delete-${item.id}'),
                       value: 'delete',

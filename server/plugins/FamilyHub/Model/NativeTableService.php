@@ -42,7 +42,7 @@ class NativeTableService extends NativeDocumentService
                 $this->text($p['title'],200);if ($r) { throw new NativeError('table_conflict',409); }
                 $count=$this->one('SELECT COUNT(*) AS n FROM familyhub_tables WHERE scope_id=? AND deleted=0',[$sid]);if ((int)$count['n']>=100) { throw new NativeError('table_limit',422); }
                 $this->change('INSERT INTO familyhub_tables(scope_id,id,title,cells,revision,updated_at,created_by) VALUES(?,?,?, ?,1,?,?)',[$sid,$id,$p['title'],'{}',time(),$actor['user']['account_id']]);
-                $r=$this->one('SELECT * FROM familyhub_tables WHERE scope_id=? AND id=?',[$sid,$id]);$result=['sheet'=>$this->sheet($r)];
+                $this->changedScope($sid);$r=$this->one('SELECT * FROM familyhub_tables WHERE scope_id=? AND id=?',[$sid,$id]);$result=['sheet'=>$this->sheet($r)];
             } else {
                 if (!$r || (int)$r['deleted']) { throw new NativeError('table_unavailable',404); }
                 if ($action==='get') { return ['sheet'=>$this->sheet($r),'lease'=>$this->lease($r,$actor)]; }
@@ -64,7 +64,7 @@ class NativeTableService extends NativeDocumentService
                             $this->removeInTransaction($sid,$id);$result=['deleted'=>true];
                         } else {
                             $this->text($p['title'],200);$cells=$this->cells($p['cells']);
-                            $this->change('UPDATE familyhub_tables SET title=?,cells=?,revision=revision+1,updated_at=? WHERE scope_id=? AND id=?',[$p['title'],$cells,time(),$sid,$id]);$r=$this->one('SELECT * FROM familyhub_tables WHERE scope_id=? AND id=?',[$sid,$id]);$result=['sheet'=>$this->sheet($r)];
+                            $this->change('UPDATE familyhub_tables SET title=?,cells=?,revision=revision+1,updated_at=? WHERE scope_id=? AND id=?',[$p['title'],$cells,time(),$sid,$id]);$this->changedScope($sid);$r=$this->one('SELECT * FROM familyhub_tables WHERE scope_id=? AND id=?',[$sid,$id]);$result=['sheet'=>$this->sheet($r)];
                         }
                     }
                 }
@@ -77,7 +77,7 @@ class NativeTableService extends NativeDocumentService
     public function removeInTransaction($sid,$id)
     {
         (new NativeAttachmentService($this->container))->removeTarget($sid,'table',$id);
-        $this->change("UPDATE familyhub_tables SET deleted=1,title='',cells='{}',revision=revision+1,updated_at=? WHERE scope_id=? AND id=?",[time(),$sid,$id]);$this->clearLease($sid,$id);
+        $this->change("UPDATE familyhub_tables SET deleted=1,title='',cells='{}',revision=revision+1,updated_at=? WHERE scope_id=? AND id=?",[time(),$sid,$id]);$this->clearLease($sid,$id);$this->changedScope($sid);
         $this->change('DELETE FROM familyhub_document_requests WHERE scope_id=? AND object_id=?',[$sid,$id]);
     }
     public function moderationEvidence($scope,$id)

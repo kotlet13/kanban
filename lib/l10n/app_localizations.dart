@@ -6252,6 +6252,30 @@ abstract class AppLocalizations {
   /// **'Only this project: tasks, events, notifications and finances. No membership in the parent space.'**
   String get sharingInviteProjectDescription;
 
+  /// No description provided for @sharingRecordMemberDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Deleting someone else’s records requires the owner. Finance permissions are separate.'**
+  String get sharingRecordMemberDescription;
+
+  /// No description provided for @sharingRecordViewerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Can view shared content, edit and delete their own records, edit assigned tasks, and check shopping items. Cannot create records or delete someone else’s records. Finance permissions are separate.'**
+  String get sharingRecordViewerDescription;
+
+  /// No description provided for @sharingRecordOwnerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The owner can edit and delete all records in this scope. Finance permissions are separate.'**
+  String get sharingRecordOwnerDescription;
+
+  /// No description provided for @sharingRecordAccessReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Members gain access to shared content and current and future projects. They can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Finance permissions and access management are granted separately. Project-only members retain their project scope. Old pending invitations will be revoked.'**
+  String get sharingRecordAccessReviewDescription;
+
   /// No description provided for @sharingMemberFullDescription.
   ///
   /// In en, this message translates to:
@@ -8222,6 +8246,18 @@ abstract class AppLocalizations {
   /// **'Space accounts are not available yet. Connect and refresh the project.'**
   String get financeAccountChoicesUnavailable;
 
+  /// No description provided for @financeEntryAccountsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing accounts. You can already edit the entry.'**
+  String get financeEntryAccountsLoading;
+
+  /// No description provided for @financeEntryAccountsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts cannot be refreshed right now. Your draft and cached accounts are preserved.'**
+  String get financeEntryAccountsUnavailable;
+
   /// No description provided for @financeProjectMovement.
   ///
   /// In en, this message translates to:
@@ -9469,6 +9505,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.'**
   String get sharingInvitationNewAccountAccess;
+
+  /// No description provided for @organizerNewerVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer version is available. Your edits are preserved and will be compared when you save.'**
+  String get organizerNewerVersion;
+
+  /// No description provided for @organizerFinanceChoicesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing cost accounts. You can already edit and save the task.'**
+  String get organizerFinanceChoicesLoading;
+
+  /// No description provided for @organizerFinanceChoicesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost accounts are currently unavailable. You can still edit the task.'**
+  String get organizerFinanceChoicesUnavailable;
+
+  /// No description provided for @recordEditForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'The space owner or author can edit this record; an assigned user can also edit a task.'**
+  String get recordEditForbidden;
+
+  /// No description provided for @recordDeleteForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'The space owner or author can delete this record.'**
+  String get recordDeleteForbidden;
+
+  /// No description provided for @recordAssignmentForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'The space owner or author can change the task assignment.'**
+  String get recordAssignmentForbidden;
+
+  /// No description provided for @sharingRestoreRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get sharingRestoreRecord;
+
+  /// No description provided for @sharingRestorePairedPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This record is linked to a task cost, or its financial links could not be verified. Restore was not completed. Your draft is retained.'**
+  String get sharingRestorePairedPending;
+
+  /// No description provided for @sharingRestoreBlobPending.
+  ///
+  /// In en, this message translates to:
+  /// **'This restore needs a new large encrypted upload. Restore was not completed. Your draft is retained.'**
+  String get sharingRestoreBlobPending;
+
+  /// No description provided for @sharingRestoreTablePending.
+  ///
+  /// In en, this message translates to:
+  /// **'This deleted table cannot obtain the editing lease required for restore. Restore was not completed. Your draft is retained.'**
+  String get sharingRestoreTablePending;
+
+  /// No description provided for @sharingRestoreHistoryPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore is waiting for verified history or server support. Your draft is retained.'**
+  String get sharingRestoreHistoryPending;
+
+  /// No description provided for @sharingRestoreForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the space owner or original author can restore this record. Your draft is retained.'**
+  String get sharingRestoreForbidden;
 }
 
 class _AppLocalizationsDelegate

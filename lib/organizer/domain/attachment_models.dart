@@ -167,3 +167,8 @@ abstract interface class AttachmentGateway {
   Future<void> delete(AttachmentMetadata attachment);
   Uint8List? localBytes(AttachmentMetadata attachment);
 }
+
+/// Metadata only; cached file bytes do not authorize download or export.
+abstract interface class AttachmentLocalPreview {
+  Future<List<AttachmentMetadata>?> cachedList();
+}

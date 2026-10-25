@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -168,6 +169,15 @@ class InviteCryptoRepository {
     r'^invitations[23]?\.(create|resend|revoke|list|pending)$',
   ).hasMatch(operation);
   Future<Map<String, dynamic>> dispatch(
+    String operation,
+    Map<String, Object?> params,
+  ) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkDispatch(operation, params),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkDispatch(
     String operation,
     Map<String, Object?> params,
   ) async {
@@ -1040,6 +1050,15 @@ class InviteCryptoRepository {
   Future<VerifiedCryptoInvitation> inspect({
     String? token,
     String? invitationId,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkInspect(token: token, invitationId: invitationId),
+  );
+
+  Future<VerifiedCryptoInvitation> _accountWorkInspect({
+    String? token,
+    String? invitationId,
   }) async {
     if ((token == null) == (invitationId == null)) {
       throw const FormatException('invitation_identifier');
@@ -1209,6 +1228,20 @@ class InviteCryptoRepository {
     String scopeId,
     String invitationId, {
     String? acceptanceProofHash,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkAcceptedRecipient(
+      scopeId,
+      invitationId,
+      acceptanceProofHash: acceptanceProofHash,
+    ),
+  );
+
+  Future<VerifiedCryptoInvitation> _accountWorkAcceptedRecipient(
+    String scopeId,
+    String invitationId, {
+    String? acceptanceProofHash,
   }) async {
     final response = await _call('acceptance', {
       if (acceptanceProofHash != null)
@@ -1326,7 +1359,14 @@ class InviteCryptoRepository {
   /// history, so a stale UI selection never establishes a replacement identity.
   /// This grants identity trust only; acceptance and owner key admission remain
   /// separate signed operations.
-  Future<void> trustCreatorFromDirectory(
+  Future<void> trustCreatorFromDirectory(VerifiedCryptoInvitation invitation) =>
+      withAccountWorkJob(
+        access.account.directory.transport,
+        AccountWorkKind.invitation,
+        () => _accountWorkTrustCreatorFromDirectory(invitation),
+      );
+
+  Future<void> _accountWorkTrustCreatorFromDirectory(
     VerifiedCryptoInvitation invitation,
   ) async {
     final accepted = invitation.response['acceptanceProofHash'] != null;
@@ -1360,6 +1400,22 @@ class InviteCryptoRepository {
   }
 
   Future<void> admit(
+    VerifiedCryptoInvitation recipient,
+    ScopeRotationReview reviewedInventory, {
+    Future<void> Function(VerifiedCryptoInvitation)? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkAdmit(
+      recipient,
+      reviewedInventory,
+      beforeDisclosure: beforeDisclosure,
+      freshDisclosureBoundary: freshDisclosureBoundary,
+    ),
+  );
+
+  Future<void> _accountWorkAdmit(
     VerifiedCryptoInvitation recipient,
     ScopeRotationReview reviewedInventory, {
     Future<void> Function(VerifiedCryptoInvitation)? beforeDisclosure,
@@ -1483,7 +1539,13 @@ class InviteCryptoRepository {
     );
   }
 
-  Future<String?> resumeAccepted(String invitationId) async {
+  Future<String?> resumeAccepted(String invitationId) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkResumeAccepted(invitationId),
+  );
+
+  Future<String?> _accountWorkResumeAccepted(String invitationId) async {
     late Map<String, dynamic> status;
     try {
       status = await _call('status', {'invitationId': invitationId});
@@ -1626,6 +1688,15 @@ class InviteCryptoRepository {
   }
 
   Future<Map<String, dynamic>> accept(
+    VerifiedCryptoInvitation invite, {
+    required String actionId,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkAccept(invite, actionId: actionId),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkAccept(
     VerifiedCryptoInvitation invite, {
     required String actionId,
   }) async {

@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:typed_data';
@@ -9,6 +10,7 @@ import 'session_crypto_access.dart';
 import 'crypto_migration_coordinator.dart';
 import 'crypto_scope_observations.dart';
 import 'scope_crypto_manager.dart';
+import 'scope_crypto_codec.dart';
 import '../collaboration_transport.dart' show withCollaborationRateLimitPause;
 
 /// A signed statement about the fully observed catalog, not proof that an
@@ -87,7 +89,13 @@ class AccountProtectionReady {
     return cryptoSha256(builder.takeBytes());
   }
 
-  Future<List<Map<String, dynamic>>> catalog() async {
+  Future<List<Map<String, dynamic>>> catalog() => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.protection,
+    () => _accountWorkCatalog(),
+  );
+
+  Future<List<Map<String, dynamic>>> _accountWorkCatalog() async {
     final result = <Map<String, dynamic>>[];
     String? after;
     var pages = 0;
@@ -319,6 +327,18 @@ class AccountProtectionReady {
   Future<void> complete({
     Map<String, dynamic>? reviewedUnavailable,
     void Function(int)? onPause,
+  }) => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.protection,
+    () => _accountWorkComplete(
+      reviewedUnavailable: reviewedUnavailable,
+      onPause: onPause,
+    ),
+  );
+
+  Future<void> _accountWorkComplete({
+    Map<String, dynamic>? reviewedUnavailable,
+    void Function(int)? onPause,
   }) async {
     _current();
     final pause = await _meta(_pauseKey), deadline = pause?['retryNotBefore'];
@@ -333,6 +353,33 @@ class AccountProtectionReady {
       () => _complete(reviewedUnavailable: reviewedUnavailable),
       pause: (seconds) => _pause(seconds, onPause),
     );
+  }
+
+  /// Read one scope under the existing bounded authority lease. This phase
+  /// performs no inspection, observation, signing, receipt or rotation work.
+  Future<({VerifiedScopeHead head, bool stale})> readScopeMembers(
+    SessionCryptoAccess access,
+    String scopeId,
+  ) async {
+    _current();
+    if (!identical(access.account, account)) {
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    }
+    return access.withVerifiedOperation(() async {
+      _current();
+      final head = await access.currentHead(scopeId, online: true);
+      var stale = false;
+      for (final member in head.members) {
+        final current = await access.currentMemberDirectory(
+          head.scopeId,
+          head.headHash,
+          member['accountId'],
+        );
+        stale |= current.deviceSnapshotHash != member['deviceSnapshotHash'];
+      }
+      _current();
+      return (head: head, stale: stale);
+    });
   }
 
   String get _activeJobKey =>
@@ -359,17 +406,9 @@ class AccountProtectionReady {
           !['active', 'committed'].contains(scope['cryptoState'])) {
         continue;
       }
-      final head = await access.currentHead(scope['id'], online: true);
-      var stale = false;
-      for (final member in head.members) {
-        final directory = await access.currentMemberDirectory(
-          head.scopeId,
-          head.headHash,
-          member['accountId'],
-        );
-        stale |= directory.deviceSnapshotHash != member['deviceSnapshotHash'];
-      }
-      if (!stale) continue;
+      final observed = await readScopeMembers(access, scope['id']);
+      final head = observed.head;
+      if (!observed.stale) continue;
       final own = head.member(account.directory.accountId);
       final canManage = own['manageKeys'] == true;
       if (own['role'] == 'owner' && canManage) {
@@ -494,12 +533,6 @@ class AccountProtectionReady {
           !['active', 'committed'].contains(scope['cryptoState'])) {
         throw const CryptoAuthorityPending('crypto_reconciliation_required');
       }
-      final head = await access.currentHead(scope['id'], online: true);
-      if (head.headHash != scope['headHash'] ||
-          head.epoch != scope['epoch'] ||
-          head.accessRevision != scope['accessRevision']) {
-        throw const FormatException('protection_catalog_head');
-      }
       if (scope['cryptoOrigin'] != true) {
         final coordinator = CryptoMigrationCoordinator(account: account);
         try {
@@ -513,15 +546,15 @@ class AccountProtectionReady {
           await coordinator.close();
         }
       }
-      for (final member in head.members) {
-        final current = await access.currentMemberDirectory(
-          head.scopeId,
-          head.headHash,
-          member['accountId'],
-        );
-        if (current.deviceSnapshotHash != member['deviceSnapshotHash']) {
-          throw const CryptoAuthorityPending('scope_rotation_required');
-        }
+      final observedScope = await readScopeMembers(access, scope['id']);
+      final head = observedScope.head;
+      if (head.headHash != scope['headHash'] ||
+          head.epoch != scope['epoch'] ||
+          head.accessRevision != scope['accessRevision']) {
+        throw const FormatException('protection_catalog_head');
+      }
+      if (observedScope.stale) {
+        throw const CryptoAuthorityPending('scope_rotation_required');
       }
       await CryptoScopeObservations(account).observe(access, head.scopeId);
     }

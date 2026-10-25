@@ -23,6 +23,12 @@ class NativeCryptoProjectRelocationV2 extends NativeDatabase
             throw new NativeError('access_migration_required',409);
         }
         NativeCryptoScopeCreationV2::guardBusiness($this->pdo,$scopeId);
+        // A relocated target needs a separately versioned atomic policy
+        // publication before its encrypted author/commitment sidecars can be
+        // exposed. Preserve the original graph and exact pending requests.
+        if((new NativeCryptoRecordPolicyV1($this->container))->active($scopeId)){
+            throw new NativeError('crypto_record_policy_relocation_pending',409,['scopeId'=>$scopeId]);
+        }
         $api=new NativeCryptoScopeV2($this->container,$this->bearer,$this->ip);
         $head=$api->current($scopeId);
         if(!$head)throw new NativeError('crypto_scope_head_missing',409);

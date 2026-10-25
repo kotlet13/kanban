@@ -24,6 +24,7 @@ class NativeMembershipRevocation extends NativeDatabase
                 $this->change("UPDATE familyhub_finance_grants SET access_level='none' WHERE scope_id=? AND account_id=?",[$sid,$accountId]);
                 $this->change('UPDATE familyhub_scopes SET access_revision=access_revision+1,sequence=sequence+1 WHERE id=?',[$sid]);
                 $this->change('UPDATE familyhub_finance_policy SET revision=revision+1 WHERE scope_id=?',[$sid]);
+                (new NativeNotificationWriter($this->container))->configurationChanged($accountId);
                 $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND account_id=? AND state='pending'",[$sid,$accountId]);
                 $this->change('UPDATE familyhub_invitations SET revoked_at=? WHERE scope_id=? AND accepted_at IS NULL AND revoked_at IS NULL AND (recipient_account_id=? OR (invitation_contract<>3 AND recipient_username=?))',[time(),$sid,$accountId,strtolower($recipient['username']??'')]);
                 $this->change("UPDATE familyhub_invitation_mail SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id IN (SELECT id FROM familyhub_invitations WHERE scope_id=? AND revoked_at IS NOT NULL) AND state<>'accepted'",[$sid]);

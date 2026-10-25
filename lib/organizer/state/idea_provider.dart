@@ -1,3 +1,4 @@
+import 'shared_record_access.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,9 +42,12 @@ final ideaRepositoryProvider = FutureProvider<IdeaRepository>((ref) async {
   final repository = IdeaRepository(
     storage,
     beforeConnectedEntry: () async {
-      await authorizeConnectedPersonalEntry(db,(bound)async {
-        final current=shared.state.session;
-        if(current==null || current.partition!=bound.partition || current.deviceId!=bound.deviceId)throw StateError('Connected workspace changed');
+      await authorizeConnectedPersonalEntry(db, (bound) async {
+        final current = shared.state.session;
+        if (current == null ||
+            current.partition != bound.partition ||
+            current.deviceId != bound.deviceId)
+          throw StateError('Connected workspace changed');
         await shared.requireVerifiedEmailForConnectedEntry();
       });
     },
@@ -243,7 +247,7 @@ final ideaAllSpacesProvider = FutureProvider<List<IdeaSpaceEntry>>((ref) async {
             sharedScopeId: scope.id,
             sourceName: scope.name,
             canEdit:
-                scope.canEdit &&
+                canEditSharedRecord(state, scope.id, 'idea', b.id) &&
                 !state
                     .dataForScope(scope.id)
                     .projects
@@ -308,3 +312,12 @@ final ideaDraftsProvider = FutureProvider<List<IdeaBoard>>((ref) async {
   final repository = await ref.watch(ideaRepositoryProvider.future);
   return repository.listDrafts();
 });
+
+/// Existing boards use record authorship; creation keeps workspace capability.
+bool canEditIdeaBoard(
+  CollaborationState? state,
+  IdeaSnapshot snapshot,
+  IdeaBoard? board,
+) => snapshot.sharedScopeId == null || board == null
+    ? snapshot.canEdit
+    : canEditSharedRecord(state, snapshot.sharedScopeId, 'idea', board.id);

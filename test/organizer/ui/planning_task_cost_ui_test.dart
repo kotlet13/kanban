@@ -137,7 +137,14 @@ void main() {
   testWidgets(
     'shared-style task cost requires explicit ledger account and explains missing setup',
     (tester) async {
-      await pumpOrganizer(tester, MemoryOrganizerStorage(), width: 320);
+      await pumpOrganizer(
+        tester,
+        MemoryOrganizerStorage(),
+        width: 320,
+        // This form-only case has no invitation source. Avoid a real plugin
+        // initial-link timeout surviving the short widget test.
+        repaintBoundaryKey: GlobalKey(),
+      );
       var saved = 0;
       showOrganizerEditor(
         tester.element(find.byType(Scaffold).first),

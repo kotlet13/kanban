@@ -56,6 +56,7 @@ class NativeReminderService extends NativeDatabase
                     $this->change('UPDATE familyhub_reminders SET scope_id=?,account_id=?,target_type=?,target_id=?,target_fingerprint=?,remind_at=?,remind_epoch=?,revision=?,state=?,schedule_mode=?,offset_minutes=? WHERE id=?', array_merge($values, [$id]));
                 } else { $this->change('INSERT INTO familyhub_reminders(scope_id,account_id,target_type,target_id,target_fingerprint,remind_at,remind_epoch,revision,state,schedule_mode,offset_minutes,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', array_merge($values, [$id])); }
             }
+            (new NativeNotificationWriter($this->container))->configurationChanged($user['account_id']);
             $response = ['reminder' => $this->wire($this->one('SELECT * FROM familyhub_reminders WHERE id=?', [$id]))];
             $this->remember($scope, $user['id'], $request, $hash, $response); return $response;
         });
@@ -69,6 +70,7 @@ class NativeReminderService extends NativeDatabase
                 $target=$this->target($scope,$row['target_type'],$row['target_id']);
                 if ($target && $this->targetProjectId($scope,$target)===$record['id']) {
                     $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?',[$row['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                 }
             }
         }
@@ -78,19 +80,25 @@ class NativeReminderService extends NativeDatabase
                 $at=$this->deadlineAt($record,(int)$row['offset_minutes']);
                 if (!$fingerprint || $at===null) {
                     $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?',[$row['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                 } else {
                     $stamp=$at->format('Y-m-d\TH:i:s.u\Z');
                     if (!hash_equals($row['target_fingerprint'],$fingerprint) || (new \DateTimeImmutable($row['remind_at']))!=$at) {
                         $this->change('UPDATE familyhub_reminders SET target_fingerprint=?,remind_at=?,remind_epoch=?,revision=revision+1 WHERE id=?',[$fingerprint,$stamp,$at->getTimestamp(),$row['id']]);
+                        (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                     }
                 }
                 continue;
             }
             $legacy = $previous ? (new NativeRecordPolicy($this->container))->wire($previous) : $record;
             if ($fingerprint && hash_equals($row['target_fingerprint'], $this->fingerprintTarget($legacy, false,$scope) ?? '') && $this->fingerprintTarget($legacy,true,$scope) === $fingerprint) {
-                $this->change('UPDATE familyhub_reminders SET target_fingerprint=? WHERE id=?', [$fingerprint, $row['id']]); continue;
+                if(!hash_equals($row['target_fingerprint'],$fingerprint)){
+                    $this->change('UPDATE familyhub_reminders SET target_fingerprint=? WHERE id=?', [$fingerprint, $row['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
+                }
+                continue;
             }
-            if (!$fingerprint || !hash_equals($row['target_fingerprint'], $fingerprint)) { $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?', [$row['id']]); }
+            if (!$fingerprint || !hash_equals($row['target_fingerprint'], $fingerprint)) { $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?', [$row['id']]); (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']); }
         }
     }
 
@@ -110,10 +118,10 @@ class NativeReminderService extends NativeDatabase
                 $record = $this->target($row['scope_id'], $row['target_type'], $row['target_id']);
                 $fingerprint = $record ? $this->fingerprintTarget($record) : null;
                 if (!$acl->visible($row['scope_id'], $row['account_id'], $this->financialRecordType($row['target_type'])) || !$fingerprint || (!hash_equals($row['target_fingerprint'], $fingerprint) && !hash_equals($row['target_fingerprint'], $this->fingerprintTarget($record, false)))) {
-                    $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?', [$row['id']]); return 'cancelled';
+                    $this->change('UPDATE familyhub_reminders SET state=\'cancelled\',revision=revision+1 WHERE id=?', [$row['id']]);(new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']); return 'cancelled';
                 }
                 (new NativeNotificationWriter($this->container))->insert($row['scope_id'], $row['account_id'], null, $row['target_type'], $row['target_id'], $record['revision'], 'reminder.due', 'reminders', 'personal', hash('sha256', 'reminder:'.$row['id'].':'.$row['revision']));
-                $this->change('UPDATE familyhub_reminders SET state=\'delivered\' WHERE id=?', [$row['id']]); return 'delivered';
+                $this->change('UPDATE familyhub_reminders SET state=\'delivered\' WHERE id=?', [$row['id']]);(new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']); return 'delivered';
             });
             if ($state === 'delivered') { $delivered++; } elseif ($state === 'cancelled') { $cancelled++; }
         }

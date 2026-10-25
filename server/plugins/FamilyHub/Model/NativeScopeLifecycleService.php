@@ -50,6 +50,7 @@ class NativeScopeLifecycleService extends NativeDatabase
                     $this->change('UPDATE '.$policy.' SET sequence=sequence+1 WHERE '.$key.'=?',[$id]);
                     $sequence=(int)$this->one('SELECT sequence FROM '.$policy.' WHERE '.$key.'=?',[$id])['sequence'];
                     $this->change('UPDATE '.$table.' SET deleted=1,payload=NULL,revision=revision+1,sequence=?,updated_at=? WHERE scope_id=? AND id=?',[$sequence,$stamp,$id,$r['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationForScope($id,$r['id']);
                     $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND target_id=? AND target_type=? AND state='pending'",[$id,$r['id'],$r['type']]);
                     $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=? AND target_type=?)',[$id,$r['id'],$r['type']]);
                     $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=? AND target_type=?)',[$id,$r['id'],$r['type']]);
@@ -78,6 +79,7 @@ class NativeScopeLifecycleService extends NativeDatabase
                 else { foreach (array_merge($graph['records'][$id],$graph['finance'][$id]) as $r) { $this->change('UPDATE '.$table.' SET response=?,status=409 WHERE scope_id=? AND response LIKE ?',[json_encode(['errorCode'=>'record_deleted','details'=>(object)[]]),$id,'%'.$r['id'].'%']); } }
             }
             if ($full) {
+                (new NativeNotificationWriter($this->container))->configurationForScope($id);
                 $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND state='pending'",[$id]);
                 $this->change("UPDATE familyhub_moderation_reports SET snapshot=NULL,details=NULL,status='redacted',redacted_at=? WHERE scope_id=?",[time(),$id]);
                 foreach (['familyhub_payment_events','familyhub_payment_cash','familyhub_payment_projections','familyhub_inbox_preferences'] as $table) { $this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$id]); }

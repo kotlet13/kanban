@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
+import '../../domain/shared_record_permissions.dart';
 import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_recovery.dart';
 import 'sharing_session_boundary.dart';
+import 'sharing_member_label.dart';
 
 Future<void> showSharingConflicts(BuildContext context, WidgetRef ref) {
   final guard = SharingSessionGuard(context, ref);
@@ -56,6 +58,72 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
               _ideaPreviews[_previewKey(conflict, true)] == true) &&
           (conflict.remotePayload == null ||
               _ideaPreviews[_previewKey(conflict, false)] == true);
+
+  bool _canKeepLocal(CollaborationState state, SharedConflict conflict) {
+    final scope = state.scopes
+        .where((s) => s.id == conflict.scopeId)
+        .firstOrNull;
+    final account = state.session?.accountId;
+    if (!state.localAccessAllowed || scope == null || account == null) {
+      return false;
+    }
+    final creator =
+        state
+            .dataForScope(scope.id)
+            .recordCreators['content:${conflict.recordId}'] ??
+        conflict.createdByAccountId;
+    if (conflict.remoteDeleted) {
+      return scope.recordPolicyVersion == 1 &&
+          conflict.localPayload != null &&
+          SharedRecordPermissions.canDelete(
+            scope: scope,
+            accountId: account,
+            creator: creator,
+          );
+    }
+    if (conflict.localPayload == null) {
+      return SharedRecordPermissions.canDelete(
+        scope: scope,
+        accountId: account,
+        creator: creator,
+      );
+    }
+    if (conflict.recordType == SharedRecordType.shoppingItem &&
+        conflict.remotePayload != null &&
+        SharedRecordPermissions.onlyShoppingCheck(
+          conflict.remotePayload!,
+          conflict.localPayload!,
+        )) {
+      return SharedRecordPermissions.canCheckShopping(scope);
+    }
+    return SharedRecordPermissions.canEdit(
+      scope: scope,
+      accountId: account,
+      creator: creator,
+      type: conflict.recordType.name,
+      assignees:
+          (conflict.remotePayload?['assigneeAccountIds'] as List? ?? const [])
+              .whereType<String>(),
+    );
+  }
+
+  bool _canKeepRemote(CollaborationState state, SharedConflict conflict) =>
+      state.localAccessAllowed &&
+      state.scopes.any(
+        (scope) =>
+            scope.id == conflict.scopeId && scope.canRead && !scope.deleted,
+      );
+
+  String _remoteLabel(CollaborationState state, SharedConflict conflict) {
+    final actor = conflict.remoteUpdatedByAccountId;
+    final member = state
+        .membersForScope(conflict.scopeId)
+        .where((row) => row.accountId == actor)
+        .firstOrNull;
+    return member == null
+        ? context.l10n.sharingRemoteVersion
+        : '${context.l10n.sharingRemoteVersion} · ${sharingMemberLabel(context, member)}';
+  }
 
   Future<void> _resolve(SharedConflict conflict, bool keepLocal) async {
     setState(() => _busyId = conflict.id);
@@ -193,7 +261,7 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _version(
-                                l.sharingRemoteVersion,
+                                _remoteLabel(state, conflict),
                                 conflict.remotePayload,
                                 conflict: conflict,
                               ),
@@ -209,7 +277,7 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                               local: true,
                             ),
                             _version(
-                              l.sharingRemoteVersion,
+                              _remoteLabel(state, conflict),
                               conflict.remotePayload,
                               conflict: conflict,
                             ),
@@ -233,35 +301,25 @@ class _SharingConflictsPageState extends ConsumerState<SharingConflictsPage> {
                       onPressed:
                           _busyId != null ||
                               !_ready(conflict) ||
-                              conflict.remoteDeleted ||
                               {
-                                'record_deleted',
                                 'parent_missing',
                                 'live_children',
                                 'requires_remote_resolution',
                               }.contains(conflict.reason) ||
-                              !(state.scopes
-                                      .where(
-                                        (scope) => scope.id == conflict.scopeId,
-                                      )
-                                      .firstOrNull
-                                      ?.canEdit ??
-                                  false)
+                              !_canKeepLocal(state, conflict)
                           ? null
                           : () => _resolve(conflict, true),
-                      child: Text(l.sharingKeepLocal),
+                      child: Text(
+                        conflict.remoteDeleted
+                            ? l.sharingRestoreRecord
+                            : l.sharingKeepLocal,
+                      ),
                     ),
                     OutlinedButton(
                       onPressed:
                           _busyId != null ||
                               !_ready(conflict) ||
-                              !(state.scopes
-                                      .where(
-                                        (scope) => scope.id == conflict.scopeId,
-                                      )
-                                      .firstOrNull
-                                      ?.canEdit ??
-                                  false)
+                              !_canKeepRemote(state, conflict)
                           ? null
                           : () => _resolve(conflict, false),
                       child: Text(l.sharingKeepRemote),

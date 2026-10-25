@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'local_database_provider.dart';
 import 'collaboration_sync_schedule.dart';
+import 'application_sync_activity.dart';
 import 'local_spaces_provider.dart' show localSpacesProvider;
 export 'local_database_provider.dart' show collaborationDatabaseFactoryProvider;
 import '../data/collaboration_repository.dart';
+import '../data/collaboration_database.dart' show LocalSyncWorkIdentity;
 import '../data/e2ee/account_crypto_repository.dart';
 import '../data/sqlite_organizer_storage.dart';
 import '../data/collaboration_transport.dart';
@@ -135,6 +137,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     StreamSubscription<CollaborationState>? subscription;
     StreamSubscription<CollaborationSyncCompletion>? completionSubscription;
     StreamSubscription<CollaborationSyncStart>? startSubscription;
+    StreamSubscription<LocalSyncWorkIdentity>? localWorkSubscription;
     Timer? timer;
     _ResumeObserver? observer;
     ref.onDispose(() {
@@ -145,6 +148,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       unawaited(subscription?.cancel());
       unawaited(completionSubscription?.cancel());
       unawaited(startSubscription?.cancel());
+      unawaited(localWorkSubscription?.cancel());
       timer?.cancel();
       if (observer != null) WidgetsBinding.instance.removeObserver(observer);
     });
@@ -165,8 +169,28 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     });
     final schedule = CollaborationSyncSchedule();
     var busy = false;
-    void refresh() {
-      if (!active || busy) return;
+    var foreground =
+        WidgetsBinding.instance.lifecycleState == null ||
+        collaborationAppActive(WidgetsBinding.instance.lifecycleState);
+    late void Function() refresh;
+    void armTimer() {
+      timer?.cancel();
+      if (!active || !foreground) return;
+      final now = repository.clock().toUtc();
+      var deadline = schedule.nextAt ?? now.add(const Duration(seconds: 30));
+      if (schedule.retryAt != null && schedule.retryAt!.isAfter(deadline)) {
+        deadline = schedule.retryAt!;
+      }
+      // An external sync wakes us through its completion stream. Avoid a
+      // zero-delay loop while that operation still owns the repository.
+      final delay = repository.state.isSyncing
+          ? const Duration(seconds: 30)
+          : deadline.difference(now);
+      timer = Timer(delay.isNegative ? Duration.zero : delay, refresh);
+    }
+
+    refresh = () {
+      if (!active || !foreground || busy) return;
       busy = true;
       final startedIdentity = repository.backgroundSyncIdentity;
       bool current() =>
@@ -175,27 +199,31 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
           repository.backgroundSyncIdentity == startedIdentity;
       unawaited(() async {
         try {
-          await repository.refreshLocal();
           if (!current()) return;
           schedule.identity(startedIdentity);
-          void completion() {
-            final result = repository.lastSyncCompletion;
-            if (result != null && schedule.complete(result) && current()) {
-              ref.read(collaborationBackgroundErrorProvider.notifier).state =
-                  result.error;
-            }
-          }
-
-          completion();
-          final work = await repository.syncWork();
-          if (!current()) return;
-          schedule.work(work);
-          if (schedule.due(
+          if (!schedule.due(
             repository.clock().toUtc(),
             busy: repository.state.isSyncing,
           )) {
-            await repository.syncNow();
-            if (current()) completion();
+            return;
+          }
+          schedule.beginAttempt();
+          final previous = repository.lastSyncCompletion?.sequence;
+          await repository.syncNow();
+          if (!current()) return;
+          final result = repository.lastSyncCompletion;
+          if (result != null && result.sequence != previous) {
+            // The subscription may already have consumed this completion. Its
+            // error/backoff must not be overwritten by a no-change deadline.
+            if (schedule.complete(result)) {
+              ref.read(collaborationBackgroundErrorProvider.notifier).state =
+                  result.error;
+            }
+          } else {
+            schedule.checked(repository.clock().toUtc());
+            if (repository.state.lastError == null)
+              ref.read(collaborationBackgroundErrorProvider.notifier).state =
+                  null;
           }
         } catch (error) {
           if (current()) {
@@ -205,16 +233,26 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
           }
         } finally {
           busy = false;
+          if (active &&
+              foreground &&
+              schedule.due(
+                repository.clock().toUtc(),
+                busy: repository.state.isSyncing,
+              )) {
+            scheduleMicrotask(refresh);
+          } else {
+            armTimer();
+          }
         }
       }());
-    }
+    };
 
     startSubscription = repository.syncStarts.listen((attempt) {
       if (!active || attempt.identity != repository.backgroundSyncIdentity) {
         return;
       }
       schedule.identity(attempt.identity);
-      schedule.beginAttempt();
+      if (!busy) schedule.beginAttempt();
     });
     completionSubscription = repository.syncCompletions.listen((result) {
       if (!active ||
@@ -234,8 +272,29 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       schedule.localEdit();
       refresh();
     };
-    timer = Timer.periodic(const Duration(seconds: 3), (_) => refresh());
-    observer = _ResumeObserver(() {
+    localWorkSubscription = repository.database.committedLocalWork.listen((work) {
+      final current = repository.state;
+      if (!active ||
+          !identical(repository, _repository) ||
+          current.sessionInvalid ||
+          current.deletionPending ||
+          current.session?.partition != work.partition ||
+          current.session?.deviceId != work.deviceId ||
+          !repository.database.isCurrentLocalWorkIdentity(work)) {
+        return;
+      }
+      schedule.identity(repository.backgroundSyncIdentity);
+      schedule.localEdit();
+      // Busy/background runs retain demand; refresh already enforces foreground,
+      // retryAt and the existing repository lease without another timer.
+      refresh();
+    });
+    observer = _ResumeObserver((resumed) {
+      foreground = resumed;
+      if (!resumed) {
+        timer?.cancel();
+        return;
+      }
       schedule.resume(repository.clock().toUtc());
       refresh();
     });
@@ -588,7 +647,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     FinanceRecurrenceRule rule,
   ) => _edit((repo) => repo.updateFinanceRecurrenceRule(scopeId, rule));
   Future<void> materializeFinanceOccurrencesForScope(String scopeId) =>
-      _edit((repo) => repo.materializeFinanceOccurrencesForScope(scopeId));
+      _readPreparingWork(
+        (repo) => repo.materializeFinanceOccurrencesForScope(scopeId),
+      );
   Future<void> confirmFinanceOccurrenceForScope(
     String scopeId,
     SharedFinanceEntry entry, {
@@ -603,7 +664,34 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     ),
   );
   Future<void> refreshFinanceAccountChoices(String scopeId) =>
-      _edit((repo) => repo.refreshFinanceAccountChoices(scopeId));
+      _readPreparingWork((repo) => repo.refreshFinanceAccountChoices(scopeId));
+
+  /// Optional selector preparation must not change an already open editor's
+  /// pinned policy revision or reset its complete local finance projection.
+  Future<void> refreshFinanceEntryAccountChoices(String scopeId) =>
+      _readPreparingWork(
+        (repo) => repo.refreshFinanceAccountChoices(
+          scopeId,
+          refreshPolicy: false,
+        ),
+      );
+
+  Future<void> _readPreparingWork(
+    Future<void> Function(CollaborationRepository) action,
+  ) async {
+    final repo = _repo, identity = _backgroundIdentity(_repo.state);
+    final before = await repo.syncWork();
+    try {
+      await action(repo);
+    } finally {
+      if (_backgroundIsCurrent(repo, identity)) {
+        final after = await repo.syncWork();
+        if (after.unresolved && after.signature != before.signature)
+          _requestAutomaticSync?.call();
+      }
+    }
+  }
+
   Future<String> createFinanceAccount({
     required String scopeId,
     required String name,
@@ -903,6 +991,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     archived: archived,
     requestId: requestId,
   );
+  Future<void> acknowledgeAutoMergeNotice(String key, String at) =>
+      _repo.acknowledgeAutoMergeNotice(key, at);
+
   Future<void> syncNow() async {
     final repo = _repo, identity = _backgroundIdentity(_repo.state);
     try {
@@ -1261,9 +1352,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
 
 class _ResumeObserver extends WidgetsBindingObserver {
   _ResumeObserver(this.onResume);
-  final void Function() onResume;
+  final void Function(bool) onResume;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) onResume();
+    onResume(collaborationAppActive(state));
   }
 }

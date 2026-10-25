@@ -1,3 +1,4 @@
+import 'sharing_role_permissions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
@@ -29,6 +30,10 @@ class SharingInvitationDetails extends StatelessWidget {
     final signed = verified == null
         ? null
         : verifiedInvitationPayload(verified);
+    final recordPolicyVersion =
+        (verified?.response['scope'] as Map?)?['recordPolicyVersion'] == 1
+        ? 1
+        : 0;
     final sender = verified == null
         ? null
         : parseCryptoInvitationDisplay(verified.response);
@@ -100,8 +105,16 @@ class SharingInvitationDetails extends StatelessWidget {
           Text(
             invitation.contractVersion == 3
                 ? invitation.role == SharedRole.viewer
-                      ? l.invitationFlowViewOnly
-                      : l.invitationFlowFullAccess
+                      ? sharingInvitationRoleLabel(
+                          l,
+                          'viewer',
+                          recordPolicyVersion: recordPolicyVersion,
+                        )
+                      : sharingInvitationRoleLabel(
+                          l,
+                          invitation.role.name,
+                          recordPolicyVersion: recordPolicyVersion,
+                        )
                 : sharingRoleLabel(context, invitation.role),
           ),
         if (!compact) ...[
@@ -124,9 +137,11 @@ class SharingInvitationDetails extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                invitation.role == SharedRole.viewer
-                    ? l.sharingViewerDescription
-                    : l.sharingMemberFullDescription,
+                sharingPermissionDescription(
+                  l,
+                  invitation.role.name,
+                  recordPolicyVersion: recordPolicyVersion,
+                ),
               ),
             ] else if (invitation.contractVersion != 4 &&
                 invitation.projectFinanceIncluded) ...[

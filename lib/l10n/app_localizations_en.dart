@@ -3531,6 +3531,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only this project: tasks, events, notifications and finances. No membership in the parent space.';
 
   @override
+  String get sharingRecordMemberDescription =>
+      'Can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Deleting someone else’s records requires the owner. Finance permissions are separate.';
+
+  @override
+  String get sharingRecordViewerDescription =>
+      'Can view shared content, edit and delete their own records, edit assigned tasks, and check shopping items. Cannot create records or delete someone else’s records. Finance permissions are separate.';
+
+  @override
+  String get sharingRecordOwnerDescription =>
+      'The owner can edit and delete all records in this scope. Finance permissions are separate.';
+
+  @override
+  String get sharingRecordAccessReviewDescription =>
+      'Members gain access to shared content and current and future projects. They can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Finance permissions and access management are granted separately. Project-only members retain their project scope. Old pending invitations will be revoked.';
+
+  @override
   String get sharingMemberFullDescription =>
       'Full access: create, edit and delete content and finances, manage settings and invitations, and invite or remove members. Ownership stays protected.';
 
@@ -4639,6 +4655,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Space accounts are not available yet. Connect and refresh the project.';
 
   @override
+  String get financeEntryAccountsLoading =>
+      'Preparing accounts. You can already edit the entry.';
+
+  @override
+  String get financeEntryAccountsUnavailable =>
+      'Accounts cannot be refreshed right now. Your draft and cached accounts are preserved.';
+
+  @override
   String get financeProjectMovement => 'Project movement';
 
   @override
@@ -5382,4 +5406,51 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingInvitationNewAccountAccess =>
       'If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.';
+
+  @override
+  String get organizerNewerVersion =>
+      'A newer version is available. Your edits are preserved and will be compared when you save.';
+
+  @override
+  String get organizerFinanceChoicesLoading =>
+      'Preparing cost accounts. You can already edit and save the task.';
+
+  @override
+  String get organizerFinanceChoicesUnavailable =>
+      'Cost accounts are currently unavailable. You can still edit the task.';
+
+  @override
+  String get recordEditForbidden =>
+      'The space owner or author can edit this record; an assigned user can also edit a task.';
+
+  @override
+  String get recordDeleteForbidden =>
+      'The space owner or author can delete this record.';
+
+  @override
+  String get recordAssignmentForbidden =>
+      'The space owner or author can change the task assignment.';
+
+  @override
+  String get sharingRestoreRecord => 'Restore';
+
+  @override
+  String get sharingRestorePairedPending =>
+      'This record is linked to a task cost, or its financial links could not be verified. Restore was not completed. Your draft is retained.';
+
+  @override
+  String get sharingRestoreBlobPending =>
+      'This restore needs a new large encrypted upload. Restore was not completed. Your draft is retained.';
+
+  @override
+  String get sharingRestoreTablePending =>
+      'This deleted table cannot obtain the editing lease required for restore. Restore was not completed. Your draft is retained.';
+
+  @override
+  String get sharingRestoreHistoryPending =>
+      'Restore is waiting for verified history or server support. Your draft is retained.';
+
+  @override
+  String get sharingRestoreForbidden =>
+      'Only the space owner or original author can restore this record. Your draft is retained.';
 }

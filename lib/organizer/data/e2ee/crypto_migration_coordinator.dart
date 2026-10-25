@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'crypto_migration_generation.dart';
 import 'crypto_migration_structure_workflow.dart';
 import 'crypto_legacy_upload_drain.dart';
@@ -175,7 +176,14 @@ class CryptoMigrationCoordinator {
     return queue.commandResult(id);
   }
 
-  Future<List<CryptoMigrationCandidate>> discoverAvailable() async {
+  Future<List<CryptoMigrationCandidate>> discoverAvailable() =>
+      withAccountWorkJob(
+        account.directory.transport,
+        AccountWorkKind.migration,
+        () => _accountWorkDiscoverAvailable(),
+      );
+
+  Future<List<CryptoMigrationCandidate>> _accountWorkDiscoverAvailable() async {
     _current();
     final result = <CryptoMigrationCandidate>[];
     String? after;
@@ -264,7 +272,13 @@ class CryptoMigrationCoordinator {
     );
   }
 
-  Future<CryptoMigrationState> inspect(String scopeId) async {
+  Future<CryptoMigrationState> inspect(String scopeId) => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.migration,
+    () => _accountWorkInspect(scopeId),
+  );
+
+  Future<CryptoMigrationState> _accountWorkInspect(String scopeId) async {
     if (!isSharedUuid(scopeId)) {
       throw const FormatException('crypto_migration_scope');
     }
@@ -366,7 +380,13 @@ class CryptoMigrationCoordinator {
     return resume(migrationId);
   }
 
-  Future<CryptoMigrationState> resume(String migrationId) async {
+  Future<CryptoMigrationState> resume(String migrationId) => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.migration,
+    () => _accountWorkResume(migrationId),
+  );
+
+  Future<CryptoMigrationState> _accountWorkResume(String migrationId) async {
     if (!isSharedUuid(migrationId)) {
       throw const FormatException('crypto_migration_id');
     }
@@ -641,7 +661,17 @@ class CryptoMigrationCoordinator {
   /// Server throttling is a durable pause, not a reason to replace signed
   /// requests. A restart observes the saved deadline before any next HTTP.
   /// The caller may leave the wizard immediately and resume with the same FILE.
-  Future<T> _limited<T>(String scopeId, Future<T> Function() action) async {
+  Future<T> _limited<T>(String scopeId, Future<T> Function() action) =>
+      withAccountWorkJob(
+        account.directory.transport,
+        AccountWorkKind.migration,
+        () => _accountWorkLimited(scopeId, action),
+      );
+
+  Future<T> _accountWorkLimited<T>(
+    String scopeId,
+    Future<T> Function() action,
+  ) async {
     final local = await _local(scopeId);
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final notBefore = local?['retryNotBefore'];

@@ -102,6 +102,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
           action:
               visibleProjects.isEmpty ||
                   widget.readOnly ||
+                  !widget.actions.canCreateRecords ||
                   !widget.allowProjectCreation
               ? null
               : FilledButton.icon(
@@ -149,10 +150,16 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
           OrganizerEmpty(
             icon: Icons.folder_outlined,
             title: l.organizerNoProjects,
-            action: widget.readOnly || !widget.allowProjectCreation
+            action:
+                widget.readOnly ||
+                    !widget.actions.canCreateRecords ||
+                    !widget.allowProjectCreation
                 ? null
                 : l.organizerAddProject,
-            onAction: widget.readOnly || !widget.allowProjectCreation
+            onAction:
+                widget.readOnly ||
+                    !widget.actions.canCreateRecords ||
+                    !widget.allowProjectCreation
                 ? null
                 : () => widget.actions.project(
                     null,
@@ -318,7 +325,8 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
     if (card && widget.cardMenuBuilder != null) {
       return widget.cardMenuBuilder!(project);
     }
-    if (widget.readOnly) return const Icon(Icons.chevron_right, size: 20);
+    if (widget.readOnly || !widget.actions.canEditRecord('project', project.id))
+      return const Icon(Icons.chevron_right, size: 20);
     return PopupMenuButton<String>(
       key: ValueKey('project-menu-${project.id}'),
       tooltip: '${l.scopeLifecycleMenu} · ${project.title}',
@@ -339,7 +347,9 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
       itemBuilder: (_) => [
         PopupMenuItem(
           value: 'edit',
-          enabled: !project.archived,
+          enabled:
+              !project.archived &&
+              widget.actions.canEditRecord('project', project.id),
           child: Text(l.organizerEditProject),
         ),
         PopupMenuItem(
@@ -349,6 +359,7 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
         const PopupMenuDivider(),
         PopupMenuItem(
           value: 'delete',
+          enabled: widget.actions.canDeleteRecord('project', project.id),
           child: Text(
             l.delete,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -399,7 +410,8 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                 scopeId: widget.reportScopeId!,
                 targetId: project.id,
                 actions: [
-                  if (!readOnly)
+                  if (!readOnly &&
+                      widget.actions.canEditRecord('project', project.id))
                     ContentMenuAction(
                       label: l.organizerEditProject,
                       icon: Icons.edit_outlined,
@@ -407,7 +419,8 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                     ),
                 ],
               )
-            else if (!widget.readOnly)
+            else if (!widget.readOnly &&
+                widget.actions.canEditRecord('project', project.id))
               _projectMenu(project, card: false),
           ],
         ),
@@ -428,11 +441,13 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
           tasks: tasks,
           onTaskSelected: readOnly
               ? null
-              : (task) => widget.actions.task(task: task),
+              : (task) {
+                  widget.actions.openTask(task);
+                },
         ),
         OrganizerSection(
           title: l.organizerTasks,
-          action: readOnly
+          action: readOnly || !widget.actions.canCreateRecords
               ? null
               : IconButton(
                   tooltip: l.organizerAddTask,
@@ -443,8 +458,10 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
               ? OrganizerEmpty(
                   icon: Icons.check_circle_outline,
                   title: l.organizerNoMatchingTasks,
-                  action: readOnly ? null : l.organizerAddTask,
-                  onAction: readOnly
+                  action: readOnly || !widget.actions.canCreateRecords
+                      ? null
+                      : l.organizerAddTask,
+                  onAction: readOnly || !widget.actions.canCreateRecords
                       ? null
                       : () => widget.actions.task(projectId: project.id),
                 )
@@ -477,10 +494,15 @@ class _OrganizerProjectsPageState extends State<OrganizerProjectsPage> {
                               ),
                           ],
                         ),
-                        onEdit: readOnly
+                        onOpen: () => widget.actions.openTask(task),
+                        onEdit:
+                            readOnly ||
+                                !widget.actions.canEditRecord('task', task.id)
                             ? null
                             : () => widget.actions.task(task: task),
-                        onCompleted: readOnly
+                        onCompleted:
+                            readOnly ||
+                                !widget.actions.canEditRecord('task', task.id)
                             ? null
                             : (v) =>
                                   widget.actions.setTaskCompleted(task.id, v),
@@ -547,8 +569,11 @@ class OrganizerTasksPage extends StatelessWidget {
             ),
         ],
       ),
-      onEdit: readOnly ? null : () => actions.task(task: task),
-      onCompleted: readOnly
+      onOpen: () => actions.openTask(task),
+      onEdit: readOnly || !actions.canEditRecord('task', task.id)
+          ? null
+          : () => actions.task(task: task),
+      onCompleted: readOnly || !actions.canEditRecord('task', task.id)
           ? null
           : (v) => actions.setTaskCompleted(task.id, v),
     );
@@ -559,7 +584,7 @@ class OrganizerTasksPage extends StatelessWidget {
           title: l.organizerTasks,
           titleAccessory: titleAccessory,
           subtitle: scopeLabel,
-          action: readOnly
+          action: readOnly || !actions.canCreateRecords
               ? null
               : FilledButton.icon(
                   onPressed: () => actions.task(),
@@ -572,8 +597,12 @@ class OrganizerTasksPage extends StatelessWidget {
             icon: Icons.check_circle_outline,
             title: l.organizerNoTasks,
             description: l.organizerNoTasksDescription,
-            action: readOnly ? null : l.organizerAddTask,
-            onAction: readOnly ? null : () => actions.task(),
+            action: readOnly || !actions.canCreateRecords
+                ? null
+                : l.organizerAddTask,
+            onAction: readOnly || !actions.canCreateRecords
+                ? null
+                : () => actions.task(),
           ),
         for (final task in dated) row(task),
         if (undated.isNotEmpty) ...[

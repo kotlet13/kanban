@@ -61,6 +61,7 @@ class NativeCryptoScopeDeletionV2 extends NativeDatabase
         ] as $table){if($retainHistory&&in_array($table,['familyhub_crypto_record_history','familyhub_crypto_migration_stage_records_v2'],true)){continue;}$this->change('DELETE FROM '.$table.' WHERE scope_id=?',[$sid]);}
         $this->change("UPDATE familyhub_attachments SET deleted=1,name='',mime='',size=0,sha256='',received=0,complete=0,created_at=0,owner_account_id='',owner_device_id='',updated_at=? WHERE scope_id=?",[time(),$sid]);
         $this->change("UPDATE familyhub_tables SET deleted=1,title='',cells='{}',lease_hash=NULL,lease_nonce=NULL,lease_account_id=NULL,lease_device_id=NULL,lease_name=NULL,lease_expires=0 WHERE scope_id=?",[$sid]);
+        $this->change('UPDATE familyhub_scopes SET documents_sequence=documents_sequence+1 WHERE id=?',[$sid]);
         // Mixed component batches, account archives, signed closures/heads and
         // digest streams can remain necessary for a surviving sibling's proof.
         $this->change('UPDATE familyhub_scopes SET deleted_at=?,name=?,owner_id=0 WHERE id=?',[time(),'Deleted encrypted scope',$sid]);

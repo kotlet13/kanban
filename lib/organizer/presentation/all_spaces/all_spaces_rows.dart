@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -461,7 +462,7 @@ class _TaskCompletionCheckboxState
         .firstOrNull;
     final data = scope == null ? null : shared!.dataForScope(scope.id);
     final task = data?.tasks.where((t) => t.id == row.id).firstOrNull;
-    return scope?.canEdit == true &&
+    return canEditSharedRecord(shared, scope?.id, 'task', row.id) &&
         scope!.canRead &&
         !scope.deleted &&
         shared?.deletionPending != true &&

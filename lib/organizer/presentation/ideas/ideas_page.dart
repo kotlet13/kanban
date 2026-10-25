@@ -25,7 +25,13 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
     IdeaSnapshot snapshot,
     bool delete,
   ) async {
-    if (!snapshot.canEdit) return;
+    if (!canEditIdeaBoard(
+      ref.read(collaborationProvider).valueOrNull,
+      snapshot,
+      board,
+    )) {
+      return;
+    }
     if (delete) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -105,7 +111,11 @@ class _IdeasPageState extends ConsumerState<IdeasPage> {
                           .projects ??
                       [];
             bool writable(IdeaBoard board) =>
-                snapshot.canEdit &&
+                canEditIdeaBoard(
+                  ref.watch(collaborationProvider).valueOrNull,
+                  snapshot,
+                  board,
+                ) &&
                 !projects.any((p) => p.id == board.projectId && p.archived);
             final pageWritable =
                 snapshot.canEdit &&

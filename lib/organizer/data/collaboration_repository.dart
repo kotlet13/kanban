@@ -2,6 +2,10 @@ import 'e2ee/crypto_migration_idea_draft_recovery.dart';
 import 'e2ee/crypto_legacy_upload_drain.dart';
 import 'dart:async';
 import 'collaboration_sync_status.dart';
+import 'collaboration_account_changes.dart';
+import 'collaboration_pending_sync_selection.dart';
+import 'collaboration_sync_diagnostics.dart';
+import 'account_work_coordinator.dart';
 export 'collaboration_sync_status.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -22,6 +26,9 @@ import 'e2ee/crypto_domain_router.dart';
 import 'e2ee/crypto_business_router.dart';
 import 'e2ee/crypto_sync_repository.dart' show CryptoAuthorityPending;
 import '../domain/collaboration_models.dart';
+import '../domain/collaboration_content_selection.dart';
+import '../domain/shared_record_permissions.dart';
+import '../domain/shared_record_merge.dart';
 import '../domain/organizer_models.dart';
 import '../domain/local_space_models.dart';
 import '../domain/linked_payment_models.dart';
@@ -63,6 +70,7 @@ part 'collaboration_scope_lifecycle.dart';
 part 'collaboration_email_invitations.dart';
 part 'collaboration_session_renewal.dart';
 part 'collaboration_record_actions.dart';
+part 'collaboration_record_merge.dart';
 part 'collaboration_person_actions.dart';
 part 'collaboration_task_cost_actions.dart';
 part 'collaboration_sync_actions.dart';
@@ -132,7 +140,7 @@ class CollaborationRepository {
 
   CollaborationRepository(
     this.database,
-    this.transport,
+    CollaborationTransport transport,
     this.sessionStore, {
     DateTime Function()? clock,
     this.pushStore,
@@ -141,12 +149,24 @@ class CollaborationRepository {
     this.ownsDatabase = true,
     this.deletionStore = const SecureAccountDeletionStore(),
     this.invitationStore = const SecurePendingInvitationStore(),
+    this.syncDiagnostics,
+    AccountWorkCoordinator? accountWork,
   }) : clock = clock ?? DateTime.now,
+       _rawTransport = transport,
+       accountWork = accountWork ?? AccountWorkCoordinator(clock: clock),
        _cryptoRouterOverride = cryptoRouter;
   final CollaborationDatabase database;
-  final CollaborationTransport transport;
+  final CollaborationTransport _rawTransport;
+  final AccountWorkCoordinator accountWork;
+  late final CollaborationTransport transport =
+      CoordinatedCollaborationTransport(
+        inner: _rawTransport,
+        coordinator: accountWork,
+        ownerFor: _accountWorkOwner,
+      );
   final DeviceSessionStore sessionStore;
   final RemotePushStore? pushStore;
+  final CollaborationSyncDiagnostics? syncDiagnostics;
   final CryptoDomainRouter? _cryptoRouterOverride;
   CryptoDomainRouter? _productionCryptoRouter;
   CryptoDomainRouter get cryptoRouter =>
@@ -245,6 +265,17 @@ class CollaborationRepository {
       ? null
       : '$_epoch:${_session!.profile.partition}:${_session!.profile.deviceId}';
 
+  Future<void>? _localRefreshRunning;
+  bool _localRefreshAll = false;
+  final _localRefreshScopes = <String>{};
+  final _scopeProjectionSignatures = <String, String>{};
+  final _scopeProjectionData = <String, SharedScopeData>{};
+  CollaborationState? _publishedContentState;
+
+  Future<void>? _coordinatorRunning;
+  bool _coordinatorDemand = false, _coordinatorManual = false;
+  bool _coordinatorProbePhase = false, _lastErrorWasProbe = false;
+
   Future<CollaborationSyncWork> syncWork() async {
     final identity = backgroundSyncIdentity;
     final partition = _session?.profile.partition;
@@ -278,7 +309,88 @@ class CollaborationRepository {
   }
 
   CollaborationState state = CollaborationState();
-  DeviceSession? _session;
+  DeviceSession? _storedSession;
+  DeviceSession? get _session => _storedSession;
+  set _session(DeviceSession? value) {
+    _storedSession = value;
+    accountWork.cancelStale();
+  }
+
+  Object? _networkAuthority, _anonymousAuthority;
+  AccountWorkOwner? _networkOwner, _anonymousOwner;
+
+  Object? get _currentNetworkAuthority {
+    final current = _session;
+    if (current == null) return null;
+    final p = current.profile;
+    // Sliding renewal/display updates keep the same bearer authority. A true
+    // account/device/server/token/epoch transition invalidates queued work.
+    return (
+      _epoch,
+      p.serverUrl,
+      p.serverId,
+      p.accountId,
+      p.deviceId,
+      current.token,
+      p.allowLocalHttp,
+    );
+  }
+
+  AccountWorkOwner _accountWorkOwner(
+    String serverUrl,
+    String? token,
+    String operation,
+    bool allowLocalHttp,
+  ) {
+    final base = normalizeCollaborationServer(
+      serverUrl,
+      allowLocalHttp: allowLocalHttp,
+    );
+    final epoch = _epoch;
+    final current = _session;
+    if (token != null &&
+        current != null &&
+        token == current.token &&
+        base == current.profile.serverUrl) {
+      final authority = _currentNetworkAuthority!;
+      if (_networkAuthority != authority) {
+        _networkAuthority = authority;
+        _networkOwner = AccountWorkOwner(
+          serverUrl: base,
+          identity: Object(),
+          isCurrent: () =>
+              !_closed &&
+              _sessionInvalidReason == null &&
+              _currentNetworkAuthority == authority,
+        );
+      }
+      return _networkOwner!;
+    }
+    // Captured old-bearer cleanup is intentionally allowed after local logout
+    // or failed enrollment. It cannot use the current account's credentials or
+    // authorize any operation beyond these existing explicit cleanup routes.
+    if (token != null &&
+        const {'auth.revoke', 'push.unregister'}.contains(operation)) {
+      return AccountWorkOwner(
+        serverUrl: base,
+        identity: Object(),
+        isCurrent: () => !_closed && _epoch == epoch,
+      );
+    }
+    if (token != null) throw const CollaborationException('session_changed');
+    final authority = (epoch, base, _currentNetworkAuthority);
+    if (_anonymousAuthority != authority) {
+      _anonymousAuthority = authority;
+      _anonymousOwner = AccountWorkOwner(
+        serverUrl: base,
+        identity: Object(),
+        isCurrent: () =>
+            !_closed && (_epoch, base, _currentNetworkAuthority) == authority,
+      );
+    }
+    return _anonymousOwner!;
+  }
+
   Future<void> _secureQueue = Future.value();
   Future<void> _deletionQueue = Future.value();
   Completer<void>? _syncDone, _pushSyncDone;
@@ -333,6 +445,7 @@ class CollaborationRepository {
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    _lastErrorWasProbe = false;
     _moderationVerifiedEpoch = null;
     _moderationAccepted = null;
     _sharedContentPolicy = null;
@@ -394,7 +507,40 @@ class CollaborationRepository {
     await refreshLocal();
   }
 
-  Future<void> refreshLocal() async {
+  /// Projection reads coalesce without touching the serial mutation queue. A
+  /// fresh invalidation during a read is retained for the following pass.
+  Future<void> refreshLocal({Set<String>? scopeIds}) {
+    if (scopeIds == null) {
+      _localRefreshAll = true;
+    } else {
+      _localRefreshScopes.addAll(scopeIds);
+    }
+    final running = _localRefreshRunning;
+    if (running != null) return running;
+    final done = Completer<void>();
+    _localRefreshRunning = done.future;
+    () async {
+      try {
+        do {
+          final selected = _localRefreshAll
+              ? null
+              : Set<String>.of(_localRefreshScopes);
+          _localRefreshAll = false;
+          _localRefreshScopes.clear();
+          await _refreshLocal(scopeIds: selected);
+        } while (!_closed &&
+            (_localRefreshAll || _localRefreshScopes.isNotEmpty));
+        done.complete();
+      } catch (error, stack) {
+        done.completeError(error, stack);
+      } finally {
+        _localRefreshRunning = null;
+      }
+    }();
+    return done.future;
+  }
+
+  Future<void> _refreshLocal({Set<String>? scopeIds}) async {
     final epoch = _epoch, profile = _session?.profile;
     if (_closed) return;
     if (profile != null &&
@@ -416,7 +562,7 @@ class CollaborationRepository {
           await sessionStore.clear();
         }
       });
-      await refreshLocal();
+      await _refreshLocal();
       return;
     }
     if (profile == null) {
@@ -463,7 +609,13 @@ class CollaborationRepository {
           <String, List<SharedFinanceAccountChoice>>{};
       for (final scope in parsedScopes) {
         if (!scope.revoked) {
-          data[scope.id] = await _scopeData(profile.partition, scope.id);
+          final prior = state.session?.partition == profile.partition
+              ? state.data[scope.id]
+              : null;
+          data[scope.id] =
+              prior != null && scopeIds != null && !scopeIds.contains(scope.id)
+              ? prior
+              : await _scopeData(profile.partition, scope.id);
           financePolicies[scope.id] = await _cachedFinancePolicy(
             profile.partition,
             scope.id,
@@ -706,6 +858,19 @@ class CollaborationRepository {
         lastSyncAttemptAt: _lastSyncAttemptAt,
         lastSuccessfulSyncAt: _lastSuccessfulSyncAt,
         lastError: _lastError,
+        autoMergeNotices: [
+          for (final row in await database.rows(
+            'SELECT name,value FROM local_meta WHERE name LIKE ? ORDER BY name LIMIT 32',
+            ['record_auto_merge_notice:${profile.partition}:%'],
+          ))
+            CollaborationAutoMergeNotice(
+              key: row['name'] as String,
+              scopeId: _map(row['value'])['scopeId'] as String,
+              recordId: _map(row['value'])['recordId'] as String,
+              type: _map(row['value'])['type'] as String,
+              at: _map(row['value'])['at'] as String,
+            ),
+        ],
         conflicts: conflicts.map(
           (r) => SharedConflict(
             id: r['id'] as String,
@@ -713,6 +878,12 @@ class CollaborationRepository {
             recordId: r['record_id'] as String,
             recordType: SharedRecordType.values.byName(r['type'] as String),
             reason: r['reason'] as String,
+            createdByAccountId: r['remote'] == null
+                ? null
+                : _map(r['remote'])['createdByAccountId'] as String?,
+            remoteUpdatedByAccountId: r['remote'] == null
+                ? null
+                : _map(r['remote'])['updatedByAccountId'] as String?,
             remoteDeleted:
                 r['remote'] != null && _map(r['remote'])['deleted'] == true,
             localPayload: r['candidate'] == null ? null : _map(r['candidate']),
@@ -725,7 +896,12 @@ class CollaborationRepository {
     }
     if (epoch == _epoch && !_closed) {
       _events.add(state);
-      database.personalChanged();
+      final domains = changedCollaborationContentDomains(
+        _publishedContentState,
+        state,
+      );
+      _publishedContentState = state;
+      if (domains.isNotEmpty) database.personalChanged(domains: domains);
     }
   }
 
@@ -734,6 +910,58 @@ class CollaborationRepository {
       'SELECT * FROM records WHERE partition=? AND scope_id=? AND deleted=0 ORDER BY id',
       [partition, scopeId],
     );
+    final complete = (await database.rows(
+      'SELECT data,finance_complete FROM scopes WHERE partition=? AND id=?',
+      [partition, scopeId],
+    )).firstOrNull;
+    final policy = await _cachedFinancePolicy(partition, scopeId);
+    final financial = complete?['finance_complete'] == 1 && policy.canRead
+        ? await database.rows(
+            "SELECT r.*,EXISTS(SELECT 1 FROM finance_outbox o WHERE o.partition=r.partition AND o.scope_id=r.scope_id AND o.record_id=r.id AND o.state!='pending') AS rejected FROM finance_records r WHERE partition=? AND scope_id=? ORDER BY id",
+            [partition, scopeId],
+          )
+        : <Map<String, dynamic>>[];
+    final creations = await database.rows(
+      "SELECT 'content' AS domain,record_id,request FROM outbox WHERE partition=? AND scope_id=? AND json_extract(request,'\$.expectedRevision')=0 "
+      "UNION ALL SELECT 'finance',record_id,request FROM finance_outbox WHERE partition=? AND scope_id=? AND json_extract(request,'\$.expectedRevision')=0",
+      [partition, scopeId, partition, scopeId],
+    );
+    final creators = <String, String?>{};
+    for (final domain in ['content', 'finance']) {
+      for (final row in domain == 'content' ? rows : financial) {
+        final remote = row['remote'] == null ? null : _map(row['remote']);
+        String? creator = remote?['createdByAccountId'] as String?;
+        if (creator == null &&
+            remote == null &&
+            row['server_revision'] == 0 &&
+            _session?.profile.partition == partition) {
+          for (final creation in creations.where(
+            (c) => c['domain'] == domain && c['record_id'] == row['id'],
+          )) {
+            final intent = _map(creation['request']);
+            if ((intent['recordId'] ?? intent['id']) == row['id'] &&
+                intent['type'] == row['type'] &&
+                intent['expectedRevision'] == 0 &&
+                intent['deleted'] == false) {
+              creator = _session!.profile.accountId;
+            }
+          }
+        }
+        creators['$domain:${row['id']}'] = creator;
+      }
+    }
+    final signature = jsonEncode([
+      rows,
+      complete,
+      policy.toJson(),
+      financial,
+      creations,
+    ]);
+    final key = '$partition:$scopeId';
+    final cached = _scopeProjectionData[key];
+    if (cached != null && _scopeProjectionSignatures[key] == signature) {
+      return cached;
+    }
     final projects = <LocalProject>[],
         tasks = <LocalTask>[],
         lists = <LocalShoppingList>[],
@@ -788,16 +1016,8 @@ class CollaborationRepository {
         financeEntries = <SharedFinanceEntry>[],
         financeTransfers = <SharedFinanceTransfer>[];
     final financeRecurrenceRules = <FinanceRecurrenceRule>[];
-    final complete = (await database.rows(
-      'SELECT finance_complete FROM scopes WHERE partition=? AND id=?',
-      [partition, scopeId],
-    )).firstOrNull;
-    if (complete?['finance_complete'] == 1 &&
-        (await _cachedFinancePolicy(partition, scopeId)).canRead) {
-      for (final row in await database.rows(
-        "SELECT r.*,EXISTS(SELECT 1 FROM finance_outbox o WHERE o.partition=r.partition AND o.scope_id=r.scope_id AND o.record_id=r.id AND o.state!='pending') AS rejected FROM finance_records r WHERE partition=? AND scope_id=?",
-        [partition, scopeId],
-      )) {
+    if (complete?['finance_complete'] == 1 && policy.canRead) {
+      for (final row in financial) {
         final remote = row['remote'] == null ? null : _map(row['remote']);
         final useCanonical = row['rejected'] == 1;
         if (useCanonical && (remote == null || remote['deleted'] == true)) {
@@ -843,7 +1063,8 @@ class CollaborationRepository {
           liveAccounts[e.fromAccountId] != e.currency ||
           liveAccounts[e.toAccountId] != e.currency,
     );
-    return SharedScopeData(
+    final result = SharedScopeData(
+      recordCreators: creators,
       ideas: ideas,
       gardens: gardens,
       people: people,
@@ -858,6 +1079,41 @@ class CollaborationRepository {
       shoppingLists: lists,
       shoppingItems: items,
     );
+    _scopeProjectionSignatures[key] = signature;
+    _scopeProjectionData[key] = result;
+    return result;
+  }
+
+  Future<void> invalidateAccountChangesCursor() async {
+    final session = _requireSession(), epoch = _epoch;
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      final suffix = '${session.profile.partition}:${session.profile.deviceId}';
+      await database.execute('DELETE FROM local_meta WHERE name=?', [
+        'account_changes_v1:$suffix',
+      ]);
+      await database.execute(
+        "INSERT INTO local_meta(name,value) VALUES(?,'1') ON CONFLICT(name) DO UPDATE SET value=CAST(value AS INTEGER)+1",
+        ['account_changes_generation_v1:$suffix'],
+      );
+    });
+  }
+
+  Future<void> acknowledgeAutoMergeNotice(String key, String at) async {
+    final session = _requireSession(), epoch = _epoch;
+    if (!key.startsWith(
+      'record_auto_merge_notice:${session.profile.partition}:',
+    )) {
+      throw const CollaborationException('session_changed');
+    }
+    await database.transaction(() async {
+      _checkEpoch(epoch);
+      await database.execute(
+        "DELETE FROM local_meta WHERE name=? AND json_extract(value,'\$.at')=?",
+        [key, at],
+      );
+    });
+    await refreshLocal(scopeIds: const {});
   }
 
   Future<void> close() async {
@@ -869,6 +1125,16 @@ class CollaborationRepository {
     await _pushSecureQueue;
     await _syncDone?.future;
     await _pushSyncDone?.future;
+    try {
+      await _coordinatorRunning;
+    } catch (_) {
+      /* caller retains failure */
+    }
+    try {
+      await _localRefreshRunning;
+    } catch (_) {
+      /* caller retains failure */
+    }
     if (ownsDatabase) await database.close();
     await _events.close();
     await _syncCompletions.close();

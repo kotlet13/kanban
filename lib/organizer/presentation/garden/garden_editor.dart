@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import '../editor_actions.dart';
 import '../shared/content_actions_menu.dart';
 import '../shared/content_moderation.dart';
@@ -74,7 +75,9 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
     final scope = state?.scopes
         .where((s) => _workspaceKey.endsWith(':${s.id}'))
         .firstOrNull;
-    return state?.localAccessAllowed == true && scope?.canEdit == true;
+    return widget.garden == null
+        ? state?.localAccessAllowed == true && scope?.canEdit == true
+        : canEditSharedRecord(state, scope?.id, 'garden', widget.garden!.id);
   }
 
   late List<GardenArea> _areas = [...?widget.garden?.areas];

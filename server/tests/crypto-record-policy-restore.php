@@ -1,0 +1,37 @@
+<?php
+/** New explicit restore controls; accepted-history seam, no HTTP/key proof. */
+require __DIR__.'/crypto-record-policy-restore-fixture.php';
+use Kanboard\Plugin\FamilyHub\Model\NativeCryptoRecordProofV2;
+$codec->record($record);ck(true,'unreleased content7 codec admits exact explicit restore intent');
+$policy->admit($record,$old,$scope,$creator);ck(true,'original creator may explicitly restore through a verified nearest-live chain while viewer');
+$ownerScope=$scope;$ownerScope['role']='owner';$policy->admit($record,$old,$ownerScope,$other);ck(true,'actual owner may restore while preserving another creator');
+deny(fn()=> $policy->admit($record,$old,$scope,$other),'record_restore_forbidden','accepted task assignment or general read access cannot grant restore authority');
+$edit=$record;unset($edit['metadata']['recordRestore']);$edit['metadata']['recordPolicy']['operation']='edit';
+deny(fn()=> $policy->admit($edit,$old,$scope,$creator),'crypto_record_restore_intent_required','ordinary author edit cannot silently revive a tombstone');
+$check=$edit;$check['type']='shoppingItem';$check['metadata']['recordPolicy']['operation']='shoppingCheck';
+deny(fn()=> $policy->admit($check,$old,$scope,$other),'crypto_record_restore_intent_required','shopping checkbox operation cannot silently revive foreign deleted content');
+$bad=$record;$bad['metadata']['recordPolicy']['createdByAccountId']=id(1);
+deny(fn()=> $policy->admit($bad,$old,$ownerScope,$other),'crypto_record_policy_creator','restore cannot replace immutable creator even when signed by owner');
+$bad=$record;$bad['metadata']['recordRestore']['tombstoneProofHash']=$hashes[3];
+deny(fn()=> $policy->admit($bad,$old,$scope,$creator),'crypto_record_restore_predecessor','stale tombstone intent cannot replace the current accepted predecessor');
+$bad=$record;$bad['metadata']['recordRestore']['previousLiveProofHash']=$hashes[1];
+deny(fn()=> $policy->admit($bad,$old,$scope,$creator),'crypto_record_restore_predecessor','caller cannot select an older live snapshot instead of nearest live ancestor');
+$live=$old;$live['deleted']=0;
+deny(fn()=> $policy->admit($record,$live,$scope,$creator),'crypto_record_restore_invalid','restore tag is forbidden for live-to-live ordinary edits');
+$missing=$record;$missing['id']=id(31);
+deny(fn()=> $policy->admit($missing,$old,$scope,$creator),'crypto_record_restore_history_pending','missing exact history remains pending instead of fabricating a key or origin');
+$bad=$record;unset($bad['metadata']['recordRestore']);
+deny(fn()=> $codec->record($bad),'crypto_record_restore_invalid','signed restore operation cannot omit its intent');
+$bad=$record;$bad['metadata']['recordPolicy']['operation']='edit';
+deny(fn()=> $codec->record($bad),'crypto_record_restore_invalid','ordinary edit cannot smuggle a restore metadata tag');
+$bad=$record;$bad['deleted']=true;$bad['envelopeBase64']=null;
+deny(fn()=> $codec->record($bad),'crypto_record_restore_invalid','restore cannot masquerade as another deletion');
+$bad=$record;$bad['contentContract']=6;
+deny(fn()=> $codec->record($bad),'crypto_record_restore_invalid','published legacy content6 cannot issue the new restore intent');
+$legacy=$edit;$legacy['contentContract']=6;unset($legacy['metadata']['recordPolicy']);$codec->record($legacy);ck(true,'published legacy content6 history shape remains accepted without restore metadata');
+$longWire=id(60);$long=acceptedRestoreHistory($longWire,'householdPerson',array_merge([false],array_fill(0,65,true)));
+$bounded=$record;$bounded['id']=$longWire;$bounded['expectedRevision']=66;$bounded['previousRecordHash']=$long[66];$bounded['metadata']['recordRestore']=['version'=>1,'tombstoneProofHash'=>$long[66],'previousLiveProofHash'=>$long[1]];
+$longOld=$old;$longOld['revision']=66;
+deny(fn()=> $policy->admit($bounded,$longOld,$scope,$creator),'crypto_record_restore_history_pending','bounded64 historical walk leaves a longer tombstone chain explicitly pending');
+ck((int)sql('SELECT COUNT(*) FROM familyhub_crypto_record_history')->fetchColumn()===70,'restore validation preserves every historical proof and makes no record effects');
+echo json_encode(['test'=>'crypto-record-policy-restore','status'=>'pass','checks'=>$checks,'fixture'=>'isolated-memory-sqlite','authority'=>'accepted-history admission seam','http'=>false,'recipientKeyVerification'=>false]).PHP_EOL;

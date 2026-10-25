@@ -5,7 +5,7 @@ extension CollaborationIdeaActions on CollaborationRepository {
     String scopeId,
     IdeaBoard board, {
     bool isNew = false,
-  }) => _edit(
+  }) => _recordEdit(
     scopeId,
     (partition) => _put(
       partition,
@@ -16,7 +16,7 @@ extension CollaborationIdeaActions on CollaborationRepository {
       expectedLocalRevision: isNew ? null : board.revision,
     ),
   );
-  Future<void> deleteIdea(String scopeId, IdeaBoard board) => _edit(
+  Future<void> deleteIdea(String scopeId, IdeaBoard board) => _recordEdit(
     scopeId,
     (p) => _put(
       p,
@@ -286,14 +286,23 @@ class SharedIdeaStorage extends IdeaStorage {
   int get identityGeneration => repository._epoch;
   @override
   Stream<void> get changes => Stream<void>.multi((controller) {
-    final shared = repository.changes.listen((_) => controller.add(null));
-    final personal = database.personalChanges.stream.listen(
-      (_) => controller.add(null),
+    var previous = collaborationContentSignature(
+      repository.state,
+      'ideas',
+      scopeId: scopeId,
     );
-    controller.onCancel = () async {
-      await shared.cancel();
-      await personal.cancel();
-    };
+    final subscription = repository.changes.listen((state) {
+      final next = collaborationContentSignature(
+        state,
+        'ideas',
+        scopeId: scopeId,
+      );
+      if (next != previous) {
+        previous = next;
+        controller.add(null);
+      }
+    }, onError: controller.addError);
+    controller.onCancel = subscription.cancel;
   });
   SharedScope _identity() {
     if (repository._session?.profile.partition != partition ||
@@ -382,7 +391,11 @@ class SharedIdeaStorage extends IdeaStorage {
       throw const OrganizerConflictException('Idea workspace changed');
     }
     snapshot.validate();
-    await repository._edit(scopeId, (p) async {
+    final workIdentity = database.captureLocalWorkIdentity(
+      repository._requireSession().profile,
+    );
+    await repository._recordEdit(scopeId, (p) async {
+      var queued = false;
       _identity();
       final previous = await read();
       if (previous.revision != expectedRevision) {
@@ -400,6 +413,7 @@ class SharedIdeaStorage extends IdeaStorage {
           deleted: true,
           expectedLocalRevision: b.revision,
         );
+        queued = true;
       }
       for (final b in snapshot.boards) {
         if (old[b.id] != null &&
@@ -414,7 +428,9 @@ class SharedIdeaStorage extends IdeaStorage {
           b.toJson(),
           expectedLocalRevision: old[b.id]?.revision,
         );
+        queued = true;
       }
+      if (queued) database.localWorkQueued(workIdentity);
     });
   }
 

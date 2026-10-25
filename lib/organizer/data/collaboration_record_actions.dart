@@ -14,7 +14,12 @@ extension CollaborationRecordActions on CollaborationRepository {
     }
   }
 
-  Future<void> _writable(String partition, String scopeId) async {
+  Future<void> _writable(
+    String partition,
+    String scopeId, {
+    bool allowShoppingCheck = false,
+    bool allowRecordPolicy = false,
+  }) async {
     await _requireScopeReconciled(partition, scopeId);
     final sharing = await database.rows(
       r"SELECT 1 FROM local_meta WHERE name=? OR (name LIKE ? AND json_extract(value,'$.projectId')=?)",
@@ -39,7 +44,17 @@ extension CollaborationRecordActions on CollaborationRepository {
       ...CollaborationRepository._map(rows.first['data']),
       'blocked': rows.first['blocked'] == 1,
     });
-    if (!scope.canEdit) {
+    final perRecord =
+        allowRecordPolicy &&
+        scope.recordPolicyVersion == 1 &&
+        scope.canRead &&
+        !scope.blocked &&
+        !scope.archived &&
+        !scope.deleted;
+    if (!scope.canEdit &&
+        !perRecord &&
+        !(allowShoppingCheck &&
+            SharedRecordPermissions.canCheckShopping(scope))) {
       throw CollaborationException(
         scope.blocked ? 'changes_blocked' : 'permission_revoked',
       );
@@ -48,8 +63,10 @@ extension CollaborationRecordActions on CollaborationRepository {
 
   Future<void> _edit(
     String scopeId,
-    Future<void> Function(String partition) action,
-  ) async {
+    Future<void> Function(String partition) action, {
+    bool allowShoppingCheck = false,
+    bool allowRecordPolicy = false,
+  }) async {
     final profile = _requireSession().profile, epoch = _epoch;
     await requireVerifiedEmailForConnectedEntry();
     _checkEpoch(epoch);
@@ -87,7 +104,12 @@ extension CollaborationRecordActions on CollaborationRepository {
           }
           await database.transaction(() async {
             _checkEpoch(epoch);
-            await _writable(profile.partition, scopeId);
+            await _writable(
+              profile.partition,
+              scopeId,
+              allowShoppingCheck: allowShoppingCheck,
+              allowRecordPolicy: allowRecordPolicy,
+            );
             await _applyRemote(
               profile.partition,
               scopeId,
@@ -99,11 +121,167 @@ extension CollaborationRecordActions on CollaborationRepository {
     }
     await database.transaction(() async {
       _checkEpoch(epoch);
-      await _writable(profile.partition, scopeId);
+      await _writable(
+        profile.partition,
+        scopeId,
+        allowShoppingCheck: allowShoppingCheck,
+        allowRecordPolicy: allowRecordPolicy,
+      );
       await action(profile.partition);
       _checkEpoch(epoch);
     });
     await refreshLocal();
+  }
+
+  /// Only record mutators route through this exception; every write still
+  /// passes _put's predecessor-based gate in the same local transaction.
+  Future<void> _recordEdit(
+    String scopeId,
+    Future<void> Function(String partition) action, {
+    bool allowShoppingCheck = false,
+  }) => _edit(
+    scopeId,
+    action,
+    allowShoppingCheck: allowShoppingCheck,
+    allowRecordPolicy: true,
+  );
+
+  Future<void> _requireRecordAuthor(
+    String partition,
+    String scopeId,
+    String type,
+    String id, {
+    required Map<String, dynamic>? old,
+    required Map<String, dynamic>? payload,
+    required bool deleted,
+    String domain = 'content',
+  }) async {
+    final session = _requireSession().profile;
+    if (session.partition != partition)
+      throw const CollaborationException('session_changed');
+    final scopes = await database.rows(
+      'SELECT data,blocked FROM scopes WHERE partition=? AND id=?',
+      [partition, scopeId],
+    );
+    if (scopes.length != 1)
+      throw const CollaborationException('permission_revoked');
+    final scope = SharedScope.fromJson({
+      ...CollaborationRepository._map(scopes.single['data']),
+      'blocked': scopes.single['blocked'] == 1,
+    });
+    // Old immutable history and pre-activation pending intents retain their
+    // original contract. Verified baseline activation enables the new gate.
+    if (scope.recordPolicyVersion != 1) return;
+    if (old == null) {
+      if (!scope.canEdit || deleted) {
+        throw const CollaborationException('record_edit_forbidden');
+      }
+      return;
+    }
+    final canonical = old['remote'] == null
+        ? null
+        : CollaborationRepository._map(old['remote']);
+    String? creator = canonical?['createdByAccountId'] as String?;
+    if (creator == '')
+      creator = null; // Existing deleted-account anonymization.
+    if (canonical == null && old['server_revision'] == 0) {
+      final table = domain == 'finance' ? 'finance_outbox' : 'outbox';
+      final creation = await database.rows(
+        'SELECT request FROM $table WHERE partition=? AND scope_id=? AND record_id=? ORDER BY rowid LIMIT 1',
+        [partition, scopeId, id],
+      );
+      if (creation.length == 1 &&
+          CollaborationRepository._map(
+                creation.single['request'],
+              )['expectedRevision'] ==
+              0 &&
+          CollaborationRepository._map(
+                creation.single['request'],
+              )['recordId'] ==
+              id &&
+          CollaborationRepository._map(creation.single['request'])['type'] ==
+              type)
+        creator = session.accountId;
+    }
+    if (creator == null &&
+        canonical == null &&
+        old['server_revision'] == 0 &&
+        domain == 'content') {
+      final archived = await database.rows(
+        'SELECT value FROM local_meta WHERE name LIKE ?',
+        ['record_resolved_op:$partition:%'],
+      );
+      for (final value in archived) {
+        final row = CollaborationRepository._map(value['value']);
+        if (row['partition'] != partition ||
+            row['scope_id'] != scopeId ||
+            row['record_id'] != id ||
+            row['request'] is! String)
+          continue;
+        final request = CollaborationRepository._map(row['request']);
+        if (request['opId'] == row['op_id'] &&
+            request['recordId'] == id &&
+            request['type'] == type &&
+            request['expectedRevision'] == 0 &&
+            request['deleted'] == false &&
+            request['payload'] is Map) {
+          creator = session.accountId;
+          break;
+        }
+      }
+    }
+    if (canonical?['deleted'] == true && !deleted) {
+      if (!SharedRecordPermissions.canDelete(
+        scope: scope,
+        accountId: session.accountId,
+        creator: creator,
+      )) {
+        throw const CollaborationException('record_restore_forbidden');
+      }
+      return;
+    }
+    final before = canonical?['payload'] is Map
+        ? Map<String, dynamic>.from(canonical!['payload'] as Map)
+        : old['payload'] == null
+        ? <String, dynamic>{}
+        : CollaborationRepository._map(old['payload']);
+    final principal = session.accountId;
+    if (type == 'shoppingItem' &&
+        !deleted &&
+        payload != null &&
+        SharedRecordPermissions.canCheckShopping(scope) &&
+        SharedRecordPermissions.onlyShoppingCheck(before, payload))
+      return;
+    if (deleted) {
+      if (!SharedRecordPermissions.canDelete(
+        scope: scope,
+        accountId: principal,
+        creator: creator,
+      ))
+        throw const CollaborationException('record_delete_forbidden');
+      return;
+    }
+    final assignees = (before['assigneeAccountIds'] as List? ?? const [])
+        .whereType<String>();
+    if (!SharedRecordPermissions.canEdit(
+      scope: scope,
+      accountId: principal,
+      creator: creator,
+      type: type,
+      assignees: assignees,
+    ))
+      throw const CollaborationException('record_edit_forbidden');
+    if (type == 'task' &&
+        !SharedRecordPermissions.canAssign(
+          scope: scope,
+          accountId: principal,
+          creator: creator,
+        ) &&
+        !SharedRecordPermissions.sameAssignments(
+          before['assigneeAccountIds'] ?? const [],
+          payload?['assigneeAccountIds'] ?? const [],
+        ))
+      throw const CollaborationException('record_assignment_forbidden');
   }
 
   Future<Map<String, dynamic>> _record(
@@ -129,6 +307,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     Map<String, Object?>? payload, {
     int? expectedLocalRevision,
     bool deleted = false,
+    Map<String, dynamic>? restoreIntent,
   }) async {
     if (!isSharedUuid(id)) {
       throw const CollaborationException('validation_error');
@@ -233,6 +412,15 @@ extension CollaborationRecordActions on CollaborationRepository {
       [partition, scope, id],
     );
     final old = existing.isEmpty ? null : existing.first;
+    await _requireRecordAuthor(
+      partition,
+      scope,
+      type.name,
+      id,
+      old: old,
+      payload: payload == null ? null : Map<String, dynamic>.from(payload),
+      deleted: deleted,
+    );
     if (deleted && old == null) {
       throw const CollaborationException('record_missing');
     }
@@ -317,6 +505,24 @@ extension CollaborationRecordActions on CollaborationRepository {
       'deleted': deleted,
       'payload': payload,
     };
+    if (restoreIntent != null) {
+      if (deleted ||
+          old == null ||
+          queued.isNotEmpty ||
+          restoreIntent['version'] != 1 ||
+          restoreIntent['scopeId'] != scope ||
+          restoreIntent['domain'] != 'content' ||
+          restoreIntent['type'] != type.name ||
+          restoreIntent['recordId'] != id ||
+          restoreIntent['expectedRevision'] != serverRevision ||
+          restoreIntent['recordRestore'] is! Map) {
+        throw const CollaborationException('crypto_record_restore_invalid');
+      }
+      await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
+        'record_restore_intent:$partition:${request['opId']}',
+        jsonEncode(restoreIntent),
+      ]);
+    }
     await database.execute(
       'INSERT INTO records(partition,scope_id,id,type,local_revision,server_revision,payload,deleted) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(partition,scope_id,id) DO UPDATE SET local_revision=excluded.local_revision,payload=excluded.payload,deleted=excluded.deleted',
       [
@@ -330,6 +536,31 @@ extension CollaborationRecordActions on CollaborationRepository {
         deleted ? 1 : 0,
       ],
     );
+    // Keep the last accepted predecessor beside each immutable intent. A later
+    // local edit may queue behind another intent; it still retains this exact
+    // accepted base, never a guessed base reconstructed from the current draft.
+    if (old?['remote'] != null && !deleted && payload != null) {
+      final canonical = CollaborationRepository._map(old!['remote']);
+      if (canonical['id'] == id &&
+          canonical['type'] == type.name &&
+          canonical['revision'] == serverRevision &&
+          canonical['deleted'] == false &&
+          canonical['payload'] is Map) {
+        await database.execute(
+          'INSERT INTO local_meta(name,value) VALUES(?,?)',
+          [
+            'record_op_base:$partition:${request['opId']}',
+            jsonEncode({
+              'scopeId': scope,
+              'canonical': canonical,
+              'expectedRevision': request['expectedRevision'],
+              'serverRevision': serverRevision,
+              'queuedPredecessors': queued.length,
+            }),
+          ],
+        );
+      }
+    }
     if (type == SharedRecordType.idea && old?['payload'] != null) {
       await database.execute('INSERT INTO local_meta(name,value) VALUES(?,?)', [
         'idea_op_base:$partition:${request['opId']}',
@@ -454,7 +685,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     required String title,
   }) async {
     final id = newSharedId(), now = _now;
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       final data = await _scopeData(p, scopeId);
       final row = LocalShoppingList(
         id: id,
@@ -482,7 +713,7 @@ extension CollaborationRecordActions on CollaborationRepository {
   }
 
   Future<void> updateShoppingList(String scopeId, LocalShoppingList draft) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final data = await _scopeData(p, scopeId),
             row = draft.copyWith(title: draft.title.trim(), updatedAt: _now);
         _validate(
@@ -511,7 +742,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     String quantity = '',
   }) async {
     final id = newSharedId(), now = _now;
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       final data = await _scopeData(p, scopeId);
       final row = LocalShoppingItem(
         id: id,
@@ -542,7 +773,7 @@ extension CollaborationRecordActions on CollaborationRepository {
   }
 
   Future<void> updateShoppingItem(String scopeId, LocalShoppingItem draft) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final data = await _scopeData(p, scopeId),
             row = draft.copyWith(
               title: draft.title.trim(),
@@ -569,7 +800,7 @@ extension CollaborationRecordActions on CollaborationRepository {
         );
       });
   Future<void> setShoppingItemChecked(String scopeId, String id, bool value) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final r = await _record(p, scopeId, id),
             row = LocalShoppingItem.fromJson({
               ...CollaborationRepository._map(r['payload']),
@@ -584,8 +815,8 @@ extension CollaborationRecordActions on CollaborationRepository {
           _payload(row.toJson()),
           expectedLocalRevision: row.revision,
         );
-      });
-  Future<void> deleteShoppingItem(String scopeId, String id) => _edit(
+      }, allowShoppingCheck: true);
+  Future<void> deleteShoppingItem(String scopeId, String id) => _recordEdit(
     scopeId,
     (p) => _put(
       p,
@@ -597,7 +828,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     ),
   );
   Future<void> deleteShoppingList(String scopeId, String id) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final data = await _scopeData(p, scopeId);
         for (final item in data.shoppingItems.where((r) => r.listId == id)) {
           await _put(
@@ -630,7 +861,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     AvailabilityPeriod? availabilityPeriod,
   }) async {
     final id = newSharedId(), now = _now;
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       final data = await _scopeData(p, scopeId);
       final row = LocalProject(
         id: id,
@@ -665,7 +896,7 @@ extension CollaborationRecordActions on CollaborationRepository {
   }
 
   Future<void> updateProject(String scopeId, LocalProject draft) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final data = await _scopeData(p, scopeId),
             row = draft.copyWith(
               title: draft.title.trim(),
@@ -732,7 +963,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     TaskTimerState timer = const TaskTimerState(),
   }) async {
     final id = newSharedId(), now = _now;
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       final data = await _scopeData(p, scopeId);
       final scoped = SharedScope.fromJson(
         CollaborationRepository._map(
@@ -779,7 +1010,7 @@ extension CollaborationRecordActions on CollaborationRepository {
   }
 
   Future<void> updateTask(String scopeId, LocalTask draft) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final data = await _scopeData(p, scopeId),
             row = draft.copyWith(
               title: draft.title.trim(),
@@ -804,7 +1035,7 @@ extension CollaborationRecordActions on CollaborationRepository {
         );
       });
   Future<void> setTaskCompleted(String scopeId, String id, bool value) =>
-      _edit(scopeId, (p) async {
+      _recordEdit(scopeId, (p) async {
         final r = await _record(p, scopeId, id),
             row = LocalTask.fromJson({
               ...CollaborationRepository._map(r['payload']),
@@ -820,7 +1051,7 @@ extension CollaborationRecordActions on CollaborationRepository {
           expectedLocalRevision: row.revision,
         );
       });
-  Future<void> deleteTask(String scopeId, String id) => _edit(
+  Future<void> deleteTask(String scopeId, String id) => _recordEdit(
     scopeId,
     (p) => _put(p, scopeId, SharedRecordType.task, id, null, deleted: true),
   );
@@ -851,7 +1082,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     required List<LocalShoppingItem> items,
   }) async {
     final id = newSharedId(), now = _now;
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       final copied = LocalShoppingList(
         id: id,
         title: list.title,
@@ -915,7 +1146,7 @@ extension CollaborationRecordActions on CollaborationRepository {
     final phaseMap = {
       for (final phase in project.phases) phase.id: newSharedId(),
     };
-    await _edit(scopeId, (p) async {
+    await _recordEdit(scopeId, (p) async {
       for (final person in people.where(
         (person) => personIds.contains(person.id),
       )) {

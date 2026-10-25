@@ -334,4 +334,39 @@ void main() {
       expect(calls, ['capabilities', 'crypto2.authority.snapshot']);
     },
   );
+  test(
+    'new record policy status and baseline preserve exact authority bundle',
+    () async {
+      final batch = snapshot();
+      await batch.call(head, {'scopeId': 'child'});
+      await batch.call('crypto2.scope.recordPolicy.status', {
+        'scopeId': 'child',
+      });
+      await batch.call('crypto2.scope.recordPolicy.baseline', {
+        'scopeId': 'child',
+        'recordId': 'target',
+      });
+      expect(await batch.call(head, {'scopeId': 'child'}), {
+        'signed': 'original',
+      });
+      expect(mutations, 0);
+      expect(calls, [
+        'capabilities',
+        'crypto2.authority.snapshot',
+        'crypto2.scope.recordPolicy.status',
+        'crypto2.scope.recordPolicy.baseline',
+      ]);
+    },
+  );
+  test(
+    'new record policy mutations still invalidate authority bundle',
+    () async {
+      final batch = snapshot();
+      await batch.call(head, {'scopeId': 'child'});
+      await batch.call('crypto2.scope.recordPolicy.stage', {
+        'commandBase64': 'signed',
+      });
+      expect(mutations, 1);
+    },
+  );
 }

@@ -173,12 +173,13 @@ class OrganizerTaskRow extends StatelessWidget {
     required this.task,
     required this.snapshot,
     required this.onEdit,
+    this.onOpen,
     required this.onCompleted,
     this.trailing,
   });
   final LocalTask task;
   final OrganizerSnapshot snapshot;
-  final VoidCallback? onEdit;
+  final VoidCallback? onEdit, onOpen;
   final ValueChanged<bool>? onCompleted;
   final Widget? trailing;
   @override
@@ -220,9 +221,9 @@ class OrganizerTaskRow extends StatelessWidget {
           ),
           Expanded(
             child: Semantics(
-              button: onEdit != null,
+              button: onOpen != null || onEdit != null,
               child: InkWell(
-                onTap: onEdit,
+                onTap: onOpen ?? onEdit,
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: EdgeInsets.symmetric(

@@ -42,7 +42,7 @@ class SqliteOrganizerStorage
     [_workspaceId],
   )).map((row) => row['id'] as String).toSet();
   @override
-  Stream<void> get changes => database.personalChanges.stream;
+  Stream<void> get changes => database.changesFor('organizer');
   static final _migrations = Expando<Future<void>>();
   Future<void> initialize() {
     final pending = _migrations[database];
@@ -495,8 +495,9 @@ class SqliteOrganizerStorage
   Future<void> _deleteProjectIdeas(
     Set<String> projects,
     Map<String, dynamic>? binding,
-    Set<String> localIds,
-  ) async {
+    Set<String> localIds, {
+    LocalSyncWorkIdentity? localWorkIdentity,
+  }) async {
     final graph = await _projectIdeaGraph(projects, binding, localIds);
     for (final row in graph['local'] as List<Map<String, dynamic>>) {
       final board = IdeaBoard.fromJson(
@@ -530,6 +531,7 @@ class SqliteOrganizerStorage
           maps.isEmpty ? row['id'] as String : maps.single['id'] as String,
           'idea',
           null,
+          localWorkIdentity: localWorkIdentity,
         );
       }
     }
@@ -605,6 +607,9 @@ class SqliteOrganizerStorage
 
   @override
   Future<void> write(OrganizerSnapshot snapshot) async {
+    final workIdentity = database.captureLocalWorkIdentity(
+      database.personalProfile,
+    );
     final identity = database.personalIdentityGeneration;
     void checkWrite() {
       if (identity != database.personalIdentityGeneration ||
@@ -778,7 +783,9 @@ class SqliteOrganizerStorage
           .map((r) => r.id)
           .toSet();
       if (deletedProjects.isNotEmpty) {
-        await _deleteProjectIdeas(deletedProjects, binding, localIds);
+        await _deleteProjectIdeas(
+          deletedProjects, binding, localIds, localWorkIdentity: workIdentity,
+        );
       }
       final changedIds = {...old.keys, ...next.keys}.toList()
         ..sort((a, b) {
@@ -871,6 +878,7 @@ class SqliteOrganizerStorage
             id,
             b?.type ?? a!.type,
             b?.json,
+            localWorkIdentity: workIdentity,
           );
         }
       }
@@ -1037,8 +1045,9 @@ Future<void> queuePrivateRecord(
   Map<String, dynamic> binding,
   String localId,
   String localType,
-  Map<String, Object?>? source,
-) async {
+  Map<String, Object?>? source, {
+  LocalSyncWorkIdentity? localWorkIdentity,
+}) async {
   final p = binding['partition'] as String,
       scope = binding['scope_id'] as String,
       w = binding['id'] as String;
@@ -1240,6 +1249,7 @@ Future<void> queuePrivateRecord(
     'INSERT INTO $outbox(op_id,partition,scope_id,record_id,request,wire_version) VALUES(?,?,?,?,?,?)',
     [request['opId'], p, scope, id, jsonEncode(request), wireVersion],
   );
+  if (localWorkIdentity?.partition == p) db.localWorkQueued(localWorkIdentity);
 }
 
 /// Redirect an equivalent newly materialized monthly occurrence to the server's

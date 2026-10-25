@@ -127,6 +127,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
                 $target = $this->one('SELECT metadata FROM familyhub_crypto_records WHERE scope_id=? AND id=?', [$record['scopeId'],$intent['target_id']]);
                 if ($target && $this->referencesTarget(['scopeId' => $record['scopeId'],'metadata' => json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR)], $record['id'], ['project'])) {
                     $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE id=?", [$intent['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationChanged($intent['account_id']);
                 }
             }
         }
@@ -158,6 +159,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             }
             $changed = $cancel || $epoch !== (int)$row['remind_epoch'] || ($state['scheduleRevision'] ?? $row['schedule_revision']) !== $row['schedule_revision'];
             $this->change('UPDATE familyhub_crypto_reminders_v2 SET state=?,target_revision=?,schedule_revision=?,remind_epoch=?,remind_at=?,revision=revision+? WHERE id=?', [$cancel ? 'cancelled' : 'pending',$record['expectedRevision'] + 1,$state['scheduleRevision'] ?? $row['schedule_revision'],$epoch,gmdate('Y-m-d\TH:i:s\Z', $epoch),$changed ? 1 : 0,$row['id']]);
+            (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
         }
     }
 
@@ -213,6 +215,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
                 throw new NativeError('crypto_scheduling_event_binding',409);
             }
             $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1,authorization=? WHERE id=?", [json_encode($proof, JSON_THROW_ON_ERROR),$id]);
+            (new NativeNotificationWriter($this->container))->configurationChanged($actor['user']['account_id']);
             return ['reminder' => $this->wireReminder($this->one('SELECT * FROM familyhub_crypto_reminders_v2 WHERE id=?', [$id]))];
         }
         if (!in_array($p['targetType'], ['task','event','financeEntry','personalFinanceEntry'], true)) {
@@ -297,6 +300,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             }
             $this->change('INSERT INTO familyhub_crypto_reminders_v2(scope_id,account_id,target_type,target_id,domain,target_revision,schedule_revision,remind_at,remind_epoch,revision,state,schedule_mode,offset_minutes,authorization,put_authorization,id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', array_merge($values, [json_encode($proof, JSON_THROW_ON_ERROR),$id]));
         }
+        (new NativeNotificationWriter($this->container))->configurationChanged($actor['user']['account_id']);
         return ['reminder' => $this->wireReminder($this->one('SELECT * FROM familyhub_crypto_reminders_v2 WHERE id=?', [$id]))];
     }
 
@@ -403,10 +407,12 @@ class NativeCryptoNotificationV2 extends NativeDatabase
                 $state = $target ? json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR)['reminderState'] ?? null : null;
                 if (!$scope || (int)$scope['archived'] || $scope['deleted_at'] !== null || !$target || (int)$target['deleted'] || (new NativeCryptoModerationAvailabilityV2($this->container,$this->bearer,$this->ip))->restriction($row['scope_id'],$row['target_id'],(int)$target['revision']) || !$state || $state['closed'] || $row['schedule_revision'] !== $state['scheduleRevision'] || !$this->ancestorsOpen($row['scope_id'], json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR)) || !$this->recipientVisible($row['scope_id'], $row['account_id'], $row['domain'])) {
                     $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE id=?", [$row['id']]);
+                    (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                     return 'cancelled';
                 }
                 (new NativeNotificationWriter($this->container))->insert($row['scope_id'], $row['account_id'], null, $row['target_type'], $row['target_id'], (int)$target['revision'], 'crypto2.reminder.due', 'reminders', 'personal', hash('sha256', 'crypto2-reminder:'.$row['id'].':'.$row['revision']));
                 $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='delivered' WHERE id=?", [$row['id']]);
+                (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                 return 'delivered';
             });
             if ($out !== null) {
@@ -517,6 +523,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             }
             $this->change('DELETE FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=? AND category=?', [$sid,$account,$p['category']]);
             $this->change('INSERT INTO familyhub_inbox_preferences VALUES(?,?,?,?)', [$sid,$account,$p['category'],json_encode($p['settings'], JSON_THROW_ON_ERROR)]);
+            (new NativeNotificationWriter($this->container))->configurationChanged($account);
         }
         $out = array_fill_keys(NativeNotificationPreferences::CATEGORIES, NativeNotificationPreferences::resolve());
         foreach ($this->many('SELECT category,settings FROM familyhub_inbox_preferences WHERE scope_id=? AND account_id=?', [$sid,$account]) as $row) {

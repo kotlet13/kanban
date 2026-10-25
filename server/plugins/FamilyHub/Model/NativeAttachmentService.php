@@ -46,7 +46,7 @@ class NativeAttachmentService extends NativeDocumentService
                 if ((int)$quota['bytes']+$p['size']>self::SCOPE_BYTES || (int)$quota['n']>=1000) { throw new NativeError('attachment_scope_limit',422); }
                 if ((int)$count['n']>=100) { throw new NativeError('attachment_target_limit',422); }
                 $this->change('INSERT INTO familyhub_attachments(scope_id,id,target_type,target_id,name,mime,size,sha256,owner_account_id,owner_device_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',[$sid,$id,$type,$target,$p['name'],$p['mime'],$p['size'],$p['sha256'],$actor['user']['account_id'],$actor['device']['id'],time(),time()]);
-                $r=$this->one('SELECT * FROM familyhub_attachments WHERE scope_id=? AND id=?',[$sid,$id]);$result=['attachment'=>$this->wire($r)];
+                $this->changedScope($sid);$r=$this->one('SELECT * FROM familyhub_attachments WHERE scope_id=? AND id=?',[$sid,$id]);$result=['attachment'=>$this->wire($r)];
             } else {
                 if (!$r || (int)$r['deleted'] || (!(int)$r['complete'] && !$this->uploadHolder($r,$actor))) { throw new NativeError('attachment_unavailable',404); }
                 if ($action==='get') {
@@ -72,13 +72,13 @@ class NativeAttachmentService extends NativeDocumentService
                         }
                         if ($offset!==(int)$r['received']) { throw new NativeError('attachment_offset',409,['offset'=>(int)$r['received']]); }
                         $this->change('INSERT INTO familyhub_attachment_chunks VALUES(?,?,?,?)',[$sid,$id,$offset,$encoded]);$r['received']+=strlen($bytes);
-                        $this->change('UPDATE familyhub_attachments SET received=?,updated_at=? WHERE scope_id=? AND id=?',[$r['received'],time(),$sid,$id]);$result=['attachment'=>$this->wire($r)];
+                        $this->change('UPDATE familyhub_attachments SET received=?,updated_at=? WHERE scope_id=? AND id=?',[$r['received'],time(),$sid,$id]);$this->changedScope($sid);$result=['attachment'=>$this->wire($r)];
                     } else {
                         if (!(int)$r['complete']) {
                             if ((int)$r['received']!==(int)$r['size']) { throw new NativeError('attachment_incomplete',409,['offset'=>(int)$r['received']]); }
                             $bytes='';foreach ($this->many('SELECT chunk_offset,data FROM familyhub_attachment_chunks WHERE scope_id=? AND attachment_id=? ORDER BY chunk_offset',[$sid,$id]) as $c) { if ((int)$c['chunk_offset']!==strlen($bytes)) { throw new NativeError('attachment_integrity',422); }$part=base64_decode($c['data'],true);if ($part===false) { throw new NativeError('attachment_integrity',422); }$bytes.=$part; }
                             $this->integrity($bytes,$r);$this->signature($bytes,$r);$this->store($r,$bytes);
-                            $this->change('UPDATE familyhub_attachments SET complete=1,updated_at=? WHERE scope_id=? AND id=?',[time(),$sid,$id]);$this->change('DELETE FROM familyhub_attachment_chunks WHERE scope_id=? AND attachment_id=?',[$sid,$id]);$r['complete']=1;
+                            $this->change('UPDATE familyhub_attachments SET complete=1,updated_at=? WHERE scope_id=? AND id=?',[time(),$sid,$id]);$this->change('DELETE FROM familyhub_attachment_chunks WHERE scope_id=? AND attachment_id=?',[$sid,$id]);$r['complete']=1;$this->changedScope($sid);
                         } else { $this->bytes($r); }
                         $result=['attachment'=>$this->wire($r)];
                     }
@@ -194,6 +194,7 @@ class NativeAttachmentService extends NativeDocumentService
         if ($operation!==null) { $path='familyhub/attachments/'.$key;if (!$this->one('SELECT path_hash FROM familyhub_deletion_files WHERE operation_id=? AND path_hash=?',[$operation,hash('sha256',$path)])) { $this->change('INSERT INTO familyhub_deletion_files(operation_id,path_hash,path) VALUES(?,?,?)',[$operation,hash('sha256',$path),$path]); } }
         if (!$this->one('SELECT storage_key FROM familyhub_document_cleanup WHERE storage_key=?',[$key])) { $this->change('INSERT INTO familyhub_document_cleanup VALUES(?,?)',[$key,time()]); }
         $this->change("UPDATE familyhub_attachments SET deleted=1,name='',mime='',size=0,sha256='',received=0,complete=0,created_at=0,owner_account_id='',owner_device_id='',updated_at=? WHERE scope_id=? AND id=?",[time(),$r['scope_id'],$r['id']]);
+        $this->changedScope($r['scope_id']);
         $this->change('DELETE FROM familyhub_attachment_chunks WHERE scope_id=? AND attachment_id=?',[$r['scope_id'],$r['id']]);
         $this->change('DELETE FROM familyhub_document_requests WHERE scope_id=? AND object_id=?',[$r['scope_id'],$r['id']]);
     }
@@ -201,7 +202,7 @@ class NativeAttachmentService extends NativeDocumentService
     {
         if (!$this->available()) { return; }
         foreach ($this->many('SELECT * FROM familyhub_attachments WHERE scope_id=? AND deleted=0',[$sid]) as $r) { $this->removeRow($r,$operation); }
-        $this->change("UPDATE familyhub_tables SET deleted=1,title='',cells='{}',lease_hash=NULL,lease_nonce=NULL,lease_account_id=NULL,lease_device_id=NULL,lease_name=NULL,lease_expires=0 WHERE scope_id=?",[$sid]);
+        $this->change("UPDATE familyhub_tables SET deleted=1,title='',cells='{}',lease_hash=NULL,lease_nonce=NULL,lease_account_id=NULL,lease_device_id=NULL,lease_name=NULL,lease_expires=0 WHERE scope_id=?",[$sid]);$this->changedScope($sid);
         $this->change('DELETE FROM familyhub_document_requests WHERE scope_id=?',[$sid]);
     }
     public function removeAccount($user,$deleteScopes,$operation=null)
@@ -212,8 +213,9 @@ class NativeAttachmentService extends NativeDocumentService
         foreach ($this->many('SELECT * FROM familyhub_attachments WHERE owner_account_id=? AND deleted=0',[$user['account_id']]) as $r) {
             $targetAlive=$r['target_type']==='scope' || ($r['target_type']==='table'?$this->one('SELECT id FROM familyhub_tables WHERE scope_id=? AND id=? AND deleted=0',[$r['scope_id'],$r['target_id']]):$this->one("SELECT id FROM familyhub_records WHERE scope_id=? AND id=? AND type='task' AND deleted=0",[$r['scope_id'],$r['target_id']]));
             if (!(int)$r['complete'] || !$targetAlive) { $this->removeRow($r,$operation); }
-            else { $this->change("UPDATE familyhub_attachments SET owner_account_id='',owner_device_id='' WHERE scope_id=? AND id=?",[$r['scope_id'],$r['id']]); }
+            else { $this->change("UPDATE familyhub_attachments SET owner_account_id='',owner_device_id='' WHERE scope_id=? AND id=?",[$r['scope_id'],$r['id']]);$this->changedScope($r['scope_id']); }
         }
+        foreach ($this->many('SELECT DISTINCT scope_id FROM familyhub_tables WHERE created_by=?',[$user['account_id']]) as $scope) { $this->changedScope($scope['scope_id']); }
         $this->change("UPDATE familyhub_tables SET created_by='' WHERE created_by=?",[$user['account_id']]);
         $this->change('UPDATE familyhub_tables SET lease_hash=NULL,lease_nonce=NULL,lease_account_id=NULL,lease_device_id=NULL,lease_name=NULL,lease_expires=0 WHERE lease_account_id=?',[$user['account_id']]);
         $this->change('DELETE FROM familyhub_document_requests WHERE account_id=?',[$user['account_id']]);
@@ -225,7 +227,7 @@ class NativeAttachmentService extends NativeDocumentService
         foreach ($this->many('SELECT * FROM familyhub_attachments WHERE scope_id=? AND target_type=? AND target_id=? AND deleted=0',[$source,$type,$id]) as $r) {
             if (!(int)$r['complete']) { $this->removeRow($r);continue; }
             $bytes=$this->bytes($r);$copy=$r;$copy['scope_id']=$target;$this->store($copy,$bytes);
-            $columns=array_keys($copy);$this->change('INSERT INTO familyhub_attachments('.implode(',',$columns).') VALUES('.implode(',',array_fill(0,count($columns),'?')).')',array_values($copy));$this->removeRow($r);
+            $columns=array_keys($copy);$this->change('INSERT INTO familyhub_attachments('.implode(',',$columns).') VALUES('.implode(',',array_fill(0,count($columns),'?')).')',array_values($copy));$this->changedScope($copy['scope_id']);$this->removeRow($r);
         }
     }
     /** Exact private leaf cleanup, also shared by account-specific deletion receipts. */

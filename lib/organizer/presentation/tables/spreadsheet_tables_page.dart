@@ -14,8 +14,10 @@ class SpreadsheetTablesPage extends StatefulWidget {
     required this.gateway,
     this.attachmentsBuilder,
     this.onReport,
+    this.changes,
   });
   final SpreadsheetGateway gateway;
+  final Stream<void>? changes;
   final Widget Function(String tableId)? attachmentsBuilder;
   final Future<void> Function(String tableId)? onReport;
   @override
@@ -27,10 +29,15 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
   bool _busy = false;
   String? _error;
   Timer? _accessTimer;
+  StreamSubscription<void>? _changes;
+  bool _reading = false, _readAgain = false;
   bool _accessLost = false;
   @override
   void initState() {
     super.initState();
+    _changes = widget.changes?.listen((_) {
+      if (mounted && ModalRoute.of(context)?.isCurrent != false) _load();
+    });
     _load();
     _accessTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && !_accessLost && !widget.gateway.isCurrent) {
@@ -42,12 +49,19 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
   @override
   void dispose() {
     _accessTimer?.cancel();
+    unawaited(_changes?.cancel());
     super.dispose();
   }
 
   @override
   void didUpdateWidget(SpreadsheetTablesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.changes, widget.changes)) {
+      unawaited(_changes?.cancel());
+      _changes = widget.changes?.listen((_) {
+        if (mounted && ModalRoute.of(context)?.isCurrent != false) _load();
+      });
+    }
     if (!identical(oldWidget.gateway, widget.gateway)) {
       _tables = null;
       _accessLost = false;
@@ -56,8 +70,27 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
   }
 
   Future<void> _load() async {
+    if (_reading) {
+      _readAgain = true;
+      return;
+    }
+    _reading = true;
     final gateway = widget.gateway;
     try {
+      if (gateway is SpreadsheetLocalPreview) {
+        final cached = await (gateway as SpreadsheetLocalPreview).cachedList();
+        if (cached != null &&
+            mounted &&
+            identical(gateway, widget.gateway) &&
+            gateway.isCurrent) {
+          setState(() => _tables = cached);
+        }
+      }
+      if (!mounted ||
+          !identical(gateway, widget.gateway) ||
+          !gateway.isCurrent) {
+        return;
+      }
       final tables = await gateway.list();
       if (mounted && identical(gateway, widget.gateway) && gateway.isCurrent) {
         setState(() {
@@ -68,6 +101,18 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
     } catch (_) {
       if (mounted && identical(gateway, widget.gateway) && gateway.isCurrent) {
         setState(() => _error = TablesStrings.of(context).failed);
+      }
+    } finally {
+      _reading = false;
+      if (mounted && identical(gateway, widget.gateway) && !gateway.isCurrent) {
+        setState(() {
+          _tables = null;
+          _accessLost = true;
+        });
+      }
+      if (_readAgain && mounted) {
+        _readAgain = false;
+        unawaited(_load());
       }
     }
   }
@@ -81,6 +126,7 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
           document: document,
           attachmentsBuilder: widget.attachmentsBuilder,
           onReport: widget.onReport,
+          changes: widget.changes,
         ),
       ),
     );
@@ -182,8 +228,10 @@ class SpreadsheetDetailPage extends StatefulWidget {
     required this.document,
     this.attachmentsBuilder,
     this.onReport,
+    this.changes,
   });
   final SpreadsheetGateway gateway;
+  final Stream<void>? changes;
   final SpreadsheetDocument document;
   final Widget Function(String tableId)? attachmentsBuilder;
   final Future<void> Function(String tableId)? onReport;
@@ -201,9 +249,12 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   bool _editing = false, _busy = false, _dirty = false, _leaving = false;
   bool _accessLost = false;
   bool _missingTable = false;
+  bool _hasRead = false;
   String? _message;
   Timer? _timer;
   int _ticks = 0;
+  StreamSubscription<void>? _changes;
+  bool _reading = false, _readAgain = false;
   Future<void> _draftWrite = Future.value();
   bool get _writable =>
       !_missingTable &&
@@ -211,7 +262,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
       _lease?.token != null &&
       _lease!.active &&
       widget.gateway.online &&
-      widget.gateway.canEdit &&
+      widget.gateway.canEditDocument(_document) &&
       widget.gateway.isCurrent;
   @override
   void initState() {
@@ -220,6 +271,8 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
     _document = widget.document;
     _title = _document.title;
     _cells = Map.of(_document.cells);
+    _hasRead = widget.gateway is! SpreadsheetLocalPreview;
+    _changes = widget.changes?.listen((_) => _load());
     _load();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
@@ -228,6 +281,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    unawaited(_changes?.cancel());
     final token = _lease?.token;
     if (token != null) {
       unawaited(
@@ -251,28 +305,64 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   }
 
   Future<void> _load() async {
-    if (_missingTable) return;
+    if (_missingTable || _editing || _dirty || _leaving || !mounted) return;
+    if (_reading) {
+      _readAgain = true;
+      return;
+    }
+    _reading = true;
+    final gateway = widget.gateway, id = _document.id;
+    bool current() =>
+        mounted &&
+        identical(gateway, widget.gateway) &&
+        id == _document.id &&
+        !_editing &&
+        !_dirty &&
+        !_leaving &&
+        !_missingTable &&
+        gateway.isCurrent;
     try {
-      final result = await widget.gateway.read(_document.id);
-      final recovery = await widget.gateway.loadDraft(_document.id);
-      if (!mounted ||
-          _editing ||
-          _dirty ||
-          _leaving ||
-          _missingTable ||
-          !widget.gateway.isCurrent) {
-        return;
+      final recovery = await gateway.loadDraft(id);
+      if (current()) setState(() => _recovery = recovery);
+      if (!current()) return;
+      if (gateway is SpreadsheetLocalPreview) {
+        final cached = await (gateway as SpreadsheetLocalPreview).cachedRead(
+          id,
+        );
+        if (cached != null && current()) {
+          setState(() {
+            _document = cached.document;
+            _title = _document.title;
+            _cells = Map.of(_document.cells);
+            _lease = null;
+            _hasRead = true;
+          });
+        }
       }
+      if (!current()) return;
+      final result = await gateway.read(id);
+      if (!current()) return;
       setState(() {
         _document = result.document;
         _title = _document.title;
         _cells = Map.of(_document.cells);
         _lease = result.lease;
-        _recovery = recovery;
+        _hasRead = true;
       });
     } catch (error) {
-      if (!_markMissing(error) && mounted) {
+      if (mounted &&
+          identical(gateway, widget.gateway) &&
+          !_markMissing(error)) {
         setState(() => _message = TablesStrings.of(context).failed);
+      }
+    } finally {
+      _reading = false;
+      if (mounted && identical(gateway, widget.gateway) && !gateway.isCurrent) {
+        setState(() => _accessLost = true);
+      }
+      if (_readAgain && mounted) {
+        _readAgain = false;
+        unawaited(_load());
       }
     }
   }
@@ -294,12 +384,13 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
     if (_editing &&
         (!_lease!.active ||
             !widget.gateway.online ||
-            !widget.gateway.canEdit)) {
+            !widget.gateway.canEditDocument(_document))) {
       _lose();
       return;
     }
     if (_editing && _ticks % 25 == 0 && !_busy) _renew();
-    if (!_editing && !_dirty && _ticks % 10 == 0 && !_busy) _load();
+    // Content refresh is driven by the shared coordinator change stream.
+    // This timer only manages the active editing lease and local access.
   }
 
   Future<void> _persist() {
@@ -332,8 +423,12 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   }
 
   Future<void> _begin() async {
-    if (_missingTable) return;
-    if (_busy || !widget.gateway.online || !widget.gateway.canEdit) return;
+    if (_missingTable || !_hasRead) return;
+    if (_busy ||
+        !widget.gateway.online ||
+        !widget.gateway.canEditDocument(_document)) {
+      return;
+    }
     setState(() => _busy = true);
     SpreadsheetLease? acquired;
     try {
@@ -532,6 +627,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   }
 
   Future<void> _delete() async {
+    if (!widget.gateway.canDeleteDocument(_document)) return;
     final s = TablesStrings.of(context);
     final yes = await showDialog<bool>(
       context: context,
@@ -665,7 +761,9 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                     : () => _save(finish: true),
                 icon: const Icon(Icons.check),
               ),
-            ] else if (widget.gateway.canEdit && widget.gateway.online)
+            ] else if (_hasRead &&
+                widget.gateway.canEditDocument(_document) &&
+                widget.gateway.online)
               IconButton(
                 tooltip: s.edit,
                 onPressed: _busy ? null : _begin,
@@ -692,7 +790,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                       enabled: !_busy && _recovery == null,
                       child: Text(s.rename),
                     ),
-                  if (_writable)
+                  if (_writable && widget.gateway.canDeleteDocument(_document))
                     PopupMenuItem(
                       value: 'delete',
                       enabled: !_busy,
@@ -746,12 +844,18 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                 ),
               ),
               Expanded(
-                child: SpreadsheetGrid(
-                  cells: _cells,
-                  editable: _writable && !_busy && _recovery == null,
-                  onChanged: _change,
-                  canAccess: () => widget.gateway.isCurrent,
-                ),
+                child: !_hasRead
+                    ? Center(
+                        child: _message == null
+                            ? const CircularProgressIndicator()
+                            : Text(_message!),
+                      )
+                    : SpreadsheetGrid(
+                        cells: _cells,
+                        editable: _writable && !_busy && _recovery == null,
+                        onChanged: _change,
+                        canAccess: () => widget.gateway.isCurrent,
+                      ),
               ),
               if (widget.attachmentsBuilder != null)
                 ConstrainedBox(

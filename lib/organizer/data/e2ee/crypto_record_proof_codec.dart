@@ -1,3 +1,4 @@
+import 'crypto_record_policy.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -443,7 +444,9 @@ class CryptoRecordProofCodec {
         (r['epoch'] as int) < 1 ||
         r['accessRevision'] is! int ||
         (r['accessRevision'] as int) < 0 ||
-        r['contentContract'] != (r['domain'] == 'finance' ? 3 : 6) ||
+        !(r['domain'] == 'finance' ? const {3, 4} : const {6, 7}).contains(
+          r['contentContract'],
+        ) ||
         !['content', 'finance'].contains(r['domain']) ||
         r['type'] is! String ||
         (r['type'] as String).isEmpty ||
@@ -471,7 +474,10 @@ class CryptoRecordProofCodec {
                 (metadata.containsKey('schedulingUse') ? 1 : 0) +
                 (metadata.containsKey('migrationOrigin') ? 1 : 0) +
                 (metadata.containsKey('inlineDeletion') ? 1 : 0) +
-                (metadata.containsKey('projectRelocation') ? 1 : 0) ||
+                (metadata.containsKey('projectRelocation') ? 1 : 0) +
+                (metadata.containsKey('recordPolicy') ? 1 : 0) +
+                (metadata.containsKey('recordPolicyCompanion') ? 1 : 0) +
+                (metadata.containsKey('recordRestore') ? 1 : 0) ||
         !['references', 'uniqueRefs', 'blobIds'].every(metadata.containsKey) ||
         metadata.keys.any(
           (k) => ![
@@ -489,10 +495,45 @@ class CryptoRecordProofCodec {
             'migrationOrigin',
             'inlineDeletion',
             'projectRelocation',
+            'recordPolicy',
+            'recordPolicyCompanion',
+            'recordRestore',
           ].contains(k),
         )) {
       throw const FormatException('crypto_metadata_shape');
     }
+    if (metadata.containsKey('recordPolicyCompanion')) {
+      final companion = metadata['recordPolicyCompanion'];
+      const fields = {'version', 'taskId', 'taskRevision', 'taskProofHash'};
+      if (r['type'] != 'taskDerivationIntent' ||
+          r['domain'] != 'content' ||
+          r['contentContract'] != 6 ||
+          companion is! Map ||
+          companion.length != fields.length ||
+          !companion.keys.every(fields.contains) ||
+          companion['version'] != 1 ||
+          !_isCryptoRecordId(companion['taskId']) ||
+          companion['taskRevision'] is! int ||
+          companion['taskRevision'] < 1 ||
+          companion['taskProofHash'] is! String ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(companion['taskProofHash'])) {
+        throw const FormatException('crypto_record_policy_companion');
+      }
+    }
+    final policyContract =
+        r['contentContract'] == (r['domain'] == 'finance' ? 4 : 7);
+    if (policyContract != metadata.containsKey('recordPolicy') ||
+        policyContract &&
+            !CryptoRecordPolicy.businessTypes.contains(r['type'])) {
+      throw const FormatException('crypto_record_policy_contract');
+    }
+    if (policyContract) {
+      final policy = metadata['recordPolicy'];
+      if (policy is! Map)
+        throw const FormatException('crypto_record_policy_shape');
+      CryptoRecordPolicy.validate(Map<String, dynamic>.from(policy));
+    }
+    CryptoRecordPolicy.validateRestore(r);
     final purposes = [
       'migrationOrigin',
       'inlineDeletion',

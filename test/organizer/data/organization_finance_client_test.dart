@@ -369,6 +369,169 @@ void main() {
   }
 
   test(
+    'task-cost policy regression core viewer own cost succeeds foreign cost rolls back',
+    () async {
+      final f = await setup();
+      final scope = f.transport.project, p = f.repo.state.session!.partition;
+      final own = f.repo.state.session!.accountId;
+      await f.repo.refreshFinancePolicy(scope);
+      await f.repo.refreshFinanceAccountChoices(scope);
+      expect(f.repo.state.financePolicyForScope(scope).canWrite, isTrue);
+      final root = f.transport.server.records[scope]![scope]!;
+      await f.db.execute(
+        'INSERT OR IGNORE INTO records(partition,scope_id,id,type,local_revision,server_revision,payload,deleted,remote) VALUES(?,?,?,?,?,?,?,?,?)',
+        [
+          p,
+          scope,
+          scope,
+          'project',
+          1,
+          1,
+          jsonEncode(root['payload']),
+          0,
+          jsonEncode(root),
+        ],
+      );
+      final task = LocalTask(
+        id: newSharedId(),
+        title: 'Own task',
+        notes: '',
+        projectId: scope,
+        dueAt: null,
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await f.repo.saveTaskWithCost(
+        scope,
+        task,
+        isNew: true,
+        cost: TaskCostDraft(
+          amountMinor: 1200,
+          ledgerAccountId: f.transport.account,
+          accountScopeId: f.transport.parent,
+        ),
+      );
+      // Accepted canonical authority is an explicit SQL seam here. This control
+      // tests local transaction admission, not signatures or HTTP delivery.
+      for (final table in ['records', 'finance_records']) {
+        final rows = await f.db.rows(
+          'SELECT * FROM $table WHERE partition=? AND scope_id=?',
+          [p, scope],
+        );
+        for (final row in rows) {
+          final remote = {
+            'id': row['id'],
+            'type': row['type'],
+            'revision': 1,
+            'deleted': false,
+            'createdByAccountId': own,
+            'payload': jsonDecode(row['payload'] as String),
+          };
+          await f.db.execute(
+            'UPDATE $table SET server_revision=1,remote=? WHERE partition=? AND scope_id=? AND id=?',
+            [jsonEncode(remote), p, scope, row['id']],
+          );
+        }
+      }
+      await f.db.execute('DELETE FROM outbox WHERE partition=?', [p]);
+      await f.db.execute('DELETE FROM finance_outbox WHERE partition=?', [p]);
+      await f.db.execute('DELETE FROM local_meta WHERE name LIKE ?', [
+        'task_cost_pair:$p:%',
+      ]);
+      final scopes = await f.db.rows(
+        'SELECT data FROM scopes WHERE partition=? AND id=?',
+        [p, scope],
+      );
+      await f.db.execute(
+        'UPDATE scopes SET data=? WHERE partition=? AND id=?',
+        [
+          jsonEncode({
+            ...jsonDecode(scopes.single['data'] as String) as Map,
+            'role': 'viewer',
+            'recordPolicyVersion': 1,
+          }),
+          p,
+          scope,
+        ],
+      );
+      await f.repo.refreshLocal();
+      var current = f.repo.state.dataForScope(scope).tasks.single;
+      var cost = f.repo.state.dataForScope(scope).financeEntries.single;
+      await f.repo.saveTaskWithCost(
+        scope,
+        current.copyWith(notes: 'Own cost edit'),
+        expectedFinanceRevision: cost.revision,
+        cost: TaskCostDraft(
+          amountMinor: 1500,
+          ledgerAccountId: f.transport.account,
+          accountScopeId: f.transport.parent,
+        ),
+      );
+      expect(
+        f.repo.state.dataForScope(scope).financeEntries.single.amountMinor,
+        1500,
+      );
+      expect(
+        f.repo.state.dataForScope(scope).tasks.single.notes,
+        'Own cost edit',
+      );
+      final rows = await f.db.rows(
+        'SELECT remote FROM finance_records WHERE partition=? AND scope_id=? AND id=?',
+        [p, scope, cost.id],
+      );
+      await f.db.execute(
+        'UPDATE finance_records SET remote=? WHERE partition=? AND scope_id=? AND id=?',
+        [
+          jsonEncode({
+            ...jsonDecode(rows.single['remote'] as String) as Map,
+            'createdByAccountId': '10000000-0000-4000-8000-000000000009',
+          }),
+          p,
+          scope,
+          cost.id,
+        ],
+      );
+      current = f.repo.state.dataForScope(scope).tasks.single;
+      cost = f.repo.state.dataForScope(scope).financeEntries.single;
+      final queued = await f.db.rows(
+        'SELECT request FROM outbox WHERE partition=? ORDER BY sequence',
+        [p],
+      );
+      await expectLater(
+        f.repo.saveTaskWithCost(
+          scope,
+          current.copyWith(notes: 'Forbidden foreign cost'),
+          expectedFinanceRevision: cost.revision,
+          cost: TaskCostDraft(
+            amountMinor: 9000,
+            ledgerAccountId: f.transport.account,
+            accountScopeId: f.transport.parent,
+          ),
+        ),
+        throwsA(
+          isA<CollaborationException>().having(
+            (e) => e.code,
+            'code',
+            'record_edit_forbidden',
+          ),
+        ),
+      );
+      expect(
+        await f.db.rows(
+          'SELECT request FROM outbox WHERE partition=? ORDER BY sequence',
+          [p],
+        ),
+        queued,
+      );
+      expect(
+        f.repo.state.dataForScope(scope).tasks.single.notes,
+        'Own cost edit',
+      );
+    },
+  );
+
+  test(
     'v3 exact parent and inline links round trip, old wire fails closed',
     () {
       final record = entry(newSharedId(), newSharedId(), parent: newSharedId());

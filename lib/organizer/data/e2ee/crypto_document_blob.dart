@@ -1,3 +1,4 @@
+import 'crypto_record_blob_target.dart';
 import 'crypto_migration_idea_payload.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -74,8 +75,43 @@ class CryptoDocumentBlob {
     }
     if (relocationTarget != null && relocationTarget.head.scopeId != scopeId)
       throw const FormatException('crypto_relocation_blob_scope');
+    Map<String, dynamic>? recordPolicyTarget;
+    final type = CryptoRecordBlobTarget.typeForKind(kind);
+    if (relocationTarget == null &&
+        domain == 'content' &&
+        type != null &&
+        await context.recordPolicies.active(scopeId)) {
+      final existing = await context.record(
+        scopeId,
+        'content',
+        recordId,
+        type: type,
+      );
+      if (existing != null && existing['deleted'] != 1) {
+        final head = await context.access.currentHead(scopeId);
+        if (await context.supportsRecordPolicyBlobTargets()) {
+          recordPolicyTarget = {
+            'type': type,
+            'wireId': context
+                .address(scopeId, 'content', type, recordId)
+                .wireId,
+            'currentRecordProofHash': existing['record_proof_hash'],
+          };
+          await context.authorizeBlobPolicyTarget(scopeId, recordPolicyTarget);
+        } else if (head.member(context.account.directory.accountId)['role'] ==
+            'viewer') {
+          throw const CryptoAuthorityPending(
+            'crypto_record_policy_blob_target_upgrade_pending',
+          );
+        }
+      }
+    }
     final write = relocationTarget == null
-        ? await context.access.writeContext(scopeId, domain)
+        ? await context.access.writeContext(
+            scopeId,
+            domain,
+            allowRecordPolicy: recordPolicyTarget != null,
+          )
         : null;
     final relocationKey = relocationTarget == null
         ? null
@@ -131,6 +167,8 @@ class CryptoDocumentBlob {
         'cipherSize': cipher.length,
         'cipherSha256': await cryptoSha256(cipher),
         'manifestBase64': manifest,
+        if (recordPolicyTarget != null)
+          'recordPolicyTarget': recordPolicyTarget,
       };
       await context.database.transaction(() async {
         await context.database.execute(
@@ -213,6 +251,8 @@ class CryptoDocumentBlob {
       'epoch': d['epoch'],
       'accessRevision': d['accessRevision'],
       'membershipHeadHash': d['membershipHeadHash'],
+      if (d['recordPolicyTarget'] != null)
+        'recordPolicyTarget': d['recordPolicyTarget'],
     };
     final begin = await _write('blob:${d['id']}:begin', 'crypto2.blob.begin', {
       ...common,
@@ -289,7 +329,7 @@ class CryptoDocumentBlob {
   }
 
   void validate(Map d) {
-    if (d.length != 10 ||
+    if (d.length != 10 + (d.containsKey('recordPolicyTarget') ? 1 : 0) ||
         d['version'] != 2 ||
         !isCryptoCanonicalUuid(d['id']) ||
         !isCryptoCanonicalUuid(d['scopeId']) ||
@@ -306,6 +346,13 @@ class CryptoDocumentBlob {
         d['membershipHeadHash'] is! String ||
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(d['membershipHeadHash'])) {
       throw const FormatException('crypto_blob_descriptor');
+    }
+    if (d.containsKey('recordPolicyTarget')) {
+      if (d['domain'] != 'content' || d['recordPolicyTarget'] is! Map)
+        throw const FormatException('crypto_record_policy_blob_target');
+      CryptoRecordBlobTarget.validate(
+        Map<String, dynamic>.from(d['recordPolicyTarget'] as Map),
+      );
     }
     cryptoBase64(d['manifestBase64'], max: 16384);
   }
@@ -376,7 +423,7 @@ class CryptoDocumentBlob {
         }
       } else {
         final member = source.member(raw['accountId']);
-        if (member['role'] == 'viewer' ||
+        if ((member['role'] == 'viewer' && d['recordPolicyTarget'] == null) ||
             d['domain'] == 'finance' && member['financeRole'] != 'write') {
           throw const FormatException('crypto_blob_author');
         }
@@ -399,7 +446,10 @@ class CryptoDocumentBlob {
             command['operation'] != 'crypto2.blob.begin' ||
             command['signer'] != 'device' ||
             command['serverId'] != author.serverId ||
-            payload.length != 9 ||
+            payload.length !=
+                9 + (d.containsKey('recordPolicyTarget') ? 1 : 0) ||
+            CryptoInventoryJson.canonical(payload['recordPolicyTarget']) !=
+                CryptoInventoryJson.canonical(d['recordPolicyTarget']) ||
             payload['scopeId'] != d['scopeId'] ||
             payload['id'] != d['id'] ||
             payload['domain'] != d['domain'] ||

@@ -204,4 +204,61 @@ void main() {
       expect(f.server.calls.length, greaterThan(before));
     },
   );
+  test(
+    'redesign external busy resume yields event loop and waits completion',
+    () async {
+      final f = await setup();
+      final entered = Completer<void>(), release = Completer<void>();
+      var gated = false;
+      f.server.beforeCall = (operation, _, __) async {
+        if (operation == 'scopes.list' && !gated) {
+          gated = true;
+          entered.complete();
+          await release.future;
+        }
+      };
+      final outside = f.repo.syncNow(manual: true);
+      await entered.future;
+      f.advance(const Duration(seconds: 31));
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.inactive,
+      );
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(f.repo.state.isSyncing, isTrue);
+      release.complete();
+      await outside;
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(f.repo.state.lastError, isNull);
+    },
+  );
+  test(
+    'redesign already consumed failed completion preserves15s retry',
+    () async {
+      final f = await setup();
+      var attempts = 0;
+      f.server.beforeCall = (operation, _, __) async {
+        if (operation == 'scopes.list') {
+          attempts++;
+          throw const CollaborationException('network');
+        }
+      };
+      await f.container
+          .read(collaborationProvider.notifier)
+          .createTask(scopeId: f.scope, title: 'Queued');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(attempts, 1);
+      f.advance(const Duration(seconds: 16));
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.inactive,
+      );
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(attempts, 2);
+    },
+  );
 }

@@ -4,7 +4,7 @@ namespace Kanboard\Plugin\FamilyHub\Schema;
 
 use PDO;
 
-const VERSION = 21;
+const VERSION = 23;
 
 function version_1(PDO $pdo)
 {
@@ -127,4 +127,14 @@ function version_20(PDO $pdo)
 function version_21(PDO $pdo)
 {
     PreauthorizedInvitationSchema::create($pdo,true);
+}
+
+function version_22(PDO $pdo)
+{
+    AccountChangesSchema::create($pdo,true);
+}
+
+function version_23(PDO $pdo)
+{
+    RecordPolicySchema::create($pdo,true);
 }

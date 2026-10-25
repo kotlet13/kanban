@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -184,7 +185,14 @@ class GardenPage extends ConsumerWidget {
                                             ),
                                       ),
                                     ),
-                                  if (canEdit)
+                                  if (remoteHousehold
+                                      ? canEditSharedRecord(
+                                          shared,
+                                          shared?.selectedSpaceId,
+                                          'garden',
+                                          garden.id,
+                                        )
+                                      : canEdit)
                                     IconButton(
                                       tooltip: l.delete,
                                       onPressed: () =>

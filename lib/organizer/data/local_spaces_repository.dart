@@ -17,7 +17,7 @@ class LocalSpacesRepository {
     : clock = clock ?? DateTime.now;
   final CollaborationDatabase database;
   final DateTime Function() clock;
-  Stream<void> get changes => database.personalChanges.stream;
+  Stream<void> get changes => database.changesFor('spaces');
   Future<LocalSpacesState> read() => database.transaction(() async {
     final storage = SqliteOrganizerStorage(database);
     final spaces =

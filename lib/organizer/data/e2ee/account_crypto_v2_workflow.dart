@@ -1,3 +1,4 @@
+import '../account_work_coordinator.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -34,8 +35,11 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
       CryptoJson.decode(_bytes(local['encrypted_root']))
           as Map<String, dynamic>;
   @override
-  Future<Map<String, dynamic>> status() =>
-      directory.call('crypto2.account.status');
+  Future<Map<String, dynamic>> status() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => directory.call('crypto2.account.status'),
+  );
   @override
   Future<String> localPhase() async {
     if ((await store.pending()).isNotEmpty ||
@@ -54,25 +58,35 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   }
 
   @override
-  Future<Uint8List> prepareRecoveryFile() => directory.exclusive(() async {
-    final local = await _local();
-    if (local?['prepared_recovery'] != null) {
-      return _bytes(local!['prepared_recovery']);
-    }
-    if ((await status())['initialized'] == true) {
-      throw const CryptoDirectoryException('directory_already_initialized');
-    }
-    final material = files.create(
-      serverId: directory.session.profile.serverId,
-      accountId: directory.accountId,
-    );
-    try {
-      await _createDevice(material.encryptedRoot, preparedFile: material.file);
-      return Uint8List.fromList(material.file);
-    } finally {
-      material.dispose();
-    }
-  });
+  Future<Uint8List> prepareRecoveryFile() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    _accountWorkPrepareRecoveryFile,
+  );
+
+  Future<Uint8List> _accountWorkPrepareRecoveryFile() =>
+      directory.exclusive(() async {
+        final local = await _local();
+        if (local?['prepared_recovery'] != null) {
+          return _bytes(local!['prepared_recovery']);
+        }
+        if ((await status())['initialized'] == true) {
+          throw const CryptoDirectoryException('directory_already_initialized');
+        }
+        final material = files.create(
+          serverId: directory.session.profile.serverId,
+          accountId: directory.accountId,
+        );
+        try {
+          await _createDevice(
+            material.encryptedRoot,
+            preparedFile: material.file,
+          );
+          return Uint8List.fromList(material.file);
+        } finally {
+          material.dispose();
+        }
+      });
   Future<void> _createDevice(
     Map<String, dynamic> encryptedRoot, {
     Uint8List? preparedFile,
@@ -110,7 +124,14 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   }
 
   @override
-  Future<void> verifyAndInitialize(Uint8List externalFile) async {
+  Future<void> verifyAndInitialize(Uint8List externalFile) =>
+      withAccountWorkJob(
+        directory.transport,
+        AccountWorkKind.account,
+        () => _accountWorkVerifyAndInitialize(externalFile),
+      );
+
+  Future<void> _accountWorkVerifyAndInitialize(Uint8List externalFile) async {
     final local = await _local();
     if (local == null ||
         local['prepared_recovery'] == null ||
@@ -174,7 +195,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   /// A fresh authenticated device plus the external file explicitly starts a new
   /// identity epoch. This revokes every old device; it is not root replacement.
   @override
-  Future<void> recover(Uint8List externalFile) async {
+  Future<void> recover(Uint8List externalFile) => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkRecover(externalFile),
+  );
+
+  Future<void> _accountWorkRecover(Uint8List externalFile) async {
     final file = files.inspect(
       externalFile,
       serverId: directory.session.profile.serverId,
@@ -263,7 +290,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     await _ready();
   }
 
-  Future<String> prepareDeviceRequest() async {
+  Future<String> prepareDeviceRequest() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => _accountWorkPrepareDeviceRequest(),
+  );
+
+  Future<String> _accountWorkPrepareDeviceRequest() async {
     final remote = await status();
     if (remote['initialized'] != true) {
       throw const CryptoDirectoryException('directory_missing');
@@ -319,7 +352,16 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     });
   }
 
-  Future<String> authorizeDeviceRequest(String externallyReceivedCard) async {
+  Future<String> authorizeDeviceRequest(String externallyReceivedCard) =>
+      withAccountWorkJob(
+        directory.transport,
+        AccountWorkKind.account,
+        () => _accountWorkAuthorizeDeviceRequest(externallyReceivedCard),
+      );
+
+  Future<String> _accountWorkAuthorizeDeviceRequest(
+    String externallyReceivedCard,
+  ) async {
     final card =
         CryptoJson.decode(
               Uint8List.fromList(utf8.encode(externallyReceivedCard)),
@@ -480,6 +522,15 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   Future<Map<String, dynamic>> _attestDirectoryEvent(
     String operation,
     Map<String, dynamic> fields,
+  ) => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => _accountWorkAttestDirectoryEvent(operation, fields),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkAttestDirectoryEvent(
+    String operation,
+    Map<String, dynamic> fields,
   ) async {
     bool matches(Map command) =>
         command['operation'] == operation &&
@@ -543,7 +594,16 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     return saved;
   }
 
-  Future<void> appendKeyringEntries(List<Map<String, dynamic>> entries) async {
+  Future<void> appendKeyringEntries(List<Map<String, dynamic>> entries) =>
+      withAccountWorkJob(
+        directory.transport,
+        AccountWorkKind.account,
+        () => _accountWorkAppendKeyringEntries(entries),
+      );
+
+  Future<void> _accountWorkAppendKeyringEntries(
+    List<Map<String, dynamic>> entries,
+  ) async {
     await directory.requireFresh();
     final lease = await signingKey();
     try {
@@ -574,7 +634,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     }
   }
 
-  Future<void> revokeDevice(String targetDeviceId) async {
+  Future<void> revokeDevice(String targetDeviceId) => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => _accountWorkRevokeDevice(targetDeviceId),
+  );
+
+  Future<void> _accountWorkRevokeDevice(String targetDeviceId) async {
     if (targetDeviceId == deviceId) {
       throw const CryptoDirectoryException(
         'directory_self_revocation_forbidden',
@@ -631,7 +697,16 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     );
   }
 
-  Future<void> acceptDeviceConfirmation(String externallyReceivedCard) async {
+  Future<void> acceptDeviceConfirmation(String externallyReceivedCard) =>
+      withAccountWorkJob(
+        directory.transport,
+        AccountWorkKind.account,
+        () => _accountWorkAcceptDeviceConfirmation(externallyReceivedCard),
+      );
+
+  Future<void> _accountWorkAcceptDeviceConfirmation(
+    String externallyReceivedCard,
+  ) async {
     final card =
         CryptoJson.decode(
               Uint8List.fromList(utf8.encode(externallyReceivedCard)),
@@ -669,7 +744,16 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     await _ready();
   }
 
-  Future<Uint8List> prepareRootReplacement(Uint8List oldExternalFile) async {
+  Future<Uint8List> prepareRootReplacement(Uint8List oldExternalFile) =>
+      withAccountWorkJob(
+        directory.transport,
+        AccountWorkKind.recovery,
+        () => _accountWorkPrepareRootReplacement(oldExternalFile),
+      );
+
+  Future<Uint8List> _accountWorkPrepareRootReplacement(
+    Uint8List oldExternalFile,
+  ) async {
     final f = files.inspect(
       oldExternalFile,
       serverId: directory.session.profile.serverId,
@@ -726,7 +810,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     }
   }
 
-  Future<bool> rootReplacementConfirmed() async {
+  Future<bool> rootReplacementConfirmed() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkRootReplacementConfirmed(),
+  );
+
+  Future<bool> _accountWorkRootReplacementConfirmed() async {
     final current = await directory.cachedVerifiedDirectory();
     final rows = await store.database.rows(
       "SELECT authorization,receipt FROM crypto_identity_requests WHERE partition=? AND stage='confirmed'",
@@ -758,6 +848,18 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   }
 
   Future<void> verifyAndRotateRoot({
+    required Uint8List oldExternalFile,
+    required Uint8List newExternalFile,
+  }) => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkVerifyAndRotateRoot(
+      oldExternalFile: oldExternalFile,
+      newExternalFile: newExternalFile,
+    ),
+  );
+
+  Future<void> _accountWorkVerifyAndRotateRoot({
     required Uint8List oldExternalFile,
     required Uint8List newExternalFile,
   }) async {
@@ -973,7 +1075,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   }
 
   @override
-  Future<void> resume() async {
+  Future<void> resume() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => _accountWorkResume(),
+  );
+
+  Future<void> _accountWorkResume() async {
     await directory.resume();
     await _ready();
   }
@@ -999,7 +1107,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     }).toList();
   }
 
-  Future<bool> canRebindLocalDevice() async {
+  Future<bool> canRebindLocalDevice() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkCanRebindLocalDevice(),
+  );
+
+  Future<bool> _accountWorkCanRebindLocalDevice() async {
     if ((await store.anchor(directory.accountId))?['trustState'] !=
         'verified') {
       return false;
@@ -1017,7 +1131,13 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   /// approved cryptographic keys. The old key authorizes only this exact new
   /// session/key tuple and is retired atomically. Its decryption keys remain
   /// local until historical wrappers have safely moved to the new device.
-  Future<void> rebindLocalDevice() async {
+  Future<void> rebindLocalDevice() => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.recovery,
+    () => _accountWorkRebindLocalDevice(),
+  );
+
+  Future<void> _accountWorkRebindLocalDevice() async {
     await directory.stageAndSend(
       (previous) async {
         if (previous == null) {

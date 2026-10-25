@@ -36,7 +36,9 @@ final linkedPaymentChangesProvider = StreamProvider.autoDispose<int>((
 });
 final linkedPaymentsProvider = FutureProvider.autoDispose
     .family<PaymentSnapshot, PaymentSpaceKey>((ref, key) async {
-      ref.watch(collaborationProvider);
+      // Content/access publications arrive once through the database stream;
+      // watching the entire collaboration state also reloaded on cloud status.
+
       ref.watch(linkedPaymentChangesProvider);
       final repository = await ref.watch(
         linkedPaymentsRepositoryProvider.future,

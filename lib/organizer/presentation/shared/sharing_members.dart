@@ -1,3 +1,4 @@
+import 'sharing_role_permissions.dart';
 import 'sharing_member_label.dart';
 import '../recovery/crypto_invitation_page.dart';
 import 'content_actions_menu.dart';
@@ -448,6 +449,12 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
                     [
                       member.username,
                       sharingRoleLabel(context, member.role),
+                      if (widget.scope.recordPolicyVersion == 1)
+                        sharingPermissionDescription(
+                          l,
+                          member.role.name,
+                          recordPolicyVersion: 1,
+                        ),
                       if (_memberAccessLabel(member).isNotEmpty)
                         _memberAccessLabel(member),
                     ].join(' · '),

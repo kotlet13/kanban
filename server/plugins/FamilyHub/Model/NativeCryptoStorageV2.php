@@ -129,7 +129,10 @@ class NativeCryptoStorageV2 extends NativeDatabase
                     (new NativeCryptoSchedulingUseV2($this->container,$this->bearer,$this->ip))->validateMetadata($r);
                 }
             }
-            [$recordScope,$recordHead] = $scopes->author($r['scopeId'], $r['membershipHeadHash'], $r['epoch'], $r['accessRevision'], $actor, $r['domain']);
+            $recordPolicy=new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip);
+            $companionException=$recordPolicy->companion($r,$records);
+            $policyException=$r['domain']==='content'&&($recordPolicy->business($r['type'])&&$recordPolicy->active($r['scopeId'])||$companionException);
+            [$recordScope,$recordHead] = $scopes->author($r['scopeId'], $r['membershipHeadHash'], $r['epoch'], $r['accessRevision'], $actor, $r['domain'],true,(bool)$policyException);
             if ($r['type']==='scopeMetadata') {
                 $scopes->manager($recordHead,$recordScope,$actor);
             }
@@ -150,6 +153,8 @@ class NativeCryptoStorageV2 extends NativeDatabase
             if ($old && ($old['type'] !== $r['type'] || NativeCryptoV2Codec::hash((object)$oldProof['recordProof']) !== $r['previousRecordHash'])) {
                 throw new NativeError('crypto_record_chain', 409);
             }
+            $recordPolicy->admit($r,$old,$recordScope,$actor,$recordHead);
+            $recordPolicy->admitCascade($r,$recordScope,$actor,$recordHead);
             if ($old) {
                 $position = $this->one('SELECT domain,sequence FROM familyhub_crypto_record_positions WHERE scope_id=? AND id=?', [$r['scopeId'], $r['id']]);
                 if (!$position || $position['domain'] !== $r['domain']) {
@@ -161,6 +166,7 @@ class NativeCryptoStorageV2 extends NativeDatabase
                 if (!$blob || $blob['domain'] !== $r['domain'] || (int)$blob['epoch'] > $r['epoch']) {
                     throw new NativeError('crypto_blob_incomplete', 409);
                 }
+                $this->assertBlobRecordBinding($blob,$r);
                 (new NativeCryptoModerationAvailabilityV2($this->container,$this->bearer,$this->ip))->assertBlob($r['scopeId'],$id,$r['domain']);
             }
             $entry['old'] = $old;
@@ -372,7 +378,7 @@ class NativeCryptoStorageV2 extends NativeDatabase
         if (str_starts_with($op, 'crypto2.blob.')) {
             return $this->blobRead($op, $p, $actor);
         }
-        $this->fields($p, ['scopeId', 'domain', 'cursor', 'accessRevision'], ['limit']);
+        $this->fields($p, ['scopeId', 'domain', 'cursor', 'accessRevision'], ['limit','supportedRecordPolicyVersion']);
         $sid = $this->uuid($p['scopeId']);
         $scopes = new NativeCryptoScopeV2($this->container, $this->bearer, $this->ip);
         $head = $scopes->current($sid);
@@ -380,6 +386,10 @@ class NativeCryptoStorageV2 extends NativeDatabase
             throw new NativeError('crypto_scope_head_missing', 404);
         }
         $scopes->author($sid, $head['head_hash'], (int)$head['epoch'], $p['accessRevision'], $actor, $p['domain'], false);
+        if(array_key_exists('supportedRecordPolicyVersion',$p)&&$p['supportedRecordPolicyVersion']!==1)throw new NativeError('validation_error');
+        if((new NativeCryptoRecordPolicyV1($this->container))->active($sid)&&($p['supportedRecordPolicyVersion']??0)<1){
+            throw new NativeError('crypto_upgrade_required',409,['requiredRecordPolicyVersion'=>1,'requiredCryptoContentContractVersion'=>7,'requiredCryptoFinanceContractVersion'=>4]);
+        }
         $sequence = $scopes->domainSequence($sid, $p['domain']);
         $cursor = $p['cursor'];
         $limit = $p['limit'] ?? 20;
@@ -543,7 +553,7 @@ class NativeCryptoStorageV2 extends NativeDatabase
         return ['scopeId' => $row['scope_id'], 'id' => $row['id'], 'type' => $row['type'], 'revision' => (int)$row['revision'], 'deleted' => (bool)$row['deleted'], 'sequence' => $position, 'epoch' => (int)$row['epoch'], 'envelopeBase64' => (bool)$row['deleted'] ? null : $row['envelope'], 'metadata' => json_decode($row['metadata'], true, 34, JSON_THROW_ON_ERROR), 'authorization' => $authorization];
     }
 
-    private function blobAuthority($p, $actor, $write)
+    protected function blobAuthority($p, $actor, $write, $recordPolicy = false)
     {
         $sid = $this->uuid($p['scopeId'] ?? null);
         $scopes = new NativeCryptoScopeV2($this->container, $this->bearer, $this->ip);
@@ -551,8 +561,7 @@ class NativeCryptoStorageV2 extends NativeDatabase
         if (!$head) {
             throw new NativeError('crypto_scope_head_missing', 404);
         }
-        $scopes->author($sid, $write ? ($p['membershipHeadHash'] ?? null) : $head['head_hash'], $write ? ($p['epoch'] ?? null) : (int)$head['epoch'], $p['accessRevision'] ?? null, $actor, $p['domain'] ?? null, $write);
-        return $head;
+        return $scopes->author($sid, $write ? ($p['membershipHeadHash'] ?? null) : $head['head_hash'], $write ? ($p['epoch'] ?? null) : (int)$head['epoch'], $p['accessRevision'] ?? null, $actor, $p['domain'] ?? null, $write, $recordPolicy);
     }
 
     private function blobWrite($op, $p, $actor, $proof)
@@ -562,11 +571,27 @@ class NativeCryptoStorageV2 extends NativeDatabase
         if (!in_array($op, ['crypto2.blob.begin', 'crypto2.blob.chunk', 'crypto2.blob.complete', 'crypto2.blob.abort'], true)) {
             throw new NativeError('unsupported_operation', 404);
         }
-        $this->fields($p, array_merge($common, $extra));
-        $this->blobAuthority($p, $actor, $op !== 'crypto2.blob.abort');
-        $sid = $p['scopeId'];
+        $this->fields($p, array_merge($common, $extra), ['recordPolicyTarget']);
+        $sid = $this->uuid($p['scopeId']);
         $id = $this->uuid($p['id']);
-        $old = $this->one('SELECT * FROM familyhub_crypto_blobs_v2 WHERE scope_id=? AND id=?', [$sid, $id]);
+        $target = $p['recordPolicyTarget'] ?? null;
+        if (array_key_exists('recordPolicyTarget',$p) && $target === null) throw new NativeError('crypto_blob_target_invalid',409);
+        $policy = new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip);
+        $targetWrite = $op !== 'crypto2.blob.abort' && $target !== null;
+        [$scope,$head] = $this->blobAuthority($p,$actor,$op !== 'crypto2.blob.abort',$targetWrite && $p['domain'] === 'content' && (bool)$policy->active($sid));
+        // Scope authorization precedes blob lookup and immutable error details.
+        $old = $this->one('SELECT * FROM familyhub_crypto_blobs_v2 WHERE scope_id=? AND id=?'.$this->lockSuffix(), [$sid, $id]);
+        $storedTarget = $old ? $this->blobTarget($old) : null;
+        // Begin evidence is immutable. A writer cannot remove or switch the
+        // target later, including after completing an otherwise reusable blob.
+        if ($old && ($op !== 'crypto2.blob.abort' || $target !== null) &&
+            NativeCryptoCodec::canonical($target) !== NativeCryptoCodec::canonical($storedTarget)) {
+            throw new NativeError('crypto_blob_immutable',409);
+        }
+        if ($targetWrite) {
+            if ($p['domain'] !== 'content') throw new NativeError('crypto_blob_target_invalid',409);
+            $policy->authorizeBlobTarget($scope,$target,$actor,$head);
+        }
         if ($op === 'crypto2.blob.begin') {
             if (!is_int($p['size']) || $p['size'] < 48 || $p['size'] > self::MAX_BLOB || !is_string($p['sha256']) || !preg_match('/^[a-f0-9]{64}$/D', $p['sha256'])) {
                 throw new NativeError('validation_error');
@@ -646,6 +671,21 @@ class NativeCryptoStorageV2 extends NativeDatabase
         }
         $this->change('UPDATE familyhub_crypto_blobs_v2 SET complete=1 WHERE scope_id=? AND id=?', [$sid, $id]);
         return ['id' => $id, 'offset' => $offset, 'complete' => true];
+    }
+
+    /** The original signed begin command already durably stores the binding;
+     * no mutable blob column or second authority source is needed. */
+    private function blobTarget($blob)
+    {
+        $proof=json_decode($blob['authorization'],true,34,JSON_THROW_ON_ERROR);
+        [$command]=NativeCryptoCodec::decode($proof);
+        return $command['payload']['recordPolicyTarget']??null;
+    }
+
+    protected function assertBlobRecordBinding($blob,$record)
+    {
+        $target=$this->blobTarget($blob);
+        if($target!==null&&($record['domain']!=='content'||$target['type']!==$record['type']||$target['wireId']!==$record['id']))throw new NativeError('crypto_blob_target_mismatch',409);
     }
 
     private function assertBlobQuota($sid, $domain, $size, $actor)

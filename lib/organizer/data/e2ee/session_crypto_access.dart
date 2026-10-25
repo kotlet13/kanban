@@ -1,3 +1,6 @@
+import '../account_work_coordinator.dart';
+import '../../domain/collaboration_models.dart' show CollaborationException;
+import 'crypto_record_policy.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -35,7 +38,8 @@ import 'crypto_project_relocation_evidence.dart';
 import 'crypto_project_relocation_recovery.dart';
 import 'crypto_project_relocation_codec.dart';
 import 'crypto_business_project_relocation.dart';
-import 'crypto_business_router.dart' show CryptoBusinessSession;
+import 'crypto_business_router.dart'
+    show CryptoBusinessSession, CryptoBusinessRecordPolicies;
 import 'crypto_finance_policy_actions.dart' show CryptoFinancePolicySnapshot;
 import 'invite_crypto_repository.dart';
 
@@ -373,6 +377,7 @@ class CryptoVerifiedReadOperation {
   _AuthorityOperation? _operation;
   CryptoDirectoryAuthoritySnapshot? _snapshot;
   bool _active = true, _running = false;
+  bool get isActive => _active;
 
   void close() {
     _active = false;
@@ -4454,7 +4459,21 @@ class SessionCryptoAccess {
       throw const FormatException('record_membership_substitution');
     }
     final member = head.member(record['accountId']);
-    if (member['role'] == 'viewer' ||
+    final recordPolicy = (record['metadata'] as Map)['recordPolicy'];
+    final policyReader =
+        domain == 'content' &&
+        record['contentContract'] == 7 &&
+        CryptoRecordPolicy.businessTypes.contains(record['type']) &&
+        recordPolicy is Map &&
+        recordPolicy['version'] == 1;
+    final companion = (record['metadata'] as Map)['recordPolicyCompanion'];
+    final companionReader =
+        domain == 'content' &&
+        record['type'] == 'taskDerivationIntent' &&
+        record['contentContract'] == 6 &&
+        companion is Map &&
+        companion['version'] == 1;
+    if ((member['role'] == 'viewer' && !policyReader && !companionReader) ||
         domain == 'finance' && member['financeRole'] != 'write') {
       throw const FormatException('record_author_role');
     }
@@ -5391,9 +5410,13 @@ class SessionCryptoAccess {
   Future<void> recoverScopeCandidateKeys(
     String scopeId,
     Uint8List externalFile,
-  ) => _withScopeDescriptorVerification(
-    scopeId,
-    () => _recoverScopeCandidateKeys(scopeId, externalFile),
+  ) => withAccountWorkJob(
+    account.directory.transport,
+    AccountWorkKind.recovery,
+    () => _withScopeDescriptorVerification(
+      scopeId,
+      () => _recoverScopeCandidateKeys(scopeId, externalFile),
+    ),
   );
 
   Future<void> _recoverScopeCandidateKeys(
@@ -6029,6 +6052,92 @@ class SessionCryptoAccess {
     }
   }
 
+  /// Direct child ownership or the exact signed parent relationship. Catalog
+  /// IDs only nominate candidates; tokens, current heads and access basis bind
+  /// the result. Hosting administrators and general key managers grant nothing.
+  Future<bool> isRecordOwner(
+    String scopeId,
+    String accountId, {
+    VerifiedScopeHead? head,
+    String? parentScopeId,
+    bool requireParentEvidence = false,
+  }) async {
+    final child = head ?? await currentHead(scopeId);
+    if (child.member(accountId)['role'] == 'owner') return true;
+    final descriptor = await verifiedScopeDescriptor(scopeId);
+    if (descriptor['kind'] != 'project' ||
+        descriptor['parentScopeToken'] == null)
+      return false;
+    final cached = await account.store.database.rows(
+      'SELECT id,data FROM scopes WHERE partition=?',
+      [account.store.partition],
+    );
+    final candidates = <String>{
+      if (parentScopeId != null) parentScopeId,
+      for (final row in cached) row['id'] as String,
+    };
+    for (final candidate in candidates) {
+      if (candidate == scopeId ||
+          !isCryptoCanonicalUuid(candidate) ||
+          await CryptoLifecycleEvidence(this).parentToken(scopeId, candidate) !=
+              descriptor['parentScopeToken'])
+        continue;
+      VerifiedScopeHead parent;
+      Map<String, dynamic> parentDescriptor;
+      try {
+        parent = await currentHead(candidate, online: true);
+        parentDescriptor = await verifiedScopeDescriptor(candidate);
+      } on CryptoAuthorityPending catch (error) {
+        if (const {
+          'scope_read_forbidden',
+          'crypto_scope_head_missing',
+          'scope_membership_required',
+        }.contains(error.reason)) {
+          if (requireParentEvidence)
+            throw const CryptoAuthorityPending(
+              'crypto_record_policy_parent_owner_pending',
+            );
+          return false;
+        }
+        rethrow;
+      } on CollaborationException catch (error) {
+        if (const {
+          'permission_revoked',
+          'scope_read_forbidden',
+          'crypto_scope_head_missing',
+          'scope_missing',
+        }.contains(error.code)) {
+          if (requireParentEvidence)
+            throw const CryptoAuthorityPending(
+              'crypto_record_policy_parent_owner_pending',
+            );
+          return false;
+        }
+        rethrow;
+      }
+      if (!const {2, 3}.contains(parentDescriptor['accessPolicyVersion']) ||
+          !parent.members.any(
+            (member) =>
+                member['accountId'] == accountId && member['role'] == 'owner',
+          ))
+        return false;
+      final token = await cryptoSha256(
+        utf8.encode(
+          'JivieScopeAccessBasis/v2\n${account.directory.session.profile.serverId}:$scopeId:$candidate',
+        ),
+      );
+      final basis = child.body['accessBasis'];
+      return basis is List &&
+          basis.length == 2 &&
+          basis.whereType<Map>().any(
+            (part) =>
+                part['scopeToken'] == token &&
+                part['accessRevision'] == parent.accessRevision,
+          );
+    }
+    return false;
+  }
+
   Future<CryptoKeyLease> recordKey(Map<String, dynamic> record) =>
       getScopeKey(record['scopeId'], record['domain'], record['epoch']);
   Future<CryptoReadContext> readContext(String scopeId, String domain) async {
@@ -6048,6 +6157,7 @@ class SessionCryptoAccess {
     String scopeId,
     String domain, {
     bool online = false,
+    bool allowRecordPolicy = false,
   }) async {
     Future<VerifiedScopeHead> writableHead({required bool online}) async {
       if (_readOnlyFrozen != null ||
@@ -6056,7 +6166,8 @@ class SessionCryptoAccess {
       }
       final head = await currentHead(scopeId, online: online);
       final member = head.member(account.directory.accountId);
-      if (member['role'] == 'viewer' ||
+      if ((member['role'] == 'viewer' &&
+              !(allowRecordPolicy && domain == 'content')) ||
           domain == 'finance' && member['financeRole'] != 'write') {
         throw const CryptoAuthorityPending('scope_write_forbidden');
       }
@@ -6241,6 +6352,24 @@ class SessionCryptoAccess {
       );
       return;
     }
+    if (const {
+      'crypto2.scope.recordPolicy.prepare',
+      'crypto2.scope.recordPolicy.stage',
+      'crypto2.scope.recordPolicy.activate',
+    }.contains(c['operation'])) {
+      final own = await account.directory.requireFresh();
+      own.activeDevice(account.deviceId);
+      final payload = c['payload'] as Map;
+      final head = await currentHead(payload['scopeId'], online: true);
+      if (payload['membershipHeadHash'] != head.headHash ||
+          payload['accessRevision'] != head.accessRevision ||
+          !await isRecordOwner(head.scopeId, own.accountId, head: head)) {
+        throw const CryptoAuthorityPending(
+          'crypto_record_policy_owner_changed',
+        );
+      }
+      return;
+    }
     if (c['operation'] == 'crypto2.scope.financePolicy.propose') {
       final own = await account.directory.requireFresh();
       own.activeDevice(account.deviceId);
@@ -6271,6 +6400,7 @@ class SessionCryptoAccess {
     final windowKey =
         '${payload['scopeId']}:${payload['domain']}:${payload['id']}';
     if (c['operation'] == 'crypto2.blob.chunk' &&
+        payload['recordPolicyTarget'] == null &&
         account.directory.isCurrent() &&
         lifecycle != null &&
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
@@ -6534,9 +6664,52 @@ class SessionCryptoAccess {
           payload['accessRevision'] != head.accessRevision) {
         throw const CryptoAuthorityPending('scope_reauthorization_required');
       }
+      var blobPolicy = false;
+      if (const {
+            'crypto2.blob.begin',
+            'crypto2.blob.chunk',
+            'crypto2.blob.complete',
+          }.contains(c['operation']) &&
+          payload['recordPolicyTarget'] is Map) {
+        if (payload['domain'] != 'content')
+          throw const FormatException('crypto_record_policy_blob_domain');
+        final business = CryptoBusinessSession(
+          account,
+          this,
+          account.store.database,
+        );
+        await business.authorizeBlobPolicyTarget(
+          payload['scopeId'],
+          Map<String, dynamic>.from(payload['recordPolicyTarget'] as Map),
+        );
+        blobPolicy = true;
+      }
+      var tablePolicy = false;
+      if (const {
+        'crypto2.table.acquire',
+        'crypto2.table.renew',
+        'crypto2.table.release',
+      }.contains(c['operation'])) {
+        if (c['operation'] == 'crypto2.table.release') {
+          tablePolicy = payload['tokenBase64'] is String;
+        } else {
+          final business = CryptoBusinessSession(
+            account,
+            this,
+            account.store.database,
+          );
+          tablePolicy = await business.authorizeTablePolicyWrite(
+            payload['scopeId'],
+            payload['id'],
+          );
+        }
+      }
       final member = head.member(account.directory.accountId);
       final checkpoint = c['operation'] == 'crypto2.domain.checkpoint';
-      if ((!checkpoint && member['role'] == 'viewer') ||
+      if ((!checkpoint &&
+              !tablePolicy &&
+              !blobPolicy &&
+              member['role'] == 'viewer') ||
           payload['domain'] == 'finance' &&
               (checkpoint
                   ? member['financeRole'] == 'none'
@@ -6557,7 +6730,8 @@ class SessionCryptoAccess {
             'crypto2.blob.begin',
             'crypto2.blob.chunk',
           ].contains(c['operation']) &&
-          lifecycle != null) {
+          lifecycle != null &&
+          payload['recordPolicyTarget'] == null) {
         final staged = await account.store.database.rows(
           'SELECT descriptor,source_hash FROM crypto_document_jobs WHERE partition=? AND id=? AND state=?',
           [account.store.partition, payload['id'], 'staged'],

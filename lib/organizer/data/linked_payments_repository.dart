@@ -18,7 +18,7 @@ class LinkedPaymentsRepository {
   LinkedPaymentsRepository(this.database, {this.collaboration});
   final CollaborationDatabase database;
   final CollaborationRepository? collaboration;
-  Stream<void> get changes => database.personalChanges.stream;
+  Stream<void> get changes => database.changesFor('payments');
   Map<String, dynamic> _map(Object? raw) =>
       jsonDecode(raw as String) as Map<String, dynamic>;
 

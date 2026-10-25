@@ -3,6 +3,13 @@ import 'e2ee/crypto_sync_schema.dart';
 import 'package:drift/drift.dart';
 import '../domain/collaboration_models.dart' show AccountSession;
 
+/// Captured account binding; workspace selection is deliberately independent.
+typedef LocalSyncWorkIdentity = ({
+  String partition,
+  String deviceId,
+  int generation,
+});
+
 /// Shared rows and their immutable outgoing operations use one SQLite commit.
 /// Anonymous and explicitly enabled private workspaces share this atomic store.
 class CollaborationDatabase extends GeneratedDatabase {
@@ -19,18 +26,138 @@ class CollaborationDatabase extends GeneratedDatabase {
 
   AccountSession? personalProfile;
   final personalChanges = StreamController<void>.broadcast();
+  final _contentChanges = StreamController<Set<String>?>.broadcast();
+
+  /// Null means an identity/restore/legacy mutation invalidated every domain.
+  /// A scoped publication does not wake unrelated local repositories.
+  Stream<void> changesFor(String domain) => _contentChanges.stream
+      .where((domains) => domains == null || domains.contains(domain))
+      .map<void>((_) {});
+
+  String _documentsKey(String partition, String scope) =>
+      'verified_documents:$partition:$scope';
+  final _documentChanges = StreamController<String>.broadcast();
+  final Object _documentTransactionKey = Object();
+  final Object _localWorkTransactionKey = Object();
+  final _committedLocalWork =
+      StreamController<LocalSyncWorkIdentity>.broadcast();
+  int _localWorkAccountGeneration = 0;
+
+  /// Delivery demand is separate from projection/read invalidations. Outboxes
+  /// remain the durable source of work if no foreground consumer is attached.
+  Stream<LocalSyncWorkIdentity> get committedLocalWork =>
+      _committedLocalWork.stream;
+
+  LocalSyncWorkIdentity? captureLocalWorkIdentity(AccountSession? expected) {
+    final current = personalProfile;
+    if (expected == null ||
+        current == null ||
+        expected.partition != current.partition ||
+        expected.deviceId != current.deviceId) {
+      return null;
+    }
+    return (
+      partition: current.partition,
+      deviceId: current.deviceId,
+      generation: _localWorkAccountGeneration,
+    );
+  }
+
+  bool isCurrentLocalWorkIdentity(LocalSyncWorkIdentity identity) =>
+      identity.generation == _localWorkAccountGeneration &&
+      identity.partition == personalProfile?.partition &&
+      identity.deviceId == personalProfile?.deviceId;
+
+  /// Call only after an actual outgoing operation insert in the same transaction.
+  void localWorkQueued(LocalSyncWorkIdentity? identity) {
+    if (identity == null || !isCurrentLocalWorkIdentity(identity)) return;
+    final pending =
+        Zone.current[_localWorkTransactionKey] as Set<LocalSyncWorkIdentity>?;
+    if (pending == null) throw StateError('local_work_requires_transaction');
+    pending.add(identity);
+  }
+
+  /// Failed projections and unrelated account/status updates cannot wake a view.
+  Stream<void> documentChanges(String partition, String scope) =>
+      _documentChanges.stream
+          .where((key) => key == _documentsKey(partition, scope))
+          .map<void>((_) {});
+
+  void documentsChanged(String partition, String scope) {
+    final key = _documentsKey(partition, scope);
+    final pending = Zone.current[_documentTransactionKey] as Set<String>?;
+    if (pending != null) {
+      pending.add(key);
+    } else if (!_documentChanges.isClosed) {
+      _documentChanges.add(key);
+    }
+  }
+
+  @override
+  Future<T> transaction<T>(
+    Future<T> Function() action, {
+    bool requireNew = false,
+  }) async {
+    final parent = Zone.current[_documentTransactionKey] as Set<String>?;
+    final pending = <String>{};
+    final workParent =
+        Zone.current[_localWorkTransactionKey] as Set<LocalSyncWorkIdentity>?;
+    final work = <LocalSyncWorkIdentity>{};
+    final result = await super.transaction(
+      () => runZoned(
+        action,
+        zoneValues: {
+          _documentTransactionKey: pending,
+          _localWorkTransactionKey: work,
+        },
+      ),
+      requireNew: requireNew,
+    );
+    // A nested success is not durable until its parent succeeds. An exception
+    // skips this publication entirely, including a later outer commit failure.
+    if (parent != null) {
+      parent.addAll(pending);
+    } else if (!_documentChanges.isClosed) {
+      for (final key in pending) {
+        _documentChanges.add(key);
+      }
+    }
+    if (workParent != null) {
+      workParent.addAll(work);
+    } else if (!_committedLocalWork.isClosed) {
+      for (final identity in work) {
+        if (isCurrentLocalWorkIdentity(identity)) {
+          _committedLocalWork.add(identity);
+        }
+      }
+    }
+    return result;
+  }
+
+  @override
+  Future<void> close() async {
+    await _committedLocalWork.close();
+    await _documentChanges.close();
+    await super.close();
+  }
+
   void activatePersonal(AccountSession? profile) {
+    _localWorkAccountGeneration++;
     personalIdentityGeneration++;
     personalProfile = profile;
-    personalChanges.add(null);
+    personalChanged();
   }
 
   Future<void> touchPersonal() => execute(
     "INSERT INTO local_meta(name,value) VALUES('organizer_generation','1') ON CONFLICT(name) DO UPDATE SET value=CAST(value AS INTEGER)+1",
   );
   int personalIdentityGeneration = 0;
-  void personalChanged() {
+  void personalChanged({Set<String>? domains}) {
+    if (domains != null && domains.isEmpty) return;
     if (!personalChanges.isClosed) personalChanges.add(null);
+    if (!_contentChanges.isClosed) {
+      _contentChanges.add(domains == null ? null : Set.unmodifiable(domains));
+    }
   }
 
   @override

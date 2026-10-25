@@ -127,6 +127,7 @@ class NativeCryptoProjectRelocationNotificationsV2 extends NativeDatabase
         if(!$this->transactionActive())throw new NativeError('crypto_relocation_transaction',409);
         foreach($prepared['items'] as $item){$row=$item['row'];$target=$item['target'];
             if($item['kind']==='reminder'){
+                (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                 $this->change('UPDATE familyhub_crypto_reminders_v2 SET scope_id=?,target_id=?,target_revision=1 WHERE id=?',[$prepared['targetScopeId'],$target['id'],$row['id']]);
                 $this->change('UPDATE familyhub_crypto_scheduling_uses_v2 SET scope_id=?,target_id=? WHERE account_id=? AND reminder_id=?',[$prepared['targetScopeId'],$target['id'],$row['account_id'],$row['id']]);
             }else{

@@ -1317,6 +1317,10 @@
   "sharingInviteProjectOnly": "Project only",
   "sharingInviteSpaceDescription": "Whole space: shared content and finances, plus all current and future projects.",
   "sharingInviteProjectDescription": "Only this project: tasks, events, notifications and finances. No membership in the parent space.",
+  "sharingRecordMemberDescription": "Can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Deleting someone else’s records requires the owner. Finance permissions are separate.",
+  "sharingRecordViewerDescription": "Can view shared content, edit and delete their own records, edit assigned tasks, and check shopping items. Cannot create records or delete someone else’s records. Finance permissions are separate.",
+  "sharingRecordOwnerDescription": "The owner can edit and delete all records in this scope. Finance permissions are separate.",
+  "sharingRecordAccessReviewDescription": "Members gain access to shared content and current and future projects. They can create records, edit and delete their own records, edit assigned tasks, and check shopping items. Finance permissions and access management are granted separately. Project-only members retain their project scope. Old pending invitations will be revoked.",
   "sharingMemberFullDescription": "Full access: create, edit and delete content and finances, manage settings and invitations, and invite or remove members. Ownership stays protected.",
   "sharingViewerDescription": "View content and finances. No editing, deleting or management.",
   "sharingLegacySpaceDescription": "This space uses older access rules. Membership does not yet include all projects and finances. The owner can review and confirm the new sharing model in Space settings.",
@@ -1723,6 +1727,8 @@
   "financeChooseEntryScope": "Where does this transaction belong?",
   "financeParentSnapshotsIncomplete": "The project finance overview is incomplete. Full account balances will appear after all permitted projects have synced.",
   "financeAccountChoicesUnavailable": "Space accounts are not available yet. Connect and refresh the project.",
+  "financeEntryAccountsLoading": "Preparing accounts. You can already edit the entry.",
+  "financeEntryAccountsUnavailable": "Accounts cannot be refreshed right now. Your draft and cached accounts are preserved.",
   "financeProjectMovement": "Project movement",
   "financeViewTotalsDescription": "Totals reflect the selected filters and posted entries. Transfers between accounts are not new income or expenses.",
   "financeFilteredMovement": "Income and expense overview",
@@ -1946,8 +1952,20 @@
   "hostingOperatorSupplied": "Operator (supplied by this server): {name}",
   "hostingContactSupplied": "Contact (supplied by this server): {contact}",
   "hostingTrustExplanation": "The operator manages accounts and connects users. By continuing, you trust it to identify users correctly. With E2EE, content is unlocked on devices; the app alerts you to an unexpected identity change.",
-  "@hostingOperatorSupplied": {"placeholders": {"name": {"type": "String"}}},
-  "@hostingContactSupplied": {"placeholders": {"contact": {"type": "String"}}},
+  "@hostingOperatorSupplied": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@hostingContactSupplied": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
   "cryptoSharingIdentityChanged": "The account identity changed or does not match the saved trust. Access is blocked for protection. Verify the person and hosting through a known channel before continuing.",
   "cryptoSharingCheckAccess": "Check access",
   "cryptoSharingAccessLabel": "Access",
@@ -1986,5 +2004,17 @@
   "cryptoInvitationAcceptedNeedsApproval": "Invitation accepted — confirm access",
   "cryptoInvitationContentAccess": "This shares existing content and future changes according to the permissions above.",
   "cryptoInvitationAcceptanceUnavailable": "This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.",
-  "sharingInvitationNewAccountAccess": "If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members."
+  "sharingInvitationNewAccountAccess": "If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.",
+  "organizerNewerVersion": "A newer version is available. Your edits are preserved and will be compared when you save.",
+  "organizerFinanceChoicesLoading": "Preparing cost accounts. You can already edit and save the task.",
+  "organizerFinanceChoicesUnavailable": "Cost accounts are currently unavailable. You can still edit the task.",
+  "recordEditForbidden": "The space owner or author can edit this record; an assigned user can also edit a task.",
+  "recordDeleteForbidden": "The space owner or author can delete this record.",
+  "recordAssignmentForbidden": "The space owner or author can change the task assignment.",
+  "sharingRestoreRecord": "Restore",
+  "sharingRestorePairedPending": "This record is linked to a task cost, or its financial links could not be verified. Restore was not completed. Your draft is retained.",
+  "sharingRestoreBlobPending": "This restore needs a new large encrypted upload. Restore was not completed. Your draft is retained.",
+  "sharingRestoreTablePending": "This deleted table cannot obtain the editing lease required for restore. Restore was not completed. Your draft is retained.",
+  "sharingRestoreHistoryPending": "Restore is waiting for verified history or server support. Your draft is retained.",
+  "sharingRestoreForbidden": "Only the space owner or original author can restore this record. Your draft is retained."
 }

@@ -1,3 +1,4 @@
+import 'crypto_record_policy.dart';
 import 'dart:convert';
 
 import '../../domain/collaboration_models.dart';
@@ -13,6 +14,7 @@ abstract final class CryptoBusinessPayload {
     Map<String, dynamic> raw, {
     bool personal = false,
   }) {
+    raw = CryptoRecordPolicy.businessPayload(raw);
     if (domain == 'content') {
       final kind = SharedRecordType.values
           .where((t) => t.name == type)

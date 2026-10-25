@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import '../shopping_page.dart';
 import '../ideas/ideas_page.dart';
 import '../ideas/idea_editor.dart';
@@ -350,7 +351,9 @@ class _ShoppingNotificationPageState
                       onSelection: (id) => setState(() => _selected = id),
                       readOnly:
                           !personalPresentation &&
-                          (!scope!.canEdit ||
+                          (!(scope!.canEdit ||
+                                  scope.recordPolicyVersion > 0 &&
+                                      scope.canRead) ||
                               scope.archived ||
                               state!.deletionPending),
                       reportScopeId: personalPresentation ? null : scope!.id,
@@ -439,8 +442,12 @@ class NotificationTargetContent extends ConsumerWidget {
                       !scope.deleted &&
                       state?.deletionPending != true))
         : scope!.canEdit && !scope.deleted && state?.deletionPending != true;
+    bool editable(String type, String id) => personalPresentation
+        ? canEdit
+        : state?.deletionPending != true &&
+              canEditSharedRecord(state, scope?.id, type, id);
     bool taskEditable(LocalTask task) =>
-        canEdit &&
+        editable('task', task.id) &&
         !snapshot.projects.any((p) => p.id == task.projectId && p.archived);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -618,7 +625,9 @@ class NotificationTargetContent extends ConsumerWidget {
                       targetType: 'event',
                       targetId: event.id,
                     ),
-                    onTap: canEdit ? () => sharedActions!.event(event) : null,
+                    onTap: editable('event', event.id)
+                        ? () => sharedActions!.event(event)
+                        : null,
                   ),
                 ),
           ] else if (record.type == 'project') ...[
@@ -629,7 +638,9 @@ class NotificationTargetContent extends ConsumerWidget {
                 child: ListTile(
                   title: Text(project.title),
                   subtitle: Text(project.description),
-                  onTap: canEdit ? () => actions.project(project) : null,
+                  onTap: editable('project', project.id)
+                      ? () => actions.project(project)
+                      : null,
                 ),
               ),
           ] else if (record.type == 'shoppingList') ...[
@@ -667,7 +678,7 @@ class NotificationTargetContent extends ConsumerWidget {
                   subtitle: Text(
                     '${item.quantity} · ${snapshot.shoppingLists.where((v) => v.id == item.listId).firstOrNull?.title ?? l.organizerShopping}',
                   ),
-                  onTap: canEdit
+                  onTap: editable('shoppingItem', item.id)
                       ? () => actions.shoppingItem(item.listId, item)
                       : null,
                 ),
@@ -762,7 +773,15 @@ class NotificationTargetContent extends ConsumerWidget {
                         account.currency,
                       ),
                     ),
-                    onTap: state.financePolicyForScope(scope.id).canWrite
+                    onTap:
+                        state.financePolicyForScope(scope.id).canWrite &&
+                            canEditSharedRecord(
+                              state,
+                              scope.id,
+                              'financeAccount',
+                              account.id,
+                              domain: 'finance',
+                            )
                         ? () => SharedFinanceActions(
                             context,
                             ref,
@@ -788,7 +807,15 @@ class NotificationTargetContent extends ConsumerWidget {
                             targetId: entry.id,
                           )
                         : null,
-                    onTap: state.financePolicyForScope(scope.id).canWrite
+                    onTap:
+                        state.financePolicyForScope(scope.id).canWrite &&
+                            canEditSharedRecord(
+                              state,
+                              scope.id,
+                              'financeEntry',
+                              entry.id,
+                              domain: 'finance',
+                            )
                         ? () async {
                             if (entry.status != SharedFinanceStatus.planned) {
                               await SharedFinanceActions(

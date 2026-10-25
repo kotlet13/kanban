@@ -86,6 +86,27 @@ String sharingErrorMessage(BuildContext context, Object error) {
         ? 'Sprememba čaka na pregled upraviteljev. Odprite Čakajoče odobritve, nato nadaljujte isto shranjeno spremembo.'
         : 'This change awaits manager review. Open Pending approvals, then resume the same saved change.';
   }
+  final restoreCode = error is CryptoAuthorityPending
+      ? error.reason
+      : error is CollaborationException
+      ? error.code
+      : null;
+  switch (restoreCode) {
+    case 'crypto_record_restore_paired_pending':
+      return context.l10n.sharingRestorePairedPending;
+    case 'crypto_record_restore_large_blob_pending':
+      return context.l10n.sharingRestoreBlobPending;
+    case 'crypto_record_restore_table_pending':
+      return context.l10n.sharingRestoreTablePending;
+    case 'record_restore_forbidden':
+      return context.l10n.sharingRestoreForbidden;
+    case 'crypto_record_restore_history_pending':
+    case 'crypto_record_restore_upgrade_pending':
+    case 'crypto_record_restore_predecessor':
+    case 'crypto_record_restore_intent_required':
+    case 'crypto_record_restore_invalid':
+      return context.l10n.sharingRestoreHistoryPending;
+  }
   if (error is! CollaborationException) {
     return organizerErrorMessage(context, error);
   }
@@ -177,6 +198,9 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'session_changed' => l.sharingAccountChanged,
     'device_revoked' => l.sharingSessionRevoked,
     'forbidden' || 'permission_denied' => l.sharingPermissionDenied,
+    'record_edit_forbidden' => l.recordEditForbidden,
+    'record_delete_forbidden' => l.recordDeleteForbidden,
+    'record_assignment_forbidden' => l.recordAssignmentForbidden,
     'finance_forbidden' || 'finance_disabled' => l.financeNoAccess,
     'unsupported_currency' => l.financeUnsupportedCurrency,
     'finance_incomplete' => l.financeLoadingSnapshot,

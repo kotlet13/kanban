@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -320,8 +321,33 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                       <MapEntry<String, SharedFinanceTransfer>>[])
                 t.key: t.value.id,
             },
-            canEditEntry: (e) => writable(projection?.entryScopeIds[e.id]),
-            canEditAccount: (a) => writable(projection?.accountScopeIds[a.id]),
+            canEditEntry: (e) =>
+                writable(projection?.entryScopeIds[e.id]) &&
+                canEditSharedRecord(
+                  state,
+                  projection?.entryScopeIds[e.id] ?? scope.id,
+                  'financeEntry',
+                  projection?.originalEntries[e.id]?.id ?? e.id,
+                  domain: 'finance',
+                ),
+            canEditAccount: (a) =>
+                writable(projection?.accountScopeIds[a.id]) &&
+                canEditSharedRecord(
+                  state,
+                  projection?.accountScopeIds[a.id] ?? scope.id,
+                  'financeAccount',
+                  projection?.originalAccounts[a.id]?.id ?? a.id,
+                  domain: 'finance',
+                ),
+            canEditTransfer: (transfer) =>
+                writable(projection?.transferScopeIds[transfer.id]) &&
+                canEditSharedRecord(
+                  state,
+                  projection?.transferScopeIds[transfer.id] ?? scope.id,
+                  'financeTransfer',
+                  projection?.originalTransfers[transfer.id]?.id ?? transfer.id,
+                  domain: 'finance',
+                ),
             canPersonalPayment: (entry) {
               final original = originalEntries[entry.id] ?? entry;
               final origin = projection?.entryScopeIds[entry.id] ?? scope.id;

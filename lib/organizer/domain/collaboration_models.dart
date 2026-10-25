@@ -112,6 +112,8 @@ class SharedScope {
     this.projectRootId,
     this.requiredRecordContractVersion = 1,
     this.accessPolicyVersion = 1,
+    this.recordPolicyVersion = 0,
+    this.verifiedParentOwner = false,
     this.accessRevision = 0,
     this.organizationLeader = false,
     this.accessSource = 'direct',
@@ -132,6 +134,8 @@ class SharedScope {
   bool get isOwner => role == SharedRole.owner;
   final int requiredRecordContractVersion, sequence;
   final int accessPolicyVersion, accessRevision;
+  final int recordPolicyVersion;
+  final bool verifiedParentOwner;
   final bool organizationLeader;
   final String accessSource;
   final String? address;
@@ -161,6 +165,8 @@ class SharedScope {
     'projectRootId': projectRootId,
     'requiredRecordContractVersion': requiredRecordContractVersion,
     'accessPolicyVersion': accessPolicyVersion,
+    'recordPolicyVersion': recordPolicyVersion,
+    'verifiedParentOwner': verifiedParentOwner,
     'accessRevision': accessRevision,
     'organizationLeader': organizationLeader,
     'accessSource': accessSource,
@@ -192,6 +198,8 @@ class SharedScope {
     accessPolicyVersion: json['accessPolicyVersion'] is int
         ? json['accessPolicyVersion'] as int
         : 1,
+    recordPolicyVersion: json['recordPolicyVersion'] == 1 ? 1 : 0,
+    verifiedParentOwner: json['verifiedParentOwner'] == true,
     accessRevision: json['accessRevision'] is int
         ? json['accessRevision'] as int
         : 0,
@@ -389,6 +397,8 @@ class SharedConflict {
     required this.recordType,
     required this.reason,
     this.remoteDeleted = false,
+    this.remoteUpdatedByAccountId,
+    this.createdByAccountId,
     required Map<String, dynamic>? localPayload,
     required Map<String, dynamic>? remotePayload,
   }) : localPayload = localPayload == null
@@ -403,12 +413,14 @@ class SharedConflict {
   final SharedRecordType recordType;
   final String reason;
   final bool remoteDeleted;
+  final String? remoteUpdatedByAccountId, createdByAccountId;
   final Map<String, dynamic>? localPayload;
   final Map<String, dynamic>? remotePayload;
 }
 
 class SharedScopeData {
   SharedScopeData({
+    Map<String, String?> recordCreators = const {},
     Iterable<IdeaBoard> ideas = const [],
     Iterable<Garden> gardens = const [],
     Iterable<FinanceRecurrenceRule> financeRecurrenceRules = const [],
@@ -422,7 +434,8 @@ class SharedScopeData {
     Iterable<LocalTask> tasks = const [],
     Iterable<LocalShoppingList> shoppingLists = const [],
     Iterable<LocalShoppingItem> shoppingItems = const [],
-  }) : ideas = List.unmodifiable(ideas),
+  }) : recordCreators = Map.unmodifiable(recordCreators),
+       ideas = List.unmodifiable(ideas),
        gardens = List.unmodifiable(gardens),
        financeRecurrenceRules = List.unmodifiable(financeRecurrenceRules),
        people = List.unmodifiable(people),
@@ -435,6 +448,10 @@ class SharedScopeData {
        tasks = List.unmodifiable(tasks),
        shoppingLists = List.unmodifiable(shoppingLists),
        shoppingItems = List.unmodifiable(shoppingItems);
+
+  /// Verified transport provenance, separate from business model serialization.
+  /// Keys are domain-qualified because content and finance may share an ID.
+  final Map<String, String?> recordCreators;
   final List<IdeaBoard> ideas;
   final List<Garden> gardens;
   final List<FinanceRecurrenceRule> financeRecurrenceRules;
@@ -448,6 +465,17 @@ class SharedScopeData {
   final List<LocalTask> tasks;
   final List<LocalShoppingList> shoppingLists;
   final List<LocalShoppingItem> shoppingItems;
+}
+
+class CollaborationAutoMergeNotice {
+  const CollaborationAutoMergeNotice({
+    required this.key,
+    required this.scopeId,
+    required this.recordId,
+    required this.type,
+    required this.at,
+  });
+  final String key, scopeId, recordId, type, at;
 }
 
 class CollaborationState {
@@ -501,6 +529,7 @@ class CollaborationState {
     Iterable<String> projectSharingPendingScopeIds = const [],
     Map<String, SharedScopeData> data = const {},
     Iterable<SharedConflict> conflicts = const [],
+    Iterable<CollaborationAutoMergeNotice> autoMergeNotices = const [],
     this.pendingCount = 0,
     this.blockedCount = 0,
     this.isSyncing = false,
@@ -528,7 +557,8 @@ class CollaborationState {
          projectSharingPendingScopeIds,
        ),
        data = UnmodifiableMapView(data),
-       conflicts = List.unmodifiable(conflicts);
+       conflicts = List.unmodifiable(conflicts),
+       autoMergeNotices = List.unmodifiable(autoMergeNotices);
   final Map<String, List<SharedMember>> members;
   final Map<String, SharedFinancePolicy> financePolicies;
   final Map<String, List<SharedFinanceAccountChoice>> financeAccountChoices;
@@ -587,6 +617,7 @@ class CollaborationState {
   final Set<String> projectSharingPendingScopeIds;
   final Map<String, SharedScopeData> data;
   final List<SharedConflict> conflicts;
+  final List<CollaborationAutoMergeNotice> autoMergeNotices;
   final int pendingCount;
   final int blockedCount;
   final bool isSyncing;

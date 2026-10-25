@@ -316,6 +316,17 @@ extension CollaborationFinanceActions on CollaborationRepository {
       [partition, scopeId, id],
     );
     final old = rows.isEmpty ? null : rows.first;
+    await _requireRecordAuthor(
+      partition,
+      scopeId,
+      type.name,
+      id,
+      old: old,
+      payload: payload == null ? null : Map<String, dynamic>.from(payload),
+      deleted: deleted,
+      domain: 'finance',
+    );
+
     if (old != null && (old['type'] != type.name || old['deleted'] == 1)) {
       throw const CollaborationException('record_deleted');
     }
@@ -946,12 +957,25 @@ extension CollaborationFinancePlanningActions on CollaborationRepository {
 
   Future<void> _materializeSharedFinance(String p, String scopeId) async {
     final data = await _scopeData(p, scopeId), now = clock().toLocal();
+    final actor = _requireSession().profile.accountId;
+    final scopes = await database.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [p, scopeId],
+    );
+    final scope = SharedScope.fromJson(
+      CollaborationRepository._map(scopes.single['data']),
+    );
+    final owner = scope.isOwner || scope.verifiedParentOwner;
     final seen = {
       for (final e in data.financeEntries)
         if (e.recurrenceRuleId != null)
           '${e.recurrenceRuleId}:${e.occurrenceKey}',
     };
     for (final rule in data.financeRecurrenceRules.where((r) => r.active)) {
+      if (scope.recordPolicyVersion == 1 &&
+          !owner &&
+          data.recordCreators['finance:${rule.id}'] != actor)
+        continue;
       if (data.financeAccounts.any(
         (a) => a.id == rule.ledgerAccountId && a.archived,
       )) {

@@ -84,6 +84,7 @@ class NativeModerationAdminService extends NativeDatabase
                         if (($scope['project_root_id']??null)===$record['id']) { $this->change('UPDATE familyhub_scopes SET name=?,metadata_revision=metadata_revision+1 WHERE id=?',['[Content removed by administrator]',$scope['id']]); }
                     } else { $this->change('UPDATE familyhub_records SET deleted=1,payload=NULL,revision=revision+1,sequence=?,updated_at=?,updated_by=NULL WHERE scope_id=? AND id=?',[$sequence,$stamp,$scope['id'],$record['id']]); }
                     if (!$structural && $record['type']==='task') { (new NativeAttachmentService($this->container))->removeTarget($scope['id'],'task',$record['id']); }
+                    (new NativeNotificationWriter($this->container))->configurationForScope($scope['id'],$record['id']);
                     $this->change("UPDATE familyhub_reminders SET state='cancelled',revision=revision+1 WHERE scope_id=? AND target_id=? AND target_type=? AND state='pending'",[$scope['id'],$record['id'],$record['type']]);
                     $accounts=array_column((new NativeOrganizationAccess($this->container))->members($scope['id']),'accountId');
                     (new NativeNotificationWriter($this->container))->visibilityChanged($accounts);

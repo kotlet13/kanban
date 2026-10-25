@@ -112,6 +112,30 @@ abstract class SpreadsheetGateway {
   Future<void> clearDraft(String id);
 }
 
+/// Display-only snapshots already accepted locally. They carry no edit lease
+/// and never replace the gateway's fresh read/write authority checks.
+abstract interface class SpreadsheetLocalPreview {
+  Future<List<SpreadsheetDocument>?> cachedList();
+  Future<SpreadsheetRead?> cachedRead(String id);
+}
+
+/// Optional capability view for shared tables with per-record authorship.
+abstract interface class SpreadsheetRecordPermissions {
+  bool canEditDocument(SpreadsheetDocument document);
+  bool canDeleteDocument(SpreadsheetDocument document);
+}
+
+extension SpreadsheetRecordCapabilities on SpreadsheetGateway {
+  bool canEditDocument(SpreadsheetDocument document) =>
+      this is SpreadsheetRecordPermissions
+      ? (this as SpreadsheetRecordPermissions).canEditDocument(document)
+      : canEdit;
+  bool canDeleteDocument(SpreadsheetDocument document) =>
+      this is SpreadsheetRecordPermissions
+      ? (this as SpreadsheetRecordPermissions).canDeleteDocument(document)
+      : canEdit;
+}
+
 /// Zero based address with spreadsheet-standard finite safety bounds.
 class SpreadsheetAddress {
   const SpreadsheetAddress(this.row, this.column);

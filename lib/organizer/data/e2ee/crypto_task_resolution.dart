@@ -23,6 +23,30 @@ Future<bool> cryptoHasTaskDerivations(
   [partition, scope],
 )).isNotEmpty;
 
+/// Selects the financial dependency only for a signed finance writer and an
+/// unresolved, already verified task intent linked to an existing expense.
+/// This SQL hint grants no finance authority; the ordinary finance pass still
+/// obtains and verifies the current policy/head before reading or publishing.
+Future<bool> cryptoNeedsTaskDerivationFinanceRefresh(
+  CollaborationDatabase database,
+  String partition,
+  String scope, {
+  required String financeRole,
+}) async {
+  if (financeRole != 'write') return false;
+  return (await database.rows(
+    "SELECT 1 FROM crypto_business_records i WHERE i.partition=? AND i.scope_id=? "
+    "AND i.domain='content' AND i.type='taskDerivationIntent' AND i.deleted=0 "
+    "AND EXISTS(SELECT 1 FROM crypto_business_records f WHERE f.partition=i.partition AND f.scope_id=i.scope_id "
+    "AND f.domain='finance' AND f.type IN ('financeEntry','personalFinanceEntry') AND f.deleted=0 "
+    "AND json_extract(f.raw_payload,'\$.taskId')=json_extract(i.raw_payload,'\$.taskId')) "
+    "AND NOT EXISTS(SELECT 1 FROM crypto_business_records r WHERE r.partition=i.partition AND r.scope_id=i.scope_id "
+    "AND r.domain='finance' AND r.type='taskDerivationResolution' AND r.deleted=0 "
+    "AND json_extract(r.raw_payload,'\$.intentProofHash')=i.record_proof_hash AND json_extract(r.raw_payload,'\$.state')='derived') LIMIT 1",
+    [partition, scope],
+  )).isNotEmpty;
+}
+
 /// Keyset traversal keeps memory bounded without permanently revisiting only
 /// the first sixteen already resolved entries. Updating a payload never changes
 /// its authenticated wire address, so it cannot move behind this cursor.

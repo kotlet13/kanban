@@ -1,3 +1,5 @@
+import '../account_work_coordinator.dart';
+import 'crypto_capability_discovery.dart';
 import 'crypto_finance_topology_creation.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -10,6 +12,7 @@ import 'account_directory_v2.dart';
 import 'crypto_json.dart';
 import 'crypto_record_address.dart';
 import 'crypto_record_proof_codec.dart';
+import 'crypto_scope_review_policy.dart';
 import 'crypto_sync_repository.dart';
 import 'scope_crypto_codec.dart';
 import 'scope_key_contributions.dart';
@@ -71,7 +74,17 @@ class ScopeCryptoManager {
 
   final SessionCryptoAccess access;
   static final _queues = <String, Future<void>>{};
-  Future<T> _exclusive<T>(String scopeId, Future<T> Function() body) async {
+  Future<T> _exclusive<T>(String scopeId, Future<T> Function() body) =>
+      withAccountWorkJob(
+        access.account.directory.transport,
+        AccountWorkKind.scopeManagement,
+        () => _accountWorkExclusive(scopeId, body),
+      );
+
+  Future<T> _accountWorkExclusive<T>(
+    String scopeId,
+    Future<T> Function() body,
+  ) async {
     final key = '${access.account.store.partition}:$scopeId';
     final previous = _queues[key] ?? Future<void>.value();
     final task = previous.then((_) => body());
@@ -687,33 +700,41 @@ class ScopeCryptoManager {
           );
       final normalized = <Map<String, dynamic>>[];
       for (final member in members) {
-        final inheritedMarker = inheritedPreauthorizations.where((entry) =>
-          entry['accountId'] == member['accountId']).firstOrNull;
+        final inheritedMarker = inheritedPreauthorizations
+            .where((entry) => entry['accountId'] == member['accountId'])
+            .firstOrNull;
         VerifiedAccountDirectory? retainedInheritedDirectory;
         if (inheritedMarker != null) {
           final parent = await access.currentHead(
-            inheritedMarker['invitationScopeId'] as String, online: true);
+            inheritedMarker['invitationScopeId'] as String,
+            online: true,
+          );
           final parentMember = parent.member(member['accountId'] as String);
           final role = parentMember['role'] == 'viewer' ? 'viewer' : 'member';
-          if (member['role'] != role || member['manageKeys'] != (role == 'member') ||
+          if (member['role'] != role ||
+              member['manageKeys'] != (role == 'member') ||
               role == 'viewer' && member['financeRole'] == 'write') {
             throw const FormatException('crypto_invitation_new_child_rights');
           }
           retainedInheritedDirectory = await access.directoryAt(
-            scopeId: parent.scopeId, scopeHeadHash: parent.headHash,
+            scopeId: parent.scopeId,
+            scopeHeadHash: parent.headHash,
             accountId: member['accountId'] as String,
             directoryHeadHash: parentMember['directoryHeadHash'] as String,
-            online: true);
+            online: true,
+          );
         }
-        final directory = retainedInheritedDirectory ?? (member['accountId'] == author.accountId
-            ? author
-            : await access.currentMemberDirectory(
-                scopeId,
-                generationId == null
-                    ? cryptoZeroHash
-                    : (existing.single['headHash'] ?? cryptoZeroHash),
-                member['accountId'],
-              ));
+        final directory =
+            retainedInheritedDirectory ??
+            (member['accountId'] == author.accountId
+                ? author
+                : await access.currentMemberDirectory(
+                    scopeId,
+                    generationId == null
+                        ? cryptoZeroHash
+                        : (existing.single['headHash'] ?? cryptoZeroHash),
+                    member['accountId'],
+                  ));
         if (directory.accountId != author.accountId) {
           await access.identities.requireVerified(
             directory.accountId,
@@ -986,6 +1007,66 @@ class ScopeCryptoManager {
     );
   });
 
+  Future<bool> _hasPreparedRotationReview(
+    String scopeId,
+    String reviewId,
+  ) async {
+    final rows = await access.account.store.database.rows(
+      "SELECT 1 FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND ((state='scopeRotationDraft' AND json_extract(CAST(payload AS TEXT),'\$.reviewId')=?) OR (state='scopeSuccessorDraft' AND intent_id=?)) LIMIT 1",
+      [
+        access.account.store.partition,
+        scopeId,
+        reviewId,
+        '$reviewId:successor',
+      ],
+    );
+    return rows.isNotEmpty;
+  }
+
+  Future<void> _requireReviewPolicyProjection(
+    String scopeId,
+    String reviewId,
+  ) async {
+    final account = access.account;
+    final records = CryptoRecordProofCodec(account.directory.reducer.crypto);
+    for (final domain in const ['content', 'finance']) {
+      String after = '';
+      while (true) {
+        final rows = await account.store.database.rows(
+          'SELECT record_id,wire FROM crypto_scope_review_records WHERE partition=? AND scope_id=? AND review_id=? AND domain=? AND record_id>? ORDER BY record_id LIMIT 100',
+          [account.store.partition, scopeId, reviewId, domain, after],
+        );
+        if (rows.isEmpty) break;
+        for (final row in rows) {
+          final wire = Map<String, dynamic>.from(
+            jsonDecode(row['wire'] as String) as Map,
+          );
+          final proof = Map<String, dynamic>.from(
+            wire['authorization']['recordProof'] as Map,
+          );
+          final record = Map<String, dynamic>.from(
+            CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map,
+          );
+          records.validateUntrustedRecord(record);
+          if (record['scopeId'] != scopeId ||
+              record['domain'] != domain ||
+              record['id'] != row['record_id'] ||
+              wire['revision'] != record['expectedRevision'] + 1) {
+            throw const FormatException('scope_review_policy_binding');
+          }
+          await CryptoScopeReviewPolicy.requireVerifiedProjection(
+            database: account.store.database,
+            partition: account.store.partition,
+            record: record,
+            recordProofHash: await records.digest(proof),
+            revision: wire['revision'] as int,
+          );
+        }
+        after = rows.last['record_id'] as String;
+      }
+    }
+  }
+
   /// Review a complete encrypted inventory before changing an existing scope.
   /// Emergency recovery deliberately labels this as an accepted candidate,
   /// because a file proves identity rather than when old records were signed.
@@ -1021,6 +1102,9 @@ class ScopeCryptoManager {
           );
         }
         await preauthorizedInvitationAdmission.revalidate(source);
+        if (!await _hasPreparedRotationReview(scopeId, fixedReviewId)) {
+          await _requireReviewPolicyProjection(scopeId, fixedReviewId);
+        }
         return ScopeRotationReview(value);
       }
     }
@@ -1048,6 +1132,14 @@ class ScopeCryptoManager {
       await access.hydrateExistingCandidateKeys(scopeId);
     }
     final id = fixedReviewId ?? crypto.randomId();
+    if (fixedReviewId != null) {
+      await CryptoScopeReviewPolicy.resetUnsignedPartialReview(
+        database: account.store.database,
+        partition: account.store.partition,
+        scopeId: scopeId,
+        reviewId: id,
+      );
+    }
     final domains = <String, dynamic>{};
     var emergency = false;
     for (final member in source.members) {
@@ -1059,6 +1151,22 @@ class ScopeCryptoManager {
       emergency |= current.deviceSnapshotHash != member['deviceSnapshotHash'];
     }
     final records = CryptoRecordProofCodec(crypto);
+    // Rotation reviews read the same encrypted records as ordinary sync. Older
+    // servers retain their original request shape; policy v1 is advertised only
+    // after identity-bound capability discovery.
+    final capabilities = await CryptoCapabilityDiscovery.read(
+      transport: account.directory.transport,
+      session: account.directory.session,
+    );
+    if (!account.directory.isCurrent()) {
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    }
+    if (capabilities['serverId'] !=
+        account.directory.session.profile.serverId) {
+      throw const FormatException('scope_review_server');
+    }
+    final recordPolicySupported =
+        (capabilities['recordPolicyVersions'] as List? ?? const []).contains(1);
     for (final domain in ['content', 'finance']) {
       if (financeOnly && domain != 'finance') continue;
       if (source.commitment(domain) == null) continue;
@@ -1078,6 +1186,7 @@ class ScopeCryptoManager {
           'accessRevision': transportAccessRevision,
           'cursor': cursor,
           'limit': 20,
+          if (recordPolicySupported) 'supportedRecordPolicyVersion': 1,
         });
         if (page['scopeSequence'] is! int ||
             page['records'] is! List ||
@@ -1101,6 +1210,13 @@ class ScopeCryptoManager {
           final recordHead = access.verifiedCandidateAncestor(
             r['membershipHeadHash'],
           );
+          if (r['scopeId'] != scopeId ||
+              r['domain'] != domain ||
+              recordHead.scopeId != scopeId ||
+              recordHead.epoch != r['epoch'] ||
+              recordHead.accessRevision != r['accessRevision']) {
+            throw const FormatException('scope_review_record_context');
+          }
           late Map<String, dynamic> decoded;
           if ((r['metadata'] as Map).containsKey('migrationOrigin')) {
             if (r['scopeId'] != scopeId ||
@@ -1127,7 +1243,8 @@ class ScopeCryptoManager {
             );
           } else {
             final member = recordHead.member(r['accountId']);
-            if (member['role'] == 'viewer' ||
+            if (member['role'] == 'viewer' &&
+                    !CryptoScopeReviewPolicy.allowsContentViewer(r) ||
                 domain == 'finance' && member['financeRole'] != 'write') {
               throw const FormatException('scope_review_author');
             }
@@ -1148,6 +1265,13 @@ class ScopeCryptoManager {
               currentEpoch: true,
             );
           }
+          await CryptoScopeReviewPolicy.requireVerifiedProjection(
+            database: account.store.database,
+            partition: account.store.partition,
+            record: decoded,
+            recordProofHash: await records.digest(proof),
+            revision: wire['revision'] as int,
+          );
           final key = await access.candidateKey(recordHead, domain);
           try {
             final plaintext = records.openVerified(decoded, key.key);
@@ -1344,6 +1468,9 @@ class ScopeCryptoManager {
         base64Encode((rows.single['payload'] as List).cast<int>()) !=
             base64Encode(CryptoJson.encode(review.value))) {
       throw const FormatException('scope_review_not_local');
+    }
+    if (!await _hasPreparedRotationReview(review.scopeId, review.id)) {
+      await _requireReviewPolicyProjection(review.scopeId, review.id);
     }
     final catalog = await _catalogScope(review.scopeId);
     // New transitions follow the existing server membership admission limit.
@@ -2054,7 +2181,16 @@ class ScopeCryptoManager {
     }
   }
 
-  Future<List<Map<String, dynamic>>> financeDrafts(String scopeId) async {
+  Future<List<Map<String, dynamic>>> financeDrafts(String scopeId) =>
+      withAccountWorkJob(
+        access.account.directory.transport,
+        AccountWorkKind.scopeManagement,
+        () => _accountWorkFinanceDrafts(scopeId),
+      );
+
+  Future<List<Map<String, dynamic>>> _accountWorkFinanceDrafts(
+    String scopeId,
+  ) async {
     final result = <Map<String, dynamic>>[];
     String? after;
     while (true) {

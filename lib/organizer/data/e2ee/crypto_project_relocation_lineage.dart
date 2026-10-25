@@ -8,8 +8,14 @@ import 'crypto_sync_repository.dart';
 /// chain. Cached SQL offsets are never sufficient to establish this lineage.
 Future<Map<String, dynamic>?> verifiedProjectRelocationLineage(
   CryptoBusinessSession context,
-  CryptoProjectionRecord target,
-) async {
+  CryptoProjectionRecord target, {
+  Future<void> Function(
+    Map<String, dynamic> record,
+    CryptoRecordAuthority authority,
+    Map<String, dynamic> wire,
+  )?
+  onVerifiedAncestor,
+}) async {
   if (target.relocationOrigin != null) return target.relocationOrigin;
   if (target.wire['revision'] == 1) return null;
   final r = target.record, root = target.historicalAnchorWire ?? target.wire;
@@ -84,6 +90,17 @@ Future<Map<String, dynamic>?> verifiedProjectRelocationLineage(
     );
     if (!context.account.directory.isCurrent())
       throw const CryptoAuthorityPending('crypto_stale_identity');
+    if (onVerifiedAncestor != null) {
+      final body = Map<String, dynamic>.from(
+        CryptoJson.decode(
+              cryptoBase64(
+                wire['authorization']['recordProof']['commandBase64'],
+              ),
+            )
+            as Map,
+      );
+      await onVerifiedAncestor(body, authority, wire);
+    }
     await context.db.execute(
       'INSERT OR IGNORE INTO crypto_business_history_proofs VALUES(?,?,?,?,?,?,?,?)',
       [

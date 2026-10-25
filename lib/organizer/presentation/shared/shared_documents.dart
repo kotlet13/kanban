@@ -90,6 +90,7 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
     return repository.openDocuments(
       widget.scope.id,
       visible: () => _visible,
+      localPreviewFeature: widget.tables ? 'spreadsheets' : 'attachments',
       onAccessLost: () {
         if (mounted) setState(() => _accessLost = true);
       },
@@ -126,6 +127,7 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
             if (widget.tables) {
               return SpreadsheetTablesPage(
                 gateway: _tableGateway ??= data.tables,
+                changes: data.changes,
                 onReport: (id) => showContentReport(
                   context,
                   ref,
@@ -142,7 +144,9 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
                         );
                         return AttachmentsPanel(
                           gateway: _attachments(data, target),
-                          canEdit: data.canEdit,
+                          changes: data.changes,
+                          canEdit: data.canAddAttachment(target),
+                          canDelete: data.canDeleteAttachment,
                           onReport: (file) => showContentReport(
                             context,
                             ref,
@@ -167,7 +171,9 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
               body: SafeArea(
                 child: AttachmentsPanel(
                   gateway: _attachments(data, target),
-                  canEdit: data.canEdit,
+                  changes: data.changes,
+                  canEdit: data.canAddAttachment(target),
+                  canDelete: data.canDeleteAttachment,
                   onReport: (file) => showContentReport(
                     context,
                     ref,

@@ -24,28 +24,30 @@ void main() {
   CollaborationSyncSchedule setup() =>
       CollaborationSyncSchedule()..identity('A:epoch1');
 
-  test('first drained completion waits60 seconds without a startup burst', () {
+  test('first drained completion waits30 seconds without a startup burst', () {
     final s = setup();
     expect(s.due(start, busy: false), isTrue);
     s.beginAttempt();
     s.complete(result(1));
-    for (final seconds in [0, 3, 12, 30, 42, 59]) {
+    for (final seconds in [0, 3, 12, 21, 29]) {
       expect(
         s.due(start.add(Duration(seconds: seconds)), busy: false),
         isFalse,
       );
     }
-    expect(s.due(start.add(const Duration(seconds: 60)), busy: false), isTrue);
+    expect(s.due(start.add(const Duration(seconds: 30)), busy: false), isTrue);
   });
   test('Mac focus burst retains original idle deadline', () {
-    final s = setup()..complete(result(1));
-    for (var second = 1; second < 60; second++) {
+    final s = setup()
+      ..beginAttempt()
+      ..complete(result(1));
+    for (var second = 1; second < 30; second++) {
       s.resume(start.add(Duration(seconds: second)));
       expect(s.due(start.add(Duration(seconds: second)), busy: false), isFalse);
     }
-    expect(s.nextAt, start.add(const Duration(seconds: 60)));
-    s.resume(start.add(const Duration(seconds: 60)));
-    expect(s.due(start.add(const Duration(seconds: 60)), busy: false), isTrue);
+    expect(s.nextAt, start.add(const Duration(seconds: 30)));
+    s.resume(start.add(const Duration(seconds: 30)));
+    expect(s.due(start.add(const Duration(seconds: 30)), busy: false), isTrue);
   });
   test('initial busy demand survives skipped attempt', () {
     final s = setup();
@@ -68,13 +70,16 @@ void main() {
       expect(s.due(start, busy: false), isFalse);
     },
   );
-  test('successful drained completion demonstrably covers busy new work', () {
-    final s = setup()
-      ..beginAttempt()
-      ..localEdit();
-    s.complete(result(1));
-    expect(s.due(start, busy: false), isFalse);
-  });
+  test(
+    'new demand remains even when current completion drained older work',
+    () {
+      final s = setup()
+        ..beginAttempt()
+        ..localEdit();
+      s.complete(result(1));
+      expect(s.due(start, busy: false), isTrue);
+    },
+  );
   test(
     'same-count replacement IDs and linked intent transitions wake once',
     () {
@@ -138,7 +143,7 @@ void main() {
     final s = setup()
       ..complete(result(1, error: StateError('limited'), retryAt: retry));
     s.localEdit();
-    s.resume(start.add(const Duration(seconds: 60)));
+    s.resume(start.add(const Duration(seconds: 30)));
     expect(
       s.due(retry.subtract(const Duration(seconds: 1)), busy: false),
       isFalse,
@@ -151,7 +156,7 @@ void main() {
       final s = setup()..complete(result(2));
       expect(s.complete(result(1, error: StateError('late'))), isFalse);
       expect(s.complete(result(3, identity: 'B:epoch2')), isFalse);
-      expect(s.nextAt, start.add(const Duration(seconds: 60)));
+      expect(s.nextAt, start.add(const Duration(seconds: 30)));
       s.identity('B:epoch2');
       expect(s.due(start, busy: false), isTrue);
       expect(s.retryAt, isNull);
@@ -161,8 +166,30 @@ void main() {
     final s = setup()..complete(result(1));
     s.work(empty);
     s.complete(result(1));
-    expect(s.nextAt, start.add(const Duration(seconds: 60)));
+    expect(s.nextAt, start.add(const Duration(seconds: 30)));
     s.localEdit();
     expect(s.due(start, busy: false), isTrue);
   });
+  test(
+    'unchanged probe sets30s deadline and preserves midflight invalidation',
+    () {
+      final s = setup()..beginAttempt();
+      s.checked(start);
+      expect(
+        s.due(start.add(const Duration(seconds: 29)), busy: false),
+        isFalse,
+      );
+      expect(
+        s.due(start.add(const Duration(seconds: 30)), busy: false),
+        isTrue,
+      );
+      s.beginAttempt();
+      s.localEdit();
+      s.checked(start.add(const Duration(seconds: 30)));
+      expect(
+        s.due(start.add(const Duration(seconds: 30)), busy: false),
+        isTrue,
+      );
+    },
+  );
 }

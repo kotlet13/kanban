@@ -170,10 +170,21 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       epoch,
       operation,
       params,
+      visibleTaskMetadata: operation == 'scopes.list'
+          ? CryptoVisibleTaskMetadataTarget(scopeId, recordId)
+          : null,
     ).timeout(const Duration(seconds: 5) - elapsed.elapsed);
     try {
       final listed = await call('scopes.list', {});
       _checkEpoch(epoch);
+      if ((listed['pendingCryptoScopeIds'] as List? ?? const []).contains(
+        scopeId,
+      )) {
+        return result(NotificationOpenStatus.requiresConnection);
+      }
+      if (elapsed.elapsed >= const Duration(seconds: 5)) {
+        return result(NotificationOpenStatus.offline);
+      }
       if (!accessible()) return result(NotificationOpenStatus.permissionDenied);
       final wire = (listed['scopes'] as List)
           .cast<Map>()
@@ -181,7 +192,7 @@ extension CollaborationNotificationRouting on CollaborationRepository {
           .firstOrNull;
       if (wire == null) {
         await _blockScope(session.profile.partition, scopeId, epoch);
-        await refreshLocal();
+        await refreshLocal(scopeIds: {scopeId});
         return result(NotificationOpenStatus.permissionDenied);
       }
       final scope = SharedScope.fromJson(Map<String, dynamic>.from(wire));
@@ -192,7 +203,7 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         }
         await _upsertScope(session.profile.partition, scope);
       });
-      await refreshLocal();
+      await refreshLocal(scopeIds: {scopeId});
       if (!accessible()) return result(NotificationOpenStatus.permissionDenied);
       final rows = await database.rows(
         'SELECT cursor FROM scopes WHERE partition=? AND id=?',
@@ -225,7 +236,7 @@ extension CollaborationNotificationRouting on CollaborationRepository {
           await _applyRemote(session.profile.partition, scopeId, record);
         }
       });
-      await refreshLocal();
+      await refreshLocal(scopeIds: {scopeId});
       _checkEpoch(epoch);
       if (!accessible()) return result(NotificationOpenStatus.permissionDenied);
       return result(
@@ -241,9 +252,9 @@ extension CollaborationNotificationRouting on CollaborationRepository {
       if (error.code == 'network') {
         return result(NotificationOpenStatus.offline);
       }
-      if (error.code == 'permission_revoked') {
+      if (error.code == 'permission_revoked' || error.code == 'scope_deleted') {
         await _blockScope(session.profile.partition, scopeId, epoch);
-        await refreshLocal();
+        await refreshLocal(scopeIds: {scopeId});
         return result(NotificationOpenStatus.permissionDenied);
       }
       rethrow;

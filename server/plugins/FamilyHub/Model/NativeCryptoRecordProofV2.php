@@ -99,7 +99,7 @@ class NativeCryptoRecordProofV2 extends NativeDatabase
             throw new NativeError('validation_error');
         }
         $domain = $this->domain($r['type']);
-        if ($r['domain'] !== $domain || $r['contentContract'] !== ($domain === 'finance' ? 3 : 6)) {
+        if ($r['domain'] !== $domain || !in_array($r['contentContract'], $domain === 'finance' ? [3,4] : [6,7], true)) {
             throw new NativeError('crypto_domain_contract', 409);
         }
         $this->digest($r['membershipHeadHash']);
@@ -120,6 +120,10 @@ class NativeCryptoRecordProofV2 extends NativeDatabase
         NativeCryptoRecordAddressV2::wireId($r['id']);
         NativeCryptoRecordAddressV2::verify($r);
         $this->metadata($r['metadata']);
+        if(isset($r['metadata']['recordPolicyCompanion'])&&($r['type']!=='taskDerivationIntent'||$r['contentContract']!==6))throw new NativeError('crypto_record_policy_companion',409);
+        $restore=$r['metadata']['recordRestore']??null;
+        if(($restore!==null)!==(($r['metadata']['recordPolicy']['operation']??null)==='restore')||$restore!==null&&
+            ($r['deleted']||$r['expectedRevision']<1||$r['contentContract']!==($domain==='finance'?4:7)||!(new NativeCryptoRecordPolicyV1($this->container))->business($r['type'])||$restore['tombstoneProofHash']!==$r['previousRecordHash']))throw new NativeError('crypto_record_restore_invalid',409);
         if (array_key_exists('migrationOrigin',$r['metadata']) &&
             ($r['expectedRevision']!==0 || $r['previousRecordHash']!==NativeCryptoDirectoryV2::ZERO)) {
             throw new NativeError('crypto_migration_origin_context',409);
@@ -165,7 +169,16 @@ class NativeCryptoRecordProofV2 extends NativeDatabase
     {
         if (!is_array($m)) {
             throw new NativeError('validation_error');
-        }$this->fields($m, ['references','uniqueRefs','blobIds','identity'], ['referenceVersions','repairOf','reminderState','notificationState','projectState','auditState','schedulingUse','migrationOrigin','inlineDeletion','projectRelocation']);
+        }$this->fields($m, ['references','uniqueRefs','blobIds','identity'], ['referenceVersions','repairOf','reminderState','notificationState','projectState','auditState','schedulingUse','migrationOrigin','inlineDeletion','projectRelocation','recordPolicy','recordPolicyCompanion','recordRestore']);
+        if(array_key_exists('recordPolicy',$m)) (new NativeCryptoRecordPolicyV1($this->container))->validate($m['recordPolicy']);
+        if(array_key_exists('recordRestore',$m)) (new NativeCryptoRecordPolicyV1($this->container))->validateRestore($m['recordRestore']);
+        if(array_key_exists('recordPolicyCompanion',$m)){
+            $companion=$m['recordPolicyCompanion'];
+            if(!is_array($companion))throw new NativeError('crypto_record_policy_companion',409);
+            $this->fields($companion,['version','taskId','taskRevision','taskProofHash']);
+            if($companion['version']!==1||!is_int($companion['taskRevision'])||$companion['taskRevision']<1)throw new NativeError('crypto_record_policy_companion',409);
+            NativeCryptoRecordAddressV2::wireId($companion['taskId']);$this->digest($companion['taskProofHash']);
+        }
         if (array_key_exists('projectRelocation',$m)) {
             if(array_key_exists('migrationOrigin',$m)||array_key_exists('inlineDeletion',$m))throw new NativeError('crypto_relocation_tag');
             NativeCryptoProjectRelocationCodecV2::tag($m['projectRelocation']);

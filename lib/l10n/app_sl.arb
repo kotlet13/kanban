@@ -1317,6 +1317,10 @@
   "sharingInviteProjectOnly": "Samo projekt",
   "sharingInviteSpaceDescription": "Cel prostor: skupne vsebine in finance ter vsi sedanji in prihodnji projekti.",
   "sharingInviteProjectDescription": "Samo ta projekt: opravila, dogodki, obvestila in finance. Brez članstva v nadrejenem prostoru.",
+  "sharingRecordMemberDescription": "Lahko ustvarja zapise, ureja in briše svoje zapise, ureja dodeljena opravila ter označuje nakupe. Zapise drugih lahko briše samo lastnik. Finančne pravice so ločene.",
+  "sharingRecordViewerDescription": "Lahko vidi skupno vsebino, ureja in briše svoje zapise, ureja dodeljena opravila ter označuje nakupe. Ne more ustvarjati zapisov ali brisati zapisov drugih. Finančne pravice so ločene.",
+  "sharingRecordOwnerDescription": "Lastnik lahko ureja in briše vse zapise v tem obsegu. Finančne pravice so ločene.",
+  "sharingRecordAccessReviewDescription": "Člani dobijo dostop do skupne vsebine ter sedanjih in prihodnjih projektov. Lahko ustvarjajo zapise, urejajo in brišejo svoje zapise, urejajo dodeljena opravila ter označujejo nakupe. Finančne pravice in upravljanje dostopa se dodelijo ločeno. Osebe, povabljene samo v projekt, ohranijo projektni obseg. Stara čakajoča povabila bodo preklicana.",
   "sharingMemberFullDescription": "Polni dostop: ustvarja, ureja in briše vsebino ter finance, upravlja nastavitve in povabila ter vabi in odstranjuje člane. Lastništvo ostane zaščiteno.",
   "sharingViewerDescription": "Samo ogled vsebine in financ. Brez urejanja, brisanja ali upravljanja.",
   "sharingLegacySpaceDescription": "Ta prostor uporablja starejša pravila dostopa. Članstvo še ne vključuje vseh projektov in financ. Lastnik lahko v Nastavitvah prostora pregleda in potrdi novo deljenje.",
@@ -1723,6 +1727,8 @@
   "financeChooseEntryScope": "Kam spada transakcija?",
   "financeParentSnapshotsIncomplete": "Pregled projektnih financ še ni popoln. Celotno stanje računov bo prikazano po uskladitvi vseh dovoljenih projektov.",
   "financeAccountChoicesUnavailable": "Računi prostora še niso na voljo. Povežite se in osvežite projekt.",
+  "financeEntryAccountsLoading": "Pripravljamo račune. Vnos lahko že urejate.",
+  "financeEntryAccountsUnavailable": "Računov trenutno ni mogoče osvežiti. Osnutek in že znani računi so ohranjeni.",
   "financeProjectMovement": "Gibanje projekta",
   "financeViewTotalsDescription": "Seštevki upoštevajo izbrane filtre in knjižene vnose. Prenosi med računi niso nov prihodek ali strošek.",
   "financeFilteredMovement": "Pregled prilivov in stroškov",
@@ -1946,8 +1952,20 @@
   "hostingOperatorSupplied": "Upravljavec (podatek tega strežnika): {name}",
   "hostingContactSupplied": "Kontakt (podatek tega strežnika): {contact}",
   "hostingTrustExplanation": "Upravljavec skrbi za račune in povezovanje uporabnikov. Z nadaljevanjem mu zaupate, da uporabnike pravilno prepozna. Pri E2EE se vsebina odklepa na napravah; na nepričakovano spremembo identitete vas aplikacija opozori.",
-  "@hostingOperatorSupplied": {"placeholders": {"name": {"type": "String"}}},
-  "@hostingContactSupplied": {"placeholders": {"contact": {"type": "String"}}},
+  "@hostingOperatorSupplied": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@hostingContactSupplied": {
+    "placeholders": {
+      "contact": {
+        "type": "String"
+      }
+    }
+  },
   "cryptoSharingIdentityChanged": "Identiteta računa se je spremenila ali ne ustreza shranjenemu zaupanju. Dostop je zaradi zaščite ustavljen. Pred nadaljevanjem preverite osebo in gostovanje po znanem kanalu.",
   "cryptoSharingCheckAccess": "Preveri dostop",
   "cryptoSharingAccessLabel": "Dostop",
@@ -1986,5 +2004,17 @@
   "cryptoInvitationAcceptedNeedsApproval": "Povabilo sprejeto — potrdite dostop",
   "cryptoInvitationContentAccess": "S tem delite dosedanjo vsebino in nove spremembe skladno z zgornjimi dovoljenji.",
   "cryptoInvitationAcceptanceUnavailable": "Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni.",
-  "sharingInvitationNewAccountAccess": "Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih."
+  "sharingInvitationNewAccountAccess": "Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih.",
+  "organizerNewerVersion": "Na voljo je novejša različica. Vaše spremembe so ohranjene; ob shranjevanju jih bomo primerjali.",
+  "organizerFinanceChoicesLoading": "Pripravljamo račune za strošek. Opravilo lahko že uredite in shranite.",
+  "organizerFinanceChoicesUnavailable": "Računi za strošek trenutno niso na voljo. Opravilo lahko še vedno uredite.",
+  "recordEditForbidden": "Ta zapis lahko ureja lastnik prostora ali avtor; opravilo tudi dodeljeni uporabnik.",
+  "recordDeleteForbidden": "Ta zapis lahko izbriše lastnik prostora ali avtor.",
+  "recordAssignmentForbidden": "Dodelitev opravila lahko spremeni lastnik prostora ali avtor.",
+  "sharingRestoreRecord": "Obnovi",
+  "sharingRestorePairedPending": "Zapis je povezan s stroškom opravila ali njegovih finančnih povezav ni bilo mogoče preveriti. Obnova ni bila izvedena. Osnutek je ohranjen.",
+  "sharingRestoreBlobPending": "Ta obnova zahteva nov prenos velike šifrirane vsebine. Obnova ni bila izvedena. Osnutek je ohranjen.",
+  "sharingRestoreTablePending": "Za izbrisano tabelo ni mogoče pridobiti zakupa za urejanje, ki je potreben za obnovo. Obnova ni bila izvedena. Osnutek je ohranjen.",
+  "sharingRestoreHistoryPending": "Obnova čaka na preverjeno zgodovino ali podporo strežnika. Osnutek je ohranjen.",
+  "sharingRestoreForbidden": "Zapis lahko obnovi samo lastnik prostora ali prvotni avtor. Osnutek je ohranjen."
 }

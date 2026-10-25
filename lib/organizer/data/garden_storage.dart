@@ -9,7 +9,7 @@ class GardenStorage {
   final CollaborationDatabase database;
   String get workspaceKey => database.selectedLocalWorkspaceId;
   int get identityGeneration => database.personalIdentityGeneration;
-  Stream<void> get changes => database.personalChanges.stream;
+  Stream<void> get changes => database.changesFor('garden');
   Future<GardenSnapshot> read() => database.transaction(() async {
     final all = await readAll();
     final space = database.selectedLocalWorkspaceId;

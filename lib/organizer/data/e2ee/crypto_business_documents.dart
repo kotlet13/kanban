@@ -1,3 +1,6 @@
+import '../account_work_coordinator.dart';
+import 'crypto_record_blob_target.dart';
+import 'crypto_record_policy.dart';
 import 'crypto_migration_idea_draft_recovery.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -65,6 +68,7 @@ class CryptoBusinessDocuments {
     Map<String, dynamic> raw,
   ) {
     if (domain != 'content') return null;
+    raw = CryptoRecordPolicy.businessPayload(raw);
     if (type == 'table') {
       if (_manifest(raw)) {
         if (raw.length != 3 ||
@@ -144,6 +148,7 @@ class CryptoBusinessDocuments {
     CryptoProjectionRecord record,
     Map<String, dynamic> raw,
   ) {
+    raw = CryptoRecordPolicy.businessPayload(raw);
     if (raw['documentType'] == 'payload') {
       if (raw.length != 4 ||
           raw['payloadType'] != record.record['type'] ||
@@ -290,6 +295,12 @@ class CryptoBusinessDocuments {
   void _recordBinding(CryptoProjectionRecord value, Map<String, dynamic> d) {
     blobs.validate(d);
     final r = value.record;
+    if (d['recordPolicyTarget'] is Map)
+      CryptoRecordBlobTarget.requireRecordBinding(
+        Map<String, dynamic>.from(d['recordPolicyTarget'] as Map),
+        r,
+      );
+
     if (d['scopeId'] != r['scopeId'] ||
         d['domain'] != r['domain'] ||
         d['epoch'] > r['epoch'] ||
@@ -312,8 +323,18 @@ class CryptoBusinessDocuments {
       if (decoded is! Map) {
         throw const FormatException('crypto_document_payload');
       }
+      if (raw.containsKey(CryptoRecordPolicy.secretField) &&
+          decoded.containsKey(CryptoRecordPolicy.secretField) &&
+          CryptoBusinessJson.canonical(raw[CryptoRecordPolicy.secretField]) !=
+              CryptoBusinessJson.canonical(
+                decoded[CryptoRecordPolicy.secretField],
+              )) {
+        throw const FormatException('crypto_record_policy_blob_secret');
+      }
       return {
         ...Map<String, dynamic>.from(decoded),
+        if (raw.containsKey(CryptoRecordPolicy.secretField))
+          CryptoRecordPolicy.secretField: raw[CryptoRecordPolicy.secretField],
         if (raw['documentType'] == 'payload')
           'cryptoPayloadBlob': descriptor
         else
@@ -337,7 +358,7 @@ class CryptoBusinessDocuments {
         raw['scopeId'] != value.record['scopeId']) {
       throw const FormatException('crypto_document_identity');
     }
-    return {...raw}..remove('cryptoBlob');
+    return CryptoRecordPolicy.businessPayload(raw)..remove('cryptoBlob');
   }
 
   Future<Map<String, dynamic>> prepareOutgoing(
@@ -438,8 +459,10 @@ class CryptoBusinessDocuments {
     );
     return [
       for (final r in rows)
-        Map<String, dynamic>.from(
-          jsonDecode(r['raw_payload'] as String) as Map,
+        CryptoRecordPolicy.businessPayload(
+          Map<String, dynamic>.from(
+            jsonDecode(r['raw_payload'] as String) as Map,
+          ),
         ),
     ];
   }
@@ -461,7 +484,7 @@ class CryptoBusinessDocuments {
   }
 
   Map<String, dynamic> _sheet(Map<String, dynamic> raw) =>
-      {...raw}..remove('cryptoBlob');
+      CryptoRecordPolicy.businessPayload(raw)..remove('cryptoBlob');
   Future<Map<String, dynamic>> _lease(String scope, String id) async {
     final head = await context.access.currentHead(scope, online: true);
     final reply = await context.account.directory.call('crypto2.table.lease', {
@@ -565,6 +588,15 @@ class CryptoBusinessDocuments {
   }
 
   Future<Map<String, dynamic>> dispatch(
+    String operation,
+    Map<String, Object?> params,
+  ) => withAccountWorkJob(
+    context.account.directory.transport,
+    AccountWorkKind.documents,
+    () => _accountWorkDispatch(operation, params),
+  );
+
+  Future<Map<String, dynamic>> _accountWorkDispatch(
     String operation,
     Map<String, Object?> params,
   ) async {
@@ -676,26 +708,8 @@ class CryptoBusinessDocuments {
       Map<String, dynamic>? raw = action['intent']['raw'] == null
           ? null
           : Map<String, dynamic>.from(action['intent']['raw'] as Map);
-      if (raw != null) {
-        final bytes = CryptoBusinessJson.encode(raw);
-        try {
-          final descriptor = await blobs.stage(
-            scopeId: s,
-            recordId: id,
-            operationId: request,
-            kind: 'table',
-            plaintext: bytes,
-          );
-          await blobs.upload(descriptor);
-          raw = {
-            'documentFormat': 1,
-            'documentType': 'table',
-            'blob': descriptor,
-          };
-        } finally {
-          bytes.fillRange(0, bytes.length, 0);
-        }
-      }
+      // Commit the full semantic table first. The shared encoder chooses
+      // inline ciphertext or a payload blob after authorization commitments.
       final result = await context.publishRaw(
         scopeId: s,
         id: id,

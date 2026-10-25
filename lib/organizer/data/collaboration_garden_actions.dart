@@ -5,7 +5,7 @@ extension CollaborationGardenActions on CollaborationRepository {
     String scopeId,
     Garden garden, {
     bool isNew = false,
-  }) => _edit(scopeId, (partition) async {
+  }) => _recordEdit(scopeId, (partition) async {
     garden.validate();
     await _put(
       partition,
@@ -16,7 +16,7 @@ extension CollaborationGardenActions on CollaborationRepository {
       expectedLocalRevision: isNew ? null : garden.revision,
     );
   });
-  Future<void> deleteGarden(String scopeId, Garden garden) => _edit(
+  Future<void> deleteGarden(String scopeId, Garden garden) => _recordEdit(
     scopeId,
     (partition) => _put(
       partition,
@@ -42,7 +42,25 @@ class SharedGardenStorage extends GardenStorage {
   @override
   int get identityGeneration => repository._epoch;
   @override
-  Stream<void> get changes => repository.changes.map<void>((_) {});
+  Stream<void> get changes => Stream<void>.multi((controller) {
+    var previous = collaborationContentSignature(
+      repository.state,
+      'garden',
+      scopeId: scopeId,
+    );
+    final subscription = repository.changes.listen((state) {
+      final next = collaborationContentSignature(
+        state,
+        'garden',
+        scopeId: scopeId,
+      );
+      if (next != previous) {
+        previous = next;
+        controller.add(null);
+      }
+    }, onError: controller.addError);
+    controller.onCancel = subscription.cancel;
+  });
   void _identity() {
     if (repository._session?.profile.partition != partition ||
         !repository.state.localAccessAllowed) {
@@ -95,7 +113,11 @@ class SharedGardenStorage extends GardenStorage {
       throw const OrganizerConflictException('Garden workspace changed');
     }
     snapshot.validate();
-    await repository._edit(scopeId, (p) async {
+    final workIdentity = database.captureLocalWorkIdentity(
+      repository._requireSession().profile,
+    );
+    await repository._recordEdit(scopeId, (p) async {
+      var queued = false;
       _identity();
       final previous = await read();
       if (previous.revision != expectedRevision) {
@@ -115,6 +137,7 @@ class SharedGardenStorage extends GardenStorage {
           deleted: true,
           expectedLocalRevision: garden.revision,
         );
+        queued = true;
       }
       for (final garden in snapshot.gardens) {
         if (old[garden.id] != null &&
@@ -130,7 +153,9 @@ class SharedGardenStorage extends GardenStorage {
           garden.toJson(),
           expectedLocalRevision: old[garden.id]?.revision,
         );
+        queued = true;
       }
+      if (queued) database.localWorkQueued(workIdentity);
     });
   }
 }

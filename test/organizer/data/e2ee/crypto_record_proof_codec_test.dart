@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_record_policy.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_codec.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_record_proof_codec.dart';
@@ -368,4 +369,129 @@ void main() {
       throwsFormatException,
     );
   });
+  test(
+    'record policy contracts sign and verify new7 without invalidating historical6; shape and internal misuse fail closed',
+    () async {
+      final raw = CryptoRecordPolicy.attachSecret({
+        'title': 'Synthetic',
+        'assigneeAccountIds': <String>[],
+      }, Uint8List(32));
+      final policy = await CryptoRecordPolicy.prepare(
+        serverId: server,
+        scopeId: scope,
+        domain: 'content',
+        wireId: id,
+        type: 'task',
+        creator: account,
+        operation: 'create',
+        payload: raw,
+      );
+      final original = seal();
+      final originalWire = await wire(original);
+      await records.verifyWire(
+        serverId: server,
+        wire: originalWire,
+        trustedSigningKey: signer.publicKey,
+        currentEpoch: true,
+      );
+      final upgraded = seal(contract: 7, metadata: {'recordPolicy': policy});
+      final upgradedWire = await wire(upgraded);
+      await records.verifyWire(
+        serverId: server,
+        wire: upgradedWire,
+        trustedSigningKey: signer.publicKey,
+        currentEpoch: true,
+      );
+      final opened = records.openVerified(
+        CryptoJson.decode(cryptoBase64(upgraded['commandBase64']))
+            as Map<String, dynamic>,
+        dek,
+      );
+      expect(utf8.decode(opened!), 'private title');
+      opened.fillRange(0, opened.length, 0);
+      expect(() => seal(contract: 7), throwsFormatException);
+      expect(
+        () => seal(contract: 6, metadata: {'recordPolicy': policy}),
+        throwsFormatException,
+      );
+      expect(
+        () => seal(
+          contract: 7,
+          metadata: {
+            'recordPolicy': {...policy, 'createdByAccountId': 'fake'},
+          },
+        ),
+        throwsFormatException,
+      );
+      expect(
+        await records.digest(original),
+        await records.digest(originalWire['authorization']['recordProof']),
+        reason: 'Original signed proof remains exact',
+      );
+    },
+  );
+  test(
+    'explicit restore signed contract binds exact tombstone and rejects stripped intent',
+    () async {
+      final raw = CryptoRecordPolicy.attachSecret({
+        'title': 'restore',
+        'assigneeAccountIds': [],
+      }, Uint8List.fromList(List.filled(32, 17)));
+      final policy = await CryptoRecordPolicy.prepare(
+        serverId: server,
+        scopeId: scope,
+        domain: 'content',
+        wireId: id,
+        type: 'task',
+        creator: account,
+        operation: 'restore',
+        payload: raw,
+      );
+      final tag = {
+        'version': 1,
+        'tombstoneProofHash': 'a' * 64,
+        'previousLiveProofHash': 'b' * 64,
+      };
+      final proof = seal(
+        revision: 2,
+        previous: 'a' * 64,
+        contract: 7,
+        metadata: {'recordPolicy': policy, 'recordRestore': tag},
+      );
+      final accepted = await records.verifyWire(
+        serverId: server,
+        wire: await wire(proof),
+        trustedSigningKey: signer.publicKey,
+        currentEpoch: true,
+      );
+      expect(accepted['metadata']['recordRestore'], tag);
+      expect(
+        () => seal(
+          revision: 2,
+          previous: 'a' * 64,
+          contract: 7,
+          metadata: {'recordPolicy': policy},
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => seal(
+          revision: 2,
+          previous: 'c' * 64,
+          contract: 7,
+          metadata: {'recordPolicy': policy, 'recordRestore': tag},
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => seal(
+          revision: 2,
+          previous: 'a' * 64,
+          contract: 6,
+          metadata: {'recordPolicy': policy, 'recordRestore': tag},
+        ),
+        throwsFormatException,
+      );
+    },
+  );
 }

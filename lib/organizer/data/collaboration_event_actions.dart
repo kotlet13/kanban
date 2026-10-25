@@ -37,7 +37,7 @@ extension CollaborationEventActions on CollaborationRepository {
       createdAt: now,
       updatedAt: now,
     );
-    await _edit(
+    await _recordEdit(
       scopeId,
       (p) => _put(
         p,
@@ -50,7 +50,7 @@ extension CollaborationEventActions on CollaborationRepository {
     return id;
   }
 
-  Future<void> updateEvent(String scopeId, SharedEvent draft) => _edit(
+  Future<void> updateEvent(String scopeId, SharedEvent draft) => _recordEdit(
     scopeId,
     (p) => _put(
       p,
@@ -61,7 +61,7 @@ extension CollaborationEventActions on CollaborationRepository {
       expectedLocalRevision: draft.revision,
     ),
   );
-  Future<void> deleteEvent(String scopeId, String id) => _edit(
+  Future<void> deleteEvent(String scopeId, String id) => _recordEdit(
     scopeId,
     (p) => _put(p, scopeId, SharedRecordType.event, id, null, deleted: true),
   );

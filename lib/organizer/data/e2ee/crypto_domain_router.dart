@@ -29,6 +29,20 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Internal selector for a task already present in the local visible projection.
+/// It is never sent to a server or accepted as access/record authority.
+class CryptoVisibleTaskMetadataTarget {
+  const CryptoVisibleTaskMetadataTarget(this.scopeId, this.recordId);
+  final String scopeId, recordId;
+}
+
+abstract interface class CryptoVisibleTaskMetadataReader {
+  Future<Map<String, dynamic>?> prepareVisibleTaskMetadata({
+    required DeviceSession session,
+    required CryptoVisibleTaskMetadataTarget target,
+  });
+}
+
 /// Classifies only a locally retained, exact terminal task rejection. This
 /// cannot fetch a scope, send a request, or restore revoked access.
 abstract interface class CryptoTerminalTaskConflicts {
@@ -37,6 +51,59 @@ abstract interface class CryptoTerminalTaskConflicts {
     required String scopeId,
     required Map<String, dynamic> operation,
   });
+}
+
+/// Classifies only a definitive retained rejection, never fetches authority.
+abstract interface class CryptoTerminalRecordConflicts {
+  Future<bool> hasTerminalRecordConflict({
+    required DeviceSession session,
+    required String scopeId,
+    required Map<String, dynamic> operation,
+  });
+}
+
+/// Preflights only an explicit restoration of a verified tombstone. The
+/// returned binding contains no record secret and never sends a restore itself.
+abstract interface class CryptoRecordRestores {
+  Future<Map<String, dynamic>> prepareRecordRestore({
+    required DeviceSession session,
+    required String scopeId,
+    required String domain,
+    required String type,
+    required String recordId,
+    required int expectedRevision,
+  });
+}
+
+/// Scope-local owner adoption after legacy exact work has drained.
+abstract interface class CryptoRecordPolicyUpgrade {
+  Future<void> ensureRecordPolicy({
+    required DeviceSession session,
+    required String scopeId,
+  });
+}
+
+/// A changed content intent may require its linked financial derivation even
+/// when no finance sequence has advanced yet. This only selects scoped work.
+abstract interface class CryptoTaskDerivationDependencies {
+  Future<bool> needsFinanceForTaskDerivations({
+    required DeviceSession session,
+    required String scopeId,
+  });
+}
+
+/// Retains only sequential metadata authority inside one explicit sync phase.
+abstract interface class CryptoVerifiedReadGroupContext {
+  Future<T> withVerifiedReads<T>({
+    required DeviceSession session,
+    required Future<T> Function() read,
+  });
+}
+
+/// Refreshes the own-account signed journal without sending pending commands.
+/// True selects conservative access work after a verified semantic change.
+abstract interface class CryptoAccountDirectoryChanges {
+  Future<bool> refreshAccountDirectory({required DeviceSession session});
 }
 
 /// Shares verified financial reads only within one scope's ordinary sync pass.
@@ -99,10 +166,12 @@ Future<Map<String, dynamic>?> routeProtectedCryptoDomain({
   required CryptoDomainRouter? router,
   ContentRouteGuard? contentGuard,
   required void Function() checkCurrent,
+  CryptoVisibleTaskMetadataTarget? visibleTaskMetadata,
 }) async {
   if (operation.startsWith('crypto2.') ||
       operation.startsWith('auth.') ||
       operation == 'account.status' ||
+      operation == 'account.changes' ||
       operation.startsWith('account.email.') ||
       operation.startsWith('moderation.policy') ||
       operation == 'moderation.acceptPolicy' ||
@@ -145,6 +214,20 @@ Future<Map<String, dynamic>?> routeProtectedCryptoDomain({
     return null;
   }
   final protected = rows.map((r) => r['scope_id'] as String).toSet();
+  // This hint is interpreted only after the existing restore/floor fences.
+  // Missing evidence falls back through the encrypted router, never plaintext.
+  if (visibleTaskMetadata != null &&
+      operation == 'scopes.list' &&
+      protected.contains(visibleTaskMetadata.scopeId) &&
+      router is CryptoVisibleTaskMetadataReader) {
+    final result = await (router as CryptoVisibleTaskMetadataReader)
+        .prepareVisibleTaskMetadata(
+          session: session,
+          target: visibleTaskMetadata,
+        );
+    checkCurrent();
+    if (result != null) return result;
+  }
   final scope = params['scopeId'];
   if (scope is String && !protected.contains(scope)) {
     if (contentGuard == null && router != null) {

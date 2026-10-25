@@ -36,6 +36,53 @@ class CryptoMigrationRecordSource {
   final Map<String, dynamic>? rawPayload;
   final Map<String, dynamic> typedRow;
 
+  /// Transport authorship is retained separately from the business payload.
+  /// These values become authoritative only after the caller verifies the
+  /// captured-row hash and its migration binding; the importer is not author.
+  String? get _creatorColumn => switch (table) {
+    'familyhub_records' ||
+    'familyhub_finance_records' ||
+    'familyhub_tables' => 'created_by',
+    'familyhub_attachments' => 'owner_account_id',
+    _ => null,
+  };
+  bool get hasCapturedCreator =>
+      _creatorColumn != null && typedRow.containsKey(_creatorColumn);
+  String? get createdByAccountId => _accountColumn(_creatorColumn);
+
+  String? get updatedByAccountId => _accountColumn(
+    const {'familyhub_records', 'familyhub_finance_records'}.contains(table)
+        ? 'updated_by'
+        : null,
+  );
+
+  String? _accountColumn(String? name) {
+    if (name == null || !typedRow.containsKey(name)) return null;
+    final cell = typedRow[name];
+    if (cell is! Map ||
+        cell.length != 2 ||
+        cell['type'] is! String ||
+        !cell.containsKey('valueBase64')) {
+      throw const FormatException('crypto_migration_source_author');
+    }
+    final encoded = cell['valueBase64'];
+    if (encoded == null) return null;
+    if (encoded is! String) {
+      throw const FormatException('crypto_migration_source_author');
+    }
+    final bytes = base64Decode(encoded);
+    if (base64Encode(bytes) != encoded) {
+      throw const FormatException('crypto_migration_source_author');
+    }
+    final account = utf8.decode(bytes);
+    if (account.isEmpty)
+      return null; // Existing account-deletion anonymization.
+    if (!isCryptoCanonicalUuid(account)) {
+      throw const FormatException('crypto_migration_source_author');
+    }
+    return account;
+  }
+
   CryptoMigrationRecordSource withScopeBaseline(Map<String, dynamic> baseline) {
     if (table != 'familyhub_scopes' ||
         type != 'scopeMetadata' ||
@@ -323,6 +370,7 @@ Future<Map<String, dynamic>?> verifyCryptoMigrationWitness({
   required String recordProofHash,
   required Map<String, dynamic>? envelope,
   Map<String, dynamic>? detachedWitness,
+  void Function(CryptoMigrationRecordSource source)? onVerifiedSource,
   required Future<String> Function(String scopeId, String namespace) reservedId,
 }) async {
   final address = cryptoRecordAddressFromMetadata(record);
@@ -409,6 +457,7 @@ Future<Map<String, dynamic>?> verifyCryptoMigrationWitness({
           source.canonicalId != address.canonicalId) {
         throw const FormatException('crypto_migration_business_parity');
       }
+      onVerifiedSource?.call(source);
     }
     return null;
   }
@@ -704,5 +753,6 @@ Future<Map<String, dynamic>?> verifyCryptoMigrationWitness({
           CryptoBusinessJson.canonical(semanticPayload)) {
     throw const FormatException('crypto_migration_business_parity');
   }
+  onVerifiedSource?.call(source);
   return Map<String, dynamic>.from(semanticPayload as Map);
 }

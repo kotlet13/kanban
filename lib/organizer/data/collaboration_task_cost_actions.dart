@@ -19,7 +19,7 @@ extension CollaborationTaskCostRecovery on CollaborationRepository {
     _checkEpoch(epoch);
     await database.transaction(() async {
       _checkEpoch(epoch);
-      await _writable(p, scopeId);
+      await _writable(p, scopeId, allowRecordPolicy: true);
       if (cost != null || removeCost) await _financeWritable(p, scopeId);
       final existing = await database.rows(
         r"SELECT * FROM finance_records WHERE partition=? AND scope_id=? AND type='financeEntry' AND deleted=0 AND json_extract(payload,'$.taskId')=?",

@@ -1,3 +1,4 @@
+import '../../state/shared_record_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -140,6 +141,16 @@ class _FinancePlanningPanelState extends ConsumerState<FinancePlanningPanel> {
   bool _canEdit(String id) =>
       !_busy &&
       _guard(existingId: id).isCurrent &&
+      (!_isShared ||
+          canEditSharedRecord(
+            ref.read(collaborationProvider).valueOrNull,
+            widget.sharedScopeId,
+            widget.snapshot.financeAccounts.any((a) => a.id == id)
+                ? 'financeAccount'
+                : 'financeRecurrenceRule',
+            id,
+            domain: 'finance',
+          )) &&
       (!_isShared && !_privateOwned(id) ||
           supportsFinancePlanningContract(
             ref.read(collaborationProvider).valueOrNull?.financeContractVersion,

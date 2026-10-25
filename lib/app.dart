@@ -12,6 +12,7 @@ import 'organizer/platform/backup_preferences_replay.dart';
 import 'organizer/presentation/onboarding/getting_started.dart';
 import 'organizer/platform/invitation_links/invitation_link_coordinator.dart';
 import 'organizer/platform/remote_push/remote_push_coordinator.dart';
+import 'organizer/presentation/shared/sync_merge_notice.dart';
 
 class JivieApp extends ConsumerStatefulWidget {
   const JivieApp({super.key});
@@ -89,7 +90,7 @@ class _JivieAppState extends ConsumerState<JivieApp> {
       builder: (context, child) => InvitationLinkCoordinator(
         child: RemotePushCoordinator(
           child: LocalNotificationCoordinator(
-            child: child ?? const SizedBox.shrink(),
+            child: SyncMergeNotice(child: child ?? const SizedBox.shrink()),
           ),
         ),
       ),

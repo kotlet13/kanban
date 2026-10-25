@@ -96,6 +96,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   bool _cryptoPending = false;
   bool _preauthorizedAccepted = false;
   bool _cryptoSetupRequired = false;
+  bool _routeWasCurrent = true, _refreshPreviewOnReturn = false;
   final _accessRefreshClock = Stopwatch()..start();
   Duration? _lastAccessRefresh;
 
@@ -313,6 +314,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
           saved?.accountPartition == _session?.partition) {
         acceptedCheckpoint = true;
         setState(() {
+          // A saved acceptance can resume before any preview is available.
+          // Keep its existing access-check action visible if resumption fails
+          // or still lacks verified access; the checkpoint grants no access.
+          _step = _InvitationStep.preview;
           _cryptoPending = true;
           _notice = context.l10n.invitationFlowAccessVerificationPending;
         });
@@ -338,6 +343,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     if (!_active || _identity != identity || _link != link) return;
     setState(() {
       _preview = preview;
+      if (preview.contractVersion != 4) {
+        _error = null;
+        _lastError = null;
+      }
       _cryptoPending = preview.awaitingApproval || acceptedCheckpoint;
       _notice = null;
       _step = _InvitationStep.preview;
@@ -387,6 +396,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         creatorAccountId: preview.inviterAccountId,
       );
       setState(() {
+        _error = null;
+        _lastError = null;
+        _refreshPreviewOnReturn = false;
         _verifiedInvitation = verified;
         _verifiedIdentity = identity;
         _verifiedLink = link;
@@ -401,12 +413,17 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     }
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    bool clearErrorBefore = true,
+  }) async {
     if (_busy) return;
     setState(() {
       _busy = true;
-      _error = null;
-      _lastError = null;
+      if (clearErrorBefore) {
+        _error = null;
+        _lastError = null;
+      }
     });
     try {
       await action();
@@ -807,6 +824,31 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   @override
   Widget build(BuildContext context) {
     ref.watch(collaborationProvider);
+    final routeCurrent = ModalRoute.of(context)?.isCurrent == true;
+    if (routeCurrent && !_routeWasCurrent) _refreshPreviewOnReturn = true;
+    _routeWasCurrent = routeCurrent;
+    // Account v2 setup may be presented by the saved-session coordinator while
+    // our first inspection is still pending. On return, re-read this exact
+    // invitation once; account readiness itself never accepts it.
+    if (routeCurrent &&
+        _refreshPreviewOnReturn &&
+        !_busy &&
+        !_joined &&
+        !_cryptoPending &&
+        _preview?.contractVersion == 4 &&
+        _matchingSession) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted ||
+            !_active ||
+            !_matchingSession ||
+            _busy ||
+            ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
+        _refreshPreviewOnReturn = false;
+        _run(_loadPreview, clearErrorBefore: false);
+      });
+    }
     ref.listen(collaborationProvider, (previous, next) {
       final before = previous?.valueOrNull?.session;
       final after = next.valueOrNull?.session;
@@ -819,6 +861,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       _verifiedLink = null;
       _preauthorizedAccepted = false;
       _cryptoSetupRequired = false;
+      _refreshPreviewOnReturn = false;
       _cryptoPending = false;
       _notice = null;
     });

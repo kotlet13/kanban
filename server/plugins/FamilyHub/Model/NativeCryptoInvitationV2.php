@@ -235,7 +235,16 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         $scope = $retainedRecipient ? $this->one('SELECT * FROM familyhub_scopes WHERE id=?', [$row['scope_id']]) : $this->usable($row);
         if (!$scope) throw new NativeError('invitation_invalid',404);
         $prepared=new NativeCryptoInvitationPreauthorizationV5($this->container);$publication=$prepared->binding($row)?$prepared->publication($row['id']):null;
-        return $this->inviterDisplay($row)+($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+($publication?['preauthorizationHeadHash'=>$publication['head_hash'],'publicationAuthorization'=>json_decode($publication['authorization'],true,34,JSON_THROW_ON_ERROR)]:[])+['invitation' => $this->wire($row),'scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','projectFinanceIncluded' => (int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1) >= 2],'registrationAllowed' => $row['recipient_kind'] === 'email'&&$row['recipient_account_id']===null,'creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
+        return $this->inviterDisplay($row)+($recipientAcceptance===null?[]:['recipientAcceptanceAuthorization'=>$recipientAcceptance])+($publication?['preauthorizationHeadHash'=>$publication['head_hash'],'publicationAuthorization'=>json_decode($publication['authorization'],true,34,JSON_THROW_ON_ERROR)]:[])+['invitation' => $this->wire($row),'scope' => $this->previewScopeDisplay($scope),'registrationAllowed' => $row['recipient_kind'] === 'email'&&$row['recipient_account_id']===null,'creatorAuthorization' => json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR),'creatorDirectory' => $prefix ?? $this->creatorDirectory($row, 0, 50),'candidateHeads' => $this->candidateHeads($row)]+($this->bridgeEvidence($row)===null?[]:['legacyBridge'=>$this->bridgeEvidence($row)]);
+    }
+
+    /** Optional host display hint only; signed invitation roles and verified
+     * scope policy remain the sole authority for admitting record mutations. */
+    private function previewScopeDisplay($scope)
+    {
+        return ['id'=>$scope['id'],'kind'=>$scope['kind'],'name'=>'Encrypted space',
+            'projectFinanceIncluded'=>(int)($scope['effective_access_policy_version']??$scope['access_policy_version']??1)>=2,
+            'recordPolicyVersion'=>(new NativeCryptoRecordPolicyV1($this->container))->active($scope['id'])?1:0];
     }
 
     /** Host display metadata only. The scope title and domain keys stay private. */

@@ -29,6 +29,22 @@ abstract interface class CollaborationTransport {
   void close();
 }
 
+typedef CollaborationAttempt = Future<Map<String, dynamic>> Function();
+typedef CollaborationAttemptGate =
+    Future<Map<String, dynamic>> Function(CollaborationAttempt send);
+
+/// A scheduler wraps one physical attempt, never an explicit rate-limit pause.
+abstract interface class CollaborationSingleAttemptTransport {
+  Future<Map<String, dynamic>> callWithAttemptGate({
+    required String serverUrl,
+    required String operation,
+    Map<String, Object?> params = const {},
+    String? token,
+    bool allowLocalHttp = false,
+    required CollaborationAttemptGate gate,
+  });
+}
+
 String normalizeCollaborationServer(
   String value, {
   bool allowLocalHttp = false,
@@ -59,7 +75,8 @@ String normalizeCollaborationServer(
   ).toString();
 }
 
-class HttpCollaborationTransport implements CollaborationTransport {
+class HttpCollaborationTransport
+    implements CollaborationTransport, CollaborationSingleAttemptTransport {
   HttpCollaborationTransport({
     http.Client? client,
     this.requestTimeout = const Duration(seconds: 20),
@@ -77,19 +94,55 @@ class HttpCollaborationTransport implements CollaborationTransport {
     Map<String, Object?> params = const {},
     String? token,
     bool allowLocalHttp = false,
+  }) => _callWithGate(
+    serverUrl: serverUrl,
+    operation: operation,
+    params: params,
+    token: token,
+    allowLocalHttp: allowLocalHttp,
+  );
+
+  @override
+  Future<Map<String, dynamic>> callWithAttemptGate({
+    required String serverUrl,
+    required String operation,
+    Map<String, Object?> params = const {},
+    String? token,
+    bool allowLocalHttp = false,
+    required CollaborationAttemptGate gate,
+  }) => _callWithGate(
+    serverUrl: serverUrl,
+    operation: operation,
+    params: params,
+    token: token,
+    allowLocalHttp: allowLocalHttp,
+    gate: gate,
+  );
+
+  Future<Map<String, dynamic>> _callWithGate({
+    required String serverUrl,
+    required String operation,
+    required Map<String, Object?> params,
+    required String? token,
+    required bool allowLocalHttp,
+    CollaborationAttemptGate? gate,
   }) async {
     final encoded = jsonEncode({'v': 1, 'op': operation, 'params': params});
     final pause =
         Zone.current[_rateLimitPauseZone] as Future<void> Function(int)?;
     while (true) {
       try {
-        onAttempt?.call(operation);
-        return await _callOnce(
-          serverUrl: serverUrl,
-          requestBody: encoded,
-          token: token,
-          allowLocalHttp: allowLocalHttp,
-        );
+        Future<Map<String, dynamic>> send() {
+          onAttempt?.call(operation);
+          return _callOnce(
+            serverUrl: serverUrl,
+            requestBody: encoded,
+            token: token,
+            allowLocalHttp: allowLocalHttp,
+          );
+        }
+
+        return await (gate == null ? send() : gate(send));
       } on CollaborationApiException catch (error) {
         final retry = error.details['retryAfter'];
         if (pause == null ||

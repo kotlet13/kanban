@@ -1,4 +1,525 @@
+24. oktober — **Omejena Mac B r10 meritev odpiranja PASS; ne ponavljaj**.
+User odobri eno instanco in isti task preview/editor brez Save; Sol6.1/high
+app/collector podagenta, root GUI in neodvisni pregled. B1build+1install+1launch,
+A ostaja r9/zaprt. Source621prod/622QA fingerprint5ce57d48…,10odobrenihlibdelt,
+isti bundle/team/Keychain/entitlements/CA, noreset. Nova QA diag namespace in
+standard SavePanel export, fresh nativeReady+validatedACK+exportReady PASS.
+Isti SHARED-A-ASSIGNED-B-24 en preview izAllTasks, nato en Edit task; original
+note+ASSIGNEE-B-MEASURED-24/creatorA/assigneeB vidni v obeh. Costexpand0/Save0/
+manualSync0. Cancel+Close+normalQuit, A/Bprocesaodsotna; oba zbiralnika končana.
+Widgetpostframe markerji preview32ms/editor14ms; to ni compositor/interactivity
+benchmark. Prava AX+screenshot content vidna v540/457ms vključno zCUA.
+Preview23requests brez globalcatalog; širši previewinterval24incl1ordinaryprobe.
+EditorEntered→previewClosed0requests. Celoten188.076s zajem47HTTPall200,
+nativeophistidentičen,0actual429/highwater25. Work47queued/47started/47completed,
+0error/quota.6probe→unchanged/0selectedWork/completion; ni fullsync testa.
+PREVIDNO stari preview24 je drugoSHARED-B-TASK-24, ne matchedbenchmark!
+Stari editor49 je isti task, a route/cache različni; ne trdi49avoided/odstotka.
+Oldledger/STOP3/rootresults hashidentični; product+test source nespremenjen.
+Ni telefonov/produkcije/Docker mutacij/poslovnih testponovitev/reset/cleanup/
+commit/push. Data vaultbyteparityUNVERIFIED/TCC brezobvoda, no protectedreads.
+Bostane r10; viewpreferences All/collapsedsidebar, poslovnipodatki isti.
+Report docs/SYNC_DIAGNOSTICS_RESULTS_2026_10_24.md; evidence
+build/qa/sync-opening-measurement-20261024/{root-results.json,root-ui-result.json,
+b/final-install-verification.json,diagnostics/}. Ta omejeni sklop ZAKLJUČEN,
+naslednje uporabnikov dogovorjeni mobiletest; ne ponovno odpiranje/idle/invite.
+Ostali mobile/upgrade/restore gaps niso zaprti in ni productionready trditve.
+
+24. oktober — **Odobreni popravki merjenega synca: 23 novih lokalnih kontrol PASS**.
+User: implementiraj predlagane popravke. GPT-6.1 Sol/high podagenti in root
+pregled. Plain task brez stroška ne pripravi finance choices do odprtja
+Strošek; ena priprava/editor, ordinary Save in draft ostaneta ob napaki.
+Known-write/incomplete snapshot ima nevtralni prep trigger brez cachedvalues;
+choices success ne pomeni complete snapshot. Existing cost auto prep ostane,
+canWriteCost/FinanceAccessGuard/paired save ista. UI 8 PASS1 + 2 novi cold-state
+PASS1, prvih osmih po dopolnitvi ni reruna; končna source review PASS.
+Visible task typed metadata hint šele po session/restore/floor fences;
+target-only shared scope projection helpers, signed parent match ali encrypted
+full fallback. Original 5s/singleflight, scoped local refresh; pending ni revoke.
+Metadata read context se zapre PRED običajnim pull; write/receipt guards isti.
+Preview 7 novih PASS: helper3 PASS2 po compile fixture FAIL1; repo3 PASS1 in
+late matrix PASS2 po napačnem logout capabilities pričakovanju. Starih PASS nič.
+Coordinator 16 bounded enum reasons, 6 novih PASS1; selection/cursor/server
+behavior nespremenjen. Semantični stamp transition je možen upravičen vzrok
+A initial broad sync, exact historical cursor absent, NE trdi runtime proof.
+Root combined analysis 0errors/0warnings, style infos; source reviews PASS.
+Ni live HTTP, nativebuild/install/launch, telefonov, produkcije, resetov,
+commit/push ali cleanup. QA ostaja r9; runtime prihranek še NEIZMERJEN.
+Old ledgers/STOP3 isti. Report docs/SYNC_DIAGNOSTICS_RESULTS_2026_10_24.md;
+dokazi build/qa/sync-proposed-fixes-20261024/. Naslednje omejena lokalna
+meritev vpliva novih popravkov, ne ponovi starih poslovnih PASS/povabil.
+
+24. oktober — **Zanesljiva QA diagnostika +isti nedokončani prenosi PASS**.
+User izrecno diagnostika/rerun/analiza/predlogi, Sol6.1/high agents+rootGUI/review.
+SamoistiMacA/B+18821, sameaccounts/keys/invite/data. QA r8 po1build/installoba;
+Blaunch1 brezbusiness: NativeTemp→containerData/tmp ordinaryreadPermissionError,
+TCCnobypass,24HTTP200/STOPdiag1. Nativefixture compile1FAIL/compile2noexec/
+compile3PASS; completionextensionstaticpotemactualproof, no4fixture.
+QA r9 po1build/installoba ONLYnativeSavePanel/export; istiDart/entitlements/
+team/bundle/Keychain/CA. CmdShiftD→standardNSSavePanel existinguserselectedRW,
+rootizbere exports/A,B freshrunfilename. Kopijaverified→livehandleswitch,
+originalkept, seq/run/quota isti, failureoldhandleintact. ActualfreshNativeReady+
+DartvalidatedACK+exportReady obaPASS, no privatecontainerreadbypass. A1/B2
+launchesthisturn; total2build/installperapp. WholeAOThashesdiffer, Dartinputsisti.
+OwnerAoldedit readB PASSsameSHARED-B-TASK-24/originalnote+OwnerAreviewed.
+AssignedBedit SAME SHARED-A-ASSIGNED-B-24 oneSave addsASSIGNEE-B-MEASURED-24,
+originalnote/creatorA/assigneeBpreserved; ApreviewseesbothPASS, ASave0.
+AXbodyclicknoUIevent; coordinatebody→previewPASS/no guarddenial. AXsetValue
+alsoonlyAXvalue, screenshotcaught; actualtypingBEFOREonlySave, no duplicateedit.
+BSave selectedcontent1/finance0,1records.batch, completion1clean thenoneown
+catchupcompletion2clean. IdleB85.423s (Aclosed/noUI)3onlyaccount.changes→unchanged
+~30s,0otherrequests/selectedWork/error.65ssubwindow2samepairsPASS.
+Attempt2native516=328A+188B HTTP516all200/0actual429/highwaterALLHTTP298,
+622.037s/78574BHTTP+503209Bnative.0errors/quotaLimit; finalA1/B2completions
+errornull/unresolvedfalse/retryfalse. Bpreview24req/editorpostframe49req/Save51req;
+Ainitial295inclsettled(293tocompletion), selectedcontent3/finance3 reasonUNKNOWN.
+CurrentHead/memberDirectory sites dominate, selectorsnotlogged andAOTframes[],
+so sameop/site isNOTsameparams/allsavingsclaim. ProposedONLY:1lazyfinancechoices
+whenplaincostcollapsed (49coincident notallavoidable);2boundedverifiedreadprep
+reuse;3diagnoseAinitialselectionbefore narrowing. ProductfixesNOTimplemented.
+OldPASS/STOP3/attempt1hashesunchanged, productionruntimebaselineidentical.
+BothnormalQuit/collectorsstopped/gatewayrunningunpaused; othercontainerssame;
+schema/config/TLSsame. No phones/prod/reset/reinvite/manualSync/cleanup/commit/
+push. VaultbyteparityUNVERIFIED; realoldnotesvisible. Mainreport
+ docs/SYNC_DIAGNOSTICS_RESULTS_2026_10_24.md; evidence
+ build/qa/sync-diagnostics-reliable-20261024/{root-results.json,source-analysis.md,
+ idle-observation.json,attempt2/diagnostics/final-summary.json}. Next userdecision
+whichproposedfix; don'trepeatthesePASS. Mobile/upgrade/restoreothermatrixopen.
+
+24. oktober — **Merjeni r7 zagon B: 249 HTTP/0×429; diagnostika STOP1**.
+User potrdi omejeni naslednji merjeni korak. GPT6.1Sol/high app/server/review,
+rootGUI. Isti A/B r7, vsak1build1install, source620/frozen621, podpis/identity/
+Keychain/CA isti; vaultbyteparityUNVERIFIED, brez reset. Server18821 samo
+NativeAccountChanges.php atomicdelta, konsistentniSQLbackup in alltables/schema
+hashparity, brezrestarta. B1launch, A0; ContinueLocally brezprotectionretry.
+Assigned SHARED-A-ASSIGNED-B-24 readPASS (creatorA/assigneeB/originalnote),
+projecteditor action→AX518ms vključujeCUA, nimobile/perfframebenchmark.
+SHARED-B-TASK-24 owneredit ostaneUNVERIFIED: rowbody nochange1, sourcearrow
+nochange1; arrowodpiraizvor, needitor, zatodrugi niistiFAIL. Sourcepreview
+current/visibilityguardreasonunknown. Save0/manualSync0/reinvite0. Zaradi
+consolecaptureProoffalse STOPprednovimeditom. Streamživ+boundedlogshow0prefix,
+ni noerrorsproof. Sourcecallback/channel/Swift/binarywiringPASS, exactdropunknown.
+HTTP249all200/0actual429/maxrolling60ALLHTTP247; initial246, potem3samo
+account.changes probes30s, ne fullsynccompletion/isolatedidle/949comparison.
+179.751scapture/38030B,350warn/400stopni dosežen, gatewaynikolipaused.
+BnormalQuit, exactA/Bprocessabsent; gatewayrunningunpaused, othercontainers
+state/image/ID isti; oldledger/r6hashesisti, nohistoryrewrite. QA-onlyloggerfixture1compile/run0, NSLog stderrmarkerPASS, OSstream0events;
+prazensinkreproducedneodvisnoodapp, exactcauseUNKNOWN; selectedOSenvunset/
+pathnoalias. Noattempt2withoutcause. Predlogboundedfilesink+channelACKšeNE.
+Runtimeappretry/rebuildne. Docs/SYNC_MEASURED_CONTINUATION_2026_10_24.md
+in build/qa/sync-measured-continuation-20261024/. Telefoni/prod nedotaknjeni,
+productionDartbaselineisti, brezcleanup/commit/push. Naslednje diagnostičniprejem
+proof, potem istiowneredit/assigneeeditdelivery; žeuspešnihneponavljaj.
+
+24. oktober — **Omejena priprava dokazov in ciljni pending izbor; 13 novih lokalnih PASS**.
+User nadaljuje prvo naslednjo točko; Sol6.1/high crypto/pending +independentreview,
+root pregled. CryptoVerifiedDispatchReads ima internaltyped origin API; public
+allowlist ostaja scopes.list/members. Metadata→isti selectedunion→cursororigin
+znotrajoriginal5sphase, končapredfinanceDeps/outbox/pull. Routerorigin exact
+currentHead/descriptor/recoveredGenesis/catch ostanejo, SessionAccess/proofs
+nespremenjeni. Startupmissingmarker korist, NEsteady-state949claim.
+Nov CollaborationPendingSyncSelection: max64pending/1MiB, samo supportedplain
+contentrecords.batch, sameownserver/account/device/requesthash, completeclaims,
+exactcurrentlocalopHash/businessmapping ineligiblereplayoutbox. Samebatchfixed
+ taskDerivationIntent proof/id/revision companion; exactknownrefVersions union
+scope/domain z remotehints/localoutbox. Izborniadmission; nespremenjeni savedpush,
+receipt-first/podpisi/claims/cursorCAS. Unknown/malformed/limit/orphan/paused/
+pair/financeprimary/blob/docs/payment fallback s bounded enumreason. Task s
+parentSpaceId pravtakofallback: poznafinanceparentclosure ni tu razrešena.
+No generic orphan delivery fix; fallbackniobljubauspešneobnove.
+Crypto5NEWPASS1: actualsigneddir/scopeverification, synthetic4→2transportcalls,
+original5.1s expiry/write-beforedelegate/freshreceipts/invalidation+forgedproof/
+identity/unknown/overlap/error. Lifecycle/descriptor/nativeorigin explicitseam,
+positive migrationpublicationanchor notnewruntimeproof. Pending8NEWPASS:
+7PASS2+eligibilitymatrixPASS3; first8fixtureFAIL typedfeatures, second1FAIL
+JSONarchivedinteger1vsbooltrue. Samofailedrerun, stariPASSnič/no4th. Actual
+repo+SQLite+BusinessSession.push->_writeRaw exactsavedrequest; authority/queue/
+receipt syntheticseams. Target3contentA/C/D,0finance/0catalog,1receiptseam;
+unrelatedBgrantedledgerheld. Paymentfull4content+4finance+1catalog, reasonpayments.
+Failureoldcursorheld/invalidationCAS verified. Runtimeunchangedthroughattempts.
+Finalroot+independentSOURCEPASS; analysis0error0warning, styleinfosinclude5new
+cryptofixtureinfos. Noserverchanges/liveHTTP/nativeQA/phones/prod/build/install/
+cleanup/commit/push. 30s isti. Stari rate/upgrade/restoreSTOP3 ostajajo; ni četrte
+nativeponovitve. Naslednje ločen dogovorjen omejen merjen lokalni scenarij.
+Poročilo docs/SYNC_PHASE_REUSE_2026_10_24.md; dokazi
+build/qa/sync-phase-reuse-20261024/ in
+build/qa/targeted-pending-sync-20261024/local-selection/.
+
+24. oktober — **Lokalni prikaz preostalih zaslonov; 17 novih lokalnih kontrol PASS**.
+User nadaljuje tretjo točko; GPT6.1Sol/high finance/docs in independent source
+review, root pregled. Finance normal entry takoj iz lokalnega stanja; en
+postframe selector, stabilni controllers/draft/selection, ghostunavailable cilj
+ne dovoljuje Save, originalunchangedaccount izjema ostane. Linkedtask/occurrence
+ne kliče unusedselector. Additive sharingform updates/fieldsBuilder/canSubmit,
+recheck po policyconfirm, identity/device/FinanceAccessGuard ostanejo.
+Root najde postframepolicyrefresh→newrevision→resetprojection→popdraft regresijo.
+Editorselector ima zaseben fresh TARGETpolicy-only check: sameownauthorization
+brezstore; newrevision sameownrights defer, actualownrightschange store+scoped
+refresh+STOP. Revocation/write→read ne ohrani starihpravic. Scope_read_forbidden
+iz selectorja največ1targetpolicyrecheck, ne sklepa denializparenta. Epoch+
+generationCAS, exactchoicesrevision, defaultpublicrefreshPolicy=true isti.
+Docs optional UI localpreview: cachedsame-server knownfeature odpre lokalno,
+unknown/cold originalfresh. Tables/list/attachmentmetadata, nebytes/lease;
+draftpredfresh in dirty/staleguard, knowncanonicalparent/itemtombstoneswin.
+Firstactualcall freshsingleflightcapabilities+authority; failedmemo reset za
+explicitretry, prepdenial obstoječhide/purge, draftprefixostane. NonUI defaults
+remote-first, breznovihpoll/signalloops. SQLperitemtombstonecost ni izmerjen.
+Finance8widgetPASS1 +1repo/widgetrevCASPASS1 +2finaltargetdenialPASS1. Prvih9
+sepozadnjemhelperjuNIponovilo; adapter/expectedpolicycall source-onlyupdated,
+manifesti ohranjeni, ne trdi vseh11tekovnaidentičnemfinalsource. Docs3widget
+PASS1+3gatewayPASS2 po typedmapfixtureFAIL1; runtime meddocstestiisti. Skupaj17
+distinctnewPASS. LocalSQLite/mock/widget, NE nativeperformance/liveHTTP/crypto
+admission. Sourcefinalroot+independentPASS, analyses0errors0warnings/stariinfos.
+Drugi project/event/shopping/ideas/garden staleopeneditorji ostanejo pozneje;
+inbox targetauthorization neobiden. Ne ponavljaj taskPASS ali starihSTOP3.
+Telefoni/produkcija/obstoječeQA/Docker/podatki nedotaknjeni, brezbuild/install/
+schema/protocol/cleanup/commit/push. 30sinterval isti. Poročilo
+ docs/SYNC_LOCAL_FIRST_SCREENS_2026_10_24.md; dokazi
+ build/qa/local-first-screens-20261024/{finance,documents,review}/.
+
+24. oktober — **Skupni nadzor zahtevkov in signali po commitu; 22 novih lokalnih PASS**.
+User naroči naslednjo točko; GPT6.1Sol/high core/direct/local-write podagenti,
+root pregled ter neodvisna izvorna pregleda. CollaborationRepository uporablja
+en AccountWorkCoordinator/oviti transport, vključno s preview in business crypto
+factoryji. Neposredna povabila/protection/docs/FILE/migration/scope postopki imajo
+nezaklepajoče oznake opravil; directory actual _callDirect in legacy imata fallback.
+99 izrecnih read operacij: največ2 hkrati, pending64/512KiB, prednost interaktivnim
+z vmesnim background. Writes/unknown/signed immediate, NE globalni2HTTP limit.
+Samo capabilities/account.changes same-owner/same-job/generation/prvotnih5s
+in-flight merge; crypto proofs/status/receipts ne združuje, ni completedcache.
+Observed429 cooldown je skupen za server v tem repo/procesu; localreject ne
+podaljša roka. Http per-attempt gate spusti pred obstoječim izrecnim pause;
+ni novih avtomatskih retryjev ali novih crypto guard loops. Owner veže
+epoch/server/account/device/bearer; expiry/display renewal ista authority.
+Stare queued/inflight rezultate zavrne, omejeni auth.revoke/push.unregister
+cleanup po localclear ostane. Brez novih workflow mutexov ali signed sprememb.
+Diagnostika128 dogodkov v RAM: kind/jobordinal/op/time/queuewait/counts, brez
+skrivnosti/payloadov. Del direct contribution/access branj je generic account,
+anon/prelogin lahko unspecified; OS SDK/fileIO ni collaboration RPC.
+Ideas/garden/connected personal storage oddajo koalesciran signal šele po
+outercommit dejanskega outbox INSERT; rollback/noop/read/draft/local-only nič.
+Obstoječi active provider ohrani busy/background demand; brez novega timerja.
+Signal RAM/outbox durable; startup odkrije delo brez poslušalca. 30s ostane.
+22 različnih novih lokalnih PASS: localwork8 (1PASS2+7PASS3 po importercompile1
+in typedfeatures fixture2), core9PASS1, actualrepo identity2 (cleanupPASS1,
+renewalPASS2 po missing account.status fixture1), direct attribution3PASS1.
+Uspešnih ni rerun, ni četrtega poskusa. Synthetic/SQLite/Http MockClient;
+ne actualserver/native/phone/performance/full invitation/FILE dokaz.
+Analize0error0warning, stare styleinfos. Root in independent source review PASS;
+36 starih teles metod ohranjenih v delegates (parity pomoč, ne formalni dokaz).
+Telefoni/produkcija/obstoječi QA/Docker/podatki nedotaknjeni; ni build/install/
+liveHTTP/schema/cleanup/commit/push. Ne trdi rešenih vseh949HTTP/native429.
+Stari STOP3 upgrade/restore/rate in drugi pending scenariji ostanejo.
+Dokazi build/qa/account-work-coordinator-20261024/{core,local-work,direct-work}/;
+poročilo docs/SYNC_ACCOUNT_WORK_COORDINATOR_2026_10_24.md, audit kaže nanj.
+Naslednji dogovorjeni korak: preostali zasloni naj najprej prikažejo lokalne
+podatke; širša ponovna uporaba preverjenih odvisnosti ostaja ločen predlog.
+
+24. oktober — **Prvi korak semantičnih sync namigov implementiran; lokalni PASS**.
+User odobri samo prvo točko iz audita, z ozko diagnostiko in lokalnimi kontrolami.
+Sol6.1/high server/core + neodvisni review, root review. NativeAccountChanges
+members access stamp uporablja snapshot_hash/device_snapshot_hash/identity epoch
+namesto journal generation/head; own directory hint ostaja, own access vključuje
+semantic metadata. Additive directoryHintsVersion1; old/future/absent fallback
+konservativen. Client speciallane samo knownflag brez reset/actualaccess:
+cachedVerifiedDirectory→requireFresh/activeDevice, brez resume/sign/observe.
+Drugi hints/pendingdata ostanejo. Exactprobe cursor ACK po durableverify z istim
+identity/generationCAS; failure brezACK. Optional diagnostics64enum/count,
+nič občutljivih podatkov ali samodejnih datotek. Brez sprememb podpisov/receiptov/
+ključev/poslovnihpodatkov/schema/rate limita. Oldcursor konservativen1accessrefresh.
+Server46novihkontrolPASS1 (31+15), PHPsyntax5PASS. Client7novihscenarijev:
+main3PASS3 po2fixtureFAIL (preširokfixtureadapter/manjkajočgenesisanchor);
+guard2PASS1+2PASS2 pofixture/assertion popravkih, exactfailedfilter, brezPASSrerun.
+Actual directory signatures/reducer/activeDevice; task business in clientlegacy
+seam in servercountertransaction, NEfullnative/E2EEtask/HTTP dokaz. Analiza
+0error0warning/20styleinfos; diagnostic-only enumclarification dodatnoanalyzed,
+brezponovitvePASS. Driftfixturewarning2ločeni memoryDB, ne ista baza.
+Stari boundaryassertion initialdirectory zdaj directory+access, sourceonly/norerun.
+Telefoni/produkcija/obstoječi QAstrežniki/aplikacije nedotaknjeni. Novi PHP
+vsebniki --rm/networknone/read-only/memorySQL, noben nativebuild/launch/install.
+Prejšnji r6rateSTOP3, upgrade/restoreSTOP3/relocationpending ostajajo; ni trditve
+odprave vseh949HTTP ali productionready. Nobencommit/push/cleanup. Dokazi:
+build/qa/sync-semantic-hints-20261024/{server,client}/summary.json;
+docs/SYNC_SEMANTIC_HINTS_2026_10_24.md. Naslednji korak po dogovoru: pokritost
+koordinatorja; tega ne mešaj s tem zaključenim korakom ali novim native retryjem.
+
+24. oktober — **Pregled vseh sync poti; dokumentacija brez izvedbe**.
+Uporabnik naroči izvorni audit kot podlago prenove. Sol6.1/high podagenti
+UI/core/crypto-server, root sinteza in pregled. Glavni dokument:
+docs/SYNC_PATHS_AUDIT_2026_10_24.md; podrobnosti docs/audits/SYNC_PATHS_*.md.
+Potrjena sourceveriga: novo scopeObserve premakne directory generation/head;
+NativeAccountChanges ju vključuje v members/parent access stamp; scope access
+izbere content+finance. Account directory hint sam izbere metadata, ne vseh
+domen. Exactknown observation/reusable checkpoint varovala ostanejo; ni dokaz
+neskončne zanke ali atribucije vseh949HTTP. Koordinator ni univerzalen za
+wizard/invite/doc/recovery; pending crypto/payment lahko izbere širši sync;
+UI ideje/vrt lahko zapišeta outbox brez takojšnjega controller demand signala.
+Dokument loči lokalno osvežitev od HTTP, izvorne vzroke od meritev in predlaga
+sled vzrokov, semantične change hints, koordinirane faze ter ciljno nadaljevanje.
+Brez runtime popravkov/testov/buildov/launch/HTTP/Docker/telefonov/produkcije,
+brez cleanup/commita/pusha. Prejšnji PASS in r6rate/upgrade/restore STOP3
+ostajajo; audit ne dovoli četrtega testa ali potrdi produkcijske pripravljenosti.
+
+24. oktober — **r6 lokalni request-limit STOP3; brez četrtega kroga**.
+R6 istiMacA/B stage/build/install vsak1PASS,615inputs/8libdeltas, podpisi+
+bundle/Keychainidentiteti preverjeni; appcontainerbyteparityUNVERIFIED/TCC,
+brezobvoda ali resetov. Root+2independentreviewsPASS: exactfallback4PASS1,
+protectionread3PASS2, metadata-onlylist/membergroup3PASS1, wizardcheckpoint
+2PASS2. Pri zaščiti legacyinspect PRED freshmembercheck; signedrequests/
+receipts/5soriginalclock isti. Metadatareuse ne zajema pull/finance/outbox.
+Native rateattempt3 FAIL:949requests/946x200+3x429 v75slogged,601/602/603crypto2
+ordinals po600crypto200; log15:22:07directory.status/08authoritysnapshot/
+24account.status. Ne trdi odpravljeno ali prihranka; workloadnewchild ni
+primerljiv z r5. B poContinue kaže Project A shared (ime/prenosPASS), task
+vsebina/assignededit in AownereditBtask šeNEPREVERJENO. Anewchildprotection
+Checkfinishfails v429oknu; Binitialwizardgenericerror exactthrowUNKNOWN.
+ObeappNORMALQUIT, nativetestSTOP3/no4th. Naslednji odvisni sync testi skipped,
+breznovihSend/accept/grant/recreate. OldQAcleanup odložen, vsi podatki/ključi
+ostanejo. 177serverhashes parityPASS čezidleupdate; po runtime so legitimne
+spremembe, ne trdi celotne runtimeparity. Ownconsole76421 ustavljenprejr6,
+boundedlogshowr6 count0; nativefailurestackni dokaz. Telefoni/produntouched.
+Dokazi build/qa/sync-redesign-20261024/r6-continuation-final.json +ledger;
+docs/SYNC_REDESIGN_IMPLEMENTATION_2026_10_24.md. CentralupgradeSTOP3UNWIRED/
+restoreSTOP3partial/relocationpending ostanejo releaseblockers. Nobencommit/
+push/release. Nadaljnja diagnoza mora biti nov dogovorjen merjen načrt, ne
+ponovitev istega testa pod novim imenom.
+
+24. oktober — **Po odklepu r5: grant + B dostop + prvi prenos PASS; rate limit odprt**.
+Isti sveži QA A/B in loopback18821; telefoni/prod/oldQA nedotaknjeni.
+B1accept14:27:31UTC, A auto FAIL1 rawreviewpull409; missingpolicy negotiation
+sourcepopravek3newPASS. R5 auto grantPASS2 ob14:50:05:1activate200/Bactive/
+consumed, originalinvite+acceptancetable samo statechanged/allotherhashesisti.
+B alone po cooldown PASS2: dešifriran Sync Space A, Aclosed; selektorB samo
+Personal+SpaceA, nobenprivateB. Staleinvitationinput+pendingnotice kljubaccess
+je UXbug vpopravilu, neponavljajaccept/grant. PrivateA SpaceB/ProjectB/task/
+event/idea/finance100−12.34=87.66PASS lokalno+metadokazi, key/dataisti.
+Bsharedtask SHARED-B-TASK-24 ->AactualGUIcontent/CreatedbySyncB PASS1 zBclosed.
+Aowneredit istegataska Saved, Bdelivery šePENDING. AProject A — shared in
+SHARED-A-ASSIGNED-B-24 assignedB Saved; Bdelivery šePENDING. Prazen eventform
+cancelled brezSave. Obeapp normalQuit po429, nobenreset/recreate/manualSync.
+Rateburst14:50:37 2x429; ponovitevAalone15:03:40/15:04:27 rate_limited.
+Ni hitripoll:30saccount.changes; fragmentedauthoritycontexts. Novo exactfallback
+memo4PASS1 +protectionreadphase3PASS2; zdaj group integration+wizardUX vdelu,
+prednovobuild rootreview. Max3/issue; noben4.STOP3restore/upgrade test.
+Native r5 A/B installed, updatermax5, šeNEstage6 doklerpatchreview. Zbiralnik
+nativeconsole PID76421 exactpredicate/JIVIE_SYNC_QA, publicr4-native-console
+večinaprazen, neclaimcapturedstack. PHPQAallopboundedcode logger vownedserver.
+Aktualniledger build/qa/sync-redesign-20261024/native-scenario-ledger.json in
+r5-shared-crud-metadata.json; docs/SYNC_REDESIGN_IMPLEMENTATION_2026_10_24.md.
+Obstoječi nonempty policyupgrade STOP3/UNWIRED, explicitrestore STOP3/partial,
+relocation pending; NEproductionready. Brezcommita/pusha ali oldQAcleanup.
+
+24. oktober — **Po r3: lokalni pregled, Mac še čaka odklep; brez nove namestitve**.
+Po r3 so v izvoru sharingcopy+wizardreturn (2+3novi UI PASS), explicitrestore
+in taskcostpravice. Rootfull `dart analyze lib` 0errors/0warnings/502styleinfos,
+brez trditve, da so vsi infos stari. Restore server24PASS/clientprotocol2PASS;
+repo3poskusi in historicalhelper3poskusi STOP3_UNVERIFIED, brez4.teka. Core
+taskcostnova SQLkontrola tudi STOP3fixture, niappFAIL; 2novi UIkontroliPASS
+(viewercreator owncost/financewrite; assignee foreigncost task-only). Popravek
+vmesne razlage: costChanged veja JE že izločala nedotaknjenstrošek, ne trdi
+da je app vedno pošiljal tujcost. CoreallowRecordPolicy+UIgate ohranita
+taskauthor/assignee in ločen financeauthor/write guard. Restore samoexplicit
+owner/creator, exacttombstone/nearestlive, originalrequestreceipt archiveisti.
+Pending PREDpublish/archive za unsupportedcandidate: velika>90KB/imageidea/
+table; taskrestore vscope sfinancekey pending, standalonefinancerestore še
+NIwired. Ne dodajaj financeodvisnosti običajnim taskedit/pull. Serverreview
+našel P1upload-beforeguard in P2historybound63vs64, obapopravka finalsource
+pregledPASS; consentGeneration immediate tombstone pravilen. Editorfinal
+13source/test analysis0errors0warnings75styleinfos. Restoreevidence
+build/qa/local-diagnostics/record-restore-20261024/summary.json. Celotenrestore
+NIpotrjen; signedidea/garden terminalclassifier še pending. Ownconsolelog
+collector8469 exactpredicate preverjen/ustavljen, nobenapp kill ali stop.
+Centralupgrade STOP3/UNWIRED nespremenjen. Vsi novi nativeCRUD/grant testi
+čakajo Macunlock (vprašanje že poslano), ista povabila/računa/ključi, brez
+resend/register. Ne dotikajse telefonov/prod/oldQA in ne briši starihokolij.
+Končni rezultati v docs/SYNC_REDESIGN_IMPLEMENTATION_2026_10_24.md in
+build/qa/sync-redesign-20261024/client-core/summary.json. Brezcommita/pusha.
+
+24. oktober — **Prenova synca v izvedbi; sveža Mac A/B r3, čaka odklep**.
+Izrecno novo naročilo dovoljuje kodo/lokalne teste/nove QA, ne telefonov ali
+produkcije. GPT6.1Sol/high podagenti, root pregled. Novi loopback Docker
+jivie-sync-redesign-20261024 (18821HTTPS/18822Mailpit), dve ločeni identiteti
+synca20261024/syncb20261024, brez starih baz. Oba vault wizard GUI PASS,
+računa A/B registrirana+emailverified+accountrecoveryfiles, ključi ohranjeni.
+A Sync Space A id78b36a24-f323-4fc5-98d2-d855f2b53177 policy1; prvoCreate
+PASS brezretry (začasno unconfirmed besedilo NI FAIL, popravljeno medbusy).
+Scopeprotection FAIL1 strict14catalog zaradi3novihdescriptorfields; r3PASS2:
+original14/hash ohranjen, outerrecordPolicyVersions hints. account.changes
+metadata-routing gap popravljen2actualrouterPASS, r2HTTP200. Rootone-shot
+30sdeadlinePASS1 real200msprobe, r3 vidni30sprobeintervali; r2 prej60s
+quantization. Scope/data/policy hashes obPHPupdate isti, nativevaultbyte
+parityUNVERIFIED/TCC brezobvoda. A1Send na novBemail PRED Bidentity; isto
+pending povabilo ec4c7869-98f1-4cda-b474-b9f37a3faf7b, recipientnull.
+Mac sezaklene predBaccept: CUAactionni potrjen, SQLpending/0acceptHTTP.
+Uservprašanzaodklep; neponoviSend/register/vault/ključi/protectionPASS.
+NadaljujISTIpovabilo po odklepu, Avidnoodprt zaautomatskigrant. SharedCRUD,
+privateSpaceB/ProjectB, konflikti/nativeautoapproval šeNOTSTARTED.
+StariQA/telefoni/prod nedotaknjeni, starih okolij šeNEbriši. Max3/test.
+Centralni crossdevicepolicy-upgrade naslednik STOP3/UNWIRED, obstoječih
+nonempty prostorov neaktiviraj; relocationpolicy pending. Blobtargetsource
++server25/client3/SemanticMAC1 PASS, r3 vključeno, realHTTPblobNEpreverjen.
+Po r3 nastajajo samo še ciljna copy/return-from-wizard in explicitrestore
+izboljšava (owner/author, exacttombstonehistory, nobroadrevive); ne trdi še
+končaneizdaje. Rootlog docs/SYNC_REDESIGN_IMPLEMENTATION_2026_10_24.md,
+ledger build/qa/sync-redesign-20261024/native-scenario-ledger.json.
+Zasebnepoverilnice/datoteke Library/Application Support/JivieLocalTest/
+20261024-sync-redesign, neizpisuj. Trenutna veja main, brezcommita.
+
 # Navodila za delo na projektu
+
+24. oktober — **Prenova IZRECNO ODOBRENA; lokalna izvedba v teku**.
+Najnovejše uporabnikovo naročilo nadomesti spodnji zgodovinski prepovedi
+izvedbe med razpravo. Sol6.1/high podagenti: redesign_server (metadata probe,
+nato permission protokol), redesign_coordinator (30s coordinator/delta),
+redesign_editor (local-first taskeditor, nato avtorstvo/prava admission pravila).
+Root pregleduje in ureja domenske UI invalidacije ter sveže izolirano okolje.
+Nič telefonov ali produkcije. Starih QA/baz/ključev/PASS ne ponavljaj ali briši.
+Nov QA jivie-sync-redesign-20261024, loopback18820/18821/18822; pripravljeno,
+še NE zagnano. Dva NOVA Mac bundle/Keychain/storage, nova A/B po zaključeni
+izvorni prenovi; A foreground ob sprejemu povabila, shared prostor A in
+zasebni prostor B/projekt B. Stara okolja očistimo šele po preverjanju novega,
+ohranimo potrebne podatke/ključe/dokaze; brez global prune. Max3poskusi/težavo.
+Izvedbeni zapis docs/SYNC_REDESIGN_IMPLEMENTATION_2026_10_24.md. Ne trdi,
+da faza1 že implementira celoten načrt/authorpolicy/merge/native rezultate.
+
+
+24. oktober — **Potrjen 30s pregled sprememb; Firebase samo uporabniška obvestila**.
+User naroči samo popravek načrta, BREZ KODE. En koordinator med aktivno
+uporabo vsakih30s preveri samo stanje sprememb računa, nato prenese samo
+spremenjene podatke/obsege/domene in potrebne odvisnosti. Nochange pomeni
+brez contentpull/financepriprave/fullrefreshLocal/module reload. Atomarna
+strežniška evidenca sprememb, perdevice cursor, napredek po verifieddurable
+apply; deletes/accesschanges vključeni. Save pošlje takoj v ozadju, startup/
+resume/reconnect/manual skozi isti coalescing. Brez prekrivanja timertekov,
+napakebackoff, nobeno jamstvo background/closed izvajanja. Firebase za
+DEJANSKA uporabniška push obvestila, ni syncchannel/pogoj/tihsignal.
+To NADOMESTI stare predloge60s/push-driven sync; interval ni več odprt.
+Plansection4+merila posodobljena v docs/E2EE_MOBILE_SESSION_2026_10_24.md.
+Brez runtime/test/build/install/HTTP/VM/phone/server/prod dejanj. Čakaj na
+izrecen začetek kode; druge nepotrjene permission/perf podrobnosti ostanejo.
+
+24. oktober — **Načrt poenostavljen: obstoječe avtorstvo, brez novega postopka**.
+User izrecno potrdi uporabo obstoječega avtorstva. Izvor javne30/6c8a2fc in
+podlage31/5fe4fdf ima generic+finance created_by/updated_by, tables created_by,
+attachments owner_account_id; update ohrani creator. UI fieldabsence ni
+dokaz manjkajočega avtorja. Plansection7 popravljen: ohrani obstoječe avtorstvo
+skozi E2EE migracijo/projekcijo, brez wizard/rekonstrukcije za vse/owner-only
+omejitve starih vnosov. Konkretne manjkajoče podatke obravnavaj šele ob dokazu.
+To ni več odprta produktna odločitev. Samo docs+ta navodila, brez kode/testov/
+naprav/strežnikov. Ostali predlogi (60s, assignee delete/reassign, attachments)
+še niso s tem izrecno potrjeni. Počakaj na uporabnikov začetek izvedbe.
+
+24. oktober — **Dogovor prenove sinhronizacije; samo načrt, BREZ KODE**.
+Userpotrdi owner vsevprostoru/author svoje/taskassignee task; nakupcheckbox
+vsičlanizdostopom, deletecelotestujimizapisi samoowner. Owner ni hostadmin
+in ne dobi zasebnihprostorovčlanov. Celovit načrt je v
+docs/E2EE_MOBILE_SESSION_2026_10_24.md razdelek »Načrt prenove
+sinhronizacije celotne aplikacije — dogovor 24. oktobra«. Local-first
+open/save, enkoordinator, scopedchanged-only refresh, read ni localEdit,
+client3waymergeE2EE, konfliktnezadrži drugih zapisov, ohranitev exactsigned
+requests/receipts/ključi/drafts. Moduleposebnosti+upgradecompat+faze+merila.
+60sforegroundpoll/300msopen/1ssave so PREDLOGI ne potrjeneobljube.
+Odprto assignee delete/reassign, attachmentrights,
+tehničnirolemappingbrezspremembedogovora, intervali/perfbudget. Authorpolicy trenutno NI
+implementirana; ni dovolj skriti gumba. Brez runtime/test/build/install/
+HTTP/VM/phone/server/prod dejanj. Ne začni izvedbe med dogovarjanjem.
+
+24. oktober — **Izvorni pregled prepletanja osvežitev; brez novih testov**.
+User zahteva širši audit pred nadaljevanjem. 3GPT6.1Sol/high UI/core/crypto,
+root synthesis/review. Docs/E2EE_MOBILE_SESSION_2026_10_24.md razdelek
+Raziskava prepletanja osvežitev vsebuje graf, inventar UI in naslednje delo.
+Potrjeno taskopen→await finance choices tudi brezstroška; choices uporablja
+_edit→async sync demand. Timer3s local refreshLocal+syncWork, NE3sHTTP;
+drained fullsync next60s/backoff15/30/60. refreshLocal vse nonrevoked scopes,
+vedno state+personalChanged→organizer/localspaces/ideas/garden/payments
+reload fanout; sharedideas2signals, payments2invalidations NI exact2HTTP.
+Ni dokazane neskončne zanke; busy/sync/lease/schedule guardi ostanejo.
+UI choices brez combined finance context; ensure lahko vzdržuje podpisan
+selector, crypto perpartition queue; lokalno branje ni vedno cheap/no-write.
+Fast Vsi preview ostaja, Uredi težja pot; taskdata zajeta pred await ostane
+v draftu. Testfinance refresh no-op, firstframe preview test ni editorperf.
+20s/timeout/429/cryptoCPU/DBčas/transienterror vzroki NEIZMERJENI.
+Predlog: meritev ozkih faz, read/edit ločitev, local-first taskdialog,
+scoped/coalesced changed-only projekcije, ohrani identity/revoke/finance
+access/receipts/pairedcost. Brez runtimeedit/test/build/install/HTTP/VM/
+phone/server/prod dejanj ali ponovitve PASS. Mobilni testi čakajo odzivnost.
+
+24. oktober — **Oba mobilna prenosa USER PASS; odpiranje opravila ~20s**.
+User iPhone freshreopen vidi oba dodatka: reverse Samsung→iPhone GUI PASS,
+ne ponavljaj obeh prenosov. User poroča Samsung slowopen in iPhone~20s
+(prej≥3s), ocena ne meritev. Naslednji cilj lokalna diagnoza taskopen,
+novi mobilni scenariji začasno počakajo. Sourceconfirmed shared task await
+refreshFinanceAccountChoices pred dialogom tudi brez stroška; policy/choices/
+refreshLocal pot, ne še runtime20s proof. Transient sync vzrok še UNKNOWN.
+Brez phoneactions/VM/HTTP/rebuild/runtimefix ali starihPASS. Podatki isti,
+produkcija nedotaknjena. docs/E2EE_MOBILE_SESSION_2026_10_24.md.
+
+24. oktober — **Samsung reverseSave: transienterror→synced; Awrite200**.
+UserSamsungSaveclosedthenerror. RootMacAndroidmirrorONLY, fresh10:27
+USKLAJENO/lastsuccess10:27/attempt10:26/0queues; nophonebutton. NEWreverse
+readonlyVM1 at08:28:23: fullseq19 08:28:16 errornull/unresolvedfalse/queues0,
+exacttaskwire/model41chars updated08:26:31 (prior30), iPhonemarkerretained.
+Noeval/invoke/business/UI/sync. Server1querysnapshotexacttaskAwrite200
+08:26:32/expectedRevision2→rev3/sequence9/ownAdevice;7recentAreceiptsall200.
+PrevioustransientreasonUNVERIFIED; oldstartup3budgetexhausted, latestVMerror
+cleared. No guessed429/conflict/network. No newbuild/retrySave/manualsync.
+NEXTuseriPhonefreshreopen task (oldeditorPreklicibezSave), confirmbothlines.
+iPhonereadreverseNOTYETPASS. Evidence mobile-update-20261024/android/
+reverse-edit-20261024 and reverse-edit/server. Laterdiagnosticimprovement:
+boundednewfailurehistory beyondfirst3startupcycles. Docsupdated.
+
+24. oktober — **iPhone→Android prikaz po reopen USER PASS; naslednje obratna smer**.
+UserSamsungPrekliči/reopen vidiTest iPhone24, prvi prenosPASS tudiGUI.
+BrezponovnegaSave/manualSync. Staleopeneditor je potrjenaUXugotovitev;
+arrival/open timingneizmerjen. Zapisana izboljšava: pristineauto-refresh,
+dirtynewversionnotice+preserveunsaved; neimplementirano. iPhoneopen≥3s
+userobservation šeundianosed. NEXT: iPhone stari obrazecPrekliči brezSave;
+SamsungistemutaskuDODAJTest Samsung24 obohranjenihopombah,1Save, nato
+reopeniPhonepreveriobevrstici. ReverseprenosšeNEPREVERJEN. Nobenreinvite/
+grant/register/FILE/manualSync/repeatPASS. Docs/E2EE_MOBILE_SESSION_2026_10_24.md.
+
+24. oktober — **iPhone→Android opomba v modelu PASS; stari odprti osnutek**.
+UseriPhoneSaveclosed, S25editor markerabsent. ExactserverBtaskwrite200
+08:16:27UTC rev1→2. AndroidreadonlyVM3boundedattempts (1endpointfixtureFAIL,
+2literalread,3normalized+wirebinding): currentmodel30chars hasFROM-A+
+normalizedtestiphone24; activeeditordraft15chars old/noTest. ActualiPhone
+screenshottext »Test iPhone 24«, literalTEST-iPhone-24firstcheckfalse ni
+prenosFAIL. Modelwirebindingexact, syncseq13 08:22:39UTC errornull/unresolved
+false/queues0. NoVM eval/invoke/businesscalls/UI/sync/save; forwardsremoved;
+no4VMread. Evidence mobile-update-20261024/android/first-edit-20261024/
+current-state-attempt3.json + first-edit/server/*.json. NEXTuserSamsung
+Prekliči(brezSave), reopenistoopravilo preveriTest iPhone24. Don'tredoSend/
+Save/sync. OpenUX staleeditor needs visible newerdata indication preserving
+unsavededits; exactarrival/open timingUNVERIFIED. UseriPhoneopen≥3s observed,
+separateresponsiveness issue recorded/notmeasured/notdiagnosed. Docsupdated.
+
+24. oktober — **user Preveri in končaj → Utrip na obeh PASS**.
+User potrdi zaključekaccountprotectiončarovnika naiPhonu inAndroidu.
+PredhodninativeautosyncPASS ostane; brezagentUI/sync/rerun. NEXTnovtest:
+iPhoneistiMOBILE-PROJECT-1/MOBILE-SHARED-1, kstariopombi DODA vrstico
+TEST-iPhone-24 in1Save, potem report/preverinovprenosnaAndroid. Ne prepiši
+stareopombe, nepovabi/regrant/register/FILE. Novedit/prenosšeNEPREVERJEN.
+
+24. oktober — **iPhone po Continue autosync PASS; čaka Preveri in končaj**.
+UserContinue→Zaščitapovezanihpodatkov, freshDeviceHub canFinishtrue,
+MobileE2EE20261018/MOBILE-PROJECT-1 committedtext. Freshiosnative-read/
+20261024T081203461838Z.json startup1 08:11:46–56UTC completedtrue/code none/
+leaseClaimedtrue/workUnresolvedfalse. Prvi actualiOSfullsyncPASS po popravkih;
+agent UI0/sync0/build0, AndroidprejšnjiPASS neponovljen. NEXTuserSAMO
+Preveri in končaj na iPhonu, report; nefinance/ključi/invite/grant/FILE.
+IzidaccountcompletionšeNEPREVERJEN. Dnevniki v mobile-update-20261024.
+
+24. oktober — **prvi ročni zagon: Android autosync PASS; iPhone KnownContinue**.
+User odpreobeQA, S25 kažeZaščitapovezanihpodatkov. SvežiAndroid20261024v1
+startup1/2 completedtrue/errornone/leaseClaimedtrue/unresolvedfalse,
+08:07:14–28 in08:08:29–41UTC; agent ni sprožilSync/UI. NativeAndroidautosync
+PASS, necompletewizard/dvosmerniprenos. Dokaz android/diagnostic-read-
+20261024T080904Z.json. Readerfixedexec-out→shell-T zaradi missingfile
+falseexit0/JSONparse, noappchange. iPhone DeviceHub screenshotshowsknown
+cleanupwarning/staredatoteke/Poskusiznova/Nadaljujvlokalnepodatke. iOS
+newnamespaceinventoryCoreDeviceerror, records[] ni dokazsynca aliodsotnosti.
+NASLEDNJE userklikne SAMO Nadaljuj v lokalne podatke naiPhonu in poroča;
+Android ne ponavljajsync. Breznovihbuild/install/reset/invite/grant/prod.
 
 24. oktober — **oba ločena mobilna QA posodobljena; čaka uporabnikov prvi sync**.
 User priklopi S25/iPhone11 istiWiFi in naroči vzporedna Android/iOS agenta;

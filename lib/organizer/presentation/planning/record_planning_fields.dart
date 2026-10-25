@@ -15,24 +15,32 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
     required this.financeAccounts,
     this.financeAccountChoices = const {},
     required this.costEditingEnabled,
+    this.costVisible = true,
+    this.onCostSectionOpened,
     required this.costAccountRequired,
     required this.enabled,
     required this.onChanged,
     this.wrap,
   });
   final OrganizerDraft draft;
-  final bool project, costEditingEnabled, costAccountRequired, enabled;
+  final bool project,
+      costEditingEnabled,
+      costAccountRequired,
+      enabled,
+      costVisible;
   final List<LocalProject> projects;
   final List<HouseholdPerson> people;
   final List<LocalFinanceAccount> financeAccounts;
   final Map<String, ({String name, String currency, bool archived})>
   financeAccountChoices;
   final VoidCallback onChanged;
+  final VoidCallback? onCostSectionOpened;
   final Widget Function(Widget)? wrap;
 
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    final costEnabled = enabled && costEditingEnabled;
     final chosenProject = projects
         .where((p) => p.id == draft.projectId)
         .firstOrNull;
@@ -53,6 +61,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TextFormField(
+                        enabled: enabled,
                         initialValue: phase.title,
                         decoration: InputDecoration(
                           labelText: l.planningPhaseTitle,
@@ -67,6 +76,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
+                        enabled: enabled,
                         initialValue: phase.milestone,
                         decoration: InputDecoration(
                           labelText: l.planningMilestone,
@@ -158,6 +168,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
         if (!project) ...[
           const SizedBox(height: 12),
           TextFormField(
+            enabled: enabled,
             key: const ValueKey('task-estimate'),
             initialValue: draft.estimateMinutes?.toString() ?? '',
             keyboardType: TextInputType.number,
@@ -177,6 +188,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
           initiallyExpanded: draft.availabilityMinutes != null,
           children: [
             TextFormField(
+              enabled: enabled,
               initialValue: draft.availabilityMinutes?.toString() ?? '',
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
@@ -282,200 +294,211 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
             ],
           ),
         ],
-        if (!project && !costEditingEnabled && draft.costEnabled)
+        if (!project && costVisible && !costEditingEnabled && draft.costEnabled)
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Text(
               '${l.taskCostTitle}: ${draft.costAmount} ${draft.costCurrency} · ${draft.costPaid ? l.taskCostPaid : l.taskCostPlanned}',
             ),
           ),
-        if (!project && costEditingEnabled)
+        if (!project &&
+            (costVisible && costEditingEnabled || onCostSectionOpened != null))
           ExpansionTile(
+            key: const ValueKey('task-cost-section'),
             tilePadding: EdgeInsets.zero,
             title: Text(l.taskCostTitle),
             initiallyExpanded: draft.costEnabled,
+            onExpansionChanged: (expanded) {
+              if (expanded) onCostSectionOpened?.call();
+            },
             children: [
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l.taskCostEnabled),
-                value: draft.costEnabled,
-                onChanged: !enabled
-                    ? null
-                    : (v) {
-                        draft.costEnabled = v;
-                        onChanged();
-                      },
-              ),
-              if (!draft.costEnabled)
-                Text(
-                  l.taskCostDetachHint,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              if (draft.costEnabled) ...[
-                TextFormField(
-                  key: const ValueKey('task-cost-amount'),
-                  initialValue: draft.costAmount,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(labelText: l.amount),
-                  validator: (v) {
-                    try {
-                      parseMoneyMinor(v ?? '');
-                      return null;
-                    } catch (_) {
-                      return l.organizerInvalidMoney;
-                    }
-                  },
-                  onSaved: (v) => draft.costAmount = v ?? '',
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: draft.costCurrency,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: l.organizerCurrency),
-                  items: [
-                    for (final c in supportedCurrencies)
-                      DropdownMenuItem(value: c, child: Text(c)),
-                  ],
-                  onChanged: !enabled
+              // A cold snapshot may offer verification, never cached cost data.
+              if (costVisible) ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l.taskCostEnabled),
+                  value: draft.costEnabled,
+                  onChanged: !costEnabled
                       ? null
                       : (v) {
-                          draft.costCurrency = v!;
-                          draft.ledgerAccountId = null;
+                          draft.costEnabled = v;
                           onChanged();
                         },
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  key: ValueKey('task-cost-account-${draft.costCurrency}'),
-                  initialValue:
-                      draft.ledgerAccountId ??
-                      (costAccountRequired ? null : ''),
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: l.taskCostAccount),
-                  items: [
-                    if (!costAccountRequired)
-                      DropdownMenuItem(
-                        value: '',
-                        child: Text(l.taskCostUnassignedAccount),
-                      ),
-                    for (final a in financeAccounts.where(
-                      (a) =>
-                          a.currency == draft.costCurrency &&
-                          (!a.archived || a.id == draft.ledgerAccountId),
-                    ))
-                      DropdownMenuItem(
-                        value: a.id,
-                        child: Text(
-                          a.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    for (final a in financeAccountChoices.entries.where(
-                      (a) =>
-                          a.value.currency == draft.costCurrency &&
-                          (!a.value.archived || a.key == draft.ledgerAccountId),
-                    ))
-                      DropdownMenuItem(
-                        value: a.key,
-                        child: Text(
-                          '${a.value.name} · ${l.financeParentAccount}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  validator: (value) =>
-                      costAccountRequired && (value == null || value.isEmpty)
-                      ? l.taskCostSelectAccount
-                      : null,
-                  onChanged: !enabled
-                      ? null
-                      : (v) => draft.ledgerAccountId = v == '' ? null : v,
-                ),
-                if (costAccountRequired &&
-                    financeAccounts
-                        .where(
-                          (a) =>
-                              a.currency == draft.costCurrency && !a.archived,
-                        )
-                        .isEmpty &&
-                    financeAccountChoices.values
-                        .where(
-                          (a) =>
-                              a.currency == draft.costCurrency && !a.archived,
-                        )
-                        .isEmpty)
-                  Text(l.financeNoAccounts),
-                for (final f in [
-                  ('payer', l.taskCostPayer, draft.payerPersonId),
-                  ('recipient', l.taskCostRecipient, draft.recipientPersonId),
-                ]) ...[
+                if (!draft.costEnabled)
+                  Text(
+                    l.taskCostDetachHint,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (draft.costEnabled) ...[
+                  TextFormField(
+                    enabled: costEnabled,
+                    key: const ValueKey('task-cost-amount'),
+                    initialValue: draft.costAmount,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(labelText: l.amount),
+                    validator: (v) {
+                      try {
+                        parseMoneyMinor(v ?? '');
+                        return null;
+                      } catch (_) {
+                        return l.organizerInvalidMoney;
+                      }
+                    },
+                    onChanged: (v) => draft.costAmount = v,
+                    onSaved: (v) => draft.costAmount = v ?? '',
+                  ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: f.$3 ?? '',
+                    initialValue: draft.costCurrency,
                     isExpanded: true,
-                    decoration: InputDecoration(labelText: f.$2),
+                    decoration: InputDecoration(labelText: l.organizerCurrency),
                     items: [
-                      DropdownMenuItem(
-                        value: '',
-                        child: Text(l.planningUnassigned),
-                      ),
-                      for (final p in people.where(
-                        (p) => !p.archived || p.id == f.$3,
+                      for (final c in supportedCurrencies)
+                        DropdownMenuItem(value: c, child: Text(c)),
+                    ],
+                    onChanged: !costEnabled
+                        ? null
+                        : (v) {
+                            draft.costCurrency = v!;
+                            draft.ledgerAccountId = null;
+                            onChanged();
+                          },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('task-cost-account-${draft.costCurrency}'),
+                    initialValue:
+                        draft.ledgerAccountId ??
+                        (costAccountRequired ? null : ''),
+                    isExpanded: true,
+                    decoration: InputDecoration(labelText: l.taskCostAccount),
+                    items: [
+                      if (!costAccountRequired)
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(l.taskCostUnassignedAccount),
+                        ),
+                      for (final a in financeAccounts.where(
+                        (a) =>
+                            a.currency == draft.costCurrency &&
+                            (!a.archived || a.id == draft.ledgerAccountId),
                       ))
                         DropdownMenuItem(
-                          value: p.id,
+                          value: a.id,
                           child: Text(
-                            p.name,
+                            a.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      for (final a in financeAccountChoices.entries.where(
+                        (a) =>
+                            a.value.currency == draft.costCurrency &&
+                            (!a.value.archived ||
+                                a.key == draft.ledgerAccountId),
+                      ))
+                        DropdownMenuItem(
+                          value: a.key,
+                          child: Text(
+                            '${a.value.name} · ${l.financeParentAccount}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                     ],
-                    onChanged: !enabled
+                    validator: (value) =>
+                        costAccountRequired && (value == null || value.isEmpty)
+                        ? l.taskCostSelectAccount
+                        : null,
+                    onChanged: !costEnabled
+                        ? null
+                        : (v) => draft.ledgerAccountId = v == '' ? null : v,
+                  ),
+                  if (costAccountRequired &&
+                      financeAccounts
+                          .where(
+                            (a) =>
+                                a.currency == draft.costCurrency && !a.archived,
+                          )
+                          .isEmpty &&
+                      financeAccountChoices.values
+                          .where(
+                            (a) =>
+                                a.currency == draft.costCurrency && !a.archived,
+                          )
+                          .isEmpty)
+                    Text(l.financeNoAccounts),
+                  for (final f in [
+                    ('payer', l.taskCostPayer, draft.payerPersonId),
+                    ('recipient', l.taskCostRecipient, draft.recipientPersonId),
+                  ]) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: f.$3 ?? '',
+                      isExpanded: true,
+                      decoration: InputDecoration(labelText: f.$2),
+                      items: [
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(l.planningUnassigned),
+                        ),
+                        for (final p in people.where(
+                          (p) => !p.archived || p.id == f.$3,
+                        ))
+                          DropdownMenuItem(
+                            value: p.id,
+                            child: Text(
+                              p.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: !costEnabled
+                          ? null
+                          : (v) {
+                              final id = v == '' ? null : v;
+                              if (f.$1 == 'payer') {
+                                draft.payerPersonId = id;
+                              } else if (f.$1 == 'recipient') {
+                                draft.recipientPersonId = id;
+                              } else {
+                                draft.recipientPersonId = id;
+                              }
+                            },
+                    ),
+                  ],
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.taskCostPaid),
+                    value: draft.costPaid,
+                    onChanged: !costEnabled || draft.costWasPaid
                         ? null
                         : (v) {
-                            final id = v == '' ? null : v;
-                            if (f.$1 == 'payer') {
-                              draft.payerPersonId = id;
-                            } else if (f.$1 == 'recipient') {
-                              draft.recipientPersonId = id;
-                            } else {
-                              draft.recipientPersonId = id;
-                            }
+                            draft.costPaid = v ?? false;
+                            draft.costPaidAt = draft.costPaid
+                                ? draft.costPaidAt ?? DateTime.now()
+                                : null;
+                            onChanged();
                           },
                   ),
+                  if (draft.costPaid)
+                    OrganizerDateTimeField(
+                      label: l.taskCostPaid,
+                      value: draft.costPaidAt,
+                      enabled: costEnabled && !draft.costWasPaid,
+                      wrap: wrap,
+                      onChanged: (value) {
+                        draft.costPaidAt = value;
+                        onChanged();
+                      },
+                    ),
+                  if (draft.date == null && !draft.costPaid)
+                    Text(l.taskCostNoDue),
                 ],
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l.taskCostPaid),
-                  value: draft.costPaid,
-                  onChanged: !enabled || draft.costWasPaid
-                      ? null
-                      : (v) {
-                          draft.costPaid = v ?? false;
-                          draft.costPaidAt = draft.costPaid
-                              ? draft.costPaidAt ?? DateTime.now()
-                              : null;
-                          onChanged();
-                        },
-                ),
-                if (draft.costPaid)
-                  OrganizerDateTimeField(
-                    label: l.taskCostPaid,
-                    value: draft.costPaidAt,
-                    enabled: enabled && !draft.costWasPaid,
-                    wrap: wrap,
-                    onChanged: (value) {
-                      draft.costPaidAt = value;
-                      onChanged();
-                    },
-                  ),
-                if (draft.date == null && !draft.costPaid)
-                  Text(l.taskCostNoDue),
               ],
             ],
           ),

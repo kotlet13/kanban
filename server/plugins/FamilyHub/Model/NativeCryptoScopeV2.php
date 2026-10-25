@@ -718,20 +718,24 @@ class NativeCryptoScopeV2 extends NativeDatabase
             }
         }
     }
-    public function author($sid, $headHash, $epoch, $access, $actor, $domain, $write = true)
+    public function author($sid, $headHash, $epoch, $access, $actor, $domain, $write = true, $recordPolicy = false)
     {
         $this->domain($domain);
         $this->digest($headHash);
         if (!is_int($epoch) || $epoch < 1 || !is_int($access) || $access < 0) {
             throw new NativeError('validation_error');
         }
-        $scope = $this->scope($sid, $actor['user']['id'], $write);
+        // Only the caller enforcing the activated record policy can request
+        // this exception. Finance always retains its existing write gate.
+        $recordPolicy=$recordPolicy&&$domain==='content';
+        $scope = $this->scope($sid, $actor['user']['id'], $write&&!$recordPolicy);
+        if($write&&(int)($scope['archived']??0)===1)throw new NativeError('scope_archived',403);
         $current = $this->current($sid);
         if (!$current || $current['head_hash'] !== $headHash || (int)$current['epoch'] !== $epoch || (int)$scope['effective_access_revision'] !== $access) {
             throw new NativeError('crypto_scope_head_changed', 409);
         }
         $m = $this->member($this->body($current), $actor['user']['account_id']);
-        if (!$m || $write && $m['role'] === 'viewer') {
+        if (!$m || $write && !$recordPolicy && $m['role'] === 'viewer') {
             throw new NativeError('permission_revoked', 403);
         }
         if ($domain === 'finance') {
@@ -1334,6 +1338,8 @@ class NativeCryptoScopeV2 extends NativeDatabase
         $account = $actor['user']['account_id'];
         $rows = $this->many('SELECT s.id FROM familyhub_scopes s WHERE s.id>? AND s.deleted_at IS NULL AND (EXISTS (SELECT 1 FROM familyhub_members m WHERE m.scope_id=s.id AND m.account_id=? AND m.user_id=? AND m.active=1) OR EXISTS (SELECT 1 FROM familyhub_members m JOIN familyhub_scopes parent ON parent.id=m.scope_id LEFT JOIN familyhub_organization_leaders leader ON leader.scope_id=parent.id AND leader.account_id=m.account_id WHERE (parent.id=s.parent_scope_id OR parent.id=s.organization_id) AND m.account_id=? AND m.user_id=? AND m.active=1 AND (parent.access_policy_version=3 OR (parent.access_policy_version=2 AND (m.role=\'owner\' OR leader.account_id IS NOT NULL))))) ORDER BY s.id LIMIT '.($limit + 1), [$after, $account, $actor['user']['id'], $account, $actor['user']['id']]);
         $out = [];
+        $recordPolicyVersions = [];
+        $recordPolicy = new NativeCryptoRecordPolicyV1($this->container);
         $bytes = 0;
         foreach (array_slice($rows, 0, $limit) as $row) {
             $descriptor = $this->catalogScope($row['id'], $actor);
@@ -1342,9 +1348,12 @@ class NativeCryptoScopeV2 extends NativeDatabase
                 break;
             }
             $out[] = $descriptor;
+            $recordPolicyVersions[$descriptor['id']] = $recordPolicy->active($descriptor['id']) ? 1 : 0;
             $bytes += $size;
         }
-        return ['scopes' => $out, 'hasMore' => count($rows) > count($out), 'nextAfterId' => $out ? end($out)['id'] : null];
+        // Discovery hints stay outside the original descriptor and protection
+        // manifest hash. They select verification, never grant authority.
+        return ['scopes' => $out, 'recordPolicyVersions' => (object)$recordPolicyVersions, 'hasMore' => count($rows) > count($out), 'nextAfterId' => $out ? end($out)['id'] : null];
     }
 
     public function catalogScope($sid, $actor)

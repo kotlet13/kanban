@@ -210,6 +210,7 @@ class NativeCryptoAccessV2 extends NativeDatabase
             $this->portions($row, function ($portion) use ($action) {
                 $sid = $portion['scope_id'];
                 (new NativeCryptoInvitationPreauthorizationV5($this->container))->retireForAccess($sid,$action['accountId']);
+                (new NativeNotificationWriter($this->container))->configurationChanged($action['accountId']);
                 $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE scope_id=? AND account_id=? AND state='pending'", [$sid, $action['accountId']]);
                 $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL,lease_until=NULL WHERE invitation_id IN (SELECT id FROM familyhub_crypto_invitations_v2 WHERE scope_id=? AND recipient_account_id=? AND state IN ('pending','accepted'))", [$sid, $action['accountId']]);
                 $this->change("UPDATE familyhub_crypto_invitation_acceptances_v2 SET state='revoked' WHERE invitation_id IN (SELECT id FROM familyhub_crypto_invitations_v2 WHERE scope_id=? AND recipient_account_id=? AND state IN ('pending','accepted')) AND state='accepted'", [$sid, $action['accountId']]);

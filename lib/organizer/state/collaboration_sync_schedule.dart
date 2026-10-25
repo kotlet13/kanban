@@ -58,7 +58,7 @@ class CollaborationSyncSchedule {
     }
     _completion = value.sequence;
     _work = value.work.signature;
-    _demand = value.work.unresolved && _requests > _attemptRequests;
+    _demand = _requests > _attemptRequests;
     if (value.retryAt != null &&
         (retryAt == null || value.retryAt!.isAfter(retryAt!))) {
       retryAt = value.retryAt;
@@ -66,7 +66,7 @@ class CollaborationSyncSchedule {
     final drained = value.error == null && !value.work.unresolved;
     _failures = drained ? 0 : _failures + 1;
     final seconds = drained
-        ? 60
+        ? 30
         : (_failures == 1
               ? 15
               : _failures == 2
@@ -74,6 +74,14 @@ class CollaborationSyncSchedule {
               : 60);
     nextAt = value.at.add(Duration(seconds: seconds));
     return true;
+  }
+
+  /// An unchanged account probe is not a full-sync completion and emits no
+  /// content state. A concurrent local save remains demanded.
+  void checked(DateTime now) {
+    _demand = _requests > _attemptRequests;
+    _failures = 0;
+    nextAt = now.add(const Duration(seconds: 30));
   }
 
   void failed(DateTime now) {

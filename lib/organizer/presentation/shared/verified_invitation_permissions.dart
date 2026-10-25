@@ -1,3 +1,4 @@
+import 'sharing_role_permissions.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -81,6 +82,14 @@ class VerifiedInvitationPermissions extends StatelessWidget {
       children: [
         const SizedBox(height: 16),
         Text('${l.cryptoSharingAccessLabel}: $label'),
+        if ((invitation.response['scope'] as Map?)?['recordPolicyVersion'] == 1)
+          Text(
+            sharingPermissionDescription(
+              l,
+              role as String,
+              recordPolicyVersion: 1,
+            ),
+          ),
         if (proposed != null) ...[
           Text(switch (proposed['financeRole']) {
             'write' => l.cryptoSharingFinanceWrite,

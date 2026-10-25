@@ -76,6 +76,7 @@ class NativeCryptoV2Service extends NativeDatabase
         $readOperations[] = 'crypto2.exports.delegation.forOffer';
         $readOperations[] = 'crypto2.authority.snapshot';
         $readOperations[] = 'crypto2.scope.memberLabels';
+        $readOperations=array_merge($readOperations,['crypto2.scope.recordPolicy.status','crypto2.scope.recordPolicy.baseline']);
         if (!in_array($operation, $readOperations, true)) {
             $decoded = NativeCryptoCodec::decode($params);
             $command = $decoded[0];
@@ -108,6 +109,9 @@ class NativeCryptoV2Service extends NativeDatabase
             $account = $actor['user']['account_id'];
             $directory = new NativeCryptoDirectoryV2($this->container, $this->bearer, $this->ip);
             $current = $directory->current($account);
+            if(in_array($operation,['crypto2.scope.recordPolicy.status','crypto2.scope.recordPolicy.baseline'],true)){
+                return (new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip))->read($operation,$params,$actor);
+            }
             if ($operation === 'crypto2.scope.memberLabels') {
                 return (new NativeCryptoMemberLabelsV2($this->container, $this->bearer, $this->ip))->read($params, $actor);
             }
@@ -342,6 +346,8 @@ class NativeCryptoV2Service extends NativeDatabase
                     $out = (new NativeCryptoFinancePolicyV2($this->container, $this->bearer, $this->ip))->propose($command['payload'], $actor, $proof, $command);
                 } elseif ($operation === 'crypto2.scope.archive' || str_starts_with($operation, 'crypto2.scope.lifecycle.')) {
                     $out = (new NativeCryptoLifecycleV2($this->container, $this->bearer, $this->ip))->write($operation, $command['payload'], $actor, $proof, $command);
+                } elseif (in_array($operation,['crypto2.scope.recordPolicy.prepare','crypto2.scope.recordPolicy.stage','crypto2.scope.recordPolicy.activate'],true)) {
+                    $out=(new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip))->write($operation,$command['payload'],$actor,$proof);
                 } elseif (in_array($operation, ['crypto2.scope.create', 'crypto2.scope.ensurePersonal'], true)) {
                     $out = (new NativeCryptoScopeCreationV2($this->container, $this->bearer, $this->ip))->write($operation, $command['payload'], $actor, $proof, $command, $key);
                 } elseif (in_array($operation, ['crypto2.scope.prepare', 'crypto2.scope.headPut', 'crypto2.scope.activate', 'crypto2.scope.cancel', 'crypto2.scope.closeDomain', 'crypto2.grants.put'], true)) {
@@ -382,7 +388,7 @@ class NativeCryptoV2Service extends NativeDatabase
     /** The existing shared-content policy is a server boundary, not merely a UI checkbox. */
     private function uploadPolicy($operation, $payload, $actor)
     {
-        $uploads = ['crypto2.records.batch','crypto2.blob.begin','crypto2.blob.chunk','crypto2.blob.complete','crypto2.scope.create','crypto2.scope.headPut','crypto2.grants.put','crypto2.reminders.put','crypto2.scope.keyDraft.put','crypto2.scope.keyDraft.offer','crypto2.scope.keyDraft.sign','crypto2.scope.financeDraft.put','crypto2.scope.financeDraft.contribute'];
+        $uploads = ['crypto2.scope.recordPolicy.prepare','crypto2.scope.recordPolicy.stage','crypto2.scope.recordPolicy.activate','crypto2.records.batch','crypto2.blob.begin','crypto2.blob.chunk','crypto2.blob.complete','crypto2.scope.create','crypto2.scope.headPut','crypto2.grants.put','crypto2.reminders.put','crypto2.scope.keyDraft.put','crypto2.scope.keyDraft.offer','crypto2.scope.keyDraft.sign','crypto2.scope.financeDraft.put','crypto2.scope.financeDraft.contribute'];
         if (!in_array($operation, $uploads, true) && !in_array($operation, ['crypto2.invitations.create','crypto2.invitations.resend'], true)) {
             return;
         }
@@ -390,7 +396,7 @@ class NativeCryptoV2Service extends NativeDatabase
         if (isset($payload['scopeId'])) {
             $ids[] = $payload['scopeId'];
         }
-        foreach ($payload['records'] ?? [] as $proof) {
+        foreach (str_starts_with($operation??'','crypto2.scope.recordPolicy.') ? [] : ($payload['records'] ?? []) as $proof) {
             [$record] = NativeCryptoCodec::decode($proof);
             $ids[] = $record['scopeId'];
         }
@@ -453,7 +459,7 @@ class NativeCryptoV2Service extends NativeDatabase
         foreach ($payload['scopeIds'] ?? [] as $sid) {
             $ids[] = $sid;
         }
-        foreach ($payload['records'] ?? [] as $proof) {
+        foreach (str_starts_with($operation??'','crypto2.scope.recordPolicy.') ? [] : ($payload['records'] ?? []) as $proof) {
             [$record] = NativeCryptoCodec::decode($proof);
             $ids[] = $record['scopeId'] ?? null;
             foreach ($record['metadata']['references'] ?? [] as $ref) {

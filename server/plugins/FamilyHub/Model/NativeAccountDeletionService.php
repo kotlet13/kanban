@@ -302,6 +302,7 @@ class NativeAccountDeletionService extends NativeDatabase
                 $this->change('DELETE FROM familyhub_push_jobs WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=?)',[$m['scopeId'],$m['id']]);
                 $this->change('DELETE FROM familyhub_deliveries WHERE inbox_id IN (SELECT id FROM familyhub_inbox WHERE scope_id=? AND target_id=?)',[$m['scopeId'],$m['id']]);
                 $this->change('DELETE FROM familyhub_inbox WHERE scope_id=? AND target_id=?',[$m['scopeId'],$m['id']]);
+                (new NativeNotificationWriter($this->container))->configurationForScope($m['scopeId'],$m['id'],false);
                 $this->change('DELETE FROM familyhub_reminders WHERE scope_id=? AND target_id=?',[$m['scopeId'],$m['id']]);
             }
         }

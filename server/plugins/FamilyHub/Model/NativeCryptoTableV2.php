@@ -8,6 +8,11 @@ class NativeCryptoTableV2 extends NativeDatabase
     protected $cryptoAccess = true;
     public const LEASE_SECONDS = 90;
 
+    protected function writeAuthority($p,$actor,$recordPolicy)
+    {
+        return (new NativeCryptoScopeV2($this->container,$this->bearer,$this->ip))->author($p['scopeId'],$p['membershipHeadHash'],$p['epoch'],$p['accessRevision'],$actor,'content',true,$recordPolicy);
+    }
+
     public function read($p, $actor)
     {
         $this->fields($p, ['scopeId', 'id', 'accessRevision']);
@@ -28,15 +33,17 @@ class NativeCryptoTableV2 extends NativeDatabase
         if (!in_array($op, ['crypto2.table.acquire', 'crypto2.table.renew', 'crypto2.table.release'], true) || $p['domain'] !== 'content') {
             throw new NativeError('validation_error');
         }
-        [$scope] = (new NativeCryptoScopeV2($this->container, $this->bearer, $this->ip))->author($p['scopeId'], $p['membershipHeadHash'], $p['epoch'], $p['accessRevision'], $actor, 'content');
+        $policy=new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip);
+        [$scope,$head]=$this->writeAuthority($p,$actor,(bool)$policy->active($p['scopeId']));
         if ($scope['kind'] !== 'organization') {
             throw new NativeError('tables_scope_unsupported', 403);
         }
         $id = NativeCryptoRecordAddressV2::wireId($p['id']);
-        $table = $this->one("SELECT id FROM familyhub_crypto_records WHERE scope_id=? AND id=? AND type='table' AND deleted=0", [$scope['id'], $id]);
+        $table = $this->one("SELECT id,revision,metadata FROM familyhub_crypto_records WHERE scope_id=? AND id=? AND type='table' AND deleted=0", [$scope['id'], $id]);
         if (!$table) {
             throw new NativeError('table_unavailable', 404);
         }
+        if($op!=='crypto2.table.release')$policy->authorizeTable($scope,$table,$actor,$head);
         $row = $this->one('SELECT * FROM familyhub_crypto_table_leases WHERE scope_id=? AND id=?', [$scope['id'], $id]);
         if ($op === 'crypto2.table.acquire') {
             $active = $row && $row['head_hash'] === $p['membershipHeadHash'] && (int)$row['expires_at'] > time();
@@ -98,7 +105,8 @@ class NativeCryptoTableV2 extends NativeDatabase
             if ($r['type'] !== 'table') {
                 continue;
             }
-            $scope = $this->scope($r['scopeId'], $actor['user']['id'], true);
+            $policy=new NativeCryptoRecordPolicyV1($this->container,$this->bearer,$this->ip);
+            $scope = $this->scope($r['scopeId'], $actor['user']['id'], !$policy->active($r['scopeId']));
             if ($scope['kind'] !== 'organization') {
                 throw new NativeError('tables_scope_unsupported', 403);
             }
