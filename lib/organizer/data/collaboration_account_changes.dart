@@ -6,12 +6,18 @@ class CollaborationAccountChanges {
     required this.accountDomains,
     required this.scopes,
     required this.directoryHintsVersion,
+    required this.notificationConfigurationChanged,
   });
   final String cursor;
   final bool reset;
   final Set<String> accountDomains;
   final Map<String, Set<String>> scopes;
   final int? directoryHintsVersion;
+  final bool? notificationConfigurationChanged;
+  // Older/unknown servers retain the broad inbox fallback. Access changes may
+  // introduce new scopes, so they still require configuration even with no bump.
+  bool get notificationConfiguration =>
+      reset || access || (notificationConfigurationChanged ?? inbox);
   bool get semanticDirectoryHint =>
       directoryHintsVersion == 1 && accountDomains.contains('directory');
   bool get requiresSync =>
@@ -81,7 +87,14 @@ class CollaborationAccountChanges {
       }
       scopes[row['scopeId'] as String] = domains(row['domains'], scopeAllowed);
     }
+    if (value['notificationHintsVersion'] == 1 &&
+        value['notificationConfigurationChanged'] is! bool) {
+      throw const FormatException('account_notification_change_hint');
+    }
     final result = CollaborationAccountChanges._(
+      notificationConfigurationChanged: value['notificationHintsVersion'] == 1
+          ? value['notificationConfigurationChanged'] as bool
+          : null,
       cursor: value['cursor'] as String,
       reset: value['resetRequired'] as bool,
       accountDomains: domains(value['accountDomains'], accountAllowed),

@@ -148,10 +148,13 @@ class NativeAccountChanges extends NativeDatabase
         $directory = $this->one('SELECT generation,head_hash,snapshot_hash,device_snapshot_hash,identity_epoch_id FROM familyhub_crypto_directory_state WHERE account_id=?', [$account]);
         $directoryLog = $directory === null ? null : array_intersect_key($directory, array_flip(['generation','head_hash','device_snapshot_hash']));
         $directoryAccess = $directory === null ? null : array_intersect_key($directory, array_flip(['snapshot_hash','device_snapshot_hash','identity_epoch_id']));
+        $inboxState = $this->one('SELECT sequence,visibility_revision,configuration_revision FROM familyhub_inbox_state WHERE account_id=?', [$account]);
+        $notificationConfiguration = $this->digest((int)($inboxState['configuration_revision'] ?? 0));
+        $configurationChanged = ($old['notificationConfiguration'] ?? null) !== $notificationConfiguration;
         $accountState = [
             // Every signed event still wakes ordinary directory verification.
             'directory' => $this->digest($directoryLog),
-            'inbox' => $this->digest($this->one('SELECT sequence,visibility_revision,configuration_revision FROM familyhub_inbox_state WHERE account_id=?', [$account])),
+            'inbox' => $this->digest($inboxState),
             'access' => $this->digest([array_keys($scopes), $directoryAccess]),
             'metadata' => $this->digest([$actor['user']['username'], $actor['user']['name'], $this->one('SELECT revision,verified_at FROM familyhub_email_identities WHERE account_id=?', [$account])]),
         ];
@@ -176,15 +179,18 @@ class NativeAccountChanges extends NativeDatabase
         $accountState['invitations'] = hash_final($hash);
         $changedScopes = []; $accountDomains = [];
         foreach ($accountState as $domain => $stamp) { if (($old['account'][$domain] ?? null) !== $stamp) { $accountDomains[] = $domain; } }
+        // Keep the v1 inbox domain unchanged for old clients. A cursor written
+        // before this additive hint needs one conservative configuration read.
+        if ($configurationChanged && !in_array('inbox', $accountDomains, true)) { $accountDomains[] = 'inbox'; }
         foreach ($scopes as $sid => $domains) {
             $changed = [];
             foreach ($domains as $domain => $stamp) { if (($old['scopes'][$sid][$domain] ?? null) !== $stamp) { $changed[] = $domain; } }
             if ($changed) { $changedScopes[] = ['scopeId' => $sid, 'domains' => $changed]; }
         }
-        $bytes = base64_encode(json_encode(['binding'=>$binding,'account'=>$accountState,'scopes'=>$scopes], JSON_THROW_ON_ERROR));
+        $bytes = base64_encode(json_encode(['binding'=>$binding,'account'=>$accountState,'scopes'=>$scopes,'notificationConfiguration'=>$notificationConfiguration], JSON_THROW_ON_ERROR));
         $next = $bytes.'.'.hash_hmac('sha256', $bytes, self::key());
         if (strlen($next) > self::MAX_CURSOR) { throw new NativeError('account_changes_too_large', 413); }
-        return ['version'=>1,'directoryHintsVersion'=>1,'serverId'=>$binding[1],'accountId'=>$account,'deviceId'=>$binding[3],
+        return ['version'=>1,'directoryHintsVersion'=>1,'notificationHintsVersion'=>1,'notificationConfigurationChanged'=>$configurationChanged,'serverId'=>$binding[1],'accountId'=>$account,'deviceId'=>$binding[3],
             'cursor'=>$next,'changed'=>(bool)($accountDomains || $changedScopes),'accountDomains'=>$accountDomains,
             'scopes'=>$changedScopes,'hasMore'=>false,'resetRequired'=>$old === null];
     }

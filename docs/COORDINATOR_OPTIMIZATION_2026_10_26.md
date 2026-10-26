@@ -64,3 +64,28 @@ s trenutnim datumom PASS. Ni četrtega teka ali ponovitve treh PASS.
 Ozka analiza 0 napak/0 opozoril, 9 obstoječih info; nov info v testu popravljen.
 Dokazi `p5a-*`. Transport je sintetičen in SQLite pravi; ne HTTP/native test.
 Konfiguracijski fanout (P5b) še sledi.
+
+## P5b — oddelen namig za konfiguracijo obvestil
+
+Strežnik v isti metadata snapshot doda `notificationHintsVersion: 1` in
+`notificationConfigurationChanged`. Obstoječi accountDomains/inbox ostane
+združljiv s starimi aplikacijami. Cursor ima dodatni podpisani digest že
+obstoječega configuration_revision; shema in poslovni podatki se ne spreminjajo.
+Stari cursor brez polja zahteva eno konfiguracijsko osvežitev in se nato umiri.
+Nova aplikacija ob običajnem inbox dogodku preskoči preferences/reminders
+fanout. Ob resetu, spremenjenem dostopu ali poslanem ukazu ga ohrani. Stari
+ali neznani strežniški hint uporablja prejšnjo konservativno pot.
+
+**15 novih kontrol PASS:** 8 strežniških + 7 Dart repository/parser.
+Strežniški prvi tek: prvih 5 kontrol PASS; test podpisa starega cursorja FAIL,
+ker fixture ni uporabila obstoječe HMAC domenske izpeljave ključa. Ta sklop
+razdeljen v split/compat datoteki; drugi tek samo 3 še odprte compat kontrole
+PASS (stari cursor, settle, izolacija računa). Ni ponovitve prvih 5 PASS.
+To je dejanski NativeAccountChanges nad disposable memory SQLite v Dockerju
+brez mreže; ni nov E2EE podpisni ali HTTP test.
+
+Odjemalec 7 PASS v prvem teku: navadni inbox 0 preference + 0 reminder branj
+za 2 prostora; config/access/legacy/unknown/command vsak ohrani 2+2. Preverjen
+je tudi strog tip eksplicitnega hint polja. Uporabljen pravi repository/SQL
+in sintetičen legacy transport; ne trdimo prihranka fizičnih crypto HTTP.
+Analiza 0 napak/0 opozoril, 9 obstoječih info. `p5b-*` dokazi, brez deploya.

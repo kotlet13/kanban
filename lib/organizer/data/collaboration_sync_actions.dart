@@ -1274,11 +1274,18 @@ extension CollaborationSyncActions on CollaborationRepository {
             changes: changes,
           );
         }
+        var notificationCommandAttempted = false;
         if (_inboxSupported && (changes == null || changes.inbox)) {
           await _syncInbox(session, epoch);
-          if (await _syncCommands(session, epoch)) {
+          notificationCommandAttempted = await _syncCommands(session, epoch);
+          if (notificationCommandAttempted) {
             await _syncInbox(session, epoch);
           }
+        }
+        if (_inboxSupported &&
+            (changes == null ||
+                changes.notificationConfiguration ||
+                notificationCommandAttempted)) {
           await _syncNotificationConfiguration(session, epoch, scopes);
         }
         final upgrade = cryptoRouter;
