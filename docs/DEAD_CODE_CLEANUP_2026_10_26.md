@@ -42,6 +42,10 @@ Odstranjena samo managerEnsure in reminderStateFor. Aktivna ensurePersonal in no
 
 Odstranjeni verifyDeletedScopeHead, verifiedCandidateDescriptor in verifyProjectRelocation; aktivni withVerifiedDeletedScope, withRecoveryCandidatePolicy in recordAuthority dispatch ostanejo. Backend crypto-scope-deletion-v2.php: PASS 94. Headless crypto_scope_forward_author_test + crypto_project_relocation_graph_test: PASS (C6-C8-dart.log). Analiza: brez napak/opozoril; samo obstoječe slogovne informacije. Nobenih sprememb shranjenih dokazov ali ključev.
 
+### C2 — Remove unused unverified directory operation index reader
+
+Odstranjen samo operationEntries; verifiedOperationEntries in SQL tabela ostaneta. Headless crypto_migration_own_attestation_test preveri dokazno verigo in manipuliran indeks: PASS. Backend crypto-migration-generation-prefix-v3.php: PASS 57 kumulativnih kontrol. Analiza identity store: 0 issues. Dokazi C2-*.log; brez brisanja uporabniških tabel.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5

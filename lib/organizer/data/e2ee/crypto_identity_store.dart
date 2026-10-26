@@ -317,56 +317,6 @@ class CryptoIdentityStore {
     }
   }
 
-  /// Discovery acceleration only. Completeness callers must use the verified
-  /// lineage overload above; a same-sized SQL index is not an absence proof.
-  Stream<Map<String, dynamic>> operationEntries(
-    String account,
-    String operation,
-    int through, {
-    bool descending = false,
-  }) async* {
-    final count =
-        (await database.rows(
-              'SELECT COUNT(*) AS n FROM crypto_directory_event_index WHERE partition=? AND account_id=? AND generation<=?',
-              [partition, account, through],
-            )).single['n']
-            as int;
-    if (count != through) {
-      // Derived and excluded from backups. Rebuild missing rows in bounded pages;
-      // callers still bind each returned command to their verified own prefix.
-      await for (final e in streamEntries(account)) {
-        if (e['generation'] > through) break;
-        final c =
-            CryptoJson.decode(
-                  cryptoBase64((e['authorization'] as Map)['commandBase64']),
-                )
-                as Map;
-        await database.execute(
-          'INSERT INTO crypto_directory_event_index VALUES(?,?,?,?) ON CONFLICT(partition,account_id,generation) DO UPDATE SET operation=excluded.operation',
-          [partition, account, e['generation'], c['operation']],
-        );
-      }
-    }
-    var after = descending ? through + 1 : 0;
-    while (true) {
-      final rows = await database.rows(
-        'SELECT e.* FROM crypto_directory_entries e JOIN crypto_directory_event_index i ON i.partition=e.partition AND i.account_id=e.account_id AND i.generation=e.generation WHERE e.partition=? AND e.account_id=? AND i.operation=? AND e.generation${descending ? '<' : '>'}? AND e.generation<=? ORDER BY e.generation ${descending ? 'DESC' : 'ASC'} LIMIT 50',
-        [partition, account, operation, after, through],
-      );
-      for (final row in rows) {
-        yield {
-          'generation': row['generation'],
-          'headHash': row['head_hash'],
-          'previousHeadHash': row['previous_head_hash'],
-          'commandHash': row['command_hash'],
-          'authorization': _decode(row['authorization']),
-        };
-      }
-      if (rows.length < 50) return;
-      after = rows.last['generation'] as int;
-    }
-  }
-
   Future<void> stageReplay(
     String run,
     String account,
