@@ -102,9 +102,56 @@ extension CollaborationNotificationRouting on CollaborationRepository {
     // A partial snapshot cannot show that an older exact notice disappeared.
   }
 
-  /// Revalidate a task that is already in the active local projection. This
-  /// cannot grant access to a new target or read any financial record. The
-  /// single scope pull is bounded to one page; the normal sync owns its cursor.
+  /// Known local content follows the account coordinator's change hints. A
+  /// hint never admits an unknown record, notification or financial target.
+  /// Older servers retain the established targeted verification path.
+  Future<bool> _knownTargetUsesCoordinator(
+    DeviceSession session,
+    int epoch,
+    NotificationTarget target,
+  ) async {
+    if (target.inboxIds.isNotEmpty ||
+        target.invitationAcceptance != null ||
+        target.records.isEmpty ||
+        target.records.any(
+          (r) => r.type == 'membership' || isFinancialRecordType(r.type),
+        )) {
+      return false;
+    }
+    final p = session.profile.partition;
+    final caps = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['capabilities:$p'],
+    );
+    _checkEpoch(epoch);
+    if (caps.isEmpty ||
+        !(CollaborationRepository._map(
+                      caps.single['value'],
+                    )['accountChangeVersions']
+                    as List? ??
+                const [])
+            .contains(1)) {
+      return false;
+    }
+    for (final ref in target.records) {
+      final rows = await database.rows(
+        'SELECT type,deleted FROM records WHERE partition=? AND scope_id=? AND id=?',
+        [p, target.scopeId, ref.recordId],
+      );
+      _checkEpoch(epoch);
+      if (rows.length != 1 ||
+          rows.single['type'] != ref.type ||
+          rows.single['deleted'] != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Revalidate an already visible task through the normal change coordinator.
+  /// Unknown/older-server paths retain the bounded single-scope fallback below.
+  /// The task preview itself does not grant new access or prepare finance;
+  /// ordinary queued account work remains owned by the existing coordinator.
   Future<NotificationOpenResult> refreshVisibleTaskTarget(
     NotificationTarget target,
   ) {
@@ -175,6 +222,18 @@ extension CollaborationNotificationRouting on CollaborationRepository {
           : null,
     ).timeout(const Duration(seconds: 5) - elapsed.elapsed);
     try {
+      if (await _knownTargetUsesCoordinator(session, epoch, target)) {
+        await syncNow();
+        _checkEpoch(epoch);
+        if (!accessible() || !await storedAccess()) {
+          return result(NotificationOpenStatus.permissionDenied);
+        }
+        return result(
+          state.dataForScope(scopeId).tasks.any((t) => t.id == recordId)
+              ? NotificationOpenStatus.available
+              : NotificationOpenStatus.deleted,
+        );
+      }
       final listed = await call('scopes.list', {});
       _checkEpoch(epoch);
       if ((listed['pendingCryptoScopeIds'] as List? ?? const []).contains(
@@ -375,19 +434,21 @@ extension CollaborationNotificationRouting on CollaborationRepository {
         if (financial) await syncNow();
         await refreshLocal();
       } else {
-        await _negotiate(session, epoch);
-        final reply = await _callSession(session, epoch, 'scopes.list', {
-          if (_privateSyncSupported) 'includePersonal': true,
-        });
-        if (!(reply['scopes'] as List).any(
-          (r) => (r as Map)['id'] == scope.id,
-        )) {
-          await _blockScope(session.profile.partition, scope.id, epoch);
-          await refreshLocal();
-          return NotificationOpenResult(
-            status: NotificationOpenStatus.permissionDenied,
-            target: target,
-          );
+        if (!await _knownTargetUsesCoordinator(session, epoch, target)) {
+          await _negotiate(session, epoch);
+          final reply = await _callSession(session, epoch, 'scopes.list', {
+            if (_privateSyncSupported) 'includePersonal': true,
+          });
+          if (!(reply['scopes'] as List).any(
+            (r) => (r as Map)['id'] == scope.id,
+          )) {
+            await _blockScope(session.profile.partition, scope.id, epoch);
+            await refreshLocal();
+            return NotificationOpenResult(
+              status: NotificationOpenStatus.permissionDenied,
+              target: target,
+            );
+          }
         }
         await syncNow();
       }
@@ -421,6 +482,20 @@ extension CollaborationNotificationRouting on CollaborationRepository {
     if (offline && target.invitationAcceptance != null) {
       return NotificationOpenResult(
         status: NotificationOpenStatus.requiresConnection,
+        target: target,
+      );
+    }
+    if (_sessionInvalidReason != null ||
+        !state.scopes.any(
+          (s) =>
+              s.id == scope.id &&
+              s.canRead &&
+              !s.blocked &&
+              !s.deleted &&
+              !s.archived,
+        )) {
+      return NotificationOpenResult(
+        status: NotificationOpenStatus.permissionDenied,
         target: target,
       );
     }

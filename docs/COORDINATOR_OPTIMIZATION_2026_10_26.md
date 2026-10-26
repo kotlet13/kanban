@@ -121,3 +121,26 @@ poskus uspe. Pravi memory SQLite/sintetičen legacy transport, ne E2EE HTTP.
 Analiza 0 napak/0 opozoril; 2 novi slogovni info v testu popravljeni.
 Dokazi `p4-*`. Širša ponovna uporaba po končanem branju zahteva preverjen
 snapshot; tega ta sklop namenoma ne uvaja.
+
+## P3 — znan nefinančni zapis prepusti osvežitev koordinatorju
+
+Odpiranje obstoječega neizbrisanega nefinančnega zapisa s pravilnim tipom in
+account/scope bindingom na strežniku z accountChangeVersions=1 ne izvaja
+ločenega negotiate→scopes.list preflighta. Znan predogled opravila prav tako
+uporabi skupni syncNow (namig→izbrane spremembe), brez svoje vzporedne poti
+scopes.list→scope pull. Obstoječe sočasno združevanje task odpiranj ostane.
+Prvi prikaz opravila ostaja lokalni. Normalni koordinator lahko dostavi že
+shranjeno čakajoče delo; ne spreminja odprtega neshranjenega osnutka.
+
+Neznani/izbrisani zapisi, inbox obvestila, membership/invitation cilji,
+finance in strežnik brez podpore ohranijo namensko pot. Po koncu osvežitve
+se še enkrat preveri lokalna dostopnost prostora; odvzem med čakanjem ne vrne
+»available«. Brez novega TTL, permission cache ali novega periodičnega dela.
+
+6 novih repository kontrol PASS1: task in shoppingList brez sprememb imata
+samo account.changes; oddaljena sprememba potegne samo ustrezen prostor in
+pokaže novo vsebino; potrjen odvzem vrne permissionDenied; network ohrani
+lokalni task in vrne offline; neznani cilj obdrži negotiate/scopes.list in
+requiresConnection. Sintetični legacy transport s pravo SQLite/koordinatorjem,
+ne E2EE HTTP/native meritev. Analiza 0 napak/0 opozoril; 2 obstoječa info,
+3 novi slogovni info odpravljeni. Dokazi `p3-*`.

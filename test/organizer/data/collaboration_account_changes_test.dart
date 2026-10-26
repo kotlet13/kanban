@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:drift/native.dart';
+import 'package:kanban/organizer/domain/collaboration_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
@@ -497,4 +498,102 @@ void main() {
       expect(f.repo.state.lastError?.code, 'synthetic_full_failure');
     },
   );
+  for (final mode in [
+    'task',
+    'shoppingList',
+    'remote',
+    'revoked',
+    'offline',
+    'unknown',
+  ]) {
+    test(
+      'known visible content uses coordinator without separate preparation: $mode',
+      () async {
+        final f = await setup();
+        final type = mode == 'shoppingList' ? 'shoppingList' : 'task';
+        final id = type == 'shoppingList'
+            ? await f.repo.createShoppingList(
+                scopeId: f.a,
+                title: 'Visible list',
+              )
+            : await f.repo.createTask(scopeId: f.a, title: 'Visible task');
+        await f.repo.syncNow();
+        expect(f.repo.state.lastError, isNull);
+        final session = f.repo.state.session!;
+        final target = NotificationTarget(
+          serverUrl: session.serverUrl,
+          serverId: session.serverId,
+          accountId: session.accountId,
+          scopeId: f.a,
+          records: [
+            NotificationRecordTarget(
+              type: type,
+              recordId: mode == 'unknown' ? newSharedId() : id,
+            ),
+          ],
+        );
+        if (mode == 'remote') {
+          final old = f.server.records[f.a]![id]!;
+          f.server.records[f.a]![id] = {
+            ...old,
+            'revision': (old['revision'] as int) + 1,
+            'sequence': f.server.sequence[f.a] = f.server.sequence[f.a]! + 1,
+            'payload': {...old['payload'] as Map, 'title': 'Changed remotely'},
+          };
+          f.transport.hints = {
+            f.a: ['content'],
+          };
+        }
+        if (mode == 'revoked') {
+          f.server.confirmRevocation(f.a, 'alice');
+          f.transport.accountDomains = ['access'];
+        }
+        if (mode == 'offline') {
+          f.transport.probeFailure = const CollaborationApiException('network');
+        }
+        f.transport.operations.clear();
+        f.server.calls.clear();
+        final result = mode == 'shoppingList' || mode == 'unknown'
+            ? await f.repo.openNotificationTarget(target)
+            : await f.repo.refreshVisibleTaskTarget(target);
+        if (mode == 'task' || mode == 'shoppingList') {
+          expect(result.status, NotificationOpenStatus.available);
+          expect(f.transport.operations, ['account.changes']);
+        } else if (mode == 'remote') {
+          expect(result.status, NotificationOpenStatus.available);
+          expect(
+            f.repo.state.dataForScope(f.a).tasks.single.title,
+            'Changed remotely',
+          );
+          expect(
+            f.server.calls
+                .where((c) => c.operation == 'sync.pull')
+                .map((c) => c.params['scopeId']),
+            [f.a],
+          );
+          expect(
+            f.server.calls.where((c) => c.operation == 'scopes.list'),
+            isEmpty,
+          );
+        } else if (mode == 'revoked') {
+          expect(result.status, NotificationOpenStatus.permissionDenied);
+          expect(
+            f.repo.state.scopes.singleWhere((s) => s.id == f.a).canRead,
+            isFalse,
+          );
+        } else if (mode == 'offline') {
+          expect(result.status, NotificationOpenStatus.offline);
+          expect(
+            f.repo.state.dataForScope(f.a).tasks.single.title,
+            'Visible task',
+          );
+          expect(f.transport.operations, ['account.changes']);
+        } else {
+          expect(result.status, NotificationOpenStatus.requiresConnection);
+          expect(f.transport.operations, contains('scopes.list'));
+          expect(f.transport.operations, contains('capabilities'));
+        }
+      },
+    );
+  }
 }
