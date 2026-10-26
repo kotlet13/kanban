@@ -54,6 +54,10 @@ Odstranjena nepovezana datoteka crypto_migration_business_parity.dart, brez prod
 
 Odstranjena samo buildCapturedSelection in njun edini verifier verifyCapturedSelection. Aktivni issuer deriveSourceSelection/verifySourceSelection, recipient verifyTargetSelection in skupni validate ostanejo. Analiza vseh treh aktivnih datotek: 0 issues. Backend selection propose regression na sveži SQLite: PASS 9 (pravi dispatcher, prazen/neprazen izbor, vezava izvornih pozicij/replay); headless parent projection: PASS 8. Kontrole ne predstavljajo novega celotnega migration/cutover testa. Dokazi C3-*.log.
 
+### C9 — Remove unused migration generation publish wrapper
+
+Odstranjen samo CryptoMigrationGeneration.publishDraft. Aktivni pipeline še neposredno kliče ScopeCryptoManager.publishMigrationGenerationDraft. Headless superseded setup regression: PASS 1; backend crypto-migration-receipts-v3.php: PASS 9; analiza generation/pipeline: 0 issues. Dokazi C9-*.log; ni spremembe receipt/generation protokola.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5

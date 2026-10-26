@@ -66,27 +66,6 @@ class CryptoMigrationGeneration {
       runtime.account.directory.call('crypto2.migration.generation.status', {
         'migrationId': migrationId,
       });
-  Future<void> publishDraft({
-    required String generationId,
-    required String migrationId,
-    required String captureId,
-    required String scopeId,
-  }) async {
-    final state = await status(generationId);
-    if (state['state'] != 'superseded' ||
-        state['context']?['newMigrationId'] != migrationId) {
-      throw const CryptoAuthorityPending(
-        'crypto_migration_generation_not_superseded',
-      );
-    }
-    await ScopeCryptoManager(runtime.access).publishMigrationGenerationDraft(
-      generationId: generationId,
-      migrationId: migrationId,
-      captureId: captureId,
-      scopeId: scopeId,
-    );
-  }
-
   Future<Map<String, dynamic>> draft({
     required String generationId,
     required String scopeId,
