@@ -18,6 +18,13 @@ final receivedInvitationNoticeProvider =
       var disposed = false;
       ref.onDispose(() => disposed = true);
       ref.watch(pendingInvitationRevisionProvider);
+      // Coordinator generations wake an already open app; content-only sync
+      // and ordinary inbox changes do not refetch pending invitations.
+      ref.watch(
+        collaborationProvider.select(
+          (value) => value.valueOrNull?.sharingRefresh.invitations,
+        ),
+      );
       final now = ref.read(collaborationClockProvider);
       final identity = ref.watch(
         collaborationProvider.select((value) {

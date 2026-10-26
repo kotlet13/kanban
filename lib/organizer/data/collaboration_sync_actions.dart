@@ -214,6 +214,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             .contains(1);
     // An older server retains its established verified recovery path.
     if (!supported) {
+      _sharingRefresh = const SharingRefreshState();
+      _sharingRefreshEpoch = epoch;
+      _sharingRefreshCursor = null;
       retireAuthority();
       selectionReason(CollaborationSyncDiagnosticKind.selectionLegacyServer);
       _coordinatorProbePhase = false;
@@ -263,6 +266,9 @@ extension CollaborationSyncActions on CollaborationRepository {
           selectionReason(
             CollaborationSyncDiagnosticKind.selectionLegacyServer,
           );
+          _sharingRefresh = const SharingRefreshState();
+          _sharingRefreshEpoch = epoch;
+          _sharingRefreshCursor = null;
           _coordinatorProbePhase = false;
           return _performSync(resumePayments: true, manual: manual);
         }
@@ -376,6 +382,24 @@ extension CollaborationSyncActions on CollaborationRepository {
         retireAuthority(scopes: _authorityDependencyScopes(affected));
       }
     }
+    // Display generations are hints only. Existing reads still verify authority.
+    // Do not amplify a repeated failed pass with the same returned cursor.
+    if (_sharingRefreshEpoch != epoch) {
+      _sharingRefreshEpoch = epoch;
+      _sharingRefreshCursor = null;
+      _sharingRefresh = const SharingRefreshState();
+    }
+    if (_sharingRefreshCursor != changes.cursor) {
+      _sharingRefreshCursor = changes.cursor;
+      _sharingRefresh = _sharingRefresh.next(
+        all: accountAuthorityChanged,
+        invitationChange: changes.accountDomains.contains('invitations'),
+        affectedScopes: _authorityDependencyScopes({
+          for (final e in changes.scopes.entries)
+            if (e.value.contains('access')) e.key,
+        }),
+      );
+    }
     if (authorityProbeCurrent) {
       authorityReuse.allowIfCurrent(authorityGeneration);
     }
@@ -448,6 +472,9 @@ extension CollaborationSyncActions on CollaborationRepository {
     _checkEpoch(epoch);
     if (!changes.requiresSync && local.isEmpty && !recoveryWork) {
       syncDiagnostics?.record(CollaborationSyncDiagnosticKind.unchanged);
+      if (!identical(state.sharingRefresh, _sharingRefresh)) {
+        await refreshLocal(scopeIds: const {});
+      }
       if (_lastErrorWasProbe) {
         _lastErrorWasProbe = false;
         _lastError = null;
@@ -775,15 +802,31 @@ extension CollaborationSyncActions on CollaborationRepository {
           // independent scopes continue. It is not authenticated revocation.
           scopes.removeWhere((scope) => cryptoPendingIds.contains(scope.id));
           if (_recordContractVersion >= 2) {
+            final allMembers =
+                changes == null ||
+                changes.reset ||
+                changes.accountDomains.any(
+                  const {'access', 'metadata'}.contains,
+                ) ||
+                (!changes.semanticDirectoryHint &&
+                    changes.accountDomains.contains('directory'));
+            final changedMembers = changes == null
+                ? <String>{}
+                : _authorityDependencyScopes({
+                    for (final e in changes.scopes.entries)
+                      if (e.value.contains('access')) e.key,
+                  });
             for (final scope in scopes) {
-              if (changes != null &&
-                  !changes.access &&
-                  !changes.scopes.containsKey(scope.id)) {
-                continue;
-              }
+              // Content/finance changes and unrelated scope access do not
+              // change this directory. Parent dependencies are included above.
+              if (!allMembers && !changedMembers.contains(scope.id)) continue;
               if (!await _privateScopeAllowed(partition, scope)) continue;
               await _renewLease(partition);
               try {
+                if (changes?.access == true) {
+                  // A real access hint must not reuse the older 60s label cache.
+                  await _invalidateMemberDirectory(partition, scope.id);
+                }
                 await _loadMembers(session, epoch, scope.id, syncLease: true);
               } on CryptoAuthorityPending {
                 _checkEpoch(epoch);

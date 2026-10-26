@@ -38,6 +38,8 @@ class _Transport extends FakeTransport {
   _Transport(super.server, this.store);
   final MemorySessionStore store;
   final operations = <String>[];
+  String cursor = 'authority-cursor';
+  bool labelsV2 = false;
   List<String> domains = [];
   Map<String, List<String>> scopes = {};
   bool reset = false,
@@ -70,7 +72,7 @@ class _Transport extends FakeTransport {
         'serverId': malformed ? 'foreign' : p.serverId,
         'accountId': p.accountId,
         'deviceId': p.deviceId,
-        'cursor': 'authority-cursor',
+        'cursor': cursor,
         'changed': resetting || domains.isNotEmpty || scopes.isNotEmpty,
         'resetRequired': resetting,
         'hasMore': false,
@@ -82,11 +84,27 @@ class _Transport extends FakeTransport {
         ],
       };
     }
+    if (labelsV2 && operation == 'scopes.members') {
+      return {
+        'members': [
+          {
+            'userId': store.value!.profile.userId,
+            'accountId': store.value!.profile.accountId,
+            'username': 'alice',
+            'displayName': 'Alice',
+            'role': 'owner',
+            'active': true,
+          },
+        ],
+      };
+    }
     if (operation == 'scopes.list') beforeScopeRead?.call();
     if (operation == 'test.denial') throw failure!;
     final result = await super.call(
       serverUrl: serverUrl,
-      operation: operation,
+      operation: labelsV2 && operation == 'sync2.pull'
+          ? 'sync.pull'
+          : operation,
       params: params,
       token: token,
       allowLocalHttp: allowLocalHttp,
@@ -95,6 +113,7 @@ class _Transport extends FakeTransport {
         ? {
             ...result,
             'accountChangeVersions': supported ? [1] : <int>[],
+            if (labelsV2) 'recordContractVersions': [1, 2],
           }
         : result;
   }
@@ -109,9 +128,10 @@ class _Fixture {
   AuthorityReuseController get authority => repo.authorityReuse;
 }
 
-Future<_Fixture> _setup() async {
+Future<_Fixture> _setup({bool labelsV2 = false}) async {
   final store = MemorySessionStore(), server = FakeServer();
-  final transport = _Transport(server, store), router = _Router();
+  final transport = _Transport(server, store)..labelsV2 = labelsV2;
+  final router = _Router();
   final repo = CollaborationRepository(
     CollaborationDatabase(NativeDatabase.memory()),
     transport,
@@ -136,6 +156,106 @@ Future<_Fixture> _setup() async {
 }
 
 void main() {
+  test(
+    'P6 targeted access selection leaves independent scope directory cached',
+    () async {
+      final f = await _setup(labelsV2: true);
+      f.transport.cursor = 'targeted-label-change';
+      f.transport.scopes = {
+        f.a: ['access'],
+      };
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError, isNull);
+      final reads = f.transport.operations.where(
+        (op) => op == 'scopes.members',
+      );
+      expect(reads.length, 1);
+      expect(f.repo.state.membersForScope(f.b), isNotEmpty);
+    },
+  );
+
+  test(
+    'P6 content hint leaves member reads and sharing generations alone',
+    () async {
+      final f = await _setup();
+      final before = f.repo.state.sharingRefresh;
+      await f.repo.database.execute(
+        "UPDATE local_meta SET value='0' WHERE name LIKE 'member_directory_at:%'",
+      );
+      f.transport.cursor = 'content-only';
+      f.transport.scopes = {
+        f.a: ['content'],
+      };
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError, isNull);
+      expect(
+        f.transport.operations.where((op) => op == 'scopes.members'),
+        isEmpty,
+      );
+      expect(f.repo.state.sharingRefresh.forScope(f.a), before.forScope(f.a));
+      expect(f.repo.state.sharingRefresh.invitations, before.invitations);
+      expect(f.repo.state.sharingRefresh.coordinated, true);
+    },
+  );
+  test(
+    'P6 scope access hint refreshes fresh labels and only affected display',
+    () async {
+      final f = await _setup(labelsV2: true);
+      final before = f.repo.state.sharingRefresh;
+      f.transport.cursor = 'access-a';
+      f.transport.scopes = {
+        f.a: ['access'],
+      };
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError, isNull);
+      expect(
+        f.transport.operations.where((op) => op == 'scopes.members'),
+        isNotEmpty,
+      );
+      expect(
+        f.repo.state.sharingRefresh.forScope(f.a),
+        isNot(before.forScope(f.a)),
+      );
+      expect(f.repo.state.sharingRefresh.forScope(f.b), before.forScope(f.b));
+      final after = f.repo.state.sharingRefresh;
+      await f.repo
+          .syncNow(); // same failed/stale hint must not amplify UI reloads
+      expect(f.repo.state.sharingRefresh.forScope(f.a), after.forScope(f.a));
+      f.transport.operations.clear();
+      f.transport.cursor = 'v2-content';
+      f.transport.scopes = {
+        f.a: ['content'],
+      };
+      await f.repo.database.execute(
+        "UPDATE local_meta SET value='0' WHERE name LIKE 'member_directory_at:%'",
+      );
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError, isNull);
+      expect(
+        f.transport.operations.where((op) => op == 'scopes.members'),
+        isEmpty,
+      );
+    },
+  );
+  test(
+    'P6 invitation hint wakes display without content or member fanout',
+    () async {
+      final f = await _setup();
+      final before = f.repo.state.sharingRefresh.invitations;
+      f.transport.cursor = 'invitation-arrival';
+      f.transport.domains = ['invitations'];
+      await f.repo.syncNow();
+      expect(f.repo.state.lastError, isNull);
+      expect(f.repo.state.sharingRefresh.invitations, before + 1);
+      expect(
+        f.transport.operations.where((op) => op == 'scopes.members'),
+        isEmpty,
+      );
+      await f.repo.signOut();
+      expect(f.repo.state.sharingRefresh.coordinated, false);
+    },
+  );
+
   test(
     'content and own journal preserve independent verified authority',
     () async {

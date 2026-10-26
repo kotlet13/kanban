@@ -17,7 +17,7 @@ ne ponavljamo. Največ trije poskusi neuspešnega scenarija.
 | P3 znani zapisi | Izvedeno in ciljno preverjeno; finance/neznani cilji ohranijo namensko pot |
 | P4 finančne izbire | Sočasne združljive priprave združene; reuse po zaključku še ni uveden |
 | P5 inbox/konfiguracija | Oba sklopa izvedena in ciljno preverjena |
-| P6 članstvo/povabila | Odprto: per-access/invitation generacija in invalidacija po lastnih spremembah |
+| P6 članstvo/povabila | Izvedene session display generacije iz koordinatorja, ciljni member refresh in ohranitev dogodkov med branjem |
 | P7 email status | Izvedeno in ciljno preverjeno |
 | P8 lokalni SQL/CPU | Najprej meritev; brez sprememb |
 
@@ -211,3 +211,40 @@ PASS. Stari testi niso ponovljeni. Analiza: 0 errors/0 warnings, 12 starih info;
 nov slogovni info v fixture popravljen. To ni meritev fizičnih HTTP ali test
 novega E2EE protokola; dejanski prihranek je omejen z lease in velikostjo
 projekcije. Dokazi `build/qa/coordinator-continuation-20261026/p2-*`.
+
+## Nadaljevanje P6 — prikaz članstva in povabil prek sprememb koordinatorja
+
+Account changes zdaj poganja session-only display generacije: account access/
+metadata/reset, access prizadetega drevesa prostorov in invitations. Content,
+finance in navaden inbox ne spreminjajo generacije prikaza. Isti vrnjeni cursor
+ne povzroča vedno novih UI reloadov. Generacije niso pravice ali dokaz; vsa
+branja in operacije potrditve/sprejema/ključi ostanejo preverjeni po stari poti.
+Po odjavi in ob starejšem strežniku je stanje neznano in velja prejšnji fallback.
+
+Odprta seznama članov in povabil ob ponovnem foregroundu novega protokola
+počakata na koordinator, namesto samostojnega HTTP osveževanja. Lokalni ukazi
+in izrecen retry še osvežijo. Dogodek med branjem/busy stanjem se ohrani za
+naslednje branje. Mount ostane svež; ne uvajamo trajnega predpomnilnika
+prejemnikov. Tudi obvestilo o prejetih povabilih posluša invitation generacijo.
+
+Koordinator pri content/finance spremembi ne bere članov. Pri scope access
+bere samo prizadeto odvisnostno drevo; account-wide sprememba ostane široka.
+Ob potrjenem izboru access dela se stari 60s cache imenika invalidira, da ne
+pokaže zastarih članov. Imena so še vedno display-only. Ni dodatnega pollerja.
+
+**6 novih kontrol PASS:** 4 repository/SQLite kontrole in 2 widget kontroli.
+Content hint: 0 member reads; invitation hint: nova generacija in 0 member
+reads; access znotraj starega cache: sveže branje; ožja kontrola dveh neodvisnih
+prostorov: 1 member read, ne 2. UI oba seznama: 1 začetno branje, resume in
+nespremenjen sync 0 dodatnih, tuji prostor 0, sprememba povabila 1, nova
+sprememba med branjem 1 naknadno branje; zamenjava računa ne naloži starih podatkov.
+
+Zgodovina napak: repository access test prva dva teka nista imela v2 member
+fixture (drugi se je po neuspelem pripravljalnem skriptu pomotoma izvedel še
+na nespremenjeni fixture); tretji tek z v2 praznimi zapisi PASS. Drugih dveh
+že uspešnih kontrol nismo ponovili. Ločen novi ciljni selection test PASS1.
+UI members PASS1; pending FAIL1 je našel resnični `setState` callback, ki je
+vračal Future. Popravljene istovrstne assignment puščice v pending strani;
+ponovljen samo pending PASS2. Analiza 0 errors/0 warnings/10 starih info.
+Dokazi `build/qa/coordinator-continuation-20261026/p6-*`. Sintetični transport
+in pravi memory SQLite/widget, ne mobilni ali fizični HTTP preizkus.

@@ -78,6 +78,23 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
   bool _loading = false;
   final _refreshClock = Stopwatch()..start();
   Duration? _lastRefresh;
+  bool _refreshPending = false;
+  int? _seenSharingRevision;
+
+  void _observeSharing(CollaborationState? state) {
+    if (state == null || state.isSyncing || !_guard.isCurrent) return;
+    final revision = state.sharingRefresh.invitations;
+    final previous = _seenSharingRevision;
+    _seenSharingRevision = revision;
+    if (previous != null && previous != revision) _eventRefresh(changed: true);
+  }
+
+  void _drainRefresh() {
+    if (!_refreshPending || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _refreshPending) _eventRefresh(changed: true);
+    });
+  }
 
   @override
   void initState() {
@@ -91,23 +108,35 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
     super.dispose();
   }
 
-  void _eventRefresh() {
+  void _eventRefresh({bool changed = false}) {
+    if (changed) _refreshPending = true;
     if (!mounted ||
         !_guard.isCurrent ||
         _busy ||
         _loading ||
-        ModalRoute.of(context)?.isCurrent != true ||
-        (_lastRefresh != null &&
-            _refreshClock.elapsed - _lastRefresh! <
-                const Duration(seconds: 5))) {
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
-    setState(() => _future = _load(refreshSaved: true));
+    if (!_refreshPending &&
+        _lastRefresh != null &&
+        _refreshClock.elapsed - _lastRefresh! < const Duration(seconds: 5)) {
+      return;
+    }
+    _refreshPending = false;
+    setState(() {
+      _future = _load(refreshSaved: true);
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _eventRefresh();
+    if (state != AppLifecycleState.resumed) return;
+    final current = ref.read(collaborationProvider).valueOrNull;
+    if (current?.sharingRefresh.coordinated != true) {
+      _eventRefresh();
+    } else {
+      _drainRefresh();
+    }
   }
 
   final _acceptedInvitations = <String>{};
@@ -136,12 +165,14 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
       : (pending.serverUrl, pending.token, pending.accountPartition);
 
   Future<_InvitationInbox> _load({bool refreshSaved = false}) async {
+    _refreshPending = false;
     _loading = true;
     _lastRefresh = _refreshClock.elapsed;
     try {
       return await _readInvitations(refreshSaved: refreshSaved);
     } finally {
       _loading = false;
+      _drainRefresh();
     }
   }
 
@@ -211,6 +242,7 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
       }
       _reloadAfterBusy = false;
     });
+    _drainRefresh();
   }
 
   Future<void> _dismissSaved() async {
@@ -350,11 +382,17 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
         if (_busy) {
           _reloadAfterBusy = true;
         } else {
-          _eventRefresh();
+          _eventRefresh(changed: true);
         }
       },
     );
-    ref.watch(collaborationProvider);
+    final collaboration = ref.watch(collaborationProvider).valueOrNull;
+    _seenSharingRevision ??= collaboration?.sharingRefresh.invitations;
+    ref.listen(
+      collaborationProvider,
+      (_, next) => _observeSharing(next.valueOrNull),
+    );
+    _drainRefresh();
     if (!_guard.isCurrent) return const SizedBox.shrink();
     return FutureBuilder<_InvitationInbox>(
       future: _future,
@@ -370,7 +408,9 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
               TextButton(
                 onPressed: _busy
                     ? null
-                    : () => setState(() => _future = _load()),
+                    : () => setState(() {
+                        _future = _load();
+                      }),
                 child: Text(context.l10n.organizerRetry),
               ),
             ],
@@ -447,7 +487,9 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
                           TextButton(
                             onPressed: _busy
                                 ? null
-                                : () => setState(() => _future = _load()),
+                                : () => setState(() {
+                                    _future = _load();
+                                  }),
                             child: Text(context.l10n.organizerRetry),
                           ),
                           TextButton(
@@ -466,7 +508,9 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
               TextButton(
                 onPressed: _busy
                     ? null
-                    : () => setState(() => _future = _load()),
+                    : () => setState(() {
+                        _future = _load();
+                      }),
                 child: Text(context.l10n.organizerRetry),
               ),
             ],

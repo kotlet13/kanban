@@ -109,6 +109,23 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
   bool _busy = false, _cryptoScope = false, _loading = false;
   final _refreshClock = Stopwatch()..start();
   Duration? _lastRefresh;
+  bool _refreshPending = false;
+  (int, int, int)? _seenSharingRevision;
+
+  void _observeSharing(CollaborationState? state) {
+    if (state == null || state.isSyncing || !_isCurrent) return;
+    final revision = state.sharingRefresh.forScope(widget.scope.id);
+    final previous = _seenSharingRevision;
+    _seenSharingRevision = revision;
+    if (previous != null && previous != revision) _eventRefresh(changed: true);
+  }
+
+  void _drainRefresh() {
+    if (!_refreshPending || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _refreshPending) _eventRefresh(changed: true);
+    });
+  }
 
   @override
   void initState() {
@@ -122,22 +139,32 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
     super.dispose();
   }
 
-  void _eventRefresh() {
+  void _eventRefresh({bool changed = false}) {
+    if (changed) _refreshPending = true;
     if (!_isCurrent ||
         _busy ||
         _loading ||
-        ModalRoute.of(context)?.isCurrent != true ||
-        (_lastRefresh != null &&
-            _refreshClock.elapsed - _lastRefresh! <
-                const Duration(seconds: 5))) {
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
+    if (!_refreshPending &&
+        _lastRefresh != null &&
+        _refreshClock.elapsed - _lastRefresh! < const Duration(seconds: 5)) {
+      return;
+    }
+    _refreshPending = false;
     _refresh();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _eventRefresh();
+    if (state != AppLifecycleState.resumed) return;
+    final current = ref.read(collaborationProvider).valueOrNull;
+    if (current?.sharingRefresh.coordinated != true) {
+      _eventRefresh(); // Older server: preserve the existing fallback.
+    } else {
+      _drainRefresh();
+    }
   }
 
   final _resendRequests = <String, ({String requestId, String language})>{};
@@ -165,12 +192,14 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
   }
 
   Future<(List<SharedMember>, List<SharedInvitation>)> _load() async {
+    _refreshPending = false;
     _loading = true;
     _lastRefresh = _refreshClock.elapsed;
     try {
       return await _readMembers();
     } finally {
       _loading = false;
+      _drainRefresh();
     }
   }
 
@@ -222,7 +251,10 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+        _drainRefresh();
+      }
     }
   }
 
@@ -383,13 +415,21 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
     if (widget.scope.kind == SharedScopeKind.personal) {
       return Text(context.l10n.privateSyncDescription);
     }
-    ref.watch(collaborationProvider);
+    final collaboration = ref.watch(collaborationProvider).valueOrNull;
+    _seenSharingRevision ??= collaboration?.sharingRefresh.forScope(
+      widget.scope.id,
+    );
+    ref.listen(
+      collaborationProvider,
+      (_, next) => _observeSharing(next.valueOrNull),
+    );
+    _drainRefresh();
     ref.listen(
       accountSummaryRefreshProvider((
         widget.session.partition,
         widget.session.deviceId,
       )),
-      (_, _) => _eventRefresh(),
+      (_, _) => _eventRefresh(changed: true),
     );
     if (!_isCurrent) return Text(context.l10n.sharingSessionExpired);
     final l = context.l10n;

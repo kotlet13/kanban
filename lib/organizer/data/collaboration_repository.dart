@@ -1,3 +1,4 @@
+import '../domain/sharing_refresh_state.dart';
 import 'e2ee/crypto_migration_idea_draft_recovery.dart';
 import 'e2ee/crypto_legacy_upload_drain.dart';
 import 'dart:async';
@@ -463,6 +464,9 @@ class CollaborationRepository {
   RemotePushRegistrationState _remotePushState =
       const RemotePushRegistrationState();
   int _epoch = 0;
+  int? _sharingRefreshEpoch;
+  String? _sharingRefreshCursor;
+  SharingRefreshState _sharingRefresh = const SharingRefreshState();
   String? _sessionInvalidReason;
   DateTime? _pushStateCheckedAt;
   int _recordContractVersion = 1;
@@ -866,6 +870,9 @@ class CollaborationRepository {
       }
       if (epoch != _epoch || _closed) return;
       state = CollaborationState(
+        sharingRefresh: _sharingRefreshEpoch == epoch
+            ? _sharingRefresh
+            : const SharingRefreshState(),
         allSpacesSelected: allSpaces.firstOrNull?['value'] == '1',
         selectedSpaceId:
             selectedSpace.isEmpty || selectedSpace.first['value'] == ''

@@ -1,3 +1,4 @@
+import 'sharing_refresh_state.dart';
 import 'moderation_models.dart';
 export 'moderation_models.dart';
 import 'dart:collection';
@@ -480,6 +481,7 @@ class CollaborationAutoMergeNotice {
 
 class CollaborationState {
   CollaborationState({
+    this.sharingRefresh = const SharingRefreshState(),
     this.session,
     this.moderationSupported = false,
     this.sharedContentPolicy,
@@ -559,6 +561,7 @@ class CollaborationState {
        data = UnmodifiableMapView(data),
        conflicts = List.unmodifiable(conflicts),
        autoMergeNotices = List.unmodifiable(autoMergeNotices);
+  final SharingRefreshState sharingRefresh;
   final Map<String, List<SharedMember>> members;
   final Map<String, SharedFinancePolicy> financePolicies;
   final Map<String, List<SharedFinanceAccountChoice>> financeAccountChoices;
