@@ -120,6 +120,8 @@ final collaborationProvider =
     );
 
 class CollaborationController extends AsyncNotifier<CollaborationState> {
+  String? get editorSessionIdentity => _repository?.backgroundSyncIdentity;
+
   Future<AccountCryptoWorkflow?> accountCryptoPreview() =>
       _repository?.accountCryptoPreview() ?? Future.value(null);
 
@@ -272,7 +274,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       schedule.localEdit();
       refresh();
     };
-    localWorkSubscription = repository.database.committedLocalWork.listen((work) {
+    localWorkSubscription = repository.database.committedLocalWork.listen((
+      work,
+    ) {
       final current = repository.state;
       if (!active ||
           !identical(repository, _repository) ||
@@ -292,6 +296,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     observer = _ResumeObserver((resumed) {
       foreground = resumed;
       if (!resumed) {
+        repository.authorityReuse.invalidate();
         timer?.cancel();
         return;
       }
@@ -670,10 +675,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   /// pinned policy revision or reset its complete local finance projection.
   Future<void> refreshFinanceEntryAccountChoices(String scopeId) =>
       _readPreparingWork(
-        (repo) => repo.refreshFinanceAccountChoices(
-          scopeId,
-          refreshPolicy: false,
-        ),
+        (repo) =>
+            repo.refreshFinanceAccountChoices(scopeId, refreshPolicy: false),
       );
 
   Future<void> _readPreparingWork(
@@ -1024,14 +1027,16 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     String? parentScopeId,
     String? id,
     String? requestId,
-  }) => _repo.createScope(
-    name,
-    kind: kind,
-    address: address,
-    organizationId: organizationId,
-    parentScopeId: parentScopeId,
-    id: id,
-    requestId: requestId,
+  }) => _edit(
+    (repo) => repo.createScope(
+      name,
+      kind: kind,
+      address: address,
+      organizationId: organizationId,
+      parentScopeId: parentScopeId,
+      id: id,
+      requestId: requestId,
+    ),
   );
   Future<String> createPerson({
     required String scopeId,

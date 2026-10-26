@@ -110,9 +110,23 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
     final l = context.l10n;
     final title = widget.tables ? l.documentsTables : l.documentsAttachments;
     if (!_visible) {
+      final revoked =
+          _accessLost ||
+          ref
+                  .read(collaborationProvider)
+                  .valueOrNull
+                  ?.scopes
+                  .any(
+                    (s) => s.id == widget.scope.id && (s.revoked || s.deleted),
+                  ) ==
+              true;
       return Scaffold(
         appBar: AppBar(title: Text(title)),
-        body: Center(child: Text(l.sharingAccessRevoked)),
+        body: Center(
+          child: Text(
+            revoked ? l.sharingAccessRevoked : l.documentsContextChanged,
+          ),
+        ),
       );
     }
     return FutureBuilder<SharedDocumentsContext>(

@@ -600,6 +600,7 @@ extension CollaborationAccountActions on CollaborationRepository {
   ) async {
     _checkEpoch(epoch);
     _sessionInvalidReason = reason;
+    authorityReuse.invalidate();
     accountWork.cancelStale();
     // Expiry preserves local content; a confirmed device revocation still closes it.
     if (reason == 'device_revoked') database.activatePersonal(null);

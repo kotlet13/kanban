@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
+import 'package:kanban/organizer/data/collaboration_transport.dart';
 import 'package:kanban/organizer/domain/attachment_models.dart';
 import 'package:kanban/organizer/domain/collaboration_models.dart';
 import 'package:kanban/organizer/domain/spreadsheet_models.dart';
@@ -41,7 +42,7 @@ class _DocumentsServer extends FakeServer {
     }
     requests.putIfAbsent(operation, () => []).add(Map.of(params));
     await beforeDocuments?.call(operation);
-    if (denied) throw const CollaborationException('permission_revoked');
+    if (denied) throw const CollaborationApiException('permission_revoked');
     final id = params['id'] as String?;
     if (operation == 'tables.list') return {'sheets': sheets.values.toList()};
     if (operation == 'tables.get') return {'sheet': sheets[id], 'lease': null};

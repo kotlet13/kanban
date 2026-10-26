@@ -11,10 +11,21 @@ enum LocalVaultPhase {
 }
 
 class LocalVaultStatus {
-  const LocalVaultStatus(this.phase, {this.vaultId, this.errorCode});
+  const LocalVaultStatus(
+    this.phase, {
+    this.vaultId,
+    this.errorCode,
+    this.retainedCopiesOnly = false,
+  });
   final LocalVaultPhase phase;
   final String? vaultId;
   final String? errorCode;
+
+  /// The encrypted installation is complete; only unclassified historical
+  /// copies remain. This does not confirm protection of those retained files.
+  final bool retainedCopiesOnly;
+  bool get canContinueWithRetainedCopies =>
+      phase == LocalVaultPhase.cleanupPending && retainedCopiesOnly;
   bool get canOpenDatabase =>
       phase == LocalVaultPhase.ready || phase == LocalVaultPhase.cleanupPending;
 }

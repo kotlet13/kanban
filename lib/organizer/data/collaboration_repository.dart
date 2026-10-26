@@ -6,6 +6,7 @@ import 'collaboration_account_changes.dart';
 import 'collaboration_pending_sync_selection.dart';
 import 'collaboration_sync_diagnostics.dart';
 import 'account_work_coordinator.dart';
+import 'authority_reuse_controller.dart';
 export 'collaboration_sync_status.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -24,6 +25,7 @@ import 'e2ee/crypto_capability_discovery.dart';
 import 'e2ee/crypto_codec.dart';
 import 'e2ee/crypto_domain_router.dart';
 import 'e2ee/crypto_business_router.dart';
+import 'e2ee/crypto_business_json.dart';
 import 'e2ee/crypto_sync_repository.dart' show CryptoAuthorityPending;
 import '../domain/collaboration_models.dart';
 import '../domain/collaboration_content_selection.dart';
@@ -125,6 +127,7 @@ class CollaborationRepository {
           ),
           isCurrent: () =>
               !_closed && _epoch == epoch && identical(_session, session),
+          authorityReuse: authorityReuse,
         ),
       );
     }
@@ -151,18 +154,71 @@ class CollaborationRepository {
     this.invitationStore = const SecurePendingInvitationStore(),
     this.syncDiagnostics,
     AccountWorkCoordinator? accountWork,
+    AuthorityReuseController? authorityReuse,
   }) : clock = clock ?? DateTime.now,
        _rawTransport = transport,
        accountWork = accountWork ?? AccountWorkCoordinator(clock: clock),
+       authorityReuse = authorityReuse ?? AuthorityReuseController(),
        _cryptoRouterOverride = cryptoRouter;
   final CollaborationDatabase database;
   final CollaborationTransport _rawTransport;
   final AccountWorkCoordinator accountWork;
+  final AuthorityReuseController authorityReuse;
+  Set<String> _authorityDependencyScopes(Set<String> scopeIds) {
+    final affected = {...scopeIds};
+    var expanded = true;
+    while (expanded) {
+      expanded = false;
+      for (final scope in state.scopes) {
+        final parent = scope.parentSpaceId;
+        if (parent == null) continue;
+        if (affected.contains(scope.id) && affected.add(parent)) {
+          expanded = true;
+        }
+        if (affected.contains(parent) && affected.add(scope.id)) {
+          expanded = true;
+        }
+      }
+    }
+    return affected;
+  }
+
   late final CollaborationTransport transport =
       CoordinatedCollaborationTransport(
         inner: _rawTransport,
         coordinator: accountWork,
         ownerFor: _accountWorkOwner,
+        onFailure: (_, params, error) {
+          // Local document context changes never revoke account authority.
+          if (error is! CollaborationApiException) return;
+          if (const {
+            'device_revoked',
+            'auth_required',
+            'session_expired',
+            'invalid_credentials',
+            'server_identity_changed',
+          }.contains(error.code)) {
+            authorityReuse.invalidate();
+          } else if (const {
+            'permission_revoked',
+            'access_revoked',
+            'scope_deleted',
+            'scope_membership_required',
+            'scope_read_forbidden',
+            'scope_write_forbidden',
+            'scope_missing',
+            'crypto_scope_head_changed',
+          }.contains(error.code)) {
+            final scope = params['scopeId'];
+            if (scope is String) {
+              authorityReuse.invalidateScopes(
+                _authorityDependencyScopes({scope}),
+              );
+            } else {
+              authorityReuse.invalidate();
+            }
+          }
+        },
       );
   final DeviceSessionStore sessionStore;
   final RemotePushStore? pushStore;
@@ -219,6 +275,7 @@ class CollaborationRepository {
             ),
             isCurrent: () =>
                 !_closed && _epoch == epoch && identical(_session, session),
+            authorityReuse: authorityReuse,
           ),
         );
       }();
@@ -274,6 +331,8 @@ class CollaborationRepository {
 
   Future<void>? _coordinatorRunning;
   bool _coordinatorDemand = false, _coordinatorManual = false;
+  int _parentFinanceRecoveryEpoch = -1;
+  final _parentFinanceRecoveryAttempts = <String, String>{};
   bool _coordinatorProbePhase = false, _lastErrorWasProbe = false;
 
   Future<CollaborationSyncWork> syncWork() async {
@@ -312,7 +371,11 @@ class CollaborationRepository {
   DeviceSession? _storedSession;
   DeviceSession? get _session => _storedSession;
   set _session(DeviceSession? value) {
+    final previousAuthority = _currentNetworkAuthority;
     _storedSession = value;
+    if (previousAuthority != _currentNetworkAuthority) {
+      authorityReuse.invalidate();
+    }
     accountWork.cancelStale();
   }
 
@@ -445,6 +508,7 @@ class CollaborationRepository {
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    authorityReuse.invalidate();
     _lastErrorWasProbe = false;
     _moderationVerifiedEpoch = null;
     _moderationAccepted = null;
@@ -1086,6 +1150,7 @@ class CollaborationRepository {
 
   Future<void> invalidateAccountChangesCursor() async {
     final session = _requireSession(), epoch = _epoch;
+    authorityReuse.invalidate();
     await database.transaction(() async {
       _checkEpoch(epoch);
       final suffix = '${session.profile.partition}:${session.profile.deviceId}';
@@ -1118,6 +1183,7 @@ class CollaborationRepository {
 
   Future<void> close() async {
     if (_closed) return;
+    authorityReuse.invalidate();
     _closed = true;
     ++_epoch;
     transport.close();

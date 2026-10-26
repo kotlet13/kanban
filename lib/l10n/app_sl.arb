@@ -2,6 +2,7 @@
   "documentsTables": "Preglednice",
   "documentsAttachments": "Priloge",
   "documentsUnavailable": "Ta prostor te možnosti še nima omogočene.",
+  "documentsContextChanged": "Ta pogled ni več aktualen. Vrni se v prostor in ga znova odpri. Osnutek ostane na tej napravi.",
   "@@locale": "sl",
   "routeError": "Napaka poti",
   "unknownError": "Neznana napaka",
@@ -395,6 +396,7 @@
   "inboxSharedPreferencesUnavailable": "Ta strežnik še ne podpira nastavitev obvestil.",
   "planningFullDay": "Celoten skupni dan",
   "sharingView": "Pogled",
+  "financeAccountOverview": "Pregled računa",
   "financeEditAccount": "Uredi račun",
   "financeOpeningBalance": "Začetno stanje",
   "financeDeleteAccountDescription": "Račun lahko izbrišeš, ko nima povezanih vnosov ali prenosov.",
@@ -882,6 +884,7 @@
   "gardenKeepEditing": "Nadaljuj urejanje",
   "gardenDiscard": "Zavrzi spremembe",
   "gardenSaveError": "Sprememb ni bilo mogoče shraniti. Osnutek je še odprt. Poskusi znova; če se je shranjeni vrt spremenil, ga ponovno odpri.",
+  "gardenEditConflict": "Vrt se je med urejanjem spremenil. Shranjevanje je ustavljeno, da ne prepišemo novejše različice. Tvoje spremembe so še v odprtem urejevalniku.",
   "gardenDeleteTitle": "Izbrišem vrt?",
   "gardenDeleteBody": "Vrt »{name}«, opombe in vsa območja bodo izbrisani s te naprave.",
   "@gardenDeleteBody": {
@@ -1751,6 +1754,7 @@
   "recoveryOperationFailed": "Koraka ni bilo mogoče dokončati. Obstoječi podatki so ohranjeni. Preverite izbiro prave datoteke in poskusite znova.",
   "recoveryLocalProtectionOnly": "To šifrira lokalno bazo aplikacije na tej napravi. Prej izvožene ali začasne kopije s tem niso samodejno zaščitene. Zaščita deljenih prostorov se pripravi posebej in je shranitev te datoteke še ne vključi.",
   "recoveryCheckingDevice": "Preverjanje lokalne shrambe …",
+  "recoveryHistoricalExportsLabel": "Kopije",
   "recoveryCleanupLabel": "Čiščenje nedokončano",
   "recoveryBrowserUnprotected": "Podatki brskalnika niso zaščiteni",
   "recoveryBrowserContinue": "Odpri obstoječe podatke brskalnika za uporabo ali izvoz",
@@ -2016,5 +2020,13 @@
   "sharingRestoreBlobPending": "Ta obnova zahteva nov prenos velike šifrirane vsebine. Obnova ni bila izvedena. Osnutek je ohranjen.",
   "sharingRestoreTablePending": "Za izbrisano tabelo ni mogoče pridobiti zakupa za urejanje, ki je potreben za obnovo. Obnova ni bila izvedena. Osnutek je ohranjen.",
   "sharingRestoreHistoryPending": "Obnova čaka na preverjeno zgodovino ali podporo strežnika. Osnutek je ohranjen.",
-  "sharingRestoreForbidden": "Zapis lahko obnovi samo lastnik prostora ali prvotni avtor. Osnutek je ohranjen."
+  "sharingRestoreForbidden": "Zapis lahko obnovi samo lastnik prostora ali prvotni avtor. Osnutek je ohranjen.",
+  "cryptoProtectionCatalogChanged": "Povezani prostori so se spremenili. Pregled zaščite lahko opraviš pozneje.",
+  "cryptoProtectionChecking": "Preverjamo stanje zaščite.",
+  "cryptoProtectionUnavailable": "Pregled zaščite trenutno ni na voljo. Poskusi pozneje.",
+  "cryptoProtectionReview": "Preglej",
+  "cryptoProtectionRetry": "Ponovno preveri",
+  "cryptoProtectionDetails": "Podrobnosti zaščite",
+  "cryptoProtectionBackToApp": "Nazaj v aplikacijo",
+  "organizerDraftSharingUnavailable": "Deljenje ni na voljo. Osnutek lahko dokončate v tem odprtem obrazcu. Pred zapiranjem kopirajte spremembe, ki jih želite ohraniti."
 }

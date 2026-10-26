@@ -69,6 +69,7 @@ class OrganizerUtripOverview extends ConsumerWidget {
       VoidCallback? onAction,
       String? createLabel,
       VoidCallback? onCreate,
+      bool showCreateLabel = false,
     }) => _OverviewSection(
       title: title,
       icon: icon,
@@ -78,6 +79,7 @@ class OrganizerUtripOverview extends ConsumerWidget {
       onAction: onAction,
       createLabel: createLabel,
       onCreate: onCreate,
+      showCreateLabel: showCreateLabel,
       onOpen: open,
       now: date,
       showSources: snapshot.sources.length > 1,
@@ -93,6 +95,7 @@ class OrganizerUtripOverview extends ConsumerWidget {
       onAction: onCalendar,
       createLabel: l.organizerAddEvent,
       onCreate: onCreateEvent,
+      showCreateLabel: true,
     );
     final upcoming = section(
       title: l.organizerUpcomingWeek,
@@ -229,6 +232,7 @@ class _OverviewSection extends StatelessWidget {
     this.onAction,
     this.createLabel,
     this.onCreate,
+    this.showCreateLabel = false,
   });
   final String title, empty, actionLabel;
   final String? createLabel;
@@ -237,7 +241,7 @@ class _OverviewSection extends StatelessWidget {
   final VoidCallback? onAction, onCreate;
   final ValueChanged<UtripItem> onOpen;
   final DateTime now;
-  final bool showSources;
+  final bool showSources, showCreateLabel;
   final int itemLimit;
 
   @override
@@ -270,7 +274,7 @@ class _OverviewSection extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (onCreate != null)
+                if (onCreate != null && !showCreateLabel)
                   IconButton(
                     tooltip: createLabel,
                     constraints: const BoxConstraints(
@@ -282,6 +286,15 @@ class _OverviewSection extends StatelessWidget {
                   ),
               ],
             ),
+            if (onCreate != null && showCreateLabel)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: onCreate,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: Text(createLabel!),
+                ),
+              ),
             const SizedBox(height: 12),
             if (items.isEmpty)
               Padding(

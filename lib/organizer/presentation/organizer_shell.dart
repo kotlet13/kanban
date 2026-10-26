@@ -1,3 +1,4 @@
+import 'recovery/account_protection_startup_notice.dart';
 import 'dart:async';
 import '../state/idea_provider.dart';
 import 'ideas/idea_editor.dart';
@@ -1253,6 +1254,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              const AccountProtectionStartupNotice(),
                               if (!phone && !desktopExperience) ...[
                                 OrganizerSpacePicker(
                                   onSelected: _selectPickerSpace,

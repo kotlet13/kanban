@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import '../authority_reuse_controller.dart';
+import 'crypto_retained_authority.dart';
+
 import '../account_work_coordinator.dart';
 import '../collaboration_transport.dart';
 import '../device_session_store.dart';
@@ -13,7 +16,7 @@ import 'crypto_capability_discovery.dart';
 
 /// Owns transport material for exactly one bounded verified operation.
 class CryptoDirectoryAuthoritySnapshot {
-  const CryptoDirectoryAuthoritySnapshot._(
+  CryptoDirectoryAuthoritySnapshot._(
     this._owner,
     this._snapshot,
     this._onFailure,
@@ -21,14 +24,55 @@ class CryptoDirectoryAuthoritySnapshot {
   final AccountDirectoryRepository _owner;
   final CryptoAuthoritySnapshot _snapshot;
   final void Function()? _onFailure;
+  final _reads = <String, CryptoAuthorityWireRead>{};
+  bool _failed = false;
+  int _readBytes = 0;
 
   Future<Map<String, dynamic>> _call(
     String operation,
     Map<String, dynamic> params,
   ) async {
+    final scope = params['scopeId'];
+    final capturedToken = _owner._reuseAllowed && scope is String
+        ? _owner.authorityReuse!.tokenForScope(scope)
+        : null;
     try {
-      return await _snapshot.call(operation, params);
+      final retained = _owner._reuseAllowed
+          ? await _owner._retainedAuthority.read(operation, params)
+          : null;
+      final result = retained ?? await _snapshot.call(operation, params);
+      if (_owner._reuseAllowed &&
+          capturedToken != null &&
+          scope is String &&
+          identical(
+            capturedToken,
+            _owner.authorityReuse!.tokenForScope(scope),
+          ) &&
+          CryptoRetainedAuthority.operations.contains(operation)) {
+        final key = CryptoRetainedAuthority.key(operation, params);
+        final copied = CryptoRetainedAuthority.copy(result);
+        final bytes =
+            utf8.encode(key).length + utf8.encode(jsonEncode(copied)).length;
+        final old = _reads[key];
+        final oldBytes = old == null
+            ? 0
+            : utf8.encode(key).length +
+                  utf8.encode(jsonEncode(old.result)).length;
+        if ((_reads.containsKey(key) ||
+                _reads.length < CryptoRetainedAuthority.maxEntries) &&
+            _readBytes - oldBytes + bytes <= CryptoRetainedAuthority.maxBytes) {
+          _reads[key] = CryptoAuthorityWireRead(
+            operation,
+            CryptoRetainedAuthority.copy(params),
+            copied,
+            capturedToken,
+          );
+          _readBytes = _readBytes - oldBytes + bytes;
+        }
+      }
+      return result;
     } catch (_) {
+      _failed = true;
       _onFailure?.call();
       rethrow;
     }
@@ -52,12 +96,100 @@ class AccountDirectoryRepository {
     required this.transport,
     required this.store,
     required this.isCurrent,
+    this.authorityReuse,
   });
   final AccountDirectoryV2 reducer;
   final DeviceSession session;
   final CollaborationTransport transport;
   final CryptoIdentityStore store;
   final bool Function() isCurrent;
+  final AuthorityReuseController? authorityReuse;
+  late final _retainedAuthority = CryptoRetainedAuthority(
+    controller: authorityReuse,
+    ownAccountId: accountId,
+    readSecure: store.secure.read,
+    partition: store.partition,
+  );
+  static final _readReuseZone = Object(), _freshAuthorityZone = Object();
+  bool get _reuseAllowed =>
+      authorityReuse?.enabled == true &&
+      identical(Zone.current[_readReuseZone], this) &&
+      Zone.current[_freshAuthorityZone] != true;
+  Future<T> withRetainedAuthorityReads<T>(Future<T> Function() body) =>
+      runZoned(body, zoneValues: {_readReuseZone: this});
+  Future<T> withoutRetainedAuthority<T>(Future<T> Function() body) =>
+      runZoned(body, zoneValues: {_freshAuthorityZone: true});
+  void retireRetainedAuthority({String? scopeId}) {
+    if (scopeId == null) {
+      _retainedAuthority.clear();
+      authorityReuse?.invalidate(disable: false);
+    } else {
+      _retainedAuthority.evict(scopeId);
+      authorityReuse?.invalidateScopes({scopeId});
+    }
+  }
+
+  Future<void> admitVerifiedScopeAuthority(
+    String scopeId,
+    String headHash,
+    Iterable<String> accounts,
+  ) async {
+    final current = Zone.current[_authoritySnapshotZone];
+    if (!_reuseAllowed ||
+        current is! CryptoDirectoryAuthoritySnapshot ||
+        !identical(current._owner, this) ||
+        current._failed ||
+        !await current._snapshot.isValid())
+      return;
+    await _retainedAuthority.admit(
+      scope: scopeId,
+      headHash: headHash,
+      accounts: accounts,
+      reads: current._reads.values,
+      isValid: current._snapshot.isValid,
+    );
+  }
+
+  Object? _lastOwnToken;
+  String? _lastOwnSemantic;
+  Future<String?> _ownSemantic() async {
+    final pin = await store.anchor(accountId);
+    if (pin == null ||
+        pin['trustState'] != 'verified' ||
+        pin['pendingRootTransition'] != null)
+      return null;
+    return jsonEncode({
+      for (final k in const [
+        'fingerprint',
+        'rootSigningKeyBase64',
+        'rootEncryptionKeyBase64',
+        'identityEpochId',
+        'snapshotHash',
+        'deviceSnapshotHash',
+        'trustState',
+      ])
+        k: pin[k],
+    });
+  }
+
+  Future<VerifiedAccountDirectory?> _retainedOwn() async {
+    if (!_reuseAllowed ||
+        _lastOwnSemantic == null ||
+        _lastOwnToken == null ||
+        !identical(_lastOwnToken, authorityReuse!.tokenForScope(null)))
+      return null;
+    if (await _ownSemantic() != _lastOwnSemantic) return null;
+    final own = await cachedVerifiedDirectory();
+    if (!_reuseAllowed ||
+        !identical(_lastOwnToken, authorityReuse!.tokenForScope(null)) ||
+        await _ownSemantic() != _lastOwnSemantic)
+      return null;
+    own.activeDevice(session.profile.deviceId);
+    return own;
+  }
+
+  Future<VerifiedAccountDirectory> currentReadDirectory() async =>
+      await _retainedOwn() ?? await requireFresh();
   static final _authoritySnapshotZone = Object();
   VerifiedAccountDirectory? _verified;
   static final _queues = <String, Future<void>>{};
@@ -120,6 +252,17 @@ class AccountDirectoryRepository {
         'scopeIds': List<String>.unmodifiable(scopeIds),
       });
 
+  /// Hosting acceptance labels can change without changing the signed head.
+  /// This exact display read bypasses both retained and short bundled material;
+  /// the caller still checks the selected head hash and accepted roster IDs.
+  Future<Map<String, dynamic>> scopeHeadForDisplay(
+    String scopeId, {
+    Map<String, dynamic>? pendingCapability,
+  }) => _callDirect('crypto2.scope.headGet', {
+    'scopeId': scopeId,
+    if (pendingCapability != null) 'pendingCapability': pendingCapability,
+  });
+
   /// Display metadata is independent of signed authority snapshot material.
   Future<Map<String, dynamic>> memberLabels({
     required String scopeId,
@@ -163,23 +306,27 @@ class AccountDirectoryRepository {
     required Future<bool> Function() isValid,
     required void Function() onMutation,
     void Function()? onFailure,
-  }) => CryptoDirectoryAuthoritySnapshot._(
-    this,
-    CryptoAuthoritySnapshot(
-      read: _callDirect,
-      serverId: session.profile.serverId,
-      accountId: accountId,
-      deviceId: session.profile.deviceId,
-      isValid: isValid,
-      onMutation: onMutation,
-      accountAfterGeneration: () async =>
-          _verified?.generation ??
-          (await store.anchor(accountId))?['generation'] as int? ??
-          0,
-      directoryAfterGenerations: _verifiedDirectoryCursorHints,
-    ),
-    onFailure,
-  );
+  }) {
+    final reuseGeneration = authorityReuse?.generation;
+    return CryptoDirectoryAuthoritySnapshot._(
+      this,
+      CryptoAuthoritySnapshot(
+        read: _callDirect,
+        serverId: session.profile.serverId,
+        accountId: accountId,
+        deviceId: session.profile.deviceId,
+        isValid: () async =>
+            reuseGeneration == authorityReuse?.generation && await isValid(),
+        onMutation: onMutation,
+        accountAfterGeneration: () async =>
+            _verified?.generation ??
+            (await store.anchor(accountId))?['generation'] as int? ??
+            0,
+        directoryAfterGenerations: _verifiedDirectoryCursorHints,
+      ),
+      onFailure,
+    );
+  }
 
   /// A transport hint for the own prefix already replayed by this repository.
   /// This skips repeated unused log bodies, not any consumer's proof replay.
@@ -207,6 +354,59 @@ class AccountDirectoryRepository {
     return {accountId: verified.generation};
   }
 
+  Object? _capabilityToken;
+  Future<Map<String, dynamic>>? _capabilityRead;
+  Future<Map<String, dynamic>> _capabilities() async {
+    final enabled = authorityReuse?.enabled == true;
+    final token = enabled ? authorityReuse!.tokenForScope(null) : null;
+    if (!enabled || !identical(token, _capabilityToken)) {
+      _capabilityRead = null;
+      _capabilityToken = token;
+    }
+    Future<Map<String, dynamic>> fetch() => CryptoCapabilityDiscovery.read(
+      transport: transport,
+      session: session,
+      authenticated: true,
+    );
+    final task = enabled ? (_capabilityRead ??= fetch()) : fetch();
+    try {
+      final result = await task;
+      _current();
+      if (result['serverId'] != session.profile.serverId ||
+          authorityReuse?.enabled != true ||
+          !identical(token, authorityReuse?.tokenForScope(null))) {
+        if (identical(_capabilityRead, task)) _capabilityRead = null;
+      }
+      return CryptoRetainedAuthority.copy(result);
+    } catch (_) {
+      if (identical(_capabilityRead, task)) _capabilityRead = null;
+      rethrow;
+    }
+  }
+
+  void _authorityMutation(String operation, Map<String, dynamic> params) {
+    if (authorityReuse == null) return;
+    if (AccountWorkCoordinator.readOperations.contains(operation) &&
+        !params.containsKey('commandBase64'))
+      return;
+    // These proven data/journal writes do not change membership, keys or
+    // lifecycle. All other unknown/signed operations retire the whole shared
+    // generation before I/O, including parent/child and future authority routes.
+    if (const {
+      'crypto2.records.batch',
+      'crypto2.domain.checkpoint',
+      'crypto2.account.scopeObserve',
+      'crypto2.account.scopeObservation.put',
+      'crypto2.inbox.sync',
+      'crypto2.table.lease',
+      'crypto2.table.acquire',
+      'crypto2.table.renew',
+      'crypto2.table.release',
+    }.contains(operation))
+      return;
+    retireRetainedAuthority();
+  }
+
   Future<Map<String, dynamic>> _callDirect(
     String operation,
     Map<String, dynamic> params,
@@ -221,28 +421,46 @@ class AccountDirectoryRepository {
     Map<String, dynamic> params,
   ) async {
     _current();
-    if (operation == 'capabilities' && params.isEmpty) {
-      final result = await CryptoCapabilityDiscovery.read(
-        transport: transport,
-        session: session,
-        authenticated: true,
+    if (operation == 'capabilities' && params.isEmpty) return _capabilities();
+    _authorityMutation(operation, params);
+    try {
+      final result = await transport.call(
+        serverUrl: session.profile.serverUrl,
+        operation: operation,
+        params: params,
+        token: session.token,
+        allowLocalHttp: session.profile.allowLocalHttp,
       );
       _current();
       return result;
+    } on CollaborationApiException catch (error) {
+      if (const {
+        'permission_revoked',
+        'access_revoked',
+        'scope_deleted',
+        'crypto_scope_head_changed',
+        'crypto_scope_rotation_required',
+        'crypto_member_directory_changed',
+        'crypto_access_changed',
+        'crypto_membership_changed',
+        'crypto_recipient_key_changed',
+        'device_revoked',
+        'auth_required',
+        'session_expired',
+        'invalid_credentials',
+        'server_identity_changed',
+      }.contains(error.code)) {
+        retireRetainedAuthority(scopeId: params['scopeId'] as String?);
+      }
+      rethrow;
     }
-    final result = await transport.call(
-      serverUrl: session.profile.serverUrl,
-      operation: operation,
-      params: params,
-      token: session.token,
-      allowLocalHttp: session.profile.allowLocalHttp,
-    );
-    _current();
-    return result;
   }
 
   Future<VerifiedAccountDirectory?> refresh({String? externalFingerprint}) =>
-      exclusive(() => _refresh(externalFingerprint: externalFingerprint));
+      withoutRetainedAuthority(
+        () =>
+            exclusive(() => _refresh(externalFingerprint: externalFingerprint)),
+      );
   Future<void> _finishCommittedPromotion() async {
     final recovered = await finishCryptoDirectoryPromotion(
       store: store,
@@ -290,6 +508,9 @@ class AccountDirectoryRepository {
     String? externalFingerprint,
     required String run,
   }) async {
+    final capturedOwnToken = authorityReuse?.enabled == true
+        ? authorityReuse!.tokenForScope(null)
+        : null;
     final anchor = await store.anchor(accountId);
     final pin = externalFingerprint ?? anchor?['fingerprint'];
     if (pin is! String || pin.isEmpty) {
@@ -452,6 +673,15 @@ class AccountDirectoryRepository {
       }
     });
     _verified = state;
+    if (capturedOwnToken != null &&
+        authorityReuse?.enabled == true &&
+        identical(capturedOwnToken, authorityReuse!.tokenForScope(null))) {
+      final semantic = await _ownSemantic();
+      if (identical(capturedOwnToken, authorityReuse!.tokenForScope(null))) {
+        _lastOwnToken = capturedOwnToken;
+        _lastOwnSemantic = semantic;
+      }
+    }
     return state;
   }
 
@@ -540,6 +770,8 @@ class AccountDirectoryRepository {
   );
 
   Future<VerifiedAccountDirectory> requireFresh() async {
+    final retained = await _retainedOwn();
+    if (retained != null) return retained;
     final state = await refresh();
     final anchor = await store.anchor(accountId);
     if (state == null || anchor?['trustState'] != 'verified') {

@@ -6,6 +6,7 @@ import '../../domain/organizer_projections.dart';
 import '../organizer_widgets.dart';
 import '../inbox/remote_reminder_editor.dart';
 import 'task_plan_fields.dart';
+import 'agenda_month_calendar.dart';
 
 class SharedAgendaPage extends StatefulWidget {
   const SharedAgendaPage({
@@ -37,6 +38,7 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
   DateTime _day = DateTime.now();
   String _personId = '';
   String? _projectId;
+  bool _calendar = true;
   @override
   void initState() {
     super.initState();
@@ -50,6 +52,7 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
       _personId = '';
       _projectId = widget.selectedProjectId;
       _day = DateTime.now();
+      _calendar = true;
     } else if (oldWidget.selectedProjectId != widget.selectedProjectId) {
       _projectId = widget.selectedProjectId;
     }
@@ -100,7 +103,7 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final items =
+    final filteredItems =
         (widget.timeline
                 ? projectTimeline(
                     widget.data,
@@ -115,22 +118,49 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
                       item.assigneeAccountIds.contains(_personId)),
             )
             .toList();
+    final items = widget.timeline && _calendar
+        ? filteredItems
+              .where((item) => agendaItemCoversDay(item, _day))
+              .toList()
+        : filteredItems;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.scope.archived) Text(l.scopeArchivedDescription),
         OrganizerHeading(
-          title: widget.timeline ? l.planningTimeline : l.planningSharedToday,
+          title: widget.timeline
+              ? (_calendar ? l.organizerCalendar : l.planningTimeline)
+              : l.planningSharedToday,
           titleAccessory: widget.titleAccessory,
           subtitle: widget.scope.name,
           action: widget.onAddEvent == null
               ? null
-              : IconButton(
-                  tooltip: l.organizerAddEvent,
+              : FilledButton.icon(
                   onPressed: widget.onAddEvent,
                   icon: const Icon(Icons.add),
+                  label: Text(l.organizerAddEvent),
                 ),
         ),
+        if (widget.timeline) ...[
+          SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(
+                value: true,
+                icon: const Icon(Icons.calendar_month_outlined),
+                label: Text(l.organizerCalendar),
+              ),
+              ButtonSegment(
+                value: false,
+                icon: const Icon(Icons.view_list_outlined),
+                label: Text(l.planningTimeline),
+              ),
+            ],
+            selected: {_calendar},
+            onSelectionChanged: (selection) =>
+                setState(() => _calendar = selection.single),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (!widget.timeline)
           Row(
             children: [
@@ -199,10 +229,22 @@ class _SharedAgendaPageState extends State<SharedAgendaPage> {
           },
         ),
         const SizedBox(height: 20),
+        if (widget.timeline && _calendar) ...[
+          AgendaMonthCalendar(
+            day: _day,
+            items: filteredItems,
+            onSelected: (day) => setState(() => _day = day),
+          ),
+          const SizedBox(height: 16),
+          Text(organizerDate(context, _day, full: true)),
+          const SizedBox(height: 12),
+        ],
         if (items.isEmpty)
           OrganizerEmpty(
             icon: Icons.event_note_outlined,
-            title: widget.timeline ? l.planningNoTimeline : l.planningNoAgenda,
+            title: widget.timeline && !_calendar
+                ? l.planningNoTimeline
+                : l.planningNoAgenda,
           ),
         for (final item in items)
           Card(

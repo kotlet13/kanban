@@ -136,11 +136,34 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
   Widget build(BuildContext context) {
     final status = _status;
     final cleanup = status?.phase == LocalVaultPhase.cleanupPending;
+    final retainedOnly = status?.canContinueWithRetainedCopies == true;
     if (!_busy &&
         _error == null &&
         ((status?.canOpenDatabase == true &&
-                (!cleanup || _continueWithCleanup)) ||
+                (!cleanup || _continueWithCleanup || retainedOnly)) ||
             (kIsWeb && _continueBrowserSource))) {
+      if (retainedOnly) {
+        // A completed encrypted installation needs no recovery action for
+        // unrelated retained files. Keep their unconfirmed protection visible.
+        final locale =
+            ref.watch(appLocaleProvider) ??
+            WidgetsBinding.instance.platformDispatcher.locale;
+        final l = lookupAppLocalizations(
+          Locale(locale.languageCode == 'sl' ? 'sl' : 'en'),
+        );
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Semantics(
+            label: l.recoveryHistoricalExportsRetained,
+            child: Banner(
+              key: const ValueKey('vault_retained_copies_notice'),
+              message: l.recoveryHistoricalExportsLabel,
+              location: BannerLocation.topEnd,
+              child: widget.child,
+            ),
+          ),
+        );
+      }
       return cleanup || _continueBrowserSource
           ? Builder(
               builder: (context) => Directionality(

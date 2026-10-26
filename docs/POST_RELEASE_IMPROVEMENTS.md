@@ -1,0 +1,44 @@
+# Nadgradnje po javni objavi prenove Jivie
+
+Ta seznam zbira izboljšave za faze po javni objavi velike nadgradnje z E2EE in prenovljeno sinhronizacijo. Dodajamo jih ob uporabniškem preizkušanju. Vpis na seznam sam po sebi ne pomeni naročila za izvedbo ali potrditve pripravljenosti celotne izdaje.
+
+## Potrjeno za poznejšo fazo
+
+### Razreševanje sprememb v že odprtem urejevalniku
+
+Dogovor 25. oktobra 2026: za trenutno izdajo uporabnik sprejme obstoječe varovalo. Če drug uporabnik spremeni isti zapis, odprti neshranjeni osnutek ostane ohranjen. Obrazec opozori na novejšo različico. Poskus shranjevanja zastarelega osnutka se ustavi; uporabnik lahko svoje besedilo skopira, odpre zadnjo različico in spremembo ponovno vnese.
+
+Na Samsungu in iPhonu je bilo potrjeno, da prihod spremembe ohrani neshranjen osnutek in da zastarelo shranjevanje ne pošlje prepisa na strežnik. Ročno kopiranje v tej fazi ni več razlog za ustavitev preizkušanja ali samostojna ovira za objavo.
+
+Poznejša izboljšava naj omogoči primerjavo izvorne različice, uporabnikovega osnutka in zadnje shranjene različice v istem postopku. Nepovezane spremembe se lahko združijo; pri nasprotujočih spremembah uporabnik izbere ali sestavi končno vsebino. Brisanje potrebuje razumljivo ločeno odločitev. Osnutek mora ostati ohranjen tudi ob novi spremembi med odločanjem ali ob neuspešnem shranjevanju.
+
+Merilo uspeha: uporabnik lahko razreši primer brez kopiranja v drugo aplikacijo, nobena tuja sprememba pa se ne prepiše brez jasne odločitve. Obstoječe preverjanje pravic, različic in podpisanih zahtev ostane obvezno.
+
+### Prenova uporabe vrta
+
+Izrecen dogovor 25. oktobra 2026: prenovo vrta pustimo za poznejšo fazo, po tej izdaji. Izboljšati preglednost risanja, prehajanja med prikazi, urejanja razporeda ter izbire sezone in kultur. Trenutni sklop ne posega v ta modul.
+
+Prvotna napaka shranjevanja sezone in kultur je medtem odpravljena; uporabnik je isti mobilni postopek potrdil kot uspešen. Tega uspešnega testa ne ponavljamo. Prenova uporabniškega poteka je ločena od že popravljenega shranjevanja.
+
+## Predlogi za razvrstitev
+
+### Enoten prehod od opravila do urejanja
+
+Skupni pregled trenutno lahko odpre predogled z dodatnim gumbom Uredi opravilo, pot iz projekta pa neposredno urejevalnik. Pri mobilnem testu je bilo to razumljeno kot razlika med Androidom in iOS, čeprav pregledani poti nimata pogoja za operacijski sistem.
+
+Izbrati enoten, jasno prepoznaven način pregledovanja in urejanja ter preveriti število klikov. Predogled ne sme ustvarjati vtisa izgubljenih pravic. To je predlog za dogovor, ne že potrjena sprememba navigacije.
+
+### Jasnejši prikaz priprave računa ob zagonu
+
+Na Samsungu se je 25. oktobra pred Utripom na kratko pokazal in izginil zaslon, ki ga je uporabnik opisal kot zaslon za potrditev. Točna identiteta tega zaslona ni bila potrjena. Preveriti prehode med nalaganjem stanja računa in prikazom čarovnika, da že zaključena priprava ne povzroča zavajajočega utripanja zaslonov. Resnično potrebno soglasje mora še vedno ostati izrecno.
+
+
+## Česa ta dogovor ne prestavlja
+
+Zaščita podatkov, preprečevanje tihih prepisov in pravilno preverjanje dostopa ostanejo zahteve trenutne izdaje. Dogovor o ročnem razreševanju osnutka ne potrjuje še odprtih preizkusov obnove in nadgradnje ter ne rešuje prevzema novih pravil urejanja v starih prostorih.
+
+Opozorilo Obnova celotne namestitve v obstoječi iOS testni namestitvi ostaja ločena ugotovitev trenutnega testiranja. Ne prestavljamo samodejno morebitne napake obnove v poznejšo izdajo.
+
+## Dodajanje novih ugotovitev
+
+Za novo točko zapišemo datum, uporabnikov primer, trenutno obnašanje, želeni rezultat in status: potrjeno za pozneje ali predlog. Izguba podatkov, napačen prejemnik, tih prepis in nedovoljen dostop se obravnavajo takoj v trenutni izdaji, ne kot običajna poznejša izboljšava.

@@ -72,6 +72,67 @@ extension CollaborationLinkedPayments on CollaborationRepository {
         reply['scopeSequence'] is! int) {
       throw const CollaborationException('finance_access_changed');
     }
+    // Incomplete E2EE snapshots may carry only a subset of cash facts. They
+    // cannot replace the last observed facts or keep an older freshness proof.
+    // Legacy finance3 servers omit this optional flag and retain their contract.
+    Future<void> checkSnapshotBoundary() async {
+      _checkEpoch(epoch);
+      if (generation != await _financeAccessGeneration(partition, space.id)) {
+        throw const CollaborationException('finance_access_changed');
+      }
+      final proofs = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['linked_payment_complete:${space.key}'],
+      );
+      if (proofs.isNotEmpty &&
+          (CollaborationRepository._map(proofs.single['value'])['scopeSequence']
+                  as int) >
+              (reply['scopeSequence'] as int)) {
+        throw const CollaborationException('payment_changed');
+      }
+      final incomplete = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['linked_payment_incomplete:${space.key}'],
+      );
+      if (incomplete.isNotEmpty) {
+        final observed = CollaborationRepository._map(
+          incomplete.single['value'],
+        );
+        if (observed['generation'] == generation &&
+            observed['accessRevision'] == policy.revision &&
+            (observed['scopeSequence'] as int) >
+                (reply['scopeSequence'] as int)) {
+          throw const CollaborationException('payment_changed');
+        }
+      }
+    }
+
+    if (reply['complete'] == false) {
+      await database.transaction(() async {
+        await checkSnapshotBoundary();
+        await database.execute('DELETE FROM local_meta WHERE name=?', [
+          'linked_payment_complete:${space.key}',
+        ]);
+        // Preserve the observed sequence floor even though the freshness proof
+        // is gone, so a delayed older full reply cannot certify stale cash.
+        await database.execute(
+          'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+          [
+            'linked_payment_incomplete:${space.key}',
+            jsonEncode({
+              'generation': generation,
+              'scopeSequence': reply['scopeSequence'],
+              'accessRevision': policy.revision,
+            }),
+          ],
+        );
+        _checkEpoch(epoch);
+      });
+      // Notify only after proof invalidation commits. Throwing inside that
+      // transaction would roll it back and let the old balance remain fresh.
+      database.personalChanged();
+      throw const CryptoAuthorityPending('crypto_payment_snapshot_incomplete');
+    }
     final events = (reply['events'] as List).map((raw) {
       final j = Map<String, dynamic>.from(raw as Map);
       j['sourcePartition'] = partition;
@@ -93,20 +154,7 @@ extension CollaborationLinkedPayments on CollaborationRepository {
       throw const CollaborationException('invalid_response');
     }
     await database.transaction(() async {
-      _checkEpoch(epoch);
-      if (generation != await _financeAccessGeneration(partition, space.id)) {
-        throw const CollaborationException('finance_access_changed');
-      }
-      final proofs = await database.rows(
-        'SELECT value FROM local_meta WHERE name=?',
-        ['linked_payment_complete:${space.key}'],
-      );
-      if (proofs.isNotEmpty &&
-          (CollaborationRepository._map(proofs.single['value'])['scopeSequence']
-                  as int) >
-              (reply['scopeSequence'] as int)) {
-        throw const CollaborationException('payment_changed');
-      }
+      await checkSnapshotBoundary();
       for (final event in events) {
         final known = await database.rows(
           'SELECT data FROM linked_payment_events WHERE space_key=? AND event_id=?',
@@ -169,6 +217,9 @@ extension CollaborationLinkedPayments on CollaborationRepository {
           }),
         ],
       );
+      await database.execute('DELETE FROM local_meta WHERE name=?', [
+        'linked_payment_incomplete:${space.key}',
+      ]);
       _checkEpoch(epoch);
     });
     database.personalChanged();

@@ -39,8 +39,8 @@ class TablesStrings {
     'Ta preglednica ni več na voljo. Osnutek ostane na tej napravi.',
   );
   String get accessLost => pick(
-    'This space is no longer available. Return to your spaces. Your draft stays on this device.',
-    'Ta prostor ni več na voljo. Vrnite se na seznam prostorov. Osnutek ostane na tej napravi.',
+    'This view is no longer current. Return to the space and reopen it. Your draft stays on this device.',
+    'Ta pogled ni več aktualen. Vrni se v prostor in ga znova odpri. Osnutek ostane na tej napravi.',
   );
   String get failed => pick(
     'Could not load or save. Try again.',
@@ -62,6 +62,12 @@ class TablesStrings {
     'Editing stopped. Your draft stays on this device. Reconnect and acquire editing to continue.',
     'Urejanje je ustavljeno. Osnutek ostane na tej napravi. Za nadaljevanje znova pridobite urejanje.',
   );
+  String get localDraftOnly => pick(
+    'Sharing is unavailable. You can finish this draft on this device. Shared changes cannot be saved now.',
+    'Deljenje ni na voljo. Osnutek lahko dokončate na tej napravi. Sprememb trenutno ni mogoče shraniti v skupno preglednico.',
+  );
+  String get keepDraftAndClose =>
+      pick('Keep draft and close', 'Ohrani osnutek in zapri');
   String get recovery => pick(
     'A draft from this device is available.',
     'Na tej napravi je na voljo osnutek.',

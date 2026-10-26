@@ -341,13 +341,14 @@ class CryptoVerifiedReadLease {
   CryptoVerifiedReadLease._(
     this._owner,
     this._generation,
+    this._reuseGeneration,
     this._lifecycle,
     this._watch,
     this._pins,
   );
   final SessionCryptoAccess _owner;
   final int _generation;
-  final int? _lifecycle;
+  final int? _reuseGeneration, _lifecycle;
   final Stopwatch _watch;
   final Map<String, String?> _pins;
 }
@@ -357,10 +358,11 @@ class CryptoVerifiedReadLease {
 class _AuthorityOperation {
   _AuthorityOperation(this.owner)
     : generation = owner._authorityGeneration,
+      reuseGeneration = owner.account.directory.authorityReuse?.generation,
       lifecycle = _BlobLifecycleEpoch.shared?.generation;
   final SessionCryptoAccess owner;
   final int generation;
-  final int? lifecycle;
+  final int? reuseGeneration, lifecycle;
   final watch = Stopwatch()..start();
   bool active = true;
   final heads = <String, VerifiedScopeHead>{};
@@ -1723,20 +1725,30 @@ class SessionCryptoAccess {
         inherited.generation == _authorityGeneration &&
         identical(_operation, inherited) &&
         await _operationPinsValid(inherited)) {
-      return body();
+      return pendingCapability != null ||
+              _readOnlyFrozen != null ||
+              Zone.current[_deletedScopeEvidenceZone] != null
+          ? account.directory.withoutRetainedAuthority(body)
+          : account.directory.withRetainedAuthorityReads(body);
     }
     final operation = _AuthorityOperation(this);
+    Future<T> run() => runZoned(
+      () => account.directory.withAuthoritySnapshot(
+        body,
+        isValid: () async =>
+            identical(_operation, operation) &&
+            await _operationPinsValid(operation),
+        onMutation: invalidateAuthorityOperation,
+      ),
+      zoneValues: {_operationKey: operation},
+    );
     try {
-      return await runZoned(
-        () => account.directory.withAuthoritySnapshot(
-          body,
-          isValid: () async =>
-              identical(_operation, operation) &&
-              await _operationPinsValid(operation),
-          onMutation: invalidateAuthorityOperation,
-        ),
-        zoneValues: {_operationKey: operation},
-      );
+      return await (freshBoundary ||
+              pendingCapability != null ||
+              _readOnlyFrozen != null ||
+              Zone.current[_deletedScopeEvidenceZone] != null
+          ? account.directory.withoutRetainedAuthority(run)
+          : account.directory.withRetainedAuthorityReads(run));
     } finally {
       operation.active = false;
       operation.heads.clear();
@@ -1750,6 +1762,8 @@ class SessionCryptoAccess {
     return value is _AuthorityOperation &&
             identical(value.owner, this) &&
             value.generation == _authorityGeneration &&
+            value.reuseGeneration ==
+                account.directory.authorityReuse?.generation &&
             canReuseCryptoReadAuthority(
               age: value.watch.elapsed,
               identityCurrent: account.directory.isCurrent(),
@@ -1782,6 +1796,7 @@ class SessionCryptoAccess {
     return CryptoVerifiedReadLease._(
       this,
       operation.generation,
+      operation.reuseGeneration,
       operation.lifecycle,
       operation.watch,
       Map.unmodifiable(operation.pins),
@@ -1791,6 +1806,8 @@ class SessionCryptoAccess {
   Future<bool> isVerifiedReadLeaseCurrent(CryptoVerifiedReadLease lease) async {
     if (!identical(lease._owner, this) ||
         lease._generation != _authorityGeneration ||
+        lease._reuseGeneration !=
+            account.directory.authorityReuse?.generation ||
         !canReuseCryptoReadAuthority(
           age: lease._watch.elapsed,
           identityCurrent: account.directory.isCurrent(),
@@ -1806,6 +1823,8 @@ class SessionCryptoAccess {
       if (await account.store.secure.read(pin.key) != pin.value) return false;
     }
     return lease._generation == _authorityGeneration &&
+        lease._reuseGeneration ==
+            account.directory.authorityReuse?.generation &&
         account.directory.isCurrent() &&
         lease._watch.elapsed < const Duration(seconds: 5) &&
         lease._lifecycle == _BlobLifecycleEpoch.shared?.generation;
@@ -1869,15 +1888,27 @@ class SessionCryptoAccess {
     invalidateBlobDelivery();
   }
 
+  /// A proof preparation is a bounded logical read even when its caller has
+  /// exhausted or invalidated an earlier lease. Nested valid reads inherit the
+  /// original boundary; this never renews the caller's clock or retained handle.
   Future<VerifiedScopeHead> currentHead(
     String scopeId, {
     bool online = false,
   }) async {
+    // Preserve the raw outer-operation publication guard before a new subtree
+    // can hide an expired but still active admitted caller.
     await _discardStaleCommittedMigrationMemo(scopeId);
-    return _withScopeDescriptorVerification(
-      scopeId,
-      () => _currentHead(scopeId, online: online),
-    );
+    try {
+      return await withVerifiedOperation(
+        () => _withScopeDescriptorVerification(
+          scopeId,
+          () => _currentHead(scopeId, online: online),
+        ),
+      );
+    } catch (_) {
+      account.directory.retireRetainedAuthority(scopeId: scopeId);
+      rethrow;
+    }
   }
 
   /// Hosting lifecycle metadata for the member list only. Send already
@@ -1887,9 +1918,12 @@ class SessionCryptoAccess {
     VerifiedScopeHead head,
   ) async {
     if (head.invitationPreauthorizations.isEmpty) return head.members;
-    final wire = await _scopeCall('crypto2.scope.headGet', {
-      'scopeId': head.scopeId,
-    });
+    final wire = Zone.current[_deletedScopeEvidenceZone] != null
+        ? await _scopeCall('crypto2.scope.headGet', {'scopeId': head.scopeId})
+        : await account.directory.scopeHeadForDisplay(
+            head.scopeId,
+            pendingCapability: pendingCapability,
+          );
     if (!account.directory.isCurrent() ||
         wire['headHash'] != head.headHash ||
         wire['payload'] is! Map ||
@@ -2140,6 +2174,16 @@ class SessionCryptoAccess {
         )) {
       operation.heads[scopeId] = verified;
       await _captureOperationPin(operation, key);
+    }
+    if (online &&
+        pendingCapability == null &&
+        _readOnlyFrozen == null &&
+        Zone.current[_deletedScopeEvidenceZone] == null) {
+      await account.directory.admitVerifiedScopeAuthority(
+        scopeId,
+        verified.headHash,
+        verified.members.map((member) => member['accountId'] as String),
+      );
     }
     return verified;
   }
@@ -6244,6 +6288,21 @@ class SessionCryptoAccess {
   }
 
   Future<VerifiedAccountDirectory> currentMemberDirectory(
+    String scopeId,
+    String scopeHeadHash,
+    String accountId,
+  ) async {
+    try {
+      return await withVerifiedOperation(
+        () => _currentMemberDirectory(scopeId, scopeHeadHash, accountId),
+      );
+    } catch (_) {
+      account.directory.retireRetainedAuthority(scopeId: scopeId);
+      rethrow;
+    }
+  }
+
+  Future<VerifiedAccountDirectory> _currentMemberDirectory(
     String scopeId,
     String scopeHeadHash,
     String accountId,

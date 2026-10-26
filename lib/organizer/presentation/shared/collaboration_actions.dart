@@ -147,17 +147,17 @@ class CollaborationActions
     String type,
     String? id, {
     bool preserveReadOnly = false,
+    bool Function()? draftIdentityCurrent,
   }) => id == null
       ? wrapEditor(editor)
       : SharingSessionBoundary(
           guard: _guard,
           visibleWhen: (state) {
             if (!preserveReadOnly) return _canEdit(state, type, id);
-            final current = _currentScope(state);
-            return current?.canRead == true &&
-                !current!.blocked &&
-                !current.archived &&
-                !current.deleted;
+            return state.localAccessAllowed &&
+                !state.sessionInvalid &&
+                !state.deletionPending &&
+                (draftIdentityCurrent?.call() ?? _guard.isCurrent);
           },
           child: editor,
         );
@@ -615,7 +615,14 @@ class CollaborationActions
         ? null
         : FinanceAccessGuard(context, ref, scope.id);
 
-    final updates = OrganizerEditorUpdates();
+    final editorController = ref.read(collaborationProvider.notifier);
+    final editorIdentity = editorController.editorSessionIdentity;
+    bool draftIdentityCurrent() =>
+        guard.isCurrent &&
+        editorController.editorSessionIdentity == editorIdentity;
+    final updates = OrganizerEditorUpdates()
+      ..allowLocalDraftContinuation =
+          task != null && _canEdit(state, 'task', task.id);
     OrganizerDraft taskDraft(LocalTask? task, SharedFinanceEntry? linkedCost) =>
         OrganizerDraft(
           isCompleted: task?.isCompleted ?? false,
@@ -685,9 +692,11 @@ class CollaborationActions
           choicesReady &&
           !updates.financeLoading &&
           !preparationFailed;
-      updates.editingAllowed = task == null
-          ? _currentScope(value)?.canEdit == true
-          : _canEdit(value, 'task', task!.id);
+      updates.editingAllowed =
+          draftIdentityCurrent() &&
+          (task == null
+              ? _currentScope(value)?.canEdit == true
+              : _canEdit(value, 'task', task!.id));
       updates.costEditingEnabled = canEditCost && updates.editingAllowed;
       // Opening the section requests fresh options; it grants no cost authority.
       updates.onCostSectionOpened =
@@ -720,7 +729,7 @@ class CollaborationActions
     }
 
     prepareChoices = () {
-      if (!open || !guard.isCurrent || preparationStarted) return;
+      if (!open || !draftIdentityCurrent() || preparationStarted) return;
       final current = ref.read(collaborationProvider).valueOrNull;
       if (linkedCost == null
           ? !costWriteRights(current)
@@ -737,7 +746,7 @@ class CollaborationActions
         } catch (_) {
           preparationFailed = true;
         }
-        if (!open || !guard.isCurrent) return;
+        if (!open || !draftIdentityCurrent()) return;
         updates.financeLoading = false;
         updateFinance(ref.read(collaborationProvider).valueOrNull);
       }());
@@ -753,7 +762,7 @@ class CollaborationActions
         // Provider publication can happen during a parent build. Apply once the
         // current frame completes, and never after closing/changing identity.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!open || !guard.isCurrent) return;
+          if (!open || !draftIdentityCurrent()) return;
           final value = next.valueOrNull;
           updateFinance(value);
           if (task == null) return;
@@ -841,12 +850,18 @@ class CollaborationActions
                     3
             ? null
             : () async {
+                if (!draftIdentityCurrent()) {
+                  throw const CollaborationException('session_changed');
+                }
                 if (!await showSharedContentPolicy(
                   context,
                   scopeId: scope.id,
                   allowOfflineDraft: true,
                 )) {
                   return timerTask!;
+                }
+                if (!draftIdentityCurrent()) {
+                  throw const CollaborationException('session_changed');
                 }
                 timerTask = await controller.toggleTaskTimer(
                   scope.id,
@@ -859,9 +874,17 @@ class CollaborationActions
         creatorLabel: _creator(task?.createdByAccountId),
         draft: initialDraft,
         errorMessage: (error) => sharingErrorMessage(context, error),
-        wrap: (editor) =>
-            wrapRecordEditor(editor, 'task', task?.id, preserveReadOnly: true),
+        wrap: (editor) => wrapRecordEditor(
+          editor,
+          'task',
+          task?.id,
+          preserveReadOnly: true,
+          draftIdentityCurrent: draftIdentityCurrent,
+        ),
         onSave: (draft) async {
+          if (!draftIdentityCurrent()) {
+            throw const CollaborationException('session_changed');
+          }
           final costChanged = costSignature(draft) != initialCost;
           if (costChanged &&
               (!canEditCost ||
@@ -1005,7 +1028,12 @@ class CollaborationActions
         },
         onDelete: task == null || !canDeleteTask
             ? null
-            : () => controller.deleteTask(scope.id, task!.id),
+            : () {
+                if (!draftIdentityCurrent()) {
+                  throw const CollaborationException('session_changed');
+                }
+                return controller.deleteTask(scope.id, task!.id);
+              },
       );
     } finally {
       open = false;

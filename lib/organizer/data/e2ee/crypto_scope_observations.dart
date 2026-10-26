@@ -701,11 +701,7 @@ class CryptoScopeObservations {
         // snapshot already carries its status/prefix). A newer signed event
         // still requires its companion page below. Frozen readers stay at their
         // exact supplied prefix and never refresh beyond that boundary.
-        own =
-            (await account.directory.refresh()) ??
-            (throw const FormatException(
-              'scope_observation_directory_missing',
-            ));
+        own = await account.directory.currentReadDirectory();
       }
       // The cursor only avoids an empty companion request. The complete signed
       // operation stream and every included bundle are still checked below;

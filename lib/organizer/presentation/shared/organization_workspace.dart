@@ -67,7 +67,6 @@ class OrganizationWorkspace extends ConsumerWidget {
               ? organization.id
               : null,
         );
-        await guard.controller.syncNow();
       },
     );
     if (!context.mounted || !guard.isCurrent || id == null) return;

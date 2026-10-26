@@ -11,6 +11,7 @@ import '../shared/sharing_recovery.dart';
 import '../shared/sharing_session_boundary.dart';
 import '../planning/task_plan_fields.dart';
 import 'shared_finance_actions.dart';
+import 'shared_finance_accounts_dialog.dart';
 import 'finance_planning_panel.dart';
 import 'finance_permissions_dialog.dart';
 import 'shared_finance_ledger.dart';
@@ -32,10 +33,14 @@ class SharedFinanceWorkspace extends ConsumerWidget {
     required this.scope,
     required this.state,
     this.titleAccessory,
+    this.readOnly = false,
+    this.initialAccountId,
   });
   final SharedScope scope;
   final CollaborationState state;
   final Widget? titleAccessory;
+  final bool readOnly;
+  final String? initialAccountId;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n, policy = state.financePolicyForScope(scope.id);
@@ -170,7 +175,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
           title: l.organizerFinances,
           titleAccessory: titleAccessory,
         ),
-        if (owner && online)
+        if (!readOnly && owner && online)
           Wrap(
             spacing: 8,
             children: [
@@ -212,7 +217,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
         else if (state.financeSnapshotComplete[scope.id] != true) ...[
           Text(l.financeLoadingSnapshot),
         ] else ...[
-          if (!isProject && children.isEmpty)
+          if (!readOnly && !isProject && children.isEmpty)
             FinancePlanningPanel(
               key: ValueKey(
                 'shared-planning-${state.session!.partition}-${scope.id}',
@@ -222,7 +227,8 @@ class SharedFinanceWorkspace extends ConsumerWidget {
               payments: payments,
               forecastAvailable: cashAvailable,
             ),
-          if ((isProject || children.isNotEmpty) &&
+          if (!readOnly &&
+              (isProject || children.isNotEmpty) &&
               (data.financeAccounts.isNotEmpty ||
                   data.financeRecurrenceRules.isNotEmpty))
             ExpansionTile(
@@ -244,7 +250,8 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                 ),
               ],
             ),
-          if (payments != null &&
+          if (!readOnly &&
+              payments != null &&
               (policy.linkedPaymentsRequired ||
                   payments.events.isNotEmpty ||
                   payments.projections.isNotEmpty ||
@@ -265,7 +272,12 @@ class SharedFinanceWorkspace extends ConsumerWidget {
               Text(l.financeAccountChoicesUnavailable),
             if (scope.parentSpaceId != null)
               TextButton.icon(
-                onPressed: () => actions.account(),
+                onPressed: () => showSharedFinanceAccounts(
+                  context,
+                  state,
+                  scope.parentSpaceId!,
+                  projectScopeId: scope.id,
+                ),
                 icon: const Icon(Icons.account_balance_outlined),
                 label: Text(l.financeManageParentAccounts),
               ),
@@ -278,6 +290,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             ),
           SharedFinanceLedger(
             showHeading: false,
+            initialAccountId: initialAccountId,
             key: ValueKey('finance-${state.session!.partition}-${scope.id}'),
             scopeName: scope.name,
             payments: projection?.payments ?? payments,
@@ -351,7 +364,8 @@ class SharedFinanceWorkspace extends ConsumerWidget {
             canPersonalPayment: (entry) {
               final original = originalEntries[entry.id] ?? entry;
               final origin = projection?.entryScopeIds[entry.id] ?? scope.id;
-              return original.accountScopeId == null &&
+              return !readOnly &&
+                  original.accountScopeId == null &&
                   canWritePaymentSource(
                     ref,
                     PaymentSpaceRef(
@@ -398,6 +412,7 @@ class SharedFinanceWorkspace extends ConsumerWidget {
                 ),
             ],
             canWrite:
+                !readOnly &&
                 (writable(scope.id) ||
                     !isProject &&
                         children.any((child) => writable(child.id))) &&

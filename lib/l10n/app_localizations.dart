@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'This space does not have this feature enabled yet.'**
   String get documentsUnavailable;
 
+  /// No description provided for @documentsContextChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This view is no longer current. Return to the space and reopen it. Your draft stays on this device.'**
+  String get documentsContextChanged;
+
   /// No description provided for @routeError.
   ///
   /// In en, this message translates to:
@@ -2083,6 +2089,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View'**
   String get sharingView;
+
+  /// No description provided for @financeAccountOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Account overview'**
+  String get financeAccountOverview;
 
   /// No description provided for @financeEditAccount.
   ///
@@ -4717,6 +4729,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.'**
   String get gardenSaveError;
+
+  /// No description provided for @gardenEditConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The garden changed while you were editing it. Saving is blocked to preserve the newer version. Your changes are still in the open editor.'**
+  String get gardenEditConflict;
 
   /// No description provided for @gardenDeleteTitle.
   ///
@@ -8390,6 +8408,12 @@ abstract class AppLocalizations {
   /// **'Checking local storage…'**
   String get recoveryCheckingDevice;
 
+  /// No description provided for @recoveryHistoricalExportsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies'**
+  String get recoveryHistoricalExportsLabel;
+
   /// No description provided for @recoveryCleanupLabel.
   ///
   /// In en, this message translates to:
@@ -9577,6 +9601,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only the space owner or original author can restore this record. Your draft is retained.'**
   String get sharingRestoreForbidden;
+
+  /// No description provided for @cryptoProtectionCatalogChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected spaces have changed. You can review protection later.'**
+  String get cryptoProtectionCatalogChanged;
+
+  /// No description provided for @cryptoProtectionChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking protection status.'**
+  String get cryptoProtectionChecking;
+
+  /// No description provided for @cryptoProtectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection review is currently unavailable. Try again later.'**
+  String get cryptoProtectionUnavailable;
+
+  /// No description provided for @cryptoProtectionReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get cryptoProtectionReview;
+
+  /// No description provided for @cryptoProtectionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get cryptoProtectionRetry;
+
+  /// No description provided for @cryptoProtectionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection details'**
+  String get cryptoProtectionDetails;
+
+  /// No description provided for @cryptoProtectionBackToApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to app'**
+  String get cryptoProtectionBackToApp;
+
+  /// No description provided for @organizerDraftSharingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing.'**
+  String get organizerDraftSharingUnavailable;
 }
 
 class _AppLocalizationsDelegate

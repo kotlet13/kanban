@@ -34,6 +34,16 @@ Future<bool> cryptoNeedsTaskDerivationFinanceRefresh(
   required String financeRole,
 }) async {
   if (financeRole != 'write') return false;
+  return cryptoHasUnresolvedTaskDerivations(database, partition, scope);
+}
+
+/// A local no-work hint only. Absence may skip this optional dependency pass;
+/// presence still requires fresh signed finance authority before selecting it.
+Future<bool> cryptoHasUnresolvedTaskDerivations(
+  CollaborationDatabase database,
+  String partition,
+  String scope,
+) async {
   return (await database.rows(
     "SELECT 1 FROM crypto_business_records i WHERE i.partition=? AND i.scope_id=? "
     "AND i.domain='content' AND i.type='taskDerivationIntent' AND i.deleted=0 "

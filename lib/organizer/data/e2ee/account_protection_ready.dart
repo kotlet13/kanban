@@ -12,6 +12,37 @@ import 'crypto_scope_observations.dart';
 import 'scope_crypto_manager.dart';
 import 'scope_crypto_codec.dart';
 import '../collaboration_transport.dart' show withCollaborationRateLimitPause;
+import '../../domain/collaboration_models.dart' show CollaborationException;
+
+enum AccountProtectionStartupStatus {
+  current,
+  catalogChanged,
+  pending,
+  setupRequired,
+  recoveryRequired,
+  reviewRequired,
+}
+
+enum AccountProtectionStartupReason {
+  none,
+  accountSetup,
+  accountPending,
+  accountRecovery,
+  scopeRecovery,
+  completionMissing,
+  catalogChanged,
+  network,
+  rateLimited,
+  proofUnavailable,
+}
+
+/// Startup presentation evidence only. This never grants connected-write
+/// authority or replaces the signed completion and per-scope admission guards.
+class AccountProtectionStartupAssessment {
+  const AccountProtectionStartupAssessment(this.status, this.reason);
+  final AccountProtectionStartupStatus status;
+  final AccountProtectionStartupReason reason;
+}
 
 /// A signed statement about the fully observed catalog, not proof that an
 /// untrusted server disclosed unknown scopes or its globally freshest state.
@@ -29,6 +60,108 @@ class AccountProtectionReady {
   void _current() {
     if (_closed || !account.directory.isCurrent()) {
       throw const CryptoAuthorityPending('protection_completion_cancelled');
+    }
+  }
+
+  /// Reads the existing account/completion/catalog evidence once. A changed
+  /// catalog needs an optional review, not automatic setup or a new signature.
+  /// No scope sweep, migration inspection/resume, observation or rotation runs.
+  Future<AccountProtectionStartupAssessment> assessStartupReview({
+    required bool Function() isCurrent,
+  }) async {
+    void current({bool directory = false}) {
+      if (_closed || !isCurrent()) {
+        throw const CryptoAuthorityPending('protection_completion_cancelled');
+      }
+      if (directory) _current();
+    }
+
+    AccountProtectionStartupAssessment? requiredFor(
+      String phase,
+      bool incomplete,
+    ) {
+      if (phase != 'ready') {
+        return AccountProtectionStartupAssessment(
+          phase == 'recoveryRequired'
+              ? AccountProtectionStartupStatus.recoveryRequired
+              : AccountProtectionStartupStatus.setupRequired,
+          phase == 'pending'
+              ? AccountProtectionStartupReason.accountPending
+              : phase == 'recoveryRequired'
+              ? AccountProtectionStartupReason.accountRecovery
+              : AccountProtectionStartupReason.accountSetup,
+        );
+      }
+      return incomplete
+          ? const AccountProtectionStartupAssessment(
+              AccountProtectionStartupStatus.recoveryRequired,
+              AccountProtectionStartupReason.scopeRecovery,
+            )
+          : null;
+    }
+
+    current();
+    try {
+      final phase = await account.localPhase();
+      current(directory: phase == 'ready');
+      final incomplete = await account.hasIncompleteScopeRecovery();
+      current(directory: phase == 'ready');
+      final initialRequired = requiredFor(phase, incomplete);
+      if (initialRequired != null) return initialRequired;
+      final completion = await cachedCompletion();
+      current(directory: true);
+      bool? matches;
+      var completionDeviceMatches = true;
+      if (completion != null) {
+        matches = await matchesCurrentCatalog(completion);
+        current(directory: true);
+        // The online refresh may have changed the device snapshot since the
+        // cached completion was checked. That is not merely catalog drift.
+        completionDeviceMatches = await completionMatchesCurrentDevice(
+          completion,
+        );
+        current(directory: true);
+      }
+      final finalPhase = await account.localPhase();
+      current(directory: true);
+      final finalIncomplete = await account.hasIncompleteScopeRecovery();
+      current(directory: true);
+      final finalRequired = requiredFor(finalPhase, finalIncomplete);
+      if (finalRequired != null) return finalRequired;
+      if (completion == null || !completionDeviceMatches) {
+        return const AccountProtectionStartupAssessment(
+          AccountProtectionStartupStatus.reviewRequired,
+          AccountProtectionStartupReason.completionMissing,
+        );
+      }
+      return AccountProtectionStartupAssessment(
+        matches!
+            ? AccountProtectionStartupStatus.current
+            : AccountProtectionStartupStatus.catalogChanged,
+        matches
+            ? AccountProtectionStartupReason.none
+            : AccountProtectionStartupReason.catalogChanged,
+      );
+    } catch (error) {
+      // An invalidated/disposed operation cannot publish even an error status
+      // for a different account. Unknown evidence is visible pending, not ready.
+      current();
+      if (!account.directory.isCurrent()) rethrow;
+      if (error is CryptoDirectoryException &&
+          error.code == 'directory_device_revoked') {
+        return const AccountProtectionStartupAssessment(
+          AccountProtectionStartupStatus.recoveryRequired,
+          AccountProtectionStartupReason.accountRecovery,
+        );
+      }
+      return AccountProtectionStartupAssessment(
+        AccountProtectionStartupStatus.pending,
+        error is CollaborationException && error.code == 'network'
+            ? AccountProtectionStartupReason.network
+            : error is CollaborationException && error.code == 'rate_limited'
+            ? AccountProtectionStartupReason.rateLimited
+            : AccountProtectionStartupReason.proofUnavailable,
+      );
     }
   }
 
@@ -266,6 +399,18 @@ class AccountProtectionReady {
     }
     final scopes = await catalog();
     return completion['scopeManifestHash'] == await catalogHash(scopes);
+  }
+
+  /// Reuses the freshly replayed own directory; it makes no network call and
+  /// cannot make an old device-bound completion current after a device change.
+  Future<bool> completionMatchesCurrentDevice(
+    Map<String, dynamic> completion,
+  ) async {
+    _current();
+    final current = await account.directory.cachedVerifiedDirectory();
+    _current();
+    current.activeDevice(account.deviceId);
+    return current.deviceSnapshotHash == completion['deviceSnapshotHash'];
   }
 
   Future<Map<String, dynamic>?> unavailableReview() async {

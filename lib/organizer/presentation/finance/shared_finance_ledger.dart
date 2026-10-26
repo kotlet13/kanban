@@ -46,6 +46,7 @@ class SharedFinanceLedger extends StatefulWidget {
     this.canEditAccount,
     this.canEditTransfer,
     this.description,
+    this.initialAccountId,
   });
   final String scopeName;
   final String? scopeId, partition;
@@ -63,6 +64,7 @@ class SharedFinanceLedger extends StatefulWidget {
   final bool Function(SharedFinanceAccount)? canEditAccount;
   final bool Function(SharedFinanceTransfer)? canEditTransfer;
   final String? description;
+  final String? initialAccountId;
   final PaymentSnapshot? payments;
   final ValueChanged<SharedFinanceEntry>? onPersonalPayment;
   final bool Function(SharedFinanceEntry)? canPersonalPayment;
@@ -75,7 +77,13 @@ class SharedFinanceLedger extends StatefulWidget {
 }
 
 class _SharedFinanceLedgerState extends State<SharedFinanceLedger> {
-  String _accountId = '';
+  late String _accountId;
+  @override
+  void initState() {
+    super.initState();
+    _accountId = widget.initialAccountId ?? '';
+  }
+
   String _projectKey = '';
   String _personId = '';
   String _authorId = '';

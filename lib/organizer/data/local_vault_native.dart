@@ -195,21 +195,21 @@ class NativeLocalVaultService implements LocalVaultService {
         } finally {
           db.close();
         }
+        final installationComplete =
+            state['phase'] == 'complete' &&
+            (await _legacyFiles()).isEmpty &&
+            state['pickerCleanupPending'] == false &&
+            state['pickerResidualFiles'] is int &&
+            (state['pickerResidualFiles'] as int) >= 0 &&
+            !EncryptedLocalVaultPreferences.keys.any(preferences.containsKey);
+        final residual = state['pickerResidualFiles'] as int? ?? 0;
         return LocalVaultStatus(
-          state['phase'] == 'complete' &&
-                  (await _legacyFiles()).isEmpty &&
-                  state['pickerCleanupPending'] != true &&
-                  state['pickerResidualFiles'] != null &&
-                  state['pickerResidualFiles'] == 0 &&
-                  !EncryptedLocalVaultPreferences.keys.any(
-                    preferences.containsKey,
-                  )
+          installationComplete && residual == 0
               ? LocalVaultPhase.ready
               : LocalVaultPhase.cleanupPending,
           vaultId: key.id,
-          errorCode: (state['pickerResidualFiles'] as int? ?? 0) > 0
-              ? 'vault_historical_exports_retained'
-              : null,
+          errorCode: residual > 0 ? 'vault_historical_exports_retained' : null,
+          retainedCopiesOnly: installationComplete && residual > 0,
         );
       }
     } on LocalVaultException catch (error) {

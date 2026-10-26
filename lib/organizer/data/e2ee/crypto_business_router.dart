@@ -288,10 +288,22 @@ class CryptoBusinessRouter
     required String scopeId,
   }) async {
     _metadataReadGroup?.close();
+    // Most content changes have no task-cost dependency. Do not make sync
+    // completion depend on replaying an unrelated local scope/directory proof.
+    // This SQL hint supplies neither authority nor finance completeness.
+    if (!await cryptoHasUnresolvedTaskDerivations(
+      database,
+      session.profile.partition,
+      scopeId,
+    )) {
+      return false;
+    }
     final account = await accountFor(session);
     final access = SessionCryptoAccess(account: account);
     return access.withVerifiedOperation(() async {
-      final head = await access.currentHead(scopeId);
+      // A candidate may outlive the cached proof (new scope, restart, restore).
+      // Use the normal online verifier rather than failing its offline preflight.
+      final head = await access.currentHead(scopeId, online: true);
       return cryptoNeedsTaskDerivationFinanceRefresh(
         database,
         account.store.partition,
@@ -491,8 +503,11 @@ class CryptoBusinessRouter
       access,
       database,
       financePolicyOnly: policyOnly,
+      // Live finance projection needs the same exact ordinary author proof as
+      // the following selector read, so a cold witness need not await a later
+      // pass. Historical/captured/frozen witnesses retain their own boundaries.
       onlineAccountChoiceDirectories: RegExp(
-        r'^finance[24]?\.accountChoices$',
+        r'^finance[24]?\.(pull|accountChoices)$',
       ).hasMatch(operation),
       financeReads: combinedRead ? combined.reads : null,
       invalidateFinanceReads: () {
@@ -3729,7 +3744,12 @@ class CryptoBusinessSession {
       // signed descriptor independently confirms this exact parent relation.
       if (!selected && candidate['parentScopeId'] != scope) continue;
       try {
-        final childDescriptor = await _verifiedScopeDescriptor(child);
+        // Coverage is an online read. A cold child's signed descriptor may
+        // need directory proofs before the later fresh head/read checks can run.
+        final childDescriptor = await _verifiedScopeDescriptor(
+          child,
+          online: true,
+        );
         final parentToken = await cryptoSha256([
           ...utf8.encode('JivieParentLifecycleScope/v2\n'),
           ...CryptoJson.encode({

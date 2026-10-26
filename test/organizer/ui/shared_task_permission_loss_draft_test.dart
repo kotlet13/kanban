@@ -19,7 +19,7 @@ class _Controller extends SharingUiController {
 
 void main() {
   testWidgets(
-    'record-only assignment loss keeps dirty task draft and disables saving while scope revoke still closes',
+    'record and scope rights loss keep existing task editable locally with shared saving disabled',
     (tester) async {
       final session = sharingSession();
       final date = DateTime.utc(2026, 10, 24);
@@ -102,9 +102,9 @@ void main() {
         find.descendant(of: notes, matching: find.byType(EditableText)),
       );
       expect(editable.controller.text, 'Unsaved local text must remain');
-      expect(editable.readOnly, true);
+      expect(editable.readOnly, false);
       expect(
-        find.byKey(const ValueKey('organizer-record-read-only')),
+        find.byKey(const ValueKey('organizer-local-draft-only')),
         findsOneWidget,
       );
       expect(
@@ -121,12 +121,32 @@ void main() {
       final completed = tester.widget<CheckboxListTile>(
         find.byKey(const ValueKey('organizer-task-completed')),
       );
-      expect(completed.onChanged, isNull);
+      expect(completed.onChanged, isNotNull);
       expect(controller.saves, 0);
       expect(tester.takeException(), isNull);
       controller.replace(state(updated, revoked: true));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.enterText(
+        notes,
+        'Finished in the open form after scope loss',
+      );
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: notes, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        'Finished in the open form after scope loss',
+      );
+      final deniedSave = tester.widget<IconButton>(
+        find.descendant(
+          of: find.byKey(const ValueKey('organizer-save')),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(deniedSave.onPressed, isNull);
       expect(controller.saves, 0);
       expect(tester.takeException(), isNull);
     },

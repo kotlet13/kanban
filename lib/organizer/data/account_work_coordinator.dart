@@ -562,10 +562,12 @@ class CoordinatedCollaborationTransport implements CollaborationTransport {
     required this.inner,
     required this.coordinator,
     required this.ownerFor,
+    this.onFailure,
   });
   final CollaborationTransport inner;
   final AccountWorkCoordinator coordinator;
   final AccountWorkOwnerResolver ownerFor;
+  final void Function(String, Map<String, Object?>, Object)? onFailure;
   @override
   Future<Map<String, dynamic>> call({
     required String serverUrl,
@@ -573,7 +575,7 @@ class CoordinatedCollaborationTransport implements CollaborationTransport {
     Map<String, Object?> params = const {},
     String? token,
     bool allowLocalHttp = false,
-  }) {
+  }) async {
     final owner = ownerFor(serverUrl, token, operation, allowLocalHttp);
     // Snapshot parameters before waiting, retaining opaque signed bytes exactly.
     final frozen = jsonDecode(jsonEncode(params)) as Map<String, dynamic>;
@@ -584,27 +586,32 @@ class CoordinatedCollaborationTransport implements CollaborationTransport {
           params: frozen,
           send: send,
         );
-    final delegate = inner;
-    if (delegate is CollaborationSingleAttemptTransport) {
-      return (delegate as CollaborationSingleAttemptTransport)
-          .callWithAttemptGate(
-            serverUrl: serverUrl,
-            operation: operation,
-            params: frozen,
-            token: token,
-            allowLocalHttp: allowLocalHttp,
-            gate: gate,
-          );
+    try {
+      final delegate = inner;
+      if (delegate is CollaborationSingleAttemptTransport) {
+        return await (delegate as CollaborationSingleAttemptTransport)
+            .callWithAttemptGate(
+              serverUrl: serverUrl,
+              operation: operation,
+              params: frozen,
+              token: token,
+              allowLocalHttp: allowLocalHttp,
+              gate: gate,
+            );
+      }
+      return await gate(
+        () => delegate.call(
+          serverUrl: serverUrl,
+          operation: operation,
+          params: frozen,
+          token: token,
+          allowLocalHttp: allowLocalHttp,
+        ),
+      );
+    } catch (error) {
+      onFailure?.call(operation, frozen, error);
+      rethrow;
     }
-    return gate(
-      () => delegate.call(
-        serverUrl: serverUrl,
-        operation: operation,
-        params: frozen,
-        token: token,
-        allowLocalHttp: allowLocalHttp,
-      ),
-    );
   }
 
   @override

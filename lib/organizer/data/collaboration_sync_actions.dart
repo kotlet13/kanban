@@ -147,6 +147,7 @@ extension CollaborationSyncActions on CollaborationRepository {
       await _coordinateSyncPass(manual: manual);
     } catch (error) {
       if (!_closed && epoch == _epoch) {
+        authorityReuse.invalidate();
         _lastSyncAttemptAt = clock().toUtc();
         _lastErrorWasProbe = _coordinatorProbePhase;
         _lastError = error is CollaborationException
@@ -172,6 +173,20 @@ extension CollaborationSyncActions on CollaborationRepository {
     _coordinatorProbePhase = true;
     final session = _session, epoch = _epoch;
     if (session == null || _closed) return;
+    var authorityGeneration = authorityReuse.generation;
+    var authorityProbeCurrent = true;
+    void retireAuthority({bool disable = true, Set<String>? scopes}) {
+      authorityProbeCurrent =
+          authorityProbeCurrent &&
+          authorityReuse.generation == authorityGeneration;
+      if (scopes == null) {
+        authorityReuse.invalidate(disable: disable);
+      } else {
+        authorityReuse.invalidateScopes(scopes);
+      }
+      authorityGeneration = authorityReuse.generation;
+    }
+
     if (!manual &&
         _automaticSyncRetryIdentity == backgroundSyncIdentity &&
         _automaticSyncRetryAt != null &&
@@ -199,6 +214,7 @@ extension CollaborationSyncActions on CollaborationRepository {
             .contains(1);
     // An older server retains its established verified recovery path.
     if (!supported) {
+      retireAuthority();
       selectionReason(CollaborationSyncDiagnosticKind.selectionLegacyServer);
       _coordinatorProbePhase = false;
       return _performSync(resumePayments: true, manual: manual);
@@ -212,6 +228,7 @@ extension CollaborationSyncActions on CollaborationRepository {
     );
     final saved = snapshot.where((r) => r['name'] == key).toList();
     if (saved.isEmpty) {
+      retireAuthority();
       selectionReason(CollaborationSyncDiagnosticKind.selectionMissingCursor);
     }
     final generation =
@@ -230,6 +247,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         'unsupported_operation',
         'account_changes_unavailable',
       }.contains(error.code)) {
+        retireAuthority();
         await _negotiate(session, epoch);
         final current = await database.rows(
           'SELECT value FROM local_meta WHERE name=?',
@@ -251,6 +269,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         rethrow;
       }
       if (error.code != 'invalid_cursor' || saved.isEmpty) rethrow;
+      retireAuthority();
       selectionReason(CollaborationSyncDiagnosticKind.selectionRejectedCursor);
       // Signing-key rotation / journal replacement is an explicit verified full
       // recovery. Keep the old durable cursor until that recovery succeeds.
@@ -337,6 +356,29 @@ extension CollaborationSyncActions on CollaborationRepository {
       selectionReason(CollaborationSyncDiagnosticKind.selectionUnknownScope);
       changes.accountDomains.add('access');
     }
+    // Hints only retire material. Each later consumer still verifies signatures,
+    // pins and its exact proof; a hint cannot install new authority.
+    final accountAuthorityChanged =
+        changes.reset ||
+        changes.accountDomains.any(const {'access', 'metadata'}.contains) ||
+        (changes.accountDomains.contains('directory') &&
+            !changes.semanticDirectoryHint);
+    if (accountAuthorityChanged) {
+      retireAuthority(disable: false);
+    } else {
+      final affected = {
+        for (final entry in changes.scopes.entries)
+          if (entry.value.contains('access')) entry.key,
+      };
+      // A parent's authority can be a child's dependency. Retire the known
+      // connected tree while preserving independent spaces' verified material.
+      if (affected.isNotEmpty) {
+        retireAuthority(scopes: _authorityDependencyScopes(affected));
+      }
+    }
+    if (authorityProbeCurrent) {
+      authorityReuse.allowIfCurrent(authorityGeneration);
+    }
     final local = await database.rows(
       "SELECT scope_id,'content' AS domain FROM outbox WHERE partition=? AND state='pending' "
       "UNION SELECT scope_id,'finance' FROM finance_outbox WHERE partition=? AND state='pending' "
@@ -393,6 +435,17 @@ extension CollaborationSyncActions on CollaborationRepository {
         ? CollaborationRecoveryFallback.payments
         : pendingSelection.fallback;
     final recoveryWork = recoveryFallback != null;
+    if (await _includeIncompleteParentFinanceRecovery(
+      session,
+      epoch,
+      changes,
+      manual: manual,
+    )) {
+      selectionReason(
+        CollaborationSyncDiagnosticKind.selectionParentFinanceDependency,
+      );
+    }
+    _checkEpoch(epoch);
     if (!changes.requiresSync && local.isEmpty && !recoveryWork) {
       syncDiagnostics?.record(CollaborationSyncDiagnosticKind.unchanged);
       if (_lastErrorWasProbe) {
@@ -956,7 +1009,14 @@ extension CollaborationSyncActions on CollaborationRepository {
                   financeCanonical!,
                 );
               }
-              await _applyRemote(partition, scopeId, canonical);
+              await _applyRemote(
+                partition,
+                scopeId,
+                canonical,
+                acknowledgedOperation: CollaborationRepository._map(
+                  op['request'],
+                ),
+              );
               if (applied['scope'] is Map<String, dynamic>) {
                 final updatedScope = SharedScope.fromJson(
                   applied['scope'] as Map<String, dynamic>,
@@ -1206,7 +1266,13 @@ extension CollaborationSyncActions on CollaborationRepository {
               }
             }
           }
-          await _syncFinance(session, epoch, financeScopes);
+          await _syncFinance(
+            session,
+            epoch,
+            financeScopes,
+            availableScopes: scopes,
+            changes: changes,
+          );
         }
         if (_inboxSupported && (changes == null || changes.inbox)) {
           await _syncInbox(session, epoch);
@@ -1589,8 +1655,9 @@ extension CollaborationSyncActions on CollaborationRepository {
   Future<void> _applyRemote(
     String partition,
     String scope,
-    Map<String, dynamic> canonical,
-  ) async {
+    Map<String, dynamic> canonical, {
+    Map<String, dynamic>? acknowledgedOperation,
+  }) async {
     final id = canonical['id'];
     final old = await database.rows(
       'SELECT * FROM records WHERE partition=? AND scope_id=? AND id=?',
@@ -1627,6 +1694,36 @@ extension CollaborationSyncActions on CollaborationRepository {
         return;
       }
     }
+    // A second garden editor can already be open when the first Save is
+    // acknowledged. That ACK is transport bookkeeping, not a newer garden, but
+    // only if it proves this exact immutable operation and still-visible copy.
+    // Pulls, deletions/restores, later canonicals and changed payloads retain
+    // the normal revision advance and therefore invalidate stale editors.
+    final ack = acknowledgedOperation;
+    final unchangedOwnGardenAck =
+        !preserve &&
+        old.isNotEmpty &&
+        canonical['type'] == 'garden' &&
+        old.first['type'] == 'garden' &&
+        canonical['deleted'] == false &&
+        old.first['deleted'] == 0 &&
+        ack?['type'] == 'garden' &&
+        ack?['recordId'] == id &&
+        ack?['deleted'] == false &&
+        ack?['expectedRevision'] is int &&
+        old.first['server_revision'] == ack!['expectedRevision'] &&
+        canonical['revision'] == (ack['expectedRevision'] as int) + 1 &&
+        _session?.profile.partition == partition &&
+        canonical['updatedByAccountId'] == _session?.profile.accountId &&
+        ack['payload'] is Map &&
+        canonical['payload'] is Map &&
+        old.first['payload'] != null &&
+        CryptoBusinessJson.canonical(ack['payload']) ==
+            CryptoBusinessJson.canonical(canonical['payload']) &&
+        CryptoBusinessJson.canonical(ack['payload']) ==
+            CryptoBusinessJson.canonical(
+              CollaborationRepository._map(old.first['payload']),
+            );
     await _reconcileLocalReminders(
       partition,
       scope,
@@ -1645,7 +1742,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         scope,
         id,
         canonical['type'],
-        preserve
+        preserve || unchangedOwnGardenAck
             ? old.first['local_revision']
             : ((old.isEmpty ? 0 : old.first['local_revision'] as int) + 1),
         canonical['revision'],

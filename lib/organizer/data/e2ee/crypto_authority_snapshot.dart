@@ -67,6 +67,7 @@ class CryptoAuthoritySnapshot {
   // Conservatively end the snapshot before unknown operations. In particular,
   // signed writes and unsigned scopeObservation.put cannot reuse its material.
   static const _otherReads = {
+    'capabilities',
     'crypto2.access.consequences',
     'crypto2.access.invitationConsequences',
     'crypto2.access.leaveRequests',
@@ -100,6 +101,7 @@ class CryptoAuthoritySnapshot {
     'crypto2.invitations.pending',
     'crypto2.invitations.preview',
     'crypto2.invitations.resolve',
+    'crypto2.invitations.resolvePreauthorization',
     'crypto2.invitations.status',
     'crypto2.legacy.lookup',
     'crypto2.migration.activation',

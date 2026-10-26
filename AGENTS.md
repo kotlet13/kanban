@@ -1,3 +1,779 @@
+25. oktober — **Dejanski Mac r13: pravice/osnutek/predogled PASS**.
+User »Ok, stestiri mac verzije«; Sol6.1high env+neodvisnipregled, rootGUI.
+Isti MacSyncA/B1build+1installvsak, isti18821/identitete/CA/Keychain/podatki;
+627produktnihinputsfrozen. NoviQA-AUTHORITY-25-1: AcreateassignedB, Bunsaved
+osnutek, Aunassign+Save1; Bautoarrive opozorilo+ohranjentekst+lokalnotipkanje,
+Savevizualnosiv. Arhiviran sintetični draft, natoCancel/freshrowREADONLYpreview
+brezEditTask. Taskassignmentpolicy1, NI membershiprevoke alitable drafttest.
+Prvotni avtomatiziraniviewerfixtureSTOP3ostane; noviGUIuserauthorizedPASS.
+UXodprto: newerversionnoticešepravi»whenyousave«obdisabledSave; brezcodefix.
+StaraQA-TABLE-ACCESS-25-1samo2readopenzameritevpravic, rev3/DRUGI-25isti,
+brezCRUD/invite/accept/grant/Saveponovitev. 322physicalHTTPall200/peak111v60s,
+0nativeerrors/0limits; A/Bfinalerrornull/unresolvedfalse. Tablewindow35/19HTTP,
+oba0authority.snapshot/headGet/directory.status +nativeproofhits; ostalifresh
+content/lifecycle/inventory/read/lease ostanejo. Različniokni, NE%proti669.
+5scopes/7members/5heads beforeafterhashbe078…ecf912isti, sole newtaskrev2,
+2batch200only. storeevictni accessrevoke(counterincludesadmissionreplace).
+ObeappnormalQuit17:18:08UTC, procesi0; capturestopped. Telefoni/mobile18801/
+produkcija/originalinedotaknjeni. TCCvaultbyteparityUNVERIFIED brezobvoda.
+Dokazi build/qa/mac-authority-reuse-20261025, docs/E2EE_MOBILE_SESSION_2026_10_24.md
+novuvod. NeponavljajPASS. Produktnakoda/biznisstrežniškakodanespremenjena.
+
+25. oktober — **Optimizacija pravic izvedena; lokalno 39 PASS, 1 UI STOP3**.
+Sol6.1/high podagenti, root in neodvisni izvorni pregled. Account-owned omejena
+pomnilniška hramba natančnih dokaznih odgovorov; vsak porabnik znova preveri
+podpise/sidrišča. account.changes razveljavi prizadeto drevo; account/reset/
+session/background razveljavi celoto. Generacijski CAS velja tudi za kratki
+snapshot/operation/finance lease, zato star paket ne dobi nove veljavnosti.
+Sveža dostava, pending/frozen/deleted meje, podpisane zahteve in receipts ostanejo.
+Povabilni acceptedAccountIds so sveži prikazni metapodatki, mimo te hrambe.
+15 coordinator + 10 coreunit + 1 signedHTTP + 6 spreadsheetUI + 7 taskUI PASS.
+HTTP prvi tek: ista hladna kopija/dva prostora/trije fresh access porabniki,
+21→6 transportnih klicev, moduli7/7/7→6/0/0, enake6 podpisane glave/role/arm.
+Ni meritev celotne aplikacije/fizičnih retryjev/mobilne hitrosti. Strežnik59777
+spet ustavljen; izvirni seed+ključi hash isti; samo zasebni kopiji lokalno.
+Spreadsheet izguba pravic ohrani trajni lokalni osnutek in delo, tudi po ozadju;
+task samo že odprti prej dovoljeni obrazec, brez nove trajne hrambe. SharedSave/
+Delete/Timer/finance dispatch blokirani; exact identity/epoch meje ostanejo.
+Task začetni viewer UI STOP3 zaradi fixture AsyncLoading; vir fixture popravljen,
+brez4.teka. Ne trdi PASS. Spreadsheet lifecycle PASS3 po2fixtureFAIL, druge
+uspešne kontrole niso ponovljene. Ena stara taskspec namerno zamenjana z novim
+dogovorom in preverjena, ne puščaj zastarelega pričakovanja zapiranja.
+Analize0errors/0warnings (styleinfos so, tudi novi); final independentreviewPASS.
+Telefoni/produkcija/mobile18801/MacGUI0; brez novih build/install/commit/push.
+Drugi Docker state isti; imagecomparison UNVERIFIED po3format poskusih, brez
+trditve o dejanski spremembi slik. Dokazi build/qa/authority-change-driven-20261025/;
+docs/E2EE_MOBILE_SESSION_2026_10_24.md uvodni razdelek. Ne ponavljaj PASS.
+
+25. oktober — **NAROČENA optimizacija pravic prek koordinatorja**.
+User potrdi ponovno uporabo zadnje preverjene avtoritete in osveževanje ob
+account.changes/access spremembah, namesto ponavljanja pri vsakem modulu.
+Sprememba pravic ne sme prekiniti odprtega urejevalnika; uporabnik lahko
+dokonča osnutek. Strežnik še vedno preveri dejanski zapis: zavrnitev ni uspešen
+skupni Save, osnutek ostane lokalen. Ne uvajaj grace dovoljenja za odvzete zapise.
+Sol6.1/high core+coordinator+neodvisni pregled, root orkestrira/pregleda.
+Ohrani podpise/pins/ključe/receipts/immutable pending zahteve in obstoječe podatke.
+Lokalno preverjanje, brez telefonov/produkcije/mobile18801; starih PASS ne
+ponavljaj, največ3poskusi failingcase. Meri dejanske zahteve; 0x429 ni dokaz
+učinkovitosti. Ne ponovi QA-TABLE-ACCESS-25-1 CRUD/povabila/granta.
+
+25. oktober — **OBA POPRAVKA + dejanski Mac tabelni scenarij PASS**.
+Userfixoboje; Sol6.1high implementation+independentreview, rootGUI/code.
+Localdocumentcontextinvalid→document_context_changed/stalehandle, NOACLmutate/
+NOdraftcache/receiptpurge; genuineAPIscopedenialstillblocks. NeutralSL/ENcopy.
+6newregressionsPASS; baselineFAILretained; nooldPASSrerun. Oldblockedscopesnot
+blindlyunblocked; existingexplicitfreshauthorityrecoveryrequired.
+Requestfix: currentHead/currentMemberDirectory proofsubtreewithVerifiedOperation;
+original5s/pins/identity/lifecycle/freshdelivery intact. Migrationpublicationguard
+BEFOREwrapper (reviewfix). capabilities+resolvePreauthorization are readallowlist,
+notmutationbarriers. 5newPASS; headtotal4→3 inclcap/snapshot, sparse1→1.
+3fixtureoraclesFAILattempt1→filteredPASS2; onenewPASSrerunafterrelevantguardchange.
+No globalresponsecache/serverlimitincrease. Analyses0errors0warnings/existinginfos.
+SameMacSyncA/B r12 onebuild/install/launch each, sameID/CA/Keychain/nativecrypto;
+vaultbyteparityUNVERIFIED/TCCnooverride. Same18821fixture/neworg/child/invite
+preserved, norepeatsetup/invite/accept/grant. RootcreatesQA-TABLE-ACCESS-25-1,
+A1PRVI-25 SaveFinish1→Saved; editDRUGI-25 SaveFinish1→Saved; Bseesrev3+DRUGI25;
+AbackparentSpaceSettingsstillOwner/BMember/Accepted. ActualGUI1PASS.
+669HTTP ALL200/0non200/0actual429; rolling60peak249(secondprecision).
+Nativecreate616ms/acquire503,535ms/saveReturn691,747ms/localApply693,748ms,
+notframebenchmark. Both0docerrors, finalsyncA4/B3 errornull/unresolvedfalse.
+Aworkcap1024only; separateerror/request/UI intact. Accessbeforeafterexacthash
+be078e18…ecf912 (5scopes7members5heads), oldsubsetunchanged.
+BothnormalQuit/pgrepabsent; rootstopafterPASS, noCUAafterquit. Preservenewtable,
+doNOTrepeatPASS. Old2026HTTPscenarioDIFFERENT no%claim. Phone/mobile18801/prod0.
+Evidence build/qa/mac-table-access-fixes-20261025 + excessive-request-fix-20261025
+and previousrepro/false-revocation-fix-result.json. Phonebuildsnotupdated.
+ActualoriginalSamsungtriggerstillunverified; provenlocalcausefixed. No commit/push.
+
+25. oktober — **NAROČEN POPRAVEK OBEH NAPAK: zahtevki in napačen odvzem**.
+Latestuser izrecno »Preglej in popravi oboje« dovoljuje produktne popravke,
+nove ciljne lokalne teste in nadaljevanje ISTEGA Mac scenarija. Prejšnji
+no-productfix/no-further-test zapisi so zgodovina, ne trenutna prepoved.
+Sol6.1/high implementation documentcontext + requestvolume, rootreview in
+neodvisenreview. Preserve dirtywork/data/keys/receipts; mobile18801/phones/
+production untouched. Neponavljaj uspešnihstarih testov ali setup/Send/accept
+novega QA Table Access25; isti organizacija/podprojekt/članstvo za nadaljevanje.
+Največ3poskusi posameznegafailingcase, nobenegaslepegaregrant/unblock.
+Nevišajserverlimit/neugašajproofguard; ločicontextinvalidodgenuinerevoke.
+Za že napačno blokirane zapise je potrebna preverjena avtoriteta.
+
+25. oktober — **končni dnevnik Mac reprodukcije: dejanski 429 potrjeni**.
+Žeobstoječi gateway+exporttails dofinalquit:2026HTTP=2022x200+3x429+1x403;
+prejšnja545/407staomejenacapture, necelota. 429headGet/inventory/accountstatus,
+status403invitation_invalid. directory.status488/headGet274/accountstatus174;
+account.changes36. Opazovanrolling60max801(secondprecision), neprivatewindow.
+0tablesops/UI: GUIreproNOTRUN, nePASS. Serverafter==table-before; začetni3scopes/
+4members/3cryptoheads exactsubsetunchanged, addedorg+child+3memberships.
+Bothappsclosed; no3rdcapture/relaunch. Preservefixturefornexttask.
+Readonlyfinalanalysis inbuild/qa/mac-table-access-repro-20261025. Seamfalse
+revocationPASSremainsvalid butSamsungtriggerUNVERIFIED; no productfixyet.
+
+25. oktober — **Preg1: FALSE REVOCATION lokalno dokazano; Mac GUI STOP pri pripravi**.
+User SamsungS25/Preg1/space sharedwithiPhone. Sol6.1high source+setup,
+rootGUI/review. Newseam1PASS realDocumentContext+SQLite/synthetictransport:
+save2successrev3 thenlocalvisiblefalse→localpermission_revoked→persistparent
+revoked/blocked, childreadable; syntheticserverauthorityunchanged. NOTproof
+actualSamsungtrigger/HTTP/E2EE/GUI. Productcodeunchanged, oldPASSnotrerun.
+SameMacSyncA/B r11 updated1build1install each, sameIDs/CA/Keychain; vaultbyte
+parityUNVERIFIED/TCCnobypass. Existingparenthousehold (priororgassumptionwrong),
+newlocal18821 QA Table Access25 organization+QA Table Child25+ONEnewBinvite;
+Bacceptonce→autonavigatePulse, AseesBmember/Accepted. NooriginalPreg1touch.
+Twofinitecaptureshit400requests/60s duringfixture (545/407captured), NOtableGUI
+create/saveyet. Stopnot429proof. BothnormalQuit/pgrepabsent; no3rdcapture.
+CUAgetAXafterquitinadvertentlyrelaunched2ndruns, recorded, no businessactions;
+finalthirdruns usedfreshdiagnosticexport. Nativeworkcap1024/errorseparate.
+Continuationstatusinvitation_invalid403 notitselfrevokeproof. Phone/mobile18801/
+produntouched. Preserveallnewfixture/evidence; don'trepeatSend/accept/create.
+Nextseparate localcontextinvalid fromconfirmedrevoke, retainallauthguard;
+actualSamsungtriggerstillunknown, fixnotyetimplemented. Sessiondoc latest.
+
+25. oktober — **NAROČENA LOKALNA REPRODUKCIJA preglednice na dveh Mac instancah**.
+Latestuser »Probi to ponardir lokalno na dveh instancah na macu« nadomesti
+samo-beleženje samo za ta incident. Reuse isolatedSyncA/B + Docker18821,
+currentproduct+QAfinitefirsterror diagnostics, preserveexistingdata/identities.
+RootGUI; Sol6.1/high setup+sourceaudit. Phones/mobile18801/produntouched.
+Scenario newsyntheticsharedtable create/save/edit/save, peerobserve; max3same
+case, stopafterfirstcapturedfailure anddiagnose, nooldPASS/reinvite/regrant/
+reset. No productfixauthorizedyet; QAinstrumentation/currentbuilds allowed.
+Sourcecandidate documentContext localpermission_revoked can _blockScope exact
+parent evenifvisibility/transientblocked, not yetruntimeproof. Capturelocalvs
+API/crypto origin and membershipbeforeafter, don'tinferrealrevocationfromUI.
+
+25. oktober — **NOV KRITIČEN REPORT: preglednica → prikaz preklicanega dostopa**.
+User same sharedspace ustvari+shrani preglednico, uredi+shrani, nato app javi
+»dostop preklican«; deljenprojektviden, celotenprostor ne. USERREPORTonly,
+naprava/scope/table/time točnoše nepotrjeni; ni dokazrealrevoke/data loss/rootcause.
+Prioritetapredrelease; ne zamenjajzprejšnjimifinanceperfPASS. Ohranisejo/data/
+requests/logs; neponavljajSave/relogin/reinvite/regrant. Za poznejšodiagnozo
+najprejobstoječilogi/točenaccount/scope/error, ločiparentvschild in truedenial
+odmisclassifiedsyncfailure. TRENUTNO SAMO ZAPISUJ ostaja: docs+ta zapis,
+ničcode/test/device/server. Sessiondoc zadnjikritičniodstavek.
+
+25. oktober — **SAMO ZAPISUJ: uporabniški test in naslednji predlog deljenja**.
+User odklopljenodkompa (NE dokazoffline) poroča uspešnoprenesene finančne
+spremembe, a zelo počasi; trajanje/vzrokneizmerjena. Odprto actualfinanceperf,
+prejšnjiunchangedprobePASS tega nezapre. Brezponovnegavnosa/starihPASS.
+Želi naslednjonadgradnjo: poišči/izberi obstoječegauporabnikaISTEGAstrežnika,
+ne le znanegasodelavca/ne poznavanjecelotnegausername. Navadnopovabilo+
+izrecenprejemnikovsprejem/cryptoaccess ostaneta; searchnigrant. Predlogime/
+usernamepartial, minimalnodisplay; emailprivacy/endpoint še nista preverjena.
+Timinggledeobjave nedoločen, NE avtomatičnopostrelease. Izrecno brezizvedbe,
+kode/testov/naprav/strežnikov/build/install; samo docs+ta zapis. Sessiondoc
+razdelek »uporabnikov samostojni preizkus: počasne finance in iskanje prejemnikov«.
+
+25. oktober — **začetna opozorila/finance pull popravek; obe QA posodobljeni, ciljni PASS**.
+User scope first2+clearAddEvent; gardenpostrelease/calendar+broadernavdeferred.
+Sol6.1/high agents/root+mutualreview. RetainedCopiesOnly strict completevault/
+key/probe/DB/nolegacy-sensitiveprefs/scanfalse/residual>0 autoopens; noexclusions/
+deletes; realcleanup/recovery/errors staygated. CompactKopije/Copies ribbon.
+Explicitaccountcompletion watchesaccountSummarycounter, samepartition/device,
+no duplicateFinishreturn read. Optionalreal/unknowncatalogdrift notice REMAINS.
+Exactcurrentroot financialwitness canhydrateordinaryauthorproof onfinancepull;
+head/epoch/access/capture/history/frozen/identity guards unchanged. 7newcorePASS,
+8startupPASS,4labelPASS. Existinglabelalreadyimplemented; noeventproductedit.
+Actualcoldbaseline pending reproducedlocally; 1newPASSofflineguardaccidental
+repeat recorded, oldPASS0. Max3caseattempts; allanalysis0errors0warnings.
+BothsameQA updated1build1install: Androidfcae2b47…83ee0/iOS5330bda7…ada972.
+Android20noncachefiles122809748B/iOS4vaultfiles7664006B byteparity; sameIDs/
+signing/CA/Keychain/nativecrypto, originalPlayAPKmetadata+iOSmetadataunchanged.
+ROOTCUA1launch each: Samsung directgosp25/currentassessment; PersonalAddEvent
+label→correctemptyform→Cancel→restoregosp25. NoSave/manualSync. gosp25button
+absentbeforeafter: permissions unchanged, exactreadonlyreasonUNVERIFIED.
+iPhone directMOBILE-PROJECT-1Utrip noContinue/recoverygate; AddEventlabelvisible;
+retainedcopyribbon+optionalcatalogChangednotice remain, notautoacknowledged.
+LatestAndroid14HTTP200/8unchanged245,107,83,108,71,124,74,80ms; iOS8HTTP200/
+2unchanged62,79ms. No caughtfailures/fullsync; WARMstate NOTcoldfinanceperfproof.
+Noexpense/saldo/garden/oldtransferrepeat, server/prod0changes. Cachecleanup
+1299724940B Android+1190072320B iOS; packages/archive/dSYM/source/backupsheld.
+iOSprep1scriptguardFAILbeforewrite→exacthunkfixPASS2,1actualbuild/install;
+AndroidreaderwrongCLIargparserFAIL noaction→correctcall, noapptestfailure.
+Evidence build/qa/startup-polish-20261025/{android,ios}/native-targeted-result.json;
+local startup-warning-cleanup/startup-sync-duplicate/add-event-label-20261025.
+Sourcehashesstable; docsupdated, no commit/push. Nextuserownphonewalkthrough.
+Do not repeat thesePASS or claim allcatalogwarnings/fullcoldsyncoptimized.
+
+25. oktober — **iPhone isti strošek in saldo native PASS; agent prevzame UI**.
+User izrecno dovoli agentcontrol. DeviceHub CUA sameQA1launch/knownContinue1,
+Finance MOBILE-PROJECT-1: existing test fin25/12.34EUR; Računiprostora→
+Pregledračuna racunqa25 readonly987.66EUR, no incompletewarning, greencloud.
+NoSave/newentry/manualSync/build/install/PASSrepeat/Samsung/prod/directserver.
+2automaticcompletions code none/unresolvedfalse/retryfalse; selectedWork
+13338ms+10554ms; nato6unchangedprobes61–148ms/~30s.563HTTPall200, NEperfclaim.
+Caught2directory_proof_pending financeprojectionchoices1080/1347/2271 and
+5crypto_record_policy_owner_pending baseline; latercompletions+balancePASS.
+Not sameoldchildcoveragepath; don'tclaimzero warnings. KnownstartupContinue+
+nonblockingprotectionbanner remain UXfollowup. Phoneleftreadonlyoverview.
+Evidence mobile-balance-visibility-20261025/ios/native-test-result.json,
+expense-visible.png,overview.png,diagnostic-read-20261025T124619386091Z.json.
+SameexpensecrossphonecheckDONE, no repeat. Sessiondoc appended; codeunchanged.
+
+25. oktober — **iPhone saldo r1 posodobljen; čaka uporabnikov pregled istega stroška**.
+User naroči SAMEiPhoneQA update+diag, Samsung/produntouched/noPASSreruns.
+Sol6.1/high iOSbuilder, rootidentity/source/artifactreview+devicebackup/install.
+IPA41938d59…adc428/16862612B, AOT861dbfcb…13707,644inputs/27dirty/29QAoverlays;
+crypto98fa917b…/finance03dd5c4e… root testedhashesexact.1archive70.095s,
+analysis0errors0warnings46styleinfos. Samebundle .ios20261018/teamCXNM99632B/
+profile50458f86…/cert7C313735…/Keychainservice/group/CA b9af…; strictdeep/sign
+and sqlite3mc+sodium unsignedparityPASS. Profilevalid2027-10-18/cert2027-06-20.
+RootnormalSIGTERM exactQA3164 once, stablefreshprivatebackup4vaultfiles7328134B,
+1inplaceinstall/0launch; same4hashes beforeafter, phasecomplete; originaliOS
+metadataunchanged. Containerpathchangedexpected; noKeychainread/reset/uninstall.
+Freshnamespace jivie_qa_ios_balance_visibility_20261025_v1/tag
+ ios-balance-visibility-20261025-r1, boundedr6diagnostic schema, directoryabsent.
+Rootinitialmanifestguardcomparedroot/candidatedifferentfields; resolvedverified
+both beforeanyinstall. No actualfailedinstall/rebuild/test. QAclosed.
+3regenerablecachedirs1190178816B removed; archive/IPA/dSYMs/source/backupsheld.
+Samsung/server/production0actions; noCRUD/manualSync/invite/PASSrepeat.
+Reader: python3 build/qa/mobile-balance-visibility-20261025/ios/read_diagnostics.py
+ --after-user-test (preparedNOTexecuted). NativeiOSbalance/syncUNVERIFIED.
+NEXTuseropenJivieTest, knownContinueonlyifshown,wait20s→MOBILE-PROJECT-1 Finance;
+inspectexisting12.34EUR, thenRačuniprostora→Pregledračuna expected987.66EUR.
+No newentry/resave/Uskladi. Evidence final-bounded-summary.json inthatiosfolder.
+
+25. oktober — **Samsung r6 saldo PASS; natančen cold-child vzrok odpravljen**.
+User nadaljujvidnostsalda; Sol6.1/high causal/data+independent+Androidbuild,
+rootnative/debugger/review/install. R5normalHistorycoveragefalse; breakpoint
+childAuthoritycatch3784. Exactthrow directory_proof_pending1435→_verifyHead→
+_currentHead→verifiedScopeDescriptor→coveragechild3744/auditancestortrue.
+Childdescriptor je bil onlinefalse predonlinehead. Zdaj samochild online:true,
+isti podpis/identity/parenttoken/topology/role/checkpoint/finalguards.
+5newPASS+causalbaselineFAIL. Secondary cachedfalse unchanged-coordinator debt:
+oneverifiedparentrecheck/stablesignature/epoch,max64,no30sloop;6newPASS+baseline.
+2fixtureFAILheld,nooldPASSreruns;independentreviewsPASS,analysis0error0warning.
+Debugger3captures: branchPASS,unnamedcatchreasonabsent,throw10pausebound
+capturesexactchildsource (no terminalcatch in3rd). AllcleanupResume/None/0BP.
+Firstcapture removal lostpauseIDs, dedicatedcleanup resumedexactownedpause.
+R6APK50423761…c1d57,106385741B;1build1install-r1launchsameQA/signer/UID10292.
+20noncachefiles122598218B exactbyteparity, freshprivatebackup; originalPlay
+metadata/APKsame. FirstpreinstallrootguardcaughtknownQAoverlayhashdifference,
+revieweddiagnostic-onlydiff;noinstalluntilreview. No reset/reinvite/newexpense.
+NATIVEaccountoverview racunqa25 PASS: saldo987.66=1000−12.34, warningabsent,
+selectedaccount/readOnly. Existingexpensepreserved,0Save/manualSync.
+Initialautomaticselectedparentwork8181ms→completionnone/unresolvedfalse/retryfalse;
+sinceDiagStart10387ms. Next30scheckunchanged258ms/no fullsync.206HTTP200,
+1knowncaughtdeferred crypto_record_policy_existing_scope_upgrade_pending,
+notterminal; don'tclaim0exceptions/instantfullsync/peerproof. Activity1179ms.
+Evidence build/qa/mobile-balance-visibility-20261025/android/native-test-result.json;
+local parent-finance-{coverage-continuation,child-authority}-20261025.
+614regenerablecachefiles1299708851B removed;APK/source/keys/backupsheld.
+PhoneleftPregledračuna/saldovisible. Production/backend/iPhone untouched.
+Nextusercontinuestests; do NOTrepeatthisPASS oroldCRUD/transfers. No commit/push.
+
+25. oktober — **Samsung r5 nameščen: pregled računa PASS, saldo FAIL; konkreten gate zajet**.
+User update+agenttest+speed+10mintimeout. Sol6.1/high build,rootreview/install/UI.
+Timeout že600000ms, potrjen/setenako;1tapHomeblank natoQAUI.1build18.4s/1install-r,
+APK96127c74…fb13e,106382989B,sameQA/sign/UID10292/dataDir/native.so/TLS/vault.
+20noncachefiles122529482B byteparity/coldbackup, originalPlaymeta/APKhash isti.
+Root1launch Activity1125ms; newnamespace jivie_qa_mobile_parent_finance_20261025_v6
+/tagandroid-parent-finance-20261025-r5. NewUI Računiprostora→PregledračunaPASS,
+racunqa25 selected/readOnly, existingtestfin25/12.34EUR visible, editločen.
+Parentincompletewarning remains/saldoFAIL; noSave/manualsync/newexpense/batch.
+11:51:56–11:56:59UTC65HTTPall200/0caughtfailure/0fullsynccompletion;10probes
+unchanged. Steady9checks66–331ms/median108ms; startupcheck1285ms inclqueue;
+notcomparableto13.178sdelivery, nofullsynclatencyclaim. UIcaptureupper~1.13s
+includes800mswait/screencap, notexactframelatency. UI navigation detour recorded.
+ReadonlyVM newr5attempt1 getClassList2MiBbound(aftergetVMsuccess), secondonly
+classlistcap16MiB→36RPCPASS; noeval/invoke/SQL/recordpayload/key. r4STOP3held.
+ACTUALgate: all3 financeSnapshotComplete=true/seq1,4,2/lifecyclevalid/write;
+parentpolicy organizationFinanceComplete=false, requiredIDs[]/seq{}. Mounted
+parentcashAvailablefalse. NOTmissingchildsnapshot; underlying signedcoverage
+false-return stillUNBOUND. No furtherretry/rebuild. Native UI passed don'trepeat.
+Evidence build/qa/mobile-parent-finance-update-20261025/android/native-test-result.json
+and native-gate-r5-http-state2.json. Readerread_diagnostics.py.644regenerable
+cachefiles1316208313B removed; artifacts/source/backups/keysheld. Homepersonal
+screenshotdeleted asunneeded. Phoneleft readonlyaccountoverview. Backend/prod/
+iPhoneunmodified. NEXTlocal signedorganizationcoverage diagnosis from thisgate,
+not newexpense/manualsync/blindbuild orrepeat27localPASS. No commit/push.
+
+25. oktober — **Parent finance + pregled računa: lokalni popravki PASS; native še odprt**.
+User naroči nepopolnost/skritsaldo/navigation; Sol6.1/high 2implementaciji+
+neodvisnireviewer/rootreview. LokalniSQLite baseline potrdi missingunchanged
+sibling po selectivechild+parent; drugbaseline unchangedcursor preskočidebt.
+_syncFinance doda samo missing/behind/stalesidecar child dependencies predparent,
+normalfreshguards/crypto ostanejo. Isti koordinator predunchanged zazna konkreten
+lokalnidebt; once/stablesignature/parent/epoch,max64, no clocks/topologyfalseonly
+trigger. Explicitmanual lahkoretry, auto30s neloopa. 14novihPASS+1fullreset
+characterization;2realbaselineFAIL/4fixtureFAIL,noPASSrerun. UI Računiprostora→
+Pregledračuna je readOnly/selectedaccount/sameidentity+accessgated, editločen;
+5novihPASS. Sidecar complete=false prejbrisalcash+freshproof; zdajohranifacts/
+intents, invalidirafreshproof+scopedsequencefloor, notifyaftercommit/pending;
+oldtrue<floor denied, full>=floor clears, legacyabsentfieldunchanged.8novihPASS,
+2realbaselineFAIL+1fixtureFAIL/max2failcase/noPASSrerun. Skupaj27meaningfulPASS
++1characterization; sourceanalysis0error0warning(10oldstyleinfoscore),UI/sidecar0.
+Root16/16hashes+diffcheckPASS, independentreviewPASS. NativeVMSTOP3timeouts,
+no state retrieved/no4th; SAME SAMSUNG BALANCE/EXACTGATE STILL UNCONFIRMED.
+No build/install/UIbusiness/server/prod/commit/push. Existingrecordsheld.
+Evidence build/qa/{parent-finance-fix-20261025,finance-account-overview-20261025,
+finance-linked-payment-completeness-20261025}/local-results or data-local-results;
+root-final-review.json inparentfolder. Docs/E2EE_MOBILE_SESSION_2026_10_24.md.
+NEXTsameQAupdate after userrequest, inspect SAMEparentaccount/racunqa25 and
+existingtestfin25 withoutnewexpense/save/repeattransfer. Previous13sperfOPEN.
+
+25. oktober — **Samsung navigacija dovoljena; parent strošek viden, saldo OPEN**.
+User izrecno dovoli rootpotipke za pregled. ADBinput deluje: Cancelaccounteditor
+(noSave),Closeaccounts,selector,parentMobileE2EE20261018,2scroll;6UIactions,
+0save/delete/manualsync. AccounteditoropeningBalance1000EUR. ParentFinance
+warning »Pregled projektnih financ še ni popoln… po uskladitvi vseh dovoljenih
+projektov«, greencloud; racunqa25 showscurrencyonly, saldo hidden. Allfilters,
+1visibleexpense actualtitle »test fin 25«(usertestlabelTEST-FINANCE-25),12.34EUR,
+Knjiženo,MOBILE-PROJECT-1,racunqa25,MobileASynthetic; totalexpense12.34.
+GUIparentexpensePASS, noSQLidentity/dedupe/peerproof; BALANCE NOTPASS. Newdiag
+61HTTP200(inclbackground),0newfailure/0completion,30sprobesunchanged; warning
+rootcauseNOTdiagnosed. No retry tests/sync/build/server/prod. Sameexpenseheld.
+Evidence mobile-finance-update-20261025/android/parent-finance-read-review.json.
+NEXTtargetparentaggregatecompleteness, no expense reentry/repeatPASS.
+
+25. oktober — **Samsung r4 finančni continuation native PASS; hitrost odprta**.
+User odpre/wait/noSave/noManual; root screenFinancegreen/expense12.34EUR,
+no bubblevisible. Completion11:17:09.250UTC none/unresolvedfalse/retryfalse;
+0finance/innerprojectionfailure,0records.batch; retainedreceiptreads8.
+Knownpolicyexisting_scope_upgrade_pending caughtdefer ni terminalnapaka.
+SelectedWork→completion13178ms,firstrecorded→completion15362ms;
+238HTTP200 skozi completion,287celcapture21s inclstartup/nav; ne oneexpensebenchmark.
+User>10s potrjeno, performance OPEN; neopravičuj vsega kotnujnaenkripcija.
+Nobennovvnos/noagentUI/sync; no peer/balance/exactplaintextbinding read.
+Evidence mobile-finance-update-20261025/android/finance-native-resume-result.json.
+NeponavljajPASS. NEXTreadonlyparentaccountracunqa25 pregled istegastroška/salda.
+
+25. oktober — **Samsung QA r4 financefix nameščen; čaka user nadaljevanje istega stroška**.
+User izrecno sameQAupdate/preservedata/diag. Sol6.1/highbuild+independentdiag
+review,rootinstall.1build1install-r APK6a6a2f9a…46685,106374901B; istiQApackage
+/sign/UID10292/dataDir/native.so/TLS/Keystore namespace.631frozen/23dirtyproduct/
+28QAoverlays, testedchoicesef06852f…c0636exact;analysis0error0warning46styleinfos.
+Newdiag3innerprojectioncatches;1newobserverPASS/parser4accept2reject; failures
+finitecodes+8sourceframes, no rawpayload/keys/URLs. Namespace
+jivie_qa_mobile_finance_20261025_v5/tagandroid-finance-fix-20261025-r4.
+Rootcoldbackup20noncachefiles122420834B; entireprofile+vault exactbyteparity.
+OriginalPlayAPKhash/meta unchanged, iPhone/backend/prod0actions. QAforce-stopped
+fromFinanceoverview(noeditor),0launch/UI/sync, freshdiagnosticdirabsent; QA CLOSED.
+644regeneratedcachefiles1316103928B removed; source/APK/backups/keysheld.
+Evidence/reader build/qa/mobile-finance-update-20261025/android/read_diagnostics.py;
+root-final-verification.json/profile-preservation-evidence.json. NativefixNOTYETPASS.
+NEXTuser openJivieTest wait20s→MOBILE-PROJECT-1Finance→cloudonly, noSave/no
+newexpense/noUskladi; continue existingTEST-FINANCE-25. Inspectfreshdiag before
+requesting manual action. Do notrepeat oldPASS.
+
+25. oktober — **Finančni parent-account ACK: lokalni root/predecessor popravek PASS**.
+User nadaljuj od financeFAIL; Sol6.1/high reprodukcija+neodvisnipregled/rootreview.
+verifyFinancialRecord preskočil latestmanifest: openHistoryChain(root) začne
+pri expectedRevision (rev-1), zato witnessrev1/rootrev1 primerja0<1 in vrže
+CryptoProjectionPending; nato terminalack_projection_pending. Pravi lokalni
+baselineFAIL, incoming rootframe zdaj posebejavtenticiran predancestorchain.
+Exacthash/type/head/canonical/scope/selection/finance/identityguards ostanejo.
+4noviPASS: root1projekcija+ACK, napačenhashdenial, older2→1, retainedapplied
+signedrequest pending→manifestarrives→settled/ista signedbody/hash/1entry/
+onlypull0batch. RealSQLite/Sodium/chain/pull/project/settlement, synthetic
+account/headauthority+pulltransport; appliedoutboxseeded, neHTTP/nativeproof.
+Ledger5invocations: fixturecompileFAIL, expectedbaselineFAIL, PASS1,
+newguardsPASS1+2fixtureFAIL, filteredPASS2; max3/case, nobenstariPASSponovljen.
+Finalnarrowanalysis0issues; zadnjeformat/braces/labelbrezponovitvePASS.
+2sourcehashrootverified, independentreviewPASS. Evidence
+build/qa/finance-parent-ack-fix-20261025/{local-results,root-review}.json.
+Nativeinnerreason/revisions niso zajeti; mobilecause confirmation šePENDING.
+Samsungr3/istiTEST-FINANCE-25/production/iPhone/server untouched;0build/install.
+NEXTsameSamsungQAupdate preservingdata, usercontinues SAMEpendingexpense;
+neustvari/ponavljajSave. Separate source-only relocation _historicalLinks249
+root→chain.authority misuse recordedOPEN, ni financefix/runtimeproof.
+
+25. oktober — **TEST-FINANCE-25 localsave PASS, finance sync FAIL**.
+User1Save12,34EUR/racunqa25; formclosed/visible. Rootreadonlyscreenredcloud,
+projectexpense12.34. Fresh10:54read: financeCaught crypto_business_ack_projection_pending
+10:54:09.730/31.119UTC; completions3/4 crypto_reconciliation_required unresolvedtrue.
+Exact boundary frozenr3 requireExactBusinessProjection4527 via3158/3118/2189;
+missing/mismatchedfield NOTlogged. HTTP373all200 interval inclidle/nav; notproof
+exactexpenseapplied. Policyexisting_scope_upgrade_pending separatelycaught,
+notestablishedrootcause. No retry/duplicateentry/agentUI/sync/build/install.
+NEXTlocal ACK/projection reproduction preserving sameexpense/signatures; no PASS
+repeats. Evidence mobile-garden-update-20261025/android/finance-expense-failure-review.json.
+
+25. oktober — **Finance račun qa25 viden; next novstrošek**.
+RootscreenMOBILE-PROJECT-1Finance/green/racunqa25EURparentaccount/Addenabled.
+No separateaccountsDialogobserved; don'tclaim routePASS or creationtime.
+No duplicateaccount.131intervalHTTP200/0newfailure(inclbackground/nav),efficiency
+notproven45dirstatus23headGet. NEXTuserTEST-FINANCE-25expense12,34EURexisting
+racunqa25/1Savewait15/noManual. Evidence mobile-garden-update-20261025/android/
+finance-existing-account-review.json.0agentUI/sync.
+
+25. oktober — **Samsung r3 garden season/cultures native PASS**.
+Userworks; readonlysave10:48:14.150→batch20016.037→completionnone/unresolvedfalse/
+retryfalse18.549(4.399s).0caughtfailures. No repeatgarden. Root0UI/sync.
+NEXTMOBILE-PROJECT-1→Finance→Računi prostora inspectlistonly, no duplicateaccount.
+Evidence mobile-garden-update-20261025/android/garden-native-result.json.
+
+25. oktober — **Samsung QA r3 gardenfix nameščen; usertest čaka**.
+UserauthorizedsameQAupdate+diag/preservedata. Sol6.1/highbuild,rootinstall.
+1build1install-r,APKf2dd86f8…39a77,sameQApackage/sign/UID10292/dataDir/native.so/
+vault/TLS.631frozen/22dirtyproduct,localreview10hashsame;0errors0warnings.
+Cold20noncachefiles122160970B exactbyteparity;originalPlay/prod/backend/iPhone
+untouched. Userallowed discardfailedinmemorygarden draft, QA stoppedwithoutsave.
+0agentlaunch/UI/sync;QA CLOSED. v4namespacejivie_qa_mobile_garden_20261025_v4,
+tagandroid-garden-fix-20261025-r3; originalcatches+save/completion. NativeUNVERIFIED.
+645regeneratedcachefiles1.316GBremoved,artifacts/keys/backupskept.
+NEXTuser gosp25/vrtaqa25 scene→season/crop1Save/wait15s; no bedredraw/manualsync.
+Evidence/reader build/qa/mobile-garden-update-20261025/android/read_diagnostics.py.
+
+25. oktober — **Garden ownACK popravek lokalno PASS; še NI na Samsungu**.
+Userlocalfix+Sol6.1/high2agents/rootreview. RealSQLite/SharedGardenStorage/repo
+syncfixture reproducerev3→4samepayload ownACK; phoneexactvaluesunknown.
+NarrowgardenACKpreserveslocalrevision only exactliveoperation/current/canonical
+payload(canonicalkeyorder), ownaccount/partition,nextserverrev,nootherqueued;
+onlysuccessfulpushcallpassesprovenance.11othercallsunchanged. AllCAS/identity/
+author/delete-restoreguards intact.4newdataPASS +1UIcasePASS,dedicatedSL/EN
+conflictcopy(retainsopeneditor,noimport/copytext).0errors0warnings,9oldinfos;
+finalUIl10n0issues. Fullinvocationledger retainsfixturefails/baselinefail/copyrerun.
+Root10sourcehashesmatch; independentreview. Evidence garden-season-save-fix-20261025.
+No phone/Docker/prod/server/build/install/commit/push. NativeUNVERIFIED/Samsungr2.
+NEXTupdate sameQA+userretest failedseason/culturepath; userallowsdiscardtestdraft.
+Don'trepeatbedSave/task/lastspacePASS. NoallconcurrentACK/pullraceclaim.
+
+25. oktober — **Uporabnik dovoli lokalni garden fix; phone draft ni treba ohraniti**.
+User zahteva lokalno reprodukcijo bedsSave→sync→season/culturesSave in popravek,
+s Sol6.1/high podagenti. Izrecno dovoli poznejšo ponovitev testnega osnutka na
+Samsungu; prejšnja zahteva obveznega ohranjanja živega phoneeditorja preklicana.
+Ta korak je lokalna koda/testi, ne namestitev; produkcija nedotaknjena.
+
+25. oktober — **Vrt grede PASS; sezona/kulture FAIL exactlocalguard**.
+UsergredeSavePASS, nextseason/culturesFAIL. gardenSave22ms organizer_conflict,
+GardenRepository._current114 (currentmissing/revision/createdAt mismatch before
+storagewrite). ExactvaluesUNKNOWN; ownsave/sync stale-basecandidate, nootheruser
+proof. MisleadingimportcopyOPEN. OsnutekostajaPHONEOPEN: NO close/reopen/install/
+forcestop/retry. Rootreadonly. NEXTlocalreprotwoedits+sync, preserveguards;
+no bedPASSrepeat. Evidence mobile-protection-ux-update-20261025/android/
+garden-season-save-failure.json; sessiondoc detail.
+
+25. oktober — **Last-space restart USER PASS: qa25 prehod ohranjen**.
+User recentappsclose/reopen/nochoice→qa25prehod. No repeat; agentdeviceactions0.
+NEXT openexistinggosp25/vrtaqa25, smallmoveexistingbed/1Save, preservecontent/
+draft; iferrorleaveopen/noRetry. Garden-save originalfailure stillOPEN.
+
+25. oktober — **qa25 taskedit/autosync PASS; next last-space restart**.
+UserappendQA25-SYNC-OK existingtask/1Save→green/~5s. Rootreadonly:batch200+
+receipt,completionseq1none/unresolvedfalse/retryfalse; save→completion4.586s,
+batchresponse1.985s.1scope/content1/finance0; nootherdeviceplaintextproof.
+Caught1existing_scope_upgrade_pending isexplicitexpecteddefer, notsyncerror.
+No successfultaskrepeat. NEXTuser recentappsclose/reopen, verifyqa25persisted;
+notpriorOsebnodefaulttest. Evidence android/task-edit-autosync-result.json under
+mobile-protection-ux-update-20261025.0agentUI/sync.
+
+25. oktober — **Ročni sync unchanged uspešen; status UX OPEN**.
+Userreport1click; rootreadonly2interactivechanges200→unchanged (no inferclickcount).
+Screenunconfirmed/neverattempt/0queues/noerror. Sourceunchangedbranch return
+beforeperformSync/no timestamps→no feedback; dialogwatchcurrent. No content
+transfer/fullsyncPASS claim. NEXTuseredit EXISTING Novo opravilo s25 vqa25,
+appendQA25-SYNC-OKnotes+1Save preserveoldtext, let autosync; no manualretry.
+Evidence mobile-protection-ux-update-20261025/android/manual-sync-noop-review.json.
+
+25. oktober — **Samsung r2 Finish PASS; qa25 oblaček še unconfirmed**.
+UserFinish/selectqa25/openbubble/noManual. Rootread-only assessmentcurrentnone,
+protectionReady+receipt200. Screen0/0/0,noerror,noattempt/nosuccessrecorded.
+ProbeverifiedJournalOnly→unchanged→cursorACK, NO fullsynccompletion proof.
+NEXTuser Uskladi zdajONCE/leaveopen, continueoldqa25syncfailure; noWizardrerun.
+Evidence mobile-protection-ux-update-20261025/android/protection-completed-project-sync.json.
+
+25. oktober — **r2 Preglej: finalUI PASS, loadingflicker OPEN**.
+UserPreglejONLY→karticeprikaz/izginjanje. Rootread-onlyfinalscreen:
+enabledFinish+Back+collapsedDetails,0capturederrors. Source_discover publishes
+candidatesbeforesequentialinspect; nullstatevisible→committedcollapsed explains
+flicker (nointermediatevideo). OpenUX stableloading/grouping; nofixthisturn.
+26reviewHTTP200~2s,6catalog5account5head8dirstatus2dirread; repeatedcontextreads
+recordedforlateroptimization, no guardbypass. Noendlessloopproof; afterward
+normalchangesonly. NEXTuserPreveriinkončajONCE; completionUNVERIFIED.
+Evidence mobile-protection-ux-update-20261025/android/manual-review-observation.json.
+
+25. oktober — **Samsung r2 neobvezni startup native PASS**.
+UserOPENwait/noactions; root screenshot+reader10:10:51UTC Osebno/Utrip+
+kratkoPreglej, noforcedwizard. catalogChanged1058msloggerrelative(notcoldstart).
+8HTTP200,1catalog,2account.changes~30sapart/unchanged;0capturedfailure,
+no fullsync/write/readinessclaim. OsebnomatchesStored=preupdateexpected,
+notlastspacebugrepro.0agentUI/sync. Evidence mobile-protection-ux-update-20261025/
+android/first-startup-review.json. NEXTuserPreglejONCE, leaveopen/noFinish;
+checkcollapsedmanualreview then open saveissues. Don'trepeatstartupPASS.
+
+25. oktober — **Zaščita startup poenostavljena; Samsung QA r2 nameščen**.
+User potrdi predlog. Sol6.1/high core/UI/independentreview, rootinstall.
+Catalog-only drift→kratko optionalPreglej, ne fullwizard. Actualsetup/recovery/
+missingcompletion/devicechange ostanejo required; unknownpending ni uspeh.
+Sharedassessment peridentity, no newscopesweep/sign/complete/rotation/grant;
+writeguards isti. Manualdetailscollapsed, pendingactionsvisible; accountchange/
+notice-dispose exactownedreviewcleanup, return1refreshsameidentity.
+11core+12UI novihPASS (pre/additiveguards coverage limits v evidence),2QAadapter
+smokePASS; nooldPASSreruns. Independent12sourcehashreviewPASS.
+1build1install-r r2 APK00e9c354…aa96,631frozenfiles, QAanalyze0errors0warnings.
+SameSamsungQApackage/signer/UID10292/dataDir/native.so. Freshcold20noncachefiles
+121854426B exactbyteparity; Keystore untouched; backup20261025-protection-ux-update.
+OriginalPlay/prod/backend/iPhone untouched.0agentlaunch/UI/sync,QA CLOSED.
+645regenerablecachefiles1.316GBremoved, artifacts/source/keys/backupskept.
+Newnamespace jivie_qa_mobile_protection_20261025_v3; assessmentstatus/reason+
+originalfailures; boundedrings. Nativebehavior/performance NOTYETPASS.
+NEXTuserOPENwait15s/noPreglej/nosync; readonly reader in
+build/qa/mobile-protection-ux-update-20261025/android/read_diagnostics.py.
+Sessiondoc final25Octsection; evidence samefolder +startup-protection-ux core.
+No commit thisturn. Prior finance/garden save/lastspace/layout failures remainopen.
+
+25. oktober — **Novstartupdiag: catalog mismatch potrjen, UX preobremenjen**.
+UserodpreQA/confusingzaščita. Rootreadonlyscreenshot+reader,0buttons/sync.
+09:33:12UTC ready/incompletefalse/cachedCompletiontrue/catalogMatchfalse→
+showMigrationWizard. ExactcatalogdifferenceNIinspected; noreencryptclaim,
+notallscope-readyproof. UI noadditionalsteps but multiplefinance/keyreview
+controls: simplifyactualaction+secondarydetails proposed, NOTimplemented.
+34HTTP200/0capturedfailure/NOcompletionevent, nofullsyncPASS. local selection
+matchesStored/expectedOsebno preupdate, notlastspacebugrepro. Evidence new
+mobile-diagnostic-update20261025/android/first-startup-review.json.
+
+25. oktober — **Samsung QA r1 diagnosticupdate nameščen; userlaunch čaka**.
+User izrecno diagnostics+sameSamsungupdate, noPASS/prod. Sol6.1/high3agenti,
+rootreview/install. 1build1install-r; APKf0d65765…a4ff, samepackage/sign/UID10292/
+dataDir/vaultnamespace/TLS. Cold noncache20files121789474B byteparityPASS,
+privatebackup20261025-mobile-diagnostic-update/Android. Beforeclose screenshot
+Osebno→Planer/tasklist/noopenform; don'tclaimrecoveryofearlierdiscardeddraft.
+Newcache jivie_qa_mobile_issues_20261025_v2/tagandroid-mobile-fixes-20261025-r1:
+originalgarden/account/formcaught, startupdecisions, selectionreason+storedmatch,
+layoutmetrics; failures/decisions each3x256KiB independentmetrics3x1MiB/6000.
+No rawpayload/IDs/keys; processsalt tokens notcrossrestart; boundedqueuescanlose.
+4newdiagnostic+5parser+1roundtripPASS; QAanalyze0errors0warnings505styleinfos.
+630manifest currentdirty10included, root hashes reviewed. Agentlaunch/UI/sync0,
+QA CLOSED/freshnamespaceabsent; nativeproof NOTYET. OriginalGooglePlaymeta same,
+prod/serveruntouched. 646thisbuildcachefiles1.316GBremoved, artifacts/keys/backups
+kept. NEXTuserOPEN+wait15s/nochoice, then newandroid/read_diagnostics.py.
+FirstOsebno expectedbaselineNOTbugproof; later explicitlastspace testneeded.
+See sessiondoc finalOct25section +build/qa/mobile-diagnostic-update-20261025/.
+
+25. oktober — **Prvi mobilni popravki lokalno; 20 novih PASS, native še NE**.
+User odobri fix + Sol6.1/high; 3agenti, root/crossreview. FreshAndroidlog
+13directory_proof_pending pri unconditional task-cost dependency preflight;
+now localcandidatefirst, realcandidate normalonline signedhead/financewrite.
+Completionfailure prevents changecursorACK; guards unchanged, no429savingsproof.
+Projectcreate nečaka dodatnegafullsync, controller _edit schedulesautomatic.
+Accountslink→guardedlist+Add, project-only sanitizedchoices; sharedcalendar
+monthgrid/timeline, visibleAddEvent. Gardenpolicy exactcapturedworkspace,
+typederrors retain draft; original09:50savecause UNKNOWN. FinanceSave locally
+PASS/no runtimepatch because originalcauseUNKNOWN. 20newdistinctPASS=4sync+
+6save+10UI, noPASSreruns. Androidlayout test STOP3 fixturecleanupFAIL (asserts
+passed, cleanupfixed/notrerun), NOTPASS; clippingrootUNKNOWN. Analyses0errors/
+0warnings, preexistinginfos. Lastspacepersistalreadyexists/noresetfound;
+startupcatalog mismatchcandidate, no unsafecompletion/skipguards. Remaining
+nativeSavecauses/startup/lastspace/clipping/requestvolume explicitlyopen.
+Phone READONLY retaineddiagnostics+1boundedlogcat(noexception), noUI/lifecycle/
+build/install/servermutations/prod. Drafts/keys/data kept. NewQA save/startup/
+selectionfailure diagnostics proposed NOTimplemented. See sessiondoc final
+Oct25 section, build/qa/mobile-manual-fixes-20261025/{sync,saves},
+build/qa/mobile-navigation-fixes-20261025. No commit/push of thisbatch.
+
+25. oktober — **Userauthorizes independentanalysis; firstsourceaudit done**.
+No productedit/test/phoneactions. Confirmed projectcreate awaits fullsync;
+accountslabel directlycallscreateform; sharedCalendar routes timeline
+listcomponent(no monthgrid). Startupcompletioncataloghash sensitive to
+newscopes plausiblewizardrecurrence, notruntimeproven. selected_space
+alreadypersisted/read; investigateoverride notinventmissingstorage.
+GardenUI genericcatch obscures nonCollaborationException, currentQAsync/
+financehooks maynotcapturegardenerror. LayoutrootcauseUNKNOWN.
+Collector43360DONE/configrestored:4576POST4564x200/8x429/4x409 allclients
+max274ms,08:24:44–08:54:23UTC. Don'tattribute409tospecificbugwithoutproof.
+Evidence today'smobile-update/first-source-review.json+server/manual-captures/
+20261025T085443Z. NEXTexistingSamsunglogs whenconnected noSave/retest;
+prioritize sync/save/requestvolume, no unsavedgardenclose.
+
+25. oktober — **Restart returnslocal instead of lastspace USERfinding**.
+S25userreport appreopen selects localspace notlastopened. Expectrestore
+lastspace onlyifstillaccessible/currentaccount; otherwiseclearfallback.
+CauseUNKNOWN(persist/restore/startupredirect), noagentreopen/repro/code.
+Preserveunsavedgarden; recordedtodaymobile-update/ux-observations+sessiondoc.
+
+25. oktober — **Householdgarden saveFAIL + userrequestsUXredesign**.
+S25screenshot1000012444/09:50local vrtaqa25/Sezona2026/2beds; redgeneric
+savefailed/draftstillopen and Neshranjenespremembe. ExacterrorUNKNOWN,
+notprovenstale/network/dataloss; visiblecanvasNOTpersistedproof. User
+finds drawing/viewnavigationconfusing. UXproposalrecordedinpostrelease
+doc (timingunconfirmed), saveFAILCURRENT notimplicitlydeferred.
+KEEPDRAFTOPEN/no retry/close/reopen/reset; inspectexistinglogsafterUSB,
+UIcatchmightnotinstrumented acknowledgeifso. Noagentactions/fix.
+Evidence today'smobile-update/ux-observations.json+sessiondoc.
+
+25. oktober — **Finance accounts navigation UX + newaccountSaveFAIL user**.
+Screenshot1000012442/09:48local Finance selectedMOBILE-PR…truncated
+(notconfirmedhousehold/QA25). Računiprostora clickopensDodajračun; user
+wantsaccountslist+emptyifconfirmedempty+separateAdd. Visibleunavailable
+accounts text/disabledDodajzapis/redcloud; unavailableNOTzeroaccounts.
+Separatesaveaccountunsuccessful userreport, exacterror/attemptsUNKNOWN.
+RecordfunctionalFAIL/balancetestblocked; preserveanydraft,no retry/recreate.
+NEXTretainedphone logs afterreconnect09:48window. Noagentactions/fix.
+Evidence today'smobile-update/ux-observations.json+sessiondoc.
+
+25. oktober — **User householdcreate much faster than sharedprojectcreate**.
+S25userqualitative: newhouseholdcreation significantlyfaster than shared
+qa25prehodproject (~≥20s earlier). Noexacthouseholdduration/samemembership
+proof/causalclaim;retaincomparisonforlogs,no rerun. Usermoves shoppingtest
+tohousehold because absentinproject, considersappropriate; notbugrequest.
+Recordedtoday'smobile-update/ux-observations.json+sessiondoc. Noagentactions.
+
+25. oktober — **Calendar hidden/no discoverable return USER UX finding**.
+S25screenshot1000012440/09:44 qa25prehod Planer/Koledar selected, heading
+Časovnica with event/task/project list, no calendargrid/clearreturncontrol.
+Usercan'trestorecalendar;recordnavUX, not provenrenderbug or lostevents.
+Onlyrecord/noagentUI/retest/fix. today'smobile-update/ux-observations.json
+and sessiondoc updated.
+
+25. oktober — **Samsungreopen accountprotectionwizard reappears USER**.
+Screenshot1000012438/09:43local Zaščitapovezanihpodatkov afterclose/reopen.
+Textnoadditionalpreparationsteps;Preveriinkončaj/Nadaljujlokalno;
+MobileE2EEnewchangesencrypted/oldcopiesretained/deletiondatenotconfirmed.
+NotiOSrestorewarning; exactgatecauseUNKNOWN, no lostkey/plaintextclaim.
+Earlierfleetingstartup identityNOTproven. Retention30daysafterrestore
+prioragreement unchanged. Useronlyrecord/noagentUI/reset/rekey/cleanup.
+Recordedtoday'smobile-update/ux-observations.json +sessiondoc.
+
+25. oktober — **UserS25Utrip clipped layout + eventaction unclear**.
+Screenshot1000012436/09:42local qa25prehod: Todayeventscard clipped at
+Koledar, largeblankbelow, bottomnavlabels obscured/systemnavigationarea.
+SourcecauseUNKNOWN(singleimage), no data loss/synccausality claim. User
+plusaloneunclear; proposedvisibleDodajdogodek notjusttooltip. Currenttest
+UIissue recorded in mobile-update20261025/ux-observations.json+sessiondoc.
+Noimplementation/phoneactions/reproattempt. Continue collecting exploratory
+findings, no rereun/create/reset/manualsync.
+
+25. oktober — **QA25 newtask autosyncFAIL+manualretryFAIL; rootcauseUNKNOWN**.
+User screenshot09:40local qa25prehod: lastsuccess09:38/attempt09:40,
+queues0/0/0,errorcryptoConnectionPending. Samecopy maps3codes incl
+reconciliation_required; noexactnativecode yet (Samsungunplugged).
+Serverreadonly08:39–08:41:58UTC201POSTall200/max94ms/0x429; don'tattribute
+to earlier08:37burst2x429 or claimHTTP200/queues0=taskdelivered.
+Serveralready1694c42/schema23; don'ttelluserrekey/reinstall/upgradebasedcopy.
+Preserveproject/task; automatic+oneuserretry recorded, NO furtherretry.
+NEXTreadexistingSamsungcachewhenUSBreturns, correlateoriginalcaught+frames
+with08:40, noSave/recreate/retest. Noagentphone/businessRPC/fix. Evidence
+today'smobile-update/server/task-create-sync-observation.
+
+25. oktober — **Exploratory S25 projectcreate≥20s USER, serverburst429**.
+Userqa25prehod vMobileE2EE20261018 Save spinner≥20s thenSUCCESS, screenshot
+09:38local. Readonlyactivecapture window08:37–08:39UTC1029POST(691/329/9
+perminute),2x42908:37:47,rest200,maxPOST86ms. ALLclientscombined, no
+operation/accountIDs; don'tattributeallrequeststoonecreate or claimrootcause.
+SourceOrganizationWorkspace._create awaitcreateScope+awaitsyncNow before
+formfinish confirmed; UIblockingdependency, exactelapsedcausalitypending
+phone log after reconnect. CurrenttestperfbugNOTpostreleasedeferral.
+Noagentphone/mutation/businessRPC/fix/rebuild. Snapshot today'smobile-update/
+server/project-create-observation. NEXTusersamecreatedprojecttasks, no
+recreate/manualsync. Collector43360continues until~08:54:50UTC autorestores.
+
+25. oktober — **User accepts stale-editor UX for release; exploratory S25 next**.
+Userexplicitlydefers compare/mergeUIpostrelease; doNOTblockcurrenttesting
+onmanualcopy/reopen. docs/POST_RELEASE_IMPROVEMENTS.md created. Safety
+guards remain; oldscopepolicy/upgrade/restore gapsNOTimplicitlydeferred.
+NextusersoloS25unplugUSB/keepLANWiFi;MacDockeronline; resolveknownDRAFT-25
+viaCancel/reopenlatest+appendmissingDRAFT/Save thenclose/reopenQA forfresh
+boundedlog. NewQA25objects only in retainedsharedspace +privatecase;
+CRUD task/event/shopping/finance/docs/ideas/garden; deleteonlynewfixtures.
+Finance proposed100−12.34+20=107.66;expense15→105;deleteincome→85.
+AfterreturniPhonecontentcheck+rootmetadatareview (E2EEnoplaintextserver).
+Server/exploratory_capture.py bounded30min1MiBmetadatafinallyrestore;
+phonecache6000events/1MiBperrunmaycap, don'tpromiseexhaustivelogs.
+Noagentbusinessactions. User can report abnormalitieswhiletesting.
+
+25. oktober — **StaleSave SAFETY PASS; dogovorjena editor razrešitev GAP**.
+SamsungSave1ob08:17:11.947UTC shows sharingStaleEditor(copy/reopen),
+DRAFT-25heldopen/userconfirmed. Native1Save/0records.batch, onlyprobe
+200unchanged. Source_put expectedLocalRevision→stale_edit beforeenqueue.
+No silentoverwrite; no payloadreads/agentappactions. Outboxmerge ne pokrije
+stale editor; comparison/mergechoice UXmissing, NOT conflictresolutionPASS.
+Evidence today'smobile-update/stale-save-25-summary.json +Androidread081758Z.
+NEXTrecommendlocal editorconflictreview; don'trepeatSave/discard/reset.
+SamsungdraftKEEPopen; iPhoneREMOTE-25canonical. Noimplementationthisturn.
+
+25. oktober — **Dirtydraft preserved+newversionnotice USERPASS**.
+SamsungDRAFT-25unsaved; iPhoneREMOTE-25Save1. Userdraftheld+notice.
+Newnative52A/83BHTTPall200;Acompletion6clean08:15:05.833UTC,
+Bcompletion6/7clean,scope1/content1/finance0,knownowner_pendinghandled.
+NoSamsungSave/agentactions. Evidence today'smobile-update/dirty-draft-25-summary.
+NEXTSamsungSaveONCE leaveoutcome/report exactmessage, noRetry/overwrite.
+SourceupdateTask→_put expectedLocalRevision stale_editguard beforeenqueue;
+outboxmerge ne editorconflictUXproof. Don'tpromiseautomaticmergeddialog.
+
+25. oktober — **Reverse iPhone→Samsung USERPASS; next dirtydraft**.
+UserappendTEST-IPHONE-25/oldnotesheld/Save1/Samsungauto-update. iOS
+08:09:47.870save→onebatch20048.901→cleancompletion51.170; Samsung
+08:10:01.223clean(~13.35s). Bothscope1/content1/finance0,newHTTPall200;
+knowniOSowner_pendinghandled. Nativeevidence today'smobile-update/
+ios-to-samsung-25-summary.json;noagentappactions/repeatedPASS.
+NEXTSamsungappendDRAFT-25withoutSave; iPhoneappendREMOTE-25Saveonce;
+wait30s checkSamsungdraftpreserved/newer-versionnotice, DO NOTSaveSamsung
+yet. No repeats basictransfer/opening; new dirtydraft scenario.
+
+25. oktober — **Nov Samsung→iPhone sync in odprt editor auto-refresh USER PASS**.
+TEST-SYNC-25 append/oldtextheld/Save1; useriPhonepristineopenauto-updated.
+AndroidSave08:05:21.357→onebatch20022.763→cleancompletion24.644UTC.
+iPhonehint48.308→cleancompletion51.200 (~29.84s afterSave, neGUIlatency).
+Bothselectedscope1/content1/finance0;allnewHTTP200/0x429. Aowncatchupclean
+thenunchanged;Bjournalcheckunchanged. KnownBowner_pendinghandled remains.
+NoagentUI/sync/payloadreads. Evidence today'smobile-update/
+samsung-to-ios-25-summary.json and freshplatformread08:06:46.
+NEXTreverseiPhoneappendTEST-IPHONE-25 preservingalltext/Saveonce,
+Samsungpristineopen wait30s/report. Don'trepeatforwardPASS/openingPASS.
+
+25. oktober — **Samsung preview74/45ms in editor73ms PASS; UI poti različne**.
+Userinstant/previewthenUredi; iPhone directeditor. NewAndroidcapture
+20261025T080327Z:2previews74/45ms, finaltaskEntered→postframe73ms,
+69newHTTPall200/0newcaught/noSave; previousunboundeditor124msnotattributed.
+SourceAllSpacesalwayspreview vs SharedActions.openTask editable→editor;
+noOScondition, exactnav/permission snapshotUNKNOWN. UXinconsistencyrecorded.
+NoagentUI/sync, nofix. NEXTuserSamsungexistingeditorappendTEST-SYNC-25
+tooldnote/Saveonce, iPhoneexistingpristineeditorleaveopen,wait30s/report;
+thenreadnewlogs+checkarrivalwithoutreopen. New changed-only/pristine-update
+scenario; noinvite/keys/manualsync orrepeatopening. Evidence today's
+mobile-update/android/task-opening-summary.json.
+
+25. oktober — **iPhone istoopravilo odpiranje42ms PASS**.
+UserMOBILE-SHARED-1 open/noedit/save; feelsinstant. Newnative UI markers
+08:00:07UTC taskEntered→editorEntered18ms→postframe24ms=42ms;0HTTP
+vopeninginterval/0newfailures. Nearbyonly30saccount.changes→unchanged.
+Handler-toFlutterpostframe ni physicaltap/compositor benchmark; old~20s
+userestimate ne matchedspeedup. AgentUI/sync/save0. Evidence today's
+mobile-update/ios/task-opening-summary.json +native-read/20261025T080046412525Z.
+NEXTuserSamsungsameMOBILE-PROJECT-1/MOBILE-SHARED-1 openonce/noedit/save,
+reportresponsiveness; iPhoneleaveopen. No repeat iOSopening or oldtransferPASS.
+
+25. oktober — **iPhone Continue in sync PASS; naslednje odzivnost opravila**.
+Userknownrestorewarning→Continue, wait. Readonlynative1572events
+07:57:28–07:58:47UTC/388HTTPall200/0x429;2completionnone/unresolvedfalse/
+retryfalse;4handledowner_pending (2scopesx2initialcycles), existingpolicy
+transition šeodprt. Natoaccount.changes→unchanged/66msHTTP, niidlebenchmark.
+WarningcauseNOTremeasured. AgentUI/sync/save0; SamsungPASSneponovljen.
+Evidence build/qa/jivie-mobile-update-20261025/ios/first-user-launch-summary.json
+in native-read/20261025T075905154486Z.json. NEXTuseriPhoneenkratodpre
+MOBILE-PROJECT-1/MOBILE-SHARED-1, ničedit/save, reportlatency/pustiopen;
+preverinoveUImarkerje, neponavljajprenosa/invite/ključi aliSamsungzagona.
+
+25. oktober — **Samsung user startup/sync PASS, existing policy deferred**.
+UserpromptUtrip, briefunidentifiedconsentscreen disappeared; UXcauseUNKNOWN.
+Readonlycache1/2034events07:50:25–07:51:51UTC;504HTTPall200/0x429.
+Completion1/2 codeNone/unresolvedFalse/retryFalse; legacycachedcapability
+thenmissingcursor/reset broadinitialwork; nextaccount.changes→unchanged.
+Twohandled existing_scope_upgrade_pending sourcebaseline206 intentional
+existing-scope deferral, not fatal; newoldspacepermissions NOTverified.
+NoagentUI/sync/retest. Old180scapture ended beforeuserlaunch, configrestored;
+evidence android/diagnostic-read-20261025T075213Z.json +first-user-launch-summary
+in build/qa/jivie-mobile-update-20261025. NEXTuseriPhoneopen wait30s report,
+onwarningstop, noSamsungrelaunch/manualsync/edits.
+
+25. oktober — **Obe mobilni QA na1694c42; čaka prvi USER zagon**.
+Sol6.1/high ločena Android/iOS +serveragent, rootartifact/installreview.
+Android1build1install-r/launch0; ista.android20261018/signature/UID10292/dataDir,
+vault4files3338630B in noncacheprofile20files116482376B byteparity; prodPlay
+APK/meta isti. iOS2archives/1install/launch0; prvinenameščen zaradi dopolnitve
+caught-error diagnostike, isti.ios20261018/profile/cert/Keychainservicegroup,
+vault4files4698502B byteparity, containerpathchangednormal, prodmetaisti.
+Isti18801 schema21→23/34sourcechanges;221olddata tables exact oldcolumns,
+newcounters0/3emptytables/5indexes, sameSID/TLSkeys/config/4ownedIDshealthy.
+Coldbackups retained;1publiccapability200/0businessRPC/otherDockeruntouched.
+QAonlynewcache namespace jivie_qa_mobile_sync_20261025_v1,3x1MiB/6000events,
+work/probe/completion/HTTP/UI/29caught; noIDs/payload/keys. Runtime sink proof
+PENDING userlaunch;AOTframesmayempty/firstcaughtnotnecessarilyrootcause;
+iOS HTTP account.changes mayother but coordinator exact. Nativepushdisabled.
+Evidence build/qa/jivie-mobile-update-20261025/root-results.json andplatform/
+serverfolders;readers android/read_diagnostics.py,ios/read_diagnostics.py
+--after-user-test. NEXTuseropens ONLY SamsungJivieTest wait30s report screen,
+noedit/manualsync; thenreadnewlogs andguideiPhone. Bothclosed, oldPASS0rerun,
+productionuntouched. Report appended docs/E2EE_MOBILE_SESSION_2026_10_24.md.
+
 24. oktober — **Omejena Mac B r10 meritev odpiranja PASS; ne ponavljaj**.
 User odobri eno instanco in isti task preview/editor brez Save; Sol6.1/high
 app/collector podagenta, root GUI in neodvisni pregled. B1build+1install+1launch,

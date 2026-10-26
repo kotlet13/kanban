@@ -9,7 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
-import '../../data/organizer_repository.dart' show newLocalId;
+import '../../data/organizer_repository.dart'
+    show newLocalId, OrganizerConflictException;
+import '../../data/e2ee/account_directory_v2.dart'
+    show CryptoDirectoryException;
+import '../../data/e2ee/crypto_sync_repository.dart'
+    show CryptoAuthorityPending;
 import '../../domain/garden_models.dart';
 import '../../state/garden_provider.dart';
 import '../../state/local_spaces_provider.dart';
@@ -212,7 +217,8 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       final scope = shared?.scopes
           .where(
             (s) =>
-                s.id == shared.selectedSpaceId &&
+                _workspaceKey ==
+                    'shared:${shared.session?.partition}:${s.id}' &&
                 s.kind == SharedScopeKind.household &&
                 !s.revoked,
           )
@@ -260,7 +266,12 @@ class _GardenEditorState extends ConsumerState<GardenEditor> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = error is CollaborationException
+          _error = error is OrganizerConflictException
+              ? context.l10n.gardenEditConflict
+              : error is CollaborationException ||
+                    error is CryptoDirectoryException ||
+                    error is CryptoAuthorityPending ||
+                    error is FormatException
               ? sharingErrorMessage(context, error)
               : context.l10n.gardenSaveError;
         });

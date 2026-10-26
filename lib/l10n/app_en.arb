@@ -2,6 +2,7 @@
   "documentsTables": "Tables",
   "documentsAttachments": "Attachments",
   "documentsUnavailable": "This space does not have this feature enabled yet.",
+  "documentsContextChanged": "This view is no longer current. Return to the space and reopen it. Your draft stays on this device.",
   "@@locale": "en",
   "routeError": "Route error",
   "unknownError": "Unknown error",
@@ -395,6 +396,7 @@
   "inboxSharedPreferencesUnavailable": "This server does not support notification preferences yet.",
   "planningFullDay": "Full shared day",
   "sharingView": "View",
+  "financeAccountOverview": "Account overview",
   "financeEditAccount": "Edit account",
   "financeOpeningBalance": "Opening balance",
   "financeDeleteAccountDescription": "You can delete an account when it has no linked entries or transfers.",
@@ -882,6 +884,7 @@
   "gardenKeepEditing": "Keep editing",
   "gardenDiscard": "Discard changes",
   "gardenSaveError": "Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.",
+  "gardenEditConflict": "The garden changed while you were editing it. Saving is blocked to preserve the newer version. Your changes are still in the open editor.",
   "gardenDeleteTitle": "Delete garden?",
   "gardenDeleteBody": "The garden “{name}”, its notes and all areas will be deleted from this device.",
   "@gardenDeleteBody": {
@@ -1751,6 +1754,7 @@
   "recoveryOperationFailed": "The step could not be completed. Your existing data are kept. Check that you selected the correct file and try again.",
   "recoveryLocalProtectionOnly": "This encrypts the app’s local database on this device. Previously exported or temporary copies are not automatically protected. Protection of shared spaces is prepared separately; saving this file does not enable it.",
   "recoveryCheckingDevice": "Checking local storage…",
+  "recoveryHistoricalExportsLabel": "Copies",
   "recoveryCleanupLabel": "Cleanup unfinished",
   "recoveryBrowserUnprotected": "Browser data unprotected",
   "recoveryBrowserContinue": "Open existing browser data for use or export",
@@ -2016,5 +2020,13 @@
   "sharingRestoreBlobPending": "This restore needs a new large encrypted upload. Restore was not completed. Your draft is retained.",
   "sharingRestoreTablePending": "This deleted table cannot obtain the editing lease required for restore. Restore was not completed. Your draft is retained.",
   "sharingRestoreHistoryPending": "Restore is waiting for verified history or server support. Your draft is retained.",
-  "sharingRestoreForbidden": "Only the space owner or original author can restore this record. Your draft is retained."
+  "sharingRestoreForbidden": "Only the space owner or original author can restore this record. Your draft is retained.",
+  "cryptoProtectionCatalogChanged": "Connected spaces have changed. You can review protection later.",
+  "cryptoProtectionChecking": "Checking protection status.",
+  "cryptoProtectionUnavailable": "Protection review is currently unavailable. Try again later.",
+  "cryptoProtectionReview": "Review",
+  "cryptoProtectionRetry": "Check again",
+  "cryptoProtectionDetails": "Protection details",
+  "cryptoProtectionBackToApp": "Back to app",
+  "organizerDraftSharingUnavailable": "Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing."
 }

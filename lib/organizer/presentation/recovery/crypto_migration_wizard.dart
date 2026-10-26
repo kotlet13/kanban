@@ -545,10 +545,11 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
                       : l.cryptoMigrationReviewDescription,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  l.cryptoMigrationLocalPreserved,
-                  key: const ValueKey('migration_local_preserved'),
-                ),
+                if (!canFinish)
+                  Text(
+                    l.cryptoMigrationLocalPreserved,
+                    key: const ValueKey('migration_local_preserved'),
+                  ),
                 if (_busy) const LinearProgressIndicator(),
                 if (_busy &&
                     _states.values.any((s) => s.retryAfterSeconds != null))
@@ -565,42 +566,60 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
                     child: Text(l.cryptoMigrationRetry),
                   ),
                 ],
-                if (_candidates?.isEmpty == true)
-                  Text(l.cryptoMigrationNoScopes),
-                TextButton(
-                  onPressed: _busy
-                      ? () => Navigator.of(context).pop()
-                      : () => _run(() async {
-                          if (_candidates != null &&
-                              (_candidates!.isEmpty ||
-                                  _candidates!.every(
-                                    (c) =>
-                                        _states[c.scopeId]?.phase ==
-                                        CryptoMigrationPhase.committed,
-                                  ))) {
-                            if (await widget.onFinished?.call() == false) {
-                              return;
+                if (canFinish)
+                  FilledButton(
+                    onPressed: _busy
+                        ? null
+                        : () => _run(() async {
+                            if (_candidates != null &&
+                                (_candidates!.isEmpty ||
+                                    _candidates!.every(
+                                      (c) =>
+                                          _states[c.scopeId]?.phase ==
+                                          CryptoMigrationPhase.committed,
+                                    ))) {
+                              if (await widget.onFinished?.call() == false) {
+                                return;
+                              }
                             }
-                          }
-                          if (context.mounted) Navigator.of(context).pop();
-                        }),
+                            if (context.mounted) Navigator.of(context).pop();
+                          }),
+                    child: Text(l.cryptoMigrationFinishReview),
+                  ),
+                TextButton(
+                  key: const ValueKey('migration_continue_local'),
+                  onPressed: _busy && canFinish
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   child: Text(
                     canFinish
-                        ? l.cryptoMigrationFinishReview
+                        ? l.cryptoProtectionBackToApp
                         : l.cryptoContinueLocally,
                   ),
                 ),
-                if (canFinish)
-                  TextButton(
-                    key: const ValueKey('migration_continue_local'),
-                    onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                    child: Text(l.cryptoContinueLocally),
-                  ),
                 for (final candidate
-                    in _candidates ?? <CryptoMigrationCandidate>[]) ...[
-                  const SizedBox(height: 20),
-                  _scope(context, candidate),
-                ],
+                    in _candidates ?? <CryptoMigrationCandidate>[])
+                  if (_states[candidate.scopeId]?.phase !=
+                      CryptoMigrationPhase.committed) ...[
+                    const SizedBox(height: 20),
+                    _scope(context, candidate),
+                  ],
+                if (canFinish ||
+                    _states.values.any(
+                      (state) => state.phase == CryptoMigrationPhase.committed,
+                    ))
+                  ExpansionTile(
+                    key: const ValueKey('migration_protection_details'),
+                    title: Text(l.cryptoProtectionDetails),
+                    children: [
+                      if (canFinish) Text(l.cryptoMigrationLocalPreserved),
+                      if (_candidates!.isEmpty) Text(l.cryptoMigrationNoScopes),
+                      for (final candidate in _candidates!)
+                        if (_states[candidate.scopeId]?.phase ==
+                            CryptoMigrationPhase.committed)
+                          _scope(context, candidate),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -609,10 +628,34 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
     );
   }
 
+  Widget _scopeReview(CryptoMigrationCandidate candidate) => OutlinedButton(
+    key: ValueKey('migration_scope_recovery_${candidate.scopeId}'),
+    onPressed: _busy
+        ? null
+        : () => Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => ScopeRecoveryPage(
+                account: (widget.controller as AccountMigrationController)
+                    .coordinator
+                    .account,
+                scopeId: candidate.scopeId,
+                label:
+                    widget.cachedLabels[candidate.scopeId] ??
+                    context.l10n.cryptoMigrationSpace,
+              ),
+            ),
+          ),
+    child: Text(context.l10n.cryptoReviewConnectedSpace),
+  );
+
   Widget _scope(BuildContext context, CryptoMigrationCandidate candidate) {
     final l = context.l10n, state = _states[candidate.scopeId];
     final phase = state?.phase;
     final done = phase == CryptoMigrationPhase.committed;
+    final recoveryReview =
+        !done &&
+        (phase == CryptoMigrationPhase.unavailable ||
+            phase == CryptoMigrationPhase.blocked);
     final text = switch (phase) {
       CryptoMigrationPhase.waitingContributors =>
         l.cryptoMigrationPendingContributors,
@@ -672,128 +715,123 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
                   state!.unavailableContributionCount,
                 ),
               ),
-            if (widget.controller is AccountMigrationController &&
+            if (recoveryReview &&
+                widget.controller is AccountMigrationController &&
                 candidate.cryptoState != null &&
                 candidate.cryptoState != 'legacy')
-              OutlinedButton(
-                onPressed: _busy
-                    ? null
-                    : () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => ScopeRecoveryPage(
-                            account:
-                                (widget.controller
-                                        as AccountMigrationController)
-                                    .coordinator
-                                    .account,
-                            scopeId: candidate.scopeId,
-                            label:
-                                widget.cachedLabels[candidate.scopeId] ??
-                                l.cryptoMigrationSpace,
-                          ),
-                        ),
-                      ),
-                child: Text(l.cryptoReviewConnectedSpace),
-              ),
+              _scopeReview(candidate),
             if (widget.controller is AccountMigrationController)
-              TextButton(
-                onPressed: _busy
-                    ? null
-                    : () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => FinanceContributionPage(
-                            account:
-                                (widget.controller
-                                        as AccountMigrationController)
-                                    .coordinator
-                                    .account,
-                            scopeId: candidate.scopeId,
-                            label:
-                                widget.cachedLabels[candidate.scopeId] ??
-                                l.cryptoMigrationSpace,
-                          ),
-                        ),
-                      ),
-                child: Text(l.cryptoFinanceContributionTitle),
-              ),
-            if (widget.controller is AccountMigrationController)
-              TextButton(
-                onPressed: _busy
-                    ? null
-                    : () => Navigator.of(context).push<void>(
-                        MaterialPageRoute(
-                          builder: (_) => ScopeKeyContributionPage(
-                            account:
-                                (widget.controller
-                                        as AccountMigrationController)
-                                    .coordinator
-                                    .account,
-                            scopeId: candidate.scopeId,
-                            label:
-                                widget.cachedLabels[candidate.scopeId] ??
-                                l.cryptoMigrationSpace,
-                          ),
-                        ),
-                      ),
-                child: Text(l.cryptoKeyContributionTitle),
-              ),
-            if (!done &&
-                state?.migrationId != null &&
-                widget.controller is AccountMigrationController)
-              TextButton(
-                onPressed: _busy
-                    ? null
-                    : () async {
-                        await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(
-                            builder: (_) => CryptoMigrationGenerationPage(
-                              coordinator:
-                                  (widget.controller
-                                          as AccountMigrationController)
-                                      .coordinator,
-                              scopeId: candidate.scopeId,
-                              migrationId: state!.migrationId!,
+              ExpansionTile(
+                key: ValueKey('migration_scope_details_${candidate.scopeId}'),
+                title: Text(l.cryptoProtectionDetails),
+                children: [
+                  if (!recoveryReview &&
+                      candidate.cryptoState != null &&
+                      candidate.cryptoState != 'legacy')
+                    _scopeReview(candidate),
+                  if (widget.controller is AccountMigrationController)
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => FinanceContributionPage(
+                                  account:
+                                      (widget.controller
+                                              as AccountMigrationController)
+                                          .coordinator
+                                          .account,
+                                  scopeId: candidate.scopeId,
+                                  label:
+                                      widget.cachedLabels[candidate.scopeId] ??
+                                      l.cryptoMigrationSpace,
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                        if (mounted) await _discover();
-                      },
-                child: Text(
-                  Localizations.localeOf(context).languageCode == 'sl'
-                      ? 'Nadaljuj po menjavi naprave'
-                      : 'Resume after changing devices',
-                ),
-              ),
-            if (!done &&
-                state?.migrationId != null &&
-                widget.controller is AccountMigrationController)
-              TextButton(
-                key: ValueKey('migration_abort_${candidate.scopeId}'),
-                onPressed: _busy
-                    ? null
-                    : state?.errorCode == 'crypto_migration_aborted'
-                    ? () => _run(() async {
-                        final next =
-                            await (widget.controller
-                                    as AccountMigrationController)
-                                .replan(candidate.scopeId);
-                        if (mounted) {
-                          setState(() => _states[candidate.scopeId] = next);
-                        }
-                      })
-                    : () => _abort(candidate, state!),
-                child: Text(
-                  Localizations.localeOf(context).languageCode == 'sl'
-                      ? state?.errorCode == 'crypto_migration_aborted'
-                            ? 'Pripravi nov poskus'
-                            : 'Varno opusti poskus'
-                      : state?.errorCode == 'crypto_migration_aborted'
-                      ? 'Prepare another attempt'
-                      : 'Safely abandon attempt',
-                ),
+                      child: Text(l.cryptoFinanceContributionTitle),
+                    ),
+                  if (widget.controller is AccountMigrationController)
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => ScopeKeyContributionPage(
+                                  account:
+                                      (widget.controller
+                                              as AccountMigrationController)
+                                          .coordinator
+                                          .account,
+                                  scopeId: candidate.scopeId,
+                                  label:
+                                      widget.cachedLabels[candidate.scopeId] ??
+                                      l.cryptoMigrationSpace,
+                                ),
+                              ),
+                            ),
+                      child: Text(l.cryptoKeyContributionTitle),
+                    ),
+                  if (!done &&
+                      state?.migrationId != null &&
+                      widget.controller is AccountMigrationController)
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                              await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => CryptoMigrationGenerationPage(
+                                    coordinator:
+                                        (widget.controller
+                                                as AccountMigrationController)
+                                            .coordinator,
+                                    scopeId: candidate.scopeId,
+                                    migrationId: state!.migrationId!,
+                                  ),
+                                ),
+                              );
+                              if (mounted) await _discover();
+                            },
+                      child: Text(
+                        Localizations.localeOf(context).languageCode == 'sl'
+                            ? 'Nadaljuj po menjavi naprave'
+                            : 'Resume after changing devices',
+                      ),
+                    ),
+                  if (!done &&
+                      state?.migrationId != null &&
+                      widget.controller is AccountMigrationController)
+                    TextButton(
+                      key: ValueKey('migration_abort_${candidate.scopeId}'),
+                      onPressed: _busy
+                          ? null
+                          : state?.errorCode == 'crypto_migration_aborted'
+                          ? () => _run(() async {
+                              final next =
+                                  await (widget.controller
+                                          as AccountMigrationController)
+                                      .replan(candidate.scopeId);
+                              if (mounted) {
+                                setState(
+                                  () => _states[candidate.scopeId] = next,
+                                );
+                              }
+                            })
+                          : () => _abort(candidate, state!),
+                      child: Text(
+                        Localizations.localeOf(context).languageCode == 'sl'
+                            ? state?.errorCode == 'crypto_migration_aborted'
+                                  ? 'Pripravi nov poskus'
+                                  : 'Varno opusti poskus'
+                            : state?.errorCode == 'crypto_migration_aborted'
+                            ? 'Prepare another attempt'
+                            : 'Safely abandon attempt',
+                      ),
+                    ),
+                ],
               ),
             if (!done && state?.canContinue == true)
-              TextButton(
+              FilledButton(
                 onPressed: _busy ? null : () => _continue(candidate),
                 child: Text(
                   state?.migrationId == null

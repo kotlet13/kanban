@@ -112,6 +112,12 @@ abstract class SpreadsheetGateway {
   Future<void> clearDraft(String id);
 }
 
+/// Privacy boundary for an already open local draft. This carries no shared
+/// read/write permission and cannot authorize a lease or publication.
+abstract interface class SpreadsheetDraftIdentity {
+  bool get isDraftIdentityCurrent;
+}
+
 /// Display-only snapshots already accepted locally. They carry no edit lease
 /// and never replace the gateway's fresh read/write authority checks.
 abstract interface class SpreadsheetLocalPreview {

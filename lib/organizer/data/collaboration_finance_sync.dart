@@ -119,9 +119,59 @@ extension CollaborationFinanceSync on CollaborationRepository {
   Future<void> _syncFinance(
     DeviceSession session,
     int epoch,
-    List<SharedScope> scopes,
-  ) async {
+    List<SharedScope> scopes, {
+    required List<SharedScope> availableScopes,
+    CollaborationAccountChanges? changes,
+  }) async {
     final p = session.profile.partition;
+    final dependencies = <SharedScope>[];
+    final selected = scopes.map((s) => s.id).toSet();
+    for (final parent in scopes.where(
+      (s) =>
+          (s.kind == SharedScopeKind.organization ||
+              s.kind == SharedScopeKind.household) &&
+          s.canRead &&
+          !s.deleted &&
+          !s.revoked,
+    )) {
+      final policy = await _cachedFinancePolicy(p, parent.id);
+      _checkEpoch(epoch);
+      if (!policy.canRead) continue;
+      for (final child in availableScopes) {
+        if (child.kind != SharedScopeKind.project ||
+            child.parentSpaceId != parent.id ||
+            !child.canRead ||
+            child.deleted ||
+            child.revoked ||
+            selected.contains(child.id)) {
+          continue;
+        }
+        final dependency = await _financeDependencyReadState(
+          p,
+          child.id,
+          policy.organizationFinanceSequences[child.id],
+        );
+        if (dependency.needsRead) {
+          selected.add(child.id);
+          dependencies.add(child);
+          changes?.include(child.id, 'finance');
+        }
+        _checkEpoch(epoch);
+      }
+    }
+    if (dependencies.isNotEmpty) {
+      // The dependency is still read through its normal fresh policy, crypto
+      // cursor transition and finance/payment verifiers. Cached flags select
+      // work only; they never certify the missing child as complete.
+      await _prepareCryptoProjectionCursors(session, epoch, dependencies);
+      scopes.addAll(dependencies);
+    }
+    // Child settlement/materialization precedes the parent's coverage read.
+    // Keep selected projects in order and include archived historical sources.
+    final ordered = [
+      ...scopes.where((s) => s.kind == SharedScopeKind.project),
+      ...scopes.where((s) => s.kind != SharedScopeKind.project),
+    ];
     final capabilities = await database.rows(
       'SELECT value FROM local_meta WHERE name=?',
       ['capabilities:$p'],
@@ -132,7 +182,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
         (CollaborationRepository._map(capabilities.single['value'])['features']
                 as Map?)?['linkedPayments'] ==
             true;
-    for (final scope in scopes) {
+    for (final scope in ordered) {
       if (!await _privateScopeAllowed(p, scope)) continue;
       await _renewLease(p);
       Future<void> syncScope() => _syncFinanceScope(
@@ -152,6 +202,153 @@ extension CollaborationFinanceSync on CollaborationRepository {
       }
       _checkEpoch(epoch);
     }
+  }
+
+  Future<({bool needsRead, String signature})> _financeDependencyReadState(
+    String partition,
+    String scope,
+    int? requiredSequence,
+  ) async {
+    final rows = await database.rows(
+      'SELECT finance_policy,finance_complete,finance_cursor,finance_access_revision,finance_blocked FROM scopes WHERE partition=? AND id=?',
+      [partition, scope],
+    );
+    if (rows.length != 1) return (needsRead: false, signature: '');
+    final row = rows.single;
+    final policy = await _cachedFinancePolicy(partition, scope);
+    // A definitive denial is not a missing snapshot and must remain hidden.
+    // An unknown policy still gets the ordinary fresh authorization query.
+    if (row['finance_policy'] != null && !policy.canRead) {
+      return (needsRead: false, signature: '');
+    }
+    final incomplete =
+        row['finance_complete'] != 1 ||
+        requiredSequence != null &&
+            (row['finance_cursor'] as int) < requiredSequence;
+    final generation = await _financeAccessGeneration(partition, scope);
+    Map<String, dynamic>? proof;
+    if (policy.linkedPaymentsRequired) {
+      final space = PaymentSpaceRef(scope, partition: partition);
+      final proofs = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['linked_payment_complete:${space.key}'],
+      );
+      if (proofs.isNotEmpty) {
+        proof = CollaborationRepository._map(proofs.single['value']);
+      }
+    }
+    return (
+      needsRead:
+          incomplete ||
+          policy.linkedPaymentsRequired &&
+              (proof == null ||
+                  row['finance_blocked'] != 0 ||
+                  proof['generation'] != generation ||
+                  proof['accessRevision'] != row['finance_access_revision']),
+      signature: jsonEncode([
+        row,
+        requiredSequence,
+        generation,
+        // Only snapshot bindings can change debt. Refresh bookkeeping such as
+        // a checked-at timestamp must not schedule another identical read.
+        if (proof != null)
+          for (final key in const [
+            'generation',
+            'scopeSequence',
+            'accessRevision',
+          ])
+            proof[key],
+      ]),
+    );
+  }
+
+  /// Automatic local debt selects the existing coordinator once per stable
+  /// prerequisite state; an explicit manual demand may retry that same debt.
+  /// A cached false aggregate gets one verified recheck even when its local
+  /// children are already ready. Local flags select work, never certify coverage.
+  Future<bool> _includeIncompleteParentFinanceRecovery(
+    DeviceSession session,
+    int epoch,
+    CollaborationAccountChanges changes, {
+    required bool manual,
+  }) async {
+    if (!_financeSupported || !_organizationFinanceSupported) return false;
+    if (_parentFinanceRecoveryEpoch != epoch) {
+      _parentFinanceRecoveryEpoch = epoch;
+      _parentFinanceRecoveryAttempts.clear();
+    }
+    var included = false;
+    final p = session.profile.partition;
+    for (final parent in state.scopes) {
+      if (!const {
+            SharedScopeKind.organization,
+            SharedScopeKind.household,
+          }.contains(parent.kind) ||
+          !parent.canRead ||
+          parent.deleted ||
+          parent.revoked ||
+          _parentFinanceRecoveryAttempts.length >= 64 &&
+              !_parentFinanceRecoveryAttempts.containsKey(parent.id)) {
+        continue;
+      }
+      final policy = await _cachedFinancePolicy(p, parent.id);
+      _checkEpoch(epoch);
+      if (!policy.canRead) continue;
+      final prerequisites = <String>[], readyChildren = <String>[];
+      for (final child in state.scopes) {
+        if (child.kind != SharedScopeKind.project ||
+            child.parentSpaceId != parent.id ||
+            !child.canRead ||
+            child.deleted ||
+            child.revoked) {
+          continue;
+        }
+        final dependency = await _financeDependencyReadState(
+          p,
+          child.id,
+          policy.organizationFinanceSequences[child.id],
+        );
+        _checkEpoch(epoch);
+        if (dependency.needsRead) {
+          prerequisites.add('${child.id}:${dependency.signature}');
+        } else if (dependency.signature.isNotEmpty) {
+          readyChildren.add('${child.id}:${dependency.signature}');
+        }
+      }
+      prerequisites.sort();
+      late final String signature;
+      if (prerequisites.isEmpty) {
+        if (policy.organizationFinanceComplete) continue;
+        final parentRead = await _financeDependencyReadState(
+          p,
+          parent.id,
+          null,
+        );
+        _checkEpoch(epoch);
+        if (parentRead.signature.isEmpty) continue;
+        readyChildren.sort();
+        signature = jsonEncode([
+          'coverage',
+          parentRead.signature,
+          readyChildren,
+        ]);
+      } else {
+        signature = jsonEncode([
+          policy.revision,
+          policy.grant.name,
+          prerequisites,
+        ]);
+      }
+      if (!manual && _parentFinanceRecoveryAttempts[parent.id] == signature) {
+        continue;
+      }
+      // Record before work, including a failed/unfinished read, so unchanged
+      // 30-second probes do not retry the same prerequisite/coverage state.
+      _parentFinanceRecoveryAttempts[parent.id] = signature;
+      changes.include(parent.id, 'finance');
+      included = true;
+    }
+    return included;
   }
 
   Future<void> _syncFinanceScope(

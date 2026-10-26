@@ -19,6 +19,10 @@ class AppLocalizationsSl extends AppLocalizations {
       'Ta prostor te možnosti še nima omogočene.';
 
   @override
+  String get documentsContextChanged =>
+      'Ta pogled ni več aktualen. Vrni se v prostor in ga znova odpri. Osnutek ostane na tej napravi.';
+
+  @override
   String get routeError => 'Napaka poti';
 
   @override
@@ -1121,6 +1125,9 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sharingView => 'Pogled';
+
+  @override
+  String get financeAccountOverview => 'Pregled računa';
 
   @override
   String get financeEditAccount => 'Uredi račun';
@@ -2619,6 +2626,10 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get gardenSaveError =>
       'Sprememb ni bilo mogoče shraniti. Osnutek je še odprt. Poskusi znova; če se je shranjeni vrt spremenil, ga ponovno odpri.';
+
+  @override
+  String get gardenEditConflict =>
+      'Vrt se je med urejanjem spremenil. Shranjevanje je ustavljeno, da ne prepišemo novejše različice. Tvoje spremembe so še v odprtem urejevalniku.';
 
   @override
   String get gardenDeleteTitle => 'Izbrišem vrt?';
@@ -4744,6 +4755,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get recoveryCheckingDevice => 'Preverjanje lokalne shrambe …';
 
   @override
+  String get recoveryHistoricalExportsLabel => 'Kopije';
+
+  @override
   String get recoveryCleanupLabel => 'Čiščenje nedokončano';
 
   @override
@@ -5459,4 +5473,31 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get sharingRestoreForbidden =>
       'Zapis lahko obnovi samo lastnik prostora ali prvotni avtor. Osnutek je ohranjen.';
+
+  @override
+  String get cryptoProtectionCatalogChanged =>
+      'Povezani prostori so se spremenili. Pregled zaščite lahko opraviš pozneje.';
+
+  @override
+  String get cryptoProtectionChecking => 'Preverjamo stanje zaščite.';
+
+  @override
+  String get cryptoProtectionUnavailable =>
+      'Pregled zaščite trenutno ni na voljo. Poskusi pozneje.';
+
+  @override
+  String get cryptoProtectionReview => 'Preglej';
+
+  @override
+  String get cryptoProtectionRetry => 'Ponovno preveri';
+
+  @override
+  String get cryptoProtectionDetails => 'Podrobnosti zaščite';
+
+  @override
+  String get cryptoProtectionBackToApp => 'Nazaj v aplikacijo';
+
+  @override
+  String get organizerDraftSharingUnavailable =>
+      'Deljenje ni na voljo. Osnutek lahko dokončate v tem odprtem obrazcu. Pred zapiranjem kopirajte spremembe, ki jih želite ohraniti.';
 }

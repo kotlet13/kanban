@@ -19,6 +19,7 @@ class SharedDocumentsContext {
   final void Function()? _onAccessLost;
   int _documentGeneration = 0;
   bool _denied = false;
+  bool _stale = false;
   bool online = true;
   bool spreadsheetsSupported = false, attachmentsSupported = false;
   final _bytes = <String, Uint8List>{};
@@ -42,6 +43,7 @@ class SharedDocumentsContext {
       .firstOrNull;
   bool get isCurrent =>
       !_denied &&
+      !_stale &&
       !_repo._closed &&
       _epoch == _repo._epoch &&
       _repo._session?.profile.partition == partition &&
@@ -51,6 +53,14 @@ class SharedDocumentsContext {
       !_repo.state.deletionPending &&
       scope != null &&
       (_visible?.call() ?? true);
+  bool get isDraftIdentityCurrent =>
+      !_repo._closed &&
+      _epoch == _repo._epoch &&
+      _repo._session?.profile.partition == partition &&
+      _repo._session?.profile.deviceId == _session.profile.deviceId &&
+      _repo._sessionInvalidReason == null &&
+      _repo.state.localAccessAllowed &&
+      !_repo.state.deletionPending;
   bool get canEdit => isCurrent && scope!.canEdit;
   bool _canEditDocument(String type, String id, {bool delete = false}) {
     if (!isCurrent || scope!.archived) return false;
@@ -124,8 +134,23 @@ class SharedDocumentsContext {
 
   void check({bool write = false}) {
     _repo._checkEpoch(_epoch);
-    if (!isCurrent || (write && !canEdit)) {
-      throw const CollaborationException('permission_revoked');
+    if (!isCurrent) {
+      final accessRevoked =
+          _denied ||
+          _repo.state.scopes.any(
+            (s) => s.id == scopeId && (s.revoked || s.deleted),
+          );
+      if (accessRevoked) {
+        throw const CollaborationException('permission_revoked');
+      }
+      // Route disposal, reconciliation, and a stale local view are not signed
+      // membership changes. Close this handle without changing the scope ACL.
+      _stale = true;
+      _bytes.clear();
+      throw const CollaborationException('document_context_changed');
+    }
+    if (write && !canEdit) {
+      throw const CollaborationException('record_edit_forbidden');
     }
   }
 
@@ -237,7 +262,7 @@ class SharedDocumentsContext {
       }
       if (operation.startsWith('tables.') &&
           scope!.kind != SharedScopeKind.organization) {
-        throw const CollaborationException('permission_revoked');
+        throw const CollaborationException('tables_scope_unsupported');
       }
       final supported = operation.startsWith('tables.')
           ? spreadsheetsSupported
@@ -297,14 +322,19 @@ class SharedDocumentsContext {
         _bytes.removeWhere((key, _) => key.startsWith('$target:'));
         await removeCache('attachments', target);
       }
-      if (const {
-        'permission_revoked',
-        'access_revoked',
-        'scope_deleted',
+      final scopeAccessDenied =
+          error is CollaborationApiException &&
+          const {
+            'permission_revoked',
+            'access_revoked',
+            'scope_deleted',
+          }.contains(error.code);
+      final sessionAccessDenied = const {
         'device_revoked',
         'auth_required',
         'session_expired',
-      }.contains(error.code)) {
+      }.contains(error.code);
+      if (scopeAccessDenied || sessionAccessDenied) {
         _denied = true;
         _onAccessLost?.call();
         _bytes.clear();
@@ -312,11 +342,7 @@ class SharedDocumentsContext {
           'DELETE FROM local_meta WHERE substr(name,1,?)=?',
           [_prefix.length, _prefix],
         );
-        if (const {
-          'permission_revoked',
-          'access_revoked',
-          'scope_deleted',
-        }.contains(error.code)) {
+        if (scopeAccessDenied) {
           await _repo._blockScope(partition, scopeId, _epoch);
           await _repo.refreshLocal();
         }
@@ -523,6 +549,7 @@ extension CollaborationDocumentActions on CollaborationRepository {
 class _RemoteSpreadsheetGateway
     implements
         SpreadsheetGateway,
+        SpreadsheetDraftIdentity,
         SpreadsheetRecordPermissions,
         SpreadsheetLocalPreview {
   _RemoteSpreadsheetGateway(this.context);
@@ -541,6 +568,8 @@ class _RemoteSpreadsheetGateway
   bool get online => context.online;
   @override
   bool get isCurrent => context.isCurrent;
+  @override
+  bool get isDraftIdentityCurrent => context.isDraftIdentityCurrent;
   SpreadsheetDocument _document(Object? value, {String? id}) {
     final doc = SpreadsheetDocument.fromJson(
       Map<String, dynamic>.from(value as Map),

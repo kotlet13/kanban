@@ -196,6 +196,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'unauthenticated' ||
     'session_expired' => l.sharingSessionExpired,
     'session_changed' => l.sharingAccountChanged,
+    'document_context_changed' => l.documentsContextChanged,
     'device_revoked' => l.sharingSessionRevoked,
     'forbidden' || 'permission_denied' => l.sharingPermissionDenied,
     'record_edit_forbidden' => l.recordEditForbidden,
@@ -208,6 +209,7 @@ String sharingErrorMessage(BuildContext context, Object error) {
     'access_revoked' ||
     'revoked' => l.sharingAccessRevoked,
     'feature_disabled' ||
+    'tables_scope_unsupported' ||
     'unsupported' ||
     'unsupported_version' ||
     'native_disabled' => l.sharingUnsupported,

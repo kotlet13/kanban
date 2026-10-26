@@ -2150,7 +2150,7 @@ class CryptoFinanceAccountChoices {
     final root = _map(jsonDecode(roots.single['wire'] as String)),
         rootProof = _map(root['authorization']['recordProof']);
     final chain = await context.access.openHistoryChain(root);
-    if (chain.nextRevision < witness['revision']) {
+    if ((root['revision'] as int) < witness['revision']) {
       throw const CryptoProjectionPending();
     }
     final evidenceFor = {
@@ -2160,10 +2160,19 @@ class CryptoFinanceAccountChoices {
       'recordProofHash': await context.codec.digest(rootProof),
     };
     var fetches = 0;
-    while (chain.nextRevision >= witness['revision']) {
-      final revision = chain.nextRevision, hash = chain.nextHash;
+    var currentFrame = true;
+    // openHistoryChain authenticates the root and starts at its predecessor.
+    // The financial witness commonly names that root itself. Process it with
+    // independent record authority before walking any authenticated ancestors.
+    while (currentFrame || chain.nextRevision >= witness['revision']) {
+      final isCurrent = currentFrame;
+      currentFrame = false;
+      final revision = isCurrent ? root['revision'] as int : chain.nextRevision;
+      final hash = isCurrent
+          ? await context.codec.digest(rootProof)
+          : chain.nextHash;
       Map<String, dynamic> item;
-      if (revision == root['revision']) {
+      if (isCurrent) {
         item = root;
       } else {
         List<Map<String, Object?>> cached = [];
@@ -2222,9 +2231,11 @@ class CryptoFinanceAccountChoices {
           item = _map(response['record']);
         }
       }
-      final authority = await chain.authority(item),
-          proof = _map(item['authorization']['recordProof']),
+      final proof = _map(item['authorization']['recordProof']),
           body = _body(proof);
+      final authority = isCurrent
+          ? await context.access.recordAuthority(body)
+          : await chain.authority(item);
       await context.db.execute(
         'INSERT OR IGNORE INTO crypto_business_history_proofs(partition,scope_id,domain,record_id,revision,proof_hash,wire,history_basis) VALUES(?,?,?,?,?,?,?,?)',
         [
@@ -2262,6 +2273,14 @@ class CryptoFinanceAccountChoices {
           expectedScopeId: scope,
           snapshotRecord: body,
           migrationOrigin: authority.migrationOrigin,
+          // Only the authenticated current root may hydrate its ordinary
+          // issuer/manager proof during a live pull. Ancestor witnesses keep
+          // their closed evidence boundary; _verify also checks the exact
+          // current head, epoch, access revision and restricted-read context.
+          onlineAuthorDirectory:
+              isCurrent &&
+              authority.currentEpoch &&
+              context.onlineAccountChoiceDirectories,
         );
         _financialChoice(
           raw,

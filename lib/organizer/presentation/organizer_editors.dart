@@ -82,6 +82,7 @@ class OrganizerEditorUpdates extends ChangeNotifier {
   OrganizerDraft? replacementDraft;
   VoidCallback? acceptReplacement;
   bool editingAllowed = true;
+  bool allowLocalDraftContinuation = false;
   bool costEditingEnabled = false;
   bool costVisible = true;
   bool financeLoading = false;
@@ -260,7 +261,11 @@ class _RecordEditorState extends State<_RecordEditor> {
   bool _busy = false;
   String? _failure;
   OrganizerDraft get draft => _draft;
-  bool get _readOnly => widget.updates?.editingAllowed == false;
+  bool get _sharedWriteUnavailable => widget.updates?.editingAllowed == false;
+  bool get _localDraftContinuation =>
+      _sharedWriteUnavailable &&
+      widget.updates?.allowLocalDraftContinuation == true;
+  bool get _readOnly => _sharedWriteUnavailable && !_localDraftContinuation;
 
   @override
   void initState() {
@@ -279,7 +284,7 @@ class _RecordEditorState extends State<_RecordEditor> {
     if (!mounted) return;
     final updates = widget.updates!;
     final replacement = updates.replacementDraft;
-    if (!updates.editingAllowed) FocusScope.of(context).unfocus();
+    if (_readOnly) FocusScope.of(context).unfocus();
     setState(() {
       if (replacement != null && replacement != _lastReplacement) {
         _lastReplacement = replacement;
@@ -313,7 +318,7 @@ class _RecordEditorState extends State<_RecordEditor> {
       widget.kind != OrganizerEditorKind.shoppingItem;
 
   Future<void> _save() async {
-    if (_busy || _readOnly) return;
+    if (_busy || _sharedWriteUnavailable) return;
     final invalidFields = _form.currentState!.validateGranularly();
     if (invalidFields.isNotEmpty) {
       // Validation can happen while the user is at the bottom of the form.
@@ -382,7 +387,7 @@ class _RecordEditorState extends State<_RecordEditor> {
   }
 
   Future<void> _delete() async {
-    if (_busy || _readOnly) return;
+    if (_busy || _sharedWriteUnavailable) return;
     if (widget.onDeleteWithReview != null) {
       setState(() => _busy = true);
       try {
@@ -415,7 +420,7 @@ class _RecordEditorState extends State<_RecordEditor> {
         return widget.wrap?.call(dialog) ?? dialog;
       },
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted || _sharedWriteUnavailable) return;
     setState(() {
       _busy = true;
       _failure = null;
@@ -525,7 +530,7 @@ class _RecordEditorState extends State<_RecordEditor> {
       actionsPadding: compact ? const EdgeInsets.fromLTRB(12, 0, 12, 12) : null,
       title: EditorHeading(
         title: widget.heading,
-        onReport: widget.onReport,
+        onReport: _sharedWriteUnavailable ? null : widget.onReport,
         busy: _busy,
         style: compact
             ? Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)
@@ -549,6 +554,15 @@ class _RecordEditorState extends State<_RecordEditor> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_localDraftContinuation)
+                  Padding(
+                    key: const ValueKey('organizer-local-draft-only'),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(l.organizerDraftSharingUnavailable),
+                    ),
+                  ),
                 if (_readOnly)
                   Padding(
                     key: const ValueKey('organizer-record-read-only'),
@@ -735,10 +749,11 @@ class _RecordEditorState extends State<_RecordEditor> {
                         widget.updates?.financeAccountChoices ??
                         widget.financeAccountChoices,
                     costEditingEnabled:
-                        widget.updates?.costEditingEnabled ??
-                        widget.costEditingEnabled,
+                        !_sharedWriteUnavailable &&
+                        (widget.updates?.costEditingEnabled ??
+                            widget.costEditingEnabled),
                     costVisible: widget.updates?.costVisible ?? true,
-                    onCostSectionOpened: _busy || _readOnly
+                    onCostSectionOpened: _busy || _sharedWriteUnavailable
                         ? null
                         : widget.updates?.onCostSectionOpened,
                     costAccountRequired: widget.costAccountRequired,
@@ -765,9 +780,10 @@ class _RecordEditorState extends State<_RecordEditor> {
                   TaskTimerPanel(
                     timer: draft.timer,
                     estimateMinutes: draft.estimateMinutes,
-                    onToggle: _busy || _readOnly
+                    onToggle: _busy || _sharedWriteUnavailable
                         ? null
                         : () async {
+                            if (_sharedWriteUnavailable) return;
                             setState(() => _busy = true);
                             try {
                               final task = await widget.onTimerToggle!();
@@ -949,9 +965,9 @@ class _RecordEditorState extends State<_RecordEditor> {
               busy: _busy,
               onCancel: () => Navigator.pop(context),
               onSave: _save,
-              saveEnabled: !_readOnly,
+              saveEnabled: !_sharedWriteUnavailable,
               onDelete:
-                  _readOnly ||
+                  _sharedWriteUnavailable ||
                       widget.onDelete == null &&
                           widget.onDeleteWithReview == null
                   ? null

@@ -6,7 +6,9 @@ Future<bool> refreshVerifiedAccountDirectoryJournal(
   AccountDirectoryRepository directory,
 ) async {
   final before = await directory.cachedVerifiedDirectory();
-  final after = await directory.requireFresh();
+  final after = await directory.withoutRetainedAuthority(
+    directory.requireFresh,
+  );
   // snapshotHash includes the full verified state (including keyring entries),
   // while journal-only events change generation/headHash without changing it.
   return before.snapshotHash != after.snapshotHash ||

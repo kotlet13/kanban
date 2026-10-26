@@ -19,6 +19,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This space does not have this feature enabled yet.';
 
   @override
+  String get documentsContextChanged =>
+      'This view is no longer current. Return to the space and reopen it. Your draft stays on this device.';
+
+  @override
   String get routeError => 'Route error';
 
   @override
@@ -1119,6 +1123,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharingView => 'View';
+
+  @override
+  String get financeAccountOverview => 'Account overview';
 
   @override
   String get financeEditAccount => 'Edit account';
@@ -2610,6 +2617,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get gardenSaveError =>
       'Could not save changes. Your draft is still open. Try again; if the saved garden changed, reopen it.';
+
+  @override
+  String get gardenEditConflict =>
+      'The garden changed while you were editing it. Saving is blocked to preserve the newer version. Your changes are still in the open editor.';
 
   @override
   String get gardenDeleteTitle => 'Delete garden?';
@@ -4740,6 +4751,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recoveryCheckingDevice => 'Checking local storage…';
 
   @override
+  String get recoveryHistoricalExportsLabel => 'Copies';
+
+  @override
   String get recoveryCleanupLabel => 'Cleanup unfinished';
 
   @override
@@ -5453,4 +5467,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingRestoreForbidden =>
       'Only the space owner or original author can restore this record. Your draft is retained.';
+
+  @override
+  String get cryptoProtectionCatalogChanged =>
+      'Connected spaces have changed. You can review protection later.';
+
+  @override
+  String get cryptoProtectionChecking => 'Checking protection status.';
+
+  @override
+  String get cryptoProtectionUnavailable =>
+      'Protection review is currently unavailable. Try again later.';
+
+  @override
+  String get cryptoProtectionReview => 'Review';
+
+  @override
+  String get cryptoProtectionRetry => 'Check again';
+
+  @override
+  String get cryptoProtectionDetails => 'Protection details';
+
+  @override
+  String get cryptoProtectionBackToApp => 'Back to app';
+
+  @override
+  String get organizerDraftSharingUnavailable =>
+      'Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing.';
 }

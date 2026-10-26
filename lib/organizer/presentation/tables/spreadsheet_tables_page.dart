@@ -249,6 +249,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   bool _editing = false, _busy = false, _dirty = false, _leaving = false;
   bool _accessLost = false;
   bool _missingTable = false;
+  bool _localDraftOnly = false;
   bool _hasRead = false;
   String? _message;
   Timer? _timer;
@@ -256,8 +257,20 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   StreamSubscription<void>? _changes;
   bool _reading = false, _readAgain = false;
   Future<void> _draftWrite = Future.value();
+  bool get _draftIdentityCurrent => widget.gateway is SpreadsheetDraftIdentity
+      ? (widget.gateway as SpreadsheetDraftIdentity).isDraftIdentityCurrent
+      : widget.gateway.isCurrent;
+  bool get _keepingLocalDraft =>
+      _editing &&
+      _draftIdentityCurrent &&
+      (_localDraftOnly ||
+          !widget.gateway.isCurrent ||
+          !widget.gateway.canEditDocument(_document));
+  bool get _draftEditable => _writable || _keepingLocalDraft;
   bool get _writable =>
       !_missingTable &&
+      !_localDraftOnly &&
+      _draftIdentityCurrent &&
       _editing &&
       _lease?.token != null &&
       _lease!.active &&
@@ -299,7 +312,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
           setState(() => _message = TablesStrings.of(context).draftFailed);
         }
       });
-      _stopEditing();
+      if (!_keepingLocalDraft) _stopEditing();
     }
     if (state == AppLifecycleState.resumed) _load();
   }
@@ -369,7 +382,11 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
 
   void _tick() {
     if (!mounted || _leaving || _missingTable) return;
-    if (!widget.gateway.isCurrent) {
+    if (!widget.gateway.isCurrent || !_draftIdentityCurrent) {
+      if (_keepingLocalDraft) {
+        if (!_localDraftOnly) _lose();
+        return;
+      }
       if (!_accessLost) {
         _accessLost = true;
         _lose();
@@ -380,6 +397,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
       }
       return;
     }
+    if (_localDraftOnly) return;
     _ticks++;
     if (_editing &&
         (!_lease!.active ||
@@ -410,7 +428,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   }
 
   void _change(Map<String, String> cells) {
-    if (!_writable || _recovery != null) return;
+    if (!_draftEditable || _recovery != null) return;
     setState(() {
       _cells = Map.of(cells);
       _dirty = true;
@@ -446,6 +464,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
       setState(() {
         _lease = lease;
         _editing = true;
+        _localDraftOnly = false;
         _ticks = 0;
         _message = null;
         if (_dirty && fresh.document.revision != _document.revision) {
@@ -527,6 +546,20 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   void _lose() {
     if (!mounted) return;
     _persist().catchError((Object _) {});
+    if (_keepingLocalDraft) {
+      final token = _lease?.token;
+      setState(() {
+        _localDraftOnly = true;
+        _lease = null;
+        _message = null;
+      });
+      if (token != null) {
+        unawaited(
+          widget.gateway.release(_document.id, token).catchError((Object _) {}),
+        );
+      }
+      return;
+    }
     setState(() {
       _editing = false;
       _lease = null;
@@ -722,7 +755,9 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
   @override
   Widget build(BuildContext context) {
     final s = TablesStrings.of(context), lease = _lease;
-    if (!widget.gateway.isCurrent || _missingTable) {
+    if ((!widget.gateway.isCurrent && !_keepingLocalDraft) ||
+        !_draftIdentityCurrent ||
+        _missingTable) {
       return PopScope(
         canPop: _leaving,
         onPopInvokedWithResult: (didPop, result) {
@@ -748,7 +783,13 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
         appBar: AppBar(
           title: Text(_title),
           actions: [
-            if (_writable) ...[
+            if (_keepingLocalDraft)
+              IconButton(
+                tooltip: s.keepDraftAndClose,
+                onPressed: _busy ? null : _leave,
+                icon: const Icon(Icons.check),
+              )
+            else if (_writable) ...[
               IconButton(
                 tooltip: s.save,
                 onPressed: _busy || _recovery != null ? null : () => _save(),
@@ -769,7 +810,7 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                 onPressed: _busy ? null : _begin,
                 icon: const Icon(Icons.edit_outlined),
               ),
-            if (_writable || widget.onReport != null)
+            if (!_keepingLocalDraft && (_writable || widget.onReport != null))
               PopupMenuButton<String>(
                 tooltip: s.more,
                 onSelected: (value) async {
@@ -816,7 +857,10 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                       if (!widget.gateway.online) _Message(s.offline),
                       if (!_editing && lease != null && lease.active)
                         _Message(s.locked(lease.holderName)),
-                      if (_editing) _Message(s.editing),
+                      if (_keepingLocalDraft)
+                        _Message(s.localDraftOnly)
+                      else if (_editing)
+                        _Message(s.editing),
                       if (_message != null) _Message(_message!),
                       if (_recovery != null)
                         _Message(
@@ -852,12 +896,12 @@ class _SpreadsheetDetailPageState extends State<SpreadsheetDetailPage>
                       )
                     : SpreadsheetGrid(
                         cells: _cells,
-                        editable: _writable && !_busy && _recovery == null,
+                        editable: _draftEditable && !_busy && _recovery == null,
                         onChanged: _change,
-                        canAccess: () => widget.gateway.isCurrent,
+                        canAccess: () => _draftIdentityCurrent,
                       ),
               ),
-              if (widget.attachmentsBuilder != null)
+              if (!_keepingLocalDraft && widget.attachmentsBuilder != null)
                 ConstrainedBox(
                   constraints: BoxConstraints(
                     maxHeight: constraints.maxHeight * .25,

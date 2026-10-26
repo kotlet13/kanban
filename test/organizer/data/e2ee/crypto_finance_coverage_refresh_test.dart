@@ -31,6 +31,7 @@ import '../collaboration_repository_test.dart' show MemorySessionStore;
 
 const _scope = '10000000-0000-4000-8000-000000000001';
 const _account = '20000000-0000-4000-8000-000000000001';
+const _coverageChild = '70000000-0000-4000-8000-000000000025';
 
 class _Secure implements AccountCryptoStore {
   @override
@@ -41,6 +42,7 @@ class _Secure implements AccountCryptoStore {
 
 class _Transport implements CollaborationTransport {
   late _Runtime runtime;
+  bool current = true;
   @override
   Future<Map<String, dynamic>> call({
     required String serverUrl,
@@ -93,9 +95,13 @@ class _Transport implements CollaborationTransport {
 // head/origin boundary. The real policy mapper, payment snapshot and repository
 // delivery guards are exercised; this is not a signature-verifier test.
 class _Head implements VerifiedScopeHead {
-  _Head({required this.accessRevision, required int policyRevision}) {
+  _Head({
+    required this.accessRevision,
+    required int policyRevision,
+    this.scopeId = _scope,
+  }) {
     body = {
-      'scopeId': _scope,
+      'scopeId': scopeId,
       'epoch': 1,
       'previousHeadHash': cryptoZeroHash,
       'initialLifecycleHash': 'b' * 64,
@@ -127,7 +133,7 @@ class _Head implements VerifiedScopeHead {
   @override
   bool get active => true;
   @override
-  String get scopeId => _scope;
+  final String scopeId;
   @override
   int get epoch => 1;
   @override
@@ -137,12 +143,18 @@ class _Head implements VerifiedScopeHead {
       members.singleWhere((m) => m['accountId'] == id);
   @override
   String? commitment(String domain) => null;
+  @override
+  List<Map<String, dynamic>> get invitationPreauthorizations => [];
 }
 
 class _Access extends SessionCryptoAccess {
   _Access({required super.account, required this.head});
   final _Head head;
   bool denied = false;
+  _Head? coverageChildHead;
+  Map<String, dynamic>? coverageChildDescriptor;
+  bool coverageChildCold = false, coverageChildOnlineReady = false;
+  final coverageChildHeadReads = <bool>[];
   @override
   Future<T> withVerifiedOperation<T>(
     Future<T> Function() body, {
@@ -154,16 +166,24 @@ class _Access extends SessionCryptoAccess {
     bool online = false,
   }) async {
     if (denied) throw const CollaborationException('permission_revoked');
+    if (scopeId == coverageChildHead?.scopeId) {
+      coverageChildHeadReads.add(online);
+      if (coverageChildCold && !coverageChildOnlineReady && !online) {
+        throw const CryptoAuthorityPending('directory_proof_pending');
+      }
+      if (online) coverageChildOnlineReady = true;
+      return coverageChildHead!;
+    }
     return head;
   }
 
   @override
   Future<CryptoReadContext> readContext(String scopeId, String domain) async {
-    await currentHead(scopeId);
+    final current = await currentHead(scopeId);
     return CryptoReadContext(
-      epoch: head.epoch,
-      accessRevision: head.accessRevision,
-      headHash: head.headHash,
+      epoch: current.epoch,
+      accessRevision: current.accessRevision,
+      headHash: current.headHash,
     );
   }
 
@@ -171,7 +191,14 @@ class _Access extends SessionCryptoAccess {
   Future<Map<String, dynamic>> verifiedScopeDescriptor(
     String scopeId, {
     bool online = false,
-  }) async => {'kind': 'household', 'accessPolicyVersion': 3};
+  }) async {
+    if (scopeId == coverageChildHead?.scopeId) {
+      await currentHead(scopeId, online: online);
+      return coverageChildDescriptor!;
+    }
+    return {'kind': 'household', 'accessPolicyVersion': 3};
+  }
+
   @override
   Future<String> verifyInitialLifecycle(
     String scopeId,
@@ -185,6 +212,8 @@ class _Access extends SessionCryptoAccess {
 class _Runtime extends CryptoBusinessSession {
   _Runtime(super.account, super.access, super.db);
   Future<void> Function()? beforeDelivery;
+  final coverageChildren = <Map<String, dynamic>>[];
+  Future<void> Function()? afterCoverageChildPull;
   final financePullReplies = <Map<String, dynamic>>[];
   final pulls = <String>[];
   bool changeHeadDuringContent = false;
@@ -197,6 +226,7 @@ class _Runtime extends CryptoBusinessSession {
   @override
   Future<List<Map<String, dynamic>>> catalog() async => [
     {'id': _scope},
+    ...coverageChildren,
   ];
   @override
   Future<void> pullVerified(
@@ -206,6 +236,9 @@ class _Runtime extends CryptoBusinessSession {
   }) async {
     await access.readContext(scopeId, domain);
     pulls.add(domain);
+    if (scopeId == _coverageChild && domain == 'finance') {
+      await afterCoverageChildPull?.call();
+    }
     if (domain == 'finance') {
       await beforeFinancePull?.call();
       if (failFinancePull) throw const CollaborationException('network');
@@ -307,6 +340,7 @@ Future<
     _Access access,
     _Runtime runtime,
     _Repository repository,
+    _Transport transport,
   })
 >
 _fixture({int headRevision = 0, int policyRevision = 1}) async {
@@ -331,7 +365,7 @@ _fixture({int headRevision = 0, int policyRevision = 1}) async {
       session: session,
       transport: transport,
       store: CryptoIdentityStore(db, _Secure(), session.profile.partition),
-      isCurrent: () => true,
+      isCurrent: () => transport.current,
     ),
   );
   final access = _Access(
@@ -359,7 +393,13 @@ _fixture({int headRevision = 0, int policyRevision = 1}) async {
     _scope,
     jsonEncode(scope.toJson()),
   ]);
-  return (db: db, access: access, runtime: runtime, repository: repository);
+  return (
+    db: db,
+    access: access,
+    runtime: runtime,
+    repository: repository,
+    transport: transport,
+  );
 }
 
 const _bank = '60000000-0000-4000-8000-000000000001';
@@ -438,8 +478,132 @@ Future<void> _seed(dynamic f) async {
   }
 }
 
+// Already authenticated head/descriptor boundary is synthetic. Real coverage,
+// exact parent-token admission, complete inventory and checkpoint SQL run here.
+Future<void> _seedCoverageChild(
+  dynamic f, {
+  bool cold = true,
+  bool wrongParent = false,
+  bool topologyIncludesChild = true,
+  bool financeAllowed = true,
+}) async {
+  await _seed(f);
+  final server = f.runtime.account.directory.session.profile.serverId as String;
+  final childHead = _Head(
+    accessRevision: 0,
+    policyRevision: 2,
+    scopeId: _coverageChild,
+  )..headHash = 'e' * 64;
+  if (!financeAllowed) childHead.body['members'][0]['financeRole'] = 'none';
+  f.access
+    ..coverageChildHead = childHead
+    ..coverageChildCold = cold
+    ..coverageChildDescriptor = {
+      'kind': 'project',
+      'accessPolicyVersion': 3,
+      'parentScopeToken': wrongParent
+          ? '0' * 64
+          : await cryptoSha256([
+              ...utf8.encode('JivieParentLifecycleScope/v2\n'),
+              ...CryptoJson.encode({
+                'version': 2,
+                'serverId': server,
+                'scopeId': _coverageChild,
+                'parentScopeId': _scope,
+              }),
+            ]),
+    };
+  f.runtime.coverageChildren.add({
+    'id': _coverageChild,
+    'parentScopeId': _scope,
+  });
+  final token = await CryptoFinanceTopology.childToken(
+    server,
+    _scope,
+    _coverageChild,
+  );
+  final topology = await CryptoFinanceTopology.create(
+    serverId: server,
+    scopeId: _scope,
+    childTokens: topologyIncludesChild ? [token] : [],
+  );
+  final metadataId = await f.runtime.reservedRecordId(_scope, 'scopeMetadata');
+  final metadata = await f.runtime.record(
+    _scope,
+    'content',
+    metadataId,
+    type: 'scopeMetadata',
+  );
+  final raw = jsonDecode(metadata['raw_payload'] as String) as Map;
+  await f.db.execute(
+    "UPDATE crypto_business_records SET raw_payload=? WHERE partition=? AND scope_id=? AND type='scopeMetadata'",
+    [
+      jsonEncode({...raw, 'financeTopology': topology}),
+      f.runtime.partition,
+      _scope,
+    ],
+  );
+  await f.db.execute(
+    "INSERT INTO crypto_scope_state(partition,scope_id,domain,state,epoch,access_revision,scope_sequence,complete,floor) VALUES(?,?,'finance','committed',1,0,2,1,1)",
+    [f.runtime.partition, _coverageChild],
+  );
+  await f.db.execute(
+    "INSERT INTO crypto_domain_checkpoints VALUES(?,?,'finance',?,1,0,2,?,0,'synthetic-child-finance-snapshot','{}','migrationCapturedSource')",
+    [f.runtime.partition, _coverageChild, childHead.headHash, 'c' * 64],
+  );
+}
+
+Future<Map<String, dynamic>> _readCoverage(dynamic f) =>
+    f.runtime.organizationFinanceCoverage(
+          _scope,
+          refreshRootFinance: true,
+          expectedHeadHash: f.access.head.headHash,
+        )
+        as Future<Map<String, dynamic>>;
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'new cold child coverage: online descriptor authority precedes exact child admission',
+    () async {
+      final f = await _fixture(headRevision: 0, policyRevision: 2);
+      await _seedCoverageChild(f);
+      final coverage = await _readCoverage(f);
+      expect(coverage['organizationFinanceComplete'], isTrue);
+      expect(coverage['organizationFinanceScopeIds'], [_coverageChild]);
+      expect(coverage['organizationFinanceSequences'], {_coverageChild: 2});
+      expect(f.access.coverageChildHeadReads.first, isTrue);
+    },
+  );
+  for (final rejection in [
+    'wrong-parent',
+    'missing-topology-token',
+    'finance-denied',
+    'identity-changed',
+  ]) {
+    test(
+      'new cold child coverage guard: $rejection remains incomplete',
+      () async {
+        final f = await _fixture(headRevision: 0, policyRevision: 2);
+        await _seedCoverageChild(
+          f,
+          cold: false,
+          wrongParent: rejection == 'wrong-parent',
+          topologyIncludesChild: rejection != 'missing-topology-token',
+          financeAllowed: rejection != 'finance-denied',
+        );
+        if (rejection == 'identity-changed') {
+          f.runtime.afterCoverageChildPull = () async {
+            f.transport.current = false;
+          };
+        }
+        final coverage = await _readCoverage(f);
+        expect(coverage['organizationFinanceComplete'], isFalse);
+        expect(coverage['organizationFinanceScopeIds'], isEmpty);
+        expect(coverage['organizationFinanceSequences'], isEmpty);
+      },
+    );
+  }
   test(
     'policy-only background retains old coverage but a failed pull never claims fresh sync',
     () async {
