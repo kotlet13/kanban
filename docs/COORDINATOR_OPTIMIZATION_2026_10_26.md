@@ -45,3 +45,22 @@ je zato zagnan posebej, ne ponovljen. Vseh pet kontrol ima samo en tek.
 
 P2–P7 še odprto; P8 najprej zahteva meritev lokalnega SQL/CPU, ne slepega
 spreminjanja. Status naslednjih sklopov dodajamo spodaj pred njihovim commitom.
+
+## P5a — drugo branje inboxa samo po oddaljenem ukazu
+
+Izvedeno: `_syncCommands` vrne, ali je dejansko poskusil oddaljen ukaz.
+Prazna ali lokalno zavrnjena vrsta ne povzroči drugega `_syncInbox`. Po ACK,
+`notification_missing` in konfliktu se drugo branje ohrani. Nadaljevanje
+shranjenih ukazov, nespremenjen request, preklici in napake ostanejo isti.
+
+4 nove headless repository kontrole PASS: prazna vrsta ima 1 inbox.sync/0
+inbox.read; ACK, poteklo obvestilo in konflikt imajo 2 inbox.sync/1 inbox.read.
+ACK se uporabi; missing odstrani samo obvestilo; konflikt ostane blocked;
+pravica do prostora je ohranjena. Prvi tek je ustavila sintetična fixture
+brez eksplicitnega legacy routerja (crypto_reconciliation_required); dodan
+fail-closed router, brez izmišljenih ključev. Drugi tek 3 PASS, ACK fixture
+imela star datum 11.10. in je pravilno sprožila retencijo. Tretji tek SAMO ACK
+s trenutnim datumom PASS. Ni četrtega teka ali ponovitve treh PASS.
+Ozka analiza 0 napak/0 opozoril, 9 obstoječih info; nov info v testu popravljen.
+Dokazi `p5a-*`. Transport je sintetičen in SQLite pravi; ne HTTP/native test.
+Konfiguracijski fanout (P5b) še sledi.

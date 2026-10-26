@@ -172,8 +172,11 @@ extension CollaborationNotificationSync on CollaborationRepository {
     );
   }
 
-  Future<void> _syncCommands(DeviceSession session, int epoch) async {
+  /// Whether a remote command was attempted; only then can its effects require
+  /// a second inbox pull. Local denials and an empty queue do not create work.
+  Future<bool> _syncCommands(DeviceSession session, int epoch) async {
     final p = session.profile.partition;
+    var remoteAttempted = false;
     while (true) {
       _checkEpoch(epoch);
       await _renewLease(p);
@@ -181,7 +184,7 @@ extension CollaborationNotificationSync on CollaborationRepository {
         "SELECT * FROM commands WHERE partition=? AND state='pending' AND (?=1 OR operation!='reminders.put' OR EXISTS(SELECT 1 FROM scopes s WHERE s.partition=commands.partition AND s.id=json_extract(commands.params,'\$.scopeId') AND json_extract(s.data,'\$.kind')='personal')) AND NOT EXISTS(SELECT 1 FROM local_meta m WHERE m.name='scope_reconciliation:'||commands.partition||':'||json_extract(commands.params,'\$.scopeId')) ORDER BY sequence LIMIT 1",
         [p, _sharedUploadsAllowed ? 1 : 0],
       );
-      if (rows.isEmpty) return;
+      if (rows.isEmpty) return remoteAttempted;
       final command = rows.first,
           params = CollaborationRepository._map(command['params']);
       try {
@@ -213,6 +216,7 @@ extension CollaborationNotificationSync on CollaborationRepository {
             throw const CollaborationApiException('finance_forbidden');
           }
         }
+        remoteAttempted = true;
         final reply = await _callSession(
           session,
           epoch,

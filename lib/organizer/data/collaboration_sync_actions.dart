@@ -1276,8 +1276,9 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
         if (_inboxSupported && (changes == null || changes.inbox)) {
           await _syncInbox(session, epoch);
-          await _syncCommands(session, epoch);
-          await _syncInbox(session, epoch);
+          if (await _syncCommands(session, epoch)) {
+            await _syncInbox(session, epoch);
+          }
           await _syncNotificationConfiguration(session, epoch, scopes);
         }
         final upgrade = cryptoRouter;
