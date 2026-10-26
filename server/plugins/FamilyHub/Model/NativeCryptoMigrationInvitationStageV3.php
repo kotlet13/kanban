@@ -23,14 +23,6 @@ class NativeCryptoMigrationInvitationStageV3 extends NativeDatabase
         return $value;
     }
 
-    private function integer($value, $minimum = 0)
-    {
-        if (!is_int($value) || $value < $minimum || $value > 9007199254740991) {
-            throw new NativeError('crypto_invitation_migration_count');
-        }
-        return $value;
-    }
-
     private function same($a, $b)
     {
         return NativeCryptoCodec::canonical($a) === NativeCryptoCodec::canonical($b);
