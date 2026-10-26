@@ -1,3 +1,20 @@
+26. oktober — **Commit/push pred statičnim dead-code pregledom; brez čiščenja kode**.
+User naroči najprej commit/push aplikacije+strežnika, nato pregled ob zaklenjenem
+Macu; dodatno izrecno zahteva dokumentiranje. Celoten dotedanji razvoj79datotek
+commit65373c0, origin/main exact hash potrjen. Strežnik že v1694c42 v istemrepo,
+ni umetne nove strežniške spremembe. Sol6.1high UI/core/server, rootanaliza+
+preverjanje. docs/DEAD_CODE_REVIEW_2026_10_26.md: 5UI+11core+5server ugotovitev,
+stopnje gotovosti/aktivne alternative/testne pasti/compat meje. Dart analyze lib
+0errors0warnings513infos, brez unused/dead diagnoz; graf564Dart/555mainreachable,
+9orphanov(3UI,1v2parity,5compat/test-only). UI3orphanfile+2testonlydecl; core
+operationEntries/oldchoice subgraph/wrappers; PHP2private+1publichelper,2dead
+inline-deleteguardbranches (ne slepo odstraniti, drugi guardi ostanejo).
+_syncNow še LIVE prekcoordinatorja; v1/migracije/coldrestore/framework/native
+entrypoints ohraniti. Noben productedit/delete/test/build/GUI/Docker/phone/prod
+poseg. Pregled ni dokaz popolne odsotnosti deadcode ali izboljšanja hitrosti.
+Pred čiščenjem prenesi koristne teste iz opuščenih poti na dejanske vstopne točke.
+Dokazi build/qa/dead-code-audit-20261026 (ignorirano); produkcijakoda ostane65373c0.
+
 25. oktober — **Dejanski Mac r13: pravice/osnutek/predogled PASS**.
 User »Ok, stestiri mac verzije«; Sol6.1high env+neodvisnipregled, rootGUI.
 Isti MacSyncA/B1build+1installvsak, isti18821/identitete/CA/Keychain/podatki;
