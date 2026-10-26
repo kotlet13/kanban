@@ -1,3 +1,20 @@
+26. oktober — **Koordinator:6implementacijskihsklopov,40novihkontrolPASS**.
+User naroči isti postopni test→commit→push princip. P1 a82b01b ciljni
+canonical documentbatch+queryorigin brezselfread; P5a ab3ab03 drugi inbox
+samo po commandattempt; P5b 6eaa8b9 additive notification config hint,
+oldcursor/oldclientfallback; P7 7d8a18d vrnjen status poemailconfirm;
+P4a 9abd131 inflightfinancechoices key(epoch/scope/mode/financegeneration/
+authoritygeneration), brezTTL; P3 d6ba7ba knownnonfinancialrecord opening
+uporabi syncNow/account.changes namesto dodatnegascopes.list preflighta.
+Vsakcommitpushremoteverified.40različnihnovihkontrol (32Dart/8PHPassertions),
+fixtureFAILi/poskusi dokumentirani, brezPASSrerun. FinalchangedDartanalyze
+0errors0warnings25starihinfo; diffcheckPASS. PHPdisposableDocker networknone/
+read-only/tmpfs memorySQL; neHTTP/crypto/nativebenchmark. NiGUI/build/install/
+deploy/phone/prod/QAdatachange. docs/COORDINATOR_OPTIMIZATION_2026_10_26.md
+jeaktualniledger; MODULE_SYNC_AUDIT zgodovinskiosnutek. P2download/P6members-
+invitations šeODPRTO; P4completedresultreuse neizveden; P8najprejmeritev.
+Podpisi/receipts/ključi/DBschema/osnutki/legacyfallback ohranjeni.
+
 26. oktober — **Koordinator P1: ciljni dokumentni signali;5novihPASS**.
 User naroči postopne optimizacije+lokalne teste+commit/push vsakegasklopa.
 P1 typed canonical table/attachment targetbatch poSQLcommitu; broadlegacy

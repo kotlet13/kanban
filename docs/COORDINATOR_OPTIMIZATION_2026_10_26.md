@@ -8,6 +8,19 @@ Meritve spodaj so števci konkretnih testnih poti, ne mobilni časovni benchmark
 ali obljuba števila fizičnih E2EE HTTP zahtevkov. Starih uspešnih scenarijev
 ne ponavljamo. Največ trije poskusi neuspešnega scenarija.
 
+## Trenutno stanje po šestih implementacijskih sklopih
+
+| Točka | Stanje |
+|---|---|
+| P1 dokumentni signali | Izvedeno in ciljno preverjeno |
+| P2 večkosovni download | Odprto: meritev priprave, nato omejena seja istega preverjenega descriptorja |
+| P3 znani zapisi | Izvedeno in ciljno preverjeno; finance/neznani cilji ohranijo namensko pot |
+| P4 finančne izbire | Sočasne združljive priprave združene; reuse po zaključku še ni uveden |
+| P5 inbox/konfiguracija | Oba sklopa izvedena in ciljno preverjena |
+| P6 članstvo/povabila | Odprto: per-access/invitation generacija in invalidacija po lastnih spremembah |
+| P7 email status | Izvedeno in ciljno preverjeno |
+| P8 lokalni SQL/CPU | Najprej meritev; brez sprememb |
+
 ## P1 — ciljni signali dokumentov in lastno branje
 
 Izvedeno: lokalni signal preverjene projekcije nosi vrsto in canonical ID;
@@ -41,9 +54,9 @@ Dokazi: `build/qa/coordinator-optimization-20261026/p1-*.log` (ignorirano).
 Prvi skupni testni filter je izbral samo tri `coordinator` teste; SQL test
 je zato zagnan posebej, ne ponovljen. Vseh pet kontrol ima samo en tek.
 
-## Nadaljevanje
+## Zgodovinsko stanje po prvem sklopu
 
-P2–P7 še odprto; P8 najprej zahteva meritev lokalnega SQL/CPU, ne slepega
+Takrat P2–P7 še odprto; P8 najprej zahteva meritev lokalnega SQL/CPU, ne slepega
 spreminjanja. Status naslednjih sklopov dodajamo spodaj pred njihovim commitom.
 
 ## P5a — drugo branje inboxa samo po oddaljenem ukazu
@@ -144,3 +157,30 @@ lokalni task in vrne offline; neznani cilj obdrži negotiate/scopes.list in
 requiresConnection. Sintetični legacy transport s pravo SQLite/koordinatorjem,
 ne E2EE HTTP/native meritev. Analiza 0 napak/0 opozoril; 2 obstoječa info,
 3 novi slogovni info odpravljeni. Dokazi `p3-*`.
+
+## Zaključni pregled in Git kontrolne točke
+
+| Sklop | Commit, push in remote HEAD potrjen |
+|---|---|
+| P1 | `a82b01b` |
+| P5a | `ab3ab03` |
+| P5b | `6eaa8b9` |
+| P7 | `7d8a18d` |
+| P4a | `9abd131` |
+| P3 | `d6ba7ba` |
+
+Skupaj **40 različnih novih ciljnih kontrol**: 32 Dart repository/SQL/widget
+in 8 PHP assertions. Končni uspehi imajo zgoraj zapisane fixture napake in
+poskuse; niso skriti ali šteti kot dodatni uspehi. Uspešnih kontrol nismo
+ponavljali. Zaključna analiza vseh spremenjenih Dart datotek: exit0,
+0 napak/0 opozoril, 25 obstoječih slogovnih info. `git diff --check` PASS.
+To ni celotna regresija, nov HTTP E2EE scenarij, Mac GUI ali mobilni benchmark.
+Ni nove gradnje/namestitve, deploya ali sprememb obstoječih testnih podatkov.
+Edini strežniški tek je disposable Docker brez mreže s svežo memory SQLite.
+
+P2/P6 zahtevata naslednji ločen korak: trenutni cache decrypted blobov že
+preprečuje ponovno nalaganje cele datoteke, preostali pull/authority strošek
+še potrebuje meritev. Pri članstvu/povabilih prikaz accepted statusa ne sme
+ostati pripet na zastarel članstveni snapshot. Za ti poti ni uveden splošen
+TTL ali preskok svežega preverjanja. P4a prav tako ne trdi odprave zaporednih
+mount→editor priprav. Izvedeni sklopi se lahko neodvisno povrnejo.
