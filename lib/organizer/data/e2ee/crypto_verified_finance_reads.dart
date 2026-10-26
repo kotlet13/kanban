@@ -3,10 +3,10 @@ import 'account_directory_v2.dart' show cryptoSha256;
 import 'crypto_json.dart';
 import 'crypto_sync_repository.dart';
 
-/// Exact materialized result of a successful, complete, attested financial
+/// Exact materialized result of a successful, complete, attested domain
 /// pull. The guard is an opaque verified-authority lease, never a SQL flag.
-class CryptoVerifiedFinanceSnapshot {
-  const CryptoVerifiedFinanceSnapshot({
+class CryptoVerifiedDomainSnapshot {
+  const CryptoVerifiedDomainSnapshot({
     required this.scopeId,
     required this.read,
     required this.stateDigest,
@@ -17,11 +17,11 @@ class CryptoVerifiedFinanceSnapshot {
   final Future<bool> Function() isCurrent;
 }
 
-/// Lives only inside one locally initiated combined finance read. Consumers
+/// Lives only inside one locally initiated combined read. Consumers
 /// still validate their own manifests, references and completeness. Only the
-/// repeated attested finance pull can be omitted, for an exact unchanged view.
-class CryptoVerifiedFinanceReads {
-  final _snapshots = <String, _FinanceReadResult>{};
+/// repeated attested domain pull can be omitted, for an exact unchanged view.
+class CryptoVerifiedDomainReads {
+  final _snapshots = <String, _DomainReadResult>{};
   bool _active = true;
   int _generation = 0;
 
@@ -38,7 +38,7 @@ class CryptoVerifiedFinanceReads {
   Future<void> read(
     String scope, {
     required Future<void> Function() pull,
-    required Future<CryptoVerifiedFinanceSnapshot?> Function() capture,
+    required Future<CryptoVerifiedDomainSnapshot?> Function() capture,
   }) async {
     final previous = _snapshots.remove(scope);
     final generation = _generation;
@@ -67,7 +67,7 @@ class CryptoVerifiedFinanceReads {
           _active &&
           afterPull == _generation &&
           watch.elapsed < const Duration(seconds: 5)) {
-        _snapshots[scope] = _FinanceReadResult(snapshot, watch);
+        _snapshots[scope] = _DomainReadResult(snapshot, watch);
       }
     } catch (_) {
       invalidate();
@@ -76,16 +76,17 @@ class CryptoVerifiedFinanceReads {
   }
 }
 
-class _FinanceReadResult {
-  const _FinanceReadResult(this.snapshot, this.watch);
-  final CryptoVerifiedFinanceSnapshot snapshot;
+class _DomainReadResult {
+  const _DomainReadResult(this.snapshot, this.watch);
+  final CryptoVerifiedDomainSnapshot snapshot;
   final Stopwatch watch;
   bool get fresh => watch.elapsed < const Duration(seconds: 5);
 }
 
 /// Bounded local equality evidence only. SQL state never grants read authority.
-class CryptoFinanceReadState {
-  const CryptoFinanceReadState(this.db, this.p);
+class CryptoDomainReadState {
+  const CryptoDomainReadState(this.db, this.p, {this.domain = 'finance'});
+  final String domain;
   final CollaborationDatabase db;
   final String p;
 
@@ -103,11 +104,11 @@ class CryptoFinanceReadState {
       'SELECT * FROM crypto_scope_state WHERE partition=? AND scope_id=? ORDER BY domain',
       [p, scope],
     );
-    final finance = state.where((r) => r['domain'] == 'finance').firstOrNull;
-    if (finance == null ||
-        finance['complete'] != 1 ||
-        (finance['projection_cursor'] as int) <
-            (finance['transport_cursor'] as int)) {
+    final selected = state.where((r) => r['domain'] == domain).firstOrNull;
+    if (selected == null ||
+        selected['complete'] != 1 ||
+        (selected['projection_cursor'] as int) <
+            (selected['transport_cursor'] as int)) {
       return null;
     }
     final records = await db.rows(
@@ -142,3 +143,8 @@ class CryptoFinanceReadState {
     return cryptoSha256(encoded);
   });
 }
+
+// Preserve the existing finance API and its default domain unchanged.
+typedef CryptoVerifiedFinanceSnapshot = CryptoVerifiedDomainSnapshot;
+typedef CryptoVerifiedFinanceReads = CryptoVerifiedDomainReads;
+typedef CryptoFinanceReadState = CryptoDomainReadState;

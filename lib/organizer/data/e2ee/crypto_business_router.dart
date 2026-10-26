@@ -131,6 +131,7 @@ class CryptoBusinessRouter
         CryptoDomainRouter,
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
+        CryptoDocumentDownloadContext,
         CryptoVerifiedReadGroupContext,
         CryptoAccountDirectoryChanges,
         CryptoProjectionCursorTransition,
@@ -323,13 +324,36 @@ class CryptoBusinessRouter
     required Future<T> Function() read,
   }) async {
     _metadataReadGroup?.close();
-    final combined = _CombinedFinanceRead(this, session);
+    final combined = _CombinedVerifiedRead(this, session);
     try {
       return await runZoned(read, zoneValues: {_combinedFinanceRead: combined});
     } finally {
       combined.active = false;
       combined.authority?.close();
       combined.reads.close();
+    }
+  }
+
+  static final _documentDownload = Object();
+
+  @override
+  Future<T> withDocumentDownload<T>({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> identity,
+    required Future<T> Function() read,
+  }) async {
+    if (!const {'attachments.get', 'ideas.asset.get'}.contains(operation) ||
+        identity.containsKey('offset') ||
+        identity.containsKey('limit')) {
+      throw const FormatException('crypto_download_identity');
+    }
+    _metadataReadGroup?.close();
+    final download = _DocumentDownloadRead(this, session, operation, identity);
+    try {
+      return await runZoned(read, zoneValues: {_documentDownload: download});
+    } finally {
+      download.close();
     }
   }
 
@@ -472,14 +496,29 @@ class CryptoBusinessRouter
   ) async {
     final candidate = Zone.current[_combinedFinanceRead];
     final combined =
-        candidate is _CombinedFinanceRead && candidate.matches(this, session)
+        candidate is _CombinedVerifiedRead && candidate.matches(this, session)
         ? candidate
         : null;
     if (combined != null) await combined.initialize();
+    final downloadCandidate = Zone.current[_documentDownload];
+    final download =
+        downloadCandidate is _DocumentDownloadRead &&
+            downloadCandidate.matches(this, session) &&
+            downloadCandidate.matchesQuery(operation, params)
+        ? downloadCandidate
+        : null;
+    if (downloadCandidate is _DocumentDownloadRead && download == null) {
+      downloadCandidate.close();
+    }
+    if (download != null) await download.initialize();
     final account =
-        sharedAccess?.account ?? combined?.account ?? await accountFor(session);
+        sharedAccess?.account ??
+        download?.account ??
+        combined?.account ??
+        await accountFor(session);
     final access =
         sharedAccess ??
+        download?.access ??
         combined?.access ??
         SessionCryptoAccess(account: account);
     final combinedRead =
@@ -510,11 +549,13 @@ class CryptoBusinessRouter
         r'^finance[24]?\.(pull|accountChoices)$',
       ).hasMatch(operation),
       financeReads: combinedRead ? combined.reads : null,
+      documentReads: download?.reads,
       invalidateFinanceReads: () {
         // Any checkpoint/bootstrap delivery ends metadata reuse before its
         // existing fresh beforeDelivery guard or receipt-driven continuation.
         _metadataReadGroup?.close();
         combined?.reads.invalidate();
+        download?.reads.invalidate();
       },
     );
     Future<Map<String, dynamic>> runRead(
@@ -522,6 +563,11 @@ class CryptoBusinessRouter
     ) {
       Future<Map<String, dynamic>> verified() =>
           access.withVerifiedOperation(body);
+      if (download != null) {
+        return (download.authority ??= access.createReadOperation()).run(
+          verified,
+        );
+      }
       return combinedRead
           ? (combined.authority ??= access.createReadOperation()).run(verified)
           : verified();
@@ -665,8 +711,8 @@ class _FinancePolicyOnlyAttempt {
   bool dispatched = false;
 }
 
-class _CombinedFinanceRead {
-  _CombinedFinanceRead(this.owner, this.session);
+class _CombinedVerifiedRead {
+  _CombinedVerifiedRead(this.owner, this.session);
   final CryptoBusinessRouter owner;
   final DeviceSession session;
   AccountCryptoV2Workflow? account;
@@ -691,6 +737,29 @@ class _CombinedFinanceRead {
       (account?.directory.isCurrent() ?? true);
 }
 
+class _DocumentDownloadRead extends _CombinedVerifiedRead {
+  _DocumentDownloadRead(
+    super.owner,
+    super.session,
+    this.operation,
+    Map<String, Object?> identity,
+  ) : identity = CryptoInventoryJson.canonical(identity);
+  final String operation, identity;
+  bool matchesQuery(String op, Map<String, Object?> params) =>
+      active &&
+      op == operation &&
+      CryptoInventoryJson.canonical({
+            for (final e in params.entries)
+              if (e.key != 'offset' && e.key != 'limit') e.key: e.value,
+          }) ==
+          identity;
+  void close() {
+    active = false;
+    authority?.close();
+    reads.close();
+  }
+}
+
 class CryptoBusinessSession {
   CryptoBusinessSession(
     this.account,
@@ -699,11 +768,13 @@ class CryptoBusinessSession {
     this.financePolicyOnly = false,
     this.onlineAccountChoiceDirectories = false,
     this.financeReads,
+    this.documentReads,
     this.invalidateFinanceReads,
   });
   final bool financePolicyOnly;
   final bool onlineAccountChoiceDirectories;
   final CryptoVerifiedFinanceReads? financeReads;
+  final CryptoVerifiedDomainReads? documentReads;
   final void Function()? invalidateFinanceReads;
   CollaborationDatabase get database => db;
   String get partition => p;
@@ -1592,8 +1663,12 @@ class CryptoBusinessSession {
     String domain, {
     bool attest = true,
   }) => access.withVerifiedOperation(() {
-    final combined = financeReads;
-    if (combined == null || domain != 'finance' || !attest) {
+    final combined = domain == 'content'
+        ? documentReads
+        : domain == 'finance'
+        ? financeReads
+        : null;
+    if (combined == null || !attest) {
       // A non-attesting read cannot satisfy an attesting consumer later.
       if (!attest) combined?.invalidate();
       return _pullVerified(scopeId, domain, attest: attest);
@@ -1601,20 +1676,21 @@ class CryptoBusinessSession {
     return combined.read(
       scopeId,
       pull: () => _pullVerified(scopeId, domain, attest: true),
-      capture: () => _verifiedFinanceSnapshot(scopeId),
+      capture: () => _verifiedDomainSnapshot(scopeId, domain),
     );
   });
 
-  Future<CryptoVerifiedFinanceSnapshot?> _verifiedFinanceSnapshot(
+  Future<CryptoVerifiedDomainSnapshot?> _verifiedDomainSnapshot(
     String scope,
+    String domain,
   ) => access.withVerifiedOperation(() async {
-    final state = CryptoFinanceReadState(db, p);
+    final state = CryptoDomainReadState(db, p, domain: domain);
     Future<String?> fingerprint() => state.capture(scope);
     final before = await fingerprint();
     if (before == null) return null;
-    final read = await access.readContext(scope, 'finance');
-    if (!await hasReusableCheckpoint(scope, 'finance', read) ||
-        !await _observedComplete(scope, 'finance')) {
+    final read = await access.readContext(scope, domain);
+    if (!await hasReusableCheckpoint(scope, domain, read) ||
+        !await _observedComplete(scope, domain)) {
       return null;
     }
     final lease = await access.verifiedReadLease();
@@ -1624,7 +1700,7 @@ class CryptoBusinessSession {
         !await access.isVerifiedReadLeaseCurrent(lease)) {
       return null;
     }
-    return CryptoVerifiedFinanceSnapshot(
+    return CryptoVerifiedDomainSnapshot(
       scopeId: scope,
       read: read,
       stateDigest: before,

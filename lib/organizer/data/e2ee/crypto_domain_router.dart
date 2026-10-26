@@ -117,6 +117,17 @@ abstract interface class CryptoFinanceReadContext {
   });
 }
 
+/// One sequential plaintext chunk download. Reuse is local, session-bound and
+/// limited to the exact operation/identity parameters (excluding offset/limit).
+abstract interface class CryptoDocumentDownloadContext {
+  Future<T> withDocumentDownload<T>({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> identity,
+    required Future<T> Function() read,
+  });
+}
+
 /// Client-owned background permission queries do not also refresh aggregate
 /// finance snapshots. This is not a server response flag or an authority cache.
 abstract interface class CryptoFinancePolicyReadContext {

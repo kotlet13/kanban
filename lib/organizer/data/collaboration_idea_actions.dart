@@ -108,31 +108,48 @@ extension CollaborationIdeaActions on CollaborationRepository {
       )).isNotEmpty) {
         continue;
       }
-      final bytes = <int>[];
-      while (bytes.length < asset.size) {
-        final offset = bytes.length;
-        final reply = await _callSession(session, epoch, 'ideas.asset.get', {
-          'scopeId': scopeId,
-          'boardId': board.id,
-          'sha256': asset.sha256,
-          'offset': offset,
-          'limit': 262144,
-        });
-        _checkIdeaAssetReply(asset, reply);
-        if (reply['sha256'] != asset.sha256 ||
-            reply['size'] != asset.size ||
-            reply['offset'] != offset) {
-          throw const CollaborationException('invalid_response');
+      Future<Uint8List> receive() async {
+        final bytes = <int>[];
+        while (bytes.length < asset.size) {
+          final offset = bytes.length;
+          final reply = await _callSession(session, epoch, 'ideas.asset.get', {
+            'scopeId': scopeId,
+            'boardId': board.id,
+            'sha256': asset.sha256,
+            'offset': offset,
+            'limit': 262144,
+          });
+          _checkIdeaAssetReply(asset, reply);
+          if (reply['sha256'] != asset.sha256 ||
+              reply['size'] != asset.size ||
+              reply['offset'] != offset) {
+            throw const CollaborationException('invalid_response');
+          }
+          final chunk = base64Decode(reply['data'] as String);
+          if (chunk.isEmpty ||
+              chunk.length > 262144 ||
+              bytes.length + chunk.length > asset.size) {
+            throw const CollaborationException('invalid_response');
+          }
+          bytes.addAll(chunk);
         }
-        final chunk = base64Decode(reply['data'] as String);
-        if (chunk.isEmpty ||
-            chunk.length > 262144 ||
-            bytes.length + chunk.length > asset.size) {
-          throw const CollaborationException('invalid_response');
-        }
-        bytes.addAll(chunk);
+        return Uint8List.fromList(bytes);
       }
-      final data = Uint8List.fromList(bytes);
+
+      final router = cryptoRouter;
+      final data = router is CryptoDocumentDownloadContext
+          ? await (router as CryptoDocumentDownloadContext)
+                .withDocumentDownload(
+                  session: session,
+                  operation: 'ideas.asset.get',
+                  identity: {
+                    'scopeId': scopeId,
+                    'boardId': board.id,
+                    'sha256': asset.sha256,
+                  },
+                  read: receive,
+                )
+          : await receive();
       await verifyIdeaAsset(asset, data);
       _checkEpoch(epoch);
       await _writableReadIdea(session.profile.partition, scopeId, board.id);

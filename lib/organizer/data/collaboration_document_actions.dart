@@ -1027,32 +1027,49 @@ class _RemoteAttachmentGateway
     context.check();
     // A cached file never bypasses a fresh online permission check.
     try {
-      final builder = BytesBuilder(copy: false);
-      while (builder.length < attachment.size) {
-        final offset = builder.length;
-        final reply = await context.call('attachments.get', {
-          ..._params,
-          'id': attachment.id,
-          'offset': offset,
-          'limit': attachmentChunkBytes,
-        });
-        final metadata = _metadata(reply['attachment'], id: attachment.id);
-        if (metadata.sha256 != attachment.sha256 ||
-            metadata.size != attachment.size ||
-            reply['offset'] != offset ||
-            reply['total'] != attachment.size) {
-          throw const CollaborationException('invalid_response');
+      Future<Uint8List> receive() async {
+        final builder = BytesBuilder(copy: false);
+        while (builder.length < attachment.size) {
+          final offset = builder.length;
+          final reply = await context.call('attachments.get', {
+            ..._params,
+            'id': attachment.id,
+            'offset': offset,
+            'limit': attachmentChunkBytes,
+          });
+          final metadata = _metadata(reply['attachment'], id: attachment.id);
+          if (metadata.sha256 != attachment.sha256 ||
+              metadata.size != attachment.size ||
+              reply['offset'] != offset ||
+              reply['total'] != attachment.size) {
+            throw const CollaborationException('invalid_response');
+          }
+          final chunk = base64Decode(reply['dataBase64'] as String);
+          if (chunk.isEmpty ||
+              chunk.length > attachmentChunkBytes ||
+              builder.length + chunk.length > attachment.size) {
+            throw const CollaborationException('invalid_response');
+          }
+          builder.add(chunk);
+          onProgress?.call(builder.length / attachment.size);
         }
-        final chunk = base64Decode(reply['dataBase64'] as String);
-        if (chunk.isEmpty ||
-            chunk.length > attachmentChunkBytes ||
-            builder.length + chunk.length > attachment.size) {
-          throw const CollaborationException('invalid_response');
-        }
-        builder.add(chunk);
-        onProgress?.call(builder.length / attachment.size);
+        return builder.takeBytes();
       }
-      final result = builder.takeBytes();
+
+      final router = context._repo.cryptoRouter;
+      final result = router is CryptoDocumentDownloadContext
+          ? await (router as CryptoDocumentDownloadContext)
+                .withDocumentDownload(
+                  session: context._session,
+                  operation: 'attachments.get',
+                  identity: {
+                    ..._params,
+                    'scopeId': context.scopeId,
+                    'id': attachment.id,
+                  },
+                  read: receive,
+                )
+          : await receive();
       await _verify(attachment, result);
       await context.putCache('file', '$_targetKey:${attachment.id}', {
         'metadata': attachment.toJson(),

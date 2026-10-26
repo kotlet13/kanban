@@ -1,4 +1,6 @@
 import '../support/synthetic_content_route_guard.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_domain_router.dart';
+import 'package:kanban/organizer/data/device_session_store.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -147,6 +149,42 @@ class _DocumentsServer extends FakeServer {
   }
 }
 
+// Measures the real repository chunk loop, with a synthetic legacy transport.
+// This is not a cryptographic authority or HTTP-count fixture.
+class _DownloadContext
+    implements CryptoDomainRouter, CryptoDocumentDownloadContext {
+  int starts = 0, finishes = 0, chunks = 0;
+  Map<String, Object?>? identity;
+  bool active = false;
+  @override
+  Future<T> withDocumentDownload<T>({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> identity,
+    required Future<T> Function() read,
+  }) async {
+    expect(operation, 'attachments.get');
+    expect(active, false);
+    starts++;
+    this.identity = Map.of(identity);
+    active = true;
+    try {
+      return await read();
+    } finally {
+      active = false;
+      finishes++;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> dispatch({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> params,
+    required Set<String> protectedScopeIds,
+  }) => throw StateError('Legacy fixture only');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -156,8 +194,10 @@ void main() {
   late CollaborationRepository repository;
   late SharedDocumentsContext context;
   late String scopeId;
+  late _DownloadContext downloadContext;
   setUp(() async {
     server = _DocumentsServer();
+    downloadContext = _DownloadContext();
     transport = FakeTransport(server);
     database = CollaborationDatabase(NativeDatabase.memory());
     repository = CollaborationRepository(
@@ -165,6 +205,7 @@ void main() {
       transport,
       MemorySessionStore(),
       contentRouteGuard: const SyntheticContentRouteGuard(),
+      cryptoRouter: downloadContext,
     );
     await repository.initialize();
     await repository.login(
@@ -183,6 +224,43 @@ void main() {
   );
   Uint8List fileBytes() =>
       Uint8List.fromList(utf8.encode('%PDF-1.7\n${'document data\n' * 30000}'));
+
+  for (final outcome in ['complete', 'corrupt', 'logout']) {
+    test('P2 one bounded download context per file: $outcome', () async {
+      final gateway = files(), bytes = fileBytes();
+      await gateway.upload(
+        name: 'download.pdf',
+        mime: 'application/pdf',
+        bytes: bytes,
+      );
+      final metadata = (await gateway.list()).single;
+      server.beforeDocuments = (op) async {
+        if (op != 'attachments.get') return;
+        expect(downloadContext.active, true);
+        final query = Map<String, Object?>.of(server.requests[op]!.last)
+          ..remove('offset')
+          ..remove('limit');
+        expect(query, downloadContext.identity);
+        downloadContext.chunks++;
+        if (outcome == 'logout' && downloadContext.chunks == 2) {
+          await repository.signOut();
+        }
+      };
+      server.corrupt = outcome == 'corrupt';
+      if (outcome == 'complete') {
+        expect(await gateway.download(metadata), bytes);
+      } else {
+        await expectLater(
+          gateway.download(metadata),
+          throwsA(isA<CollaborationException>()),
+        );
+      }
+      expect(downloadContext.starts, 1);
+      expect(downloadContext.finishes, 1);
+      expect(downloadContext.active, false);
+      expect(downloadContext.chunks, greaterThan(1));
+    });
+  }
 
   test(
     'new tables persist raw formulas, conflict revisions and local drafts',

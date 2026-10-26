@@ -13,7 +13,7 @@ ne ponavljamo. Največ trije poskusi neuspešnega scenarija.
 | Točka | Stanje |
 |---|---|
 | P1 dokumentni signali | Izvedeno in ciljno preverjeno |
-| P2 večkosovni download | Odprto: meritev priprave, nato omejena seja istega preverjenega descriptorja |
+| P2 večkosovni download | Izvedena omejena ponovna uporaba preverjene projekcije med kosi iste datoteke; mobilna/HTTP meritev še ni izvedena |
 | P3 znani zapisi | Izvedeno in ciljno preverjeno; finance/neznani cilji ohranijo namensko pot |
 | P4 finančne izbire | Sočasne združljive priprave združene; reuse po zaključku še ni uveden |
 | P5 inbox/konfiguracija | Oba sklopa izvedena in ciljno preverjena |
@@ -184,3 +184,30 @@ preprečuje ponovno nalaganje cele datoteke, preostali pull/authority strošek
 ostati pripet na zastarel članstveni snapshot. Za ti poti ni uveden splošen
 TTL ali preskok svežega preverjanja. P4a prav tako ne trdi odprave zaporednih
 mount→editor priprav. Izvedeni sklopi se lahko neodvisno povrnejo.
+
+## Nadaljevanje P2 — ena preverjena vsebinska priprava med kosi datoteke
+
+Priloge in slike idej imajo eksplicitni lokalni download context, vezan na
+sejo, operacijo in vse identitetne parametre (razen offset/limit). Zaključi
+se tudi ob napaki. Obstoječi preverjeni read lease poteče po prvotnih 5 s;
+sprememba seje, pravic, lokalne projekcije ali nepopoln/neomejen snapshot
+onemogoči reuse. Blob descriptor, current/source head ter hash/velikost/cilj
+vsakega kosa se še vedno preverjajo. Prenos ne spremeni podpisov ali formata.
+
+Celoten decrypted blob je bil že prej lokalno predpomnjen po descriptor hash;
+prejšnja koda torej ni nujno prenašala cele datoteke za vsak kos. Odstranjen
+je ponovni attested content pull znotraj še veljavnega istega prenosa.
+Generalizirana obstoječa finance-read implementacija ohrani finance alias in
+privzeto domeno; prenosa financ in vsebine imata ločena konteksta.
+
+**5 novih kontrol PASS:** 2 pravi memory SQLite/equality testi (content ne
+uporabi finance completeness, 8 nespremenjenih zaporednih odjemalcev = 1
+pull callback, spremenjena projekcija/lease/close prekine reuse); 3 repository
+chunk-loop kontrole s sintetičnim transportom (celotni bajti, pokvarjena
+vsebina, odjava med drugim kosom; vedno en context z zaključkom). Prvi tek
+je imel compile napako v fixture `logout` namesto `signOut`; SQL kontroli sta
+kljub skupni compiler napaki dokončali PASS. Drugi tek samo 3 chunk kontrole
+PASS. Stari testi niso ponovljeni. Analiza: 0 errors/0 warnings, 12 starih info;
+nov slogovni info v fixture popravljen. To ni meritev fizičnih HTTP ali test
+novega E2EE protokola; dejanski prihranek je omejen z lease in velikostjo
+projekcije. Dokazi `build/qa/coordinator-continuation-20261026/p2-*`.
