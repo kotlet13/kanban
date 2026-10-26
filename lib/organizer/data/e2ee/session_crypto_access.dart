@@ -2291,11 +2291,6 @@ class SessionCryptoAccess {
 
   /// A retained deletion witness is historical evidence for a previously
   /// anchored exact scope head. It cannot establish a new active scope/floor.
-  Future<VerifiedScopeHead> verifyDeletedScopeHead(
-    String scopeId,
-    Map<String, dynamic> wire,
-  ) => withVerifiedDeletedScope(scopeId, wire, (head) async => head);
-
   Future<T> withVerifiedDeletedScope<T>(
     String scopeId,
     Map<String, dynamic> wire,
@@ -2332,35 +2327,6 @@ class SessionCryptoAccess {
     } finally {
       context.active = false;
     }
-  }
-
-  /// Authenticated genesis descriptor for proposal verification only. This
-  /// never installs an active head, grants a key, or satisfies currentHead.
-  Future<Map<String, dynamic>> verifiedCandidateDescriptor(
-    String scopeId,
-    Map<String, dynamic> wire,
-  ) async {
-    final body = Map<String, dynamic>.from(wire['payload'] as Map);
-    final hash = wire['headHash'];
-    if (body['scopeId'] != scopeId || await codec.headHash(body) != hash) {
-      throw const FormatException('scope_head_substitution');
-    }
-    final baseline = await verifyInitialLifecycle(
-      scopeId,
-      wire,
-      scopeHeadHash: hash as String,
-    );
-    if (baseline != body['initialLifecycleHash']) {
-      throw const FormatException('scope_lifecycle_baseline_substitution');
-    }
-    if (body['epoch'] != 1 || body['previousHeadHash'] != cryptoZeroHash) {
-      return verifiedScopeDescriptor(scopeId, online: true);
-    }
-    final descriptor = _scopeDescriptors[scopeId];
-    if (descriptor == null || descriptor['initialLifecycleHash'] != baseline) {
-      throw const CryptoAuthorityPending('scope_descriptor_migration_pending');
-    }
-    return Map<String, dynamic>.unmodifiable(descriptor);
   }
 
   /// Uses only a reverified exact candidate and its authenticated descriptor /
@@ -4483,10 +4449,6 @@ class SessionCryptoAccess {
     }
     return _ordinaryRecordAuthority(record);
   }
-
-  Future<VerifiedProjectRelocationRecord> verifyProjectRelocation(
-    Map<String, dynamic> record,
-  ) => _projectRelocation.verify(record);
 
   // This base deliberately excludes purpose dispatch. Final publication may
   // resolve only the two explicit historical timing gaps after all current

@@ -38,6 +38,10 @@ ostanejo nedotaknjene. Izidi in ukazi so v `build/qa/dead-code-cleanup-20261026/
 
 Odstranjena samo managerEnsure in reminderStateFor. Aktivna ensurePersonal in notranja priprava reminder metapodatkov ostaneta. Backend crypto2-notification-integration.php: PASS 71; headless crypto_business_finance_test + crypto_business_payload_test: PASS 4. Analiza routerja: 0 napak/opozoril, 11 obstoječih slogovnih informacij. Dokazi C4-C5-*.log. To niso novi mobilni testi.
 
+### C6-C8 — Remove unused scope verification convenience methods
+
+Odstranjeni verifyDeletedScopeHead, verifiedCandidateDescriptor in verifyProjectRelocation; aktivni withVerifiedDeletedScope, withRecoveryCandidatePolicy in recordAuthority dispatch ostanejo. Backend crypto-scope-deletion-v2.php: PASS 94. Headless crypto_scope_forward_author_test + crypto_project_relocation_graph_test: PASS (C6-C8-dart.log). Analiza: brez napak/opozoril; samo obstoječe slogovne informacije. Nobenih sprememb shranjenih dokazov ali ključev.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5
