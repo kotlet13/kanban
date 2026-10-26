@@ -1057,7 +1057,9 @@ class _RemoteAttachmentGateway
       }
 
       final router = context._repo.cryptoRouter;
-      final result = router is CryptoDocumentDownloadContext
+      final result =
+          attachment.size > attachmentChunkBytes &&
+              router is CryptoDocumentDownloadContext
           ? await (router as CryptoDocumentDownloadContext)
                 .withDocumentDownload(
                   session: context._session,

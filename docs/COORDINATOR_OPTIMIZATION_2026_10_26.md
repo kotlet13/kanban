@@ -8,7 +8,7 @@ Meritve spodaj so števci konkretnih testnih poti, ne mobilni časovni benchmark
 ali obljuba števila fizičnih E2EE HTTP zahtevkov. Starih uspešnih scenarijev
 ne ponavljamo. Največ trije poskusi neuspešnega scenarija.
 
-## Trenutno stanje po šestih implementacijskih sklopih
+## Trenutno stanje po nadaljevanju P2, P6 in P8
 
 | Točka | Stanje |
 |---|---|
@@ -283,3 +283,35 @@ možnost nadaljnjega združevanja lokalnih signalov, ne dodatnih HTTP. Teh
 pre-read/CAS/own-ACK poti nismo spreminjali. Večji poseg v fanout in P4b
 ponovna uporaba zaključenih finance izbir ostaneta neobvezni nadaljevanji
 po ločeni meritvi; za ta korak ni podlage za nov TTL finančnih pravic.
+
+## Zaključni pregled nadaljevanja
+
+P2 ima še majhno omejitev stroška: kontekst se vzpostavi samo za datoteke,
+večje od enega 256 KiB kosa. Manjše priloge/slike uporabijo prvotni neposredni
+prenos, brez nepotrebnega zajema projekcije za neobstoječi naslednji kos.
+2 novi repository kontroli PASS1 (1 KiB in točno 256 KiB): en chunk request,
+0 download contextov, končni bajti isti. Večkosovni PASS niso ponovljeni;
+slike idej so v tem nadaljevanju izvorno pregledane, brez novega asset HTTP testa.
+
+Končna analiza vseh spremenjenih Dart datotek: 0 errors/0 warnings in 31
+obstoječih slogovnih info; `final-changed-analysis.log`, exit 0.
+
+Skupaj nadaljevanje vsebuje **15 različnih novih uspešnih lokalnih kontrol**
+(7 P2, 6 P6, 2 P8); prejšnji PASS scenariji niso ponovno pognani. Testi imajo
+pravo memory SQLite in widget/repository izvajanje, transport je sintetičen.
+Ni novih dokazov mobilne hitrosti, dejanskega E2EE HTTP prihranka ali
+produkcijske pripravljenosti. Napake testnih podlag in ujeti UI popravek so
+zapisani zgoraj; noben scenarij ni presegel treh testnih poskusov.
+
+Ločene Git točke tega nadaljevanja:
+- `4ec1560`: večkosovni prenos in preverjena content projekcija.
+- `cf5660f`: članstvo/povabila prek generacij koordinatorja in ciljni imenik.
+- `e99a426`: lokalni postcommit refresh samo spremenjenega prostora.
+- Naslednji mali commit: izločitev enokosovnih prenosov iz P2 konteksta in ta
+  zaključna dokumentacija. Vsak push se preveri s primerjavo remote main/HEAD.
+
+Za naslednjo fazo ostanejo neobvezna večja optimizacija lokalnih pomožnih
+branj/signalov, izmerjeno utemeljena P4b finance result reuse ter dejanska
+HTTP/native meritev teh sprememb. Ni spreminjanja migracij, podatkov, ključev,
+pravil sprejema ali finančnih varoval. Obstoječi QA podatki, Docker storitve,
+telefoni in produkcija v tem nadaljevanju niso bili uporabljeni ali spremenjeni.

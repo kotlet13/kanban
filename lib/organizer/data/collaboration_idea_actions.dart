@@ -137,7 +137,8 @@ extension CollaborationIdeaActions on CollaborationRepository {
       }
 
       final router = cryptoRouter;
-      final data = router is CryptoDocumentDownloadContext
+      final data =
+          asset.size > 262144 && router is CryptoDocumentDownloadContext
           ? await (router as CryptoDocumentDownloadContext)
                 .withDocumentDownload(
                   session: session,

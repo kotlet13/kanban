@@ -225,6 +225,24 @@ void main() {
   Uint8List fileBytes() =>
       Uint8List.fromList(utf8.encode('%PDF-1.7\n${'document data\n' * 30000}'));
 
+  for (final size in [1024, attachmentChunkBytes]) {
+    test('P2 single chunk skips combined preparation: $size bytes', () async {
+      final gateway = files();
+      final bytes = Uint8List.fromList(
+        utf8.encode('%PDF-1.7\n${'x' * (size - 9)}'),
+      );
+      expect(bytes.length, size);
+      await gateway.upload(
+        name: 'small.pdf',
+        mime: 'application/pdf',
+        bytes: bytes,
+      );
+      final metadata = (await gateway.list()).single;
+      expect(await gateway.download(metadata), bytes);
+      expect(downloadContext.starts, 0);
+      expect(server.requests['attachments.get']!.length, 1);
+    });
+  }
   for (final outcome in ['complete', 'corrupt', 'logout']) {
     test('P2 one bounded download context per file: $outcome', () async {
       final gateway = files(), bytes = fileBytes();
