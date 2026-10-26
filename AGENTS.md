@@ -1,3 +1,27 @@
+26. oktober — **Popis21modulov + izvorni audit koordinatorja; brez implementacije**.
+User naroči najprej popis vseh modulov, nato modulni pregled s podagenti.
+Popis M01–M21+X01 shranjen pred delegacijo;3GPT6.1Sol/high content/data/account,
+root X01 + preverjanje konkretnih poti. docs/MODULE_SYNC_AUDIT_2026_10_26.md
+vsebuje matriko vsakega modula in prioriteteP1–P8. Baselinecfb10fc/product65373c0.
+Loči networkqueue, account.changes selection in verifiedauthorityreuse:
+navadniCRUD→outbox→koordinator30s/localsave/resume; nochange vrne brezfullsync.
+Ni privateHTTPpoll vsakega poslovnegamodula, vendar NI vse change-gated.
+P1 scopedocumentevents breztargeta + conditional ownread→trailingread;
+P2 chunkdownload ponavlja contentpull, blobplaintextcache že obstaja (NE
+celotennetworkdownloadvsakkos); P3 aggregate/preview odprtja freshprepare;
+P4 financechoices mount/editor/taskcost ločenepoti; P5 inbox→commands→inbox
+šeob0commands in vseconfigscope obcombinedinboxhint; P6 members/pending
+mount/resume/summary freshreads; P7 emailconfirm dvojniaccountStatus;
+P8 lokalscopeSQL/garden/ideas fanout (NEHTTP). Tableviewer lease samoREAD,
+Editacquire/25srenew ostaneta; sekundniprojectiontimers nisoHTTP.
+Namenskeauth/invite/recovery/migration/moderation/backup-resume kontrole,
+exactrequests/receipts/policy/identity/ACL/drafts ohraniti. Izvornepotiniso
+novifizičniHTTPcount/latencameritev/dokazneskončnezanke. Samodokumentacija,
+brezproductedit/test/analyze/build/GUI/HTTP/Docker/phone/prod; nobenPASSrerun.
+Delovniporočili+account v build/qa/module-sync-audit-20261026 (ignorirano),
+ključnedokaznereference trajno v mainreportu. Naslednje izboljšave šele po
+uporabnikovem naročilu, ozko in po prioritetah, ne nov celoten testni krog.
+
 26. oktober — **Commit/push pred statičnim dead-code pregledom; brez čiščenja kode**.
 User naroči najprej commit/push aplikacije+strežnika, nato pregled ob zaklenjenem
 Macu; dodatno izrecno zahteva dokumentiranje. Celoten dotedanji razvoj79datotek
