@@ -1573,9 +1573,6 @@ class CryptoBusinessSession {
     };
   }
 
-  Future<Map<String, dynamic>> managerEnsure(String id) =>
-      ScopeCryptoManager(access).ensurePersonal(id);
-
   Future<String> reservedRecordId(String scope, String namespace) =>
       _reservedId(scope, namespace);
 
@@ -2026,14 +2023,6 @@ class CryptoBusinessSession {
     int expectedRevision,
     Map<String, dynamic>? raw,
   ) => _notificationState(scope, domain, id, type, expectedRevision, raw);
-  Future<Map<String, dynamic>> reminderStateFor(
-    String scope,
-    String domain,
-    String id,
-    String type,
-    Map<String, dynamic>? raw,
-  ) => _reminderState(scope, domain, id, type, raw);
-
   Future<Map<String, dynamic>> businessMetadata({
     required String scopeId,
     required String domain,

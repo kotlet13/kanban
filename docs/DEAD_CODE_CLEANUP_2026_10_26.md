@@ -34,6 +34,10 @@ ostanejo nedotaknjene. Izidi in ukazi so v `build/qa/dead-code-cleanup-20261026/
   nespremenjeni zapisi in brez ustvarjenega deletion plana.
 - **PASS, 43 kumulativnih kontrol** (37 fixture + 6 novih), prvi poskus, `S1.log`.
 
+### C4-C5 — Remove unused crypto business router wrappers
+
+Odstranjena samo managerEnsure in reminderStateFor. Aktivna ensurePersonal in notranja priprava reminder metapodatkov ostaneta. Backend crypto2-notification-integration.php: PASS 71; headless crypto_business_finance_test + crypto_business_payload_test: PASS 4. Analiza routerja: 0 napak/opozoril, 11 obstoječih slogovnih informacij. Dokazi C4-C5-*.log. To niso novi mobilni testi.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5
