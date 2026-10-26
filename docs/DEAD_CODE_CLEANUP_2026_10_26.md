@@ -58,6 +58,23 @@ Odstranjena samo buildCapturedSelection in njun edini verifier verifyCapturedSel
 
 Odstranjen samo CryptoMigrationGeneration.publishDraft. Aktivni pipeline še neposredno kliče ScopeCryptoManager.publishMigrationGenerationDraft. Headless superseded setup regression: PASS 1; backend crypto-migration-receipts-v3.php: PASS 9; analiza generation/pipeline: 0 issues. Dokazi C9-*.log; ni spremembe receipt/generation protokola.
 
+### C10 — STOP3; izbris razveljavljen, original ohranjen
+
+- Poskus odstranitve resumeAll ni objavljen. Dart inherited-invitation test:
+  poskus1 7 PASS/28 FAIL (zastarel fake authorityReuse); poskus2 samo28 padlih,
+  FAIL (manjkajoče retained/snapshot metode). Poskus3 dopolni samo fake in
+  ponovi padle: 14 PASS/14 FAIL (fake nima transport getterja). Brez četrtega teka.
+- Izbris in začasne fixture spremembe sta vrnjena točno na HEAD; patch/dnevniki
+  ostanejo v C10-* dokazih. Ni sprememb produkcijskih varoval zaradi testa.
+- Backend notification terminal seam: poskus1 fixture autoload path FAIL,
+  poskus2 po pravilnem mountu PASS6. To je memory SQL seam, ne API/signature
+  dispatch test. Ni zadosten dokaz za dokončanje C10; najprej popraviti star
+  testni model skladno s trenutno admission pogodbo v ločenem koraku.
+
+### U1 — Remove obsolete public card dialog and test active contact screen
+
+Odstranjen nepovezan crypto_public_card_dialog in njegov test. Prenesena smiselna keyboard/back/success/failure kontrola na dejanski ContactIdentityVerificationPage: PASS 6 za Android/iOS teme brez naprav. Test preverja exact scope/account/card delegacijo; kriptografski verifier ni mock testa pretvorjen v produkcijsko izjemo. Backend origin/author integration: PASS 51. Dokazi U1-*.log. Zapisan tudi STOP3 C10; ta izbris ni del commita.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5
