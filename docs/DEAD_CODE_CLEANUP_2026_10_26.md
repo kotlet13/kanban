@@ -50,6 +50,10 @@ Odstranjen samo operationEntries; verifiedOperationEntries in SQL tabela ostanet
 
 Odstranjena nepovezana datoteka crypto_migration_business_parity.dart, brez produkcijskih/testnih uvozov. Aktivni v3 codec ostane. Dart crypto_migration_business_parity_v3_test PASS in PHP crypto-business-parity-v3-vectors PASS 23 na istih neodvisnih vektorjih. Analiza aktivnih migration callerjev brez napak/opozoril. To ne odstranjuje nobenega shranjenega formata in ni nova celotna migracija. Dokazi C1-*.log.
 
+### C3 — Remove unused combined captured finance selection builder
+
+Odstranjena samo buildCapturedSelection in njun edini verifier verifyCapturedSelection. Aktivni issuer deriveSourceSelection/verifySourceSelection, recipient verifyTargetSelection in skupni validate ostanejo. Analiza vseh treh aktivnih datotek: 0 issues. Backend selection propose regression na sveži SQLite: PASS 9 (pravi dispatcher, prazen/neprazen izbor, vezava izvornih pozicij/replay); headless parent projection: PASS 8. Kontrole ne predstavljajo novega celotnega migration/cutover testa. Dokazi C3-*.log.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5
