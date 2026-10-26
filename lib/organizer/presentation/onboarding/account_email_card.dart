@@ -75,7 +75,7 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
 
   Future<void> _confirm() async {
     final l = context.l10n;
-    bool confirmed = false;
+    AccountStatus? confirmed;
     await showSharingForm(
       context,
       title: l.accountEmailConfirm,
@@ -86,18 +86,17 @@ class _AccountEmailCardState extends ConsumerState<AccountEmailCard> {
       errorMessage: (e) => sharingErrorMessage(context, e),
       wrap: (form) => SharingSessionBoundary(guard: _guard, child: form),
       onSubmit: (values) async {
-        await _guard.controller.confirmEmailVerification(
+        confirmed = await _guard.controller.confirmEmailVerification(
           values['token']!.trim(),
         );
-        confirmed = true;
       },
     );
-    if (confirmed && mounted && _guard.isCurrent) {
+    if (confirmed != null && mounted && _guard.isCurrent) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l.accountEmailConfirmed)));
       setState(() {
-        _future = _guard.controller.accountStatus();
+        _future = Future.value(confirmed);
       });
     }
   }

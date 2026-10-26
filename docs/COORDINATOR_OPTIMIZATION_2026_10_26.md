@@ -89,3 +89,17 @@ za 2 prostora; config/access/legacy/unknown/command vsak ohrani 2+2. Preverjen
 je tudi strog tip eksplicitnega hint polja. Uporabljen pravi repository/SQL
 in sintetičen legacy transport; ne trdimo prihranka fizičnih crypto HTTP.
 Analiza 0 napak/0 opozoril, 9 obstoječih info. `p5b-*` dokazi, brez deploya.
+
+## P7 — en status po potrditvi e-pošte
+
+Repository vrne AccountStatus iz že obstoječega account.status po uspešni
+potrditvi; controller ga prenese, UI ga uporabi brez drugega status klica.
+Potrditev je vezana na začetno sejo/epoch; status in UI ohranita identity guard.
+
+5 novih kontrol PASS: repository uspeh/call count + napaka confirm + napaka
+status (3 PASS1); UI uporaba vrnjenega statusa + ignoriranje poznega rezultata
+po zamenjavi računa (2 PASS2 po manjkajočem importu modelov v novi fixture).
+Prve tri niso ponovljene. UI ima samo začetno status branje; vrnjena potrditev
+ne doda drugega. Analiza 0 napak/0 opozoril, 2 stara info; nov testni info
+popravljen. Dokazi `p7-*`. Obstoječi UI fake override prilagojen vrnjenemu tipu;
+stari suite ni ponovno izvajan. Ni pošiljanja prave e-pošte ali sprememb računov.

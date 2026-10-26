@@ -553,7 +553,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     otp: otp,
     language: language,
   );
-  Future<void> confirmEmailVerification(String token) =>
+  Future<AccountStatus> confirmEmailVerification(String token) =>
       _repo.confirmEmailVerification(token);
   Future<void> requestPasswordReset({
     required String serverUrl,

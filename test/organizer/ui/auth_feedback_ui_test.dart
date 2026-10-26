@@ -30,11 +30,16 @@ class FeedbackController extends SharingUiController {
   }
 
   @override
-  Future<void> confirmEmailVerification(String token) async {
+  Future<AccountStatus> confirmEmailVerification(String token) async {
+    final session = state.valueOrNull?.session;
     calls.add('confirm:$token');
     await verification?.future;
     if (verificationError != null) throw verificationError!;
+    if (state.valueOrNull?.session != session) {
+      throw const CollaborationException('session_changed');
+    }
     verified = true;
+    return accountStatus();
   }
 
   @override

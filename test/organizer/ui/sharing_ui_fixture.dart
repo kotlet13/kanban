@@ -401,8 +401,9 @@ class SharingUiController extends CollaborationController {
   }
 
   @override
-  Future<void> confirmEmailVerification(String token) async {
+  Future<AccountStatus> confirmEmailVerification(String token) async {
     calls.add('emailConfirmed');
+    return accountStatus();
   }
 
   @override

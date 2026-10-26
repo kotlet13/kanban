@@ -75,9 +75,13 @@ extension CollaborationAccountRecovery on CollaborationRepository {
     });
   }
 
-  Future<void> confirmEmailVerification(String token) async {
-    await _call('account.email.confirm', {'token': token});
-    await accountStatus();
+  Future<AccountStatus> confirmEmailVerification(String token) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _callSession(session, epoch, 'account.email.confirm', {
+      'token': token,
+    });
+    _checkEpoch(epoch);
+    return accountStatus();
   }
 
   Future<void> requestPasswordReset({
