@@ -1,3 +1,25 @@
+26. oktober — **Postopno čiščenje dead code;16odstranitev, C10STOP3**.
+User izrecno naroči brisanje+headless/backend kontrola in commit/push vsakega
+posameznega dela. Modulni audit predhodno shranjen ed2326d. Odstranjeni U1–U5,
+C1–C9,S1–S2 v13produktnihsklopih (C4/C5 router in C6/C7/C8 access vsak ensklop).
+Vsak preverjen pred commit/push; natančni izidi in omejitve v
+ docs/DEAD_CODE_CLEANUP_2026_10_26.md, git zgodovina daje reverttočke.
+UItesti preneseni na ContactIdentityVerificationPage/InboxPreferences/
+OrganizerUtripOverview/assessStartupReview/SharedContentActionsMenu.
+PHPzačasni Docker networknone/read-onlysource/tmpfsfreshSQLite, brezportov;
+večina realdispatcher+sodium, posebej označeni memorySQLseams/vectors.
+Dartheadless, finalanalyze lib+changedtests0errors0warnings510infos.
+C10resumeAllizbris RAZVELJAVLJEN: starfake manjkajoauthorityReuse/wrappers/
+transport, poskus1 7PASS28FAIL, poskus2samo28FAIL, poskus3 14PASS14FAIL;
+brez4teka. Originalhelper+test obnovljenaexactHEAD, patchdokaz ohranjen.
+C11/S3 javni/compat kandidati inS4/S5nedosegljivivarovali ohranjeni.
+Noben productguard oslabljen; keys/tables/pending/receipts/legacyformati isti.
+TestfixtureS2 crypto-configFAIL→PASS2; U2backendverifiedemail/consentsetup
+FAIL→PASS2; U3UIAsyncLoadingfixtureFAIL→PASS2. Nobenfailureprikrit.
+Telefoni/obstoječeQA/produkcija nedotaknjeni. Ni novegaGUI/build/install/
+HTTPtesta ali celotneregresije. Naslednjič neponavljajPASSbrezrazloga;
+C10popravi testnimodel ločeno predodstranitvijo; druge4najdbe presodi ločeno.
+
 26. oktober — **Popis21modulov + izvorni audit koordinatorja; brez implementacije**.
 User naroči najprej popis vseh modulov, nato modulni pregled s podagenti.
 Popis M01–M21+X01 shranjen pred delegacijo;3GPT6.1Sol/high content/data/account,

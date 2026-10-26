@@ -9,6 +9,7 @@ import 'package:kanban/l10n/app_localizations.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
 import 'package:kanban/organizer/presentation/shared/content_moderation.dart';
+import 'package:kanban/organizer/presentation/shared/content_actions_menu.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import '../data/collaboration_moderation_test.dart' show ModerationServer;
 import '../data/collaboration_repository_test.dart'
@@ -363,7 +364,7 @@ void main() {
                       },
                       child: const Text('Publish'),
                     ),
-                    ContentReportButton(
+                    SharedContentActionsMenu(
                       scopeId: scope,
                       targetId: '11111111-1111-4111-8111-111111111111',
                     ),
@@ -421,8 +422,10 @@ void main() {
         'Published only with consent',
       );
       Future<void> openReport() async {
+        await tester.tap(find.byType(PopupMenuButton<String>));
+        await tester.pumpAndSettle();
         await tester.runAsync(() async {
-          await tester.tap(find.byIcon(Icons.flag_outlined));
+          await tester.tap(find.text('Report content'));
           await Future<void>.delayed(const Duration(milliseconds: 25));
         });
         await tester.pump(const Duration(milliseconds: 300));
@@ -450,15 +453,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(server.reports, 0);
       server.moderationSupported = true;
-      await tester.runAsync(() async {
-        await tester.tap(find.byIcon(Icons.flag_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 25));
-      });
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 25)),
-      );
-      await tester.pumpAndSettle();
+      await openReport();
       expect(find.byType(ContentReportDialog), findsOneWidget);
       await tester.runAsync(() async {
         await controller.login(

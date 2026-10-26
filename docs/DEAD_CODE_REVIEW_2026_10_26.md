@@ -1,5 +1,9 @@
 # Pregled neuporabljene kode — 26. oktober 2026
 
+> Zgodovinski izvorni pregled pred brisanjem. Nadaljevanje in dejanski izidi
+> odstranitev so v [dnevniku čiščenja](DEAD_CODE_CLEANUP_2026_10_26.md):
+> 16 najdb odstranjenih in preverjenih; C10 STOP3 ohranjen, C11/S3/S4/S5 ohranjeni.
+
 ## Izhodišče in obseg
 
 Pred začetkom pregleda je bil celoten dotedanji razvoj shranjen v commit
@@ -157,4 +161,3 @@ Druge pomembne izključitve:
 Nič od predlaganega še ni odstranjeno ali prevezano. V tem koraku sta se
 spremenili samo dokumentacija in ignorirani audit izhodi. Statični pregled ni
 popoln dokaz odsotnosti druge mrtve kode in ne obljublja manj HTTP zahtevkov.
-

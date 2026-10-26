@@ -277,7 +277,6 @@ void main() {
           width: width,
         );
         expect(find.byIcon(Icons.flag_outlined), findsNothing);
-        expect(find.byType(ContentReportButton), findsNothing);
         if (width == 360) await screenshot(tester, 'tasks-360');
         await openMenu(tester, 'task');
         expect(controller.previews, 0);

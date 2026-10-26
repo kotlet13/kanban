@@ -292,31 +292,6 @@ class _SharedContentPolicyDialogState extends State<SharedContentPolicyDialog> {
   }
 }
 
-class ContentReportButton extends ConsumerWidget {
-  const ContentReportButton({
-    super.key,
-    required this.scopeId,
-    required this.targetId,
-    this.targetType = 'record',
-  });
-  final String scopeId, targetId, targetType;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => IconButton(
-    key: ValueKey('report-$targetType-$scopeId-$targetId'),
-    tooltip: targetType == 'user'
-        ? context.l10n.moderationReportUser
-        : context.l10n.moderationReportContent,
-    icon: const Icon(Icons.flag_outlined, size: 20),
-    onPressed: () => showContentReport(
-      context,
-      ref,
-      scopeId: scopeId,
-      targetType: targetType,
-      targetId: targetId,
-    ),
-  );
-}
-
 final _reportDialogs = Expando<bool>();
 
 Future<void> showContentReport(

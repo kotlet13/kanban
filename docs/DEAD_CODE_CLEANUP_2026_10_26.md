@@ -8,7 +8,8 @@ commit + push po vsakem uspešno preverjenem delu. ID-ji so iz
 Vsak spodnji sklop je ločen commit. Git zgodovina tega dokumenta pokaže
 njegov commit; staro stanje je mogoče obnoviti z revert posameznega commita.
 Pri vsakem koraku preverimo tudi push. PHP integracije uporabljajo dejanski
-API dispatcher, sodium in svežo SQLite bazo v začasnem Docker vsebniku:
+API dispatcher/sodium s svežo SQLite bazo; posebej označene ožje kontrole
+uporabljajo neposredno storitev z memory SQL fixture. Vse teče v začasnem Docker vsebniku:
 `--network none`, read-only source/config, tmpfs data, brez objavljenih portov.
 To je backend integracija, ne HTTP/native end-to-end dokaz. Dart kontrole
 so headless; ne zaganjajo uporabnikovih aplikacij. Obstoječe baze in produkcija
@@ -87,9 +88,31 @@ Odstranjen SharedTodayOverview. Test archive/unarchive prenesen na OrganizerUtri
 
 Odstranjen matchesStartupAcknowledgment in test, ki je klical samo opuščeni helper. Dodana locked/copied-completion kontrola na dejanski assessStartupReview. Ciljne aktivne startup/widget kontrole (locked, spremenjena naprava/račun, odhod v lokalni zaslon in offline): PASS5. Backend crypto2 account integration: PASS20 (epoch recovery, naprave, zgodovina in replay). Ostali aktualni startup testi ostanejo. Dokazi U4-*.log.
 
+### U5 — Remove obsolete report button and use active content menu in tests
+
+Odstranjen samo ContentReportButton, showContentReport in dialogi ostanejo. Controller test prevezan na dejanski SharedContentActionsMenu: PASS1, odpoved ne pošlje, consent omogoči zapis, offline/unsupported pojasnilo, menjava računa zapre report. Backend crypto2-moderation-integration.php PASS59. Odstranjena le odsotnost starega tipa iz drugega testa; odsotnost flag ikone in menu kontrole ostanejo. Final analyze lib+changed UI tests: 0 errors/0 warnings/510 infos. Dokazi U5-* in final-analyze.log.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5
 (nedosegljivi varovalni veji z nejasnim namenom) niso avtomatično dovoljenje
 za brisanje. Združljivostne kode, migracij, tabel, podpisov, receiptov in
 starih formatov ne odstranjujemo. Aktivni `_syncNow` ostane.
+
+## Končni rezultat
+
+Odstranjenih16 najdb v13 ločenih produktnih commitih: U1–U5, C1–C9,
+S1–S2. Sorodni neklicani ovoji iste datoteke so en sklop (C4/C5 in C6/C7/C8).
+Vsak sklop je pred commitom preverjen s ciljnimi headless/backend kontrolami
+in nato pushan. Predhodni modulni audit je ločen dokumentacijski checkpoint.
+Dart analiza celotnega `lib` + vseh spremenjenih UI testov: **0 napak,
+0 opozoril, 510 informacij** (večinoma obstoječ slog). Ni testa cele aplikacije
+ali nove mobilne potrditve. Ni obljube izboljšanja hitrosti od brisanja kode,
+ki jo je prevajalnik morda že izločil.
+
+Ostaja5 izvornih najdb: **C10 STOP3** (original v celoti ohranjen), **C11/S3**
+(nepotrjena smiselnost odstranitve javnih/združljivostnih metod), **S4/S5**
+(namen nedosegljivih varoval ni dokončno razjasnjen). Nobenega izbrisa, ki ni
+prestal predvidenih kontrol, nismo objavili. Za naslednji korak najprej
+posodobiti stari C10 testni model, nato ločeno presoditi preostale štiri najdbe.
+Podatkovnih baz, migracij, ključev, backupov in native namestitev nismo spreminjali.
