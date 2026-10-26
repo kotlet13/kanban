@@ -44,7 +44,11 @@ Odstranjeni verifyDeletedScopeHead, verifiedCandidateDescriptor in verifyProject
 
 ### C2 — Remove unused unverified directory operation index reader
 
-Odstranjen samo operationEntries; verifiedOperationEntries in SQL tabela ostaneta. Headless crypto_migration_own_attestation_test preveri dokazno verigo in manipuliran indeks: PASS. Backend crypto-migration-generation-prefix-v3.php: PASS 57 kumulativnih kontrol. Analiza identity store: 0 issues. Dokazi C2-*.log; brez brisanja uporabniških tabel.
+Odstranjen samo operationEntries; verifiedOperationEntries in SQL tabela ostaneta. Headless crypto_migration_own_attestation_test preveri dokazno verigo in manipuliran indeks: PASS. Backend crypto-migration-generation-prefix-v3.php: PASS 57 kumulativnih kontrol. Analiza identity store: 0 napak/opozoril, 4 obstoječe slogovne informacije. Dokazi C2-*.log; brez brisanja uporabniških tabel.
+
+### C1 — Remove orphaned migration parity v2 implementation
+
+Odstranjena nepovezana datoteka crypto_migration_business_parity.dart, brez produkcijskih/testnih uvozov. Aktivni v3 codec ostane. Dart crypto_migration_business_parity_v3_test PASS in PHP crypto-business-parity-v3-vectors PASS 23 na istih neodvisnih vektorjih. Analiza aktivnih migration callerjev brez napak/opozoril. To ne odstranjuje nobenega shranjenega formata in ni nova celotna migracija. Dokazi C1-*.log.
 
 ## Ohranitev in omejitve
 
