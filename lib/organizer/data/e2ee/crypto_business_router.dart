@@ -4469,7 +4469,35 @@ class CryptoBusinessSession {
       final origin = value['migrationOrigin'];
       if (const {'table', 'attachment'}.contains(r['type']) &&
           value['previousDocumentProofHash'] != value['hash']) {
-        db.documentsChanged(p, r['scopeId'] as String);
+        final canonical = value['canonical'] as Map;
+        final raw = value['raw'] as Map?;
+        final previous = value['previousRaw'] as Map?;
+        final targets = <({String? type, String? id})>{
+          if (r['type'] == 'attachment') ...[
+            if (raw != null)
+              (
+                type: raw['targetType'] as String?,
+                id: raw['targetId'] as String?,
+              ),
+            if (previous != null)
+              (
+                type: previous['targetType'] as String?,
+                id: previous['targetId'] as String?,
+              ),
+          ],
+        };
+        // Tombstones without a prior payload must not silently miss a panel.
+        if (targets.isEmpty) targets.add((type: null, id: null));
+        for (final target in targets) {
+          db.documentsChanged(
+            p,
+            r['scopeId'] as String,
+            type: r['type'] as String,
+            id: canonical['id'] as String,
+            targetType: target.type,
+            targetId: target.id,
+          );
+        }
       }
       if (r['type'] == 'scopeMetadata' &&
           origin is Map &&

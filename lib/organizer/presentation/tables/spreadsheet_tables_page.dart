@@ -15,9 +15,11 @@ class SpreadsheetTablesPage extends StatefulWidget {
     this.attachmentsBuilder,
     this.onReport,
     this.changes,
+    this.changesForTable,
   });
   final SpreadsheetGateway gateway;
   final Stream<void>? changes;
+  final Stream<void> Function(String tableId)? changesForTable;
   final Widget Function(String tableId)? attachmentsBuilder;
   final Future<void> Function(String tableId)? onReport;
   @override
@@ -126,7 +128,7 @@ class _SpreadsheetTablesPageState extends State<SpreadsheetTablesPage> {
           document: document,
           attachmentsBuilder: widget.attachmentsBuilder,
           onReport: widget.onReport,
-          changes: widget.changes,
+          changes: widget.changesForTable?.call(document.id) ?? widget.changes,
         ),
       ),
     );

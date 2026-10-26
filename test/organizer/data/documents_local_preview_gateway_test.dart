@@ -21,6 +21,7 @@ class _Server extends FakeServer {
   Object? capabilityFailure;
   Completer<void>? capabilityGate;
   late SpreadsheetDocument document;
+  Future<void> Function(String)? beforeDocument;
   @override
   Future<Map<String, dynamic>> call(
     String operation,
@@ -41,6 +42,7 @@ class _Server extends FakeServer {
     if (operation.startsWith('tables.') ||
         operation.startsWith('attachments.')) {
       documentCalls++;
+      await beforeDocument?.call(operation);
       if (operation == 'tables.list') {
         return {
           'sheets': [document.toJson()],
@@ -297,6 +299,138 @@ void main() {
         ),
         isEmpty,
       );
+      final drafts = await f.db.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        ['table_draft:${f.partition}:${f.scope}:$_table'],
+      );
+      expect(jsonDecode(drafts.single['value'] as String)['cells'], {
+        'A1': 'draft',
+      });
+    },
+  );
+  test(
+    'coordinator document read ignores only its own query projection',
+    () async {
+      final f = await _fixture();
+      final context = await f.open();
+      var listEvents = 0, detailEvents = 0;
+      final list = context.tableChanges().listen((_) => listEvents++);
+      final detail = context.tableChanges(_table).listen((_) => detailEvents++);
+      addTearDown(list.cancel);
+      addTearDown(detail.cancel);
+      f.server.beforeDocument = (_) => f.db.transaction(() async {
+        f.db.documentsChanged(f.partition, f.scope, type: 'table', id: _table);
+      });
+      await context.tables.list();
+      await _flush();
+      expect(listEvents, 0); // The list already receives this verified result.
+      expect(detailEvents, 1); // The other reader still needs it.
+      await context.tables.read(_table);
+      await _flush();
+      expect(listEvents, 1);
+      expect(detailEvents, 1);
+      expect(f.server.documentCalls, 2);
+    },
+  );
+
+  test(
+    'coordinator remote commit during a document read remains visible',
+    () async {
+      final f = await _fixture();
+      final context = await f.open();
+      final entered = Completer<void>(), release = Completer<void>();
+      f.server.beforeDocument = (_) async {
+        entered.complete();
+        await release.future;
+        await f.db.transaction(() async {
+          f.db.documentsChanged(
+            f.partition,
+            f.scope,
+            type: 'table',
+            id: _table,
+          );
+        });
+      };
+      var events = 0;
+      final sub = context.tableChanges(_table).listen((_) => events++);
+      addTearDown(sub.cancel);
+      final read = context.tables.read(_table);
+      await entered.future;
+      // An independent coordinator job, outside the reader's async zone.
+      await f.db.transaction(() async {
+        f.db.documentsChanged(f.partition, f.scope, type: 'table', id: _table);
+      });
+      await _flush();
+      expect(events, 1);
+      release.complete();
+      await read;
+      await _flush();
+      expect(events, 1);
+    },
+  );
+
+  test(
+    'coordinator document targeting preserves drafts and access denial',
+    () async {
+      final f = await _fixture();
+      final context = await f.open();
+      final target = AttachmentTarget(
+        scopeId: f.scope,
+        targetType: 'table',
+        targetId: _table,
+      );
+      var tables = 0, attachments = 0;
+      final ts = context.tableChanges(_table).listen((_) => tables++);
+      final ats = context
+          .attachmentChanges(target)
+          .listen((_) => attachments++);
+      addTearDown(ts.cancel);
+      addTearDown(ats.cancel);
+      await context.tables.storeDraft(
+        SpreadsheetDraft(
+          tableId: _table,
+          baseRevision: 1,
+          title: 'Unsaved',
+          cells: {'A1': 'draft'},
+          updatedAt: 1,
+        ),
+      );
+      await f.db.transaction(() async {
+        f.db.documentsChanged(
+          f.partition,
+          f.scope,
+          type: 'attachment',
+          id: _file,
+          targetType: 'table',
+          targetId: 'other-table',
+        );
+        f.db.documentsChanged(
+          f.partition,
+          f.scope,
+          type: 'table',
+          id: 'other-table',
+        );
+      });
+      await _flush();
+      expect([tables, attachments], [0, 0]);
+      f.db.documentsChanged(
+        f.partition,
+        f.scope,
+        type: 'attachment',
+        id: _file,
+        targetType: 'table',
+        targetId: _table,
+      );
+      await _flush();
+      expect([tables, attachments], [0, 1]);
+      f.server.capabilityFailure = const CollaborationApiException(
+        'device_revoked',
+      );
+      await expectLater(context.tables.list(), throwsA(code('device_revoked')));
+      f.db.documentsChanged(f.partition, f.scope, type: 'table', id: _table);
+      await _flush();
+      expect([tables, attachments], [0, 1]);
+      expect(context.isCurrent, isFalse);
       final drafts = await f.db.rows(
         'SELECT value FROM local_meta WHERE name=?',
         ['table_draft:${f.partition}:${f.scope}:$_table'],

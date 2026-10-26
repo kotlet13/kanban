@@ -1,5 +1,7 @@
 # Pregled modulov in koordinacije osveževanja — 26. oktober 2026
 
+Izvedba po tem pregledu: [postopna optimizacija koordinatorja](COORDINATOR_OPTIMIZATION_2026_10_26.md). Spodnji audit ostaja zgodovinsko izhodišče.
+
 ## Obseg in vrstni red
 
 Izhodišče: `cfb10fc` (produktna koda `65373c0`). Uporabnik naroča najprej

@@ -27,8 +27,30 @@ class SharedDocumentsContext {
   final _legacyUploads = <String, CryptoLegacyUploadDrain>{};
   Future<void>? _onlinePreparation;
   String get partition => _session.profile.partition;
-  Stream<void> get changes => _repo.database
-      .documentChanges(partition, scopeId)
+  final _readOrigins = <String, Object>{};
+  Object _readOrigin(String query) =>
+      _readOrigins.putIfAbsent(query, Object.new);
+  Stream<void> tableChanges([String? id]) => _repo.database
+      .documentChanges(
+        partition,
+        scopeId,
+        type: 'table',
+        id: id,
+        ignoreOrigin: _readOrigin(
+          id == null ? 'tables.list' : 'tables.get:$id',
+        ),
+      )
+      .where((_) => isCurrent);
+  Stream<void> attachmentChanges(AttachmentTarget target) => _repo.database
+      .documentChanges(
+        partition,
+        scopeId,
+        targetType: target.targetType,
+        targetId: target.targetId,
+        ignoreOrigin: _readOrigin(
+          'attachments.list:${target.targetType}:${target.targetId}',
+        ),
+      )
       .where((_) => isCurrent);
   String get _prefix => 'document_cache:$partition:$scopeId:';
   SharedScope? get scope => _repo.state.scopes
@@ -288,7 +310,7 @@ class SharedDocumentsContext {
       }.contains(operation)) {
         drain = _legacyUploads[body['id']];
       }
-      final result = await _repo._callSession(
+      Future<Map<String, dynamic>> readOrWrite() => _repo._callSession(
         _session,
         _epoch,
         operation,
@@ -297,6 +319,19 @@ class SharedDocumentsContext {
             ? null
             : () => drain!.authorize(operation, body),
       );
+      final query = switch (operation) {
+        'tables.list' => 'tables.list',
+        'tables.get' => 'tables.get:${params['id']}',
+        'attachments.list' =>
+          'attachments.list:${params['targetType']}:${params['targetId']}',
+        _ => null,
+      };
+      final result = query == null
+          ? await readOrWrite()
+          : await _repo.database.withDocumentRead(
+              _readOrigin(query),
+              readOrWrite,
+            );
       drain?.accept(result);
       await _refreshDocumentCreators();
       if (write) {

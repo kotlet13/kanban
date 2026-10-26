@@ -141,7 +141,8 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
             if (widget.tables) {
               return SpreadsheetTablesPage(
                 gateway: _tableGateway ??= data.tables,
-                changes: data.changes,
+                changes: data.tableChanges(),
+                changesForTable: data.tableChanges,
                 onReport: (id) => showContentReport(
                   context,
                   ref,
@@ -158,7 +159,7 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
                         );
                         return AttachmentsPanel(
                           gateway: _attachments(data, target),
-                          changes: data.changes,
+                          changes: data.attachmentChanges(target),
                           canEdit: data.canAddAttachment(target),
                           canDelete: data.canDeleteAttachment,
                           onReport: (file) => showContentReport(
@@ -185,7 +186,7 @@ class _SharedDocumentsRouteState extends ConsumerState<SharedDocumentsRoute> {
               body: SafeArea(
                 child: AttachmentsPanel(
                   gateway: _attachments(data, target),
-                  changes: data.changes,
+                  changes: data.attachmentChanges(target),
                   canEdit: data.canAddAttachment(target),
                   canDelete: data.canDeleteAttachment,
                   onReport: (file) => showContentReport(

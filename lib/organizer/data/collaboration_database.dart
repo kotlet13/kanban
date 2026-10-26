@@ -10,6 +10,16 @@ typedef LocalSyncWorkIdentity = ({
   int generation,
 });
 
+typedef _DocumentChange = ({
+  String partition,
+  String scope,
+  String? type,
+  String? id,
+  String? targetType,
+  String? targetId,
+  Object? origin,
+});
+
 /// Shared rows and their immutable outgoing operations use one SQLite commit.
 /// Anonymous and explicitly enabled private workspaces share this atomic store.
 class CollaborationDatabase extends GeneratedDatabase {
@@ -34,9 +44,8 @@ class CollaborationDatabase extends GeneratedDatabase {
       .where((domains) => domains == null || domains.contains(domain))
       .map<void>((_) {});
 
-  String _documentsKey(String partition, String scope) =>
-      'verified_documents:$partition:$scope';
-  final _documentChanges = StreamController<String>.broadcast();
+  final _documentChanges = StreamController<Set<_DocumentChange>>.broadcast();
+  final Object _documentReadKey = Object();
   final Object _documentTransactionKey = Object();
   final Object _localWorkTransactionKey = Object();
   final _committedLocalWork =
@@ -78,18 +87,70 @@ class CollaborationDatabase extends GeneratedDatabase {
   }
 
   /// Failed projections and unrelated account/status updates cannot wake a view.
-  Stream<void> documentChanges(String partition, String scope) =>
-      _documentChanges.stream
-          .where((key) => key == _documentsKey(partition, scope))
-          .map<void>((_) {});
+  /// Untyped legacy invalidations remain broad. Each durable commit wakes a
+  /// matching reader once, even when it contains several document projections.
+  Stream<void> documentChanges(
+    String partition,
+    String scope, {
+    String? type,
+    String? id,
+    String? targetType,
+    String? targetId,
+    Object? ignoreOrigin,
+  }) => _documentChanges.stream
+      .where(
+        (batch) => batch.any((change) {
+          if (change.partition != partition || change.scope != scope) {
+            return false;
+          }
+          if (ignoreOrigin != null && identical(change.origin, ignoreOrigin)) {
+            return false;
+          }
+          if (change.type == null) return true;
+          if (targetType != null) {
+            // A table deletion also invalidates its attachment panel. Unknown old
+            // attachment targets (e.g. legacy tombstones) conservatively wake panels.
+            return (change.type == targetType && change.id == targetId) ||
+                (change.type == 'attachment' &&
+                    (change.targetType == null ||
+                        (change.targetType == targetType &&
+                            change.targetId == targetId)));
+          }
+          return (type == null || change.type == type) &&
+              (id == null || change.id == id);
+        }),
+      )
+      .map<void>((_) {});
 
-  void documentsChanged(String partition, String scope) {
-    final key = _documentsKey(partition, scope);
-    final pending = Zone.current[_documentTransactionKey] as Set<String>?;
+  /// Suppress only this exact reader's own verified projection notification.
+  /// Other readers and independent sync commits still receive it. This does
+  /// not cache results or bypass any authorization, revision or proof check.
+  Future<T> withDocumentRead<T>(Object reader, Future<T> Function() action) =>
+      runZoned(action, zoneValues: {_documentReadKey: reader});
+
+  void documentsChanged(
+    String partition,
+    String scope, {
+    String? type,
+    String? id,
+    String? targetType,
+    String? targetId,
+  }) {
+    final change = (
+      partition: partition,
+      scope: scope,
+      type: type,
+      id: id,
+      targetType: targetType,
+      targetId: targetId,
+      origin: Zone.current[_documentReadKey],
+    );
+    final pending =
+        Zone.current[_documentTransactionKey] as Set<_DocumentChange>?;
     if (pending != null) {
-      pending.add(key);
+      pending.add(change);
     } else if (!_documentChanges.isClosed) {
-      _documentChanges.add(key);
+      _documentChanges.add({change});
     }
   }
 
@@ -98,8 +159,9 @@ class CollaborationDatabase extends GeneratedDatabase {
     Future<T> Function() action, {
     bool requireNew = false,
   }) async {
-    final parent = Zone.current[_documentTransactionKey] as Set<String>?;
-    final pending = <String>{};
+    final parent =
+        Zone.current[_documentTransactionKey] as Set<_DocumentChange>?;
+    final pending = <_DocumentChange>{};
     final workParent =
         Zone.current[_localWorkTransactionKey] as Set<LocalSyncWorkIdentity>?;
     final work = <LocalSyncWorkIdentity>{};
@@ -117,10 +179,8 @@ class CollaborationDatabase extends GeneratedDatabase {
     // skips this publication entirely, including a later outer commit failure.
     if (parent != null) {
       parent.addAll(pending);
-    } else if (!_documentChanges.isClosed) {
-      for (final key in pending) {
-        _documentChanges.add(key);
-      }
+    } else if (pending.isNotEmpty && !_documentChanges.isClosed) {
+      _documentChanges.add(Set.unmodifiable(pending));
     }
     if (workParent != null) {
       workParent.addAll(work);

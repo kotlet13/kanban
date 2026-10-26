@@ -1,3 +1,13 @@
+26. oktober — **Koordinator P1: ciljni dokumentni signali;5novihPASS**.
+User naroči postopne optimizacije+lokalne teste+commit/push vsakegasklopa.
+P1 typed canonical table/attachment targetbatch poSQLcommitu; broadlegacy
+fallback, nestedrollback, partitionguard. Queryorigin skipa samo lastni
+readsignal; independent coordinator commit še sproži refresh. UI tablelist/
+detailID/attachmenttarget pravilno vezani. Ni permissioncache/protocolchange.
+5novihheadlessPASS1 (3gateway/1SQL/1widget), sintetičnitransport neHTTP/native.
+Dokument docs/COORDINATOR_OPTIMIZATION_2026_10_26.md; P2–P7odprto/P8meritev.
+Telefoni/QA/prod/podatki nedotaknjeni. BrezponavljanjaPASS.
+
 26. oktober — **Postopno čiščenje dead code;16odstranitev, C10STOP3**.
 User izrecno naroči brisanje+headless/backend kontrola in commit/push vsakega
 posameznega dela. Modulni audit predhodno shranjen ed2326d. Odstranjeni U1–U5,
