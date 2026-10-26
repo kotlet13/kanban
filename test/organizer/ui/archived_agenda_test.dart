@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/l10n/app_localizations.dart';
 import 'package:kanban/organizer/domain/organizer_models.dart';
 import 'package:kanban/organizer/presentation/planning/shared_agenda_page.dart';
-import 'package:kanban/organizer/presentation/planning/shared_today_overview.dart';
+import 'package:kanban/organizer/presentation/planning/utrip_overview.dart';
+import 'package:kanban/organizer/domain/all_spaces_projection.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'sharing_ui_fixture.dart' show SharingUiController, sharingSession;
 
@@ -44,7 +45,7 @@ void main() {
     home: Scaffold(body: SingleChildScrollView(child: child)),
   );
   testWidgets(
-    'shared today excludes archived scope and restores it after unarchive',
+    'active Utrip excludes archived scope and restores it after unarchive',
     (tester) async {
       final controller = SharingUiController(
         initial: CollaborationState(
@@ -57,7 +58,20 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [collaborationProvider.overrideWith(() => controller)],
-          child: app(SharedTodayOverview(onAgenda: (id) => opened = id)),
+          child: app(
+            Consumer(
+              builder: (context, ref, _) => OrganizerUtripOverview(
+                now: now,
+                snapshot: projectAllSpaces(
+                  personal: OrganizerSnapshot(),
+                  shared:
+                      ref.watch(collaborationProvider).valueOrNull ??
+                      CollaborationState(),
+                ),
+                onOpen: (item) => opened = item.source.scopeId,
+              ),
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();
