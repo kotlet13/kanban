@@ -25,6 +25,15 @@ ostanejo nedotaknjene. Izidi in ukazi so v `build/qa/dead-code-cleanup-20261026/
   dev-config brez crypto preview. Poskus2 uporablja obstoječi crypto-test-config,
   PASS. Produktnega varovala nismo spreminjali. Dokaza `S2.log`, `S2-attempt2.log`.
 
+### S1 — neklican zasebni primerjalnik inline deletion
+
+- Odstranjen samo `NativeCryptoInlineDeletionV2::same`; vse veje in varovala ostanejo.
+- Nov ciljni backend test `crypto-inline-deletion-preview-regression.php`:
+  podpisan projekt+opravilo, nepovezano opravilo, natančen graf/števci,
+  ponovljiv read-only preview, zavrnitev zamenjave canonical/wire ID,
+  nespremenjeni zapisi in brez ustvarjenega deletion plana.
+- **PASS, 43 kumulativnih kontrol** (37 fixture + 6 novih), prvi poskus, `S1.log`.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5

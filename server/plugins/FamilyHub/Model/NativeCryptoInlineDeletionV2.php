@@ -6,7 +6,6 @@ class NativeCryptoInlineDeletionV2 extends NativeDatabase
 {
     protected $cryptoAccess=true;
     private function hash($v){return NativeCryptoInlineDeletionCodecV2::hash($v);}
-    private function same($a,$b){return NativeCryptoCodec::canonical($a)===NativeCryptoCodec::canonical($b);}
     private function source($row){$a=json_decode($row['authorization'],true,34,JSON_THROW_ON_ERROR);[$b]=NativeCryptoCodec::decode($a['recordProof']);return [$b,$a];}
     private function descriptor($r){[$b,$a]=$this->source($r);return ['scopeId'=>$r['scope_id'],'id'=>$r['id'],'type'=>$r['type'],'domain'=>$b['domain'],'revision'=>(int)$r['revision'],'recordProofHash'=>$this->hash($a['recordProof'])];}
     private function context($sid,$actor)
