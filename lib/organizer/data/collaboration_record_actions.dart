@@ -130,7 +130,9 @@ extension CollaborationRecordActions on CollaborationRepository {
       await action(profile.partition);
       _checkEpoch(epoch);
     });
-    await refreshLocal();
+    // Every mutator in this transaction is bound to scopeId. Preserve the
+    // other materialized scopes; queued concurrent refreshes merge their scopes.
+    await refreshLocal(scopeIds: {scopeId});
   }
 
   /// Only record mutators route through this exception; every write still

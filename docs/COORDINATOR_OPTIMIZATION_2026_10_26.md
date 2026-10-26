@@ -19,7 +19,7 @@ ne ponavljamo. Največ trije poskusi neuspešnega scenarija.
 | P5 inbox/konfiguracija | Oba sklopa izvedena in ciljno preverjena |
 | P6 članstvo/povabila | Izvedene session display generacije iz koordinatorja, ciljni member refresh in ohranitev dogodkov med branjem |
 | P7 email status | Izvedeno in ciljno preverjeno |
-| P8 lokalni SQL/CPU | Najprej meritev; brez sprememb |
+| P8 lokalni SQL/CPU | Izmerjeno; po lokalnem shranjevanju se obnovi samo spremenjeni prostor. Širša pomožna branja in lokalni signali so zapisani za pozneje |
 
 ## P1 — ciljni signali dokumentov in lastno branje
 
@@ -248,3 +248,38 @@ vračal Future. Popravljene istovrstne assignment puščice v pending strani;
 ponovljen samo pending PASS2. Analiza 0 errors/0 warnings/10 starih info.
 Dokazi `build/qa/coordinator-continuation-20261026/p6-*`. Sintetični transport
 in pravi memory SQLite/widget, ne mobilni ali fizični HTTP preizkus.
+
+## Nadaljevanje P8 — izmerjena lokalna osvežitev po shranjevanju
+
+Nova omejena headless meritev nad 8 sintetičnimi praznimi prostori in memory
+SQLite, brez dodatnih transportnih klicev med merjenimi dejanji:
+
+| Operacija | SQL branja | Branja zapisov prostorov | Enkraten čas |
+|---|---:|---:|---:|
+| polni refreshLocal | 83 | 8 | 6,325 ms |
+| scoped refreshLocal | 55 | 1 | 3,915 ms |
+| createTask pred popravkom | 99 | 9 | 12,730 ms |
+| createTask po popravku | 71 | 2 | 11,297 ms |
+
+To so števci ene kontrolirane poti in posamezni elapsed časi, ne statistični
+CPU/native benchmark ali napoved pospeška mobilnega šifriranja. Dve branju
+pri save sta obstoječi pre-read in postcommit projekcija istega prostora.
+
+Pregled vseh `_edit`/`_recordEdit` callsiteov potrdi scope-bound mutacije
+(opravila, dogodki, projekti s fazami, nakupi, osebe, vrt in ideje). Njihov
+postcommit zdaj poda `scopeIds: {scopeId}`. CAS, avtorstvo, šifriranje, signed
+outbox in pre-read ostanejo. Člani/finance metadata/queue ter drugi skupni
+pomožni podatki se še preberejo; ne trdimo, da je cel refresh samo en prostor.
+
+**2 novi kontroli PASS1:** baseline meritev (ni ponovljena) in nova kontrola
+popravka s shranjenim opravilom, identično projekcijo nedotaknjenega prostora,
+0 transportnih klicev ter dvema sočasnima lokalnima shranitvama v drugih
+prostorih. Vsi trije zapisi vidni, 3 namere v outboxu, nič izgubljenega.
+Analiza 0 errors/0 warnings/9 starih info. Dokazi `p8-*` v isti mapi.
+
+Meritev lokalnega vrta in idej: skupno 48 SQL branj/22,368 ms, vsak stream
+4 dogodke vključno z enim eksplicitnim diagnostičnim drain reloadom. To potrdi
+možnost nadaljnjega združevanja lokalnih signalov, ne dodatnih HTTP. Teh
+pre-read/CAS/own-ACK poti nismo spreminjali. Večji poseg v fanout in P4b
+ponovna uporaba zaključenih finance izbir ostaneta neobvezni nadaljevanji
+po ločeni meritvi; za ta korak ni podlage za nov TTL finančnih pravic.
