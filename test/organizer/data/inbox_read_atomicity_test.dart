@@ -216,41 +216,160 @@ void main() {
       );
     },
   );
-  test(
-    'DB blocked financial scope rejects receipt despite stale eligible UI',
-    () async {
-      final (repo, db, scope) = await sharedFixture();
-      await db.execute('UPDATE inbox SET data=? WHERE id=1', [
-        jsonEncode(entry(1, scope, finance: true).toJson()),
-      ]);
-      await db.execute(
-        'UPDATE scopes SET finance_policy=?,finance_blocked=1,finance_complete=1 WHERE id=?',
-        [
-          jsonEncode(
-            const SharedFinancePolicy(
-              enabled: true,
-              grant: SharedFinanceGrant.read,
-            ).toJson(),
+  for (final grant in [SharedFinanceGrant.write, SharedFinanceGrant.read]) {
+    test(
+      'inbox write-block repair: ${grant.name} receipt preserves blocked finance queue',
+      () async {
+        final (repo, db, scope) = await sharedFixture();
+        final p = repo.state.session!.partition;
+        await db.execute('UPDATE inbox SET data=? WHERE id=1', [
+          jsonEncode(entry(1, scope, finance: true).toJson()),
+        ]);
+        await db.execute(
+          'UPDATE scopes SET finance_policy=?,finance_blocked=1,finance_complete=1 WHERE id=?',
+          [
+            jsonEncode(
+              SharedFinancePolicy(
+                enabled: true,
+                grant: grant,
+                revision: 2,
+                organizationFinanceComplete: true,
+              ).toJson(),
+            ),
+            scope,
+          ],
+        );
+        final account = SharedFinanceAccount(
+          id: newSharedId(),
+          name: 'Retained draft',
+          currency: 'EUR',
+          openingBalanceMinor: 1234,
+          createdAt: now,
+          updatedAt: now,
+        );
+        final payload = account.toPayload();
+        final op = newSharedId();
+        final original = jsonEncode({
+          'opId': op,
+          'recordId': account.id,
+          'type': 'financeAccount',
+          'expectedRevision': 0,
+          'deleted': false,
+          'payload': payload,
+        });
+        await db.execute(
+          'INSERT INTO finance_records(partition,scope_id,id,type,local_revision,server_revision,payload,deleted) VALUES(?,?,?,?,?,?,?,?)',
+          [
+            p,
+            scope,
+            account.id,
+            'financeAccount',
+            1,
+            0,
+            jsonEncode(payload),
+            0,
+          ],
+        );
+        await db.execute(
+          'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,state) VALUES(?,?,?,?,?,?)',
+          [op, p, scope, account.id, original, 'blocked'],
+        );
+        final queued = await db.rows('SELECT * FROM finance_outbox');
+        final records = await db.rows('SELECT * FROM finance_records');
+        final flags = await db.rows(
+          'SELECT finance_policy,finance_blocked,finance_complete FROM scopes WHERE id=?',
+          [scope],
+        );
+        await repo.markInboxRead(
+          [1, 2],
+          expectedPartition: p,
+          stillEligible: (_) => true,
+        );
+        expect(
+          (await db.rows('SELECT data FROM inbox')).every(
+            (r) => SharedInboxEntry.fromJson(
+              jsonDecode(r['data'] as String),
+            ).isRead,
           ),
-          scope,
-        ],
-      );
-      await expectLater(
-        repo.markInboxRead([1], stillEligible: (_) => true),
-        throwsA(
-          isA<CollaborationException>().having(
-            (e) => e.code,
-            'code',
-            'finance_forbidden',
+          true,
+        );
+        final receipts = await db.rows(
+          "SELECT params FROM commands WHERE operation='inbox.read' ORDER BY sequence",
+        );
+        expect(receipts, hasLength(2));
+        expect(
+          receipts.map((r) => (jsonDecode(r['params'] as String) as Map)['id']),
+          [1, 2],
+        );
+        expect(
+          receipts.every(
+            (r) =>
+                (jsonDecode(r['params'] as String)
+                    as Map)['expectedRevision'] ==
+                1,
           ),
-        ),
-      );
-      expect(
-        await db.rows("SELECT id FROM commands WHERE operation='inbox.read'"),
-        isEmpty,
-      );
-    },
-  );
+          true,
+        );
+        expect(await db.rows('SELECT * FROM finance_outbox'), queued);
+        expect(await db.rows('SELECT * FROM finance_records'), records);
+        expect(
+          await db.rows(
+            'SELECT finance_policy,finance_blocked,finance_complete FROM scopes WHERE id=?',
+            [scope],
+          ),
+          flags,
+        );
+      },
+    );
+  }
+  for (final deniedByScope in [false, true]) {
+    test(
+      'inbox write-block repair: ${deniedByScope ? "scope" : "finance"} denial still rejects stale visible receipts',
+      () async {
+        final (repo, db, scope) = await sharedFixture();
+        await db.execute('UPDATE inbox SET data=? WHERE id=2', [
+          jsonEncode(entry(2, scope, finance: true).toJson()),
+        ]);
+        await db.execute(
+          'UPDATE scopes SET blocked=?,finance_policy=?,finance_blocked=1,finance_complete=1 WHERE id=?',
+          [
+            deniedByScope ? 1 : 0,
+            jsonEncode(
+              SharedFinancePolicy(
+                enabled: true,
+                grant: deniedByScope
+                    ? SharedFinanceGrant.write
+                    : SharedFinanceGrant.none,
+              ).toJson(),
+            ),
+            scope,
+          ],
+        );
+        await expectLater(
+          repo.markInboxRead([1, 2], stillEligible: (_) => true),
+          throwsA(
+            isA<CollaborationException>().having(
+              (e) => e.code,
+              'code',
+              deniedByScope ? 'permission_revoked' : 'finance_forbidden',
+            ),
+          ),
+        );
+        expect(
+          await db.rows("SELECT id FROM commands WHERE operation='inbox.read'"),
+          isEmpty,
+        );
+        expect(
+          (await db.rows('SELECT data FROM inbox')).every(
+            (r) => !SharedInboxEntry.fromJson(
+              jsonDecode(r['data'] as String),
+            ).isRead,
+          ),
+          true,
+        );
+      },
+    );
+  }
   test(
     'finance readiness repair: mixed receipts do not require a complete snapshot',
     () async {

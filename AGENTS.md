@@ -1,3 +1,14 @@
+26. oktober — **Točen Samsung inbox finance_blocked popravek, lokalni RED→4PASS**.
+Native enklik na ad06e36 ujel notification_actions157: inbox18/parentMobileE2EE,
+finance_blocked1, scopevalid; read-only policygrantwrite/rev2/snapshotcomplete.
+User naroči lokalni popravek, S25odklopi, namestitev PO vrnitvi. MarkInboxRead
+ne zamenjuje writequeue finance_blocked z read permission; scope/session/
+canRead/atomic/immutable guards isti. PredfixexactSQLFAILnaisti157, pofix4PASS
+write/read z blockedfinancequeue+payload+flags nespremenjeni, dejanskafinance/
+scopedenial še vedno zavrne celotno skupino. Analysis0issues. BrezoldPASSrerun/
+native/build/install/server/prod. Obe napravi še ad06e36. Docs zadnja2sklopa
+COORDINATOR_OPTIMIZATION_2026_10_26.md; evidence inbox-write-block-repair-20261026.
+
 26. oktober — **Finance access recovery + inbox readiness, 6 novih lokalnih PASS**.
 User ima legitimne finance pravice; finance se pojavijo po Dostop do financ,
 markallread vrne lažni finance_forbidden. Lokalno potrjena obnovljeni scope+

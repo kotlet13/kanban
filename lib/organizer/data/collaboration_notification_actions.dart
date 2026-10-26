@@ -147,15 +147,10 @@ extension CollaborationNotificationActions on CollaborationRepository {
         }
         if (entry.category == 'finance' ||
             isFinancialRecordType(entry.targetType)) {
-          final access = await database.rows(
-            'SELECT finance_blocked FROM scopes WHERE partition=? AND id=?',
-            [session.profile.partition, entry.scopeId],
-          );
-          // A read receipt changes inbox metadata, not financial records. A
-          // partial financial snapshot must not masquerade as denied access.
-          if (access.isEmpty || access.single['finance_blocked'] == 1) {
-            throw const CollaborationException('finance_forbidden');
-          }
+          // This receipt changes inbox metadata, not financial records. A
+          // partial snapshot or held financial write queue is not a read-access
+          // denial. Keep the scope/session checks above and financial grant
+          // below; do not release or replay any blocked financial intent.
           if (!(await _cachedFinancePolicy(
             session.profile.partition,
             entry.scopeId,
