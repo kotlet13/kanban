@@ -188,6 +188,25 @@ extension CollaborationAccessReviewActions on CollaborationRepository {
             restored++;
           }
           await _upsertScope(partition, scope);
+          if (_financeSupported &&
+              await _privateScopeAllowed(partition, scope)) {
+            final finance = (await database.rows(
+              'SELECT finance_complete FROM scopes WHERE partition=? AND id=?',
+              [partition, scope.id],
+            )).single;
+            final policy = await _cachedFinancePolicy(partition, scope.id);
+            if (previous?.revoked == true ||
+                !policy.canRead ||
+                finance['finance_complete'] != 1) {
+              // Verified space access does not itself grant financial access.
+              // Schedule the ordinary policy + delta read, even if the server
+              // cursor has not changed since a stale local denial was cached.
+              await database.execute(
+                'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
+                ['finance_access_review:$partition:${scope.id}', scope.id],
+              );
+            }
+          }
           await database.execute('DELETE FROM local_meta WHERE name=?', [
             'scope_reconciliation:$partition:${scope.id}',
           ]);

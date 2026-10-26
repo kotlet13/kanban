@@ -425,6 +425,21 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (scope is String) changes.include(scope, row['domain'] as String);
       if (row['domain'] == 'commands') changes.accountDomains.add('inbox');
     }
+    // Durable local repair debt is a selection hint, never an access grant.
+    // Successful ordinary finance reads consume it; failures retain it.
+    final financeReview = await database.rows(
+      'SELECT value FROM local_meta WHERE name=? || value',
+      ['finance_access_review:$p:'],
+    );
+    for (final row in financeReview) {
+      final id = row['value'] as String;
+      if (state.scopes.any(
+        (s) => s.id == id && s.canRead && !s.deleted && !s.revoked,
+      )) {
+        changes.include(id, 'finance');
+        selectionReason(CollaborationSyncDiagnosticKind.selectionLocalFinance);
+      }
+    }
     final pendingSelection = await CollaborationPendingSyncSelection.read(
       database: database,
       session: session,

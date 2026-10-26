@@ -148,12 +148,12 @@ extension CollaborationNotificationActions on CollaborationRepository {
         if (entry.category == 'finance' ||
             isFinancialRecordType(entry.targetType)) {
           final access = await database.rows(
-            'SELECT finance_blocked,finance_complete FROM scopes WHERE partition=? AND id=?',
+            'SELECT finance_blocked FROM scopes WHERE partition=? AND id=?',
             [session.profile.partition, entry.scopeId],
           );
-          if (access.isEmpty ||
-              access.single['finance_blocked'] == 1 ||
-              access.single['finance_complete'] != 1) {
+          // A read receipt changes inbox metadata, not financial records. A
+          // partial financial snapshot must not masquerade as denied access.
+          if (access.isEmpty || access.single['finance_blocked'] == 1) {
             throw const CollaborationException('finance_forbidden');
           }
           if (!(await _cachedFinancePolicy(

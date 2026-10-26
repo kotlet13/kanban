@@ -344,3 +344,50 @@ Uporabnik potrdi en pregled ob svežem zagonu v ozadju in gumb **Preveri vse dos
 6. 2 prilagojeni metadata routing kontroli zdaj neposredno preverita izjemo account.changes. Stara domneva, da hladen zagon nikoli ne preveri avtoritete, po novem dogovoru ne velja. Obnovitveno varovalo ni oslabljeno.
 
 Dokazi: `build/qa/access-review-20261026/` (vključno z vsemi neuspelimi pripravami). Samo lokalni headless Flutter/SQLite/widget testi. Ni novega Mac GUI/HTTP scenarija, gradnje ali namestitve na telefon, spremembe obstoječih testnih shramb ali produkcije. Prvotni Samsung Mobile E2EE/Preg1 ostaja nedotaknjen; njegova dejanska obnova in mobilni čas pregleda sta naslednji ročni preizkus po namestitvi.
+
+### 26. oktober — Samsung: vrnitev prostora in nadaljevanje Preg1 USER PASS
+
+Po posodobitvi iste Jivie Test na 4580fbe uporabnik odpre aplikacijo: manjkajoči skupni prostor se vrne pred eno minuto; nato odpre obstoječo preglednico, jo uredi in uspešno shrani. Brez novega povabila, ponovnega vnosa ali odjave. To je uporabnikova potrditev odprave stare lokalne blokade in nadaljevanja obstoječih podatkov, ne meritev natančnega časa izrisa.
+
+Read-only diagnostika `build/qa/mobile-access-review-20261026/android/diagnostic-read-20261026T175201890699Z.json`: 573 dogodkov nove gradnje, 131 zajetih HTTP odgovorov, vsi 200 (0 zajetih 403/429). En crypto2.records.batch ob 17:51:15.875 UTC, pridobitev in sprostitev urejanja prav tako200. Koordinator nato izbere samo1 content scope/0 finance; completion seq1 ob17:51:30.226 UTC code=none/unresolved=false/retry=false in cursorAcknowledged. Naslednje 30s preverjanje unchanged. 64.451ms completion polje pomeni čas od začetka diagnostične seje, NE trajanja shranjevanja. Ne pripisuj vseh131 zahtevkov preverjanju dostopov: zajem vključuje zagon, odpiranje/urejanje/shranjevanje preglednice in sync.
+
+Zajet en interni caught `crypto_record_policy_existing_scope_upgrade_pending` v syncCaught; obstoječa veja ga obravnava kot odloženo nadgradnjo politike, zaključek istega cikla nima napake. Ni dokaz, da je policy nadgradnja dokončana, niti neuspeha tega shranjevanja. Prenos/prikaz iste spremembe na drugi napravi v tem koraku ni preverjen. Agent UI/save/sync/launch actions=0, zgolj branje dnevnika. Ta vrnitev prostora in shranjevanje sta PASS; ne ponavljaj brez novega razloga. Mobilni ročni gumb Preveri vse dostope je še nepreverjen.
+
+
+### 26. oktober — nova mobilna ugotovitev: finance in označevanje obvestil (ODPRTO)
+
+Uporabnik na Samsungu poroča: v skupnem prostoru račun/finance sprva niso vidni; po odprtju »Dostop do financ« se pokažejo in vnose lahko dodaja. Nato »Označi vse kot prebrano« vrne »Za finance v tem prostoru nimaš dostopa …«. Slika 1000012454.jpg ob 19:31 lokalno kaže finančna obvestila v prostoru Mobile E2EE 20261018. To ni dokaz novega dejanskega odvzema pravic. Obe ugotovitvi sta odprti; brez ponovnega klika, nadgradnje ali popravljanja podatkov v tem pregledu.
+
+Potrjeno iz kode:
+- `collaboration_notification_actions.dart`, `markInboxRead`: v eni lokalni transakciji preverja vsak izbran inbox ID. Za finančna obvestila vrne isti `finance_forbidden` tako pri finance_blocked kot pri finance_complete != 1/manjkajoči scope vrstici ali cached policy.canRead=false. Torej nepopoln lokalni prikaz in zavrnjen dostop dobita isto sporočilo. Preverjanje je pred enqueue inbox.read; ena zavrnjena postavka prekine transakcijo celotne skupine. Prava varovala session/scope/signed request ostajajo potrebna.
+- `collaboration_repository.dart`, `_scopeData`: račune/vnose pokaže šele ob finance_complete=1 in policy.canRead. Odsotnost računov v tem stanju sama ne dokazuje odsotnosti strežniških podatkov ali pravic.
+- `finance_permissions_dialog.dart`, `_load`: odprtje prebere members in financeGrants. Samo odprtje ne podeli pravice. Ni še dokaza, katera osvežitev med tem odpre prikaz. Staro lokalno zanikanje politike po prejšnji lažni revokaciji je kandidat, ne potrjen runtime vzrok.
+
+Read-only zajem `build/qa/mobile-access-review-20261026/android/diagnostic-read-20261026T183400300814Z.json`: 2420 dogodkov od17:50:25 do18:33:01 UTC, 526 HTTP dogodkov v celotnem mešanem obdobju uporabe (NE toliko zahtevkov za en klik). Sync diagnostika ne zajame točne lokalne UI izjeme markInboxRead. Štirje notranji policy_existing_scope_upgrade_pending so zaključeni kot odložena priprava brez napake cikla. Ločena zadnja network napaka authority.snapshot ob18:33:01 UTC je poznejša od slike in je ne pripisujemo označevanju obvestil.
+
+En omejen read-only VM pregled metapodatkov se je končal z timeout po6,43s; ni uspešnega odčitka konkretnega zavrnjenega inbox ID/politike. Zapis v `build/qa/finance-inbox-observation-20261026/attempts.json`; brez nadaljnjih slepih poskusov, eval/invoke, UI dejanj ali poslovnih klicev. Produkcija, podatki in podpisane zahteve nespremenjeni.
+
+Predlagan naslednji popravek: ločiti lokalno pripravljenost financ od dejanske pravice; po obnovi dostopa ciljno uskladiti finančno stanje prek obstoječega koordinatorja. Pri skupinskem označevanju obravnavati nedostopno/zastarelo obvestilo ločeno, z ohranjenimi preverjanji računa in prejemnika ter podpisano potjo. Najprej lokalna regresija mešane skupine obvestil in obnovljenega prostora; brez ponovitve uspešnega mobilnega prenosa ali Preg1.
+
+Uporabnik dodatno pojasni: kliknil je prav gumb **Dostop do financ na vrhu modula Finance**, brez opisanega spreminjanja dovoljenj. Pred tem je modul prikazoval opozorilo o manjkajočem dostopu (točno besedilo ni zajeto); po kliku so se prikazale finančne informacije. Ne opisuj tega samo kot praznega seznama računov. Sveži read-only posnetek Samsung19:39 v `build/qa/finance-inbox-observation-20261026/current-screen.png` potrdi isti gumb pod naslovom Finance, zelen oblaček in omogočen Dodaj zapis, obenem pa »Pregled projektnih financ še ni popoln …«. To je trenutno stanje, ne posnetek stanja pred klikom. Gumb v `shared_finance_workspace.dart:183` odpira `showFinancePermissions`; ni bil ponovno pritisnjen. Vzročna povezava prikaza z branjem members/grants ali sočasnim koordinatorjem še ni izolirana.
+
+
+### 26. oktober — ciljni popravek finančnega dostopa in inbox receipts, lokalno PASS
+
+Uporabnik potrdi, da ima legitimno dodeljene finančne pravice, nato izrecno naroči popravek. Ne spreminjamo dodeljenih pravic. Lokalno reproducirana vrzel: preverjanje dostopov obnovi prostor, vendar star finance policy denial in nepopoln snapshot ne izbereta običajne finančne poti, kadar account.changes ostane unchanged. To potrdi vzrok v tej lokalni reprodukciji; ni naknadni dokaz natančne runtime vrstice Samsungovega prvotnega klika.
+
+Izvedba:
+- Preverjeni začetni/ročni pregled dostopov za dostopne prostore z obnovljenim dostopom, neznano/zavrnjeno cached finančno politiko ali nepopolnim snapshotom zapiše lokalno zahtevo za ciljni finančni pregled. Zasebni izključeni prostori so izvzeti. To ni grant ali nastavitev complete.
+- Obstoječi koordinator zahtevo združi s finance hints tudi ob unchanged strežniškem cursorju. Običajni policy/pull in podpisna preverjanja ostanejo. Ni novega timerja, UI omrežnega preflighta ali full content synca. Po uspehu ali sveži pravi zavrnitvi se zahteva porabi; naslednji nespremenjeni krog ne ponovi finance policy/pull. Omrežna/prehodna napaka zahtevo ohrani za obstoječi mehanizem nadaljevanja. Ključ zahteve je vezan na točno particijo, brez LIKE wildcard ujemanja URL-ja.
+- Inbox read receipt ne zahteva več finance_complete=1: gre za oznako obvestila, ne dostop do finančnega zapisa. Še vedno preverja trenutni račun, scope, dejansko cached pravico in finance_blocked. Transakcija skupine ter podpisan immutable inbox.read prenos sta ohranjena. Prave zavrnitve se ne preskakujejo potiho in ni delnega uspeha skupine, prikazanega kot popoln uspeh.
+- Ni resetov, sprememb formata ali oslabitve kriptografskih preverjanj. Že blokiranih zahtev ne postavljamo samodejno nazaj v pending.
+
+6 novih lokalnih kontrol PASS:
+1. Mešana skupina task+finance obvestil se označi prebrana tudi ob nepopolnem finančnem snapshotu; snapshot ostane nepopoln, ustvarita se dve inbox.read zahtevi.
+2. Prava finance denial v drugi postavki razveljavi celotno skupino, brez prebranih oznak ali queued zahtev.
+3. Lokalno revoked prostor s staro finančno prepovedjo se obnovi in prenese račun ob unchanged cursorju; naslednji krog brez finance branj.
+4. Že obnovljen prostor s preostalo staro finančno prepovedjo se popravi brez odpiranja dovoljenj.
+5. Sveža strežniška finančna zavrnitev ostane zavrnitev, brez pulla in brez ponavljanja naslednji krog.
+6. Prekinitev policy branja ohrani zahtevo in blocked finance_outbox bajtno; nadaljevanje popravi stanje in porabi zahtevo, blocked vnos ostane enak. Test uporablja sintetični blocked request, ne novega dokaza realnega kriptografskega podpisa.
+
+Prvi tek: oba inbox testa PASS; trije finance testi se ustavijo v podlagi zaradi INSERT ob že obstoječem account cursorju. Podlaga uporablja upsert; drugi tek SAMO teh treh PASS. Resilience test prvič compile FAIL zaradi manjkajočega importa transport exception, drugič PASS. Noben četrti poskus ali ponovitev PASS. Prava memory SQLite/repository/materializacija in sintetični transport, brez novega HTTP/native/GUI dokaza. Dokazi v `build/qa/finance-inbox-observation-20261026/`: local-tests-attempt1.log, finance-tests-attempt2.log, resilience-attempt1/2.log, analyze-final.log. Scoped analiza brez napak/opozoril, deset obstoječih style infos. Produkcija, telefoni, nameščeni paketi in obstoječe testne baze v tem popravku nedotaknjeni. Naslednje: posodobitev iste Jivie Test in ozka mobilna potrditev obeh novih ugotovitev, brez ponavljanja starih PASS.

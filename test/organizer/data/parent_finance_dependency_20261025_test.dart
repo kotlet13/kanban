@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/data/collaboration_database.dart';
+import 'package:kanban/organizer/data/collaboration_transport.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
 import 'package:kanban/organizer/data/device_session_store.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_domain_router.dart';
@@ -207,7 +208,7 @@ Future<({CollaborationRepository repo, _Transport transport})> _open({
   final p = profile.partition;
   if (savedCursor) {
     await repo.database.execute(
-      'INSERT INTO local_meta(name,value) VALUES(?,?)',
+      'INSERT INTO local_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value',
       ['account_changes_v1:$p:${profile.deviceId}', 'synthetic-prior-cursor'],
     );
   }
@@ -239,6 +240,151 @@ Future<void> _cacheIncompleteCoverage(
 }
 
 void main() {
+  test(
+    'finance repair resilience: interrupted policy read retains debt and blocked intent',
+    () async {
+      final f = await _open();
+      final repo = f.repo, t = f.transport;
+      final p = repo.state.session!.partition;
+      await repo.database.execute(
+        'UPDATE scopes SET finance_policy=?,finance_complete=0,finance_blocked=1 WHERE id=?',
+        [jsonEncode(const SharedFinancePolicy().toJson()), t.parent],
+      );
+      final op = newSharedId();
+      const original =
+          '{"type":"financeEntry","untouched":"signed intent placeholder"}';
+      await repo.database.execute(
+        'INSERT INTO finance_outbox(op_id,partition,scope_id,record_id,request,state) VALUES(?,?,?,?,?,?)',
+        [op, p, t.parent, newSharedId(), original, 'blocked'],
+      );
+      final before = await repo.database.rows(
+        'SELECT * FROM finance_outbox WHERE op_id=?',
+        [op],
+      );
+      t.beforeFinancePolicy = (id) async {
+        if (id == t.parent) throw const CollaborationApiException('network');
+      };
+      await repo.checkAllAccess();
+      expect(repo.state.lastError, isNotNull);
+      expect(
+        await repo.database.rows('SELECT name FROM local_meta WHERE name=?', [
+          'finance_access_review:$p:${t.parent}',
+        ]),
+        hasLength(1),
+      );
+      expect(repo.state.financePolicyForScope(t.parent).canRead, false);
+      expect(
+        await repo.database.rows('SELECT * FROM finance_outbox WHERE op_id=?', [
+          op,
+        ]),
+        before,
+      );
+      t.beforeFinancePolicy = null;
+      await repo.syncNow(manual: true);
+      expect(repo.state.lastError, isNull);
+      expect(repo.state.financePolicyForScope(t.parent).canRead, true);
+      expect(
+        await repo.database.rows('SELECT name FROM local_meta WHERE name=?', [
+          'finance_access_review:$p:${t.parent}',
+        ]),
+        isEmpty,
+      );
+      expect(
+        await repo.database.rows('SELECT * FROM finance_outbox WHERE op_id=?', [
+          op,
+        ]),
+        before,
+      );
+    },
+  );
+
+  test(
+    'finance access repair: restored space refreshes denied policy despite unchanged server cursor',
+    () async {
+      final f = await _open();
+      final repo = f.repo, t = f.transport;
+      final p = repo.state.session!.partition;
+      final data = repo.state.scopes
+          .singleWhere((s) => s.id == t.parent)
+          .toJson();
+      await repo.database.execute(
+        'UPDATE scopes SET data=?,blocked=1,finance_policy=?,finance_complete=0,finance_blocked=1 WHERE partition=? AND id=?',
+        [
+          jsonEncode({...data, 'revoked': true}),
+          jsonEncode(const SharedFinancePolicy().toJson()),
+          p,
+          t.parent,
+        ],
+      );
+      await repo.refreshLocal();
+      await repo.checkAllAccess();
+      expect(repo.state.lastError, isNull);
+      expect(
+        repo.state.scopes.singleWhere((s) => s.id == t.parent).revoked,
+        false,
+      );
+      expect(repo.state.financePolicyForScope(t.parent).canRead, true);
+      expect(repo.state.financeSnapshotComplete[t.parent], true);
+      expect(
+        repo.state.data[t.parent]!.financeAccounts.map((a) => a.id),
+        contains(t.account),
+      );
+      expect(t.financePolicyReads, contains(t.parent));
+      expect(
+        await repo.database.rows('SELECT name FROM local_meta WHERE name=?', [
+          'finance_access_review:$p:${t.parent}',
+        ]),
+        isEmpty,
+      );
+      t.financePulls.clear();
+      t.financePolicyReads.clear();
+      await repo.syncNow();
+      expect(t.financePulls, isEmpty);
+      expect(t.financePolicyReads, isEmpty);
+    },
+  );
+
+  test(
+    'finance access repair: already restored space repairs old denial without UI permission dialog',
+    () async {
+      final f = await _open();
+      final repo = f.repo, t = f.transport;
+      await repo.database.execute(
+        'UPDATE scopes SET finance_policy=?,finance_complete=0,finance_blocked=1 WHERE id=?',
+        [jsonEncode(const SharedFinancePolicy().toJson()), t.parent],
+      );
+      await repo.refreshLocal();
+      await repo.checkAllAccess();
+      expect(repo.state.lastError, isNull);
+      expect(repo.state.financePolicyForScope(t.parent).canWrite, true);
+      expect(repo.state.financeSnapshotComplete[t.parent], true);
+      expect(t.financePulls, contains(t.parent));
+    },
+  );
+
+  test(
+    'finance access repair: verified financial denial is consumed without granting or polling again',
+    () async {
+      final f = await _open();
+      final repo = f.repo, t = f.transport;
+      t.grant = 'none';
+      await repo.database.execute(
+        'UPDATE scopes SET finance_policy=?,finance_complete=0,finance_blocked=1 WHERE id=?',
+        [jsonEncode(const SharedFinancePolicy().toJson()), t.parent],
+      );
+      await repo.refreshLocal();
+      await repo.checkAllAccess();
+      expect(repo.state.financePolicyForScope(t.parent).canRead, false);
+      expect(t.financePolicyReads, contains(t.parent));
+      expect(t.financePulls, isNot(contains(t.parent)));
+      t.financePulls.clear();
+      t.financePolicyReads.clear();
+      await repo.syncNow();
+      expect(t.financePolicyReads, isEmpty);
+      expect(t.financePulls, isEmpty);
+    },
+  );
+
   test(
     'new cached coverage continuation: unchanged probe rechecks false parent after every child is complete',
     () async {

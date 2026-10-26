@@ -358,6 +358,15 @@ extension CollaborationFinanceSync on CollaborationRepository {
     required bool linkedPaymentsSupported,
   }) async {
     final p = session.profile.partition;
+    Future<void> reviewed() => database.transaction(() async {
+      _checkEpoch(epoch);
+      await _validLease(p);
+      _checkEpoch(epoch);
+      await database.execute('DELETE FROM local_meta WHERE name=?', [
+        'finance_access_review:$p:${scope.id}',
+      ]);
+    });
+
     try {
       final policy = await _fetchFinancePolicy(
         session,
@@ -365,7 +374,10 @@ extension CollaborationFinanceSync on CollaborationRepository {
         scope.id,
         syncLease: true,
       );
-      if (!policy.canRead) return;
+      if (!policy.canRead) {
+        await reviewed();
+        return;
+      }
       if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
       await _pullFinanceScope(session, epoch, scope.id);
       if (_organizationFinanceSupported &&
@@ -401,6 +413,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
         );
         _checkEpoch(epoch);
       }
+      await reviewed();
     } on CryptoAuthorityPending {
       _checkEpoch(epoch);
       _lastError ??= const CollaborationException(
@@ -426,6 +439,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
         await _validLease(p);
         _checkEpoch(epoch);
         await _storeFinancePolicy(p, scope.id, const SharedFinancePolicy());
+        await reviewed();
       });
     }
   }

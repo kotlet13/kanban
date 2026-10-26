@@ -251,4 +251,83 @@ void main() {
       );
     },
   );
+  test(
+    'finance readiness repair: mixed receipts do not require a complete snapshot',
+    () async {
+      final (repo, db, scope) = await sharedFixture();
+      await db.execute('UPDATE inbox SET data=? WHERE id=1', [
+        jsonEncode(entry(1, scope, finance: true).toJson()),
+      ]);
+      await db.execute(
+        'UPDATE scopes SET finance_policy=?,finance_blocked=0,finance_complete=0 WHERE id=?',
+        [
+          jsonEncode(
+            const SharedFinancePolicy(
+              enabled: true,
+              grant: SharedFinanceGrant.read,
+            ).toJson(),
+          ),
+          scope,
+        ],
+      );
+      await repo.markInboxRead([
+        1,
+        2,
+      ], expectedPartition: repo.state.session!.partition);
+      final rows = await db.rows('SELECT data FROM inbox ORDER BY id');
+      expect(
+        rows.every(
+          (r) =>
+              SharedInboxEntry.fromJson(jsonDecode(r['data'] as String)).isRead,
+        ),
+        isTrue,
+      );
+      expect(
+        await db.rows("SELECT id FROM commands WHERE operation='inbox.read'"),
+        hasLength(2),
+      );
+      expect(
+        (await db.rows('SELECT finance_complete FROM scopes WHERE id=?', [
+          scope,
+        ])).single['finance_complete'],
+        0,
+      );
+    },
+  );
+
+  test(
+    'finance readiness repair: genuine financial denial keeps bulk receipts atomic',
+    () async {
+      final (repo, db, scope) = await sharedFixture();
+      await db.execute('UPDATE inbox SET data=? WHERE id=2', [
+        jsonEncode(entry(2, scope, finance: true).toJson()),
+      ]);
+      await db.execute(
+        'UPDATE scopes SET finance_policy=?,finance_blocked=0,finance_complete=1 WHERE id=?',
+        [jsonEncode(const SharedFinancePolicy().toJson()), scope],
+      );
+      await expectLater(
+        repo.markInboxRead([1, 2]),
+        throwsA(
+          isA<CollaborationException>().having(
+            (e) => e.code,
+            'code',
+            'finance_forbidden',
+          ),
+        ),
+      );
+      expect(
+        await db.rows("SELECT id FROM commands WHERE operation='inbox.read'"),
+        isEmpty,
+      );
+      expect(
+        (await db.rows('SELECT data FROM inbox')).every(
+          (r) => !SharedInboxEntry.fromJson(
+            jsonDecode(r['data'] as String),
+          ).isRead,
+        ),
+        isTrue,
+      );
+    },
+  );
 }

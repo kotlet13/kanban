@@ -1,3 +1,17 @@
+26. oktober — **Finance access recovery + inbox readiness, 6 novih lokalnih PASS**.
+User ima legitimne finance pravice; finance se pojavijo po Dostop do financ,
+markallread vrne lažni finance_forbidden. Lokalno potrjena obnovljeni scope+
+stara finance denial+unchanged cursor vrzel. Verified access review zapiše
+partition-bound finance review debt; isti koordinator ciljno policy/pull,
+uspeh/freshdeny consume, failure retain; no new timer/auto-grant/fullcontent.
+Inbox receipt ne zahteva finance_complete, ohrani scope/session/canRead/
+finance_blocked/atomicgroup/immutable signed command. Blocked intents isti.
+6novih SQL/synthetictransport PASS; fixturecursorFAIL→PASS2, resilience
+missingimportFAIL→PASS2; brezPASSrerun, breznative/HTTP/build/install/prod.
+Docs COORDINATOR_OPTIMIZATION_2026_10_26.md zadnji sklop; evidence
+build/qa/finance-inbox-observation-20261026/. Mobilni novi ugotovitvi še
+čakata posodobitev in ciljno potrditev. To ni dokaz prvotne Samsung throwvrstice.
+
 26. oktober — **Preveri vse dostope: startup+manual, lokalni ciljni testi PASS**.
 User potrdi coldstartbackground review in globalni gumb; telefon odklopi,
 telefonov/prod se ne dotikaj. Nova collaboration_access_review: coordinator
