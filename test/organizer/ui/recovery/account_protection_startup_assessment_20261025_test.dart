@@ -283,6 +283,19 @@ void main() {
       }
     },
   );
+  test(
+    'locked local setup ignores copied completion acknowledgement',
+    () async {
+      final w = _Workflow(sharingSession())..phase = 'locked';
+      final s = _Service(w)..matches = true;
+      expect(
+        (await s.assessStartupReview(isCurrent: () => true)).status,
+        AccountProtectionStartupStatus.setupRequired,
+      );
+      expect(s.completionReads, 0);
+      expect(s.catalogReads, 0);
+    },
+  );
   test('exact current catalog is the only current review result', () async {
     final w = _Workflow(sharingSession());
     final s = _Service(w)..matches = true;

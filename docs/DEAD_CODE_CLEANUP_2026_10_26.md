@@ -83,6 +83,10 @@ Odstranjen samo DeviceReminderSettings. Njegov uporabni test lifetime koordinato
 
 Odstranjen SharedTodayOverview. Test archive/unarchive prenesen na OrganizerUtripOverview + dejanski projectAllSpaces in provider spremembe: PASS1 v poskusu2; poskus1 fixture je prezgodaj bral requireValue v AsyncLoading, popravljeno samo v testu. Obstoječi SharedAgendaPage history test ostane nespremenjen. Backend account-changes-metadata: PASS19 (memory SQL, scope selection/access/deletion hints, brez HTTP/proof verifikacije). Dokazi U3-*.log.
 
+### U4 — Remove obsolete startup acknowledgement predicate
+
+Odstranjen matchesStartupAcknowledgment in test, ki je klical samo opuščeni helper. Dodana locked/copied-completion kontrola na dejanski assessStartupReview. Ciljne aktivne startup/widget kontrole (locked, spremenjena naprava/račun, odhod v lokalni zaslon in offline): PASS5. Backend crypto2 account integration: PASS20 (epoch recovery, naprave, zgodovina in replay). Ostali aktualni startup testi ostanejo. Dokazi U4-*.log.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5

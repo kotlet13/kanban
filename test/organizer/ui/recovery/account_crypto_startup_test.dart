@@ -4,51 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/presentation/recovery/account_crypto_startup.dart';
 
 void main() {
-  test(
-    'copied startup acknowledgement never approves a restored/new device',
-    () {
-      final ack = {
-        'version': 2,
-        'deviceId': 'old',
-        'identityEpochId': 'epoch',
-        'headHash': 'head',
-        'components': [
-          {'scopeId': 'scope'},
-        ],
-      };
-      expect(
-        matchesStartupAcknowledgment(
-          ack,
-          phase: 'locked',
-          deviceId: 'old',
-          identityEpochId: 'epoch',
-          headHash: 'head',
-        ),
-        false,
-      );
-      expect(
-        matchesStartupAcknowledgment(
-          ack,
-          phase: 'ready',
-          deviceId: 'new',
-          identityEpochId: 'epoch',
-          headHash: 'head',
-        ),
-        false,
-      );
-      expect(
-        matchesStartupAcknowledgment(
-          ack,
-          phase: 'ready',
-          deviceId: 'old',
-          identityEpochId: 'newEpoch',
-          headHash: 'head',
-        ),
-        false,
-      );
-    },
-  );
-
   testWidgets(
     'stored-session action opens automatically and exit preserves local screen',
     (tester) async {

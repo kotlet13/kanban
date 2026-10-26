@@ -25,21 +25,6 @@ final accountCryptoStartupIdentityProvider = Provider<String?>((ref) {
   return session == null ? null : '${session.partition}:${session.deviceId}';
 });
 
-bool matchesStartupAcknowledgment(
-  Map ack, {
-  required String phase,
-  required String deviceId,
-  required String identityEpochId,
-  required String headHash,
-}) =>
-    phase == 'ready' &&
-    ack['version'] == 2 &&
-    ack['deviceId'] == deviceId &&
-    ack['identityEpochId'] == identityEpochId &&
-    ack['headHash'] == headHash &&
-    ack['components'] is List &&
-    (ack['components'] as List).isNotEmpty;
-
 /// Shared by the required startup route and the nonblocking review status.
 /// Ordinary sync/projection emissions do not rerun account/catalog reads.
 final accountProtectionStartupServiceProvider =
