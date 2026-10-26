@@ -75,6 +75,10 @@ Odstranjen samo CryptoMigrationGeneration.publishDraft. Aktivni pipeline še nep
 
 Odstranjen nepovezan crypto_public_card_dialog in njegov test. Prenesena smiselna keyboard/back/success/failure kontrola na dejanski ContactIdentityVerificationPage: PASS 6 za Android/iOS teme brez naprav. Test preverja exact scope/account/card delegacijo; kriptografski verifier ni mock testa pretvorjen v produkcijsko izjemo. Backend origin/author integration: PASS 51. Dokazi U1-*.log. Zapisan tudi STOP3 C10; ta izbris ni del commita.
 
+### U2 — Remove legacy reminder settings and exercise current preferences
+
+Odstranjen samo DeviceReminderSettings. Njegov uporabni test lifetime koordinatorja prevezan na dejanski InboxPreferencesScrollView: PASS1; po zaprtju nastavitve callback ostane pravilen. Lokalna v1 preference migracija ohranjena. Backend reminder archive: poskus1 fixture email_verification_required, poskus2 po dopolnitvi sintetičnega lastnika z verified email in sprejetimi pravili PASS4. Produktni guardi isti; dokazi U2-*.log.
+
 ## Ohranitev in omejitve
 
 C11 (aktivna v1 alternativa), S3 (javni PHP helper/zunanji uporabniki), S4/S5

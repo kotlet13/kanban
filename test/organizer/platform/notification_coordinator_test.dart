@@ -19,7 +19,7 @@ import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/platform/notification_coordinator.dart';
 import 'package:kanban/organizer/platform/notification_providers.dart';
 import 'package:kanban/organizer/platform/local_notification_adapter.dart';
-import 'package:kanban/organizer/presentation/planning/device_reminder_settings.dart';
+import 'package:kanban/organizer/presentation/inbox/inbox_preferences.dart';
 import '../ui/organizer_ui_test.dart' as personal;
 import '../ui/sharing_ui_fixture.dart';
 import 'local_notification_adapter_test.dart' as fake;
@@ -392,7 +392,7 @@ void main() {
                 context,
                 MaterialPageRoute<void>(
                   builder: (_) =>
-                      const Scaffold(body: DeviceReminderSettings()),
+                      const Scaffold(body: InboxPreferencesScrollView()),
                 ),
               ),
               child: const Text('settings'),
@@ -403,11 +403,16 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('settings'));
       await tester.pumpAndSettle();
-      final switchFinder = find.byType(SwitchListTile).first;
+      final switchFinder = find.byKey(
+        const ValueKey('notification-setting-all-push'),
+      );
+      await tester.ensureVisible(switchFinder);
       await tester.tap(switchFinder);
       await tester.pumpAndSettle();
       expect(scheduler.permissionRequests, 1);
-      Navigator.of(tester.element(find.byType(DeviceReminderSettings))).pop();
+      Navigator.of(
+        tester.element(find.byType(InboxPreferencesScrollView)),
+      ).pop();
       await tester.pumpAndSettle();
       final container = ProviderScope.containerOf(
         tester.element(find.text('settings')),

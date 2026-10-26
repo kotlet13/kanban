@@ -8,6 +8,10 @@ function uuid(){ $h=bin2hex(random_bytes(16));return substr($h,0,8).'-'.substr($
 function check($v,$m){if(!$v)throw new RuntimeException('FAIL: '.$m);echo 'PASS: '.$m.PHP_EOL;}
 $pdo=$container['db']->getConnection();$service=new NativeService($container);$name='archivereminder_'.bin2hex(random_bytes(6));$pw=bin2hex(random_bytes(18));
 $id=$container['userModel']->create(['username'=>$name,'password'=>$pw,'role'=>'app-user']);$session=$service->dispatch('auth.login',['username'=>$name,'password'=>$pw,'deviceName'=>'Synthetic archive reminder'],'','synthetic-archive-reminder');$bearer='Bearer '.$session['token'];$account=$session['user']['accountId'];
+// Current connected-write prerequisites for this disposable synthetic owner.
+$verify=$pdo->prepare('INSERT INTO familyhub_email_identities(account_id,email,verified_at,revision) VALUES(?,?,?,1)');
+$verify->execute([$account,$name.'@capture.invalid',time()]);
+$service->dispatch('moderation.acceptPolicy',['policyVersion'=>1],$bearer,'synthetic-archive-reminder');
 $org=uuid();$archived=uuid();$active=uuid();$service->dispatch('scopes.create',['id'=>$org,'kind'=>'organization','name'=>'Synthetic reminder org','requestId'=>uuid()],$bearer,'synthetic-archive-reminder');
 foreach([$archived,$active]as$scope)$service->dispatch('scopes.create',['id'=>$scope,'kind'=>'project','name'=>'Synthetic reminder project','organizationId'=>$org,'requestId'=>uuid()],$bearer,'synthetic-archive-reminder');
 $task=uuid();$stamp=gmdate('Y-m-d\TH:i:s\Z');$payload=['title'=>'Synthetic target','notes'=>'','projectId'=>$active,'dueAt'=>null,'isCompleted'=>false,'startAt'=>null,'endAt'=>null,'assigneeAccountIds'=>[],'phaseId'=>null,'estimateMinutes'=>null,'availabilityMinutes'=>null,'availabilityPeriod'=>null,'timer'=>['elapsedSeconds'=>0,'runningSince'=>null,'runId'=>null],'assigneePersonId'=>null,'subjectPersonIds'=>[],'createdAt'=>$stamp,'updatedAt'=>$stamp];
