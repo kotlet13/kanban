@@ -1,3 +1,4 @@
+import 'access_review_button.dart';
 import 'hosting_disclosure.dart';
 import '../../data/collaboration_repository.dart' show newSharedId;
 import 'package:flutter/material.dart';
@@ -298,6 +299,7 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                               icon: const Icon(Icons.mail_outline, size: 18),
                               label: Text(l.sharingHaveInvite),
                             ),
+                            const AccessReviewButton(),
                             TextButton(
                               onPressed: _busy ? null : _signOut,
                               child: Text(l.logout),

@@ -315,3 +315,32 @@ branj/signalov, izmerjeno utemeljena P4b finance result reuse ter dejanska
 HTTP/native meritev teh sprememb. Ni spreminjanja migracij, podatkov, ključev,
 pravil sprejema ali finančnih varoval. Obstoječi QA podatki, Docker storitve,
 telefoni in produkcija v tem nadaljevanju niso bili uporabljeni ali spremenjeni.
+
+
+## Preverjanje vseh dostopov ob zagonu in ročno — 26. oktober
+
+Uporabnik potrdi en pregled ob svežem zagonu v ozadju in gumb **Preveri vse dostope**. Odpiranje Utripa ne čaka na omrežje; ob zapiranju ne izvajamo opravila. Pregled je del obstoječe serializacije koordinatorja, ne nov timer ali opravilo posameznega zaslona. Ista seja v pomnilniku opravi začetni pregled enkrat; poznejši 30-sekundni krogi ostanejo changed-only. Omrežna napaka ne potrdi opravljenega pregleda, zato naslednji dovoljeni krog obstoječega razporejevalnika lahko nadaljuje. Ponovna prijava oziroma nova instanca repozitorija zahtevata svoj pregled.
+
+### Izvedba in varovala
+
+- `collaboration_access_review.dart`: skupni `scopes.list` skozi obstoječo overjeno kriptografsko pot, razveljavitev starega authority reuse, obstoječa omejena skupina preverjenih branj, lease in transakcijska uveljavitev z epoch/session varovalom. Ne gre za neposredno zaupanje tabeli članov na strežniku.
+- Staršem sledi lokalna uveljavitev podprostorov. Manjkajoč nadrejeni prostor je dovoljen za povabilo samo v projekt; cikel ali protisloven odgovor se zavrne pred uveljavitvijo.
+- Sveže preverjen prostor nadomesti staro lokalno oznako revoked. Samo blokada, povezana s starim revoked, se sprosti; ostale operativne blokade ostanejo. Starejša sequence, pending dokaz, nezdružljiva politika ali lokalna oznaka deleted se ne uporabijo za odklep.
+- Dodatna najdba: `crypto_visible_task_scope.dart` je prek `...local` tudi po veljavnem preverjanju glave/članstva ohranjal staro revoked oznako. Zdaj preverjeni rezultat prekliče to lokalno zanikanje, pending veja ga ohrani. Izbrisa ne razveljavlja.
+- Potrjen odvzem/izbris uporablja obstoječo `_upsertScope` obravnavo. Sama odsotnost iz kataloga pomeni unresolved/reconciliation, ne dokaz odvzema. Celotna omrežna napaka ne spreminja scope vrstic.
+- Podatki, ključi, cursorji, osnutki, podpisane zahteve in receipts se ne ponastavljajo. Neodvisno blokiranih outbox operacij ne prestavimo samodejno v pending: potrebujejo obstoječo izrecno nadaljevalno pot. Lokalna regresija potrdi bajtno ohranitev originalnega requesta in osnutka.
+- Gumb je v nastavitvah povezanega računa in prostora, tudi ko v računu ni nobenega vidnega prostora. Ima stanje preverjanja, zaščito pred večkratnim pritiskom, povzetek dostopnih/obnovljenih/preklicanih/nepreverjenih ter varovalo zamenjave računa. Zagon, gumb in sočasni ročni pozivi delijo isti pregled.
+- Pregled ne zahteva celotnega content/finance pulla. Obstoječa kriptografska pot lahko pridobi manjkajočo šifrirano metapodatkovno vsebino ali dokaze; zato en logični scopes.list NI obljuba enega dejanskega HTTP zahtevka. Na realnih mobilnih podatkih število/čas še nista izmerjena.
+
+### Lokalni rezultati
+
+15 novih kontrol PASS + 2 prilagojeni obstoječi metadata-routing kontroli PASS (17 različnih kontrol):
+
+1. 7 koordinator/SQLite: popravek stare blokade ob unchanged; nadaljnja dva kroga samo account.changes; 14 prostorov/en logični seznam in združena ročna poziva; potrjen odvzem proti izpuščenemu prostoru; offline byte parity in nadaljevanje; pending proof in poznejša ročna obnova; cikel; starejša sequence. Prvi tek vseh sedmih FAIL v pripravi zaradi manjkajoče accounts FK vrstice; drugi PASS. Vsebinsko ni bilo testnega odklepa mimo produkcijske poti; transport v tem sklopu je sintetični legacy adapter.
+2. 2 novi kontroli dejanske E2EE projekcije z nadomeščenim ponudnikom preverjene glave: potrjena glava odstrani staro revoked/blocked projekcijo; zavrnjena glava ne vrne odklepa. Produkcijska SQL/projekcijska koda, ne nova kriptografska HTTP/signature integracija. Prvi tek compile fixture FAIL zaradi neubežanega SQL `$`; drugi PASS. Stari project-root PASS ni ponovljen.
+3. 2 prekinitveni/hranilni: odjava med odgovorom ne uveljavi starega rezultata; osnutek in že blokiran originalni outbox request ostaneta enaka. Prvi compile fixture FAIL (manjkajoč import); drugi odjava PASS, osnutek FAIL zaradi nepopolnega sintetičnega Task payloada; tretji samo osnutek s pravim modelnim serializerjem PASS. Ni četrtega poskusa.
+4. 2 widget kontroli: gumb brez vidnih prostorov, busy/rezultat; zamenjava računa skrije prejšnji rezultat. Prvi compile fixture FAIL zaradi prekritja podedovanega `calls`; drugi PASS.
+5. 2 novi produkcijski router kontroli: manjkajoča preverjena identiteta in restore fence ustavita začetni pregled; ni plaintext fallback scopes.list in scope vrstice ostanejo iste. Uporabljen pravi CryptoBusinessRouter, account provider namensko zavrne; ne celoten podpisni E2EE dokaz.
+6. 2 prilagojeni metadata routing kontroli zdaj neposredno preverita izjemo account.changes. Stara domneva, da hladen zagon nikoli ne preveri avtoritete, po novem dogovoru ne velja. Obnovitveno varovalo ni oslabljeno.
+
+Dokazi: `build/qa/access-review-20261026/` (vključno z vsemi neuspelimi pripravami). Samo lokalni headless Flutter/SQLite/widget testi. Ni novega Mac GUI/HTTP scenarija, gradnje ali namestitve na telefon, spremembe obstoječih testnih shramb ali produkcije. Prvotni Samsung Mobile E2EE/Preg1 ostaja nedotaknjen; njegova dejanska obnova in mobilni čas pregleda sta naslednji ročni preizkus po namestitvi.

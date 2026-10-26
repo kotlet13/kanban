@@ -2028,5 +2028,24 @@
   "cryptoProtectionRetry": "Ponovno preveri",
   "cryptoProtectionDetails": "Podrobnosti zaščite",
   "cryptoProtectionBackToApp": "Nazaj v aplikacijo",
-  "organizerDraftSharingUnavailable": "Deljenje ni na voljo. Osnutek lahko dokončate v tem odprtem obrazcu. Pred zapiranjem kopirajte spremembe, ki jih želite ohraniti."
+  "organizerDraftSharingUnavailable": "Deljenje ni na voljo. Osnutek lahko dokončate v tem odprtem obrazcu. Pred zapiranjem kopirajte spremembe, ki jih želite ohraniti.",
+  "sharingCheckAllAccess": "Preveri vse dostope",
+  "sharingCheckingAllAccess": "Preverjam dostope …",
+  "sharingAccessReviewResult": "Preverjanje končano. Dostopni prostori: {available}. Obnovljeni dostopi: {restored}. Potrjeni odvzemi: {revoked}. Še nepreverjeni: {unresolved}.",
+  "@sharingAccessReviewResult": {
+    "placeholders": {
+      "available": {
+        "type": "int"
+      },
+      "restored": {
+        "type": "int"
+      },
+      "revoked": {
+        "type": "int"
+      },
+      "unresolved": {
+        "type": "int"
+      }
+    }
+  }
 }

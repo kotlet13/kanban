@@ -9649,6 +9649,29 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing.'**
   String get organizerDraftSharingUnavailable;
+
+  /// No description provided for @sharingCheckAllAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Check all access'**
+  String get sharingCheckAllAccess;
+
+  /// No description provided for @sharingCheckingAllAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking access…'**
+  String get sharingCheckingAllAccess;
+
+  /// No description provided for @sharingAccessReviewResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Check complete. Available spaces: {available}. Restored access: {restored}. Confirmed revocations: {revoked}. Still unverified: {unresolved}.'**
+  String sharingAccessReviewResult(
+    int available,
+    int restored,
+    int revoked,
+    int unresolved,
+  );
 }
 
 class _AppLocalizationsDelegate

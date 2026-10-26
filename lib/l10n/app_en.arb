@@ -2028,5 +2028,24 @@
   "cryptoProtectionRetry": "Check again",
   "cryptoProtectionDetails": "Protection details",
   "cryptoProtectionBackToApp": "Back to app",
-  "organizerDraftSharingUnavailable": "Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing."
+  "organizerDraftSharingUnavailable": "Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing.",
+  "sharingCheckAllAccess": "Check all access",
+  "sharingCheckingAllAccess": "Checking access…",
+  "sharingAccessReviewResult": "Check complete. Available spaces: {available}. Restored access: {restored}. Confirmed revocations: {revoked}. Still unverified: {unresolved}.",
+  "@sharingAccessReviewResult": {
+    "placeholders": {
+      "available": {
+        "type": "int"
+      },
+      "restored": {
+        "type": "int"
+      },
+      "revoked": {
+        "type": "int"
+      },
+      "unresolved": {
+        "type": "int"
+      }
+    }
+  }
 }

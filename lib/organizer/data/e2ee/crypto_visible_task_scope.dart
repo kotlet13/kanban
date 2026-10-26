@@ -93,6 +93,11 @@ extension CryptoVisibleTaskScope on CryptoBusinessSession {
         'kind': descriptor['kind'],
         'projectRootId': rootId,
         'role': member['role'],
+        // A fresh verified head/membership supersedes a cached access denial.
+        // Pending discovery above must retain the old denial; a local deletion
+        // is deliberately not cleared here.
+        'revoked': false,
+        'blocked': local['revoked'] == true ? false : local['blocked'] == true,
         'accessRevision': head.accessRevision,
         'name': source['name'] ?? 'Jivie',
         'address': source['address'],

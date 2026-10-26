@@ -46,7 +46,7 @@ class _Transport implements CollaborationTransport {
 void main() {
   for (final fenced in [false, true]) {
     test(
-      'actual crypto router account changes bypasses content readiness fenced=$fenced',
+      'direct account changes metadata route bypasses content readiness fenced=$fenced',
       () async {
         final profile = AccountSession(
           serverUrl: 'https://example.test/',
@@ -99,7 +99,23 @@ void main() {
         );
         addTearDown(repo.close);
         await repo.initialize();
-        await repo.syncNow();
+        // Cold-start coordination now deliberately reviews access first. Test
+        // the metadata routing exemption itself, independently of that demand.
+        expect(
+          await routeProtectedCryptoDomain(
+            database: db,
+            session: store.value!,
+            operation: 'account.changes',
+            params: {},
+            router: repo.cryptoRouter,
+            checkCurrent: () {},
+          ),
+          isNull,
+        );
+        await transport.call(
+          serverUrl: profile.serverUrl,
+          operation: 'account.changes',
+        );
         expect(transport.operations, ['account.changes']);
         expect(cryptoAccountCalls, 0);
         expect(repo.state.lastError, isNull);

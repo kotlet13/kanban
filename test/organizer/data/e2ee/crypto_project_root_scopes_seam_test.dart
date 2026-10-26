@@ -99,6 +99,7 @@ class _Account implements AccountCryptoV2Workflow {
   final _Directory directory = _Directory();
   @override
   final CryptoIdentityStore store;
+  bool rejectHead = false;
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw StateError('Unexpected account dependency');
@@ -135,7 +136,11 @@ class _Access implements SessionCryptoAccess {
   Future<VerifiedScopeHead> currentHead(
     String scopeId, {
     bool online = false,
-  }) async => _Head();
+  }) async {
+    if (account.rejectHead) throw StateError('unverified_head');
+    return _Head();
+  }
+
   @override
   Future<Map<String, dynamic>> verifiedScopeDescriptor(
     String scopeId, {
@@ -217,7 +222,67 @@ void main() {
         'crypto2.scope.lifecycle.list',
         'crypto2.scope.lifecycle.list',
       ]);
-
     },
   );
+  for (final reject in [false, true]) {
+    test(
+      'access review projection clears cached denial only after verified head reject=$reject',
+      () async {
+        final db = CollaborationDatabase(NativeDatabase.memory());
+        addTearDown(db.close);
+        await fixture.seed(db, fixture.scope);
+        await db.execute(
+          r"UPDATE scopes SET data=json_set(data,'$.revoked',json('true'),'$.blocked',json('true')),blocked=1 WHERE partition=? AND id=?",
+          [fixture.partition, fixture.scope],
+        );
+        final before = await db.rows('SELECT data,blocked FROM scopes');
+        final account = _Account(db)..rejectHead = reject;
+        final runtime = _Runtime(account, db);
+        final metadataId = await runtime.reservedRecordId(
+          fixture.scope,
+          'scopeMetadata',
+        );
+        final address = CryptoRecordAddress.forType(
+          serverId: fixture.server,
+          scopeId: fixture.scope,
+          type: 'scopeMetadata',
+          canonicalId: metadataId,
+        );
+        await CryptoBusinessAddresses(
+          db,
+          fixture.partition,
+          fixture.server,
+        ).install(address);
+        await db.execute(
+          'INSERT INTO crypto_business_records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+          [
+            fixture.partition,
+            fixture.scope,
+            'content',
+            address.wireId,
+            'scopeMetadata',
+            1,
+            0,
+            'c' * 64,
+            0,
+            jsonEncode({'name': 'Existing encrypted space'}),
+            '{}',
+            'ordinary',
+            'crypto',
+          ],
+        );
+        if (reject) {
+          await expectLater(runtime.scopes(), throwsStateError);
+        } else {
+          final reply = await runtime.scopes();
+          final scope = (reply['scopes'] as List).single as Map;
+          expect(scope['revoked'], false);
+          expect(scope['blocked'], false);
+          expect(scope['role'], 'owner');
+        }
+        // Projection alone cannot mutate the old access row.
+        expect(await db.rows('SELECT data,blocked FROM scopes'), before);
+      },
+    );
+  }
 }

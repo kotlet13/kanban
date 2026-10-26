@@ -1,3 +1,4 @@
+import 'access_review_button.dart';
 import 'content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -161,6 +162,7 @@ class SpaceSettingsPage extends ConsumerWidget {
                       ),
                     ),
                 ],
+                if (usableSession) const AccessReviewButton(),
                 if (!usableSession) ...[
                   Text(
                     session == null

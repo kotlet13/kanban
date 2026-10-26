@@ -5494,4 +5494,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get organizerDraftSharingUnavailable =>
       'Sharing is unavailable. You can finish your draft in this open form. Copy any changes you need before closing.';
+
+  @override
+  String get sharingCheckAllAccess => 'Check all access';
+
+  @override
+  String get sharingCheckingAllAccess => 'Checking access…';
+
+  @override
+  String sharingAccessReviewResult(
+    int available,
+    int restored,
+    int revoked,
+    int unresolved,
+  ) {
+    return 'Check complete. Available spaces: $available. Restored access: $restored. Confirmed revocations: $revoked. Still unverified: $unresolved.';
+  }
 }

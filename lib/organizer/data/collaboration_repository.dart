@@ -77,6 +77,7 @@ part 'collaboration_record_merge.dart';
 part 'collaboration_person_actions.dart';
 part 'collaboration_task_cost_actions.dart';
 part 'collaboration_sync_actions.dart';
+part 'collaboration_access_review.dart';
 part 'collaboration_event_actions.dart';
 part 'collaboration_notification_actions.dart';
 part 'collaboration_notification_sync.dart';
@@ -332,6 +333,10 @@ class CollaborationRepository {
 
   Future<void>? _coordinatorRunning;
   bool _coordinatorDemand = false, _coordinatorManual = false;
+  int _accessReviewEpoch = -1;
+  CollaborationAccessReview? _lastAccessReview;
+  Future<CollaborationAccessReview>? _accessReviewRunning;
+  Future<CollaborationAccessReview>? _accessReviewManual;
   int _parentFinanceRecoveryEpoch = -1;
   final _parentFinanceRecoveryAttempts = <String, String>{};
   bool _coordinatorProbePhase = false, _lastErrorWasProbe = false;

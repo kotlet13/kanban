@@ -193,6 +193,11 @@ extension CollaborationSyncActions on CollaborationRepository {
         clock().toUtc().isBefore(_automaticSyncRetryAt!)) {
       return;
     }
+    if (_accessReviewEpoch != epoch) {
+      await _reviewAllAccess(session, epoch);
+      _checkEpoch(epoch);
+      authorityGeneration = authorityReuse.generation;
+    }
     final selectionReasons = <CollaborationSyncDiagnosticKind>{};
     void selectionReason(CollaborationSyncDiagnosticKind reason) {
       if (selectionReasons.add(reason)) syncDiagnostics?.record(reason);

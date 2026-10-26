@@ -5500,4 +5500,20 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get organizerDraftSharingUnavailable =>
       'Deljenje ni na voljo. Osnutek lahko dokončate v tem odprtem obrazcu. Pred zapiranjem kopirajte spremembe, ki jih želite ohraniti.';
+
+  @override
+  String get sharingCheckAllAccess => 'Preveri vse dostope';
+
+  @override
+  String get sharingCheckingAllAccess => 'Preverjam dostope …';
+
+  @override
+  String sharingAccessReviewResult(
+    int available,
+    int restored,
+    int revoked,
+    int unresolved,
+  ) {
+    return 'Preverjanje končano. Dostopni prostori: $available. Obnovljeni dostopi: $restored. Potrjeni odvzemi: $revoked. Še nepreverjeni: $unresolved.';
+  }
 }

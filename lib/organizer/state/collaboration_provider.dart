@@ -997,6 +997,8 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   Future<void> acknowledgeAutoMergeNotice(String key, String at) =>
       _repo.acknowledgeAutoMergeNotice(key, at);
 
+  Future<CollaborationAccessReview> checkAllAccess() => _repo.checkAllAccess();
+
   Future<void> syncNow() async {
     final repo = _repo, identity = _backgroundIdentity(_repo.state);
     try {

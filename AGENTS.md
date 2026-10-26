@@ -1,3 +1,19 @@
+26. oktober — **Preveri vse dostope: startup+manual, lokalni ciljni testi PASS**.
+User potrdi coldstartbackground review in globalni gumb; telefon odklopi,
+telefonov/prod se ne dotikaj. Nova collaboration_access_review: coordinator
+onceperepoch+manualsingleflight, fresh existing verified scopes.list/group,
+lease+transaction+epoch guard, parentsfirst apply, 30s unchanged ostane cheap.
+Stari revoked samo ob verifiedcurrent+compatible+nondeleted+sequenceguard;
+missing/pending ni revoke. E2EE projection prej spreadlocal ohranil revoked;
+po veljavni glavi ga odstrani, pending/deletion ostaneta varovana.
+Queues/drafts/keys/receipts ohranjeni; blocked outbox se NE auto-resubmit.
+Account+space settings gumb dostopen brezvidnihprostorov, busy/result/sessionguard.
+15novih+2prilagojenihkontrol PASS; fixtureFAIL in max3 ledger v
+ docs/COORDINATOR_OPTIMIZATION_2026_10_26.md, build/qa/access-review-20261026/.
+Samo headlessSQL/widget/projection/routerseams, ne nov native/realHTTPsigtest.
+14scope en logični list ni1HTTPobljuba. Samsung stari parent/Preg1 še NE
+obnovljen na napravi; naslednje install in uporabnikov coldstart+pregled.
+
 26. oktober — **Koordinator:6implementacijskihsklopov,40novihkontrolPASS**.
 User naroči isti postopni test→commit→push princip. P1 a82b01b ciljni
 canonical documentbatch+queryorigin brezselfread; P5a ab3ab03 drugi inbox
