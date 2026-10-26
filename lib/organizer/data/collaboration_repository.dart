@@ -491,6 +491,18 @@ class CollaborationRepository {
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
   bool _financeSupported = false;
   bool _organizationFinanceSupported = false;
+  final _financeChoicePreparations =
+      <
+        ({
+          int epoch,
+          String scope,
+          bool refreshPolicy,
+          int financeGeneration,
+          int authorityGeneration,
+        }),
+        Future<void>
+      >{};
+
   String get _financeNamespace => _financeContractVersion >= 3
       ? 'finance4'
       : _financeContractVersion >= 2

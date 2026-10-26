@@ -84,6 +84,9 @@ extension CollaborationFinanceAccountChoices on CollaborationRepository {
     }
   }
 
+  /// Coalesce only concurrent preparations with the same admission snapshot.
+  /// Completed/error results are never cached. Full and editor-only policy
+  /// reads remain distinct so an open draft keeps its captured access policy.
   Future<void> refreshFinanceAccountChoices(
     String scopeId, {
     bool refreshPolicy = true,
@@ -92,6 +95,47 @@ extension CollaborationFinanceAccountChoices on CollaborationRepository {
       throw const CollaborationException('unsupported_version');
     }
     final session = _requireSession(), epoch = _epoch;
+    final generation = await _financeAccessGeneration(
+      session.profile.partition,
+      scopeId,
+    );
+    _checkEpoch(epoch);
+    final key = (
+      epoch: epoch,
+      scope: scopeId,
+      refreshPolicy: refreshPolicy,
+      financeGeneration: generation,
+      authorityGeneration: authorityReuse.generation,
+    );
+    final existing = _financeChoicePreparations[key];
+    if (existing != null) {
+      await existing;
+      _checkEpoch(epoch);
+      return;
+    }
+    final work = _prepareFinanceAccountChoices(
+      session,
+      epoch,
+      scopeId,
+      refreshPolicy: refreshPolicy,
+    );
+    _financeChoicePreparations[key] = work;
+    try {
+      await work;
+      _checkEpoch(epoch);
+    } finally {
+      if (identical(_financeChoicePreparations[key], work)) {
+        _financeChoicePreparations.remove(key);
+      }
+    }
+  }
+
+  Future<void> _prepareFinanceAccountChoices(
+    DeviceSession session,
+    int epoch,
+    String scopeId, {
+    required bool refreshPolicy,
+  }) async {
     final policy = refreshPolicy
         ? await _fetchFinancePolicy(session, epoch, scopeId)
         : await _cachedFinancePolicy(session.profile.partition, scopeId);

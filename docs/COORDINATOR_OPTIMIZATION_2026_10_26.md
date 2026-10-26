@@ -103,3 +103,21 @@ Prve tri niso ponovljene. UI ima samo začetno status branje; vrnjena potrditev
 ne doda drugega. Analiza 0 napak/0 opozoril, 2 stara info; nov testni info
 popravljen. Dokazi `p7-*`. Obstoječi UI fake override prilagojen vrnjenemu tipu;
 stari suite ni ponovno izvajan. Ni pošiljanja prave e-pošte ali sprememb računov.
+
+## P4a — sočasna priprava finančnih izbir
+
+Priprave se združijo samo, če so hkrati aktivne in imajo isti epoch, prostor,
+refreshPolicy način, finance_access_generation in authorityReuse generation.
+Uspeh ali napaka se takoj odstrani iz mape. Ni TTL ali ponovne uporabe
+zaključenega rezultata; zaporedno odprtje ostane sveže. Polna priprava in
+selector za odprt osnutek ostaneta ločena. Obstoječi SQL/generation guardi
+in pravice se še vedno izvajajo v prvotni pripravi.
+
+5 novih repository kontrol PASS2 po manjkajočem model importu v novi fixture:
+združljivi sočasni pripravi 1 policy/1 selector, poznejše odprtje novo branje;
+editor proti full; spremenjena authority generation; spremenjena finančna
+generation z zavrnitvijo starega odgovora; skupna napaka se odstrani in nov
+poskus uspe. Pravi memory SQLite/sintetičen legacy transport, ne E2EE HTTP.
+Analiza 0 napak/0 opozoril; 2 novi slogovni info v testu popravljeni.
+Dokazi `p4-*`. Širša ponovna uporaba po končanem branju zahteva preverjen
+snapshot; tega ta sklop namenoma ne uvaja.
