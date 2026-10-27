@@ -1304,6 +1304,7 @@
   "syncStatusOffline": "Strežnik ni dosegljiv",
   "syncStatusProblem": "Sinhronizacija potrebuje tvojo pozornost",
   "syncStatusDeviceOnly": "Lokalno na tej napravi",
+  "syncStatusHistorical": "Prej usklajeno; trenutno stanje še ni preverjeno",
   "syncStatusLastSuccess": "Zadnja uspešna uskladitev podatkov",
   "syncStatusLastAttempt": "Zadnji poskus uskladitve podatkov",
   "syncStatusNeverAttempted": "Poskus še ni zabeležen",

@@ -47,6 +47,22 @@ class _Controller extends SharingUiController {
   int previews = 0;
   Completer<void>? previewGate, acceptGate;
   int selectFailures = 0;
+  Completer<void>? acceptedScopeGate, unrelatedSyncGate;
+  Object? acceptedScopeError;
+  final acceptedScopePreparations = <String>[];
+  @override
+  Future<void> prepareAcceptedScope(String id) async {
+    acceptedScopePreparations.add(id);
+    await acceptedScopeGate?.future;
+    if (acceptedScopeError != null) throw acceptedScopeError!;
+  }
+
+  @override
+  Future<void> syncNow() async {
+    await unrelatedSyncGate?.future;
+    await super.syncNow();
+  }
+
   @override
   Future<void> acceptInvitation(String token) async {
     await acceptGate?.future;
@@ -736,6 +752,112 @@ void main() {
     'https://sharing.example.test/index.php?controller=InvitationController&action=show&plugin=FamilyHub&language=en#token=fhi4_${'a' * 64}',
   )!;
 
+  testWidgets(
+    'accept27 opens verified target before unrelated sync completion or error',
+    (tester) async {
+      final controller = _Controller(
+        encrypted: true,
+        viewer: true,
+        awaitingApproval: true,
+      )..unrelatedSyncGate = Completer<void>();
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..resumedScope = sharingScopeId;
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: rootEmailLink.serverUrl,
+          token: rootEmailLink.token,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(find.byType(InvitationWizard), findsNothing);
+      expect(controller.acceptedScopePreparations, [sharingScopeId]);
+      expect(controller.state.valueOrNull?.selectedSpaceId, sharingScopeId);
+      expect(crypto.accepts, 0);
+      controller.unrelatedSyncGate!.completeError(
+        const CollaborationException('network'),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'accept27 pending target keeps invitation checkpoint and route open',
+    (tester) async {
+      final controller =
+          _Controller(encrypted: true, viewer: true, awaitingApproval: true)
+            ..acceptedScopeError = const CollaborationException(
+              'crypto_reconciliation_required',
+            );
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..resumedScope = sharingScopeId;
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: rootEmailLink.serverUrl,
+          token: rootEmailLink.token,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(find.byType(InvitationWizard), findsOneWidget);
+      expect(store.value?.token, rootEmailLink.token);
+      expect(controller.state.valueOrNull?.selectedSpaceId, isNull);
+      expect(controller.calls.where((s) => s == 'sync'), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'accept27 account change during target preparation cannot navigate or consume invitation',
+    (tester) async {
+      final controller = _Controller(
+        encrypted: true,
+        viewer: true,
+        awaitingApproval: true,
+      )..acceptedScopeGate = Completer<void>();
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..resumedScope = sharingScopeId;
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: rootEmailLink.serverUrl,
+          token: rootEmailLink.token,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: rootEmailLink,
+        crypto: crypto,
+        store: store,
+      );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('invitation-flow-join')),
+      );
+      await tester.tap(find.byKey(const ValueKey('invitation-flow-join')));
+      await tester.pump();
+      expect(controller.acceptedScopePreparations, [sharingScopeId]);
+      controller.replace(
+        CollaborationState(
+          session: sharingSession(second: true),
+          scopes: [sharingScope()],
+        ),
+      );
+      controller.acceptedScopeGate!.complete();
+      await tester.pumpAndSettle();
+      expect(controller.state.valueOrNull?.selectedSpaceId, isNull);
+      expect(store.value?.token, rootEmailLink.token);
+      expect(controller.calls.where((s) => s == 'sync'), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets(
     'ux26 accepted preview without link checkpoint checks status and surfaces proof error',
     (tester) async {

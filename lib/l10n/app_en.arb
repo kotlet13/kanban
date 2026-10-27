@@ -1304,6 +1304,7 @@
   "syncStatusOffline": "Server is unreachable",
   "syncStatusProblem": "Synchronization needs your attention",
   "syncStatusDeviceOnly": "Local to this device",
+  "syncStatusHistorical": "Previously synced; current state not yet checked",
   "syncStatusLastSuccess": "Last successful data sync",
   "syncStatusLastAttempt": "Last data sync attempt",
   "syncStatusNeverAttempted": "No attempt has been recorded",

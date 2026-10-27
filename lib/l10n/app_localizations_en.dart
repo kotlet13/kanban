@@ -3489,6 +3489,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusDeviceOnly => 'Local to this device';
 
   @override
+  String get syncStatusHistorical =>
+      'Previously synced; current state not yet checked';
+
+  @override
   String get syncStatusLastSuccess => 'Last successful data sync';
 
   @override

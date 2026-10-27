@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../recovery/crypto_invitation_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -294,10 +295,13 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
           ),
         );
         if (scope != null && mounted && _guard.isCurrent) {
-          await _guard.controller.syncNow();
+          await _guard.controller.prepareAcceptedScope(scope);
           if (!mounted || !_guard.isCurrent) return;
           await _guard.controller.selectSpace(scope);
-          if (mounted && _guard.isCurrent) widget.onAccepted(scope);
+          if (mounted && _guard.isCurrent) {
+            unawaited(_guard.controller.syncNow().catchError((Object _) {}));
+            widget.onAccepted(scope);
+          }
         }
         if (mounted && _guard.isCurrent) {
           setState(() {

@@ -43,6 +43,30 @@ abstract interface class CryptoVisibleTaskMetadataReader {
   });
 }
 
+/// A just-accepted scope is prepared independently of unrelated account work.
+/// The adapter returns only authenticated, completely projected target content.
+/// Its final guard must remain current through the repository's SQL commit.
+abstract interface class CryptoAcceptedScopeReader {
+  Future<CryptoAcceptedScopeRead> prepareAcceptedScope({
+    required DeviceSession session,
+    required String scopeId,
+    required int cursor,
+  });
+}
+
+class CryptoAcceptedScopeRead {
+  const CryptoAcceptedScopeRead({
+    required this.scope,
+    required this.records,
+    required this.cursor,
+    required this.isCurrent,
+  });
+  final Map<String, dynamic> scope;
+  final List<Map<String, dynamic>> records;
+  final int cursor;
+  final Future<bool> Function() isCurrent;
+}
+
 /// Classifies only a locally retained, exact terminal task rejection. This
 /// cannot fetch a scope, send a request, or restore revoked access.
 abstract interface class CryptoTerminalTaskConflicts {

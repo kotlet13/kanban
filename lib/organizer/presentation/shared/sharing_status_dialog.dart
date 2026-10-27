@@ -15,6 +15,7 @@ String sharingStatusLabel(BuildContext context, SharingSyncStatus status) =>
       SharingSyncStatus.unknown => context.l10n.syncStatusUnknown,
       SharingSyncStatus.synced => context.l10n.syncStatusSynced,
       SharingSyncStatus.checked => context.l10n.syncStatusChecked,
+      SharingSyncStatus.historical => context.l10n.syncStatusHistorical,
       SharingSyncStatus.pending => context.l10n.syncStatusPending,
       SharingSyncStatus.syncing => context.l10n.sharingSyncing,
       SharingSyncStatus.offline => context.l10n.syncStatusOffline,
@@ -205,7 +206,7 @@ class _SharingStatusDialog extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                '${l.syncStatusLastSuccess}: ${time(state.lastSuccessfulSyncAt, l.syncStatusNotConfirmed)}',
+                '${l.syncStatusLastSuccess}: ${time(state.lastSuccessfulSyncAt ?? state.previousSuccessfulSyncAt, l.syncStatusNotConfirmed)}',
               ),
               const SizedBox(height: 8),
               Text(

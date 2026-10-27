@@ -6174,6 +6174,12 @@ abstract class AppLocalizations {
   /// **'Local to this device'**
   String get syncStatusDeviceOnly;
 
+  /// No description provided for @syncStatusHistorical.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously synced; current state not yet checked'**
+  String get syncStatusHistorical;
+
   /// No description provided for @syncStatusLastSuccess.
   ///
   /// In en, this message translates to:

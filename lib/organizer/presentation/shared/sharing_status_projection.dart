@@ -5,6 +5,7 @@ enum SharingSyncStatus {
   unknown,
   synced,
   checked,
+  historical,
   pending,
   syncing,
   offline,
@@ -96,6 +97,8 @@ class SharingStatusProjection {
         ? SharingSyncStatus.synced
         : state.lastSuccessfulChangeCheckAt != null
         ? SharingSyncStatus.checked
+        : state.previousSuccessfulSyncAt != null
+        ? SharingSyncStatus.historical
         : SharingSyncStatus.unknown;
     final contextualStatus =
         status == SharingSyncStatus.syncing ||

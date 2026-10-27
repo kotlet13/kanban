@@ -175,3 +175,178 @@ vira povabil. Omejeno pumpanje in null testni vir povabil popravita fixture,
 ne produktne logike. Šest že uspešnih bootstrap kontrol ni bilo ponovljenih.
 Root pregleda shell spremembo: samo začetna lokalna pripravljenost, brez novih
 omrežnih klicev ali spreminjanja shranjene izbire. Skupno deset novih kontrol.
+
+
+Produktni popravek je commit `36783e2143d0db31c941bb6eca987ccc2302aa29`,
+push na origin/main potrjen z exact oddaljenim hashom. Root pred gradnjama
+preveri 636 Android/647 iOS izvornih hashov. Nobene strežniške spremembe v tem
+sklopu; lokalni mobilni strežnik ostaja cd80678.
+
+Samsung: ena arm64 debug gradnja (32,09 s), ena install-r, brez zagona;
+APK `3d79c1b3d2684dbef2f65d5a7bae18bc384fd4a33e80edb279a98366daa008a0`.
+Sveža kopija in exact primerjava vseh 20 nepredpomnilniških datotek
+(128.172.956 B) pred in po namestitvi. UID/podpis/imenik/CA/native knjižnice
+isti; originalni Play APK in metapodatki nespremenjeni. Novi bralnik:
+`build/qa/mobile-startup-logo-20261027/android/read_diagnostics.py`.
+Odstranjenih 1.315.217.657 B obnovljivih build datotek; paketi, izvor in kopije
+ostanejo. Runtime prikaz čaka uporabnikov zagon.
+
+
+iPhone: ena Release archive gradnja (88,16 s), ena namestitev, brez zagona.
+AOT `9299b5babde8c52d35e1b79a9324dc7ec772df3e6c74ee626f4f40bea8014fc2`.
+Štiri datoteke trezorja (10.285.446 B) enake pred/neposredno pred/po namestitvi;
+podpis/profil/team/Keychain/CA/native kriptografija ohranjeni, originalni
+metapodatki nespremenjeni. Odstranjenih samo 934.495.067 B obnovljivega derived
+predpomnilnika; archive/dSYM/izvor/kopije ohranjeni. Bralnik:
+`python3 build/qa/mobile-startup-logo-20261027/ios/read_diagnostics.py --after-user-test`.
+Obe namestitvi sta uspeli v prvem poskusu, aplikaciji ostaneta zaprti. Novi
+mobilni prikaz ni še runtime potrjen. Diagnostika je pripravljena za uporabnikov
+zagon; telefonov nismo dodatno klikali in uspešnih poslovnih testov ne ponavljamo.
+
+
+## Uporabniško deljenje in sprejem — samo diagnoza, 27. oktober
+
+Uporabnik potrdi novi zagon, nato poroča pošiljanje približno 15 s in sprejem
+na iPhonu več kot 10 s; pozneje potrdi, da je tudi sprejem uspel. Nobeno povabilo,
+Save ali sync ni bilo ponovno sproženo z naše strani. Samo oba nova bounded
+bralnika in izvorni pregled, brez sprememb kode/namestitev/strežnika.
+
+Android dnevnik `diagnostic-read-20261027T163120926589Z.json`:
+`crypto2.invitations.create` HTTP200/62 ms ob16:30:12.471UTC;
+resolvePreauthorization do publishPreauthorization 10.132 s (seq181–957).
+V tem časovnem oknu202 fizična HTTP odgovora, vsi200; med njimi53receipt.get,
+26account.status,18grants.manifest,16grants.put,12grants.list,8headGet.
+Časovna vsota HTTP trajanj6.133 s ni čisti wall-clock ali celotna latenca klika.
+Izvor invite_crypto_repository `_preparePreauthorization`: pripravi parent,
+zaporedno otroke, vsak `_preparePreauthorizedScope` z reviewRotation +
+confirmRotation, nato objavi povabilo. Dve aktivaciji/glavi v oknu sta skladni
+s pripravo več prostorov; ni dokaz, da so vsi klici odveč ali pripadajo izključno
+povabilu. Del so lahko sočasni opravki koordinatorja.
+
+iOS dnevnik `diagnostic-read-20261027T163151217822Z.json`:
+accept HTTP200/30 ms ob16:31:14.716UTC, status HTTP200/14 ms takoj zatem.
+Do naslednjega sync completion code none/unresolvedfalse/retryfalse je33.966 s;
+v oknu seq188–1219 je255HTTP odgovorov, vsi200.29authority.snapshot,
+30receipt.get,28lifecycle.list; snapshoti do~840KB, posamezen do614ms.
+`invitation_wizard.dart::_openEncryptedTarget` pred izbiro prostora izrecno
+čaka `controller.syncNow()` celotnega računa. To je konkreten kandidat za
+zožitev čakanja na preverjen ciljni prostor, preostanek pa v koordinatorju.
+Zajeti so tudi owner_pending (iOS) in existing_scope_upgrade_pending(Android)
+ujeti policy-baseline izidi, a končni sync je uspešen; ne trdimo, da so sami
+vzrok zamude. Zgodnejši iOS invitations.status403 je pred svežim preview/accept,
+ni dokaz zavrnjenega sprejema. Natančna razčlenitev brez vsebine:
+`build/qa/sharing-latency-observation-20261027/summary.json`.
+
+Predlog nadaljevanja (ne izvedba): izmerjeno združevanje/ponovna uporaba dokazov
+znotraj iste priprave deljenja z ohranjenimi svežinami/podpisi; pri sprejemu
+odpreti preverjeni ciljni prostor po minimalno potrebnem prenosu, ostale prostore
+obdelati v ozadju. Ne predlagamo odstranitve zaščit ali lažnega uspeha pred
+objavo prejemnikovih ključev. To ni iPhone-only težava.
+
+Dodatno uporabnik opaža nevtralen oblaček ob novem zagonu, zelen po prvi
+uskladitvi. Trenutni projection/ikonografija to potrjuje: checked uporablja
+cloud_outlined, synced cloud_done; časi uspeha so session-only. To ni dokaz
+izgube že prenesenih podatkov. UX možnost: ohraniti/označiti zadnjo potrjeno
+uskladitev ločeno od trenutnega preverjanja, brez trditve nove svežine. Samo
+zapis, brez trajnega shranjevanja statusa ali spremembe barve v tem koraku.
+
+## Pohitritev povabil in zgodovina oblačka — lokalna izvedba, 27. oktober
+
+Uporabnik nato naroči izvedbo vseh treh popravkov, najprej lokalno. Trije
+GPT 6.1 Sol/high podagenti obdelajo pošiljanje, sprejem in oblaček; root pregleda
+integracijo in varovala, podagent neodvisno pregleda sprejem in pošiljanje.
+V tem sklopu ni zagona aplikacij, namestitev, posegov v telefone, obstoječe
+testne baze ali strežnike. Mobilni namestitvi ostajata 36783e2, testni strežnik
+cd80678; produkcija in originalna Samsung aplikacija sta nedotaknjeni.
+
+### Pošiljanje
+
+`invite_crypto_repository.dart` znotraj priprave preavtorizacije ponovno
+uporabi točne dokaze iste omejene preverjene operacije. Vstop, vsak otrok,
+potrditev rotacije in končna objava imajo svežo mejo. Obstoječa omejitev
+veljavnosti dokazov, podpisi, identitete, preklic po podpisanem zapisu,
+nespremenljive zahteve in receipts ostanejo. Ni splošnega predpomnilnika ali
+podaljšanja veljavnosti pravic.
+
+Pet novih kontrol PASS. Omejen lokalni primer skozi dejansko pripravo
+povabila/preverjanje podpisa imenika prejemnika in sintetično ponavljanje
+preverjanj pravic: 6 → 4 transportni klici. To ni meritev celotnega pošiljanja
+ali dokaz zmanjšanja prej zajetih 202 HTTP zahtevkov. Potrjeni so sveža zavrnitev
+kljub staremu dokazu, invalidacija po podpisanem zapisu in zavrnitev napačnega
+podpisa. Rotacije/otroci/objava imajo kontroliran preizkus mehanizma meje in
+izvorni pregled klicnih mest, ne celotnega omrežnega E2E preizkusa.
+Poskus 1: testni prejemnik brez accountId; navidezni uspeh preširokega preverjanja
+podpisa razveljavljen. Poskus 2: vseh pet pravilnih kontrol PASS. Analiza brez
+ugotovitev. Dokazi: `build/qa/invitation-speed-20261027/send/result.json`.
+
+### Oblaček
+
+Nova zgodovina uspešne uskladitve je ločena od dokaza v trenutni seji. En
+verzioniran zapis v local_meta je vezan na strežnik, račun in napravo; bere se
+enkrat na sejo, piše po uspešnem zaključku brez odprtega dela. Ne spreminja
+pravic, podatkovnih kurzorjev ali sheme baze. Okvara izbirnega branja/pisanja
+zgodovine ne sme pokvariti dejanske sinhronizacije.
+
+Po ponovnem zagonu siva kljukica pomeni »Prej usklajeno; trenutno stanje še ni
+preverjeno«, z zadnjim časom v podrobnostih. Trenutna uspešna uskladitev je
+zelena; napake, nerešeno delo in nepripravljenost imajo prednost. Svež pregled
+brez prenosa je še vedno ločen status. Ob prvi nadgradnji brez shranjene zgodovine
+aplikacija ne izmisli prejšnjega uspeha; zgodovina nastane po naslednji dejanski
+uspešni uskladitvi.
+
+21 novih kontrol PASS (17 podatkovnih, 4 UI/projekcija) in ena namerno
+prilagojena kontrola ponovnega zagona PASS. Zadnja kontrola okvare izbirnega
+branja: dva neuspeha testnega vira (ponavljajoča se napaka je zadela tudi nujno
+branje; popravek vzorca nato ni zadel oblikovanega besedila), PASS v tretjem
+poskusu. Brez četrtega poskusa. Ozka analiza 0 napak/opozoril, 9 obstoječih
+slogovnih informacij. Dokazi: `build/qa/sync-cloud-history-20261027/result.json`.
+
+### Sprejem in skupni pregled
+
+Čarovnik in seznam čakajočih povabil po uspešnem kriptografskem sprejemu čakata
+le na preverjen ciljni prostor. Novi `prepareAcceptedScope` uporablja obstoječi
+currentHead/pullVerified, preverjeno vsebino in podpisane metapodatke cilja.
+Po izbiri prostora nadaljuje običajni koordinator brez čakanja UI na druge
+prostore, finance ali čakalne operacije računa. Sprejem ne potrdi celotnega
+account.changes kurzorja ali lažno označi financ kot popolnih.
+
+Zapis ostane atomaren prek obstoječega _applyRemote: lokalni kandidati,
+tombstones, nespremenljive čakalne zahteve in pripadajoči stroški ostanejo.
+Pred/med commitom so preverjeni identiteta/seja/potek/preklic, brisanje računa,
+zapora nedokončane obnove, podpisana avtoriteta, trenutnost celotne vsebine,
+stanje cilja, finančni kurzor in oznake izvora kurzorjev. Obstoječa živa lastna
+lease se ohrani; tuje žive se ne prevzame. Stara navadna in nova kriptografska
+zaporedja se obravnavajo po obstoječem preverjenem prehodu. Ni samodejnega
+ponovnega pošiljanja blokiranih zapisov ali slepega vračanja pravic.
+
+Root pri pregledu ujame nevarnost sočasnega napredka finančnega kurzorja/oznake
+in premika vsebine med stranmi. Nova primerjava prepreči ponastavitev novejšega
+napredka. Pri drugi napaki kontrola najprej dejansko pade, nato po zajemu stanja
+pred branjem metapodatkov/strani in primerjavi po branju uspe. Bere se po 100
+projekcij, seznam za atomaren zapis pa je še vedno velikosti ciljnega prostora.
+
+31 novih različnih kontrol PASS: 19 podatkovnih/SQL, 7 prek produkcijskega
+ciljnega crypto helperja z že preverjenimi testnimi avtoritetami, 3 čarovnika
+in 2 seznama čakajočih povabil. Vključujejo ločitev nepovezanega synca, ohranitev
+lokalnega osnutka, tekmovanja kurzorjev, napačno sejo in zaporo obnove.
+To niso novi celotni podpisni/HTTP/native E2E preizkusi; preverjanje podpisov
+ostaja v obstoječih produkcijskih poteh, neodvisno izvorno pregledanih.
+
+Poskusi: glavna skupina 12 kontrol najprej testna napaka pri prevajanju,
+nato napačna pot testnega transporta (11 PASS, 1 timeout), nato 12 PASS.
+**Odstopanje od navodila brez ponovitev:** ob popravku skupnega testnega vira
+je podagent ponovil teh 11 že uspešnih novih kontrol. To ni bilo potrebno;
+evidentirano je in ni skrito v številu različnih uspešnih kontrol. Starih
+zgodovinskih poslovnih scenarijev nismo ponovno izvajali. UI čakajočih povabil
+je imel najprej dve napaki manjkajoče testne Directory.session, nato oba PASS.
+Tekmovanje vsebinskega posnetka RED1 → PASS2; vse ostale nove ločene kontrole
+PASS1. Noben četrti poskus. Dokazi: `build/qa/accepted-scope-20261027-result.json`.
+
+Skupaj 57 novih različnih uspešnih kontrol in ena prilagojena stara kontrola
+novega prikaza zgodovine. Končna skupna statična analiza 25 spremenjenih/novih
+Dart datotek: 0 napak, 0 opozoril, 27 obstoječih slogovnih informacij;
+`build/qa/invitation-speed-20261027/combined-analysis.log`. Root pregleda
+integracijo, podagent neodvisno preveri meje pošiljanja in SQL varovala sprejema.
+To ni dokaz celotne regresije ali izmerjene mobilne pohitritve. Naslednji korak
+je posodobitev obeh Jivie Test po naročilu uporabnika in omejena meritev novega
+pošiljanja/sprejema ter oblačka; uspešnih starih CRUD testov ne ponavljati.

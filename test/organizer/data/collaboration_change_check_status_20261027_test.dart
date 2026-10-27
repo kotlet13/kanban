@@ -145,7 +145,7 @@ void main() {
     () async {
       expect(repo.state.lastSyncAttemptAt, isNull);
       expect(repo.state.lastSuccessfulSyncAt, isNull);
-      expect(status(), SharingSyncStatus.unknown);
+      expect(status(), SharingSyncStatus.historical);
       final data = repo.state.data[scope];
       await repo.syncNow();
       expect(

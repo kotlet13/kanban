@@ -1,3 +1,38 @@
+27. oktober — **Povabila in zgodovina oblačka: lokalno57novih+1prilagojenPASS**.
+User naroči pohitriSend/Accept+cloud, localfirst, preserveguards/data/prod.
+Sol6.1high send+accept+cloud, rootreview+neodvisnisourcereview. Sendfreshbounded
+operacije entry/child/confirm/publication; signedwritesinvalidate/receiptsisti.
+5newPASS; controlledrecipientproofseam6→4requests, NEcelotenrotation/nativeperf.
+Acceptwizard+pendinglist prepareAcceptedScope samoverifiedtarget, potemselect+
+nonawaitedexistingcoordinator. Contentcheckpoint+authority5s/current/session/
+restorefence/epoch/lease/cursororigin+finance/markerCAS; drafts/outboxretained,
+noaccountcursorack/nofullsuccess/nofinancecomplete.31newPASS SQL/cryptohelper/
+UIseams, NEcelotenHTTPsignatureE2E. RootmaterializationraceRED1→PASS2; stage
+statebeforepages (100/page), target-sizedmemory. MainfixturecompileFAIL1,
+routingFAIL2(11PASS), PASS3(12):11newPASSunnecessarilyrepeated, explicitdeviation
+recorded. PendingUIfixtureFAIL1→PASS2; nofourthrun/oldbusinessreruns.
+CloudseparatepreviousSuccessfulSyncAt persistedexactpartition+device; neutral
+historytick/label/time, freshgreenonlycurrent.21new+1adaptedPASS; faultfixture
+FAIL1/2→PASS3. Optionalhistorycannotfailsync/noHTTP/schema change. Firstupgrade
+nohistoryuntilnextsuccess. Combined25Dartanalyze0errors0warnings27oldinfos.
+Docs UX_FOLLOWUP_2026_10_27.md finalsection; evidence invitation-speed-20261027,
+sync-cloud-history-20261027, accepted-scope-20261027-result.json. NoGUI/build/
+install/server/device/prodactions. Phones36783e2/servercd80678 unchanged.
+Nativefullsend/acceptlatency remainsUNMEASURED; nextinstallonlywhenuserasks.
+
+27. oktober — **Logo popravek 36783e2 nameščen na obe QA, čaka uporabnikov zagon**.
+10newlocalPASS (6bootstrapPASS1+4shellPASS2fixture), narrowanalyze0issues.
+Commitpush36783e2143d0db31c941bb6eca987ccc2302aa29 remoteverified.
+Android1build32.09s1install0launch,20files128172956B parity/sameUIDsignCA/native;
+APK3d79c1b3…daa008a0. iOS1archive88.16s1install0launch,4vault10285446B parity,
+AOT9299b5ba…a8014fc2, samecertprofileKeychainCA/native. Originalsunchanged.
+Root636/647producthash verified; no serverchange (18801stayscd80678)/prodaction.
+Freshreaders build/qa/mobile-startup-logo-20261027/{android,ios}/read_diagnostics.py
+(iOS --after-user-test), tags android-startup-logo-20261027-r1 / ios-startup-logo-20261027-r1.
+Owncaches1315217657+934495067Bcleaned; sourceartifactsbackupretained.
+Nextuseropenapps observe logo→lastspacePulse, real recovery/error still gated;
+no runtimePASS claimed. docs/UX_FOLLOWUP_2026_10_27.md updated.
+
 27. oktober — **Logo do lokalne baze/izbire, nato zadnji Utrip; lokalno10PASS**.
 User naroči implement+localtest+obeQAinstall. Root bootstrap unknowninitial
 busy/statusnull/errornull→JivieStartupLogo; realsetup/recovery/cleanup/error

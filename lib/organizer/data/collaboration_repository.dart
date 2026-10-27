@@ -78,6 +78,7 @@ part 'collaboration_person_actions.dart';
 part 'collaboration_task_cost_actions.dart';
 part 'collaboration_sync_actions.dart';
 part 'collaboration_access_review.dart';
+part 'collaboration_accepted_scope.dart';
 part 'collaboration_event_actions.dart';
 part 'collaboration_notification_actions.dart';
 part 'collaboration_notification_sync.dart';
@@ -525,6 +526,8 @@ class CollaborationRepository {
   bool _syncing = false;
   int? _syncEpoch, _fullSyncEpoch;
   DateTime? _lastSyncAttemptAt, _lastSuccessfulSyncAt;
+  DateTime? _previousSuccessfulSyncAt;
+  String? _loadedSyncHistoryKey;
   DateTime? _lastChangeCheckAttemptAt, _lastSuccessfulChangeCheckAt;
   bool _changeCheckRequiresRefresh = false;
   bool _financeStatusRequiresRefresh = false;
@@ -540,6 +543,8 @@ class CollaborationRepository {
     _sharedContentPolicy = null;
     _lastSyncAttemptAt = null;
     _lastSuccessfulSyncAt = null;
+    _previousSuccessfulSyncAt = null;
+    _loadedSyncHistoryKey = null;
     _lastChangeCheckAttemptAt = null;
     _lastSuccessfulChangeCheckAt = null;
     _changeCheckRequiresRefresh = false;
@@ -636,6 +641,10 @@ class CollaborationRepository {
   Future<void> _refreshLocal({Set<String>? scopeIds}) async {
     final epoch = _epoch, profile = _session?.profile;
     if (_closed) return;
+    if (profile != null) {
+      await _restoreSuccessfulSyncHistory(profile, epoch);
+      if (epoch != _epoch || _closed) return;
+    }
     if (profile != null &&
         (await database.rows('SELECT value FROM local_meta WHERE name=?', [
           'deleted_account:${profile.partition}',
@@ -970,6 +979,7 @@ class CollaborationRepository {
             (_syncing && _syncEpoch == _epoch) || _fullSyncEpoch == _epoch,
         lastSyncAttemptAt: _lastSyncAttemptAt,
         lastSuccessfulSyncAt: _lastSuccessfulSyncAt,
+        previousSuccessfulSyncAt: _previousSuccessfulSyncAt,
         lastChangeCheckAttemptAt: _lastChangeCheckAttemptAt,
         lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
         hasUnresolvedSyncWork: localEvidence.unresolved,
@@ -1022,6 +1032,92 @@ class CollaborationRepository {
       );
       _publishedContentState = state;
       if (domains.isNotEmpty) database.personalChanged(domains: domains);
+    }
+  }
+
+  String _syncHistoryKey(AccountSession profile) =>
+      'sync_success_history:${profile.partition}:${Uri.encodeComponent(profile.deviceId)}';
+
+  Future<void> _restoreSuccessfulSyncHistory(
+    AccountSession profile,
+    int epoch,
+  ) async {
+    final key = _syncHistoryKey(profile);
+    if (_loadedSyncHistoryKey == key) return;
+    try {
+      final rows = await database.rows(
+        'SELECT value FROM local_meta WHERE name=?',
+        [key],
+      );
+      if (epoch != _epoch || _closed) return;
+      _loadedSyncHistoryKey = key;
+      _previousSuccessfulSyncAt = null;
+      if (rows.isEmpty) return;
+      final value = _map(rows.single['value']);
+      if (value['version'] != 1 ||
+          value['partition'] != profile.partition ||
+          value['deviceId'] != profile.deviceId) {
+        return;
+      }
+      final raw = value['at'];
+      if (raw is! String || !raw.endsWith('Z')) return;
+      final at = DateTime.tryParse(raw);
+      if (at == null ||
+          !at.isAfter(DateTime.utc(2000)) ||
+          at.isAfter(clock().toUtc())) {
+        return;
+      }
+      _previousSuccessfulSyncAt = at;
+    } catch (_) {
+      // Missing/corrupt history or a failed optional read means unknown. Avoid
+      // repeated display reads in this session; never block access or sync.
+      if (epoch == _epoch && !_closed) {
+        _loadedSyncHistoryKey = key;
+        _previousSuccessfulSyncAt = null;
+      }
+    }
+  }
+
+  Future<void> _rememberSuccessfulSync(
+    int epoch,
+    DateTime at,
+    CollaborationSyncWork work,
+    Object? error,
+  ) async {
+    if (error != null || work.unresolved || epoch != _epoch || _closed) return;
+    final profile = _session?.profile;
+    if (profile == null ||
+        state.sessionInvalid ||
+        state.deletionPending ||
+        state.conflicts.isNotEmpty ||
+        state.financeConflicts.isNotEmpty ||
+        _financeStatusRequiresRefresh) {
+      return;
+    }
+    // Do not use the pending account cursor acknowledgement as a content debt:
+    // this callback precedes that acknowledgement. Actual local debts still veto.
+    try {
+      final local = await _readSyncStatusLocalEvidence(profile.partition);
+      if (local.unresolved || local.reconciliation) return;
+      await database.transaction(() async {
+        _checkEpoch(epoch);
+        await database.execute(
+          'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
+          [
+            _syncHistoryKey(profile),
+            jsonEncode({
+              'version': 1,
+              'partition': profile.partition,
+              'deviceId': profile.deviceId,
+              'at': at.toUtc().toIso8601String(),
+            }),
+          ],
+        );
+        _checkEpoch(epoch);
+      });
+    } catch (_) {
+      // Optional display bookkeeping cannot change the verified sync outcome.
+      // The atomic row retains the previous complete history on write failure.
     }
   }
 

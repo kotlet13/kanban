@@ -3495,6 +3495,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get syncStatusDeviceOnly => 'Lokalno na tej napravi';
 
   @override
+  String get syncStatusHistorical =>
+      'Prej usklajeno; trenutno stanje še ni preverjeno';
+
+  @override
   String get syncStatusLastSuccess => 'Zadnja uspešna uskladitev podatkov';
 
   @override

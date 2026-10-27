@@ -71,6 +71,7 @@ part 'crypto_record_policy_baseline.dart';
 part 'crypto_record_policy_business.dart';
 part 'crypto_record_restore.dart';
 part 'crypto_visible_task_scope.dart';
+part 'crypto_accepted_scope.dart';
 
 /// Catalog/cache IDs are discovery candidates only. A verified signed child
 /// descriptor admits exactly the parent whose purpose-separated token matches.
@@ -141,6 +142,7 @@ class CryptoBusinessRouter
         CryptoRecordPolicyUpgrade,
         CryptoRecordRestores,
         CryptoVisibleTaskMetadataReader,
+        CryptoAcceptedScopeReader,
         CryptoTaskDerivationDependencies {
   CryptoBusinessRouter({required this.database, required this.accountFor});
   final CollaborationDatabase database;
@@ -206,6 +208,20 @@ class CryptoBusinessRouter
     } finally {
       read.close();
     }
+  }
+
+  @override
+  Future<CryptoAcceptedScopeRead> prepareAcceptedScope({
+    required DeviceSession session,
+    required String scopeId,
+    required int cursor,
+  }) async {
+    _metadataReadGroup?.close();
+    final account = await accountFor(session);
+    final access = SessionCryptoAccess(account: account);
+    final business = CryptoBusinessSession(account, access, database);
+    configurePayloads(business);
+    return business.acceptedScope(scopeId, cursor);
   }
 
   @override

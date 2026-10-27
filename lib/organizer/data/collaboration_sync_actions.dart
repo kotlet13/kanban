@@ -1546,6 +1546,7 @@ extension CollaborationSyncActions on CollaborationRepository {
               _automaticSyncRetryIdentity = completionIdentity;
             }
           }
+          await _rememberSuccessfulSync(epoch, at, work, error);
           if (epoch == _epoch &&
               !_closed &&
               completionSequence > (lastSyncCompletion?.sequence ?? 0)) {

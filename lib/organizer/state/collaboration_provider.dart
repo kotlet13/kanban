@@ -999,6 +999,9 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
 
   Future<CollaborationAccessReview> checkAllAccess() => _repo.checkAllAccess();
 
+  Future<void> prepareAcceptedScope(String scopeId) =>
+      _repo.prepareAcceptedScope(scopeId);
+
   Future<void> syncNow() async {
     final repo = _repo, identity = _backgroundIdentity(_repo.state);
     try {

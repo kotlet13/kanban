@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import '../../data/e2ee/invite_crypto_repository.dart';
 import '../../data/pending_invitation_store.dart'
@@ -602,7 +603,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         !_matchingSession)
       return;
     final guard = SharingSessionGuard(context, ref);
-    await guard.controller.syncNow();
+    await guard.controller.prepareAcceptedScope(scopeId);
     if (!mounted || !_active || !guard.isCurrent || _link?.token != link.token)
       return;
     final scope = ref
@@ -624,6 +625,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       _joined = true;
       _joinedIdentity = _identity;
     });
+    // The target is ready. Finance, inherited scopes and unrelated pending
+    // operations remain ordinary coordinator demand, independent of opening.
+    unawaited(guard.controller.syncNow().catchError((Object _) {}));
     widget.onAccepted?.call(scopeId);
     Navigator.of(context).pop();
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
@@ -76,7 +77,9 @@ class SharingStatus extends ConsumerWidget {
     );
     final scheme = Theme.of(context).colorScheme;
     final icon = switch (projection.status) {
-      SharingSyncStatus.synced => Icons.cloud_done_outlined,
+      SharingSyncStatus.synced ||
+      SharingSyncStatus.checked ||
+      SharingSyncStatus.historical => Icons.cloud_done_outlined,
       SharingSyncStatus.offline ||
       SharingSyncStatus.local => Icons.cloud_off_outlined,
       _ => Icons.cloud_outlined,
@@ -90,6 +93,12 @@ class SharingStatus extends ConsumerWidget {
       _ => scheme.onSurfaceVariant,
     };
     final label = sharingStatusLabel(context, projection.status);
+    final historicalAt = state.lastSuccessfulSyncAt == null
+        ? state.previousSuccessfulSyncAt
+        : null;
+    final historyLabel = historicalAt == null
+        ? ''
+        : '\n${context.l10n.syncStatusLastSuccess}: ${DateFormat.yMd(Localizations.localeOf(context).toString()).add_Hm().format(historicalAt.toLocal())}';
     return SizedBox(
       key: const ValueKey('sharing-sync-status-slot'),
       width: width,
@@ -101,7 +110,7 @@ class SharingStatus extends ConsumerWidget {
             height: 48,
             child: IconButton(
               key: const ValueKey('sharing-sync-status-cloud'),
-              tooltip: '${context.l10n.syncStatusDetails}: $label',
+              tooltip: '${context.l10n.syncStatusDetails}: $label$historyLabel',
               onPressed: () => showSharingStatusDetails(
                 context,
                 state: state,

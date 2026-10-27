@@ -730,7 +730,13 @@ class InviteCryptoRepository {
     final key = '${access.account.store.partition}:${p['invitationId']}';
     final running = _preparations[key];
     if (running != null) return running;
-    final task = _preparePreauthorization(created, authorization);
+    // Send preparation may replay the same signed authority several times.
+    // Start from a fresh server boundary, then share only this operation's
+    // bounded proof material. Every signed delivery still retires the snapshot.
+    final task = access.withVerifiedOperation(
+      () => _preparePreauthorization(created, authorization),
+      freshBoundary: true,
+    );
     _preparations[key] = task;
     try {
       return await task;
@@ -813,26 +819,32 @@ class InviteCryptoRepository {
       access,
     ).preauthorizationChildren(admission.invitationScopeId);
     for (final child in children) {
-      final childAdmission = await admission.forChild(child);
-      final head = await _preparePreauthorizedScope(childAdmission);
+      // The parent rotation changed authority. Each descendant starts from a
+      // fresh boundary and may share only its own admission/review reads.
+      final head = await access.withVerifiedOperation(() async {
+        final childAdmission = await admission.forChild(child);
+        return _preparePreauthorizedScope(childAdmission);
+      }, freshBoundary: true);
       childHeads.add({'scopeId': child, 'headHash': head.headHash});
     }
     childHeads.sort(
       (a, b) => (a['scopeId'] as String).compareTo(b['scopeId'] as String),
     );
-    final own = await access.account.directory.requireFresh();
-    final published = await manager.invitationCommand(
-      'crypto2.invitations.publishPreauthorization',
-      admission.scopeId,
-      {
-        'scopeId': admission.scopeId,
-        'invitationId': admission.invitationId,
-        'preauthorizationHeadHash': parent.headHash,
-        'childHeads': childHeads,
-        'authorDirectoryHeadHash': own.headHash,
-      },
-      actionKey: 'preauthorize-publish:${admission.invitationId}',
-    );
+    final published = await access.withVerifiedOperation(() async {
+      final own = await access.account.directory.requireFresh();
+      return manager.invitationCommand(
+        'crypto2.invitations.publishPreauthorization',
+        admission.scopeId,
+        {
+          'scopeId': admission.scopeId,
+          'invitationId': admission.invitationId,
+          'preauthorizationHeadHash': parent.headHash,
+          'childHeads': childHeads,
+          'authorDirectoryHeadHash': own.headHash,
+        },
+        actionKey: 'preauthorize-publish:${admission.invitationId}',
+      );
+    }, freshBoundary: true);
     return _publishedInvitation(created, published);
   }
 
@@ -932,12 +944,17 @@ class InviteCryptoRepository {
           (a, b) =>
               (a['accountId'] as String).compareTo(b['accountId'] as String),
         );
-    final head = await manager.confirmRotation(
-      review,
-      acceptedCandidateHistory: false,
-      members: members,
-      membershipIntents: [admission.intent],
-      preauthorizedInvitationAdmission: admission,
+    // Confirmation remains a fresh check independent of the completed review;
+    // only repeated consumers inside that confirmation share exact proofs.
+    final head = await access.withVerifiedOperation(
+      () => manager.confirmRotation(
+        review,
+        acceptedCandidateHistory: false,
+        members: members,
+        membershipIntents: [admission.intent],
+        preauthorizedInvitationAdmission: admission,
+      ),
+      freshBoundary: true,
     );
     await db.execute(
       'UPDATE crypto_membership_intents SET payload=? WHERE partition=? AND scope_id=? AND intent_id=?',

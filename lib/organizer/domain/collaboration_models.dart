@@ -539,6 +539,7 @@ class CollaborationState {
        isSyncing = previous.isSyncing,
        lastSyncAttemptAt = previous.lastSyncAttemptAt,
        lastSuccessfulSyncAt = previous.lastSuccessfulSyncAt,
+       previousSuccessfulSyncAt = previous.previousSuccessfulSyncAt,
        privateRecordIds = previous.privateRecordIds,
        financeConflicts = previous.financeConflicts,
        financeSnapshotComplete = previous.financeSnapshotComplete,
@@ -613,6 +614,7 @@ class CollaborationState {
     this.isSyncing = false,
     this.lastSyncAttemptAt,
     this.lastSuccessfulSyncAt,
+    this.previousSuccessfulSyncAt,
     this.lastChangeCheckAttemptAt,
     this.lastSuccessfulChangeCheckAt,
     this.hasUnresolvedSyncWork = false,
@@ -709,6 +711,10 @@ class CollaborationState {
   /// Session-only account refresh evidence. Null means unknown after restart;
   /// queued work/conflicts remain independent of a successful refresh.
   final DateTime? lastSyncAttemptAt, lastSuccessfulSyncAt;
+
+  /// Display-only history from this exact account/server/device. It never
+  /// confirms the current session or grants access to cached content.
+  final DateTime? previousSuccessfulSyncAt;
 
   /// A successful account change check is not a data transfer or admission proof.
   final DateTime? lastChangeCheckAttemptAt, lastSuccessfulChangeCheckAt;
