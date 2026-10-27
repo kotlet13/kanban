@@ -4,6 +4,7 @@ enum SharingSyncStatus {
   local,
   unknown,
   synced,
+  checked,
   pending,
   syncing,
   offline,
@@ -85,10 +86,16 @@ class SharingStatusProjection {
         ? SharingSyncStatus.disabled
         : privateSync && state.privateSync.paused
         ? SharingSyncStatus.paused
-        : pending > 0 || privateSync && state.privateSync.localPendingCount > 0
+        : pending > 0 ||
+              state.hasUnresolvedSyncWork ||
+              privateSync && state.privateSync.localPendingCount > 0
         ? SharingSyncStatus.pending
+        : state.syncRequiresRefresh
+        ? SharingSyncStatus.unknown
         : state.lastSuccessfulSyncAt != null
         ? SharingSyncStatus.synced
+        : state.lastSuccessfulChangeCheckAt != null
+        ? SharingSyncStatus.checked
         : SharingSyncStatus.unknown;
     final contextualStatus =
         status == SharingSyncStatus.syncing ||

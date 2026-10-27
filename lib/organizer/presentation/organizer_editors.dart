@@ -4,14 +4,19 @@ import 'desktop/desktop_layout.dart';
 import 'shared/content_moderation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
 
 import '../../l10n/l10n.dart';
 import '../domain/organizer_models.dart';
+import '../domain/task_cost_account_default.dart';
+import '../domain/draft_three_way_merge.dart';
 import 'organizer_errors.dart';
 import 'planning/task_plan_fields.dart';
 import 'planning/date_time_field.dart';
 import 'planning/record_planning_fields.dart';
 import 'planning/task_timer_panel.dart';
+
+part 'task_draft_review.dart';
 
 /// Dialog result is presentation data; persistence and validation stay in the
 /// organizer controller and domain layer.
@@ -82,6 +87,7 @@ class OrganizerEditorUpdates extends ChangeNotifier {
   OrganizerDraft? replacementDraft;
   VoidCallback? acceptReplacement;
   bool editingAllowed = true;
+  bool Function()? isCurrent;
   bool allowLocalDraftContinuation = false;
   bool costEditingEnabled = false;
   bool costVisible = true;
@@ -256,7 +262,11 @@ class _RecordEditorState extends State<_RecordEditor> {
   var _form = GlobalKey<FormState>();
   late OrganizerDraft _draft;
   OrganizerDraft? _lastReplacement;
+  late Map<String, Object?> _taskBase;
   bool _dirty = false;
+  late bool _mayDefaultCostAccount;
+  bool _costAccountChosen = false;
+  bool _costCurrencyChosen = false;
   bool _newerVersion = false;
   bool _busy = false;
   String? _failure;
@@ -271,6 +281,8 @@ class _RecordEditorState extends State<_RecordEditor> {
   void initState() {
     super.initState();
     _draft = widget.draft;
+    _taskBase = _taskDraftFields(_draft);
+    _mayDefaultCostAccount = !widget.draft.costEnabled;
     widget.updates?.addListener(_applyUpdates);
   }
 
@@ -282,21 +294,210 @@ class _RecordEditorState extends State<_RecordEditor> {
 
   void _applyUpdates() {
     if (!mounted) return;
+    if (widget.kind == OrganizerEditorKind.task) _form.currentState?.save();
     final updates = widget.updates!;
     final replacement = updates.replacementDraft;
     if (_readOnly) FocusScope.of(context).unfocus();
     setState(() {
       if (replacement != null && replacement != _lastReplacement) {
         _lastReplacement = replacement;
-        if (_dirty || _busy) {
+        if (_dirty ||
+            _busy ||
+            !DraftThreeWayMerge.equal(_taskBase, _taskDraftFields(draft))) {
           _newerVersion = true;
         } else {
           _draft = replacement;
+          _taskBase = _taskDraftFields(replacement);
+          _mayDefaultCostAccount = !replacement.costEnabled;
+          _costAccountChosen = false;
+          _costCurrencyChosen = false;
           _form = GlobalKey<FormState>();
           updates.acceptReplacement?.call();
         }
       }
     });
+  }
+
+  Future<void> _reviewLatestTask() async {
+    _form.currentState?.save();
+    final updates = widget.updates;
+    final latest = updates?.replacementDraft;
+    final accept = updates?.acceptReplacement;
+    if (_busy ||
+        _sharedWriteUnavailable ||
+        latest == null ||
+        accept == null ||
+        updates?.isCurrent?.call() == false) {
+      return;
+    }
+    final mine = _taskDraftFields(draft);
+    final newest = _taskDraftFields(latest);
+    // Timer commands have their own delivery path; a task save cannot replay
+    // an earlier operational timer state as an editable draft choice.
+    final merge = DraftThreeWayMerge(
+      base: {..._taskBase, 'timer': newest['timer']},
+      mine: {...mine, 'timer': newest['timer']},
+      latest: newest,
+    );
+    final costEditable =
+        updates?.costEditingEnabled == true &&
+        updates?.costVisible == true &&
+        updates?.financeUnavailable != true &&
+        updates?.financeLoading != true;
+    // Task-only authority cannot expose or overwrite a retained financial draft.
+    if (!costEditable &&
+        !DraftThreeWayMerge.equal(_taskBase['cost'], mine['cost'])) {
+      setState(() => _failure = context.l10n.recordEditForbidden);
+      return;
+    }
+    final l = context.l10n;
+    final costVisibility = updates?.costVisible;
+    final costPermission = updates?.costEditingEnabled;
+    final costReadiness = (
+      updates?.financeUnavailable,
+      updates?.financeLoading,
+    );
+    bool current() =>
+        mounted &&
+        !_sharedWriteUnavailable &&
+        updates?.isCurrent?.call() != false &&
+        identical(widget.updates, updates) &&
+        identical(updates?.replacementDraft, latest) &&
+        identical(updates?.acceptReplacement, accept) &&
+        DraftThreeWayMerge.equal(mine, _taskDraftFields(draft)) &&
+        DraftThreeWayMerge.equal(newest, _taskDraftFields(latest)) &&
+        updates?.costVisible == costVisibility &&
+        updates?.costEditingEnabled == costPermission &&
+        (updates?.financeUnavailable, updates?.financeLoading) == costReadiness;
+    final navigator = Navigator.of(context);
+    final route = DialogRoute<Map<String, Object?>>(
+      context: context,
+      builder: (_) => _TaskDraftReviewDialog(
+        merge: merge,
+        costVisible: updates?.costVisible == true,
+        labels: {
+          'title': l.organizerTitle,
+          'notes': l.organizerNotes,
+          'assignment': l.organizerDraftAssignment,
+          'schedule': l.organizerDraftSchedule,
+          'planning': l.organizerDraftPlanning,
+          'completion': l.organizerDraftCompletion,
+          'timer': l.organizerDraftTimer,
+          'cost': l.organizerDraftCost,
+        },
+        describe: _describeTaskReview,
+      ),
+    );
+    var invalidated = false;
+    void invalidateReview() {
+      if (current()) return;
+      invalidated = true;
+      if (route.isActive) navigator.removeRoute(route);
+    }
+
+    updates?.addListener(invalidateReview);
+    Map<String, Object?>? result;
+    try {
+      result = await navigator.push(route);
+    } finally {
+      updates?.removeListener(invalidateReview);
+    }
+    if (!mounted) return;
+    if (invalidated || !current()) {
+      setState(() => _failure = l.organizerDraftReviewStale);
+      return;
+    }
+    if (result == null) return;
+    final resolved = {
+      ...result,
+      'cost': {
+        ...result['cost'] as Map,
+        'wasPaid': (newest['cost'] as Map)['wasPaid'],
+      },
+    };
+    // No await between the final captured-version guard and base acceptance.
+    accept();
+    setState(() {
+      _taskBase = newest;
+      _draft = _taskDraftFromFields(resolved);
+      _lastReplacement = latest;
+      _newerVersion = false;
+      _dirty = true;
+      _failure = null;
+      _form = GlobalKey<FormState>();
+      _mayDefaultCostAccount = false;
+    });
+  }
+
+  String _describeTaskReview(String key, Object? value) {
+    final l = context.l10n;
+    String person(Object? id) => id == null
+        ? '—'
+        : widget.people.where((p) => p.id == id).firstOrNull?.label ??
+              widget.householdPeople
+                  .where((p) => p.id == id)
+                  .firstOrNull
+                  ?.name ??
+              '—';
+    String date(Object? raw) => raw == null
+        ? '—'
+        : DateFormat.yMd(
+            Localizations.localeOf(context).toLanguageTag(),
+          ).add_Hm().format(DateTime.parse(raw as String).toLocal());
+    switch (key) {
+      case 'title':
+      case 'notes':
+        return (value as String).isEmpty ? '—' : value;
+      case 'assignment':
+        final fields = value as Map;
+        final project = widget.projects
+            .where((p) => p.id == fields['project'])
+            .firstOrNull;
+        final phase = project?.phases
+            .where((p) => p.id == fields['phase'])
+            .firstOrNull;
+        return [
+          project?.title ?? '—',
+          phase?.title ?? '—',
+          person(fields['person']),
+          ...[
+            ...fields['subjects'] as List,
+            ...fields['accounts'] as List,
+          ].map(person),
+        ].join(' · ');
+      case 'schedule':
+        final fields = value as List;
+        return '${l.planningDue}: ${date(fields[0])}\n${l.planningStart}: ${date(fields[1])}\n${l.planningEnd}: ${date(fields[2])}';
+      case 'planning':
+        final fields = value as List;
+        return '${l.planningEstimateMinutes}: ${fields[0] ?? '—'}\n${l.planningAvailabilityMinutes}: ${fields[1] ?? '—'}\n${l.planningAvailabilityPeriod}: ${fields[2] == null
+            ? '—'
+            : fields[2] == 'day'
+            ? l.planningPerDay
+            : l.planningPerWeek}';
+      case 'completion':
+        return value == true ? '✓' : '—';
+      case 'timer':
+        final timer = TaskTimerState.fromJson(
+          Map<String, dynamic>.from(value as Map),
+        );
+        return '${l.planningElapsed}: ${planningDuration(timer.elapsedAt(DateTime.now()))}\n${l.planningStart}: ${date(timer.runningSince?.toIso8601String())}';
+      case 'cost':
+        final fields = value as Map;
+        if (fields['enabled'] != true) return '—';
+        final account =
+            widget.financeAccounts
+                .where((a) => a.id == fields['account'])
+                .firstOrNull
+                ?.name ??
+            (widget.updates?.financeAccountChoices ??
+                    widget.financeAccountChoices)[fields['account']]
+                ?.name ??
+            l.taskCostUnassignedAccount;
+        return '${fields['amount']} ${fields['currency']} · $account · ${fields['paid'] == true ? l.taskCostPaid : l.taskCostPlanned}\n${l.paymentPaidAt}: ${date(fields['paidAt'])}\n${l.taskCostPayer}: ${person(fields['payer'])}\n${l.taskCostRecipient}: ${person(fields['recipient'])}\n${l.planningCreatedBy}: ${person(fields['creator'])}\n${l.organizerDraftPreviouslyPosted}: ${fields['wasPaid'] == true ? '✓' : '—'}';
+      default:
+        return '—';
+    }
   }
 
   void _edit(VoidCallback change) {
@@ -319,6 +520,10 @@ class _RecordEditorState extends State<_RecordEditor> {
 
   Future<void> _save() async {
     if (_busy || _sharedWriteUnavailable) return;
+    if (widget.kind == OrganizerEditorKind.task && _newerVersion) {
+      await _reviewLatestTask();
+      return;
+    }
     final invalidFields = _form.currentState!.validateGranularly();
     if (invalidFields.isNotEmpty) {
       // Validation can happen while the user is at the bottom of the form.
@@ -369,6 +574,15 @@ class _RecordEditorState extends State<_RecordEditor> {
         return;
       }
       if (!mounted) return;
+      if (_newerVersion ||
+          _sharedWriteUnavailable ||
+          widget.updates?.isCurrent?.call() == false) {
+        setState(() {
+          _busy = false;
+          _failure = context.l10n.organizerDraftReviewStale;
+        });
+        return;
+      }
       await widget.onSave(draft);
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
@@ -519,6 +733,43 @@ class _RecordEditorState extends State<_RecordEditor> {
               localIds!.contains(account.id) == localOwnership,
         )
         .toList();
+    // Defaults affect only a newly added cost, never a stored cost or a user's
+    // explicit selection. Deferred parent choices arrive through editor updates.
+    final costEditable =
+        !_sharedWriteUnavailable &&
+        (widget.updates?.costEditingEnabled ?? widget.costEditingEnabled) &&
+        (widget.updates?.costVisible ?? true) &&
+        widget.updates?.financeLoading != true &&
+        widget.updates?.financeUnavailable != true;
+    if (widget.kind == OrganizerEditorKind.task &&
+        _mayDefaultCostAccount &&
+        !_costAccountChosen &&
+        costEditable &&
+        draft.costEnabled &&
+        draft.ledgerAccountId == null) {
+      final choice = defaultTaskCostAccount(
+        ownAccounts: allowedAccounts.map(
+          (a) => (id: a.id, currency: a.currency, archived: a.archived),
+        ),
+        parentAccounts:
+            (widget.updates?.financeAccountChoices ??
+                    widget.financeAccountChoices)
+                .entries
+                .map(
+                  (a) => (
+                    id: a.key,
+                    currency: a.value.currency,
+                    archived: a.value.archived,
+                  ),
+                ),
+        currency: draft.costCurrency,
+        currencyUnchosen: !_costCurrencyChosen && draft.costAmount.isEmpty,
+      );
+      if (choice != null) {
+        draft.ledgerAccountId = choice.id;
+        draft.costCurrency = choice.currency;
+      }
+    }
     final finance = widget.kind == OrganizerEditorKind.finance;
     final dateRequired = widget.kind == OrganizerEditorKind.event || finance;
     final dialog = AlertDialog(
@@ -576,9 +827,22 @@ class _RecordEditorState extends State<_RecordEditor> {
                   Padding(
                     key: const ValueKey('organizer-newer-version'),
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      l.organizerNewerVersion,
-                      semanticsLabel: l.organizerNewerVersion,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.organizerNewerVersion,
+                          semanticsLabel: l.organizerNewerVersion,
+                        ),
+                        if (widget.kind == OrganizerEditorKind.task)
+                          TextButton(
+                            key: const ValueKey('organizer-review-latest'),
+                            onPressed: _busy || _sharedWriteUnavailable
+                                ? null
+                                : _reviewLatestTask,
+                            child: Text(l.organizerReviewLatest),
+                          ),
+                      ],
                     ),
                   ),
                 TextFormField(
@@ -756,6 +1020,11 @@ class _RecordEditorState extends State<_RecordEditor> {
                     onCostSectionOpened: _busy || _sharedWriteUnavailable
                         ? null
                         : widget.updates?.onCostSectionOpened,
+                    onCostAccountChanged: () => _costAccountChosen = true,
+                    onCostCurrencyChanged: () {
+                      _costCurrencyChosen = true;
+                      _costAccountChosen = false;
+                    },
                     costAccountRequired: widget.costAccountRequired,
                     enabled: !_busy && !_readOnly,
                     wrap: widget.wrap,

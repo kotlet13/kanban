@@ -8,13 +8,15 @@ import '../../domain/organizer_models.dart' show ProjectArea;
 import '../../state/organizer_provider.dart';
 import '../organizer_widgets.dart';
 import '../planning/utrip_overview.dart';
+import '../planning/agenda_month_calendar.dart';
+import '../../domain/organizer_projections.dart';
 import 'all_spaces_rows.dart';
 import 'all_spaces_area.dart';
 import 'all_spaces_payments.dart';
 export 'all_spaces_area.dart';
 
 /// Aggregate presentation never becomes the write target. Opening a row uses
-/// its captured source; creating first switches to an explicitly chosen space.
+/// its captured source; creating uses the selected space or an explicit choice.
 class AllSpacesPage extends ConsumerStatefulWidget {
   const AllSpacesPage({
     super.key,
@@ -28,7 +30,11 @@ class AllSpacesPage extends ConsumerStatefulWidget {
     this.onCreateSource,
     this.canCreateInSource,
     this.onOverviewArea,
+    this.creationScopeId,
   });
+
+  /// A concrete selected space remains the write target of its aggregate.
+  final String? creationScopeId;
   final AllSpacesSnapshot? snapshot;
   final String? subtitle;
   final bool allowCreation, showDescription;
@@ -51,6 +57,8 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
   DateTime? _month;
   String? _currency;
   bool _showCompleted = false;
+  bool _calendar = true;
+  DateTime? _day;
 
   String _title(BuildContext context) => switch (widget.area) {
     AllSpacesArea.today => context.l10n.organizerToday,
@@ -64,6 +72,19 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
   };
 
   Future<void> _chooseTarget(AllSpacesSnapshot snapshot) async {
+    final selectedScope = widget.creationScopeId;
+    if (selectedScope != null) {
+      final selected = snapshot.sources
+          .where((source) => source.scopeId == selectedScope)
+          .firstOrNull;
+      // A stale or read-only selection must not redirect a write to a child.
+      if (selected == null ||
+          widget.canCreateInSource?.call(selected) == false) {
+        return;
+      }
+      await _create(selected);
+      return;
+    }
     final source = await showDialog<AllSpacesSource>(
       context: context,
       builder: (context) => SimpleDialog(
@@ -84,13 +105,28 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
       ),
     );
     if (source != null && mounted) {
-      if (widget.onCreateSource != null) {
-        await widget.onCreateSource!(source);
-      } else {
-        await widget.onSource(source, widget.area, null);
-      }
+      await _create(source);
     }
   }
+
+  Future<void> _create(AllSpacesSource source) async {
+    if (widget.onCreateSource != null) {
+      await widget.onCreateSource!(source);
+    } else {
+      await widget.onSource(source, widget.area, null);
+    }
+  }
+
+  AgendaItem _calendarItem(AllSpacesRow row) => AgendaItem(
+    type: row.type,
+    id: row.id,
+    title: row.title,
+    startAt: (row.startDate ?? (row.type == 'event' ? row.date : null))
+        ?.toLocal(),
+    endAt: row.endDate?.toLocal(),
+    dueAt: row.type == 'task' ? row.date?.toLocal() : null,
+    isCompleted: row.completed,
+  );
 
   Future<void> _open(AllSpacesRow row) async {
     if (!allSpacesSourceIsCurrent(ref, row.source)) return;
@@ -194,9 +230,23 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
           widget.area,
           now: now,
           showCompleted: _showCompleted,
-          month: _month,
+          month: widget.area == AllSpacesArea.calendar && _calendar
+              ? null
+              : _month,
           currency: _currency,
         );
+        final calendarItems = widget.area == AllSpacesArea.calendar
+            ? [for (final row in rows) _calendarItem(row)]
+            : <AgendaItem>[];
+        final selectedDay = _day ?? now;
+        final visibleRows = widget.area == AllSpacesArea.calendar && _calendar
+            ? rows
+                  .where(
+                    (row) =>
+                        agendaItemCoversDay(_calendarItem(row), selectedDay),
+                  )
+                  .toList()
+            : rows;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -214,7 +264,15 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
                   : OutlinedButton.icon(
                       onPressed: () => _chooseTarget(snapshot),
                       icon: const Icon(Icons.add),
-                      label: Text(l.allSpacesAdd),
+                      label: Text(
+                        widget.creationScopeId == null
+                            ? l.allSpacesAdd
+                            : switch (widget.area) {
+                                AllSpacesArea.calendar => l.organizerAddEvent,
+                                AllSpacesArea.finances => l.organizerAddFinance,
+                                _ => l.organizerAddTask,
+                              },
+                      ),
                     ),
             ),
             if (widget.area == AllSpacesArea.tasks) ...[
@@ -235,9 +293,41 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
               ),
               const SizedBox(height: 12),
             ],
-            if (widget.area == AllSpacesArea.finances ||
-                widget.area == AllSpacesArea.calendar)
-              _period(context),
+            if (widget.area == AllSpacesArea.calendar) ...[
+              SegmentedButton<bool>(
+                key: const ValueKey('aggregate-calendar-view'),
+                segments: [
+                  ButtonSegment(
+                    value: true,
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: Text(l.organizerCalendar),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    icon: const Icon(Icons.view_list_outlined),
+                    label: Text(l.planningTimeline),
+                  ),
+                ],
+                selected: {_calendar},
+                onSelectionChanged: (selection) =>
+                    setState(() => _calendar = selection.single),
+              ),
+              const SizedBox(height: 12),
+              if (_calendar) ...[
+                AgendaMonthCalendar(
+                  day: selectedDay,
+                  items: calendarItems,
+                  onSelected: (day) => setState(() {
+                    _day = day;
+                    _month = null;
+                  }),
+                ),
+                Text(organizerDate(context, selectedDay, full: true)),
+                const SizedBox(height: 12),
+              ] else
+                _period(context),
+            ],
+            if (widget.area == AllSpacesArea.finances) _period(context),
             if (widget.area == AllSpacesArea.finances) ...[
               if (snapshot.sources.any(
                 (source) => source.canReadFinance && !source.financeComplete,
@@ -264,10 +354,12 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
               ),
               const SizedBox(height: 12),
             ],
-            if (rows.isEmpty)
+            if (visibleRows.isEmpty)
               OrganizerEmpty(
                 icon: Icons.layers_outlined,
-                title: widget.area == AllSpacesArea.today
+                title: widget.area == AllSpacesArea.calendar && _calendar
+                    ? l.planningNoAgenda
+                    : widget.area == AllSpacesArea.today
                     ? l.allSpacesTodayEmpty
                     : l.allSpacesEmpty,
               ),
@@ -307,7 +399,7 @@ class _AllSpacesPageState extends ConsumerState<AllSpacesPage> {
                     ),
                 ],
               ),
-            for (final row in rows)
+            for (final row in visibleRows)
               AllSpacesRowTile(
                 key: ValueKey(
                   'all-tile-${row.source.key}-${row.type}-${row.id}',

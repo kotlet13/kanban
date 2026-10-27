@@ -1082,9 +1082,14 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     accessScope: accessScope,
     requestId: requestId,
   );
+  Future<List<InvitationRecipient>> searchInvitationRecipients({
+    required String scopeId,
+    required String query,
+  }) => _repo.searchInvitationRecipients(scopeId: scopeId, query: query);
   Future<SharedInvitation> createRecipientInvitation({
     required String scopeId,
     required String recipient,
+    String? recipientAccountId,
     SharedRole role = SharedRole.member,
     String language = 'sl',
     String? accessScope,
@@ -1101,6 +1106,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       : _repo.createRecipientInvitation(
           scopeId: scopeId,
           recipient: recipient,
+          recipientAccountId: recipientAccountId,
           role: role,
           language: language,
           accessScope: accessScope,

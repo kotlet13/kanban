@@ -73,7 +73,7 @@ class OrganizerTodayPage extends ConsumerWidget {
             final task = snapshot.tasks
                 .where((t) => t.id == item.id)
                 .firstOrNull;
-            if (task != null) actions.task(task: task);
+            if (task != null) actions.openTask(task);
         }
       },
       onTasks: onPlans,

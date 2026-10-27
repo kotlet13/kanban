@@ -13,7 +13,7 @@ class NativeEmailInvitationService extends NativeInvitationService
         $operation=$v3 ? 'invitations2.'.substr($operation,13) : $operation;
         $this->rate([['email-invitation-ip:'.$this->ip,120,60]]);
         if ($operation==='invitations2.create') {
-            $this->fields($params,['scopeId','role','requestId','language'],['recipientEmail','recipient','expiresIn','accessScope']);
+            $this->fields($params,['scopeId','role','requestId','language'],['recipientEmail','recipient','expiresIn','accessScope','recipientAccountId']);
             if (isset($params['recipient'])===isset($params['recipientEmail']) || (!$v3 && isset($params['recipient']))) { throw new NativeError('validation_error'); }
             $recipient=$this->text($params['recipient']??$params['recipientEmail'],254);
             $isEmail=isset($params['recipientEmail']) || str_contains($recipient,'@');
@@ -98,6 +98,7 @@ class NativeEmailInvitationService extends NativeInvitationService
                 } else {
                     if (!in_array($params['role'],['member','viewer'],true)) { throw new NativeError('validation_error'); }
                     $role=$params['role']; $recipient=$this->recipient($params,$user);
+                    if (isset($params['recipientAccountId']) && (!$v3 || $recipient['email']!==null || $recipient['account']!==$this->uuid($params['recipientAccountId']))) { throw new NativeError('recipient_unavailable',409); }
                 }
                 $result=$this->issueInvitation($scopeId,$user,$recipient,$role,$params['language'],$duration,$v3,$accessScope);
                 if (isset($old)) {
@@ -146,7 +147,7 @@ class NativeEmailInvitationService extends NativeInvitationService
         $username=$this->username($value);
         $target=$this->one('SELECT a.account_id,u.username FROM users u JOIN familyhub_accounts a ON a.user_id=u.id WHERE LOWER(u.username)=? AND u.is_active=1',[$username]);
         if (!$target || $target['account_id']===$user['account_id']) { throw new NativeError('recipient_unavailable',409); }
-        // No public directory, no core/unverified address disclosure, and no legacy registration path.
+        // No address disclosure and no legacy registration path.
         return ['email'=>null,'username'=>strtolower($target['username']),'account'=>$target['account_id']];
     }
     private function issueInvitation($scopeId,$user,$recipient,$role,$language,$duration,$v3,$accessScope)

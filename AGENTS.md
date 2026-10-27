@@ -1,3 +1,28 @@
+27. oktober — **Zbrani UX popravki lokalno, telefoni še nespremenjeni**.
+User dovoli vse zbrane ugotovitve razen vrta, Mac zaklenjen. Sol6.1/high
+navigation/search/status+draft, root finance defaults/integration/review.
+Konkreten izbrani parent je create target (Vsi še chooser); task cost dropdown
+predizbere own/parent unique valid account, manual/currency/old cost preserved.
+Shopping DETAIL samo list menu+sync, scope actions ostanejo overview/settings;
+calendar/grid toggle; task preview→explicitEdit enotno. recipients.search
+capability+2–64chars/350ms/10results/authmanager/quota/minimal labels, noemail,
+selected accountId checked plain+crypto+immutable draft; oldserver exactfallback.
+Sync check times ločeni od transfer; unchanged cheap evidence clone z istimi
+projection refs, bounded SQL, brez fullrefresh/HTTP dodatkov. Shared task draft
+threeway review, explicit conflicts, samecost atomic; timer/priorposted latest;
+stale/access/delete preserve draft+no baseadvance. Standalone finance/table
+merge NI uveden.64 aktualnih Dart kontrol PASS (63novih+1adapted),18PHPassertions
+PASS (freshmemorySQLite realdispatcher/networknone Docker, NEHTTP/cryptoE2E).
+1draft newer-update STOP3: fixture substring2matches; predtem removal/0accept/
+draft preservationPASS, reopenlatest afterassert UNVERIFIED. Finder corrected,
+NO4thrun. Original vs current menu2oldPASS superseded, excludedfrom64.
+Fullanalyze20errors2warnings in unchanged oldfakes/diagnostictemplate; targeted
+lib+changedtests0errors0warnings511infos. Logs+attempts build/qa/*20261027;
+trajno docs/UX_FOLLOWUP_2026_10_27.md. Finance~5s useraccepted; gardenout.
+Startupflicker sourcereview no newproven cause; no gate weakened. NoGUI/phone/
+install/prod/existingQA mutation. Search needs testserver+app update onreturn.
+User data/keys/drafts/protocol guards retained; no oldPASS reruns withoutchange.
+
 26. oktober — **Točen Samsung inbox finance_blocked popravek, lokalni RED→4PASS**.
 Native enklik na ad06e36 ujel notification_actions157: inbox18/parentMobileE2EE,
 finance_blocked1, scopevalid; read-only policygrantwrite/rev2/snapshotcomplete.

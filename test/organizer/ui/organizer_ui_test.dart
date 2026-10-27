@@ -301,8 +301,12 @@ void main() {
       );
       await tester.tap(find.text('Izmeri sobo'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Uredi opravilo'));
+      await tester.pumpAndSettle();
       await saveTitle(tester, 'Izmeri kuhinjo');
       expect(store.snapshot.tasks.last.title, 'Izmeri kuhinjo');
+      await tester.tap(find.text('Zapri'));
+      await tester.pumpAndSettle();
       await mobileTab(tester, 'Nakupi');
       await tester.tap(find.text('Nov seznam').first);
       await tester.pumpAndSettle();
@@ -496,6 +500,8 @@ void main() {
       await mobileTab(tester, 'Opravila');
       await tester.ensureVisible(find.text('Daljni rok'));
       await tester.tap(find.text('Daljni rok'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Uredi opravilo'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(
         find.descendant(

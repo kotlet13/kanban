@@ -3489,10 +3489,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusDeviceOnly => 'Local to this device';
 
   @override
-  String get syncStatusLastSuccess => 'Last successful synchronization';
+  String get syncStatusLastSuccess => 'Last successful data sync';
 
   @override
-  String get syncStatusLastAttempt => 'Last attempt';
+  String get syncStatusLastAttempt => 'Last data sync attempt';
 
   @override
   String get syncStatusNeverAttempted => 'No attempt has been recorded';
@@ -5423,7 +5423,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizerNewerVersion =>
-      'A newer version is available. Your edits are preserved and will be compared when you save.';
+      'A newer version is available. Your draft is preserved.';
 
   @override
   String get organizerFinanceChoicesLoading =>
@@ -5510,4 +5510,71 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return 'Check complete. Available spaces: $available. Restored access: $restored. Confirmed revocations: $revoked. Still unverified: $unresolved.';
   }
+
+  @override
+  String get sharingRecipientSearchHint =>
+      'Type at least 2 characters of a name or username, or enter an exact email address.';
+
+  @override
+  String get sharingRecipientSearchEmpty => 'No matching users on this server.';
+
+  @override
+  String get sharingRecipientSearchFailed =>
+      'Search is unavailable. You can still enter an exact username or email address.';
+
+  @override
+  String get syncStatusChecked => 'Account changes checked';
+
+  @override
+  String get syncStatusLastChangeCheckSuccess => 'Last successful change check';
+
+  @override
+  String get syncStatusLastChangeCheckAttempt => 'Last change check attempt';
+
+  @override
+  String get organizerReviewLatest => 'Review latest changes';
+
+  @override
+  String get organizerDraftCompareTitle => 'Review task changes';
+
+  @override
+  String get organizerDraftCompareHelp =>
+      'Review the original, your draft and the latest version. Choose which version to keep for each conflict.';
+
+  @override
+  String get organizerDraftBase => 'Original';
+
+  @override
+  String get organizerDraftMine => 'My draft';
+
+  @override
+  String get organizerDraftLatest => 'Latest';
+
+  @override
+  String get organizerDraftApply => 'Apply to draft';
+
+  @override
+  String get organizerDraftReviewStale =>
+      'The task or access changed during review. Your draft is preserved. Review the latest changes again.';
+
+  @override
+  String get organizerDraftAssignment => 'Project and people';
+
+  @override
+  String get organizerDraftSchedule => 'Schedule';
+
+  @override
+  String get organizerDraftPlanning => 'Planning details';
+
+  @override
+  String get organizerDraftCompletion => 'Completion';
+
+  @override
+  String get organizerDraftTimer => 'Timer';
+
+  @override
+  String get organizerDraftCost => 'Task cost';
+
+  @override
+  String get organizerDraftPreviouslyPosted => 'Previously posted';
 }

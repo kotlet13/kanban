@@ -17,6 +17,8 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
     required this.costEditingEnabled,
     this.costVisible = true,
     this.onCostSectionOpened,
+    this.onCostAccountChanged,
+    this.onCostCurrencyChanged,
     required this.costAccountRequired,
     required this.enabled,
     required this.onChanged,
@@ -35,6 +37,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
   financeAccountChoices;
   final VoidCallback onChanged;
   final VoidCallback? onCostSectionOpened;
+  final VoidCallback? onCostAccountChanged, onCostCurrencyChanged;
   final Widget Function(Widget)? wrap;
 
   @override
@@ -352,6 +355,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
+                    key: ValueKey('task-cost-currency-${draft.costCurrency}'),
                     initialValue: draft.costCurrency,
                     isExpanded: true,
                     decoration: InputDecoration(labelText: l.organizerCurrency),
@@ -362,6 +366,7 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                     onChanged: !costEnabled
                         ? null
                         : (v) {
+                            onCostCurrencyChanged?.call();
                             draft.costCurrency = v!;
                             draft.ledgerAccountId = null;
                             onChanged();
@@ -369,7 +374,9 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    key: ValueKey('task-cost-account-${draft.costCurrency}'),
+                    key: ValueKey(
+                      'task-cost-account-${draft.costCurrency}-${draft.ledgerAccountId}',
+                    ),
                     initialValue:
                         draft.ledgerAccountId ??
                         (costAccountRequired ? null : ''),
@@ -415,7 +422,10 @@ class OrganizerRecordPlanningFields extends StatelessWidget {
                         : null,
                     onChanged: !costEnabled
                         ? null
-                        : (v) => draft.ledgerAccountId = v == '' ? null : v,
+                        : (v) {
+                            onCostAccountChanged?.call();
+                            draft.ledgerAccountId = v == '' ? null : v;
+                          },
                   ),
                   if (costAccountRequired &&
                       financeAccounts

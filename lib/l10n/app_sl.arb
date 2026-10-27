@@ -1304,8 +1304,8 @@
   "syncStatusOffline": "Strežnik ni dosegljiv",
   "syncStatusProblem": "Sinhronizacija potrebuje tvojo pozornost",
   "syncStatusDeviceOnly": "Lokalno na tej napravi",
-  "syncStatusLastSuccess": "Zadnja uspešna uskladitev",
-  "syncStatusLastAttempt": "Zadnji poskus",
+  "syncStatusLastSuccess": "Zadnja uspešna uskladitev podatkov",
+  "syncStatusLastAttempt": "Zadnji poskus uskladitve podatkov",
   "syncStatusNeverAttempted": "Poskus še ni zabeležen",
   "syncStatusNotConfirmed": "Še ni potrjena",
   "syncStatusLastError": "Napaka",
@@ -2009,7 +2009,7 @@
   "cryptoInvitationContentAccess": "S tem delite dosedanjo vsebino in nove spremembe skladno z zgornjimi dovoljenji.",
   "cryptoInvitationAcceptanceUnavailable": "Ta naprava ne more preveriti shranjenega sprejema. Povabilo odprite na napravi, kjer ste ga sprejeli. Lokalni podatki so ohranjeni.",
   "sharingInvitationNewAccountAccess": "Če prejemnik ustvari nov račun, se dostop po sprejemu povabila dokonča med vašo naslednjo uporabo aplikacije. Če je potrebna vaša potrditev, odprite povabilo v Obvestilih ali v Deljenju in članih.",
-  "organizerNewerVersion": "Na voljo je novejša različica. Vaše spremembe so ohranjene; ob shranjevanju jih bomo primerjali.",
+  "organizerNewerVersion": "Na voljo je novejša različica. Tvoj osnutek je ohranjen.",
   "organizerFinanceChoicesLoading": "Pripravljamo račune za strošek. Opravilo lahko že uredite in shranite.",
   "organizerFinanceChoicesUnavailable": "Računi za strošek trenutno niso na voljo. Opravilo lahko še vedno uredite.",
   "recordEditForbidden": "Ta zapis lahko ureja lastnik prostora ali avtor; opravilo tudi dodeljeni uporabnik.",
@@ -2047,5 +2047,26 @@
         "type": "int"
       }
     }
-  }
+  },
+  "sharingRecipientSearchHint": "Vnesi vsaj 2 znaka imena ali uporabniškega imena ali točen e-poštni naslov.",
+  "sharingRecipientSearchEmpty": "Na tem strežniku ni ustreznih uporabnikov.",
+  "sharingRecipientSearchFailed": "Iskanje ni na voljo. Še vedno lahko vneseš točno uporabniško ime ali e-poštni naslov.",
+  "syncStatusChecked": "Spremembe računa preverjene",
+  "syncStatusLastChangeCheckSuccess": "Zadnje uspešno preverjanje sprememb",
+  "syncStatusLastChangeCheckAttempt": "Zadnji poskus preverjanja sprememb",
+  "organizerReviewLatest": "Preglej novejše spremembe",
+  "organizerDraftCompareTitle": "Pregled sprememb opravila",
+  "organizerDraftCompareHelp": "Primerjaj prvotno različico, svoj osnutek in najnovejšo različico. Pri vsakem sporu izberi, katero ohraniš.",
+  "organizerDraftBase": "Prvotno",
+  "organizerDraftMine": "Moj osnutek",
+  "organizerDraftLatest": "Najnovejše",
+  "organizerDraftApply": "Uporabi v osnutku",
+  "organizerDraftReviewStale": "Med pregledom se je spremenilo opravilo ali dostop. Tvoj osnutek je ohranjen. Znova preglej najnovejše spremembe.",
+  "organizerDraftAssignment": "Projekt in osebe",
+  "organizerDraftSchedule": "Časovni načrt",
+  "organizerDraftPlanning": "Podrobnosti načrtovanja",
+  "organizerDraftCompletion": "Dokončanost",
+  "organizerDraftTimer": "Časovnik",
+  "organizerDraftCost": "Strošek opravila",
+  "organizerDraftPreviouslyPosted": "Prej knjiženo"
 }

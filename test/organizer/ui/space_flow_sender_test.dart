@@ -50,6 +50,7 @@ class _Sender extends SharingUiController {
   Future<SharedInvitation> createRecipientInvitation({
     required String scopeId,
     required String recipient,
+    String? recipientAccountId,
     SharedRole role = SharedRole.member,
     String language = 'sl',
     String? accessScope,

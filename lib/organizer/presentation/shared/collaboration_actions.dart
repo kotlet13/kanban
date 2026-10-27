@@ -72,7 +72,6 @@ class CollaborationActions
 
   @override
   Future<void> openTask(LocalTask task) async {
-    if (canEditRecord('task', task.id)) return this.task(task: task);
     final state = ref.read(collaborationProvider).valueOrNull;
     final session = state?.session;
     final current = _currentScope(state);
@@ -621,6 +620,7 @@ class CollaborationActions
         guard.isCurrent &&
         editorController.editorSessionIdentity == editorIdentity;
     final updates = OrganizerEditorUpdates()
+      ..isCurrent = draftIdentityCurrent
       ..allowLocalDraftContinuation =
           task != null && _canEdit(state, 'task', task.id);
     OrganizerDraft taskDraft(LocalTask? task, SharedFinanceEntry? linkedCost) =>
@@ -762,7 +762,13 @@ class CollaborationActions
         // Provider publication can happen during a parent build. Apply once the
         // current frame completes, and never after closing/changing identity.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!open || !draftIdentityCurrent()) return;
+          if (!open) return;
+          if (!draftIdentityCurrent()) {
+            updates.editingAllowed = false;
+            updates.costVisible = false;
+            updates.financeChanged();
+            return;
+          }
           final value = next.valueOrNull;
           updateFinance(value);
           if (task == null) return;
@@ -770,7 +776,12 @@ class CollaborationActions
           final latest = latestData?.tasks
               .where((row) => row.id == task!.id)
               .firstOrNull;
-          if (latest == null) return;
+          if (latest == null) {
+            updates.editingAllowed = false;
+            updates.costVisible = false;
+            updates.financeChanged();
+            return;
+          }
           final cost = latestData?.financeEntries
               .where((row) => row.taskId == latest.id)
               .firstOrNull;

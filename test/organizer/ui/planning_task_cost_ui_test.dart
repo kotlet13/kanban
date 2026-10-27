@@ -87,6 +87,8 @@ void main() {
       await tester.ensureVisible(find.text('Pripravi gredo'));
       await tester.tap(find.text('Pripravi gredo'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Uredi opravilo'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(
         find.byKey(const ValueKey('task-timer-toggle')),
       );

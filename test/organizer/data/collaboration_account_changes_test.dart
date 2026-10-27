@@ -134,7 +134,7 @@ void main() {
   }
 
   test(
-    'unchanged probe alone does not pull prepare refresh emit or claim full sync',
+    'unchanged probe publishes only check evidence without content refresh or full sync',
     () async {
       final f = await setup();
       final beforeState = f.repo.state,
@@ -149,9 +149,17 @@ void main() {
       await f.repo.syncNow();
       await Future<void>.delayed(Duration.zero);
       expect(f.transport.operations, ['account.changes']);
-      expect(identical(beforeState, f.repo.state), isTrue);
+      expect(identical(beforeState, f.repo.state), isFalse);
+      expect(f.repo.state.lastSuccessfulChangeCheckAt, isNotNull);
+      expect(
+        f.repo.state.lastSuccessfulSyncAt,
+        beforeState.lastSuccessfulSyncAt,
+      );
+      expect(f.repo.state.lastSyncAttemptAt, beforeState.lastSyncAttemptAt);
+      expect(identical(beforeState.data[f.a], f.repo.state.data[f.a]), isTrue);
+      expect(identical(beforeState.data[f.b], f.repo.state.data[f.b]), isTrue);
       expect(identical(beforeCompletion, f.repo.lastSyncCompletion), isTrue);
-      expect(changes, 0);
+      expect(changes, 1);
       expect(personal, 0);
       expect(f.transport.probes, ['snapshot-1']);
     },

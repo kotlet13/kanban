@@ -183,6 +183,7 @@ Future<Map<String, dynamic>?> routeProtectedCryptoDomain({
       operation.startsWith('auth.') ||
       operation == 'account.status' ||
       operation == 'account.changes' ||
+      operation == 'recipients.search' ||
       operation.startsWith('account.email.') ||
       operation.startsWith('moderation.policy') ||
       operation == 'moderation.acceptPolicy' ||

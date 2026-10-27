@@ -1959,7 +1959,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       final actions = OrganizerActions(context, ref, snapshot);
       if (row.type == 'task') {
         final item = snapshot.tasks.where((v) => v.id == row.id).firstOrNull;
-        if (item != null) await actions.task(task: item);
+        if (item != null) await actions.openTask(item);
         return;
       }
       if (row.type == 'event') {
@@ -2468,7 +2468,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
       _Area.people => OrganizerPeoplePage(
         people: snapshot.people,
         tasks: snapshot.tasks,
-        onTask: (task) => actions.task(task: task),
+        onTask: (task) => actions.openTask(task),
       ),
       _Area.today => OrganizerTodayPage(
         onInvitation: () =>

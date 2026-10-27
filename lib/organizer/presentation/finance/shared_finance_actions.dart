@@ -208,55 +208,6 @@ class SharedFinanceActions {
   }
 
   Future<void> _entry(SharedFinanceEntry? entry) async {
-    if (entry == null && scope.kind != SharedScopeKind.project) {
-      final current = ref.read(collaborationProvider).valueOrNull ?? state;
-      final children = current.scopes
-          .where(
-            (s) =>
-                s.parentSpaceId == scope.id &&
-                s.kind == SharedScopeKind.project &&
-                !s.revoked &&
-                !s.deleted &&
-                !s.archived &&
-                !s.blocked &&
-                current.financePolicyForScope(s.id).canWrite &&
-                current.financeSnapshotComplete[s.id] == true,
-          )
-          .toList();
-      if (children.isNotEmpty && current.organizationFinanceSupported) {
-        final target = await showDialog<SharedScope>(
-          context: context,
-          builder: (context) => SimpleDialog(
-            title: Text(context.l10n.financeChooseEntryScope),
-            children: [
-              for (final candidate in [
-                if (current.financePolicyForScope(scope.id).canWrite) scope,
-                ...children,
-              ])
-                SimpleDialogOption(
-                  onPressed: () => Navigator.pop(context, candidate),
-                  child: Text(
-                    candidate.id == scope.id
-                        ? '${candidate.name} · ${context.l10n.financeSpaceOnly}'
-                        : candidate.name,
-                  ),
-                ),
-            ],
-          ),
-        );
-        if (target == null || !context.mounted) return;
-        if (target.id != scope.id) {
-          final fresh = ref.read(collaborationProvider).valueOrNull;
-          if (fresh == null ||
-              fresh.session?.partition != state.session?.partition ||
-              fresh.session?.deviceId != state.session?.deviceId ||
-              !fresh.financePolicyForScope(target.id).canWrite) {
-            return;
-          }
-          return SharedFinanceActions(context, ref, target, fresh).entry();
-        }
-      }
-    }
     final current = ref.read(collaborationProvider).valueOrNull ?? state;
     if (current.session?.partition != state.session?.partition ||
         current.session?.deviceId != state.session?.deviceId) {

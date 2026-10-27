@@ -6177,13 +6177,13 @@ abstract class AppLocalizations {
   /// No description provided for @syncStatusLastSuccess.
   ///
   /// In en, this message translates to:
-  /// **'Last successful synchronization'**
+  /// **'Last successful data sync'**
   String get syncStatusLastSuccess;
 
   /// No description provided for @syncStatusLastAttempt.
   ///
   /// In en, this message translates to:
-  /// **'Last attempt'**
+  /// **'Last data sync attempt'**
   String get syncStatusLastAttempt;
 
   /// No description provided for @syncStatusNeverAttempted.
@@ -9533,7 +9533,7 @@ abstract class AppLocalizations {
   /// No description provided for @organizerNewerVersion.
   ///
   /// In en, this message translates to:
-  /// **'A newer version is available. Your edits are preserved and will be compared when you save.'**
+  /// **'A newer version is available. Your draft is preserved.'**
   String get organizerNewerVersion;
 
   /// No description provided for @organizerFinanceChoicesLoading.
@@ -9672,6 +9672,132 @@ abstract class AppLocalizations {
     int revoked,
     int unresolved,
   );
+
+  /// No description provided for @sharingRecipientSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least 2 characters of a name or username, or enter an exact email address.'**
+  String get sharingRecipientSearchHint;
+
+  /// No description provided for @sharingRecipientSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching users on this server.'**
+  String get sharingRecipientSearchEmpty;
+
+  /// No description provided for @sharingRecipientSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Search is unavailable. You can still enter an exact username or email address.'**
+  String get sharingRecipientSearchFailed;
+
+  /// No description provided for @syncStatusChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Account changes checked'**
+  String get syncStatusChecked;
+
+  /// No description provided for @syncStatusLastChangeCheckSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last successful change check'**
+  String get syncStatusLastChangeCheckSuccess;
+
+  /// No description provided for @syncStatusLastChangeCheckAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last change check attempt'**
+  String get syncStatusLastChangeCheckAttempt;
+
+  /// No description provided for @organizerReviewLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Review latest changes'**
+  String get organizerReviewLatest;
+
+  /// No description provided for @organizerDraftCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review task changes'**
+  String get organizerDraftCompareTitle;
+
+  /// No description provided for @organizerDraftCompareHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the original, your draft and the latest version. Choose which version to keep for each conflict.'**
+  String get organizerDraftCompareHelp;
+
+  /// No description provided for @organizerDraftBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get organizerDraftBase;
+
+  /// No description provided for @organizerDraftMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My draft'**
+  String get organizerDraftMine;
+
+  /// No description provided for @organizerDraftLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get organizerDraftLatest;
+
+  /// No description provided for @organizerDraftApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to draft'**
+  String get organizerDraftApply;
+
+  /// No description provided for @organizerDraftReviewStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The task or access changed during review. Your draft is preserved. Review the latest changes again.'**
+  String get organizerDraftReviewStale;
+
+  /// No description provided for @organizerDraftAssignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Project and people'**
+  String get organizerDraftAssignment;
+
+  /// No description provided for @organizerDraftSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get organizerDraftSchedule;
+
+  /// No description provided for @organizerDraftPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning details'**
+  String get organizerDraftPlanning;
+
+  /// No description provided for @organizerDraftCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion'**
+  String get organizerDraftCompletion;
+
+  /// No description provided for @organizerDraftTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer'**
+  String get organizerDraftTimer;
+
+  /// No description provided for @organizerDraftCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Task cost'**
+  String get organizerDraftCost;
+
+  /// No description provided for @organizerDraftPreviouslyPosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously posted'**
+  String get organizerDraftPreviouslyPosted;
 }
 
 class _AppLocalizationsDelegate

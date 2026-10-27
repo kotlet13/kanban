@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'account_directory_v2.dart';
 import '../collaboration_transport.dart';
+import '../../domain/collaboration_models.dart' show CollaborationException;
 import 'crypto_json.dart';
 import 'crypto_record_address.dart' show isCryptoCanonicalUuid;
 import 'crypto_sync_repository.dart';
@@ -303,6 +304,10 @@ class InviteCryptoRepository {
               payload['preauthorization'] = resolved.preauthorization;
             }
           }
+          if (params['recipientAccountId'] != null &&
+              recipient['accountId'] != params['recipientAccountId']) {
+            throw const CollaborationException('recipient_unavailable');
+          }
           final crypto = access.account.directory.reducer.crypto;
           token =
               'fhi4_${crypto.randomId().replaceAll('-', '')}${crypto.randomId().replaceAll('-', '')}';
@@ -348,6 +353,11 @@ class InviteCryptoRepository {
             );
           }
         });
+      }
+      if (params['recipientAccountId'] != null &&
+          (payload['recipient'] as Map?)?['accountId'] !=
+              params['recipientAccountId']) {
+        throw const CollaborationException('recipient_unavailable');
       }
       final response = await manager.invitationCommand(
         op,

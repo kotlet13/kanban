@@ -16,6 +16,7 @@ class OrganizerShoppingPage extends StatefulWidget {
     this.readOnly = false,
     this.scopeLabel,
     this.titleAccessory,
+    this.detailTitleAccessory,
     this.reportScopeId,
     this.onShare,
     this.onMoveToHousehold,
@@ -29,6 +30,7 @@ class OrganizerShoppingPage extends StatefulWidget {
   final String? scopeLabel;
   final String? reportScopeId;
   final Widget? titleAccessory;
+  final Widget? detailTitleAccessory;
   final ValueChanged<LocalShoppingList>? onShare, onMoveToHousehold;
   final String? emptyDescription;
   final Set<String> highlightedItemIds;
@@ -240,7 +242,9 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
             Expanded(
               child: OrganizerHeading(
                 title: list.title,
-                titleAccessory: back ? widget.titleAccessory : null,
+                titleAccessory: back
+                    ? widget.detailTitleAccessory ?? widget.titleAccessory
+                    : null,
                 subtitle: widget.scopeLabel ?? l.organizerPersonal,
               ),
             ),
@@ -263,7 +267,7 @@ class _OrganizerShoppingPageState extends State<OrganizerShoppingPage> {
               IconButton(
                 tooltip: l.organizerEditList,
                 onPressed: () => widget.actions.shoppingList(list),
-                icon: const Icon(Icons.more_horiz),
+                icon: const Icon(Icons.edit_outlined),
               ),
           ],
         ),

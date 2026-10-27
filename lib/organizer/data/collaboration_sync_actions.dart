@@ -148,7 +148,6 @@ extension CollaborationSyncActions on CollaborationRepository {
     } catch (error) {
       if (!_closed && epoch == _epoch) {
         authorityReuse.invalidate();
-        _lastSyncAttemptAt = clock().toUtc();
         _lastErrorWasProbe = _coordinatorProbePhase;
         _lastError = error is CollaborationException
             ? error
@@ -246,6 +245,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         '0';
     Map<String, dynamic> reply;
     syncDiagnostics?.record(CollaborationSyncDiagnosticKind.probe);
+    _lastChangeCheckAttemptAt = clock().toUtc();
     try {
       reply = await _callSession(session, epoch, 'account.changes', {
         'cursor': saved.firstOrNull?['value'],
@@ -490,15 +490,14 @@ extension CollaborationSyncActions on CollaborationRepository {
       );
     }
     _checkEpoch(epoch);
+    _lastSuccessfulChangeCheckAt = clock().toUtc();
+    _changeCheckRequiresRefresh =
+        changes.requiresSync || local.isNotEmpty || recoveryWork;
     if (!changes.requiresSync && local.isEmpty && !recoveryWork) {
       syncDiagnostics?.record(CollaborationSyncDiagnosticKind.unchanged);
-      if (!identical(state.sharingRefresh, _sharingRefresh)) {
-        await refreshLocal(scopeIds: const {});
-      }
       if (_lastErrorWasProbe) {
         _lastErrorWasProbe = false;
         _lastError = null;
-        await refreshLocal(scopeIds: const {});
       }
       if (verifiedDirectory) {
         await _acknowledgeAccountChanges(
@@ -508,6 +507,12 @@ extension CollaborationSyncActions on CollaborationRepository {
           generation: generation,
           cursor: changes.cursor,
         );
+      }
+      _checkEpoch(epoch);
+      if (!identical(state.sharingRefresh, _sharingRefresh)) {
+        await refreshLocal(scopeIds: const {});
+      } else {
+        await _publishChangeCheckEvidence(epoch);
       }
       return;
     }
@@ -540,6 +545,7 @@ extension CollaborationSyncActions on CollaborationRepository {
     if (completion == null ||
         completion.sequence == previous ||
         completion.error != null) {
+      await refreshLocal(scopeIds: const {});
       return;
     }
     await _acknowledgeAccountChanges(
@@ -551,6 +557,9 @@ extension CollaborationSyncActions on CollaborationRepository {
       paymentKey: paymentWork ? paymentKey : null,
       paymentSignature: paymentSignature,
     );
+    _checkEpoch(epoch);
+    _changeCheckRequiresRefresh = false;
+    await refreshLocal(scopeIds: const {});
   }
 
   // Both callers have completed their selected verified durable work: either

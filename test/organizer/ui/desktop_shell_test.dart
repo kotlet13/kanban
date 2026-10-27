@@ -293,6 +293,9 @@ void main() {
         find.byKey(const ValueKey('desktop-search-local:task:desktop-task')),
       );
       await tester.pumpAndSettle();
+      expect(find.text('Za balkon.'), findsOneWidget);
+      await tester.tap(find.text('Uredi opravilo'));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('organizer-desktop-inspector')),
         findsOneWidget,

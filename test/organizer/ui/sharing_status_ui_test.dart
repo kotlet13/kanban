@@ -272,7 +272,10 @@ void main() {
       expect(find.text('Sporne spremembe: 1'), findsOneWidget);
       expect(find.text('Zadržane spremembe: 3'), findsOneWidget);
       expect(find.textContaining('veljajo za ta račun'), findsOneWidget);
-      expect(find.textContaining('Zadnja uspešna uskladitev:'), findsOneWidget);
+      expect(
+        find.textContaining('Zadnja uspešna uskladitev podatkov:'),
+        findsOneWidget,
+      );
       controller.replace(
         CollaborationState(
           session: sharingSession(),
@@ -375,7 +378,10 @@ void main() {
       );
       controller.switchAccount();
       await tester.pump();
-      expect(find.textContaining('Zadnja uspešna uskladitev:'), findsNothing);
+      expect(
+        find.textContaining('Zadnja uspešna uskladitev podatkov:'),
+        findsNothing,
+      );
       expect(
         find.byKey(const ValueKey('sharing-sync-dialog-refresh')),
         findsNothing,

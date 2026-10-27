@@ -259,6 +259,42 @@ class SharingWorkspace extends ConsumerWidget {
                 state: state,
               );
             }
+            Future<void> createInSource(AllSpacesSource source) async {
+              final current = ref.read(collaborationProvider).valueOrNull;
+              final target = current?.scopes
+                  .where((s) => s.id == source.scopeId)
+                  .firstOrNull;
+              if (current == null ||
+                  target?.canEdit != true ||
+                  !current.localAccessAllowed ||
+                  current.session?.partition != state.session?.partition ||
+                  current.session?.deviceId != state.session?.deviceId) {
+                return;
+              }
+              final targetActions = CollaborationActions(
+                context,
+                ref,
+                target!,
+                current.dataForScope(target.id),
+              );
+              switch (view) {
+                case SharingView.finances:
+                  if (current.financePolicyForScope(target.id).canWrite &&
+                      current.financeSnapshotComplete[target.id] == true) {
+                    await SharedFinanceActions(
+                      context,
+                      ref,
+                      target,
+                      current,
+                    ).entry();
+                  }
+                case SharingView.timeline:
+                  await targetActions.event();
+                default:
+                  await targetActions.task();
+              }
+            }
+
             if (scope.kind == SharedScopeKind.organization &&
                 !(view == SharingView.projects &&
                     state
@@ -303,6 +339,15 @@ class SharingWorkspace extends ConsumerWidget {
                   ),
                 ),
                 showDescription: false,
+                creationScopeId: scope.id,
+                allowCreation: state.localAccessAllowed && scope.canEdit,
+                canCreateInSource: (source) =>
+                    source.scope?.canEdit == true &&
+                    (view != SharingView.finances ||
+                        state.financePolicyForScope(source.scopeId!).canWrite &&
+                            state.financeSnapshotComplete[source.scopeId] ==
+                                true),
+                onCreateSource: createInSource,
                 onSource:
                     onSource ??
                     (source, area, id) async {
@@ -394,40 +439,8 @@ class SharingWorkspace extends ConsumerWidget {
                         state.financePolicyForScope(source.scopeId!).canWrite &&
                             state.financeSnapshotComplete[source.scopeId] ==
                                 true),
-                onCreateSource: (source) async {
-                  final current = ref.read(collaborationProvider).valueOrNull;
-                  final target = current?.scopes
-                      .where((s) => s.id == source.scopeId)
-                      .firstOrNull;
-                  if (current == null ||
-                      target?.canEdit != true ||
-                      !current.localAccessAllowed ||
-                      current.session?.partition != state.session?.partition) {
-                    return;
-                  }
-                  final targetActions = CollaborationActions(
-                    context,
-                    ref,
-                    target!,
-                    current.dataForScope(target.id),
-                  );
-                  switch (view) {
-                    case SharingView.finances:
-                      if (current.financePolicyForScope(target.id).canWrite &&
-                          current.financeSnapshotComplete[target.id] == true) {
-                        await SharedFinanceActions(
-                          context,
-                          ref,
-                          target,
-                          current,
-                        ).entry();
-                      }
-                    case SharingView.timeline:
-                      await targetActions.event();
-                    default:
-                      await targetActions.task();
-                  }
-                },
+                creationScopeId: scope.id,
+                onCreateSource: createInSource,
                 area: switch (view) {
                   SharingView.agenda => AllSpacesArea.today,
                   SharingView.timeline => AllSpacesArea.calendar,
@@ -541,7 +554,7 @@ class SharingWorkspace extends ConsumerWidget {
                       tasks: data.tasks,
                       scope: scope,
                       readOnly: readOnly || !state.householdPeopleSupported,
-                      onTask: (task) => actions.task(task: task),
+                      onTask: (task) => actions.openTask(task),
                     ),
                     SharingView.finances => SharedFinanceWorkspace(
                       titleAccessory: status,
@@ -550,6 +563,7 @@ class SharingWorkspace extends ConsumerWidget {
                     ),
                     SharingView.shopping => OrganizerShoppingPage(
                       titleAccessory: status,
+                      detailTitleAccessory: syncStatus,
                       key: ValueKey(
                         'shared-shopping-${state.session!.partition}-${scope.id}',
                       ),

@@ -14,6 +14,7 @@ String sharingStatusLabel(BuildContext context, SharingSyncStatus status) =>
       SharingSyncStatus.local => context.l10n.syncStatusDeviceOnly,
       SharingSyncStatus.unknown => context.l10n.syncStatusUnknown,
       SharingSyncStatus.synced => context.l10n.syncStatusSynced,
+      SharingSyncStatus.checked => context.l10n.syncStatusChecked,
       SharingSyncStatus.pending => context.l10n.syncStatusPending,
       SharingSyncStatus.syncing => context.l10n.sharingSyncing,
       SharingSyncStatus.offline => context.l10n.syncStatusOffline,
@@ -193,6 +194,14 @@ class _SharingStatusDialog extends ConsumerWidget {
                 state.session == null
                     ? l.syncStatusLocalScope
                     : l.syncStatusAccountScope,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${l.syncStatusLastChangeCheckSuccess}: ${time(state.lastSuccessfulChangeCheckAt, l.syncStatusNotConfirmed)}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${l.syncStatusLastChangeCheckAttempt}: ${time(state.lastChangeCheckAttemptAt, l.syncStatusNeverAttempted)}',
               ),
               const SizedBox(height: 16),
               Text(

@@ -345,10 +345,75 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     });
   }
 
+  /// Search only the captured server/account and scope. Results are transient
+  /// metadata; invitation acceptance and encrypted grants stay independent.
+  Future<List<InvitationRecipient>> searchInvitationRecipients({
+    required String scopeId,
+    required String query,
+  }) async {
+    final session = _requireSession(), epoch = _epoch;
+    final value = query.trim();
+    if (value.runes.length < 2 ||
+        value.runes.length > 64 ||
+        value.contains('@')) {
+      return const [];
+    }
+    if (!_recipientSearchSupported) return const [];
+    void checkScope() {
+      _checkEpoch(epoch);
+      final scope = state.scopes.where((s) => s.id == scopeId).firstOrNull;
+      if (!state.localAccessAllowed ||
+          state.sessionInvalid ||
+          state.deletionPending ||
+          scope == null ||
+          scope.deleted ||
+          !scope.canManage ||
+          scope.blocked ||
+          scope.archived ||
+          scope.accessPolicyVersion != 3) {
+        throw const CollaborationException('permission_revoked');
+      }
+    }
+
+    checkScope();
+    final reply = await _callSession(session, epoch, 'recipients.search', {
+      'scopeId': scopeId,
+      'query': value,
+    });
+    checkScope();
+    final rows = reply['recipients'];
+    if (rows is! List || rows.length > 10) {
+      throw const CollaborationException('invalid_response');
+    }
+    final accounts = <String>{};
+    return List.unmodifiable(
+      rows.map((row) {
+        if (row is! Map ||
+            row.length != 3 ||
+            row['accountId'] is! String ||
+            !isSharedUuid(row['accountId']) ||
+            row['accountId'] == session.profile.accountId ||
+            !accounts.add(row['accountId']) ||
+            row['username'] is! String ||
+            !RegExp(r'^[a-zA-Z0-9_.-]{3,64}$').hasMatch(row['username']) ||
+            row['displayName'] is! String ||
+            (row['displayName'] as String).runes.length > 100) {
+          throw const CollaborationException('invalid_response');
+        }
+        return InvitationRecipient(
+          accountId: row['accountId'],
+          username: row['username'],
+          displayName: row['displayName'],
+        );
+      }),
+    );
+  }
+
   /// New username invitations use the scoped explicit-acceptance contract only.
   Future<SharedInvitation> createRecipientInvitation({
     required String scopeId,
     required String recipient,
+    String? recipientAccountId,
     SharedRole role = SharedRole.member,
     String language = 'sl',
     String? accessScope,
@@ -371,6 +436,8 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       final reply = await _callSession(session, epoch, 'invitations3.create', {
         'scopeId': scopeId,
         'recipient': value,
+        if (recipientAccountId != null)
+          'recipientAccountId': recipientAccountId,
         'role': role.name,
         'language': language,
         'requestId': requestId ?? newSharedId(),
@@ -399,6 +466,7 @@ extension CollaborationEmailInvitations on CollaborationRepository {
     final reply = await _callSession(session, epoch, 'invitations3.create', {
       'scopeId': scopeId,
       'recipient': value,
+      if (recipientAccountId != null) 'recipientAccountId': recipientAccountId,
       'accessScope': target,
       'role': role.name,
       'language': language,

@@ -1,4 +1,5 @@
 import 'sharing_role_permissions.dart';
+import 'invitation_recipient_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +22,7 @@ Future<bool> showScopeInvitation(
   final l = context.l10n;
   final guard = SharingSessionGuard(context, ref, session: session);
   bool current(CollaborationState state) =>
+      state.localAccessAllowed &&
       !state.sessionInvalid &&
       !state.deletionPending &&
       !state.allSpacesSelected &&
@@ -31,12 +33,17 @@ Future<bool> showScopeInvitation(
             s.id == scope.id &&
             s.canManage &&
             !s.blocked &&
+            !s.deleted &&
             !s.archived &&
             s.accessRevision == scope.accessRevision &&
             s.accessPolicyVersion == scope.accessPolicyVersion,
       );
-  if (!guard.isCurrent ||
-      !current(ref.read(collaborationProvider).requireValue)) {
+  bool isCurrent() {
+    final state = ref.read(collaborationProvider).valueOrNull;
+    return guard.isCurrent && state != null && current(state);
+  }
+
+  if (!isCurrent()) {
     return false;
   }
   final initial = ref.read(collaborationProvider).requireValue;
@@ -61,6 +68,7 @@ Future<bool> showScopeInvitation(
   }
   String? submittedKey, requestId, requestLanguage;
   SharedInvitation? sent;
+  InvitationRecipient? selectedRecipient;
   await showSharingForm(
     context,
     title: l.sharingInvitePerson,
@@ -68,6 +76,23 @@ Future<bool> showScopeInvitation(
     fields: [
       SharingField(
         id: 'recipient',
+        inputBuilder: initial.recipientSearchSupported && username
+            ? (controller, enabled, validator) => InvitationRecipientField(
+                key: ValueKey(
+                  '${session.partition}:${session.deviceId}:${scope.id}:${scope.accessRevision}',
+                ),
+                controller: controller,
+                enabled: enabled,
+                label: l.spaceFlowRecipient,
+                validator: validator,
+                isCurrent: isCurrent,
+                search: (query) => guard.controller.searchInvitationRecipients(
+                  scopeId: scope.id,
+                  query: query,
+                ),
+                onSelected: (value) => selectedRecipient = value,
+              )
+            : null,
         label: username ? l.spaceFlowRecipient : l.accountEmail,
         keyboardType: TextInputType.emailAddress,
         validator: (value, _) {
@@ -133,21 +158,19 @@ Future<bool> showScopeInvitation(
     wrap: (form) =>
         SharingSessionBoundary(guard: guard, visibleWhen: current, child: form),
     onSubmit: (values) async {
-      if (!guard.isCurrent ||
-          !current(ref.read(collaborationProvider).requireValue)) {
+      if (!isCurrent()) {
         throw const CollaborationException('access_revoked');
       }
       if (!await showSharedContentPolicy(context, scopeId: scope.id)) {
         throw const CollaborationException('policy_acceptance_cancelled');
       }
-      if (!context.mounted ||
-          !guard.isCurrent ||
-          !current(ref.read(collaborationProvider).requireValue)) {
+      if (!context.mounted || !isCurrent()) {
         throw const CollaborationException('access_revoked');
       }
       final entered = values['recipient']!.trim();
       final recipient = entered.toLowerCase();
-      final key = '${recipient.toLowerCase()}:${values['role']}';
+      final key =
+          '${recipient.toLowerCase()}:${selectedRecipient?.accountId ?? 'exact'}:${values['role']}';
       if (key != submittedKey) {
         submittedKey = key;
         requestId = newSharedId();
@@ -156,6 +179,10 @@ Future<bool> showScopeInvitation(
       sent = await guard.controller.createRecipientInvitation(
         scopeId: scope.id,
         recipient: recipient,
+        recipientAccountId:
+            selectedRecipient?.username.toLowerCase() == recipient
+            ? selectedRecipient?.accountId
+            : null,
         role: SharedRole.values.byName(values['role']!),
         accessScope: scope.accessPolicyVersion == 3
             ? scope.kind == SharedScopeKind.project

@@ -493,6 +493,7 @@ class CollaborationRepository {
   bool _emailInvitationsSupported = false;
   bool _scopedInvitationsSupported = false;
   bool _usernameInvitationsSupported = false;
+  bool _recipientSearchSupported = false;
   bool _invitationResendSupported = false;
   bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
@@ -524,6 +525,9 @@ class CollaborationRepository {
   bool _syncing = false;
   int? _syncEpoch, _fullSyncEpoch;
   DateTime? _lastSyncAttemptAt, _lastSuccessfulSyncAt;
+  DateTime? _lastChangeCheckAttemptAt, _lastSuccessfulChangeCheckAt;
+  bool _changeCheckRequiresRefresh = false;
+  bool _financeStatusRequiresRefresh = false;
   CollaborationException? _lastError;
   final _leaseOwner = newSharedId();
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
@@ -536,6 +540,10 @@ class CollaborationRepository {
     _sharedContentPolicy = null;
     _lastSyncAttemptAt = null;
     _lastSuccessfulSyncAt = null;
+    _lastChangeCheckAttemptAt = null;
+    _lastSuccessfulChangeCheckAt = null;
+    _changeCheckRequiresRefresh = false;
+    _financeStatusRequiresRefresh = false;
     _fullSyncEpoch = null;
   }
 
@@ -874,6 +882,22 @@ class CollaborationRepository {
         }
       }
       if (epoch != _epoch || _closed) return;
+      final localEvidence = await _readSyncStatusLocalEvidence(
+        profile.partition,
+      );
+      if (epoch != _epoch || _closed) return;
+      _financeStatusRequiresRefresh =
+          _financeSupported &&
+          parsedScopes.any(
+            (scope) =>
+                scope.canRead &&
+                !scope.revoked &&
+                !scope.deleted &&
+                (scope.kind != SharedScopeKind.personal ||
+                    privateState.enabled && !privateState.paused) &&
+                financePolicies[scope.id]?.canRead == true &&
+                financeComplete[scope.id] != true,
+          );
       state = CollaborationState(
         sharingRefresh: _sharingRefreshEpoch == epoch
             ? _sharingRefresh
@@ -925,6 +949,7 @@ class CollaborationRepository {
         emailInvitationsSupported: _emailInvitationsSupported,
         scopedInvitationsSupported: _scopedInvitationsSupported,
         usernameInvitationsSupported: _usernameInvitationsSupported,
+        recipientSearchSupported: _recipientSearchSupported,
         invitationResendSupported: _invitationResendSupported,
         spaceProjectMembershipSupported: _spaceProjectMembershipSupported,
         members: members,
@@ -945,6 +970,13 @@ class CollaborationRepository {
             (_syncing && _syncEpoch == _epoch) || _fullSyncEpoch == _epoch,
         lastSyncAttemptAt: _lastSyncAttemptAt,
         lastSuccessfulSyncAt: _lastSuccessfulSyncAt,
+        lastChangeCheckAttemptAt: _lastChangeCheckAttemptAt,
+        lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
+        hasUnresolvedSyncWork: localEvidence.unresolved,
+        syncRequiresRefresh:
+            _changeCheckRequiresRefresh ||
+            localEvidence.reconciliation ||
+            _financeStatusRequiresRefresh,
         lastError: _lastError,
         autoMergeNotices: [
           for (final row in await database.rows(
@@ -991,6 +1023,51 @@ class CollaborationRepository {
       _publishedContentState = state;
       if (domains.isNotEmpty) database.personalChanged(domains: domains);
     }
+  }
+
+  Future<({bool unresolved, bool reconciliation})> _readSyncStatusLocalEvidence(
+    String partition,
+  ) async {
+    // Presence only: never serialize queues or retained complete payment history.
+    final extraWork = await database.rows(
+      "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked')) "
+      "OR EXISTS(SELECT 1 FROM linked_payment_intents WHERE "
+      "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
+      "AND state IN ('pending','waiting_source_publication','quarantine')) AS unresolved",
+      [partition, partition],
+    );
+    final prefix = 'scope_reconciliation:$partition:';
+    final reconciliation = await database.rows(
+      'SELECT 1 FROM local_meta WHERE substr(name,1,length(?))=? LIMIT 1',
+      [prefix, prefix],
+    );
+    return (
+      unresolved: extraWork.single['unresolved'] == 1,
+      reconciliation: reconciliation.isNotEmpty,
+    );
+  }
+
+  Future<void> _publishChangeCheckEvidence(int epoch) async {
+    _checkEpoch(epoch);
+    final profile = _session!.profile;
+    final localEvidence = await _readSyncStatusLocalEvidence(profile.partition);
+    _checkEpoch(epoch);
+    if (state.session?.partition != profile.partition ||
+        state.session?.deviceId != profile.deviceId) {
+      return;
+    }
+    state = CollaborationState.withChangeCheckEvidence(
+      state,
+      lastChangeCheckAttemptAt: _lastChangeCheckAttemptAt,
+      lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
+      lastError: _lastError,
+      hasUnresolvedSyncWork: localEvidence.unresolved,
+      syncRequiresRefresh:
+          _changeCheckRequiresRefresh ||
+          localEvidence.reconciliation ||
+          _financeStatusRequiresRefresh,
+    );
+    _events.add(state);
   }
 
   Future<SharedScopeData> _scopeData(String partition, String scopeId) async {

@@ -415,3 +415,43 @@ User izrecno naroči samo lokalni popravek in test točnega primera; S25 odklopi
 Pred popravkom nova lokalna reprodukcija grantwrite/revision2/finance_complete1/organizationFinanceCompletetrue/finance_blocked1 pade z finance_forbidden na notification_actions157, tako kot native zajem. Po popravku štiri ciljne kontrole PASS: write in read grant dovolita mešano skupino dveh receipts, pri čemer lokalni finance account payload, celotna blocked finance_outbox vrstica in finance policy/blocked/complete flags ostanejo bajtno/enakovredno nespremenjeni; oba queued inbox.read imata izvirni expectedRevision1. Prava finance denial ohrani neprebrano skupino in nič queued commands, prav tako prava scope blokada kljub stale eligible UI. Stari test, ki je zahteval zavrnitev tudi ob veljavnem read grant, je nadomeščen s tem pravilnim contractom.
 
 Dokazi `build/qa/inbox-write-block-repair-20261026/`: reproduction-attempt1.log (pričakovani produktni FAIL, ne fixture napaka), targeted-tests.log (4PASS, write drugi tek/read+2negative prvi), analyze.log (No issues found). Pravi lokalni repository/SQLite s sintetičnim transportom, ne novo mobilno/HTTP/signature preverjanje. Stari PASS niso ponovljeni, brez build/install/UI/device/server dejanj. Oba telefona sta še na ad06e36; nov popravek čaka uporabnikovo vrnitev in posodobitev iste Jivie Test.
+
+
+### 26. oktober — Samsung inbox USER PASS; iskanje prejemnika še ni izvedeno
+
+Po namestitvi679d8e1 uporabnik potrdi »vse dela na moji strani« v nadaljevanju ciljne kontrole mark-all-read. Samsungovo označevanje obvestil je USER PASS; ne ponavljaj. iPhone še ostaja naad06e36, popravek inbox block še ni nameščen tam. Agent v tem koraku ne izvaja nobenega klika/synca ali device branja.
+
+User nato pri deljenju gospodinjstva z obstoječim uporabnikom začne pisati uporabnika iPhona in pričakuje predloge. Source scope_invitation_form.dart potrjuje navadno recipient polje in razrešitev šele ob pošiljanju; pogodba docs/server/space-sharing-api-contract.md izrecno zahteva točno username oziroma email, brez directory/search API. Samodejni predlogi strežniških uporabnikov še niso implementirani. Predhodno dogovorjena želja ostaja nadaljnja UX nadgradnja: iskanje prijavljenih uporabnikov istega strežnika, izbor točnega prejemnika in običajen prostovoljni sprejem povabila. To ni failure obstoječega prenosa povabila; uporabnik ga v tem poročilu še ni poslal. Brez produktnih sprememb.
+
+
+### 27. oktober — zavajajoč status po zagonu brez sprememb (ponovljena znana ugotovitev)
+
+Slika1000012460.jpg ob04:55 prikazuje povezani gosp25, account-wide status »Uskladitev še ni potrjena«, oba časa prazna in0/0/0. Uporabnik sprašuje, ali mora posebej omogočiti sync. Source pregled: _lastSyncAttemptAt/_lastSuccessfulSyncAt sta volatile repository polji, ob novem procesu začneta null; _resetSyncEvidence ju prav tako izprazni. Koordinatorjeva pravilna unchanged veja vrne brez _performSync in ne nastavi teh časov. SharingStatusProjection unknown/synced uporablja lastSuccessfulSyncAt, dialog pa prazni polji opiše kot da poskusa ni bilo. Zato lahko pravilno preverjen nespremenjen račun po zagonu še vedno kaže unknown/noattempt. To je potrjena izvorna UX vrzel, ne runtime dokaz točne overnight veje ali dokaz, da so vsi trenutni vnosi gospodinjstva že na strežniku. Povezani prostor uporablja samodejni koordinator; slika ne kaže poziva za dodatno potrditev ali izklopljenega synca. Ni novih device/server/UI/test dejanj ali product popravka. Nadaljnji predlog: ločiti zadnje uspešno preverjanje sprememb od zadnjega prenosa in pošteno prikazati ohranjeno/preverjeno stanje, brez izsiljenega fullsynca za zelen oblaček.
+### 27. oktober — finančni čas sprejemljiv; odvečen izbor prostora pri dodajanju
+
+Uporabnik poroča, da finančna sinhronizacija zdaj traja približno pet sekund in da je to sprejemljivo. Prejšnje splošne ugotovitve »finance traja in traja« ne vodimo več kot potrjeno trenutno težavo tega uporabniškega scenarija. To je uporabniška ocena, ne nova meritev vseh naprav ali vrst prenosa; brez ponavljanja uspešnih testov.
+
+Nova UX ugotovitev: pri izbranem gospodinjstvu gosp 25, ki vsebuje projekt, dodajanje opravila odpre nepotreben dialog »Izberi prostor za dodajanje« z gospodinjstvom in njegovim projektom. Slika 1000012462.jpg ob 05:02 potrjuje primer opravil. Uporabnik poroča enako tudi za dogodke in finančne vnose; ti dve poti v tem koraku nista neodvisno preverjeni.
+
+Želeno pravilo: nov zapis privzeto pripada trenutno izbranemu prostoru. Izbrano gospodinjstvo pomeni zapis neposredno v gospodinjstvu; izbran projekt pomeni zapis v tem projektu. Obstoj podprojektov sam po sebi ne sproži izbire cilja. Morebitna prostovoljna izbira projekta ne sme biti obvezen vmesni korak. Obstoječe pravice in veljavnost cilja ostanejo obvezne; brez tihega preusmerjanja v drug prostor ob zavrnitvi.
+
+Status: zapisano za popravek, še ni implementirano. Samo dokumentacija; brez sprememb aplikacije, podatkov, naprav, strežnika ali testov.
+
+
+### 27. oktober — podvojen meni na nakupovalnem seznamu
+
+Uporabnik na Samsungu v gospodinjstvu gosp 25 odpre Nakupe → Seznam s25. Slika 1000012464.jpg ob 05:04 potrjuje dva ločena gumba »…« desno ob naslovu in zelenem oblačku. Vsebina obeh menijev ni pregledana; ni še potrjeno, ali podvajata ista dejanja ali sta različna menija brez jasne razlike.
+
+Želeno: en jasen meni dejanj nakupovalnega seznama; morebitna druga raven dejanj mora imeti razumljivo oznako in mesto, brez dveh nerazločljivih gumbov. Pri popravku ohraniti dostop do potrebnih dejanj in preverjanje pravic. Status: odprta UX ugotovitev, zapisano za odpravo. Samo dokumentacija, brez sprememb kode, naprav, podatkov ali testov.
+
+
+### 27. oktober — samodejna izbira računa za strošek opravila
+
+Uporabnik pojasni: aplikacija ne odpira dodatnega vprašanja ali dialoga. V obrazcu stroška opravila je spustni seznam računov, v katerem mora račun ročno izbrati. Težava je manjkajoča smiselna predizbira. Naročen zapis želenega vedenja: če ima prostor samo en ustrezen račun, ga aplikacija samodejno izbere. Pri opravilu v projektu ima prednost račun tega projekta, če takšna povezava obstaja; sicer se uporabi račun nadrejenega prostora. Spustni seznam ostane na voljo za ročno spremembo; ustrezen račun je že predizbran in edine izbire ni treba ročno nastavljati.
+
+Če po teh pravilih ostane več ustreznih računov brez določenega privzetega, izbira ostane potrebna; ne izbirati naključnega računa. Samodejna izbira mora upoštevati obstoječe pravice, razpoložljivost in veljavnost računa. Projektna povezava računa in njena trenutna izvedba v kodi v tem koraku nista preverjeni; zapis ne uvaja novega lastništva računa ali spremembe finančnega modela. Status: dogovor za prihodnji popravek, samo dokumentacija; brez sprememb aplikacije, podatkov, naprav ali testov.
+
+
+### 27. oktober — izvedba zbranih UX ugotovitev
+
+Uporabnik dovoli odpravo zbranih težav med odsotnostjo, razen vrta. Aktualni pregled popravkov, ciljnih testov, STOP3 in omejitev je v [UX_FOLLOWUP_2026_10_27.md](UX_FOLLOWUP_2026_10_27.md). Zgornji zapisi »še ni implementirano« pri predizbiri računa, izboru prostora, nakupovalnem meniju, iskanju prejemnikov in prikazu preverjanja synca so zgodovinsko izhodišče. Izvedba je lokalna; namestitve na telefona in obstoječi mobilni testni strežnik še sledijo. Vrt, produkcija in obstoječi testni podatki ostanejo nedotaknjeni.

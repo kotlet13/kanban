@@ -1304,8 +1304,8 @@
   "syncStatusOffline": "Server is unreachable",
   "syncStatusProblem": "Synchronization needs your attention",
   "syncStatusDeviceOnly": "Local to this device",
-  "syncStatusLastSuccess": "Last successful synchronization",
-  "syncStatusLastAttempt": "Last attempt",
+  "syncStatusLastSuccess": "Last successful data sync",
+  "syncStatusLastAttempt": "Last data sync attempt",
   "syncStatusNeverAttempted": "No attempt has been recorded",
   "syncStatusNotConfirmed": "Not confirmed yet",
   "syncStatusLastError": "Error",
@@ -2009,7 +2009,7 @@
   "cryptoInvitationContentAccess": "This shares existing content and future changes according to the permissions above.",
   "cryptoInvitationAcceptanceUnavailable": "This device cannot verify the saved acceptance. Open the invitation on the device where you accepted it. Your local data is preserved.",
   "sharingInvitationNewAccountAccess": "If the recipient creates a new account, access can be completed after acceptance when you next use the app. If your confirmation is needed, open the invitation in Notifications or Sharing and members.",
-  "organizerNewerVersion": "A newer version is available. Your edits are preserved and will be compared when you save.",
+  "organizerNewerVersion": "A newer version is available. Your draft is preserved.",
   "organizerFinanceChoicesLoading": "Preparing cost accounts. You can already edit and save the task.",
   "organizerFinanceChoicesUnavailable": "Cost accounts are currently unavailable. You can still edit the task.",
   "recordEditForbidden": "The space owner or author can edit this record; an assigned user can also edit a task.",
@@ -2047,5 +2047,26 @@
         "type": "int"
       }
     }
-  }
+  },
+  "sharingRecipientSearchHint": "Type at least 2 characters of a name or username, or enter an exact email address.",
+  "sharingRecipientSearchEmpty": "No matching users on this server.",
+  "sharingRecipientSearchFailed": "Search is unavailable. You can still enter an exact username or email address.",
+  "syncStatusChecked": "Account changes checked",
+  "syncStatusLastChangeCheckSuccess": "Last successful change check",
+  "syncStatusLastChangeCheckAttempt": "Last change check attempt",
+  "organizerReviewLatest": "Review latest changes",
+  "organizerDraftCompareTitle": "Review task changes",
+  "organizerDraftCompareHelp": "Review the original, your draft and the latest version. Choose which version to keep for each conflict.",
+  "organizerDraftBase": "Original",
+  "organizerDraftMine": "My draft",
+  "organizerDraftLatest": "Latest",
+  "organizerDraftApply": "Apply to draft",
+  "organizerDraftReviewStale": "The task or access changed during review. Your draft is preserved. Review the latest changes again.",
+  "organizerDraftAssignment": "Project and people",
+  "organizerDraftSchedule": "Schedule",
+  "organizerDraftPlanning": "Planning details",
+  "organizerDraftCompletion": "Completion",
+  "organizerDraftTimer": "Timer",
+  "organizerDraftCost": "Task cost",
+  "organizerDraftPreviouslyPosted": "Previously posted"
 }

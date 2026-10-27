@@ -26,6 +26,7 @@ class SharingField {
     this.dateTime = false,
     this.maxLines = 1,
     this.advanced = false,
+    this.inputBuilder,
   });
   final String id;
   final String label;
@@ -40,6 +41,12 @@ class SharingField {
   final bool dateTime;
   final int maxLines;
   final bool advanced;
+  final Widget Function(
+    TextEditingController controller,
+    bool enabled,
+    String? Function(String?) validator,
+  )?
+  inputBuilder;
 }
 
 Future<void> showSharingForm(
@@ -329,7 +336,22 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                     field,
                     Padding(
                       padding: EdgeInsets.only(bottom: compact ? 12 : 16),
-                      child: field.dateTime
+                      child: field.inputBuilder != null
+                          ? field.inputBuilder!(
+                              _controllers[field.id]!,
+                              !_busy && !field.readOnly,
+                              (value) {
+                                if (field.required &&
+                                    (value == null || value.trim().isEmpty)) {
+                                  return context.l10n.sharingRequired;
+                                }
+                                return field.validator?.call(
+                                  value ?? '',
+                                  _values,
+                                );
+                              },
+                            )
+                          : field.dateTime
                           ? FormField<String>(
                               key: ValueKey('sharing-${field.id}'),
                               initialValue: field.initialValue,

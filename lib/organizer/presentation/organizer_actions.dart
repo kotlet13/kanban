@@ -12,10 +12,12 @@ import 'collection_actions.dart';
 import 'organizer_editors.dart';
 import 'organizer_errors.dart';
 import 'personal_workspace_boundary.dart';
+import 'inbox/visible_task_target_view.dart';
 import '../data/organizer_repository.dart'
     show OrganizerConflictException, newLocalId;
 
-class OrganizerActions implements OrganizerCollectionActions {
+class OrganizerActions
+    implements OrganizerCollectionActions, OrganizerRecordPermissionActions {
   OrganizerActions(this.context, this.ref, this.snapshot, {this.onProjectShare})
     : _guard = PersonalWorkspaceGuard(context, ref, snapshot.workspaceKey);
   final PersonalWorkspaceGuard _guard;
@@ -28,6 +30,29 @@ class OrganizerActions implements OrganizerCollectionActions {
       throw const OrganizerConflictException('Personal workspace changed');
     }
     return ref.read(organizerProvider.notifier);
+  }
+
+  @override
+  bool get canCreateRecords => _guard.isCurrent;
+  @override
+  bool canEditRecord(String type, String id) => _guard.isCurrent;
+  @override
+  bool canDeleteRecord(String type, String id) => _guard.isCurrent;
+  @override
+  bool get canCheckShoppingItems => _guard.isCurrent;
+
+  @override
+  Future<void> openTask(LocalTask task) async {
+    if (!_guard.isCurrent) return;
+    await showVisibleTaskTarget(
+      context,
+      ref,
+      NotificationTarget(
+        localSpaceId: snapshot.workspaceKey,
+        records: [NotificationRecordTarget(type: 'task', recordId: task.id)],
+      ),
+      isCurrent: () => _guard.isCurrent,
+    );
   }
 
   @override

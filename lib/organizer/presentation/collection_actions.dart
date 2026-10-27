@@ -25,7 +25,8 @@ abstract interface class OrganizerCollectionActions {
 
 /// Optional record-specific capability view; local collections keep their
 /// existing behavior while shared collections use verified provenance.
-abstract interface class OrganizerRecordPermissionActions {
+abstract interface class OrganizerRecordPermissionActions
+    implements OrganizerCollectionActions {
   bool get canCreateRecords;
   bool canEditRecord(String type, String id);
   bool canDeleteRecord(String type, String id);

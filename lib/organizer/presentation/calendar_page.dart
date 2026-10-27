@@ -142,6 +142,7 @@ class _OrganizerCalendarPageState extends State<OrganizerCalendarPage> {
                   OrganizerTaskRow(
                     task: task,
                     snapshot: widget.snapshot,
+                    onOpen: () => widget.actions.openTask(task),
                     onEdit: () => widget.actions.task(task: task),
                     onCompleted: (v) => widget.actions.run(
                       () => widget.actions.controller.setTaskCompleted(

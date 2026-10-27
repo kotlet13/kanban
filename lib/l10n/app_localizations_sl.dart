@@ -3495,10 +3495,10 @@ class AppLocalizationsSl extends AppLocalizations {
   String get syncStatusDeviceOnly => 'Lokalno na tej napravi';
 
   @override
-  String get syncStatusLastSuccess => 'Zadnja uspešna uskladitev';
+  String get syncStatusLastSuccess => 'Zadnja uspešna uskladitev podatkov';
 
   @override
-  String get syncStatusLastAttempt => 'Zadnji poskus';
+  String get syncStatusLastAttempt => 'Zadnji poskus uskladitve podatkov';
 
   @override
   String get syncStatusNeverAttempted => 'Poskus še ni zabeležen';
@@ -5429,7 +5429,7 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerNewerVersion =>
-      'Na voljo je novejša različica. Vaše spremembe so ohranjene; ob shranjevanju jih bomo primerjali.';
+      'Na voljo je novejša različica. Tvoj osnutek je ohranjen.';
 
   @override
   String get organizerFinanceChoicesLoading =>
@@ -5516,4 +5516,74 @@ class AppLocalizationsSl extends AppLocalizations {
   ) {
     return 'Preverjanje končano. Dostopni prostori: $available. Obnovljeni dostopi: $restored. Potrjeni odvzemi: $revoked. Še nepreverjeni: $unresolved.';
   }
+
+  @override
+  String get sharingRecipientSearchHint =>
+      'Vnesi vsaj 2 znaka imena ali uporabniškega imena ali točen e-poštni naslov.';
+
+  @override
+  String get sharingRecipientSearchEmpty =>
+      'Na tem strežniku ni ustreznih uporabnikov.';
+
+  @override
+  String get sharingRecipientSearchFailed =>
+      'Iskanje ni na voljo. Še vedno lahko vneseš točno uporabniško ime ali e-poštni naslov.';
+
+  @override
+  String get syncStatusChecked => 'Spremembe računa preverjene';
+
+  @override
+  String get syncStatusLastChangeCheckSuccess =>
+      'Zadnje uspešno preverjanje sprememb';
+
+  @override
+  String get syncStatusLastChangeCheckAttempt =>
+      'Zadnji poskus preverjanja sprememb';
+
+  @override
+  String get organizerReviewLatest => 'Preglej novejše spremembe';
+
+  @override
+  String get organizerDraftCompareTitle => 'Pregled sprememb opravila';
+
+  @override
+  String get organizerDraftCompareHelp =>
+      'Primerjaj prvotno različico, svoj osnutek in najnovejšo različico. Pri vsakem sporu izberi, katero ohraniš.';
+
+  @override
+  String get organizerDraftBase => 'Prvotno';
+
+  @override
+  String get organizerDraftMine => 'Moj osnutek';
+
+  @override
+  String get organizerDraftLatest => 'Najnovejše';
+
+  @override
+  String get organizerDraftApply => 'Uporabi v osnutku';
+
+  @override
+  String get organizerDraftReviewStale =>
+      'Med pregledom se je spremenilo opravilo ali dostop. Tvoj osnutek je ohranjen. Znova preglej najnovejše spremembe.';
+
+  @override
+  String get organizerDraftAssignment => 'Projekt in osebe';
+
+  @override
+  String get organizerDraftSchedule => 'Časovni načrt';
+
+  @override
+  String get organizerDraftPlanning => 'Podrobnosti načrtovanja';
+
+  @override
+  String get organizerDraftCompletion => 'Dokončanost';
+
+  @override
+  String get organizerDraftTimer => 'Časovnik';
+
+  @override
+  String get organizerDraftCost => 'Strošek opravila';
+
+  @override
+  String get organizerDraftPreviouslyPosted => 'Prej knjiženo';
 }

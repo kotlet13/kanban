@@ -47,6 +47,16 @@ enum SharedRecordType {
   householdPerson,
 }
 
+/// Minimal same-server recipient metadata; this does not grant shared access.
+class InvitationRecipient {
+  const InvitationRecipient({
+    required this.accountId,
+    required this.username,
+    required this.displayName,
+  });
+  final String accountId, username, displayName;
+}
+
 class CollaborationException implements Exception {
   const CollaborationException(this.code);
   final String code;
@@ -480,6 +490,71 @@ class CollaborationAutoMergeNotice {
 }
 
 class CollaborationState {
+  /// Publishes check evidence without recopying immutable account projections.
+  CollaborationState.withChangeCheckEvidence(
+    CollaborationState previous, {
+    required this.lastChangeCheckAttemptAt,
+    required this.lastSuccessfulChangeCheckAt,
+    required this.lastError,
+    required this.syncRequiresRefresh,
+    required this.hasUnresolvedSyncWork,
+  }) : sharingRefresh = previous.sharingRefresh,
+       session = previous.session,
+       moderationSupported = previous.moderationSupported,
+       sharedContentPolicy = previous.sharedContentPolicy,
+       selectedSpaceId = previous.selectedSpaceId,
+       allSpacesSelected = previous.allSpacesSelected,
+       pushProjectId = previous.pushProjectId,
+       sessionInvalid = previous.sessionInvalid,
+       localAccessAllowed = previous.localAccessAllowed,
+       sessionRenewalSupported = previous.sessionRenewalSupported,
+       organizationsSupported = previous.organizationsSupported,
+       householdPeopleSupported = previous.householdPeopleSupported,
+       projectArchivingSupported = previous.projectArchivingSupported,
+       scopeDeletionSupported = previous.scopeDeletionSupported,
+       scopeArchivingSupported = previous.scopeArchivingSupported,
+       deletionPending = previous.deletionPending,
+       privateSync = previous.privateSync,
+       remotePushRegistration = previous.remotePushRegistration,
+       financePendingCount = previous.financePendingCount,
+       financeBlockedCount = previous.financeBlockedCount,
+       inboxSupported = previous.inboxSupported,
+       financeSupported = previous.financeSupported,
+       organizationFinanceSupported = previous.organizationFinanceSupported,
+       financeContractVersion = previous.financeContractVersion,
+       recordContractVersion = previous.recordContractVersion,
+       emailVerificationSupported = previous.emailVerificationSupported,
+       resetSupported = previous.resetSupported,
+       externalPushSupported = previous.externalPushSupported,
+       smtpSupported = previous.smtpSupported,
+       emailInvitationsSupported = previous.emailInvitationsSupported,
+       scopedInvitationsSupported = previous.scopedInvitationsSupported,
+       usernameInvitationsSupported = previous.usernameInvitationsSupported,
+       recipientSearchSupported = previous.recipientSearchSupported,
+       invitationResendSupported = previous.invitationResendSupported,
+       spaceProjectMembershipSupported =
+           previous.spaceProjectMembershipSupported,
+       pendingCount = previous.pendingCount,
+       blockedCount = previous.blockedCount,
+       isSyncing = previous.isSyncing,
+       lastSyncAttemptAt = previous.lastSyncAttemptAt,
+       lastSuccessfulSyncAt = previous.lastSuccessfulSyncAt,
+       privateRecordIds = previous.privateRecordIds,
+       financeConflicts = previous.financeConflicts,
+       financeSnapshotComplete = previous.financeSnapshotComplete,
+       financeSnapshotSequences = previous.financeSnapshotSequences,
+       members = previous.members,
+       financePolicies = previous.financePolicies,
+       financeAccountChoices = previous.financeAccountChoices,
+       inbox = previous.inbox,
+       notificationPreferences = previous.notificationPreferences,
+       scheduledReminders = previous.scheduledReminders,
+       scopes = previous.scopes,
+       projectSharingPendingScopeIds = previous.projectSharingPendingScopeIds,
+       data = previous.data,
+       conflicts = previous.conflicts,
+       autoMergeNotices = previous.autoMergeNotices;
+
   CollaborationState({
     this.sharingRefresh = const SharingRefreshState(),
     this.session,
@@ -517,6 +592,7 @@ class CollaborationState {
     this.emailInvitationsSupported = false,
     this.scopedInvitationsSupported = false,
     this.usernameInvitationsSupported = false,
+    this.recipientSearchSupported = false,
     this.invitationResendSupported = false,
     this.spaceProjectMembershipSupported = false,
     Map<String, List<SharedMember>> members = const {},
@@ -537,6 +613,10 @@ class CollaborationState {
     this.isSyncing = false,
     this.lastSyncAttemptAt,
     this.lastSuccessfulSyncAt,
+    this.lastChangeCheckAttemptAt,
+    this.lastSuccessfulChangeCheckAt,
+    this.hasUnresolvedSyncWork = false,
+    this.syncRequiresRefresh = false,
     this.lastError,
   }) : privateRecordIds = Map.unmodifiable(privateRecordIds),
        financeConflicts = List.unmodifiable(financeConflicts),
@@ -580,6 +660,7 @@ class CollaborationState {
       emailInvitationsSupported,
       scopedInvitationsSupported,
       usernameInvitationsSupported,
+      recipientSearchSupported,
       invitationResendSupported,
       spaceProjectMembershipSupported;
   final bool inboxSupported,
@@ -628,6 +709,10 @@ class CollaborationState {
   /// Session-only account refresh evidence. Null means unknown after restart;
   /// queued work/conflicts remain independent of a successful refresh.
   final DateTime? lastSyncAttemptAt, lastSuccessfulSyncAt;
+
+  /// A successful account change check is not a data transfer or admission proof.
+  final DateTime? lastChangeCheckAttemptAt, lastSuccessfulChangeCheckAt;
+  final bool hasUnresolvedSyncWork, syncRequiresRefresh;
   final CollaborationException? lastError;
   SharedScopeData dataForScope(String scopeId) =>
       data[scopeId] ?? SharedScopeData();
