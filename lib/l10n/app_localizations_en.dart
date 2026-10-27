@@ -4537,6 +4537,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitationFlowAgreeAccept => 'Agree and accept invitation';
 
   @override
+  String get invitationFlowDecline => 'Decline invitation';
+
+  @override
+  String get invitationFlowDeclined => 'Invitation declined.';
+
+  @override
+  String get sharingInvitationDeclined => 'Invitation declined';
+
+  @override
   String get invitationFlowPrepareAccount => 'Prepare account';
 
   @override

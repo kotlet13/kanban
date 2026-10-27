@@ -15,6 +15,7 @@ import 'crypto_directory_promotion.dart';
 import 'crypto_legacy_invitation_capsule.dart';
 import 'crypto_legacy_invitation_evidence.dart';
 import 'crypto_directory_consistency.dart';
+import 'crypto_capability_discovery.dart';
 import 'crypto_inherited_invitation_grants.dart';
 import 'crypto_preauthorized_invitation.dart';
 import 'crypto_invitation_preauthorization_codec.dart';
@@ -154,12 +155,13 @@ class InviteCryptoRepository {
       'recipientEmail': recipient['kind'] == 'email'
           ? recipient['value']
           : null,
+      'declined': source['state'] == 'declined',
       'pendingKeys':
           source['state'] == 'accepted' &&
           source['legacyAcceptedAtEpoch'] == null,
       'revokedAt':
           source['legacyRevokedAtEpoch'] ??
-          (source['state'] == 'revoked' ? 0 : null),
+          (const ['revoked', 'declined'].contains(source['state']) ? 0 : null),
       'acceptedAt':
           source['legacyAcceptedAtEpoch'] ??
           (source['state'] == 'consumed' ? 0 : null),
@@ -1712,6 +1714,90 @@ class InviteCryptoRepository {
       [access.account.store.partition, scopeId, invitationId],
     );
     return scopeId;
+  }
+
+  /// Refuse this exact pending invitation without changing any membership.
+  /// The durable sender preserves the signed command across retries/lost ACKs.
+  Future<void> decline(
+    VerifiedCryptoInvitation invite, {
+    required String actionId,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.invitation,
+    () => _accountWorkDecline(invite, actionId: actionId),
+  );
+
+  Future<void> _accountWorkDecline(
+    VerifiedCryptoInvitation invite, {
+    required String actionId,
+  }) async {
+    if (invite.invitation['state'] != 'pending') {
+      throw const CollaborationException('invitation_already_accepted');
+    }
+    final directory = access.account.directory;
+    final caps = await CryptoCapabilityDiscovery.read(
+      transport: directory.transport,
+      session: directory.session,
+    );
+    if (!directory.isCurrent() ||
+        caps['serverId'] != directory.session.profile.serverId) {
+      throw const CollaborationException('session_changed');
+    }
+    if ((caps['features'] as Map?)?['invitationDecline'] != true ||
+        !(caps['invitationContractVersions'] as List? ?? const []).contains(
+          4,
+        )) {
+      throw const CollaborationException('invitation_decline_unavailable');
+    }
+    final invitation = invite.invitation;
+    final creatorHash = await cryptoSha256(
+      CryptoJson.encode(invite.authorization),
+    );
+    final scope = invitation['scopeId'] as String;
+    final key = 'decline:$actionId';
+    await manager.serialize(scope, () async {
+      final db = access.account.store.database;
+      final partition = access.account.store.partition;
+      final saved = await db.rows(
+        'SELECT payload FROM crypto_invitation_drafts WHERE partition=? AND action_id=?',
+        [partition, key],
+      );
+      late Map<String, dynamic> payload;
+      if (saved.isNotEmpty) {
+        payload = Map<String, dynamic>.from(
+          jsonDecode(saved.single['payload'] as String) as Map,
+        );
+        if (payload['scopeId'] != scope ||
+            payload['invitationId'] != invitation['id'] ||
+            payload['tokenHash'] != invitation['tokenHash'] ||
+            payload['creatorProofHash'] != creatorHash) {
+          throw const FormatException('invitation_decline_changed');
+        }
+      } else {
+        final own = await directory.requireFresh();
+        payload = {
+          'scopeId': scope,
+          'invitationId': invitation['id'],
+          'tokenHash': invitation['tokenHash'],
+          'creatorProofHash': creatorHash,
+          'authorDirectoryHeadHash': own.headHash,
+        };
+        await db.execute(
+          'INSERT INTO crypto_invitation_drafts VALUES(?,?,?,NULL)',
+          [partition, key, jsonEncode(payload)],
+        );
+      }
+      final result = await manager.invitationCommand(
+        'crypto2.invitations.decline',
+        scope,
+        payload,
+        actionKey: key,
+      );
+      if (result['declined'] != true ||
+          result['invitationId'] != invitation['id']) {
+        throw const FormatException('invitation_decline_receipt');
+      }
+    });
   }
 
   Future<Map<String, dynamic>> accept(

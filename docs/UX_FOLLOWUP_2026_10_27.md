@@ -350,3 +350,114 @@ integracijo, podagent neodvisno preveri meje pošiljanja in SQL varovala sprejem
 To ni dokaz celotne regresije ali izmerjene mobilne pohitritve. Naslednji korak
 je posodobitev obeh Jivie Test po naročilu uporabnika in omejena meritev novega
 pošiljanja/sprejema ter oblačka; uspešnih starih CRUD testov ne ponavljati.
+
+
+## Namestitev povabil in oblačka na oba telefona, 27. oktober
+
+Po uporabnikovem naročilu sta obe isti Jivie Test posodobljeni na 27d69c3.
+Android in iOS sta pripravljala ločena GPT 6.1 Sol/high podagenta; root je pred
+vsako namestitvijo preveril produktne in staging hashe, pakete, podpis in kopije.
+Vsaka platforma: ena gradnja, ena namestitev, nič naših zagonov aplikacije.
+Strežniških sprememb ni; obstoječi lokalni mobilni strežnik cd80678 je healthy,
+TLS s testnim CA preverjen, javni capabilities HTTP200. Root URL vrne404;
+veljavni NativeApiController endpoint vrne200. Noben auth poslovni RPC.
+
+Samsung: APK7f81ab38255aa19e9671114964b465bed7012f3e14a2dac116b6f5d9ac3a1c7b,
+106.511.385B; gradnja26,05s.638root/641staging vhodov; 20 nepredpomnilniških
+podatkovnih datotek130.273.588B exact pred/po. UID10292, dataDir, podpis,
+CA/native knjižnice isti. Originalni Google Play APK/metapodatki nespremenjeni.
+Ozka analiza39datotek0errors/0warnings/52styleinfos. Odstranjenih samo
+1.315.369.537B lastnega obnovljivega build predpomnilnika.
+
+iPhone: AOTfb08a53e6e2a97c067b350038b802d66df9fdbd7f54bc5ca0eef1343e252b619,
+gradnja76,14s.649root/652staging vhodov; štiri datoteke trezorja13.291.910B exact
+pred/neposredno pred/po. Isti bundle, cert/profil/team, Keychain service/group,
+CA in unsigned sqlite3mc/sodium. Originalni produkcijski metapodatki isti.
+Prvi prednamestitveni pregled ustavljen, ker se je QA med gradnjo znova odprla;
+NI bilo poskusa namestitve. Normalno zaprta samo QA, zajeta sveža stabilna
+kopija, enaka prvotni, nato nova preverba in ena uspešna namestitev. Nobene
+obnove stare kopije ali ponovne gradnje. Ozka analiza18vhodov0errors/0warnings/
+30styleinfos. Odstranjenih934.458.862B samo lastnega derived predpomnilnika.
+
+Sveža diagnostika ima pet statičnih časovnih oznak: priprava preavtorizacije
+začetek/konec, priprava ciljnega prostora začetek/konec in odprtje ciljnega
+prostora. Oznake ne vsebujejo besedil, IDjev, URLjev ali ključev. HTTP trajanja,
+vrste operacij in napake ostajajo v omejenih obstoječih dnevnikih. Skupni QA
+instrumenter spremeni samo staging, manifesti in patchi vključujejo vse oznake;
+oba bralnika sta shematsko preverjena lokalno brez branja novih mobilnih dnevnikov.
+
+Dokazi: `build/qa/mobile-invitation-speed-20261027/{android,ios}/final-summary.json`,
+`root-source-review.json`, `server-readiness.json`. Paketi/arhiv/dSYM/izvor/kopije
+ostanejo. Diagnostična bralnika po uporabnikovem preizkusu:
+- `python3 build/qa/mobile-invitation-speed-20261027/android/read_diagnostics.py`
+- `python3 build/qa/mobile-invitation-speed-20261027/ios/read_diagnostics.py --after-user-test`
+
+Runtime hitrost in novi oblaček še čakata uporabnikov preizkus. Prvi korak:
+odpreti obe Jivie Test, počakati približno20s, za zdaj brez novega povabila ali
+ročnega synca; nato preveriti stanje. Prvi zagon nove verzije še nima stare
+trajne zgodovine, če po nadgradnji še ni bilo uspešne celotne uskladitve. To ni
+izguba podatkov; zgodovina nastane pri naslednjem uspešnem zaključku.
+
+
+## Uporabniška potrditev pohitritve in zavrnitev povabila, 27. oktober
+
+Uporabnik po posodobitvi potrdi, da sta ustvarjanje prostora in sprejem povabila
+bistveno boljša. To je uporabniška potrditev odzivnosti, ne nova izmerjena
+primerjava sekund/HTTP. V tem koraku teh uspešnih dejanj ne ponavljamo.
+Naroči možnost »Zavrni povabilo« na predogledu in odstranitev spodnjega
+»Nadaljuj lokalno«, ker ne opisuje dejanja na povabilu.
+
+Izvorni pregled: spodnji gumb je v CryptoInvitationPage, tudi v načinu
+lastnikove potrditve. Obstoječi Back/deferLink in clearPendingInvitation sta
+lokalna odložitev/odstranitev povezave, ne strežniška zavrnitev. Zato dejanske
+zavrnitve ne smemo implementirati samo s preimenovanjem gumba. Za novo
+pending-only recipient decline se uporabi podpisana ukazna pot z ohranjenimi
+receipts; že sprejeti/porabljeni dostopi ne smejo biti preklicani.
+
+
+Izvedeno: `crypto2.invitations.decline` s capability `invitationDecline`, za
+pogodbo4. Podpis veže račun/napravo/strežnik ter točen prostor, povabilo,
+tokenHash in creatorProofHash. Preverjen prejemnik lahko spremeni samo pending
+v declined. Ponovljen podpisan ukaz uporablja isti receipt; accepted/consumed
+se zavrne brez spremembe članstva. Pošiljatelj vidi »Povabilo zavrnjeno«;
+čakajoča povabila in mail se umaknejo. Glave, ključi, grants, preavtorizacijske
+rezervacije in SQL članstva ostanejo nespremenjeni. Decline ni preklic dostopa.
+Novega vprašanja/čarovnika za potrditev ni. Stare pogodbe1–3 in strežniki brez
+capability ne dobijo navideznega lokalnega gumba za zavrnitev.
+
+Oba prejemnikova predogleda imata gumb Zavrni povabilo; lastnikov grant in že
+sprejeto povabilo ga nimata. Spodnji Nadaljuj lokalno je odstranjen; AppBar Nazaj
+ostane. Po potrjenem uspehu se odstrani samo ista shranjena povezava in osveži
+povzetek. Pri napaki povezava ostane. Potrjena zavrnitev in poznejši neuspeh
+lokalnega čiščenja ohranita možnost zaključka, brez ponovne strežniške zavrnitve
+ali samodejnega nalaganja že zavrnjenega povabila. Čiščenje je vezano na prvotni
+račun in povezavo. Neodvisni pregled ujame stare bridgeLegacy podpise brez polja
+recipient; popravljeno z authenticated ID lookup samo pri takih/nevezanih
+prejemnikih. Običajni podpisani accountId ne doda takega lookup klica; sprejem
+starih migriranih povabil ostane nespremenjen.
+
+Lokalno: 3 novi jedrni Dart testi PASS1, 16 backend assertions PASS1 prek
+pravega podpisanega NativeCryptoV2Service dispatcherja/receiptov, fresh memory
+SQLite, injected actor in brez rate accounting/HTTP. Preverjeni napačen podpis,
+napačen uporabnik, zamenjava creator proof, izgubljeni ACK/exact replay, drugačen
+isti request, sprejem-pred-zavrnitvijo, pending filter in nespremenjeni grants/
+heads/reservations/membership. 9 novih UI kontrol PASS: šest v tretjem poskusu
+(prvi rezultat ni bil zajet, drugi compileFAIL zastarelega testnega admit fake,
+popravek in PASS3; brez četrtega teka), nova cleanup/lifecycle kontrola PASS1 in
+dve novi wizard kontroli PASS1. Znanih že uspešnih testov nismo ponavljali.
+
+Končna analiza15spremenjenih/novih Dart datotek:0errors0warnings6obstoječih
+styleinfos. Prva skupna analiza je ujela štiri opozorila kopirane testne priprave;
+root odstrani neuporabljena importa/parametra (isti privzeti vrednosti) in doda
+izrecen mounted guard, ki je že vsebovan v _active, ter zavite oklepaje novih
+pogojev. Brez semantičnega spreminjanja potrjenih poti in brez novih runtime
+ponovitev. PHP lint4modelov PASS, git diffcheck PASS. Neodvisen izvorni pregled
+končnega protokola in UI brez preostalih konkretnih blokad.
+
+Dokazi: `build/qa/invitation-decline-20261027/core-result.json`,
+`ui/ui-results.json`, `combined-analyze.log`; API dodatek v
+`docs/server/email-invitation-api-contract.md`. Lokalni testi niso novi native,
+SMTP, HTTP, MySQL ali MariaDB testi. V tem sklopu ni gradenj, namestitev,
+sprememb telefonov, produkcije ali obstoječega testnega strežnika. Telefona še
+27d69c3, testni strežnik še cd80678. Za novo zavrnitev je naslednji korak po
+naročilu uporabnika posodobitev testnega strežnika in obeh aplikacij.

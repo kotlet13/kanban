@@ -2547,6 +2547,7 @@ class ScopeCryptoManager {
       'crypto2.invitations.resend',
       'crypto2.invitations.revoke',
       'crypto2.invitations.accept',
+      'crypto2.invitations.decline',
       'crypto2.invitations.publishPreauthorization',
     }.contains(operation)) {
       throw const FormatException('invitation_operation');

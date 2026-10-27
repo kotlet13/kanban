@@ -8042,6 +8042,24 @@ abstract class AppLocalizations {
   /// **'Agree and accept invitation'**
   String get invitationFlowAgreeAccept;
 
+  /// No description provided for @invitationFlowDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline invitation'**
+  String get invitationFlowDecline;
+
+  /// No description provided for @invitationFlowDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation declined.'**
+  String get invitationFlowDeclined;
+
+  /// No description provided for @sharingInvitationDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation declined'**
+  String get sharingInvitationDeclined;
+
   /// No description provided for @invitationFlowPrepareAccount.
   ///
   /// In en, this message translates to:

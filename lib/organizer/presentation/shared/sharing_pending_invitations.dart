@@ -291,6 +291,35 @@ class _PendingInvitationsState extends ConsumerState<_PendingInvitations>
               account: account,
               invitationId: invitation.invitationId!,
               preview: invitation,
+              declineSupported:
+                  ref
+                      .read(collaborationProvider)
+                      .valueOrNull
+                      ?.invitationDeclineSupported ==
+                  true,
+              onDeclined: () async {
+                if (!mounted || !_guard.isCurrent) return;
+                final pending = widget.pending;
+                final expectedToken =
+                    token ??
+                    (pending?.invitationId == invitation.invitationId
+                        ? pending?.token
+                        : null);
+                if (expectedToken != null) {
+                  await _guard.controller.clearPendingInvitation(
+                    expectedToken: expectedToken,
+                  );
+                }
+                if (!mounted || !_guard.isCurrent) return;
+                ref
+                    .read(
+                      accountSummaryRefreshProvider((
+                        widget.session.partition,
+                        widget.session.deviceId,
+                      )).notifier,
+                    )
+                    .state++;
+              },
             ),
           ),
         );

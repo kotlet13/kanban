@@ -32,6 +32,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _scopedInvitationsSupported = false;
     _usernameInvitationsSupported = false;
     _recipientSearchSupported = false;
+    _invitationDeclineSupported = false;
     _invitationResendSupported = false;
     _spaceProjectMembershipSupported = false;
     final rows = await database.rows(
@@ -127,6 +128,9 @@ extension CollaborationAccountActions on CollaborationRepository {
         _scopedInvitationsSupported && features['usernameInvitations'] == true;
     _recipientSearchSupported =
         _usernameInvitationsSupported && features['recipientSearch'] == true;
+    _invitationDeclineSupported =
+        features['invitationDecline'] == true &&
+        (caps['invitationContractVersions'] as List? ?? const []).contains(4);
     _invitationResendSupported =
         _scopedInvitationsSupported && features['invitationResend'] == true;
     _emailInvitationsSupported =
@@ -308,6 +312,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _scopedInvitationsSupported = false;
     _usernameInvitationsSupported = false;
     _recipientSearchSupported = false;
+    _invitationDeclineSupported = false;
     _invitationResendSupported = false;
     _spaceProjectMembershipSupported = false;
     _lastError = null;

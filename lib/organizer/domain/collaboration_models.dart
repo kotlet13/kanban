@@ -305,6 +305,7 @@ class SharedInvitation {
     this.acceptedAt,
     this.revokedAt,
     this.pendingKeys = false,
+    this.declined = false,
   });
   final String id;
   final String scopeId;
@@ -316,7 +317,7 @@ class SharedInvitation {
   final String? token, recipientEmail;
   final int contractVersion;
   final String? accessScope;
-  final bool deliveryQueued, pendingKeys;
+  final bool deliveryQueued, pendingKeys, declined;
   bool get isEmailInvitation => const [2, 3, 4].contains(contractVersion);
   factory SharedInvitation.fromJson(
     Map<String, dynamic> json, {
@@ -348,6 +349,7 @@ class SharedInvitation {
     accessScope: json['accessScope'] as String?,
     deliveryQueued: json['deliveryQueued'] == true,
     pendingKeys: json['pendingKeys'] == true,
+    declined: json['declined'] == true || json['state'] == 'declined',
   );
 }
 
@@ -531,6 +533,7 @@ class CollaborationState {
        scopedInvitationsSupported = previous.scopedInvitationsSupported,
        usernameInvitationsSupported = previous.usernameInvitationsSupported,
        recipientSearchSupported = previous.recipientSearchSupported,
+       invitationDeclineSupported = previous.invitationDeclineSupported,
        invitationResendSupported = previous.invitationResendSupported,
        spaceProjectMembershipSupported =
            previous.spaceProjectMembershipSupported,
@@ -594,6 +597,7 @@ class CollaborationState {
     this.scopedInvitationsSupported = false,
     this.usernameInvitationsSupported = false,
     this.recipientSearchSupported = false,
+    this.invitationDeclineSupported = false,
     this.invitationResendSupported = false,
     this.spaceProjectMembershipSupported = false,
     Map<String, List<SharedMember>> members = const {},
@@ -663,6 +667,7 @@ class CollaborationState {
       scopedInvitationsSupported,
       usernameInvitationsSupported,
       recipientSearchSupported,
+      invitationDeclineSupported,
       invitationResendSupported,
       spaceProjectMembershipSupported;
   final bool inboxSupported,

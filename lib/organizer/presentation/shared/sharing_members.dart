@@ -575,6 +575,8 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
                               ? l.cryptoInvitationAcceptedNeedsApproval
                               : invitation.acceptedAt != null
                               ? l.sharingAccepted
+                              : invitation.declined
+                              ? l.sharingInvitationDeclined
                               : invitation.revokedAt != null
                               ? l.sharingRevoked
                               : !invitation.expiresAt.isAfter(now)

@@ -291,6 +291,9 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         if ($op === 'crypto2.invitations.accept') {
             return $this->accept($p, $actor, $proof);
         }
+        if ($op === 'crypto2.invitations.decline') {
+            return $this->decline($p, $actor);
+        }
         $scopes = new NativeCryptoScopeV2($this->container, $this->bearer, $this->ip);
         $sid = $this->uuid($p['scopeId'] ?? null);
         $scope = $this->scope($sid, $actor['user']['id']);
@@ -312,6 +315,9 @@ class NativeCryptoInvitationV2 extends NativeDatabase
             }
             if ($row['state'] === 'consumed') {
                 throw new NativeError('invitation_already_accepted', 409);
+            }
+            if ($row['state'] === 'declined') {
+                throw new NativeError('invitation_invalid', 409);
             }
             $this->cancel($row['id'], 'revoked');
             return ['revoked' => true];
@@ -341,7 +347,7 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         $old = null;
         if ($op === 'crypto2.invitations.resend') {
             $old = $this->invitation($p['replacesInvitationId'] ?? null);
-            if ($old['scope_id'] !== $sid || $old['state'] === 'consumed' || $old['state'] === 'revoked' || $old['recipient_kind'] !== $recipient['kind'] || $old['recipient_value'] !== $recipient['value'] || $old['recipient_account_id'] !== $recipient['accountId'] || $old['role'] !== $p['role']) {
+            if ($old['scope_id'] !== $sid || $old['state'] === 'consumed' || in_array($old['state'], ['revoked','declined'], true) || $old['recipient_kind'] !== $recipient['kind'] || $old['recipient_value'] !== $recipient['value'] || $old['recipient_account_id'] !== $recipient['accountId'] || $old['role'] !== $p['role']) {
                 throw new NativeError('invitation_invalid', 409);
             }
         }
@@ -388,6 +394,32 @@ class NativeCryptoInvitationV2 extends NativeDatabase
         $activation=$preauthorization?$prepared->acceptPrepared($row,$p,$actor,$hash):[];
         if (!$preauthorization) (new NativeCryptoInvitationNotificationV2($this->container))->accepted($row['id'], $hash);
         return $activation+['scope' => ['id' => $scope['id'],'kind' => $scope['kind'],'name' => 'Encrypted space','role' => $row['role']],'state' => 'pendingKeys','invitationId' => $row['id'],'acceptanceProofHash' => $hash,'candidateHeads' => []];
+    }
+
+    /** Recipient consent refusal only. Signed roster, grants and SQL access stay intact. */
+    private function decline($p, $actor)
+    {
+        $this->fields($p, ['scopeId','invitationId','tokenHash','creatorProofHash','authorDirectoryHeadHash']);
+        $row = $this->invitation($p['invitationId']);
+        $creation = json_decode($row['authorization'], true, 34, JSON_THROW_ON_ERROR);
+        if ($row['scope_id'] !== $p['scopeId'] || !$this->matches($row, $actor)
+            || $row['token_hash'] !== $p['tokenHash'] || $p['creatorProofHash'] !== NativeCryptoV2Codec::hash((object)$creation)) {
+            throw new NativeError('invitation_invalid', 403);
+        }
+        (new NativeCryptoScopeV2($this->container))->currentAuthorReference($p['authorDirectoryHeadHash'], $actor);
+        // A separate exact signed retry may observe the terminal state, while
+        // the ordinary immutable receipt path handles a lost acknowledgement.
+        if ($row['state'] === 'declined') return ['declined'=>true,'invitationId'=>$row['id']];
+        if (in_array($row['state'], ['accepted','consumed'], true)) {
+            throw new NativeError('invitation_already_accepted', 409);
+        }
+        $this->usable($row);
+        if ($this->change("UPDATE familyhub_crypto_invitations_v2 SET state='declined',recipient_account_id=? WHERE id=? AND state='pending'", [$actor['user']['account_id'],$row['id']]) !== 1) {
+            throw new NativeError('invitation_invalid', 409);
+        }
+        $this->change("UPDATE familyhub_crypto_invitation_mail_v2 SET state='cancelled',token_cipher=NULL,lease_token=NULL WHERE invitation_id=? AND state<>'accepted'", [$row['id']]);
+        (new NativeCryptoInvitationNotificationV2($this->container))->resolved($row['id']);
+        return ['declined'=>true,'invitationId'=>$row['id']];
     }
 
     private function cancel($id, $state)

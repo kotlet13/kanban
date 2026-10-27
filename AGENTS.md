@@ -1,3 +1,41 @@
+27. oktober — **Zavrni povabilo izvedeno lokalno; telefoni/strežnik še brez tega**.
+User potrdi bistvenopohitritev create/accept (userreport, NEmeritev), naroči
+Decline+removeContinueLocally. Sol6.1high core/UI/reviewer, rootreview+integracija.
+Signedcrypto2.invitations.decline featureinvitationDecline contract4only;
+recipient/exacttoken+creatorproof/currentdirectory, pending→declined, immutable
+receipts/retry; accepted/consumed rejectnochange. Heads/grants/reservations/
+SQLmembership unchanged; mailcancel/pendinghide, senderexplicitdeclinedlabel.
+UIbothrecipientroutes: pending/cap/currentrecipientonly; noowner/accepteddecline.
+Backremains, ContinueLocallyremoved. Successclearexacttoken+summary; failures
+retain; confirmedcleanupfailure retrylocalonly, identity/linkbound. Bridgelegacy
+missingrecipient regressioncaught/fixed viaauthenticatedIDfallback; mainaccountID
+noextraread. Legacy1–3unsupportedtruthfully. NoDBschemachange.
+12newDartPASS(3core+9UI),16PHPassertionsPASS signeddispatcherfreshmemorySQLite,
+injectedactor/norate/HTTP. Core/backendPASS1; UI6attempt1unobserved/2fixturecompile
+FAIL/3PASS; cleanup1+wizard2PASS1; no4thrun/noestablishedPASSrepeat. Final15file
+analyze0errors0warnings6oldinfos;4copiedfixturewarningscleanedwithoutsemanticchange.
+PHP4lint+diffcheckPASS. DocsUX_FOLLOWUP_2026_10_27.md andserveremailcontract;
+evidencebuild/qa/invitation-decline-20261027. No devices/build/install/deploy/
+existingserver/prod changes. Phones27d69c3/servercd80678; nextupdateboth+server
+whenuserasks. Genuine decline requiresnewserverfeature; no local-onlyfake.
+
+27. oktober — **Obe Jivie Test27d69c3 nameščeni, diagnostika povabil pripravljena**.
+Userupdateboth; Sol6.1high Android+iOS, rootartifact/source/backupreview.
+Each1build1install0agentlaunch. Android20noncache130273588B exact; iOS4vault
+13291910B exact. SameQAIDs/sign/UID/Keychain/native/CA; originalPlayAPK+meta/
+iOSprodmeta unchanged. APK7f81ab38…ac3a1c7b, iOSAOTfb08a53e…252b619.
+iOSpreflightSTOP1 QA reopened beforeinstall; normalSIGTERM+freshidenticalbackup,
+secondpreflightPASS; NOfailedinstall/rebuild/restore. Root638/649inputs exact.
+Fresh5staticnoIDmarkers preauthorizationBegin/Ready,targetPrepareBegin/Ready,
+targetOpened; namespace invitation_speed_20261027_v1 perplatform. Readers
+build/qa/mobile-invitation-speed-20261027/{android,ios}/read_diagnostics.py
+(iOS --after-user-test). SameDocker18801healthy/TLScapabilities200;0authbusiness
+RPC/servermutations; produntouched. OwnregenerablecachesAndroid1315369537B+
+iOS934458862B removed, artifacts/source/backupsheld. Narrowanalyze0errors0warn.
+Nativeperf/cloudPENDINGuser; firstopenbothwait20s/noinvite/manualSyncyet.
+No historical timestamp fabricated onfirstupgrade; afterfirstgenuinesuccess
+nextrestartcanrestorehistory. Docs UX_FOLLOWUP_2026_10_27.md lastsection/evidence.
+
 27. oktober — **Povabila in zgodovina oblačka: lokalno57novih+1prilagojenPASS**.
 User naroči pohitriSend/Accept+cloud, localfirst, preserveguards/data/prod.
 Sol6.1high send+accept+cloud, rootreview+neodvisnisourcereview. Sendfreshbounded

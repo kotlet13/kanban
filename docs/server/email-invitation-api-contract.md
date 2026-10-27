@@ -59,3 +59,34 @@ The migration is supported on SQLite, MySQL8.4 and MariaDB10.11. Back up databas
 The source now uses shorter SL/EN plain invitation mail: inviter, concrete space/project, access, open-invitation URL and exact expiry date/time with explicit UTC timezone. Policy3 full access explicitly includes deleting content and managing members; view-only copy says viewing, and policy1/2 never receive a widened policy3 label. Mail remains plain text, with no remote content or tracking. The invitation-only supplement initially made no version bump or new migration. The combined current source distribution is0.15.0/schema19; packaging is not evidence of a hosting change or real invitation.
 
 For new optional `invitations3.create.recipient` (existing username or email), independent `usernameInvitations`/`invitationResend` feature gates and atomic `invitations3.resend`, see the [policy3 supplement](space-sharing-api-contract.md#source-supplement---16-october-2026). Existing `recipientEmail` and explicit verified-email acceptance remain compatible. The username channel is an authenticated pending invitation, never an automatic signup or hidden email lookup.
+
+
+## Encrypted invitation refusal — 27 October 2026
+
+Servers advertising `features.invitationDecline=true` and invitation contract4
+support signed `crypto2.invitations.decline`. This supplements the encrypted
+invitation protocol; it does not add a refusal operation to contracts1–3.
+The payload has exactly `scopeId`, `invitationId`, `tokenHash`,
+`creatorProofHash`, and `authorDirectoryHeadHash`. The ordinary signed command
+identity, current device/directory, immutable request and receipt checks apply.
+Only the intended recipient may change a usable pending invitation to `declined`.
+The exact result is `{declined: true, invitationId: <same id>}`. A confirmed
+refusal is idempotent; accepted/consumed invitations reject the operation with
+`invitation_already_accepted` and retain all access. A caller's possession of
+an invitation link alone does not authorize refusal.
+
+The terminal state removes the invitation from pending results and cancels
+queued invitation mail. Signed heads, encrypted grants, preauthorization
+reservations, consent fences and existing SQL membership are unchanged.
+A later genuinely new invitation may replace a declined reservation through
+the existing signed preparation path; decline never grants access or changes
+an accepted invitation. Old clients receive terminal revokedAt compatibility
+metadata; new clients additionally recognize `declined` and display refusal.
+There is no schema migration. Clients capability-gate the action and clear
+only the exact local invitation link after a confirmed result. Back remains
+local navigation/deferral, not refusal.
+
+Local evidence: `server/tests/crypto2-invitation-decline-20261027.php` exercises
+16 assertions on isolated memory SQLite with the real signed dispatcher and
+receipt handling, injected authenticated actor and disabled rate accounting.
+It is not a new HTTP, mail-delivery, mobile, MySQL or MariaDB test.

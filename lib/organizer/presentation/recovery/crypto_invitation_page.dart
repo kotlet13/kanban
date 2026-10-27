@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
+import '../../data/collaboration_repository.dart' show newSharedId;
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/invite_crypto_repository.dart';
 import '../../data/e2ee/session_crypto_access.dart';
@@ -25,6 +26,8 @@ class CryptoInvitationPage extends StatefulWidget {
     this.preview,
     this.kind,
     this.expectedAcceptance,
+    this.declineSupported = false,
+    this.onDeclined,
     super.key,
   });
 
@@ -35,6 +38,8 @@ class CryptoInvitationPage extends StatefulWidget {
   final SharedInvitationPreview? preview;
   final SharedScopeKind? kind;
   final InvitationAcceptanceNotification? expectedAcceptance;
+  final bool declineSupported;
+  final Future<void> Function()? onDeclined;
 
   @override
   State<CryptoInvitationPage> createState() => _CryptoInvitationPageState();
@@ -47,6 +52,8 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
       InviteCryptoRepository(SessionCryptoAccess(account: widget.account));
   bool _busy = false, _pending = false;
   bool _preauthorizedAccepted = false;
+  bool _declined = false;
+  late final _declineActionId = newSharedId();
   Object? _error;
   VerifiedCryptoInvitation? _invite;
   ScopeRotationReview? _review;
@@ -73,6 +80,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     if (state != AppLifecycleState.resumed ||
         !_current ||
         _busy ||
+        _declined ||
         ModalRoute.of(context)?.isCurrent != true ||
         (_lastRefresh != null &&
             _refreshClock.elapsed - _lastRefresh! <
@@ -171,7 +179,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
 
   Future<void> _continue() => _run(() async {
     final invite = _invite;
-    if (invite == null || !_current || _pending) return;
+    if (invite == null || !_current || _pending || _declined) return;
     if (widget.scopeId == null) {
       await invites.accept(invite, actionId: widget.invitationId);
       if (!_current) return;
@@ -193,6 +201,27 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     if (review == null) return;
     await invites.admit(invite, review);
     if (mounted && _current) Navigator.of(context).pop(widget.scopeId);
+  });
+
+  bool get _canDecline =>
+      widget.declineSupported &&
+      widget.scopeId == null &&
+      !_pending &&
+      !_declined &&
+      _invite?.invitation['state'] == 'pending' &&
+      _current;
+
+  Future<void> _finishDeclined() async {
+    await widget.onDeclined?.call();
+    if (mounted && _current) Navigator.of(context).pop();
+  }
+
+  Future<void> _decline() => _run(() async {
+    if (!_canDecline) return;
+    await invites.decline(_invite!, actionId: _declineActionId);
+    if (!_current) return;
+    setState(() => _declined = true);
+    await _finishDeclined();
   });
 
   @override
@@ -262,6 +291,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                           ? l.invitationFlowAccessVerificationPending
                           : l.cryptoInvitationPendingKeys,
                     ),
+                  if (_declined) Text(l.invitationFlowDeclined),
                   if (_invite != null)
                     VerifiedInvitationPermissions(
                       invitation: _invite!,
@@ -274,6 +304,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                   ],
                   if (_invite != null &&
                       !_pending &&
+                      !_declined &&
                       _error == null &&
                       _current)
                     FilledButton(
@@ -285,6 +316,18 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                             : l.cryptoInvitationGrantConfirm,
                       ),
                     ),
+                  if (_canDecline)
+                    OutlinedButton(
+                      key: const ValueKey('crypto-invitation-decline'),
+                      onPressed: _busy ? null : _decline,
+                      child: Text(l.invitationFlowDecline),
+                    ),
+                  if (_declined)
+                    TextButton(
+                      key: const ValueKey('crypto-invitation-declined-close'),
+                      onPressed: _busy ? null : () => _run(_finishDeclined),
+                      child: Text(l.close),
+                    ),
                   if (widget.scopeId != null && _error != null)
                     TextButton(
                       key: const ValueKey(
@@ -295,7 +338,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                           : () => openCryptoApprovals(context),
                       child: Text(cryptoApprovalsLabel(context)),
                     ),
-                  if (_error != null || _pending)
+                  if (!_declined && (_error != null || _pending))
                     TextButton(
                       key: const ValueKey('crypto-invitation-retry'),
                       onPressed: _busy || isSharingIdentityChanged(_error)
@@ -307,10 +350,6 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                             : l.cryptoMigrationRetry,
                       ),
                     ),
-                  TextButton(
-                    onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                    child: Text(l.cryptoContinueLocally),
-                  ),
                 ],
               ),
             ),

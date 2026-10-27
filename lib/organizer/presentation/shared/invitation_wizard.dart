@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import '../../data/e2ee/invite_crypto_repository.dart';
+import '../../data/e2ee/crypto_json.dart';
+import '../../data/collaboration_repository.dart' show newSharedId;
 import '../../data/pending_invitation_store.dart'
     show PendingInvitationStoreSerialization;
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
@@ -13,6 +15,7 @@ import '../../../l10n/l10n.dart';
 import '../../platform/invitation_links/invitation_link.dart';
 import '../../platform/invitation_links/invitation_link_providers.dart';
 import '../../state/collaboration_provider.dart';
+import '../../state/account_summary_refresh_provider.dart';
 import '../../data/collaboration_transport.dart'
     show normalizeCollaborationServer;
 import '../onboarding/account_recovery_actions.dart';
@@ -95,6 +98,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
   bool _cryptoPending = false;
+  bool _declined = false, _recipientVerifiedForDecline = false;
+  String? _declinedIdentity;
+  InvitationLink? _declinedLink;
+  late final _declineActionId = newSharedId();
   bool _preauthorizedAccepted = false;
   bool _cryptoSetupRequired = false;
   bool _routeWasCurrent = true, _refreshPreviewOnReturn = false;
@@ -297,6 +304,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     var acceptedCheckpoint = false;
     setState(() {
       _verifiedInvitation = null;
+      _recipientVerifiedForDecline = false;
       _verifiedIdentity = null;
       _verifiedLink = null;
       _cryptoSetupRequired = false;
@@ -396,6 +404,48 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         scopeId: preview.scopeId,
         creatorAccountId: preview.inviterAccountId,
       );
+      var recipientVerifiedForDecline = false;
+      if (!_cryptoPending &&
+          verified.invitation['state'] == 'pending' &&
+          ref
+                  .read(collaborationProvider)
+                  .valueOrNull
+                  ?.invitationDeclineSupported ==
+              true) {
+        final command =
+            CryptoJson.decode(
+                  cryptoBase64(verified.authorization['commandBase64']),
+                )
+                as Map;
+        final recipient = (command['payload'] as Map)['recipient'] as Map?;
+        if (recipient?['accountId'] is String) {
+          recipientVerifiedForDecline =
+              recipient!['accountId'] == _session?.accountId;
+        } else if (recipient?['kind'] == 'username') {
+          recipientVerifiedForDecline =
+              (recipient!['value'] as String).toLowerCase() ==
+              _session?.username.toLowerCase();
+        } else if (recipient == null || recipient['kind'] == 'email') {
+          // A token preview is public. Only an authenticated ID lookup can
+          // bind an older unbound email invitation to this account.
+          try {
+            final own = await _cryptoInvites(
+              workflow,
+            ).inspect(invitationId: preview.invitationId);
+            recipientVerifiedForDecline =
+                base64Encode(CryptoJson.encode(own.authorization)) ==
+                base64Encode(CryptoJson.encode(verified.authorization));
+          } catch (_) {
+            recipientVerifiedForDecline = false;
+          }
+        }
+      }
+      if (!_active ||
+          !_matchingSession ||
+          _identity != identity ||
+          _link != link) {
+        return;
+      }
       setState(() {
         _error = null;
         _lastError = null;
@@ -403,6 +453,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         _verifiedInvitation = verified;
         _verifiedIdentity = identity;
         _verifiedLink = link;
+        _recipientVerifiedForDecline = recipientVerifiedForDecline;
         _preauthorizedAccepted =
             _cryptoPending && isPreauthorizedInvitation(verified);
         if (_cryptoPending) {
@@ -739,6 +790,66 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     }
   });
 
+  bool get _canDecline =>
+      !_declined &&
+      !_joined &&
+      !_cryptoPending &&
+      _reviewMatchesCurrent &&
+      _recipientVerifiedForDecline &&
+      _verifiedInvitation?.invitation['state'] == 'pending' &&
+      ref.read(collaborationProvider).valueOrNull?.invitationDeclineSupported ==
+          true;
+
+  Future<void> _finishDeclined() async {
+    final link = _declinedLink;
+    final identity = _declinedIdentity;
+    if (!_declined ||
+        link == null ||
+        identity == null ||
+        _identity != identity ||
+        _link != link ||
+        !_active ||
+        !_matchingSession) {
+      return;
+    }
+    final guard = SharingSessionGuard(context, ref);
+    await guard.controller.clearPendingInvitation(expectedToken: link.token);
+    if (!mounted || !_active || !guard.isCurrent || _identity != identity) {
+      return;
+    }
+    _consumeRouteHint(link);
+    ref
+        .read(
+          accountSummaryRefreshProvider((
+            _session!.partition,
+            _session!.deviceId,
+          )).notifier,
+        )
+        .state++;
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _decline() => _run(() async {
+    if (!_canDecline) return;
+    final identity = _identity;
+    final link = _link;
+    final verified = _verifiedInvitation!;
+    final repository = await ref.read(collaborationRepositoryProvider.future);
+    if (!_canDecline || _identity != identity || _link != link) return;
+    final account = await repository.connectedCryptoAccount();
+    if (!_canDecline || _identity != identity || _link != link) return;
+    await _cryptoInvites(account).decline(verified, actionId: _declineActionId);
+    if (!_active || !_matchingSession || _identity != identity || _link != link) {
+      return;
+    }
+    setState(() {
+      _declined = true;
+      _declinedIdentity = identity;
+      _declinedLink = link;
+    });
+    await _finishDeclined();
+  });
+
   Future<void> _finishJoined(SharedInvitationPreview preview) async {
     if (!_active || _joinedIdentity != _identity) {
       throw const CollaborationException('session_changed');
@@ -861,6 +972,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         return;
       }
       _verifiedInvitation = null;
+      _recipientVerifiedForDecline = false;
+      _declined = false;
+      _declinedIdentity = null;
+      _declinedLink = null;
       _verifiedIdentity = null;
       _verifiedLink = null;
       _preauthorizedAccepted = false;
@@ -985,7 +1100,18 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                       ),
                       const SizedBox(height: 24),
                       if (!auth) ...[
-                        if (_matchingSession) ...[
+                        if (_declined) ...[
+                          Text(l.invitationFlowDeclined),
+                          TextButton(
+                            key: const ValueKey(
+                              'invitation-flow-declined-close',
+                            ),
+                            onPressed: _busy
+                                ? null
+                                : () => _run(_finishDeclined),
+                            child: Text(l.close),
+                          ),
+                        ] else if (_matchingSession) ...[
                           Text(l.accountSignedIn(_session!.username)),
                           const SizedBox(height: 12),
                           FilledButton(
@@ -1018,6 +1144,12 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                                   : l.invitationFlowJoinSpace,
                             ),
                           ),
+                          if (_canDecline)
+                            OutlinedButton(
+                              key: const ValueKey('invitation-flow-decline'),
+                              onPressed: _busy ? null : _decline,
+                              child: Text(l.invitationFlowDecline),
+                            ),
                           if (_preview?.contractVersion == 4 &&
                               !_busy &&
                               !_cryptoPending &&

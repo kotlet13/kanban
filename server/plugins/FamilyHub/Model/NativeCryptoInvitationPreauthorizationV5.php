@@ -114,7 +114,7 @@ class NativeCryptoInvitationPreauthorizationV5 extends NativeCryptoInvitationV2
     {
         $prior=$this->invitation($old['invitation_id']);[$next]=NativeCryptoCodec::decode(json_decode($row['authorization'],true,34,JSON_THROW_ON_ERROR));
         $explicit=$next['operation']==='crypto2.invitations.resend'&&($next['payload']['replacesInvitationId']??null)===$prior['id'];
-        if($prior['recipient_account_id']!==$row['recipient_account_id']||$prior['scope_id']!==$row['scope_id']||$old['invitation_scope_id']!==$row['scope_id']||$prior['state']==='consumed'||(!$explicit&&$prior['state']!=='revoked'&&(int)$prior['expires_at']>time()))throw new NativeError('crypto_invitation_preauthorization_conflict',409);
+        if($prior['recipient_account_id']!==$row['recipient_account_id']||$prior['scope_id']!==$row['scope_id']||$old['invitation_scope_id']!==$row['scope_id']||$prior['state']==='consumed'||(!$explicit&&!in_array($prior['state'],['revoked','declined'],true)&&(int)$prior['expires_at']>time()))throw new NativeError('crypto_invitation_preauthorization_conflict',409);
     }
 
     public function validatePreauthorizations($scope,$body)

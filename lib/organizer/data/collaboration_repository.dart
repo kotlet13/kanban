@@ -495,6 +495,7 @@ class CollaborationRepository {
   bool _scopedInvitationsSupported = false;
   bool _usernameInvitationsSupported = false;
   bool _recipientSearchSupported = false;
+  bool _invitationDeclineSupported = false;
   bool _invitationResendSupported = false;
   bool _spaceProjectMembershipSupported = false;
   bool _accountDeletionSupported = false;
@@ -959,6 +960,7 @@ class CollaborationRepository {
         scopedInvitationsSupported: _scopedInvitationsSupported,
         usernameInvitationsSupported: _usernameInvitationsSupported,
         recipientSearchSupported: _recipientSearchSupported,
+        invitationDeclineSupported: _invitationDeclineSupported,
         invitationResendSupported: _invitationResendSupported,
         spaceProjectMembershipSupported: _spaceProjectMembershipSupported,
         members: members,

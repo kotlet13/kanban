@@ -303,7 +303,7 @@ class NativeCryptoV2Service extends NativeDatabase
                         (new NativeCryptoObservationV2($this->container))->includeEvent($command,(int)$current['generation']+1);
                     }
                     $out = $directory->append($command, $proof, $snapshot);
-                } elseif (in_array($operation, ['crypto2.invitations.create', 'crypto2.invitations.resend', 'crypto2.invitations.revoke', 'crypto2.invitations.accept','crypto2.invitations.publishPreauthorization'], true)) {
+                } elseif (in_array($operation, ['crypto2.invitations.create', 'crypto2.invitations.resend', 'crypto2.invitations.revoke', 'crypto2.invitations.decline', 'crypto2.invitations.accept','crypto2.invitations.publishPreauthorization'], true)) {
                     $out = (new NativeCryptoInvitationV2($this->container, $this->bearer, $this->ip))->write($operation, $command['payload'], $actor, $proof, $deliveryToken);
                 } elseif ($operation === 'crypto2.moderation.report') {
                     $out = (new NativeCryptoModerationV2($this->container, $this->bearer, $this->ip))->report($command['payload'], $actor, $proof, $command);
@@ -434,7 +434,7 @@ class NativeCryptoV2Service extends NativeDatabase
             (new NativeCryptoExportV2($this->container,$this->bearer,$this->ip))->replayAccess($operation,$payload,$actor);
             return;
         }
-        if ($operation === 'crypto2.invitations.accept') {
+        if (in_array($operation, ['crypto2.invitations.accept','crypto2.invitations.decline'], true)) {
             (new NativeCryptoInvitationV2($this->container, $this->bearer, $this->ip))->replayAccess($payload, $actor);
             return;
         }

@@ -4543,6 +4543,15 @@ class AppLocalizationsSl extends AppLocalizations {
   String get invitationFlowAgreeAccept => 'Strinjam se in sprejmi povabilo';
 
   @override
+  String get invitationFlowDecline => 'Zavrni povabilo';
+
+  @override
+  String get invitationFlowDeclined => 'Povabilo je zavrnjeno.';
+
+  @override
+  String get sharingInvitationDeclined => 'Povabilo zavrnjeno';
+
+  @override
   String get invitationFlowPrepareAccount => 'Pripravi račun';
 
   @override
