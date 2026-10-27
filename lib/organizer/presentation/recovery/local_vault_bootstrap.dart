@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../../theme/jivie_theme.dart';
+import '../../../widgets/jivie_startup_logo.dart';
 import '../../data/local_vault.dart';
 import '../../data/local_vault_open.dart';
 import '../../platform/recovery/recovery_file_io.dart';
@@ -190,7 +191,11 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
       themeMode: ref.watch(themeModeProvider),
       theme: buildJivieTheme(Brightness.light),
       darkTheme: buildJivieTheme(Brightness.dark),
-      home: Builder(builder: _buildRecovery),
+      // An unknown initial state is not a recovery diagnosis. Keep the normal
+      // app unmounted until inspection confirms it is safe to open the vault.
+      home: _busy && status == null && _error == null
+          ? const JivieStartupLogo()
+          : Builder(builder: _buildRecovery),
     );
   }
 

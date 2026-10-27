@@ -71,3 +71,107 @@ Skupno: **64 aktualnih ciljnih Dart kontrol PASS** (63 novih in 1 namerno prilag
 - Celotna statična analiza repozitorija je pokazala 20 napak in 2 opozorili v nespremenjenih starejših testnih dvojnikih in predlogi `tools/diagnostics/qa_reliable_diagnostics.dart` (predloga se kopira v drug kontekst). To ni uspešna celotna analiza. Seznam z dokazom nespremenjenih datotek: `build/qa/ux-followup-20261027/full-analysis-limitations.json`. Ločeni končni rezultat produktne kode in vseh spremenjenih testov je zabeležen spodaj.
 
 Končna analiza `lib` in vseh takrat spremenjenih testov: **0 napak, 0 opozoril, 511 slogovnih info**, exit 0 (`analyze-final-targets.log`). Pozneje prilagojeni dve besedilni pričakovanji v `sharing_status_ui_test.dart` sta dodatno ozko analizirani; ne gre za ponovljen runtime test. `git diff --check` PASS. Obstoječi neuspehi celotne analize ostanejo izrecno ločeni od tega ciljnega rezultata.
+
+
+## Namestitev po uporabnikovi vrnitvi — 27. oktober 2026
+
+Uporabnik je priklopil oba telefona in dovolil namestitev. Produktna podlaga je
+commit `cd806786b02866f8c1a06066e28c51255a29630f`. Ločena podagenta GPT 6.1
+Sol/high pripravljata Android in iOS; root preverja dokaze in posodobi izključno
+lokalni mobilni strežnik. To ni objava v Google Play/TestFlight ali produkcijo.
+
+Mobilni testni strežnik `18801` je posodobljen na točno trenutno vsebino vtičnika:
+pet spremenjenih datotek in nova `NativeRecipientSearchService.php`. Pred
+spremembo je narejena zasebna hladna kopija podatkov, izvora, konfiguracije in
+TLS. Po zagonu so vseh 225 tabel, njihove vsebine in shema bajtno/logično enake
+po tabelnih primerjavah; shema ostane 23. Identiteta gostovanja, TLS in ključi
+ostanejo isti. En javni HTTPS capabilities zahtevek vrne 200 in
+`recipientSearch: true`; avtenticiranih poslovnih zahtevkov ni. Vse prvotne
+storitve so spet zagnane z istimi ID-ji/slikami; drugi vsebniki niso spremenjeni.
+Dokazi: `build/qa/mobile-ux-update-20261027/server/result.json`.
+
+Android: ena gradnja in ena namestitev `install -r` v isti testni paket,
+brez zagona aplikacije. Isti podpis, UID 10292, podatkovni imenik in native
+knjižnice. Vseh 20 nepredpomnilniških datotek (128.038.724 B) je pred in po
+namestitvi enakih; originalni Google Play paket in njegovi metapodatki so isti.
+APK SHA-256: `bcdb3b1f74a5279dc17302e596407d508e08fd9e8b96273ff1849b64838021ef`.
+Diagnostika: `jivie_qa_android_ux_20261027_v1`, oznaka
+`android-ux-20261027-r1`. Branje po uporabnikovem preizkusu:
+`python3 build/qa/mobile-ux-update-20261027/android/read_diagnostics.py`.
+
+iOS: ena Release archive gradnja (78,17 s), ena namestitev v isti testni paket,
+brez zagona. Štiri datoteke trezorja (10.285.446 B) so enake pred, neposredno
+pred in po namestitvi. Isti podpisni certifikat/profil, team, Keychain identiteta,
+CA in native kriptografski knjižnici; produkcijski metapodatki nespremenjeni.
+AOT SHA-256: `58042f6ff21ca2e1863db3d65a3112d52a830a7f79e1e28fd5bc53afb58d0db5`.
+Diagnostika: `jivie_qa_ios_ux_update_20261027_v1`, oznaka
+`ios-ux-update-20261027-r1`. Branje po uporabnikovem preizkusu:
+`python3 build/qa/mobile-ux-update-20261027/ios/read_diagnostics.py --after-user-test`.
+Obstoječe opozorilo archive o PrivacyInfo iz cryptography_flutter je zabeleženo;
+gradnja uspešna. Ciljni Dart analizi brez napak/opozoril. Root je dodatno potrdil
+635 Android/646 iOS izvornih hashov proti trenutnemu repozitoriju; nespremenjeni.
+
+Odstranjeni so samo obnovljivi vmesni izdelki teh gradenj: Android
+1.315.201.733 B, iOS 934.484.034 B. Paketi/archive/dSYM, izvor, dokazi in zasebne
+kopije ostanejo. Bralnika diagnostike sta statično preverjena proti novi shemi;
+zagon aplikacij in branje novih runtime dnevnikov še nista izvedena.
+
+Obe aplikaciji sta zaprti za uporabnikov prvi zagon. Naslednji korak: odpreti
+Samsung Jivie Test, počakati približno 20 sekund in preveriti začetni zaslon;
+nato ciljno nove poti (ne ponovitev starih uspešnih scenarijev).
+
+
+### Prvi uporabnikov Samsung zagon nove gradnje
+
+Uporabnik potrdi običajen uspešen zagon, vendar za približno sekundo vidi
+zaslon o obnovi. Bralni zajem `diagnostic-read-20261027T161800108837Z.json`:
+assessment current/reason none; ena completion code none/unresolved false/
+retry false; nadaljnji krogi unchanged. To ni dokaz nove potrebe po obnovi.
+
+Izvorna vrzel je zdaj konkretno najdena: `LocalVaultBootstrap` začne z
+`_busy=true`, `_status=null`; `build` do zaključka inspect vrne `_buildRecovery`,
+ta pa brez pogoja prikaže naslov in pojasnila obnove celotne namestitve.
+Nalaganje zato lahko pokaže obnovitveni zaslon tudi pri zdravi bazi. To je
+izvorno potrjena pot; kratki uporabnikov prikaz ni bil posnet frame-po-frame
+in zgodnja lokalna inspect faza ni zajeta v trenutnem runtime dnevniku.
+Predlagani ciljni popravek: pred prvim izidom lokalnega pregleda nevtralen
+nalagalni prikaz, ob dejanskem recovery/setup/error pa obstoječe varovalo in
+ustrezen zaslon. Brez preskoka inspect ali odpiranja baze pred potrditvijo.
+V tem odgovoru samo diagnoza/zapis, brez produktne spremembe ali namestitve.
+
+
+## Ciljni popravek začetnega prikaza — logotip → zadnji prostor
+
+Uporabnik naroči izvedbo, lokalno preverjanje in posodobitev obeh Jivie Test.
+`LocalVaultBootstrap` pri prvem še neznanem stanju prikaže `JivieStartupLogo`.
+Aplikativni otrok, baza, usmerjevalnik in porabniki ostanejo nemontirani do
+uspešnega pregleda. Ko je znan dejanski setup/recovery/cleanup/error, ostane
+obstoječi zaslon z vsemi varovali. Pri že dovoljenih ohranjenih kopijah ostane
+nevsiljiva oznaka. Nobena zahteva za obnovitev ni samodejno potrjena.
+
+Shell pri prvem zagonu počaka na lokalni organizer, localSpaces in collaboration
+izid, da ne pokaže osebnega prostora pred obnovljeno izbiro skupnega prostora.
+Po prvem izidu ni novih blokad zaradi osveževanja ali `isSyncing`. Obstoječa
+začetna destinacija je Utrip; obdelava izrecnih povabil/push povezav je ohranjena.
+Preverjen izvor: `CollaborationRepository.initialize` bere lokalno sejo,
+metapodatke in projekcije; `_restoreRemotePush` bere varno lokalno shrambo.
+Koordinator zažene omrežni sync ločeno prek microtask/unawaited. Ni novega
+timerja/HTTP poti ali spremembe kriptografskih in zapisovalnih pravic.
+
+Šest novih bootstrap widget kontrol PASS v prvem poskusu: zakasnjen prvi
+pregled → ready/retained copies/recovery/setup/cleanup in napaka pregleda.
+Pred izidom nič prezgodnjih child porabnikov ali obnovitvenih gumbov; pri pravi
+napaki se ne ostane v logotipu in ne odpre podatkov. Ciljna analiza teh treh
+datotek brez ugotovitev. Neodvisni podagent pregleda ohranitev bootstrap varoval.
+Dokazi: `build/qa/startup-logo-20261027/`.
+
+Štiri dodatne kontrole dejanskega shell widgeta PASS v drugem poskusu: oba
+vrstna reda obnovitve lokalne/skupne izbire, zadnji lokalni Utrip in kasnejši
+refresh brez prekrivanja, prava napaka branja z obstoječim gumbom Poskusi znova.
+Skupni Utrip se odpre ob `isSyncing=true`, zato ne čaka na omrežni zaključek.
+Prvi poskus: testni `pumpAndSettle` je čakal na namenoma aktivno animacijo synca;
+druga dva primera sta končne trditve dosegla, a ju je podrl timer iz testnega
+vira povabil. Omejeno pumpanje in null testni vir povabil popravita fixture,
+ne produktne logike. Šest že uspešnih bootstrap kontrol ni bilo ponovljenih.
+Root pregleda shell spremembo: samo začetna lokalna pripravljenost, brez novih
+omrežnih klicev ali spreminjanja shranjene izbire. Skupno deset novih kontrol.

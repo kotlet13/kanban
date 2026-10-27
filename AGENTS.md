@@ -1,3 +1,30 @@
+27. oktober — **Logo do lokalne baze/izbire, nato zadnji Utrip; lokalno10PASS**.
+User naroči implement+localtest+obeQAinstall. Root bootstrap unknowninitial
+busy/statusnull/errornull→JivieStartupLogo; realsetup/recovery/cleanup/error
+unchanged, child never before canOpen. Sol6.1high shell initial-only gate on
+organizer/localSpaces/collaboration localreads, no isSyncing/HTTPwait; initial
+Pulse unchanged, existing links/errors remain. Root verifies init+pushrestore
+onlylocal; backgroundcoordinator unchanged.6newbootstrapPASS1;4newshellPASS2
+(firstfixture animatedsync pumpAndSettle + invitationtimer, no guardfailure).
+No oldPASSrerun or data/schema/protocolchange. Builds/install next distinct
+build/qa/mobile-startup-logo-20261027; docs UX_FOLLOWUP updated.
+
+27. oktober — **Obe Jivie Test + lokalni strežnik posodobljeni na cd80678**.
+User oba telefona priklopljena pripravljena; Sol6.1/high Android+iOS, root
+server/review. Vsak1build1install0launch, isti QA package/sign/Keychain/CA/native.
+Android20files128038724B whole noncache parity; iOS4vault10285446B parity.
+OriginalPlay APK/meta in iOSprodmeta unchanged. APKbcdb3b1f…8021ef;
+iOSAOT58042f6f…58d0db5. Root635/646sourcehash unchanged. Server18801 šestPHP
+sourcefiles exactHEAD; coldbackup,225tables+DDL+schema23 exact; sameSID/TLSkeys,
+HTTPS capabilities200 recipientSearchtrue,0authbusinessRPC,othercontainerssame.
+Fresh diagnostics android-ux-20261027-r1 / ios-ux-update-20261027-r1;
+readers build/qa/mobile-ux-update-20261027/{android,ios}/read_diagnostics.py
+(iOS --after-user-test). Ownregenerablecaches Android1315201733+iOS934484034B
+removed; artifacts/source/backupsheld. No launch/CRUD/PASSrepeat/proddeploy.
+Runtime pendinguser; next Samsungopenwait20s then targetednewUX. Fullhandoff
+ docs/UX_FOLLOWUP_2026_10_27.md and evidence samefolder. Productcd80678 pushed;
+this installation ledger only, no productchange.
+
 27. oktober — **Zbrani UX popravki lokalno, telefoni še nespremenjeni**.
 User dovoli vse zbrane ugotovitve razen vrta, Mac zaklenjen. Sol6.1/high
 navigation/search/status+draft, root finance defaults/integration/review.

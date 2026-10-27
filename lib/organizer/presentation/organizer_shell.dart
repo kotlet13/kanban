@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
 import '../../widgets/jivie_brand_mark.dart';
+import '../../widgets/jivie_startup_logo.dart';
 import '../domain/organizer_models.dart';
 import '../state/organizer_provider.dart';
 import '../state/local_spaces_provider.dart';
@@ -81,6 +82,7 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   final _desktopInspector = OrganizerDesktopInspectorController();
   final _desktopInspectorKey = GlobalKey();
   bool _desktopPlannerExpanded = true, _desktopSpaceExpanded = true;
+  bool _initialWorkspaceReady = false;
   int _navigationRevision = 0;
   int _spaceRestorations = 0;
   int _navigationOperation = 0;
@@ -1146,6 +1148,16 @@ class _OrganizerShellState extends ConsumerState<OrganizerShell> {
   @override
   Widget build(BuildContext context) {
     final data = ref.watch(organizerProvider);
+    final localSpaces = ref.watch(localSpacesProvider);
+    final collaboration = ref.watch(collaborationProvider);
+    if (!_initialWorkspaceReady) {
+      // All three restore local state only. The coordinator's background sync
+      // must not keep the shell hidden after the saved workspace is available.
+      if (data.isLoading || localSpaces.isLoading || collaboration.isLoading) {
+        return const JivieStartupLogo();
+      }
+      _initialWorkspaceReady = true;
+    }
     final l = context.l10n;
     final hasUnread = ref.watch(organizerInboxHasUnreadProvider);
     final allSpaces =
