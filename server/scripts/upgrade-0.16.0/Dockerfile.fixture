@@ -1,0 +1,3 @@
+# Disposable synthetic upgrade verification only; no production image changes.
+FROM familyhub-crypto-tests:local
+RUN apk add --no-cache --upgrade $(apk info | grep '^php84') php84-tokenizer && php -r 'if (!function_exists("token_get_all") || !extension_loaded("sodium") || !class_exists("ZipArchive")) { exit(1); }'

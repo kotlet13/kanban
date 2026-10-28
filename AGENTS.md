@@ -1,3 +1,24 @@
+28. oktober — **PRODUKCIJA nadgrajena na FamilyHub0.16.0/shema23**.
+User potrdi javni Android32 in izrecno naroči produkcijski upgrade; ločeno
+odobri accountglobal Sodium za PHP8.4. Root cPanel/izvedba, Sol6.1high
+helpers/schema/runtime review. PHP8.4.27 CLI+web sodium/sign/AEAD/mysql PASS.
+IstiSID/config/SMTP/FCM/ključi/HTTPS; 3računi5naprav. Resnični HTTP503+5cronpause,
+>65sdrain; sveža polna kopija5028325B SHA23edf1e…7742b3, prava networknone
+MariaDB10.11.19 obnova98tabel684vrstic+vsiizvori/datoteke/ključi exactPASS.
+Stage/apply/releaseHTTP/releaseWorkers vsak1PASS; 98→225tabel,127novihpraznih
+predrelease,2zeroštevca+3indeksi, starevrednosti exact razen schema19→23.
+200sourcefiles exact; novi security-mail cron bounded50s/1, originalcronprefix
+exact. PublicHTTPS200 sameSID crypto1/2+cutover3+invite4/decline/search+
+accountChanges/recordpolicyPASS. Vzdrževanje~19:11–19:17UTC; released19:18UTC.
+Zasebni backup/proof zunajGit in nahostu; deployment-result SHA9538f458…a464d5.
+Ownrestorecontainer+anonymousvolume odstranjena, kopije/dokazi ohranjeni.
+SyntheticcaptureSTOP3 ostane, downstream distinctfixtureapplyPASS2; detajli
+server/scripts/upgrade-0.16.0/README.md. docs/server/UPGRADE_0_16.md končniizid.
+Telefoni/poslovniCRUD/prijave0; ne trdi mobileupgrade/FILEruntimePASS. Strežnik
+sam NEšifrira starih vsebin: naslednji clientwizard; 30dnihrambe začne šele
+po uspešni obnovi nove šifrirane kopije. Ne izvajaj slepega rollbacka poE2EE.
+Prejšnji »produkcijenetikat« v tem obsegu nadomešča izrecni userupgrade.
+
 27. oktober — **Zavrni povabilo izvedeno lokalno; telefoni/strežnik še brez tega**.
 User potrdi bistvenopohitritev create/accept (userreport, NEmeritev), naroči
 Decline+removeContinueLocally. Sol6.1high core/UI/reviewer, rootreview+integracija.
