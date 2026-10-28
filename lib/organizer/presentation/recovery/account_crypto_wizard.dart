@@ -407,7 +407,8 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                         ? l.recoveryCombinedExplanation
                         : l.accountRecoveryExplanation,
                   ),
-                  if (ref.exists(collaborationProvider) &&
+                  if (!freshSetup &&
+                      ref.exists(collaborationProvider) &&
                       ref.watch(collaborationProvider).valueOrNull?.session !=
                           null) ...[
                     const SizedBox(height: 12),

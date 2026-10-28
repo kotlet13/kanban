@@ -83,9 +83,49 @@ source/schema, configuration, SMTP/FCM secrets, TLS, cron definitions, unrelated
 sites/databases and earlier safety backups. Rotate the Jivie server incarnation
 so old tokens/commands/recovery identities cannot become fresh authorization.
 
-At this documentation checkpoint production was inspected read-only; reset has
-not yet been performed. The simplified app has not been published or installed.
-Do not tell users that the currently published build has this new flow.
+### Production outcome
+
+Reset completed on 28 October 2026. Maintenance began at22:02:06UTC; HTTPS and
+all six original cron definitions were restored by22:06:25UTC (259seconds).
+
+- Current schema23 and all200 hosted plugin files were independently matched to
+  reviewed source. Production read-only capture/sealing passed.
+- Fresh full backup:6,156,735bytes,225tables/1,056rows,3private files/4directories.
+  SHA256 `5c02286407e458dcddeec79e81cccca69abf801aa9760b0993f479f26999d6b9`.
+- Actual isolated MariaDB10.11.19 restore passed: every row/DDL/source/data/config/
+  key/cron hash matched. Networknone, noports or hostbinds; no application worker
+  ran in the restored copy. The owned restore container and anonymous volume were
+  removed after verification; backup and proof remain private.
+- All three pinned nonadmin users and old FamilyHub account/business/device/
+  cryptographic/migration/delivery state were removed transactionally. All177
+  FamilyHub tables were empty except the new instance and zero lock seeds before
+  release. There were no attachment/idea files to quarantine in production.
+- New server incarnation: `14fb6cbc-2670-49fe-a43f-26125fb5aba2`. Old incarnation
+  `ad56910f-ca2e-41ee-af0d-3f18081497cf` no longer authorizes clients.
+- Retained admin/core data, schema, source, private files, configuration, SMTP/FCM
+  keys, original HTTPS rules/mode and original cron compare exact. Old delivery
+  queues empty. Actual TLS capability response200 confirmed newSID and unchanged
+  crypto1/2, cutover3, invitation4/decline/search and account changes.
+- No new user enrollment, invitation, business record or phone action followed
+  reset. First new account will need a newly issued administrator enrollment code
+  through the existing flow; later users receive new invitations.
+
+Private host operation:
+`/home/tripar13/private/jivie-production/fresh-reset23-20261028-220129`.
+Private local evidence/backup:
+`/Users/anzenovsak/JivieProductionSafety/20261028-fresh-reset`.
+Outcome archive SHA256:
+`3252803b934a60361b2eb8e21cd60cd14d7da43a82cefc7ea36215f943bee7f6`.
+
+Reset tooling's initial synthetic capture fixture remains STOP3 (fixture setup
+defects); do not call it PASS. Actual production capture passed independently.
+Distinct downstream tests exercised full backup/restore, competing kernel lock,
+quarantine, reset, preserved core, repeat-apply refusal and release permissions.
+See its README for precise attempt ledger. No successful backup/restore was rerun.
+
+Application implementation committed/pushed as7e1133d. The simplified app has not
+been published or installed. Users must wait for the new release before fresh
+setup. Do not tell users that the currently published build has this new flow.
 
 ## Next required investigation before Google Play release
 
