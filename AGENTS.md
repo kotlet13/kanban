@@ -19,8 +19,11 @@ Appcommitpush7e1133d, resettools/docs d0ceee0. Freshflow ŠE NI naGooglePlay.
 Prvotni syntheticcaptureSTOP3 ostaja; actualprodcapturePASS, distinctdownstream
 backup/restore+13stagePASS, že uspešni testi neponovljeni. Detajli
  docs/FRESH_ONBOARDING_2026_10_28.md in server/scripts/fresh-reset/README.md.
-Naslednje uporabnik naroči AndroidIMEincognito pregled/popravilo predPlay;
-vrstni red po tem uspešnemresetu. Ne ugašaj privacyflags, globalcauseUNPROVEN.
+AndroidIME pregled poresetu: centralfocusedsecret Androidhidden/paused/detached
+in disable sprosti focus/client; inactive/autofill inprivacyflags ohranjeni.
+7obscurefieldscovered,6newwidgetPASS,0errors/warnings3oldinfos; sourceReviewPASS.
+Commit192b458, brezphone/build/Play. Samsungglobalincognitovzrok/izidUNVERIFIED;
+ne trdi nativePASS. Dokazi build/qa/password-ime-lifecycle-20261028/result.json.
 
 28. oktober — **PRODUKCIJA: popravek odkrivanja migracije sheme23 nameščen**.
 User odobri diagnozo/lokalni popravek/strežnik; telefon lahko zapre. Bralno
