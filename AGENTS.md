@@ -1,3 +1,16 @@
+28. oktober — **Android1.11.1(33) ODDAN v javni pregled**.
+User izrecno naroči freshoneFILE+IME release.1build145.55s/1upload/1submit,
+productionrelease9/100%existingcountry/managedpublishingOFF. Play potrdi
+»Spremembe v pregledu«, quickchecks še tečejo; NEapproval/NEpublicavailability.
+AAB101870983B SHAcd5867a7…abafe; same32cert/8permissions/Firebase/3ABI15libs,
+10ELF64alignment+cryptoexportsPASS;1357frozen/636rootproductexact, noQA/secrets.
+DataStorearm64/x86_64 stariNDK16KBRELRO Playwarning ostane: binariesexact32,
+alignmentPASS NI dokazruntimecompat. Nativepicker/Keystore/globalIME šeUNVERIFIED.
+Owncache1970322958Bremoved; source/artifacts/R8/16symbols/logs preservedhash.
+Ni novihfunctionalsuites/phone/serverchanges. Productionreset že končan prej.
+Prvi freshračun šele po javni33 in novemadminenrollmentcode. Trajno
+ docs/release/ANDROID_1_11_1_2026_10_28.md; build/qa/public-release-1.11.1-20261028.
+
 28. oktober — **PRODUKCIJA PONASTAVLJENA po izrecni uporabnikovi zahtevi**.
 Prejšnji ohranitveni migracijski načrt je za3račune opuščen. Nov SID
 14fb6cbc-2670-49fe-a43f-26125fb5aba2; stari ad56910f…97cf NEVELJAVEN.
