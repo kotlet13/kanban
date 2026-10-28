@@ -37,7 +37,7 @@ class NativeCryptoMigrationV2 extends NativeDatabase
         'familyhub_idea_report_assets' => 'report_id,scope_id,board_id,sha256',
         'familyhub_inbox' => 'id,event_key,recipient_account_id,scope_id,category,kind,audience,actor_account_id,target_type,target_id,target_revision,group_key,created_at,read_at,revision,sequence,in_app',
         'familyhub_inbox_preferences' => 'scope_id,account_id,category,settings',
-        'familyhub_inbox_state' => 'account_id,sequence,visibility_revision',
+        'familyhub_inbox_state' => 'account_id,sequence,visibility_revision,configuration_revision',
         'familyhub_instance' => 'id,server_id',
         'familyhub_invitation_mail' => 'invitation_id,token_cipher,language,state,attempts,next_attempt,lease_token,lease_until,accepted_at',
         'familyhub_invitations' => 'id,scope_id,creator_id,creator_account_id,recipient_username,role,token_hash,created_at,expires_at,accepted_at,accepted_by,accepted_account_id,revoked_at,recipient_email,recipient_account_id,invitation_contract,access_scope',
@@ -62,7 +62,7 @@ class NativeCryptoMigrationV2 extends NativeDatabase
         'familyhub_reminders' => 'id,scope_id,account_id,target_type,target_id,target_fingerprint,remind_at,remind_epoch,revision,state,schedule_mode,offset_minutes',
         'familyhub_scope_deletion_files' => 'scope_id,path_hash,path',
         'familyhub_scope_revocations' => 'scope_id,account_id',
-        'familyhub_scopes' => 'id,kind,name,owner_id,sequence,created_at,organization_id,required_record_contract,project_root_id,archived,access_policy_version,access_revision,address,metadata_revision,parent_scope_id,deleted_at',
+        'familyhub_scopes' => 'id,kind,name,owner_id,sequence,created_at,organization_id,required_record_contract,project_root_id,archived,access_policy_version,access_revision,address,metadata_revision,parent_scope_id,deleted_at,documents_sequence',
         'familyhub_tables' => 'scope_id,id,title,cells,revision,deleted,updated_at,created_by,lease_hash,lease_nonce,lease_account_id,lease_device_id,lease_name,lease_expires',
         'familyhub_totp_state' => 'user_id,secret_hash,last_step',
     ];
@@ -1651,6 +1651,9 @@ class NativeCryptoMigrationV2 extends NativeDatabase
             ? array_column($this->many("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'familyhub_%' ORDER BY name"), 'name')
             : array_column($this->many("SELECT TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME LIKE 'familyhub_%' ORDER BY TABLE_NAME"), 'name');
         $knownCrypto = [
+            // Schema 21/23 operational crypto tables; not legacy plaintext sources.
+            'invitation_publications_v5', 'invitation_reservations_v5',
+            'record_policy_baselines_v1', 'record_policy_entries_v1', 'record_policy_state_v1',
             'accounts', 'directory_state', 'directory', 'devices', 'keyring_entries_v2',
             'keyring_entries', 'receipts', 'scopes', 'domain_keys', 'scope_heads',
             'scope_state', 'closures', 'closure_records', 'record_history',

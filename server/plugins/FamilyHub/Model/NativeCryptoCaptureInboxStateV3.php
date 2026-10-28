@@ -28,7 +28,9 @@ final class NativeCryptoCaptureInboxStateV3
         $old = self::values($baseline);
         if ($now['account_id'] !== $accountId || $old['account_id'] !== $accountId
             || $now['sequence'] < $old['sequence']
-            || $now['visibility_revision'] < $old['visibility_revision']) {
+            || $now['visibility_revision'] < $old['visibility_revision']
+            || isset($old['configuration_revision'])
+                && (!isset($now['configuration_revision']) || $now['configuration_revision'] < $old['configuration_revision'])) {
             throw new NativeError('crypto_capture_inbox_state_conflict',409);
         }
         return $baseline;
@@ -38,7 +40,11 @@ final class NativeCryptoCaptureInboxStateV3
     {
         if (!is_object($typedRow)) self::fail();
         $row = get_object_vars($typedRow);
-        if (count($row)!==3 || array_diff(array_keys($row),['account_id','sequence','visibility_revision'])) self::fail();
+        // Preserve signed pre-schema-22 baselines exactly; new captures retain
+        // the additional monotone configuration counter without dropping it.
+        $required = ['account_id','sequence','visibility_revision'];
+        if (array_diff($required, array_keys($row))
+            || array_diff(array_keys($row), [...$required, 'configuration_revision'])) self::fail();
         $out=[];
         foreach ($row as $key=>$cell) {
             if (is_object($cell)) $cell=get_object_vars($cell);

@@ -656,7 +656,16 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
         !done &&
         (phase == CryptoMigrationPhase.unavailable ||
             phase == CryptoMigrationPhase.blocked);
+    final sl = Localizations.localeOf(context).languageCode == 'sl';
     final text = switch (phase) {
+      null =>
+        _failed
+            ? (sl
+                  ? 'Stanja zaščite tega prostora ni bilo mogoče preveriti. Ponovite preverjanje; podatki ostajajo ohranjeni.'
+                  : 'Protection status for this space could not be checked. Retry the check; your data is preserved.')
+            : (sl
+                  ? 'Preverjamo stanje zaščite prostora.'
+                  : 'Checking protection status for this space.'),
       CryptoMigrationPhase.waitingContributors =>
         l.cryptoMigrationPendingContributors,
       CryptoMigrationPhase.verifying ||
@@ -701,7 +710,8 @@ class _CryptoMigrationWizardState extends ConsumerState<CryptoMigrationWizard> {
               ),
             if (state != null && state.progress > 0 && !done)
               LinearProgressIndicator(value: state.progress.clamp(0, 1)),
-            if (state?.canContinue != true && !done)
+            if (phase == CryptoMigrationPhase.waitingContributors &&
+                state?.canContinue != true)
               Text(l.cryptoMigrationWaitingHelp),
             if ((state?.pendingContributionCount ?? 0) > 0)
               Text(

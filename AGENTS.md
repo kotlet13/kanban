@@ -1,3 +1,22 @@
+28. oktober — **PRODUKCIJA: popravek odkrivanja migracije sheme23 nameščen**.
+User odobri diagnozo/lokalni popravek/strežnik; telefon lahko zapre. Bralno
+potrjen crypto_migration_schema_unsupported, account/email pripravljena,
+0migrationRows. Model allowlist manjkal5crypto tabel+2counter stolpca.
+Dodani exact typed counters; inbox baseline sprejme3/4polja, ohrani stari
+podpisani3field baseline in monotone guards. 14SQLite+14MariaDB synthetic
+assertionsPASS,2novawidgetPASS, analyze0issues; setupfaili v dokumentu.
+2PHPfile hotfix19:54:17UTC, old/newSHAverified+privatebeforebackup;0DBwrites/
+0DDL/0keychange. Prvi deploySTOP execdisabled predlivechange, R2nativePHPparser
+PASS. READ ONLY snapshot model Dom discoverPASS capture3/owned2/pending1/
+existingMigrationfalse; schemaaccepted/noextraCols. PublicHTTPS200sameSID.
+Prvi afterprobePDO zaradi FORUPDATE/READONLY, popravljen privateprobe mode;
+ne štejte za novproduktniFAIL ali HTTPsignaturetest. Nativecutover/FILE še
+NEPASS. UI misleading-other-owner fix samo source, prihodnjajavnaizdaja;
+Play32/telefoni niso spremenjeni. Naslednjiuser isti wizard Ponovi preverjanje1,
+ne novi recoveryključi/reinstall; pravi pendingcontributor ostanevarovan.
+Docs server/MIGRATION_SCHEMA23_HOTFIX_2026_10_28.md; evidence
+build/qa/migration-schema-20261028; originalretention30dnipoencryptedrestore.
+
 28. oktober — **PRODUKCIJA nadgrajena na FamilyHub0.16.0/shema23**.
 User potrdi javni Android32 in izrecno naroči produkcijski upgrade; ločeno
 odobri accountglobal Sodium za PHP8.4. Root cPanel/izvedba, Sol6.1high

@@ -27,7 +27,7 @@ class _Controller implements CryptoMigrationController {
     canContinue: true,
   );
   int prepares = 0, resumes = 0;
-  bool fail = false;
+  bool fail = false, failInspect = false;
   @override
   Stream<CryptoMigrationState> get changes => events.stream;
   @override
@@ -37,7 +37,11 @@ class _Controller implements CryptoMigrationController {
   }
 
   @override
-  Future<CryptoMigrationState> inspect(String scopeId) async => state;
+  Future<CryptoMigrationState> inspect(String scopeId) async {
+    if (failInspect) throw StateError('secret backend detail');
+    return state;
+  }
+
   @override
   Future<CryptoMigrationState> prepare(String scopeId) async {
     prepares++;
@@ -142,6 +146,35 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets('failed scope inspection never claims another owner is pending', (
+    tester,
+  ) async {
+    final controller = _Controller()..failInspect = true;
+    await _pump(tester, controller);
+    expect(find.textContaining('could not be checked'), findsOneWidget);
+    expect(find.textContaining('Another owner needs'), findsNothing);
+    expect(find.textContaining('secret backend detail'), findsNothing);
+    expect(controller.prepares, 0);
+    controller.failInspect = false;
+    await tester.tap(find.text('Retry verification'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('could not be checked'), findsNothing);
+    expect(controller.prepares, 0);
+  });
+
+  testWidgets('confirmed contributor wait retains its explanation', (
+    tester,
+  ) async {
+    final controller = _Controller()
+      ..state = const CryptoMigrationState(
+        scopeId: _id,
+        phase: CryptoMigrationPhase.waitingContributors,
+        pendingContributionCount: 1,
+      );
+    await _pump(tester, controller);
+    expect(find.textContaining('Another owner needs'), findsOneWidget);
+  });
+
   testWidgets(
     'declined unavailable-scope completion stays open and does not acknowledge protection',
     (tester) async {
