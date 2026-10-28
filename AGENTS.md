@@ -1,3 +1,27 @@
+28. oktober — **PRODUKCIJA PONASTAVLJENA po izrecni uporabnikovi zahtevi**.
+Prejšnji ohranitveni migracijski načrt je za3račune opuščen. Nov SID
+14fb6cbc-2670-49fe-a43f-26125fb5aba2; stari ad56910f…97cf NEVELJAVEN.
+3nonadminuporabniki+vseh177FHtabel vsebine izbrisane; samo novSID/lock0 seed.
+Admin/core/config/SMTP/FCM/ključi/source200/schema23/TLS/cron exact ohranjeni.
+Freshbackup6156735B SHA5c022864…99d6b9; prava isolatednetworknoneMariaDB10.11.19
+obnova225tabel1056vrstic+vsiizvori/datoteke/ključiPASS. HTTP503+6cronpause
+22:02:06UTC→release22:06:25UTC,65sdrain presežen, apply/stage/releasePASS1.
+HTTPS200newSID/crypto1/2+cutover3+invite4+decline/search/accountChangesPASS.
+Backup/dokazi /Users/anzenovsak/JivieProductionSafety/20261028-fresh-reset in
+hostprivate/fresh-reset23-20261028-220129 ohranjeni. Ownedrestorecontainer+volume
+odstranjena. Nobene nove registracije/invitation/telefonskega posega; za novo
+prvo prijavo je potreben nov admin enrollment code PO novi objavi aplikacije.
+Freshapp: prazna nativebaza autoencryption, pri novem računu EN combinedFILE,
+savedmarker boundroot/device in auto-init/complete, webfallback+legacy ohranjena.
+14vault+14accountnewPASS; real signedHTTP setup2usersPASS3, sharingPASS2,
+coldFILErecover+decryptPASS1. Nativepicker/Keychain/phone/releaseNEtestirano.
+Appcommitpush7e1133d, resettools/docs d0ceee0. Freshflow ŠE NI naGooglePlay.
+Prvotni syntheticcaptureSTOP3 ostaja; actualprodcapturePASS, distinctdownstream
+backup/restore+13stagePASS, že uspešni testi neponovljeni. Detajli
+ docs/FRESH_ONBOARDING_2026_10_28.md in server/scripts/fresh-reset/README.md.
+Naslednje uporabnik naroči AndroidIMEincognito pregled/popravilo predPlay;
+vrstni red po tem uspešnemresetu. Ne ugašaj privacyflags, globalcauseUNPROVEN.
+
 28. oktober — **PRODUKCIJA: popravek odkrivanja migracije sheme23 nameščen**.
 User odobri diagnozo/lokalni popravek/strežnik; telefon lahko zapre. Bralno
 potrjen crypto_migration_schema_unsupported, account/email pripravljena,
