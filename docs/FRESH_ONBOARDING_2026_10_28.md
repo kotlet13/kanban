@@ -127,13 +127,40 @@ Application implementation committed/pushed as7e1133d. The simplified app has no
 been published or installed. Users must wait for the new release before fresh
 setup. Do not tell users that the currently published build has this new flow.
 
-## Next required investigation before Google Play release
+## Android password keyboard follow-up
 
-User reports that after entering a password in Jivie, the Android keyboard stays
-in incognito mode even in other applications. Cause is unverified; do not treat
-this as a proven global Android flag mutation. After this fresh-flow/reset work,
-inspect password fields, focus/input-connection disposal, keyboard IME flags and
-any secure-window handling, including navigation/background transitions. Fix any
-confirmed application defect and test the relevant lifecycle locally before the
-next store release. Native cross-application keyboard behavior still needs an
-Android device confirmation. User explicitly requested this ordering on 28 October.
+After the completed production reset, investigated the user's report that entering
+a Jivie password leaves the Android keyboard in incognito mode in other apps.
+No Jivie native code changes global keyboard settings. Android's
+`IME_FLAG_NO_PERSONALIZED_LEARNING` is per editor; Flutter creates a fresh editor
+configuration. The reported cross-application symptom is not proven to be caused
+by Jivie without a native reproduction.
+
+A local lifecycle test did reproduce a password retaining focus after Android
+backgrounding; its baseline stopped at that failed focus assertion before the
+connection assertion. The corrected test explicitly confirms connection closure.
+`PasswordVisibility` now releases only
+its focused secret descendant on Android `hidden`, `paused`, or `detached`, and
+when the wrapper becomes disabled during submission. It does **not** unfocus on
+transient `inactive`: Android keyboards/autofill may emit it while typing. It does
+not clear the password, automatically focus it on return, alter other fields or
+apply this lifecycle behavior to iOS. Observer and owned focus node are disposed.
+
+All seven obscured input sites are covered. The previously direct password field
+in preserved-installation-file recovery now uses the same lifecycle owner and
+explicitly disables suggestions, autocorrection and personalized learning. It
+remains hidden; no new visibility toggle was added there.
+
+Six distinct new widget controls passed, including the RED→PASS background case,
+disabled/revealed-secret handling, an unrelated normal field, nonsecret wrapper,
+iOS preservation, and the preserved-file password. Four controls initially hit
+an invalid fixture lifecycle transition on cleanup; corrected fixture sequence
+passed on attempt2. No old successful suite was repeated. Independent native and
+Dart source review found no remaining actionable issue in this change.
+
+Actual Samsung cross-app keyboard behavior still needs device confirmation after
+installing a new build. Password privacy flags remain enabled; do not claim that
+the system-wide symptom has been reproduced or definitively fixed on a device.
+No phone installation or Google Play submission occurred in this task.
+Evidence: `build/qa/password-ime-lifecycle-20261028/result.json`; final targeted
+analysis reports0errors/0warnings and3pre-existing style infos.

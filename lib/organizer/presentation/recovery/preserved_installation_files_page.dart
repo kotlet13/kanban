@@ -9,6 +9,7 @@ import '../../data/local_vault_open.dart';
 import '../../data/preserved_installation_files.dart';
 import '../../platform/private_file_io.dart';
 import '../backup/backup_file_io.dart';
+import '../password_visibility.dart';
 
 final preservedInstallationFileCodecProvider =
     Provider<PreservedInstallationFileCodec>(
@@ -211,13 +212,19 @@ class _FilesState extends ConsumerState<PreservedInstallationFilesPage> {
                   : (v) => setState(() => _reviewed = v == true),
             ),
           ],
-          TextField(
-            controller: _password,
-            obscureText: true,
+          PasswordVisibility(
             enabled: !_busy,
-            decoration: InputDecoration(
-              labelText: l.backupPassword,
-              helperText: l.backupPasswordRule,
+            builder: (obscure, _) => TextField(
+              controller: _password,
+              obscureText: obscure,
+              enabled: !_busy,
+              autocorrect: false,
+              enableSuggestions: false,
+              enableIMEPersonalizedLearning: false,
+              decoration: InputDecoration(
+                labelText: l.backupPassword,
+                helperText: l.backupPasswordRule,
+              ),
             ),
           ),
           const SizedBox(height: 16),
