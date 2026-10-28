@@ -12,6 +12,7 @@ import 'crypto_json.dart';
 import 'crypto_sync_repository.dart' show CryptoKeyLease;
 import 'recovery_file_codec.dart';
 import 'crypto_scope_observations.dart';
+import '../recovery_bundle.dart';
 
 /// Recovery setup backed by the encrypted database journal. Routine sessions
 /// have only their own device secrets, never account-root signing authority.
@@ -21,6 +22,138 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   CryptoIdentityStore get store => directory.store;
   RecoveryFileCodec get files => RecoveryFileCodec(directory.reducer.crypto);
   String get deviceId => directory.session.profile.deviceId;
+  String get _savedSetupKey => 'accountSavedSetup:${store.partition}:$deviceId';
+
+  /// A save acknowledgement is local evidence from a completed file write.
+  /// It never comes from returning from a share sheet or starting a download.
+  Future<bool> hasSavedSetup() async {
+    final rows = await store.database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      [_savedSetupKey],
+    );
+    if (rows.isEmpty) return false;
+    final marker = jsonDecode(rows.single['value'] as String) as Map;
+    final local = await _local();
+    if (local == null ||
+        marker['signingPublicKey'] != local['signing_public'] ||
+        marker['encryptionPublicKey'] != local['encryption_public']) {
+      return false;
+    }
+    if (local['prepared_recovery'] != null) {
+      final file = _bytes(local['prepared_recovery']);
+      try {
+        return files.inspect(
+              file,
+              serverId: directory.session.profile.serverId,
+              accountId: directory.accountId,
+            )['fingerprint'] ==
+            marker['fingerprint'];
+      } finally {
+        file.fillRange(0, file.length, 0);
+      }
+    }
+    final anchor = await store.anchor(directory.accountId);
+    if (anchor != null && anchor['fingerprint'] != marker['fingerprint']) {
+      return false;
+    }
+    final initializations = await store.database.rows(
+      "SELECT authorization FROM crypto_identity_requests WHERE partition=? AND operation='crypto2.account.initialize' AND retired=0",
+      [store.partition],
+    );
+    if (initializations.length != 1) return false;
+    final proof =
+        CryptoJson.decode(_bytes(initializations.single['authorization']))
+            as Map;
+    final command =
+        CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+    final payload = command['payload'] as Map;
+    return command['serverId'] == directory.session.profile.serverId &&
+        command['accountId'] == directory.accountId &&
+        command['deviceId'] == deviceId &&
+        payload['deviceSigningKeyBase64'] == local['signing_public'] &&
+        payload['deviceEncryptionKeyBase64'] == local['encryption_public'] &&
+        directory.reducer.crypto.fingerprint(
+              cryptoBase64(payload['rootSigningKeyBase64'], length: 32),
+              cryptoBase64(payload['rootEncryptionKeyBase64'], length: 32),
+            ) ==
+            marker['fingerprint'];
+  }
+
+  Future<void> confirmSavedRecoveryFile(Uint8List savedFile) async {
+    final accountFile = RecoveryBundleCodec.accountBytes(savedFile);
+    try {
+      await directory.exclusive(() async {
+        final local = await _local();
+        if (!directory.isCurrent() ||
+            local?['prepared_recovery'] == null ||
+            !['prepared', 'saved'].contains(local?['phase']) ||
+            base64Encode(_bytes(local!['prepared_recovery'])) !=
+                base64Encode(accountFile)) {
+          throw const CryptoDirectoryException('directory_file_not_verified');
+        }
+        final inspected = files.inspect(
+          accountFile,
+          serverId: directory.session.profile.serverId,
+          accountId: directory.accountId,
+        );
+        await store.database.transaction(() async {
+          await store.database.execute(
+            "UPDATE crypto_identity_secrets SET phase='saved' WHERE partition=? AND device_id=?",
+            [store.partition, deviceId],
+          );
+          await store.database.execute(
+            'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
+            [
+              _savedSetupKey,
+              jsonEncode({
+                'fingerprint': inspected['fingerprint'],
+                'signingPublicKey': local['signing_public'],
+                'encryptionPublicKey': local['encryption_public'],
+              }),
+            ],
+          );
+        });
+      });
+    } finally {
+      accountFile.fillRange(0, accountFile.length, 0);
+    }
+  }
+
+  /// Resume the exact saved setup, including a failure before a signed request
+  /// was staged. Once staged, the existing immutable journal owns retries.
+  Future<void> resumeSavedSetup() async {
+    if (!directory.isCurrent() || !await hasSavedSetup()) {
+      throw const CryptoDirectoryException('directory_file_not_verified');
+    }
+    final phase = await localPhase();
+    if (phase == 'ready') return;
+    if (phase == 'saved') {
+      final local = (await _local())!;
+      final file = _bytes(local['prepared_recovery']);
+      try {
+        await verifyAndInitialize(file);
+      } finally {
+        file.fillRange(0, file.length, 0);
+      }
+      return;
+    }
+    if (phase == 'pending' || phase == 'verified') {
+      await resume();
+      return;
+    }
+    throw const CryptoDirectoryException('directory_file_not_verified');
+  }
+
+  Future<void> finishSavedSetup() => directory.exclusive(() async {
+    // This is only a local presentation marker. Do not call localPhase here:
+    // ready-phase verification acquires the same non-reentrant directory lock.
+    if (!directory.isCurrent() || (await _local())?['phase'] != 'ready') {
+      throw const CryptoDirectoryException('directory_device_locked');
+    }
+    await store.database.execute('DELETE FROM local_meta WHERE name=?', [
+      _savedSetupKey,
+    ]);
+  });
   Future<bool> hasIncompleteScopeRecovery() =>
       CryptoScopeObservations.recoveryIncomplete(this);
   Future<void> restoreScopesFromFile(Uint8List file) =>
@@ -128,7 +261,14 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
       withAccountWorkJob(
         directory.transport,
         AccountWorkKind.account,
-        () => _accountWorkVerifyAndInitialize(externalFile),
+        () async {
+          final accountFile = RecoveryBundleCodec.accountBytes(externalFile);
+          try {
+            await _accountWorkVerifyAndInitialize(accountFile);
+          } finally {
+            accountFile.fillRange(0, accountFile.length, 0);
+          }
+        },
       );
 
   Future<void> _accountWorkVerifyAndInitialize(Uint8List externalFile) async {
@@ -276,16 +416,23 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
       },
       externalFingerprint: file['fingerprint'] as String,
       establishesFreshness: true,
-      beforeSendTransaction: () => store.database.execute(
-        'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL) ON CONFLICT(partition,scope_id,intent_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
-        [
-          store.partition,
-          directory.accountId,
-          'fileScopeRecoverySummary',
-          'scopeRecoveryPending',
-          CryptoJson.encode({'reason': 'scope_recovery_verification_required'}),
-        ],
-      ),
+      beforeSendTransaction: () async {
+        await store.database.execute('DELETE FROM local_meta WHERE name=?', [
+          _savedSetupKey,
+        ]);
+        await store.database.execute(
+          'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL) ON CONFLICT(partition,scope_id,intent_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
+          [
+            store.partition,
+            directory.accountId,
+            'fileScopeRecoverySummary',
+            'scopeRecoveryPending',
+            CryptoJson.encode({
+              'reason': 'scope_recovery_verification_required',
+            }),
+          ],
+        );
+      },
     );
     await _ready();
   }

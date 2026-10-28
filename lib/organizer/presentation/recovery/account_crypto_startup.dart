@@ -102,11 +102,17 @@ final accountCryptoStartupActionProvider =
           session.deviceId != workflow.deviceId) {
         return null;
       }
+      final savedSetup = await workflow.hasSavedSetup();
+      if (!active ||
+          ref.read(accountCryptoStartupIdentityProvider) != identity) {
+        return null;
+      }
       return AccountCryptoStartupAction(
         identity: '${session.partition}:${session.deviceId}',
         builder: (context) {
-          if (assessment.status !=
-              AccountProtectionStartupStatus.reviewRequired) {
+          if (savedSetup ||
+              assessment.status !=
+                  AccountProtectionStartupStatus.reviewRequired) {
             return AccountCryptoWizard(workflow: workflow);
           }
           final labels = <String, String>{

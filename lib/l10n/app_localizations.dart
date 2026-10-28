@@ -8468,6 +8468,24 @@ abstract class AppLocalizations {
   /// **'This account only'**
   String get accountRecoveryScope;
 
+  /// No description provided for @recoveryCombinedScope.
+  ///
+  /// In en, this message translates to:
+  /// **'One recovery file'**
+  String get recoveryCombinedScope;
+
+  /// No description provided for @recoveryCombinedExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Save one file to unlock this installation and recover this account’s encryption keys. It is not a copy of your data or recovery for other accounts. Keep it outside this device and do not send it to support. After the file is saved, preparation continues automatically. If interrupted, you can resume here.'**
+  String get recoveryCombinedExplanation;
+
+  /// No description provided for @recoveryCombinedPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing account protection. You can close this step and resume later.'**
+  String get recoveryCombinedPreparing;
+
   /// No description provided for @accountRecoveryExplanation.
   ///
   /// In en, this message translates to:

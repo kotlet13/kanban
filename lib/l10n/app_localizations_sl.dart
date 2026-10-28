@@ -4787,6 +4787,17 @@ class AppLocalizationsSl extends AppLocalizations {
   String get accountRecoveryScope => 'Samo ta račun';
 
   @override
+  String get recoveryCombinedScope => 'Ena obnovitvena datoteka';
+
+  @override
+  String get recoveryCombinedExplanation =>
+      'Shranite eno datoteko za odklep te namestitve in obnovo šifrirnih ključev tega računa. Ne vsebuje kopije podatkov ali obnovitve drugih računov. Hranite jo zunaj te naprave in je ne pošiljajte podpori. Po shranitvi se priprava nadaljuje samodejno. Če jo prekinete, lahko nadaljujete tukaj.';
+
+  @override
+  String get recoveryCombinedPreparing =>
+      'Pripravljanje zaščite računa. Ta korak lahko zaprete in nadaljujete pozneje.';
+
+  @override
   String get accountRecoveryExplanation =>
       'Ta datoteka obnovi šifrirne ključe tega računa. Ne vsebuje ključa namestitve, drugih profilov ali kopije podatkov. Shranite jo tudi zunaj te naprave in je ne pošiljajte podpori.';
 

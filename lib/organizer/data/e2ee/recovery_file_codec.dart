@@ -5,9 +5,11 @@ import 'package:sodium/sodium.dart';
 
 import 'crypto_codec.dart';
 import 'crypto_json.dart';
+import '../recovery_bundle.dart';
 
-/// Account files contain no installation key, session token, data snapshot, or
-/// routine device private key. They are bearer secrets, not password files.
+/// The account section contains no installation key, session token, data
+/// snapshot or routine device private key. A combined file wraps this section
+/// alongside independent installation recovery material.
 class AccountRecoveryMaterial {
   AccountRecoveryMaterial({
     required this.file,
@@ -233,7 +235,13 @@ class RecoveryFileCodec {
     required String serverId,
     required String accountId,
   }) {
-    final decoded = CryptoJson.decode(file, limit: maxBytes);
+    final accountFile = RecoveryBundleCodec.accountBytes(file);
+    dynamic decoded;
+    try {
+      decoded = CryptoJson.decode(accountFile, limit: maxBytes);
+    } finally {
+      accountFile.fillRange(0, accountFile.length, 0);
+    }
     if (decoded is! Map<String, dynamic> ||
         decoded.length != 10 ||
         ![1, 2].contains(decoded['version']) ||

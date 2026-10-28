@@ -35,6 +35,8 @@ class _Store implements CryptoIdentityStore {
 }
 
 class _Workflow implements AccountCryptoV2Workflow {
+  @override
+  Future<bool> hasSavedSetup() async => false;
   _Workflow(this.session) : store = _Store(session.partition);
   final AccountSession session;
   String phase = 'ready';

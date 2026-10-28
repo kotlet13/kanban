@@ -4783,6 +4783,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountRecoveryScope => 'This account only';
 
   @override
+  String get recoveryCombinedScope => 'One recovery file';
+
+  @override
+  String get recoveryCombinedExplanation =>
+      'Save one file to unlock this installation and recover this account’s encryption keys. It is not a copy of your data or recovery for other accounts. Keep it outside this device and do not send it to support. After the file is saved, preparation continues automatically. If interrupted, you can resume here.';
+
+  @override
+  String get recoveryCombinedPreparing =>
+      'Preparing account protection. You can close this step and resume later.';
+
+  @override
   String get accountRecoveryExplanation =>
       'This file restores this account’s encryption keys. It does not contain your installation key, other profiles, or a copy of your data. Keep it outside this device and do not send it to support.';
 

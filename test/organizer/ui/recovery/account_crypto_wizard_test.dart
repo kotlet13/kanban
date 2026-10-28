@@ -61,6 +61,8 @@ class _RebindWorkflow extends _Workflow implements AccountCryptoV2Workflow {
   bool scopePending = false;
   int scopeRestores = 0;
   @override
+  Future<bool> hasSavedSetup() async => false;
+  @override
   Future<bool> hasIncompleteScopeRecovery() async => scopePending;
   @override
   Future<void> restoreScopesFromFile(Uint8List file) async {

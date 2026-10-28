@@ -67,6 +67,9 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
     }
     await _run((service) async {
       await ref.read(recoveryFileIoProvider).cleanup();
+      if (service is LocalVaultFreshSetup) {
+        return (service as LocalVaultFreshSetup).initializeFreshInstallation();
+      }
       return service.inspect();
     });
   }

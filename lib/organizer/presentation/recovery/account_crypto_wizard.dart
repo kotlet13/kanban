@@ -4,6 +4,7 @@ import '../onboarding/account_deletion_panel.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
@@ -13,9 +14,25 @@ import '../../data/e2ee/crypto_scope_observations.dart';
 import 'account_devices_page.dart';
 import 'crypto_migration_wizard.dart';
 import '../../data/e2ee/crypto_migration_coordinator.dart';
+import '../../data/e2ee/account_protection_ready.dart';
+import '../../data/recovery_bundle.dart';
 import '../../platform/recovery/recovery_file_io.dart';
+import '../backup/backup_file_io.dart' show BackupSaveStatus;
+import 'local_vault_bootstrap.dart' show localVaultServiceProvider;
 import '../../state/account_crypto_provider.dart';
+import '../../state/account_summary_refresh_provider.dart';
 import '../../state/collaboration_provider.dart';
+
+final accountFreshSetupProtectionProvider =
+    Provider<AccountProtectionReady Function(AccountCryptoV2Workflow)>(
+      (ref) => AccountProtectionReady.new,
+    );
+
+/// Browser downloads do not acknowledge an external file write and the web
+/// vault does not export installation keys. Keep its explicit import route.
+final accountCombinedRecoveryAvailableProvider = Provider<bool>(
+  (ref) => !kIsWeb,
+);
 
 /// Preview servers may offer account key preparation after authentication. The
 /// invitation stays in its existing durable workflow and Join remains explicit.
@@ -123,6 +140,9 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
   bool _canRebind = false;
   bool _scopeRecoveryIncomplete = false;
   bool _busy = true, _failed = false;
+  bool _setupFinished = false;
+  bool _savedSetupPending = false;
+  AccountProtectionReady? _automaticProtection;
   int _generation = 0;
   @override
   void initState() {
@@ -133,10 +153,50 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
   @override
   void dispose() {
     _generation++;
+    _automaticProtection?.close();
     super.dispose();
   }
 
-  Future<void> _refresh() => _run(() async {});
+  Future<void> _refresh() => _run(() async {
+    final workflow = widget.workflow;
+    if (workflow is AccountCryptoV2Workflow && await workflow.hasSavedSetup()) {
+      _savedSetupPending = true;
+      await _continueSavedSetup(workflow);
+    }
+  });
+
+  Future<void> _continueSavedSetup(AccountCryptoV2Workflow workflow) async {
+    await workflow.resumeSavedSetup();
+    await _finishFreshSetup(workflow, savedSetup: true);
+  }
+
+  Future<void> _finishFreshSetup(
+    AccountCryptoV2Workflow workflow, {
+    required bool savedSetup,
+  }) async {
+    if (!mounted || !workflow.directory.isCurrent()) return;
+    final service = ref.read(accountFreshSetupProtectionProvider)(workflow);
+    _automaticProtection = service;
+    try {
+      if (!await service.completeFreshSetup()) {
+        if (savedSetup) await workflow.finishSavedSetup();
+        _savedSetupPending = false;
+        return;
+      }
+      if (savedSetup) await workflow.finishSavedSetup();
+      _savedSetupPending = false;
+      if (!mounted || !workflow.directory.isCurrent()) return;
+      refreshAccountSummaries(
+        ProviderScope.containerOf(context, listen: false),
+        partition: workflow.store.partition,
+        deviceId: workflow.deviceId,
+      );
+      _setupFinished = true;
+    } finally {
+      service.close();
+      if (identical(_automaticProtection, service)) _automaticProtection = null;
+    }
+  }
 
   Future<void> _run(Future<void> Function() operation) async {
     final generation = ++_generation;
@@ -165,6 +225,9 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
       _remote = remote;
       _phase = phase;
       _canRebind = canRebind;
+      _savedSetupPending =
+          widget.workflow is AccountCryptoV2Workflow &&
+          await (widget.workflow as AccountCryptoV2Workflow).hasSavedSetup();
     } catch (error) {
       if (!mounted || generation != _generation) return;
       _failed = error is! CryptoScopeRecoveryIncomplete;
@@ -188,19 +251,44 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
     } finally {
       if (mounted && generation == _generation) setState(() => _busy = false);
     }
+    if (mounted && generation == _generation && _setupFinished) {
+      await Navigator.of(context).maybePop();
+    }
   }
 
   Future<void> _save(String title, {bool share = false}) => _run(() async {
     final bytes = await widget.workflow.prepareRecoveryFile();
+    Uint8List? installation, combined;
     try {
       final io = ref.read(recoveryFileIoProvider);
+      final workflow = widget.workflow;
+      final automatic = ref.read(accountCombinedRecoveryAvailableProvider);
+      if (workflow is AccountCryptoV2Workflow && automatic) {
+        final vault = await ref.read(localVaultServiceProvider.future);
+        installation = await vault.prepareRecoveryFile();
+        combined = RecoveryBundleCodec.wrap(installation, bytes);
+      }
+      final exported = combined ?? bytes;
       if (share) {
-        await io.share(bytes, title, accountOnly: true);
+        await io.share(exported, title, accountOnly: combined == null);
       } else {
-        await io.save(bytes, title, accountOnly: true);
+        final result = await io.save(
+          exported,
+          title,
+          accountOnly: combined == null,
+        );
+        if (result == BackupSaveStatus.saved &&
+            workflow is AccountCryptoV2Workflow &&
+            automatic) {
+          await workflow.confirmSavedRecoveryFile(exported);
+          _savedSetupPending = true;
+          await _continueSavedSetup(workflow);
+        }
       }
     } finally {
       bytes.fillRange(0, bytes.length, 0);
+      installation?.fillRange(0, installation.length, 0);
+      combined?.fillRange(0, combined.length, 0);
     }
   });
 
@@ -233,6 +321,12 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
         await (recover
             ? widget.workflow.recover(file)
             : widget.workflow.verifyAndInitialize(file));
+        if (!recover && widget.workflow is AccountCryptoV2Workflow) {
+          await _finishFreshSetup(
+            widget.workflow as AccountCryptoV2Workflow,
+            savedSetup: false,
+          );
+        }
         if (recover && widget.workflow is AccountCryptoV2Workflow) {
           await (widget.workflow as AccountCryptoV2Workflow)
               .restoreScopesFromFile(file);
@@ -260,9 +354,18 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
   Widget build(BuildContext context) {
     final l = context.l10n;
     final initialized = _remote?['initialized'] == true;
-    final ready = _phase == 'ready' && !_scopeRecoveryIncomplete;
+    final ready =
+        _phase == 'ready' && !_scopeRecoveryIncomplete && !_savedSetupPending;
     final recoveringScopes = _phase == 'ready' && _scopeRecoveryIncomplete;
-    final pending = _phase == 'verified' || _phase == 'pending';
+    final pending =
+        _phase == 'verified' ||
+        _phase == 'pending' ||
+        _phase == 'saved' ||
+        _savedSetupPending;
+    final freshSetup =
+        widget.workflow is AccountCryptoV2Workflow &&
+        ref.watch(accountCombinedRecoveryAvailableProvider) &&
+        (!initialized || _savedSetupPending);
     final theme = Theme.of(context);
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
@@ -293,11 +396,17 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   Text(
-                    l.accountRecoveryScope,
+                    freshSetup
+                        ? l.recoveryCombinedScope
+                        : l.accountRecoveryScope,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 16),
-                  Text(l.accountRecoveryExplanation),
+                  Text(
+                    freshSetup
+                        ? l.recoveryCombinedExplanation
+                        : l.accountRecoveryExplanation,
+                  ),
                   if (ref.exists(collaborationProvider) &&
                       ref.watch(collaborationProvider).valueOrNull?.session !=
                           null) ...[
@@ -333,13 +442,14 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                           .session!,
                     ),
                   const SizedBox(height: 16),
-                  Text(
-                    l.accountRecoveryPreview,
-                    key: const ValueKey('account_crypto_preview_warning'),
-                  ),
+                  if (!freshSetup)
+                    Text(
+                      l.accountRecoveryPreview,
+                      key: const ValueKey('account_crypto_preview_warning'),
+                    ),
                   const SizedBox(height: 16),
-                  Text(l.accountRecoveryManualShare),
-                  if (widget.workflow is AccountCryptoV2Workflow)
+                  if (!freshSetup) Text(l.accountRecoveryManualShare),
+                  if (widget.workflow is AccountCryptoV2Workflow && !freshSetup)
                     TextButton.icon(
                       icon: const Icon(Icons.devices_outlined),
                       label: _buttonLabel(l.cryptoDevicesTitle),
@@ -360,6 +470,8 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                     ),
                   const SizedBox(height: 24),
                   if (_busy) const LinearProgressIndicator(),
+                  if (_busy && _savedSetupPending)
+                    Text(l.recoveryCombinedPreparing),
                   if (_failed)
                     Text(
                       l.accountRecoveryFailed,
@@ -434,7 +546,15 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                       key: const ValueKey('account_crypto_resume'),
                       onPressed: _busy
                           ? null
-                          : () => _run(widget.workflow.resume),
+                          : () => _run(() async {
+                              final workflow = widget.workflow;
+                              if (workflow is AccountCryptoV2Workflow &&
+                                  await workflow.hasSavedSetup()) {
+                                await _continueSavedSetup(workflow);
+                              } else {
+                                await workflow.resume();
+                              }
+                            }),
                       child: _buttonLabel(l.accountRecoveryResume),
                     ),
                   if (pending && _failed)
@@ -453,7 +573,11 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                       icon: const Icon(Icons.save_alt),
                       label: _buttonLabel(l.recoverySaveFile),
                     ),
-                    if (ref.read(recoveryFileIoProvider).canShare) ...[
+                    if ((widget.workflow is! AccountCryptoV2Workflow ||
+                            !ref.read(
+                              accountCombinedRecoveryAvailableProvider,
+                            )) &&
+                        ref.read(recoveryFileIoProvider).canShare) ...[
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
                         key: const ValueKey('account_crypto_share'),
@@ -465,8 +589,14 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    Text(l.recoveryExternalVerification),
-                    if (_phase == 'prepared')
+                    if (widget.workflow is! AccountCryptoV2Workflow ||
+                        !ref.read(accountCombinedRecoveryAvailableProvider))
+                      Text(l.recoveryExternalVerification),
+                    if (_phase == 'prepared' &&
+                        (widget.workflow is! AccountCryptoV2Workflow ||
+                            !ref.read(
+                              accountCombinedRecoveryAvailableProvider,
+                            )))
                       OutlinedButton.icon(
                         key: const ValueKey('account_crypto_verify'),
                         onPressed: _busy ? null : () => _import(recover: false),

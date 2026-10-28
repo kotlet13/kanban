@@ -7,8 +7,8 @@ import '../../presentation/backup/backup_file_io.dart';
 import '../private_file_io.dart';
 import 'recovery_cache.dart';
 
-/// Recovery imports are always a fresh platform selection. A successful save
-/// or return from another application never substitutes for this read.
+/// Recovery imports are always a fresh platform selection. Fresh account setup
+/// may use a completed save; sharing and download initiation never confirm it.
 class RecoveryFileIo {
   static const maxBytes = 64 * 1024;
 
@@ -52,7 +52,7 @@ class RecoveryFileIo {
   }
 
   /// Opening or returning from the system share sheet proves no external copy.
-  /// The wizard still requires a fresh external-file import before activation.
+  /// Sharing never authorizes activation of a prepared account.
   Future<void> share(
     Uint8List bytes,
     String title, {

@@ -6,6 +6,7 @@ import 'package:cryptography/cryptography.dart';
 
 import 'local_vault.dart';
 import 'local_vault_secure_storage.dart';
+import 'recovery_bundle.dart';
 
 abstract interface class LocalVaultKeyStore {
   Future<String?> read();
@@ -57,11 +58,13 @@ class LocalVaultKey {
   });
 
   static LocalVaultKey decode(String text) {
-    if (utf8.encode(text).length > 4096) {
-      throw const LocalVaultException('vault_recovery_invalid');
-    }
+    Uint8List? extracted;
+    Uint8List? encoded;
     try {
-      final json = jsonDecode(text) as Map<String, dynamic>;
+      encoded = Uint8List.fromList(utf8.encode(text));
+      extracted = RecoveryBundleCodec.installationBytes(encoded);
+      if (extracted.length > 4096) throw const FormatException();
+      final json = jsonDecode(utf8.decode(extracted)) as Map<String, dynamic>;
       if (json.length != 4 ||
           json['format'] != 'jivie-installation-recovery' ||
           json['version'] != 1 ||
@@ -74,6 +77,9 @@ class LocalVaultKey {
       return LocalVaultKey(json['vaultId'] as String, bytes);
     } catch (_) {
       throw const LocalVaultException('vault_recovery_invalid');
+    } finally {
+      extracted?.fillRange(0, extracted.length, 0);
+      encoded?.fillRange(0, encoded.length, 0);
     }
   }
 

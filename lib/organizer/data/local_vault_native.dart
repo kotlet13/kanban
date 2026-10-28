@@ -47,6 +47,10 @@ Future<NativeLocalVaultService> openLocalVaultService() => _defaultService ??=
         legacySecretProtection: Platform.isIOS || Platform.isMacOS
             ? protectExistingLocalVaultSecrets
             : null,
+        hasRetainedSecrets: () async =>
+            (await localVaultSecureStorage.readAll()).keys.any(
+              (key) => key != SecureLocalVaultKeyStore.key,
+            ),
       );
       await service.protectSecretsAtStartup();
       await service.preserveLegacyPickerCaches();
@@ -78,7 +82,8 @@ Future<LocalVaultPreferences> openLocalVaultPreferences() async =>
 
 /// All public mutations are serialized by an OS lease that also covers other
 /// isolates/processes. Open database handles retain a shared lease until close.
-class NativeLocalVaultService implements LocalVaultService {
+class NativeLocalVaultService
+    implements LocalVaultService, LocalVaultFreshSetup {
   NativeLocalVaultService(
     this.directory,
     this.keyStore, {
@@ -87,6 +92,7 @@ class NativeLocalVaultService implements LocalVaultService {
     this.checkpoint,
     this.pickerRoots = const [],
     this.legacySecretProtection,
+    this.hasRetainedSecrets,
   }) : files = files ?? LocalVaultFiles();
   final Directory directory;
   final LocalVaultKeyStore keyStore;
@@ -94,6 +100,7 @@ class NativeLocalVaultService implements LocalVaultService {
   final LocalVaultFiles files;
   final List<LegacyPickerCacheRoot> pickerRoots;
   final Future<void> Function()? legacySecretProtection;
+  final Future<bool> Function()? hasRetainedSecrets;
 
   /// Every cold bootstrap, including an already-complete journal, protects old
   /// Apple credentials before inspect/session consumers can open. The same
@@ -120,6 +127,8 @@ class NativeLocalVaultService implements LocalVaultService {
     'candidateVerified',
     'switched',
     'complete',
+    'freshPrepared',
+    'freshKeyIntent',
   };
 
   Future<T> _exclusive<T>(Future<T> Function() action) async {
@@ -148,6 +157,8 @@ class NativeLocalVaultService implements LocalVaultService {
           state['version'] != 1 ||
           state['cipher'] != LocalVaultCipher.format ||
           !_phases.contains(state['phase']) ||
+          (const {'freshPrepared', 'freshKeyIntent'}.contains(state['phase']) &&
+              state['setupMode'] != 'fresh') ||
           state['vaultId'] is! String ||
           state['probe'] is! Map) {
         throw const FormatException();
@@ -176,6 +187,117 @@ class NativeLocalVaultService implements LocalVaultService {
     await key.verifyProbe(Map<String, dynamic>.from(state['probe'] as Map));
     return key;
   }
+
+  /// Fail closed for every retained file or preference. Empty directories may
+  /// be platform-created, but their contents never qualify as a fresh install.
+  Future<bool> _emptyDirectory(
+    Directory root, {
+    bool vault = false,
+    bool freshIntent = false,
+  }) async {
+    await files.rejectLink(root.path);
+    if (!await root.exists()) return true;
+    await for (final entity in root.list(followLinks: false)) {
+      await files.rejectLink(entity.path);
+      if (path.normalize(entity.absolute.path) ==
+          path.normalize(vaultDirectory.absolute.path)) {
+        continue;
+      }
+      if (vault && entity.absolute.path == _lock.absolute.path) continue;
+      if (vault &&
+          freshIntent &&
+          entity.absolute.path == _journal.absolute.path) {
+        continue;
+      }
+      if (entity is! Directory || !await _emptyDirectory(entity)) return false;
+    }
+    return true;
+  }
+
+  bool _hasFreshPreferences() => preferences.getKeys().every((name) {
+    if (const {'app_locale_code', 'app_theme_mode'}.contains(name)) return true;
+    if (name != 'window_width' && name != 'window_height') return false;
+    final value = preferences.get(name);
+    return value is double && value.isFinite && value > 0;
+  });
+
+  Future<bool> _hasFreshSources({bool freshIntent = false}) async =>
+      _hasFreshPreferences() &&
+      await _emptyDirectory(directory) &&
+      await _emptyDirectory(
+        vaultDirectory,
+        vault: true,
+        freshIntent: freshIntent,
+      ) &&
+      await _emptyPickerRoots();
+
+  Future<bool> _emptyPickerRoots() async {
+    for (final root in pickerRoots) {
+      if (!await _emptyDirectory(root.directory)) return false;
+    }
+    return true;
+  }
+
+  Future<Map<String, dynamic>> _prepareFreshKey() async {
+    final key = LocalVaultKey.generate();
+    try {
+      final state = <String, dynamic>{
+        'format': 'jivie-local-vault',
+        'version': 1,
+        'vaultId': key.id,
+        'cipher': LocalVaultCipher.format,
+        'probe': await key.makeProbe(),
+        'setupMode': 'fresh',
+      };
+      // Bind the later OS key to this empty installation before writing it.
+      await _save(state, 'freshKeyIntent');
+      await keyStore.write(key.encode());
+      checkpoint?.call('freshKeyStored');
+      await _save(state, 'freshPrepared');
+      return state;
+    } finally {
+      key.bytes.fillRange(0, key.bytes.length, 0);
+    }
+  }
+
+  @override
+  Future<LocalVaultStatus> initializeFreshInstallation() =>
+      _exclusive(() async {
+        var state = await _state();
+        if (state == null) {
+          if (await keyStore.read() != null ||
+              await hasRetainedSecrets?.call() == true ||
+              !await _hasFreshSources()) {
+            return inspect();
+          }
+          state = await _prepareFreshKey();
+        }
+        if (state['setupMode'] != 'fresh') return inspect();
+        if (state['phase'] == 'freshKeyIntent') {
+          if (await hasRetainedSecrets?.call() == true ||
+              !await _hasFreshSources(freshIntent: true)) {
+            throw const LocalVaultException('vault_source_changed');
+          }
+          if (await keyStore.read() == null) {
+            // No encrypted candidate has ever existed in this phase. Replace
+            // a stopped pre-store intent only after proving empty again.
+            state = await _prepareFreshKey();
+          } else {
+            final key = await _key(state);
+            try {
+              await _save(state, 'freshPrepared');
+            } finally {
+              key.bytes.fillRange(0, key.bytes.length, 0);
+            }
+          }
+        }
+        final status = await inspect();
+        if (status.phase == LocalVaultPhase.recoveryRequired ||
+            status.phase == LocalVaultPhase.ready) {
+          return status;
+        }
+        return _migrateUnlocked();
+      });
 
   @override
   Future<LocalVaultStatus> inspect() async {
@@ -267,7 +389,7 @@ class NativeLocalVaultService implements LocalVaultService {
     Uint8List bytes,
     Map<String, dynamic> state,
   ) async {
-    if (bytes.length > 4096) {
+    if (bytes.length > 64 * 1024) {
       throw const LocalVaultException('vault_recovery_invalid');
     }
     final key = LocalVaultKey.decode(utf8.decode(bytes));
@@ -523,12 +645,22 @@ class NativeLocalVaultService implements LocalVaultService {
   }
 
   @override
-  Future<LocalVaultStatus> migrate() => _exclusive(() async {
+  Future<LocalVaultStatus> migrate() => _exclusive(_migrateUnlocked);
+
+  Future<LocalVaultStatus> _migrateUnlocked() async {
     final state = await _state();
-    if (state == null || state['phase'] == 'keyPrepared') {
+    if (state == null ||
+        const {'keyPrepared', 'freshKeyIntent'}.contains(state['phase'])) {
       throw const LocalVaultException('vault_recovery_unverified');
     }
     final key = await _key(state);
+    if (state['setupMode'] == 'fresh' &&
+        !{'switched', 'complete'}.contains(state['phase']) &&
+        (!await _emptyDirectory(directory) ||
+            !await _emptyPickerRoots() ||
+            !_hasFreshPreferences())) {
+      throw const LocalVaultException('vault_source_changed');
+    }
     if (state['phase'] == 'complete') {
       if ((await inspect()).phase == LocalVaultPhase.ready) return inspect();
       // A stale/old runtime may have recreated an original. Never silently
@@ -663,7 +795,7 @@ class NativeLocalVaultService implements LocalVaultService {
         guard.close();
       }
     }
-  });
+  }
 
   /// Called before application data opens, under the same installation lease.
   Future<void> preserveLegacyPickerCaches() => _exclusive(() async {

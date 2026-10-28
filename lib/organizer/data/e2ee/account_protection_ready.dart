@@ -481,6 +481,17 @@ class AccountProtectionReady {
     ),
   );
 
+  /// New accounts can finish without presenting migration controls. Existing
+  /// legacy scopes retain their explicit migration and contribution workflow.
+  Future<bool> completeFreshSetup({void Function(int)? onPause}) async {
+    final scopes = await catalog();
+    _current();
+    if (scopes.any((scope) => scope['cryptoOrigin'] != true)) return false;
+    await complete(onPause: onPause);
+    _current();
+    return true;
+  }
+
   Future<void> _accountWorkComplete({
     Map<String, dynamic>? reviewedUnavailable,
     void Function(int)? onPause,

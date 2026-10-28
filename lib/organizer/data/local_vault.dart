@@ -46,3 +46,9 @@ abstract interface class LocalVaultService {
   Future<LocalVaultStatus> migrate();
   Future<LocalVaultStatus> recover(Uint8List bytes);
 }
+
+/// Optional native capability. Only an installation with no retained user
+/// state may start automatically; this never confirms an external recovery file.
+abstract interface class LocalVaultFreshSetup {
+  Future<LocalVaultStatus> initializeFreshInstallation();
+}
