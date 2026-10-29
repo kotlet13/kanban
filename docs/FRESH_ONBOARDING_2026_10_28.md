@@ -164,3 +164,43 @@ the system-wide symptom has been reproduced or definitively fixed on a device.
 No phone installation or Google Play submission occurred in this task.
 Evidence: `build/qa/password-ime-lifecycle-20261028/result.json`; final targeted
 analysis reports0errors/0warnings and3pre-existing style infos.
+
+
+## 29 October — first public33 Android setup blocked before save picker
+
+User enrolled the first fresh account, confirmed email, then reported a generic
+error on the one-file screen when pressing Save. User explicitly confirms that
+the Android destination picker never appears. Do not ask to reenroll, delete the
+app or reverify email. Read-only production counts: accounts1/devices1,
+crypto_accounts0/directory_state0/crypto_receipts0. No server mutation during
+this diagnosis. These counts prove registration, but not where the client failed.
+
+The wizard catches errors from prepareRecoveryFile, local vault key export,
+bundle creation, native save and status refresh into the same generic message;
+it does not retain the actual exception there. Native save uses ACTION_CREATE_DOCUMENT;
+no proven filename/size violation was found by this inspection. Root cause is
+NOT yet established. ADB currently lists no connected devices. Need targeted
+Android diagnostics/reproduction before a speculative product change. No tests
+rerun, no phone install, no further reset or enrollment code issued.
+
+
+### Same29October follow-up — open-vault export defect reproduced and fixed
+
+Connected S25 is public1.11.1(33), app PID32513. Read-only app log capture did
+not expose the swallowed wizard exception; no device action or install performed.
+The new local native test holds the actual encrypted database open while calling
+prepareRecoveryFile: baseline fails with LocalVaultException(vault_busy) from
+LocalVaultFiles.lock. The active DB holds a shared installation lease, while
+prepareRecoveryFile incorrectly demanded exclusive ownership even to read an
+existing key. Earlier export tests had not kept a DB handle open.
+
+Existing key export now uses a shared lease and verifies the journal/key/probe.
+Initial key creation remains exclusive, with state reread after lease transition.
+No replacement key, migration, reset, database close or protocol change. Three
+new controls pass: export with live read/write DB and unchanged journal/key;
+exclusive operation still blocks export; missing secure key fails without creating
+replacement. Analyze:0errors/0warnings,3pre-existinginfos. No old successful suite
+rerun. Evidence build/qa/public33-recovery-save-20261029/ includes baseline/fixed
+logs and result. This proves the local cause/path; exact native exception has
+not been captured and handset still runs33. Google Play replacement required
+before the same account can continue on the device; do not reenroll or reset.

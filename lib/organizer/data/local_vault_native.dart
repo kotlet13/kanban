@@ -358,32 +358,54 @@ class NativeLocalVaultService
   }
 
   @override
-  Future<Uint8List> prepareRecoveryFile() => _exclusive(() async {
-    var state = await _state();
-    LocalVaultKey key;
-    if (state == null) {
-      if (await databaseFile.exists() || await archiveFile.exists()) {
-        throw const LocalVaultException('vault_journal_missing');
+  Future<Uint8List> prepareRecoveryFile() async {
+    // An active database holds a shared installation lease. Exporting its
+    // existing key is read-only and must coexist with that lease, while still
+    // excluding recovery/migration that could replace the key or journal.
+    await files.privateDirectory(vaultDirectory);
+    final lease = await files.lock(_lock, shared: true);
+    try {
+      final state = await _state();
+      if (state != null) {
+        final key = await _key(state);
+        return Uint8List.fromList(utf8.encode(key.encode()));
       }
-      final existing = await keyStore.read();
-      key = existing == null
-          ? LocalVaultKey.generate()
-          : LocalVaultKey.decode(existing);
-      await keyStore.write(key.encode());
-      checkpoint?.call('keyStored');
-      state = {
-        'format': 'jivie-local-vault',
-        'version': 1,
-        'vaultId': key.id,
-        'cipher': LocalVaultCipher.format,
-        'probe': await key.makeProbe(),
-      };
-      await _save(state, 'keyPrepared');
-    } else {
-      key = await _key(state);
+    } on LocalVaultException {
+      rethrow;
+    } catch (_) {
+      throw const LocalVaultException('vault_io');
+    } finally {
+      await lease.close();
     }
-    return Uint8List.fromList(utf8.encode(key.encode()));
-  });
+    // Initial key preparation still mutates storage. Re-read under exclusive
+    // ownership: another caller may have prepared it after our shared read.
+    return _exclusive(() async {
+      var state = await _state();
+      LocalVaultKey key;
+      if (state == null) {
+        if (await databaseFile.exists() || await archiveFile.exists()) {
+          throw const LocalVaultException('vault_journal_missing');
+        }
+        final existing = await keyStore.read();
+        key = existing == null
+            ? LocalVaultKey.generate()
+            : LocalVaultKey.decode(existing);
+        await keyStore.write(key.encode());
+        checkpoint?.call('keyStored');
+        state = {
+          'format': 'jivie-local-vault',
+          'version': 1,
+          'vaultId': key.id,
+          'cipher': LocalVaultCipher.format,
+          'probe': await key.makeProbe(),
+        };
+        await _save(state, 'keyPrepared');
+      } else {
+        key = await _key(state);
+      }
+      return Uint8List.fromList(utf8.encode(key.encode()));
+    });
+  }
 
   Future<LocalVaultKey> _verifyBytes(
     Uint8List bytes,
