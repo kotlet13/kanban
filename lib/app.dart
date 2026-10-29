@@ -8,6 +8,7 @@ import 'theme/jivie_theme.dart';
 import 'l10n/l10n.dart';
 import 'organizer/state/app_preferences_provider.dart';
 import 'organizer/platform/notification_coordinator.dart';
+import 'organizer/platform/first_launch_notification_permission.dart';
 import 'organizer/platform/backup_preferences_replay.dart';
 import 'organizer/presentation/onboarding/getting_started.dart';
 import 'organizer/platform/invitation_links/invitation_link_coordinator.dart';
@@ -90,7 +91,9 @@ class _JivieAppState extends ConsumerState<JivieApp> {
       builder: (context, child) => InvitationLinkCoordinator(
         child: RemotePushCoordinator(
           child: LocalNotificationCoordinator(
-            child: SyncMergeNotice(child: child ?? const SizedBox.shrink()),
+            child: FirstLaunchNotificationPermission(
+              child: SyncMergeNotice(child: child ?? const SizedBox.shrink()),
+            ),
           ),
         ),
       ),
