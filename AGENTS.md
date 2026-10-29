@@ -1,3 +1,18 @@
+29. oktober — **Android1.11.2(34) oddan na Google Play; pregled še teče**.
+Userexplicitpublicrelease po9799e08 recoveryexportfix; phoneodklopljen.
+Root1build152.08s/1upload/1submit, productionrelease10/100%existingcountry,
+managedOFF. PlaySpremembevpregledu/quickchecks running; NEapproved/publicPASS.
+AAB101870581B SHAe06da435…b33fbb3e;1359frozen/717rootproductexact; same33cert,
+8permissions/Firebase/lock/3ABI15libs/cryptoexports;10ELF64alignmentPASS.
+Onlyproductdiff local_vault_native+version;3newlocalcontrols priorPASS,
+nativefailurecode notcaptured/userpickerafterupdatePENDING. NooldPASSrerun.
+KnownDataStore16KBRELROwarning unchanged/bytesexact33; notfixed/runtimeclaim.
+Owncache1970314210Bremoved;16symbols/R8/source/logs/artifacts33+34hashpreserved.
+No phone/serveractions. Keepnewproductionaccount; ordinaryPlayupdate only,
+no reinstall/reset/enrollment. docs/release/ANDROID_1_11_2_2026_10_29.md;
+evidence build/qa/public-release-1.11.2-20261029. Existing unrelateddirtyledger
+preserved separately; releaseversion/docs/header only staged forreleasecommit.
+
 28. oktober — **Android1.11.1(33) ODDAN v javni pregled**.
 User izrecno naroči freshoneFILE+IME release.1build145.55s/1upload/1submit,
 productionrelease9/100%existingcountry/managedpublishingOFF. Play potrdi
