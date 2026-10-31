@@ -84,4 +84,20 @@ Dokazi: `build/qa/invite-ux-20261031/RESULT.md`,
 `build/qa/invite-auto-20261031/RESULT.md` in
 `build/qa/invitation-release-20261031/`.
 
-Strežniška namestitev in javna oddaja sta naslednja koraka; še nista PASS.
+### Strežnik
+
+31. oktobra ob 11:51:49 UTC je nameščena združljiva izvorna dopolnitev:
+nov EmailVerificationController, AccountService, MailQueue, MailTransport,
+PushPresentation in registracija poti v Plugin. Prejšnji sprejemni popravek
+NativeCryptoInvitationNotificationV2 je bil že nameščen in ostane bajtno isti.
+7 datotek preverjenih pred/po + native PHP8.4 lint; zasebna kopija prejšnjih
+izvorov in konfiguracije je v `private/jivie-production/invitation-update-20261031/before`.
+Brez SQL/schema/user/key/SMTP/cron sprememb. Konfiguraciji dodano samo odobreno
+javno ime upravljavca. HTTPS capabilities potrdi isti SID in ime; nov javni
+GET prek dejanskega Kanboarda izriše stran brez prijave, brez tokena pravilno
+ne ponudi potrditve. Nobena uporabniška koda ni bila porabljena.
+
+Android1.11.4(36) je zgrajen iz zamrznjenega izvora a9fefde + version36;
+enkrat oddan v Google Play production release12/100% obstoječih držav.
+Konzola potrdi »Spremembe v pregledu«, hitra preverjanja še tečejo; ni še
+odobreno/javno. Podrobnosti v [zapisu izdaje](release/ANDROID_1_11_4_2026_10_31.md).

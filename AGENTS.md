@@ -1,3 +1,24 @@
+31. oktober — **Android1.11.4(36) oddan v javni pregled; še ni javno potrjen**.
+Po dopolnjenem Word poročilu/roadmapu: Sol6.1high UX/email/autoapproval, root
+review+integracija+deploy+Play. Produkt a9fefde pushed. Krajši invite, dobesedni
+vnosi, email link/explicit POST+manualcode, file explanation+verifiedemailgate,
+firstvisit hint, exact retained Send auto approval+stale consumed reconciliation.
+Local: UX8PASS, root5+1PASS, email17backend+6HTTPseam+10JS+3parser+2review+
+1coldroutingPASS, auto14Dart+2PHPcopyPASS. 4widget STOP3 ostanejo NEPASS;
+fix source reviewed, sorodne core/rootintegrationPASS niso njihov četrti tek.
+Changed analyze0errors0warnings13oldinfos. Podatki/ključi/osnutki/istiinvite ohranjeni.
+Server source-only7files+public operator Anže Novšak, TriparNA z.o.o. deployed
+11:51:49UTC; beforebackup/privatehash+PHP8.4lint,0SQL/DDL/user/key/SMTP/cron.
+Publiccapabilities sameSID+operator; realGETemailpagePASS(noactualtoken).
+1Androidbuild111.06s/1upload/1submit, productionrelease12/100%existingcountries,
+managedOFF; Play Spremembe v pregledu/quickchecksrunning, NEapproved/public.
+AAB102007710B SHA b9214a39…afe7105;1372frozen/720rootproductexact/same35cert/
+8permissions/Firebase/nativeexports. DataStoreRELROwarning ostane bytesexact35,
+16KBalignment ni runtimePASS. Owncache1973359658Bremoved,16symbols/R8/artifacts/
+source/logs preservedhash. Phones0actions. Ordinaryupdate, sameaccount/invite.
+Docs INVITATION_SIMPLIFICATION_2026_10_31.md in release/ANDROID_1_11_4_2026_10_31.md;
+evidence build/qa/invitation-release-20261031 in public-release-1.11.4-20261031.
+
 29. oktober — **Android1.11.3(35) oddan na Google Play; pregled še teče**.
 Userexplicitrelease prve prošnje za dovoljenje obvestil; product54353c7,
 6newwidgetPASS prior/cleananalyze, brezponavljanj. Root1build146.90s/1upload/
