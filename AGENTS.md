@@ -1,3 +1,17 @@
+31. oktober — **Android1.11.5(37) oddan v javni pregled; še ne javno potrjen**.
+User explicit diagnosticrelease zaistiA33sync; root1build113.15s/1upload/
+1submit, productionrelease13/100%existingcountries,managedOFF. Konzola
+Spremembevpregledu/quickchecksrunning;36publicconfirmedpreflight,37NEapproved.
+17novihlocalPASS predgradnjo, uspešnih testov neponavljamo. Product047c5d5
+pushed/remoteverified;1377frozen/643rootproductexact, same36cert/8permissions/
+Firebase/nativeintents/lock/Flutterengine. AAB102122846B SHAc77603bf…efb93dd.
+VerifierR1helper targetSDK37typo→R2PASSsameAABtarget36, nobenrebuild/replace.
+DataStorebytesexact36/known16KBRELROwarning ostane, alignmentniRuntimePASS.
+Owncache1973728839Bremoved, source/16symbols/R8/logs/AAB36+37hashpreserved.
+0phone/serveractions. OriginalA33vzrokšeodprt; ordinaryupdate/istiaccount,
+Uskladizdaj→Podrobnostinapake→Kopirajpodrobnosti. Docs
+ docs/release/ANDROID_1_11_5_2026_10_31.md; evidence public-release-1.11.5-20261031.
+
 31. oktober — **Android1.11.4(36) oddan v javni pregled; še ni javno potrjen**.
 Po dopolnjenem Word poročilu/roadmapu: Sol6.1high UX/email/autoapproval, root
 review+integracija+deploy+Play. Produkt a9fefde pushed. Krajši invite, dobesedni
