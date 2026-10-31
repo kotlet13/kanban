@@ -705,6 +705,11 @@ extension CollaborationEmailInvitations on CollaborationRepository {
       _checkEpoch(epoch);
     } catch (error) {
       _checkEpoch(epoch);
+      _captureSyncFailure(
+        error,
+        epoch: epoch,
+        stage: SyncFailureStage.metadata,
+      );
       _lastError = error is CollaborationException
           ? error
           : const CollaborationException('invalid_response');

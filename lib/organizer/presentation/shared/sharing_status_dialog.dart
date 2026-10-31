@@ -1,4 +1,3 @@
-import 'content_moderation.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
-import 'sharing_errors.dart';
 import 'sharing_status_projection.dart';
+import 'sync_failure_panel.dart';
 
 String sharingStatusLabel(BuildContext context, SharingSyncStatus status) =>
     switch (status) {
@@ -196,6 +195,13 @@ class _SharingStatusDialog extends ConsumerWidget {
                     ? l.syncStatusLocalScope
                     : l.syncStatusAccountScope,
               ),
+              SyncFailurePanel(
+                state: state,
+                failures: sharingSyncFailures(state, backgroundError),
+                actionsEnabled: actionsEnabled,
+                navigationEnabled: localActionsEnabled,
+                onConflicts: () => run(onConflicts),
+              ),
               const SizedBox(height: 16),
               Text(
                 '${l.syncStatusLastChangeCheckSuccess}: ${time(state.lastSuccessfulChangeCheckAt, l.syncStatusNotConfirmed)}',
@@ -232,19 +238,6 @@ class _SharingStatusDialog extends ConsumerWidget {
                 if (supplement.hasProblem) Text(l.syncStatusProblem),
                 if (supplement.requiresRefresh) Text(l.syncStatusNotConfirmed),
               ],
-              if (state.lastError != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  '${l.syncStatusLastError}: ${state.lastError!.code == 'server_identity_changed' ? l.syncStatusServerChanged : sharingErrorMessage(context, state.lastError!)}',
-                ),
-              ],
-              if (backgroundError != null &&
-                  !identical(backgroundError, state.lastError)) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${l.syncStatusLastError}: ${sharingErrorMessage(context, backgroundError)}',
-                ),
-              ],
               if (privateSync) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -262,18 +255,6 @@ class _SharingStatusDialog extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (state.lastError?.code == 'policy_acceptance_required')
-                    TextButton.icon(
-                      key: const ValueKey('sync-review-shared-rules'),
-                      onPressed: actionsEnabled
-                          ? () => showSharedContentPolicy(
-                              context,
-                              scopeId: scopeId,
-                            )
-                          : null,
-                      icon: const Icon(Icons.policy_outlined),
-                      label: Text(l.moderationPolicyTitle),
-                    ),
                   if (state.session != null || allowLocalActions)
                     TextButton.icon(
                       key: const ValueKey('sharing-sync-dialog-refresh'),

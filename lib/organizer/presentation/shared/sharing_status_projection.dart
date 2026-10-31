@@ -79,6 +79,7 @@ class SharingStatusProjection {
                   backgroundError.code == 'network'
         ? SharingSyncStatus.offline
         : state.lastError != null ||
+              state.syncFailures.isNotEmpty ||
               backgroundError != null ||
               conflicts > 0 ||
               blocked > 0

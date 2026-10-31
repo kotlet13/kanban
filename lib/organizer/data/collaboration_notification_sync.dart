@@ -380,6 +380,12 @@ extension CollaborationNotificationSync on CollaborationRepository {
         if (deniedScope != null && e.code == 'permission_revoked') {
           await _blockScope(p, deniedScope!, epoch);
         }
+        _captureSyncFailure(
+          e,
+          epoch: epoch,
+          stage: SyncFailureStage.notifications,
+          scopeId: deniedScope,
+        );
         _lastError = e;
       }
     }

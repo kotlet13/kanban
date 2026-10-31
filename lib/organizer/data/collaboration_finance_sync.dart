@@ -367,6 +367,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
       ]);
     });
 
+    var failureStage = SyncFailureStage.financePolicy;
     try {
       final policy = await _fetchFinancePolicy(
         session,
@@ -378,8 +379,11 @@ extension CollaborationFinanceSync on CollaborationRepository {
         await reviewed();
         return;
       }
+      failureStage = SyncFailureStage.financeUpload;
       if (policy.canWrite) await _pushFinanceScope(session, epoch, scope.id);
+      failureStage = SyncFailureStage.financeDownload;
       await _pullFinanceScope(session, epoch, scope.id);
+      failureStage = SyncFailureStage.financePolicy;
       if (_organizationFinanceSupported &&
           scope.kind == SharedScopeKind.project) {
         try {
@@ -407,6 +411,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
               policy.canWrite &&
               (scope.kind == SharedScopeKind.organization ||
                   scope.organizationId != null)) {
+        failureStage = SyncFailureStage.linkedPayments;
         await _fetchLinkedPayments(
           PaymentSpaceRef(scope.id, partition: p),
           syncLease: true,
@@ -414,12 +419,26 @@ extension CollaborationFinanceSync on CollaborationRepository {
         _checkEpoch(epoch);
       }
       await reviewed();
-    } on CryptoAuthorityPending {
+    } on CryptoAuthorityPending catch (error) {
       _checkEpoch(epoch);
+      _captureSyncFailure(
+        error,
+        epoch: epoch,
+        stage: failureStage,
+        scopeId: scope.id,
+      );
       _lastError ??= const CollaborationException(
         'crypto_reconciliation_required',
       );
     } on CollaborationApiException catch (e) {
+      if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
+        _captureSyncFailure(
+          e,
+          epoch: epoch,
+          stage: failureStage,
+          scopeId: scope.id,
+        );
+      }
       if (const {
         'crypto_scope_head_missing',
         'crypto_migration_required',
@@ -441,6 +460,14 @@ extension CollaborationFinanceSync on CollaborationRepository {
         await _storeFinancePolicy(p, scope.id, const SharedFinancePolicy());
         await reviewed();
       });
+    } catch (error) {
+      _captureSyncFailure(
+        error,
+        epoch: epoch,
+        stage: failureStage,
+        scopeId: scope.id,
+      );
+      rethrow;
     }
   }
 
@@ -481,12 +508,24 @@ extension CollaborationFinanceSync on CollaborationRepository {
             dependenciesOnly: true,
           );
         }
-      } on CryptoAuthorityPending {
+      } on CryptoAuthorityPending catch (error) {
         _checkEpoch(epoch);
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: SyncFailureStage.financeUpload,
+          scopeId: scope.id,
+        );
         _lastError ??= const CollaborationException(
           'crypto_reconciliation_required',
         );
       } on CollaborationApiException catch (error) {
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: SyncFailureStage.financeUpload,
+          scopeId: scope.id,
+        );
         if (!const {
           'crypto_scope_head_missing',
           'crypto_migration_required',
@@ -590,6 +629,12 @@ extension CollaborationFinanceSync on CollaborationRepository {
         });
       } on CollaborationApiException catch (e) {
         if (e.code == 'finance_forbidden' || e.code == 'scope_archived') {
+          _captureSyncFailure(
+            e,
+            epoch: epoch,
+            stage: SyncFailureStage.financeUpload,
+            scopeId: scope,
+          );
           await _fetchFinancePolicy(session, epoch, scope, syncLease: true);
           await database.transaction(() async {
             _checkEpoch(epoch);
@@ -638,6 +683,12 @@ extension CollaborationFinanceSync on CollaborationRepository {
                 [p, op['op_id']],
               );
             } else {
+              _captureSyncFailure(
+                e,
+                epoch: epoch,
+                stage: SyncFailureStage.financeUpload,
+                scopeId: scope,
+              );
               await database.execute(
                 "UPDATE finance_outbox SET state='conflict' WHERE partition=? AND scope_id=? AND record_id=?",
                 [p, scope, op['record_id']],
@@ -661,6 +712,14 @@ extension CollaborationFinanceSync on CollaborationRepository {
         final canonical = e.details['serverRecord'] == null
             ? null
             : _financeCanonical(e.details['serverRecord']);
+        if (e.code != 'conflict') {
+          _captureSyncFailure(
+            e,
+            epoch: epoch,
+            stage: SyncFailureStage.financeUpload,
+            scopeId: scope,
+          );
+        }
         await database.transaction(() async {
           _checkEpoch(epoch);
           await _validLease(p);
@@ -760,7 +819,17 @@ extension CollaborationFinanceSync on CollaborationRepository {
         }
         return;
       } on CollaborationApiException catch (e) {
-        if (e.code != 'finance_access_changed') rethrow;
+        if (e.code != 'finance_access_changed') {
+          if (e.code != 'finance_forbidden' && e.code != 'permission_revoked') {
+            _captureSyncFailure(
+              e,
+              epoch: epoch,
+              stage: SyncFailureStage.financeDownload,
+              scopeId: scope,
+            );
+          }
+          rethrow;
+        }
         await database.transaction(() async {
           _checkEpoch(epoch);
           await _validLease(p);

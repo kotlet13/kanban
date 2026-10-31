@@ -143,10 +143,19 @@ extension CollaborationSyncActions on CollaborationRepository {
 
   Future<void> _coordinateSyncJob({required bool manual}) async {
     final epoch = _epoch;
+    _lastCapturedSyncFailureError = null;
+    _lastCapturedSyncFailureScopeId = null;
     try {
       await _coordinateSyncPass(manual: manual);
     } catch (error) {
       if (!_closed && epoch == _epoch) {
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: _coordinatorProbePhase
+              ? SyncFailureStage.accountCheck
+              : SyncFailureStage.preflight,
+        );
         authorityReuse.invalidate();
         _lastErrorWasProbe = _coordinatorProbePhase;
         _lastError = error is CollaborationException
@@ -193,7 +202,16 @@ extension CollaborationSyncActions on CollaborationRepository {
       return;
     }
     if (_accessReviewEpoch != epoch) {
-      await _reviewAllAccess(session, epoch);
+      try {
+        await _reviewAllAccess(session, epoch);
+      } catch (error) {
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: SyncFailureStage.accessReview,
+        );
+        rethrow;
+      }
       _checkEpoch(epoch);
       authorityGeneration = authorityReuse.generation;
     }
@@ -498,6 +516,13 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (_lastErrorWasProbe) {
         _lastErrorWasProbe = false;
         _lastError = null;
+        _lastCapturedSyncFailureError = null;
+        _lastCapturedSyncFailureScopeId = null;
+        _syncFailures.removeWhere(
+          (failure) =>
+              failure.stage == SyncFailureStage.accountCheck ||
+              failure.stage == SyncFailureStage.accessReview,
+        );
       }
       if (verifiedDirectory) {
         await _acknowledgeAccountChanges(
@@ -659,6 +684,11 @@ extension CollaborationSyncActions on CollaborationRepository {
     _lastSyncAttemptAt = clock().toUtc();
     if (_sessionInvalidReason != null) {
       _lastError = CollaborationException(_sessionInvalidReason!);
+      _captureSyncFailure(
+        _lastError!,
+        epoch: _epoch,
+        stage: SyncFailureStage.preflight,
+      );
       await refreshLocal(
         scopeIds: changes == null || changes.access
             ? null
@@ -692,6 +722,14 @@ extension CollaborationSyncActions on CollaborationRepository {
     }
     final done = _syncDone = Completer<void>();
     var leaseClaimed = false, completed = false;
+    var failureStage = SyncFailureStage.preflight;
+    String? failureScopeId;
+    void capture(Object error) => _captureSyncFailure(
+      error,
+      epoch: epoch,
+      stage: failureStage,
+      scopeId: failureScopeId,
+    );
     final previousFullSuccess = _lastSuccessfulSyncAt;
     try {
       _lastError = null;
@@ -700,6 +738,31 @@ extension CollaborationSyncActions on CollaborationRepository {
         leaseClaimed = await _claimLease(partition);
         if (!leaseClaimed) return;
         _checkEpoch(epoch);
+        // Clear only work this transfer retries. A cheap probe or a selected
+        // unrelated domain cannot resolve an older scoped failure.
+        if (changes == null || changes.reset) {
+          _syncFailures.clear();
+        } else {
+          _syncFailures.removeWhere((failure) {
+            final scope = failure.scopeId;
+            if (scope == null) return true;
+            return switch (failure.stage) {
+              SyncFailureStage.upload ||
+              SyncFailureStage.download => changes.content(scope),
+              SyncFailureStage.financePolicy ||
+              SyncFailureStage.financeUpload ||
+              SyncFailureStage.financeDownload ||
+              SyncFailureStage.linkedPayments => changes.finance(scope),
+              SyncFailureStage.notifications =>
+                changes.inbox || changes.notificationConfiguration,
+              SyncFailureStage.recordPolicy =>
+                changes.access || changes.scopes.containsKey(scope),
+              _ => false,
+            };
+          });
+        }
+        _lastCapturedSyncFailureError = null;
+        _lastCapturedSyncFailureScopeId = null;
         await refreshLocal(
           scopeIds: changes == null || changes.access
               ? null
@@ -711,10 +774,12 @@ extension CollaborationSyncActions on CollaborationRepository {
         // terms endpoint outage and immediately retried by the next API read.
         await _renewDeviceSessionIfNeeded(session, epoch);
         if (_moderationSupported) {
+          failureStage = SyncFailureStage.moderation;
           try {
             await _refreshModerationStatus(session, epoch);
           } on CollaborationException catch (error) {
             _checkEpoch(epoch);
+            capture(error);
             if (_sessionInvalidReason != null) rethrow;
             // Terms service failure defers shared uploads, while personal sync and
             // authorized downloads continue independently.
@@ -724,9 +789,11 @@ extension CollaborationSyncActions on CollaborationRepository {
             _lastError = error;
           }
         }
+        failureStage = SyncFailureStage.preflight;
         await _retryRemotePushCleanups(epoch);
         await _syncRemotePushRegistration(session, epoch);
         late List<SharedScope> scopes;
+        failureStage = SyncFailureStage.metadata;
         Future<void> readMetadata() async {
           final reply = changes == null || changes.access
               ? await _callSession(session, epoch, 'scopes.list', {
@@ -795,6 +862,14 @@ extension CollaborationSyncActions on CollaborationRepository {
                   !scope.revoked) {
                 // A missing row is not proof of revoked membership: a restored or
                 // incomplete server must not silently lock the only local copy.
+                _captureSyncFailure(
+                  const CollaborationException(
+                    'crypto_reconciliation_required',
+                  ),
+                  epoch: epoch,
+                  stage: SyncFailureStage.metadata,
+                  scopeId: scope.id,
+                );
                 _lastError ??= const CollaborationException(
                   'crypto_reconciliation_required',
                 );
@@ -805,6 +880,14 @@ extension CollaborationSyncActions on CollaborationRepository {
               }
             }
             for (final scope in scopes) {
+              if (!cryptoPendingIds.contains(scope.id)) {
+                _syncFailures.removeWhere(
+                  (failure) =>
+                      failure.stage == SyncFailureStage.metadata &&
+                      failure.scopeId == scope.id &&
+                      failure.reason == 'crypto_reconciliation_required',
+                );
+              }
               await _upsertScope(partition, scope);
               if (!cryptoPendingIds.contains(scope.id)) {
                 await database.execute('DELETE FROM local_meta WHERE name=?', [
@@ -826,6 +909,19 @@ extension CollaborationSyncActions on CollaborationRepository {
             _lastError ??= const CollaborationException(
               'crypto_reconciliation_required',
             );
+            for (final pendingId in cryptoPendingIds.where(
+              (id) =>
+                  changes == null ||
+                  changes.access ||
+                  changes.scopes.containsKey(id),
+            )) {
+              _captureSyncFailure(
+                const CollaborationException('crypto_reconciliation_required'),
+                epoch: epoch,
+                stage: SyncFailureStage.metadata,
+                scopeId: pendingId,
+              );
+            }
           }
           // Pending discovery preserves the local view/immutable queues while
           // independent scopes continue. It is not authenticated revocation.
@@ -856,15 +952,32 @@ extension CollaborationSyncActions on CollaborationRepository {
                   // A real access hint must not reuse the older 60s label cache.
                   await _invalidateMemberDirectory(partition, scope.id);
                 }
+                _syncFailures.removeWhere(
+                  (failure) =>
+                      failure.stage == SyncFailureStage.metadata &&
+                      failure.scopeId == scope.id,
+                );
                 await _loadMembers(session, epoch, scope.id, syncLease: true);
-              } on CryptoAuthorityPending {
+              } on CryptoAuthorityPending catch (error) {
                 _checkEpoch(epoch);
+                _captureSyncFailure(
+                  error,
+                  epoch: epoch,
+                  stage: SyncFailureStage.metadata,
+                  scopeId: scope.id,
+                );
                 // One scope awaiting keys/identity must not starve independent scopes.
                 // Cached labels remain display-only and grant no upload authority.
                 _lastError ??= const CollaborationException(
                   'crypto_reconciliation_required',
                 );
               } on CollaborationApiException catch (error) {
+                _captureSyncFailure(
+                  error,
+                  epoch: epoch,
+                  stage: SyncFailureStage.metadata,
+                  scopeId: scope.id,
+                );
                 if (!const {
                   'crypto_scope_head_missing',
                   'crypto_migration_required',
@@ -914,8 +1027,10 @@ extension CollaborationSyncActions on CollaborationRepository {
           await readMetadataAndPrepareCursors();
         }
         if (_financeSupported) {
+          failureStage = SyncFailureStage.financePolicy;
           await _pushFinanceDependencies(session, epoch, financeScopes);
         }
+        failureStage = SyncFailureStage.upload;
         // Push first, retaining dirty candidates when subsequent pulls arrive.
         while (true) {
           _checkEpoch(epoch);
@@ -926,6 +1041,7 @@ extension CollaborationSyncActions on CollaborationRepository {
           );
           if (pending.isEmpty) break;
           final op = pending.first, scopeId = op['scope_id'] as String;
+          failureScopeId = scopeId;
           final pairKey = 'task_cost_pair:$partition:${op['op_id']}';
           final pairs = await database.rows(
             'SELECT value FROM local_meta WHERE name=?',
@@ -1145,6 +1261,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                   )) {
                 continue;
               }
+              if (error.code != 'conflict') capture(error);
               await database.transaction(() async {
                 _checkEpoch(epoch);
                 await _validLease(partition);
@@ -1182,6 +1299,7 @@ extension CollaborationSyncActions on CollaborationRepository {
               });
             } else if (financePair != null &&
                 error.code == 'finance_forbidden') {
+              capture(error);
               await database.transaction(() async {
                 _checkEpoch(epoch);
                 await _storeFinancePolicy(
@@ -1200,13 +1318,17 @@ extension CollaborationSyncActions on CollaborationRepository {
               });
             } else if ((error.code == 'permission_revoked' ||
                 error.code == 'scope_deleted')) {
+              capture(error);
               await _blockScope(partition, scopeId, epoch);
             } else {
               rethrow;
             }
           }
         }
+        failureStage = SyncFailureStage.download;
+        failureScopeId = null;
         for (final scope in contentScopes) {
+          failureScopeId = scope.id;
           if (!await _privateScopeAllowed(partition, scope)) continue;
           var more = true;
           while (more) {
@@ -1259,8 +1381,9 @@ extension CollaborationSyncActions on CollaborationRepository {
                   [next, partition, scope.id],
                 );
               });
-            } on CryptoAuthorityPending {
+            } on CryptoAuthorityPending catch (error) {
               _checkEpoch(epoch);
+              capture(error);
               _lastError ??= const CollaborationException(
                 'crypto_reconciliation_required',
               );
@@ -1272,6 +1395,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                 'crypto_device_keys_pending',
               }.contains(error.code)) {
                 _checkEpoch(epoch);
+                capture(error);
                 _lastError ??= const CollaborationException(
                   'crypto_reconciliation_required',
                 );
@@ -1286,9 +1410,11 @@ extension CollaborationSyncActions on CollaborationRepository {
             }
           }
         }
+        failureScopeId = null;
         await _mergeVerifiedRecordConflicts(session, epoch);
         if (_recordContractVersion >= 5) {
           for (final scope in contentScopes) {
+            failureScopeId = scope.id;
             if (!await _privateScopeAllowed(partition, scope)) continue;
             for (final row in await database.rows(
               "SELECT payload FROM records WHERE partition=? AND scope_id=? AND type='idea' AND deleted=0",
@@ -1319,7 +1445,9 @@ extension CollaborationSyncActions on CollaborationRepository {
             }
           }
         }
+        failureScopeId = null;
         if (_financeSupported) {
+          failureStage = SyncFailureStage.financePolicy;
           final dependencies = cryptoRouter;
           if (changes != null &&
               dependencies is CryptoTaskDerivationDependencies) {
@@ -1346,6 +1474,8 @@ extension CollaborationSyncActions on CollaborationRepository {
             changes: changes,
           );
         }
+        failureStage = SyncFailureStage.notifications;
+        failureScopeId = null;
         var notificationCommandAttempted = false;
         if (_inboxSupported && (changes == null || changes.inbox)) {
           await _syncInbox(session, epoch);
@@ -1360,6 +1490,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                 notificationCommandAttempted)) {
           await _syncNotificationConfiguration(session, epoch, scopes);
         }
+        failureStage = SyncFailureStage.recordPolicy;
         final upgrade = cryptoRouter;
         if (upgrade is CryptoRecordPolicyUpgrade) {
           for (final scope in scopes.where(
@@ -1368,6 +1499,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                 changes.access ||
                 changes.scopes.containsKey(s.id),
           )) {
+            failureScopeId = scope.id;
             if (!await _privateScopeAllowed(partition, scope)) continue;
             try {
               await _renewLease(partition);
@@ -1383,6 +1515,7 @@ extension CollaborationSyncActions on CollaborationRepository {
                 'crypto_record_policy_owner_pending',
                 'crypto_record_policy_existing_scope_upgrade_pending',
               }.contains(error.reason)) {
+                capture(error);
                 _lastError ??= const CollaborationException(
                   'crypto_reconciliation_required',
                 );
@@ -1390,12 +1523,20 @@ extension CollaborationSyncActions on CollaborationRepository {
             }
           }
         }
+        failureScopeId = null;
+        failureStage = SyncFailureStage.moderation;
         _checkEpoch(epoch);
         if (!_sharedUploadsAllowed &&
             (await database.rows(
               "SELECT 1 FROM outbox o JOIN scopes s ON s.partition=o.partition AND s.id=o.scope_id WHERE o.partition=? AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM finance_outbox o JOIN scopes s ON s.partition=o.partition AND s.id=o.scope_id WHERE o.partition=? AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM commands c JOIN scopes s ON s.partition=c.partition AND s.id=json_extract(c.params,'\$.scopeId') WHERE c.partition=? AND c.operation='reminders.put' AND json_extract(s.data,'\$.kind')!='personal' UNION ALL SELECT 1 FROM linked_payment_intents i JOIN scopes s ON s.partition=json_extract(i.data,'\$.partition') AND s.id=json_extract(i.data,'\$.source.space.id') WHERE s.partition=? AND i.state='pending' AND json_extract(i.data,'\$.operation')!='finance3.paymentProject' AND json_extract(s.data,'\$.kind')!='personal' LIMIT 1",
               [partition, partition, partition, partition],
             )).isNotEmpty) {
+          final policyError = CollaborationException(
+            _moderationSupported
+                ? 'policy_acceptance_required'
+                : 'moderation_upgrade_required',
+          );
+          capture(policyError);
           _lastError ??= CollaborationException(
             _moderationSupported
                 ? 'policy_acceptance_required'
@@ -1403,15 +1544,18 @@ extension CollaborationSyncActions on CollaborationRepository {
           );
         }
         completed = true;
-      } on CryptoAuthorityPending {
+      } on CryptoAuthorityPending catch (error) {
+        capture(error);
         if (epoch == _epoch) {
           _lastError = const CollaborationException(
             'crypto_reconciliation_required',
           );
         }
       } on CollaborationException catch (error) {
+        capture(error);
         if (epoch == _epoch) _lastError = error;
-      } catch (_) {
+      } catch (error) {
+        capture(error);
         if (epoch == _epoch) {
           _lastError = const CollaborationException('invalid_response');
         }
@@ -1424,6 +1568,11 @@ extension CollaborationSyncActions on CollaborationRepository {
             );
           }
         } catch (error) {
+          _captureSyncFailure(
+            error,
+            epoch: epoch,
+            stage: SyncFailureStage.completion,
+          );
           completed = false;
           if (epoch == _epoch) {
             _lastError = error is CollaborationException
@@ -1445,7 +1594,12 @@ extension CollaborationSyncActions on CollaborationRepository {
                   ? null
                   : changes.scopes.keys.toSet(),
             );
-          } catch (_) {
+          } catch (error) {
+            _captureSyncFailure(
+              error,
+              epoch: epoch,
+              stage: SyncFailureStage.localProjection,
+            );
             if (resumePayments && _fullSyncEpoch == epoch) {
               _fullSyncEpoch = null;
             }
@@ -1462,8 +1616,18 @@ extension CollaborationSyncActions on CollaborationRepository {
             collaboration: this,
           ).resumePending();
         } on CollaborationException catch (error) {
+          _captureSyncFailure(
+            error,
+            epoch: epoch,
+            stage: SyncFailureStage.linkedPayments,
+          );
           if (epoch == _epoch) _lastError = error;
-        } catch (_) {
+        } catch (error) {
+          _captureSyncFailure(
+            error,
+            epoch: epoch,
+            stage: SyncFailureStage.linkedPayments,
+          );
           if (epoch == _epoch) {
             _lastError = const CollaborationException('invalid_response');
           }
@@ -1482,6 +1646,11 @@ extension CollaborationSyncActions on CollaborationRepository {
                 : changes.scopes.keys.toSet(),
           );
         } catch (error) {
+          _captureSyncFailure(
+            error,
+            epoch: epoch,
+            stage: SyncFailureStage.localProjection,
+          );
           if (epoch == _epoch) {
             _lastSuccessfulSyncAt = previousSuccess;
             _lastError = error is CollaborationException
@@ -1492,6 +1661,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
       }
     } catch (error) {
+      capture(error);
       completed = false;
       if (epoch == _epoch) {
         _lastError = error is CollaborationException
@@ -1506,6 +1676,11 @@ extension CollaborationSyncActions on CollaborationRepository {
           try {
             work = await syncWork();
           } catch (error) {
+            _captureSyncFailure(
+              error,
+              epoch: epoch,
+              stage: SyncFailureStage.completion,
+            );
             completed = false;
             work = const CollaborationSyncWork(
               'bookkeeping_failed',

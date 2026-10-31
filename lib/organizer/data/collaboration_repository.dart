@@ -533,10 +533,63 @@ class CollaborationRepository {
   bool _changeCheckRequiresRefresh = false;
   bool _financeStatusRequiresRefresh = false;
   CollaborationException? _lastError;
+  final _syncFailures = <SyncFailureDetails>[];
+  Object? _lastCapturedSyncFailureError;
+  String? _lastCapturedSyncFailureScopeId;
+
+  void _captureSyncFailure(
+    Object error, {
+    required int epoch,
+    required SyncFailureStage stage,
+    String? scopeId,
+  }) {
+    try {
+      if (_closed || epoch != _epoch || _session == null) return;
+      if (identical(error, _lastCapturedSyncFailureError) &&
+          (scopeId == null || scopeId == _lastCapturedSyncFailureScopeId)) {
+        return;
+      }
+      _lastCapturedSyncFailureError = error;
+      _lastCapturedSyncFailureScopeId = scopeId;
+      final reason = error is CryptoAuthorityPending
+          ? (syncFailureSafeReasons.contains(error.reason)
+                ? error.reason
+                : 'crypto_pending')
+          : error is CryptoDirectoryException
+          ? error.code
+          : error is CollaborationException
+          ? error.code
+          : 'unknown';
+      final safeReason = safeSyncFailureReason(reason);
+      // Preserve the first precise context through existing cleanup catches.
+      // A canonical const error in another scope is a separate local failure.
+      _syncFailures.removeWhere(
+        (item) =>
+            item.stage == stage &&
+            item.scopeId == scopeId &&
+            item.reason == safeReason,
+      );
+      _syncFailures.add(
+        SyncFailureDetails(
+          stage: stage,
+          occurredAt: clock().toUtc(),
+          reason: safeReason,
+          scopeId: scopeId,
+        ),
+      );
+      if (_syncFailures.length > 20) _syncFailures.removeAt(0);
+    } catch (_) {
+      // Optional diagnostics must never replace a sync error or prevent cleanup.
+    }
+  }
+
   final _leaseOwner = newSharedId();
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    _syncFailures.clear();
+    _lastCapturedSyncFailureError = null;
+    _lastCapturedSyncFailureScopeId = null;
     authorityReuse.invalidate();
     _lastErrorWasProbe = false;
     _moderationVerifiedEpoch = null;
@@ -675,6 +728,7 @@ class CollaborationRepository {
       );
       if (epoch != _epoch || _closed) return;
       state = CollaborationState(
+        syncFailures: _syncFailures,
         lastError: _lastError,
         allSpacesSelected: selection.firstOrNull?['value'] == '1',
       );
@@ -909,6 +963,7 @@ class CollaborationRepository {
                 financeComplete[scope.id] != true,
           );
       state = CollaborationState(
+        syncFailures: _syncFailures,
         sharingRefresh: _sharingRefreshEpoch == epoch
             ? _sharingRefresh
             : const SharingRefreshState(),
@@ -1159,6 +1214,7 @@ class CollaborationRepository {
       lastChangeCheckAttemptAt: _lastChangeCheckAttemptAt,
       lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
       lastError: _lastError,
+      syncFailures: _syncFailures,
       hasUnresolvedSyncWork: localEvidence.unresolved,
       syncRequiresRefresh:
           _changeCheckRequiresRefresh ||

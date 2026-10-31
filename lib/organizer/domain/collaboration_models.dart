@@ -1,4 +1,6 @@
 import 'sharing_refresh_state.dart';
+import 'sync_failure_details.dart';
+export 'sync_failure_details.dart';
 import 'moderation_models.dart';
 export 'moderation_models.dart';
 import 'dart:collection';
@@ -500,7 +502,11 @@ class CollaborationState {
     required this.lastError,
     required this.syncRequiresRefresh,
     required this.hasUnresolvedSyncWork,
-  }) : sharingRefresh = previous.sharingRefresh,
+    List<SyncFailureDetails>? syncFailures,
+  }) : syncFailures = syncFailures == null
+           ? previous.syncFailures
+           : List.unmodifiable(syncFailures),
+       sharingRefresh = previous.sharingRefresh,
        session = previous.session,
        moderationSupported = previous.moderationSupported,
        sharedContentPolicy = previous.sharedContentPolicy,
@@ -624,7 +630,9 @@ class CollaborationState {
     this.hasUnresolvedSyncWork = false,
     this.syncRequiresRefresh = false,
     this.lastError,
-  }) : privateRecordIds = Map.unmodifiable(privateRecordIds),
+    List<SyncFailureDetails> syncFailures = const [],
+  }) : syncFailures = List.unmodifiable(syncFailures),
+       privateRecordIds = Map.unmodifiable(privateRecordIds),
        financeConflicts = List.unmodifiable(financeConflicts),
        financeSnapshotComplete = Map.unmodifiable(financeSnapshotComplete),
        financeSnapshotSequences = Map.unmodifiable(financeSnapshotSequences),
@@ -725,6 +733,7 @@ class CollaborationState {
   final DateTime? lastChangeCheckAttemptAt, lastSuccessfulChangeCheckAt;
   final bool hasUnresolvedSyncWork, syncRequiresRefresh;
   final CollaborationException? lastError;
+  final List<SyncFailureDetails> syncFailures;
   SharedScopeData dataForScope(String scopeId) =>
       data[scopeId] ?? SharedScopeData();
 }

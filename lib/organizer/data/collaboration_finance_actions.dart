@@ -60,6 +60,16 @@ extension CollaborationFinanceActions on CollaborationRepository {
       }
       policy = SharedFinancePolicy.fromJson(reply);
     } on CollaborationApiException catch (error) {
+      if (syncLease &&
+          error.code != 'finance_forbidden' &&
+          error.code != 'permission_revoked') {
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: SyncFailureStage.financePolicy,
+          scopeId: scopeId,
+        );
+      }
       if (error.code == 'finance_forbidden' ||
           error.code == 'permission_revoked') {
         // Every policy fetch, including dependency preflight, must invalidate
