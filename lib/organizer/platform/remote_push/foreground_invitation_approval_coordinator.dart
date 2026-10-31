@@ -36,8 +36,28 @@ final foregroundInvitationApprovalRunnerProvider =
               isForegroundCurrent: isCurrent,
               invitationIds: invitationIds,
             );
+        if (isCurrent()) {
+          // Fixed vocabulary only; no IDs, recipient data or exception text.
+          final reasons = result.invitations
+              .map(
+                (item) =>
+                    safeForegroundInvitationApprovalReason(item.errorCode),
+              )
+              .toSet()
+              .join(',');
+          debugPrint(
+            'invitation_autoapproval completed=${result.completed} pending=${result.pending} reasons=$reasons',
+          );
+        }
         if (result.completed > 0 && isCurrent()) {
-          await repository.refreshInvitationApprovalInbox(isCurrent: isCurrent);
+          try {
+            await repository.refreshInvitationApprovalInbox(
+              isCurrent: isCurrent,
+            );
+          } catch (_) {
+            // Display-only cleanup is separate from the verified completion.
+            debugPrint('invitation_autoapproval notice_refresh_pending');
+          }
         }
       },
     );
@@ -60,7 +80,7 @@ class _ForegroundInvitationApprovalCoordinatorState
   AppLifecycleState? _lifecycle;
   bool _running = false, _scheduled = false, _requestedDuringRun = false;
   String? _identity;
-  bool _entered = false;
+  bool _entered = false, _explicitRequestPending = false;
   final _seenEvents = <String>{};
   int _generation = 0;
 
@@ -139,6 +159,7 @@ class _ForegroundInvitationApprovalCoordinatorState
           }
         : <String>{};
     _entered = true;
+    _explicitRequestPending = false;
     _seenEvents.addAll(_acceptedEvents(currentState));
     bool current() {
       if (!mounted || generation != _generation || !_eligible()) return false;
@@ -152,9 +173,11 @@ class _ForegroundInvitationApprovalCoordinatorState
         current,
         invitationIds,
       );
-    } catch (_) {
-      // The exact server invitation remains pending and can be opened from the
-      // inbox or member list. Automatic work never interrupts the active user.
+    } catch (error) {
+      debugPrint(
+        'invitation_autoapproval pending reason=${safeForegroundInvitationApprovalReason(error)}',
+      );
+      // The exact retained Send remains available for a later foreground event.
     } finally {
       _running = false;
       if (_requestedDuringRun) {
@@ -173,11 +196,16 @@ class _ForegroundInvitationApprovalCoordinatorState
       _generation++;
       _entered = false;
       _seenEvents.clear();
+      _explicitRequestPending = false;
     }
     _identity = identity;
     if (!_eligible()) return;
     final accepted = _acceptedEvents(state!);
-    if (_entered && accepted.every(_seenEvents.contains)) return;
+    if (!_explicitRequestPending &&
+        _entered &&
+        accepted.every(_seenEvents.contains)) {
+      return;
+    }
     _schedule();
   }
 
@@ -192,7 +220,12 @@ class _ForegroundInvitationApprovalCoordinatorState
     ref.listen(collaborationProvider, (_, next) => _changed(next.valueOrNull));
     ref.listen(
       foregroundInvitationApprovalRequestProvider,
-      (_, _) => _changed(ref.read(collaborationProvider).valueOrNull),
+      // A push can arrive for an already-seen inbox event after a transient
+      // failure. An explicit wake-up must be allowed to retry the retained job.
+      (_, _) {
+        _explicitRequestPending = true;
+        _schedule();
+      },
     );
     _changed(ref.watch(collaborationProvider).valueOrNull);
     return widget.child;

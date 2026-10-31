@@ -76,6 +76,7 @@ Future<bool> showScopeInvitation(
     fields: [
       SharingField(
         id: 'recipient',
+        sensitive: true,
         inputBuilder: initial.recipientSearchSupported && username
             ? (controller, enabled, validator) => InvitationRecipientField(
                 key: ValueKey(

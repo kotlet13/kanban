@@ -125,19 +125,50 @@ class GettingStartedChoices extends StatelessWidget {
   }
 }
 
-class GettingStartedHint extends ConsumerWidget {
+class GettingStartedHint extends ConsumerStatefulWidget {
   const GettingStartedHint({
     super.key,
     required this.onStart,
     this.onInvitation,
+    this.alreadyStarted = false,
   });
   final VoidCallback onStart;
   final VoidCallback? onInvitation;
+  final bool alreadyStarted;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GettingStartedHint> createState() => _GettingStartedHintState();
+}
+
+class _GettingStartedHintState extends ConsumerState<GettingStartedHint> {
+  bool? _showThisVisit;
+
+  void _finishVisit(VoidCallback action) {
+    setState(() => _showThisVisit = false);
+    action();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final seen = ref.watch(gettingStartedSeenProvider);
     final guideSeen = ref.watch(firstTimeGuideSeenProvider);
-    if (seen.valueOrNull != false && guideSeen.valueOrNull != false) {
+    if (_showThisVisit == null && seen.hasValue) {
+      _showThisVisit = seen.value == false && !widget.alreadyStarted;
+      if (seen.value == false) {
+        // Keep the hint during this first visit, but don't show it on every
+        // return to Personal/Pulse just because the separate guide is unread.
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          try {
+            await ref.read(gettingStartedSeenProvider.notifier).acknowledge();
+          } catch (_) {
+            // Optional help state must never block local work. Retry naturally
+            // on a later visit if the preference could not be stored.
+          }
+        });
+      }
+    }
+    if (_showThisVisit != true || widget.alreadyStarted) {
       return const SizedBox.shrink();
     }
     final l = context.l10n;
@@ -149,27 +180,41 @@ class GettingStartedHint extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l.setupTitle,
-                style: Theme.of(context).textTheme.titleMedium,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l.setupTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('getting-started-dismiss'),
+                    tooltip: l.close,
+                    onPressed: () => setState(() => _showThisVisit = false),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(l.setupHint),
               TextButton.icon(
                 key: const ValueKey('first-launch-invitation'),
-                onPressed: onInvitation ?? onStart,
+                onPressed: () =>
+                    _finishVisit(widget.onInvitation ?? widget.onStart),
                 icon: const Icon(Icons.mark_email_unread_outlined),
                 label: Text(l.invitationFlowOpen),
               ),
               if (guideSeen.valueOrNull == false)
                 TextButton.icon(
-                  onPressed: () => showFirstTimeGuide(context, ref),
+                  onPressed: () =>
+                      _finishVisit(() => showFirstTimeGuide(context, ref)),
                   icon: const Icon(Icons.explore_outlined),
                   label: Text(l.guideOpen),
                 ),
-              if (seen.valueOrNull == false)
+              if (_showThisVisit == true)
                 TextButton.icon(
-                  onPressed: onStart,
+                  onPressed: () => _finishVisit(widget.onStart),
                   icon: const Icon(Icons.arrow_forward),
                   label: Text(l.setupChoose),
                 ),

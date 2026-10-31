@@ -555,6 +555,17 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
   );
   Future<AccountStatus> confirmEmailVerification(String token) =>
       _repo.confirmEmailVerification(token);
+  Future<AccountStatus> confirmEmailVerificationLink(
+    String token, {
+    required String accountId,
+    required String serverId,
+    required String email,
+  }) => _repo.confirmEmailVerification(
+    token,
+    accountId: accountId,
+    serverId: serverId,
+    email: email,
+  );
   Future<void> requestPasswordReset({
     required String serverUrl,
     required String username,

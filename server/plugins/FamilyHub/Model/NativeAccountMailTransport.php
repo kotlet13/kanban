@@ -1,7 +1,7 @@
 <?php
 namespace Kanboard\Plugin\FamilyHub\Model;
 
-/** No global BCC, core queue, URLs or inbox preferences for security mail. */
+/** No global BCC, core queue or inbox preferences for security mail. */
 class NativeAccountMailTransport
 {
     public static function securityMessage($kind, $language)
@@ -27,6 +27,21 @@ class NativeAccountMailTransport
         };
     }
 
+    public static function verificationMessage($code,$language,array $details)
+    {
+        $english=$language==='en';
+        $base=NativeEmailInvitationService::publicUrl($details['serverUrl']??'');
+        foreach (['accountId','serverId'] as $key) { if (!is_string($details[$key]??null) || !preg_match('/^[a-f0-9-]{36}$/D',$details[$key])) { throw new NativeError('validation_error'); } }
+        if (!preg_match('/^fhv1_[a-f0-9]{64}$/D',$code)) { throw new NativeError('validation_error'); }
+        $url=$base.'/index.php?controller=EmailVerificationController&action=show&plugin=FamilyHub&language='.($english?'en':'sl').'#'.http_build_query(['token'=>$code,'accountId'=>$details['accountId'],'serverId'=>$details['serverId'],'email'=>$details['email']],'','&',PHP_QUERY_RFC3986);
+        $title=$english?'Confirm your email':'Potrdi e-pošto';
+        $body=($english?'Open this link, review the account and choose Confirm email:':'Odpri povezavo, preveri račun in izberi Potrdi e-pošto:')."\n\n".$url."\n\n".
+            ($english?'Or enter this one-time code in the Jivie app:':'Lahko pa v aplikacijo Jivie vneseš to enkratno kodo:')."\n".$code."\n\n".
+            ($english?'Valid until ':'Velja do ').gmdate('Y-m-d H:i',(int)($details['expiresAt']??0)).' UTC.'."\n\n".
+            ($english?'If you did not request this, ignore the message.':'Če tega nisi zahteval, sporočilo prezri.');
+        return [$title,$body];
+    }
+
     public function send($recipient, $purpose, $code, $id, $language, array $details = [])
     {
         $config = NativeSmtpTransport::configuration();
@@ -38,6 +53,9 @@ class NativeAccountMailTransport
         $english = $language === 'en';
         $title = $purpose === 'verify' ? ($english ? 'Confirm your email' : 'Potrdite e-pošto') : ($english ? 'Reset your password' : 'Ponastavite geslo');
         $body = ($english ? 'Enter this one-time code in the Jivie app:' : 'To enkratno kodo vnesite v aplikacijo Jivie:')."\n\n".$code."\n\n".($english ? 'If you did not request this, ignore the message.' : 'Če tega niste zahtevali, sporočilo prezrite.');
+        if ($purpose === 'verify') {
+            [$title,$body]=self::verificationMessage($code,$language,$details);
+        }
         if ($purpose === 'invitation') {
             $title=$english?'Invitation to Jivie':'Povabilo v Jivie';
             $project=($details['scopeKind']??'')==='project';
@@ -47,7 +65,7 @@ class NativeAccountMailTransport
             $access=$viewer?($english?'You can view this '.$scopeLabel.'in Jivie.':'V Jivie si lahko ogledaš ta '.trim($scopeLabel).'.'):
                 ($english?'You can collaborate in this '.$scopeLabel.'in Jivie.':'V Jivie lahko sodelujete v tem '.($project?'projektu.':'prostoru.'));
             if ($modern) {
-                $access.="\n".($english?'Access: ':'Dostop: ').($viewer?($english?'View only':'Samo ogled'):($english?'Full access (including deleting content and managing members)':'Polni dostop (tudi brisanje vsebine in upravljanje članov)'));
+                $access.="\n".($english?'Access: ':'Dostop: ').($viewer?($english?'Can view':'Bralec'):($english?'Member':'Član'))."\n".($english?'Review the exact permissions in the app.':'Natančne pravice preveri v aplikaciji.');
             }
             $expiry=(int)($details['expiresAt']??0);
             $formatted=$expiry>0?gmdate($english?'Y-m-d H:i':'d. m. Y H:i',$expiry).' UTC':'';

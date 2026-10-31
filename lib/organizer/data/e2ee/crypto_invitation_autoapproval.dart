@@ -1,5 +1,51 @@
 part of 'invite_crypto_repository.dart';
 
+enum ForegroundInvitationApprovalStatus { completed, pending, manualReview }
+
+class ForegroundInvitationApprovalResult {
+  const ForegroundInvitationApprovalResult(this.status, [this.reason]);
+  final ForegroundInvitationApprovalStatus status;
+  final String? reason;
+}
+
+/// Static codes only: never expose exception text, invitation IDs, tokens,
+/// account labels or other server-provided values in automatic diagnostics.
+String safeForegroundInvitationApprovalReason(Object error) {
+  final code = error is String
+      ? error
+      : error is CryptoAuthorityPending
+      ? error.reason
+      : error is CollaborationApiException
+      ? error.code
+      : error is FormatException
+      ? error.message
+      : 'invitation_approval_pending';
+  const allowed = {
+    'crypto_invitation_foreground_required',
+    'crypto_stale_identity',
+    'invitation_acceptance_pending',
+    'invitation_send_pending',
+    'invitation_list_pending',
+    'invitation_not_accepted',
+    'invitation_invalid',
+    'invitation_acceptance_changed',
+    'invitation_acceptance_binding',
+    'crypto_invitation_auto_policy_changed',
+    'crypto_invitation_auto_membership_changed',
+    'crypto_invitation_auto_acceptance_changed',
+    'crypto_invitation_auto_acceptance',
+    'crypto_invitation_auto_binding',
+    'crypto_invitation_auto_rights',
+    'crypto_invitation_auto_hint',
+    'scope_review_confirmation_required',
+    'scope_receipt_pending',
+    'crypto_invitation_original_intent_missing',
+    'network_unavailable',
+    'invitation_approval_pending',
+  };
+  return allowed.contains(code) ? code : 'invitation_approval_pending';
+}
+
 /// Routing and display only. Every transition still requires the exact signed
 /// Send, recipient acceptance, fresh verified policy and foreground authority.
 class ForegroundInvitationApprovalPending {
@@ -14,9 +60,10 @@ class ForegroundInvitationApprovalPending {
 class ForegroundInvitationApprovalSummary {
   const ForegroundInvitationApprovalSummary({
     this.completed = 0,
+    this.examined = 0,
     this.invitations = const [],
   });
-  final int completed;
+  final int completed, examined;
   final List<ForegroundInvitationApprovalPending> invitations;
   int get pending => invitations.length;
 }
@@ -25,6 +72,51 @@ final _foregroundInvitationRuns =
     <String, Future<ForegroundInvitationApprovalSummary>>{};
 
 extension ForegroundInvitationApproval on InviteCryptoRepository {
+  Future<ForegroundInvitationApprovalResult>
+  _finishForegroundInvitationApproval({
+    required String scopeId,
+    required String invitationId,
+    required bool Function() isForegroundCurrent,
+    InvitationAcceptanceNotification? expectedAcceptance,
+  }) async {
+    _foregroundGuard(isForegroundCurrent);
+    // The page must wait for a sweep already completing this same account,
+    // then verify using its own foreground capability and exact notification.
+    final running = _foregroundInvitationRuns[access.account.store.partition];
+    if (running != null) await running;
+    _foregroundGuard(isForegroundCurrent);
+    final summary = await _accountWorkProcessForegroundAutoApprovals(
+      isForegroundCurrent: isForegroundCurrent,
+      invitationIds: {invitationId},
+      targetScopeId: scopeId,
+      expectedAcceptance: expectedAcceptance,
+      reconcileCompleted: true,
+    );
+    _foregroundGuard(isForegroundCurrent);
+    if (summary.completed == 1) {
+      return const ForegroundInvitationApprovalResult(
+        ForegroundInvitationApprovalStatus.completed,
+      );
+    }
+    final reason = summary.examined == 0
+        ? 'crypto_invitation_original_intent_missing'
+        : summary.invitations.firstOrNull?.errorCode ??
+              'invitation_approval_pending';
+    const manualReasons = {
+      'crypto_invitation_original_intent_missing',
+      'crypto_invitation_auto_policy_changed',
+      'crypto_invitation_auto_rights',
+      'invitation_acceptance_changed',
+      'crypto_invitation_auto_acceptance_changed',
+    };
+    return ForegroundInvitationApprovalResult(
+      manualReasons.contains(reason)
+          ? ForegroundInvitationApprovalStatus.manualReview
+          : ForegroundInvitationApprovalStatus.pending,
+      reason,
+    );
+  }
+
   void _foregroundGuard(bool Function() current) {
     if (!current() || !access.account.directory.isCurrent()) {
       throw const CryptoAuthorityPending(
@@ -136,17 +228,35 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
   _accountWorkProcessForegroundAutoApprovals({
     required bool Function() isForegroundCurrent,
     Set<String> invitationIds = const {},
+    String? targetScopeId,
+    InvitationAcceptanceNotification? expectedAcceptance,
+    bool reconcileCompleted = false,
   }) async {
     _foregroundGuard(isForegroundCurrent);
     final partition = access.account.store.partition;
     // A second account/device caller must never inherit another foreground
     // capability. It may ask for a later sweep after this run completes.
-    if (_foregroundInvitationRuns.containsKey(partition)) {
-      return const ForegroundInvitationApprovalSummary();
+    final running = _foregroundInvitationRuns[partition];
+    if (running != null) {
+      if (!reconcileCompleted) {
+        return const ForegroundInvitationApprovalSummary();
+      }
+      await running;
+      _foregroundGuard(isForegroundCurrent);
+      return _accountWorkProcessForegroundAutoApprovals(
+        isForegroundCurrent: isForegroundCurrent,
+        invitationIds: invitationIds,
+        targetScopeId: targetScopeId,
+        expectedAcceptance: expectedAcceptance,
+        reconcileCompleted: true,
+      );
     }
     final task = _processForegroundApprovals(
       isForegroundCurrent,
       invitationIds,
+      targetScopeId: targetScopeId,
+      expectedAcceptance: expectedAcceptance,
+      reconcileCompleted: reconcileCompleted,
     );
     _foregroundInvitationRuns[partition] = task;
     try {
@@ -160,8 +270,11 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
 
   Future<ForegroundInvitationApprovalSummary> _processForegroundApprovals(
     bool Function() current,
-    Set<String> invitationIds,
-  ) async {
+    Set<String> invitationIds, {
+    String? targetScopeId,
+    InvitationAcceptanceNotification? expectedAcceptance,
+    bool reconcileCompleted = false,
+  }) async {
     final store = access.account.store,
         session = access.account.directory.session.profile;
     if (invitationIds.length > 100 ||
@@ -171,9 +284,17 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
     final hints = invitationIds.isEmpty
         ? ''
         : " AND intent_id IN (${List.filled(invitationIds.length, '?').join(',')})";
+    final states = reconcileCompleted
+        ? "state IN ('invitationForegroundApproval','invitationForegroundApprovalComplete')"
+        : "state='invitationForegroundApproval'";
+    final target = targetScopeId == null ? '' : ' AND scope_id=?';
     final rows = await store.database.rows(
-      "SELECT scope_id,intent_id,payload FROM crypto_membership_intents WHERE partition=? AND state='invitationForegroundApproval'$hints ORDER BY COALESCE(json_extract(CAST(payload AS TEXT),'\$.lastExamined'),0),scope_id,intent_id LIMIT 100",
-      [store.partition, ...invitationIds.map((id) => 'autoInvitation:$id')],
+      "SELECT scope_id,intent_id,payload,state FROM crypto_membership_intents WHERE partition=? AND $states$hints$target ORDER BY COALESCE(json_extract(CAST(payload AS TEXT),'\$.lastExamined'),0),scope_id,intent_id LIMIT 100",
+      [
+        store.partition,
+        ...invitationIds.map((id) => 'autoInvitation:$id'),
+        if (targetScopeId != null) targetScopeId,
+      ],
     );
     var completed = 0;
     final pending = <ForegroundInvitationApprovalPending>[];
@@ -203,6 +324,14 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
           throw const CryptoAuthorityPending('invitation_send_pending');
         }
         final proof = _autoDecode(commands.single['authorization']);
+        if (expectedAcceptance != null &&
+            (expectedAcceptance.scopeId != scope ||
+                expectedAcceptance.invitationId != id ||
+                expectedAcceptance.tokenHash != original['tokenHash'] ||
+                expectedAcceptance.creatorProofHash !=
+                    await cryptoSha256(CryptoJson.encode(proof)))) {
+          throw const FormatException('invitation_acceptance_changed');
+        }
         final command =
             CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
         if (command['serverId'] != session.serverId ||
@@ -225,13 +354,21 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
         }
         final state = selected.single['state'];
         if (state == 'revoked' || state == 'expired') {
+          if (reconcileCompleted) {
+            throw const CryptoAuthorityPending('invitation_invalid');
+          }
           await store.database.execute(
             "UPDATE crypto_membership_intents SET state='invitationForegroundApprovalClosed' WHERE partition=? AND scope_id=? AND intent_id=?",
             [store.partition, scope, row['intent_id']],
           );
           continue;
         }
-        if (state != 'accepted' && state != 'consumed') continue;
+        if (state != 'accepted' && state != 'consumed') {
+          if (reconcileCompleted) {
+            throw const CryptoAuthorityPending('invitation_not_accepted');
+          }
+          continue;
+        }
         final head = await access.currentHead(scope, online: true);
         final recipient = state == 'consumed'
             ? await _retainedConsumedRecipient(saved, scope, id, head)
@@ -241,6 +378,10 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
                 acceptanceProofHash: saved['acceptanceProofHash'],
               );
         final acceptanceHash = recipient.response['acceptanceProofHash'];
+        if (expectedAcceptance != null &&
+            expectedAcceptance.acceptanceProofHash != acceptanceHash) {
+          throw const FormatException('invitation_acceptance_changed');
+        }
         final acceptedCommand =
             CryptoJson.decode(
                   cryptoBase64(recipient.authorization['commandBase64']),
@@ -320,6 +461,22 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
           }
         }
 
+        bool exactMembership(VerifiedScopeHead candidate) =>
+            candidate.members.any(
+              (member) =>
+                  member['accountId'] == recipient.creator.accountId &&
+                  [
+                    'role',
+                    'financeRole',
+                    'manageKeys',
+                  ].every((key) => member[key] == rights[key]),
+            ) &&
+            (candidate.body['membershipIntents'] as List).any(
+              (intent) =>
+                  intent['accountId'] == recipient.creator.accountId &&
+                  intent['invitationId'] == id &&
+                  intent['acceptanceProofHash'] == acceptanceHash,
+            );
         Future<void> freshBoundary() => access.withVerifiedOperation(() async {
           await guard(recipient);
           await access.account.directory.requireFresh();
@@ -333,6 +490,12 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
             );
           }
           final parent = await access.currentHead(scope, online: true);
+          if (row['state'] == 'invitationForegroundApprovalComplete' &&
+              !exactMembership(parent)) {
+            throw const CryptoAuthorityPending(
+              'crypto_invitation_auto_membership_changed',
+            );
+          }
           if (parent.members.any(
             (m) => m['accountId'] == recipient.creator.accountId,
           )) {
@@ -367,6 +530,19 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
               v['invitationId'] == id &&
               v['acceptanceProofHash'] == acceptanceHash,
         );
+        if (row['state'] == 'invitationForegroundApprovalComplete') {
+          // A local completion marker alone is not proof. Recheck the exact
+          // signed acceptance, live membership intent, rights and directory.
+          if (!already) {
+            throw const CryptoAuthorityPending(
+              'crypto_invitation_auto_membership_changed',
+            );
+          }
+          await freshBoundary();
+          _foregroundGuard(current);
+          completed++;
+          continue;
+        }
         if (already) {
           await manager.reconcileAppliedRotation(
             scopeId: scope,
@@ -444,13 +620,7 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
         );
         completed++;
       } catch (error) {
-        final code = error is CryptoAuthorityPending
-            ? error.reason
-            : error is CollaborationApiException
-            ? error.code
-            : error is FormatException
-            ? error.message
-            : 'invitation_approval_pending';
+        final code = safeForegroundInvitationApprovalReason(error);
         pending.add(ForegroundInvitationApprovalPending(scope, id, code));
       } finally {
         // Fair bounded backlog on later foreground events. Exact inbox hints
@@ -464,6 +634,7 @@ extension ForegroundInvitationApproval on InviteCryptoRepository {
     }
     return ForegroundInvitationApprovalSummary(
       completed: completed,
+      examined: rows.length,
       invitations: List.unmodifiable(pending),
     );
   }

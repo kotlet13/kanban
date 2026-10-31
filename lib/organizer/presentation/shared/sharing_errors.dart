@@ -112,6 +112,10 @@ String sharingErrorMessage(BuildContext context, Object error) {
   }
   final l = context.l10n;
   return switch (error.code) {
+    'server_error' =>
+      Localizations.localeOf(context).languageCode == 'sl'
+          ? 'Strežnik ni mogel dokončati dejanja. Povabilo je ohranjeno; poskusi znova pozneje.'
+          : 'The server could not complete the action. Your invitation is retained; try again later.',
     'crypto_reconciliation_required' ||
     'crypto_transport_required' ||
     'crypto_server_upgrade_required' => l.cryptoConnectionPending,

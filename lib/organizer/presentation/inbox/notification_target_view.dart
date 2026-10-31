@@ -1,3 +1,5 @@
+import '../../data/collaboration_repository.dart'
+    show CollaborationNotificationRouting;
 import '../../state/shared_record_access.dart';
 import '../shopping_page.dart';
 import '../ideas/ideas_page.dart';
@@ -63,8 +65,15 @@ Future<bool> showNotificationTarget(
       return false;
     }
     final l = context.l10n;
+    // Consuming an invitation hides its notice. A retained typed acceptance
+    // may still wake exact local proof reconciliation; deleted alone is never
+    // evidence of successful admission or authority to grant access.
+    final reconcileResolvedInvitation =
+        result.status == NotificationOpenStatus.deleted &&
+        target.invitationAcceptance != null;
     if (result.status != NotificationOpenStatus.available &&
-        result.status != NotificationOpenStatus.offline) {
+        result.status != NotificationOpenStatus.offline &&
+        !reconcileResolvedInvitation) {
       final message = switch (result.status) {
         NotificationOpenStatus.deleted => l.inboxDeleted,
         NotificationOpenStatus.permissionDenied => l.sharingAccessRevoked,
@@ -99,12 +108,15 @@ Future<bool> showNotificationTarget(
         (current?.session == null || !target.matches(current!.session!))) {
       return false;
     }
-    final acceptance = result.target.invitationAcceptance;
+    final acceptance = reconcileResolvedInvitation
+        ? target.invitationAcceptance
+        : result.target.invitationAcceptance;
     if (acceptance != null) {
       final scope = current?.scopes
           .where((s) => s.id == acceptance.scopeId)
           .firstOrNull;
-      if (result.status != NotificationOpenStatus.available ||
+      if ((result.status != NotificationOpenStatus.available &&
+              !reconcileResolvedInvitation) ||
           scope == null ||
           !scope.canManage ||
           scope.blocked ||
@@ -133,18 +145,43 @@ Future<bool> showNotificationTarget(
           )) {
         return false;
       }
-      await Navigator.of(context, rootNavigator: true).push<void>(
-        MaterialPageRoute(
-          builder: (_) => CryptoInvitationPage(
-            account: account,
-            scopeId: scope.id,
-            invitationId: acceptance.invitationId,
-            label: scope.name,
-            kind: scope.kind,
-            expectedAcceptance: acceptance,
-          ),
-        ),
-      );
+      final approved = await Navigator.of(context, rootNavigator: true)
+          .push<String>(
+            MaterialPageRoute(
+              builder: (_) => CryptoInvitationPage(
+                account: account,
+                scopeId: scope.id,
+                invitationId: acceptance.invitationId,
+                label: scope.name,
+                kind: scope.kind,
+                expectedAcceptance: acceptance,
+              ),
+            ),
+          );
+      if (approved == scope.id &&
+          context.mounted &&
+          isCurrent?.call() != false &&
+          account.directory.isCurrent()) {
+        bool stillCurrent() {
+          final session = ref.read(collaborationProvider).valueOrNull?.session;
+          return context.mounted &&
+              isCurrent?.call() != false &&
+              account.directory.isCurrent() &&
+              session?.partition == capturedSession?.partition &&
+              session?.deviceId == capturedSession?.deviceId;
+        }
+
+        if (stillCurrent()) {
+          try {
+            await repository.refreshInvitationApprovalInbox(
+              isCurrent: stillCurrent,
+            );
+          } catch (_) {
+            // Optional notice cleanup cannot invalidate proven access. Ordinary
+            // inbox sync retains responsibility for a later refresh.
+          }
+        }
+      }
       return true;
     }
     if (target.records.isNotEmpty &&

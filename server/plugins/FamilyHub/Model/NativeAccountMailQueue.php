@@ -57,7 +57,7 @@ class NativeAccountMailQueue extends NativeDatabase
             try {
                 $code = NativeAccountMailCrypto::decrypt($job['token_cipher'], (new NativeAccountTokens($this->container))->aad($id, $row['account_id']));
                 if (!hash_equals($row['token_hash'], hash('sha256', $code))) { throw new NativeError('email_unavailable', 503); }
-                if (($transport->send($row['email'], $row['purpose'], $code, $id, $job['language'])['accepted'] ?? false) !== true) { throw new NativeError('email_unavailable', 503); }
+                if (($transport->send($row['email'], $row['purpose'], $code, $id, $job['language'], $row['purpose']==='verify'?['email'=>$row['email'],'accountId'=>$row['account_id'],'serverId'=>$this->serverId(),'serverUrl'=>NativeEmailInvitationService::publicUrl($this->configModel->get('application_url')),'expiresAt'=>(int)$row['expires_at']]:[])['accepted'] ?? false) !== true) { throw new NativeError('email_unavailable', 503); }
                 $this->finish($id, $lease, 'accepted'); return 'accepted';
             } catch (\Throwable $ignored) {
                 if ((int)$job['attempts'] >= 5) { $this->finish($id, $lease, 'cancelled'); return 'cancelled'; }

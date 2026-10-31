@@ -16,12 +16,13 @@ class SharingInvitationDetails extends StatelessWidget {
     required this.invitation,
     this.showPermissions = true,
     this.compact = false,
+    this.concise = false,
     this.verifiedInvitation,
   });
   final SharedInvitationPreview invitation;
   final VerifiedCryptoInvitation? verifiedInvitation;
   // The final encrypted review renders its verified permission projection.
-  final bool showPermissions, compact;
+  final bool showPermissions, compact, concise;
 
   @override
   Widget build(BuildContext context) {
@@ -118,15 +119,15 @@ class SharingInvitationDetails extends StatelessWidget {
                 : sharingRoleLabel(context, invitation.role),
           ),
         if (!compact) ...[
-          if (recipientEmail != null)
+          if (!concise && recipientEmail != null)
             Text(l.emailInviteFor(recipientEmail))
-          else
+          else if (!concise)
             Text(recipientUsername),
           Text(
             '${l.sharingExpires} ${organizerDate(context, expiresAt.toLocal())} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(expiresAt.toLocal()), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}',
           ),
           const SizedBox(height: 12),
-          Text(l.invitationFlowPersonalStaysPrivate),
+          if (!concise) Text(l.invitationFlowPersonalStaysPrivate),
           if (showPermissions) ...[
             if (invitation.contractVersion == 3) ...[
               const SizedBox(height: 12),

@@ -458,6 +458,21 @@ class _SharingFormDialogState extends State<_SharingFormDialog> {
                                 enableIMEPersonalizedLearning:
                                     !field.obscure && !field.sensitive,
                                 autocorrect: false,
+                                textCapitalization: TextCapitalization.none,
+                                smartDashesType:
+                                    field.sensitive ||
+                                        field.keyboardType ==
+                                            TextInputType.emailAddress ||
+                                        field.keyboardType == TextInputType.url
+                                    ? SmartDashesType.disabled
+                                    : null,
+                                smartQuotesType:
+                                    field.sensitive ||
+                                        field.keyboardType ==
+                                            TextInputType.emailAddress ||
+                                        field.keyboardType == TextInputType.url
+                                    ? SmartQuotesType.disabled
+                                    : null,
                                 readOnly: field.readOnly,
                                 enabled: !_busy,
                                 keyboardType: field.keyboardType,

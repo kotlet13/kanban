@@ -75,10 +75,18 @@ extension CollaborationAccountRecovery on CollaborationRepository {
     });
   }
 
-  Future<AccountStatus> confirmEmailVerification(String token) async {
+  Future<AccountStatus> confirmEmailVerification(
+    String token, {
+    String? accountId,
+    String? serverId,
+    String? email,
+  }) async {
     final session = _requireSession(), epoch = _epoch;
     await _callSession(session, epoch, 'account.email.confirm', {
       'token': token,
+      if (accountId != null) 'accountId': accountId,
+      if (serverId != null) 'serverId': serverId,
+      if (email != null) 'email': email,
     });
     _checkEpoch(epoch);
     return accountStatus();

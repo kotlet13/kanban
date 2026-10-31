@@ -39,6 +39,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="jivie" android:host="invite" />
+                <data android:scheme="jivie" android:host="verify-email" />
+                <data android:scheme="vsakdan" android:host="verify-email" />
                 <data android:scheme="vsakdan" android:host="invite" />
             </intent-filter>
         </activity>

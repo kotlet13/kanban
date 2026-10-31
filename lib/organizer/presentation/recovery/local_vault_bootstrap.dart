@@ -9,6 +9,7 @@ import '../../../widgets/jivie_startup_logo.dart';
 import '../../data/local_vault.dart';
 import '../../data/local_vault_open.dart';
 import '../../platform/recovery/recovery_file_io.dart';
+import 'recovery_file_explanation.dart';
 import '../../state/app_preferences_provider.dart';
 
 final localVaultServiceProvider = FutureProvider<LocalVaultService>(
@@ -213,7 +214,11 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
         phase == LocalVaultPhase.needsSetup ||
         phase == LocalVaultPhase.recoveryUnverified;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.recoverySetupTitle)),
+      appBar: AppBar(
+        title: Text(
+          mayPrepare ? l10n.recoverySaveFile : l10n.recoverySetupTitle,
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -222,15 +227,15 @@ class _LocalVaultBootstrapState extends ConsumerState<LocalVaultBootstrap> {
               padding: const EdgeInsets.all(24),
               children: [
                 Text(
-                  l10n.recoveryInstallationScope,
+                  mayPrepare
+                      ? l10n.recoverySaveFile
+                      : l10n.recoveryInstallationScope,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 16),
-                Text(l10n.recoveryInstallationExplanation),
-                const SizedBox(height: 16),
-                Text(l10n.recoveryFileWarning),
-                const SizedBox(height: 16),
-                Text(l10n.recoveryLocalProtectionOnly),
+                const RecoveryFileExplanation(
+                  scope: RecoveryFileScope.installation,
+                ),
                 const SizedBox(height: 24),
                 if (unsupported) Text(l10n.recoveryUnsupported),
                 if (locked) Text(l10n.recoveryLockedExplanation),

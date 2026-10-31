@@ -30,22 +30,53 @@ class NativeAccountService extends NativeDatabase
                 return ['accepted' => true];
             }
             if ($operation === 'account.email.confirm') {
-                $this->fields($params, ['token']);
-                $tokens = new NativeAccountTokens($this->container);
-                $row = $tokens->valid($params['token'], 'verify', $user);
-                if (!$identity || $identity['pending_email'] !== $row['email'] || (int)$identity['revision'] !== (int)$row['identity_revision']) { throw new NativeError('account_token_invalid', 404); }
-                $other=$this->one('SELECT account_id FROM familyhub_email_identities WHERE email=? AND verified_at IS NOT NULL AND account_id<>?',[$row['email'],$user['account_id']]);
-                if ($other) { throw new NativeError('email_unavailable',409); }
-                $tokens->consume($row);
-                $this->change('UPDATE familyhub_email_identities SET email=?,verified_at=?,pending_email=NULL WHERE account_id=?', [$row['email'], time(), $user['account_id']]);
-                $this->change('UPDATE familyhub_invitations SET recipient_account_id=? WHERE recipient_email=? AND recipient_account_id IS NULL',[$user['account_id'],$row['email']]);
-                $this->change('UPDATE users SET email=? WHERE id=?', [$row['email'], $user['id']]);
-                $tokens->revoke($user['account_id'], 'reset');
-                return ['verified' => true];
+                $this->fields($params, ['token'], ['accountId','serverId','email']);
+                if (isset($params['accountId']) || isset($params['serverId'])) {
+                    $this->binding($params, $user['account_id']);
+                }
+                if (isset($params['email']) && $params['email']!==($identity['pending_email']??null)) { throw new NativeError('account_token_invalid',404); }
+                return $this->confirm($params['token'], $user, $identity);
             }
             throw new NativeError('unsupported_operation', 404);
         },$operation==='account.email.confirm');
         if ($result instanceof NativeError) { throw $result; }
         return $result;
+    }
+
+    /** Explicit capability POST from the email landing; never a login or membership action. */
+    public function confirmLink(array $params)
+    {
+        if (!NativeAccountMailCrypto::configured()) { throw new NativeError('email_unavailable',503); }
+        $this->fields($params,['token','accountId','serverId','email']);
+        $this->rate([['account-email-link-ip:'.$this->ip,20,900]]);
+        return $this->transaction(function () use ($params) {
+            $row=(new NativeAccountTokens($this->container))->lookup($params['token'],'verify');
+            $this->binding($params,$row['account_id']);
+            if ($params['email']!==$row['email']) { throw new NativeError('account_token_invalid',404); }
+            $account=$this->one('SELECT user_id FROM familyhub_accounts WHERE account_id=?',[$row['account_id']]);
+            $user=$account?$this->one('SELECT * FROM users WHERE id=?'.$this->lockSuffix(),[$account['user_id']]):null;
+            if (!$user || (int)$user['is_active']!==1 || (int)$user['is_ldap_user']!==0 || (int)$user['disable_login_form']!==0) { throw new NativeError('account_token_invalid',404); }
+            $user['account_id']=$row['account_id'];
+            $identity=$this->one('SELECT * FROM familyhub_email_identities WHERE account_id=?',[$row['account_id']]);
+            return $this->confirm($params['token'],$user,$identity);
+        },true);
+    }
+    private function binding(array $params,$account)
+    {
+        if (($params['accountId']??null)!==$account || ($params['serverId']??null)!==$this->serverId()) { throw new NativeError('account_token_invalid',404); }
+    }
+    private function confirm($token,array $user,$identity)
+    {
+        $tokens=new NativeAccountTokens($this->container);
+        $row=$tokens->valid($token,'verify',$user);
+        if (!$identity || $identity['pending_email']!==$row['email'] || (int)$identity['revision']!==(int)$row['identity_revision']) { throw new NativeError('account_token_invalid',404); }
+        $other=$this->one('SELECT account_id FROM familyhub_email_identities WHERE email=? AND verified_at IS NOT NULL AND account_id<>?',[$row['email'],$user['account_id']]);
+        if ($other) { throw new NativeError('email_unavailable',409); }
+        $tokens->consume($row);
+        $this->change('UPDATE familyhub_email_identities SET email=?,verified_at=?,pending_email=NULL WHERE account_id=?',[$row['email'],time(),$user['account_id']]);
+        $this->change('UPDATE familyhub_invitations SET recipient_account_id=? WHERE recipient_email=? AND recipient_account_id IS NULL',[$user['account_id'],$row['email']]);
+        $this->change('UPDATE users SET email=? WHERE id=?',[$row['email'],$user['id']]);
+        $tokens->revoke($user['account_id'],'reset');
+        return ['verified'=>true];
     }
 }

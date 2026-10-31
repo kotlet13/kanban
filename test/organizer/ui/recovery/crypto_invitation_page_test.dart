@@ -120,6 +120,17 @@ class _Invites extends InviteCryptoRepository {
   int trusts = 0, accepts = 0, grants = 0, resumes = 0;
   VerifiedCryptoInvitation inspectedInvitation = _invite;
   @override
+  Future<ForegroundInvitationApprovalResult>
+  finishForegroundInvitationApproval({
+    required String scopeId,
+    required String invitationId,
+    required bool Function() isForegroundCurrent,
+    InvitationAcceptanceNotification? expectedAcceptance,
+  }) async => const ForegroundInvitationApprovalResult(
+    ForegroundInvitationApprovalStatus.manualReview,
+    'crypto_invitation_original_intent_missing',
+  );
+  @override
   ScopeCryptoManager get manager => _Manager(access);
   @override
   Future<String?> resumeAccepted(String invitationId) async {
@@ -135,8 +146,9 @@ class _Invites extends InviteCryptoRepository {
   @override
   Future<VerifiedCryptoInvitation> acceptedRecipient(
     String scopeId,
-    String invitationId,
-  ) async => _invite;
+    String invitationId, {
+    String? acceptanceProofHash,
+  }) async => _invite;
   @override
   Future<void> trustCreatorFromDirectory(
     VerifiedCryptoInvitation invite,
@@ -159,8 +171,10 @@ class _Invites extends InviteCryptoRepository {
   @override
   Future<void> admit(
     VerifiedCryptoInvitation recipient,
-    ScopeRotationReview reviewedInventory,
-  ) async {
+    ScopeRotationReview reviewedInventory, {
+    Future<void> Function(VerifiedCryptoInvitation)? beforeDisclosure,
+    Future<void> Function()? freshDisclosureBoundary,
+  }) async {
     grants++;
     await grantGate?.future;
     if (grantError != null) throw grantError!;
@@ -877,6 +891,14 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(invites.grants, 1);
+        expect(
+          find.text(locale == 'sl' ? 'Dostop omogočen' : 'Access enabled'),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('crypto-invitation-approved-close')),
+        );
+        await tester.pumpAndSettle();
         expect(result, 'scope');
         expect(tester.takeException(), isNull);
       },

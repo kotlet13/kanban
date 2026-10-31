@@ -85,6 +85,11 @@ class OrganizerTodayPage extends ConsumerWidget {
       headerHint: onGettingStarted == null
           ? null
           : GettingStartedHint(
+              alreadyStarted:
+                  shared.valueOrNull?.session != null ||
+                  snapshot.tasks.isNotEmpty ||
+                  snapshot.events.isNotEmpty ||
+                  snapshot.projects.isNotEmpty,
               onStart: onGettingStarted!,
               onInvitation: onInvitation,
             ),

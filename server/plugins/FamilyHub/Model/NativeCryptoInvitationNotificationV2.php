@@ -34,10 +34,11 @@ class NativeCryptoInvitationNotificationV2 extends NativeDatabase
         $row = $this->one('SELECT * FROM familyhub_crypto_invitations_v2 WHERE id=?', [$id]);
         if (!$row || $row['state'] !== 'accepted' || !$this->creation($row)) return;
         $writer = new NativeNotificationWriter($this->container);
-        // The opaque group retains the exact proof hash without a new schema or
-        // any content. This also prevents distinct acceptances being coalesced.
+        // Keep all 256 proof bits, but fit the existing VARCHAR(120) group key.
+        // The invitation ID is already stored in target_id and bound by event_key.
+        // Never truncate a proof hash or coalesce distinct acceptance proofs.
         $writer->insert($row['scope_id'], $row['creator_account_id'], $row['recipient_account_id'],
-            'membership', $id, 1, self::KIND, 'membership', 'personal', self::eventKey($id, $hash), $id.':'.$hash);
+            'membership', $id, 1, self::KIND, 'membership', 'personal', self::eventKey($id, $hash), 'a2_'.rtrim(strtr(base64_encode(hex2bin($hash)), '+/', '-_'), '='));
     }
 
     /** Fresh lifecycle + exact proof association for inbox reads and both delivery workers. */
@@ -46,17 +47,31 @@ class NativeCryptoInvitationNotificationV2 extends NativeDatabase
         if (!$inbox || $inbox['kind'] !== self::KIND || $inbox['target_type'] !== 'membership'
             || $inbox['category'] !== 'membership' || $inbox['audience'] !== 'personal') return null;
         $parts = explode(':', $inbox['group_key']);
-        if (count($parts) !== 6 || $parts[0] !== $inbox['scope_id'] || $parts[1] !== $inbox['target_id']
-            || !preg_match('/^[a-f0-9]{64}$/D', $parts[2]) || $parts[3] !== 'membership'
-            || $parts[4] !== 'personal' || !ctype_digit($parts[5])
-            || !hash_equals(self::eventKey($inbox['target_id'], $parts[2]), $inbox['event_key'])) return null;
+        $hash = null;
+        if (count($parts) === 5 && preg_match('/^a2_[A-Za-z0-9_-]{43}$/D', $parts[1])
+            && $parts[2] === 'membership' && $parts[3] === 'personal' && ctype_digit($parts[4])) {
+            $encoded = substr($parts[1], 3);
+            $bytes = base64_decode(strtr($encoded, '-_', '+/').'=', true);
+            // Require canonical encoding, including unused bits in the last character.
+            if ($bytes !== false && strlen($bytes) === 32
+                && rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=') === $encoded) {
+                $hash = bin2hex($bytes);
+            }
+        } elseif (count($parts) === 6 && $parts[1] === $inbox['target_id']
+            && preg_match('/^[a-f0-9]{64}$/D', $parts[2]) && $parts[3] === 'membership'
+            && $parts[4] === 'personal' && ctype_digit($parts[5])) {
+            // Preserve already-stored legacy notifications (e.g. SQLite installations).
+            $hash = $parts[2];
+        }
+        if ($hash === null || $parts[0] !== $inbox['scope_id']
+            || !hash_equals(self::eventKey($inbox['target_id'], $hash), $inbox['event_key'])) return null;
         $row = $this->one('SELECT * FROM familyhub_crypto_invitations_v2 WHERE id=?', [$inbox['target_id']]);
         if (!$row || $row['state'] !== 'accepted' || $row['scope_id'] !== $inbox['scope_id']
             || $row['creator_account_id'] !== $inbox['recipient_account_id']
             || $row['recipient_account_id'] !== $inbox['actor_account_id']) return null;
         $creation = $this->creation($row);
         if (!$creation) return null;
-        $accepted = $this->one("SELECT * FROM familyhub_crypto_invitation_acceptances_v2 WHERE invitation_id=? AND proof_hash=? AND account_id=? AND state='accepted'", [$row['id'],$parts[2],$row['recipient_account_id']]);
+        $accepted = $this->one("SELECT * FROM familyhub_crypto_invitation_acceptances_v2 WHERE invitation_id=? AND proof_hash=? AND account_id=? AND state='accepted'", [$row['id'],$hash,$row['recipient_account_id']]);
         if (!$accepted) return null;
         $proof = json_decode($accepted['authorization'], true, 34, JSON_THROW_ON_ERROR);
         [$command] = NativeCryptoCodec::decode($proof);
@@ -68,14 +83,14 @@ class NativeCryptoInvitationNotificationV2 extends NativeDatabase
             || $p['tokenHash'] !== $row['token_hash'] || $p['creatorProofHash'] !== $creation['hash']
             || $p['role'] !== $row['role'] || $p['expiresAt'] !== (int)$row['expires_at']
             || $p['membershipHeadHash'] !== $creation['command']['payload']['membershipHeadHash']
-            || NativeCryptoV2Codec::hash((object)$proof) !== $parts[2]) return null;
+            || NativeCryptoV2Codec::hash((object)$proof) !== $hash) return null;
         try {
             (new NativeCryptoInvitationV2($this->container))->usable($row);
         } catch (NativeError $error) {
             if (in_array($error->status, [403,404,409], true)) return null;
             throw $error;
         }
-        return ['scopeId'=>$row['scope_id'],'invitationId'=>$row['id'],'acceptanceProofHash'=>$parts[2],
+        return ['scopeId'=>$row['scope_id'],'invitationId'=>$row['id'],'acceptanceProofHash'=>$hash,
             'creatorProofHash'=>$creation['hash'],'tokenHash'=>$row['token_hash']];
     }
 

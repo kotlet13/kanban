@@ -14,6 +14,7 @@ import 'package:kanban/organizer/data/pending_invitation_store.dart';
 import 'package:kanban/organizer/platform/invitation_links/invitation_link.dart';
 import 'package:kanban/organizer/platform/invitation_links/invitation_link_providers.dart';
 import 'package:kanban/organizer/presentation/shared/invitation_wizard.dart';
+import 'package:kanban/organizer/presentation/shared/hosting_disclosure.dart';
 import 'package:kanban/organizer/presentation/shared/verified_invitation_permissions.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 import 'package:kanban/organizer/data/collaboration_repository.dart';
@@ -157,7 +158,7 @@ class _CryptoInvites extends InviteCryptoRepository {
   _CryptoInvites(_CryptoAccount account)
     : super(SessionCryptoAccess(account: account));
   int trusts = 0, accepts = 0, resumes = 0;
-  Object? trustError, resumeError;
+  Object? trustError, resumeError, acceptError;
   Completer<void>? trustGate;
   Future<void> Function()? afterAccept;
   String? resumedScope, resumedAfterAccept;
@@ -216,6 +217,7 @@ class _CryptoInvites extends InviteCryptoRepository {
   }) async {
     await trustCreatorFromDirectory(invite);
     accepts++;
+    if (acceptError != null) throw acceptError!;
     if (resumedAfterAccept != null) resumedScope = resumedAfterAccept;
     await afterAccept?.call();
     return {};
@@ -353,6 +355,230 @@ Future<void> _enter(WidgetTester tester, String key, String value) async {
 }
 
 void main() {
+  testWidgets('inviteReview main link stays primary and confirms origin', (
+    tester,
+  ) async {
+    final controller = _Controller(initial: CollaborationState());
+    await _pump(tester, controller);
+    final input = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(const ValueKey('invitation-flow-input')),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(input.keyboardType, TextInputType.url);
+    expect(input.autocorrect, isFalse);
+    expect(input.enableSuggestions, isFalse);
+    expect(input.textCapitalization, TextCapitalization.none);
+    expect(input.smartDashesType, SmartDashesType.disabled);
+    expect(input.smartQuotesType, SmartQuotesType.disabled);
+    expect(find.byKey(const ValueKey('invitation-flow-server')), findsNothing);
+    expect(find.byKey(const ValueKey('invitation-flow-code')), findsNothing);
+    final exact = _link.toUri().toString();
+    await _enter(tester, 'input', exact);
+    expect(input.controller!.text, exact);
+    await _tap(tester, 'invitation-flow-open');
+    expect(
+      find.byKey(const ValueKey('invitation-flow-confirm-origin')),
+      findsOneWidget,
+    );
+    expect(controller.previews, 0);
+    expect(controller.savedInvitation?.token, _link.token);
+    expect(controller.calls, isNot(contains('accept')));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'inviteReview advanced code preserves same trust gate and token',
+    (tester) async {
+      final controller = _Controller(initial: CollaborationState());
+      await _pump(tester, controller);
+      await _tap(tester, 'invitation-flow-advanced-input');
+      await _enter(tester, 'code', _link.token);
+      await _enter(tester, 'server', _link.serverUrl);
+      await _tap(tester, 'invitation-flow-open');
+      expect(
+        find.byKey(const ValueKey('invitation-flow-confirm-origin')),
+        findsOneWidget,
+      );
+      expect(controller.previews, 0);
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(controller.savedInvitation?.serverUrl, _link.serverUrl);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'inviteReview registration keeps short context after trust gate',
+    (tester) async {
+      final controller = _Controller(initial: CollaborationState());
+      await _pump(tester, controller, link: _link);
+      expect(find.byType(HostingDisclosureForServer), findsOneWidget);
+      await _tap(tester, 'invitation-flow-confirm-origin');
+      expect(find.byType(HostingDisclosureForServer), findsNothing);
+      await _tap(tester, 'invitation-flow-register-choice');
+      final l = AppLocalizations.of(
+        tester.element(find.byType(InvitationWizard)),
+      )!;
+      expect(find.byType(HostingDisclosureForServer), findsNothing);
+      expect(find.text(l.invitationFlowStepsWriter), findsNothing);
+      expect(
+        find.byKey(const ValueKey('invitation-flow-username')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('invitation-flow-confirm')),
+        findsOneWidget,
+      );
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(controller.calls, isNot(contains('accept')));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  VerifiedCryptoInvitation reviewFor(String username) =>
+      VerifiedCryptoInvitation(
+        {
+          'scope': {'recordPolicyVersion': 1},
+          'invitation': {
+            'id': 'saved-invite',
+            'scopeId': sharingScopeId,
+            'state': 'pending',
+          },
+          'creatorAuthorization': {
+            'commandBase64': base64Encode(
+              CryptoJson.encode({
+                'payload': {
+                  'invitationId': 'saved-invite',
+                  'scopeId': sharingScopeId,
+                  'expiresAt': 4070908800,
+                  'role': 'member',
+                  'recipient': {'kind': 'username', 'value': username},
+                },
+              }),
+            ),
+          },
+        },
+        _CryptoDirectory(),
+        [],
+      );
+
+  testWidgets(
+    'inviteReview consent keeps actual member rights and hides matched account switch',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..inspectedInvitation = reviewFor(sharingSession().username);
+      await _pump(tester, controller, link: _link, crypto: crypto);
+      final l = AppLocalizations.of(
+        tester.element(find.byType(InvitationWizard)),
+      )!;
+      expect(find.text(l.sharingRecordMemberDescription), findsOneWidget);
+      expect(find.text(l.inviteReviewVisibility), findsOneWidget);
+      expect(find.text(l.invitationFlowPersonalStaysPrivate), findsNothing);
+      expect(find.byType(HostingDisclosureForServer), findsNothing);
+      expect(find.textContaining(l.sharingExpires), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('invitation-flow-other-account')),
+        findsNothing,
+      );
+      expect(crypto.accepts, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('inviteReview wrong recipient retains account escape', (
+    tester,
+  ) async {
+    final controller = _Controller(encrypted: true);
+    final crypto = _CryptoInvites(_CryptoAccount())
+      ..inspectedInvitation = reviewFor('another-recipient');
+    await _pump(tester, controller, link: _link, crypto: crypto);
+    expect(
+      find.byKey(const ValueKey('invitation-flow-other-account')),
+      findsOneWidget,
+    );
+    await _tap(tester, 'invitation-flow-other-account');
+    expect(
+      find.byKey(const ValueKey('invitation-flow-password')),
+      findsOneWidget,
+    );
+    expect(controller.savedInvitation?.token, _link.token);
+    expect(crypto.accepts, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'inviteReview accepted invitation keeps access action without account switch',
+    (tester) async {
+      final controller = _Controller(encrypted: true, awaitingApproval: true);
+      final crypto = _CryptoInvites(_CryptoAccount());
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+          invitationId: 'saved-invite',
+          accountPartition: sharingSession().partition,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      final l = AppLocalizations.of(
+        tester.element(find.byType(InvitationWizard)),
+      )!;
+      expect(find.text(l.cryptoSharingCheckAccess), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('invitation-flow-other-account')),
+        findsNothing,
+      );
+      expect(crypto.accepts, 0);
+      expect(controller.savedInvitation?.token, _link.token);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'invite31 server failure is visible and same invitation can resume',
+    (tester) async {
+      final controller = _Controller(encrypted: true);
+      final crypto = _CryptoInvites(_CryptoAccount())
+        ..acceptError = const CollaborationException('server_error');
+      final store = MemoryPendingInvitationStore()
+        ..value = PendingInvitation(
+          serverUrl: _link.serverUrl,
+          token: _link.token,
+          serverId: sharingSession().serverId,
+        );
+      await _pump(
+        tester,
+        controller,
+        link: _link,
+        crypto: crypto,
+        store: store,
+      );
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 1);
+      expect(store.value?.token, _link.token);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining('Strežnik ni mogel'),
+        ),
+        findsOneWidget,
+      );
+      crypto.acceptError = null;
+      await _tap(tester, 'invitation-flow-join');
+      expect(crypto.accepts, 2);
+      expect(store.value?.invitationId, 'saved-invite');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   Future<NavigatorState> coverInvitation(WidgetTester tester) async {
     final navigator = Navigator.of(
       tester.element(find.byType(InvitationWizard)),

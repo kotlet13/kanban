@@ -79,6 +79,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     with WidgetsBindingObserver {
   final _form = GlobalKey<FormState>();
   final _input = TextEditingController();
+  final _code = TextEditingController();
   final _server = TextEditingController();
   final _username = TextEditingController();
   final _name = TextEditingController();
@@ -98,6 +99,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
   String? _pinnedServerId, _boundPartition, _joinedIdentity;
   bool _superseded = false;
   bool _cryptoPending = false;
+  String? _acceptedRecipientIdentity;
   bool _declined = false, _recipientVerifiedForDecline = false;
   String? _declinedIdentity;
   InvitationLink? _declinedLink;
@@ -199,6 +201,25 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       _verifiedLink?.token == _link?.token &&
       _sameServer(_verifiedLink?.serverUrl, _link?.serverUrl) &&
       _matchingSession;
+  bool get _hasMatchedRecipient {
+    if (!_matchingSession) return false;
+    if (_joined || _acceptedRecipientIdentity == _identity) return true;
+    if (!_reviewMatchesCurrent) return false;
+    final verified = _verifiedInvitation!;
+    final signed = verifiedInvitationPayload(verified);
+    final recipient = verified.legacyEvidence == null
+        ? signed['recipient'] as Map
+        : verified.invitation['recipient'] as Map;
+    if (recipient['accountId'] is String) {
+      return recipient['accountId'] == _session!.accountId;
+    }
+    if (recipient['kind'] == 'username') {
+      return (recipient['value'] as String).toLowerCase() ==
+          _session!.username.toLowerCase();
+    }
+    return _recipientVerifiedForDecline;
+  }
+
   bool get _matchingSession {
     final state = ref.read(collaborationProvider).valueOrNull;
     return state != null &&
@@ -276,7 +297,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
 
   Future<void> _openInput() async {
     final link = InvitationLink.tryParseInput(
-      _input.text,
+      _input.text.trim().isNotEmpty ? _input.text : _code.text,
       serverUrl: _server.text.trim(),
     );
     if (link == null) {
@@ -322,6 +343,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
           saved?.invitationId != null &&
           saved?.accountPartition == _session?.partition) {
         acceptedCheckpoint = true;
+        _acceptedRecipientIdentity = identity;
         setState(() {
           // A saved acceptance can resume before any preview is available.
           // Keep its existing access-check action visible if resumption fails
@@ -485,6 +507,11 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
           _lastError = error;
           _error = sharingErrorMessage(context, error);
         });
+        // Long invitation previews can put the inline error below the viewport.
+        // Keep the draft/link in place and make this failed action visible now.
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(_error!)));
       }
     } finally {
       if (mounted) {
@@ -773,6 +800,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     });
     if (!current() || !savedAcceptance) return;
     setState(() {
+      _acceptedRecipientIdentity = identity;
       _cryptoPending = true;
       _lastAccessRefresh = _accessRefreshClock.elapsed;
       _preauthorizedAccepted = isPreauthorizedInvitation(invite);
@@ -839,7 +867,10 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     final account = await repository.connectedCryptoAccount();
     if (!_canDecline || _identity != identity || _link != link) return;
     await _cryptoInvites(account).decline(verified, actionId: _declineActionId);
-    if (!_active || !_matchingSession || _identity != identity || _link != link) {
+    if (!_active ||
+        !_matchingSession ||
+        _identity != identity ||
+        _link != link) {
       return;
     }
     setState(() {
@@ -886,6 +917,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     String label, {
     bool secret = false,
     bool readOnly = false,
+    TextInputType? keyboardType,
     String? Function(String?)? validate,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
@@ -899,7 +931,11 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
         readOnly: readOnly,
         obscureText: obscure,
         autocorrect: false,
-        enableSuggestions: !secret,
+        textCapitalization: TextCapitalization.none,
+        smartDashesType: SmartDashesType.disabled,
+        smartQuotesType: SmartQuotesType.disabled,
+        keyboardType: keyboardType,
+        enableSuggestions: !secret && keyboardType == null,
         enableIMEPersonalizedLearning: !secret,
         decoration: InputDecoration(labelText: label, suffixIcon: toggle),
         validator: (value) => value == null || value.trim().isEmpty
@@ -924,6 +960,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
     _generation++;
     for (final c in [
       _input,
+      _code,
       _server,
       _username,
       _name,
@@ -982,6 +1019,7 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
       _cryptoSetupRequired = false;
       _refreshPreviewOnReturn = false;
       _cryptoPending = false;
+      _acceptedRecipientIdentity = null;
       _notice = null;
     });
     ref.listen(pendingInvitationLinkProvider, (_, incoming) {
@@ -1029,11 +1067,29 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                     if (_step == _InvitationStep.input) ...[
                       Text(l.invitationFlowPasteHelp),
                       const SizedBox(height: 24),
-                      _field('input', _input, l.invitationFlowLinkOrCode),
+                      _field(
+                        'input',
+                        _input,
+                        l.inviteReviewLink,
+                        keyboardType: TextInputType.url,
+                      ),
                       ExpansionTile(
-                        title: Text(l.invitationFlowCodeServer),
-                        initiallyExpanded: _server.text.isEmpty,
-                        children: [_field('server', _server, l.serverURL)],
+                        key: const ValueKey('invitation-flow-advanced-input'),
+                        title: Text(l.inviteReviewCodeOption),
+                        children: [
+                          _field(
+                            'code',
+                            _code,
+                            l.inviteReviewCode,
+                            keyboardType: TextInputType.visiblePassword,
+                          ),
+                          _field(
+                            'server',
+                            _server,
+                            l.serverURL,
+                            keyboardType: TextInputType.url,
+                          ),
+                        ],
                       ),
                       FilledButton(
                         key: const ValueKey('invitation-flow-open'),
@@ -1055,26 +1111,22 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                       ),
                     ] else ...[
                       if (_preview != null) ...[
-                        Text(
-                          _preview!.role == SharedRole.viewer
-                              ? l.invitationFlowStepsViewer
-                              : l.invitationFlowStepsWriter,
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        const SizedBox(height: 12),
                         if (!auth && _matchingSession && !_joined) ...[
                           SharingInvitationDetails(
                             invitation: _preview!,
                             showPermissions: _preview!.contractVersion != 4,
+                            concise: _preview!.contractVersion == 4,
                             verifiedInvitation: _reviewMatchesCurrent
                                 ? _verifiedInvitation
                                 : null,
                           ),
-                          if (_reviewMatchesCurrent)
+                          if (_reviewMatchesCurrent) ...[
                             VerifiedInvitationPermissions(
                               invitation: _verifiedInvitation!,
-                              explainContent: true,
                             ),
+                            const SizedBox(height: 12),
+                            Text(l.inviteReviewVisibility),
+                          ],
                         ] else ...[
                           Text(
                             _preview!.scopeNameAvailable
@@ -1082,7 +1134,9 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                                     _preview!.scopeName,
                                   )
                                 : l.cryptoInvitationTargetUnavailable,
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: auth
+                                ? Theme.of(context).textTheme.bodyMedium
+                                : Theme.of(context).textTheme.titleLarge,
                           ),
                           if (_preview!.inviterEmail != null ||
                               _preview!.inviterName.isNotEmpty)
@@ -1094,11 +1148,6 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                         ],
                       ],
                       const SizedBox(height: 16),
-                      HostingDisclosureForServer(
-                        serverUrl: _link!.serverUrl,
-                        compact: true,
-                      ),
-                      const SizedBox(height: 24),
                       if (!auth) ...[
                         if (_declined) ...[
                           Text(l.invitationFlowDeclined),
@@ -1164,10 +1213,16 @@ class _InvitationWizardState extends ConsumerState<InvitationWizard>
                               onPressed: () => _run(_loadPreview),
                               child: Text(l.organizerRetry),
                             ),
-                          TextButton(
-                            onPressed: _busy ? null : () => _chooseAuth(false),
-                            child: Text(l.invitationFlowOtherAccount),
-                          ),
+                          if (!_hasMatchedRecipient)
+                            TextButton(
+                              key: const ValueKey(
+                                'invitation-flow-other-account',
+                              ),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _chooseAuth(false),
+                              child: Text(l.invitationFlowOtherAccount),
+                            ),
                         ] else ...[
                           Text(l.invitationFlowSignInToJoin),
                           const SizedBox(height: 12),

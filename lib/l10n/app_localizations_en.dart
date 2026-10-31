@@ -5601,4 +5601,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizerDraftPreviouslyPosted => 'Previously posted';
+
+  @override
+  String get inviteReviewLink => 'Invitation link';
+
+  @override
+  String get inviteReviewCodeOption => 'Enter a code and server instead';
+
+  @override
+  String get inviteReviewCode => 'Invitation code';
+
+  @override
+  String get inviteReviewVisibility =>
+      'Content you add is visible to members according to their permissions. You can view members in the space settings.';
+
+  @override
+  String get recoveryReviewLocalBrief =>
+      'This file helps unlock the encrypted data from this installation. Keep it somewhere safe, outside this device.';
+
+  @override
+  String get recoveryReviewAccountBrief =>
+      'This file helps you regain access if you lose your password and device. Keep it somewhere safe, outside this device.';
+
+  @override
+  String get recoveryReviewDetailsTitle => 'What the recovery file does';
+
+  @override
+  String get recoveryReviewReadMore => 'Read more here';
+
+  @override
+  String get recoveryReviewBackupExplanation =>
+      'The file contains keys, not a copy of your entries or attachments. To restore content, you also need the encrypted data from the server or a separate backup. Keep the file private; anyone who has it may be able to unlock those data.';
+
+  @override
+  String get emailLinkReviewTitle => 'Confirm email';
+
+  @override
+  String get emailLinkReviewDescription =>
+      'Confirm this email address for your current account. This does not accept an invitation.';
+
+  @override
+  String get emailLinkReviewWrongAccount =>
+      'This link belongs to another account or server. Open Jivie with the account that requested this email. Your current account will stay signed in.';
+
+  @override
+  String get emailLinkReviewManualTitle => 'Enter the code from your email';
+
+  @override
+  String get emailLinkReviewManualDescription =>
+      'Open the latest Jivie email and follow its confirmation link, or paste its one-time code here.';
+
+  @override
+  String get autoInviteReviewProgress => 'Enabling access …';
+
+  @override
+  String get autoInviteReviewCompleted => 'Access enabled';
+
+  @override
+  String get autoInviteReviewPending =>
+      'Access approval is still pending. The invitation is saved. Check again when a connection is available.';
+
+  @override
+  String get emailLinkReviewRefresh => 'Check email status';
+
+  @override
+  String get emailLinkReviewCardTitle => 'Email address';
 }

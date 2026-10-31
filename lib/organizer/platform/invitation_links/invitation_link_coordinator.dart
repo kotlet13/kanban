@@ -4,6 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'invitation_link_providers.dart';
 import 'invitation_link.dart';
+import '../email_verification/email_verification_link.dart';
+import '../email_verification/email_verification_link_review.dart';
+import '../../../app_router.dart';
+import '../../presentation/recovery/account_crypto_startup.dart';
 import '../../state/collaboration_provider.dart';
 import '../../data/collaboration_transport.dart'
     show normalizeCollaborationServer;
@@ -11,8 +15,13 @@ import '../../data/pending_invitation_store.dart'
     show PendingInvitationStoreSerialization;
 
 class InvitationLinkCoordinator extends ConsumerStatefulWidget {
-  const InvitationLinkCoordinator({super.key, required this.child});
+  const InvitationLinkCoordinator({
+    super.key,
+    required this.child,
+    this.navigatorKey,
+  });
   final Widget child;
+  final GlobalKey<NavigatorState>? navigatorKey;
   @override
   ConsumerState<InvitationLinkCoordinator> createState() =>
       _InvitationLinkCoordinatorState();
@@ -28,6 +37,11 @@ class _InvitationLinkCoordinatorState
   Timer? _echoExpiry;
   bool _sameLink(Uri a, Uri? b) {
     if (b == null) return false;
+    final emailLeft = EmailVerificationLink.tryParse(a),
+        emailRight = EmailVerificationLink.tryParse(b);
+    if (emailLeft != null && emailRight != null) {
+      return emailLeft.toUri().toString() == emailRight.toUri().toString();
+    }
     final left = InvitationLink.tryParse(a), right = InvitationLink.tryParse(b);
     return left != null &&
         right != null &&
@@ -49,6 +63,34 @@ class _InvitationLinkCoordinatorState
   }
 
   Future<bool> _dispatch(Uri uri, {required bool automatic}) async {
+    final emailLink = EmailVerificationLink.tryParse(uri);
+    if (emailLink != null) {
+      // Keep the invitation store and its delivery generation untouched. A mail
+      // verification link has no authority over the existing invitation wizard.
+      try {
+        await ref.read(collaborationProvider.future);
+      } catch (_) {}
+      if (!mounted) return false;
+      // The required startup page may arrive after the account session. Wait
+      // for its shared assessment and push frame so review stays above it.
+      try {
+        await ref.read(accountCryptoStartupActionProvider.future);
+      } catch (_) {}
+      if (!mounted) return false;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return false;
+      final navigatorContext =
+          (widget.navigatorKey ?? appRouter.routerDelegate.navigatorKey)
+              .currentContext;
+      if (navigatorContext == null || !navigatorContext.mounted) return false;
+      unawaited(
+        showDialog<void>(
+          context: navigatorContext,
+          builder: (_) => EmailVerificationLinkReview(link: emailLink),
+        ),
+      );
+      return false;
+    }
     final parsed = InvitationLink.tryParse(uri);
     if (parsed == null) {
       if (mounted) ref.read(invitationLinkErrorProvider.notifier).state = true;

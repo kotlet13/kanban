@@ -12,9 +12,10 @@ import '../shared/hosting_disclosure.dart';
 import '../shared/sharing_invitation_details.dart';
 import '../shared/verified_invitation_permissions.dart';
 import '../../domain/collaboration_models.dart';
+import '../../state/application_sync_activity.dart';
 
-/// Joining and granting access remain deliberate. Signed directory validation
-/// and secure first-use identity pins run without asking people to copy cards.
+/// Recipient acceptance remains explicit. Owners first resume their retained
+/// Send consent; changes still require a fresh verified manual review.
 class CryptoInvitationPage extends StatefulWidget {
   const CryptoInvitationPage({
     required this.account,
@@ -53,6 +54,9 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
   bool _busy = false, _pending = false;
   bool _preauthorizedAccepted = false;
   bool _declined = false;
+  bool _approved = false, _ownerPending = false, _manualReview = false;
+  AppLifecycleState? _lifecycle;
+  int _foregroundGeneration = 0;
   late final _declineActionId = newSharedId();
   Object? _error;
   VerifiedCryptoInvitation? _invite;
@@ -65,22 +69,27 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
   @override
   void initState() {
     super.initState();
+    _lifecycle = WidgetsBinding.instance.lifecycleState;
     WidgetsBinding.instance.addObserver(this);
     _load();
   }
 
   @override
   void dispose() {
+    _foregroundGeneration++;
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycle = state;
+    if (!collaborationAppActive(state)) _foregroundGeneration++;
     if (state != AppLifecycleState.resumed ||
         !_current ||
         _busy ||
         _declined ||
+        _approved ||
         ModalRoute.of(context)?.isCurrent != true ||
         (_lastRefresh != null &&
             _refreshClock.elapsed - _lastRefresh! <
@@ -90,7 +99,10 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     _load();
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    bool reconcileOnError = false,
+  }) async {
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -99,10 +111,37 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     try {
       await action();
     } catch (error) {
-      if (_current) setState(() => _error = error);
+      var reconciled = false;
+      if (reconcileOnError && _current) {
+        // A concurrent foreground sweep may have consumed this exact request
+        // while the older manual view was still open. Only verified completion
+        // may replace the error; expired/invalid alone is never success.
+        try {
+          final result = await _attemptOwnerApproval();
+          reconciled =
+              result.status == ForegroundInvitationApprovalStatus.completed;
+          if (reconciled && _current) setState(() => _approved = true);
+        } catch (_) {
+          // Keep the original actionable failure and retained local intent.
+        }
+      }
+      if (_current && !reconciled) setState(() => _error = error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<ForegroundInvitationApprovalResult> _attemptOwnerApproval() {
+    final generation = _foregroundGeneration;
+    return invites.finishForegroundInvitationApproval(
+      scopeId: widget.scopeId!,
+      invitationId: widget.invitationId,
+      expectedAcceptance: widget.expectedAcceptance,
+      isForegroundCurrent: () =>
+          _current &&
+          generation == _foregroundGeneration &&
+          collaborationAppActive(_lifecycle),
+    );
   }
 
   Future<void> _load() => _run(() async {
@@ -112,7 +151,31 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     setState(() {
       _invite = null;
       _review = null;
+      _manualReview = false;
     });
+    if (widget.scopeId != null) {
+      final result = await _attemptOwnerApproval();
+      if (!_current) return;
+      if (result.status == ForegroundInvitationApprovalStatus.completed) {
+        setState(() {
+          _approved = true;
+          _ownerPending = false;
+          _manualReview = false;
+        });
+        return;
+      }
+      if (result.status == ForegroundInvitationApprovalStatus.pending) {
+        debugPrint(
+          'invitation_autoapproval pending reason=${safeForegroundInvitationApprovalReason(result.reason ?? 'invitation_approval_pending')}',
+        );
+        setState(() => _ownerPending = true);
+        return;
+      }
+      setState(() {
+        _manualReview = true;
+        _ownerPending = false;
+      });
+    }
     if (widget.scopeId == null) {
       final opened = await invites.resumeAccepted(widget.invitationId);
       if (!mounted || !_current) return;
@@ -200,8 +263,8 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
     final review = _review;
     if (review == null) return;
     await invites.admit(invite, review);
-    if (mounted && _current) Navigator.of(context).pop(widget.scopeId);
-  });
+    if (mounted && _current) setState(() => _approved = true);
+  }, reconcileOnError: widget.scopeId != null);
 
   bool get _canDecline =>
       widget.declineSupported &&
@@ -263,7 +326,13 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                   Text(
                     widget.scopeId == null
                         ? l.cryptoInvitationVerifyCreator
-                        : l.cryptoInvitationGrantExplanation,
+                        : _approved
+                        ? l.autoInviteReviewCompleted
+                        : _manualReview
+                        ? l.cryptoInvitationGrantExplanation
+                        : _busy
+                        ? l.autoInviteReviewProgress
+                        : l.autoInviteReviewPending,
                   ),
                   HostingDisclosureForServer(
                     serverUrl:
@@ -291,6 +360,14 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                           ? l.invitationFlowAccessVerificationPending
                           : l.cryptoInvitationPendingKeys,
                     ),
+                  if (_approved)
+                    FilledButton.icon(
+                      key: const ValueKey('crypto-invitation-approved-close'),
+                      onPressed: () =>
+                          Navigator.of(context).pop(widget.scopeId),
+                      icon: const Icon(Icons.check),
+                      label: Text(l.close),
+                    ),
                   if (_declined) Text(l.invitationFlowDeclined),
                   if (_invite != null)
                     VerifiedInvitationPermissions(
@@ -305,6 +382,7 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                   if (_invite != null &&
                       !_pending &&
                       !_declined &&
+                      !_approved &&
                       _error == null &&
                       _current)
                     FilledButton(
@@ -338,7 +416,9 @@ class _CryptoInvitationPageState extends State<CryptoInvitationPage>
                           : () => openCryptoApprovals(context),
                       child: Text(cryptoApprovalsLabel(context)),
                     ),
-                  if (!_declined && (_error != null || _pending))
+                  if (!_declined &&
+                      !_approved &&
+                      (_error != null || _pending || _ownerPending))
                     TextButton(
                       key: const ValueKey('crypto-invitation-retry'),
                       onPressed: _busy || isSharingIdentityChanged(_error)

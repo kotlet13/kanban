@@ -150,7 +150,11 @@ class _InvitationRecipientFieldState extends State<InvitationRecipientField> {
           enabled: widget.enabled,
           validator: widget.validator,
           autocorrect: false,
-          keyboardType: TextInputType.text,
+          keyboardType: TextInputType.emailAddress,
+          textCapitalization: TextCapitalization.none,
+          enableSuggestions: false,
+          smartDashesType: SmartDashesType.disabled,
+          smartQuotesType: SmartQuotesType.disabled,
           decoration: InputDecoration(
             labelText: widget.label,
             helperText: l.sharingRecipientSearchHint,

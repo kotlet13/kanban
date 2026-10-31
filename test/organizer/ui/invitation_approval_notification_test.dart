@@ -9,6 +9,9 @@ import 'package:kanban/organizer/data/e2ee/account_directory_repository.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/invite_crypto_repository.dart';
 import 'package:kanban/organizer/data/e2ee/scope_crypto_manager.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_sync_repository.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
+import 'package:kanban/organizer/data/collaboration_transport.dart';
 import 'package:kanban/organizer/data/device_session_store.dart';
 import 'package:kanban/organizer/platform/remote_push/foreground_invitation_approval_coordinator.dart';
 import 'package:kanban/organizer/platform/remote_push/remote_push_providers.dart';
@@ -87,11 +90,65 @@ class _Account extends Fake implements AccountCryptoV2Workflow {
 
 class _VerifiedDirectory extends Fake implements VerifiedAccountDirectory {}
 
+class _ApprovalManager extends Fake implements ScopeCryptoManager {
+  @override
+  Future<List<ScopeRotationReview>> pendingRotationReviews(
+    String scopeId,
+  ) async => [];
+  @override
+  Future<ScopeRotationReview> reviewRotation(
+    String scopeId, {
+    dynamic recoveryFile,
+    bool financeOnly = false,
+    dynamic inheritedInvitationAdmission,
+    dynamic preauthorizedInvitationAdmission,
+    String? fixedReviewId,
+  }) async => ScopeRotationReview({
+    'reviewId': 'review',
+    'scopeId': sharingScopeId,
+    'domains': <String, dynamic>{},
+  });
+}
+
 class _Invites extends Fake implements InviteCryptoRepository {
   _Invites(this.changed);
   final String changed;
   int trusted = 0;
-  int admitted = 0;
+  int admitted = 0, automaticAttempts = 0;
+  Object? grantError;
+  Completer<ForegroundInvitationApprovalResult>? automaticGate;
+  bool Function()? foregroundGuard;
+  List<ForegroundInvitationApprovalResult> automaticResults = const [
+    ForegroundInvitationApprovalResult(
+      ForegroundInvitationApprovalStatus.manualReview,
+      'crypto_invitation_original_intent_missing',
+    ),
+  ];
+  @override
+  ScopeCryptoManager get manager => _ApprovalManager();
+  @override
+  Future<ForegroundInvitationApprovalResult>
+  finishForegroundInvitationApproval({
+    required String scopeId,
+    required String invitationId,
+    required bool Function() isForegroundCurrent,
+    InvitationAcceptanceNotification? expectedAcceptance,
+  }) async {
+    foregroundGuard = isForegroundCurrent;
+    final index = automaticAttempts++;
+    final result = automaticGate != null
+        ? await automaticGate!.future
+        : automaticResults[index < automaticResults.length
+              ? index
+              : automaticResults.length - 1];
+    if (!isForegroundCurrent()) {
+      throw const CryptoAuthorityPending(
+        'crypto_invitation_foreground_required',
+      );
+    }
+    return result;
+  }
+
   @override
   Future<VerifiedCryptoInvitation> acceptedRecipient(
     String scopeId,
@@ -107,16 +164,15 @@ class _Invites extends Fake implements InviteCryptoRepository {
             : h.acceptanceProofHash,
         'creatorAuthorization': {
           'commandBase64': base64Encode(
-            utf8.encode(
-              jsonEncode({
-                'payload': {
-                  'creatorProofHash': changed == 'creator'
-                      ? hash('d')
-                      : h.creatorProofHash,
-                  'tokenHash': changed == 'token' ? hash('d') : h.tokenHash,
-                },
-              }),
-            ),
+            CryptoJson.encode({
+              'payload': {
+                'role': 'viewer',
+                'creatorProofHash': changed == 'creator'
+                    ? hash('d')
+                    : h.creatorProofHash,
+                'tokenHash': changed == 'token' ? hash('d') : h.tokenHash,
+              },
+            }),
           ),
         },
       },
@@ -140,10 +196,245 @@ class _Invites extends Fake implements InviteCryptoRepository {
     Future<void> Function()? freshDisclosureBoundary,
   }) async {
     admitted++;
+    if (grantError != null) throw grantError!;
   }
 }
 
+Future<void> _ownerPage(WidgetTester tester, _Invites invites) async {
+  tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        hostingInformationProvider.overrideWith(
+          (ref, target) async => const HostingInformation(),
+        ),
+      ],
+      child: MaterialApp(
+        locale: const Locale('sl'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: CryptoInvitationPage(
+          account: _Account(),
+          invitationId: inviteId,
+          scopeId: sharingScopeId,
+          expectedAcceptance: hint(),
+          repository: invites,
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
 void main() {
+  testWidgets(
+    'oct31 owner push shows progress then verified completion without redundant confirmation',
+    (tester) async {
+      final invites = _Invites('');
+      invites.automaticGate = Completer<ForegroundInvitationApprovalResult>();
+      await _ownerPage(tester, invites);
+      expect(find.text('Omogočanje dostopa …'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(invites.foregroundGuard!(), isTrue);
+      invites.automaticGate!.complete(
+        const ForegroundInvitationApprovalResult(
+          ForegroundInvitationApprovalStatus.completed,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Dostop omogočen'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-approved-close')),
+        findsOneWidget,
+      );
+      expect(invites.admitted, 0);
+      expect(invites.trusted, 0);
+      expect(invites.automaticAttempts, 1);
+    },
+  );
+
+  testWidgets(
+    'oct31 pending automatic approval retains retry and does not expose a manual grant',
+    (tester) async {
+      final invites = _Invites('')
+        ..automaticResults = const [
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.pending,
+            'scope_receipt_pending',
+          ),
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.completed,
+          ),
+        ];
+      await _ownerPage(tester, invites);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(find.text('Dostop omogočen'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-retry')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dostop omogočen'), findsOneWidget);
+      expect(invites.automaticAttempts, 2);
+      expect(invites.admitted, 0);
+    },
+  );
+
+  testWidgets(
+    'oct31 stale manual consumed error reconciles verified automatic completion',
+    (tester) async {
+      final invites = _Invites('')
+        ..grantError = const CollaborationApiException('invitation_invalid')
+        ..automaticResults = const [
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.manualReview,
+            'crypto_invitation_auto_policy_changed',
+          ),
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.completed,
+          ),
+        ];
+      await _ownerPage(tester, invites);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        160,
+      );
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dostop omogočen'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(invites.admitted, 1);
+      expect(invites.automaticAttempts, 2);
+    },
+  );
+
+  testWidgets(
+    'oct31 generic invalid manual request cannot imply successful access',
+    (tester) async {
+      final invites = _Invites('')
+        ..grantError = const CollaborationApiException('invitation_invalid')
+        ..automaticResults = const [
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.manualReview,
+            'crypto_invitation_original_intent_missing',
+          ),
+          ForegroundInvitationApprovalResult(
+            ForegroundInvitationApprovalStatus.pending,
+            'invitation_invalid',
+          ),
+        ];
+      await _ownerPage(tester, invites);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        160,
+      );
+      await tester.tap(find.byKey(const ValueKey('crypto-invitation-confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text('Dostop omogočen'), findsNothing);
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-retry')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('crypto-invitation-confirm')),
+        findsNothing,
+      );
+      expect(invites.automaticAttempts, 2);
+    },
+  );
+
+  testWidgets(
+    'oct31 automatic owner capability expires on background and disposal',
+    (tester) async {
+      final invites = _Invites('')
+        ..automaticGate = Completer<ForegroundInvitationApprovalResult>();
+      await _ownerPage(tester, invites);
+      expect(invites.foregroundGuard!(), isTrue);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      expect(invites.foregroundGuard!(), isFalse);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      expect(invites.foregroundGuard!(), isFalse);
+      invites.automaticGate!.complete(
+        const ForegroundInvitationApprovalResult(
+          ForegroundInvitationApprovalStatus.completed,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Dostop omogočen'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      expect(invites.foregroundGuard!(), isFalse);
+    },
+  );
+
+  testWidgets(
+    'oct31 explicit push retries an already-seen failed approval event',
+    (tester) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      final controller = SharingUiController(
+        initial: shared(inbox: [event(1)]),
+      );
+      var attempts = 0;
+      await tester.pumpWidget(
+        coordinator(controller, (current, ids) async {
+          attempts++;
+          if (attempts == 1) throw const FormatException('PRIVATE data');
+        }),
+      );
+      await tester.pumpAndSettle();
+      expect(attempts, 1);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ForegroundInvitationApprovalCoordinator)),
+      );
+      container
+          .read(foregroundInvitationApprovalRequestProvider.notifier)
+          .state++;
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+      controller.replace(
+        shared(inbox: [event(1)], synced: DateTime.utc(2026, 2)),
+      );
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+    },
+  );
+
+  testWidgets('oct31 deferred push during sync retains the explicit retry', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final controller = SharingUiController(initial: shared(inbox: [event(1)]));
+    var attempts = 0;
+    await tester.pumpWidget(
+      coordinator(controller, (current, ids) async {
+        attempts++;
+        if (attempts == 1) throw const FormatException('transient');
+      }),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ForegroundInvitationApprovalCoordinator)),
+    );
+    controller.replace(shared(inbox: [event(1)], syncing: true));
+    await tester.pumpAndSettle();
+    container
+        .read(foregroundInvitationApprovalRequestProvider.notifier)
+        .state++;
+    await tester.pumpAndSettle();
+    expect(attempts, 1);
+    controller.replace(shared(inbox: [event(1)]));
+    await tester.pumpAndSettle();
+    expect(attempts, 2);
+  });
+
   test(
     'actual host wire strips crypto2 prefix before typed acceptance parsing',
     () {
@@ -296,11 +587,11 @@ void main() {
       await tester.pumpAndSettle();
       controller.replace(shared());
       await tester.pumpAndSettle();
-      expect(calls, 2);
+      expect(calls, 3);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
-      expect(calls, 3);
+      expect(calls, 4);
       expect(tester.takeException(), isNull);
     },
   );

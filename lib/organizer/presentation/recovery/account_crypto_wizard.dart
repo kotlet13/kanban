@@ -1,4 +1,5 @@
 import 'account_protection_completion.dart';
+import 'recovery_file_explanation.dart';
 import '../onboarding/account_email_card.dart';
 import '../onboarding/account_deletion_panel.dart';
 import 'dart:typed_data';
@@ -142,6 +143,8 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
   bool _busy = true, _failed = false;
   bool _setupFinished = false;
   bool _savedSetupPending = false;
+  bool _emailVerified = false;
+  String? _emailPartition, _emailDevice;
   AccountProtectionReady? _automaticProtection;
   int _generation = 0;
   @override
@@ -366,6 +369,15 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
         widget.workflow is AccountCryptoV2Workflow &&
         ref.watch(accountCombinedRecoveryAvailableProvider) &&
         (!initialized || _savedSetupPending);
+    final session = ref.exists(collaborationProvider)
+        ? ref.watch(collaborationProvider).valueOrNull?.session
+        : null;
+    final needsEmailConfirmation =
+        widget.workflow is AccountCryptoV2Workflow &&
+        session != null &&
+        (!_emailVerified ||
+            _emailPartition != session.partition ||
+            _emailDevice != session.deviceId);
     final theme = Theme.of(context);
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
@@ -384,7 +396,7 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
         appBar: AppBar(
           title: Text(
             widget.workflow is AccountCryptoV2Workflow
-                ? l.recoverySetupTitle
+                ? (freshSetup ? l.recoverySaveFile : l.recoverySetupTitle)
                 : l.accountRecoveryTitle,
           ),
         ),
@@ -402,10 +414,10 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    freshSetup
-                        ? l.recoveryCombinedExplanation
-                        : l.accountRecoveryExplanation,
+                  RecoveryFileExplanation(
+                    scope: freshSetup
+                        ? RecoveryFileScope.combined
+                        : RecoveryFileScope.account,
                   ),
                   if (!freshSetup &&
                       ref.exists(collaborationProvider) &&
@@ -437,10 +449,31 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                       ref.watch(collaborationProvider).valueOrNull?.session !=
                           null)
                     AccountEmailCard(
+                      key: ValueKey((session?.partition, session?.deviceId)),
                       session: ref
                           .watch(collaborationProvider)
                           .valueOrNull!
                           .session!,
+                      onStatusChanged: (status) {
+                        if (!mounted) return;
+                        final current = ref
+                            .read(collaborationProvider)
+                            .valueOrNull
+                            ?.session;
+                        if (current?.partition != session?.partition ||
+                            current?.deviceId != session?.deviceId)
+                          return;
+                        final verified = status?.emailVerified == true;
+                        if (_emailVerified != verified ||
+                            _emailPartition != current?.partition ||
+                            _emailDevice != current?.deviceId) {
+                          setState(() {
+                            _emailVerified = verified;
+                            _emailPartition = current?.partition;
+                            _emailDevice = current?.deviceId;
+                          });
+                        }
+                      },
                     ),
                   const SizedBox(height: 16),
                   if (!freshSetup)
@@ -567,6 +600,7 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                   if (!initialized &&
                       !ready &&
                       !pending &&
+                      !needsEmailConfirmation &&
                       _remote != null) ...[
                     FilledButton.icon(
                       key: const ValueKey('account_crypto_save'),

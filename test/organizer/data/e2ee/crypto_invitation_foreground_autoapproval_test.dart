@@ -55,6 +55,19 @@ class _Peer implements VerifiedAccountDirectory {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _UnusedTransport implements CollaborationTransport {
+  @override
+  Future<Map<String, dynamic>> call({
+    required String serverUrl,
+    required String operation,
+    Map<String, Object?> params = const {},
+    String? token,
+    bool allowLocalHttp = false,
+  }) async => throw StateError('unexpected_fixture_network');
+  @override
+  void close() {}
+}
+
 class _Directory implements AccountDirectoryRepository {
   _Directory(this.store, this.reducer, this.session, this.own);
   @override
@@ -64,6 +77,8 @@ class _Directory implements AccountDirectoryRepository {
   @override
   final DeviceSession session;
   final _Peer own;
+  @override
+  final CollaborationTransport transport = _UnusedTransport();
   bool current = true, oldHost = false;
   int calls = 0, writes = 0;
   Map<String, dynamic>? receipt;
@@ -462,6 +477,206 @@ void main() {
     await f.open();
   });
   tearDown(() => f.close());
+  Future<ForegroundInvitationApprovalResult> targeted({
+    InvitationAcceptanceNotification? expected,
+  }) => f.repository.finishForegroundInvitationApproval(
+    scopeId: f.head.scopeId,
+    invitationId: f.id,
+    expectedAcceptance: expected,
+    isForegroundCurrent: () => f.foreground,
+  );
+
+  Future<InvitationAcceptanceNotification> exactHint({String? token}) async =>
+      InvitationAcceptanceNotification(
+        scopeId: f.head.scopeId,
+        invitationId: f.id,
+        acceptanceProofHash: f.accepted.response['acceptanceProofHash'],
+        creatorProofHash: await cryptoSha256(
+          CryptoJson.encode(f.originalProof),
+        ),
+        tokenHash: token ?? f.original['tokenHash'],
+      );
+
+  test(
+    'oct31 targeted push completes exact retained Send then verifies completed access without granting twice',
+    () async {
+      await f.send();
+      final hint = await exactHint();
+      expect(
+        (await targeted(expected: hint)).status,
+        ForegroundInvitationApprovalStatus.completed,
+      );
+      expect(f.repository.admits, 1);
+      final acceptanceReads = f.repository.acceptanceReads;
+      expect(
+        (await targeted(expected: hint)).status,
+        ForegroundInvitationApprovalStatus.completed,
+      );
+      expect(f.repository.admits, 1);
+      expect(f.repository.runtimeManager.receiptResumes, 0);
+      expect(f.repository.acceptanceReads, acceptanceReads);
+      f.head.intents.clear();
+      final stale = await targeted(expected: hint);
+      expect(stale.status, ForegroundInvitationApprovalStatus.pending);
+      expect(stale.reason, 'crypto_invitation_auto_membership_changed');
+      expect(f.repository.admits, 1);
+    },
+  );
+
+  test(
+    'oct31 exact push binding rejects substituted hint before grant and after completion',
+    () async {
+      await f.send();
+      final substituted = await exactHint(token: 'f' * 64);
+      expect(
+        (await targeted(expected: substituted)).reason,
+        'invitation_acceptance_changed',
+      );
+      expect(f.repository.admits, 0);
+      expect(
+        (await targeted(expected: await exactHint())).status,
+        ForegroundInvitationApprovalStatus.completed,
+      );
+      expect(
+        (await targeted(expected: substituted)).status,
+        ForegroundInvitationApprovalStatus.manualReview,
+      );
+      expect(f.repository.admits, 1);
+    },
+  );
+
+  test(
+    'oct31 push waits for concurrent foreground completion and rechecks using its own guard',
+    () async {
+      await f.send();
+      final gate = Completer<void>();
+      f.repository.policyGate = gate;
+      final sweep = f.run();
+      await Future<void>.delayed(Duration.zero);
+      var pageFinished = false;
+      final page = targeted().then((r) {
+        pageFinished = true;
+        return r;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(pageFinished, isFalse);
+      gate.complete();
+      expect((await sweep).completed, 1);
+      expect((await page).status, ForegroundInvitationApprovalStatus.completed);
+      expect(f.repository.admits, 1);
+    },
+  );
+
+  test(
+    'oct31 stale consumed page reconciles exact applied receipt without a second admission',
+    () async {
+      await f.send();
+      f.repository.lostAck = true;
+      expect((await f.run()).pending, 1);
+      expect(f.repository.admits, 1);
+      expect(
+        (await targeted(expected: await exactHint())).status,
+        ForegroundInvitationApprovalStatus.completed,
+      );
+      expect(f.repository.admits, 1);
+      expect(f.repository.runtimeManager.receiptResumes, 1);
+    },
+  );
+
+  test(
+    'oct31 expired request is pending rather than success and preserves original journal',
+    () async {
+      await f.send();
+      f.invitationState = 'expired';
+      final result = await targeted();
+      expect(result.status, ForegroundInvitationApprovalStatus.pending);
+      expect(result.reason, 'invitation_invalid');
+      expect(
+        (await f.intents()).single['state'],
+        'invitationForegroundApproval',
+      );
+      expect(f.repository.admits, 0);
+    },
+  );
+
+  test(
+    'oct31 missing original Send and changed rights require review without automatic disclosure',
+    () async {
+      await f.send();
+      f.repository.changedRights = true;
+      expect(
+        (await targeted()).status,
+        ForegroundInvitationApprovalStatus.manualReview,
+      );
+      expect(f.repository.admits, 0);
+      await f.db.execute(
+        "DELETE FROM crypto_membership_intents WHERE state='invitationForegroundApproval'",
+      );
+      final result = await targeted();
+      expect(result.status, ForegroundInvitationApprovalStatus.manualReview);
+      expect(result.reason, 'crypto_invitation_original_intent_missing');
+      expect(f.repository.admits, 0);
+    },
+  );
+
+  test(
+    'oct31 waiting page cannot inherit another foreground capability',
+    () async {
+      await f.send();
+      final gate = Completer<void>();
+      f.repository.policyGate = gate;
+      final sweep = f.run();
+      await Future<void>.delayed(Duration.zero);
+      var pageCurrent = true;
+      final page = f.repository.finishForegroundInvitationApproval(
+        scopeId: f.head.scopeId,
+        invitationId: f.id,
+        isForegroundCurrent: () => pageCurrent,
+      );
+      final invalidated = expectLater(
+        page,
+        throwsA(isA<CryptoAuthorityPending>()),
+      );
+      await Future<void>.delayed(Duration.zero);
+      pageCurrent = false;
+      gate.complete();
+      expect((await sweep).completed, 1);
+      await invalidated;
+      expect(f.repository.admits, 1);
+    },
+  );
+
+  test(
+    'oct31 missing verified history stays pending without redundant manual approval',
+    () async {
+      await f.send();
+      f.repository.runtimeManager.basis = 'reviewedRecoveryBaseline';
+      final result = await targeted();
+      expect(result.status, ForegroundInvitationApprovalStatus.pending);
+      expect(result.reason, 'scope_review_confirmation_required');
+      expect(f.repository.admits, 0);
+      expect(
+        (await f.intents()).single['state'],
+        'invitationForegroundApproval',
+      );
+    },
+  );
+
+  test('oct31 diagnostic vocabulary never retains exception values', () {
+    expect(
+      safeForegroundInvitationApprovalReason(
+        const FormatException('recipient@example.invalid SECRET TOKEN'),
+      ),
+      'invitation_approval_pending',
+    );
+    expect(
+      safeForegroundInvitationApprovalReason(
+        const CryptoAuthorityPending('crypto_invitation_auto_policy_changed'),
+      ),
+      'crypto_invitation_auto_policy_changed',
+    );
+  });
+
   test(
     'foreground v4 new Send captures exact local intent and admits once after signed acceptance',
     () async {
@@ -684,10 +899,7 @@ void main() {
       f.repository.loseForegroundAtDisclosure = false;
       await f.accept();
       final r = await f.run();
-      expect(
-        r.invitations.single.errorCode,
-        'invitation_acceptance_binding',
-      );
+      expect(r.invitations.single.errorCode, 'invitation_acceptance_binding');
       expect(f.repository.admits, 0);
     },
   );

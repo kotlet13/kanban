@@ -9840,6 +9840,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previously posted'**
   String get organizerDraftPreviouslyPosted;
+
+  /// No description provided for @inviteReviewLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation link'**
+  String get inviteReviewLink;
+
+  /// No description provided for @inviteReviewCodeOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code and server instead'**
+  String get inviteReviewCodeOption;
+
+  /// No description provided for @inviteReviewCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation code'**
+  String get inviteReviewCode;
+
+  /// No description provided for @inviteReviewVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Content you add is visible to members according to their permissions. You can view members in the space settings.'**
+  String get inviteReviewVisibility;
+
+  /// No description provided for @recoveryReviewLocalBrief.
+  ///
+  /// In en, this message translates to:
+  /// **'This file helps unlock the encrypted data from this installation. Keep it somewhere safe, outside this device.'**
+  String get recoveryReviewLocalBrief;
+
+  /// No description provided for @recoveryReviewAccountBrief.
+  ///
+  /// In en, this message translates to:
+  /// **'This file helps you regain access if you lose your password and device. Keep it somewhere safe, outside this device.'**
+  String get recoveryReviewAccountBrief;
+
+  /// No description provided for @recoveryReviewDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the recovery file does'**
+  String get recoveryReviewDetailsTitle;
+
+  /// No description provided for @recoveryReviewReadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read more here'**
+  String get recoveryReviewReadMore;
+
+  /// No description provided for @recoveryReviewBackupExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The file contains keys, not a copy of your entries or attachments. To restore content, you also need the encrypted data from the server or a separate backup. Keep the file private; anyone who has it may be able to unlock those data.'**
+  String get recoveryReviewBackupExplanation;
+
+  /// No description provided for @emailLinkReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm email'**
+  String get emailLinkReviewTitle;
+
+  /// No description provided for @emailLinkReviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm this email address for your current account. This does not accept an invitation.'**
+  String get emailLinkReviewDescription;
+
+  /// No description provided for @emailLinkReviewWrongAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This link belongs to another account or server. Open Jivie with the account that requested this email. Your current account will stay signed in.'**
+  String get emailLinkReviewWrongAccount;
+
+  /// No description provided for @emailLinkReviewManualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your email'**
+  String get emailLinkReviewManualTitle;
+
+  /// No description provided for @emailLinkReviewManualDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the latest Jivie email and follow its confirmation link, or paste its one-time code here.'**
+  String get emailLinkReviewManualDescription;
+
+  /// No description provided for @autoInviteReviewProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabling access …'**
+  String get autoInviteReviewProgress;
+
+  /// No description provided for @autoInviteReviewCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Access enabled'**
+  String get autoInviteReviewCompleted;
+
+  /// No description provided for @autoInviteReviewPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Access approval is still pending. The invitation is saved. Check again when a connection is available.'**
+  String get autoInviteReviewPending;
+
+  /// No description provided for @emailLinkReviewRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Check email status'**
+  String get emailLinkReviewRefresh;
+
+  /// No description provided for @emailLinkReviewCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get emailLinkReviewCardTitle;
 }
 
 class _AppLocalizationsDelegate

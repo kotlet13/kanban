@@ -5610,4 +5610,70 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get organizerDraftPreviouslyPosted => 'Prej knjiženo';
+
+  @override
+  String get inviteReviewLink => 'Povezava povabila';
+
+  @override
+  String get inviteReviewCodeOption =>
+      'Namesto povezave vnesi kodo in strežnik';
+
+  @override
+  String get inviteReviewCode => 'Koda povabila';
+
+  @override
+  String get inviteReviewVisibility =>
+      'Vsebina, ki jo dodaš, je članom vidna glede na njihove pravice. Člane si lahko ogledaš v nastavitvah prostora.';
+
+  @override
+  String get recoveryReviewLocalBrief =>
+      'Ta datoteka pomaga odkleniti šifrirane podatke te namestitve. Shrani jo na varno mesto zunaj te naprave.';
+
+  @override
+  String get recoveryReviewAccountBrief =>
+      'Ta datoteka ti pomaga obnoviti dostop, če izgubiš geslo in napravo. Shrani jo na varno mesto zunaj te naprave.';
+
+  @override
+  String get recoveryReviewDetailsTitle => 'Čemu služi obnovitvena datoteka';
+
+  @override
+  String get recoveryReviewReadMore => 'Več si preberi tukaj';
+
+  @override
+  String get recoveryReviewBackupExplanation =>
+      'Datoteka vsebuje ključe, ne kopije tvojih vnosov ali prilog. Za obnovo vsebine potrebuješ tudi šifrirane podatke s strežnika ali ločeno varnostno kopijo. Datoteko hrani zasebno; kdor jo ima, lahko z njo odklene te podatke.';
+
+  @override
+  String get emailLinkReviewTitle => 'Potrdi e-pošto';
+
+  @override
+  String get emailLinkReviewDescription =>
+      'Potrdi ta e-poštni naslov za trenutni račun. S tem ne sprejmeš povabila.';
+
+  @override
+  String get emailLinkReviewWrongAccount =>
+      'Ta povezava pripada drugemu računu ali strežniku. Odpri Jivie z računom, ki je zahteval to e-pošto. Trenutni račun ostane prijavljen.';
+
+  @override
+  String get emailLinkReviewManualTitle => 'Vnesi kodo iz e-pošte';
+
+  @override
+  String get emailLinkReviewManualDescription =>
+      'Odpri zadnje sporočilo Jivie in sledi potrditveni povezavi ali sem prilepi enkratno kodo.';
+
+  @override
+  String get autoInviteReviewProgress => 'Omogočanje dostopa …';
+
+  @override
+  String get autoInviteReviewCompleted => 'Dostop omogočen';
+
+  @override
+  String get autoInviteReviewPending =>
+      'Odobritev dostopa še čaka. Povabilo je shranjeno. Znova preveri, ko bo povezava na voljo.';
+
+  @override
+  String get emailLinkReviewRefresh => 'Preveri potrditev e-pošte';
+
+  @override
+  String get emailLinkReviewCardTitle => 'E-poštni naslov';
 }

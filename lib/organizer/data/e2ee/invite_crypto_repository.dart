@@ -4,7 +4,8 @@ import 'dart:typed_data';
 
 import 'account_directory_v2.dart';
 import '../collaboration_transport.dart';
-import '../../domain/collaboration_models.dart' show CollaborationException;
+import '../../domain/collaboration_models.dart'
+    show CollaborationException, InvitationAcceptanceNotification;
 import 'crypto_json.dart';
 import 'crypto_record_address.dart' show isCryptoCanonicalUuid;
 import 'crypto_sync_repository.dart';
@@ -68,6 +69,25 @@ class InviteCryptoRepository {
   InviteCryptoRepository(this.access);
   final SessionCryptoAccess access;
   ScopeCryptoManager get manager => ScopeCryptoManager(access);
+
+  /// A push is a wake-up hint. Only a retained, exact Send can authorize this
+  /// continuation; the signed acceptance and fresh authority are checked again.
+  Future<ForegroundInvitationApprovalResult>
+  finishForegroundInvitationApproval({
+    required String scopeId,
+    required String invitationId,
+    required bool Function() isForegroundCurrent,
+    InvitationAcceptanceNotification? expectedAcceptance,
+  }) => withAccountWorkJob(
+    access.account.directory.transport,
+    AccountWorkKind.foregroundInvitation,
+    () => _finishForegroundInvitationApproval(
+      scopeId: scopeId,
+      invitationId: invitationId,
+      isForegroundCurrent: isForegroundCurrent,
+      expectedAcceptance: expectedAcceptance,
+    ),
+  );
 
   Future<Map<String, dynamic>> foregroundInvitationRights(
     Map<String, dynamic> payload, {
