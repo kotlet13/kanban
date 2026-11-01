@@ -667,7 +667,10 @@ class CryptoRecordPolicyBaseline {
         payload['accessRevision'] != access) {
       throw const FormatException('record_policy_authorization_binding');
     }
-    final head = await business.access.headAt(scope, hash);
+    // A recipient may not have the baseline owner's historical directory
+    // locally. Fetch exact scoped evidence through the ordinary verifier;
+    // missing cached proof must not prevent an online policy read.
+    final head = await business.access.headAt(scope, hash, online: true);
     if (head.accessRevision != access ||
         !await business.access.isRecordOwner(
           scope,
@@ -691,6 +694,7 @@ class CryptoRecordPolicyBaseline {
       scopeHeadHash: hash,
       accountId: raw['accountId'] as String,
       directoryHeadHash: members.single['directoryHeadHash'] as String,
+      online: true,
     );
     _crypto.verifyDomain(
       proof,

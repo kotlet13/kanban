@@ -206,6 +206,11 @@ String syncFailureExplanation(
     'Dostop se je med preverjanjem spremenil. Uskladitev tega dela še ni potrjena.',
     'Access changed during verification. Sync for this part is not yet confirmed.',
   ),
+  'directory_proof_pending' => _text(
+    context,
+    'Dokazila o identiteti podpisnika še ni bilo mogoče pridobiti ali preveriti. Ta oznaka sama ne pomeni manjkajočih dovoljenj in ne zahteva novega računa ali ključev. Izberi »Uskladi zdaj«, da aplikacija ponovi preverjanje.',
+    'Evidence of the signer’s identity could not yet be obtained or verified. This code alone does not mean missing permissions and does not require a new account or keys. Choose “Sync now” to retry verification.',
+  ),
   'account_deleted' => _text(
     context,
     'Ta račun je izbrisan.',
@@ -282,8 +287,8 @@ String _stageLabel(BuildContext context, SyncFailureStage stage) =>
       ),
       SyncFailureStage.recordPolicy => _text(
         context,
-        'Pravice za vsebino',
-        'Content permissions',
+        'Preverjanje pravil za zapise',
+        'Verifying record rules',
       ),
       SyncFailureStage.linkedPayments => _text(
         context,
@@ -504,79 +509,66 @@ class SyncFailurePanel extends ConsumerWidget {
       allowSignedOut: state.session == null,
     );
     if (!guard.isCurrent) return;
+    // Capture the failures shown by this panel. A later sync must not replace
+    // the evidence while the user reads it or between displaying and copying.
+    final diagnostics = syncFailureDiagnosticsJson(failures);
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => SharingSessionBoundary(
         guard: guard,
-        child: Consumer(
-          builder: (context, ref, _) {
-            final current = ref.watch(collaborationProvider).valueOrNull;
-            final background = ref.watch(collaborationBackgroundErrorProvider);
-            final entries = current == null
-                ? <SyncFailureDetails>[]
-                : sharingSyncFailures(current, background);
-            return AlertDialog(
-              title: Text(
-                _text(context, 'Podrobnosti napake', 'Error details'),
-              ),
-              content: SizedBox(
-                width: 440,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _text(
-                          context,
-                          'Kopija vsebuje le korak uskladitve, varno oznako vzroka in zabeleženi čas. Imena, identifikatorji, naslovi in skrivnosti niso vključeni.',
-                          'The copy includes only the sync stage, a safe reason code and recorded time. Names, identifiers, addresses and secrets are excluded.',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        syncFailureDiagnosticsJson(entries),
-                        key: const ValueKey('sync-safe-diagnostics'),
-                      ),
-                    ],
+        child: AlertDialog(
+          title: Text(
+            _text(dialogContext, 'Podrobnosti napake', 'Error details'),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _text(
+                      dialogContext,
+                      'Kopija vsebuje le korak uskladitve, varno oznako vzroka in zabeleženi čas. Imena, identifikatorji, naslovi in skrivnosti niso vključeni.',
+                      'The copy includes only the sync stage, a safe reason code and recorded time. Names, identifiers, addresses and secrets are excluded.',
+                    ),
                   ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  key: const ValueKey('sync-copy-diagnostics'),
-                  onPressed: entries.isEmpty
-                      ? null
-                      : () async {
-                          if (!guard.isCurrent) return;
-                          final latest = ref
-                              .read(collaborationProvider)
-                              .valueOrNull;
-                          if (latest == null) return;
-                          await Clipboard.setData(
-                            ClipboardData(
-                              text: syncFailureDiagnosticsJson(
-                                sharingSyncFailures(
-                                  latest,
-                                  ref.read(
-                                    collaborationBackgroundErrorProvider,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                  child: Text(
-                    _text(context, 'Kopiraj podrobnosti', 'Copy details'),
+                  const SizedBox(height: 12),
+                  Text(
+                    _text(
+                      dialogContext,
+                      'Podrobnosti veljajo za poskus, prikazan ob odprtju tega okna.',
+                      'These details describe the attempt displayed when this window opened.',
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(context.l10n.close),
-                ),
-              ],
-            );
-          },
+                  const SizedBox(height: 12),
+                  SelectableText(
+                    diagnostics,
+                    key: const ValueKey('sync-safe-diagnostics'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              key: const ValueKey('sync-copy-diagnostics'),
+              onPressed: failures.isEmpty
+                  ? null
+                  : () async {
+                      if (!guard.isCurrent) return;
+                      await Clipboard.setData(ClipboardData(text: diagnostics));
+                    },
+              child: Text(
+                _text(dialogContext, 'Kopiraj podrobnosti', 'Copy details'),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(dialogContext.l10n.close),
+            ),
+          ],
         ),
       ),
     );
