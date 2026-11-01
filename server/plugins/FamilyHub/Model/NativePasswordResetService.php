@@ -8,13 +8,19 @@ class NativePasswordResetService extends NativeDatabase
         if (!NativeAccountMailCrypto::configured()) { throw new NativeError('email_unavailable', 503); }
         if ($operation === 'auth.reset.request') { return $this->request($params); }
         if ($operation !== 'auth.reset.confirm') { throw new NativeError('unsupported_operation', 404); }
-        $this->fields($params, ['token', 'password'], ['otp']);
+        $this->fields($params, ['token', 'password'], ['otp', 'expectedAccountId', 'expectedServerId']);
+        $bound = array_key_exists('expectedAccountId', $params) || array_key_exists('expectedServerId', $params);
+        if ($bound) {
+            $this->uuid($params['expectedAccountId'] ?? null);
+            $this->uuid($params['expectedServerId'] ?? null);
+        }
         $password = $this->text($params['password'], 72);
         if (strlen($password) < 12) { throw new NativeError('password_too_short'); }
         $this->rate([['reset-confirm-ip:'.$this->ip, 20, 900], ['reset-confirm-code:'.hash('sha256', is_string($params['token']) ? $params['token'] : ''), 10, 900]]);
         $result = $this->transaction(function () use ($params, $password) {
             $tokens = new NativeAccountTokens($this->container);
             $initial = $tokens->lookup($params['token'], 'reset');
+            if (isset($params['expectedAccountId']) && ($params['expectedAccountId'] !== $initial['account_id'] || $params['expectedServerId'] !== $this->serverId())) { throw new NativeError('password_reset_identity_mismatch', 409); }
             $binding = $this->one('SELECT user_id FROM familyhub_accounts WHERE account_id=?', [$initial['account_id']]);
             $user = $binding ? $this->one('SELECT * FROM users WHERE id=?'.$this->lockSuffix(), [$binding['user_id']]) : null;
             if (!$user || (int)$user['is_active'] !== 1 || (int)$user['is_ldap_user'] !== 0 || (int)$user['disable_login_form'] !== 0) { throw new NativeError('account_token_invalid', 404); }

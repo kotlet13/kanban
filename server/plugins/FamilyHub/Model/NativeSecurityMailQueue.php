@@ -31,7 +31,7 @@ class NativeSecurityMailQueue extends NativeDatabase
                 // recovery/reset warning to that original address. No token,
                 // new address, key or account content enters this notice.
                 $knownKind = in_array($event['kind'], ['crypto.initialized','crypto.deviceAdded','crypto.deviceRevoked',
-                    'auth.resetRequested','auth.resetCompleted','crypto.recoveryStarted','crypto.recoveryCompleted'], true);
+                    'auth.resetRequested','auth.resetCompleted','auth.passwordChanged','crypto.recoveryStarted','crypto.recoveryCompleted'], true);
                 if (!$user || !(int)$user['is_active'] || NativeCryptoAccountTombstoneV2::account($this->pdo,$row['account_id']) ||
                     !$knownKind || !filter_var($event['email'],FILTER_VALIDATE_EMAIL) ||
                     (int)$event['attempts'] >= 5 || (int)$event['created_at'] < time() - 86400) {

@@ -24,6 +24,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
+    _passwordChangeSupported = false;
     _externalPushSupported = false;
     _pushProjectId = null;
     _pushDisplayVersion = 1;
@@ -118,6 +119,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _smtpSupported = features['smtp'] == true;
     _emailVerificationSupported = features['emailVerification'] == true;
     _passwordResetSupported = features['passwordReset'] == true;
+    _passwordChangeSupported = features['passwordChange'] == true;
     _spaceProjectMembershipSupported =
         features['spaceProjectMembership'] == true &&
         (caps['spaceAccessPolicyVersions'] as List? ?? const []).contains(3);
@@ -304,6 +306,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _privateSyncSupported = false;
     _emailVerificationSupported = false;
     _passwordResetSupported = false;
+    _passwordChangeSupported = false;
     _externalPushSupported = false;
     _pushProjectId = null;
     _pushDisplayVersion = 1;
@@ -581,7 +584,8 @@ extension CollaborationAccountActions on CollaborationRepository {
             'invalid_credentials',
           }.contains(e.code) &&
           !((operation == 'account.email.request' ||
-                  operation == 'account.deletion.confirm') &&
+                  operation == 'account.deletion.confirm' ||
+                  operation == 'account.password.change') &&
               e.code == 'invalid_credentials')) {
         await _invalidateDeviceSession(session, epoch, e.code);
       }

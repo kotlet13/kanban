@@ -5721,4 +5721,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recoveryCheckCiphertext =>
       'The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file.';
+
+  @override
+  String get accountPasswordChange => 'Change password';
+
+  @override
+  String get accountCurrentPassword => 'Current password';
+
+  @override
+  String get accountPasswordChangeDescription =>
+      'Enter your current password and a new one. This device stays signed in, and your encryption keys stay the same. Other devices will need to sign in again.';
+
+  @override
+  String get accountPasswordChanged =>
+      'Password changed. This device stays signed in.';
+
+  @override
+  String get accountPasswordChangeUnsupported =>
+      'Password changes from account settings require a server update.';
+
+  @override
+  String get accountCurrentPasswordWrong =>
+      'The current password or two-factor code is incorrect. Your session stays active.';
+
+  @override
+  String get accountSignedInReset => 'Forgot your password? Send email';
+
+  @override
+  String get accountSignedInResetWarning =>
+      'Email reset is a separate option for this account. Confirming its code signs out all devices, including this one. Keep your recovery file: a password reset does not restore encryption keys or data.';
+
+  @override
+  String get accountResetWrongAccount =>
+      'This reset code is for a different account or server. Nothing was changed.';
+
+  @override
+  String get accountPasswordChangeUncertain =>
+      'Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in.';
 }

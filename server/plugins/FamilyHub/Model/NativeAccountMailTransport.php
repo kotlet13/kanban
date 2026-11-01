@@ -12,6 +12,7 @@ class NativeAccountMailTransport
             'crypto.deviceRevoked'=>['Dostop naprave je preklican.','A device has been revoked.'],
             'auth.resetRequested'=>['Zahtevana je bila ponastavitev prijavnega gesla.','A login password reset was requested.'],
             'auth.resetCompleted'=>['Prijavno geslo je bilo ponastavljeno.','The login password was reset.'],
+            'auth.passwordChanged'=>['Prijavno geslo je bilo spremenjeno.','The login password was changed.'],
             'crypto.recoveryStarted'=>['Začela se je obnova dostopa.','Account access recovery has started.'],
             'crypto.recoveryCompleted'=>['Obnova dostopa je zaključena.','Account access recovery has completed.'],
         ];

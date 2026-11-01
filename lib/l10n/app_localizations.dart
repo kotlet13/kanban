@@ -10038,6 +10038,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file.'**
   String get recoveryCheckCiphertext;
+
+  /// No description provided for @accountPasswordChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get accountPasswordChange;
+
+  /// No description provided for @accountCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get accountCurrentPassword;
+
+  /// No description provided for @accountPasswordChangeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current password and a new one. This device stays signed in, and your encryption keys stay the same. Other devices will need to sign in again.'**
+  String get accountPasswordChangeDescription;
+
+  /// No description provided for @accountPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. This device stays signed in.'**
+  String get accountPasswordChanged;
+
+  /// No description provided for @accountPasswordChangeUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changes from account settings require a server update.'**
+  String get accountPasswordChangeUnsupported;
+
+  /// No description provided for @accountCurrentPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'The current password or two-factor code is incorrect. Your session stays active.'**
+  String get accountCurrentPasswordWrong;
+
+  /// No description provided for @accountSignedInReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot your password? Send email'**
+  String get accountSignedInReset;
+
+  /// No description provided for @accountSignedInResetWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Email reset is a separate option for this account. Confirming its code signs out all devices, including this one. Keep your recovery file: a password reset does not restore encryption keys or data.'**
+  String get accountSignedInResetWarning;
+
+  /// No description provided for @accountResetWrongAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This reset code is for a different account or server. Nothing was changed.'**
+  String get accountResetWrongAccount;
+
+  /// No description provided for @accountPasswordChangeUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in.'**
+  String get accountPasswordChangeUncertain;
 }
 
 class _AppLocalizationsDelegate

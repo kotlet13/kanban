@@ -533,6 +533,7 @@ class CollaborationState {
        recordContractVersion = previous.recordContractVersion,
        emailVerificationSupported = previous.emailVerificationSupported,
        resetSupported = previous.resetSupported,
+       passwordChangeSupported = previous.passwordChangeSupported,
        externalPushSupported = previous.externalPushSupported,
        smtpSupported = previous.smtpSupported,
        emailInvitationsSupported = previous.emailInvitationsSupported,
@@ -597,6 +598,7 @@ class CollaborationState {
     this.recordContractVersion = 1,
     this.emailVerificationSupported = false,
     this.resetSupported = false,
+    this.passwordChangeSupported = false,
     this.externalPushSupported = false,
     this.smtpSupported = false,
     this.emailInvitationsSupported = false,
@@ -671,6 +673,7 @@ class CollaborationState {
   final Map<String, int> financeSnapshotSequences;
   final bool emailVerificationSupported,
       resetSupported,
+      passwordChangeSupported,
       emailInvitationsSupported,
       scopedInvitationsSupported,
       usernameInvitationsSupported,

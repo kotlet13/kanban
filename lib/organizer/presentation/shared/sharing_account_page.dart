@@ -22,6 +22,7 @@ import '../onboarding/getting_started.dart';
 import '../onboarding/private_sync_panel.dart';
 import '../onboarding/local_space_connection_panel.dart';
 import '../onboarding/account_email_card.dart';
+import '../onboarding/account_password_card.dart';
 import '../recovery/account_recovery_file_check_card.dart';
 import '../onboarding/account_deletion_panel.dart';
 
@@ -305,7 +306,8 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                               onPressed: _busy ? null : _signOut,
                               child: Text(l.logout),
                             ),
-                            if (state.lastError?.code == 'auth_required' ||
+                            if (state.sessionInvalid ||
+                                state.lastError?.code == 'auth_required' ||
                                 state.lastError?.code == 'device_revoked' ||
                                 !session.expiresAt.isAfter(DateTime.now()))
                               TextButton(
@@ -341,6 +343,14 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                 const SizedBox(height: 20),
                 PrivateSyncPanel(onConnect: () => _selectAuth(true)),
                 const LocalSpaceConnectionPanel(),
+                const SizedBox(height: 20),
+                AccountPasswordCard(
+                  key: ValueKey(
+                    'password-${session.partition}-${session.deviceId}',
+                  ),
+                  session: session,
+                  onSignIn: () => _selectAuth(true),
+                ),
                 const SizedBox(height: 20),
                 AccountRecoveryFileCheckCard(
                   key: ValueKey(

@@ -5731,4 +5731,41 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get recoveryCheckCiphertext =>
       'Obnovitvenega gradiva računa na strežniku ni bilo mogoče preveriti. Obnova ni bila izvedena. Poskusite znova pozneje; če se težava ponavlja, obvestite skrbnika strežnika, vendar mu ne pošiljajte obnovitvene datoteke.';
+
+  @override
+  String get accountPasswordChange => 'Spremeni geslo';
+
+  @override
+  String get accountCurrentPassword => 'Trenutno geslo';
+
+  @override
+  String get accountPasswordChangeDescription =>
+      'Vnesi trenutno in novo geslo. Ta naprava ostane prijavljena, šifrirni ključi ostanejo isti. Druge naprave se bodo morale znova prijaviti.';
+
+  @override
+  String get accountPasswordChanged =>
+      'Geslo je spremenjeno. Ta naprava ostane prijavljena.';
+
+  @override
+  String get accountPasswordChangeUnsupported =>
+      'Za spremembo gesla v nastavitvah računa je potrebna posodobitev strežnika.';
+
+  @override
+  String get accountCurrentPasswordWrong =>
+      'Trenutno geslo ali koda za dvostopenjsko preverjanje ni pravilna. Prijava ostane aktivna.';
+
+  @override
+  String get accountSignedInReset => 'Pozabljeno geslo? Pošlji e-pošto';
+
+  @override
+  String get accountSignedInResetWarning =>
+      'Ponastavitev po e-pošti je ločena možnost za ta račun. Potrditev kode odjavi vse naprave, tudi to. Ohrani obnovitveno datoteko: ponastavitev gesla ne obnovi šifrirnih ključev ali podatkov.';
+
+  @override
+  String get accountResetWrongAccount =>
+      'Ta koda je za drug račun ali strežnik. Nič ni bilo spremenjeno.';
+
+  @override
+  String get accountPasswordChangeUncertain =>
+      'Potrditve ni bilo mogoče prejeti. Geslo je morda že spremenjeno. Preveri prijavo z novim geslom na drugi napravi ali uporabi ponastavitev po e-pošti. Ta naprava ostane prijavljena.';
 }

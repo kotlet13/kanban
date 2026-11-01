@@ -2108,5 +2108,15 @@
   "recoveryCheckNetwork": "The check needs a connection to your account server. Check your connection and try again.",
   "recoveryCheckInvalidFile": "This is not a valid recovery file for this account and server, or the file is damaged. Choose the correct account file.",
   "recoveryCheckFailed": "The recovery file could not be checked. Existing keys and data are preserved. Try again later.",
-  "recoveryCheckCiphertext": "The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file."
+  "recoveryCheckCiphertext": "The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file.",
+  "accountPasswordChange": "Change password",
+  "accountCurrentPassword": "Current password",
+  "accountPasswordChangeDescription": "Enter your current password and a new one. This device stays signed in, and your encryption keys stay the same. Other devices will need to sign in again.",
+  "accountPasswordChanged": "Password changed. This device stays signed in.",
+  "accountPasswordChangeUnsupported": "Password changes from account settings require a server update.",
+  "accountCurrentPasswordWrong": "The current password or two-factor code is incorrect. Your session stays active.",
+  "accountSignedInReset": "Forgot your password? Send email",
+  "accountSignedInResetWarning": "Email reset is a separate option for this account. Confirming its code signs out all devices, including this one. Keep your recovery file: a password reset does not restore encryption keys or data.",
+  "accountResetWrongAccount": "This reset code is for a different account or server. Nothing was changed.",
+  "accountPasswordChangeUncertain": "Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in."
 }

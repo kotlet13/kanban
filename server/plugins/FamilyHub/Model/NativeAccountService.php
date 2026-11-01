@@ -5,6 +5,7 @@ class NativeAccountService extends NativeDatabase
 {
     public function execute($operation, array $params)
     {
+        if ($operation === 'account.password.change') { return (new NativePasswordChangeService($this->container, $this->bearer, $this->ip))->execute($operation, $params); }
         if ($operation !== 'account.status' && !NativeAccountMailCrypto::configured()) { throw new NativeError('email_unavailable', 503); }
         $this->rate($operation === 'account.status' ? [['account-status-ip:'.$this->ip, 2400, 60]] : [['account-email-ip:'.$this->ip, 20, 900]]);
         $actor = $this->actor(false);

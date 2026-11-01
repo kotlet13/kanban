@@ -566,6 +566,26 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     serverId: serverId,
     email: email,
   );
+  Future<void> changeAccountPassword({
+    required String currentPassword,
+    required String newPassword,
+    String? otp,
+  }) => _repo.changeAccountPassword(
+    currentPassword: currentPassword,
+    newPassword: newPassword,
+    otp: otp,
+  );
+  Future<void> requestSignedInPasswordReset({String language = 'sl'}) =>
+      _repo.requestSignedInPasswordReset(language: language);
+  Future<void> confirmSignedInPasswordReset({
+    required String token,
+    required String password,
+    String? otp,
+  }) => _repo.confirmSignedInPasswordReset(
+    token: token,
+    password: password,
+    otp: otp,
+  );
   Future<void> requestPasswordReset({
     required String serverUrl,
     required String username,

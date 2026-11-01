@@ -501,6 +501,7 @@ class CollaborationRepository {
   bool _accountDeletionSupported = false;
   bool _privateSyncSupported = false;
   bool _emailVerificationSupported = false, _passwordResetSupported = false;
+  bool _passwordChangeSupported = false;
   bool _financeSupported = false;
   bool _organizationFinanceSupported = false;
   final _financeChoicePreparations =
@@ -1009,6 +1010,7 @@ class CollaborationRepository {
         recordContractVersion: _recordContractVersion,
         emailVerificationSupported: _emailVerificationSupported,
         resetSupported: _passwordResetSupported,
+        passwordChangeSupported: _passwordChangeSupported,
         externalPushSupported: _externalPushSupported,
         smtpSupported: _smtpSupported,
         emailInvitationsSupported: _emailInvitationsSupported,

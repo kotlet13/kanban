@@ -206,6 +206,7 @@ Future<Map<String, dynamic>?> routeProtectedCryptoDomain({
   if (operation.startsWith('crypto2.') ||
       operation.startsWith('auth.') ||
       operation == 'account.status' ||
+      operation == 'account.password.change' ||
       operation == 'account.changes' ||
       operation == 'recipients.search' ||
       operation.startsWith('account.email.') ||

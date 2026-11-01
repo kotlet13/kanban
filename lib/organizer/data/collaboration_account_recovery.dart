@@ -92,6 +92,83 @@ extension CollaborationAccountRecovery on CollaborationRepository {
     return accountStatus();
   }
 
+  /// Credential change preserves the current bearer and all local crypto state.
+  Future<void> changeAccountPassword({
+    required String currentPassword,
+    required String newPassword,
+    String? otp,
+  }) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _negotiate(session, epoch);
+    _currentDeviceSession(session, epoch);
+    if (!_passwordChangeSupported) {
+      throw const CollaborationException('password_change_unsupported');
+    }
+    final reply =
+        await _callSession(session, epoch, 'account.password.change', {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          if (otp != null) 'otp': otp,
+        }, capabilitiesVerified: true);
+    _currentDeviceSession(session, epoch);
+    if (reply['changed'] != true ||
+        reply['sessionPreserved'] != true ||
+        reply['accountId'] != session.profile.accountId ||
+        reply['deviceId'] != session.profile.deviceId) {
+      throw const CollaborationException('invalid_response');
+    }
+  }
+
+  /// Account settings fixes the destination to this signed-in identity.
+  Future<void> requestSignedInPasswordReset({String language = 'sl'}) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _negotiate(session, epoch);
+    _currentDeviceSession(session, epoch);
+    if (!_passwordChangeSupported || !_passwordResetSupported) {
+      throw const CollaborationException('password_change_unsupported');
+    }
+    await requestPasswordReset(
+      serverUrl: session.profile.serverUrl,
+      username: session.profile.username,
+      language: language,
+      allowLocalHttp: session.profile.allowLocalHttp,
+    );
+    _currentDeviceSession(session, epoch);
+  }
+
+  Future<void> confirmSignedInPasswordReset({
+    required String token,
+    required String password,
+    String? otp,
+  }) async {
+    final session = _requireSession(), epoch = _epoch;
+    await _negotiate(session, epoch);
+    _currentDeviceSession(session, epoch);
+    // The bound confirm parameters are part of the passwordChange capability.
+    if (!_passwordChangeSupported || !_passwordResetSupported) {
+      throw const CollaborationException('password_change_unsupported');
+    }
+    final reply = await transport.call(
+      serverUrl: session.profile.serverUrl,
+      operation: 'auth.reset.confirm',
+      params: {
+        'token': token,
+        'password': password,
+        'expectedAccountId': session.profile.accountId,
+        'expectedServerId': session.profile.serverId,
+        if (otp != null) 'otp': otp,
+      },
+      allowLocalHttp: session.profile.allowLocalHttp,
+    );
+    _currentDeviceSession(session, epoch);
+    if (reply['reset'] != true) {
+      throw const CollaborationException('invalid_response');
+    }
+    // Confirmed reset revokes all sessions, including this one. Preserve local
+    // content/keys and show the existing session-invalid flow, without logout.
+    await _invalidateDeviceSession(session, epoch, 'session_expired');
+  }
+
   Future<void> requestPasswordReset({
     required String serverUrl,
     required String username,
