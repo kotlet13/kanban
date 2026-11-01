@@ -177,3 +177,34 @@ Rezultat: **0 errors, 0 warnings, 2 obstoječa info** za stare neobdane
 Format in ciljni `git diff --check`: PASS. Produkt je po lokalnem PASS
 zamrznjen za rootov pregled, commit, strežniško namestitev in pripravo javne
 Android izdaje; ta odjemalski razdelek ne potrjuje njihove izvedbe.
+
+## Produkcijska namestitev
+
+Uporabnik je naknadno izrecno odobril strežniško nadgradnjo in novo javno
+Android izdajo. Produkt `0dedf33` je commit/push. Produkcija je prejela šest
+PHP datotek **1. novembra ob 18:55:00 UTC**. Paket SHA-256
+`49bb4ebeccf4cec99bca266c7d08bacb978f0fd6f711361b7489cd61ac45e286`
+je preverjen pred razpakiranjem v zasebno mapo. Predhodni izvorni hashi vseh
+obstoječih datotek se ujemajo z manifestom; nova storitev prej ni obstajala.
+PHP 8.4 lint, zasebna kopija starih datotek, atomarne zamenjave posameznih
+datotek in končni hashi so uspešni. Capability je objavljena zadnja.
+
+`config.php` pred/po ima SHA-256
+`316dbbd0558c9fb1d914efcaa2651d4bcea460e58aaecaaf5830147d7a248ee4`.
+Namestitveni helper ne dostopa do podatkovne baze, ne izvaja DDL in ne
+spreminja nobenega uporabnikovega gesla, prijave, ključa, SMTP ali cron nastavitev.
+Javni HTTPS capabilities vrne HTTP 200, isti SID in `passwordChange=true`,
+`passwordReset=true`; upravljavec ostaja Anže Novšak, TriparNA z.o.o.
+To ni produkcijski preizkus dejanske spremembe uporabnikovega gesla.
+
+Dokazi: `build/qa/password-change-20261101/production-deployment-result.json`,
+`production-deployed.png`, `production-capabilities-after.json`.
+Rezultat je prenesen iz cPanel File Manager; SHA-256
+`6908035a9e247b144666ea8278a85910efa01861d6e98773af63440f8dc95109`.
+Zasebna strežniška kopija je v
+`/home/tripar13/private/jivie-production/password-change-20261101/before`.
+Telefoni niso bili upravljani. Naslednji korak je oddaja Android 1.11.8 (40)
+in nato uporabnikov preizkus na isti prijavljeni napravi.
+
+Android 1.11.8 (40) je oddan v javni pregled; končni dokaz in omejitve so v
+`docs/release/ANDROID_1_11_8_2026_11_01.md`. Javna razpoložljivost še ni potrjena.

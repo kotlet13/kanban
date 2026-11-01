@@ -1,3 +1,26 @@
+1. november — **Sprememba gesla: strežnik nameščen, Android1.11.8(40) oddan v pregled**.
+User izrecno dovoli backend+Play; Sol6.1high server/client/review, rootintegracija.
+account.password.change ohrani exactcurrentbearer/device/expiry/push in E2EE,
+revokedothernativeauth; 12–72UTF8bytes/notrim/TOTP/rate/lockedrevalidation.
+Emailresetfixedidentity+optionalpairedbinding, allsessionsrevokeexplicit;
+keys/data same.66PHPchecks9groupsPASS (64main1+2rollback1),9DartcorePASS3+
+7UIPASS1=82newcontrols. Corefixture1logincrypto/2untypedmapFAIL; onebroadfalse
+PASS2 supersededexactcode+requestcountPASS3, no realPASSrerun. Analyze0errors/
+0warnings2oldinfos. TrueSQLite/dispatcher/TOTP/AEAD, syntheticUI/transport,
+notHTTP/native/MariaDBconcurrencyPASS. Product0dedf33pushed.
+Prod6PHPsource-only18:55:00UTC, hashbefore/after+privatebackup+PHP8.4lintPASS,
+0DDL/DBbusiness/credential/key/config/SMTP/cronchange. HTTPS200sameSID+
+passwordChange/resettrue. DeployresultSHA6908035a…c95109 privatecopyheld.
+Android1build126.41s/verifierPASS1,1389frozen/725productrootexact;
+AAB102210110B SHAc49f39e1…f321ff same39cert/8permissions/Firebase/engine.
+DataStore16KBRELROwarningunchanged, notruntimePASS. Owncache1975049717Bremoved,
+16symbols/R8/source/logs/AAB39+40hashpreserved.1upload1submitrelease16/100%
+existingcountries/managedOFF. PlaySpremembevpregledu/quickchecksrunning;
+NEapproved/public. No phones. Usernext ordinaryupdate→Account→Spremenigeslo,
+currentpasswordrequired; mailresetlogsoutcurrenttoo. RecoveryFILEsame.
+Docs PASSWORD_CHANGE_2026_11_01.md + release/ANDROID_1_11_8_2026_11_01.md;
+evidence build/qa/password-change-20261101 + android-1.11.8-20261101.
+
 1. november — **Android1.11.6(38) oddan v javni pregled; še NEapproved**.
 User explicit submit preparedAAB;1upload/1submit,0newbuild/tests/phones/server.
 Productionrelease14/100%existingcountries,managedOFF;09:02:49UTC console
