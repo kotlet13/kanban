@@ -7,6 +7,7 @@ import 'package:sodium/sodium.dart';
 import 'account_crypto_repository.dart' show AccountCryptoWorkflow;
 import 'account_directory_repository.dart';
 import 'account_directory_v2.dart';
+import 'account_recovery_file_check.dart';
 import 'crypto_identity_store.dart';
 import 'crypto_json.dart';
 import 'crypto_sync_repository.dart' show CryptoKeyLease;
@@ -172,6 +173,14 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
     directory.transport,
     AccountWorkKind.account,
     () => directory.call('crypto2.account.status'),
+  );
+
+  /// Checks only account recovery keys. Never starts recovery or changes the
+  /// current device, account directory, local vault or recovery setup journal.
+  Future<void> checkRecoveryFile(Uint8List externalFile) => withAccountWorkJob(
+    directory.transport,
+    AccountWorkKind.account,
+    () => AccountRecoveryFileCheck(directory).check(externalFile),
   );
   @override
   Future<String> localPhase() async {

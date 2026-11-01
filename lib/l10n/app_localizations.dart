@@ -9954,6 +9954,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Email address'**
   String get emailLinkReviewCardTitle;
+
+  /// No description provided for @recoveryCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check recovery file'**
+  String get recoveryCheckTitle;
+
+  /// No description provided for @recoveryCheckDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Check whether a saved file unlocks this account’s keys. Recovery does not start and devices stay signed in.'**
+  String get recoveryCheckDescription;
+
+  /// No description provided for @recoveryCheckScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This check does not test installation recovery or a data backup, even with a combined file. Keep the file private.'**
+  String get recoveryCheckScope;
+
+  /// No description provided for @recoveryCheckSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file unlocks this account’s keys. No recovery was performed. Installation recovery and data were not tested.'**
+  String get recoveryCheckSuccess;
+
+  /// No description provided for @recoveryCheckCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'File selection cancelled. No file was checked.'**
+  String get recoveryCheckCancelled;
+
+  /// No description provided for @recoveryCheckProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Selecting or checking the recovery file…'**
+  String get recoveryCheckProgress;
+
+  /// No description provided for @recoveryCheckUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This account file check is currently unavailable. Existing keys and data are preserved.'**
+  String get recoveryCheckUnavailable;
+
+  /// No description provided for @recoveryCheckSessionChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session changed or expired. Sign in to the intended account and choose the file again.'**
+  String get recoveryCheckSessionChanged;
+
+  /// No description provided for @recoveryCheckSyncRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Account protection has changed. Sync your data, then choose the file again to check it.'**
+  String get recoveryCheckSyncRequired;
+
+  /// No description provided for @recoveryCheckIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be verified against the trusted account keys. It may be an older file. Sync your data and check the current account recovery file.'**
+  String get recoveryCheckIdentity;
+
+  /// No description provided for @recoveryCheckNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'The check needs a connection to your account server. Check your connection and try again.'**
+  String get recoveryCheckNetwork;
+
+  /// No description provided for @recoveryCheckInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a valid recovery file for this account and server, or the file is damaged. Choose the correct account file.'**
+  String get recoveryCheckInvalidFile;
+
+  /// No description provided for @recoveryCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The recovery file could not be checked. Existing keys and data are preserved. Try again later.'**
+  String get recoveryCheckFailed;
+
+  /// No description provided for @recoveryCheckCiphertext.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file.'**
+  String get recoveryCheckCiphertext;
 }
 
 class _AppLocalizationsDelegate

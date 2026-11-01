@@ -204,3 +204,71 @@ rerun. Evidence build/qa/public33-recovery-save-20261029/ includes baseline/fixe
 logs and result. This proves the local cause/path; exact native exception has
 not been captured and handset still runs33. Google Play replacement required
 before the same account can continue on the device; do not reenroll or reset.
+
+## 1 November — non-destructive account recovery-file check
+
+User requested a safe check before resetting a forgotten/rejected password.
+Implemented with Sol6.1/high core, UI and independent review; root integration
+and local tests. This does not change passwords, start account recovery, revoke
+devices, initialize keys or restore a database. No server/phone/Play actions.
+
+The Account page now has **Preveri obnovitveno datoteko / Check recovery file**.
+An explicit selection uses the existing private bounded file picker. Rendering
+the card does not load crypto setup. Each check acquires a fresh workflow from
+the current controller after selection, avoiding a cached workflow from before
+sliding session renewal. Captured session-object identity, workflow epoch and
+operation generation protect the picker and result against account/session
+changes. Cancellation clears previous success; selected byte buffers are cleared
+in finally. Error messages use fixed safe codes, never file contents/raw errors.
+
+The check accepts standalone account files and the account section of combined
+files. It replays the local signed account directory against an independently
+verified secure anchor, checks the active device, epoch and public keys, then
+makes a fresh authenticated account.status read. Exact generation/head/snapshot/
+device hash must match; the encrypted recovery root must match its signed hash.
+RecoveryFileCodec.open actually authenticates/decrypts that envelope and derives
+and checks the root key pairs. Recovered secrets are disposed immediately;
+session and anchor are checked again before success. Changed state requires a
+separate ordinary sync and new explicit check; this check does not refresh or
+promote directory state. Normal transport scheduling and auth-denial authority
+cache invalidation remain intact; persistent account/key/user state is untouched.
+
+Limits shown in UI: this proves the observed account recovery-key material,
+**not** installation recovery, a backup restore, availability/completeness of all
+encrypted records, or that a server hid no newer directory prefix. It is not an
+offline verifier. Existing Dart immutable encoded strings cannot be zeroized;
+owned byte buffers and secure-key leases are cleared/disposed. No recovery file
+or key was copied from a real user to perform these tests.
+
+### Local verification
+
+30 distinct new controls PASS:
+
+- 19 core controls PASS1: real signed directory/reducer/AEAD, correct account and
+  combined file; wrong account/server/secret, truncated file, different root,
+  mismatched live metadata, wrong ciphertext hash, valid hash with broken AEAD,
+  changed session, network failure, unverified/pending-transition anchor.
+- 3 additional core controls PASS1: anchor changes during the read, caller
+  overwrites its selected buffer after the checker takes a copy, corrupt local
+  signed directory. Only these three were run in the additional invocation.
+- 7 initial widget controls PASS1: success/cancel, safe failure, stale picker,
+  session replacement during check, explicit sync-needed status, lazy Account
+  entry and same-account re-login, disposal during file selection.
+- Review caught a tuple-cached preview workflow after normal session renewal.
+  The new entry now directly acquires a fresh workflow. The affected lazy-entry
+  test was updated and rerun with one new renewal control: both PASS1. The other
+  six successful widget tests and all successful core tests were not rerun.
+
+Core tests use in-memory SQLite with full table snapshots and frozen database/
+secure-store writes after fixture setup. Synthetic transport allows only unsigned
+account.status reads. UI tests use controlled picker/check/controller boundaries;
+they do not exercise a real mobile picker, Keychain or production HTTP. Independent
+review found no remaining actionable issue. Targeted analysis of seven files:
+0 errors, 0 warnings, 10 pre-existing style infos; diff check passes.
+
+Evidence: build/qa/recovery-file-check-20261101/{core-attempt1.log,
+core-race-attempt1.log,ui-attempt1.log,ui-session-attempt1.log,analyze.log}.
+No existing successful business suite rerun, no functional failure or fourth
+attempt. No app bundle built or released; real-device verification remains for
+the next explicitly requested installation/release. Existing user data and all
+unrelated working-tree changes remain preserved.

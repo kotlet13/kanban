@@ -22,6 +22,7 @@ import '../onboarding/getting_started.dart';
 import '../onboarding/private_sync_panel.dart';
 import '../onboarding/local_space_connection_panel.dart';
 import '../onboarding/account_email_card.dart';
+import '../recovery/account_recovery_file_check_card.dart';
 import '../onboarding/account_deletion_panel.dart';
 
 class SharingAccountPage extends ConsumerStatefulWidget {
@@ -340,6 +341,13 @@ class _SharingAccountPageState extends ConsumerState<SharingAccountPage> {
                 const SizedBox(height: 20),
                 PrivateSyncPanel(onConnect: () => _selectAuth(true)),
                 const LocalSpaceConnectionPanel(),
+                const SizedBox(height: 20),
+                AccountRecoveryFileCheckCard(
+                  key: ValueKey(
+                    'recovery-check-${session.partition}-${session.deviceId}',
+                  ),
+                  session: session,
+                ),
                 const SizedBox(height: 20),
                 AccountEmailCard(
                   key: ValueKey(

@@ -5666,4 +5666,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailLinkReviewCardTitle => 'Email address';
+
+  @override
+  String get recoveryCheckTitle => 'Check recovery file';
+
+  @override
+  String get recoveryCheckDescription =>
+      'Check whether a saved file unlocks this account’s keys. Recovery does not start and devices stay signed in.';
+
+  @override
+  String get recoveryCheckScope =>
+      'This check does not test installation recovery or a data backup, even with a combined file. Keep the file private.';
+
+  @override
+  String get recoveryCheckSuccess =>
+      'The selected file unlocks this account’s keys. No recovery was performed. Installation recovery and data were not tested.';
+
+  @override
+  String get recoveryCheckCancelled =>
+      'File selection cancelled. No file was checked.';
+
+  @override
+  String get recoveryCheckProgress =>
+      'Selecting or checking the recovery file…';
+
+  @override
+  String get recoveryCheckUnavailable =>
+      'This account file check is currently unavailable. Existing keys and data are preserved.';
+
+  @override
+  String get recoveryCheckSessionChanged =>
+      'Your session changed or expired. Sign in to the intended account and choose the file again.';
+
+  @override
+  String get recoveryCheckSyncRequired =>
+      'Account protection has changed. Sync your data, then choose the file again to check it.';
+
+  @override
+  String get recoveryCheckIdentity =>
+      'The file could not be verified against the trusted account keys. It may be an older file. Sync your data and check the current account recovery file.';
+
+  @override
+  String get recoveryCheckNetwork =>
+      'The check needs a connection to your account server. Check your connection and try again.';
+
+  @override
+  String get recoveryCheckInvalidFile =>
+      'This is not a valid recovery file for this account and server, or the file is damaged. Choose the correct account file.';
+
+  @override
+  String get recoveryCheckFailed =>
+      'The recovery file could not be checked. Existing keys and data are preserved. Try again later.';
+
+  @override
+  String get recoveryCheckCiphertext =>
+      'The server’s account recovery material could not be verified. No recovery was performed. Try again later; if this continues, contact your server administrator without sending the recovery file.';
 }

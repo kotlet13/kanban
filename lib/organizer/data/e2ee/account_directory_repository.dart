@@ -252,6 +252,24 @@ class AccountDirectoryRepository {
         'scopeIds': List<String>.unmodifiable(scopeIds),
       });
 
+  /// An explicit recovery-file check needs a new authenticated status read,
+  /// even when called inside a retained/bundled authority operation. This does
+  /// not refresh, promote, pin or persist any directory material.
+  Future<Map<String, dynamic>> recoveryFileCheckStatus() =>
+      withAccountWorkJob(transport, AccountWorkKind.account, () async {
+        _current();
+        // Bypass directory refresh and authority snapshots. The transport keeps
+        // its ordinary scheduler/session guards and auth-failure invalidation.
+        final result = await transport.call(
+          serverUrl: session.profile.serverUrl,
+          operation: 'crypto2.account.status',
+          token: session.token,
+          allowLocalHttp: session.profile.allowLocalHttp,
+        );
+        _current();
+        return result;
+      });
+
   /// Hosting acceptance labels can change without changing the signed head.
   /// This exact display read bypasses both retained and short bundled material;
   /// the caller still checks the selected head hash and accepted roster IDs.

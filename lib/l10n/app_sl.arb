@@ -2094,5 +2094,19 @@
   "autoInviteReviewCompleted": "Dostop omogočen",
   "autoInviteReviewPending": "Odobritev dostopa še čaka. Povabilo je shranjeno. Znova preveri, ko bo povezava na voljo.",
   "emailLinkReviewRefresh": "Preveri potrditev e-pošte",
-  "emailLinkReviewCardTitle": "E-poštni naslov"
+  "emailLinkReviewCardTitle": "E-poštni naslov",
+  "recoveryCheckTitle": "Preveri obnovitveno datoteko",
+  "recoveryCheckDescription": "Preverite, ali shranjena datoteka odklene ključe tega računa. Obnova se ne sproži, naprave ostanejo prijavljene.",
+  "recoveryCheckScope": "Preverjanje ne zajema obnove lokalne namestitve ali varnostne kopije podatkov, tudi pri združeni datoteki. Datoteko hranite zasebno.",
+  "recoveryCheckSuccess": "Izbrana datoteka odklene ključe tega računa. Obnova ni bila izvedena. Obnova namestitve in podatki niso bili preizkušeni.",
+  "recoveryCheckCancelled": "Izbira datoteke je preklicana. Nobena datoteka ni bila preverjena.",
+  "recoveryCheckProgress": "Izbiranje ali preverjanje obnovitvene datoteke …",
+  "recoveryCheckUnavailable": "Preverjanje datoteke za ta račun trenutno ni na voljo. Obstoječi ključi in podatki so ohranjeni.",
+  "recoveryCheckSessionChanged": "Seja se je spremenila ali potekla. Prijavite se v želeni račun in znova izberite datoteko.",
+  "recoveryCheckSyncRequired": "Zaščita računa se je spremenila. Uskladite podatke, nato znova izberite datoteko za preverjanje.",
+  "recoveryCheckIdentity": "Datoteke ni bilo mogoče preveriti z zaupanja vrednimi ključi računa. Morda gre za starejšo datoteko. Uskladite podatke in preverite trenutno obnovitveno datoteko računa.",
+  "recoveryCheckNetwork": "Preverjanje potrebuje povezavo s strežnikom računa. Preverite povezavo in poskusite znova.",
+  "recoveryCheckInvalidFile": "To ni veljavna obnovitvena datoteka za ta račun in strežnik ali pa je datoteka poškodovana. Izberite pravo datoteko računa.",
+  "recoveryCheckFailed": "Obnovitvene datoteke ni bilo mogoče preveriti. Obstoječi ključi in podatki so ohranjeni. Poskusite znova pozneje.",
+  "recoveryCheckCiphertext": "Obnovitvenega gradiva računa na strežniku ni bilo mogoče preveriti. Obnova ni bila izvedena. Poskusite znova pozneje; če se težava ponavlja, obvestite skrbnika strežnika, vendar mu ne pošiljajte obnovitvene datoteke."
 }

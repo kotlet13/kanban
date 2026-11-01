@@ -5676,4 +5676,59 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get emailLinkReviewCardTitle => 'E-poštni naslov';
+
+  @override
+  String get recoveryCheckTitle => 'Preveri obnovitveno datoteko';
+
+  @override
+  String get recoveryCheckDescription =>
+      'Preverite, ali shranjena datoteka odklene ključe tega računa. Obnova se ne sproži, naprave ostanejo prijavljene.';
+
+  @override
+  String get recoveryCheckScope =>
+      'Preverjanje ne zajema obnove lokalne namestitve ali varnostne kopije podatkov, tudi pri združeni datoteki. Datoteko hranite zasebno.';
+
+  @override
+  String get recoveryCheckSuccess =>
+      'Izbrana datoteka odklene ključe tega računa. Obnova ni bila izvedena. Obnova namestitve in podatki niso bili preizkušeni.';
+
+  @override
+  String get recoveryCheckCancelled =>
+      'Izbira datoteke je preklicana. Nobena datoteka ni bila preverjena.';
+
+  @override
+  String get recoveryCheckProgress =>
+      'Izbiranje ali preverjanje obnovitvene datoteke …';
+
+  @override
+  String get recoveryCheckUnavailable =>
+      'Preverjanje datoteke za ta račun trenutno ni na voljo. Obstoječi ključi in podatki so ohranjeni.';
+
+  @override
+  String get recoveryCheckSessionChanged =>
+      'Seja se je spremenila ali potekla. Prijavite se v želeni račun in znova izberite datoteko.';
+
+  @override
+  String get recoveryCheckSyncRequired =>
+      'Zaščita računa se je spremenila. Uskladite podatke, nato znova izberite datoteko za preverjanje.';
+
+  @override
+  String get recoveryCheckIdentity =>
+      'Datoteke ni bilo mogoče preveriti z zaupanja vrednimi ključi računa. Morda gre za starejšo datoteko. Uskladite podatke in preverite trenutno obnovitveno datoteko računa.';
+
+  @override
+  String get recoveryCheckNetwork =>
+      'Preverjanje potrebuje povezavo s strežnikom računa. Preverite povezavo in poskusite znova.';
+
+  @override
+  String get recoveryCheckInvalidFile =>
+      'To ni veljavna obnovitvena datoteka za ta račun in strežnik ali pa je datoteka poškodovana. Izberite pravo datoteko računa.';
+
+  @override
+  String get recoveryCheckFailed =>
+      'Obnovitvene datoteke ni bilo mogoče preveriti. Obstoječi ključi in podatki so ohranjeni. Poskusite znova pozneje.';
+
+  @override
+  String get recoveryCheckCiphertext =>
+      'Obnovitvenega gradiva računa na strežniku ni bilo mogoče preveriti. Obnova ni bila izvedena. Poskusite znova pozneje; če se težava ponavlja, obvestite skrbnika strežnika, vendar mu ne pošiljajte obnovitvene datoteke.';
 }
