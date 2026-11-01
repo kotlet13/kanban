@@ -1,3 +1,17 @@
+1. november — **RecordPolicy dokaz popravljen lokalno; Android1.11.6(38) pripravljen, NIoddan**.
+User potrdi repro/fix/UI/test/prepare. Sol6.1high core+UI+review,rootintegracija.
+Pravi directoryAt RED directory_proof_pending; exact baselinehead+signerdirectory
+online:true, ostalaguardsisti.7core+4UI=11novihPASS; recipientfixtureFAIL1→RED2→
+PASS3;5negativePASS1;stalesessionmatcherFAIL1→PASS2only;UI4PASS1. Pravi podpisi/
+directoryreducer/AEAD, head/keyseams in synthetictransport; NEphone/HTTPPASS.
+Stable diagnosticdialogcopy snapshot, sessionguard, kratkaSL/ENrazlaga.
+Product3a290b8pushed.1build127.14s/verifierPASS1,1380frozen/643rootexact,
+AAB102127831B SHA61675f97…7d33d91; same37cert/8permissions/native/Firebase.
+DataStoreknown16KBRELROwarning unchanged; alignmentniRuntimePASS.
+Owncache1973668976Bremoved;16symbols/R8/source/logs/AAB37+38preserved.
+0phones/server/Playactions; istiaccount/invite/data. A33realoutcomePENDING.
+Docs RECORD_POLICY_PROOF_FIX_2026_11_01.md in release/ANDROID_1_11_6_2026_11_01.md.
+
 31. oktober — **Android1.11.5(37) oddan v javni pregled; še ne javno potrjen**.
 User explicit diagnosticrelease zaistiA33sync; root1build113.15s/1upload/
 1submit, productionrelease13/100%existingcountries,managedOFF. Konzola
