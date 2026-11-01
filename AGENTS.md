@@ -1,3 +1,12 @@
+1. november — **Android1.11.6(38) oddan v javni pregled; še NEapproved**.
+User explicit submit preparedAAB;1upload/1submit,0newbuild/tests/phones/server.
+Productionrelease14/100%existingcountries,managedOFF;09:02:49UTC console
+Spremembevpregledu/quickchecksrunning.37active preflight,38publicNEconfirmed.
+AAB102127831B SHA61675f97…d33d91 exactprepared;min24/target36/3ABI/unchanged
+supporteddevices. ExistingDataStoreRELROwarning unchanged, NEruntimePASS.
+Ordinaryupdate/sameaccount thenUskladizdaj1; actualA33outcomePENDING.
+Docs release/ANDROID_1_11_6_2026_11_01.md; proof build/qa/android-1.11.6-20261101.
+
 1. november — **RecordPolicy dokaz popravljen lokalno; Android1.11.6(38) pripravljen, NIoddan**.
 User potrdi repro/fix/UI/test/prepare. Sol6.1high core+UI+review,rootintegracija.
 Pravi directoryAt RED directory_proof_pending; exact baselinehead+signerdirectory
