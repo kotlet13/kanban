@@ -10128,6 +10128,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review.'**
   String get syncCommandRejected;
+
+  /// No description provided for @syncScopeRotationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This space needs its encryption key update to finish before sync can continue. Review account protection. Local data and queued changes are retained.'**
+  String get syncScopeRotationRequired;
+
+  /// No description provided for @syncHeldPreviousReasonCaution.
+  ///
+  /// In en, this message translates to:
+  /// **'A reason retained from an earlier held request describes that earlier attempt. It does not by itself confirm the current cause or that the required protection update is still unfinished.'**
+  String get syncHeldPreviousReasonCaution;
 }
 
 class _AppLocalizationsDelegate

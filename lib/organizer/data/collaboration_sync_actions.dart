@@ -2,8 +2,8 @@ part of 'collaboration_repository.dart';
 
 /// Leased idempotent delivery, incremental pulls, conflicts and recovery export.
 extension CollaborationSyncActions on CollaborationRepository {
-  /// An explicit recheck only reads exact receipts. It neither rearms held
-  /// requests nor treats their receipt as a verified content projection.
+  /// Explicit retry checks exact receipts and current operation-specific
+  /// authority. A receipt alone never establishes a verified projection.
   Future<bool> _recheckHeldSyncReceipts(
     DeviceSession session,
     int epoch,
@@ -26,7 +26,7 @@ extension CollaborationSyncActions on CollaborationRepository {
       );
     }
     final inventory = await database.rows(
-      "SELECT request_id,LENGTH(CAST(signed_body AS BLOB))+COALESCE(LENGTH(CAST(response AS BLOB)),0) AS bytes FROM crypto_outbox WHERE partition=? AND state='blocked' ORDER BY sequence LIMIT 65",
+      "SELECT request_id,operation,LENGTH(CAST(signed_body AS BLOB))+COALESCE(LENGTH(CAST(response AS BLOB)),0) AS bytes FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='blocked' ORDER BY sequence LIMIT 65",
       [p],
     );
     final quarantine = await database.rows(
@@ -65,7 +65,17 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (!withinLimit) {
         reasons.add('crypto_held_sync_inventory_limit');
       } else if (inventory.isNotEmpty) {
-        if (router is CryptoTerminalReceiptReconciliation) {
+        if (router is CryptoHeldCommandResume) {
+          rejected = await (router as CryptoHeldCommandResume)
+              .resumeHeldCommands(
+                session: session,
+                requestIds: {
+                  for (final r in inventory) r['request_id'] as String,
+                },
+                checkCurrent: current,
+              );
+          await current();
+        } else if (router is CryptoTerminalReceiptReconciliation) {
           rejected = await (router as CryptoTerminalReceiptReconciliation)
               .reconcileTerminalReceipts(
                 session: session,
@@ -78,10 +88,24 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
         for (final item in inventory) {
           final rows = await database.rows(
-            'SELECT state,response FROM crypto_outbox WHERE partition=? AND request_id=?',
+            'SELECT state,response FROM crypto_outbox WHERE partition=? AND request_id=? AND ${cryptoActiveOutboxPredicate()}',
             [p, item['request_id']],
           );
           _checkEpoch(epoch);
+          if (rows.isEmpty) {
+            final retired = await database.rows(
+              'SELECT 1 FROM crypto_outbox WHERE partition=? AND request_id=? AND NOT (${cryptoActiveOutboxPredicate()})',
+              [p, item['request_id']],
+            );
+            _checkEpoch(epoch);
+            if (retired.length != 1) {
+              throw const CollaborationException('invalid_response');
+            }
+            // A verified newer checkpoint may satisfy this derived assertion;
+            // original signed evidence remains retained. Require full refresh.
+            _heldReceiptProgress = true;
+            continue;
+          }
           if (rows.length != 1) {
             throw const CollaborationException('invalid_response');
           }
@@ -101,6 +125,27 @@ extension CollaborationSyncActions on CollaborationRepository {
                 final code = response[key];
                 if (code is String && syncFailureSafeReasons.contains(code)) {
                   reasons.add(code);
+                  if (item['operation'] == 'crypto2.domain.checkpoint' &&
+                      const {
+                        'scope_rotation_required',
+                        'scope_reauthorization_required',
+                      }.contains(code)) {
+                    // Trigger one normal full pass to publish/verify a current
+                    // checkpoint. This marker supplies no authority; the domain
+                    // workflow proves strict supersession or keeps work held.
+                    await current();
+                    await database.transaction(() async {
+                      _checkEpoch(epoch);
+                      await _validLease(p);
+                      await database.execute(
+                        'INSERT OR IGNORE INTO local_meta(name,value) VALUES(?,?)',
+                        [
+                          'held_receipt_refresh_v1:$p',
+                          'checkpoint-review:${newSharedId()}',
+                        ],
+                      );
+                    });
+                  }
                   break;
                 }
               }
@@ -287,7 +332,17 @@ extension CollaborationSyncActions on CollaborationRepository {
     _lastCapturedSyncFailureError = null;
     _lastCapturedSyncFailureScopeId = null;
     try {
+      _heldRefreshFollowupNeeded = false;
       await _coordinateSyncPass(manual: manual);
+      // A newly proved checkpoint replacement can advance the generation while
+      // this full pass runs. One explicit follow-up verifies that exact new debt;
+      // repeated concurrent transitions remain visible, never an unbounded loop.
+      if (manual && _heldRefreshFollowupNeeded) {
+        _heldRefreshFollowupNeeded = false;
+        _checkEpoch(epoch);
+        await _coordinateSyncPass(manual: true);
+      }
+      _heldRefreshFollowupNeeded = false;
     } catch (error) {
       if (!_closed && epoch == _epoch) {
         _captureSyncFailure(
@@ -768,6 +823,7 @@ extension CollaborationSyncActions on CollaborationRepository {
           clearedHeldRefresh = remaining.isEmpty;
           if (!clearedHeldRefresh) {
             _lastSuccessfulSyncAt = previousSuccessfulSyncAt;
+            _heldRefreshFollowupNeeded = manual;
           }
         });
         if (clearedHeldRefresh) {
@@ -1764,7 +1820,7 @@ extension CollaborationSyncActions on CollaborationRepository {
           // held. Recompute categories instead of attributing its old guard to
           // the neighbouring request. No second receipt lookup is needed.
           final debt = (await database.rows(
-            "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state='blocked') AS crypto, EXISTS(SELECT 1 FROM linked_payment_intents WHERE (json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) AND state='quarantine') AS payment",
+            "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='blocked') AS crypto, EXISTS(SELECT 1 FROM linked_payment_intents WHERE (json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) AND state='quarantine') AS payment",
             [partition, partition],
           )).single;
           _checkEpoch(epoch);

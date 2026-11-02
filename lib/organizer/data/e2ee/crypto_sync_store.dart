@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'crypto_json.dart';
+import 'crypto_active_outbox.dart';
 import 'package:cryptography/cryptography.dart' show Sha256;
 
 import '../collaboration_database.dart';
@@ -28,7 +29,7 @@ class CryptoSyncStore {
       database.transaction(body);
 
   Future<List<Map<String, Object?>>> pending() => database.rows(
-    "SELECT * FROM crypto_outbox WHERE partition=? AND state='pending' ORDER BY sequence",
+    "SELECT * FROM crypto_outbox WHERE partition=? AND state='pending' AND ${cryptoActiveOutboxPredicate()} ORDER BY sequence",
     [partition],
   );
 
@@ -50,14 +51,14 @@ class CryptoSyncStore {
   ) async* {
     for (final id in requestIds) {
       final metadata = await database.rows(
-        "SELECT LENGTH(CAST(signed_body AS BLOB)) AS bytes FROM crypto_outbox WHERE partition=? AND request_id=? AND state IN ('pending','blocked')",
+        "SELECT LENGTH(CAST(signed_body AS BLOB)) AS bytes FROM crypto_outbox WHERE partition=? AND request_id=? AND state IN ('pending','blocked') AND ${cryptoActiveOutboxPredicate()}",
         [partition, id],
       );
       if (metadata.isEmpty) continue;
       if ((metadata.single['bytes'] as int) > 2 * 1024 * 1024) {
         throw const FormatException('crypto_stored_command_size');
       }
-      final row = await outgoing(id);
+      final row = await _activeOutgoing(id);
       if (row != null && const {'pending', 'blocked'}.contains(row['state'])) {
         yield row;
       }
@@ -69,8 +70,8 @@ class CryptoSyncStore {
     bool includeBlocked = false,
   }) async* {
     final predicate = includeBlocked
-        ? "state IN ('pending','blocked')"
-        : 'state=?';
+        ? "state IN ('pending','blocked') AND ${cryptoActiveOutboxPredicate()}"
+        : 'state=? AND ${cryptoActiveOutboxPredicate()}';
     final stateArgs = <Object?>[if (!includeBlocked) state];
     final watermark =
         (await database.rows(
@@ -118,6 +119,110 @@ class CryptoSyncStore {
         'SELECT * FROM crypto_outbox WHERE partition=? AND request_id=?',
         [partition, requestId],
       )).firstOrNull;
+
+  Future<Map<String, Object?>?> _activeOutgoing(
+    String id,
+  ) async => (await database.rows(
+    'SELECT * FROM crypto_outbox WHERE partition=? AND request_id=? AND ${cryptoActiveOutboxPredicate()}',
+    [partition, id],
+  )).firstOrNull;
+
+  /// Validate the entire explicit inventory before loading or sending any body.
+  Future<void> validateHeldSelection(
+    Set<String> requestIds, {
+    bool includeLocallyCompleted = false,
+  }) async {
+    final active = includeLocallyCompleted
+        ? '1=1'
+        : cryptoActiveOutboxPredicate();
+    if (requestIds.length > 64) {
+      throw const FormatException('crypto_held_sync_inventory_limit');
+    }
+    var total = 0;
+    for (final id in requestIds) {
+      final rows = await database.rows(
+        "SELECT LENGTH(CAST(signed_body AS BLOB))+COALESCE(LENGTH(CAST(response AS BLOB)),0) AS bytes FROM crypto_outbox WHERE partition=? AND request_id=? AND state IN ('blocked','pending') AND $active",
+        [partition, id],
+      );
+      if (rows.isNotEmpty) total += rows.single['bytes'] as int;
+      if (total > 1048576) {
+        throw const FormatException('crypto_held_sync_inventory_limit');
+      }
+    }
+  }
+
+  Stream<Map<String, Object?>> boundedHeldDelivery(
+    Set<String> requestIds, {
+    bool includeLocallyCompleted = false,
+  }) async* {
+    final snapshot = await transaction(() async {
+      await validateHeldSelection(
+        requestIds,
+        includeLocallyCompleted: includeLocallyCompleted,
+      );
+      final rows = <Map<String, Object?>>[];
+      for (final id in requestIds) {
+        final row = includeLocallyCompleted
+            ? await outgoing(id)
+            : await _activeOutgoing(id);
+        if (row != null &&
+            const {'pending', 'blocked'}.contains(row['state'])) {
+          rows.add(row);
+        }
+      }
+      rows.sort(
+        (a, b) => (a['sequence'] as int).compareTo(b['sequence'] as int),
+      );
+      return rows;
+    });
+    yield* Stream.fromIterable(snapshot);
+  }
+
+  /// Compare the immutable body and retained state after awaited authority work.
+  /// The row stays blocked even while an explicit retry is in flight, so a
+  /// crash cannot enroll it into automatic delivery.
+  Future<void> recordHeldAttempt(
+    Map<String, Object?> snapshot, {
+    Map<String, dynamic>? guardFailure,
+  }) => transaction(() async {
+    final old = await _activeOutgoing(snapshot['request_id'] as String);
+    if (old == null ||
+        snapshot['state'] != 'blocked' ||
+        const [
+          'state',
+          'operation',
+          'signed_body',
+          'request_hash',
+          'response',
+        ].any((key) => old[key] != snapshot[key])) {
+      throw const FormatException('crypto_receipt_changed');
+    }
+    final details = guardFailure == null
+        ? old['response'] as String
+        : _wireText(guardFailure);
+    await database.execute(
+      'INSERT INTO crypto_outbox_attempts(partition,request_id,event,details) VALUES(?,?,?,?)',
+      [
+        partition,
+        snapshot['request_id'],
+        guardFailure == null ? 'manual_resume' : 'blocked',
+        details,
+      ],
+    );
+    if (guardFailure != null) {
+      await database.execute(
+        "UPDATE crypto_outbox SET response=? WHERE partition=? AND request_id=? AND state='blocked' AND response=? AND signed_body=? AND request_hash=?",
+        [
+          details,
+          partition,
+          snapshot['request_id'],
+          snapshot['response'],
+          snapshot['signed_body'],
+          snapshot['request_hash'],
+        ],
+      );
+    }
+  });
 
   Future<void> stage({
     required String requestId,

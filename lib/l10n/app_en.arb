@@ -2123,5 +2123,7 @@
   "syncCommandReceiptPending": "The server outcome of an existing sync request could not be confirmed. Local data and the original request are retained. Choose “Sync now” to check the confirmation again.",
   "syncHeldInventoryLimit": "The safe limit for checking held requests was reached. Existing requests and data are retained; sync is not confirmed. Copy the error details for review.",
   "syncPaymentQuarantined": "A linked payment is held because its verification is incomplete. It remains separate from the sync request checks. Existing entries are retained; copy the error details for review.",
-  "syncCommandRejected": "The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review."
+  "syncCommandRejected": "The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review.",
+  "syncScopeRotationRequired": "This space needs its encryption key update to finish before sync can continue. Review account protection. Local data and queued changes are retained.",
+  "syncHeldPreviousReasonCaution": "A reason retained from an earlier held request describes that earlier attempt. It does not by itself confirm the current cause or that the required protection update is still unfinished."
 }

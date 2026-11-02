@@ -6,6 +6,7 @@ import 'crypto_business_router.dart';
 import '../collaboration_transport.dart' show CollaborationApiException;
 import 'crypto_json.dart';
 import 'crypto_sync_repository.dart';
+import 'crypto_checkpoint_supersession.dart';
 
 /// Attests only the exact authenticated, projected record set this device has
 /// observed. This is not evidence that the server disclosed unseen history.
@@ -17,6 +18,9 @@ class CryptoDomainCheckpointPublisher {
     final read = await context.access.readContext(scope, domain);
     if (await context.hasReusableCheckpoint(scope, domain, read)) {
       await _reconcileReusableReceipt(scope, domain, read);
+      await CryptoCheckpointSupersession(
+        context,
+      ).reconcile(scope, domain, read);
       return PaymentCheckpointStep.reusableCheckpoint;
     }
     final snapshot = context.codec.crypto.randomId();
@@ -214,7 +218,7 @@ class CryptoDomainCheckpointPublisher {
       if (verified == null) {
         return PaymentCheckpointStep.checkpointVerificationPending;
       }
-      return await db.transaction(() async {
+      final result = await db.transaction(() async {
         final state = (await db.rows(
           'SELECT * FROM crypto_scope_state WHERE partition=? AND scope_id=? AND domain=?',
           [partition, scope, domain],
@@ -322,6 +326,12 @@ class CryptoDomainCheckpointPublisher {
         );
         return PaymentCheckpointStep.complete;
       });
+      if (result == PaymentCheckpointStep.complete) {
+        await CryptoCheckpointSupersession(
+          context,
+        ).reconcile(scope, domain, read);
+      }
+      return result;
     } finally {
       await db.execute(
         'DELETE FROM crypto_domain_inventory_rows WHERE partition=? AND snapshot_id=?',

@@ -39,6 +39,17 @@ abstract interface class CryptoTerminalReceiptReconciliation {
   });
 }
 
+/// Explicit bounded retry of immutable held intent. A receipt is checked first;
+/// fresh operation-specific authority, current signer and exact bytes remain
+/// mandatory before a resend. Unknown and rejected work stays held.
+abstract interface class CryptoHeldCommandResume {
+  Future<Set<String>> resumeHeldCommands({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+  });
+}
+
 /// Internal selector for a task already present in the local visible projection.
 /// It is never sent to a server or accepted as access/record authority.
 class CryptoVisibleTaskMetadataTarget {

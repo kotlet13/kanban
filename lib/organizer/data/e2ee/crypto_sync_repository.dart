@@ -146,6 +146,7 @@ class CryptoSyncRepository {
     required this.isCurrent,
     this.completenessProof,
     this.beforeDelivery,
+    this.heldSignerPublicKey,
     this.readContext,
     this.deliverySidecar,
     this.supportsRecordPolicy,
@@ -177,6 +178,10 @@ class CryptoSyncRepository {
   /// Refresh signed directory/member snapshots and current scope heads before
   /// online delivery. Absence never grants permission from cached capability.
   final Future<void> Function(Map<String, dynamic> signed)? beforeDelivery;
+
+  /// Current verified active-device key, resolved after fresh delivery checks.
+  /// Required only for explicit held-command resumption.
+  final Future<Uint8List> Function()? heldSignerPublicKey;
 
   /// Transient comparison secrets for capture3 only. Called after an exact
   /// receipt lookup proves no saved outcome; never persisted with signed bytes.
@@ -953,15 +958,119 @@ class CryptoSyncRepository {
     );
   }
 
+  /// A narrowly selected manual resend. Held state is retained until a bound
+  /// applied receipt, including interruptions and unknown responses.
+  Future<void> resumeHeldCommands({
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+    Future<void> Function(String requestId, bool applied)? onTerminal,
+  }) {
+    final selected = Set<String>.unmodifiable(requestIds);
+    return _exclusive(() async {
+      await checkCurrent();
+      _current();
+      await _deliver(
+        requestIds: selected,
+        terminalOnly: true,
+        resumeHeld: true,
+        checkCurrent: checkCurrent,
+        onTerminal: onTerminal,
+        settleRejected: false,
+      );
+    });
+  }
+
+  /// Read-only final check for an operation-owned supersession proof. Unknown
+  /// is never an applied receipt and does not change any queue state here.
+  Future<bool> hasUnknownHeldReceipt({
+    required String requestId,
+    required String requestHash,
+    required Future<void> Function() checkCurrent,
+  }) => _exclusive(() async {
+    await checkCurrent();
+    _current();
+    final rows = await store.boundedHeldDelivery({
+      requestId,
+    }, includeLocallyCompleted: true).toList();
+    if (rows.length != 1 || rows.single['state'] != 'blocked') return false;
+    final row = rows.single;
+    if (row['request_hash'] != requestHash) {
+      throw const FormatException('crypto_stored_command_binding');
+    }
+    final signed =
+        jsonDecode(row['signed_body'] as String) as Map<String, dynamic>;
+    await _validateStoredCommand(row, signed);
+    await checkCurrent();
+    try {
+      final receipt = await _call('crypto2.receipt.get', {
+        'requestId': requestId,
+        'requestHash': requestHash,
+      });
+      await checkCurrent();
+      _current();
+      return receipt['outcome'] == 'unknown';
+    } on CollaborationApiException catch (error) {
+      if (!const {
+        'permission_revoked',
+        'finance_forbidden',
+        'forbidden',
+        'crypto_grant_missing',
+        'crypto_device_keys_pending',
+        'crypto_content_restricted',
+        'crypto_receipt_scope_required',
+        'idempotency_mismatch',
+      }.contains(error.code)) {
+        rethrow;
+      }
+      return false;
+    }
+  });
+
+  Future<void> _validateStoredCommand(
+    Map<String, Object?> row,
+    Map<String, dynamic> signed,
+  ) async {
+    if (signed.length != 2 ||
+        !signed.containsKey('commandBase64') ||
+        !signed.containsKey('signatureBase64')) {
+      throw const FormatException('crypto_stored_command_binding');
+    }
+    cryptoBase64(signed['signatureBase64'], length: 64);
+    final command =
+        CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
+    if (await _hash(signed) != row['request_hash'] ||
+        command['version'] != 2 ||
+        command['requestId'] != row['request_id'] ||
+        command['operation'] != row['operation'] ||
+        command['serverId'] != session.profile.serverId ||
+        command['accountId'] != session.profile.accountId ||
+        command['signer'] != 'device' ||
+        !isCryptoCanonicalUuid(command['deviceId'])) {
+      throw const FormatException('crypto_stored_command_binding');
+    }
+  }
+
+  bool _canResumeHeld(Map<String, Object?> row) {
+    if (row['state'] != 'blocked' || row['response'] is! String) return false;
+    final retained = jsonDecode(row['response'] as String);
+    return retained is Map &&
+        retained['outcome'] == 'unresolved' &&
+        retained['reason'] == 'authority_pending' &&
+        retained['code'] == 'scope_rotation_required';
+  }
+
   Future<void> _deliver({
     Set<String>? requestIds,
     bool terminalOnly = false,
+    bool resumeHeld = false,
     Future<void> Function()? checkCurrent,
     Future<void> Function(String requestId, bool applied)? onTerminal,
     bool settleRejected = true,
   }) async {
     await for (final row
-        in terminalOnly
+        in resumeHeld
+            ? store.boundedHeldDelivery(requestIds!)
+            : terminalOnly
             ? (requestIds == null
                   ? store.terminalDelivery()
                   : store.selectedTerminalDelivery(requestIds))
@@ -974,24 +1083,7 @@ class CryptoSyncRepository {
       final signed =
           jsonDecode(row['signed_body'] as String) as Map<String, dynamic>;
       if (terminalOnly) {
-        if (signed.length != 2 ||
-            !signed.containsKey('commandBase64') ||
-            !signed.containsKey('signatureBase64')) {
-          throw const FormatException('crypto_stored_command_binding');
-        }
-        cryptoBase64(signed['signatureBase64'], length: 64);
-        final command =
-            CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
-        if (await _hash(signed) != row['request_hash'] ||
-            command['version'] != 2 ||
-            command['requestId'] != row['request_id'] ||
-            command['operation'] != row['operation'] ||
-            command['serverId'] != session.profile.serverId ||
-            command['accountId'] != session.profile.accountId ||
-            command['signer'] != 'device' ||
-            !isCryptoCanonicalUuid(command['deviceId'])) {
-          throw const FormatException('crypto_stored_command_binding');
-        }
+        await _validateStoredCommand(row, signed);
       }
       late Map<String, dynamic> receipt;
       Future<Map<String, dynamic>?> lookup() async {
@@ -1029,24 +1121,55 @@ class CryptoSyncRepository {
       if (historical == null) continue;
       receipt = historical;
       if (receipt['outcome'] == 'unknown') {
-        if (terminalOnly) continue;
+        final explicitHeld = resumeHeld && _canResumeHeld(row);
+        if (terminalOnly && !explicitHeld) continue;
         final fresh = beforeDelivery;
-        if (fresh == null) {
+        if (fresh == null || (explicitHeld && heldSignerPublicKey == null)) {
           throw const CryptoAuthorityPending(
             'crypto_delivery_reconciliation_required',
           );
         }
-        try {
-          await fresh(signed);
-          _current();
-        } on CryptoAuthorityPending catch (error) {
+        Future<void> retainGuard(Map<String, dynamic> failure) async {
           await store.transaction(() async {
+            await checkCurrent?.call();
             _current();
-            await store.outcome(row['request_id'] as String, 'blocked', {
-              'outcome': 'unresolved',
-              'reason': 'authority_pending',
-              'code': error.reason,
-            });
+            if (explicitHeld) {
+              await store.recordHeldAttempt(row, guardFailure: failure);
+            } else {
+              await store.outcome(
+                row['request_id'] as String,
+                'blocked',
+                failure,
+              );
+            }
+          });
+        }
+
+        try {
+          if (explicitHeld) {
+            final command =
+                CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
+            if (command['deviceId'] != session.profile.deviceId) {
+              throw const CryptoAuthorityPending('crypto_device_keys_pending');
+            }
+          }
+          await fresh(signed);
+          await checkCurrent?.call();
+          _current();
+          if (explicitHeld) {
+            crypto.verifyDomain(
+              signed,
+              await heldSignerPublicKey!(),
+              'JivieE2EE/v2\n',
+            );
+            await checkCurrent?.call();
+            _current();
+          }
+        } on CryptoAuthorityPending catch (error) {
+          await retainGuard({
+            'outcome': 'unresolved',
+            'reason': 'authority_pending',
+            'code': error.reason,
           });
           continue;
         } on CollaborationApiException catch (error) {
@@ -1059,13 +1182,7 @@ class CryptoSyncRepository {
           }.contains(error.code)) {
             rethrow;
           }
-          await store.transaction(() async {
-            _current();
-            await store.outcome(row['request_id'] as String, 'blocked', {
-              'outcome': 'unresolved',
-              'reason': error.code,
-            });
-          });
+          await retainGuard({'outcome': 'unresolved', 'reason': error.code});
           continue;
         }
         try {
@@ -1080,6 +1197,14 @@ class CryptoSyncRepository {
                   !sidecar.containsKey('captureSecrets'))) {
             throw const FormatException('crypto_capture_sidecar_operation');
           }
+          if (explicitHeld) {
+            await store.transaction(() async {
+              await checkCurrent?.call();
+              _current();
+              await store.recordHeldAttempt(row);
+            });
+          }
+          await checkCurrent?.call();
           await _call(row['operation'] as String, {...signed, ...sidecar});
         } on CollaborationApiException catch (error) {
           // Required acceptance has no terminal receipt; keep the exact pending work.

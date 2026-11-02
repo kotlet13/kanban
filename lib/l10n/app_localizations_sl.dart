@@ -5788,4 +5788,12 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get syncCommandRejected =>
       'Strežnik je zavrnil obstoječo zahtevo sinhronizacije. Uskladitev ni potrjena. Obstoječi podatki in zabeleženi izid ostanejo ohranjeni; kopiraj podrobnosti napake za pregled.';
+
+  @override
+  String get syncScopeRotationRequired =>
+      'Pred nadaljevanjem uskladitve je treba dokončati posodobitev šifrirnih ključev tega prostora. Preglej zaščito računa. Lokalni podatki in čakajoče spremembe ostanejo ohranjeni.';
+
+  @override
+  String get syncHeldPreviousReasonCaution =>
+      'Oznaka vzroka, ohranjena pri prejšnji zadržani zahtevi, opisuje takratni poskus. Sama ne potrjuje trenutnega vzroka ali tega, da zahtevana posodobitev zaščite še ni končana.';
 }

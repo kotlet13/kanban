@@ -1,3 +1,4 @@
+import 'e2ee/crypto_active_outbox.dart';
 import '../domain/payment_completion_diagnostics.dart';
 import '../domain/sharing_refresh_state.dart';
 import 'e2ee/crypto_migration_idea_draft_recovery.dart';
@@ -354,7 +355,7 @@ class CollaborationRepository {
       "SELECT 'record' AS kind,op_id AS id,sequence,state FROM outbox WHERE partition=? "
       "UNION ALL SELECT 'finance',op_id,sequence,state FROM finance_outbox WHERE partition=? "
       "UNION ALL SELECT 'command',id,sequence,state FROM commands WHERE partition=? "
-      "UNION ALL SELECT 'crypto',request_id,sequence,state FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked') "
+      "UNION ALL SELECT 'crypto',request_id,sequence,state FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state IN ('pending','blocked') "
       "UNION ALL SELECT 'payment',id,rowid,state FROM linked_payment_intents WHERE "
       "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
       "AND state IN ('pending','waiting_source_publication','quarantine','complete','local_only') "
@@ -593,6 +594,7 @@ class CollaborationRepository {
   final _heldReceiptFailures = <SyncFailureDetails>[];
   Object? _heldReceiptError;
   bool _heldReceiptProgress = false;
+  bool _heldRefreshFollowupNeeded = false;
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
@@ -1209,15 +1211,15 @@ class CollaborationRepository {
   }) async {
     // Aggregate metadata only: never serialize queues or retained terminal history.
     final extraWork = await database.rows(
-      "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked')) "
+      "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state IN ('pending','blocked')) "
       "OR EXISTS(SELECT 1 FROM linked_payment_intents WHERE "
       "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
       "AND state IN ('pending','waiting_source_publication','quarantine')) AS unresolved, "
-      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND state='pending') + "
+      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='pending') + "
       "(SELECT COUNT(*) FROM linked_payment_intents WHERE "
       "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
       "AND state IN ('pending','waiting_source_publication')) AS pending, "
-      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND state='blocked') + "
+      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='blocked') + "
       "(SELECT COUNT(*) FROM linked_payment_intents WHERE "
       "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
       "AND state='quarantine') AS blocked, "

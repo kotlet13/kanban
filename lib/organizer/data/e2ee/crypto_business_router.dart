@@ -1,3 +1,4 @@
+import 'crypto_active_outbox.dart';
 import 'crypto_verified_dispatch_reads.dart';
 import 'crypto_account_directory_changes.dart';
 import 'crypto_consent_generation.dart';
@@ -132,6 +133,7 @@ class CryptoBusinessRouter
     implements
         CryptoDomainRouter,
         CryptoTerminalReceiptReconciliation,
+        CryptoHeldCommandResume,
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
         CryptoDocumentDownloadContext,
@@ -157,6 +159,30 @@ class CryptoBusinessRouter
     required DeviceSession session,
     required Set<String> requestIds,
     required Future<void> Function() checkCurrent,
+  }) => _reconcileHeldCommands(
+    session: session,
+    requestIds: requestIds,
+    checkCurrent: checkCurrent,
+    resume: false,
+  );
+
+  @override
+  Future<Set<String>> resumeHeldCommands({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+  }) => _reconcileHeldCommands(
+    session: session,
+    requestIds: requestIds,
+    checkCurrent: checkCurrent,
+    resume: true,
+  );
+
+  Future<Set<String>> _reconcileHeldCommands({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+    required bool resume,
   }) async {
     _metadataReadGroup?.close();
     await checkCurrent();
@@ -168,23 +194,33 @@ class CryptoBusinessRouter
       database,
     );
     final rejected = <String>{};
-    await business.queue.reconcileTerminalReceipts(
-      requestIds: requestIds,
-      checkCurrent: checkCurrent,
-      settleRejected: false,
-      onTerminal: (id, applied) async {
-        if (!applied) {
-          rejected.add(id);
-          return;
-        }
-        // Transport settlement is not a content projection. The ordinary
-        // verified full sync owns clearing this debt, including after restart.
-        await database.execute(
-          'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
-          ['held_receipt_refresh_v1:${session.profile.partition}', id],
-        );
-      },
-    );
+    Future<void> terminal(String id, bool applied) async {
+      if (!applied) {
+        rejected.add(id);
+        return;
+      }
+      // Transport settlement is not a content projection. The ordinary
+      // verified full sync owns clearing this debt, including after restart.
+      await database.execute(
+        'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
+        ['held_receipt_refresh_v1:${session.profile.partition}', id],
+      );
+    }
+
+    if (resume) {
+      await business.queue.resumeHeldCommands(
+        requestIds: requestIds,
+        checkCurrent: checkCurrent,
+        onTerminal: terminal,
+      );
+    } else {
+      await business.queue.reconcileTerminalReceipts(
+        requestIds: requestIds,
+        checkCurrent: checkCurrent,
+        settleRejected: false,
+        onTerminal: terminal,
+      );
+    }
     await checkCurrent();
     return Set.unmodifiable(rejected);
   }
@@ -974,6 +1010,13 @@ class CryptoBusinessSession {
     beforeDelivery: (signed) {
       invalidateFinanceReads?.call();
       return access.beforeDelivery(signed);
+    },
+    heldSignerPublicKey: () async {
+      final directory = await account.directory.cachedVerifiedDirectory();
+      return cryptoBase64(
+        directory.activeDevice(account.deviceId)['signingKeyBase64'],
+        length: 32,
+      );
     },
     project: project,
     resolveHistoricalSiblings: CryptoBusinessGroupHistory(this).resolve,

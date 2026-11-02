@@ -1,3 +1,4 @@
+import 'crypto_active_outbox.dart';
 import 'dart:typed_data';
 import 'crypto_migration_superseded_setup.dart';
 import 'crypto_finance_topology_creation.dart';
@@ -26,7 +27,7 @@ class CryptoMigrationPendingWork {
     var after = 0;
     while (true) {
       final rows = await runtime.db.rows(
-        "SELECT o.sequence,o.request_id,o.operation,o.signed_body,k.action_key FROM crypto_outbox o LEFT JOIN crypto_command_keys k ON k.partition=o.partition AND k.request_id=o.request_id WHERE o.partition=? AND o.sequence>? AND o.state IN ('pending','blocked') ORDER BY o.sequence LIMIT 8",
+        "SELECT o.sequence,o.request_id,o.operation,o.signed_body,k.action_key FROM crypto_outbox o LEFT JOIN crypto_command_keys k ON k.partition=o.partition AND k.request_id=o.request_id WHERE o.partition=? AND o.sequence>? AND ${cryptoActiveOutboxPredicate('o')} AND o.state IN ('pending','blocked') ORDER BY o.sequence LIMIT 8",
         [runtime.partition, after],
       );
       if (rows.isEmpty) break;

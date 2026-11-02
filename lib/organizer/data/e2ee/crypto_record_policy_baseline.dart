@@ -113,7 +113,7 @@ class CryptoRecordPolicyBaseline {
     );
     if (membership.isNotEmpty) return true;
     final commands = await business.db.rows(
-      "SELECT operation,signed_body FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked') AND operation!='crypto2.records.batch' AND operation NOT LIKE 'crypto2.scope.recordPolicy.%' ORDER BY sequence LIMIT 32",
+      "SELECT operation,signed_body FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state IN ('pending','blocked') AND operation!='crypto2.records.batch' AND operation NOT LIKE 'crypto2.scope.recordPolicy.%' ORDER BY sequence LIMIT 32",
       [_partition],
     );
     for (final command in commands) {

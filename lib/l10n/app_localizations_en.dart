@@ -5778,4 +5778,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncCommandRejected =>
       'The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review.';
+
+  @override
+  String get syncScopeRotationRequired =>
+      'This space needs its encryption key update to finish before sync can continue. Review account protection. Local data and queued changes are retained.';
+
+  @override
+  String get syncHeldPreviousReasonCaution =>
+      'A reason retained from an earlier held request describes that earlier attempt. It does not by itself confirm the current cause or that the required protection update is still unfinished.';
 }

@@ -85,3 +85,47 @@ prava SQLite transakcija z novejšo generacijo tik pred CAS ohrani novo oznako,
 prejšnji čas in zgodovino; napaka agregatnega branja po potrjenem CAS obnovi
 izvorno oznako ter prejšnji čas/zgodovino. Naslednji ročni poskus opravi celotno
 preverjanje in zaključi oznako brez novega branja že potrjenega receipta.
+
+## Uporabnikov ponovni poskus po 1.11.12 — 09:25 UTC
+
+Uporabnik sporoči isti izvoz po posodobitvi in ročnem poskusu:
+`preflight / crypto_command_receipt_pending` ob 2026-11-02T09:25:28.167042Z
+in `preflight / scope_rotation_required` ob 2026-11-02T09:25:28.167047Z.
+Sinhronizacija pri uporabniku še NI PASS.
+
+Branje kode potrdi, da ročni pregled neznanega/neporavnanega izida doda
+`crypto_command_receipt_pending`, nato lahko iz ohranjenega lokalnega odgovora
+iste zahteve doda prvotni `code` ali `reason`. Druga oznaka zato ni dokaz sveže
+strežniške zavrnitve niti dveh različnih blokiranih operacij.
+`scope_rotation_required` med drugim nastane pri neskladju deviceSnapshotHash
+v podpisanem članstvu prostora s trenutno preverjenim imenikom računa.
+Povezava s ponastavitvijo/prijavo je možna, iz izvoza pa ni potrjena.
+
+Omejitev 1.11.12: terminal-only pregled išče že obstoječe potrdilo; neznana
+zahteva se ne pošlje znova in ne sproži svoje prvotne priprave/rotacije. Zato
+lahko ob odsotnem potrdilu ostane zadržana tudi po odpravi začetnega razloga.
+Naslednji ciljni primer je varno nadaljevanje izvornega opravila po obnovljeni
+avtoriteti, z ohranitvijo identitete zahteve in podpisanih podatkov. Pred
+spremembo je treba ločiti svežo zahtevo po rotaciji od ohranjenega starega
+razloga ter določiti operacijo; uporabnikov izvoz tega ne vsebuje. Noben
+nov produktni popravek, test, izdaja, dostop do telefona ali strežnika v tem
+diagnostičnem koraku ni bil izveden. Ne priporočamo brisanja ali nove obnove.
+
+## Ponovitev po pripravi zaščite — 09:32 UTC
+
+Uporabnik je odprl »Nadaljuj pripravo zaščite«; po kratkem delu se je vrnil
+na računov zaslon, gumb je ostal. Koda AccountProtectionPage ob uspešnem
+complete izvede pop(true), vendar screenshot sam ne dokazuje konkretnega
+strežniškega izida. Po naslednjem ročnem sync uporabnik pošlje:
+`preflight / crypto_command_receipt_pending` 2026-11-02T09:32:53.882370Z in
+`preflight / scope_rotation_required` 2026-11-02T09:32:53.882373Z.
+
+Ta uporabniški poskus NI razrešil zadržanega dela. Novi čas diagnostike ni
+dokaz sveže zahteve po rotaciji: ročni pregled še vedno lahko izpisuje
+prejšnji razlog iz ohranjenega odgovora. Ne ponavljati čarovnika, ponovnega
+uvoza datoteke ali resetiranja kot naslednjega koraka. Nadaljnje delo zahteva
+ciljni lokalni primer blokade pred pošiljanjem, nato uspešne priprave zaščite
+in nadaljevanja izvorne operacije. Ne brisati blokiranih vrstic ali jih
+splošno prestavljati v pending brez preverjanja podpisane zahteve, trenutne
+avtoritete ter pravil njene izvorne operacije. Telefoni/strežnik nespremenjeni;
+v tem koraku samo zapis opažanja, brez novega testa ali produktnega popravka.

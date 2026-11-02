@@ -75,6 +75,7 @@ _Review? _reviewFor(String reason) => switch (reason) {
   'protection_scope_action_required' ||
   'scope_review_confirmation_required' ||
   'scope_review_policy_projection_pending' ||
+  'scope_rotation_required' ||
   'scope_key_recovery_required' => _Review.protection,
   'auth_required' || 'unauthenticated' || 'session_expired' => _Review.session,
   'invitation_acceptance_required' ||
@@ -210,6 +211,7 @@ String syncFailureExplanation(
     'Dokazila o pravilih zapisov še niso pripravljena. Pregleda še ni mogoče potrditi; izberi ponovni pregled, ko se podatki uskladijo.',
     'Record policy evidence is not ready yet. The review cannot be confirmed; review again after the data syncs.',
   ),
+  'scope_rotation_required' => context.l10n.syncScopeRotationRequired,
   'finance_key_contribution_required' ||
   'scope_successor_key_contribution_required' => _text(
     context,
@@ -241,7 +243,8 @@ String syncFailureExplanation(
     'Dokazila o identiteti podpisnika še ni bilo mogoče pridobiti ali preveriti. Ta oznaka sama ne pomeni manjkajočih dovoljenj in ne zahteva novega računa ali ključev. Izberi »Uskladi zdaj«, da aplikacija ponovi preverjanje.',
     'Evidence of the signer’s identity could not yet be obtained or verified. This code alone does not mean missing permissions and does not require a new account or keys. Choose “Sync now” to retry verification.',
   ),
-  'crypto_command_receipt_pending' => context.l10n.syncCommandReceiptPending,
+  'crypto_command_receipt_pending' =>
+    '${context.l10n.syncCommandReceiptPending} ${context.l10n.syncHeldPreviousReasonCaution}',
   'crypto_command_rejected' => context.l10n.syncCommandRejected,
   'crypto_held_sync_inventory_limit' => context.l10n.syncHeldInventoryLimit,
   'crypto_payment_quarantined' => context.l10n.syncPaymentQuarantined,
