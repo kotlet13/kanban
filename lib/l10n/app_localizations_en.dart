@@ -5758,4 +5758,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get accountPasswordChangeUncertain =>
       'Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in.';
+
+  @override
+  String get syncHeldRequestsExplanation =>
+      'Held requests are still unconfirmed. Choose “Sync now” to check them again. If they remain held, open Error details and copy the safe reason code.';
+
+  @override
+  String get syncCommandReceiptPending =>
+      'The server outcome of an existing sync request could not be confirmed. Local data and the original request are retained. Choose “Sync now” to check the confirmation again.';
+
+  @override
+  String get syncHeldInventoryLimit =>
+      'The safe limit for checking held requests was reached. Existing requests and data are retained; sync is not confirmed. Copy the error details for review.';
+
+  @override
+  String get syncPaymentQuarantined =>
+      'A linked payment is held because its verification is incomplete. It remains separate from the sync request checks. Existing entries are retained; copy the error details for review.';
+
+  @override
+  String get syncCommandRejected =>
+      'The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review.';
 }

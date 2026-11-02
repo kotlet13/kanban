@@ -131,6 +131,7 @@ Future<Map<String, dynamic>> cryptoScopeParentProjection({
 class CryptoBusinessRouter
     implements
         CryptoDomainRouter,
+        CryptoTerminalReceiptReconciliation,
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
         CryptoDocumentDownloadContext,
@@ -150,6 +151,43 @@ class CryptoBusinessRouter
   final Future<AccountCryptoV2Workflow> Function(DeviceSession) accountFor;
 
   static final _verifiedMetadataReads = Object();
+
+  @override
+  Future<Set<String>> reconcileTerminalReceipts({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+  }) async {
+    _metadataReadGroup?.close();
+    await checkCurrent();
+    final account = await accountFor(session);
+    await checkCurrent();
+    final business = CryptoBusinessSession(
+      account,
+      SessionCryptoAccess(account: account),
+      database,
+    );
+    final rejected = <String>{};
+    await business.queue.reconcileTerminalReceipts(
+      requestIds: requestIds,
+      checkCurrent: checkCurrent,
+      settleRejected: false,
+      onTerminal: (id, applied) async {
+        if (!applied) {
+          rejected.add(id);
+          return;
+        }
+        // Transport settlement is not a content projection. The ordinary
+        // verified full sync owns clearing this debt, including after restart.
+        await database.execute(
+          'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
+          ['held_receipt_refresh_v1:${session.profile.partition}', id],
+        );
+      },
+    );
+    await checkCurrent();
+    return Set.unmodifiable(rejected);
+  }
 
   @override
   Future<bool> refreshAccountDirectory({required DeviceSession session}) async {

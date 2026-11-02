@@ -29,6 +29,16 @@ abstract interface class CryptoDomainRouter {
   });
 }
 
+/// Manual lookup of exact retained requests. This cannot resend a command,
+/// establish a projection, or grant authority from a receipt.
+abstract interface class CryptoTerminalReceiptReconciliation {
+  Future<Set<String>> reconcileTerminalReceipts({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+  });
+}
+
 /// Internal selector for a task already present in the local visible projection.
 /// It is never sent to a server or accepted as access/record authority.
 class CryptoVisibleTaskMetadataTarget {

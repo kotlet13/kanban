@@ -2118,5 +2118,10 @@
   "accountSignedInReset": "Forgot your password? Send email",
   "accountSignedInResetWarning": "Email reset is a separate option for this account. Confirming its code signs out all devices, including this one. Keep your recovery file: a password reset does not restore encryption keys or data.",
   "accountResetWrongAccount": "This reset code is for a different account or server. Nothing was changed.",
-  "accountPasswordChangeUncertain": "Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in."
+  "accountPasswordChangeUncertain": "Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in.",
+  "syncHeldRequestsExplanation": "Held requests are still unconfirmed. Choose “Sync now” to check them again. If they remain held, open Error details and copy the safe reason code.",
+  "syncCommandReceiptPending": "The server outcome of an existing sync request could not be confirmed. Local data and the original request are retained. Choose “Sync now” to check the confirmation again.",
+  "syncHeldInventoryLimit": "The safe limit for checking held requests was reached. Existing requests and data are retained; sync is not confirmed. Copy the error details for review.",
+  "syncPaymentQuarantined": "A linked payment is held because its verification is incomplete. It remains separate from the sync request checks. Existing entries are retained; copy the error details for review.",
+  "syncCommandRejected": "The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review."
 }

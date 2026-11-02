@@ -5768,4 +5768,24 @@ class AppLocalizationsSl extends AppLocalizations {
   @override
   String get accountPasswordChangeUncertain =>
       'Potrditve ni bilo mogoče prejeti. Geslo je morda že spremenjeno. Preveri prijavo z novim geslom na drugi napravi ali uporabi ponastavitev po e-pošti. Ta naprava ostane prijavljena.';
+
+  @override
+  String get syncHeldRequestsExplanation =>
+      'Zadržane zahteve še niso potrjene. Izberi »Uskladi zdaj« za ponovno preverjanje. Če ostanejo zadržane, odpri Podrobnosti napake in kopiraj varno oznako vzroka.';
+
+  @override
+  String get syncCommandReceiptPending =>
+      'Strežniškega izida obstoječe zahteve sinhronizacije še ni bilo mogoče potrditi. Lokalni podatki in izvirna zahteva ostanejo ohranjeni. Izberi »Uskladi zdaj« za ponovno preverjanje potrdila.';
+
+  @override
+  String get syncHeldInventoryLimit =>
+      'Dosežena je varna omejitev preverjanja zadržanih zahtev. Obstoječe zahteve in podatki ostanejo ohranjeni; uskladitev ni potrjena. Kopiraj podrobnosti napake za pregled.';
+
+  @override
+  String get syncPaymentQuarantined =>
+      'Povezano plačilo je zadržano, ker preverjanje še ni končano. Obravnava se ločeno od preverjanja zahtev sinhronizacije. Obstoječi vnosi ostanejo ohranjeni; kopiraj podrobnosti napake za pregled.';
+
+  @override
+  String get syncCommandRejected =>
+      'Strežnik je zavrnil obstoječo zahtevo sinhronizacije. Uskladitev ni potrjena. Obstoječi podatki in zabeleženi izid ostanejo ohranjeni; kopiraj podrobnosti napake za pregled.';
 }

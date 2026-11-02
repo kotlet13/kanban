@@ -935,23 +935,64 @@ class CryptoSyncRepository {
   /// Consume only already recorded terminal outcomes for an exact selection.
   /// Unknown or denied lookups retain pending work; this never sends a mutation
   /// or retries blocked work, even when a verified projection is already newer.
-  Future<void> reconcileTerminalReceipts({required Set<String> requestIds}) {
+  Future<void> reconcileTerminalReceipts({
+    required Set<String> requestIds,
+    Future<void> Function()? checkCurrent,
+    Future<void> Function(String requestId, bool applied)? onTerminal,
+    bool settleRejected = true,
+  }) {
     final selected = Set<String>.unmodifiable(requestIds);
-    return _exclusive(() => _deliver(requestIds: selected, terminalOnly: true));
+    return _exclusive(
+      () => _deliver(
+        requestIds: selected,
+        terminalOnly: true,
+        checkCurrent: checkCurrent,
+        onTerminal: onTerminal,
+        settleRejected: settleRejected,
+      ),
+    );
   }
 
   Future<void> _deliver({
     Set<String>? requestIds,
     bool terminalOnly = false,
+    Future<void> Function()? checkCurrent,
+    Future<void> Function(String requestId, bool applied)? onTerminal,
+    bool settleRejected = true,
   }) async {
     await for (final row
-        in terminalOnly ? store.terminalDelivery() : store.pendingDelivery()) {
+        in terminalOnly
+            ? (requestIds == null
+                  ? store.terminalDelivery()
+                  : store.selectedTerminalDelivery(requestIds))
+            : store.pendingDelivery()) {
+      await checkCurrent?.call();
       _current();
       if (requestIds != null && !requestIds.contains(row['request_id'])) {
         continue;
       }
       final signed =
           jsonDecode(row['signed_body'] as String) as Map<String, dynamic>;
+      if (terminalOnly) {
+        if (signed.length != 2 ||
+            !signed.containsKey('commandBase64') ||
+            !signed.containsKey('signatureBase64')) {
+          throw const FormatException('crypto_stored_command_binding');
+        }
+        cryptoBase64(signed['signatureBase64'], length: 64);
+        final command =
+            CryptoJson.decode(cryptoBase64(signed['commandBase64'])) as Map;
+        if (await _hash(signed) != row['request_hash'] ||
+            command['version'] != 2 ||
+            command['requestId'] != row['request_id'] ||
+            command['operation'] != row['operation'] ||
+            command['serverId'] != session.profile.serverId ||
+            command['accountId'] != session.profile.accountId ||
+            command['signer'] != 'device' ||
+            !isCryptoCanonicalUuid(command['deviceId'])) {
+          throw const FormatException('crypto_stored_command_binding');
+        }
+      }
       late Map<String, dynamic> receipt;
       Future<Map<String, dynamic>?> lookup() async {
         try {
@@ -966,6 +1007,9 @@ class CryptoSyncRepository {
             'forbidden',
             'crypto_grant_missing',
             'crypto_device_keys_pending',
+            if (terminalOnly) 'crypto_content_restricted',
+            if (terminalOnly) 'crypto_receipt_scope_required',
+            if (terminalOnly) 'idempotency_mismatch',
           }.contains(error.code)) {
             rethrow;
           }
@@ -1064,18 +1108,30 @@ class CryptoSyncRepository {
         throw const FormatException('crypto_receipt_substitution');
       }
       final response = Map<String, dynamic>.from(receipt['response'] as Map);
+      if (terminalOnly &&
+          !settleRejected &&
+          (receipt['status'] is! int ||
+              (receipt['status'] != 200 &&
+                  ((receipt['status'] as int) < 400 ||
+                      (receipt['status'] as int) > 599)))) {
+        throw const FormatException('crypto_receipt_status');
+      }
       final applied = receipt['status'] == 200;
       if (applied && row['operation'] == 'crypto2.records.batch') {
         _verifyBatchAck(signed, response);
       }
       await store.transaction(() async {
+        await checkCurrent?.call();
         _current();
-        await store.outcome(
-          row['request_id'] as String,
-          applied ? 'applied' : 'rejected',
-          receipt,
-          allowBlockedTerminal: terminalOnly,
-        );
+        if (applied || settleRejected) {
+          await store.outcome(
+            row['request_id'] as String,
+            applied ? 'applied' : 'rejected',
+            receipt,
+            allowBlockedTerminal: terminalOnly,
+          );
+        }
+        await onTerminal?.call(row['request_id'] as String, applied);
       });
     }
   }

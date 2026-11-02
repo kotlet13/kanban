@@ -318,6 +318,7 @@ class CollaborationRepository {
   );
   Stream<CollaborationSyncStart> get syncStarts => _syncStarts.stream;
   int _syncCompletionSequence = 0;
+  int _verifiedSyncCompletionSequence = 0;
   int? _fullAttemptEpoch;
   CollaborationSyncCompletion? lastSyncCompletion;
   DateTime? _automaticSyncRetryAt;
@@ -589,9 +590,16 @@ class CollaborationRepository {
   }
 
   final _leaseOwner = newSharedId();
+  final _heldReceiptFailures = <SyncFailureDetails>[];
+  Object? _heldReceiptError;
+  bool _heldReceiptProgress = false;
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    _heldReceiptFailures.clear();
+    _heldReceiptError = null;
+    _heldReceiptProgress = false;
+    _verifiedSyncCompletionSequence = 0;
     _syncFailures.clear();
     _lastCapturedSyncFailureError = null;
     _lastCapturedSyncFailureScopeId = null;
@@ -1195,7 +1203,10 @@ class CollaborationRepository {
       int blocked,
     })
   >
-  _readSyncStatusLocalEvidence(String partition) async {
+  _readSyncStatusLocalEvidence(
+    String partition, {
+    bool includeHeldReceiptRefresh = true,
+  }) async {
     // Aggregate metadata only: never serialize queues or retained terminal history.
     final extraWork = await database.rows(
       "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked')) "
@@ -1227,8 +1238,13 @@ class CollaborationRepository {
     );
     final prefix = 'scope_reconciliation:$partition:';
     final reconciliation = await database.rows(
-      'SELECT 1 FROM local_meta WHERE substr(name,1,length(?))=? LIMIT 1',
-      [prefix, prefix],
+      'SELECT 1 FROM local_meta WHERE substr(name,1,length(?))=? OR (? AND name=?) LIMIT 1',
+      [
+        prefix,
+        prefix,
+        includeHeldReceiptRefresh ? 1 : 0,
+        'held_receipt_refresh_v1:$partition',
+      ],
     );
     return (
       unresolved: extraWork.single['unresolved'] == 1,

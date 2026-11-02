@@ -241,6 +241,10 @@ String syncFailureExplanation(
     'Dokazila o identiteti podpisnika še ni bilo mogoče pridobiti ali preveriti. Ta oznaka sama ne pomeni manjkajočih dovoljenj in ne zahteva novega računa ali ključev. Izberi »Uskladi zdaj«, da aplikacija ponovi preverjanje.',
     'Evidence of the signer’s identity could not yet be obtained or verified. This code alone does not mean missing permissions and does not require a new account or keys. Choose “Sync now” to retry verification.',
   ),
+  'crypto_command_receipt_pending' => context.l10n.syncCommandReceiptPending,
+  'crypto_command_rejected' => context.l10n.syncCommandRejected,
+  'crypto_held_sync_inventory_limit' => context.l10n.syncHeldInventoryLimit,
+  'crypto_payment_quarantined' => context.l10n.syncPaymentQuarantined,
   'crypto_payment_checkpoint_pending' => _text(
     context,
     'Podpisanega potrdila o popolnosti finančnih podatkov še ni bilo mogoče preveriti. Povezana plačila še niso usklajena. Izberi »Uskladi zdaj« za ponovno preverjanje.',

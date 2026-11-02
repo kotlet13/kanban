@@ -2,6 +2,147 @@ part of 'collaboration_repository.dart';
 
 /// Leased idempotent delivery, incremental pulls, conflicts and recovery export.
 extension CollaborationSyncActions on CollaborationRepository {
+  /// An explicit recheck only reads exact receipts. It neither rearms held
+  /// requests nor treats their receipt as a verified content projection.
+  Future<bool> _recheckHeldSyncReceipts(
+    DeviceSession session,
+    int epoch,
+  ) async {
+    final p = session.profile.partition;
+    _heldReceiptProgress = false;
+    if (_syncing) await _syncDone?.future;
+    _checkEpoch(epoch);
+    _syncFailures.removeWhere(_heldReceiptFailures.contains);
+    _heldReceiptFailures.clear();
+    if (identical(_lastError, _heldReceiptError)) _lastError = null;
+    _heldReceiptError = null;
+    if (_lastErrorWasProbe) {
+      _lastError = null;
+      _lastErrorWasProbe = false;
+      _syncFailures.removeWhere(
+        (f) =>
+            f.stage == SyncFailureStage.accountCheck ||
+            f.stage == SyncFailureStage.accessReview,
+      );
+    }
+    final inventory = await database.rows(
+      "SELECT request_id,LENGTH(CAST(signed_body AS BLOB))+COALESCE(LENGTH(CAST(response AS BLOB)),0) AS bytes FROM crypto_outbox WHERE partition=? AND state='blocked' ORDER BY sequence LIMIT 65",
+      [p],
+    );
+    final quarantine = await database.rows(
+      "SELECT 1 FROM linked_payment_intents WHERE (json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) AND state='quarantine' LIMIT 1",
+      [p],
+    );
+    _checkEpoch(epoch);
+    if (inventory.isEmpty && quarantine.isEmpty) return false;
+    if (_syncing) await _syncDone?.future;
+    _checkEpoch(epoch);
+    _coordinatorProbePhase = false;
+    _syncing = true;
+    _syncEpoch = epoch;
+    final done = _syncDone = Completer<void>();
+    var leaseClaimed = false;
+    final reasons = <String>{
+      if (quarantine.isNotEmpty) 'crypto_payment_quarantined',
+    };
+    try {
+      leaseClaimed = await _claimLease(p);
+      if (!leaseClaimed) return false;
+      _checkEpoch(epoch);
+      _lastSyncAttemptAt = clock().toUtc();
+      await refreshLocal(scopeIds: const {});
+      Future<void> current() async {
+        _checkEpoch(epoch);
+        await _renewLease(p);
+        _checkEpoch(epoch);
+      }
+
+      final withinLimit =
+          inventory.length <= 64 &&
+          inventory.fold<int>(0, (n, r) => n + (r['bytes'] as int)) <= 1048576;
+      final router = cryptoRouter;
+      var rejected = <String>{};
+      if (!withinLimit) {
+        reasons.add('crypto_held_sync_inventory_limit');
+      } else if (inventory.isNotEmpty) {
+        if (router is CryptoTerminalReceiptReconciliation) {
+          rejected = await (router as CryptoTerminalReceiptReconciliation)
+              .reconcileTerminalReceipts(
+                session: session,
+                requestIds: {
+                  for (final r in inventory) r['request_id'] as String,
+                },
+                checkCurrent: current,
+              );
+          await current();
+        }
+        for (final item in inventory) {
+          final rows = await database.rows(
+            'SELECT state,response FROM crypto_outbox WHERE partition=? AND request_id=?',
+            [p, item['request_id']],
+          );
+          _checkEpoch(epoch);
+          if (rows.length != 1) {
+            throw const CollaborationException('invalid_response');
+          }
+          final row = rows.single;
+          if (rejected.contains(item['request_id']) ||
+              row['state'] == 'rejected') {
+            reasons.add('crypto_command_rejected');
+          } else if (row['state'] == 'applied') {
+            _heldReceiptProgress = true;
+          } else if (row['state'] == 'blocked' || row['state'] == 'pending') {
+            reasons.add('crypto_command_receipt_pending');
+            // Retained local diagnostics explain the original guard, never
+            // promote an untrusted value to authority or export arbitrary text.
+            try {
+              final response = jsonDecode(row['response'] as String) as Map;
+              for (final key in const ['code', 'reason']) {
+                final code = response[key];
+                if (code is String && syncFailureSafeReasons.contains(code)) {
+                  reasons.add(code);
+                  break;
+                }
+              }
+            } on FormatException {
+              // Keep malformed retained evidence and the finite fallback.
+            } on TypeError {
+              // Keep malformed retained evidence and the finite fallback.
+            }
+          }
+        }
+      }
+      if (quarantine.isNotEmpty) reasons.add('crypto_payment_quarantined');
+      for (final reason in reasons.take(20)) {
+        final error = CollaborationException(reason);
+        _captureSyncFailure(
+          error,
+          epoch: epoch,
+          stage: SyncFailureStage.preflight,
+        );
+        _heldReceiptFailures.add(_syncFailures.last);
+        _heldReceiptError ??= error;
+        _lastError ??= error;
+      }
+      _lastErrorWasProbe = false;
+      return true;
+    } finally {
+      try {
+        if (leaseClaimed) {
+          await database.execute(
+            'DELETE FROM sync_leases WHERE partition=? AND owner=?',
+            [p, _leaseOwner],
+          );
+        }
+      } finally {
+        _syncing = false;
+        _syncEpoch = null;
+        done.complete();
+        await refreshLocal(scopeIds: const {});
+      }
+    }
+  }
+
   Future<bool> _claimLease(String partition) => database.transaction(() async {
     final now = clock().millisecondsSinceEpoch;
     final leases = await database.rows(
@@ -458,6 +599,12 @@ extension CollaborationSyncActions on CollaborationRepository {
         selectionReason(CollaborationSyncDiagnosticKind.selectionLocalFinance);
       }
     }
+    final heldRecheck =
+        manual && await _recheckHeldSyncReceipts(session, epoch);
+    _checkEpoch(epoch);
+    // A receipt settles transport only. A genuine transition gets one normal
+    // full verified refresh before any full-success timestamp can advance.
+    final heldReceiptProgress = heldRecheck && _heldReceiptProgress;
     final pendingSelection = await CollaborationPendingSyncSelection.read(
       database: database,
       session: session,
@@ -496,7 +643,13 @@ extension CollaborationSyncActions on CollaborationRepository {
     final recoveryFallback = paymentWork
         ? CollaborationRecoveryFallback.payments
         : pendingSelection.fallback;
-    final recoveryWork = recoveryFallback != null;
+    final heldRefresh = await database.rows(
+      'SELECT value FROM local_meta WHERE name=?',
+      ['held_receipt_refresh_v1:$p'],
+    );
+    _checkEpoch(epoch);
+    final recoveryWork =
+        recoveryFallback != null || (manual && heldRefresh.isNotEmpty);
     if (await _includeIncompleteParentFinanceRecovery(
       session,
       epoch,
@@ -510,10 +663,16 @@ extension CollaborationSyncActions on CollaborationRepository {
     _checkEpoch(epoch);
     _lastSuccessfulChangeCheckAt = clock().toUtc();
     _changeCheckRequiresRefresh =
-        changes.requiresSync || local.isNotEmpty || recoveryWork;
-    if (!changes.requiresSync && local.isEmpty && !recoveryWork) {
+        changes.requiresSync ||
+        local.isNotEmpty ||
+        recoveryWork ||
+        heldReceiptProgress;
+    if (!changes.requiresSync &&
+        local.isEmpty &&
+        !recoveryWork &&
+        !heldReceiptProgress) {
       syncDiagnostics?.record(CollaborationSyncDiagnosticKind.unchanged);
-      if (_lastErrorWasProbe) {
+      if (_lastErrorWasProbe && !heldRecheck) {
         _lastErrorWasProbe = false;
         _lastError = null;
         _lastCapturedSyncFailureError = null;
@@ -524,7 +683,7 @@ extension CollaborationSyncActions on CollaborationRepository {
               failure.stage == SyncFailureStage.accessReview,
         );
       }
-      if (verifiedDirectory) {
+      if (verifiedDirectory && !heldRecheck) {
         await _acknowledgeAccountChanges(
           epoch: epoch,
           key: key,
@@ -552,6 +711,7 @@ extension CollaborationSyncActions on CollaborationRepository {
       }
     }
     final previous = lastSyncCompletion?.sequence;
+    final previousSuccessfulSyncAt = _lastSuccessfulSyncAt;
     syncDiagnostics?.record(
       recoveryWork
           ? CollaborationSyncDiagnosticKind.recoveryFallback
@@ -560,31 +720,83 @@ extension CollaborationSyncActions on CollaborationRepository {
       recoveryFallback: recoveryFallback,
     );
     _coordinatorProbePhase = false;
-    await _performSync(
-      resumePayments: true,
-      manual: manual,
-      changes: recoveryWork ? null : changes,
-    );
-    _checkEpoch(epoch);
-    final completion = lastSyncCompletion;
-    if (completion == null ||
-        completion.sequence == previous ||
-        completion.error != null) {
+    var clearedHeldRefresh = false;
+    try {
+      await _performSync(
+        resumePayments: true,
+        manual: manual,
+        changes: recoveryWork || heldReceiptProgress ? null : changes,
+        retainedFailures: List.of(_heldReceiptFailures),
+      );
+      _checkEpoch(epoch);
+      final completion = lastSyncCompletion;
+      if (completion == null ||
+          completion.sequence == previous ||
+          completion.error != null) {
+        await refreshLocal(scopeIds: const {});
+        return;
+      }
+      await _acknowledgeAccountChanges(
+        epoch: epoch,
+        key: key,
+        generationKey: generationKey,
+        generation: generation,
+        cursor: changes.cursor,
+        paymentKey: paymentWork ? paymentKey : null,
+        paymentSignature: paymentSignature,
+      );
+      _checkEpoch(epoch);
+      _changeCheckRequiresRefresh = false;
       await refreshLocal(scopeIds: const {});
-      return;
+      if ((recoveryWork || heldReceiptProgress) &&
+          heldRefresh.isNotEmpty &&
+          _verifiedSyncCompletionSequence == completion.sequence &&
+          completion.error == null) {
+        // Final projection refresh, completion bookkeeping and cursor commit all
+        // succeeded. Clear only the exact progress generation this full pass saw.
+        await database.transaction(() async {
+          _checkEpoch(epoch);
+          await database.execute(
+            'DELETE FROM local_meta WHERE name=? AND value=?',
+            ['held_receipt_refresh_v1:$p', heldRefresh.single['value']],
+          );
+          _checkEpoch(epoch);
+          final remaining = await database.rows(
+            'SELECT value FROM local_meta WHERE name=?',
+            ['held_receipt_refresh_v1:$p'],
+          );
+          clearedHeldRefresh = remaining.isEmpty;
+          if (!clearedHeldRefresh) {
+            _lastSuccessfulSyncAt = previousSuccessfulSyncAt;
+          }
+        });
+        if (clearedHeldRefresh) {
+          await _publishChangeCheckEvidence(epoch);
+          await _rememberSuccessfulSync(
+            epoch,
+            completion.at,
+            completion.work,
+            null,
+          );
+        } else {
+          await refreshLocal(scopeIds: const {});
+        }
+      }
+    } catch (_) {
+      if (!_closed && epoch == _epoch) {
+        _lastSuccessfulSyncAt = previousSuccessfulSyncAt;
+        if (clearedHeldRefresh && heldRefresh.isNotEmpty) {
+          await database.transaction(() async {
+            _checkEpoch(epoch);
+            await database.execute(
+              'INSERT OR IGNORE INTO local_meta(name,value) VALUES(?,?)',
+              ['held_receipt_refresh_v1:$p', heldRefresh.single['value']],
+            );
+          });
+        }
+      }
+      rethrow;
     }
-    await _acknowledgeAccountChanges(
-      epoch: epoch,
-      key: key,
-      generationKey: generationKey,
-      generation: generation,
-      cursor: changes.cursor,
-      paymentKey: paymentWork ? paymentKey : null,
-      paymentSignature: paymentSignature,
-    );
-    _checkEpoch(epoch);
-    _changeCheckRequiresRefresh = false;
-    await refreshLocal(scopeIds: const {});
   }
 
   // Both callers have completed their selected verified durable work: either
@@ -633,6 +845,7 @@ extension CollaborationSyncActions on CollaborationRepository {
     required bool resumePayments,
     required bool manual,
     CollaborationAccountChanges? changes,
+    List<SyncFailureDetails> retainedFailures = const [],
   }) {
     final session = _session, epoch = _epoch;
     if (session == null) {
@@ -640,6 +853,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         resumePayments: resumePayments,
         manual: manual,
         changes: changes,
+        retainedFailures: retainedFailures,
       );
     }
     return CryptoCapabilityDiscovery.withSync(
@@ -647,6 +861,7 @@ extension CollaborationSyncActions on CollaborationRepository {
         resumePayments: resumePayments,
         manual: manual,
         changes: changes,
+        retainedFailures: retainedFailures,
       ),
       transport: transport,
       session: session,
@@ -662,6 +877,7 @@ extension CollaborationSyncActions on CollaborationRepository {
     required bool resumePayments,
     required bool manual,
     CollaborationAccountChanges? changes,
+    List<SyncFailureDetails> retainedFailures = const [],
   }) async {
     if (_syncing ||
         _session == null ||
@@ -1543,6 +1759,34 @@ extension CollaborationSyncActions on CollaborationRepository {
                 : 'moderation_upgrade_required',
           );
         }
+        if (retainedFailures.isNotEmpty) {
+          // Ordinary work may settle one original request while another stays
+          // held. Recompute categories instead of attributing its old guard to
+          // the neighbouring request. No second receipt lookup is needed.
+          final debt = (await database.rows(
+            "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state='blocked') AS crypto, EXISTS(SELECT 1 FROM linked_payment_intents WHERE (json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) AND state='quarantine') AS payment",
+            [partition, partition],
+          )).single;
+          _checkEpoch(epoch);
+          _syncFailures.removeWhere(_heldReceiptFailures.contains);
+          _heldReceiptFailures.clear();
+          for (final reason in [
+            if (debt['crypto'] == 1) 'crypto_command_receipt_pending',
+            if (debt['payment'] == 1) 'crypto_payment_quarantined',
+          ]) {
+            final error = CollaborationException(reason);
+            _captureSyncFailure(
+              error,
+              epoch: epoch,
+              stage: SyncFailureStage.preflight,
+            );
+            _heldReceiptFailures.add(_syncFailures.last);
+            if (_lastError == null) {
+              _lastError = error;
+              _heldReceiptError = error;
+            }
+          }
+        }
         completed = true;
       } on CryptoAuthorityPending catch (error) {
         capture(error);
@@ -1636,7 +1880,10 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (resumePayments && epoch == _epoch && !_closed) {
         final previousSuccess = _lastSuccessfulSyncAt;
         if (completed && _lastError == null) {
-          final local = await _readSyncStatusLocalEvidence(partition);
+          final local = await _readSyncStatusLocalEvidence(
+            partition,
+            includeHeldReceiptRefresh: changes != null,
+          );
           _checkEpoch(epoch);
           if (!local.business &&
               !local.unresolved &&
@@ -1647,6 +1894,7 @@ extension CollaborationSyncActions on CollaborationRepository {
               state.conflicts.isEmpty &&
               state.financeConflicts.isEmpty) {
             _lastSuccessfulSyncAt = clock().toUtc();
+            _verifiedSyncCompletionSequence = completionSequence;
           }
         }
         if (_fullSyncEpoch == epoch) _fullSyncEpoch = null;

@@ -43,6 +43,27 @@ class CryptoSyncStore {
   Stream<Map<String, Object?>> terminalDelivery() =>
       _deliveryRows('pending', includeBlocked: true);
 
+  /// Exact selection avoids loading unrelated ciphertext during a bounded
+  /// receipt recheck. IDs are snapshotted by the queue before it waits.
+  Stream<Map<String, Object?>> selectedTerminalDelivery(
+    Set<String> requestIds,
+  ) async* {
+    for (final id in requestIds) {
+      final metadata = await database.rows(
+        "SELECT LENGTH(CAST(signed_body AS BLOB)) AS bytes FROM crypto_outbox WHERE partition=? AND request_id=? AND state IN ('pending','blocked')",
+        [partition, id],
+      );
+      if (metadata.isEmpty) continue;
+      if ((metadata.single['bytes'] as int) > 2 * 1024 * 1024) {
+        throw const FormatException('crypto_stored_command_size');
+      }
+      final row = await outgoing(id);
+      if (row != null && const {'pending', 'blocked'}.contains(row['state'])) {
+        yield row;
+      }
+    }
+  }
+
   Stream<Map<String, Object?>> _deliveryRows(
     String state, {
     bool includeBlocked = false,

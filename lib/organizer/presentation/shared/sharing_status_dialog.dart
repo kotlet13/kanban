@@ -250,6 +250,13 @@ class _SharingStatusDialog extends ConsumerWidget {
                       : 'These are background requests, not additional entries. Sync finishes only when these are confirmed too.',
                 ),
               ],
+              if (state.blockedSyncCommandCount > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l.syncHeldRequestsExplanation,
+                  key: const ValueKey('sharing-held-sync-guidance'),
+                ),
+              ],
               if (supplement.label != null ||
                   supplement.pendingCount > 0 ||
                   supplement.blockedCount > 0 ||

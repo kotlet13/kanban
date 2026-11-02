@@ -10098,6 +10098,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirmation could not be received. Your password may already have changed. Try the new password on another device or use email reset. This device stays signed in.'**
   String get accountPasswordChangeUncertain;
+
+  /// No description provided for @syncHeldRequestsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Held requests are still unconfirmed. Choose “Sync now” to check them again. If they remain held, open Error details and copy the safe reason code.'**
+  String get syncHeldRequestsExplanation;
+
+  /// No description provided for @syncCommandReceiptPending.
+  ///
+  /// In en, this message translates to:
+  /// **'The server outcome of an existing sync request could not be confirmed. Local data and the original request are retained. Choose “Sync now” to check the confirmation again.'**
+  String get syncCommandReceiptPending;
+
+  /// No description provided for @syncHeldInventoryLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'The safe limit for checking held requests was reached. Existing requests and data are retained; sync is not confirmed. Copy the error details for review.'**
+  String get syncHeldInventoryLimit;
+
+  /// No description provided for @syncPaymentQuarantined.
+  ///
+  /// In en, this message translates to:
+  /// **'A linked payment is held because its verification is incomplete. It remains separate from the sync request checks. Existing entries are retained; copy the error details for review.'**
+  String get syncPaymentQuarantined;
+
+  /// No description provided for @syncCommandRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected an existing sync request. Sync is not confirmed. Existing data and the recorded outcome are retained; copy the error details for review.'**
+  String get syncCommandRejected;
 }
 
 class _AppLocalizationsDelegate
