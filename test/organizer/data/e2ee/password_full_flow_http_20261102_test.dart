@@ -15,6 +15,7 @@ import 'package:kanban/organizer/data/e2ee/account_crypto_v2_workflow.dart';
 import 'package:kanban/organizer/data/e2ee/account_directory_v2.dart';
 import 'package:kanban/organizer/data/e2ee/account_protection_ready.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_active_outbox.dart';
+import 'package:kanban/organizer/data/e2ee/crypto_business_router.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_codec.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_json.dart';
 import 'package:kanban/organizer/data/e2ee/crypto_sync_repository.dart';
@@ -414,6 +415,77 @@ class _Flow {
           repo.state.blockedSyncCommandCount == 0,
       'baseline_queue_not_empty',
     );
+  }
+
+  Future<void> verifyRepairedContinuation() async {
+    final before = await _json(File('${root.path}/held-before-repair.json'));
+    final originals = before['rows'] as List?;
+    _check(originals != null && originals.length == 6, 'held_baseline_missing');
+    final partition = sessions.current!.profile.partition;
+    for (final raw in originals!) {
+      final original = Map<String, dynamic>.from(raw as Map);
+      final rows = await db.rows(
+        '''SELECT request_id,operation,state,
+        signed_body,request_hash,response FROM crypto_outbox
+        WHERE partition=? AND request_id=?''',
+        [partition, original['request_id']],
+      );
+      _check(rows.length == 1, 'original_held_row_missing');
+      for (final field in original.keys) {
+        _check(
+          rows.single[field] == original[field],
+          'original_held_evidence_changed',
+        );
+      }
+      final marker = await db.rows('SELECT value FROM local_meta WHERE name=?', [
+        'crypto_checkpoint_superseded_v1:$partition:${original['request_id']}',
+      ]);
+      _check(marker.length == 1, 'checkpoint_supersession_marker_missing');
+      final audit = await db.rows(
+        '''SELECT 1 FROM crypto_outbox_attempts
+        WHERE partition=? AND request_id=? AND event='checkpoint_superseded_locally' ''',
+        [partition, original['request_id']],
+      );
+      _check(audit.length == 1, 'checkpoint_supersession_audit_missing');
+    }
+    final workflow = await account();
+    final access = SessionCryptoAccess(account: workflow);
+    final business = CryptoBusinessSession(workflow, access, db);
+    var verifiedDomains = 0;
+    await access.withVerifiedOperation(() async {
+      for (final key in ['householdId', 'organizationId', 'projectId']) {
+        final scope = state[key] as String;
+        for (final domain in ['content', 'finance']) {
+          final read = await access.readContext(scope, domain);
+          _check(
+            await business.hasReusableCheckpoint(scope, domain, read),
+            'final_scope_domain_not_complete',
+          );
+          verifiedDomains++;
+        }
+      }
+    }, freshBoundary: true);
+    _check(
+      repo.state.syncFailures.isEmpty && !repo.state.hasUnresolvedSyncWork,
+      'final_sync_not_clear',
+    );
+    _check(
+      (await db.rows('SELECT 1 FROM local_meta WHERE name=?', [
+        'held_receipt_refresh_v1:$partition',
+      ])).isEmpty,
+      'refresh_marker_not_finished',
+    );
+    await _save(File('${root.path}/repaired-continuation-result.json'), {
+      'originalHeldRequests': originals.length,
+      'immutableHeldEvidencePreserved': true,
+      'originalRowsStillBlocked': true,
+      'supersessionMarkersAndAudits': originals.length,
+      'completeReusableDomains': verifiedDomains,
+      'businessValuesAndProofsVerified': true,
+      'activeQueuesEmpty': true,
+      'currentSyncFailuresEmpty': true,
+      'refreshMarkerCleared': true,
+    });
   }
 
   Future<void> setup() async {
@@ -844,6 +916,7 @@ class _Flow {
         );
         await sync(phase);
         if (phase != 'sync_records') await verifyBaseline();
+        if (phase == 'sync_after_rebind') await verifyRepairedContinuation();
     }
     await save();
     await snapshot(phase);

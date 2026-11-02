@@ -1369,6 +1369,34 @@ class ScopeCryptoManager {
     if (limit < 1 || limit > 50) {
       throw const FormatException('scope_review_limit');
     }
+    final account = access.account;
+    Future<void> requireRetainedReview() async {
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      final retained = await account.store.database.rows(
+        "SELECT payload FROM crypto_membership_intents WHERE partition=? AND scope_id=? AND intent_id=? AND state='scopeRotationReview'",
+        [account.store.partition, review.scopeId, review.id],
+      );
+      if (!account.directory.isCurrent()) {
+        throw const CryptoAuthorityPending('crypto_stale_identity');
+      }
+      if (retained.length != 1 ||
+          base64Encode((retained.single['payload'] as List).cast<int>()) !=
+              base64Encode(CryptoJson.encode(review.value))) {
+        throw const FormatException('scope_review_not_local');
+      }
+    }
+
+    await requireRetainedReview();
+    // A reopened page has a fresh access object's empty verified-head cache.
+    // Reauthenticate the exact saved candidate and its ancestry before opening
+    // its existing keys. This grants no write authority and accepts no history.
+    final source = await access.recoveryCandidateHead(review.scopeId);
+    if (source.headHash != review.sourceHeadHash) {
+      throw const CryptoAuthorityPending('scope_review_changed');
+    }
+    await requireRetainedReview();
     final rows = await access.account.store.database.rows(
       'SELECT * FROM crypto_scope_review_records WHERE partition=? AND scope_id=? AND review_id=? AND record_id>? ORDER BY record_id LIMIT ?',
       [
@@ -1382,6 +1410,9 @@ class ScopeCryptoManager {
     final result = <ScopeRecoveryPreview>[];
     try {
       for (final row in rows) {
+        if (!account.directory.isCurrent()) {
+          throw const CryptoAuthorityPending('crypto_stale_identity');
+        }
         final wire = jsonDecode(row['wire'] as String) as Map<String, dynamic>;
         final r =
             CryptoJson.decode(
@@ -1405,6 +1436,7 @@ class ScopeCryptoManager {
           lease.release();
         }
       }
+      await requireRetainedReview();
       return result;
     } catch (_) {
       for (final item in result) {

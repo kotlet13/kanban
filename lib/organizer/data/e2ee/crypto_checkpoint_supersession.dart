@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'account_directory_v2.dart' show cryptoSha256;
+import 'account_directory_v2.dart'
+    show VerifiedAccountDirectory, cryptoDirectoryDomain, cryptoSha256;
 import 'crypto_business_router.dart';
 import 'crypto_active_outbox.dart';
 import 'crypto_json.dart';
@@ -142,11 +143,14 @@ class CryptoCheckpointSupersession {
           continue;
         }
         try {
-          final verified = await context.access.verifyDomainCheckpoint(
+          final historical = await _retainedAssertionHead(
             previous.proof,
-            onlineAuthorDirectory: true,
+            previous.command,
+            previous.payload,
+            own,
+            head,
           );
-          if (!await _descends(head, verified.head)) continue;
+          if (!await _descends(head, historical)) continue;
         } on CryptoAuthorityPending {
           continue;
         } on FormatException {
@@ -260,6 +264,95 @@ class CryptoCheckpointSupersession {
       }
       return changed;
     }, freshBoundary: true);
+  }
+
+  /// Authentication of an immutable local assertion for retirement only.
+  ///
+  /// A checkpoint blocked before a device rebind/rotation was never included
+  /// in a server snapshot or account observation. Requiring it to qualify as
+  /// freshly observed historical data would therefore prevent retirement even
+  /// after a complete current checkpoint has been verified above. This narrow
+  /// path proves the old signature and its anchored account/scope lineage; it
+  /// does not return checkpoint authority, project data, or authorize delivery.
+  /// The replacement still uses the ordinary freshness-enforcing verifier.
+  Future<VerifiedScopeHead> _retainedAssertionHead(
+    Map<String, dynamic> proof,
+    Map command,
+    Map payload,
+    VerifiedAccountDirectory currentOwn,
+    VerifiedScopeHead currentHead,
+  ) async {
+    const fields = {
+      'scopeId',
+      'domain',
+      'epoch',
+      'membershipHeadHash',
+      'accessRevision',
+      'expectedSequence',
+      'recordCount',
+      'manifestHash',
+      'historyBasis',
+      'authorDirectoryHeadHash',
+    };
+    bool hash(Object? value) =>
+        value is String && RegExp(r'^[a-f0-9]{64}$').hasMatch(value);
+    if (!_identity(command) ||
+        payload.length != fields.length ||
+        payload.keys.any((key) => !fields.contains(key)) ||
+        payload['scopeId'] != currentHead.scopeId ||
+        !const {'content', 'finance'}.contains(payload['domain']) ||
+        payload['epoch'] is! int ||
+        payload['epoch'] < 1 ||
+        payload['accessRevision'] is! int ||
+        payload['accessRevision'] < 0 ||
+        payload['expectedSequence'] is! int ||
+        payload['expectedSequence'] < 0 ||
+        payload['recordCount'] is! int ||
+        payload['recordCount'] < 0 ||
+        !hash(payload['membershipHeadHash']) ||
+        !hash(payload['authorDirectoryHeadHash']) ||
+        !hash(payload['manifestHash']) ||
+        !const {
+          'verifiedCheckpoint',
+          'reviewedRecoveryBaseline',
+        }.contains(payload['historyBasis'])) {
+      throw const FormatException('crypto_checkpoint_shape');
+    }
+    final historical = await context.access.headAt(
+      currentHead.scopeId,
+      payload['membershipHeadHash'],
+    );
+    if (!historical.active ||
+        historical.scopeId != currentHead.scopeId ||
+        historical.headHash != payload['membershipHeadHash'] ||
+        historical.epoch != payload['epoch'] ||
+        historical.accessRevision != payload['accessRevision']) {
+      throw const FormatException('crypto_checkpoint_head');
+    }
+    final member = historical.member(command['accountId']);
+    if (member['role'] == 'viewer' ||
+        payload['domain'] == 'finance' && member['financeRole'] == 'none') {
+      throw const FormatException('crypto_checkpoint_role');
+    }
+    final author = await context.access.directoryAt(
+      scopeId: currentHead.scopeId,
+      scopeHeadHash: currentHead.headHash,
+      accountId: command['accountId'],
+      directoryHeadHash: payload['authorDirectoryHeadHash'],
+      online: true,
+    );
+    if (author.serverId != currentOwn.serverId ||
+        author.accountId != currentOwn.accountId ||
+        !currentOwn.includesAnchor(author.generation, author.headHash)) {
+      throw const CryptoAuthorityPending('directory_known_ancestry_pending');
+    }
+    final device = author.activeDevice(command['deviceId']);
+    context.account.directory.reducer.crypto.verifyDomain(
+      proof,
+      cryptoBase64(device['signingKeyBase64'], length: 32),
+      cryptoDirectoryDomain,
+    );
+    return historical;
   }
 
   Future<bool> _descends(VerifiedScopeHead head, VerifiedScopeHead old) async {

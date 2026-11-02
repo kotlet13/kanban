@@ -111,3 +111,24 @@ The original SQLite, session, secure-store file and ledger are byte-identical be
 The dedicated `jivie-password-flow-20261102` container was stopped normally after observation, with its database and all client evidence retained. Its loopback endpoint is `http://127.0.0.1:57901`; only this container was created or stopped. Server source hashes remain identical to the starting manifest (`70b49310f7100c3d28e720d8b7da67a6ad6253a9`), and application/backend product source remains unchanged. Targeted harness analysis reports zero issues. No build, Play submission, phone action or production action was performed.
 
 Continue a later repair from this **same failing fixture**. The final sync phase has used one of three attempts. Do not repeat enrollment, password change, rebind, scope reviews or the successful baseline. Verification of a correction must demonstrate that the retained derived requests are safely resolved, all six domains become complete, and the existing acknowledged user records remain intact; it must also cover the fresh-page preview and same-installation rebind workflow without weakening historical-data guards.
+
+## Repair and successful continuation — 2 November, 21:17 UTC
+
+The user explicitly required a successful local synchronization before the next Google Play submission. The same preserved installation and synthetic account were continued; no enrollment, password change, rebind, accepted scope review, or successful baseline phase was repeated. The unchanged local server was restarted on its existing database.
+
+The narrow correction is documented in `CHECKPOINT_REBIND_RETIREMENT_2026_11_02.md`. Historical authentication of an obsolete local derived assertion is now separate from admitting historical data. Current replacement checkpoints still require the full ordinary verifier and complete inventory. Saved review previews additionally authenticate their exact retained candidate ancestry when opened with a fresh manager.
+
+**`sync_after_rebind` attempt 2 passed through the real HTTP transport at 21:17:31 UTC.** The run completed in about 11 seconds with 266 HTTP requests. It used the ordinary synchronization path; no blocked row, projection completeness flag, or server receipt was manually changed.
+
+* All six naturally generated old checkpoint rows remain blocked evidence with identical request ID, operation, signed bytes, request hash and stored response. Each has exactly one local supersession marker and audit record; none is falsely marked applied.
+* All six content/finance domains have complete reusable checkpoints verified against fresh current authority. The project-content flag returned to complete through normal synchronization, without a special repair write.
+* Active pending/blocked record and command queues are empty, current `syncFailures` is empty, unresolved work is false, and the durable full-refresh marker is cleared.
+* The existing task, 45.67 EUR opening balance and 12.34 EUR expense retain their values, acknowledged revisions and verified cryptographic record proofs.
+
+Evidence: `build/qa/password-flow-http-20261102/sync_after_rebind-r2.log`, `sync_after_rebind-summary.json`, and `repaired-continuation-result.json`. The earlier failed attempt remains recorded. The successful final phase must not be rerun merely for reassurance.
+
+This establishes successful continuation of the actual reproduced local workflow. The user's nineteen phone requests have not been read or individually verified, and no phone or production backend was changed. The email-reset/FILE-recovery variant and a fully automatic bypass-free rebind review remain outside this test. Existing explicit history confirmation is preserved.
+
+### Fresh-manager saved preview after the fix
+
+A distinct read-only HTTP check on a client clone passed on attempt 1: the actual `reviewRotation` path prepared a local review, then a fresh access/manager reloaded that exact review and decrypted all three records, including the original task. All 32 HTTP calls were restricted to a finite read-only allowlist. The review stayed pending; no history was accepted. Original signed commands, identity keys, review/key bytes and the source clone hashes were unchanged. Evidence: `build/qa/password-flow-fix-20261102/retained-preview-http/result.json`. This verifies the reopened-page core path over real HTTP, without claiming a native UI test.

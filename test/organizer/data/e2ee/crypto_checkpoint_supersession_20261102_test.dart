@@ -27,10 +27,11 @@ import 'package:sodium/sodium.dart';
 const scope = '10000000-0000-4000-8000-000000000001';
 
 class _Secure implements AccountCryptoStore {
+  final values = <String, String>{};
   @override
-  Future<String?> read(String key) async => null;
+  Future<String?> read(String key) async => values[key];
   @override
-  Future<void> write(String key, String value) async {}
+  Future<void> write(String key, String value) async => values[key] = value;
 }
 
 class _Directory extends AccountDirectoryRepository {
@@ -70,6 +71,8 @@ class _Access extends SessionCryptoAccess {
       (account.directory as _Directory).verified;
   bool historyMissing = false;
   VerifiedAccountDirectory? otherDirectory;
+  VerifiedAccountDirectory? historicalDirectory;
+  KeyPair? retiredSigning;
   @override
   Future<VerifiedScopeHead> currentHead(
     String id, {
@@ -106,6 +109,10 @@ class _Access extends SessionCryptoAccess {
     bool online = false,
     bool allowUnverifiedContact = false,
   }) async {
+    if (historicalDirectory?.accountId == accountId &&
+        historicalDirectory?.headHash == directoryHeadHash) {
+      return historicalDirectory!;
+    }
     if (otherDirectory?.accountId == accountId &&
         otherDirectory?.headHash == directoryHeadHash) {
       return otherDirectory!;
@@ -159,12 +166,17 @@ _fixture({
   CollaborationDatabase? database,
   DeviceSession? existingSession,
   bool otherAuthor = false,
+  bool rebound = false,
 }) async {
   final db = database ?? CollaborationDatabase(NativeDatabase.memory());
   if (database == null) addTearDown(db.close);
   final crypto = CryptoCodec(await SodiumInit.init());
   final signing = crypto.sodium.crypto.sign.keyPair();
   addTearDown(signing.secretKey.dispose);
+  final originalSigning = rebound
+      ? crypto.sodium.crypto.sign.keyPair()
+      : signing;
+  if (rebound) addTearDown(originalSigning.secretKey.dispose);
   final session =
       existingSession ??
       DeviceSession(
@@ -194,11 +206,12 @@ _fixture({
   addTearDown(box.secretKey.dispose);
   addTearDown(deviceBox.secretKey.dispose);
   final epoch = crypto.randomId();
+  final originalDevice = rebound ? crypto.randomId() : session.profile.deviceId;
   directory.verified = (await AccountDirectoryV2(crypto).prepare(
     previous: null,
     serverId: session.profile.serverId,
     accountId: session.profile.accountId,
-    deviceId: session.profile.deviceId,
+    deviceId: originalDevice,
     identityEpochId: epoch,
     operation: 'crypto2.account.initialize',
     signer: 'root',
@@ -207,7 +220,7 @@ _fixture({
     payload: {
       'rootSigningKeyBase64': base64Encode(root.publicKey),
       'rootEncryptionKeyBase64': base64Encode(box.publicKey),
-      'deviceSigningKeyBase64': base64Encode(signing.publicKey),
+      'deviceSigningKeyBase64': base64Encode(originalSigning.publicKey),
       'deviceEncryptionKeyBase64': base64Encode(deviceBox.publicKey),
       'keyringCiphertextBase64': base64Encode(Uint8List(48)),
     },
@@ -274,18 +287,20 @@ _fixture({
   }
   Map<String, dynamic> command(
     String operation,
-    Map<String, dynamic> payload,
-  ) => {
+    Map<String, dynamic> payload, {
+    String? deviceId,
+  }) => {
     'version': 2,
     'operation': operation,
     'requestId': crypto.randomId(),
     'serverId': session.profile.serverId,
     'accountId': session.profile.accountId,
-    'deviceId': session.profile.deviceId,
+    'deviceId': deviceId ?? session.profile.deviceId,
     'signer': 'device',
     'payload': payload,
   };
   Future<VerifiedScopeHead> makeHead(VerifiedScopeHead? previous) async {
+    final initial = previous == null && rebound;
     final body = <String, dynamic>{
       'scopeId': scope,
       'epoch': (previous?.epoch ?? 0) + 1,
@@ -320,8 +335,12 @@ _fixture({
     final pending = await codec.verifyProposal(
       serverId: session.profile.serverId,
       authorization: crypto.signDomain(
-        command('crypto2.scope.headPut', body),
-        signing.secretKey,
+        command(
+          'crypto2.scope.headPut',
+          body,
+          deviceId: initial ? originalDevice : null,
+        ),
+        initial ? originalSigning.secretKey : signing.secretKey,
         cryptoDirectoryDomain,
       ),
       previous: previous,
@@ -340,8 +359,8 @@ _fixture({
           'headHash': pending.headHash,
           'grantManifestHash': '8' * 64,
           'authorDirectoryHeadHash': directory.verified.headHash,
-        }),
-        signing.secretKey,
+        }, deviceId: initial ? originalDevice : null),
+        initial ? originalSigning.secretKey : signing.secretKey,
         cryptoDirectoryDomain,
       ),
       authorDirectory: directory.verified,
@@ -353,6 +372,40 @@ _fixture({
   }
 
   access.old = await makeHead(null);
+  if (rebound) {
+    access.historicalDirectory = directory.verified;
+    access.retiredSigning = originalSigning;
+    final newBox = crypto.sodium.crypto.box.keyPair();
+    addTearDown(newBox.secretKey.dispose);
+    directory.verified = (await AccountDirectoryV2(crypto).prepare(
+      previous: directory.verified,
+      serverId: session.profile.serverId,
+      accountId: session.profile.accountId,
+      deviceId: session.profile.deviceId,
+      identityEpochId: epoch,
+      operation: 'crypto2.device.rebind',
+      signer: 'device',
+      pinnedRootFingerprint: crypto.fingerprint(root.publicKey, box.publicKey),
+      signingKey: originalSigning.secretKey,
+      newDeviceSigningKey: signing.secretKey,
+      payload: {
+        'approvingDeviceId': originalDevice,
+        'signingKeyBase64': base64Encode(signing.publicKey),
+        'encryptionKeyBase64': base64Encode(newBox.publicKey),
+        'keyringWrite': true,
+        'manageDevices': true,
+        'retireApprovingDevice': true,
+      },
+    )).result;
+    member['directoryHeadHash'] = directory.verified.headHash;
+    member['deviceSnapshotHash'] = directory.verified.deviceSnapshotHash;
+    await directory.store.pinRoot(
+      session.profile.accountId,
+      session.profile.serverId,
+      directory.verified.rootFingerprint,
+    );
+    await directory.store.remember(directory.verified, 'verified');
+  }
   access.head = await makeHead(access.old);
   final runtime = _Runtime(account, access, db);
   final queue = runtime.commands = CryptoSyncRepository(
@@ -711,3 +764,7 @@ Future<dynamic> reauthorizationFixture({
   existingSession: session,
   otherAuthor: otherAuthor,
 );
+
+/// Signed device retirement and distinct old/new scope snapshots. The ordinary
+/// historical checkpoint verifier must reject an unobserved old assertion.
+Future<dynamic> reboundCheckpointFixture() => _fixture(rebound: true);
