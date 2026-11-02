@@ -1,3 +1,16 @@
+2. november — **Android1.11.14(46) oddan v javni pregled; NEapproved**.
+Userexplicitobjavi po localdiagnostics47ff42c in podpisno nezdružljivem direct
+S25preflight; priorNEPlay s tem nadomeščen. 22newPASSprej,0successfulreruns.
+1build109.98s/verifierPASS1,1416frozen/650Androidproductrootexact;
+AAB102654553B SHAfd842f32…9a0f2b0c,same45cert/8permissions/Firebase/native/lock.
+DataStoreRELROunchanged,alignmentNEruntimePASS. Owncache1981974085Bremoved;
+16symbols/R8/source/logs/AAB45+46preserved.1upload1submitrelease22/100%existing
+countries/managedOFF;PlaySpremembevpregledu+quickchecksrun,46NEpublicconfirmed.
+45publicconfirmedpreflight.0phone/serveractions. Newdiag loči receivedpages/
+records in heldreceipt/resume/current/oldreason; actualS25blockerUNKNOWN.
+Nextordinaryupdate/sameaccount/Uskladizdaj1→copydetails,noreset/reinstall.
+Docs release/ANDROID_1_11_14_2026_11_02; evidence android-1.11.14-20261102.
+
 2. november — **Delni sync/held diagnostika lokalno:22novihPASS, NIPlay**.
 User localdiagnostics+tests, natoexplicitNEobjaviPlay. Finite perrequestreceipt/
 resume/currentreason vs retainedreason, finalactiveID+hash binding/count20sample;
