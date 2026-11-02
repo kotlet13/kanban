@@ -1,3 +1,15 @@
+2. november — **Android1.11.9(41) oddan v javni pregled; še NEapproved**.
+User explicit nova javna izdaja po lokalnem8d5c23a.15novihPASS prej,
+0uspešnihponovitev/0phone/serverchanges.1build104.85s/verifierPASS1,
+1391frozen/726productrootexact; AAB102216601B SHAe7756bab…5def4faf,
+same40cert/8permissions/Firebase/engine/lock/native. DataStore16KBRELRO
+warningunchanged; alignmentniRuntimePASS. Owncache1975091509Bremoved,
+16symbols/R8/source/logs/AAB40+41hashpreserved.1upload1submitrelease17,
+100%existingcountries/managedOFF; Play Spremembevpregledu, quickchecksrun.
+40activeconfirmedpreflight;41publicNEconfirmed. Nativeuser syncoutcomePENDING:
+ordinaryupdate/istiaccount/Uskladizdaj; brezreset/recovery/reinstall.
+Docs release/ANDROID_1_11_9_2026_11_02.md; evidence android-1.11.9-20261102.
+
 1. november — **Sprememba gesla: strežnik nameščen, Android1.11.8(40) oddan v pregled**.
 User izrecno dovoli backend+Play; Sol6.1high server/client/review, rootintegracija.
 account.password.change ohrani exactcurrentbearer/device/expiry/push in E2EE,
