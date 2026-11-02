@@ -1,3 +1,4 @@
+import '../domain/payment_completion_diagnostics.dart';
 import '../domain/sharing_refresh_state.dart';
 import 'e2ee/crypto_migration_idea_draft_recovery.dart';
 import 'e2ee/crypto_legacy_upload_drain.dart';
@@ -575,6 +576,9 @@ class CollaborationRepository {
           stage: stage,
           occurredAt: clock().toUtc(),
           reason: safeReason,
+          completionDiagnostics: error is CryptoAuthorityPending
+              ? error.completionDiagnostics
+              : null,
           scopeId: scopeId,
         ),
       );

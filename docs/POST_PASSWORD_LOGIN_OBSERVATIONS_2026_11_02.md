@@ -137,3 +137,80 @@ Dokazi: `build/qa/post-password-payment-sync-20261102/`:
 `runtime-checkpoint-cold-r2.log`, `runtime-checkpoint-r3-and-negatives-r1.log`,
 `payment-diagnostics-r1.log`, `analyze.log`, `analyze-new-fixture.log`.
 Nova javna Android izdaja v tem koraku ni zgrajena ali oddana.
+
+## Uporabniški rezultat po 1.11.9 — sinhronizacija še ni potrjena
+
+Uporabnik po posodobitvi poroča `linkedPayments /
+crypto_payment_records_pending` ob 05:51:13.397080Z, 05:51:18.113928Z in
+05:51:22.107566Z. Pred tem je potrdil prikazano preverjanje prostorov;
+napaka se je pojavila tudi po potrditvi. Prejšnji lokalni PASS in popravek
+imenika zato nista dokaz odprave uporabnikove celotne težave.
+
+Bralni pregled natančno potrdi pomen kategorije: obstaja lokalni checkpoint
+za trenutno glavo članstva, vendar finančni `crypto_scope_state` manjka ali
+njegov `complete` ni 1. Kategorija ne dokazuje svežine tega checkpointa,
+manjkajočega konkretnega zapisa, izgube ključev ali napačnega gesla.
+Preverjanje dostopov do prostorov ne potrjuje popolnosti finančne projekcije.
+
+`CryptoDomainCheckpointPublisher.publish` lahko vrne brez complete ob
+neujemajočem lokalnem zapisu/inventarju, nepreverjenem prejetem zapisu,
+nedokončanem ukazu checkpointa, neuspešni preverbi njegovega podpisa ali
+spremenjenih mejah lokalnega prenosa. Sedanja kategorija teh izhodov ne loči.
+Zgolj na podlagi izvoza ni mogoče izbrati enega kot dejanski vzrok.
+
+Naslednji dokaz mora zajeti konkretno vejo zaključevanja in varni razlog
+zadržanega zapisa ter lokalno povezati pull, preverbo inventarja in končni
+payment snapshot. Ne zadostuje še en test samega prevoda kategorije napake.
+Ne postaviti complete na silo, ne resetirati računa ali ključev, ne zahtevati
+ponovnega potrjevanja prostorov brez novega dokaza. Ta pregled ni spreminjal
+produktne kode, telefonov ali strežnika in ni ponavljal uspešnih testov.
+
+
+## Natančno zaključevanje plačil — implementacija za 1.11.10
+
+Uporabnik naroči implementacijo in novo objavo. Sol 6.1 high implementira
+jedro in UI, root poveže prejemnika, pregleda spremembe in preveri paket.
+To je diagnostična izdaja: konkretni vzrok na uporabnikovem telefonu in
+uspešna finančna uskladitev še nista potrjena.
+
+Vsak dosedanji tihi izhod publisherja vrne končno oznako. Končni guard loči
+manjkajoče stanje, floor, revizijo pravic, zaporedje prostora, generacijo
+pregleda, zaostali projekcijski kurzor in spremenjeno sejo. Prvotni pogoji,
+vrstni red, transakcije in edini zapis complete=1 ostanejo isti. Runtime
+hrani največ 20 lokalnih oznak, ločeno po prostoru/domeni, in jih počisti ob
+vsakem pullu ter notranjem ponovnem poskusu. Oznake niso dokaz pravic.
+
+Ob nepopolnem posnetku se izvozi completionDiagnostics: checkpointStep in
+po potrebi recordVerdict/recordReason za en vzorčni zadržani zapis istega
+prostora. SQL bere samo verdict/error (LIMIT 1); vzorec ni nujno zapis, na
+katerem se je publisher najprej ustavil. UI to izrecno pojasni. Ne izvozi
+identitete, vsebine ali ključev; enum in strogi allowlist veljata ob sprejemu,
+prikazu in kopiranju. Neznane oznake se zavržejo oziroma postanejo unknown.
+Napaka pomožne poizvedbe ohrani prvotno napako in oznako koraka. Brez novih
+HTTP zahtevkov, sprememb sheme, sej, računov, ključev ali strežnika.
+
+Prejemnik še vedno najprej preveri epoch/generation/revision/sequence ter
+transakcijsko umakne le dokaz svežine; obstoječa finančna dejstva in čakajoči
+ukazi ostanejo. Izvoz in kopiranje sta vezana na isti prikazani poskus.
+Ni dodanih navideznih gumbov za reset/obnovo ali samodejnega potrjevanja.
+
+Ciljno lokalno preverjanje: **22 novih različnih PASS**:
+- jedro 4 PASS1 na runtime→publisher→snapshot poti ter čiščenje oznak;
+- 8 novih follow-up PASS2: prvi ukaz ni izbral testov (0 izvedenih), po
+  popravku izbire optional SQL failure, dejanski reader-null in 6 končnih
+  guardov; prvotni 4 PASS niso ponovljeni;
+- prejemnik 3 PASS1: prenos/sanacija diagnostike, ohranjena dejstva/pending
+  in prednost prvotnega access guard; dodatni parser 1 PASS1;
+- UI 5 PASS1 in nato 1 nov selektivni SL/EN split-state/cursor PASS1;
+  prvotnih 5 ni bilo ponovljenih.
+
+Meje: prava memorySQLite in runtime/publisher/snapshot, transport, dostava
+ukaza in ključi so testne meje; končni guardi uporabljajo reader seam,
+reader-null posebej pravi reader. Ni celoten produkcijski HTTP ali telefon
+PASS in ne dokaz vzroka na uporabniški napravi. Uspešnih starih testov nismo
+ponavljali. Root analyze: prvi napačno poimenovan testni path brez analize;
+pravilni nabor 0 errors/0 warnings, 21 starih info in 1 nov testni braces
+info (odpravljen brez spremembe vedenja; nato analyze samo te datoteke).
+Neodvisen bralni pregled ni našel blokad ali oslabljenih varoval.
+
+Dokazi: build/qa/payment-completion-diagnostics-20261102/{core,root,ui}/.

@@ -8,6 +8,7 @@ import 'crypto_finance_topology_creation.dart';
 import 'crypto_finance_topology.dart';
 import 'crypto_project_relocation_lineage.dart';
 import 'dart:async';
+import '../../domain/payment_completion_diagnostics.dart';
 import 'crypto_finance_account_choices.dart';
 import 'crypto_business_project_relocation.dart';
 import 'crypto_project_root_projection.dart';
@@ -1680,27 +1681,40 @@ class CryptoBusinessSession {
     String domain,
     String wireId,
   ) => _wireRow(scope, domain, wireId);
+  // A result belongs only to this runtime and exact scope/domain pull. It is
+  // never read by checkpoint reuse, authorization, projection or ACK guards.
+  final _completionDiagnostics =
+      <(String, String), PaymentCompletionDiagnostics>{};
+
+  PaymentCompletionDiagnostics? completionDiagnosticsFor(
+    String scope,
+    String domain,
+  ) => _completionDiagnostics[(scope, domain)];
+
   Future<void> pullVerified(
     String scopeId,
     String domain, {
     bool attest = true,
-  }) => access.withVerifiedOperation(() {
-    final combined = domain == 'content'
-        ? documentReads
-        : domain == 'finance'
-        ? financeReads
-        : null;
-    if (combined == null || !attest) {
-      // A non-attesting read cannot satisfy an attesting consumer later.
-      if (!attest) combined?.invalidate();
-      return _pullVerified(scopeId, domain, attest: attest);
-    }
-    return combined.read(
-      scopeId,
-      pull: () => _pullVerified(scopeId, domain, attest: true),
-      capture: () => _verifiedDomainSnapshot(scopeId, domain),
-    );
-  });
+  }) {
+    _completionDiagnostics.remove((scopeId, domain));
+    return access.withVerifiedOperation(() {
+      final combined = domain == 'content'
+          ? documentReads
+          : domain == 'finance'
+          ? financeReads
+          : null;
+      if (combined == null || !attest) {
+        // A non-attesting read cannot satisfy an attesting consumer later.
+        if (!attest) combined?.invalidate();
+        return _pullVerified(scopeId, domain, attest: attest);
+      }
+      return combined.read(
+        scopeId,
+        pull: () => _pullVerified(scopeId, domain, attest: true),
+        capture: () => _verifiedDomainSnapshot(scopeId, domain),
+      );
+    });
+  }
 
   Future<CryptoVerifiedDomainSnapshot?> _verifiedDomainSnapshot(
     String scope,
@@ -1758,6 +1772,8 @@ class CryptoBusinessSession {
     required bool attest,
   }) async {
     await rateLimitedRead(scopeId, domain, () async {
+      // A rate-limit retry is a new attempt too; never retain its predecessor.
+      _completionDiagnostics.remove((scopeId, domain));
       await access.ensureScopeReadKeys(scopeId, domain);
       await queue.pull(
         scopeId: scopeId,
@@ -1768,7 +1784,17 @@ class CryptoBusinessSession {
         )).accessRevision,
       );
       if (attest) {
-        await CryptoDomainCheckpointPublisher(this).publish(scopeId, domain);
+        final step = await CryptoDomainCheckpointPublisher(
+          this,
+        ).publish(scopeId, domain);
+        if (step != PaymentCheckpointStep.complete &&
+            step != PaymentCheckpointStep.reusableCheckpoint) {
+          if (_completionDiagnostics.length >= 20) {
+            _completionDiagnostics.remove(_completionDiagnostics.keys.first);
+          }
+          _completionDiagnostics[(scopeId, domain)] =
+              PaymentCompletionDiagnostics(checkpointStep: step);
+        }
         final read = await access.readContext(scopeId, domain);
         if (await hasReusableCheckpoint(scopeId, domain, read)) {
           // Outside the projection/checkpoint SQL transaction: the included own

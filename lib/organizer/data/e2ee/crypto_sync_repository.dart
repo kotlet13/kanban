@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../domain/payment_completion_diagnostics.dart';
 import 'dart:typed_data';
 import '../../domain/shared_payload_validation.dart' show isSharedUuid;
 
@@ -98,8 +99,9 @@ class CryptoProjectionHistoryBudget {
 }
 
 class CryptoAuthorityPending implements Exception {
-  const CryptoAuthorityPending(this.reason);
+  const CryptoAuthorityPending(this.reason, {this.completionDiagnostics});
   final String reason;
+  final PaymentCompletionDiagnostics? completionDiagnostics;
   @override
   String toString() => 'CryptoAuthorityPending($reason)';
 }

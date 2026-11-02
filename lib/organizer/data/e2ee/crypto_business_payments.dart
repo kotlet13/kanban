@@ -1,4 +1,6 @@
 import 'dart:convert';
+import '../../domain/payment_completion_diagnostics.dart';
+import '../../domain/sync_failure_details.dart' show safeSyncFailureReason;
 import 'dart:typed_data';
 import '../../domain/collaboration_models.dart' show CollaborationException;
 import '../../domain/linked_payment_models.dart';
@@ -1126,6 +1128,34 @@ class CryptoBusinessPayments {
         checkpoints.isNotEmpty &&
         scopeState.length == 1 &&
         scopeState.single['complete'] == 1;
+    final completion = context.completionDiagnosticsFor(scope, 'finance');
+    PaymentCompletionDiagnostics? diagnostic;
+    if ((!observedComplete || pending != 0) && completion != null) {
+      // One unresolved authenticated row is only a diagnostic sample. Select
+      // only fixed status/error columns; never export identity, wire or payload.
+      diagnostic = completion;
+      try {
+        final unresolved = await context.database.rows(
+          """SELECT r.verdict,r.error FROM crypto_received r
+        WHERE r.partition=? AND r.scope_id=? AND r.domain='finance'
+          AND r.batch_key IS NOT NULL AND r.verdict NOT IN ('verified','superseded')
+          AND r.revision=(SELECT MAX(x.revision) FROM crypto_received x
+            WHERE x.partition=r.partition AND x.scope_id=r.scope_id AND x.domain=r.domain
+              AND x.record_id=r.record_id AND x.batch_key IS NOT NULL)
+        ORDER BY r.sequence,r.record_id LIMIT 1""",
+          [p, scope],
+        );
+        final row = unresolved.firstOrNull;
+        diagnostic = PaymentCompletionDiagnostics.fromJson({
+          'checkpointStep': completion.checkpointStep.name,
+          if (row != null) 'recordVerdict': row['verdict'],
+          if (row != null) 'recordReason': row['error'],
+        }, sanitizeReason: safeSyncFailureReason);
+      } catch (_) {
+        // Optional diagnostics cannot replace the existing incomplete outcome.
+        // Retain the exact publisher branch if the local sample is unavailable.
+      }
+    }
     return {
       'events': events,
       'projections': projections,
@@ -1142,6 +1172,10 @@ class CryptoBusinessPayments {
             ? 'crypto_payment_records_pending'
             : 'crypto_payment_projections_pending',
       'pendingCount': pending,
+      if (diagnostic != null)
+        'completionDiagnostics': diagnostic.toSafeDiagnosticJson(
+          sanitizeReason: safeSyncFailureReason,
+        ),
     };
   }
 

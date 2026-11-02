@@ -7,6 +7,7 @@ import '../../data/e2ee/account_directory_v2.dart'
     show CryptoDirectoryException;
 import '../../data/e2ee/crypto_sync_repository.dart'
     show CryptoAuthorityPending;
+import '../../domain/payment_completion_diagnostics.dart';
 import '../../state/collaboration_provider.dart';
 import '../onboarding/account_email_card.dart';
 import '../recovery/account_crypto_wizard.dart';
@@ -322,6 +323,187 @@ String _stageLabel(BuildContext context, SyncFailureStage stage) =>
       ),
     };
 
+String _paymentCheckpointExplanation(
+  BuildContext context,
+  PaymentCheckpointStep step,
+) => switch (step) {
+  PaymentCheckpointStep.scopeStateMissing => _text(
+    context,
+    'Lokalno stanje finančnega prostora še ni na voljo.',
+    'The local financial scope state is not yet available.',
+  ),
+  PaymentCheckpointStep.inventorySequenceChanged => _text(
+    context,
+    'Zaporedje finančnih zapisov se je med preverjanjem spremenilo.',
+    'The financial record sequence changed during verification.',
+  ),
+  PaymentCheckpointStep.projectedRecordMissing => _text(
+    context,
+    'V lokalnem prikazu manjka pričakovani finančni zapis.',
+    'An expected financial record is missing from the local display.',
+  ),
+  PaymentCheckpointStep.projectedRevisionMismatch => _text(
+    context,
+    'Različica zapisa v lokalnem prikazu se ne ujema s pričakovano različico.',
+    'The record version in the local display does not match the expected version.',
+  ),
+  PaymentCheckpointStep.projectedProofMismatch => _text(
+    context,
+    'Dokazilo zapisa v lokalnem prikazu se ne ujema s pričakovanim dokazilom.',
+    'The record evidence in the local display does not match the expected evidence.',
+  ),
+  PaymentCheckpointStep.projectedHistoryUnverified => _text(
+    context,
+    'Zgodovina finančnega zapisa v lokalnem prikazu še ni preverjena.',
+    'The financial record history in the local display is not yet verified.',
+  ),
+  PaymentCheckpointStep.receivedInventoryUncovered => _text(
+    context,
+    'Prejeti finančni zapis še ni zajet v preverjenem seznamu zapisov.',
+    'A received financial record is not yet covered by the verified record inventory.',
+  ),
+  PaymentCheckpointStep.restoreAnchorUncovered => _text(
+    context,
+    'Obnovitvena referenca še ni zajeta v preverjenem seznamu finančnih zapisov.',
+    'A restore reference is not yet covered by the verified financial record inventory.',
+  ),
+  PaymentCheckpointStep.businessRecordOmitted => _text(
+    context,
+    'V preverjenem seznamu manjka pričakovani finančni vnos.',
+    'An expected financial entry is missing from the verified record inventory.',
+  ),
+  PaymentCheckpointStep.commandAuthorityPending => _text(
+    context,
+    'Pooblastilo za potrditev popolnosti finančnih podatkov še ni preverjeno.',
+    'Authority to confirm financial data completeness is not yet verified.',
+  ),
+  PaymentCheckpointStep.commandCheckpointChanged => _text(
+    context,
+    'Potrdilo o popolnosti finančnih podatkov se je med potrjevanjem spremenilo.',
+    'The financial completeness checkpoint changed during confirmation.',
+  ),
+  PaymentCheckpointStep.commandCheckpointImmutable => _text(
+    context,
+    'Obstoječega nespremenljivega potrdila o popolnosti ni mogoče nadomestiti.',
+    'The existing immutable completeness checkpoint cannot be replaced.',
+  ),
+  PaymentCheckpointStep.checkpointVerificationPending => _text(
+    context,
+    'Preverjanje podpisanega potrdila o popolnosti finančnih podatkov še ni zaključeno.',
+    'Verification of the signed financial completeness checkpoint is not yet complete.',
+  ),
+  PaymentCheckpointStep.completionStateMissing => _text(
+    context,
+    'Pri končnem preverjanju manjka lokalno stanje finančnega prostora.',
+    'The final verification is missing the local financial scope state.',
+  ),
+  PaymentCheckpointStep.completionFloorChanged => _text(
+    context,
+    'Različica zaščite finančnih podatkov se je med končnim preverjanjem spremenila.',
+    'The financial protection version changed during the final verification.',
+  ),
+  PaymentCheckpointStep.completionAccessRevisionChanged => _text(
+    context,
+    'Različica dostopa do financ se je med končnim preverjanjem spremenila.',
+    'The financial access revision changed during the final verification.',
+  ),
+  PaymentCheckpointStep.completionScopeSequenceChanged => _text(
+    context,
+    'Zaporedje finančnega prostora se je med končnim preverjanjem spremenilo.',
+    'The financial scope sequence changed during the final verification.',
+  ),
+  PaymentCheckpointStep.completionScanGenerationChanged => _text(
+    context,
+    'Generacija pregleda finančnih podatkov se je med končnim preverjanjem spremenila.',
+    'The financial scan generation changed during the final verification.',
+  ),
+  PaymentCheckpointStep.completionProjectionCursorBehind => _text(
+    context,
+    'Lokalni prikaz finančnih podatkov še ni dosegel preverjenega zaporedja zapisov.',
+    'The local financial display has not yet reached the verified record sequence.',
+  ),
+  PaymentCheckpointStep.completionSessionChanged => _text(
+    context,
+    'Seja preverjanja finančnih podatkov ni več aktualna.',
+    'The financial verification session is no longer current.',
+  ),
+  PaymentCheckpointStep.completionCheckpointMissing => _text(
+    context,
+    'Pri končnem preverjanju manjka potrjeno dokazilo o popolnosti finančnih podatkov.',
+    'The final verification is missing a verified financial completeness checkpoint.',
+  ),
+  PaymentCheckpointStep.completionBusinessRecordStale => _text(
+    context,
+    'Finančni vnos pri končnem preverjanju ne ustreza potrjenemu stanju.',
+    'A financial entry does not match the verified state at the final check.',
+  ),
+  PaymentCheckpointStep.completionRestoreAnchorUncovered => _text(
+    context,
+    'Obnovitvena referenca pri končnem preverjanju ni zajeta v potrjenem stanju.',
+    'A restore reference is not covered by the verified state at the final check.',
+  ),
+  PaymentCheckpointStep.completionReceivedUnverified => _text(
+    context,
+    'Prejeti finančni zapis pri končnem preverjanju še ni preverjen.',
+    'A received financial record is not yet verified at the final check.',
+  ),
+  PaymentCheckpointStep.completionReceivedProofUnmatched => _text(
+    context,
+    'Dokazilo prejetega finančnega zapisa se pri končnem preverjanju ne ujema s potrjenim stanjem.',
+    'The evidence for a received financial record does not match the verified state at the final check.',
+  ),
+  PaymentCheckpointStep.completionCountMismatch => _text(
+    context,
+    'Število finančnih zapisov se pri končnem preverjanju ne ujema s potrjenim številom.',
+    'The financial record count does not match the verified count at the final check.',
+  ),
+  PaymentCheckpointStep.reusableCheckpoint ||
+  PaymentCheckpointStep.complete => _text(
+    context,
+    'Zabeleženo preverjanje finančnih podatkov je uspelo; ta podrobnost ne potrjuje vzroka ustavitve.',
+    'The recorded financial data check succeeded; this detail does not confirm the cause of the stop.',
+  ),
+};
+
+String _failureExplanation(BuildContext context, SyncFailureDetails failure) {
+  final details = failure.completionDiagnostics;
+  if (details == null) return syncFailureExplanation(context, failure.reason);
+  final checkpoint = _paymentCheckpointExplanation(
+    context,
+    details.checkpointStep,
+  );
+  final verdict = switch (details.recordVerdict) {
+    PaymentRecordVerdict.received => _text(context, 'prejet', 'received'),
+    PaymentRecordVerdict.quarantined => _text(
+      context,
+      'zadržan',
+      'quarantined',
+    ),
+    null => null,
+  };
+  return [
+    _text(
+      context,
+      'Točen korak preverjanja plačil: $checkpoint',
+      'Precise payment verification step: $checkpoint',
+    ),
+    if (verdict != null || details.recordReason != null)
+      _text(
+        context,
+        'Podrobnosti vzorčenega čakajočega zapisa; ta zapis ni nujno tisti, ki je ustavil preverjanje.',
+        'Details of a sampled pending record; this may differ from the record that stopped verification.',
+      ),
+    if (verdict != null)
+      _text(context, 'Stanje zapisa: $verdict.', 'Record state: $verdict.'),
+    if (details.recordReason != null)
+      _text(
+        context,
+        'Varna oznaka vzroka zapisa: ${safeSyncFailureReason(details.recordReason)}.',
+        'Safe record reason: ${safeSyncFailureReason(details.recordReason)}.',
+      ),
+  ].join(' ');
+}
+
 String _failureLocation(
   BuildContext context,
   CollaborationState state,
@@ -491,7 +673,7 @@ class SyncFailurePanel extends ConsumerWidget {
           const SizedBox(height: 12),
           Text(_failureLocation(context, state, failure)),
           Text(
-            '${_stageLabel(context, failure.stage)}: ${syncFailureExplanation(context, failure.reason)}',
+            '${_stageLabel(context, failure.stage)}: ${_failureExplanation(context, failure)}',
           ),
           if (_availableReview(state, failure) case final review?)
             TextButton(
@@ -545,8 +727,8 @@ class SyncFailurePanel extends ConsumerWidget {
                   Text(
                     _text(
                       dialogContext,
-                      'Kopija vsebuje le korak uskladitve, varno oznako vzroka in zabeleženi čas. Imena, identifikatorji, naslovi in skrivnosti niso vključeni.',
-                      'The copy includes only the sync stage, a safe reason code and recorded time. Names, identifiers, addresses and secrets are excluded.',
+                      'Kopija vsebuje korak uskladitve, varno oznako vzroka in zabeleženi čas ter, kadar so na voljo, točen korak preverjanja plačil, stanje zapisa in varno oznako njegovega vzroka. Stanje in vzrok opisujeta vzorčeni čakajoči zapis, ki ni nujno tisti, ki je ustavil preverjanje. Imena, identifikatorji, naslovi, vsebina zapisov in skrivnosti niso vključeni.',
+                      'The copy includes the sync stage, a safe reason code and recorded time, plus the precise payment verification step, record state and safe record reason when available. The state and reason describe a sampled pending record, which may differ from the record that stopped verification. Names, identifiers, addresses, record contents and secrets are excluded.',
                     ),
                   ),
                   const SizedBox(height: 12),

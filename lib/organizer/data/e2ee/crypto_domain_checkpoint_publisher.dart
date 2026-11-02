@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../domain/payment_completion_diagnostics.dart';
 import 'package:cryptography/cryptography.dart' show Sha256;
 
 import 'crypto_business_router.dart';
@@ -12,16 +13,18 @@ class CryptoDomainCheckpointPublisher {
   CryptoDomainCheckpointPublisher(this.context);
   final CryptoBusinessSession context;
 
-  Future<void> publish(String scope, String domain) async {
+  Future<PaymentCheckpointStep> publish(String scope, String domain) async {
     final read = await context.access.readContext(scope, domain);
-    if (await context.hasReusableCheckpoint(scope, domain, read)) return;
+    if (await context.hasReusableCheckpoint(scope, domain, read)) {
+      return PaymentCheckpointStep.reusableCheckpoint;
+    }
     final snapshot = context.codec.crypto.randomId();
     final db = context.database, partition = context.partition;
     final initialState = (await db.rows(
       'SELECT * FROM crypto_scope_state WHERE partition=? AND scope_id=? AND domain=?',
       [partition, scope, domain],
     )).firstOrNull;
-    if (initialState == null) return;
+    if (initialState == null) return PaymentCheckpointStep.scopeStateMissing;
     try {
       final sink = Sha256().newHashSink();
       String? after;
@@ -49,7 +52,9 @@ class CryptoDomainCheckpointPublisher {
           throw const FormatException('crypto_inventory_page');
         }
         sequence ??= page['scopeSequence'] as int;
-        if (sequence != page['scopeSequence']) return;
+        if (sequence != page['scopeSequence']) {
+          return PaymentCheckpointStep.inventorySequenceChanged;
+        }
         for (final raw in page['descriptors'] as List) {
           if (raw is! Map) {
             throw const FormatException('crypto_inventory_descriptor');
@@ -77,7 +82,11 @@ class CryptoDomainCheckpointPublisher {
           if (projected == null ||
               projected['crypto_revision'] != descriptor['revision'] ||
               projected['record_proof_hash'] != descriptor['recordProofHash']) {
-            return;
+            return projected == null
+                ? PaymentCheckpointStep.projectedRecordMissing
+                : projected['crypto_revision'] != descriptor['revision']
+                ? PaymentCheckpointStep.projectedRevisionMismatch
+                : PaymentCheckpointStep.projectedProofMismatch;
           }
           if (!const [
             'currentEpoch',
@@ -87,7 +96,7 @@ class CryptoDomainCheckpointPublisher {
             'inlineProjectDeletion',
             'managerAttestedProjectRelocation',
           ].contains(projected['history_basis'])) {
-            return;
+            return PaymentCheckpointStep.projectedHistoryUnverified;
           }
           reviewed |= projected['history_basis'] == 'reviewedRecoveryBaseline';
           await db.execute(
@@ -130,7 +139,9 @@ class CryptoDomainCheckpointPublisher {
               AND i.snapshot_id=? AND i.record_id=r.record_id AND i.revision=r.revision)) LIMIT 1''',
         [partition, scope, domain, snapshot],
       );
-      if (uncovered.isNotEmpty) return;
+      if (uncovered.isNotEmpty) {
+        return PaymentCheckpointStep.receivedInventoryUncovered;
+      }
       if ((await db.rows(
         '''SELECT 1 FROM crypto_restore_record_anchors a
         WHERE a.partition=? AND a.scope_id=? AND a.domain=? AND NOT EXISTS(
@@ -139,7 +150,7 @@ class CryptoDomainCheckpointPublisher {
             AND i.proof_hash=a.proof_hash) LIMIT 1''',
         [partition, scope, domain, snapshot],
       )).isNotEmpty) {
-        return;
+        return PaymentCheckpointStep.restoreAnchorUncovered;
       }
       final omitted = await db.rows(
         '''SELECT 1 FROM crypto_business_records b
@@ -149,7 +160,9 @@ class CryptoDomainCheckpointPublisher {
           AND i.proof_hash=b.record_proof_hash) LIMIT 1''',
         [partition, scope, domain, snapshot],
       );
-      if (omitted.isNotEmpty) return;
+      if (omitted.isNotEmpty) {
+        return PaymentCheckpointStep.businessRecordOmitted;
+      }
       final directory = await context.account.directory
           .cachedVerifiedDirectory();
       final payload = <String, dynamic>{
@@ -176,7 +189,7 @@ class CryptoDomainCheckpointPublisher {
       try {
         await context.queue.commandResult(request);
       } on CryptoAuthorityPending {
-        return;
+        return PaymentCheckpointStep.commandAuthorityPending;
       } on CollaborationApiException catch (error) {
         if (!const {
           'crypto_checkpoint_changed',
@@ -184,7 +197,9 @@ class CryptoDomainCheckpointPublisher {
         }.contains(error.code)) {
           rethrow;
         }
-        return;
+        return error.code == 'crypto_checkpoint_changed'
+            ? PaymentCheckpointStep.commandCheckpointChanged
+            : PaymentCheckpointStep.commandCheckpointImmutable;
       }
       // Command delivery uses the durable queue's transport directly. Its fresh
       // pre-delivery review does not end the caller's outer inventory memo.
@@ -195,20 +210,34 @@ class CryptoDomainCheckpointPublisher {
         () => context.checkpoints.reconcile(scope, domain, read),
         freshBoundary: true,
       );
-      if (verified == null) return;
-      await db.transaction(() async {
+      if (verified == null) {
+        return PaymentCheckpointStep.checkpointVerificationPending;
+      }
+      return await db.transaction(() async {
         final state = (await db.rows(
           'SELECT * FROM crypto_scope_state WHERE partition=? AND scope_id=? AND domain=?',
           [partition, scope, domain],
         )).firstOrNull;
-        if (state == null ||
-            state['floor'] != read.epoch ||
-            state['access_revision'] != read.accessRevision ||
-            state['scope_sequence'] != sequence ||
-            state['scan_generation'] != initialState['scan_generation'] ||
-            (state['projection_cursor'] as int) < sequence! ||
-            !context.account.directory.isCurrent()) {
-          return;
+        if (state == null) {
+          return PaymentCheckpointStep.completionStateMissing;
+        }
+        if (state['floor'] != read.epoch) {
+          return PaymentCheckpointStep.completionFloorChanged;
+        }
+        if (state['access_revision'] != read.accessRevision) {
+          return PaymentCheckpointStep.completionAccessRevisionChanged;
+        }
+        if (state['scope_sequence'] != sequence) {
+          return PaymentCheckpointStep.completionScopeSequenceChanged;
+        }
+        if (state['scan_generation'] != initialState['scan_generation']) {
+          return PaymentCheckpointStep.completionScanGenerationChanged;
+        }
+        if ((state['projection_cursor'] as int) < sequence!) {
+          return PaymentCheckpointStep.completionProjectionCursorBehind;
+        }
+        if (!context.account.directory.isCurrent()) {
+          return PaymentCheckpointStep.completionSessionChanged;
         }
         final checkpoint = await db.rows(
           'SELECT 1 FROM crypto_domain_checkpoints WHERE partition=? AND scope_id=? AND domain=? AND head_hash=? AND sequence=? AND manifest_hash=? AND snapshot_id=? AND record_count=?',
@@ -223,7 +252,9 @@ class CryptoDomainCheckpointPublisher {
             count,
           ],
         );
-        if (checkpoint.length != 1) return;
+        if (checkpoint.length != 1) {
+          return PaymentCheckpointStep.completionCheckpointMissing;
+        }
         final stale = await db.rows(
           """SELECT 1 FROM crypto_business_records b
           WHERE b.partition=? AND b.scope_id=? AND b.domain=? AND NOT EXISTS(
@@ -232,7 +263,9 @@ class CryptoDomainCheckpointPublisher {
               AND i.proof_hash=b.record_proof_hash) LIMIT 1""",
           [partition, scope, domain, verified],
         );
-        if (stale.isNotEmpty) return;
+        if (stale.isNotEmpty) {
+          return PaymentCheckpointStep.completionBusinessRecordStale;
+        }
         if ((await db.rows(
           '''SELECT 1 FROM crypto_restore_record_anchors a
           WHERE a.partition=? AND a.scope_id=? AND a.domain=? AND NOT EXISTS(
@@ -241,7 +274,7 @@ class CryptoDomainCheckpointPublisher {
               AND i.proof_hash=a.proof_hash) LIMIT 1''',
           [partition, scope, domain, verified],
         )).isNotEmpty) {
-          return;
+          return PaymentCheckpointStep.completionRestoreAnchorUncovered;
         }
         String? cursor;
         while (true) {
@@ -257,7 +290,7 @@ class CryptoDomainCheckpointPublisher {
           if (known.isEmpty) break;
           for (final r in known) {
             if (r['verdict'] != 'verified' && r['verdict'] != 'superseded') {
-              return;
+              return PaymentCheckpointStep.completionReceivedUnverified;
             }
             final wire = jsonDecode(r['wire'] as String) as Map;
             final proofHash = await context.codec.digest(
@@ -269,7 +302,9 @@ class CryptoDomainCheckpointPublisher {
               'SELECT 1 FROM crypto_domain_inventory_rows WHERE partition=? AND snapshot_id=? AND record_id=? AND revision=? AND proof_hash=?',
               [partition, verified, r['record_id'], r['revision'], proofHash],
             );
-            if (matched.length != 1) return;
+            if (matched.length != 1) {
+              return PaymentCheckpointStep.completionReceivedProofUnmatched;
+            }
             cursor = r['record_id'] as String;
           }
         }
@@ -277,11 +312,14 @@ class CryptoDomainCheckpointPublisher {
           'SELECT COUNT(*) AS n FROM crypto_business_records WHERE partition=? AND scope_id=? AND domain=?',
           [partition, scope, domain],
         )).single['n'];
-        if (projectedCount != count) return;
+        if (projectedCount != count) {
+          return PaymentCheckpointStep.completionCountMismatch;
+        }
         await db.execute(
           'UPDATE crypto_scope_state SET complete=1 WHERE partition=? AND scope_id=? AND domain=?',
           [partition, scope, domain],
         );
+        return PaymentCheckpointStep.complete;
       });
     } finally {
       await db.execute(

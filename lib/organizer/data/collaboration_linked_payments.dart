@@ -136,6 +136,10 @@ extension CollaborationLinkedPayments on CollaborationRepository {
         reason is String && paymentSnapshotIncompleteReasons.contains(reason)
             ? reason
             : 'crypto_payment_snapshot_incomplete',
+        completionDiagnostics: PaymentCompletionDiagnostics.fromJson(
+          reply['completionDiagnostics'],
+          sanitizeReason: safeSyncFailureReason,
+        ),
       );
     }
     final events = (reply['events'] as List).map((raw) {

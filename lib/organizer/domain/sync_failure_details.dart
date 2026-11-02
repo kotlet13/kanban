@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'payment_completion_diagnostics.dart';
 
 /// Local diagnostic context only. No value here is authorization evidence.
 enum SyncFailureStage {
@@ -80,6 +81,10 @@ const syncFailureSafeReasons = <String>{
   'crypto_archive_recovery_file_required',
   'crypto_archive_stage_interrupted',
   'crypto_atomic_batch_size_pending',
+  'crypto_authority_pending',
+  'crypto_record_verification',
+  'crypto_semantic_verification',
+  'crypto_restore_record_equivocation',
   'crypto_attachment_operation_pending',
   'crypto_business_ack_history_pending',
   'crypto_business_ack_projection_pending',
@@ -515,9 +520,11 @@ class SyncFailureDetails {
     required this.occurredAt,
     required String reason,
     this.scopeId,
+    this.completionDiagnostics,
     // ignore: prefer_initializing_formals
   }) : _reason = reason;
 
+  final PaymentCompletionDiagnostics? completionDiagnostics;
   final SyncFailureStage stage;
   final DateTime? occurredAt;
   final String _reason;
@@ -530,6 +537,10 @@ class SyncFailureDetails {
   Map<String, Object> toSafeDiagnosticJson() => {
     'stage': stage.name,
     'reason': reason,
+    if (completionDiagnostics != null)
+      'completionDiagnostics': completionDiagnostics!.toSafeDiagnosticJson(
+        sanitizeReason: safeSyncFailureReason,
+      ),
     if (occurredAt != null) 'occurredAt': occurredAt!.toUtc().toIso8601String(),
   };
 }
