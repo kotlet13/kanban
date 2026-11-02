@@ -1,15 +1,13 @@
-import 'account_protection_completion.dart';
+import 'account_protection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/account_protection_ready.dart';
-import '../../data/e2ee/crypto_migration_coordinator.dart';
 import '../../state/account_crypto_provider.dart';
 import '../../state/account_summary_refresh_provider.dart';
 import '../../state/collaboration_provider.dart';
 import 'account_crypto_wizard.dart';
-import 'crypto_migration_wizard.dart';
 
 class AccountCryptoStartupAction {
   const AccountCryptoStartupAction({
@@ -111,22 +109,15 @@ final accountCryptoStartupActionProvider =
         identity: '${session.partition}:${session.deviceId}',
         builder: (context) {
           if (savedSetup ||
-              assessment.status !=
-                  AccountProtectionStartupStatus.reviewRequired) {
+              assessment.status ==
+                  AccountProtectionStartupStatus.setupRequired ||
+              (assessment.status ==
+                      AccountProtectionStartupStatus.recoveryRequired &&
+                  assessment.reason !=
+                      AccountProtectionStartupReason.scopeRecovery)) {
             return AccountCryptoWizard(workflow: workflow);
           }
-          final labels = <String, String>{
-            for (final scope
-                in ref.read(collaborationProvider).valueOrNull?.scopes ?? [])
-              scope.id: scope.name,
-          };
-          return CryptoMigrationWizard(
-            controller: AccountMigrationController(
-              CryptoMigrationCoordinator(account: workflow),
-            ),
-            cachedLabels: labels,
-            onFinished: () => finishAccountProtection(context, workflow),
-          );
+          return AccountProtectionEntry(account: workflow);
         },
       );
     });

@@ -944,7 +944,8 @@ class CryptoSyncRepository {
     Set<String>? requestIds,
     bool terminalOnly = false,
   }) async {
-    await for (final row in store.pendingDelivery()) {
+    await for (final row
+        in terminalOnly ? store.terminalDelivery() : store.pendingDelivery()) {
       _current();
       if (requestIds != null && !requestIds.contains(row['request_id'])) {
         continue;
@@ -1073,6 +1074,7 @@ class CryptoSyncRepository {
           row['request_id'] as String,
           applied ? 'applied' : 'rejected',
           receipt,
+          allowBlockedTerminal: terminalOnly,
         );
       });
     }

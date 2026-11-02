@@ -1636,7 +1636,18 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (resumePayments && epoch == _epoch && !_closed) {
         final previousSuccess = _lastSuccessfulSyncAt;
         if (completed && _lastError == null) {
-          _lastSuccessfulSyncAt = clock().toUtc();
+          final local = await _readSyncStatusLocalEvidence(partition);
+          _checkEpoch(epoch);
+          if (!local.business &&
+              !local.unresolved &&
+              !local.reconciliation &&
+              !state.sessionInvalid &&
+              !state.deletionPending &&
+              !_financeStatusRequiresRefresh &&
+              state.conflicts.isEmpty &&
+              state.financeConflicts.isEmpty) {
+            _lastSuccessfulSyncAt = clock().toUtc();
+          }
         }
         if (_fullSyncEpoch == epoch) _fullSyncEpoch = null;
         try {

@@ -16,6 +16,7 @@ class CryptoDomainCheckpointPublisher {
   Future<PaymentCheckpointStep> publish(String scope, String domain) async {
     final read = await context.access.readContext(scope, domain);
     if (await context.hasReusableCheckpoint(scope, domain, read)) {
+      await _reconcileReusableReceipt(scope, domain, read);
       return PaymentCheckpointStep.reusableCheckpoint;
     }
     final snapshot = context.codec.crypto.randomId();
@@ -327,5 +328,77 @@ class CryptoDomainCheckpointPublisher {
         [partition, snapshot],
       );
     }
+  }
+
+  /// A pulled, verified own attestation may precede a lost command ACK. Settle
+  /// only that exact retained request; the observed projection cannot replace
+  /// its receipt or authorize retransmission, including from an older device.
+  Future<void> _reconcileReusableReceipt(
+    String scope,
+    String domain,
+    CryptoReadContext read,
+  ) async {
+    final rows = await context.database.rows(
+      '''SELECT c.authorization,c.sequence,c.manifest_hash,c.record_count
+      FROM crypto_domain_checkpoints c JOIN crypto_scope_state s
+      ON s.partition=c.partition AND s.scope_id=c.scope_id AND s.domain=c.domain
+      WHERE c.partition=? AND c.scope_id=? AND c.domain=? AND c.head_hash=?
+        AND c.epoch=? AND c.access_revision=? AND c.sequence=s.scope_sequence
+        AND s.floor=? AND s.access_revision=? AND s.complete=1
+        AND s.projection_cursor>=s.transport_cursor LIMIT 2''',
+      [
+        context.partition,
+        scope,
+        domain,
+        read.headHash,
+        read.epoch,
+        read.accessRevision,
+        read.epoch,
+        read.accessRevision,
+      ],
+    );
+    if (rows.length != 1) return;
+    final checkpoint = rows.single;
+    late Map<String, dynamic> proof;
+    late Map command, payload;
+    try {
+      proof = Map<String, dynamic>.from(
+        jsonDecode(checkpoint['authorization'] as String) as Map,
+      );
+      command = CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
+      payload = command['payload'] as Map;
+    } on FormatException {
+      return;
+    } on TypeError {
+      return;
+    }
+    final session = context.account.directory.session.profile;
+    if (command['version'] != 2 ||
+        command['operation'] != 'crypto2.domain.checkpoint' ||
+        command['serverId'] != session.serverId ||
+        command['accountId'] != session.accountId ||
+        command['requestId'] is! String ||
+        payload['scopeId'] != scope ||
+        payload['domain'] != domain ||
+        payload['membershipHeadHash'] != read.headHash ||
+        payload['epoch'] != read.epoch ||
+        payload['accessRevision'] != read.accessRevision ||
+        payload['expectedSequence'] != checkpoint['sequence'] ||
+        payload['manifestHash'] != checkpoint['manifest_hash'] ||
+        payload['recordCount'] != checkpoint['record_count']) {
+      return;
+    }
+    final request = command['requestId'] as String;
+    final saved = await context.queue.store.outgoing(request);
+    if (saved == null ||
+        saved['operation'] != 'crypto2.domain.checkpoint' ||
+        !const {'pending', 'blocked'}.contains(saved['state']) ||
+        base64Encode(
+              CryptoJson.encode(jsonDecode(saved['signed_body'] as String)),
+            ) !=
+            base64Encode(CryptoJson.encode(proof))) {
+      return;
+    }
+    await context.queue.reconcileTerminalReceipts(requestIds: {request});
   }
 }

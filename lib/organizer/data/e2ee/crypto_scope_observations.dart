@@ -43,8 +43,10 @@ class _ScopeRecoveryRun {
 }
 
 class CryptoScopeObservations {
-  CryptoScopeObservations(this.account);
+  CryptoScopeObservations(this.account, {this.isCurrent});
   final AccountCryptoV2Workflow account;
+  final bool Function()? isCurrent;
+  SessionCryptoAccess scopeAccess() => SessionCryptoAccess(account: account);
   static Future<String> token(String server, String account, String scope) =>
       cryptoSha256(
         utf8.encode('JivieScopeObservation/v2\n') +
@@ -208,38 +210,96 @@ class CryptoScopeObservations {
     () => _accountWorkHydrateObservedScopes(file),
   );
 
-  Future<void> _accountWorkHydrateObservedScopes(Uint8List file) async {
+  /// Keep the selected FILE only for this foreground batch. Each bounded pass
+  /// retains the existing cryptographic checks; continuation stops when every
+  /// discovered obligation has been attempted without further progress. Neither
+  /// a stalled scope nor an unverified claim prevents later scopes being tried.
+  Future<void> hydrateAllAvailableObservedScopes(Uint8List file) =>
+      _hydrateAllAvailableObservedScopes(file);
+
+  /// Reverify an unfinished account recovery using only retained verified keys.
+  /// Private artifacts that still need the FILE remain explicit obligations.
+  Future<void> resumeObservedScopesFromSavedKeys() async {
+    if (!await recoveryIncomplete(account)) return;
+    await _hydrateAllAvailableObservedScopes(null);
+  }
+
+  Future<void> _hydrateAllAvailableObservedScopes(Uint8List? file) =>
+      withAccountWorkJob(
+        account.directory.transport,
+        AccountWorkKind.recovery,
+        () async {
+          final visited = <String>{};
+          CryptoScopeRecoveryIncomplete? incomplete;
+          for (var pass = 0; pass < 128; pass++) {
+            var progress = false;
+            try {
+              await _accountWorkHydrateObservedScopes(
+                file,
+                onAttempt: (token) => progress = visited.add(token) || progress,
+              );
+              return;
+            } on CryptoScopeRecoveryIncomplete catch (error) {
+              incomplete = error;
+              if (!progress) rethrow;
+            }
+          }
+          throw incomplete!;
+        },
+      );
+
+  Future<void> _accountWorkHydrateObservedScopes(
+    Uint8List? file, {
+    void Function(String)? onAttempt,
+  }) async {
+    void current() {
+      if (!account.directory.isCurrent() || isCurrent?.call() == false) {
+        throw const CryptoAuthorityPending('scope_recovery_identity_changed');
+      }
+    }
+
+    current();
     final db = account.store.database, partition = account.store.partition;
     final own = await account.directory.cachedVerifiedDirectory();
-    final info = account.files.inspect(
-      file,
-      serverId: own.serverId,
-      accountId: own.accountId,
-    );
-    if (info['fingerprint'] != own.rootFingerprint) {
-      throw const FormatException('scope_recovery_file_identity');
+    current();
+    own.activeDevice(account.deviceId);
+    if (file != null) {
+      final info = account.files.inspect(
+        file,
+        serverId: own.serverId,
+        accountId: own.accountId,
+      );
+      if (info['fingerprint'] != own.rootFingerprint) {
+        throw const FormatException('scope_recovery_file_identity');
+      }
+      final status = await account.status();
+      final root = account.files.open(
+        file: file,
+        encryptedRoot: Map<String, dynamic>.from(
+          CryptoJson.decode(cryptoBase64(status['keyringCiphertextBase64']))
+              as Map,
+        ),
+        serverId: own.serverId,
+        accountId: own.accountId,
+        expectedFingerprint: own.rootFingerprint,
+      );
+      root.dispose();
     }
-    final status = await account.status();
-    final root = account.files.open(
-      file: file,
-      encryptedRoot: Map<String, dynamic>.from(
-        CryptoJson.decode(cryptoBase64(status['keyringCiphertextBase64']))
-            as Map,
-      ),
-      serverId: own.serverId,
-      accountId: own.accountId,
-      expectedFingerprint: own.rootFingerprint,
-    );
-    root.dispose();
+    current();
     Future<void> save(
       String scope,
       String id,
       String state,
       Map<String, dynamic> payload,
-    ) => db.execute(
-      'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL) ON CONFLICT(partition,scope_id,intent_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
-      [partition, scope, id, state, CryptoJson.encode(payload)],
-    );
+    ) async {
+      current();
+      await db.execute(
+        'INSERT INTO crypto_membership_intents VALUES(?,?,?,?,?,NULL) ON CONFLICT(partition,scope_id,intent_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
+        [partition, scope, id, state, CryptoJson.encode(payload)],
+      );
+      current();
+    }
+
     await save(
       own.accountId,
       'fileScopeRecoverySummary',
@@ -287,6 +347,8 @@ class CryptoScopeObservations {
     }
     final activeRun = run;
     Future<void> route(String scope) async {
+      current();
+      onAttempt?.call('route:$scope');
       if (!isCryptoCanonicalUuid(scope))
         throw const FormatException('scope_recovery_route');
       await db.execute(
@@ -331,6 +393,7 @@ class CryptoScopeObservations {
       }
       if (page['hasMore'] == false) {
         activeRun.catalogComplete = true;
+        onAttempt?.call('catalogComplete');
       } else if (page['hasMore'] != true ||
           values.isEmpty ||
           last == null ||
@@ -354,6 +417,7 @@ class CryptoScopeObservations {
     for (var n = 0; n < 128 && !activeRun.eventsComplete; n++) {
       if (!await activeRun.events.moveNext()) {
         activeRun.eventsComplete = true;
+        onAttempt?.call('eventsComplete');
         await activeRun.events.cancel();
         break;
       }
@@ -383,6 +447,7 @@ class CryptoScopeObservations {
           recomputed != entry['headHash'] ||
           !own.includesAnchor(entry['generation'], recomputed))
         throw const FormatException('scope_recovery_migration_inclusion');
+      onAttempt?.call('event:$commandHash');
       await save(
         own.accountId,
         'scopeRecoveryExpected:$commandHash',
@@ -404,9 +469,14 @@ class CryptoScopeObservations {
     for (final row in work) {
       final scope = row['scope_id'] as String;
       activeRun.lastScope = scope;
+      onAttempt?.call('scope:$scope');
       try {
-        final access = SessionCryptoAccess(account: account);
-        await access.recoverScopeCandidateKeys(scope, file);
+        final access = scopeAccess();
+        if (file == null) {
+          await access.hydrateExistingCandidateKeys(scope);
+        } else {
+          await access.recoverScopeCandidateKeys(scope, file);
+        }
         final genesis = await access.recoveredMigrationGenesis(scope);
         if (genesis != null) {
           if (activeRun.recovered.length >= 20)
@@ -452,8 +522,27 @@ class CryptoScopeObservations {
           [partition, scope],
         );
       } on CryptoAuthorityPending catch (error) {
+        current();
         await save(scope, 'fileScopeRecovery', 'scopeRecoveryPending', {
           'reason': error.reason,
+        });
+      } on CollaborationException catch (error) {
+        current();
+        if (!const {
+          'permission_denied',
+          'permission_revoked',
+          'scope_not_found',
+          'network',
+        }.contains(error.code)) {
+          rethrow;
+        }
+        await save(scope, 'fileScopeRecovery', 'scopeRecoveryPending', {
+          'reason': error.code,
+        });
+      } on FormatException catch (_) {
+        current();
+        await save(scope, 'fileScopeRecovery', 'scopeRecoveryPending', {
+          'reason': 'scope_proof_unavailable',
         });
       }
     }
@@ -474,17 +563,14 @@ class CryptoScopeObservations {
       activeRun.lastClaim = row['intent_id'] as String;
       final pendingClaim = _decode(row['payload']!);
       final hash = pendingClaim['commandHash'] as String;
+      onAttempt?.call('claim:$hash');
       try {
         final entry = Map<String, dynamic>.from(pendingClaim['entry'] as Map);
         final classified = await classifier.classify(entry);
         var covered = classified.privateControl;
-        if (classified.privateArtifact) {
+        if (classified.privateArtifact && file != null) {
           final restored = await restoreCryptoMigrationOwnLocalArtifact(
-            runtime: CryptoBusinessSession(
-              account,
-              SessionCryptoAccess(account: account),
-              db,
-            ),
+            runtime: CryptoBusinessSession(account, scopeAccess(), db),
             attestation: classified,
             recoveryFile: file,
             ownEvent: Map<String, dynamic>.from(entry['authorization'] as Map),
@@ -504,8 +590,12 @@ class CryptoScopeObservations {
           );
           if (candidates.length == 1) {
             final scope = candidates.single['scope_id'] as String;
-            final access = SessionCryptoAccess(account: account);
-            await access.recoverScopeCandidateKeys(scope, file);
+            final access = scopeAccess();
+            if (file == null) {
+              await access.hydrateExistingCandidateKeys(scope);
+            } else {
+              await access.recoverScopeCandidateKeys(scope, file);
+            }
             final genesis = await access.recoveredMigrationGenesis(scope);
             final cached = activeRun.recovered[scope];
             if (genesis != null &&
@@ -540,8 +630,12 @@ class CryptoScopeObservations {
             final scope = candidates.single['scope_id'] as String;
             var capsule = activeRun.recovered[scope];
             if (capsule == null) {
-              final access = SessionCryptoAccess(account: account);
-              await access.recoverScopeCandidateKeys(scope, file);
+              final access = scopeAccess();
+              if (file == null) {
+                await access.hydrateExistingCandidateKeys(scope);
+              } else {
+                await access.recoverScopeCandidateKeys(scope, file);
+              }
               capsule = await access.recoveredMigrationGenesis(scope);
             }
             covered =
@@ -582,6 +676,7 @@ class CryptoScopeObservations {
           rethrow;
       }
     }
+    current();
     if ((await account.directory.cachedVerifiedDirectory()).headHash !=
         own.headHash) {
       throw const CryptoScopeRecoveryIncomplete(

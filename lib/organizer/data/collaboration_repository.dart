@@ -1046,6 +1046,8 @@ class CollaborationRepository {
         lastChangeCheckAttemptAt: _lastChangeCheckAttemptAt,
         lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
         hasUnresolvedSyncWork: localEvidence.unresolved,
+        pendingSyncCommandCount: localEvidence.pending,
+        blockedSyncCommandCount: localEvidence.blocked,
         syncRequiresRefresh:
             _changeCheckRequiresRefresh ||
             localEvidence.reconciliation ||
@@ -1184,16 +1186,44 @@ class CollaborationRepository {
     }
   }
 
-  Future<({bool unresolved, bool reconciliation})> _readSyncStatusLocalEvidence(
-    String partition,
-  ) async {
-    // Presence only: never serialize queues or retained complete payment history.
+  Future<
+    ({
+      bool unresolved,
+      bool business,
+      bool reconciliation,
+      int pending,
+      int blocked,
+    })
+  >
+  _readSyncStatusLocalEvidence(String partition) async {
+    // Aggregate metadata only: never serialize queues or retained terminal history.
     final extraWork = await database.rows(
       "SELECT EXISTS(SELECT 1 FROM crypto_outbox WHERE partition=? AND state IN ('pending','blocked')) "
       "OR EXISTS(SELECT 1 FROM linked_payment_intents WHERE "
       "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
-      "AND state IN ('pending','waiting_source_publication','quarantine')) AS unresolved",
-      [partition, partition],
+      "AND state IN ('pending','waiting_source_publication','quarantine')) AS unresolved, "
+      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND state='pending') + "
+      "(SELECT COUNT(*) FROM linked_payment_intents WHERE "
+      "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
+      "AND state IN ('pending','waiting_source_publication')) AS pending, "
+      "(SELECT COUNT(*) FROM crypto_outbox WHERE partition=? AND state='blocked') + "
+      "(SELECT COUNT(*) FROM linked_payment_intents WHERE "
+      "(json_extract(data,'\$.partition')=? OR json_extract(data,'\$.partition') IS NULL) "
+      "AND state='quarantine') AS blocked, "
+      "EXISTS(SELECT 1 FROM outbox WHERE partition=?) OR "
+      "EXISTS(SELECT 1 FROM finance_outbox WHERE partition=?) OR "
+      "EXISTS(SELECT 1 FROM commands WHERE partition=?) AS business",
+      [
+        partition,
+        partition,
+        partition,
+        partition,
+        partition,
+        partition,
+        partition,
+        partition,
+        partition,
+      ],
     );
     final prefix = 'scope_reconciliation:$partition:';
     final reconciliation = await database.rows(
@@ -1202,7 +1232,10 @@ class CollaborationRepository {
     );
     return (
       unresolved: extraWork.single['unresolved'] == 1,
+      business: extraWork.single['business'] == 1,
       reconciliation: reconciliation.isNotEmpty,
+      pending: extraWork.single['pending'] as int,
+      blocked: extraWork.single['blocked'] as int,
     );
   }
 
@@ -1222,6 +1255,8 @@ class CollaborationRepository {
       lastError: _lastError,
       syncFailures: _syncFailures,
       hasUnresolvedSyncWork: localEvidence.unresolved,
+      pendingSyncCommandCount: localEvidence.pending,
+      blockedSyncCommandCount: localEvidence.blocked,
       syncRequiresRefresh:
           _changeCheckRequiresRefresh ||
           localEvidence.reconciliation ||

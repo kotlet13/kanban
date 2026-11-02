@@ -1,4 +1,4 @@
-import 'account_protection_completion.dart';
+import 'account_protection_page.dart';
 import 'recovery_file_explanation.dart';
 import '../onboarding/account_email_card.dart';
 import '../onboarding/account_deletion_panel.dart';
@@ -13,8 +13,6 @@ import '../../data/e2ee/account_crypto_repository.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/crypto_scope_observations.dart';
 import 'account_devices_page.dart';
-import 'crypto_migration_wizard.dart';
-import '../../data/e2ee/crypto_migration_coordinator.dart';
 import '../../data/e2ee/account_protection_ready.dart';
 import '../../data/recovery_bundle.dart';
 import '../../platform/recovery/recovery_file_io.dart';
@@ -550,27 +548,10 @@ class _AccountCryptoWizardState extends ConsumerState<AccountCryptoWizard> {
                           ? null
                           : () => Navigator.of(context).push<void>(
                               MaterialPageRoute(
-                                builder: (_) => CryptoMigrationWizard(
-                                  onFinished: () => finishAccountProtection(
-                                    context,
-                                    widget.workflow as AccountCryptoV2Workflow,
-                                  ),
-                                  cachedLabels: {
-                                    for (final scope
-                                        in ref
-                                                .read(collaborationProvider)
-                                                .valueOrNull
-                                                ?.scopes ??
-                                            [])
-                                      scope.id: scope.name,
-                                  },
-                                  controller: AccountMigrationController(
-                                    CryptoMigrationCoordinator(
-                                      account:
-                                          widget.workflow
-                                              as AccountCryptoV2Workflow,
-                                    ),
-                                  ),
+                                builder: (_) => AccountProtectionEntry(
+                                  account:
+                                      widget.workflow
+                                          as AccountCryptoV2Workflow,
                                 ),
                               ),
                             ),

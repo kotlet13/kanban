@@ -158,7 +158,7 @@ class AccountCryptoV2Workflow implements AccountCryptoWorkflow {
   Future<bool> hasIncompleteScopeRecovery() =>
       CryptoScopeObservations.recoveryIncomplete(this);
   Future<void> restoreScopesFromFile(Uint8List file) =>
-      CryptoScopeObservations(this).hydrateObservedScopes(file);
+      CryptoScopeObservations(this).hydrateAllAvailableObservedScopes(file);
   Future<Map<String, Object?>?> _local() async => (await store.database.rows(
     'SELECT * FROM crypto_identity_secrets WHERE partition=? AND device_id=?',
     [store.partition, deviceId],

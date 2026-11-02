@@ -549,65 +549,162 @@ class AccountProtectionReady {
 
   String get _scopeActionKey =>
       'protectionReady:${account.store.partition}:${account.deviceId}:scopeAction';
-  Future<Map<String, dynamic>?> pendingScopeAction() => _meta(_scopeActionKey);
+
+  /// Presentation-only failures from the last account-wide scope pass. These
+  /// rows never supply authority or replace a current per-scope review.
+  Future<List<Map<String, dynamic>>> pendingScopeActions() async {
+    final value = await _meta(_scopeActionKey);
+    if (value == null) return const [];
+    final raw = value['actions'] is List ? value['actions'] as List : [value];
+    return List.unmodifiable([
+      for (final action in raw)
+        if (action is Map && action['scopeId'] is String)
+          Map<String, dynamic>.unmodifiable({
+            'scopeId': action['scopeId'],
+            'canManage': action['canManage'] == true,
+            'reason': safeScopeActionReason(action['reason']),
+          }),
+    ]);
+  }
+
+  Future<Map<String, dynamic>?> pendingScopeAction() async =>
+      (await pendingScopeActions()).firstOrNull;
+
+  static String safeScopeActionReason(Object? reason) =>
+      const {
+        'scope_rotation_required',
+        'scope_review_confirmation_required',
+        'scope_review_policy_projection_pending',
+        'scope_review_changed',
+        'scope_key_recovery_required',
+        'scope_history_keys_pending',
+        'scope_keys_pending',
+        'recovery_historical_key_pending',
+        'scope_management_forbidden',
+        'scope_owner_required',
+        'scope_owner_acceptance_required',
+        'scope_successor_key_contribution_required',
+        'finance_key_contribution_required',
+        'finance_inventory_review_required',
+        'grant_recipients_pending',
+        'scope_grants_changed',
+        'scope_receipt_pending',
+        'scope_reauthorization_required',
+        'scope_rotation_reauthorization_required',
+        'directory_proof_pending',
+        'crypto_reconciliation_required',
+        'crypto_access_base_changed',
+        'network',
+        'rate_limited',
+        'permission_denied',
+        'permission_revoked',
+        'scope_not_found',
+      }.contains(reason)
+      ? reason as String
+      : 'scope_proof_unavailable';
+
+  /// Overridable construction boundary; all progress still goes through the
+  /// manager's exact retained-review and current-authority checks.
+  ScopeCryptoManager scopeManager(SessionCryptoAccess access) =>
+      ScopeCryptoManager(access);
+  CryptoScopeObservations scopeObservations() =>
+      CryptoScopeObservations(account, isCurrent: () => !_closed);
+
   Future<bool> _rotateRecoveredOwners(
     List<Map<String, dynamic>> scopes,
     SessionCryptoAccess access,
   ) async {
     var changed = false;
-    final manager = ScopeCryptoManager(access);
+    final manager = scopeManager(access);
+    if (!identical(manager.access.account, account)) {
+      throw const CryptoAuthorityPending('crypto_stale_identity');
+    }
+    final actions = <Map<String, dynamic>>[];
+    // Replace the previous pass rather than retaining stale per-scope failures.
+    await _save(_scopeActionKey, {'actions': actions});
     for (final scope in scopes) {
       _current();
       if (scope['headHash'] == null ||
           !['active', 'committed'].contains(scope['cryptoState'])) {
+        actions.add({
+          'scopeId': scope['id'],
+          'canManage': false,
+          'reason': 'crypto_reconciliation_required',
+        });
+        await _save(_scopeActionKey, {'actions': actions});
         continue;
       }
-      final observed = await readScopeMembers(access, scope['id']);
-      final head = observed.head;
-      if (!observed.stale) continue;
-      final own = head.member(account.directory.accountId);
-      final canManage = own['manageKeys'] == true;
-      if (own['role'] == 'owner' && canManage) {
-        try {
-          final pending = await manager.pendingRotationReviews(head.scopeId);
-          final review =
-              pending
-                  .where((r) => r.sourceHeadHash == head.headHash)
-                  .firstOrNull ??
-              await manager.reviewRotation(head.scopeId);
-          _current();
-          // Only already authenticated checkpoint history is automatic.
-          // Unobserved tails still require the existing explicit review UI.
-          await manager.confirmRotation(
-            review,
-            acceptedCandidateHistory: false,
-          );
-          _current();
-          await account.store.database.execute(
-            'DELETE FROM local_meta WHERE name=?',
-            [_scopeActionKey],
-          );
-          changed = true;
-          continue;
-        } on CryptoAuthorityPending catch (error) {
-          _current();
-          await _save(_scopeActionKey, {
-            'scopeId': head.scopeId,
-            'canManage': true,
-            'reason': error.reason,
-          });
-          throw const CryptoAuthorityPending(
-            'protection_scope_action_required',
-          );
+      var canManage = false;
+      try {
+        final observed = await readScopeMembers(access, scope['id']);
+        _current();
+        final head = observed.head;
+        if (!observed.stale) continue;
+        final own = head.member(account.directory.accountId);
+        canManage = own['manageKeys'] == true;
+        if (own['role'] != 'owner' || !canManage) {
+          throw const CryptoAuthorityPending('scope_rotation_required');
         }
+        final pending = await manager.pendingRotationReviews(head.scopeId);
+        _current();
+        final review =
+            pending
+                .where((r) => r.sourceHeadHash == head.headHash)
+                .firstOrNull ??
+            await manager.reviewRotation(head.scopeId);
+        _current();
+        // Only already authenticated checkpoint history is automatic.
+        // A candidate baseline keeps its saved per-scope review and previews.
+        await manager.confirmRotation(review, acceptedCandidateHistory: false);
+        _current();
+        changed = true;
+      } on CryptoAuthorityPending catch (error) {
+        _current();
+        if (const {
+          'crypto_stale_identity',
+          'protection_completion_cancelled',
+        }.contains(error.reason)) {
+          rethrow;
+        }
+        actions.add({
+          'scopeId': scope['id'],
+          'canManage': canManage,
+          'reason': safeScopeActionReason(error.reason),
+        });
+      } on CollaborationException catch (error) {
+        _current();
+        if (!const {
+          'network',
+          'permission_denied',
+          'permission_revoked',
+          'scope_not_found',
+        }.contains(error.code)) {
+          rethrow;
+        }
+        actions.add({
+          'scopeId': scope['id'],
+          'canManage': canManage,
+          'reason': safeScopeActionReason(error.code),
+        });
+      } on FormatException catch (_) {
+        _current();
+        actions.add({
+          'scopeId': scope['id'],
+          'canManage': canManage,
+          'reason': 'scope_proof_unavailable',
+        });
       }
-      await _save(_scopeActionKey, {
-        'scopeId': head.scopeId,
-        'canManage': canManage,
-        'reason': 'scope_rotation_required',
-      });
+      _current();
+      await _save(_scopeActionKey, {'actions': actions});
+    }
+    _current();
+    if (actions.isNotEmpty) {
       throw const CryptoAuthorityPending('protection_scope_action_required');
     }
+    await account.store.database.execute(
+      'DELETE FROM local_meta WHERE name=?',
+      [_scopeActionKey],
+    );
     return changed;
   }
 
@@ -633,7 +730,25 @@ class AccountProtectionReady {
     final own = await account.directory.requireFresh(),
         access = SessionCryptoAccess(account: account);
     var scopes = await catalog();
-    if (await _rotateRecoveredOwners(scopes, access)) scopes = await catalog();
+    CryptoScopeRecoveryIncomplete? incompleteRecovery;
+    if (await account.hasIncompleteScopeRecovery()) {
+      try {
+        await scopeObservations().resumeObservedScopesFromSavedKeys();
+      } on CryptoScopeRecoveryIncomplete catch (error) {
+        incompleteRecovery = error;
+      }
+    }
+    _current();
+    if (await _rotateRecoveredOwners(scopes, access)) {
+      scopes = await catalog();
+      if (await account.hasIncompleteScopeRecovery()) {
+        await scopeObservations().resumeObservedScopesFromSavedKeys();
+        incompleteRecovery = null;
+      }
+    }
+    _current();
+    if (incompleteRecovery != null) throw incompleteRecovery;
+    _current();
     final observed = await catalogHash(scopes);
     final prior = await _activeJob();
     if (prior != null &&

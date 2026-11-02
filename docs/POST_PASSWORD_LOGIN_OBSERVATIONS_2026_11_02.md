@@ -214,3 +214,127 @@ info (odpravljen brez spremembe vedenja; nato analyze samo te datoteke).
 Neodvisen bralni pregled ni našel blokad ali oslabljenih varoval.
 
 Dokazi: build/qa/payment-completion-diagnostics-20261102/{core,root,ui}/.
+
+
+## Uporabniški zasloni 07:42–07:46 — priprava računov/prostorov
+
+Po uporabnikovem naslednjem preizkusu ni potrjen zaključek zaščite ali celotne
+uskladitve. Šest posnetkov kaže začetni CryptoMigrationWizard »ni dodatnih
+korakov«, nato opozorili za Dom in TriparNA, ScopeRecoveryPage z generično
+napako ter oblaček pending ob treh ničelnih poslovnih števcih in prikazanem
+času uspešne uskladitve. Na slikah ni novega completionDiagnostics JSON;
+iz njih ni mogoče potrditi odprave ali istega vzroka linkedPayments napake.
+
+Bralno potrjena razhajanja:
+- account_crypto_startup odpre migration wizard za reviewRequired, ko manjka
+  zaključni dokaz ali se ne ujema trenutna naprava. To ni dokaz, da manjka
+  obnovitvena datoteka ali da jo je treba ponovno uvoziti.
+- CryptoMigrationWizard.canFinish gleda samo seznam migracijskih kandidatov.
+  Prazen/committed seznam lahko kaže »ni dodatnih korakov«, medtem ko
+  AccountProtectionReady.complete ločeno še preverja obnovljene lastnike.
+- _rotateRecoveredOwners v local_meta že shrani konkretni scopeAction.reason.
+  account_protection_completion ga v prikazu ne uporabi; prikaže enako
+  besedilo za različne ovire glede na canManage. Besedilo o drugem finančnem
+  sodelavcu zato ni dokaz, da ga ta račun dejansko potrebuje.
+- ScopeRecoveryPage._run ujame vse izjeme v bool _failed in konkretni razlog
+  izgubi. Gumb uvoza datoteke je alternativna pot, ne dokaz nujnosti; ob njem
+  obstaja reviewLocal/hydrateExistingCandidateKeys. Uporabniško je to nejasno.
+- Oblaček pending uporablja tudi hasUnresolvedSyncWork (crypto_outbox,
+  commands/payment intents), ki ni razčlenjen v treh poslovnih števcih. Zato
+  pending + 0/0/0 ni dokaz izgube sprememb, a uporabniku ne pojasni zadržka.
+
+Uporabnik izrecno zavrne preverjanje z isto obnovitveno datoteko za vsak
+prostor. Dogovor za poenostavitev: en izbor datoteke na računski postopek;
+uporabiti že preverjene lokalne ključe, kadar so na voljo; aplikacija obdela
+upravičene prostore in ohrani napredek. Ena razumljiva skupna predstavitev
+rezultata, konkretne izjeme po prostoru (brez ponovnega uvoza zgolj zaradi
+nezaključene priprave). Ne enačiti samodejne obdelave z avtomatskim soglasjem
+k nepreverjeni zgodovini ali dodelitvijo novih pravic. Pravi potreben pregled
+mora biti jasno predstavljen v skupnem postopku; brez ugibanja, da mora
+ukrepati drug uporabnik. Nove zahteve zapisane; produktna koda, telefoni in
+strežnik v tem bralnem pregledu niso spremenjeni, testov ni bilo.
+
+
+## Enoten računski pregled in zaključevanje sinhronizacije — lokalna nadgradnja
+
+Uporabnik naroči odpravo ponavljanja po prostorih in nedokončane uskladitve.
+Sol 6.1 high: računsko jedro, sync jedro in UI; root integrira, preveri kodo,
+poveže vstopne poti in vodi dodatne ciljne teste. Telefoni, produkcija in
+Google Play v tem koraku ostanejo nespremenjeni. Različica ostaja 1.11.10+42;
+nova binarna izdaja še ni pripravljena ali oddana.
+
+### Uporabniški tok
+
+- Priprava uporablja preverjene obstoječe ključe. Če je potrebna datoteka,
+  uporabnik izbere eno datoteko za celoten računski postopek. Omejeni prehodi
+  nadaljujejo skozi več kot 20 prostorov; zastoj enega ne skrije ostalih.
+- Nedokončana preverjanja lahko nadaljujejo s shranjenimi ključi, brez novega
+  recoverEpoch, preklica naprav, novih računov ali novih obnovitvenih ključev.
+- Skupni zaslon pokaže lokalna imena in varno oznako posamezne ovire. Izrecen
+  pregled nepreverjene zgodovine ostaja; v teh pregledih ni ločenega uvoza
+  datoteke. Pravi prispevek drugega sodelavca ostane potreben, kadar manjka.
+- Zaprtje/menjava seje ustavi naslednje korake omejene obdelave; uspešni koraki
+  in preostale obveznosti ostanejo. Izbrani bajti se počistijo v finally.
+- Startup completionMissing in scopeRecovery, ročni pregled in pripravljen
+  račun vodijo v novi skupni tok. Prava obnova računa ostane v obstoječem
+  čarovniku. Legacy prostori po preverjenem katalogu ohranijo migracijski tok.
+- ScopeRecoveryPage ne izgubi več konkretne varne izjeme v bool. Kopija napake
+  izključi imena, identifikatorje, vsebino in ključe. Obsolete modalni
+  account_protection_completion je odstranjen; nima več klicateljev.
+
+### Dve lokalno ponovljeni sync napaki
+
+1. Čas uspešne uskladitve se je premaknil pred preverjanjem notranje vrste.
+   Sedaj se premakne šele brez poslovnih/crypto/payment obveznosti,
+   reconciliation oznak, konfliktov in ob ohranjenih sejah/finance guardih.
+   Preverjanje uporablja agregatni SQL, ne dodatne serializacije zgodovine.
+   Prejšnja uspešna zgodovina ostane, če trenutni poskus ni dokončan.
+2. Že preverjen in uporaben checkpoint je povzročil zgodnji return, zato je
+   njegov izgubljeni ACK ostal v pending/blocked vrsti. Sedaj se preveri samo
+   terminalni receipt točno iste shranjene podpisane zahteve. Ujemati se morajo
+   račun, strežnik, prostor, domena, head/epoch/revision/sequence, manifest,
+   število zapisov in celotna authorization. Lookup ne pošlje mutacije, ne
+   ustvari novega namena in ne nastavi complete. Neznan/zavrnjen lookup ali
+   zamenjan dokaz ohrani zahtevo; veljaven zavrnilni receipt ostane rejected.
+
+Oblaček posebej izpiše pending/blocked zahteve protokola. Pending z nič
+poslovnimi spremembami se imenuje nedokončana priprava sinhronizacije.
+Nobena od teh oznak ne nadomesti dokazov popolnosti ali pooblastil.
+
+### Preverjanje in omejitve
+
+**47 različnih aktualnih lokalnih kontrol PASS:** sync jedro 12, računsko
+jedro 14, skupni UI 13, root vstopne poti/status/varen izvoz 8.
+
+- Sync timestamp: prvotni fiksni čas je dal neveljaven pozitivni rezultat;
+  popravljen čas RED2, produktni popravek PASS3. Dve lost-ACK kontroli RED1,
+  nato PASS2 z novimi negativnimi kontrolami. Poseben nov test potrdi agregate
+  in samo obstoječ končni signature read. Stari uspešni testi niso ponovljeni.
+- Računsko jedro: 10 začetnih PASS1, 2 nova saved-key PASS1, 1 prilagojen guard
+  PASS1 in 1 nov preklic po 20/25 prostorih PASS1. Prejšnji preprost guard PASS
+  je nadomeščen in ni v aktualnem seštevku; en začetni selector ni našel testov.
+- Skupni UI: 1 builder PASS1, 11 widget PASS2 (FAIL1 inicializacija fixture
+  seje pred odprtjem), 1 nova razlaga nepopolne obnove PASS1.
+- Root: 6 novih PASS1; direktna sync pot PASS1; prepared-account pot PASS3
+  (FAIL1 neizgrajen gumb v lenem ListView; FAIL2 popravljalni skript ni našel
+  besedila in fixture ni spremenil; popravek scrollUntilVisible PASS3).
+- Končni analyze vseh spremenjenih produktnih datotek in ciljnih testov:
+  0 errors, 0 warnings, 50 preostalih starih info. Diff-check PASS.
+
+Pravi SQLite, podpisane zahteve/vrsta, podpisani account genesis in FILE AEAD
+so preverjeni lokalno; scope verifier/manager ter transport in UI uporabljajo
+izrecne testne meje. To NI dokaz vzroka na telefonu, celotnega HTTP postopka
+ali uspešnega zaključka Dom/TriparNA. Nov uporabniški JSON ni bil pridobljen.
+Neznani dokazi/permission ali potrebna soglasja še vedno zakonito ustavijo
+postopek. Generic commandResult za rejected ukaze ostaja nespremenjen; ločena
+ugotovitev o prikazu tega stanja ni potrjena kot vzrok uporabnikove težave.
+
+Dokazi: build/qa/sync-queue-completion-20261102/,
+build/qa/account-recovery-batch-20261102/core/,
+build/qa/unified-account-protection-20261102/ui/,
+build/qa/account-sync-continuation-20261102/root/.
+
+Naslednji dejanski preizkus po novi običajni posodobitvi: isti račun in isti
+podatki; brez brisanja, ponovne prijave ali nove obnove. Skupni pregled mora
+nadaljevati obstoječe delo. Če ostane ovira, kopirati njeno konkretno varno
+napako; zelenega oblačka ali končnega uspeha še ne trdimo.

@@ -39,11 +39,22 @@ class CryptoSyncStore {
 
   Stream<Map<String, Object?>> blockedDelivery() => _deliveryRows('blocked');
 
-  Stream<Map<String, Object?>> _deliveryRows(String state) async* {
+  /// Receipt lookups may settle unresolved blocked work without retrying it.
+  Stream<Map<String, Object?>> terminalDelivery() =>
+      _deliveryRows('pending', includeBlocked: true);
+
+  Stream<Map<String, Object?>> _deliveryRows(
+    String state, {
+    bool includeBlocked = false,
+  }) async* {
+    final predicate = includeBlocked
+        ? "state IN ('pending','blocked')"
+        : 'state=?';
+    final stateArgs = <Object?>[if (!includeBlocked) state];
     final watermark =
         (await database.rows(
-              "SELECT MAX(sequence) AS last_sequence FROM crypto_outbox WHERE partition=? AND state=?",
-              [partition, state],
+              'SELECT MAX(sequence) AS last_sequence FROM crypto_outbox WHERE partition=? AND $predicate',
+              [partition, ...stateArgs],
             )).single['last_sequence']
             as int?;
     if (watermark == null) return;
@@ -51,8 +62,8 @@ class CryptoSyncStore {
     while (after < watermark) {
       final page = await database.transaction(() async {
         final metadata = await database.rows(
-          "SELECT sequence,LENGTH(CAST(signed_body AS BLOB)) AS body_bytes FROM crypto_outbox WHERE partition=? AND state=? AND sequence>? AND sequence<=? ORDER BY sequence LIMIT 16",
-          [partition, state, after, watermark],
+          'SELECT sequence,LENGTH(CAST(signed_body AS BLOB)) AS body_bytes FROM crypto_outbox WHERE partition=? AND $predicate AND sequence>? AND sequence<=? ORDER BY sequence LIMIT 16',
+          [partition, ...stateArgs, after, watermark],
         );
         if (metadata.isEmpty) return <Map<String, Object?>>[];
         var bytes = 0, count = 0, last = after;
@@ -69,8 +80,8 @@ class CryptoSyncStore {
           last = row['sequence'] as int;
         }
         return database.rows(
-          "SELECT * FROM crypto_outbox WHERE partition=? AND state=? AND sequence>? AND sequence<=? ORDER BY sequence LIMIT 16",
-          [partition, state, after, last],
+          'SELECT * FROM crypto_outbox WHERE partition=? AND $predicate AND sequence>? AND sequence<=? ORDER BY sequence LIMIT 16',
+          [partition, ...stateArgs, after, last],
         );
       });
       if (page.isEmpty) break;
@@ -161,15 +172,25 @@ class CryptoSyncStore {
   Future<void> outcome(
     String requestId,
     String state,
-    Map<String, dynamic> response,
-  ) async {
+    Map<String, dynamic> response, {
+    bool allowBlockedTerminal = false,
+  }) async {
     if (!['applied', 'rejected', 'blocked'].contains(state)) {
       throw const FormatException('crypto_outcome');
     }
     final rows = await outgoing(requestId);
     if (rows == null) throw const FormatException('crypto_missing_request');
     final body = _wireText(response);
+    // Only the caller that has validated an exact terminal receipt may settle
+    // a blocked unknown outcome. This is neither a retry nor a new command.
+    final settlesBlocked =
+        allowBlockedTerminal &&
+        rows['state'] == 'blocked' &&
+        (state == 'applied' || state == 'rejected') &&
+        (jsonDecode(rows['response'] as String) as Map)['outcome'] ==
+            'unresolved';
     if (rows['state'] != 'pending' &&
+        !settlesBlocked &&
         (rows['state'] != state || rows['response'] != body)) {
       throw const FormatException('crypto_receipt_changed');
     }

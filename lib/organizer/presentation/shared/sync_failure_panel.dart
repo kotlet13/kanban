@@ -11,6 +11,9 @@ import '../../domain/payment_completion_diagnostics.dart';
 import '../../state/collaboration_provider.dart';
 import '../onboarding/account_email_card.dart';
 import '../recovery/account_crypto_wizard.dart';
+import '../recovery/account_protection_page.dart';
+import '../../data/e2ee/account_crypto_v2_workflow.dart';
+import '../../state/account_crypto_provider.dart';
 import '../recovery/crypto_approvals_page.dart';
 import 'content_moderation.dart';
 import 'received_invitation_notice.dart';
@@ -67,7 +70,12 @@ enum _Review {
 _Review? _reviewFor(String reason) => switch (reason) {
   'email_verification_required' => _Review.email,
   'crypto_migration_required' ||
-  'crypto_device_keys_pending' => _Review.protection,
+  'crypto_device_keys_pending' ||
+  'crypto_scope_recovery_incomplete' ||
+  'protection_scope_action_required' ||
+  'scope_review_confirmation_required' ||
+  'scope_review_policy_projection_pending' ||
+  'scope_key_recovery_required' => _Review.protection,
   'auth_required' || 'unauthenticated' || 'session_expired' => _Review.session,
   'invitation_acceptance_required' ||
   'invitation_proof_pending' => _Review.invitations,
@@ -191,6 +199,27 @@ String syncFailureExplanation(
     context,
     'Identiteta povezave se je spremenila. Potreben je varen pregled identitete; samodejno nadaljevanje je ustavljeno.',
     'The connection identity changed. A secure identity review is needed; automatic continuation is stopped.',
+  ),
+  'scope_review_confirmation_required' => _text(
+    context,
+    'Preglej razpoložljive podatke in potrdi prikazano izhodišče. Datoteke ni treba izbirati za vsak prostor posebej.',
+    'Review the available data and confirm the displayed baseline. You do not need to select the file separately for each space.',
+  ),
+  'scope_review_policy_projection_pending' => _text(
+    context,
+    'Dokazila o pravilih zapisov še niso pripravljena. Pregleda še ni mogoče potrditi; izberi ponovni pregled, ko se podatki uskladijo.',
+    'Record policy evidence is not ready yet. The review cannot be confirmed; review again after the data syncs.',
+  ),
+  'finance_key_contribution_required' ||
+  'scope_successor_key_contribution_required' => _text(
+    context,
+    'Za nadaljevanje manjka prispevek sodelavca z ustreznimi šifrirnimi ključi. Podatki ostanejo ohranjeni.',
+    'A contribution from a collaborator with the required encryption keys is missing. Data is retained.',
+  ),
+  'crypto_scope_recovery_incomplete' => _text(
+    context,
+    'Priprava ključev za vse prostore še ni končana. Nadaljuj v skupnem pregledu zaščite računa.',
+    'Key preparation for all spaces is not finished. Continue in the account protection review.',
   ),
   'scope_key_recovery_required' || 'crypto_native_vault_required' => _text(
     context,
@@ -628,6 +657,38 @@ class SyncFailurePanel extends ConsumerWidget {
       // The existing sign-in route owns that transition after this guarded open.
       await showSharingSignIn(context, initialServer: session.serverUrl);
       return;
+    }
+    if (review == _Review.protection) {
+      final workflow = ref.read(accountCryptoPreviewProvider).valueOrNull;
+      if (!context.mounted || !guard.isCurrent) return;
+      if (workflow is AccountCryptoV2Workflow &&
+          workflow.store.partition == session.partition &&
+          workflow.deviceId == session.deviceId) {
+        String? phase;
+        var savedSetup = true;
+        try {
+          phase = await workflow.localPhase();
+          savedSetup = await workflow.hasSavedSetup();
+        } catch (_) {
+          // The account wizard owns unavailable local setup evidence.
+        }
+        if (!context.mounted ||
+            !guard.isCurrent ||
+            !workflow.directory.isCurrent()) {
+          return;
+        }
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => SharingSessionBoundary(
+              guard: guard,
+              child: phase == 'ready' && !savedSetup
+                  ? AccountProtectionEntry(account: workflow)
+                  : AccountCryptoWizard(workflow: workflow),
+            ),
+          ),
+        );
+        return;
+      }
     }
     final Widget child = switch (review) {
       _Review.email => AccountEmailCard(session: session),

@@ -1,8 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
+import '../../data/e2ee/account_directory_v2.dart'
+    show CryptoDirectoryException;
+import '../../data/e2ee/crypto_sync_repository.dart'
+    show CryptoAuthorityPending;
+import '../../domain/collaboration_models.dart';
+import '../shared/sync_failure_panel.dart' show syncFailureExplanation;
 import '../../data/e2ee/scope_crypto_manager.dart';
 import '../../data/e2ee/session_crypto_access.dart';
 import '../../platform/recovery/recovery_file_io.dart';
@@ -12,10 +19,12 @@ class ScopeRecoveryPage extends ConsumerStatefulWidget {
     required this.account,
     required this.scopeId,
     required this.label,
+    this.allowFileImport = true,
     super.key,
   });
   final AccountCryptoV2Workflow account;
   final String scopeId, label;
+  final bool allowFileImport;
   @override
   ConsumerState<ScopeRecoveryPage> createState() => _ScopeRecoveryPageState();
 }
@@ -48,7 +57,7 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
       final review = reviews.first,
           proposed = await manager.proposedMembers(reviews.first);
       final preview = await manager.previewRotation(review);
-      if (!mounted) {
+      if (!_current) {
         for (final row in preview) {
           row.dispose();
         }
@@ -63,7 +72,7 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
   });
   Future<void> _editMembers() => _run(() async {
     final head = await manager.access.recoveryCandidateHead(widget.scopeId);
-    if (mounted) {
+    if (_current) {
       setState(
         () => _members = [
           for (final m in head.members) Map<String, dynamic>.from(m),
@@ -76,7 +85,7 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
     if (review == null) return;
     await manager.cancelRotation(review);
     _clearPreview();
-    if (mounted) {
+    if (_current) {
       setState(() {
         _review = null;
         _members = null;
@@ -85,7 +94,9 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
     }
   });
   List<ScopeRecoveryPreview> _preview = [];
-  bool _busy = false, _failed = false, _accepted = false, _complete = false;
+  bool _busy = false, _accepted = false, _complete = false;
+  SyncFailureDetails? _failure;
+  bool get _current => mounted && widget.account.directory.isCurrent();
   void _clearPreview() {
     for (final item in _preview) {
       item.dispose();
@@ -100,24 +111,26 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
   }
 
   Future<void> _run(Future<void> Function() action) async {
-    if (_busy) return;
+    if (_busy || !_current) return;
     setState(() {
       _busy = true;
-      _failed = false;
+      _failure = null;
     });
     try {
       await action();
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+    } catch (error) {
+      if (_current) {
+        setState(() => _failure = scopeRecoveryFailure(error));
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (_current) setState(() => _busy = false);
     }
   }
 
   Future<void> _reviewLocal() => _run(() async {
     final review = await manager.reviewRotation(widget.scopeId),
         preview = await manager.previewRotation(review);
-    if (!mounted) {
+    if (!_current) {
       for (final row in preview) row.dispose();
       return;
     }
@@ -132,12 +145,13 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
     final file = await ref.read(recoveryFileIoProvider).pick();
     if (file == null) return;
     try {
+      if (!_current) return;
       final review = await manager.reviewRotation(
         widget.scopeId,
         recoveryFile: file,
       );
       final preview = await manager.previewRotation(review);
-      if (!mounted) {
+      if (!_current) {
         for (final item in preview) {
           item.dispose();
         }
@@ -160,7 +174,7 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
       review,
       afterId: _preview.last.id,
     );
-    if (!mounted) {
+    if (!_current) {
       for (final item in next) {
         item.dispose();
       }
@@ -178,24 +192,34 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
       members: _members,
     );
     _clearPreview();
-    if (mounted) setState(() => _complete = true);
+    if (_current) setState(() => _complete = true);
   });
   String _previewSummary(ScopeRecoveryPreview item) {
-    if(item.plaintext==null)return context.l10n.cryptoScopeDeleted;
+    if (item.plaintext == null) return context.l10n.cryptoScopeDeleted;
     try {
-      final decoded=jsonDecode(utf8.decode(item.plaintext!));
-      final value=decoded is Map && decoded['payload'] is Map?decoded['payload']:decoded;
-      if(value is Map) {
-        final parts=<String>[];
-        for(final key in ['title','name','description','notes']) {
-          if(value[key] is String && (value[key] as String).isNotEmpty) {
-            final text=value[key] as String;parts.add(text.length>1000?'${text.substring(0,1000)}…':text);
+      final decoded = jsonDecode(utf8.decode(item.plaintext!));
+      final value = decoded is Map && decoded['payload'] is Map
+          ? decoded['payload']
+          : decoded;
+      if (value is Map) {
+        final parts = <String>[];
+        for (final key in ['title', 'name', 'description', 'notes']) {
+          if (value[key] is String && (value[key] as String).isNotEmpty) {
+            final text = value[key] as String;
+            parts.add(
+              text.length > 1000 ? '${text.substring(0, 1000)}…' : text,
+            );
           }
         }
-        if(parts.isNotEmpty)return parts.join('\n');
+        if (parts.isNotEmpty) return parts.join('\n');
       }
-    }catch(_){/* Original evidence is retained; previews never expose protocol. */}
-    return context.l10n.cryptoScopeRecoveryCount(context.l10n.cryptoScopeContent,1);
+    } catch (_) {
+      /* Original evidence is retained; previews never expose protocol. */
+    }
+    return context.l10n.cryptoScopeRecoveryCount(
+      context.l10n.cryptoScopeContent,
+      1,
+    );
   }
 
   @override
@@ -219,7 +243,25 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
                 const SizedBox(height: 12),
                 Text(l.cryptoMigrationLocalAvailable),
                 if (_busy) const LinearProgressIndicator(),
-                if (_failed) Text(l.cryptoScopeRecoveryPending),
+                if (_failure case final failure?) ...[
+                  Text(syncFailureExplanation(context, failure.reason)),
+                  TextButton.icon(
+                    onPressed: () {
+                      if (!_current) return;
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: syncFailureDiagnosticsJson([failure]),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: Text(
+                      Localizations.localeOf(context).languageCode == 'sl'
+                          ? 'Kopiraj podrobnosti napake'
+                          : 'Copy error details',
+                    ),
+                  ),
+                ],
                 if (_complete)
                   Text(l.cryptoScopeRecoveryComplete)
                 else if (review == null) ...[
@@ -227,10 +269,11 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
                     onPressed: _busy ? null : _reviewLocal,
                     child: Text(l.cryptoScopeReviewLocal),
                   ),
-                  FilledButton(
-                    onPressed: _busy ? null : _reviewFile,
-                    child: Text(l.cryptoScopeRecoveryImport),
-                  ),
+                  if (widget.allowFileImport)
+                    FilledButton(
+                      onPressed: _busy ? null : _reviewFile,
+                      child: Text(l.cryptoScopeRecoveryImport),
+                    ),
                 ] else ...[
                   for (final domain in review.domains.keys)
                     Text(
@@ -245,9 +288,7 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12),
-                        child: SelectableText(
-                          _previewSummary(item),
-                        ),
+                        child: SelectableText(_previewSummary(item)),
                       ),
                     ),
                   if (_preview.isNotEmpty)
@@ -340,3 +381,18 @@ class _ScopeRecoveryPageState extends ConsumerState<ScopeRecoveryPage> {
     );
   }
 }
+
+/// Preserve the exact safe reason without exporting scope labels, payloads or keys.
+SyncFailureDetails scopeRecoveryFailure(Object error) => SyncFailureDetails(
+  stage: SyncFailureStage.completion,
+  occurredAt: DateTime.now().toUtc(),
+  reason: switch (error) {
+    CryptoAuthorityPending() => error.reason,
+    CryptoDirectoryException() => error.code,
+    CollaborationException() => error.code,
+    _ => 'unknown',
+  },
+  completionDiagnostics: error is CryptoAuthorityPending
+      ? error.completionDiagnostics
+      : null,
+);

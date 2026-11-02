@@ -155,7 +155,16 @@ class _SharingStatusDialog extends ConsumerWidget {
         !loading &&
         (projection.sessionValid || allowLocalActions && state.session == null);
     final localActionsEnabled = !busy && !state.isSyncing && !loading;
-    final label = sharingStatusLabel(context, projection.status);
+    final sl = Localizations.localeOf(context).languageCode == 'sl';
+    final preparationPending =
+        projection.status == SharingSyncStatus.pending &&
+        state.hasUnresolvedSyncWork &&
+        projection.pending == 0;
+    final label = preparationPending
+        ? (sl
+              ? 'Priprava sinhronizacije še ni končana'
+              : 'Sync preparation is not finished')
+        : sharingStatusLabel(context, projection.status);
     void run(VoidCallback action) {
       final current = ref.read(collaborationProvider).valueOrNull;
       if (originContext.mounted &&
@@ -222,6 +231,25 @@ class _SharingStatusDialog extends ConsumerWidget {
               Text('${l.syncStatusPendingCount}: ${projection.pending}'),
               Text('${l.syncStatusConflictsCount}: ${projection.conflicts}'),
               Text('${l.syncStatusBlockedCount}: ${projection.blocked}'),
+              if (state.pendingSyncCommandCount > 0 ||
+                  state.blockedSyncCommandCount > 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  sl
+                      ? 'Čakajoče zahteve sinhronizacije: ${state.pendingSyncCommandCount}'
+                      : 'Pending sync requests: ${state.pendingSyncCommandCount}',
+                ),
+                Text(
+                  sl
+                      ? 'Zadržane zahteve sinhronizacije: ${state.blockedSyncCommandCount}'
+                      : 'Held sync requests: ${state.blockedSyncCommandCount}',
+                ),
+                Text(
+                  sl
+                      ? 'To so zahteve v ozadju, ne dodatni vnosi. Sinhronizacija je končana šele, ko so tudi te potrjene.'
+                      : 'These are background requests, not additional entries. Sync finishes only when these are confirmed too.',
+                ),
+              ],
               if (supplement.label != null ||
                   supplement.pendingCount > 0 ||
                   supplement.blockedCount > 0 ||

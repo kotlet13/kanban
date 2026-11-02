@@ -502,8 +502,14 @@ class CollaborationState {
     required this.lastError,
     required this.syncRequiresRefresh,
     required this.hasUnresolvedSyncWork,
+    int? pendingSyncCommandCount,
+    int? blockedSyncCommandCount,
     List<SyncFailureDetails>? syncFailures,
-  }) : syncFailures = syncFailures == null
+  }) : pendingSyncCommandCount =
+           pendingSyncCommandCount ?? previous.pendingSyncCommandCount,
+       blockedSyncCommandCount =
+           blockedSyncCommandCount ?? previous.blockedSyncCommandCount,
+       syncFailures = syncFailures == null
            ? previous.syncFailures
            : List.unmodifiable(syncFailures),
        sharingRefresh = previous.sharingRefresh,
@@ -623,6 +629,8 @@ class CollaborationState {
     Iterable<CollaborationAutoMergeNotice> autoMergeNotices = const [],
     this.pendingCount = 0,
     this.blockedCount = 0,
+    this.pendingSyncCommandCount = 0,
+    this.blockedSyncCommandCount = 0,
     this.isSyncing = false,
     this.lastSyncAttemptAt,
     this.lastSuccessfulSyncAt,
@@ -722,6 +730,10 @@ class CollaborationState {
   final List<CollaborationAutoMergeNotice> autoMergeNotices;
   final int pendingCount;
   final int blockedCount;
+
+  /// Protocol commands/payment intents outside the business record counters.
+  /// Retained terminal receipts and completed/local-only intents are excluded.
+  final int pendingSyncCommandCount, blockedSyncCommandCount;
   final bool isSyncing;
 
   /// Session-only account refresh evidence. Null means unknown after restart;

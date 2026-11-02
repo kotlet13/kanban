@@ -4,13 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/l10n.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
 import '../../data/e2ee/account_protection_ready.dart';
-import '../../data/e2ee/crypto_migration_coordinator.dart';
 import '../../state/account_crypto_provider.dart';
 import '../../state/account_summary_refresh_provider.dart';
 import '../../state/collaboration_provider.dart';
 import 'account_crypto_startup.dart';
-import 'account_protection_completion.dart';
-import 'crypto_migration_wizard.dart';
+import 'account_protection_page.dart';
 
 /// Builds the existing explicit review flow; reading this provider performs no
 /// migration, completion, signature or rotation.
@@ -25,20 +23,9 @@ final accountProtectionReviewActionProvider =
           identity != '${workflow.store.partition}:${workflow.deviceId}') {
         return null;
       }
-      final labels = <String, String>{
-        for (final scope
-            in ref.read(collaborationProvider).valueOrNull?.scopes ?? [])
-          scope.id: scope.name,
-      };
       return AccountCryptoStartupAction(
         identity: identity!,
-        builder: (context) => CryptoMigrationWizard(
-          controller: AccountMigrationController(
-            CryptoMigrationCoordinator(account: workflow),
-          ),
-          cachedLabels: labels,
-          onFinished: () => finishAccountProtection(context, workflow),
-        ),
+        builder: (_) => AccountProtectionEntry(account: workflow),
       );
     });
 

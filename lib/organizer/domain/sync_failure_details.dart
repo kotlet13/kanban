@@ -269,6 +269,8 @@ const syncFailureSafeReasons = <String>{
   'crypto_read_context_required',
   'crypto_read_retry_pending',
   'crypto_reconciliation_required',
+  'crypto_scope_recovery_incomplete',
+  'scope_proof_unavailable',
   'crypto_record_creator_provenance_pending',
   'crypto_record_policy_activation_pending',
   'crypto_record_policy_activation_rollback',
