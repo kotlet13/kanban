@@ -505,7 +505,9 @@ class CollaborationState {
     int? pendingSyncCommandCount,
     int? blockedSyncCommandCount,
     List<SyncFailureDetails>? syncFailures,
-  }) : pendingSyncCommandCount =
+    SyncTransferEvidence? syncTransfer,
+  }) : syncTransfer = syncTransfer ?? previous.syncTransfer,
+       pendingSyncCommandCount =
            pendingSyncCommandCount ?? previous.pendingSyncCommandCount,
        blockedSyncCommandCount =
            blockedSyncCommandCount ?? previous.blockedSyncCommandCount,
@@ -641,6 +643,7 @@ class CollaborationState {
     this.syncRequiresRefresh = false,
     this.lastError,
     List<SyncFailureDetails> syncFailures = const [],
+    this.syncTransfer,
   }) : syncFailures = List.unmodifiable(syncFailures),
        privateRecordIds = Map.unmodifiable(privateRecordIds),
        financeConflicts = List.unmodifiable(financeConflicts),
@@ -749,6 +752,7 @@ class CollaborationState {
   final bool hasUnresolvedSyncWork, syncRequiresRefresh;
   final CollaborationException? lastError;
   final List<SyncFailureDetails> syncFailures;
+  final SyncTransferEvidence? syncTransfer;
   SharedScopeData dataForScope(String scopeId) =>
       data[scopeId] ?? SharedScopeData();
 }

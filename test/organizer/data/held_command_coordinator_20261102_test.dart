@@ -83,6 +83,18 @@ class _ScopedRouter extends CryptoBusinessRouter {
   }
 
   @override
+  Future<Set<String>> resumeHeldCommandsObserved({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+    required HeldCommandObserver observe,
+  }) => resumeHeldCommands(
+    session: session,
+    requestIds: requestIds,
+    checkCurrent: checkCurrent,
+  );
+
+  @override
   Future<void> ensureRecordPolicy({
     required DeviceSession session,
     required String scopeId,

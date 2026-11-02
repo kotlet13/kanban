@@ -72,3 +72,39 @@ Preostala resnična ovira ostane prikazana. Ta izdaja ne obide manjkajočih
 pravic ali dokazil in ne obljublja razrešitve neznanih vrst zadržanih zahtev.
 
 Končna skupna analiza 19 Dart datotek: 0 napak, 0 opozoril, 34 predhodnih slogovnih info (vključno z dodatno pregledanima migration/policy datotekama). Root 3 nove testne info popravljene; testna analiza 0 issues. Diff check PASS.
+
+## Uporabniški preizkus po oddaji 45 — 10:37 UTC
+
+Uporabnik posreduje screenshot 1000012611 in izvoz z enim vnosom:
+`preflight / crypto_command_receipt_pending`, čas
+`2026-11-02T10:37:39.806682Z`. Na screenshotu ni številke različice ali števila
+preostalih zadržanih zahtev. Izid uporabniškega preizkusa: sinhronizacija še
+ni potrjena; to NI runtime PASS popravka. Izginotje scope_rotation_required
+ni dokaz odpravljene rotacije ali manjšega števila zahtev.
+
+Bralni pregled kode potrdi diagnostično vrzel: v
+collaboration_sync_actions.dart, končni blok `retainedFailures.isNotEmpty`,
+po običajnem prenosu odstrani preflight podrobnosti in ponovno sestavi le
+kategoriji iz SQL EXISTS nad aktivnimi blocked crypto zahtevami ter karanteno
+plačil. Zato lahko specifični ohranjeni ali sveže dobljeni razlog izgine,
+četudi ista zahteva ostane blocked. Izvoz sam ne pove, katera od poti ga je
+ustvarila ali katera operacija/guard/receipt rezultat je zadnja ovira.
+
+Dodatno: terminal lookup lahko vrne unknown ali zavrnitev vpogleda brez
+spremembe retained response; resume velja le za točen unresolved /
+authority_pending / scope_rotation_required. Ostalih vrst ni varno sprostiti
+na slepo. Dokazana checkpoint nadomestitev ima še stroge pogoje istega
+inventarja, iste naprave in preverjene nove verige/potrdila.
+
+Naslednja potrebna diagnostika mora varno razlikovati operacijo, končni
+rezultat receipt lookup (unknown/denied/applied/rejected), izvedeno ali
+preskočeno nadaljevanje in njegov aktualni guard ter število aktivnih held
+zahtev. Zgodovinski razlog naj bo izrecno ločen od aktualnega izida; podatki
+morajo pripadati še vedno aktivni isti zahtevi, ne sosednjemu zapisu. Ne
+izvažati ID-jev, podpisov, ključev ali vsebin. Te informacije v uporabnikovem
+trenutnem JSON niso prisotne, zato dejanski vzrok ostaja nepotrjen.
+
+V tem pregledu ni izvajanja testov, posegov v telefone/strežnik/uporabniške
+podatke, produktnih sprememb, nove gradnje ali objave. Obstoječih uspešnih
+testov nismo ponavljali. Uporabniku ne nalagamo nove obnove ali ponovitev
+čarovnika na podlagi generičnega rezultata.

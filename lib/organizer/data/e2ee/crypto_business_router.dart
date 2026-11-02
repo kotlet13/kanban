@@ -134,6 +134,7 @@ class CryptoBusinessRouter
         CryptoDomainRouter,
         CryptoTerminalReceiptReconciliation,
         CryptoHeldCommandResume,
+        CryptoHeldCommandDiagnostics,
         CryptoFinancePolicyReadContext,
         CryptoFinanceReadContext,
         CryptoDocumentDownloadContext,
@@ -178,11 +179,26 @@ class CryptoBusinessRouter
     resume: true,
   );
 
+  @override
+  Future<Set<String>> resumeHeldCommandsObserved({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+    required HeldCommandObserver observe,
+  }) => _reconcileHeldCommands(
+    session: session,
+    requestIds: requestIds,
+    checkCurrent: checkCurrent,
+    resume: true,
+    observe: observe,
+  );
+
   Future<Set<String>> _reconcileHeldCommands({
     required DeviceSession session,
     required Set<String> requestIds,
     required Future<void> Function() checkCurrent,
     required bool resume,
+    HeldCommandObserver? observe,
   }) async {
     _metadataReadGroup?.close();
     await checkCurrent();
@@ -209,6 +225,7 @@ class CryptoBusinessRouter
 
     if (resume) {
       await business.queue.resumeHeldCommands(
+        observe: observe,
         requestIds: requestIds,
         checkCurrent: checkCurrent,
         onTerminal: terminal,

@@ -568,6 +568,79 @@ String _failureLocation(
         );
 }
 
+String _heldExplanation(BuildContext context, HeldCommandDiagnostic item) {
+  final operation = switch (safeHeldOperation(item.operation)) {
+    'crypto2.domain.checkpoint' => _text(
+      context,
+      'Potrditev povzetka podatkov',
+      'Data summary confirmation',
+    ),
+    'crypto2.records.batch' => _text(
+      context,
+      'Pošiljanje zapisov',
+      'Record upload',
+    ),
+    _ => _text(context, 'Zaščitena zahteva', 'Protected request'),
+  };
+  final receipt = switch (item.receipt) {
+    HeldReceiptResult.notChecked => _text(
+      context,
+      'izid preverjanja ni zabeležen',
+      'check outcome not recorded',
+    ),
+    HeldReceiptResult.unknown => _text(
+      context,
+      'strežnik še nima končnega potrdila',
+      'server has no final receipt',
+    ),
+    HeldReceiptResult.denied => _text(
+      context,
+      'vpogled v potrdilo je zavrnjen',
+      'receipt lookup denied',
+    ),
+    HeldReceiptResult.applied => _text(
+      context,
+      'strežnik je potrdil izvedbo',
+      'server confirmed execution',
+    ),
+    HeldReceiptResult.rejected => _text(
+      context,
+      'strežnik je zahtevo zavrnil',
+      'server rejected the request',
+    ),
+  };
+  final resume = switch (item.resume) {
+    HeldResumeResult.notAttempted => _text(
+      context,
+      'nadaljevanje ni bilo poskušeno',
+      'resume not attempted',
+    ),
+    HeldResumeResult.ineligible => _text(
+      context,
+      'samodejna ponovitev te zahteve ni dovoljena',
+      'this request is not eligible for automatic retry',
+    ),
+    HeldResumeResult.guardBlocked => _text(
+      context,
+      'nadaljevanje je ustavilo preverjanje zaščite',
+      'protection check blocked resume',
+    ),
+    HeldResumeResult.sending => _text(
+      context,
+      'poskus pošiljanja nima zabeleženega zaključka',
+      'send attempt has no recorded completion',
+    ),
+    HeldResumeResult.sent => _text(
+      context,
+      'pošiljanje je bilo poskušeno',
+      'sending was attempted',
+    ),
+  };
+  return '$operation: $receipt; $resume.'
+      '${item.currentReason == null ? '' : ' ${_text(context, 'Trenutni razlog', 'Current reason')}: ${syncFailureExplanation(context, safeSyncFailureReason(item.currentReason))}'}'
+      '${item.retainedReason == null ? '' : ' ${_text(context, 'Prej shranjen razlog (lahko je zastarel)', 'Previously retained reason (may be stale)')}: ${syncFailureExplanation(context, safeSyncFailureReason(item.retainedReason))}'}';
+}
+
 class SyncFailurePanel extends ConsumerWidget {
   const SyncFailurePanel({
     super.key,
@@ -733,6 +806,28 @@ class SyncFailurePanel extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
+        if (state.syncTransfer case final transfer?) ...[
+          Text(
+            _text(context, 'Prejem v tem poskusu', 'Received in this attempt'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          Text(
+            _text(
+              context,
+              'Vsebina: ${transfer.contentRecords} zapisov, ${transfer.contentPages} strani. Finance: ${transfer.financeRecords} zapisov, ${transfer.financePages} strani.',
+              'Content: ${transfer.contentRecords} records, ${transfer.contentPages} pages. Finance: ${transfer.financeRecords} records, ${transfer.financePages} pages.',
+            ),
+            key: const ValueKey('sync-transfer-evidence'),
+          ),
+          Text(
+            _text(
+              context,
+              'Štejemo uspešno shranjene prenose; ponovitve se lahko štejejo večkrat. Vrednost 0 pomeni, da prejem ni zabeležen. To še ne potrjuje pošiljanja ali celotne uskladitve.',
+              'Counts cover committed downloads; retries may count again. Zero means no download was recorded. This does not confirm uploads or complete sync.',
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Text(
           _text(context, 'Kaj je ustavilo uskladitev', 'What stopped sync'),
           style: Theme.of(context).textTheme.titleSmall,
@@ -743,6 +838,26 @@ class SyncFailurePanel extends ConsumerWidget {
           Text(
             '${_stageLabel(context, failure.stage)}: ${_failureExplanation(context, failure)}',
           ),
+          if (failure.heldDiagnostics case final held?) ...[
+            Text(
+              _text(
+                context,
+                'Zadržane zahteve: ${held.remaining}',
+                'Held requests: ${held.remaining}',
+              ),
+              key: const ValueKey('sync-held-count'),
+            ),
+            for (final sample in held.samples.take(3))
+              Text(_heldExplanation(context, sample)),
+            if (held.samples.length > 3 || held.remaining > held.samples.length)
+              Text(
+                _text(
+                  context,
+                  'Prikazan je vzorec. Več podatkov je v podrobnostih.',
+                  'A sample is shown. More information is available in details.',
+                ),
+              ),
+          ],
           if (_availableReview(state, failure) case final review?)
             TextButton(
               key: ValueKey('sync-remediation-${review.name}'),
@@ -776,7 +891,10 @@ class SyncFailurePanel extends ConsumerWidget {
     if (!guard.isCurrent) return;
     // Capture the failures shown by this panel. A later sync must not replace
     // the evidence while the user reads it or between displaying and copying.
-    final diagnostics = syncFailureDiagnosticsJson(failures);
+    final diagnostics = syncFailureDiagnosticsJson(
+      failures,
+      transfer: state.syncTransfer,
+    );
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => SharingSessionBoundary(
@@ -795,8 +913,8 @@ class SyncFailurePanel extends ConsumerWidget {
                   Text(
                     _text(
                       dialogContext,
-                      'Kopija vsebuje korak uskladitve, varno oznako vzroka in zabeleženi čas ter, kadar so na voljo, točen korak preverjanja plačil, stanje zapisa in varno oznako njegovega vzroka. Stanje in vzrok opisujeta vzorčeni čakajoči zapis, ki ni nujno tisti, ki je ustavil preverjanje. Imena, identifikatorji, naslovi, vsebina zapisov in skrivnosti niso vključeni.',
-                      'The copy includes the sync stage, a safe reason code and recorded time, plus the precise payment verification step, record state and safe record reason when available. The state and reason describe a sampled pending record, which may differ from the record that stopped verification. Names, identifiers, addresses, record contents and secrets are excluded.',
+                      'Kopija vsebuje rezultate prenosa in vzorec preostalih ovir. Trenutni izid preverjanja je ločen od prej shranjenega razloga. Ne vsebuje imen, identifikatorjev, vsebine zapisov ali ključev.',
+                      'The copy includes download results and a sample of remaining blockers. Current check outcomes are separate from previously retained reasons. Names, identifiers, record contents and keys are excluded.',
                     ),
                   ),
                   const SizedBox(height: 12),

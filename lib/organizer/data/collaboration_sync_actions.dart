@@ -2,6 +2,54 @@ part of 'collaboration_repository.dart';
 
 /// Leased idempotent delivery, incremental pulls, conflicts and recovery export.
 extension CollaborationSyncActions on CollaborationRepository {
+  Future<HeldSyncDiagnostics?> _heldDiagnostics(
+    String partition,
+    int epoch,
+  ) async {
+    try {
+      return await database.transaction(() async {
+        final count = await database.rows(
+          "SELECT COUNT(*) AS n FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='blocked'",
+          [partition],
+        );
+        final rows = await database.rows(
+          "SELECT request_id,request_hash,operation,SUBSTR(response,1,4096) AS response FROM crypto_outbox WHERE partition=? AND ${cryptoActiveOutboxPredicate()} AND state='blocked' ORDER BY sequence LIMIT 20",
+          [partition],
+        );
+        _checkEpoch(epoch);
+        return HeldSyncDiagnostics(
+          remaining: count.single['n'] as int,
+          samples: [for (final row in rows) _heldSample(row)],
+        );
+      });
+    } catch (_) {
+      // Diagnostic read failure cannot affect the transaction or success guards.
+      return null;
+    }
+  }
+
+  HeldCommandDiagnostic _heldSample(Map<String, dynamic> row) {
+    final found = _heldObservations[row['request_id']];
+    final observation = found?.$1 == row['request_hash'] ? found?.$2 : null;
+    String? retained;
+    try {
+      final value = jsonDecode(row['response'] as String);
+      if (value is Map) {
+        final code = value['code'] ?? value['reason'];
+        if (code is String) retained = safeSyncFailureReason(code);
+      }
+    } catch (_) {
+      /* Optional malformed historical evidence stays unreported. */
+    }
+    return HeldCommandDiagnostic(
+      operation: safeHeldOperation(row['operation'] as String),
+      receipt: observation?.receipt ?? HeldReceiptResult.notChecked,
+      resume: observation?.resume ?? HeldResumeResult.notAttempted,
+      currentReason: observation?.currentReason,
+      retainedReason: retained,
+    );
+  }
+
   /// Explicit retry checks exact receipts and current operation-specific
   /// authority. A receipt alone never establishes a verified projection.
   Future<bool> _recheckHeldSyncReceipts(
@@ -65,7 +113,24 @@ extension CollaborationSyncActions on CollaborationRepository {
       if (!withinLimit) {
         reasons.add('crypto_held_sync_inventory_limit');
       } else if (inventory.isNotEmpty) {
-        if (router is CryptoHeldCommandResume) {
+        if (router is CryptoHeldCommandDiagnostics) {
+          rejected = await (router as CryptoHeldCommandDiagnostics)
+              .resumeHeldCommandsObserved(
+                session: session,
+                requestIds: {
+                  for (final r in inventory) r['request_id'] as String,
+                },
+                checkCurrent: current,
+                observe: (id, hash, detail) {
+                  if (!_closed &&
+                      epoch == _epoch &&
+                      inventory.any((r) => r['request_id'] == id)) {
+                    _heldObservations[id] = (hash, detail);
+                  }
+                },
+              );
+          await current();
+        } else if (router is CryptoHeldCommandResume) {
           rejected = await (router as CryptoHeldCommandResume)
               .resumeHeldCommands(
                 session: session,
@@ -158,12 +223,27 @@ extension CollaborationSyncActions on CollaborationRepository {
         }
       }
       if (quarantine.isNotEmpty) reasons.add('crypto_payment_quarantined');
+      final heldDetails =
+          (reasons.contains('crypto_command_receipt_pending') ||
+              reasons.contains('crypto_command_rejected') ||
+              reasons.contains('crypto_held_sync_inventory_limit'))
+          ? await _heldDiagnostics(p, epoch)
+          : null;
+      _checkEpoch(epoch);
       for (final reason in reasons.take(20)) {
         final error = CollaborationException(reason);
         _captureSyncFailure(
           error,
           epoch: epoch,
           stage: SyncFailureStage.preflight,
+          heldDiagnostics:
+              const {
+                'crypto_command_receipt_pending',
+                'crypto_command_rejected',
+                'crypto_held_sync_inventory_limit',
+              }.contains(reason)
+              ? heldDetails
+              : null,
         );
         _heldReceiptFailures.add(_syncFailures.last);
         _heldReceiptError ??= error;
@@ -329,6 +409,8 @@ extension CollaborationSyncActions on CollaborationRepository {
 
   Future<void> _coordinateSyncJob({required bool manual}) async {
     final epoch = _epoch;
+    _heldObservations.clear();
+    _syncTransfer = SyncTransferEvidence(startedAt: clock().toUtc());
     _lastCapturedSyncFailureError = null;
     _lastCapturedSyncFailureScopeId = null;
     try {
@@ -988,6 +1070,9 @@ extension CollaborationSyncActions on CollaborationRepository {
         partition = _session!.profile.partition;
     _syncing = true;
     _syncEpoch = epoch;
+    if (!resumePayments || _syncTransfer == null) {
+      _syncTransfer = SyncTransferEvidence(startedAt: clock().toUtc());
+    }
     if (resumePayments) {
       _fullSyncEpoch = epoch;
       _fullAttemptEpoch = epoch;
@@ -1653,6 +1738,11 @@ extension CollaborationSyncActions on CollaborationRepository {
                   [next, partition, scope.id],
                 );
               });
+              _receivedSyncPage(
+                epoch,
+                finance: false,
+                records: canonical.length,
+              );
             } on CryptoAuthorityPending catch (error) {
               _checkEpoch(epoch);
               capture(error);
@@ -1824,6 +1914,10 @@ extension CollaborationSyncActions on CollaborationRepository {
             [partition, partition],
           )).single;
           _checkEpoch(epoch);
+          final heldDetails = debt['crypto'] == 1
+              ? await _heldDiagnostics(partition, epoch)
+              : null;
+          _checkEpoch(epoch);
           _syncFailures.removeWhere(_heldReceiptFailures.contains);
           _heldReceiptFailures.clear();
           for (final reason in [
@@ -1835,6 +1929,9 @@ extension CollaborationSyncActions on CollaborationRepository {
               error,
               epoch: epoch,
               stage: SyncFailureStage.preflight,
+              heldDiagnostics: reason == 'crypto_command_receipt_pending'
+                  ? heldDetails
+                  : null,
             );
             _heldReceiptFailures.add(_syncFailures.last);
             if (_lastError == null) {

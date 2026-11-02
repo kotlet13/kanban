@@ -816,6 +816,7 @@ extension CollaborationFinanceSync on CollaborationRepository {
               ],
             );
           });
+          _receivedSyncPage(epoch, finance: true, records: canonical.length);
         }
         return;
       } on CollaborationApiException catch (e) {

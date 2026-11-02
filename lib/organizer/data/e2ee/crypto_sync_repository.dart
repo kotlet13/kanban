@@ -1,3 +1,5 @@
+import '../../domain/held_sync_diagnostics.dart';
+import 'crypto_domain_router.dart' show HeldCommandObserver;
 import 'dart:convert';
 import '../../domain/payment_completion_diagnostics.dart';
 import 'dart:typed_data';
@@ -964,6 +966,7 @@ class CryptoSyncRepository {
     required Set<String> requestIds,
     required Future<void> Function() checkCurrent,
     Future<void> Function(String requestId, bool applied)? onTerminal,
+    HeldCommandObserver? observe,
   }) {
     final selected = Set<String>.unmodifiable(requestIds);
     return _exclusive(() async {
@@ -973,6 +976,7 @@ class CryptoSyncRepository {
         requestIds: selected,
         terminalOnly: true,
         resumeHeld: true,
+        observe: observe,
         checkCurrent: checkCurrent,
         onTerminal: onTerminal,
         settleRejected: false,
@@ -1063,6 +1067,7 @@ class CryptoSyncRepository {
     Set<String>? requestIds,
     bool terminalOnly = false,
     bool resumeHeld = false,
+    HeldCommandObserver? observe,
     Future<void> Function()? checkCurrent,
     Future<void> Function(String requestId, bool applied)? onTerminal,
     bool settleRejected = true,
@@ -1085,6 +1090,27 @@ class CryptoSyncRepository {
       if (terminalOnly) {
         await _validateStoredCommand(row, signed);
       }
+      var receiptResult = HeldReceiptResult.notChecked;
+      var resumeResult = HeldResumeResult.notAttempted;
+      String? currentReason;
+      void report() {
+        try {
+          observe?.call(
+            row['request_id'] as String,
+            row['request_hash'] as String,
+            HeldCommandDiagnostic(
+              operation: row['operation'] as String,
+              receipt: receiptResult,
+              resume: resumeResult,
+              currentReason: currentReason,
+            ),
+          );
+        } catch (_) {
+          /* Optional observations cannot alter delivery. */
+        }
+      }
+
+      report();
       late Map<String, dynamic> receipt;
       Future<Map<String, dynamic>?> lookup() async {
         try {
@@ -1105,7 +1131,12 @@ class CryptoSyncRepository {
           }.contains(error.code)) {
             rethrow;
           }
-          if (terminalOnly) return null;
+          if (terminalOnly) {
+            receiptResult = HeldReceiptResult.denied;
+            currentReason = error.code;
+            report();
+            return null;
+          }
           await store.transaction(() async {
             _current();
             await store.outcome(row['request_id'] as String, 'blocked', {
@@ -1120,9 +1151,17 @@ class CryptoSyncRepository {
       final historical = await lookup();
       if (historical == null) continue;
       receipt = historical;
+      receiptResult = receipt['outcome'] == 'unknown'
+          ? HeldReceiptResult.unknown
+          : HeldReceiptResult.notChecked;
+      report();
       if (receipt['outcome'] == 'unknown') {
         final explicitHeld = resumeHeld && _canResumeHeld(row);
-        if (terminalOnly && !explicitHeld) continue;
+        if (terminalOnly && !explicitHeld) {
+          resumeResult = HeldResumeResult.ineligible;
+          report();
+          continue;
+        }
         final fresh = beforeDelivery;
         if (fresh == null || (explicitHeld && heldSignerPublicKey == null)) {
           throw const CryptoAuthorityPending(
@@ -1130,6 +1169,9 @@ class CryptoSyncRepository {
           );
         }
         Future<void> retainGuard(Map<String, dynamic> failure) async {
+          resumeResult = HeldResumeResult.guardBlocked;
+          currentReason = (failure['code'] ?? failure['reason']) as String?;
+          report();
           await store.transaction(() async {
             await checkCurrent?.call();
             _current();
@@ -1205,17 +1247,28 @@ class CryptoSyncRepository {
             });
           }
           await checkCurrent?.call();
+          resumeResult = HeldResumeResult.sending;
+          report();
           await _call(row['operation'] as String, {...signed, ...sidecar});
+          resumeResult = HeldResumeResult.sent;
+          report();
         } on CollaborationApiException catch (error) {
           // Required acceptance has no terminal receipt; keep the exact pending work.
           if (error.code == 'policy_acceptance_required') {
             rethrow;
           }
+          currentReason = error.code;
+          resumeResult = HeldResumeResult.sent;
+          report();
           /* Persisted conclusive failures are resolved by their exact receipt. */
         }
         final afterSend = await lookup();
         if (afterSend == null) continue;
         receipt = afterSend;
+        receiptResult = receipt['outcome'] == 'unknown'
+            ? HeldReceiptResult.unknown
+            : HeldReceiptResult.notChecked;
+        report();
       }
       if (receipt['outcome'] == 'unknown') continue;
       final sameAuthorization =
@@ -1258,6 +1311,14 @@ class CryptoSyncRepository {
         }
         await onTerminal?.call(row['request_id'] as String, applied);
       });
+      receiptResult = applied
+          ? HeldReceiptResult.applied
+          : HeldReceiptResult.rejected;
+      final rejectionCode = response['errorCode'] ?? response['code'];
+      currentReason = applied
+          ? null
+          : (rejectionCode is String ? rejectionCode : currentReason);
+      report();
     }
   }
 

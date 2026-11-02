@@ -50,6 +50,20 @@ abstract interface class CryptoHeldCommandResume {
   });
 }
 
+/// Observes existing network work only. IDs and hashes stay local and are used
+/// to bind each observation to the exact still-held command.
+typedef HeldCommandObserver =
+    void Function(String id, String hash, HeldCommandDiagnostic detail);
+
+abstract interface class CryptoHeldCommandDiagnostics {
+  Future<Set<String>> resumeHeldCommandsObserved({
+    required DeviceSession session,
+    required Set<String> requestIds,
+    required Future<void> Function() checkCurrent,
+    required HeldCommandObserver observe,
+  });
+}
+
 /// Internal selector for a task already present in the local visible projection.
 /// It is never sent to a server or accepted as access/record authority.
 class CryptoVisibleTaskMetadataTarget {

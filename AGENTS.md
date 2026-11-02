@@ -1,3 +1,16 @@
+2. november — **Delni sync/held diagnostika lokalno:22novihPASS, NIPlay**.
+User localdiagnostics+tests, natoexplicitNEobjaviPlay. Finite perrequestreceipt/
+resume/currentreason vs retainedreason, finalactiveID+hash binding/count20sample;
+SLENplaincopy. Committedcontent/financepage+recordcounts (notunique/fullsuccess),
+immutablecopy/sessionreset. Optionalobserver+SQLreadonly,0extraHTTP; guards/keys/
+queues/schema unchanged. 9core+8integration+5UI/exportPASS,0successfulreruns.
+Integrationfixturecompile logout→signOut FAIL1→5PASS2;3newPASS1. Newfixture
+lintfixed, final0errors0warnings30oldinfos. TrueSQL/signatures/synthetictransport,
+NEphone/HTTPE2E. Existing projectiontestadapter updated; oldPASSnotrerun.
+S25readonlyADBpackage confirms1.11.13(45);0appactions/install/DB/logcat.0server/
+build/Playactions. User shoppingdownloadworks whileheld persists; actualcause
+UNKNOWN. Docs HELD_SYNC_DIAGNOSTICS_2026_11_02; evidence held-diagnostics-20261102.
+
 2. november — **Android1.11.13(45) oddan v javni pregled; NEapproved**.
 User explicit localfix+Play za pendingreceipt/rotation po44. Sol6.1high core/UI/
 review, rootintegracija. Product8b24fcfpushed. Receiptfirst bounded64/1MiB exact

@@ -1,3 +1,5 @@
+import 'held_sync_diagnostics.dart';
+export 'held_sync_diagnostics.dart';
 import 'dart:convert';
 import 'payment_completion_diagnostics.dart';
 
@@ -526,10 +528,12 @@ class SyncFailureDetails {
     required String reason,
     this.scopeId,
     this.completionDiagnostics,
+    this.heldDiagnostics,
     // ignore: prefer_initializing_formals
   }) : _reason = reason;
 
   final PaymentCompletionDiagnostics? completionDiagnostics;
+  final HeldSyncDiagnostics? heldDiagnostics;
   final SyncFailureStage stage;
   final DateTime? occurredAt;
   final String _reason;
@@ -542,6 +546,8 @@ class SyncFailureDetails {
   Map<String, Object> toSafeDiagnosticJson() => {
     'stage': stage.name,
     'reason': reason,
+    if (heldDiagnostics != null)
+      'heldCommands': heldDiagnostics!.toJson(safeSyncFailureReason),
     if (completionDiagnostics != null)
       'completionDiagnostics': completionDiagnostics!.toSafeDiagnosticJson(
         sanitizeReason: safeSyncFailureReason,
@@ -552,7 +558,10 @@ class SyncFailureDetails {
 
 /// Explicit schema prevents accidental serialization of account/scope metadata.
 /// Keep the most recent twenty items even when called with an unbounded list.
-String syncFailureDiagnosticsJson(Iterable<SyncFailureDetails> failures) {
+String syncFailureDiagnosticsJson(
+  Iterable<SyncFailureDetails> failures, {
+  SyncTransferEvidence? transfer,
+}) {
   final bounded = <SyncFailureDetails>[];
   for (final failure in failures) {
     bounded.add(failure);
@@ -560,6 +569,7 @@ String syncFailureDiagnosticsJson(Iterable<SyncFailureDetails> failures) {
   }
   return jsonEncode({
     'version': 1,
+    if (transfer != null) 'transfer': transfer.toJson(),
     'syncFailures': [
       for (final failure in bounded) failure.toSafeDiagnosticJson(),
     ],

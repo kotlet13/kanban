@@ -538,6 +538,25 @@ class CollaborationRepository {
   bool _financeStatusRequiresRefresh = false;
   CollaborationException? _lastError;
   final _syncFailures = <SyncFailureDetails>[];
+  SyncTransferEvidence? _syncTransfer;
+  final _heldObservations = <String, (String, HeldCommandDiagnostic)>{};
+
+  void _receivedSyncPage(
+    int epoch, {
+    required bool finance,
+    required int records,
+  }) {
+    if (_closed ||
+        epoch != _epoch ||
+        _session == null ||
+        _syncTransfer == null ||
+        !_syncing ||
+        _syncEpoch != epoch) {
+      return;
+    }
+    _syncTransfer = _syncTransfer!.received(finance: finance, records: records);
+  }
+
   Object? _lastCapturedSyncFailureError;
   String? _lastCapturedSyncFailureScopeId;
 
@@ -546,6 +565,7 @@ class CollaborationRepository {
     required int epoch,
     required SyncFailureStage stage,
     String? scopeId,
+    HeldSyncDiagnostics? heldDiagnostics,
   }) {
     try {
       if (_closed || epoch != _epoch || _session == null) return;
@@ -578,6 +598,7 @@ class CollaborationRepository {
           stage: stage,
           occurredAt: clock().toUtc(),
           reason: safeReason,
+          heldDiagnostics: heldDiagnostics,
           completionDiagnostics: error is CryptoAuthorityPending
               ? error.completionDiagnostics
               : null,
@@ -598,6 +619,8 @@ class CollaborationRepository {
   final _visibleTaskRefreshes = <String, Future<NotificationOpenResult>>{};
 
   void _resetSyncEvidence() {
+    _syncTransfer = null;
+    _heldObservations.clear();
     _heldReceiptFailures.clear();
     _heldReceiptError = null;
     _heldReceiptProgress = false;
@@ -744,6 +767,7 @@ class CollaborationRepository {
       if (epoch != _epoch || _closed) return;
       state = CollaborationState(
         syncFailures: _syncFailures,
+        syncTransfer: _syncTransfer,
         lastError: _lastError,
         allSpacesSelected: selection.firstOrNull?['value'] == '1',
       );
@@ -979,6 +1003,7 @@ class CollaborationRepository {
           );
       state = CollaborationState(
         syncFailures: _syncFailures,
+        syncTransfer: _syncTransfer,
         sharingRefresh: _sharingRefreshEpoch == epoch
             ? _sharingRefresh
             : const SharingRefreshState(),
@@ -1272,6 +1297,7 @@ class CollaborationRepository {
       lastSuccessfulChangeCheckAt: _lastSuccessfulChangeCheckAt,
       lastError: _lastError,
       syncFailures: _syncFailures,
+      syncTransfer: _syncTransfer,
       hasUnresolvedSyncWork: localEvidence.unresolved,
       pendingSyncCommandCount: localEvidence.pending,
       blockedSyncCommandCount: localEvidence.blocked,
