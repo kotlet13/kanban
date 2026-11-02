@@ -1135,6 +1135,12 @@ class CryptoBusinessPayments {
       'accessRevision': policy['revision'],
       'scopeSequence': checkpoints.isEmpty ? 0 : checkpoints.single['sequence'],
       'complete': observedComplete && pending == 0,
+      if (!observedComplete || pending != 0)
+        'incompleteReason': checkpoints.isEmpty
+            ? 'crypto_payment_checkpoint_pending'
+            : !observedComplete
+            ? 'crypto_payment_records_pending'
+            : 'crypto_payment_projections_pending',
       'pendingCount': pending,
     };
   }

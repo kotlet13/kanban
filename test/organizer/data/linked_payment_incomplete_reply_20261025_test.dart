@@ -27,6 +27,7 @@ class _LegacyRouter implements CryptoDomainRouter {
 class _Transport extends OrganizationFinanceTransport {
   _Transport() : super(FakeServer());
   bool? complete;
+  Object? incompleteReason;
   int replyRevision = 1, replySequence = 4;
   Future<void> Function()? beforeReply;
   @override
@@ -46,6 +47,7 @@ class _Transport extends OrganizationFinanceTransport {
         'accessRevision': replyRevision,
         'scopeSequence': replySequence,
         if (complete != null) 'complete': complete,
+        if (incompleteReason != null) 'incompleteReason': incompleteReason,
       };
     }
     final reply = await super.call(
@@ -161,6 +163,37 @@ Future<List<List<Map<String, Object?>>>> _facts(
 ];
 
 void main() {
+  for (final reason in <Object>[
+    ...paymentSnapshotIncompleteReasons,
+    'secret@example.test/token',
+    {'private': 'payload'},
+  ]) {
+    test(
+      '20261102 incomplete diagnostic category ${reason is String ? reason : 'malformed'} preserves facts',
+      () async {
+        final f = await _open();
+        final before = await _facts(f.repo);
+        f.transport.complete = false;
+        f.transport.incompleteReason = reason;
+        await expectLater(
+          f.repo.fetchLinkedPayments(f.space),
+          throwsA(
+            isA<CryptoAuthorityPending>().having(
+              (e) => e.reason,
+              'safe reason',
+              reason is String &&
+                      paymentSnapshotIncompleteReasons.contains(reason)
+                  ? reason
+                  : 'crypto_payment_snapshot_incomplete',
+            ),
+          ),
+        );
+        expect(await _facts(f.repo), before);
+        expect((await f.payments.read(f.space)).fresh, isFalse);
+      },
+    );
+  }
+
   test(
     'new race delayed older complete reply cannot restore proof after incomplete observation',
     () async {

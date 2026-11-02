@@ -131,7 +131,12 @@ extension CollaborationLinkedPayments on CollaborationRepository {
       // Notify only after proof invalidation commits. Throwing inside that
       // transaction would roll it back and let the old balance remain fresh.
       database.personalChanged();
-      throw const CryptoAuthorityPending('crypto_payment_snapshot_incomplete');
+      final reason = reply['incompleteReason'];
+      throw CryptoAuthorityPending(
+        reason is String && paymentSnapshotIncompleteReasons.contains(reason)
+            ? reason
+            : 'crypto_payment_snapshot_incomplete',
+      );
     }
     final events = (reply['events'] as List).map((raw) {
       final j = Map<String, dynamic>.from(raw as Map);

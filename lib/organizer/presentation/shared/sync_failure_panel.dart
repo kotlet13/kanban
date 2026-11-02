@@ -211,6 +211,21 @@ String syncFailureExplanation(
     'Dokazila o identiteti podpisnika še ni bilo mogoče pridobiti ali preveriti. Ta oznaka sama ne pomeni manjkajočih dovoljenj in ne zahteva novega računa ali ključev. Izberi »Uskladi zdaj«, da aplikacija ponovi preverjanje.',
     'Evidence of the signer’s identity could not yet be obtained or verified. This code alone does not mean missing permissions and does not require a new account or keys. Choose “Sync now” to retry verification.',
   ),
+  'crypto_payment_checkpoint_pending' => _text(
+    context,
+    'Podpisanega potrdila o popolnosti finančnih podatkov še ni bilo mogoče preveriti. Povezana plačila še niso usklajena. Izberi »Uskladi zdaj« za ponovno preverjanje.',
+    'The signed evidence of financial data completeness could not yet be verified. Linked payments are not synced yet. Choose “Sync now” to retry verification.',
+  ),
+  'crypto_payment_records_pending' => _text(
+    context,
+    'Nekateri finančni zapisi še čakajo na varen prenos ali preverjanje. Povezana plačila še niso usklajena; obstoječi vnosi ostanejo ohranjeni.',
+    'Some financial records still await secure transfer or verification. Linked payments are not synced yet; existing entries are retained.',
+  ),
+  'crypto_payment_projections_pending' => _text(
+    context,
+    'Povezanih plačil še ni bilo mogoče uskladiti z njihovimi izvornimi zapisi. Obstoječi vnosi ostanejo ohranjeni. Če se težava ponovi, posreduj podrobnosti napake.',
+    'Linked payments could not yet be reconciled with their source records. Existing entries are retained. If this persists, share the error details.',
+  ),
   'account_deleted' => _text(
     context,
     'Ta račun je izbrisan.',

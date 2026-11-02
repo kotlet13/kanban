@@ -20,6 +20,13 @@ enum SyncFailureStage {
   completion,
 }
 
+/// Fixed incomplete-snapshot categories; never accept server-supplied text.
+const paymentSnapshotIncompleteReasons = <String>{
+  'crypto_payment_checkpoint_pending',
+  'crypto_payment_records_pending',
+  'crypto_payment_projections_pending',
+};
+
 /// Only fixed product codes can leave the process through diagnostic export.
 /// Never accept a prefix/pattern: an exception code can itself contain secrets.
 const syncFailureSafeReasons = <String>{
@@ -240,6 +247,7 @@ const syncFailureSafeReasons = <String>{
   'crypto_payment_baseline_transition_pending',
   'crypto_payment_group_authority_changed',
   'crypto_payment_snapshot_incomplete',
+  ...paymentSnapshotIncompleteReasons,
   'crypto_payment_target_approval_pending',
   'crypto_pending',
   'crypto_policy_successor_type_pending',

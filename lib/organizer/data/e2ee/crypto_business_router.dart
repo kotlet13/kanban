@@ -1033,8 +1033,14 @@ class CryptoBusinessSession {
     partition: p,
     codec: codec,
     call: (operation, params) => account.directory.call(operation, params),
-    verify: (proof) async =>
-        (await access.verifyDomainCheckpoint(proof)).historyBasis,
+    // A live inventory may cite an exact author directory head absent from
+    // this session's cache. Fetch and verify that signed prefix before deciding
+    // that no checkpoint is usable. Frozen/deleted evidence still suppresses
+    // online reads inside verifyDomainCheckpoint; no trust floor is relaxed.
+    verify: (proof) async => (await access.verifyDomainCheckpoint(
+      proof,
+      onlineAuthorDirectory: true,
+    )).historyBasis,
   );
 
   Future<List<Map<String, dynamic>>> catalog() async {

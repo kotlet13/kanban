@@ -94,6 +94,26 @@ List<String> _recordCopies(WidgetTester tester) {
 }
 
 void main() {
+  for (final entry in {
+    'crypto_payment_checkpoint_pending': 'Podpisanega potrdila',
+    'crypto_payment_records_pending': 'Nekateri finančni zapisi',
+    'crypto_payment_projections_pending': 'Povezanih plačil',
+  }.entries) {
+    testWidgets(
+      '20261102 payment explanation ${entry.key} exports safe category without setup action',
+      (tester) async {
+        final controller = SharingUiController(
+          initial: _state(entry.key, stage: SyncFailureStage.linkedPayments),
+        );
+        await _pump(tester, controller, locale: 'sl');
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(find.text('Preglej zaščito računa'), findsNothing);
+        await _tap(tester, 'sync-error-details');
+        expect(_displayed(tester), contains(entry.key));
+        expect(_displayed(tester), contains('linkedPayments'));
+      },
+    );
+  }
   testWidgets(
     'details and copy retain displayed attempt across async changes and tap race; reopening refreshes',
     (tester) async {

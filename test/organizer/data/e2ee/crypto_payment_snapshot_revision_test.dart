@@ -130,6 +130,8 @@ class _Head implements VerifiedScopeHead {
       members.singleWhere((m) => m['accountId'] == id);
   @override
   String? commitment(String domain) => null;
+  @override
+  List<Map<String, dynamic>> get invitationPreauthorizations => const [];
 }
 
 class _Access extends SessionCryptoAccess {
@@ -289,6 +291,46 @@ _fixture({int headRevision = 0, int policyRevision = 1}) async {
 }
 
 void main() {
+  for (final checkpointPresent in [false, true]) {
+    test(
+      '20261102 snapshot reports missing ${checkpointPresent ? 'records' : 'checkpoint'} without marking complete',
+      () async {
+        final f = await _fixture();
+        // Synthetic authenticated checkpoint boundary; cryptographic reader is
+        // exercised separately by runtime_checkpoint_author_directory tests.
+        if (checkpointPresent) {
+          await f.db.execute(
+            'INSERT INTO crypto_domain_checkpoints VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+            [
+              f.runtime.partition,
+              _scope,
+              'finance',
+              f.access.head.headHash,
+              1,
+              0,
+              0,
+              'b' * 64,
+              0,
+              'synthetic',
+              '{}',
+              'verifiedCheckpoint',
+            ],
+          );
+        }
+        final reply = await CryptoBusinessPayments(
+          f.runtime,
+        ).dispatch('finance3.payments', {'scopeId': _scope});
+        expect(reply['complete'], isFalse);
+        expect(
+          reply['incompleteReason'],
+          checkpointPresent
+              ? 'crypto_payment_records_pending'
+              : 'crypto_payment_checkpoint_pending',
+        );
+        expect(await f.db.rows('SELECT * FROM crypto_scope_state'), isEmpty);
+      },
+    );
+  }
   TestWidgetsFlutterBinding.ensureInitialized();
   for (final entry in [
     (head: 0, policy: 1, expected: 1),
