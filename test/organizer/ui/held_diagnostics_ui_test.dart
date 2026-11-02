@@ -165,8 +165,8 @@ void main() {
         expect(
           find.textContaining(
             locale == 'sl'
-                ? 'Prej shranjen razlog'
-                : 'Previously retained reason',
+                ? 'Prejšnja ovira je lahko zastarela'
+                : 'The previous blocker may be stale',
           ),
           findsOneWidget,
         );

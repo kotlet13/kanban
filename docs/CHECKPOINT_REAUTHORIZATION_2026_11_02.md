@@ -37,7 +37,7 @@ Uporabnik je odobril lokalni popravek in novo javno Android izdajo.
 
 Dokazi: `build/qa/checkpoint-reauthorization-20261102/`.
 
-22 različnih novih preizkusov PASS:
+22 različnih novih preizkusov PASS (poleg tega 2 prilagojena UI preizkusa PASS):
 
 - 13 jedrnih: vseh 19 zahtev, novejši popis in 11 negativnih varoval;
 - 4 nadaljevanja: sveža avtoriteta, še zastarela, preklicana, druga naprava;
@@ -63,7 +63,11 @@ Zgodovina poskusov:
 - Koordinator R1: dinamični klic razširitve Dart; R2: nov šifrirani kontekst
   ni uporabljal načrtovanega projekcijskega vmesnika fixture; R3 z izrecno
   sintetično zunanjo projekcijo 2 PASS. Podpisani izdajatelj je ostal pravi.
-- Noben že uspešen test ni bil ponovno zagnan. Ni četrtega poskusa.
+- Noben nespremenjen že uspešen test ni bil ponovno zagnan. Dva obstoječa
+  UI preizkusa za namenoma skrajšano razlago sta prilagojena in preverjena
+  enkrat (UI adjusted R1: 2 PASS). Ni četrtega poskusa.
+- Sprememba teh dveh testnih pričakovanj je narejena po zamrznitvi izdaje;
+  produktna koda je identična zamrznjenemu viru. Ponovna gradnja ni potrebna.
 - Končna analiza 11 datotek: 0 napak, 0 opozoril, 9 predhodnih slogovnih
   informacij v crypto_sync_repository. Nove slogovne informacije odpravljene.
 
