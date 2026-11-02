@@ -69,6 +69,7 @@ class _Access extends SessionCryptoAccess {
   VerifiedAccountDirectory get verified =>
       (account.directory as _Directory).verified;
   bool historyMissing = false;
+  VerifiedAccountDirectory? otherDirectory;
   @override
   Future<VerifiedScopeHead> currentHead(
     String id, {
@@ -105,6 +106,10 @@ class _Access extends SessionCryptoAccess {
     bool online = false,
     bool allowUnverifiedContact = false,
   }) async {
+    if (otherDirectory?.accountId == accountId &&
+        otherDirectory?.headHash == directoryHeadHash) {
+      return otherDirectory!;
+    }
     if (directoryHeadHash != verified.headHash ||
         accountId != verified.accountId) {
       throw const CryptoAuthorityPending('directory_proof_pending');
@@ -147,25 +152,34 @@ class _Runtime extends CryptoBusinessSession {
 Future<
   ({_Runtime runtime, _Access access, _Wire wire, String old, String next})
 >
-_fixture() async {
-  final db = CollaborationDatabase(NativeDatabase.memory());
-  addTearDown(db.close);
+_fixture({
+  bool downloaded = false,
+  bool laterInventory = false,
+  int count = 1,
+  CollaborationDatabase? database,
+  DeviceSession? existingSession,
+  bool otherAuthor = false,
+}) async {
+  final db = database ?? CollaborationDatabase(NativeDatabase.memory());
+  if (database == null) addTearDown(db.close);
   final crypto = CryptoCodec(await SodiumInit.init());
   final signing = crypto.sodium.crypto.sign.keyPair();
   addTearDown(signing.secretKey.dispose);
-  final session = DeviceSession(
-    AccountSession(
-      serverUrl: 'https://synthetic.invalid',
-      serverId: crypto.randomId(),
-      accountId: crypto.randomId(),
-      userId: 1,
-      username: 'Synthetic',
-      displayName: 'Synthetic',
-      deviceId: crypto.randomId(),
-      expiresAt: DateTime.utc(2030),
-    ),
-    'synthetic-token',
-  );
+  final session =
+      existingSession ??
+      DeviceSession(
+        AccountSession(
+          serverUrl: 'https://synthetic.invalid',
+          serverId: crypto.randomId(),
+          accountId: crypto.randomId(),
+          userId: 1,
+          username: 'Synthetic',
+          displayName: 'Synthetic',
+          deviceId: crypto.randomId(),
+          expiresAt: DateTime.utc(2030),
+        ),
+        'synthetic-token',
+      );
   final wire = _Wire();
   final directory = _Directory(
     reducer: AccountDirectoryV2(crypto),
@@ -213,6 +227,51 @@ _fixture() async {
     'financeRole': 'none',
     'manageKeys': true,
   };
+  final otherSigning = crypto.sodium.crypto.sign.keyPair();
+  addTearDown(otherSigning.secretKey.dispose);
+  final otherDevice = crypto.randomId();
+  Map<String, dynamic>? otherMember;
+  if (otherAuthor) {
+    final otherRoot = crypto.sodium.crypto.sign.keyPair(),
+        otherBox = crypto.sodium.crypto.box.keyPair();
+    addTearDown(otherRoot.secretKey.dispose);
+    addTearDown(otherBox.secretKey.dispose);
+    final otherEpoch = crypto.randomId();
+    final other = (await AccountDirectoryV2(crypto).prepare(
+      previous: null,
+      serverId: session.profile.serverId,
+      accountId: crypto.randomId(),
+      deviceId: otherDevice,
+      identityEpochId: otherEpoch,
+      operation: 'crypto2.account.initialize',
+      signer: 'root',
+      pinnedRootFingerprint: crypto.fingerprint(
+        otherRoot.publicKey,
+        otherBox.publicKey,
+      ),
+      signingKey: otherRoot.secretKey,
+      payload: {
+        'rootSigningKeyBase64': base64Encode(otherRoot.publicKey),
+        'rootEncryptionKeyBase64': base64Encode(otherBox.publicKey),
+        'deviceSigningKeyBase64': base64Encode(otherSigning.publicKey),
+        'deviceEncryptionKeyBase64': base64Encode(deviceBox.publicKey),
+        'keyringCiphertextBase64': base64Encode(Uint8List(48)),
+      },
+    )).result;
+    access.otherDirectory = other;
+    otherMember = {
+      ...member,
+      'role': 'member',
+      'manageKeys': false,
+      'accountId': other.accountId,
+      'rootSigningKeyBase64': base64Encode(otherRoot.publicKey),
+      'rootEncryptionKeyBase64': base64Encode(otherBox.publicKey),
+      'recoveryRootEpochId': otherEpoch,
+      'identityEpochId': otherEpoch,
+      'directoryHeadHash': other.headHash,
+      'deviceSnapshotHash': other.deviceSnapshotHash,
+    };
+  }
   Map<String, dynamic> command(
     String operation,
     Map<String, dynamic> payload,
@@ -239,7 +298,11 @@ _fixture() async {
         {'scopeToken': '2' * 64, 'accessRevision': 0},
       ],
       'authorDirectoryHeadHash': directory.verified.headHash,
-      'members': [member],
+      'members': ([member, if (otherMember != null) otherMember]
+        ..sort(
+          (a, b) =>
+              (a['accountId'] as String).compareTo(b['accountId'] as String),
+        )),
       'membershipIntents': [],
       'closures': {
         'content': previous == null ? null : '7' * 64,
@@ -263,7 +326,9 @@ _fixture() async {
       ),
       previous: previous,
       authorDirectory: directory.verified,
-      directoryAtHead: (a, h) async => directory.verified,
+      directoryAtHead: (a, h) async => a == directory.verified.accountId
+          ? directory.verified
+          : access.otherDirectory!,
       checkIdentity: (a, f) async {},
     );
     return codec.verifyActivation(
@@ -281,7 +346,9 @@ _fixture() async {
       ),
       authorDirectory: directory.verified,
       grantManifestHash: '8' * 64,
-      directoryAtHead: (a, h) async => directory.verified,
+      directoryAtHead: (a, h) async => a == directory.verified.accountId
+          ? directory.verified
+          : access.otherDirectory!,
     );
   }
 
@@ -319,17 +386,59 @@ _fixture() async {
   await queue.store.outcome(old, 'blocked', {
     'outcome': 'unresolved',
     'reason': 'authority_pending',
-    'code': 'scope_rotation_required',
+    'code': (count > 1 || downloaded || laterInventory)
+        ? 'scope_reauthorization_required'
+        : 'scope_rotation_required',
   });
+  for (var i = 1; i < count; i++) {
+    final id = await queue.enqueueCommand(
+      actionKey: 'old:$i',
+      operation: 'crypto2.domain.checkpoint',
+      payload: payload,
+    );
+    await queue.store.outcome(id, 'blocked', {
+      'outcome': 'unresolved',
+      'reason': 'authority_pending',
+      'code': 'scope_reauthorization_required',
+    });
+  }
   final next = await queue.enqueueCommand(
     actionKey: 'new',
     operation: 'crypto2.domain.checkpoint',
     payload: {
       ...payload,
+      if (laterInventory) 'expectedSequence': 1,
+      if (laterInventory) 'manifestHash': 'e' * 64,
       'epoch': 2,
       'membershipHeadHash': access.head.headHash,
     },
   );
+  if (otherAuthor) {
+    final row = (await queue.store.outgoing(next))!;
+    final original = jsonDecode(row['signed_body'] as String) as Map;
+    final raw = Map<String, dynamic>.from(
+      CryptoJson.decode(cryptoBase64(original['commandBase64'])) as Map,
+    );
+    raw['accountId'] = access.otherDirectory!.accountId;
+    raw['deviceId'] = otherDevice;
+    raw['payload'] = {
+      ...raw['payload'] as Map,
+      'authorDirectoryHeadHash': access.otherDirectory!.headHash,
+    };
+    final proof = crypto.signDomain(
+      raw,
+      otherSigning.secretKey,
+      cryptoDirectoryDomain,
+    );
+    await db.execute(
+      'UPDATE crypto_outbox SET signed_body=?,request_hash=? WHERE request_id=?',
+      [
+        jsonEncode(proof),
+        await cryptoSha256(cryptoBase64(proof['commandBase64'])),
+        next,
+      ],
+    );
+  }
   final nextRow = (await queue.store.outgoing(next))!;
   final signed = jsonDecode(nextRow['signed_body'] as String);
   await queue.store.outcome(next, 'applied', {
@@ -344,9 +453,9 @@ _fixture() async {
     domain: 'content',
     epoch: 2,
     accessRevision: 0,
-    transportCursor: 0,
-    projectionCursor: 0,
-    scopeSequence: 0,
+    transportCursor: laterInventory ? 1 : 0,
+    projectionCursor: laterInventory ? 1 : 0,
+    scopeSequence: laterInventory ? 1 : 0,
     complete: true,
   );
   await db.execute(
@@ -358,14 +467,20 @@ _fixture() async {
       access.head.headHash,
       2,
       0,
-      0,
-      payload['manifestHash'],
+      laterInventory ? 1 : 0,
+      laterInventory ? 'e' * 64 : payload['manifestHash'],
       0,
       'current-snapshot',
       jsonEncode(signed),
       'verifiedCheckpoint',
     ],
   );
+  if (downloaded) {
+    await db.execute(
+      'DELETE FROM crypto_outbox WHERE partition=? AND request_id=?',
+      [runtime.partition, next],
+    );
+  }
   return (runtime: runtime, access: access, wire: wire, old: old, next: next);
 }
 
@@ -580,3 +695,19 @@ void main() {
     });
   }
 }
+
+Future<dynamic> reauthorizationFixture({
+  bool downloaded = false,
+  bool laterInventory = false,
+  int count = 1,
+  CollaborationDatabase? database,
+  DeviceSession? session,
+  bool otherAuthor = false,
+}) => _fixture(
+  downloaded: downloaded,
+  laterInventory: laterInventory,
+  count: count,
+  database: database,
+  existingSession: session,
+  otherAuthor: otherAuthor,
+);

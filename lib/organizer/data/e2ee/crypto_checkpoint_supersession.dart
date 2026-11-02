@@ -4,6 +4,7 @@ import 'account_directory_v2.dart' show cryptoSha256;
 import 'crypto_business_router.dart';
 import 'crypto_active_outbox.dart';
 import 'crypto_json.dart';
+import 'crypto_record_address.dart' show isCryptoCanonicalUuid;
 import 'crypto_sync_repository.dart';
 import 'scope_crypto_codec.dart';
 
@@ -63,7 +64,7 @@ class CryptoCheckpointSupersession {
       final replacement = _decode(checkpoint['authorization']);
       if (replacement == null) return 0;
       final next = replacement.command, payload = replacement.payload;
-      if (!_identity(next) ||
+      if (!_identity(next, ownAccount: false) ||
           payload['scopeId'] != scope ||
           payload['domain'] != domain ||
           payload['membershipHeadHash'] != read.headHash ||
@@ -80,11 +81,13 @@ class CryptoCheckpointSupersession {
         onlineAuthorDirectory: true,
       );
       final nextRow = await context.queue.store.outgoing(next['requestId']);
-      if (nextRow == null ||
-          !_applied(nextRow, replacement.proof) ||
-          await _hash(replacement.proof) != nextRow['request_hash']) {
-        return 0;
-      }
+      // A fully verified downloaded attestation need not have an outgoing row
+      // on this device. Never manufacture a receipt for that remote assertion.
+      final localReplacement =
+          nextRow != null &&
+          _applied(nextRow, replacement.proof) &&
+          await _hash(replacement.proof) == nextRow['request_hash'];
+      if (nextRow != null && !localReplacement) return 0;
       var changed = 0;
       for (final item in inventory) {
         current();
@@ -104,25 +107,34 @@ class CryptoCheckpointSupersession {
         final before = previous.payload;
         if (before['scopeId'] != scope ||
             before['domain'] != domain ||
-            before['manifestHash'] != payload['manifestHash'] ||
-            before['recordCount'] != payload['recordCount'] ||
-            before['historyBasis'] != payload['historyBasis'] ||
             before['expectedSequence'] is! int ||
             (before['expectedSequence'] as int) >
                 (payload['expectedSequence'] as int) ||
             before['epoch'] is! int ||
             before['accessRevision'] is! int ||
-            (before['epoch'] as int) >= read.epoch ||
+            (before['epoch'] as int) > read.epoch ||
             (before['accessRevision'] as int) > read.accessRevision) {
+          continue;
+        }
+        // At the same sequence nothing may change silently. A later verified
+        // inventory covers all locally known records/anchors via reuse checks;
+        // this only retires a derived assertion, never a user record/intent.
+        final sameInventory =
+            before['manifestHash'] == payload['manifestHash'] &&
+            before['recordCount'] == payload['recordCount'] &&
+            before['historyBasis'] == payload['historyBasis'];
+        if ((!sameInventory &&
+                before['expectedSequence'] == payload['expectedSequence']) ||
+            (before['epoch'] == read.epoch &&
+                before['membershipHeadHash'] != read.headHash)) {
           continue;
         }
         final marker =
             'crypto_checkpoint_superseded_v1:$partition:${old['request_id']}';
-        if ((await db.rows('SELECT 1 FROM local_meta WHERE name=?', [
-          marker,
-        ])).isNotEmpty) {
-          continue;
-        }
+        final oldMarker = (await db.rows(
+          'SELECT value FROM local_meta WHERE name=?',
+          [marker],
+        )).firstOrNull?['value'];
         if ((await db.rows(
           'SELECT 1 FROM crypto_outbox_records WHERE partition=? AND request_id=? LIMIT 1',
           [partition, old['request_id']],
@@ -161,10 +173,16 @@ class CryptoCheckpointSupersession {
         }
         final details = utf8.decode(
           CryptoJson.encode({
-            'version': 1,
+            'version': localReplacement ? 1 : 2,
             'oldRequestHash': old['request_hash'],
             'newRequestId': next['requestId'],
-            'newRequestHash': nextRow['request_hash'],
+            'newRequestHash': await _hash(replacement.proof),
+            if (!localReplacement)
+              'replacementAuthorization': checkpoint['authorization'],
+            if (!localReplacement)
+              'replacementSequence': checkpoint['sequence'],
+            if (!localReplacement)
+              'replacementManifest': checkpoint['manifest_hash'],
             'scopeId': scope,
             'domain': domain,
             'oldHeadHash': before['membershipHeadHash'],
@@ -179,9 +197,10 @@ class CryptoCheckpointSupersession {
           final stillNext = await context.queue.store.outgoing(
             next['requestId'],
           );
-          if ((await db.rows('SELECT 1 FROM local_meta WHERE name=?', [
-            marker,
-          ])).isNotEmpty) {
+          if ((await db.rows('SELECT value FROM local_meta WHERE name=?', [
+                marker,
+              ])).firstOrNull?['value'] !=
+              oldMarker) {
             return false;
           }
           if (stillOld == null ||
@@ -189,9 +208,11 @@ class CryptoCheckpointSupersession {
               stillOld['request_hash'] != old['request_hash'] ||
               stillOld['signed_body'] != old['signed_body'] ||
               stillOld['response'] != old['response'] ||
-              stillNext == null ||
-              stillNext['request_hash'] != nextRow['request_hash'] ||
-              !_applied(stillNext, replacement.proof) ||
+              (localReplacement
+                  ? (stillNext == null ||
+                        stillNext['request_hash'] != nextRow['request_hash'] ||
+                        !_applied(stillNext, replacement.proof))
+                  : stillNext != null) ||
               !await context.hasReusableCheckpoint(scope, domain, read) ||
               (await db.rows(
                 'SELECT 1 FROM crypto_outbox_records WHERE partition=? AND request_id=? LIMIT 1',
@@ -213,7 +234,7 @@ class CryptoCheckpointSupersession {
             return false;
           }
           await db.execute(
-            'INSERT OR IGNORE INTO local_meta(name,value) VALUES(?,?)',
+            'INSERT OR REPLACE INTO local_meta(name,value) VALUES(?,?)',
             [marker, details],
           );
           await db.execute(
@@ -257,15 +278,16 @@ class CryptoCheckpointSupersession {
     return cursor.headHash == old.headHash;
   }
 
-  bool _identity(Map command) {
+  bool _identity(Map command, {bool ownAccount = true}) {
     final profile = context.account.directory.session.profile;
     return command.length == 8 &&
         command['version'] == 2 &&
         command['operation'] == 'crypto2.domain.checkpoint' &&
         command['signer'] == 'device' &&
         command['serverId'] == profile.serverId &&
-        command['accountId'] == profile.accountId &&
-        command['deviceId'] == profile.deviceId &&
+        (!ownAccount || command['accountId'] == profile.accountId) &&
+        isCryptoCanonicalUuid(command['accountId']) &&
+        isCryptoCanonicalUuid(command['deviceId']) &&
         command['requestId'] is String;
   }
 

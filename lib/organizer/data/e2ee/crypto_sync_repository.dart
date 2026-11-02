@@ -1060,7 +1060,9 @@ class CryptoSyncRepository {
     return retained is Map &&
         retained['outcome'] == 'unresolved' &&
         retained['reason'] == 'authority_pending' &&
-        retained['code'] == 'scope_rotation_required';
+        (retained['code'] == 'scope_rotation_required' ||
+            (row['operation'] == 'crypto2.domain.checkpoint' &&
+                retained['code'] == 'scope_reauthorization_required'));
   }
 
   Future<void> _deliver({

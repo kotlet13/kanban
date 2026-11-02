@@ -85,3 +85,33 @@ nič ni odstranjeno/ponastavljeno. Ni gradnje, objave ali spremembe strežnika.
 Prvi zagon apksigner ni našel Java Runtime; z obstoječim Android Studio JBR
 je preverjanje uspelo. Dokazi: s25/preflight-result.json in
 s25/installed-signature.txt v istem diagnostičnem sklopu.
+
+## Dejanski uporabnikov zajem po 1.11.14 — 2. november, 20:25 CET
+
+Uporabnik pošlje version1 JSON: 19 remaining, sampleLimit20, vseh 19 vzorcev
+crypto2.domain.checkpoint / receipt unknown / resume ineligible / retainedReason
+scope_reauthorization_required. Preflight čas 19:25:46.948119Z, transfer začetek
+19:25:46.983636Z; vse štiri metrike prejetih strani/zapisov 0. Zato v tem
+poskusu ni zabeleženega potrjenega prenosa, ne pa dokaz odsotnosti preteklih
+prenosov. Zajem ne vsebuje prostorskih ID-jev: ne trdimo, da vseh19 pripada Domu.
+
+Bralni pregled kode potrdi neposredni razlog za ineligible: _canResumeHeld
+sprejme samo unresolved/authority_pending/scope_rotation_required; zapisani
+scope_reauthorization_required ni dovoljen za ponovno pošiljanje. Pri checkpoint
+beforeDelivery ta razlog nastane ob neskladju membershipHeadHash, epoch ali
+accessRevision s preverjeno trenutno glavo. RetainedReason opisuje stari
+poskus, ne sveže preverjenega stanja pravic. Unknown pomeni brez znanega končnega
+potrdila, ne dokaz strežniške zavrnitve ali izgubljenih uporabniških podatkov.
+
+Obstoječi CryptoCheckpointSupersession že pozna oba razloga, vendar potrebuje
+preverjen novejši checkpoint istega inventarja, isto napravo, nižjo staro epoch,
+veljavno verigo in druge varovalke. Iz tega JSON ni razvidno, kateri od teh
+pogojev ni izpolnjen oziroma ali pot do nadomestitve sploh steče. Predlagana
+naslednja lokalna reprodukcija mora zajeti konkretni reauthorization checkpoint
+in celotno pot koordinator→publisher→supersession, ne zgolj rotation retry.
+Ne dodajati slepe ponovitve starega podpisa, lažnega ACK ali brisanja blocked.
+
+Screenshot razkriva še predolg podvojen uporabniški opis enakih zahtev. Smiselna
+naslednja UX sprememba: ena združena razlaga za 19 enakih vrst zahtev, podrobni
+vzorci samo v diagnostiki. V tem pregledu ni produktnega popravka, novih testov,
+posega v telefon/strežnik ali nove oddaje na Play.

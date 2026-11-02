@@ -71,6 +71,31 @@ class _LegacyRouter implements CryptoDomainRouter {
 class _ScopedRouter extends CryptoBusinessRouter {
   _ScopedRouter({required super.database, required super.accountFor});
   Future<void> Function()? duringResume;
+  _Transport? syntheticProjection;
+  @override
+  Future<Map<String, dynamic>> dispatch({
+    required DeviceSession session,
+    required String operation,
+    required Map<String, Object?> params,
+    required Set<String> protectedScopeIds,
+  }) {
+    final transport = syntheticProjection;
+    if (transport == null) {
+      return super.dispatch(
+        session: session,
+        operation: operation,
+        params: params,
+        protectedScopeIds: protectedScopeIds,
+      );
+    }
+    return transport.call(
+      serverUrl: session.profile.serverUrl,
+      operation: operation,
+      params: params,
+      token: session.token,
+    );
+  }
+
   @override
   Future<Set<String>> resumeHeldCommands({
     required DeviceSession session,
@@ -554,4 +579,15 @@ void main() {
       expect(f.transport.calls, ['account.changes']);
     },
   );
+}
+
+Future<dynamic> reauthorizationCoordinatorFixture() async {
+  final f = _Fixture(CryptoCodec(await SodiumInit.init()));
+  await f.open(scoped: true);
+  addTearDown(f.repo.close);
+  f.transport.financeEnabled = true;
+  (f.repo.cryptoRouter as _ScopedRouter).syntheticProjection = f.transport;
+  await f.repo.createScope('Synthetic target');
+  await f.repo.syncNow();
+  return f;
 }

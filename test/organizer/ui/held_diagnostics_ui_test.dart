@@ -236,3 +236,9 @@ void main() {
     },
   );
 }
+
+Future<void> pumpHeldPanel(
+  WidgetTester tester,
+  SharingUiController controller, {
+  String locale = 'sl',
+}) => _pump(tester, controller, locale: locale);

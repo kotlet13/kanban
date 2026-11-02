@@ -345,3 +345,12 @@ void main() {
     },
   );
 }
+
+Future<dynamic> reauthorizationResumeFixture({
+  String code = 'scope_reauthorization_required',
+}) async {
+  final f = _Fixture(CryptoCodec(await SodiumInit.init()));
+  addTearDown(f.close);
+  await f.held(code: code);
+  return f;
+}

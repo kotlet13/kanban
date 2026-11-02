@@ -502,6 +502,14 @@ String _paymentCheckpointExplanation(
 };
 
 String _failureExplanation(BuildContext context, SyncFailureDetails failure) {
+  if (failure.reason == 'crypto_command_receipt_pending' &&
+      failure.heldDiagnostics != null) {
+    return _text(
+      context,
+      'Nekatere zahteve še niso zaključene. Podatki so ohranjeni. Izberi »Uskladi zdaj« za ponovno preverjanje.',
+      'Some requests are not complete yet. Data is retained. Choose “Sync now” to check again.',
+    );
+  }
   final details = failure.completionDiagnostics;
   if (details == null) return syncFailureExplanation(context, failure.reason);
   final checkpoint = _paymentCheckpointExplanation(
@@ -636,9 +644,43 @@ String _heldExplanation(BuildContext context, HeldCommandDiagnostic item) {
       'sending was attempted',
     ),
   };
-  return '$operation: $receipt; $resume.'
-      '${item.currentReason == null ? '' : ' ${_text(context, 'Trenutni razlog', 'Current reason')}: ${syncFailureExplanation(context, safeSyncFailureReason(item.currentReason))}'}'
-      '${item.retainedReason == null ? '' : ' ${_text(context, 'Prej shranjen razlog (lahko je zastarel)', 'Previously retained reason (may be stale)')}: ${syncFailureExplanation(context, safeSyncFailureReason(item.retainedReason))}'}';
+  return [
+    '$operation: $receipt; $resume.',
+    if (item.currentReason != null)
+      '${_text(context, 'Trenutni razlog', 'Current reason')}: ${syncFailureExplanation(context, safeSyncFailureReason(item.currentReason))}',
+    if (item.retainedReason != null)
+      _text(
+        context,
+        'Prejšnja ovira je lahko zastarela; podrobnosti so v diagnostiki.',
+        'The previous blocker may be stale; details are in diagnostics.',
+      ),
+  ].join(' ');
+}
+
+List<String> _heldGroups(BuildContext context, HeldSyncDiagnostics held) {
+  final groups =
+      <
+        (String, HeldReceiptResult, HeldResumeResult, String?, String?),
+        List<HeldCommandDiagnostic>
+      >{};
+  for (final item in held.samples) {
+    final key = (
+      safeHeldOperation(item.operation),
+      item.receipt,
+      item.resume,
+      item.currentReason == null
+          ? null
+          : safeSyncFailureReason(item.currentReason),
+      item.retainedReason == null
+          ? null
+          : safeSyncFailureReason(item.retainedReason),
+    );
+    groups.putIfAbsent(key, () => []).add(item);
+  }
+  return [
+    for (final group in groups.values.take(2))
+      '${group.length > 1 ? '${group.length} × ' : ''}${_heldExplanation(context, group.first)}',
+  ];
 }
 
 class SyncFailurePanel extends ConsumerWidget {
@@ -822,8 +864,8 @@ class SyncFailurePanel extends ConsumerWidget {
           Text(
             _text(
               context,
-              'Štejemo uspešno shranjene prenose; ponovitve se lahko štejejo večkrat. Vrednost 0 pomeni, da prejem ni zabeležen. To še ne potrjuje pošiljanja ali celotne uskladitve.',
-              'Counts cover committed downloads; retries may count again. Zero means no download was recorded. This does not confirm uploads or complete sync.',
+              '0 pomeni brez zabeleženega prejema. Ponovitve se lahko štejejo večkrat; to še ni potrditev celotne uskladitve.',
+              '0 means no recorded download. Retries may count again; this does not confirm complete sync.',
             ),
           ),
           const SizedBox(height: 12),
@@ -847,14 +889,14 @@ class SyncFailurePanel extends ConsumerWidget {
               ),
               key: const ValueKey('sync-held-count'),
             ),
-            for (final sample in held.samples.take(3))
-              Text(_heldExplanation(context, sample)),
+            for (final summary in _heldGroups(context, held))
+              Text(summary, key: const ValueKey('sync-held-group')),
             if (held.samples.length > 3 || held.remaining > held.samples.length)
               Text(
                 _text(
                   context,
-                  'Prikazan je vzorec. Več podatkov je v podrobnostih.',
-                  'A sample is shown. More information is available in details.',
+                  'Enake zahteve so združene. Vsi razpoložljivi vzorci so v podrobnostih.',
+                  'Matching requests are grouped. All available samples are in details.',
                 ),
               ),
           ],
