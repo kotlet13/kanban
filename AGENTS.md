@@ -1,3 +1,18 @@
+2. november — **Android1.11.11(43) oddan v javni pregled; NEapproved**.
+UserexplicitPlay po49b762f. AccountwideoneFILE/savedkeys/batchcontinue,
+exactlostACKreceipt/pendingcounts/truthfulsuccess; guards/data preserved.
+47currentlocalPASSprej (12sync+14recovery+13UI+8root),0successfulrerunsvobjavi.
+1build102.47s/verifierPASS1,1401frozen/726rootproductexact;
+AAB102376153B SHA1ec926bb…d80162be, same42cert/8permissions/Firebase/native/engine.
+DataStoreRELROunchanged,alignmentNEruntimePASS. Owncache1978167096Bremoved;
+16symbols/R8/source/logs/AAB42+43hashpreserved. 1upload1submitrelease19/100%
+existingcountries/managedOFF;07:36:32UTC Spremembevpregledu+quickchecksrun.
+42publicconfirmedpreflight;43NEpublicconfirmed. 0phone/server/datachanges.
+Nextordinaryupdate/sameaccount,sharedreviewretainedwork,noreset/reinstall/
+newaccount/recoverEpoch. Dom/TriparNArealoutcomePENDING; noactualcauseclaim.
+Docs release/ANDROID_1_11_11_2026_11_02.md + POST_PASSWORD_LOGIN_OBSERVATIONS;
+evidence build/qa/android-1.11.11-20261102. Product49b762f pushed.
+
 2. november — **Android1.11.10(42) oddan v javni pregled; NEapproved**.
 Po user41records_pending+spaceconfirmation ni syncPASS. User implement+release.
 Sol6.1high core/UI/review, root plumbing/review/Play. Product33808d7pushed.
