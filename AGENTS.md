@@ -1,3 +1,23 @@
+2. november — **Android1.11.10(42) oddan v javni pregled; NEapproved**.
+Po user41records_pending+spaceconfirmation ni syncPASS. User implement+release.
+Sol6.1high core/UI/review, root plumbing/review/Play. Product33808d7pushed.
+Exactpublisherexit finiteenum, final7guardsločeni; session-local bounded20,
+clearperpull/retry. Sample1SQLverdict/error only, safeallowlist at parse/UI/export,
+sample ni nujno prvi blocker. Diagnostics-only, NOactualphonecause/fixclaim;
+complete/ACL/keys/queues/freshnessguardsisti, noextraHTTP/schema/phone/server.
+22newPASS:core4R1+8R2(followupR1zero-match0tests),receiver3R1+parser1R1,
+UI5R1+1newR1.0successfulreruns. Analyze0errors0warnings21oldinfos;
+rootanalyzepath typo corrected,1newtestbracesinfofixed+targetanalyze0issues.
+1build90.88s/verifierPASS1,1396frozen/726rootproductexact;AAB102272637B
+SHAfaa0e272…ab0610713,same41cert/8permissions/Firebase/engine/lock/native.
+DataStore16KBRELROunchanged,alignmentNEruntimePASS. Owncache1975492355Bremoved,
+16symbols/R8/source/logs/AAB41+42hashpreserved.1upload1submitrelease18/100%
+existingcountries/managedOFF;PlaySpremembevpregledu+quickchecksrun.
+41publicconfirmedpreflight;42NEpublicconfirmed. Nextordinaryupdate/sameaccount/
+Uskladizdaj1→copydetails, noreinstall/reset/recovery/wizardrepeat.
+Docs POST_PASSWORD_LOGIN_OBSERVATIONS_2026_11_02 + release/ANDROID_1_11_10_2026_11_02;
+evidence payment-completion-diagnostics-20261102 + android-1.11.10-20261102.
+
 2. november — **Android1.11.9(41) oddan v javni pregled; še NEapproved**.
 User explicit nova javna izdaja po lokalnem8d5c23a.15novihPASS prej,
 0uspešnihponovitev/0phone/serverchanges.1build104.85s/verifierPASS1,
