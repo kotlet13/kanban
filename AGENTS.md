@@ -1,3 +1,26 @@
+2. november — **Android1.11.15(47) oddan v javni pregled; NEapproved**.
+Userexplicit lokalnofix+Play po dejanskih19checkpoint unknown/ineligible/
+scope_reauthorization_required. Productb006e36/testexpect6d21859pushed.
+Exactsame-device guardedresume za reauthcheckpoint; verifieddownloaded/
+otherauthorizedauthor checkpoint supersession, latersequence completeinventory,
+samesequenceexact; oldsignedrows/blockedstate/response preserved/no fakeACK.
+Version2localmarker+audit boundreplacementproof, CAS+freshauthority+ancestors+
+knownrecords/restoreanchors+nooutboxclaims; activeSQLsameallpaths/fullrefresh.
+22newPASS (13core4resume1otherauthor2coordinator2UI)+2adaptedUI PASS; unchanged
+successful0reruns. OtherauthorfixtureFAIL1/2→PASS3, coordinatorfixtureFAIL1/2→
+PASS3; RED2previoussource19confirmed, compilefix corePASS2. No4thrun.
+RealSQL/signatures/directory, syntheticnetwork/projection; actualS25PENDING.
+Analyze0errors0warnings9oldinfos. MainUIgroups19/shorttext/fullJSONpreserved.
+1build86.65s/verifierPASS1,1420frozen/729productrootexact; testexpect-only later.
+AAB102657353B SHA51b193a5…ac597727,same46cert/8permissions/Firebase/native/lock.
+Owncache1981969415Bremoved/16symbolsR8sourceoutputslogsAAB46+47hashpreserved.
+DataStoreRELROunchanged/alignmentNEruntimePASS.1upload1submitrelease23/100%
+existingcountries/managedOFF; PlaySpremembevpregledu+quickchecksrunning.
+46publicconfirmedpreflight,47NEpublicconfirmed.0phone/server/userdataactions.
+Nextordinaryupdate/sameaccount/Uskladizdaj1; noreset/reinstall/newFILE.
+Docs CHECKPOINT_REAUTHORIZATION_2026_11_02 + release/ANDROID_1_11_15_2026_11_02;
+evidence checkpoint-reauthorization-20261102 + android-1.11.15-20261102.
+
 2. november — **Android1.11.14(46) oddan v javni pregled; NEapproved**.
 Userexplicitobjavi po localdiagnostics47ff42c in podpisno nezdružljivem direct
 S25preflight; priorNEPlay s tem nadomeščen. 22newPASSprej,0successfulreruns.
