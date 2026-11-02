@@ -1,3 +1,23 @@
+2. november — **Android1.11.13(45) oddan v javni pregled; NEapproved**.
+User explicit localfix+Play za pendingreceipt/rotation po44. Sol6.1high core/UI/
+review, rootintegracija. Product8b24fcfpushed. Receiptfirst bounded64/1MiB exact
+heldrequest guardedresume; verifiedsameinventory descendantcheckpoint supersession
+localmarker+audit, oldbytes/blockedrow retained, nofakeACK. ActiveSQLsameallpaths;
+freshgenerationCAS+max1fullfollowup, nofalsegreen/guardbypass. 40newPASS:
+16core+14checkpoint+7root+3UI,0successfulreruns. Optionalwizardmessage5STOP3,
+productchangefullyreverted/notshipped; tests explicit skipped, NEPASS.
+Analyze0errors0warnings34oldinfos; rootfixture3newinfosfixed/0issues. RealSQL/
+signature/chain, syntheticnetwork/projection; actual19types/phoneoutcomeUNKNOWN.
+1build103.93s/verifierPASS1,1411frozen/729rootexact;AAB102607044B
+SHA8cba180e…4372ade,same44cert/8permissions/Firebase/native/engine/lock.
+DataStoreRELROunchanged,alignmentNEruntimePASS. Owncache1981502118Bremoved;
+16symbols/R8/source/logs/AAB44+45hashpreserved.1upload1submitrelease21/100%
+existingcountries/managedOFF;10:00:06UTC Spremembevpregledu/quickchecksrun.
+44publicconfirmedpreflight;45NEpublicconfirmed.0phone/server/userdatachanges.
+Nextordinaryupdate/sameaccount/Uskladizdaj1; noreset/reinstall/newFILE.
+Docs HELD_COMMAND_RESUME_2026_11_02 + release/ANDROID_1_11_13_2026_11_02;
+evidence held-command-resume-20261102 + android-1.11.13-20261102.
+
 2. november — **Android 1.11.12 (44) oddan v javni pregled; NE approved**.
 User explicit fix+release po blocked19/manualno-op. Sol6.1high core/UI/review,
 root integracija/review/Play. Product b0cc389 pushed. Manual-only bounded64/1MiB
