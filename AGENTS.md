@@ -1,3 +1,23 @@
+2. november — **Android 1.11.12 (44) oddan v javni pregled; NE approved**.
+User explicit fix+release po blocked19/manualno-op. Sol6.1high core/UI/review,
+root integracija/review/Play. Product b0cc389 pushed. Manual-only bounded64/1MiB
+exact signed receipt lookup, unknown/rejected held; no generic rearm/mutation.
+Applied receipt requires durable CAS refresh marker + full content/finance pass;
+current-attempt completion, concurrent marker/fault/history guards preserved.
+Busy/attempt/progress/finite reasons; cheap automatic unchanged poll retained.
+27 new local PASS (20core/7UI), no successful reruns; realSQL/signedqueue with
+synthetic transport/projection, NOT phone/HTTP E2E. Actual19cause unconfirmed.
+Analyze0errors0warnings31oldinfos; finaltest0issues. 1build97.93s/verifierPASS1,
+1405frozen/727rootinputexact; AAB102481297B SHA0e691eb5…896b27b, same43cert/
+8permissions/Firebase/native. DataStoreRELROunchanged, alignmentNEruntimePASS.
+Owncache1978788408Bremoved; source/16symbols/R8/logs/AAB43+44hashpreserved.
+1upload1submit release20/100%existingcountries/managedOFF; 08:47UTC console
+Spremembe v pregledu + quickchecks running. 43publicconfirmed;44NEpublic.
+0phone/server/data changes. Nextordinaryupdate/sameaccount/Uskladi zdaj1;
+no reset/reinstall/newaccount/recovery. UseractualoutcomePENDING.
+Docs HELD_SYNC_RECHECK_2026_11_02 + release/ANDROID_1_11_12_2026_11_02;
+evidence build/qa/held-sync-20261102 + android-1.11.12-20261102.
+
 2. november — **Android1.11.11(43) oddan v javni pregled; NEapproved**.
 UserexplicitPlay po49b762f. AccountwideoneFILE/savedkeys/batchcontinue,
 exactlostACKreceipt/pendingcounts/truthfulsuccess; guards/data preserved.
