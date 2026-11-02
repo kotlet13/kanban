@@ -1,3 +1,22 @@
+2. november — **Android 1.11.16 (48) oddan v javni pregled; NE approved**.
+User zahteva popravek+Play šele po dejanskem lokalnem syncPASS. Ista ohranjena
+HTTP namestitev/račun po password/login/rebind/review: sync_after_rebind R2PASS
+21:17:31UTC,11s266HTTP.6naravnozadržanihcheckpointov exactbytes/response/blocked
+ohranjenih,6marker+audit,6complete/reusabledomains,0activequeues/napak/refreshdebt;
+task+45.67/12.34EUR values/revisions/proofsPASS. Ni reset/ponovljenihPASSfaz.
+Private historicalauth samoza retirement; globalfreshnessverifier nespremenjen;
+currentreplacement/receipt/coverage/CASguardsisti. Coldsavedreview candidatechain
+preverjena brez potrditve:3records32readHTTP PASS1/ključi inoriginalicloneisti.
+13newcore+8newpreviewPASS1, analize0issues; neodvisnireviewGO. Productf9f1e11pushed.
+1build105.08s/verifierPASS1,1426frozen/730productexact;AAB102685457B
+SHA20b55e26…8461d61a,same47cert/8permissions/Firebase/native/engine/lock.
+DataStoreRELROunchanged/notruntimePASS. Owncache1981999051Bremoved,source/16symbols/
+R8/logs/AAB47+48hashpreserved.1upload1submit100%existingcountries/managedOFF;
+2026-11-02T21:26:12.036Z Spremembe v pregledu/quickchecksrun.47publicconfirmed,
+48NEpublicconfirmed.0phone/prodmutations; dedicatedlocalserverstopped/dataheld.
+Phone19outcomePENDING; ordinaryupdate/sameaccount/Uskladizdaj1, noreset/logout/FILE.
+Docs PASSWORD_FLOW_HTTP + CHECKPOINT_REBIND_RETIREMENT + release/ANDROID_1_11_16.
+
 2. november — **Android1.11.15(47) oddan v javni pregled; NEapproved**.
 Userexplicit lokalnofix+Play po dejanskih19checkpoint unknown/ineligible/
 scope_reauthorization_required. Productb006e36/testexpect6d21859pushed.
