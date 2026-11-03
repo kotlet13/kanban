@@ -1,3 +1,26 @@
+3. november — **Android1.11.17(49) oddan v javni pregled; NEapproved**.
+User deletiontoast→metadata reconciliation + moveArchive/Delete + Play.
+Local realHTTP RED: scope.delete applied, stale own-directory inclusion failed;
+nextsync metadata/crypto_reconciliation_required. Fresh verifiedoperation after
+exactreceipt guards; catalog omission→signed retainedStatus, missingproof held.
+No fakeACK/delete replay/guardbypass. Terminal deleted+revoked avoids rereads.
+Explicit lifecyclebuttons at settingsbottom; preview/permissions/confirm remain.
+13newcore+16newUI PASS; 1UIfixtureonly retried. SamefailedHTTPfixture syncPASS:
+28requests/1deletionStatus/0newdelete, originaljournal/session/keys/FILE preserved.
+Newhousehold+task+sync+preview+1delete+autosync PASS3,285HTTP/~7s; R1nativeassets
+race beforeload,R2mapfixture beforecreate. Bothabsent/other2spaces exact. No
+successfulreruns. Selecteddeletedspace stays locked until userchooses surviving.
+Product93e1c30+c1cb132pushed.1build103.05s/1verifierPASS,1431frozen/731rootexact;
+AAB102700815B SHA f562dab1…1696e42d,same48cert/8permissions/Firebase/native.
+DataStoreRELROunchanged,alignmentNEruntimePASS. Owncache1982319032Bremoved;
+source/16symbols/R8/logs/AAB48+49hashpreserved.1upload1submit/100%existingcountries/
+managedOFF;04:26:40UTC Play Spremembevpregledu+quickchecksrun;48publicconfirmed,
+49NEpublic.0phone/prodserver/userdatachanges. Localfixturestopped/backupsheld.
+Nextordinaryupdate/sameaccount/Uskladizdaj1; no repeatdelete/reset/reinstall.
+Docs SPACE_DELETION_2026_11_03 + SCOPE_DELETION_RECONCILIATION_2026_11_03 +
+SPACE_SETTINGS_LIFECYCLE_2026_11_03 + release/ANDROID_1_11_17_2026_11_03;
+evidence password-flow-http-20261102 + scope-deletion-20261103 + android-1.11.17-20261103.
+
 2. november — **Android 1.11.16 (48) oddan v javni pregled; NE approved**.
 User zahteva popravek+Play šele po dejanskem lokalnem syncPASS. Ista ohranjena
 HTTP namestitev/račun po password/login/rebind/review: sync_after_rebind R2PASS
