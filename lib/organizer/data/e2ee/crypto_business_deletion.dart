@@ -590,13 +590,19 @@ class CryptoBusinessDeletion {
             )) {
       throw const FormatException('crypto_scope_deletion_result');
     }
-    final own = await context.account.directory.requireFresh();
-    if (!own.includesAnchor(
-      (event['payload'] as Map)['expectedGeneration'] + 1,
-      result['eventHeadHash'],
-    )) {
-      throw const FormatException('crypto_scope_deletion_event_inclusion');
-    }
+    // The queue sends the immutable command through its own transport. Its
+    // companion event therefore cannot reuse the pre-delivery read snapshot.
+    // Receipt equality above is necessary, but inclusion still needs a fresh,
+    // verified account prefix after the server committed that exact command.
     context.access.invalidateAuthorityOperation();
+    await context.access.withVerifiedOperation(() async {
+      final own = await context.account.directory.requireFresh();
+      if (!own.includesAnchor(
+        (event['payload'] as Map)['expectedGeneration'] + 1,
+        result['eventHeadHash'],
+      )) {
+        throw const FormatException('crypto_scope_deletion_event_inclusion');
+      }
+    }, freshBoundary: true);
   }
 }

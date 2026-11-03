@@ -736,8 +736,347 @@ class _Flow {
     });
   }
 
+  Future<List<Map<String, Object?>>> retainedOtherScopeRows() async {
+    final result = <Map<String, Object?>>[];
+    for (final table in ['records', 'finance_records']) {
+      final rows = await db.rows(
+        'SELECT scope_id,id,type,payload,deleted,server_revision,remote FROM $table '
+        'WHERE partition=? AND scope_id IN (?,?) ORDER BY scope_id,id',
+        [
+          sessions.current!.profile.partition,
+          state['organizationId'],
+          state['projectId'],
+        ],
+      );
+      result.addAll(rows.map((row) => {'table': table, ...row}));
+    }
+    return result;
+  }
+
+  Future<void> previewHouseholdDeletion() async {
+    _check(
+      (state['phases'] as Map)['sync_after_rebind']['passed'] == true,
+      'repaired_existing_fixture_required',
+    );
+    _check(
+      Directory('${root.path}/before-household-deletion-20261103').existsSync(),
+      'pre_deletion_backup_required',
+    );
+    final target = state['householdId'] as String;
+    final preview = await repo.previewScopeDeletion(target);
+    _check(preview['scopeId'] == target, 'deletion_preview_wrong_scope');
+    _check(preview['canDelete'] == true, 'deletion_preview_ineligible');
+    _check(
+      (preview['scopeContexts'] as List).length == 1 &&
+          (preview['scopeContexts'] as List).single['scopeId'] == target,
+      'deletion_preview_unexpected_graph',
+    );
+    state['householdDeletion'] = {
+      'preview': preview,
+      'otherRowsBefore': await retainedOtherScopeRows(),
+      'identityMaterialHash': await identityMaterialHash(),
+      'recoveryFileHash': await cryptoSha256(await recoveryFile.readAsBytes()),
+      'sessionHash': await cryptoSha256(await sessions.file.readAsBytes()),
+      'confirmed': false,
+    };
+    await save();
+    await _save(File('${root.path}/delete-household-preview-result.json'), {
+      'canDelete': true,
+      'graphCount': preview['graphCount'],
+      'counts': preview['counts'],
+      'httpOperations': calls,
+      'confirmationSubmitted': false,
+    });
+  }
+
+  Future<void> deleteHouseholdAndVerify() async {
+    final deletion = state['householdDeletion'] as Map;
+    final preview = Map<String, dynamic>.from(deletion['preview'] as Map);
+    final target = state['householdId'] as String;
+    _check(preview['scopeId'] == target, 'deletion_preview_wrong_scope');
+    if (deletion['confirmed'] != true) {
+      deletion['stage'] = 'confirming_existing_preview';
+      await save();
+      await repo.deleteScopeContents(preview);
+      // Persist the returned request before checking its automatic follow-up
+      // sync, so a metadata failure never causes a second deletion on retry.
+      deletion['confirmed'] = true;
+      deletion['stage'] = 'after_confirmation_followup';
+      await save();
+      await snapshot('delete_household_after_confirmation');
+      _check(
+        repo.state.lastError == null && repo.state.syncFailures.isEmpty,
+        'deletion_automatic_followup_failed',
+      );
+    }
+    deletion['stage'] = 'manual_sync_after_deletion';
+    await save();
+    await sync('delete_household_full_sync');
+    await verifyDeletedHousehold();
+  }
+
+  Future<void> syncAfterCommittedDeletion() async {
+    _check(
+      (state['phases'] as Map)['delete_household']['error'] ==
+          'crypto_scope_deletion_event_inclusion',
+      'actual_deletion_failure_required',
+    );
+    await sync('sync_after_delete');
+    _check(
+      (calls['crypto2.scope.delete'] ?? 0) == 0,
+      'sync_reissued_scope_deletion',
+    );
+    await verifyDeletedHousehold();
+  }
+
+  Future<void> verifyDeletedHousehold() async {
+    final deletion = state['householdDeletion'] as Map;
+    final target = state['householdId'] as String;
+    final rows = await db.rows(
+      'SELECT data FROM scopes WHERE partition=? AND id=?',
+      [sessions.current!.profile.partition, target],
+    );
+    _check(rows.length == 1, 'deletion_local_scope_evidence_missing');
+    final scope = jsonDecode(rows.single['data'] as String) as Map;
+    _check(
+      scope['deleted'] == true && scope['revoked'] == true,
+      'deletion_local_tombstone_missing',
+    );
+    _check(
+      !repo.state.scopes.any(
+        (scope) => scope.id == target && !scope.deleted && !scope.revoked,
+      ),
+      'deleted_household_still_visible',
+    );
+    for (final key in ['organizationId', 'projectId']) {
+      _check(
+        repo.state.scopes.any(
+          (scope) => scope.id == state[key] && !scope.deleted && !scope.revoked,
+        ),
+        'unrelated_scope_disappeared',
+      );
+    }
+    _check(
+      jsonEncode(await retainedOtherScopeRows()) ==
+          jsonEncode(deletion['otherRowsBefore']),
+      'unrelated_business_rows_changed',
+    );
+    _check(
+      await identityMaterialHash() == deletion['identityMaterialHash'] &&
+          await cryptoSha256(await recoveryFile.readAsBytes()) ==
+              deletion['recoveryFileHash'] &&
+          await cryptoSha256(await sessions.file.readAsBytes()) ==
+              deletion['sessionHash'],
+      'deletion_changed_identity_or_recovery_material',
+    );
+    final active = await db.rows(
+      '''SELECT count(*) AS count FROM crypto_outbox
+      WHERE state IN ('pending','blocked') AND ${cryptoActiveOutboxPredicate()}''',
+    );
+    _check(
+      active.single['count'] == 0 &&
+          repo.state.syncFailures.isEmpty &&
+          !repo.state.hasUnresolvedSyncWork,
+      'deletion_sync_not_clear',
+    );
+    for (final file in [
+      'held-before-repair.json',
+      'delete-household-committed-evidence.json',
+    ]) {
+      final evidence = await _json(File('${root.path}/$file'));
+      for (final raw in evidence['rows'] as List) {
+        final original = Map<String, dynamic>.from(raw as Map);
+        final current = await db.rows(
+          'SELECT request_id,operation,state,signed_body,request_hash,response '
+          'FROM crypto_outbox WHERE partition=? AND request_id=?',
+          [sessions.current!.profile.partition, original['request_id']],
+        );
+        _check(current.length == 1, 'deletion_retained_command_missing');
+        for (final field in original.keys) {
+          _check(
+            current.single[field] == original[field],
+            'deletion_retained_command_changed',
+          );
+        }
+      }
+    }
+    deletion['stage'] = 'complete';
+    await _save(File('${root.path}/delete-household-result.json'), {
+      'existingAccountAndInstallation': true,
+      'actualPreviewAndConfirmation': true,
+      'deletedHouseholdAbsent': true,
+      'otherScopesVisible': 2,
+      'otherBusinessRowsUnchanged': true,
+      'sessionKeysRecoveryUnchanged': true,
+      'verifiedTrustAnchorsMayAdvance': true,
+      'activeQueuesEmpty': true,
+      'currentSyncFailuresEmpty': true,
+      'originalCheckpointAndDeletionEvidenceUnchanged': true,
+      'deleteHttpRequestsThisAttempt': calls['crypto2.scope.delete'] ?? 0,
+      'httpOperations': calls,
+    });
+  }
+
+  Future<void> freshHouseholdDeletion() async {
+    _check(
+      (state['phases'] as Map)['sync_after_delete']['passed'] == true,
+      'existing_deletion_must_be_repaired_first',
+    );
+    final fresh =
+        state.putIfAbsent(
+              'freshHouseholdDeletion',
+              () => <String, dynamic>{
+                'scopeId': crypto.randomId(),
+                'requestId': crypto.randomId(),
+              },
+            )
+            as Map;
+    final scopeId = fresh['scopeId'] as String;
+    fresh['otherRowsBefore'] ??= await retainedOtherScopeRows();
+    fresh['identityMaterialHash'] ??= await identityMaterialHash();
+    fresh['recoveryFileHash'] ??= await cryptoSha256(
+      await recoveryFile.readAsBytes(),
+    );
+    fresh['sessionHash'] ??= await cryptoSha256(
+      await sessions.file.readAsBytes(),
+    );
+    await save();
+    await step('fresh_deletion_create_household', () async {
+      final created = await repo.createScope(
+        'Disposable household deletion verification',
+        kind: SharedScopeKind.household,
+        id: scopeId,
+        requestId: fresh['requestId'] as String,
+      );
+      _check(created == scopeId, 'fresh_deletion_scope_identity_mismatch');
+    });
+    await step('fresh_deletion_create_task', () async {
+      fresh['taskId'] = await repo.createTask(
+        scopeId: scopeId,
+        title: 'Disposable deletion task',
+      );
+    });
+    await step('fresh_deletion_sync_seed', () async {
+      await sync('fresh_delete_seed');
+      final record = await db.rows(
+        'SELECT server_revision,deleted FROM records WHERE partition=? AND id=?',
+        [sessions.current!.profile.partition, fresh['taskId']],
+      );
+      _check(
+        record.length == 1 &&
+            (record.single['server_revision'] as int) > 0 &&
+            record.single['deleted'] == 0,
+        'fresh_deletion_task_not_synchronized',
+      );
+    });
+    await step('fresh_deletion_preview', () async {
+      // Match the user deleting the household currently selected in the app.
+      // UI fallback rendering is covered separately by the widget regression.
+      await repo.selectSpace(scopeId);
+      _check(
+        repo.state.selectedSpaceId == scopeId,
+        'fresh_deletion_target_not_selected',
+      );
+      final preview = await repo.previewScopeDeletion(scopeId);
+      _check(
+        preview['canDelete'] == true &&
+            preview['scopeId'] == scopeId &&
+            preview['graphCount'] == 1,
+        'fresh_deletion_preview_ineligible',
+      );
+      fresh['preview'] = preview;
+    });
+    final beforeDeleteCalls = Map<String, int>.from(calls);
+    final sequenceBefore = repo.lastSyncCompletion?.sequence ?? 0;
+    await step('fresh_deletion_confirm', () async {
+      await repo.deleteScopeContents(
+        Map<String, dynamic>.from(fresh['preview'] as Map),
+      );
+    });
+    _check(
+      repo.lastSyncCompletion != null &&
+          repo.lastSyncCompletion!.sequence > sequenceBefore &&
+          repo.lastSyncCompletion!.error == null &&
+          repo.state.lastError == null &&
+          repo.state.syncFailures.isEmpty &&
+          !repo.state.hasUnresolvedSyncWork,
+      'fresh_deletion_automatic_followup_failed',
+    );
+    for (final removed in [scopeId, state['householdId']]) {
+      final row = await db.rows(
+        'SELECT data FROM scopes WHERE partition=? AND id=?',
+        [sessions.current!.profile.partition, removed],
+      );
+      _check(row.length == 1, 'fresh_deletion_scope_evidence_missing');
+      final scope = jsonDecode(row.single['data'] as String) as Map;
+      _check(
+        scope['deleted'] == true && scope['revoked'] == true,
+        'fresh_deletion_tombstone_missing',
+      );
+    }
+    final visible = repo.state.scopes
+        .where((scope) => !scope.deleted && !scope.revoked)
+        .map((scope) => scope.id)
+        .toSet();
+    _check(
+      visible.length == 2 &&
+          visible.containsAll([
+            state['organizationId'] as String,
+            state['projectId'] as String,
+          ]),
+      'fresh_deletion_visible_scope_set_changed',
+    );
+    _check(
+      jsonEncode(await retainedOtherScopeRows()) ==
+              jsonEncode(fresh['otherRowsBefore']) &&
+          await identityMaterialHash() == fresh['identityMaterialHash'] &&
+          await cryptoSha256(await recoveryFile.readAsBytes()) ==
+              fresh['recoveryFileHash'] &&
+          await cryptoSha256(await sessions.file.readAsBytes()) ==
+              fresh['sessionHash'],
+      'fresh_deletion_changed_unrelated_data_or_identity',
+    );
+    final confirmationCalls = {
+      for (final entry in calls.entries)
+        if (entry.value - (beforeDeleteCalls[entry.key] ?? 0) > 0)
+          entry.key: entry.value - (beforeDeleteCalls[entry.key] ?? 0),
+    };
+    _check(
+      confirmationCalls['crypto2.scope.delete'] == 1,
+      'fresh_deletion_was_not_one_actual_request',
+    );
+    await _save(File('${root.path}/fresh-household-deletion-result.json'), {
+      'sameAccountAndInstallation': true,
+      'newDisposableHouseholdAndSynchronizedTask': true,
+      'actualPreviewThenOneDeleteRequest': true,
+      'targetSelectedBeforeDeletion': true,
+      'automaticFollowupCompletedWithoutError': true,
+      'bothDeletedHouseholdsAbsent': true,
+      'otherScopesVisible': 2,
+      'otherBusinessRowsAndIdentityUnchanged': true,
+      'currentSyncFailuresEmpty': true,
+      'httpOperations': calls,
+      'confirmationHttpOperations': confirmationCalls,
+    });
+  }
+
   Future<void> run(String phase) async {
     switch (phase) {
+      case 'delete_household_preview':
+        await previewHouseholdDeletion();
+      case 'delete_household':
+        await deleteHouseholdAndVerify();
+      case 'sync_after_delete':
+        await syncAfterCommittedDeletion();
+      case 'fresh_household_delete':
+        await freshHouseholdDeletion();
+      case 'delete_household_failed_followup':
+        _check(
+          (state['phases'] as Map)['delete_household']['error'] ==
+              'crypto_scope_deletion_event_inclusion',
+          'actual_deletion_failure_required',
+        );
+        await sync(phase, requireSuccess: false);
       case 'verify_held_checkpoint_probe':
         await verifyHeldCheckpointProbe();
       case 'enroll':

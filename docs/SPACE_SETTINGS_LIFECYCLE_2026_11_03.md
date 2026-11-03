@@ -17,3 +17,9 @@ New file: `test/organizer/ui/space_settings_lifecycle_20261103_test.dart`.
 - Independent source review found no new permission or confirmation weakening.
 
 Evidence: `build/qa/space-settings-lifecycle-20261103/ui-r1.log` and `ui-local-r2.log`. Widgets use synthetic controllers and a real empty in-memory schema for infrastructure; this is not a native phone or HTTP deletion test. No production or phone actions were taken.
+
+## Selection after confirmed deletion
+
+The repository marks the deleted space as both `deleted` and `revoked` while retaining its selected-space identity. The shell does not silently switch the target to another space. Its picker replaces the deleted name with a locked access-unavailable label; settings remove the deleted space’s members and actions and offer remaining spaces. Selecting a remaining space restores its normal settings.
+
+One additional new shell test, `deleted_space_selection_20261103_test.dart`, passed on its first functional run. It presses the new settings delete button, confirms the counted preview, receives the repository-shaped deleted/revoked state from its controller, checks that the old actions and members disappear and the locked header is shown, then selects a surviving household successfully. This is synthetic UI state transition coverage, not another HTTP deletion run. Analyze finished with no issues; preliminary static errors in the test fixture were corrected before its first test run. Existing revoked/missing-picker and revoked-settings tests were inspected but not rerun. Evidence: `build/qa/space-settings-lifecycle-20261103/selection-r1.log`.

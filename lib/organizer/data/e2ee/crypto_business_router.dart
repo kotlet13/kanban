@@ -1212,11 +1212,19 @@ class CryptoBusinessSession {
     for (final scope in result) {
       await _finishScopeForRead(scope, discovered, descriptors);
     }
-    final cached = await db.rows('SELECT id FROM scopes WHERE partition=?', [
-      p,
-    ]);
+    final cached = await db.rows(
+      'SELECT id,data FROM scopes WHERE partition=?',
+      [p],
+    );
     final omitted =
         cached
+            .where((row) {
+              final local = jsonDecode(row['data'] as String) as Map;
+              // Already confirmed deletion is terminal. Keep its local
+              // evidence, but do not fetch the same witness on every refresh.
+              // A revocation alone is not terminal and can be restored.
+              return local['deleted'] != true || local['revoked'] != true;
+            })
             .map((row) => row['id'])
             .whereType<String>()
             .where(
@@ -1262,6 +1270,38 @@ class CryptoBusinessSession {
       if (changes != null) {
         revoked.addAll(changes.revoked);
         deleted.addAll(changes.deleted);
+      }
+      // Encrypted deletion keeps a signed witness rather than a legacy
+      // revocation row. Catalog omission alone is never deletion authority:
+      // verify the retained leaf, anchored membership and account event before
+      // withdrawing a cached scope. This also repairs a lost/post-commit reply
+      // without issuing a second deletion or discarding its original journal.
+      for (final scope in requested) {
+        if (revoked.contains(scope) || deleted.contains(scope)) continue;
+        try {
+          await CryptoBusinessDeletion(this).retainedStatus(scope);
+          if (!account.directory.isCurrent()) {
+            throw const CryptoAuthorityPending('crypto_stale_identity');
+          }
+          revoked.add(scope);
+          deleted.add(scope);
+        } on CollaborationException catch (error) {
+          if (const {
+            'device_revoked',
+            'auth_required',
+            'session_expired',
+            'invalid_credentials',
+            'server_identity_changed',
+          }.contains(error.code)) {
+            rethrow;
+          }
+          // Missing/denied/transient evidence leaves the cached scope pending.
+        } catch (_) {
+          // A malformed, unanchored or invalidly signed witness cannot delete.
+        }
+        if (!account.directory.isCurrent()) {
+          throw const CryptoAuthorityPending('crypto_stale_identity');
+        }
       }
     }
     return {
