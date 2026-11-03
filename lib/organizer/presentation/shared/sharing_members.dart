@@ -13,7 +13,6 @@ import '../organizer_widgets.dart';
 import 'sharing_errors.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
-import 'scope_lifecycle_menu.dart';
 import '../../state/account_crypto_provider.dart';
 import '../../state/account_summary_refresh_provider.dart';
 import '../../data/e2ee/account_crypto_v2_workflow.dart';
@@ -459,7 +458,6 @@ class _SharingMembersPageState extends ConsumerState<SharingMembersPage>
           children: [
             OrganizerHeading(
               title: l.sharingMembers,
-              titleAccessory: ScopeLifecycleMenu(scope: widget.scope),
               subtitle: widget.scope.name,
               action: widget.scope.canManage && !widget.scope.archived
                   ? FilledButton.icon(

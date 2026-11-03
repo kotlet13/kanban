@@ -15,6 +15,7 @@ import 'organization_access_settings.dart';
 import 'project_sharing_settings.dart';
 import 'sharing_forms.dart';
 import 'sharing_session_boundary.dart';
+import 'scope_lifecycle_menu.dart';
 import '../../data/collaboration_repository.dart' show newSharedId;
 
 /// The only destination that displays shared-space members and invitations.
@@ -261,6 +262,7 @@ class SpaceSettingsPage extends ConsumerWidget {
                       scope: selected,
                       onProjectSelected: (id) => onScopeSelected(id),
                     ),
+                  ScopeLifecycleActions(scope: selected),
                 ] else ...[
                   Text(
                     selectedScopeId == null

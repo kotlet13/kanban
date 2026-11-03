@@ -4349,6 +4349,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scopeLifecycleMenu => 'Space settings';
 
   @override
+  String get spaceArchiveAction => 'Archive space';
+
+  @override
+  String get spaceRestoreAction => 'Restore space';
+
+  @override
+  String get spaceDeleteAction => 'Permanently delete space';
+
+  @override
   String get scopeDeleteTitle => 'Delete permanently';
 
   @override

@@ -7722,6 +7722,24 @@ abstract class AppLocalizations {
   /// **'Space settings'**
   String get scopeLifecycleMenu;
 
+  /// No description provided for @spaceArchiveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive space'**
+  String get spaceArchiveAction;
+
+  /// No description provided for @spaceRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore space'**
+  String get spaceRestoreAction;
+
+  /// No description provided for @spaceDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete space'**
+  String get spaceDeleteAction;
+
   /// No description provided for @scopeDeleteTitle.
   ///
   /// In en, this message translates to:

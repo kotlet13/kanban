@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban/organizer/presentation/shared/scope_lifecycle_menu.dart';
-import 'package:kanban/organizer/presentation/shared/sharing_workspace.dart';
 import 'package:kanban/organizer/state/collaboration_provider.dart';
 
 import 'onboarding_ui_test.dart' show pumpPanel;
@@ -22,9 +21,10 @@ class LifecycleUiController extends SharingUiController {
 
 void main() {
   for (final width in [320.0, 390.0, 1280.0]) {
-    testWidgets('task heading has contextual archive and counted deletion at $width', (tester) async {
-      final scope = sharingScope(), controller = LifecycleUiController(sharingScope());
-      await pumpPanel(tester, controller, SharingWorkspace(view: SharingView.tasks, selectedScopeId: scope.id, onScopeSelected: (_) {}, onConnect: () {}), width: width);
+    testWidgets('project context has archive and counted deletion at $width', (tester) async {
+      final scope = SharedScope.fromJson({...sharingScope().toJson(), 'kind': 'project'});
+      final controller = LifecycleUiController(scope);
+      await pumpPanel(tester, controller, ScopeLifecycleMenu(scope: scope), width: width);
       expect(find.text('Arhiviraj'), findsNothing);
       final menu = find.byKey(ValueKey('scope-lifecycle-${scope.id}'));
       expect(menu, findsOneWidget);

@@ -72,7 +72,7 @@ void main() {
             );
             expect(
               find.byKey(ValueKey('scope-lifecycle-${scope.id}')),
-              view == SharingView.agenda ? findsNothing : findsOneWidget,
+              findsNothing,
             );
             if (view == SharingView.agenda) {
               expect(

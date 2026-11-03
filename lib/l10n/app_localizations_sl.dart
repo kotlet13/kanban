@@ -4354,6 +4354,15 @@ class AppLocalizationsSl extends AppLocalizations {
   String get scopeLifecycleMenu => 'Nastavitve prostora';
 
   @override
+  String get spaceArchiveAction => 'Arhiviraj prostor';
+
+  @override
+  String get spaceRestoreAction => 'Ponovno aktiviraj prostor';
+
+  @override
+  String get spaceDeleteAction => 'Trajno izbriši prostor';
+
+  @override
   String get scopeDeleteTitle => 'Trajno izbriši';
 
   @override

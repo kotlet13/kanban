@@ -248,13 +248,7 @@ class SharingWorkspace extends ConsumerWidget {
                 !scope.revoked &&
                 !scope.deleted) {
               return SharedFinanceWorkspace(
-                titleAccessory: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    syncStatus,
-                    ScopeLifecycleMenu(scope: scope),
-                  ],
-                ),
+                titleAccessory: syncStatus,
                 scope: scope,
                 state: state,
               );
@@ -311,7 +305,7 @@ class SharingWorkspace extends ConsumerWidget {
                   organization: scope,
                   onProject: onScopeSelected,
                   onMembers: (id) => onMembers?.call(id),
-                  titleAccessory: ScopeLifecycleMenu(scope: scope),
+                  titleAccessory: syncStatus,
                 );
               }
               final personal = OrganizerSnapshot();
@@ -322,9 +316,7 @@ class SharingWorkspace extends ConsumerWidget {
               return AllSpacesPage(
                 onOverviewArea: onOverviewArea,
                 key: ValueKey('organization-${scope.id}-$view'),
-                titleAccessory: view == SharingView.agenda
-                    ? syncStatus
-                    : ScopeLifecycleMenu(scope: scope),
+                titleAccessory: syncStatus,
                 area: switch (view) {
                   SharingView.agenda => AllSpacesArea.today,
                   SharingView.timeline => AllSpacesArea.calendar,
@@ -379,15 +371,7 @@ class SharingWorkspace extends ConsumerWidget {
             final projectDetail =
                 view == SharingView.projects &&
                 data.projects.any((p) => p.id == effectiveProjectId);
-            final status = view == SharingView.agenda || projectDetail
-                ? syncStatus
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      syncStatus,
-                      ScopeLifecycleMenu(scope: scope),
-                    ],
-                  );
+            final status = syncStatus;
             final householdProjects =
                 scope.kind == SharedScopeKind.household &&
                 scope.accessPolicyVersion == 3 &&

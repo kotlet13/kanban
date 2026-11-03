@@ -55,7 +55,7 @@ class LocalSpaceSettings extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OrganizerHeading(title: l.spaceSettingsTitle, titleAccessory: LocalSpaceLifecycleMenu(space: space)),
+        OrganizerHeading(title: l.spaceSettingsTitle),
         ListTile(
           key: ValueKey('local-space-settings-${space.id}'),
           contentPadding: EdgeInsets.zero,
@@ -90,6 +90,7 @@ class LocalSpaceSettings extends ConsumerWidget {
             label: Text(l.localSpaceLinkAction),
           ),
         ),
+        LocalSpaceLifecycleActions(space: space),
       ],
     );
   }

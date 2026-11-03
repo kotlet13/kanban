@@ -7,6 +7,7 @@ import '../../state/organizer_provider.dart';
 import '../../domain/organizer_models.dart';
 import '../personal_workspace_boundary.dart';
 import 'sharing_errors.dart';
+import 'space_lifecycle_buttons.dart';
 
 Future<bool> showLocalSpaceDeletionDialog(
   BuildContext context,
@@ -102,51 +103,36 @@ Future<bool> showLocalSpaceDeletionDialog(
   }
 }
 
-class LocalSpaceLifecycleMenu extends ConsumerWidget {
-  const LocalSpaceLifecycleMenu({super.key, required this.space});
+class LocalSpaceLifecycleActions extends ConsumerWidget {
+  const LocalSpaceLifecycleActions({super.key, required this.space});
   final LocalSpace space;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (space.id == 'local' || space.binding != null) {
+    final spaces = ref.watch(localSpacesProvider).valueOrNull;
+    final current = spaces?.spaces
+        .where((item) => item.id == space.id)
+        .firstOrNull;
+    if (current == null || current.id == 'local' || current.binding != null) {
       return const SizedBox.shrink();
     }
-    final l = context.l10n;
-    return PopupMenuButton<String>(
-      key: ValueKey('local-space-lifecycle-${space.id}'),
-      tooltip: '${l.scopeLifecycleMenu} · ${space.name}',
-      icon: const Icon(Icons.more_horiz),
-      onSelected: (action) async {
-        if (action == 'delete') {
-          await showLocalSpaceDeletionDialog(context, ref, space);
-        } else {
-          try {
-            await ref
-                .read(localSpacesProvider.notifier)
-                .archiveSpace(space.id, archived: !space.archived);
-          } catch (error) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(sharingErrorMessage(context, error))),
-              );
-            }
+    return SpaceLifecycleButtons(
+      actionKey: 'local-space-settings-${current.id}',
+      archived: current.archived,
+      onArchive: () async {
+        try {
+          await ref
+              .read(localSpacesProvider.notifier)
+              .archiveSpace(current.id, archived: !current.archived);
+        } catch (error) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(sharingErrorMessage(context, error))),
+            );
           }
         }
       },
-      itemBuilder: (_) => [
-        PopupMenuItem<String>(enabled: false, child: Text(space.name)),
-        PopupMenuItem<String>(
-          value: 'archive',
-          child: Text(space.archived ? l.peopleRestore : l.peopleArchive),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Text(
-            l.delete,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        ),
-      ],
+      onDelete: () => showLocalSpaceDeletionDialog(context, ref, current),
     );
   }
 }

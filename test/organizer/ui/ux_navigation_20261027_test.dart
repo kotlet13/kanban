@@ -558,7 +558,7 @@ void main() {
   });
 
   testWidgets(
-    'shopping overview retains space actions while list detail removes them and Back restores overview',
+    'shopping overview leaves space actions in settings while list context and Back remain',
     (tester) async {
       final scope = parent(SharedScopeKind.household);
       final state = stateFor(scope, twoLists: true);
@@ -581,7 +581,7 @@ void main() {
         ],
       );
       final spaceMenu = find.byKey(ValueKey('scope-lifecycle-${scope.id}'));
-      expect(spaceMenu, findsOneWidget);
+      expect(spaceMenu, findsNothing);
       await tester.tap(find.text('One list'));
       await tester.pumpAndSettle();
       expect(spaceMenu, findsNothing);
@@ -592,7 +592,7 @@ void main() {
       );
       await tester.tap(find.widgetWithText(TextButton, 'Shopping'));
       await tester.pumpAndSettle();
-      expect(spaceMenu, findsOneWidget);
+      expect(spaceMenu, findsNothing);
       expect(find.text('One list'), findsOneWidget);
       expect(find.text('Other list'), findsOneWidget);
       expect(tester.takeException(), isNull);

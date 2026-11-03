@@ -6,6 +6,7 @@ import '../../state/collaboration_provider.dart';
 import 'sharing_errors.dart';
 import 'content_actions_menu.dart';
 import 'sharing_session_boundary.dart';
+import 'space_lifecycle_buttons.dart';
 
 /// Named, counted destructive preview. Fetching it never deletes or archives.
 Future<bool> showScopeDeletionDialog(
@@ -198,6 +199,31 @@ List<ContentMenuAction> scopeLifecycleContentActions(
   ];
 }
 
+/// Full-space actions are visible at the bottom of the settings page.
+class ScopeLifecycleActions extends ConsumerWidget {
+  const ScopeLifecycleActions({super.key, required this.scope});
+  final SharedScope scope;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(collaborationProvider);
+    final options = _lifecycleOptions(ref, scope);
+    if (options == null) return const SizedBox.shrink();
+    final current = options.scope;
+    return SpaceLifecycleButtons(
+      actionKey: 'space-settings-${current.id}',
+      archived: current.archived,
+      onArchive: options.archive
+          ? () => _selectLifecycle(context, ref, current, 'archive')
+          : null,
+      onDelete: options.delete
+          ? () => _selectLifecycle(context, ref, current, 'delete')
+          : null,
+    );
+  }
+}
+
+/// Kept for project rows; space/module headings use the settings destination.
 class ScopeLifecycleMenu extends ConsumerWidget {
   const ScopeLifecycleMenu({super.key, required this.scope});
   final SharedScope scope;
