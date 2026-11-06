@@ -299,6 +299,7 @@ class ReminderSnoozeStore {
             scheduledAt: until,
             target: plan.target,
             reason: plan.reason,
+            isSnoozed: true,
           );
         }
       }

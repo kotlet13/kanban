@@ -2408,6 +2408,30 @@ abstract class AppLocalizations {
   /// **'This reminder is only for your account. The server saves it in your inbox; phone or email delivery depends on your settings and connection.'**
   String get remoteReminderDescription;
 
+  /// No description provided for @remoteReminderRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder recipients'**
+  String get remoteReminderRecipients;
+
+  /// No description provided for @remoteReminderRecipientsSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Only you'**
+  String get remoteReminderRecipientsSelf;
+
+  /// No description provided for @remoteReminderRecipientsTaskAssignees.
+  ///
+  /// In en, this message translates to:
+  /// **'You and assignees at reminder time'**
+  String get remoteReminderRecipientsTaskAssignees;
+
+  /// No description provided for @remoteReminderTaskRecipientsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'You and whoever is assigned to the task at reminder time receive the reminder. If nobody is assigned, only you receive it. Phone or email delivery depends on each recipient’s settings.'**
+  String get remoteReminderTaskRecipientsDescription;
+
   /// No description provided for @remoteReminderDate.
   ///
   /// In en, this message translates to:

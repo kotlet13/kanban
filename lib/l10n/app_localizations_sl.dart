@@ -1310,6 +1310,20 @@ class AppLocalizationsSl extends AppLocalizations {
       'Opomnik je namenjen samo tvojemu računu. Strežnik ga shrani v center obvestil; dostava na telefon ali e-pošto je odvisna od tvojih nastavitev in povezave.';
 
   @override
+  String get remoteReminderRecipients => 'Prejemniki opomnika';
+
+  @override
+  String get remoteReminderRecipientsSelf => 'Samo ti';
+
+  @override
+  String get remoteReminderRecipientsTaskAssignees =>
+      'Ti in zadolženi ob času opomnika';
+
+  @override
+  String get remoteReminderTaskRecipientsDescription =>
+      'Opomnik prejmeš ti in tisti, ki bodo ob času opomnika zadolženi za opravilo. Če zadolženih ni, ga prejmeš samo ti. Dostava na telefon ali e-pošto je odvisna od nastavitev vsakega prejemnika.';
+
+  @override
   String get remoteReminderDate => 'Datum opomnika';
 
   @override

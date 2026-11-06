@@ -18,6 +18,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _moderationAccepted = null;
     _sharedContentPolicy = null;
     _inboxSupported = false;
+    _taskReminderRecipientsSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
     _organizationFinanceSupported = false;
@@ -109,6 +110,8 @@ extension CollaborationAccountActions on CollaborationRepository {
       _sharedContentPolicy = null;
     }
     _inboxSupported = features['inbox'] == true;
+    _taskReminderRecipientsSupported =
+        _inboxSupported && features['taskReminderRecipients'] == true;
     _accountDeletionSupported = features['accountDeletion'] == true;
     _financeSupported = features['finance'] == true;
     _externalPushSupported = features['externalPush'] == true;
@@ -300,6 +303,7 @@ extension CollaborationAccountActions on CollaborationRepository {
     _moderationAccepted = null;
     _sharedContentPolicy = null;
     _inboxSupported = false;
+    _taskReminderRecipientsSupported = false;
     _accountDeletionSupported = false;
     _financeSupported = false;
     _organizationFinanceSupported = false;

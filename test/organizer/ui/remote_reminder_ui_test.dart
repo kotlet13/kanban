@@ -15,6 +15,7 @@ SharedScheduledReminder reminder({
   String syncState = 'synced',
   String state = 'pending',
   DateTime? remindAt,
+  String? recipientPolicy,
 }) => SharedScheduledReminder(
   id: reminderId,
   scopeId: sharingScopeId,
@@ -24,6 +25,7 @@ SharedScheduledReminder reminder({
   revision: 4,
   state: state,
   syncState: syncState,
+  recipientPolicy: recipientPolicy,
 );
 CollaborationState state({
   List<SharedScheduledReminder> reminders = const [],
@@ -31,10 +33,12 @@ CollaborationState state({
   bool revoked = false,
   SharedRole role = SharedRole.owner,
   int recordContractVersion = 1,
+  bool taskReminderRecipientsSupported = false,
 }) => CollaborationState(
   session: sharingSession(),
   recordContractVersion: recordContractVersion,
   inboxSupported: true,
+  taskReminderRecipientsSupported: taskReminderRecipientsSupported,
   selectedSpaceId: sharingScopeId,
   scopes: [sharingScope(revoked: revoked, role: role)],
   data: {
@@ -58,7 +62,7 @@ CollaborationState state({
 
 class ReminderController extends SharingUiController {
   ReminderController(CollaborationState initial) : super(initial: initial);
-  String? savedId, partition;
+  String? savedId, partition, savedRecipientPolicy;
   DateTime? savedAt;
   int? savedRevision, savedOffset;
   SharedScheduledReminder? cancelled;
@@ -71,6 +75,7 @@ class ReminderController extends SharingUiController {
     required String targetId,
     required DateTime remindAt,
     int? offsetMinutes,
+    String? recipientPolicy,
     int expectedRevision = 0,
     String? expectedPartition,
   }) async {
@@ -86,6 +91,7 @@ class ReminderController extends SharingUiController {
     savedId = id;
     savedAt = remindAt;
     savedOffset = offsetMinutes;
+    savedRecipientPolicy = recipientPolicy;
     savedRevision = expectedRevision;
     partition = expectedPartition;
     calls.add('put');

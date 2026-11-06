@@ -155,9 +155,15 @@ OrganizerInboxProjection projectOrganizerInbox({
     };
     if (!active) return false;
     final plan = sharedPlan(entry);
-    // A future effective alarm (including a device snooze) hides older alarms.
-    // A delivered server alarm is itself an inbox event and needs no local plan.
-    if (plan != null) return !plan.scheduledAt.isAfter(now);
+    // Only an explicit device snooze delays a delivered server reminder. An
+    // unrelated automatic task deadline may still be in the future.
+    if (plan?.isSnoozed == true) return !plan!.scheduledAt.isAfter(now);
+    // Another member's reminder is independent of this account's own future
+    // or cancelled schedule for the same task.
+    if (entry.actorAccountId != null &&
+        entry.actorAccountId != shared.session!.accountId) {
+      return true;
+    }
     final schedules = shared.scheduledReminders.where(
       (r) =>
           r.scopeId == entry.scopeId &&

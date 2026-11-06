@@ -494,6 +494,7 @@ class CollaborationRepository {
   int? _moderationVerifiedEpoch;
   SharedContentPolicy? _sharedContentPolicy;
   bool _inboxSupported = false;
+  bool _taskReminderRecipientsSupported = false;
   bool _emailInvitationsSupported = false;
   bool _scopedInvitationsSupported = false;
   bool _usernameInvitationsSupported = false;
@@ -1042,6 +1043,7 @@ class CollaborationRepository {
         scopeDeletionSupported: _scopeDeletionSupported,
         scopeArchivingSupported: _scopeArchivingSupported,
         inboxSupported: _inboxSupported,
+        taskReminderRecipientsSupported: _taskReminderRecipientsSupported,
         financeSupported: _financeSupported,
         organizationFinanceSupported: _organizationFinanceSupported,
         financeAccountChoices: financeAccountChoices,

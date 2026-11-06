@@ -295,6 +295,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
     required String targetId,
     required DateTime remindAt,
     int? offsetMinutes,
+    String? recipientPolicy,
     int expectedRevision = 0,
     String? expectedPartition,
   }) async {
@@ -305,6 +306,14 @@ extension CollaborationNotificationActions on CollaborationRepository {
         expectedRevision < 0 ||
         !remindAt.toUtc().isAfter(clock().toUtc())) {
       throw const CollaborationException('validation_error');
+    }
+    if (recipientPolicy != null &&
+        (recipientPolicy != taskReminderRecipientPolicy ||
+            targetType != 'task')) {
+      throw const CollaborationException('validation_error');
+    }
+    if (recipientPolicy != null && !_taskReminderRecipientsSupported) {
+      throw const CollaborationException('client_upgrade_required');
     }
     if (offsetMinutes != null &&
         (_recordContractVersion < 6 ||
@@ -333,7 +342,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         throw const CollaborationException('finance_forbidden');
       }
       final source = await database.rows(
-        'SELECT type,payload,deleted FROM $table WHERE partition=? AND scope_id=? AND id=?',
+        'SELECT * FROM $table WHERE partition=? AND scope_id=? AND id=?',
         [session.profile.partition, scopeId, targetId],
       );
       if (source.isEmpty ||
@@ -347,6 +356,17 @@ extension CollaborationNotificationActions on CollaborationRepository {
               ) ==
               null) {
         throw const CollaborationException('reminder_target_unavailable');
+      }
+      if (recipientPolicy != null) {
+        await _requireRecordAuthor(
+          session.profile.partition,
+          scopeId,
+          targetType,
+          targetId,
+          old: source.single,
+          payload: CollaborationRepository._map(source.single['payload']),
+          deleted: false,
+        );
       }
       if (offsetMinutes != null) {
         final deadline = CollaborationRepository._map(
@@ -395,6 +415,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         state: 'pending',
         syncState: 'queued',
         offsetMinutes: offsetMinutes,
+        recipientPolicy: recipientPolicy,
       );
       await database.execute('DELETE FROM local_meta WHERE name=?', [
         'reminder_cancelled:${session.profile.partition}:$reminderId',
@@ -414,6 +435,7 @@ extension CollaborationNotificationActions on CollaborationRepository {
         'targetType': targetType,
         'targetId': targetId,
         'remindAt': remindAt.toUtc().toIso8601String(),
+        if (recipientPolicy != null) 'recipientPolicy': recipientPolicy,
         if (offsetMinutes != null) ...{
           'scheduleMode': 'deadline',
           'offsetMinutes': offsetMinutes,

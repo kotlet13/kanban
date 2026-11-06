@@ -859,6 +859,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
     required String targetId,
     required DateTime remindAt,
     int? offsetMinutes,
+    String? recipientPolicy,
     int expectedRevision = 0,
     String? expectedPartition,
   }) => _edit(
@@ -869,6 +870,7 @@ class CollaborationController extends AsyncNotifier<CollaborationState> {
       targetId: targetId,
       remindAt: remindAt,
       offsetMinutes: offsetMinutes,
+      recipientPolicy: recipientPolicy,
       expectedRevision: expectedRevision,
       expectedPartition: expectedPartition,
     ),

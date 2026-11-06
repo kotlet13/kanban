@@ -43,6 +43,7 @@ class CryptoBusinessNotifications {
       ..remove('requestId')
       ..remove('recordContractVersion')
       ..remove('financeContractVersion');
+    if (operation == 'reminders.put') _recipientPolicy(payload);
     final write = const {
       'inbox.read',
       'inbox.preferences.set',
@@ -580,6 +581,15 @@ class CryptoBusinessNotifications {
   bool _sameIdentity(Object? a, Object? b) =>
       CryptoSchedulingUse(context).same(a, b);
 
+  String? _recipientPolicy(Map value) {
+    if (!value.containsKey('recipientPolicy')) return null;
+    if (value['recipientPolicy'] != taskReminderRecipientPolicy ||
+        value['targetType'] != 'task') {
+      throw const FormatException('crypto_reminder_recipient_policy');
+    }
+    return taskReminderRecipientPolicy;
+  }
+
   Future<Map<String, dynamic>> _migratedReminder(
     Map<String, dynamic> wire,
     Map<String, dynamic> currentProof,
@@ -733,6 +743,19 @@ class CryptoBusinessNotifications {
     final command =
         CryptoJson.decode(cryptoBase64(proof['commandBase64'])) as Map;
     final putCandidate = wire['putAuthorization'];
+    // Routing state cannot expand or drop the audience of the original signed
+    // put, including cancelled, delivered, migrated and relocated outcomes.
+    // These proofs are authenticated by the ordinary paths below.
+    if (putCandidate is Map) {
+      final put = CryptoSchedulingUse(context).body(putCandidate);
+      final original =
+          put['operation'] == 'crypto2.migration.notificationTransform'
+          ? put['canonical'] as Map
+          : put['payload'] as Map;
+      if (_recipientPolicy(wire) != _recipientPolicy(original)) {
+        throw const FormatException('crypto_reminder_recipient_substitution');
+      }
+    }
     if (historicalAck &&
         command['operation'] == 'crypto2.reminders.cancel' &&
         putCandidate is Map) {
@@ -823,6 +846,10 @@ class CryptoBusinessNotifications {
       throw const FormatException('crypto_reminder_identity_substitution');
     }
     final intent = command['payload'] as Map;
+    if (command['operation'] == 'crypto2.reminders.put' &&
+        _recipientPolicy(intent) != _recipientPolicy(original)) {
+      throw const FormatException('crypto_reminder_recipient_substitution');
+    }
     if (wire['scopeId'] != intent['scopeId'] ||
         wire['id'] != intent['id'] ||
         wire['revision'] is! int ||

@@ -6,6 +6,7 @@ namespace Kanboard\Plugin\FamilyHub\Model;
 class NativeCryptoNotificationV2 extends NativeDatabase
 {
     protected $cryptoAccess = true;
+    public const TASK_RECIPIENT_POLICY = 'schedulerAndTaskAssignees';
 
     /** Notification routing only; membership is never a business record type. */
     public function routingDomain($type)
@@ -122,7 +123,15 @@ class NativeCryptoNotificationV2 extends NativeDatabase
 
     public function changed($record, $previous)
     {
+        if ($record['type'] === 'task' && $previous) {
+            // Existing clients reconcile removals through visibility revision,
+            // even when the obsolete shared notice is behind their cursor.
+            $this->invalidateSharedReminderInbox($record['scopeId'], $record['id']);
+        }
         if ($record['type'] === 'project' && ($record['deleted'] || $record['metadata']['projectState']['archived'])) {
+            // A project closure can retire descendants already behind inbox
+            // cursors. Reconcile only accounts with new-policy notices here.
+            $this->invalidateSharedReminderInbox($record['scopeId'], null);
             foreach ($this->reminderRows("scope_id=? AND state='pending'", [$record['scopeId']]) as $intent) {
                 $target = $this->one('SELECT metadata FROM familyhub_crypto_records WHERE scope_id=? AND id=?', [$record['scopeId'],$intent['target_id']]);
                 if ($target && $this->referencesTarget(['scopeId' => $record['scopeId'],'metadata' => json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR)], $record['id'], ['project'])) {
@@ -183,7 +192,7 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             return $this->inboxWrite($op, $p, $actor);
         }
         $cancel = $op === 'crypto2.reminders.cancel';
-        $this->fields($p, $cancel ? ['id','scopeId','expectedRevision'] : ['id','scopeId','targetType','targetId','targetIdentity','remindAt','expectedRevision'], $cancel ? ['useProof','accountEventProof'] : ['scheduleMode','offsetMinutes','useProof','accountEventProof','targetDueAtEpoch','targetRevision','targetRecordProofHash']);
+        $this->fields($p, $cancel ? ['id','scopeId','expectedRevision'] : ['id','scopeId','targetType','targetId','targetIdentity','remindAt','expectedRevision'], $cancel ? ['useProof','accountEventProof'] : ['scheduleMode','offsetMinutes','useProof','accountEventProof','targetDueAtEpoch','targetRevision','targetRecordProofHash','recipientPolicy']);
         $sid = $this->uuid($p['scopeId']);
         $id = $this->uuid($p['id']);
         if (!$cancel) {
@@ -200,12 +209,26 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         if ($row && ($row['scope_id'] !== $sid || $row['account_id'] !== $actor['user']['account_id'])) {
             throw new NativeError('permission_revoked', 403);
         }
+        if ($cancel && $row && $this->sharedTaskReminder($row)) {
+            // Serialize the owner cancellation with peer sends, whose worker
+            // holds this same lifecycle mutex. Cancellation remains an escape
+            // even when the scope is no longer eligible for delivery.
+            $this->lockDeliveryScope($sid);
+            $row = $this->one('SELECT * FROM familyhub_crypto_reminders_v2 WHERE id=?', [$id]);
+            if (!$row) { throw new NativeError('reminder_missing', 404); }
+            if ($row['scope_id'] !== $sid || $row['account_id'] !== $actor['user']['account_id']) {
+                throw new NativeError('permission_revoked', 403);
+            }
+        }
         if (!is_int($p['expectedRevision']) || $p['expectedRevision'] !== (int)($row['revision'] ?? 0)) {
             throw new NativeError('reminder_conflict', 409);
         }
         if ($cancel) {
             if (!$row) {
                 throw new NativeError('reminder_missing', 404);
+            }
+            if ($this->sharedTaskReminder($row)) {
+                $this->invalidateSharedReminderInbox($sid, $row['target_id'], $this->sharedReminderEventKey($row));
             }
             $uses = new NativeCryptoSchedulingUseV2($this->container, $this->bearer, $this->ip);
             $use = $uses->forReminder($actor['user']['account_id'], $id);
@@ -219,6 +242,9 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             return ['reminder' => $this->wireReminder($this->one('SELECT * FROM familyhub_crypto_reminders_v2 WHERE id=?', [$id]))];
         }
         if (!in_array($p['targetType'], ['task','event','financeEntry','personalFinanceEntry'], true)) {
+            throw new NativeError('validation_error');
+        }
+        if (array_key_exists('recipientPolicy', $p) && ($p['targetType'] !== 'task' || $p['recipientPolicy'] !== self::TASK_RECIPIENT_POLICY)) {
             throw new NativeError('validation_error');
         }
         if (!is_array($p['targetIdentity'])) {
@@ -249,6 +275,9 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         }
         if ($row && ($row['target_id'] !== $targetId || $row['target_type'] !== $p['targetType'])) {
             throw new NativeError('reminder_target_immutable', 409);
+        }
+        if (isset($p['recipientPolicy'])) {
+            $this->assertTaskReminderEdit($target, $actor);
         }
         (new NativeRecordPolicy($this->container))->date($p['remindAt']);
         $at = (new \DateTimeImmutable($p['remindAt']))->getTimestamp();
@@ -292,6 +321,9 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         }
         $values = [$sid,$actor['user']['account_id'],$p['targetType'],$targetId,$domain,(int)$target['revision'],$state['scheduleRevision'],gmdate('Y-m-d\TH:i:s\Z', $at),$at,$p['expectedRevision'] + 1,'pending',$mode,$offset,json_encode($proof, JSON_THROW_ON_ERROR)];
         if ($row) {
+            if ($this->sharedTaskReminder($row)) {
+                $this->invalidateSharedReminderInbox($sid, $row['target_id'], $this->sharedReminderEventKey($row));
+            }
             $this->change('UPDATE familyhub_crypto_reminders_v2 SET scope_id=?,account_id=?,target_type=?,target_id=?,domain=?,target_revision=?,schedule_revision=?,remind_at=?,remind_epoch=?,revision=?,state=?,schedule_mode=?,offset_minutes=?,authorization=?,put_authorization=? WHERE id=?', array_merge($values, [json_encode($proof, JSON_THROW_ON_ERROR),$id]));
         } else {
             $count = $this->one("SELECT COUNT(*) AS n FROM familyhub_crypto_reminders_v2 WHERE account_id=? AND state='pending'", [$actor['user']['account_id']]);
@@ -331,6 +363,96 @@ class NativeCryptoNotificationV2 extends NativeDatabase
             }
             throw $error;
         }
+    }
+
+    /** Policy is part of the original signed put, including after cancellation.
+     * An absent field is permanently the historical own-recipient contract. */
+    private function sharedTaskReminder($row)
+    {
+        if ($row['target_type'] !== 'task' || $row['put_authorization'] === null) { return false; }
+        [$put] = NativeCryptoCodec::decode(json_decode($row['put_authorization'], true, 34, JSON_THROW_ON_ERROR));
+        return ($put['payload']['recipientPolicy'] ?? null) === self::TASK_RECIPIENT_POLICY;
+    }
+
+    /** Reuse the existing exact task edit authority, without staging any blob.
+     * Active record policy includes creator/owner/current-assignee exceptions;
+     * legacy scopes retain their ordinary scope write restriction. */
+    private function assertTaskReminderEdit($target, $actor)
+    {
+        $scope = $this->scope($target['scope_id'], $actor['user']['id']);
+        $scopes = new NativeCryptoScopeV2($this->container, $this->bearer, $this->ip);
+        $head = $scopes->current($scope['id']);
+        if (!$head) { throw new NativeError('crypto_scope_head_missing', 404); }
+        $scopes->assertCurrentMembership($scope, $head);
+        $policy = new NativeCryptoRecordPolicyV1($this->container, $this->bearer, $this->ip);
+        if (!$policy->active($scope['id'])) {
+            $this->scope($scope['id'], $actor['user']['id'], true);
+            return;
+        }
+        $authorization = json_decode($target['authorization'], true, 34, JSON_THROW_ON_ERROR);
+        $policy->authorizeBlobTarget($scope, ['type' => 'task', 'wireId' => $target['id'],
+            'currentRecordProofHash' => NativeCryptoSchedulingUseV2::proofHash($authorization['recordProof'])], $actor, $head);
+    }
+
+    /** Losing broadcast authority suppresses peers, not the still-valid own reminder. */
+    private function taskReminderPeersAllowed($row, $target)
+    {
+        $user = $this->one('SELECT a.account_id,u.* FROM familyhub_accounts a JOIN users u ON u.id=a.user_id WHERE a.account_id=? AND u.is_active=1', [$row['account_id']]);
+        if (!$user) { return false; }
+        try {
+            $this->assertTaskReminderEdit($target, ['user' => $user]);
+            return true;
+        } catch (NativeError $error) {
+            if (in_array($error->status, [403,404,409], true)) { return false; }
+            throw $error;
+        }
+    }
+
+    private function sharedReminderEventKey($row)
+    {
+        // At most 60 ASCII bytes (UUID + signed BIGINT), existing column is 64.
+        return 'r2a:'.$row['id'].':'.$row['revision'];
+    }
+
+    private function invalidateSharedReminderInbox($sid, $target, $eventKey = null)
+    {
+        $after = '';
+        do {
+            $args = [$sid,$after];
+            $where = "scope_id=? AND recipient_account_id>? AND kind='crypto2.reminder.due' AND event_key LIKE 'r2a:%'";
+            if ($target !== null) { $where .= ' AND target_id=?'; $args[] = $target; }
+            if ($eventKey !== null) { $where .= ' AND event_key=?'; $args[] = $eventKey; }
+            $accounts = $this->many('SELECT DISTINCT recipient_account_id FROM familyhub_inbox WHERE '.$where.' ORDER BY recipient_account_id LIMIT 100', $args);
+            if ($accounts) {
+                $ids = array_column($accounts, 'recipient_account_id');
+                (new NativeNotificationWriter($this->container))->visibilityChanged($ids);
+                $after = end($ids);
+            }
+        } while (count($accounts) === 100);
+    }
+
+    /** Same target gate at due time and at every later delivery/open. */
+    private function sharedReminderTargetOpen($row, $target)
+    {
+        if (!$target || $target['type'] !== 'task' || (int)$target['deleted']) { return false; }
+        $scope = $this->one('SELECT s.archived,s.deleted_at,p.archived AS parent_archived,p.deleted_at AS parent_deleted_at FROM familyhub_scopes s LEFT JOIN familyhub_scopes p ON p.id=COALESCE(s.parent_scope_id,s.organization_id) WHERE s.id=?', [$row['scope_id']]);
+        $metadata = json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR);
+        $state = $metadata['reminderState'] ?? null;
+        return $scope && !(int)$scope['archived'] && !(int)($scope['parent_archived'] ?? 0)
+            && $scope['deleted_at'] === null && $scope['parent_deleted_at'] === null && $state && !$state['closed']
+            && $row['schedule_revision'] === $state['scheduleRevision']
+            && !(new NativeCryptoModerationAvailabilityV2($this->container, $this->bearer, $this->ip))->restriction($row['scope_id'], $target['id'], (int)$target['revision'])
+            && $this->ancestorsOpen($row['scope_id'], $metadata)
+            && $this->recipientVisible($row['scope_id'], $row['account_id'], $row['domain']);
+    }
+
+    private function sharedReminderRecipient($row, $target, $account)
+    {
+        if (!$this->recipientVisible($row['scope_id'], $account, $row['domain'])) { return false; }
+        if ($account === $row['account_id']) { return true; }
+        $metadata = json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR);
+        return in_array($account, $metadata['notificationState']['assigneeAccountIds'] ?? [], true)
+            && $this->taskReminderPeersAllowed($row, $target);
     }
 
     /** Worker lock order matches ordinary scope mutations; fences never substitute for active crypto provenance. */
@@ -410,7 +532,28 @@ class NativeCryptoNotificationV2 extends NativeDatabase
                     (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                     return 'cancelled';
                 }
-                (new NativeNotificationWriter($this->container))->insert($row['scope_id'], $row['account_id'], null, $row['target_type'], $row['target_id'], (int)$target['revision'], 'crypto2.reminder.due', 'reminders', 'personal', hash('sha256', 'crypto2-reminder:'.$row['id'].':'.$row['revision']));
+                $recipients = [$row['account_id']];
+                $eventKey = hash('sha256', 'crypto2-reminder:'.$row['id'].':'.$row['revision']);
+                $shared = $this->sharedTaskReminder($row);
+                if ($shared) {
+                    if (!$this->sharedReminderTargetOpen($row, $target)) {
+                        $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='cancelled',revision=revision+1 WHERE id=?", [$row['id']]);
+                        (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
+                        return 'cancelled';
+                    }
+                    $eventKey = $this->sharedReminderEventKey($row);
+                    $metadata = json_decode($target['metadata'], true, 34, JSON_THROW_ON_ERROR);
+                    if ($this->taskReminderPeersAllowed($row, $target)) {
+                        foreach ($metadata['notificationState']['assigneeAccountIds'] as $account) {
+                            if ($this->recipientVisible($row['scope_id'], $account, $row['domain'])) { $recipients[] = $account; }
+                        }
+                    }
+                }
+                $recipients = array_values(array_unique($recipients));
+                sort($recipients, SORT_STRING);
+                foreach ($recipients as $account) {
+                    (new NativeNotificationWriter($this->container))->insert($row['scope_id'], $account, $shared ? $row['account_id'] : null, $row['target_type'], $row['target_id'], (int)$target['revision'], 'crypto2.reminder.due', 'reminders', 'personal', $eventKey);
+                }
                 $this->change("UPDATE familyhub_crypto_reminders_v2 SET state='delivered' WHERE id=?", [$row['id']]);
                 (new NativeNotificationWriter($this->container))->configurationChanged($row['account_id']);
                 return 'delivered';
@@ -453,6 +596,9 @@ class NativeCryptoNotificationV2 extends NativeDatabase
         if ($out['putAuthorization'] !== null) {
             [$put] = NativeCryptoCodec::decode($out['putAuthorization']);
             $out['targetIdentity'] = $put['payload']['targetIdentity'] ?? null;
+            if (array_key_exists('recipientPolicy', $put['payload'])) {
+                $out['recipientPolicy'] = $put['payload']['recipientPolicy'];
+            }
         }
         if ($row['schedule_mode'] === 'deadline') {
             $out += ['scheduleMode' => 'deadline','offsetMinutes' => (int)$row['offset_minutes']];
@@ -472,6 +618,16 @@ class NativeCryptoNotificationV2 extends NativeDatabase
     {
         if ($row['kind'] === NativeCryptoInvitationNotificationV2::KIND
             && (new NativeCryptoInvitationNotificationV2($this->container))->reference($row) === null) return false;
+        if ($row['kind'] === 'crypto2.reminder.due' && str_starts_with($row['event_key'], 'r2a:')) {
+            if (!preg_match('/^r2a:([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}):([1-9][0-9]{0,18})$/D', $row['event_key'], $match)) { return false; }
+            $reminder = $this->one('SELECT * FROM familyhub_crypto_reminders_v2 WHERE id=?', [$match[1]]);
+            if (!$reminder || $reminder['state'] !== 'delivered' || $reminder['scope_id'] !== $row['scope_id']
+                || $reminder['target_id'] !== $row['target_id'] || $reminder['target_type'] !== $row['target_type']
+                || (string)$reminder['revision'] !== $match[2] || !$this->sharedTaskReminder($reminder)) { return false; }
+            $target = $this->one('SELECT * FROM familyhub_crypto_records WHERE scope_id=? AND id=?', [$reminder['scope_id'], $reminder['target_id']]);
+            return $this->sharedReminderTargetOpen($reminder, $target)
+                && $this->sharedReminderRecipient($reminder, $target, $row['recipient_account_id']);
+        }
         return $this->recipientVisible($row['scope_id'], $row['recipient_account_id'], $this->routingDomain($row['target_type']));
     }
 

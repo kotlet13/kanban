@@ -102,7 +102,7 @@ OrganizerInboxProjection project(
   effectivePlans: plans,
   now: now,
 );
-ReminderPlan alarm({bool future = false}) => ReminderPlan(
+ReminderPlan alarm({bool future = false, bool snoozed = false}) => ReminderPlan(
   stableKey: 'local-auto',
   scheduledAt: future
       ? now.add(const Duration(hours: 1))
@@ -115,6 +115,7 @@ ReminderPlan alarm({bool future = false}) => ReminderPlan(
     records: const [NotificationRecordTarget(type: 'task', recordId: 'task')],
   ),
   reason: 'task_due',
+  isSnoozed: snoozed,
 );
 
 class EmptyPersonal extends OrganizerController {
@@ -200,7 +201,7 @@ void main() {
       expect(
         project(
           shared(reminderState: null),
-          plans: [alarm(future: true)],
+          plans: [alarm(future: true, snoozed: true)],
         ).hasUnread({}),
         isFalse,
       );

@@ -26,6 +26,7 @@ import 'crypto_directory_promotion.dart';
 import 'crypto_lifecycle_evidence.dart';
 import 'crypto_authority_operation_policy.dart';
 import 'crypto_scope_anchor.dart';
+import 'crypto_anchor_lock.dart';
 import 'crypto_scope_observations.dart';
 import 'crypto_business_lifecycle.dart';
 import 'crypto_business_moderation.dart';
@@ -261,8 +262,27 @@ class CryptoMigrationCandidate {
 }
 
 class _DeletedScopeEvidence {
-  _DeletedScopeEvidence(this.scopeId);
+  _DeletedScopeEvidence(this.owner, this.scopeId, this.guard);
+  static const maxHeads = 64, maxHeadBytes = 2 * 1024 * 1024;
+  static const maxRequests = 256, maxResponseBytes = 8 * 1024 * 1024;
+  final SessionCryptoAccess owner;
   final String scopeId;
+  final Future<void> Function() guard;
+  final wires = <String, Map<String, dynamic>>{};
+  final heads = <String, VerifiedScopeHead>{};
+  final directories = <String, VerifiedAccountDirectory>{};
+  final directoryAnchors = <String, String>{};
+  final descriptors = <String, Map<String, dynamic>>{};
+  final genesisAnchors = <String, Map<String, String>>{};
+  final publications = <String, List<Map<String, dynamic>>>{};
+  final genesisDescriptors =
+      <String, VerifiedCryptoMigrationGenesisDescriptor>{};
+  final observations = <String, List<Map<String, dynamic>>>{};
+  final checkedObservations = <String, String>{};
+  final relocationAnchors = <String, Map<String, dynamic>>{};
+  final relocationGenesis = <String, VerifiedProjectRelocationGenesis>{};
+  String? checkedRelocationOwnHead;
+  int requests = 0, responseBytes = 0;
   bool active = true;
 }
 
@@ -680,10 +700,29 @@ class SessionCryptoAccess {
   Map<String, dynamic>? _scopeAnchorProof;
   String? _inviterAccount, _inviterFingerprint;
   String? _invitationScope, _invitationHead;
-  final _observedScopes = <String, List<Map<String, dynamic>>>{};
-  final _ownRelocationAnchors = <String, Map<String, dynamic>>{};
-  final _relocationGenesis = <String, VerifiedProjectRelocationGenesis>{};
-  String? _checkedRelocationOwnHead;
+  final _ordinaryObservedScopes = <String, List<Map<String, dynamic>>>{};
+  Map<String, List<Map<String, dynamic>>> get _observedScopes =>
+      _deletedEvidence?.observations ?? _ordinaryObservedScopes;
+  final _ordinaryRelocationAnchors = <String, Map<String, dynamic>>{};
+  Map<String, Map<String, dynamic>> get _ownRelocationAnchors =>
+      _deletedEvidence?.relocationAnchors ?? _ordinaryRelocationAnchors;
+  final _ordinaryRelocationGenesis =
+      <String, VerifiedProjectRelocationGenesis>{};
+  Map<String, VerifiedProjectRelocationGenesis> get _relocationGenesis =>
+      _deletedEvidence?.relocationGenesis ?? _ordinaryRelocationGenesis;
+  String? _ordinaryCheckedRelocationOwnHead;
+  String? get _checkedRelocationOwnHead => _deletedEvidence == null
+      ? _ordinaryCheckedRelocationOwnHead
+      : _deletedEvidence!.checkedRelocationOwnHead;
+  set _checkedRelocationOwnHead(String? value) {
+    final retained = _deletedEvidence;
+    if (retained == null) {
+      _ordinaryCheckedRelocationOwnHead = value;
+    } else {
+      retained.checkedRelocationOwnHead = value;
+    }
+  }
+
   bool _hasScopedIdentityAnchor(String scope) =>
       _invitationScope == scope ||
       _observedScopes.containsKey(scope) ||
@@ -930,11 +969,20 @@ class SessionCryptoAccess {
     _checkedRelocationOwnHead = own.headHash;
   }
 
-  final _checkedObservedScopes = <String, String>{};
-  final _verifiedGenesisAnchors = <String, Map<String, String>>{};
-  final _verifiedGenesisPublications = <String, List<Map<String, dynamic>>>{};
-  final _verifiedGenesisDescriptors =
+  final _ordinaryCheckedObservedScopes = <String, String>{};
+  Map<String, String> get _checkedObservedScopes =>
+      _deletedEvidence?.checkedObservations ?? _ordinaryCheckedObservedScopes;
+  final _ordinaryGenesisAnchors = <String, Map<String, String>>{};
+  Map<String, Map<String, String>> get _verifiedGenesisAnchors =>
+      _deletedEvidence?.genesisAnchors ?? _ordinaryGenesisAnchors;
+  final _ordinaryGenesisPublications = <String, List<Map<String, dynamic>>>{};
+  Map<String, List<Map<String, dynamic>>> get _verifiedGenesisPublications =>
+      _deletedEvidence?.publications ?? _ordinaryGenesisPublications;
+  final _ordinaryGenesisDescriptors =
       <String, VerifiedCryptoMigrationGenesisDescriptor>{};
+  Map<String, VerifiedCryptoMigrationGenesisDescriptor>
+  get _verifiedGenesisDescriptors =>
+      _deletedEvidence?.genesisDescriptors ?? _ordinaryGenesisDescriptors;
   Map<String, Map<String, String>> get _committedGenesisAnchors =>
       _descriptorVerification?.genesisAnchors ?? _verifiedGenesisAnchors;
 
@@ -1214,26 +1262,52 @@ class SessionCryptoAccess {
   Future<Map<String, dynamic>> _scopeCall(
     String operation,
     Map<String, dynamic> params,
-  ) {
+  ) async {
     final retained =
         Zone.current[_deletedScopeEvidenceZone] as _DeletedScopeEvidence?;
     if (retained != null) {
-      if (!retained.active || params['scopeId'] != retained.scopeId) {
+      if (!identical(retained.owner, this) ||
+          !retained.active ||
+          params['scopeId'] != retained.scopeId) {
         throw const CryptoAuthorityPending(
           'crypto_deleted_scope_evidence_expired',
         );
       }
+      await retained.guard();
+      if (++retained.requests > _DeletedScopeEvidence.maxRequests) {
+        throw const CryptoAuthorityPending(
+          'crypto_scope_deletion_history_pending',
+        );
+      }
+      final Map<String, dynamic> response;
       if (operation == 'crypto2.scope.headGet') {
-        return account.directory.call('crypto2.scope.deletionHead', params);
+        response = await account.directory.call(
+          'crypto2.scope.deletionHead',
+          params,
+        );
+      } else if (operation == 'crypto2.directory.read') {
+        response = await account.directory
+            .call('crypto2.scope.deletionDirectory', {
+              for (final entry in params.entries)
+                if (entry.key != 'headHash') entry.key: entry.value,
+              'limit': 20,
+            });
+      } else {
+        throw const CryptoAuthorityPending(
+          'crypto_deleted_scope_evidence_only',
+        );
       }
-      if (operation == 'crypto2.directory.read') {
-        return account.directory.call('crypto2.scope.deletionDirectory', {
-          for (final entry in params.entries)
-            if (entry.key != 'headHash') entry.key: entry.value,
-          'limit': 20,
-        });
+      await retained.guard();
+      retained.responseBytes += CryptoJson.encode(
+        response,
+        limit: _DeletedScopeEvidence.maxResponseBytes,
+      ).length;
+      if (retained.responseBytes > _DeletedScopeEvidence.maxResponseBytes) {
+        throw const CryptoAuthorityPending(
+          'crypto_scope_deletion_history_pending',
+        );
       }
-      throw const CryptoAuthorityPending('crypto_deleted_scope_evidence_only');
+      return response;
     }
     return account.directory.call(operation, {
       ...params,
@@ -1271,9 +1345,28 @@ class SessionCryptoAccess {
     account.directory.reducer.crypto,
     account.store,
   );
-  final _heads = <String, VerifiedScopeHead>{};
-  final _directories = <String, VerifiedAccountDirectory>{};
-  final _directoryAnchors = <String, String>{};
+  _DeletedScopeEvidence? get _deletedEvidence {
+    final value = Zone.current[_deletedScopeEvidenceZone];
+    if (value is! _DeletedScopeEvidence || !identical(value.owner, this)) {
+      return null;
+    }
+    if (!value.active) {
+      throw const CryptoAuthorityPending(
+        'crypto_deleted_scope_evidence_expired',
+      );
+    }
+    return value;
+  }
+
+  final _ordinaryHeads = <String, VerifiedScopeHead>{};
+  Map<String, VerifiedScopeHead> get _heads =>
+      _deletedEvidence?.heads ?? _ordinaryHeads;
+  final _ordinaryDirectories = <String, VerifiedAccountDirectory>{};
+  Map<String, VerifiedAccountDirectory> get _directories =>
+      _deletedEvidence?.directories ?? _ordinaryDirectories;
+  final _ordinaryDirectoryAnchors = <String, String>{};
+  Map<String, String> get _directoryAnchors =>
+      _deletedEvidence?.directoryAnchors ?? _ordinaryDirectoryAnchors;
   Future<CryptoKeyLease> signingKey() => account.signingKey();
   Map<String, dynamic> _decode(Object? bytes) =>
       CryptoJson.decode(
@@ -1292,11 +1385,14 @@ class SessionCryptoAccess {
     final retained =
         Zone.current[_deletedScopeEvidenceZone] as _DeletedScopeEvidence?;
     if (retained != null) {
-      if (!retained.active || retained.scopeId != scopeId) {
+      if (!identical(retained.owner, this) ||
+          !retained.active ||
+          retained.scopeId != scopeId) {
         throw const CryptoAuthorityPending(
           'crypto_deleted_scope_evidence_expired',
         );
       }
+      await retained.guard();
       allowUnverifiedContact = true;
     }
     final frozen = _readOnlyFrozen;
@@ -1511,7 +1607,7 @@ class SessionCryptoAccess {
       _directories[cacheKey] = target;
       _directoryAnchors[cacheKey] = anchorToken;
     }
-    if (allowUnverifiedContact) {
+    if (allowUnverifiedContact && _deletedEvidence == null) {
       await account.store.database.execute(
         'INSERT INTO crypto_restore_scoped_directories VALUES(?,?,?,?,?,?) ON CONFLICT(partition,scope_id,head_hash,account_id,directory_head_hash) DO UPDATE SET entries=excluded.entries',
         [
@@ -1582,7 +1678,7 @@ class SessionCryptoAccess {
         accountId,
       ))!['headHash'];
     }
-    if (allowUnverifiedContact) {
+    if (allowUnverifiedContact && _deletedEvidence == null) {
       await account.store.database.execute(
         'INSERT INTO crypto_restore_scoped_directories VALUES(?,?,?,?,?,?) ON CONFLICT DO NOTHING',
         [
@@ -2188,8 +2284,11 @@ class SessionCryptoAccess {
     return verified;
   }
 
-  final _verifiedScopeDescriptors = <String, Map<String, dynamic>>{};
+  final _ordinaryScopeDescriptors = <String, Map<String, dynamic>>{};
+  Map<String, Map<String, dynamic>> get _verifiedScopeDescriptors =>
+      _deletedEvidence?.descriptors ?? _ordinaryScopeDescriptors;
   _ScopeDescriptorVerification? get _descriptorVerification {
+    if (_deletedEvidence != null) return null;
     final stage =
         Zone.current[_scopeDescriptorVerificationZone]
             as _ScopeDescriptorVerification?;
@@ -2209,7 +2308,9 @@ class SessionCryptoAccess {
     String scope,
     Future<T> Function() body,
   ) async {
-    if (_descriptorVerification != null) return body();
+    if (_deletedEvidence != null || _descriptorVerification != null) {
+      return body();
+    }
     final stage = _ScopeDescriptorVerification(
       this,
       Map.of(_verifiedScopeDescriptors),
@@ -2289,43 +2390,211 @@ class SessionCryptoAccess {
         as int;
   }
 
-  /// A retained deletion witness is historical evidence for a previously
-  /// anchored exact scope head. It cannot establish a new active scope/floor.
+  /// A deletion witness may close an unseen signed descendant of independent
+  /// local history. This private read verifies every predecessor and covers ALL
+  /// known anchors; it never establishes a new active head, floor or key.
   Future<T> withVerifiedDeletedScope<T>(
     String scopeId,
     Map<String, dynamic> wire,
     Future<T> Function(VerifiedScopeHead head) action,
   ) async {
-    await _ensureInvitationAnchor(scopeId);
-    final hash = wire['headHash'];
-    final rawFloor = await account.store.secure.read(
-      'scope2:${account.store.partition}:$scopeId',
+    if (!isCryptoCanonicalUuid(scopeId) ||
+        Zone.current[_deletedScopeEvidenceZone] != null ||
+        _readOnlyFrozen != null ||
+        pendingCapability != null) {
+      throw const CryptoAuthorityPending('crypto_deleted_scope_evidence_only');
+    }
+    final candidate = Map<String, dynamic>.from(
+      CryptoJson.decode(
+            CryptoJson.encode(wire, limit: _DeletedScopeEvidence.maxHeadBytes),
+            limit: _DeletedScopeEvidence.maxHeadBytes,
+          )
+          as Map,
     );
+    final hash = candidate['headHash'] as String;
+    await account.directory.requireFresh();
+    await _ensureInvitationAnchor(scopeId);
+    // Recovery above may legitimately refresh the own lineage. Freeze the
+    // resulting independently verified prefix, not the prefix before recovery.
+    final own = await account.directory.cachedVerifiedDirectory();
+    own.activeDevice(account.deviceId);
+    final partition = account.store.partition, device = account.deviceId;
+    final floorKey = 'scope2:$partition:$scopeId';
+    final ownKey = 'directory2:$partition:${own.accountId}';
+    final rawFloor = await account.store.secure.read(floorKey);
+    final ownPin = await account.store.secure.read(ownKey);
     final floor = rawFloor == null ? null : jsonDecode(rawFloor) as Map;
-    if (floor?['headHash'] != hash &&
-        !(_observedScopes[scopeId] ?? const <Map<String, dynamic>>[]).any(
-          (value) => value['headHash'] == hash,
-        )) {
+    final observations =
+        (CryptoJson.decode(
+                  CryptoJson.encode(
+                    _observedScopes[scopeId] ?? const <Map<String, dynamic>>[],
+                    limit: _DeletedScopeEvidence.maxHeadBytes,
+                  ),
+                  limit: _DeletedScopeEvidence.maxHeadBytes,
+                )
+                as List)
+            .cast<Map<String, dynamic>>();
+    final anchors = <String>{
+      if (floor != null) floor['headHash'] as String,
+      for (final observation in observations) observation['headHash'] as String,
+    };
+    if (anchors.isEmpty) {
       throw const CryptoAuthorityPending(
         'crypto_scope_deletion_history_pending',
       );
     }
-    final context = _DeletedScopeEvidence(scopeId);
+    if (ownPin == null ||
+        jsonDecode(ownPin)['headHash'] != own.headHash ||
+        anchors.any((hash) => !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) ||
+        floor != null && (floor['epoch'] is! int || floor['epoch'] < 1)) {
+      throw const CryptoAuthorityPending(
+        'crypto_deleted_scope_evidence_expired',
+      );
+    }
+    late final _DeletedScopeEvidence context;
+    Future<void> guard() async {
+      if (!context.active ||
+          !account.directory.isCurrent() ||
+          account.store.partition != partition ||
+          account.deviceId != device ||
+          account.directory.accountId != own.accountId ||
+          account.directory.session.profile.serverId != own.serverId ||
+          await account.store.secure.read(floorKey) != rawFloor ||
+          await account.store.secure.read(ownKey) != ownPin ||
+          !account.directory.isCurrent() ||
+          !context.active) {
+        throw const CryptoAuthorityPending(
+          'crypto_deleted_scope_evidence_expired',
+        );
+      }
+    }
+
+    context = _DeletedScopeEvidence(this, scopeId, guard);
+    if (observations.isNotEmpty) {
+      context.observations[scopeId] = observations;
+      context.checkedObservations[scopeId] = own.headHash;
+    }
+    final descriptor = _scopeDescriptors[scopeId];
+    if (descriptor != null &&
+        descriptor['initialLifecycleHash'] ==
+            candidate['payload']?['initialLifecycleHash']) {
+      // A previously verified legacy descriptor may be read, but this callback
+      // cannot modify its ordinary memo or bootstrap fresh descriptor keys.
+      context.descriptors[scopeId] = Map<String, dynamic>.from(
+        CryptoJson.decode(CryptoJson.encode(descriptor)) as Map,
+      );
+    }
     try {
       return await runZoned(() async {
+        await guard();
+        await _stageDeletedScopeHistory(context, candidate);
+        if (!anchors.every(context.wires.containsKey) ||
+            floor != null &&
+                context.wires[floor['headHash']]!['payload']['epoch'] !=
+                    floor['epoch']) {
+          throw const CryptoAuthorityPending(
+            'crypto_scope_deletion_history_pending',
+          );
+        }
         final verified = await _verifyHead(
           scopeId,
-          wire,
+          context.wires[hash]!,
           online: true,
           historical: true,
         );
         if (!verified.active || verified.headHash != hash) {
           throw const FormatException('crypto_scope_deletion_head');
         }
-        return action(verified);
+        await guard();
+        final result = await action(verified);
+        // No network/callback inside the lock. Return only if both independent
+        // secure anchors and the exact account/session still match after ALL
+        // certificate, leaf and account-event checks performed by the caller.
+        return withCryptoAnchorLock(partition, () async {
+          await guard();
+          return result;
+        });
       }, zoneValues: {_deletedScopeEvidenceZone: context});
     } finally {
       context.active = false;
+      context.wires.clear();
+      context.heads.clear();
+      context.directories.clear();
+      context.directoryAnchors.clear();
+      context.descriptors.clear();
+      context.genesisAnchors.clear();
+      context.publications.clear();
+      context.genesisDescriptors.clear();
+      context.observations.clear();
+      context.checkedObservations.clear();
+      context.relocationAnchors.clear();
+      context.relocationGenesis.clear();
+    }
+  }
+
+  Future<void> _stageDeletedScopeHistory(
+    _DeletedScopeEvidence context,
+    Map<String, dynamic> candidate,
+  ) async {
+    var wire = candidate;
+    int? descendantEpoch;
+    var bytes = 0;
+    while (true) {
+      await context.guard();
+      if (context.wires.length >= _DeletedScopeEvidence.maxHeads) {
+        throw const CryptoAuthorityPending(
+          'crypto_scope_deletion_history_pending',
+        );
+      }
+      final encoded = CryptoJson.encode(
+        wire,
+        limit: _DeletedScopeEvidence.maxHeadBytes,
+      );
+      bytes += encoded.length;
+      if (bytes > _DeletedScopeEvidence.maxHeadBytes) {
+        throw const CryptoAuthorityPending(
+          'crypto_scope_deletion_history_pending',
+        );
+      }
+      // Private immutable-by-ownership copy: a caller/transport mutation after
+      // preflight must not change the bytes passed into signature verification.
+      wire = Map<String, dynamic>.from(
+        CryptoJson.decode(encoded, limit: encoded.length) as Map,
+      );
+      final body = Map<String, dynamic>.from(wire['payload'] as Map);
+      codec.validateBody(body);
+      final hash = wire['headHash'];
+      if (body['scopeId'] != context.scopeId ||
+          hash != await codec.headHash(body) ||
+          context.wires.containsKey(hash) ||
+          descendantEpoch != null && body['epoch'] != descendantEpoch - 1) {
+        throw const FormatException('crypto_scope_deletion_head');
+      }
+      context.wires[hash as String] = wire;
+      final previous = body['previousHeadHash'] as String;
+      if (previous == cryptoZeroHash) {
+        if (body['epoch'] != 1) {
+          throw const FormatException('scope_head_chain');
+        }
+        return;
+      }
+      if (body['epoch'] <= 1) throw const FormatException('scope_head_chain');
+      descendantEpoch = body['epoch'] as int;
+      // SQL supplies proof bytes only. Neither row presence nor its epoch can
+      // anchor this chain; every staged wire is reverified by _verifyHead.
+      final rows = await account.store.database.rows(
+        'SELECT authorization FROM crypto_scope_heads WHERE partition=? AND scope_id=? AND head_hash=?',
+        [account.store.partition, context.scopeId, previous],
+      );
+      wire = rows.length == 1
+          ? _decode(rows.single['authorization'])
+          : await _scopeCall('crypto2.scope.headGet', {
+              'scopeId': context.scopeId,
+              'headHash': previous,
+            });
+      if (wire['headHash'] != previous) {
+        throw const FormatException('crypto_scope_deletion_head');
+      }
     }
   }
 
@@ -3161,6 +3430,12 @@ class SessionCryptoAccess {
     Map<String, dynamic> wire, {
     RecoveredAccountRoot? recoveryRoot,
   }) async {
+    // Retained deletion evidence cannot acquire descriptor keys or reopen an
+    // ordinary migration transport. An unavailable legacy descriptor stays
+    // pending; an existing verified descriptor remains private to this read.
+    if (_deletedEvidence != null) {
+      throw const CryptoAuthorityPending('scope_descriptor_migration_pending');
+    }
     VerifiedCryptoOwnContentContribution? ownContentBootstrap;
     if (!_hasScopedIdentityAnchor(scopeId) &&
         !await _hasCommittedMigrationIdentity(scopeId, wire['headHash'])) {
@@ -3886,6 +4161,13 @@ class SessionCryptoAccess {
   }) async {
     final hash = wire['headHash'] as String;
     final p = Map<String, dynamic>.from(wire['payload'] as Map);
+    final retained = _deletedEvidence;
+    if (retained != null) {
+      await retained.guard();
+      if (retained.scopeId != scopeId || !retained.wires.containsKey(hash)) {
+        throw const FormatException('crypto_scope_deletion_head');
+      }
+    }
     if (descriptorIdentity != null) {
       if (!descriptorGenesisOnly) {
         throw const FormatException('scope_descriptor_genesis_only');
@@ -3952,33 +4234,49 @@ class SessionCryptoAccess {
     }
     VerifiedScopeHead? previous;
     if (p['previousHeadHash'] != cryptoZeroHash) {
-      final rows = await account.store.database.rows(
-        'SELECT authorization FROM crypto_scope_heads WHERE partition=? AND scope_id=? AND head_hash=?',
-        [account.store.partition, scopeId, p['previousHeadHash']],
-      );
-      if (rows.isNotEmpty) {
+      final retainedWire = retained?.wires[p['previousHeadHash']];
+      if (retained != null) {
+        if (retainedWire == null) {
+          throw const CryptoAuthorityPending(
+            'crypto_scope_deletion_history_pending',
+          );
+        }
         previous = await _verifyHead(
           scopeId,
-          _decode(rows.single['authorization']),
-          online: online,
-          historical: true,
-          requireDescriptor: requireDescriptor || p['epoch'] > 1,
-          descriptorRecoveryRoot: descriptorRecoveryRoot,
-        );
-      } else if (online)
-        previous = await _verifyHead(
-          scopeId,
-          await _scopeCall('crypto2.scope.headGet', {
-            'scopeId': scopeId,
-            'headHash': p['previousHeadHash'],
-          }),
+          retainedWire,
           online: true,
           historical: true,
           requireDescriptor: requireDescriptor || p['epoch'] > 1,
-          descriptorRecoveryRoot: descriptorRecoveryRoot,
         );
-      else {
-        throw const CryptoAuthorityPending('scope_history_pending');
+      } else {
+        final rows = await account.store.database.rows(
+          'SELECT authorization FROM crypto_scope_heads WHERE partition=? AND scope_id=? AND head_hash=?',
+          [account.store.partition, scopeId, p['previousHeadHash']],
+        );
+        if (rows.isNotEmpty) {
+          previous = await _verifyHead(
+            scopeId,
+            _decode(rows.single['authorization']),
+            online: online,
+            historical: true,
+            requireDescriptor: requireDescriptor || p['epoch'] > 1,
+            descriptorRecoveryRoot: descriptorRecoveryRoot,
+          );
+        } else if (online)
+          previous = await _verifyHead(
+            scopeId,
+            await _scopeCall('crypto2.scope.headGet', {
+              'scopeId': scopeId,
+              'headHash': p['previousHeadHash'],
+            }),
+            online: true,
+            historical: true,
+            requireDescriptor: requireDescriptor || p['epoch'] > 1,
+            descriptorRecoveryRoot: descriptorRecoveryRoot,
+          );
+        else {
+          throw const CryptoAuthorityPending('scope_history_pending');
+        }
       }
     }
     final proof = Map<String, dynamic>.from(wire['authorization'] as Map);
@@ -4115,6 +4413,11 @@ class SessionCryptoAccess {
         scope: scopeId,
         genesisHash: hash,
       );
+      return activated;
+    }
+    if (retained != null) {
+      await retained.guard();
+      _heads[hash] = activated;
       return activated;
     }
     await account.store.database.execute(

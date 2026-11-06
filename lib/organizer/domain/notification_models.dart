@@ -173,7 +173,11 @@ class ReminderPlan {
     required this.scheduledAt,
     required this.target,
     required this.reason,
+    this.isSnoozed = false,
   });
+
+  /// Ephemeral device override, distinct from a task's default future deadline.
+  final bool isSnoozed;
   final String stableKey, reason;
   final DateTime scheduledAt;
   final NotificationTarget target;
@@ -428,6 +432,8 @@ class SharedNotificationPreferences {
       categories[category] ?? const SharedNotificationSettings();
 }
 
+const taskReminderRecipientPolicy = 'schedulerAndTaskAssignees';
+
 class SharedScheduledReminder {
   const SharedScheduledReminder({
     required this.id,
@@ -440,7 +446,11 @@ class SharedScheduledReminder {
     this.syncState = 'synced',
     this.syncError,
     this.offsetMinutes,
+    this.recipientPolicy,
   });
+
+  /// Absent keeps the original scheduler-only intent, including old queues.
+  final String? recipientPolicy;
   final int? offsetMinutes;
   bool get relativeToDeadline => offsetMinutes != null;
   final String id, scopeId, targetType, targetId, state;
@@ -462,6 +472,7 @@ class SharedScheduledReminder {
         syncState: j['syncState'] as String? ?? 'synced',
         syncError: j['syncError'] as String?,
         offsetMinutes: _readReminderOffset(j),
+        recipientPolicy: _readReminderRecipientPolicy(j),
       );
   Map<String, Object?> toJson() => {
     'id': id,
@@ -473,11 +484,21 @@ class SharedScheduledReminder {
     'state': state,
     'syncState': syncState,
     if (syncError != null) 'syncError': syncError,
+    if (recipientPolicy != null) 'recipientPolicy': recipientPolicy,
     if (offsetMinutes != null) ...{
       'scheduleMode': 'deadline',
       'offsetMinutes': offsetMinutes,
     },
   };
+}
+
+String? _readReminderRecipientPolicy(Map<String, dynamic> json) {
+  if (!json.containsKey('recipientPolicy')) return null;
+  if (json['recipientPolicy'] != taskReminderRecipientPolicy ||
+      json['targetType'] != 'task') {
+    throw const FormatException('reminder_recipient_policy');
+  }
+  return taskReminderRecipientPolicy;
 }
 
 int? _readReminderOffset(Map<String, dynamic> json) {

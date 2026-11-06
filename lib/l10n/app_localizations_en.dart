@@ -1310,6 +1310,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'This reminder is only for your account. The server saves it in your inbox; phone or email delivery depends on your settings and connection.';
 
   @override
+  String get remoteReminderRecipients => 'Reminder recipients';
+
+  @override
+  String get remoteReminderRecipientsSelf => 'Only you';
+
+  @override
+  String get remoteReminderRecipientsTaskAssignees =>
+      'You and assignees at reminder time';
+
+  @override
+  String get remoteReminderTaskRecipientsDescription =>
+      'You and whoever is assigned to the task at reminder time receive the reminder. If nobody is assigned, only you receive it. Phone or email delivery depends on each recipient’s settings.';
+
+  @override
   String get remoteReminderDate => 'Reminder date';
 
   @override

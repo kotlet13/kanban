@@ -535,6 +535,8 @@ class CollaborationState {
        financePendingCount = previous.financePendingCount,
        financeBlockedCount = previous.financeBlockedCount,
        inboxSupported = previous.inboxSupported,
+       taskReminderRecipientsSupported =
+           previous.taskReminderRecipientsSupported,
        financeSupported = previous.financeSupported,
        organizationFinanceSupported = previous.organizationFinanceSupported,
        financeContractVersion = previous.financeContractVersion,
@@ -600,6 +602,7 @@ class CollaborationState {
     Map<String, bool> financeSnapshotComplete = const {},
     Map<String, int> financeSnapshotSequences = const {},
     this.inboxSupported = false,
+    this.taskReminderRecipientsSupported = false,
     this.financeSupported = false,
     this.organizationFinanceSupported = false,
     this.financeContractVersion = 1,
@@ -693,6 +696,7 @@ class CollaborationState {
       invitationResendSupported,
       spaceProjectMembershipSupported;
   final bool inboxSupported,
+      taskReminderRecipientsSupported,
       financeSupported,
       organizationFinanceSupported,
       externalPushSupported,

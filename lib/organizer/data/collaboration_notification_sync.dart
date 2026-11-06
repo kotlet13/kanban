@@ -199,6 +199,13 @@ extension CollaborationNotificationSync on CollaborationRepository {
             if (error.code != 'permission_revoked') rethrow;
             throw const CollaborationApiException('permission_revoked');
           }
+          if (command['operation'] == 'reminders.put' &&
+              params['recipientPolicy'] != null &&
+              !_taskReminderRecipientsSupported) {
+            // Keep the exact immutable intent pending, never downgrade it to
+            // scheduler-only delivery when reconnecting to an older server.
+            throw const CollaborationException('client_upgrade_required');
+          }
           if (command['operation'] == 'reminders.put' && scope.archived) {
             throw const CollaborationApiException('scope_archived');
           }
@@ -239,7 +246,8 @@ extension CollaborationNotificationSync on CollaborationRepository {
                 item.revision != (params['expectedRevision'] as int) + 1 ||
                 (command['operation'] == 'reminders.put' &&
                     (item.targetType != params['targetType'] ||
-                        item.targetId != params['targetId']))) {
+                        item.targetId != params['targetId'] ||
+                        item.recipientPolicy != params['recipientPolicy']))) {
               throw const CollaborationException('invalid_response');
             }
             // An explicit accepted edit/cancel resolves only older rejected
@@ -313,6 +321,7 @@ extension CollaborationNotificationSync on CollaborationRepository {
           'reminder_conflict',
           'reminder_target_unavailable',
           'reminder_target_immutable',
+          'record_edit_forbidden',
           'reminder_missing',
           'record_missing',
           'scope_archived',

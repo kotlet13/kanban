@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../state/collaboration_provider.dart';
+import '../../domain/shared_record_permissions.dart';
 import '../organizer_widgets.dart';
 import '../shared/sharing_errors.dart';
 import '../shared/sharing_session_boundary.dart';
 import 'inbox_preferences.dart';
 
-/// Remote schedules belong to the signed-in account, not to all assignees.
-/// This component does not enable any delivery channel or schedule locally.
+/// The signed-in account owns the schedule and explicitly chooses its audience.
+/// This component does not enable delivery channels or schedule locally.
 class RemoteReminderButton extends ConsumerWidget {
   const RemoteReminderButton({
     super.key,
@@ -192,6 +193,36 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
   SharedScheduledReminder? _editing;
   late DateTime _at;
   int? _offsetMinutes;
+  String? _recipientPolicy;
+  bool _canIncludeAssignees(CollaborationState? state) {
+    if (state == null ||
+        !state.taskReminderRecipientsSupported ||
+        widget.targetType != 'task') {
+      return false;
+    }
+    final scope = state.scopes.where((s) => s.id == widget.scopeId).firstOrNull;
+    final task = state
+        .dataForScope(widget.scopeId)
+        .tasks
+        .where((t) => t.id == widget.targetId)
+        .firstOrNull;
+    return scope != null &&
+        task != null &&
+        state.session != null &&
+        SharedRecordPermissions.canEdit(
+          scope: scope,
+          accountId: state.session!.accountId,
+          creator: task.createdByAccountId,
+          type: 'task',
+          assignees: task.assigneeAccountIds,
+        );
+  }
+
+  String? _initialRecipientPolicy(CollaborationState? state) => _editing != null
+      ? _editing!.recipientPolicy
+      : _canIncludeAssignees(state)
+      ? taskReminderRecipientPolicy
+      : null;
   DateTime? _deadline(CollaborationState? state) => widget.targetType == 'task'
       ? state
             ?.dataForScope(widget.scopeId)
@@ -216,6 +247,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
         reminders.where((r) => r.state == 'pending').firstOrNull ??
         reminders.firstOrNull;
     _offsetMinutes = _editing?.offsetMinutes;
+    _recipientPolicy = _initialRecipientPolicy(state);
     _at =
         (_editing?.remindAt ??
                 ref
@@ -304,6 +336,11 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
   Future<void> _submit({bool cancel = false}) async {
     if (!_current || _busy) return;
     if (!cancel &&
+        _recipientPolicy != null &&
+        !_canIncludeAssignees(ref.read(collaborationProvider).valueOrNull)) {
+      return;
+    }
+    if (!cancel &&
         ref
                 .read(collaborationProvider)
                 .valueOrNull
@@ -346,6 +383,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
           targetId: widget.targetId,
           remindAt: _at.toUtc(),
           offsetMinutes: _offsetMinutes,
+          recipientPolicy: _recipientPolicy,
           expectedRevision: _editing?.revision ?? 0,
           expectedPartition: partition,
         );
@@ -443,7 +481,41 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
                   _ => '',
                 }, style: Theme.of(context).textTheme.titleMedium),
               ),
-            Text(l.remoteReminderDescription),
+            Text(
+              _recipientPolicy == taskReminderRecipientPolicy
+                  ? l.remoteReminderTaskRecipientsDescription
+                  : l.remoteReminderDescription,
+            ),
+            if (widget.targetType == 'task' &&
+                (state?.taskReminderRecipientsSupported == true ||
+                    _recipientPolicy != null))
+              DropdownButtonFormField<String>(
+                key: ValueKey(
+                  'remote-reminder-recipient-policy-${_editing?.id}',
+                ),
+                initialValue: _recipientPolicy ?? 'self',
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l.remoteReminderRecipients,
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'self',
+                    child: Text(l.remoteReminderRecipientsSelf),
+                  ),
+                  DropdownMenuItem(
+                    value: taskReminderRecipientPolicy,
+                    enabled: _canIncludeAssignees(state),
+                    child: Text(l.remoteReminderRecipientsTaskAssignees),
+                  ),
+                ],
+                onChanged: _busy || !canSchedule
+                    ? null
+                    : (value) => setState(() {
+                        _recipientPolicy = value == 'self' ? null : value;
+                        _error = null;
+                      }),
+              ),
             TextButton.icon(
               onPressed: _busy
                   ? null
@@ -479,6 +551,7 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
                             .where((r) => r.id == id)
                             .firstOrNull;
                         _offsetMinutes = _editing?.offsetMinutes;
+                        _recipientPolicy = _initialRecipientPolicy(state);
                         _at =
                             (_editing?.remindAt ??
                                     ref
@@ -558,7 +631,9 @@ class _RemoteReminderDialogState extends ConsumerState<_RemoteReminderDialog> {
         EditorActionsRow(
           saveKey: const ValueKey('remote-reminder-save'),
           busy: _busy,
-          saveEnabled: canSchedule,
+          saveEnabled:
+              canSchedule &&
+              (_recipientPolicy == null || _canIncludeAssignees(state)),
           cancelLabel: l.close,
           onCancel: () => Navigator.pop(context),
           onSave: _submit,
