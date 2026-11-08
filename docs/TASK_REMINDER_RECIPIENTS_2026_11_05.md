@@ -211,3 +211,25 @@ dotika na Androidu s kandidatno gradnjo in podprto različico strežnika.
 Dokazi so v `build/qa/reminder-recipients-http-20261105/`, vključno z
 `open_both_push_references-renewal-20261106-r7.log`. Zgodovinski
 `http-outcome.json` še vedno opisuje prvotno ustavitev po tretjem poskusu.
+
+## 7. november – produkcijski strežniški popravek nameščen
+
+Po izrecnem naročilu uporabnika je bila ob 21:02:51 UTC (22:02:51 lokalno)
+izvedena ena namestitev dveh PHP datotek iz commita `9c265b6` na
+`jivie.triparna.si`. Prejšnji hashi obeh datotek in konfiguracije so se
+ujemali s pričakovanimi. Preneseni ZIP SHA-256:
+`5ee56bbedd982c1963af456e19c7fc5f2d8b9445ca8f2e36e26ea5e710bd54f9`.
+Strežniški helper je potrdil PHP 8.4 lint, varnostno kopijo, zamenjavi in
+končna hasha; NativeService s capability je zamenjan zadnji.
+Kopija je v `/home/tripar13/private/jivie-production/reminder-recipients-20261107/before`.
+Ni migracije sheme, neposrednega dostopa do baze ali spremembe konfiguracije,
+poverilnic, ključev oziroma cron nastavitev.
+
+Javni HTTPS capabilities po namestitvi: HTTP 200, ista identiteta strežnika,
+`features.taskReminderRecipients=true`; edina sprememba v features je ta
+nova zmožnost. To potrjuje namestitev in oglaševanje funkcije, ne fizične
+push dostave. Pravi prejem in klik na Androidu z 1.11.18 (50) ostajata za
+preizkus. Ločena težava relativnih opomnikov ostaja odprta.
+Dokazi: `build/qa/reminder-server-deploy-20261107/verified-outcome.json`,
+manifest ter capabilities-before/after.json. Uspešnih lokalnih testov nismo
+ponavljali, novih opomnikov ali pošiljanj nismo ustvarili.

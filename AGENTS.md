@@ -1,3 +1,221 @@
+7. november — **Opomnik obema: produkcijski PHP nameščen.**
+Userexplicit »Namesti se streznisko opremo«. Po obnovljenem browserdostopu
+savedloginPASS;1source-onlydeploy21:02:51UTC/2PHPiz9c265b6,prehash+PHP84lint+
+backup+posthashPASS,capabilitylast/configsame/noDDL/noDBaccess/credentials/cron.
+PublicHTTPS200/sameSID/taskReminderRecipients=true edinafeaturesdelta.
+Backup private/jivie-production/reminder-recipients-20261107/before.
+Evidence build/qa/reminder-server-deploy-20261107;docsTASK_REMINDER_RECIPIENTS.
+Android1.11.18(50) prej oddanPlay;realAndroidpush+tapPENDING/relativebugOPEN.
+0newtests/reminders/manualsends/phonechanges/commit/push v tem koraku.
+
+6. november — **Opomnik za oba: lokalna dostava in obe odprtji potrjeni; pred Play ostaja Android.**
+Na istem lokalnem strežniku in z istima sintetičnima računoma je uporabnik dovolil
+tri nove izvedbe. R4 je odkril nekanoničen zapis naslova v testni seji. R5 je
+uspešno preveril dva obstoječa zapisa in obnovil zaščito istega prostora z istima
+članoma. Po nastanku opravila je zadnja od 634 zahtev dobila HTTP 429. R6 je
+potrdil isti zapis pri obeh, en absolutni opomnik, naravni rok, dva inbox vnosa
+in dve prestreženi sporočili. Test je nato surovi Android display2 envelope poslal
+štiripoljnemu parserju in padel pred odpiranjema. Zgodovinski izidi so ohranjeni.
+Po ločeni izrecni odobritvi je R7 enkrat odprl izključno obe obstoječi sporočili
+prek produkcijskega SystemPushMessage in openRemotePushReference. Oba računa:
+točno isto opravilo, lasten inbox vnos, vidno obvestilo, stanje brez napak/vrst.
+Lokalna koraka 3,61/2,78 s. Rok opravila je ob R7 že potekel. Nobenega novega
+opomnika/pošiljanja pri R7, zunanjih FCM/APNs zahtev nič. Vsebnika ustavljena.
+Na produkcijskem iPhonu en ročni klik v mirujoči Jivie: prvi posnetek do 579 ms
+že Usklajeno, preverjanje 22:13, 0/0/0. To je UI opažanje, ne HTTP čas ali števec.
+iPhone zaklenjen, črn zaslon potrjen. Ni produkcijske namestitve ali objave.
+Pred javno izdajo sta odprta prava dostava in tap na Androidu s kandidatno gradnjo;
+stara Android napaka ni potrjeno odpravljena. Ločena težava relativnih opomnikov
+ostaja odprta. Docs TASK_REMINDER_RECIPIENTS_2026_11_05 + REMINDER_PHYSICAL_SETUP_2026_11_05;
+evidence build/qa/reminder-recipients-http-20261105. Spodnji STOP3 ostaja zgodovinski.
+
+5. november — **Opomnik nastavljalec+zadolženi lokalno; HTTP STOP3/NEizdaja**.
+Usernadaljuj naslednjikorak po iPhoneoldscopePASS. OptionalSIGNED taskpolicy
+schedulerAndTaskAssignees +cap features.taskReminderRecipients; newUIdefaultboth/
+selfchoice, oldqueued/oldeditabsentkeepown, capabilitylossnodowngrade. Oneownerrow,
+currentverifiedassigneesunion/dedup/prefs/ACL; newbroadcastrequiresexacttaskedit,
+losteditpeerssuppressed/ownallowed. Schemafree putproof, strict r2a:id:revkey,
+newactor=scheduler. Latecancel/edit/completion/reassign/revoke/projectclose
+recheckpush/email/open; boundedvisibilityinvalidation. Sharedcancel scopemutex+
+reloadowner/rev; legacycancelescape. Replypolicy bindsoriginalANDcurrentPUT.
+Peerinboxfuturetaskdue nohide; validSQLsnoozeonlyisSnoozed ephemeral; ownfuture
+separatefrompeer. Localdefaultdeadline remainsseparatetrack/notallchanneldedup.
+24newFlutterPASS (8UI,5projection,11data)+1affectedoldsnooze;74newPHPcontrolsPASS.
+RootR1projectionimportFAIL/UI8PASS→projection5PASS2. DataR1typedcaps/R2missing
+explicitmetadatafixture router→5PASS1/1PASS2/4PASS3; latermixedsignedPUT1PASS1.
+PHPzero-checkfixtureorderFAIL1→50PASS2,+17newPASS1,+7cancelorderPASS1.
+0successfulreruns; analyze20paths0errors0warnings2oldproviderinfos; finalcrypto
+source+test0issues. IndependentreviewGOlocalcode, NEdeploymentapproval.
+Newretained2accountHTTPclone recoveredowner+other/exactoriginalURL57881; NO
+setup/login/FILErecoverrerun. PrepareFAIL3:1Flutterbindingmissing,2testHTTP400,
+3Dockerinternalrequestedportnotmapped. 0scenarioAPItoPHP; healthcheckGETseparate.
+PerexplicitAGENTS3limitSTOP, no4th/reset/newfixture. Due/provider/bothopen/
+HTTPprojection BLOCKED_NOT_EXECUTED;0newHTTPtask/reminder. Owncontainerstoppedheld;
+originalfiles+copied2FILE+securestorehashsame, all3logs/ledger/SQL/keyspreserved.
+2PHPsource reviewZIP+manifest prepared ONLY;0serverdeploy/appbuild/install/
+Play/AppStore/commit/push. ExistingnewrelativeconsentgenerationbugOPEN. iPhone
+userasleep→DeviceHubControlsLock/blackverified, nofurtherphoneactions.
+Docs TASK_REMINDER_RECIPIENTS_2026_11_05; evidence task-reminder-recipients-
+20261105 +reminder-recipients-http-20261105/http-outcome.json. Next needs renewed
+boundedtestauthorization onSAMEfixture+knownportrepair, thenreal2accountHTTP;
+onlyafterthatsource-onlydeployment/apps/nativepush. Do notclaimfeaturelive.
+
+5. november — **Stari iPhone prostor: varen popravek + fizični sync PASS; NItrgovinskeizdaje**.
+User »nadaljuj naslednjikorak« po diagnozi dovoli localfix/nativevalidation.
+Onlyproduct session_crypto_access.dart SHAcd678653…75e1e7: retainedsigned
+successor→genesis fullverify+ALLsafeFloor/ownIncludedobservations; at least1anchor.
+Privateinstance+scope+leasecontext, deepcopypreawait, finalsession/pinCAS;
+64heads/2MiB,256retainedreads/8MiB, no ordinarykeys/writeauthority/SQLpromotion.
+Missinglegacydescriptorpending; malformed/fork/rollback/racesstayheld.
+28distinctnewPASS1:core1+22(excludespositive),fullstatus2,contexts3;0successreruns.
+Analyze0errors0warnings71oldinfos;1newtestbracefixed/target0issues;reviewGO.
+OneisolatediOS49archivePASS57.59s,665rootinputsexact/only1productdelta;
+148files41849215B,AOT0edf4eea…def8d786; same49bundle/cert/profile/entitlements/
+Firebase/devAPS/locks. VerifierR1helperextractoptionalargFAIL+diagnosticrepeat;
+syntaxfixedR2PASSsameartifact/0rebuild. FreshPIDboundterminate/coldbackup6files;
+1inplaceinstall21:31:35UTC,6filesbyteexactbeforelaunch/noKeychainexport/reset.
+Ordinarysameaccount/test_gosp automatic sync→Usklajeno22:32local/0pending0conflict
+0held/noerror,0manualretry. Postlivecopy+offlinecomparisonPASS1: sameaccount/vault/
+state/FILE, olddeleted+revoked+blockedtrue, reconciliationmissing→absent;
+SQLheads1/2authorizationexact,oldrecords+keymetadataunchanged; test_gospactive/
+1recordbytesexact. Inputsunchanged; NOTatomiccopy/NOTnativeKeychainpinproof.
+0serverdeploy/store/commit/push; oldAndroidtapcauseOPEN/sender+assigneeNOTimplemented.
+Docs REMINDER_PHYSICAL_SETUP finalsections; evidence deleted-scope-descendant+
+ios-retained-deletion-fix-20261105; privateiphone-retained-fix-{before,installed-
+before-launch,observation} outsideGit. EarlierNIpopravka checkpoint superseded.
+
+5. november — **iPhone stari prostor: izbris potrjen, neopažena glava3 lokalno reproducirana; NIpopravka**.
+Usernaroči raziskavo stare metadata napake. ExistingOct31FILE725B→AirDrop
+istiMac/private0600 outsideGit; 0recovery/rekey. Encryptedcurrentlivecopy+
+cold35pred49 vsak1readonlyofflinePASS, vaultID/AEADprobe/quickcheck/hashsame;
+currentNEatomic. Exactoldscope/account binding: missingPREDupgrade+push,
+NEcrypto_pending; localheads1/2,metadatarev1verifiedCheckpoint,domainscomplete,
+0ordinaryqueues/deletiondraft. DistinctobservationprobePASS1:2Included gen3/4
+obahead2,0candidate/cursor9. Prod2distinctREADONLYSQL faziPASS1each/rollback:
+scopeDELETED2026-11-03T04:04:48Z,member0/revoke0,witness1retainedmember1;
+retainedHEAD3 parentEXACTlocal2,chain3→2→1intact,actorother,proofrefsavailable.
+SQLpresence+hashcomparisons NEHTTP/fullsignaturePASS. Codeguard exactpin/observed
+headrequired; unseenvalidsuccessor→crypto_scope_deletion_history_pending,
+routercatches→missing/metadata/crypto_reconciliation_required. Newrealguard
+diagnostic1PASS1 signedproposal+activation3 independentlyverified, synthetic
+pin2/transport,callback0/pinunchanged; NEactualphoneexceptionproof. Analyze0issues.
+One-scoped-nonsecretKeychainpin LLDB attempts NOTPASS: R1compileFAILbeforequery/
+detachconfirmed;R2silentcapture outcomeUNKNOWN;R3stalePID despitepreflightchange
+(rootorchestrationerror)/noquery. NO4th; PID733→833causeUNKNOWN. NosafePINvalue
+obtained/no rawKeychainoutput; noSecItemwrites. CurrentphoneexactguardUNPROVEN.
+FinalordinaryJivieresponsive/sameaccount/test_gosp, NEfullsyncgreen. 0productfix/
+build/install/prodwrite/reset/rekey/release/commit. Docs REMINDER_PHYSICAL_SETUP
+newoldspace section; privateJivieTestAccounts/20261105/old-space-offline-probe+
+diagnostics/iphone-old-scope-{metadata,retained-ancestry}-r1; newtest
+scope_deleted_unseen_head_diagnostic_20261105_test.dart. OriginalAndroidcauseOPEN.
+
+5. november — **Native opomnik+prava tarča PASS z zamikom; stari metadata ostaja**.
+User izrecno dovoli produkcijski testni prostor, iPhoneupgrade/FILEcheck in
+nov Macaccount; poverilnice/FILE samo zunajGit, poznejšiizbris NEzdaj.
+iPhone35→49 samebundle/cert/profile/entitlements, devAPNs; buildR1missing
+sharedApplefile→R2PASS59.68s,665rootinputs exact.1install, cold6files1239364B
+predprvimzagonom byteexact; noreset/uninstall/Keychainexport. Readonlyaccount
+queryR1FAIL/R2HY000→R3PASS activeaccount+1unrevokeddevice,0DBwrites; zgodovinski
+izbris nepotrjen. Metadata/crypto_reconciliation_required OLDtestno gospodinjstvo
+opažen PREDpush; ni potrjen vzrok Androidtap. Novo test_gosp invitePASS;
+existingOct31FILE725B checkPASS1/accountkeysunlock, NEactualrecovery/datarestore.
+Macisolated49 buildPASS1/94.887s,648inputs exact/6identityoverlays/199files,
+separate sandbox+Keychain, noURLhandler, ordinaryprodHTTPS. Accountregister+
+emailverify+combinedFILE725B0600 outsideGitPASS; inviteaccepted then ownerpush
+zamik(userconfirmed), Checkaccess1waiting→2granted/test_gosp decryptedPASS.
+iPhone systempermissionON/remoteoptinOFF→1enable→native registeredPASS;
+taskcategory inApp/sound/pushON/emailOFF unchanged, no globalprefschange.
+Userconfirmed collaborationrules accepted;1Mac→iPhone taskcreated19:32:26UTC,
+Mac20:32local Synced/0pending/conflict/blocked. Nativecenter20:32–20:36local
+noassignedpush observed. ReadonlyqueueprobeR1PASS19:36:05UTC: inbox1created
+19:32:27crypto2.task.assigned; jobcancelled/attempts1/iosactivematchingreg,
+notexpired/nolease/sentnull. Providererrornotpersisted→causeUNKNOWN/noFCMtap.
+iPhonenormalreopen inbox»Dodeljeno ti je 1 opravilo«+correcttaskopenPASS,
+INAPPonly/NE native. GuardprobeR1PASS19:43:18UTC/currentgatestrue,
+cancelledhistoricalproviderUNKNOWN/noresend/rearm. FirebaseconsoleREADONLY:
+sameproject/bundleasinstalled49 verifiedfrozenconfig/generateddefines/AOT;
+NOdevAPNskey/NOprodAPNskey/NOdevcert/NOprodcert, FCMv1ON. Definiteconfiggap,
+NEprovidererrorcodeproof;vtistemcheckpointu0Firebasewrites/keycreate/upload.
+Privatefirebase-apns-observation; poznejsiuserapprovedsetupspodaj.
+Ownabsolute firstsave19:40:24UTC due20:45local(19:45UTC) BLOCKEDaccountRules;
+userseparateapproval→accepted19:48:22UTC AFTERdue. Autosyncstarted/rulesUIgone,
+oldspacemetadata persists. PostpolicyserverprobeR1PASS19:52:24UTC/0DBwrites:
+exact1ownabsolute rev1/targetrev1/due19:45/state delivered; exact1dueinbox
+created19:49:01/inApptrue/unread/rev1/targetrev1. NaturalworkerAFTERrules+due,
+NEtimely/nativePASS. Exact1iosjobcancelled/attempt1/active+revisionMatchreg,
+sentnull/notexpired/providerresponseunpersisted;0providerrequest/rearm/reschedule.
+iPhone20:51syncdialog onlypreexistingoldmetadata/rulesgone. FinalUIinbox
+»Čas je za opomnik«/Zame/test_gosp/20:49 plusassigned20:32;1inapptap→exactsame
+tasktitle+notes+assignee+creatorPASS. NE nativepush/tap/ontime. Private
+iphone-absolute-inapp-inbox.png+iphone-absolute-inapp-open.png; checkpointclosed.
+Earlier savedwording superseded by actualrulesgate; noduplicate.
+UserNOWexplicitAPNssetup+actiontimeapproved:1SandboxTopicSpecifickey ONLY
+si.triparna.jivie/Apple1topicSandboxconfirmed; FirebaseDEVELOPMENTackcorrect
+key/team,0productionslot.1download→privateJivieProductionSafety/20261105-apns
+dir0700/key0600,0productcode/build/deploy. SAMEdeliveredreminder1edit20:12:51UTC
+due20:20UTC(21:20local);predueREADONLYR1oktrue20:13:19exactduecount0,
+functionalNOTaccepted/NEprobeerror.1manualsync→R2PASS20:15:24UTC exact1same
+reminder pending/rev2/targetrev1/due20:20; predue0inbox/0jobexpected.
+NOdelaycauseinferred/NOthirdpredueprobe.1Home~20:15UTCbackgrounded,
+naturalworker/nativePENDING/oldmetadataPREDpush. OldjobNErearmed;
+private diagnostics/iphone-apns-fresh-predue-r2.png+iphone-apns-sync-before-push.png.
+DistinctpostdueREADONLYR1at20:20:43UTC sameownabsolute rev2/target1/due20:20
+DELIVERED, exactrevisiondueinbox1created20:20:03/inApptrue/unread;
+exact1iosjobPENDING/ATTEMPTS0/activematchingreg/sentnull/notexpired.
+Awaitnaturalpushworker/NEproviderFAIL;NCempty20:20/notapyet/noresend.
+Private diagnostics/iphone-apns-fresh-postdue-r1.png.
+NativeRECEIPTPASS20:21:42.444UTC/realiOSJivie»Opomnik«/genericencryptedbody,
+backgroundNC; privateiphone-apns-native-receipt-r2.png. Earlier20:20NCempty
+whilejobpending0/NEproviderFAIL. CUAtap/Openattemptsrowonlyslid; USERexplicit
+clicked»Odpri«→appUtrip/syncspinner.20:23:26stillUtrip/spinner/noexacttarget;
+TedajTAPROUTINGNOTPASS. Privateiphone-apns-after-native-open.png.
+FinalREADONLY20:23:37UTC exactrev2delivered/inbox20:20:03unreadatsnapshot,
+iosjobSENT/attempt1/sentAt20:21:02/activematchingreg/notexpired;1naturalattempt,
+0manualresend/rearm. Private diagnostics/iphone-apns-fresh-delivery-result.png.
+AfterUSER»Odpri«+Utripwait APPAUTOopenedEXACTtask/title+notes+assignee+creator
+~20:24UTC/screenshot20:24:15.411 iphone-apns-native-open-exact-task.png.
+NOagentinapproutingbetweenOpenandtarget. NATIVERECEIPT+ROUTEPASSwithdelay.
+OnlyAFTERPASSagentclosedtask/openedcloudinspection→SAMEoldtestnogospodinjstvo
+metadata. SafeJSON20:24:29 metadata/crypto_reconciliation_required/noNEWunknown;
+newautoattempt20:24:27pages0initialNEfullsyncgreen. Privateiphone-apns-sync-
+after-native-open.png+iphone-apns-sync-details-after-native-open.png;0furtherUI.
+APNsSANDBOXonlycurrentdev49/productionApple+TestFlightslotUNCONFIGURED.
+OriginalAndroidcauseUNCONFIRMED;setupscopecomplete/0newcode/tests/build/release.
+newprivatephysical-apns-fresh-test.json; no newreminder/nooldPASSreruns.
+No productfix/deploy/release/commit. Privatephysical-task-test.json+
+diagnostics/iphone-task-push-result.json/images preserve runtimecheckpoint.
+Docs REMINDER_PHYSICAL_SETUP_2026_11_05; evidence ios-production-upgrade-20261105
+and reminder-sync-20261105/mac49; private /Users/anzenovsak/JivieTestAccounts/20261105.
+
+5. november — **Opomniki: lokalna diagnoza, BREZ produktnega popravka/izdaje**.
+User pozneje pojasni: zadnjaPlay(exactversionUNKNOWN), konkreten datum/ura,
+napaka sele ob TAP prejetega pusha. Locen cist absolute-tap branch originala
+(istiaccount/keys; prvirelativeFAILclonepreserved): novrequiredtask+absolute
+69HTTPclearR1, naturaldueworker1→inbox1, realopenRemotePushReference39HTTP
+clearR1/available/exacttask+inbox/globalerrornone/reminderdelivered.
+Nativeenvelopesynthetic/noFCM/phone; actualabsolutetapERROR NEREPRODUCIRAN.
+Relative napaka in stalebanner sta LOCENI ugotovitvi, NEpotrjenphonecause.
+Obabranchserverjastopped/original8SHAexact/kloniheld;7distinctHTTPfaz1x.
+User zahteva pregled sender+assignee push in lokalni repro slike unknown/
+crypto_reconciliation_required. Trenutni zvoncek je own-account; dodelitev
+task.assigned je locen dogodek. Novi sender+assignee tok NI implementiran.
+1nov realrepo/controller+synthetictransport test PASS1: manual unchanged
+po probe failure pocisti repo, pusti backgroundError→exact unknown JSON;
+automatic probe ga pocisti. Initial crypto razlog injected, NEphonecause.
+RealHTTP clone retained passwordflow: discovery9/createTask41/absolute50
+clearR1; relative20 unresolvedR1 notifications/scheduling_consent_generation_pending.
+Fresh signed verified taskrev1 nima consentGeneration: transition mint le
+ob oldgeneration, relative zahteva UUID. Pred crypto2.reminders.put; navadni
+commands pending in reminder queued ostaneta, displayed synccommand0 ozek.
+1natural due worker absolute→inbox1, 0FCM/SMTP; postdelivery20HTTP unresolved
+zaradi istega prej pending relative, clientinbox1/absoluteprojectionpending.
+SingleaccountHTTP, NE2recipient/nativePASS; stale-directory hipoteza NEdosezena.
+5faz1x,0successfulreruns;2newtestsanalyzeR1warning !→R2zeroissues. Dockerimage
+oldpinFAIL→private8.4.27sodiumbuildPASS; PHP8.4.24/exactKanboarddigest.
+Original8files SHAexact; clone/keys/FILE/evidence preserved, ownserverstopped.
+0product/serverprod/phone/release/commit/push; unrelateddirtyworkpreserved.
+Docs REMINDER_SYNC_DIAGNOSTICS_2026_11_05; evidence build/qa/reminder-sync-20261105.
+
 3. november — **Android1.11.17(49) oddan v javni pregled; NEapproved**.
 User deletiontoast→metadata reconciliation + moveArchive/Delete + Play.
 Local realHTTP RED: scope.delete applied, stale own-directory inclusion failed;
